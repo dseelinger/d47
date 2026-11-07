@@ -1,4 +1,6 @@
-using Avalonia.Automation;
+using Avalonia;
+using Avalonia.Media;
+using D47.App.Controls;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -20,7 +22,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The Activities page off the Checklist: every activity, its date, and the Suggest box (#587).</summary>
+/// <summary>The Activities page under Commander › Statistics: every activity and its date, the undated ones first (#587).</summary>
 public sealed class TheActivitiesPageListsEveryActivityTests
 {
     private const string Fid = "F1";
@@ -39,10 +41,7 @@ public sealed class TheActivitiesPageListsEveryActivityTests
 
     private static ActivityLedger Ledger()
     {
-        var ledger = new ActivityLedger(
-            Path.Combine(@"C:\d47-test", "activities.json"),
-            new MemoryFileSystem(),
-            NullLogger.Instance);
+        var ledger = new ActivityLedger(new MemoryFileSystem(), NullLogger.Instance);
 
         ledger.Apply(
         [
@@ -88,8 +87,6 @@ public sealed class TheActivitiesPageListsEveryActivityTests
     private static string RowName(Border row) =>
         row.GetVisualDescendants().OfType<TextBlock>().First().Text!;
 
-    private static CheckBox BoxOf(Border row) => row.GetVisualDescendants().OfType<CheckBox>().Single();
-
     private static void Save(Window window, string name)
     {
         Dispatcher.UIThread.RunJobs();
@@ -99,7 +96,7 @@ public sealed class TheActivitiesPageListsEveryActivityTests
     }
 
     [AvaloniaFact]
-    public void EveryActivityHasARowOldestFirstAndUndatedLast()
+    public void EveryActivityHasARowUndatedFirstThenOldestFirst()
     {
         using var look = AppLook.Put();
         var window = Open(Ledger(), 1280);
@@ -109,8 +106,10 @@ public sealed class TheActivitiesPageListsEveryActivityTests
 
         var names = rows.Select(RowName).ToList();
 
-        Assert.Equal(["BOUNTY HUNTING", "EXPLORATION", "MINING", "TRADING"], names.Take(4));
-        Assert.Equal("COMBAT ZONES", names[4]);
+        var undated = ActivityCatalogue.All.Count - 4;
+
+        Assert.All(names.Take(undated), name => Assert.DoesNotContain(name, new[] { "BOUNTY HUNTING", "EXPLORATION", "MINING", "TRADING" }));
+        Assert.Equal(["BOUNTY HUNTING", "EXPLORATION", "MINING", "TRADING"], names.Skip(undated));
 
         var words = window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text).ToList();
 
@@ -132,7 +131,10 @@ public sealed class TheActivitiesPageListsEveryActivityTests
         Press(window, "ActivitiesHead.Lastdone");
         Press(window, "ActivitiesHead.Lastdone");
 
-        Assert.Equal(["TRADING", "MINING", "EXPLORATION", "BOUNTY HUNTING"], Rows(window).Select(RowName).Take(4));
+        var names = Rows(window).Select(RowName).ToList();
+
+        Assert.Equal(["TRADING", "MINING", "EXPLORATION", "BOUNTY HUNTING"], names.Take(4));
+        Assert.Equal(ActivityCatalogue.All.Count, names.Count);
 
         window.Close();
     }
@@ -159,34 +161,6 @@ public sealed class TheActivitiesPageListsEveryActivityTests
     }
 
     [AvaloniaFact]
-    public void UntickingSuggestKeepsTheRowAndItsDate()
-    {
-        using var look = AppLook.Put();
-        var ledger = Ledger();
-        var window = Open(ledger, 1280);
-
-        var mining = Rows(window).Single(row => RowName(row) == "MINING");
-
-        BoxOf(mining).IsChecked = false;
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.False(ledger.IsSuggested("mining", Fid));
-        Assert.DoesNotContain(ledger.Stalest(20, Fid), date => date.Key == "mining");
-
-        var again = Rows(window).Single(row => RowName(row) == "MINING");
-
-        Assert.Same(mining, again);
-        Assert.Contains(
-            again.GetVisualDescendants().OfType<TextBlock>(),
-            block => block.Text == "23 Sep 3312" || block.Text == "13 days ago");
-
-        BoxOf(again).IsChecked = true;
-        Assert.Contains(ledger.Stalest(20, Fid), date => date.Key == "mining");
-
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void ThePageDrawsAtTheDesignsWidthsAndTheNarrowRowIsTaller()
     {
         using var look = AppLook.Put();
@@ -206,31 +180,106 @@ public sealed class TheActivitiesPageListsEveryActivityTests
     }
 
     [AvaloniaFact]
-    public void TheChecklistsActivitiesButtonOpensThePageWithABreadcrumbBack()
+    public void EveryActivityNameIsWhiteAndNoRowHasACheckbox()
     {
         using var look = AppLook.Put();
+        var window = Open(Ledger(), 1280);
 
-        var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
-        panel.EnableChecklist(Checklists(), activities: Ledger());
+        Assert.Empty(window.GetVisualDescendants().OfType<CheckBox>());
+
+        Application.Current!.Resources.TryGetResource(ThemeManager.WhiteKey, null, out var white);
+
+        foreach (var row in Rows(window))
+        {
+            var name = row.GetVisualDescendants().OfType<TextBlock>().First();
+
+            Assert.Equal(((ISolidColorBrush)white!).Color, ((ISolidColorBrush)name.Foreground!).Color);
+        }
+
+        window.Close();
+    }
+
+    private static (Window Window, PanelView Panel) CommanderPanel(params string[] events)
+    {
+        var state = JournalScript.Timed(
+            DateTimeOffset.UtcNow, Fid, "Jameson", [.. events.Select(json => (TimeSpan.Zero, json))]);
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        panel.EnableChecklist(Checklists());
+        panel.EnableStatistics(() => state, Ledger());
 
         var window = new Window { Content = panel, Width = 1280, Height = 900 };
         window.Show();
         panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
-        var button = panel.GetVisualDescendants().OfType<Button>()
-            .Single(found => found.IsEffectivelyVisible && found.Content as string == "Activities");
+        return (window, panel);
+    }
 
-        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    [AvaloniaFact]
+    public void TheChecklistHasNoActivitiesButton()
+    {
+        using var look = AppLook.Put();
+        var (window, panel) = CommanderPanel();
+
+        Assert.DoesNotContain(
+            panel.GetVisualDescendants().OfType<Button>(),
+            found => found.Content as string == "Activities");
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TheStatisticsSidebarListsActivitiesAndDrawsThePage(bool statisticsKnown)
+    {
+        using var look = AppLook.Put();
+        var (window, panel) = CommanderPanel(
+            statisticsKnown ? ["""{"event":"Statistics","Bank_Account":{"Current_Wealth":1000}}"""] : []);
+
+        panel.Nav.SelectRoot(PanelTab.Commander, StatisticsPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+
+        var page = panel.GetVisualDescendants().OfType<StatisticsPage>().Single();
+        var sidebar = page.GetVisualDescendants().OfType<Sidebar>().Single();
+
+        Assert.Contains(
+            sidebar.Items,
+            row => row.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "ACTIVITIES"));
+
+        page.Open(StatisticsPage.ActivitiesKey);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
             ActivityCatalogue.All.Count,
             panel.GetVisualDescendants().OfType<Border>().Count(border => border.Classes.Contains(ListRow.Class)));
 
-        Assert.Contains(
-            panel.GetVisualDescendants().OfType<Control>(),
-            control => control.IsEffectivelyVisible && AutomationProperties.GetName(control)?.StartsWith("Mining, ", StringComparison.Ordinal) == true);
+        Save(window, $"activities-in-statistics-{(statisticsKnown ? "known" : "unknown")}.png");
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ChoosingAGameSectionAfterActivitiesLeavesTheActivitiesPage()
+    {
+        using var look = AppLook.Put();
+        var (window, panel) = CommanderPanel("""{"event":"Statistics","Bank_Account":{"Current_Wealth":1000},"Combat":{"Bounties_Claimed":3}}""");
+
+        panel.Nav.SelectRoot(PanelTab.Commander, StatisticsPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+        panel.GetVisualDescendants().OfType<StatisticsPage>().Single(found => found.IsEffectivelyVisible).Open(StatisticsPage.ActivitiesKey);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(StatisticsPage.ActivitiesKey, panel.Nav.DestinationKey);
+
+        panel.GetVisualDescendants().OfType<StatisticsPage>().Single(found => found.IsEffectivelyVisible).Open("Combat");
+        Dispatcher.UIThread.RunJobs();
+
+        var page = panel.GetVisualDescendants().OfType<StatisticsPage>().Single(found => found.IsEffectivelyVisible);
+
+        Assert.Equal(StatisticsPage.RootKey, panel.Nav.DestinationKey);
+        Assert.Equal("Combat", page.Section);
+        Assert.Equal(0, panel.GetVisualDescendants().OfType<Border>().Count(border => border.Classes.Contains(ListRow.Class)));
 
         window.Close();
     }

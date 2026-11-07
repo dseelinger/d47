@@ -1147,9 +1147,7 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.OutstandingCrimes>());
 
-        var activities = new D47.Core.Activities.ActivityLedger(foundations.Data("activities.json"), files, foundations.Log<D47.Core.Activities.ActivityLedger>());
-
-        activities.Load();
+        var activities = new D47.Core.Activities.ActivityLedger(files, foundations.Log<D47.Core.Activities.ActivityLedger>());
 
         var activityBars = new D47.Core.Adventures.ActivityBars(foundations.Data("activity-bars.json"), files, foundations.Log<D47.Core.Adventures.ActivityBars>());
 

@@ -23,7 +23,7 @@ public sealed class WhenEachActivityWasLastDoneTests
         return file;
     }
 
-    private ActivityLedger Ledger() => new(Path.Combine(Dir, "activities.json"), _files, NullLogger.Instance);
+    private ActivityLedger Ledger() => new(_files, NullLogger.Instance);
 
     private static readonly (string Key, string Kind, string Extra)[] Dating =
     [
@@ -81,42 +81,6 @@ public sealed class WhenEachActivityWasLastDoneTests
             Line("2026-01-06T00:00:00Z", "LaunchFighter", ",\"PlayerControlled\":false"))], TestContext.Current.CancellationToken);
 
         Assert.All(ActivityCatalogue.All, entry => Assert.Null(ledger.LastDone(entry.Key, Fid)));
-    }
-
-    [Fact]
-    public void TheStalestThreeAreTheOldestSuggestedOnesOldestFirst()
-    {
-        var ledger = Ledger();
-        ledger.FoldHistory([Journal(
-            Line("2026-01-01T00:00:00Z", "LoadGame", $",\"FID\":\"{Fid}\""),
-            Line("2026-01-02T00:00:00Z", "Bounty"),
-            Line("2026-01-03T00:00:00Z", "MarketBuy"),
-            Line("2026-01-04T00:00:00Z", "MiningRefined"),
-            Line("2026-01-05T00:00:00Z", "EngineerCraft"),
-            Line("2026-01-06T00:00:00Z", "MissionCompleted"))], TestContext.Current.CancellationToken);
-
-        ledger.SetSuggested("bounty-hunting", Fid, false);
-
-        Assert.Equal(["trading", "mining", "engineering"], ledger.Stalest(3, Fid).Select(a => a.Key));
-        Assert.Equal(DateTimeOffset.Parse("2026-01-02T00:00:00Z"), ledger.LastDone("bounty-hunting", Fid));
-    }
-
-    [Fact]
-    public void ASuggestionChoiceSurvivesAReload()
-    {
-        Ledger().SetSuggested("mining", Fid, false);
-
-        var reloaded = Ledger();
-        reloaded.Load();
-
-        Assert.False(reloaded.IsSuggested("mining", Fid));
-        Assert.True(reloaded.IsSuggested("trading", Fid));
-
-        reloaded.SetSuggested("mining", Fid, true);
-        var again = Ledger();
-        again.Load();
-
-        Assert.True(again.IsSuggested("mining", Fid));
     }
 
     [Fact]

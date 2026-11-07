@@ -25,9 +25,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// <summary>The crumb the suggestions page is pushed as.</summary>
     public const string SuggestionsKey = "checklist.suggestions";
 
-    /// <summary>The crumb the Activities page is pushed as.</summary>
-    public const string ActivitiesKey = "checklist.activities";
-
     /// <summary>The crumb the All lists page is pushed as.</summary>
     public const string AllKey = "checklist.all";
 
@@ -42,9 +39,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
     /// <summary>The Suggestions level: proposals waiting for a yes.</summary>
     public static NavCrumb Suggestions => new(SuggestionsKey, "Suggestions");
-
-    /// <summary>The Activities level.</summary>
-    public static NavCrumb Activities => new(ActivitiesKey, "Activities");
 
     /// <summary>The level that shows one list.</summary>
     public static NavCrumb ListCrumb(ChecklistList list)
@@ -131,12 +125,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         IsVisible = false,
     };
 
-    private readonly Button _activities = new()
-    {
-        Content = "Activities",
-        VerticalAlignment = VerticalAlignment.Top,
-    };
-
     /// <summary>Bulk-removes every Done line on the whole checklist (#259).</summary>
     private readonly Button _deleteCompleted = new()
     {
@@ -198,8 +186,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         _suggestions.Click += (_, _) => _nav.Drill(Suggestions);
 
-        _activities.Click += (_, _) => _nav.Drill(Activities);
-
         _add = D47.App.Controls.Glyphs.Quiet(new Button(), "ADD A LINE", "Add a line");
         _add.VerticalAlignment = VerticalAlignment.Top;
 
@@ -217,7 +203,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             case Level.Lists:
                 _right.Children.Add(_add);
                 _right.Children.Add(_suggestions);
-                _right.Children.Add(_activities);
                 break;
 
             case Level.One:

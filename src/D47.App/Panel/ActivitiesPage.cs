@@ -3,18 +3,16 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
 using D47.App.Theming;
 using D47.Core.Activities;
 using D47.Core.Utilities;
 
 namespace D47.App.Panel;
 
-/// <summary>Every catalogue activity with when it was last done and whether it may be suggested (#587).</summary>
+/// <summary>Every catalogue activity with when it was last done, the undated ones first (#587).</summary>
 public sealed class ActivitiesPage : UserControl
 {
     /// <summary>Below this width a row is two columns.</summary>
@@ -22,20 +20,16 @@ public sealed class ActivitiesPage : UserControl
 
     public const string TableId = "Activities";
 
-    private const double SuggestColumn = 76;
-
     private static readonly TableColumn[] WideColumns =
     [
         new("Activity", ColumnFit.Fill),
         new("LastDone"),
         new("Age"),
-        new("Suggest", ColumnFit.Fixed) { Fixed = SuggestColumn },
     ];
 
     private static readonly TableColumn[] NarrowColumns =
     [
         new("Activity", ColumnFit.Fill),
-        new("Suggest", ColumnFit.Fixed) { Fixed = SuggestColumn },
     ];
 
     private readonly ActivityLedger _ledger;
@@ -53,14 +47,12 @@ public sealed class ActivitiesPage : UserControl
     private static readonly IReadOnlyList<SortColumn<ActivityRow>> WideHeadings =
     [
         SortColumn<ActivityRow>.Text("Activity", row => row.Entry.Name),
-        SortColumn<ActivityRow>.Figure("Last done", row => row.At, SortDirection.Ascending),
-        SortColumn<ActivityRow>.Plain("Suggest"),
+        SortColumn<ActivityRow>.Figure<DateTimeOffset>("Last done", row => row.SortKey, SortDirection.Ascending),
     ];
 
     private static readonly IReadOnlyList<SortColumn<ActivityRow>> NarrowHeadings =
     [
         SortColumn<ActivityRow>.Text("Activity · Last done", row => row.Entry.Name),
-        SortColumn<ActivityRow>.Plain("Suggest"),
     ];
 
     private readonly SortHeader<ActivityRow> _wideHead = new("ActivitiesHead", WideHeadings, new SortOrder(1, SortDirection.Ascending));
@@ -69,9 +61,7 @@ public sealed class ActivitiesPage : UserControl
 
     private bool _narrow;
 
-    private bool _writing;
-
-    public ActivitiesPage(ActivityLedger ledger, Func<string?> commander, Func<DateTimeOffset>? now = null, ColumnWidthMemory? columnWidths = null)
+    public ActivitiesPage(ActivityLedger ledger, Func<string?> commander, Func<DateTimeOffset>? now = null, ColumnWidthMemory? columnWidths = null, bool embedded = false)
     {
         _columnWidths = columnWidths;
         _layout = NewLayout();
@@ -81,12 +71,14 @@ public sealed class ActivitiesPage : UserControl
         _wideHead.Changed += Fill;
         _narrowHead.Changed += Fill;
 
-        Content = new ScrollViewer
-        {
-            Content = new Border { Padding = new Thickness(14), Child = _page },
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-        };
+        Content = embedded
+            ? _page
+            : new ScrollViewer
+            {
+                Content = new Border { Padding = new Thickness(14), Child = _page },
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            };
 
         Fill();
     }
@@ -121,14 +113,8 @@ public sealed class ActivitiesPage : UserControl
         return base.ArrangeOverride(finalSize);
     }
 
-    /// <summary>The ledger raises this from whichever thread wrote; a tick on this page's own toggle is skipped.</summary>
-    private void Follow()
-    {
-        if (!_writing)
-        {
-            Dispatcher.UIThread.Post(Fill);
-        }
-    }
+    /// <summary>The ledger raises this from whichever thread folded.</summary>
+    private void Follow() => Dispatcher.UIThread.Post(Fill);
 
     private void Fill()
     {
@@ -166,13 +152,12 @@ public sealed class ActivitiesPage : UserControl
 
         var rows = ActivityCatalogue.All
             .Select(entry => new ActivityRow(entry, _ledger.LastDone(entry.Key, commander)))
-            .OrderBy(row => row.At is null)
-            .ThenBy(row => row.At)
+            .OrderBy(row => row.SortKey)
             .ToList();
 
         foreach (var (entry, at) in (_narrow ? _narrowHead : _wideHead).Sort(rows))
         {
-            _page.Children.Add(Row(entry, at, corpus, now, commander));
+            _page.Children.Add(Row(entry, at, corpus, now));
         }
     }
 
@@ -191,9 +176,6 @@ public sealed class ActivitiesPage : UserControl
             AddCell(grid, sorting.Cell(1, HorizontalAlignment.Left), 1);
         }
 
-        var suggest = sorting.Cell(_narrow ? 1 : 2, HorizontalAlignment.Center);
-        AddCell(grid, suggest, _narrow ? 1 : 3);
-
         return head;
     }
 
@@ -205,11 +187,8 @@ public sealed class ActivitiesPage : UserControl
         ActivityEntry entry,
         DateTimeOffset? at,
         DateTimeOffset? corpus,
-        DateTimeOffset now,
-        string? commander)
+        DateTimeOffset now)
     {
-        var suggested = _ledger.IsSuggested(entry.Key, commander);
-
         var name = ListRow.Name(new TextBlock
         {
             Text = entry.Name,
@@ -217,17 +196,7 @@ public sealed class ActivitiesPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         });
 
-        Inked(name, suggested);
-
-        var box = new CheckBox
-        {
-            IsChecked = suggested,
-            Classes = { "bare" },
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        AutomationProperties.SetName(box, $"Suggest {entry.Name}");
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var row = ListRow.Dress(new Border
         {
@@ -264,56 +233,10 @@ public sealed class ActivitiesPage : UserControl
             }
         }
 
-        AddCell(grid, box, _narrow ? 1 : 3);
-
         AutomationProperties.SetName(row, $"{entry.Name}, {(at is { } last ? Date(last) : "not in your journals")}");
-
-        box.IsCheckedChanged += (_, _) =>
-        {
-            var on = box.IsChecked == true;
-
-            if (commander is not { Length: > 0 })
-            {
-                return;
-            }
-
-            _writing = true;
-
-            try
-            {
-                _ledger.SetSuggested(entry.Key, commander, on);
-            }
-            finally
-            {
-                _writing = false;
-            }
-
-            Inked(name, on);
-        };
-
-        row.Tapped += (_, e) =>
-        {
-            if (e.Source is Visual source && source.FindAncestorOfType<CheckBox>(includeSelf: true) is null)
-            {
-                box.IsChecked = box.IsChecked != true;
-            }
-        };
-
-        box.GotFocus += (_, e) =>
-        {
-            if (e.NavigationMethod is NavigationMethod.Tab or NavigationMethod.Directional)
-            {
-                ThemeInk.Bind(row, Border.BorderBrushProperty, ThemeManager.CyanKey);
-            }
-        };
-
-        box.LostFocus += (_, _) => row.BorderBrush = Brushes.Transparent;
 
         return row;
     }
-
-    private static void Inked(TextBlock name, bool suggested) =>
-        ThemeInk.Bind(name, TextBlock.ForegroundProperty, suggested ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
 
     private static Control When(DateTimeOffset? at, DateTimeOffset? corpus, DateTimeOffset now)
     {
@@ -349,4 +272,8 @@ public sealed class ActivitiesPage : UserControl
 }
 
 /// <summary>One catalogue activity and when it was last done.</summary>
-internal readonly record struct ActivityRow(ActivityEntry Entry, DateTimeOffset? At);
+internal readonly record struct ActivityRow(ActivityEntry Entry, DateTimeOffset? At)
+{
+    /// <summary>The date, or a value before every date for an activity with none.</summary>
+    public DateTimeOffset SortKey => At ?? DateTimeOffset.MinValue;
+}

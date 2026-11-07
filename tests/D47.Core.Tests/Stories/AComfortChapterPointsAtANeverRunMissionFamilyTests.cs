@@ -30,7 +30,7 @@ public sealed class AComfortChapterPointsAtANeverRunMissionFamilyTests
     [Fact]
     public void ACompletedMissionIsFiledUnderItsFamilyAndUnderMissions()
     {
-        var ledger = new ActivityLedger(null, new MemoryInstall().Files, NullLogger.Instance);
+        var ledger = new ActivityLedger(new MemoryInstall().Files, NullLogger.Instance);
         var load = JournalEvent.TryParse("""{"timestamp":"2026-10-01T10:00:00Z","event":"LoadGame","FID":"F1"}""", NullLogger.Instance, out var started);
         var done = JournalEvent.TryParse("""{"timestamp":"2026-10-02T10:00:00Z","event":"MissionCompleted","Name":"Mission_Smuggle_Famine_name"}""", NullLogger.Instance, out var completed);
 

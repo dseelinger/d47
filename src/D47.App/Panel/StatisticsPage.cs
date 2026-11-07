@@ -5,14 +5,18 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Activities;
 using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › Statistics: every section of the <c>Statistics</c> event, one at a time, with a search across them (#553).</summary>
+/// <summary>Commander › Statistics: every section of the <c>Statistics</c> event, one at a time, with a search across them, and the Activities page (#553).</summary>
 public sealed class StatisticsPage : UserControl, IFilterablePage
 {
     public const string RootKey = "statistics";
+
+    /// <summary>The Activities entry in the sidebar; it is not a section of the game's event.</summary>
+    public const string ActivitiesKey = "d47.activities";
 
     /// <summary>The footer's phrase; it carries a <c>get_commander_statistics</c> keyword.</summary>
     public const string Phrase = "what are my career statistics";
@@ -25,14 +29,30 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
     private readonly Action _clearSearch;
     private readonly ContentControl _sidebar = new();
     private readonly StackPanel _body = new();
+    private readonly ActivitiesPage? _activities;
+    private readonly Func<string, bool>? _navigate;
     private CareerStatistics? _seen;
     private string? _section;
     private string _query = string.Empty;
 
-    public StatisticsPage(Func<CommanderGameState?> state, JournalClock clock, Action clearSearch)
+    public StatisticsPage(
+        Func<CommanderGameState?> state,
+        JournalClock clock,
+        Action clearSearch,
+        ActivityLedger? activities = null,
+        ColumnWidthMemory? columnWidths = null,
+        string? opening = null,
+        Func<string, bool>? navigate = null)
     {
         _state = state;
         _clearSearch = clearSearch;
+        _navigate = navigate;
+        _section = opening;
+
+        if (activities is not null)
+        {
+            _activities = new ActivitiesPage(activities, () => state()?.Identity.FrontierId, columnWidths: columnWidths, embedded: true);
+        }
 
         Content = PageFooter.Shell(_sidebar, _body, Phrase, clock, 900);
         Draw();
@@ -70,9 +90,14 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         return true;
     }
 
-    /// <summary>Shows one section, by its journal name, and drops the search.</summary>
+    /// <summary>Shows one section, by its journal name, and drops the search. <c>navigate</c> may move to another page of the trail instead.</summary>
     public void Open(string section)
     {
+        if (_navigate?.Invoke(section) == true)
+        {
+            return;
+        }
+
         _section = section;
 
         if (_sidebar.Content is Sidebar sidebar)
@@ -97,21 +122,29 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
 
         var sections = Statistics.Sections;
 
-        if (_section is null || !sections.Contains(_section, StringComparer.Ordinal))
+        if (_section is null || (_section != ActivitiesKey && !sections.Contains(_section, StringComparer.Ordinal)))
         {
             _section = sections.Count > 0 ? sections[0] : null;
         }
 
-        _sidebar.Content = sections.Count == 0
+        var groups = new List<SidebarGroup>();
+
+        if (sections.Count > 0)
+        {
+            groups.Add(new SidebarGroup(null, [.. sections.Select(name => new SidebarItem(
+                name,
+                CareerStatistics.Label(name),
+                Statistics.Section(name).Count.ToString(System.Globalization.CultureInfo.InvariantCulture)))]));
+        }
+
+        if (_activities is not null)
+        {
+            groups.Add(new SidebarGroup(null, [new SidebarItem(ActivitiesKey, "Activities")]));
+        }
+
+        _sidebar.Content = groups.Count == 0
             ? null
-            : new Sidebar(
-                [new SidebarGroup(null, [.. sections.Select(name => new SidebarItem(
-                    name,
-                    CareerStatistics.Label(name),
-                    Statistics.Section(name).Count.ToString(System.Globalization.CultureInfo.InvariantCulture)))])],
-                _section,
-                Open,
-                "The game's sections, in the order it writes them.");
+            : new Sidebar(groups, _section, Open, sections.Count > 0 ? "The game's sections, in the order it writes them." : null);
 
         DrawBody();
     }
@@ -119,6 +152,12 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
     private void DrawBody()
     {
         _body.Children.Clear();
+
+        if (_section == ActivitiesKey && _activities is not null && _query.Length == 0)
+        {
+            _body.Children.Add(_activities);
+            return;
+        }
 
         if (!Statistics.IsKnown)
         {

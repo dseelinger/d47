@@ -16,6 +16,8 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private Func<NavCrumb, Control>? _creditsBuild;
     private Func<NavCrumb, Control>? _codexBuild;
     private Func<NavCrumb, Control>? _commandersBuild;
+    private string? _statisticsOpening;
+    private StatisticsPage? _statisticsRoot;
     private MissionsPage? _missions;
     private StandingPage? _standing;
     private StatisticsPage? _statistics;
@@ -35,8 +37,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
-        D47.Core.Goals.GoalBook? goals = null,
-        D47.Core.Activities.ActivityLedger? activities = null)
+        D47.Core.Goals.GoalBook? goals = null)
     {
         ChecklistPage? page = null;
         var root = new NavCrumb(ChecklistRoot, "Checklist")
@@ -52,9 +53,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         {
             // Suggestions opened by a switch or by voice may be drawn before the root ever was.
             ChecklistPage.SuggestionsKey => (page ??= Page(root)).BuildSuggestions(),
-            ChecklistPage.ActivitiesKey => activities is null
-                ? new TextBlock { Text = "No activity dates yet." }
-                : new ActivitiesPage(activities, () => checklists.Document.CommanderFid, columnWidths: host.ColumnWidths),
             _ => page = Page(crumb),
         };
 
@@ -64,7 +62,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             ChecklistRoot,
             ChecklistPage.Suggestions,
             () => checklists.Proposals.PendingFor(checklists.Document.CommanderFid).Count > 0);
-        host.Nav.Declare(ChecklistRoot, ChecklistPage.Activities);
         host.Nav.Declare(ChecklistRoot, ChecklistPage.AllLists);
     }
 
@@ -145,12 +142,26 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             });
     }
 
-    public void EnableStatistics(Func<D47.Core.Journal.CommanderGameState?> state)
+    public void EnableStatistics(Func<D47.Core.Journal.CommanderGameState?> state, D47.Core.Activities.ActivityLedger? activities = null)
     {
         _commanderClock ??= new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
         var clock = _commanderClock;
 
-        _statisticsBuild = _ => _statistics = new StatisticsPage(state, clock, () => host.ClearSearch());
+        _statisticsBuild = crumb =>
+        {
+            var opening = crumb.Key == StatisticsPage.ActivitiesKey ? StatisticsPage.ActivitiesKey : _statisticsOpening;
+            _statisticsOpening = null;
+
+            _statistics = new StatisticsPage(
+                state, clock, () => host.ClearSearch(), activities, host.ColumnWidths, opening, activities is null ? null : NavigateStatistics);
+
+            if (crumb.Key == StatisticsPage.RootKey)
+            {
+                _statisticsRoot = _statistics;
+            }
+
+            return _statistics;
+        };
 
         host.Furnish(
             PanelTab.Commander,
@@ -159,6 +170,39 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             {
                 Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
             });
+
+        if (activities is not null)
+        {
+            host.Nav.Declare(StatisticsPage.RootKey, new NavCrumb(StatisticsPage.ActivitiesKey, "Activities") { Whole = true });
+        }
+    }
+
+    /// <summary>Keeps the trail and the sidebar agreeing: Activities is a page of its own, the game's sections are the root.</summary>
+    private bool NavigateStatistics(string section)
+    {
+        var onActivities = host.Nav.DestinationKey == StatisticsPage.ActivitiesKey;
+
+        if (section == StatisticsPage.ActivitiesKey)
+        {
+            return !onActivities && host.Nav.Show(StatisticsPage.ActivitiesKey);
+        }
+
+        if (!onActivities)
+        {
+            return false;
+        }
+
+        _statisticsOpening = section;
+
+        var moved = host.Nav.ToRoot();
+
+        if (_statisticsRoot is { } root && root.Section != section)
+        {
+            _statisticsOpening = null;
+            root.Open(section);
+        }
+
+        return moved;
     }
 
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state)
@@ -346,7 +390,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         IsWatches(crumb.Key) && _watchesBuild is { } watches ? watches(crumb)
         : crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
         : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
-        : crumb.Key == StatisticsPage.RootKey && _statisticsBuild is { } statistics ? statistics(crumb)
+        : (crumb.Key == StatisticsPage.RootKey || crumb.Key == StatisticsPage.ActivitiesKey) && _statisticsBuild is { } statistics ? statistics(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
         : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav)
         : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)

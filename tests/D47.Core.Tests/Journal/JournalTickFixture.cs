@@ -50,7 +50,7 @@ internal sealed class JournalTickFixture
             Exobiology = Exobiology,
             Cartography = new CartographyLedger(null, Files, NullLogger.Instance),
             Crimes = new OutstandingCrimes(Files, NullLogger.Instance),
-            Activities = new ActivityLedger(null, Files, NullLogger.Instance),
+            Activities = new ActivityLedger(Files, NullLogger.Instance),
             SignalSightings = new SignalSightings(Files, NullLogger.Instance),
             CommanderErases = new CommanderErases(Files, NullLogger<CommanderErases>.Instance),
             Friends = new FriendRoster(),

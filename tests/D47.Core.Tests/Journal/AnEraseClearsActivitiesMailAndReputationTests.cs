@@ -34,7 +34,7 @@ public sealed class AnEraseClearsActivitiesMailAndReputationTests
     [Fact]
     public void AnEraseLeavesOnlyTheActivitiesDoneAfterIt()
     {
-        var ledger = new ActivityLedger(null, new MemoryFileSystem(), NullLogger.Instance);
+        var ledger = new ActivityLedger(new MemoryFileSystem(), NullLogger.Instance);
 
         ledger.Apply([Load(G, "08:00:00"), Refined("08:10:00"), Load(F, "09:00:00"), Refined("09:10:00"), Erase(F, "10:00:00")]);
 
@@ -50,7 +50,7 @@ public sealed class AnEraseClearsActivitiesMailAndReputationTests
     [Fact]
     public void FoldingTheSameEraseAgainChangesNoActivityDate()
     {
-        var ledger = new ActivityLedger(null, new MemoryFileSystem(), NullLogger.Instance);
+        var ledger = new ActivityLedger(new MemoryFileSystem(), NullLogger.Instance);
 
         ledger.Apply([Load(G, "08:00:00"), Refined("08:10:00"), Load(F, "09:00:00"), Refined("09:10:00"), Erase(F, "10:00:00"), Load(F, "10:00:01"), Refined("11:00:00")]);
 
@@ -79,18 +79,6 @@ public sealed class AnEraseClearsActivitiesMailAndReputationTests
 
         Assert.Equal(forF, mail.Compose(F));
         Assert.Equal(forG, mail.Compose(G));
-    }
-
-    [Fact]
-    public void AnEraseKeepsWhichActivitiesAreSuggested()
-    {
-        var ledger = new ActivityLedger(null, new MemoryFileSystem(), NullLogger.Instance);
-
-        ledger.Apply([Load(F, "09:00:00"), Refined("09:10:00")]);
-        ledger.SetSuggested("mining", F, suggested: false);
-        ledger.Apply([Erase(F, "10:00:00")]);
-
-        Assert.False(ledger.IsSuggested("mining", F));
     }
 
     [Fact]

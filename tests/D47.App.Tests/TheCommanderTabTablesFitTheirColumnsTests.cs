@@ -209,7 +209,7 @@ public class TheCommanderTabTablesFitTheirColumnsTests
     [AvaloniaFact]
     public void TheActivitiesFitTheirColumns()
     {
-        var ledger = new ActivityLedger(Path.Combine(@"C:\d47-test", "activities.json"), new MemoryFileSystem(), NullLogger.Instance);
+        var ledger = new ActivityLedger(new MemoryFileSystem(), NullLogger.Instance);
         var window = Show(new ActivitiesPage(ledger, () => "F1", () => Now));
 
         Fits(window, ActivitiesPage.TableId, 2);

@@ -87,7 +87,7 @@ internal sealed class PanelPathFixture : IDisposable
 
         panel.EnableMissions(state, now);
         panel.EnableStanding(state);
-        panel.EnableStatistics(state);
+        panel.EnableStatistics(state, new D47.Core.Activities.ActivityLedger(memory(), NullLogger.Instance));
         panel.EnableSession(state);
         panel.EnableBgsWork(state, () => null, now);
         panel.EnableCombatStats(state, () => HistoryState.Done, now);

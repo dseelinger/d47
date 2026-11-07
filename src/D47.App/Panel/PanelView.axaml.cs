@@ -639,12 +639,11 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Gives this surface the checklist (Phase 25, "The checklist leaves its window").</summary>
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
-        D47.Core.Goals.GoalBook? goals = null,
-        D47.Core.Activities.ActivityLedger? activities = null)
+        D47.Core.Goals.GoalBook? goals = null)
     {
         // Read by the conversation's proposal cards.
         _checklists = checklists;
-        _commander.EnableChecklist(checklists, goals, activities);
+        _commander.EnableChecklist(checklists, goals);
     }
 
     /// <summary>Gives this surface Commander › Watches, after the checklist.</summary>
@@ -664,7 +663,9 @@ public partial class PanelView : UserControl, IPanelTabHost
         Action? backfill = null) => _commander.EnableStanding(state, goals, backfill);
 
     /// <summary>Gives this surface Commander › Statistics, after Progress.</summary>
-    public void EnableStatistics(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableStatistics(state);
+    public void EnableStatistics(
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        D47.Core.Activities.ActivityLedger? activities = null) => _commander.EnableStatistics(state, activities);
 
     /// <summary>Gives this surface Commander › This session, after Statistics.</summary>
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableSession(state);

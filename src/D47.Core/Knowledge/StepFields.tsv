@@ -1649,7 +1649,6 @@ ToolRun	Tool	string	get_setting	no
 ToolRun	Tool	string	get_ship_plans	no
 ToolRun	Tool	string	get_ship_specification	no
 ToolRun	Tool	string	get_spelling_alphabet	no
-ToolRun	Tool	string	get_stale_activities	no
 ToolRun	Tool	string	get_surface_bearing	no
 ToolRun	Tool	string	get_system_lore	no
 ToolRun	Tool	string	get_unsold_exobiology	no
@@ -1706,7 +1705,6 @@ ToolRun	Tool	string	search_stations	no
 ToolRun	Tool	string	search_systems	no
 ToolRun	Tool	string	select_comms_channel	no
 ToolRun	Tool	string	send_chat_message	no
-ToolRun	Tool	string	set_activity_suggested	no
 ToolRun	Tool	string	set_alarm	no
 ToolRun	Tool	string	set_course_for_objective	no
 ToolRun	Tool	string	set_journal_reminder	no

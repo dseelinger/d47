@@ -110,7 +110,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
         var exobiology = new ExobiologyLedger(null, fileSystem, logger);
         var cartography = new CartographyLedger(null, fileSystem, logger);
         var crimes = new OutstandingCrimes(fileSystem, logger);
-        var activities = new ActivityLedger(null, fileSystem, logger);
+        var activities = new ActivityLedger(fileSystem, logger);
         var mail = new MailLedger("mail.json", fileSystem, logger);
         var signals = new SignalSightings(fileSystem, logger);
         var met = new CommanderLog(fileSystem, logger);
@@ -141,7 +141,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
             [nameof(HistoryBackfill.Exobiology)] = () => Snapshot(exobiology.Unsold(F).Held),
             [nameof(HistoryBackfill.Cartography)] = () => Snapshot(cartography.Unsold(F).Held),
             [nameof(HistoryBackfill.Crimes)] = () => Snapshot(crimes.Owed(F, 1)),
-            [nameof(HistoryBackfill.Activities)] = () => Snapshot(activities.Stalest(100, F)) + Snapshot(activities.LastDone("mining", F)),
+            [nameof(HistoryBackfill.Activities)] = () => string.Join(",", D47.Core.Activities.ActivityCatalogue.All.Select(entry => activities.LastDone(entry.Key, F))),
             [nameof(HistoryBackfill.Mail)] = () => mail.Compose(F),
             [nameof(HistoryBackfill.MetCommanders)] = () => Snapshot(met.Met(F)),
             [nameof(HistoryBackfill.Travel)] = () => Snapshot(travel.Steps(F)),

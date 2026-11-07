@@ -1,4 +1,3 @@
-using System.Text.Json;
 using D47.Core.Journal;
 using D47.Core.Stories;
 using D47.Core.Storage;
@@ -11,9 +10,9 @@ public sealed record ActivityDate(string Key, DateTimeOffset At);
 
 /// <summary>
 /// When each catalogued activity was last done, per Commander, from the journals and then live (#585).
-/// Only the choice of which activities to suggest is written to disk.
+/// Nothing is written to disk.
 /// </summary>
-public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger logger)
+public sealed class ActivityLedger(IFileSystem fileSystem, ILogger logger)
 {
     private sealed class Book
     {
@@ -23,16 +22,7 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
 
         /// <summary>The latest <c>NewCommander</c>; nothing at or before it is recorded.</summary>
         public DateTimeOffset? ErasedAt { get; set; }
-
-        public HashSet<string> NotSuggested { get; } = new(StringComparer.Ordinal);
     }
-
-    private sealed class DataFile
-    {
-        public Dictionary<string, List<string>> NotSuggested { get; set; } = [];
-    }
-
-    private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 
     private readonly Lock _gate = new();
 
@@ -42,7 +32,7 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
 
     private bool _historyFolded;
 
-    /// <summary>Raised after events are folded or a suggestion is changed.</summary>
+    /// <summary>Raised after events are folded.</summary>
     public event Action? Changed;
 
     /// <summary>Whether the journals older than this session have been folded in.</summary>
@@ -55,39 +45,6 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
                 return _historyFolded;
             }
         }
-    }
-
-    /// <summary>Reads the suggestion choices from <c>path</c>.</summary>
-    public void Load()
-    {
-        if (path is null)
-        {
-            return;
-        }
-
-        try
-        {
-            if (fileSystem.ReadText(path) is not { } text)
-            {
-                return;
-            }
-
-            var file = JsonSerializer.Deserialize<DataFile>(text, Json);
-
-            lock (_gate)
-            {
-                foreach (var (fid, keys) in file?.NotSuggested ?? [])
-                {
-                    Open(fid).NotSuggested.UnionWith(keys);
-                }
-            }
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or NotSupportedException)
-        {
-            logger.LogWarning(ex, "Could not read {Path}; every activity is suggested", path);
-        }
-
-        Changed?.Invoke();
     }
 
     /// <summary>Folds a tick's events, in order, attributing them to <paramref name="commander"/> until one names another.</summary>
@@ -155,78 +112,6 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
         {
             return BookOf(commander)?.Earliest;
         }
-    }
-
-    /// <summary>Whether <paramref name="key"/> may be suggested; true until the Commander says otherwise.</summary>
-    public bool IsSuggested(string key, string? commander = null)
-    {
-        lock (_gate)
-        {
-            return BookOf(commander) is not { } book || !book.NotSuggested.Contains(key);
-        }
-    }
-
-    /// <summary>The <paramref name="count"/> oldest dated activities that may be suggested, oldest first.</summary>
-    public IReadOnlyList<ActivityDate> Stalest(int count, string? commander = null)
-    {
-        lock (_gate)
-        {
-            if (BookOf(commander) is not { } book)
-            {
-                return [];
-            }
-
-            return
-            [
-                .. book.Last
-                    .Where(pair => !book.NotSuggested.Contains(pair.Key))
-                    .OrderBy(pair => pair.Value)
-                    .ThenBy(pair => pair.Key, StringComparer.Ordinal)
-                    .Take(Math.Max(0, count))
-                    .Select(pair => new ActivityDate(pair.Key, pair.Value)),
-            ];
-        }
-    }
-
-    /// <summary>Sets whether <paramref name="key"/> may be suggested to <paramref name="commander"/>, and writes the choice.</summary>
-    public void SetSuggested(string key, string commander, bool suggested)
-    {
-        DataFile file;
-
-        lock (_gate)
-        {
-            var book = Open(commander);
-
-            if (suggested)
-            {
-                book.NotSuggested.Remove(key);
-            }
-            else
-            {
-                book.NotSuggested.Add(key);
-            }
-
-            file = new DataFile
-            {
-                NotSuggested = _books
-                    .Where(pair => pair.Value.NotSuggested.Count > 0)
-                    .ToDictionary(pair => pair.Key, pair => pair.Value.NotSuggested.Order(StringComparer.Ordinal).ToList(), StringComparer.Ordinal),
-            };
-        }
-
-        if (path is not null)
-        {
-            try
-            {
-                fileSystem.WriteText(path, JsonSerializer.Serialize(file, Json));
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                logger.LogWarning(ex, "Could not write {Path}; the choice holds until d47 restarts", path);
-            }
-        }
-
-        Changed?.Invoke();
     }
 
     private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
@@ -345,7 +230,7 @@ public sealed class ActivityLedger(string? path, IFileSystem fileSystem, ILogger
         }
     }
 
-    /// <summary>Drops the dates at or before <paramref name="at"/>; the suggestion choices are kept.</summary>
+    /// <summary>Drops the dates at or before <paramref name="at"/>.</summary>
     private static void Erase(Book book, DateTimeOffset at)
     {
         if (book.ErasedAt is { } erased && erased >= at)
