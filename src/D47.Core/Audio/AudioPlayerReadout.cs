@@ -1,6 +1,9 @@
-namespace D47.Core.Audio;
+﻿namespace D47.Core.Audio;
 
-/// <summary>What the audio player and its mini read-outs say about the ambient music.</summary>
+/// <summary>
+/// What the audio player and its mini read-outs say about the ambient music. <see cref="CanStart"/>: nothing plays
+/// and Elite is closed, so Play and Next start <see cref="Folder"/>; Previous and Thumbs down stay off.
+/// </summary>
 public sealed record AudioPlayerReadout(
     string StateWord,
     bool Playing,
@@ -8,7 +11,8 @@ public sealed record AudioPlayerReadout(
     string Folder,
     string PlayLabel,
     bool Enabled,
-    bool Muted)
+    bool Muted,
+    bool CanStart = false)
 {
     public const string Nothing = "—";
 
@@ -25,8 +29,9 @@ public sealed record AudioPlayerReadout(
         var enabled = !muted && (state.Playing || state.Paused || state.Idle);
         var word = muted ? "Muted" : paused ? "Paused" : state.Playing ? "Playing" : "Nothing playing";
         var track = enabled && state.Track is { Length: > 0 } name ? Path.GetFileName(name) : Nothing;
-        var folder = enabled && state.Folder is { Length: > 0 } where ? where : Nothing;
+        var canStart = !muted && !enabled && state.Startable;
+        var folder = (enabled || canStart) && state.Folder is { Length: > 0 } where ? where : Nothing;
 
-        return new AudioPlayerReadout(word, !muted && !paused && state.Playing, track, folder, state.Playing && !paused ? "Pause" : "Play", enabled, muted);
+        return new AudioPlayerReadout(word, !muted && !paused && state.Playing, track, folder, state.Playing && !paused ? "Pause" : "Play", enabled, muted, canStart);
     }
 }

@@ -98,6 +98,25 @@ public sealed class TheAudioPlayerShowsTheMusicTests
     }
 
     [AvaloniaFact]
+    public void WithEliteClosedPlayAndNextStartTheLastFolder()
+    {
+        var (dialog, _, actions, _, window) = Shown(new MusicState(null, false, false, Folder: "supercruise", Startable: true));
+
+        Assert.Equal("Nothing playing", Named<TextBlock>(dialog, AudioPlayerDialog.StateName).Text);
+        Assert.Equal("supercruise", Named<TextBlock>(dialog, AudioPlayerDialog.FolderName).Text);
+        Assert.Equal("PLAY", Named<Button>(dialog, AudioPlayerDialog.PlayName).Content);
+        Assert.True(Named<Button>(dialog, AudioPlayerDialog.PlayName).IsEnabled);
+        Assert.True(Named<Button>(dialog, AudioPlayerDialog.NextName).IsEnabled);
+        Assert.False(Named<Button>(dialog, AudioPlayerDialog.PreviousName).IsEnabled);
+        Assert.False(Named<Button>(dialog, AudioPlayerDialog.ThumbsDownName).IsEnabled);
+
+        Press(Named<Button>(dialog, AudioPlayerDialog.PlayName));
+        Assert.Equal([MusicAction.Resume], actions);
+
+        window.SaveFrame("audio-player-startable.png");
+    }
+
+    [AvaloniaFact]
     public void MutedLeavesTheButtonsOffAndTheLevelPressable()
     {
         var (dialog, model, _, _, _) = Shown(Playing);

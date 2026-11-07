@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Audio;
 using D47.Core.Configuration;
 
@@ -410,6 +410,10 @@ public static class AudioCapability
     private static bool CanControl(MusicState state, D47Settings settings) =>
         !settings.Audio.For(AudioChannel.Music).Muted && (state.Playing || state.Paused || state.Idle);
 
+    /// <summary>Play and Next also start the last folder while Elite is closed.</summary>
+    private static bool CanStart(MusicState state, D47Settings settings) =>
+        CanControl(state, settings) || (!settings.Audio.For(AudioChannel.Music).Muted && state.Startable);
+
     /// <summary>Pause or resume, and next, above the music's level row. None where nothing plays the music.</summary>
     private static IEnumerable<SettingRow> TransportRows(
         Func<MusicAction, string>? music,
@@ -431,7 +435,8 @@ public static class AudioCapability
                 + "paused, Muted while the music channel is muted and Nothing playing otherwise. The button reads "
                 + "Pause while a track plays: press it and the music holds, the row shows Paused and the button "
                 + "reads Resume; press Resume and the track carries on. The button is greyed out when nothing "
-                + "plays or the channel is muted. Saying \"pause the music\" or \"resume the music\" does the "
+                + "plays or the channel is muted, except with Elite closed, when it reads Resume and starts the folder "
+                + "that played last. Saying \"pause the music\" or \"resume the music\" does the "
                 + "same. Needs ambient music playing, which follows what you are doing in game.",
             Advanced = true,
             Label = "Now playing",
@@ -445,9 +450,9 @@ public static class AudioCapability
             {
                 Read = s => NowPlaying(musicState(), s.Audio.For(AudioChannel.Music).Muted),
             },
-            PressLabelFor = () => musicState() is { Paused: true } or { Idle: true } ? "Resume" : "Pause",
-            PressEnabled = s => CanControl(musicState(), s),
-            Press = () => music(musicState() is { Paused: true } or { Idle: true } ? MusicAction.Resume : MusicAction.Pause),
+            PressLabelFor = () => musicState() is { Paused: true } or { Idle: true } or { Startable: true } ? "Resume" : "Pause",
+            PressEnabled = s => CanStart(musicState(), s),
+            Press = () => music(musicState() is { Paused: true } or { Idle: true } or { Startable: true } ? MusicAction.Resume : MusicAction.Pause),
             Watch = watch,
         };
 
@@ -457,7 +462,8 @@ public static class AudioCapability
             Exercise =
                 ShowMusic + "find Next track and press Next while music plays: another track from the same "
                 + "folder starts and Now playing shows its file name. The button is greyed out when nothing plays "
-                + "or the channel is muted. Saying \"next track\" does the same. Needs ambient music playing.",
+                + "or the channel is muted, except with Elite closed, when it starts the folder that played last. "
+                + "Saying \"next track\" does the same. Needs ambient music playing.",
             Advanced = true,
             Label = "Next track",
             Help = "Starts another track from the same folder.",
@@ -466,7 +472,7 @@ public static class AudioCapability
             GroupHelp = what,
             DocsAnchor = "the-six-categories",
             PressLabel = "Next",
-            PressEnabled = s => CanControl(musicState(), s),
+            PressEnabled = s => CanStart(musicState(), s),
             Press = () => music(MusicAction.Next),
             Watch = watch,
         };

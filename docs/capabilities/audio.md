@@ -348,9 +348,15 @@ with the same folder names; see [The music library](#the-music-library). Files o
 
 To hear this music rather than Elite's, set Elite's music volume to zero (Options, Audio).
 
-Ambience plays only while Elite is running. D47 checks for the game's window every two seconds:
+Ambience follows the game only while Elite is running. D47 checks for the game's window every two seconds:
 when the game closes, crashed or not, the track stops, and when it starts again the music picks up
-for the situation it is in, unless you paused or muted it. Until Elite is detected, nothing plays.
+for the situation it is in, unless you paused or muted it. Until Elite is detected, nothing starts on its own.
+
+With Elite closed you can still start the music: play, resume, next or previous, by voice, media key, the
+Audio player or the Ambient music rows, start the situation folder that played last, and General if none
+has played yet. D47 remembers that folder between runs. The music then carries on from that folder, track
+after track, until you pause it, Elite starts and the music moves to the situation the game is in, or Elite
+exits.
 
 Tracks are shuffled within a folder and the whole folder plays before any of them repeats. Two
 seconds of silence separate a track that ends from the next one. A situation with nothing in it falls back to `general`; `general` with
@@ -399,17 +405,18 @@ these keys.
 - While paused, a change of situation starts nothing, and the paused track is held for its folder.
   Resume continues the held track of the folder you are in now, if it has one within 30 minutes,
   and otherwise starts that folder's next track.
-- With Elite closed, resume, next and previous reply "Elite is not running." and play nothing. Pause still
-  works.
+- With Elite closed and nothing playing, resume, next and previous start the folder that played last.
+  Pause works as usual.
 - Pause lasts until you resume or restart D47. It is not the **Mute** setting, which is saved and
   unchanged by these keys.
 
 The same controls are on the page. With Show every setting on, open Settings › Hearing and sound ›
 Sounds and levels; the **Ambient music** group, above Levels, holds three rows. **Now playing** shows the
 track's file name, or Paused, Muted or Nothing playing, and its button reads Pause while a track plays and
-Resume while paused. **Next track** has a Next button that starts another track from the same folder. **Previous track**
+Resume while paused or while Elite is closed and nothing plays. **Next track** has a Next button that starts another track from the same folder. **Previous track**
 has a Previous button that plays the track before the current one. All
-buttons are greyed out when nothing plays or the music is muted. The [Audio player](#audio-player) has the same
+buttons are greyed out when nothing plays or the music is muted, except that with Elite closed Resume and Next
+stay usable and start the folder that played last. The [Audio player](#audio-player) has the same
 buttons in a dialog of its own.
 
 Windows sends the media keys to whichever media session was used last. With Spotify or another
@@ -427,7 +434,8 @@ The same four actions work by voice — "pause", "play", "pause the music", "res
 The Audio player shows the track that is playing, the situation folder it plays from, and the **Music level**.
 Its buttons are Previous, Pause (Play while paused or idle), Next and Thumbs down; they do what the rows
 above do, and Thumbs down does what `thumbs_down_music` does. All four are greyed out when nothing plays or
-the music is muted. The level stays usable while muted and is drawn in its muted style.
+the music is muted, except that with Elite closed and nothing playing, Play and Next stay usable and Folder
+shows the folder they will start. The level stays usable while muted and is drawn in its muted style.
 
 A bar between the track and the buttons shows how far through the track it is, with the time played on the left and
 the track's length on the right as minutes and seconds. In the d47 window you can drag the bar to a point in the

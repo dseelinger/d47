@@ -309,14 +309,14 @@ public sealed class AudioPlayerDialog : ModalDialog
         ThemeInk.Bind(_track, TextBlock.ForegroundProperty, live ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
 
         _folder.Text = read.Folder;
-        ThemeInk.Bind(_folder, TextBlock.ForegroundProperty, live ? ThemeManager.AKey : ThemeManager.GreyKey);
+        ThemeInk.Bind(_folder, TextBlock.ForegroundProperty, live || read.CanStart ? ThemeManager.AKey : ThemeManager.GreyKey);
 
         _play.Content = read.PlayLabel.ToUpperInvariant();
 
-        foreach (var button in new[] { _previous, _play, _next, _down })
-        {
-            button.IsEnabled = live;
-        }
+        _previous.IsEnabled = live;
+        _down.IsEnabled = live;
+        _play.IsEnabled = live || read.CanStart;
+        _next.IsEnabled = live || read.CanStart;
 
         Poll();
 

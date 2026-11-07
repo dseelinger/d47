@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-/// <summary>Ambient music starts nothing while Elite is not running, and stops when it exits (#536).</summary>
+/// <summary>Ambient music starts nothing on its own while Elite is not running, and stops when it exits (#536).</summary>
 [Trait("Category", "Integration")]
 public class AmbientMusicPlaysOnlyWhileEliteRunsTests : IDisposable
 {
@@ -72,12 +72,11 @@ public class AmbientMusicPlaysOnlyWhileEliteRunsTests : IDisposable
     [InlineData(MusicAction.Resume)]
     [InlineData(MusicAction.Previous)]
     [InlineData(MusicAction.Next)]
-    public void ResumeAndNextSayEliteIsNotRunning(MusicAction action)
+    public void ResumeNextAndPreviousStartTheGeneralFolderWhenNoFolderHasPlayed(MusicAction action)
     {
-        var said = _bench.Music.Control(action);
+        _bench.Music.Control(action);
 
-        Assert.Equal("Elite is not running.", said);
-        Assert.Empty(_bench.Sink.Started);
+        Assert.Equal("lobby", Assert.Single(_bench.Sink.Started).Name);
     }
 
     [Fact]

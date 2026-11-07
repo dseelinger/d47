@@ -12,6 +12,11 @@ internal sealed class MusicBench : IDisposable
     private readonly string _root;
 
     public MusicBench(string folder, params (string Situation, string Track)[] tracks)
+        : this(folder, lastFolder: null, tracks)
+    {
+    }
+
+    public MusicBench(string folder, string? lastFolder, params (string Situation, string Track)[] tracks)
     {
         _root = Path.Combine(Path.GetTempPath(), folder, Guid.NewGuid().ToString("n"));
         Sink = new RecordingAudioSink();
@@ -19,7 +24,7 @@ internal sealed class MusicBench : IDisposable
 
         var library = Library(tracks);
 
-        Music = new AmbientMusic(Audio, () => library, new Random(7));
+        Music = new AmbientMusic(Audio, () => library, new Random(7), lastFolder: lastFolder);
         Audio.MusicFinished += Music.TrackFinished;
     }
 

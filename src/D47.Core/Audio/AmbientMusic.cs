@@ -23,12 +23,17 @@ public enum AudioPlayerAction
 /// What the transport controls show: the track, whether it is playing, whether the Commander paused it, and
 /// whether it faded out with nothing happening.
 /// </summary>
-public sealed record MusicState(string? Track, bool Playing, bool Paused, bool Idle = false, string? Folder = null);
+/// <summary>
+/// What the ambience is doing. <paramref name="Startable"/>: nothing plays, Elite is closed and the music is not muted,
+/// so play or next starts the folder in <paramref name="Folder"/>.
+/// </summary>
+public sealed record MusicState(string? Track, bool Playing, bool Paused, bool Idle = false, string? Folder = null, bool Startable = false);
 
 /// <summary>
 /// The ambience layer and its transport: follows the situation, starts the next track, and holds the
-/// Commander's pause. Pause is session state; the mute setting is separate and saved. Nothing plays
-/// until <see cref="GameRunning"/> says Elite is running. A one-shot folder plays one cue that keeps the
+/// Commander's pause. Pause is session state; the mute setting is separate and saved. While Elite is not running
+/// nothing starts on its own; play, next and previous start the last folder that played, and that music carries on
+/// until Elite starts or exits. A one-shot folder plays one cue that keeps the
 /// slot to its end, then hands back to the situation current at that moment.
 /// After <see cref="IdleWatch.Threshold"/> with nothing happening the track fades out and is held, and it
 /// fades back in on the next activity.
@@ -38,7 +43,8 @@ public sealed class AmbientMusic(
     Func<CueLibrary> library,
     Random? shuffle = null,
     MusicRejects? rejects = null,
-    Func<string, bool>? deleteFile = null)
+    Func<string, bool>? deleteFile = null,
+    string? lastFolder = null)
 {
     public static readonly TimeSpan IdleFadeOut = TimeSpan.FromSeconds(10);
 
@@ -60,6 +66,22 @@ public sealed class AmbientMusic(
     private readonly IdleWatch _watch = new();
     private string? _target;
     private bool _idle;
+    private string? _lastFolder = lastFolder;
+
+    /// <summary>True while music the Commander started with Elite closed is playing or paused.</summary>
+    private bool _byCommander;
+
+    /// <summary>The last situation folder a track played from, skipping one-shot folders; null before any has.</summary>
+    public string? LastFolder
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _lastFolder;
+            }
+        }
+    }
 
     /// <summary>1 when a voice turn or a transport key happened since the last <see cref="Follow"/>.</summary>
     private int _stirred;
@@ -305,7 +327,7 @@ public sealed class AmbientMusic(
             {
                 EndCue();
             }
-            else if (_running && !_paused && !_idle)
+            else if (Plays && !_paused && !_idle)
             {
                 StartNext(afterGap: true);
             }
@@ -325,7 +347,7 @@ public sealed class AmbientMusic(
                 _current = null;
                 LeaveCue();
             }
-            else if (_running && !_paused && !_idle && !audio.Activity.MusicPlaying)
+            else if (Plays && !_paused && !_idle && !audio.Activity.MusicPlaying)
             {
                 StartNext();
             }
@@ -336,7 +358,7 @@ public sealed class AmbientMusic(
 
     /// <summary>
     /// The library lost tracks: stops every track, held ones included, and starts the next one from the
-    /// library as it is now unless paused, idle, muted or Elite is not running.
+    /// library as it is now unless paused, idle, muted, or Elite is not running and the Commander started nothing.
     /// </summary>
     public void Restart()
     {
@@ -346,7 +368,7 @@ public sealed class AmbientMusic(
             _current = null;
             LeaveCue();
 
-            if (_running && !_paused && !_idle && !audio.Mix.Music.Muted)
+            if (Plays && !_paused && !_idle && !audio.Mix.Music.Muted)
             {
                 StartNext();
             }
@@ -356,8 +378,8 @@ public sealed class AmbientMusic(
     }
 
     /// <summary>
-    /// Whether Elite is running. Stopping stops every track; starting again leaves the next
-    /// <see cref="Follow"/> to start one for the situation it finds.
+    /// Whether Elite is running. Stopping stops every track and keeps <see cref="LastFolder"/>; starting leaves the next
+    /// <see cref="Follow"/> to start or crossfade to the situation it finds.
     /// </summary>
     public void GameRunning(bool running)
     {
@@ -369,6 +391,7 @@ public sealed class AmbientMusic(
             }
 
             _running = running;
+            _byCommander = false;
             _watch.Reset();
             _target = null;
             _idle = false;
@@ -384,6 +407,25 @@ public sealed class AmbientMusic(
         }
 
         Raise();
+    }
+
+    /// <summary>Whether a finished track or an unmute starts the next one.</summary>
+    private bool Plays => _running || _byCommander;
+
+    /// <summary>With Elite closed, points the ambience at the last folder and lets the music carry on.</summary>
+    private void StartByCommander()
+    {
+        if (_running)
+        {
+            return;
+        }
+
+        if (!_byCommander)
+        {
+            CurrentAmbience.Enter(_lastFolder ?? Situations.General);
+        }
+
+        _byCommander = true;
     }
 
     private Ambience CurrentAmbience => _drawn ??= new Ambience(shuffle, IsRejected);
@@ -521,10 +563,7 @@ public sealed class AmbientMusic(
 
     private string Resume(TimeSpan? fadeIn)
     {
-        if (!_running)
-        {
-            return NotRunning;
-        }
+        StartByCommander();
 
         _paused = false;
 
@@ -549,10 +588,7 @@ public sealed class AmbientMusic(
 
     private string Skip()
     {
-        if (!_running)
-        {
-            return NotRunning;
-        }
+        StartByCommander();
 
         _paused = false;
 
@@ -569,10 +605,7 @@ public sealed class AmbientMusic(
 
     private string Back()
     {
-        if (!_running)
-        {
-            return NotRunning;
-        }
+        StartByCommander();
 
         _paused = false;
 
@@ -602,8 +635,6 @@ public sealed class AmbientMusic(
         audio.PlayMusic(track, CurrentAmbience.Playing, afterGap: false, fadeIn: null);
         return restarted ? "Restarted this track." : "Previous track.";
     }
-
-    private const string NotRunning = "Elite is not running.";
 
     private const string NothingToPlay = "There is no music to play. Drop tracks into data\\audio\\music.";
 
@@ -651,7 +682,15 @@ public sealed class AmbientMusic(
     {
         var live = _current is not null && audio.Activity.MusicPlaying;
         var idle = live && _idle && !_paused;
-        return new MusicState(live ? _current!.Name : null, live && !_paused && !_idle, _paused, idle, live ? audio.MusicFolder : null);
+
+        if (live && audio.MusicFolder is { } folder && !Situations.OneShot.Contains(folder))
+        {
+            _lastFolder = folder;
+        }
+
+        var startable = !live && !_running && !audio.Mix.Music.Muted;
+        var shown = live ? audio.MusicFolder : startable ? _lastFolder ?? Situations.General : null;
+        return new MusicState(live ? _current!.Name : null, live && !_paused && !_idle, _paused, idle, shown, startable);
     }
 
     private void Raise()

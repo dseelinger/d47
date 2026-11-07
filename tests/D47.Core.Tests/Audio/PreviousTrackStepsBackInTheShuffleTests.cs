@@ -137,14 +137,15 @@ public class PreviousTrackStepsBackInTheShuffleTests : IDisposable
     }
 
     [Fact]
-    public void WithEliteClosedPreviousSaysSoAndPlaysNothing()
+    public void WithEliteClosedPreviousStartsTheLastFolder()
     {
+        _bench.Music.Follow(Docked, musicTrack: null);
         _bench.Music.GameRunning(running: false);
 
-        var said = _bench.Music.Control(MusicAction.Previous);
+        _bench.Music.Control(MusicAction.Previous);
 
-        Assert.Equal("Elite is not running.", said);
-        Assert.Empty(_bench.Sink.Started);
+        Assert.Equal(2, _bench.Sink.Started.Count);
+        Assert.Equal(Situations.Docked, _bench.Music.State.Folder);
     }
 
     [Fact]

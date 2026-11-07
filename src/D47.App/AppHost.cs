@@ -180,8 +180,19 @@ public sealed class AppHost : IDisposable
             _logger);
         RunPlayer = new StoryRunPlayer(audio, RunLineClip, speakAgain: RunVoicing.SpeakAsync);
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
-        Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile);
-        Music.Changed += state => Panel.AudioPlayer = AudioPlayerReadout.From(state, Settings.Current.Audio.Music.Muted);
+        var savedFolder = viewState.Load().LastMusicFolder;
+        Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile, lastFolder: savedFolder);
+        Music.Changed += state =>
+        {
+            Panel.AudioPlayer = AudioPlayerReadout.From(state, Settings.Current.Audio.Music.Muted);
+
+            if (Music.LastFolder is { } folder && !string.Equals(folder, savedFolder, StringComparison.OrdinalIgnoreCase))
+            {
+                savedFolder = folder;
+                _ = Task.Run(() => viewState.Save(viewState.Load() with { LastMusicFolder = folder }));
+            }
+        };
+        Panel.AudioPlayer = AudioPlayerReadout.From(Music.State, Settings.Current.Audio.Music.Muted);
         Panel.AudioProgress = Music.Progress;
         _cues = cues;
         Voice = voice;
@@ -3869,8 +3880,8 @@ public sealed class AppHost : IDisposable
         tick.Add("callout-drain", _ => host.Announcer.SpeakPending());
 
         // Ambience follows Elite's music track where its folder has tracks, and otherwise the situation
-        // Status.json states, sampled on the tick after the journal has been read. It plays only while Elite
-        // runs; the process check lists processes while Elite is down, so it runs every two seconds.
+        // Status.json states, sampled on the tick after the journal has been read. It follows the game only while
+        // Elite runs; the process check lists processes while Elite is down, so it runs every two seconds.
         var eliteCheckedAt = DateTimeOffset.MinValue;
 
         tick.Add("ambience", context =>

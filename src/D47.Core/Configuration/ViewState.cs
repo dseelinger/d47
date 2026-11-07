@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
@@ -40,6 +40,9 @@ public sealed record ViewState
 
     /// <summary>The time of the last BGS tick d47 accepted, ISO 8601 UTC, or null.</summary>
     public string? BgsTickLast { get; init; }
+
+    /// <summary>The last ambient music situation folder that played, so play can start it with Elite closed; or null.</summary>
+    public string? LastMusicFolder { get; init; }
 
     /// <summary>Where the Commander put the flat mini panel, or null if they never moved it (Phase 48).</summary>
     public OverlayPlacement? Overlay { get; init; }
