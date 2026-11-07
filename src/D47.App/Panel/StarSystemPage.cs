@@ -196,9 +196,6 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     /// <summary>Raised when <see cref="Filters"/> changes, so the panel shows or hides its field.</summary>
     public event EventHandler? FiltersChanged;
 
-    /// <summary>Whether the page follows the Commander's own system.</summary>
-    public bool Following => _following;
-
     /// <summary>
     /// Fetches the Commander's new system when they have moved and the page follows them. Returns at once;
     /// true when the page redrew since the last call, an answer arriving included. Call on the UI thread.

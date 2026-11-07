@@ -96,6 +96,10 @@ public class ScrollingTheReadingAboveTheFoldTests : IDisposable
         return new Fixture(panel, model, window, log, journal);
     }
 
+    /// <summary>The text the transcript block draws.</summary>
+    private static string DrawnText(PanelView panel) =>
+        string.Concat((panel.GetControl<SelectableTextBlock>("Transcript").Inlines ?? []).OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));
+
     /// <summary>Waits for the reading to be on the page.</summary>
     private static async Task Settled(Fixture fixture)
     {
@@ -262,11 +266,13 @@ public class ScrollingTheReadingAboveTheFoldTests : IDisposable
 
         Assert.True(fixture.Panel.ReadingIsAboveTheFold);
 
-        for (var tick = 0; tick < 10; tick++)
+        // Five lines a tick, each batch waited for on the page as the log page's own once-a-second read draws it.
+        for (var tick = 0; tick < 2; tick++)
         {
-            lines.Add($"log line {60 + tick}");
-            await fixture.Panel.RefreshLogNow();
-            Dispatcher.UIThread.RunJobs();
+            var last = $"log line {64 + (tick * 5)}";
+
+            lines.AddRange(Enumerable.Range(60 + (tick * 5), 5).Select(line => $"log line {line}"));
+            Assert.True(UiWait.Running(() => DrawnText(fixture.Panel).Contains(last, StringComparison.Ordinal), seconds: 5));
         }
 
         Assert.False(

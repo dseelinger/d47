@@ -151,9 +151,6 @@ public sealed class AvatarView : UserControl
         }
     }
 
-    /// <summary>Whether a timer is advancing frames.</summary>
-    internal bool HasTimer => _clipTimer.IsEnabled || _frames.IsEnabled;
-
     /// <summary>Looks for the current state's clip again.</summary>
     public void Reload() => Apply(_state);
 

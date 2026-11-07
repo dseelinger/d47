@@ -1,4 +1,7 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -13,8 +16,46 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-public class TheCarrierPageDrawsTheModelPickedForItTests
+[Collection(nameof(ShipArtCollection))]
+public sealed class TheCarrierPageDrawsTheModelPickedForItTests : IDisposable
 {
+    /// <summary>Each carrier model's 4K still, told apart by width.</summary>
+    private static readonly Dictionary<string, int> Widths = new()
+    {
+        ["fleetcarrier"] = 30,
+        ["fleetcarrier_nautilus"] = 40,
+    };
+
+    private const string Art = "/carrier-hull-art";
+
+    private readonly (IFileSystem Files, string? Folder, string? Shipped) _was = (ShipArt.Files, ShipArt.Folder, ShipArt.Shipped);
+
+    public void Dispose()
+    {
+        ShipArt.Files = _was.Files;
+        ShipArt.Folder = _was.Folder;
+        ShipArt.Shipped = _was.Shipped;
+    }
+
+    /// <summary>Puts each model's still in an in-memory data folder, and points the art there with nothing from the build.</summary>
+    private static void PutStills()
+    {
+        var files = new MemoryFileSystem();
+
+        foreach (var (symbol, width) in Widths)
+        {
+            using var bitmap = new WriteableBitmap(new PixelSize(width, 10), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+            using var png = new MemoryStream();
+
+            bitmap.Save(png, new PngBitmapEncoderOptions());
+            files.WriteBytes(Path.Combine(Art, symbol + ".4k.png"), png.ToArray());
+        }
+
+        ShipArt.Files = files;
+        ShipArt.Shipped = null;
+        ShipArt.Folder = Art;
+    }
+
     private const string Stats =
         """{"timestamp":"2026-09-22T23:24:52Z","event":"CarrierStats","CarrierID":3715429376,"CarrierType":"FleetCarrier","Callsign":"BNH-T2F","Name":"Sacred Fire","DockingAccess":"all","JumpRangeCurr":500.0,"SpaceUsage":{"TotalCapacity":25000,"Cargo":540,"FreeSpace":23530},"Finance":{"CarrierBalance":990302661},"Crew":[{"CrewRole":"Refuel","Activated":true,"Enabled":true}]}""";
 
@@ -34,12 +75,18 @@ public class TheCarrierPageDrawsTheModelPickedForItTests
             hulls: memory);
     }
 
+    /// <summary>The model whose still the page draws.</summary>
     private static string? Drawn(Window window) =>
-        window.GetVisualDescendants().OfType<HullPicture>().Single().Hull;
+        window.GetVisualDescendants().OfType<HullPicture>().Single().GetVisualDescendants().OfType<Image>()
+            .Select(image => image.Source as Bitmap)
+            .Where(bitmap => bitmap is not null)
+            .Select(bitmap => Widths.Single(model => model.Value == bitmap!.PixelSize.Width).Key)
+            .SingleOrDefault();
 
     [AvaloniaFact]
     public void ACarrierWithNoPickIsDrawnAsTheDrake()
     {
+        PutStills();
         var window = new Window { Content = Page(Memory()), Width = 924, Height = 640 };
 
         window.Show();
@@ -53,13 +100,15 @@ public class TheCarrierPageDrawsTheModelPickedForItTests
     [AvaloniaFact]
     public void ThePickedModelIsDrawnAndKeptByANewPage()
     {
+        PutStills();
         var memory = Memory();
         var window = new Window { Content = Page(memory), Width = 924, Height = 640 };
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var segment = window.GetVisualDescendants().OfType<Segment>().Single();
+        // The model picker; the still brings a size picker of its own.
+        var segment = window.GetVisualDescendants().OfType<Segment>().Single(found => !found.GetVisualAncestors().OfType<HullPicture>().Any());
         segment.GetVisualDescendants().OfType<RadioButton>().ElementAt(2).IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 

@@ -55,9 +55,6 @@ internal sealed class VideoFrames : IDisposable
 
     internal PixelSize Size => new(_width, _height);
 
-    /// <summary>Whether the last <see cref="Next"/> ran off the end of the video.</summary>
-    internal bool Ended => _ended;
-
     /// <summary>Opens a file for reading, or null if it cannot be read as video.</summary>
     internal static VideoFrames? Open(string path)
     {

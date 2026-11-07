@@ -27,9 +27,6 @@ public sealed class StatusLine : StackPanel
     /// <summary>What the line is showing, or null when it shows nothing.</summary>
     public string? Text => !IsVisible ? null : _failure.IsVisible ? _failure.Text : _note.Text;
 
-    /// <summary>Whether what the line is showing is a failure.</summary>
-    public bool Failed => IsVisible && _failure.IsVisible;
-
     /// <summary>Shows an outcome that is not a failure.</summary>
     public void Say(string text) => Show(text, failed: false);
 

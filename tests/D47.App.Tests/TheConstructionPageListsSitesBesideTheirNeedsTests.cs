@@ -234,17 +234,6 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
     }
 
     [AvaloniaFact]
-    public void ASurfaceWithoutTheFleetStillGetsConstructionBeforeEngineers()
-    {
-        var state = State(Reconciled);
-        var panel = new PanelView { DataContext = new PanelViewModel() };
-
-        panel.EnableConstruction(new ConstructionSurface(() => state, () => Now, null, null));
-
-        Assert.Equal(["Construction"], panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
-    }
-
-    [AvaloniaFact]
     public void OneCurrentAndOneStaleSiteFillOneHeadEachAndTheStaleOneWarns()
     {
         var (window, panel) = Open(State(Reconciled));

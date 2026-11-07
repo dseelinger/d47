@@ -172,12 +172,17 @@ public class TheCodexDiscoveriesPageShowsEntryThumbnailsTests
     {
         var surface = new Surface();
         var missing = surface.StockRow(3, onDisk: false, side: 30);
+        var later = surface.StockRow(4, onDisk: false, side: 30);
         surface.Placeholder(40);
 
         var (window, page) = Open(surface);
 
         Assert.Equal("CodexThumbPlaceholder", Thumb(page, 3)!.Name);
-        Assert.True(surface.Store.Fetched(missing.Key).IsCompleted);
+
+        // A picture read after the draw is asked for; one the draw had started would have been asked for first.
+        surface.Store.Stock(later);
+        surface.Release.AwaitAsk(later);
+        Assert.False(surface.Release.WasAskedFor(missing));
 
         window.Close();
     }
@@ -187,12 +192,16 @@ public class TheCodexDiscoveriesPageShowsEntryThumbnailsTests
     {
         var surface = new Surface();
         var row = surface.StockRow(3, onDisk: false, side: 30);
+        var other = surface.StockRow(4, onDisk: false, side: 30);
 
         Assert.Null(surface.Store.StockOnDisk(row));
-        Assert.True(surface.Store.Fetched(row.Key).IsCompleted);
+
+        surface.Store.Stock(other);
+        surface.Release.AwaitAsk(other);
+        Assert.False(surface.Release.WasAskedFor(row));
 
         Assert.Null(surface.Store.Stock(row));
-        Assert.False(surface.Store.Fetched(row.Key).IsCompleted);
+        surface.Release.AwaitAsk(row);
 
         surface.Release.Hold.SetResult();
     }
@@ -226,7 +235,7 @@ public class TheCodexDiscoveriesPageShowsEntryThumbnailsTests
         Assert.Equal("CodexThumbPlaceholder", Thumb(page, 3)!.Name);
 
         Assert.Null(surface.Store.Stock(row));
-        Assert.True(surface.Store.Fetched(row.Key).Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+        UiWait.Until(() => surface.Store.StockOnDisk(row) is not null, seconds: 10);
 
         window.Content = null;
         Dispatcher.UIThread.RunJobs();

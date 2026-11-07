@@ -48,9 +48,6 @@ public sealed class CoverageRecorder
     public static bool Enabled =>
         Environment.GetEnvironmentVariable(EnvironmentVariable) == "1";
 
-    /// <summary>Where the readable report is written.</summary>
-    public string ReportPath => _reportFile;
-
     /// <summary>
     /// A recorder if this process asked for one, otherwise null — so every caller's check is "is there
     /// one", and there is no disabled object silently doing nothing.

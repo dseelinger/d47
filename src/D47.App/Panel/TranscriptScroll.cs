@@ -58,25 +58,6 @@ internal sealed class TranscriptScroll
         _followButton.Click += OnFollowClick;
     }
 
-    public bool Following => _following;
-
-    /// <summary>Whether none of the reading is inside the view.</summary>
-    public bool ReadingIsAboveTheFold
-    {
-        get
-        {
-            var scroller = Scroller;
-            var pad = FoldPad;
-            var top = pad.Margin.Top;
-            var content = Math.Max(0, scroller.Extent.Height - PadOn(pad));
-
-            var from = scroller.Offset.Y;
-            var to = from + scroller.Viewport.Height;
-
-            return Math.Min(to, top + content) - Math.Max(from, top) <= 0.5;
-        }
-    }
-
     private TranscriptPage Page => _page();
 
     private bool NewestAtTop => Page is TranscriptPage.Journal or TranscriptPage.RawJournal;

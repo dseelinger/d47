@@ -42,7 +42,7 @@ public class TheGalaxyMapNamesThePlanDrawnTests
     {
         var (panel, page) = Opened(headset);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
 
         Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
         Assert.Equal("ROAD TO RICHES PLAN: Road to Riches", page.PlanName());
@@ -58,7 +58,7 @@ public class TheGalaxyMapNamesThePlanDrawnTests
     {
         var (panel, page) = Opened(headset);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
         ThePlanPageOffersTheGalaxyMapTests.Press(page.PlottedRoute());
 
         Assert.Null(page.PlanShown());
@@ -71,7 +71,7 @@ public class TheGalaxyMapNamesThePlanDrawnTests
     {
         var (panel, page) = Opened(headset: true);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
 
         Assert.Equal(GalaxyMapPage.PanelMapHeight, page.Map().Bounds.Height);
     }
@@ -83,7 +83,7 @@ public class TheGalaxyMapNamesThePlanDrawnTests
     {
         var (panel, page) = Opened(headset);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
 
         var stops = ThePlanPageOffersTheGalaxyMapTests.RichesRoute().Stops;
 

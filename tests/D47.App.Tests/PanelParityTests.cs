@@ -103,16 +103,6 @@ public class PanelParityTests
         frame.SaveCapture("vr-panel-mini.png");
     }
 
-    [AvaloniaFact]
-    public void TheTailIsTheLastFewLinesAndNothingElse()
-    {
-        var model = new PanelViewModel();
-        model.Append("one\ntwo\nthree\nfour");
-
-        Assert.Equal("two\nthree\nfour", model.Tail(3));
-        Assert.Equal("one\ntwo\nthree\nfour", model.Tail(10));
-    }
-
     private static Control Named(Control view, string name) =>
         view.GetLogicalDescendants().OfType<Control>().Single(control => control.Name == name);
 

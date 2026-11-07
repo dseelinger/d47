@@ -123,9 +123,6 @@ public sealed class Sidebar : Border
         }
     }
 
-    /// <summary>The rows, in order, for a test to read.</summary>
-    internal IReadOnlyList<Border> Items => [.. _rows.Select(row => row.Shape)];
-
     private void Choose(string key)
     {
         Selected = key;

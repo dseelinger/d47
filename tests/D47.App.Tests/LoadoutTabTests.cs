@@ -171,6 +171,9 @@ public class LoadoutTabTests
                              || button.GetVisualDescendants().OfType<TextBlock>()
                                  .Any(text => text.Text == label));
 
+    /// <summary>The crumb the ship page opens for one slot of a build: the slot row's key under the slot prefix.</summary>
+    private static NavCrumb Slot(string buildId, string slot) => new($"{LoadoutPages.SlotPrefix}{buildId}|{slot}", slot);
+
     /// <summary>The tab arrives when the host furnishes it, on both surfaces.</summary>
     [AvaloniaFact]
     public void TheTabIsThereOnceTheHostGivesIt()
@@ -291,7 +294,7 @@ public class LoadoutTabTests
 
         surface.Panel.Nav.GoTo(
             LoadoutPages.Ship(surface.Ships.Fleet()[0]),
-            LoadoutPages.Slot(build.Id, "MainEngines"));
+            Slot(build.Id, "MainEngines"));
 
         Dispatcher.UIThread.RunJobs();
 
@@ -325,7 +328,7 @@ public class LoadoutTabTests
 
         surface.Panel.Nav.GoTo(
             LoadoutPages.Ship(surface.Ships.Fleet()[0]),
-            LoadoutPages.Slot(build.Id, "MainEngines"));
+            Slot(build.Id, "MainEngines"));
 
         Dispatcher.UIThread.RunJobs();
 
@@ -356,7 +359,7 @@ public class LoadoutTabTests
 
         surface.Panel.Nav.GoTo(
             new NavCrumb(LoadoutPages.ShipPrefix + build.Id, "Python"),
-            LoadoutPages.Slot(build.Id, "MainEngines"));
+            Slot(build.Id, "MainEngines"));
 
         Dispatcher.UIThread.RunJobs();
 

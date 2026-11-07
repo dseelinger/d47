@@ -144,9 +144,6 @@ public sealed class SystemStationPage : UserControl, IPageSummary
     /// <summary>The station drawn, or null while the record is read or does not list it.</summary>
     public StationProfile? Station => _profile?.Stations.FirstOrDefault(station => station.MarketId == _marketId);
 
-    /// <summary>The section showing.</summary>
-    public Section Showing => _section;
-
     public static string Key(long address, long marketId) =>
         KeyPrefix + address.ToString(CultureInfo.InvariantCulture) + ":" + marketId.ToString(CultureInfo.InvariantCulture);
 

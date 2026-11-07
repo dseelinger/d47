@@ -93,17 +93,6 @@ public sealed class PowerView : UserControl
     /// <summary>The chart as last drawn, or null in a reduced state.</summary>
     internal PowerChart? Chart { get; private set; }
 
-    /// <summary>Whether the stack counts hardpoints out of the draw.</summary>
-    internal bool Retracted
-    {
-        get => _retracted;
-        set
-        {
-            _retracted = value;
-            Redraw();
-        }
-    }
-
     /// <summary>The priority opened up, once drawn.</summary>
     internal int? Selected
     {

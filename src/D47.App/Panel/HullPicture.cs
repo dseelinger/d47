@@ -23,7 +23,6 @@ internal sealed class HullPicture : Grid
 
     private readonly string? _hull;
 
-    internal string? Hull => _hull;
     private readonly Control? _beside;
     private readonly Image _fitted = new()
     {

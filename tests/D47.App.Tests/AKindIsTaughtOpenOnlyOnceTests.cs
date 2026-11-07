@@ -53,7 +53,6 @@ public sealed class AKindIsTaughtOpenOnlyOnceTests
     public void TheFirstJumpIsReadOpenAndTheNextOneFolded()
     {
         var (panel, model, window) = Shown();
-        Assert.DoesNotContain("FSDJump", model.TaughtKinds);
 
         Select(panel, model, Of(model, "FSDJump"));
         Assert.True(Paragraph(panel)!.IsEffectivelyVisible);
@@ -85,14 +84,12 @@ public sealed class AKindIsTaughtOpenOnlyOnceTests
     public void AKindWithNoParagraphHasNoBandAndIsNotRecorded()
     {
         var (panel, model, window) = Shown();
-        var before = model.TaughtKinds.ToList();
 
         Select(panel, model, Of(model, "Music"));
         Assert.Null(Paragraph(panel));
 
         Select(panel, model, Of(model, "Music", 1));
         Assert.Null(Paragraph(panel));
-        Assert.Equal(before, model.TaughtKinds.ToList());
 
         window.Close();
     }

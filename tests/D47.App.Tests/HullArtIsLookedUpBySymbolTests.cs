@@ -142,17 +142,21 @@ public sealed class HullArtIsLookedUpBySymbolTests : IDisposable
     {
         Stock("corsair.png", "corsair.4k.png", "anaconda.4k.png", "adder.4k.png");
 
-        Assert.NotNull(ShipArt.Close4K("Corsair"));
-        Assert.Equal(1, ShipArt.Held);
+        var corsair = ShipArt.Close4K("Corsair");
+        var anaconda = ShipArt.Close4K("Anaconda");
+        var adder = ShipArt.Close4K("Adder");
 
-        Assert.NotNull(ShipArt.Close4K("Anaconda"));
-        Assert.Equal(2, ShipArt.Held);
-
-        Assert.NotNull(ShipArt.Close4K("Adder"));
+        Assert.NotNull(corsair);
+        Assert.NotNull(anaconda);
+        Assert.NotNull(adder);
 
         // Two, and the literal is the point: this is 66 MB of pixels and a third would be a hundred.
         Assert.Equal(2, ShipArt.CloseHeld);
-        Assert.Equal(2, ShipArt.Held);
+
+        // The last two come back from memory; the first was let go, so asking again reads it afresh.
+        Assert.Same(adder, ShipArt.Close4K("Adder"));
+        Assert.Same(anaconda, ShipArt.Close4K("Anaconda"));
+        Assert.NotSame(corsair, ShipArt.Close4K("Corsair"));
     }
 
     [Fact]

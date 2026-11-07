@@ -2,6 +2,7 @@ using Xunit;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
+using Avalonia.Media.Imaging;
 using D47.App.Panel;
 using D47.Core.Storage;
 using D47.Core;
@@ -39,6 +40,26 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
     private static Image Picture(AvatarView view) => view.GetLogicalDescendants().OfType<Image>().Single();
 
     private static Shape Mark(AvatarView view) => view.GetLogicalDescendants().OfType<Shape>().Single();
+
+    /// <summary>Whether the drawn picture changes while the UI thread runs for up to a second.</summary>
+    private static bool Moves(AvatarView view)
+    {
+        var before = Pixels(Picture(view));
+
+        return UiWait.Running(() => !Pixels(Picture(view)).SequenceEqual(before), seconds: 1);
+    }
+
+    private static byte[] Pixels(Image picture)
+    {
+        var bitmap = Assert.IsType<WriteableBitmap>(picture.Source);
+
+        using var frame = bitmap.Lock();
+
+        var pixels = new byte[frame.RowBytes * frame.Size.Height];
+        System.Runtime.InteropServices.Marshal.Copy(frame.Address, pixels, 0, pixels.Length);
+
+        return pixels;
+    }
 
     [AvaloniaFact]
     public void AMissingClipDrawsTheMark()
@@ -81,7 +102,7 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
         Assert.True(Picture(view).IsVisible);
         Assert.NotNull(Picture(view).Source);
         Assert.False(Mark(view).IsVisible);
-        Assert.True(view.HasTimer);
+        Assert.True(Moves(view));
     }
 
     [AvaloniaFact]
@@ -103,7 +124,7 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
         var view = Avatar("covas", LoopState.Thinking, still: true);
 
         Assert.NotNull(Picture(view).Source);
-        Assert.False(view.HasTimer);
+        Assert.False(Moves(view));
     }
 
     [AvaloniaFact]
@@ -115,11 +136,12 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
         window.Show();
 
         var view = (AvatarView)window.Content!;
-        Assert.True(view.HasTimer);
+        Assert.True(Moves(view));
 
         window.Content = null;
 
-        Assert.False(view.HasTimer);
+        Assert.Null(view.ShowingClip);
+        Assert.Null(Picture(view).Source);
 
         window.Close();
     }
@@ -161,6 +183,6 @@ public class TheAvatarPlaysTheCoresClipTests : IDisposable
 
         Assert.True(Picture(view).IsVisible);
         Assert.False(Mark(view).IsVisible);
-        Assert.True(view.HasTimer);
+        Assert.True(Moves(view));
     }
 }

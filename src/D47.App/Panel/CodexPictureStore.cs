@@ -171,12 +171,9 @@ public sealed class CodexPictureStore
     }
 
     /// <summary>
-    /// The path of <paramref name="row"/>'s picture when it is on disk and matches the row. Otherwise null, and
+    /// The bytes of <paramref name="row"/>'s picture when it is on disk and matches the row. Otherwise null, and
     /// the picture is fetched once per session; <see cref="Arrived"/> follows when it lands.
     /// </summary>
-    public string? Picture(CodexPictureRow row) => Stock(row) is null ? null : StockPath(row.Asset);
-
-    /// <summary>The bytes of <see cref="Picture"/>; null under the same conditions.</summary>
     public byte[]? Stock(CodexPictureRow row)
     {
         if (!_allowed())
@@ -228,9 +225,6 @@ public sealed class CodexPictureStore
             _rows = rows;
         }
     }
-
-    /// <summary>The fetch started for <paramref name="key"/>; true when the picture landed.</summary>
-    public Task<bool> Fetched(CodexPictureKey key) => _asked.TryGetValue(key, out var task) ? task : Task.FromResult(false);
 
     /// <summary>
     /// The active Commander's folder, or null with none active. The first call with a Commander active moves the

@@ -26,17 +26,6 @@ public sealed class CustomVoiceDraft(
     /// <summary>Raised when what the page shows has changed, on whichever thread changed it.</summary>
     public event Action? Changed;
 
-    public bool HasTake
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _samples is not null;
-            }
-        }
-    }
-
     public bool Decoding
     {
         get

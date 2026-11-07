@@ -222,14 +222,14 @@ public sealed class AStationOpensItsOwnPageUnderItsSystemTests
         var page = Drawn(out var window);
 
         Assert.Equal(["Overview", "Market 2", "Outfitting 1", "Shipyard 0"], Sections(page).ItemsSource!.Cast<string>());
-        Assert.Equal(SystemStationPage.Section.Overview, page.Showing);
+        Assert.Equal(SystemStationPage.Section.Overview, (SystemStationPage.Section)Sections(page).SelectedIndex);
 
         var market = Block(page, "TradeMarket");
         Assert.Contains(D47.App.Theming.ListRow.OpensClass, market.Classes);
         Assert.True(market.MinHeight >= 44);
         Enter(market);
 
-        Assert.Equal(SystemStationPage.Section.Market, page.Showing);
+        Assert.Equal(SystemStationPage.Section.Market, (SystemStationPage.Section)Sections(page).SelectedIndex);
         Assert.Contains(
             page.GetVisualDescendants().OfType<TextBlock>(),
             block => block.Name == "MarketReported" && block.Text!.StartsWith("Reported 2026-10-10", StringComparison.Ordinal));

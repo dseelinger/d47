@@ -137,9 +137,6 @@ public sealed class PageFooter : Border
         Refresh();
     }
 
-    /// <summary>The time shown, or null when the right side is not drawn.</summary>
-    internal string? Time => _stamp.IsVisible ? _time.Text : null;
-
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);

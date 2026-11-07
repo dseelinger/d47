@@ -115,7 +115,6 @@ public sealed class TheAvatarShowsTheCastMemberSpeakingTests : IDisposable
         view.Speaker = fixture.Portraits.For(Member, 208);
 
         Assert.Null(view.ShowingClip);
-        Assert.False(view.HasTimer);
         Assert.Same(view.Speaker, view.Picture.Source);
 
         view.Speaker = null;

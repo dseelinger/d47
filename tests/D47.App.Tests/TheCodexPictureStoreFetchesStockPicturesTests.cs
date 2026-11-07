@@ -57,13 +57,29 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
     {
         public ConcurrentQueue<LogLevel> Levels { get; } = new();
 
+        public ConcurrentQueue<string> Said { get; } = new();
+
         public IDisposable? BeginScope<TState>(TState state)
             where TState : notnull => null;
 
         public bool IsEnabled(LogLevel logLevel) => true;
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
             Levels.Enqueue(logLevel);
+            Said.Enqueue(formatter(state, exception));
+        }
+    }
+
+    private static async Task Until(Func<bool> done)
+    {
+        var until = DateTime.UtcNow.AddSeconds(10);
+
+        while (!done())
+        {
+            Assert.True(DateTime.UtcNow < until, "the store never got there");
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
     }
 
     private static string Stock(string name) => Path.Combine(Folder, CodexPictureStore.StockFolder, name);
@@ -127,12 +143,17 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
         release.Serve(row.Tag, row.Asset, Bytes);
         var (store, files) = Open(release);
         var arrived = new ConcurrentQueue<CodexPictureKey>();
-        store.Arrived += arrived.Enqueue;
+        var landed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        store.Arrived += key =>
+        {
+            arrived.Enqueue(key);
+            landed.TrySetResult();
+        };
 
-        Assert.Null(store.Picture(row));
-        Assert.True(await store.Fetched(row.Key));
+        Assert.Null(store.Stock(row));
+        await landed.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
-        Assert.Equal(Stock(row.Asset), store.Picture(row));
+        Assert.Equal(Bytes, store.Stock(row));
         Assert.Equal(Bytes, files.ReadBytes(Stock(row.Asset)));
         Assert.Null(files.ReadBytes(Stock(row.Asset) + ".part"));
         Assert.Equal([row.Key], arrived);
@@ -145,11 +166,17 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
         var release = new Release();
         var row = Row();
         release.Serve(row.Tag, row.Asset, Encoding.ASCII.GetBytes("another one"));
-        var (store, files) = Open(release);
+        var log = new Messages();
+        var (store, files) = Open(release, logger: log);
+        var arrived = 0;
+        store.Arrived += _ => Interlocked.Increment(ref arrived);
 
-        store.Picture(row);
+        store.Stock(row);
 
-        Assert.False(await store.Fetched(row.Key));
+        // The discard is logged once the download has been read and checked.
+        await Until(() => log.Said.Any(line => line.Contains("does not match", StringComparison.Ordinal)));
+
+        Assert.Equal(0, Volatile.Read(ref arrived));
         Assert.Null(files.ReadBytes(Stock(row.Asset)));
         Assert.Null(files.ReadBytes(Stock(row.Asset) + ".part"));
     }
@@ -162,7 +189,7 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
         var (store, files) = Open(release);
         files.WriteBytes(Stock(row.Asset), Bytes);
 
-        Assert.Equal(Stock(row.Asset), store.Picture(row));
+        Assert.Equal(Bytes, store.Stock(row));
         Assert.Empty(release.Asked);
     }
 
@@ -199,7 +226,7 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
 
         Assert.Empty(store.StockRows());
         await store.IndexFetched;
-        Assert.Null(store.Picture(row));
+        Assert.Null(store.Stock(row));
 
         Assert.Empty(release.Asked);
         Assert.Equal([own], store.LocalKeys());

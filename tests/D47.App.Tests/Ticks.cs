@@ -42,5 +42,5 @@ internal static class Ticks
 
     /// <summary>Whether anything above this control is marked as chrome.</summary>
     private static bool IsChrome(Control control) =>
-        control.GetSelfAndLogicalAncestors().OfType<Control>().Any(PageChrome.IsChrome);
+        control.GetSelfAndLogicalAncestors().OfType<Control>().Any(each => each.Classes.Contains(PageChrome.Class));
 }

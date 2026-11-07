@@ -27,23 +27,35 @@ public sealed class DroppedInAudioIsRebuiltOffTheTickTests : IDisposable
         }
     }
 
+    /// <summary>How many times the watch has set its quiet-period timer: once for every change it was told of.</summary>
+    private int _armed;
+
     private AudioFolderWatch Watch(ManualClock clock, Action rebuild) =>
-        new(_root, rebuild, NullLogger.Instance, clock.Starter, () => clock.Now);
+        new(
+            _root,
+            rebuild,
+            NullLogger.Instance,
+            (delay, fire) =>
+            {
+                Interlocked.Increment(ref _armed);
+                return clock.Start(delay, fire);
+            },
+            () => clock.Now);
 
     private static async Task WriteAsync(string path)
     {
         await File.WriteAllBytesAsync(path, new byte[64], TestContext.Current.CancellationToken);
     }
 
-    /// <summary>Waits until the watcher has delivered at least <paramref name="count"/> events and gone quiet.</summary>
-    private static void Delivered(AudioFolderWatch watch, int count)
+    /// <summary>Waits until the watcher has set its timer for at least <paramref name="count"/> events and gone quiet.</summary>
+    private void Delivered(int count)
     {
         var deadline = Environment.TickCount64 + 5000;
         var last = -1;
 
         while (Environment.TickCount64 < deadline)
         {
-            var seen = watch.ChangesSeen;
+            var seen = Volatile.Read(ref _armed);
 
             if (seen >= count && seen == last)
             {
@@ -69,7 +81,7 @@ public sealed class DroppedInAudioIsRebuiltOffTheTickTests : IDisposable
             await WriteAsync(Path.Combine(_root, "cues", "listening", $"clip{i}.wav"));
         }
 
-        Delivered(watch, 20);
+        Delivered(20);
 
         clock.Advance(AudioFolderWatch.QuietFor - TimeSpan.FromSeconds(1));
         Assert.Equal(0, Volatile.Read(ref rebuilds));
@@ -94,13 +106,13 @@ public sealed class DroppedInAudioIsRebuiltOffTheTickTests : IDisposable
             });
 
         await WriteAsync(Path.Combine(_root, "cues", "one.wav"));
-        Delivered(watch, 1);
+        Delivered(1);
         clock.Advance(AudioFolderWatch.QuietFor + TimeSpan.FromSeconds(1));
         Assert.Equal(1, Volatile.Read(ref attempts));
 
-        var seen = watch.ChangesSeen;
+        var seen = Volatile.Read(ref _armed);
         await WriteAsync(Path.Combine(_root, "cues", "two.wav"));
-        Delivered(watch, seen + 1);
+        Delivered(seen + 1);
         clock.Advance(AudioFolderWatch.QuietFor + TimeSpan.FromSeconds(1));
         Assert.Equal(2, Volatile.Read(ref attempts));
     }

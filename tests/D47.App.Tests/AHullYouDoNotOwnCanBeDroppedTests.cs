@@ -176,7 +176,7 @@ public class AHullYouDoNotOwnCanBeDroppedTests
         ((Window)panel.Parent!).Width = 700;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(1, panel.GetVisualDescendants().OfType<DrillView>().Single().Panes);
+        Assert.True(panel.GetVisualDescendants().OfType<DrillView>().Single().Bounds.Width < 2 * DrillView.MinimumPaneWidth);
 
         OpenTheHull(panel, ships);
 

@@ -29,18 +29,6 @@ internal static class ShipArt
     private static string? _folder;
     private static string? _shipped;
 
-    /// <summary>How many 4K pictures are held right now.</summary>
-    internal static int Held
-    {
-        get
-        {
-            lock (Close)
-            {
-                return Close.Count;
-            }
-        }
-    }
-
     /// <summary>The file system art is read through, set once at startup.</summary>
     internal static IFileSystem Files
     {

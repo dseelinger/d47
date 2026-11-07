@@ -70,7 +70,14 @@ public class UsageCountsAreSentOncePerCompletedDayTests
         rig.Reporter.SettingsChanged();
 
         Assert.Null(rig.Files.Stat(CountsFile));
-        Assert.Empty(rig.Reporter.Ledger.CompletedDays(DateOnly.MaxValue));
+
+        // Turned on again the next day, it has nothing from before to send.
+        rig.Counts = true;
+        rig.Reporter.SettingsChanged();
+        rig.Now = Tuesday.AddDays(1);
+        await rig.Reporter.SendDueAsync();
+
+        Assert.Empty(rig.Bodies);
     }
 
     [Fact]
@@ -167,14 +174,18 @@ public class UsageCountsAreSentOncePerCompletedDayTests
     }
 
     [Fact]
-    public void AFileWithoutTheRecordIsReadAsNotAccepted()
+    public async Task AFileWithoutTheRecordIsReadAsNotAccepted()
     {
         var rig = new Rig();
         rig.Files.WriteText(CountsFile, "{\"days\":{}}");
 
         var reporter = rig.NewReporter();
 
-        Assert.False(reporter.Ledger.LastSendAccepted);
+        // Not accepted, so starting up sends today so far.
+        reporter.Record("open_tool", ToolCaller.Commander);
+        await reporter.SendDueAsync(includeToday: true);
+
+        Assert.Single(rig.Bodies);
     }
 
     [Fact]
@@ -190,7 +201,7 @@ public class UsageCountsAreSentOncePerCompletedDayTests
         Assert.Equal(2, rig.Bodies.Count);
         Assert.Contains("2026-10-20", rig.Bodies[0]);
         Assert.Contains("2026-10-21", rig.Bodies[1]);
-        Assert.Empty(rig.Reporter.Ledger.CompletedDays(DateOnly.MaxValue));
+        Assert.Empty(rig.Saved().CompletedDays(DateOnly.MaxValue));
     }
 
     [Fact]
@@ -206,7 +217,7 @@ public class UsageCountsAreSentOncePerCompletedDayTests
 
         await rig.Reporter.SendDueAsync(includeToday: true);
 
-        Assert.True(rig.Reporter.Ledger.LastSendAccepted);
+        Assert.True(rig.Saved().LastSendAccepted);
         Assert.Equal(before, rig.Bodies.Count);
     }
 
@@ -230,8 +241,7 @@ public class UsageCountsAreSentOncePerCompletedDayTests
         await rig.Call("open_tool", ToolCaller.Commander);
         rig.Now = Tuesday.AddDays(1);
         await rig.Reporter.SendDueAsync();
-        Assert.True(rig.Reporter.Ledger.LastSendAccepted);
-        rig.Reporter.Save();
+        Assert.True(rig.Saved().LastSendAccepted);
         Assert.Contains("\"accepted\":true", rig.Files.ReadText(CountsFile));
 
         await rig.Call("open_tool", ToolCaller.Commander);
@@ -239,7 +249,7 @@ public class UsageCountsAreSentOncePerCompletedDayTests
         rig.Status = failure;
         await rig.Reporter.SendDueAsync();
 
-        Assert.False(rig.Reporter.Ledger.LastSendAccepted);
+        Assert.False(rig.Saved().LastSendAccepted);
     }
 
     [Fact]
@@ -252,7 +262,7 @@ public class UsageCountsAreSentOncePerCompletedDayTests
         await rig.Reporter.SendDueAsync(includeToday: true);
 
         Assert.Contains("\"count\":1", Assert.Single(rig.Bodies));
-        Assert.Contains("\"count\":1", rig.Reporter.Ledger.Report(DateOnly.FromDateTime(Tuesday.UtcDateTime)));
+        Assert.Contains("\"count\":1", rig.Saved().Report(DateOnly.FromDateTime(Tuesday.UtcDateTime)));
     }
 
     private sealed class Rig
@@ -301,6 +311,14 @@ public class UsageCountsAreSentOncePerCompletedDayTests
         public CapabilityRegistry Registry { get; }
 
         public UsageReporter Reporter { get; }
+
+        /// <summary>The counts as the reporter last wrote them to its file.</summary>
+        public UsageLedger Saved()
+        {
+            Reporter.Save();
+
+            return UsageLedger.Parse(Files.ReadText(CountsFile)!);
+        }
 
         public bool Counts { get; set; } = true;
 

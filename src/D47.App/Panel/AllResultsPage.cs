@@ -85,8 +85,6 @@ internal sealed class AllResultsPage : UserControl, IPageSummary
         remove { }
     }
 
-    internal IReadOnlyList<Border> Rows => _rows;
-
     private Border Row(PanelFindResult result, bool tall, Action<PanelFindResult> open)
     {
         var lines = new StackPanel

@@ -85,13 +85,6 @@ public sealed class BloomStack : Control
         set => SetValue(IsHollowProperty, value);
     }
 
-    /// <summary>The ghosts, backmost and narrowest first.</summary>
-    public IReadOnlyList<Control> Ghosts => _ghosts;
-
-    /// <summary>Whether <paramref name="visual"/> is a stack's ghost rather than content of its own.</summary>
-    public static bool IsGhost(Visual visual) =>
-        visual.GetVisualParent() is BloomStack stack && stack._ghosts.Contains(visual);
-
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);

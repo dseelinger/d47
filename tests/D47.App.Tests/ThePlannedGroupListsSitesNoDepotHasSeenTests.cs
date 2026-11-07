@@ -83,10 +83,15 @@ public class ThePlannedGroupListsSitesNoDepotHasSeenTests
     {
         var state = State();
 
+        var folder = TestSurface.MemoryFolder("planned-group");
+        var checklists = TestSurface.Checklists(folder);
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.Classes.Set("headset", headset);
-        panel.EnableConstruction(
-            new ConstructionSurface(
+        panel.EnableLoadout(
+            TestSurface.ShipPlans(checklists, folder, () => state),
+            checklists,
+            () => state,
+            construction: new ConstructionSurface(
                 () => state,
                 () => Now,
                 null,

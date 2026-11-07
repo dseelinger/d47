@@ -240,9 +240,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
 
     private readonly HashSet<string> _taughtKinds = new(StringComparer.Ordinal);
 
-    /// <summary>The event kinds whose paragraph has been shown open in this run.</summary>
-    public IReadOnlyCollection<string> TaughtKinds => _taughtKinds;
-
     /// <summary>True the first time a kind with a paragraph is selected, and records it; a kind with none is never recorded.</summary>
     public bool TeachKind(string kind) =>
         D47.Core.Journal.JournalExplainers.For(kind) is not null && _taughtKinds.Add(kind);
@@ -280,9 +277,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         JournalRawText = JournalDocumentSource is { } document ? document(JournalNoise) : string.Empty;
         JournalSelected = Journal.Count > 0 ? Journal[0] : null;
     }
-
-    /// <summary>Re-reads the log.</summary>
-    public void RefreshLog() => ShowLog(ReadLog());
 
     /// <summary>The read alone, with no property set — the half that is safe off the UI thread.</summary>
     public string ReadLog()
@@ -848,13 +842,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
             : run.Translation.Length > 0
                 ? $"{run.Text.ToString().TrimEnd()}\n\n{run.Translation}\n"
                 : run.Text.ToString();
-
-    /// <summary>The last <paramref name="lines"/> lines, for a surface with less room than a window.</summary>
-    public string Tail(int lines)
-    {
-        var all = TranscriptText.Split('\n');
-        return all.Length <= lines ? TranscriptText : string.Join('\n', all[^lines..]);
-    }
 
     /// <summary>How many sent lines are kept.</summary>
     private const int MostRemembered = 200;

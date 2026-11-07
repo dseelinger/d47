@@ -11,10 +11,36 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The log page keeps up with the file while it is open.</summary>
+/// <summary>The log page keeps up with the file while it is open, reading it once a second.</summary>
 [Trait("Category", "Integration")]
 public class TheLogPageStaysLiveTests
 {
+    /// <summary>Longer than two of the page's one-second reads, so a follow that is running is seen to read.</summary>
+    private const double Quiet = 2.5;
+
+    private sealed class Log(string text)
+    {
+        private int _reads;
+
+        public string Text { get; set; } = text;
+
+        public int Reads => Volatile.Read(ref _reads);
+
+        public string Read()
+        {
+            Interlocked.Increment(ref _reads);
+            return Text;
+        }
+
+        /// <summary>Runs the UI thread until the file is read again, or <paramref name="seconds"/> pass; true when it was.</summary>
+        public bool ReadAgainWithin(double seconds)
+        {
+            var start = Reads;
+
+            return UiWait.Running(() => Reads > start, seconds);
+        }
+    }
+
     private static (Window Window, PanelView View, PanelViewModel Model) Open(Func<string> source)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
@@ -42,8 +68,8 @@ public class TheLogPageStaysLiveTests
     [AvaloniaFact]
     public async Task ALineWrittenWhileThePageIsOpenArrivesOnIt()
     {
-        var log = "[12:00:00] the first line\n";
-        var (window, view, model) = Open(() => log);
+        var log = new Log("[12:00:00] the first line\n");
+        var (window, view, _) = Open(log.Read);
 
         view.Page = TranscriptPage.Log;
         await view.Reading;
@@ -51,14 +77,9 @@ public class TheLogPageStaysLiveTests
 
         Assert.Contains("the first line", Drawn(view), StringComparison.Ordinal);
 
-        log += "[12:00:01] THE LINE THAT ARRIVED LATER\n";
+        log.Text += "[12:00:01] THE LINE THAT ARRIVED LATER\n";
 
-        // The page's own refresh, driven directly rather than by waiting a real second: a test that sleeps
-        // for a timer is a test that is slow and flaky about the same thing.
-        await view.RefreshLogNow();
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.Contains("THE LINE THAT ARRIVED LATER", Drawn(view), StringComparison.Ordinal);
+        Assert.True(UiWait.Running(() => Drawn(view).Contains("THE LINE THAT ARRIVED LATER", StringComparison.Ordinal), seconds: 5));
 
         window.Close();
     }
@@ -70,8 +91,8 @@ public class TheLogPageStaysLiveTests
     [AvaloniaFact]
     public async Task AnUnchangedFileIsNotRedrawn()
     {
-        var reads = 0;
-        var (window, view, model) = Open(() => { reads++; return "[12:00:00] steady\n"; });
+        var log = new Log("[12:00:00] steady\n");
+        var (window, view, _) = Open(log.Read);
 
         view.Page = TranscriptPage.Log;
         await view.Reading;
@@ -79,13 +100,11 @@ public class TheLogPageStaysLiveTests
 
         var block = view.FindControl<SelectableTextBlock>("Transcript")!;
         var before = block.Inlines!.Count;
-        var readsAfterOpen = reads;
 
-        await view.RefreshLogNow();
-        Dispatcher.UIThread.RunJobs();
+        // Two reads, so the first has finished and anything it would have drawn is drawn.
+        Assert.True(log.ReadAgainWithin(5), "the page did not read the file at all.");
+        Assert.True(log.ReadAgainWithin(5), "the page read the file once and stopped.");
 
-        // It read the file — that is the point of a tick — and drew nothing new from it.
-        Assert.True(reads > readsAfterOpen, "the tick did not read the file at all.");
         Assert.Equal(before, block.Inlines!.Count);
 
         window.Close();
@@ -98,8 +117,8 @@ public class TheLogPageStaysLiveTests
     [AvaloniaFact]
     public async Task AnotherPageDoesNotReadTheLogAtAll()
     {
-        var reads = 0;
-        var (window, view, _) = Open(() => { reads++; return "[12:00:00] steady\n"; });
+        var log = new Log("[12:00:00] steady\n");
+        var (window, view, _) = Open(log.Read);
 
         view.Page = TranscriptPage.Log;
         await view.Reading;
@@ -108,12 +127,7 @@ public class TheLogPageStaysLiveTests
         view.Page = TranscriptPage.Conversation;
         Dispatcher.UIThread.RunJobs();
 
-        var settled = reads;
-
-        await view.RefreshLogNow();
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.Equal(settled, reads);
+        Assert.False(log.ReadAgainWithin(Quiet));
 
         window.Close();
     }
@@ -122,19 +136,21 @@ public class TheLogPageStaysLiveTests
     [AvaloniaFact]
     public void ArrivingOnTheLogPageByAPageChangeFollowsIt()
     {
-        var (window, view, _) = Open(() => "[12:00:00] steady\n");
+        var log = new Log("[12:00:00] steady\n");
+        var (window, view, _) = Open(log.Read);
 
-        Assert.False(view.FollowingLog, "it followed a page nobody is on.");
+        Assert.False(log.ReadAgainWithin(Quiet), "it followed a page nobody is on.");
 
         view.Page = TranscriptPage.Log;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(view.FollowingLog, "arriving by a page change did not start the follow.");
+        Assert.True(log.ReadAgainWithin(5), "arriving by a page change did not start the follow.");
+        Assert.True(log.ReadAgainWithin(5), "arriving by a page change read once and followed nothing.");
 
         view.Page = TranscriptPage.Conversation;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(view.FollowingLog, "leaving the page did not stop the follow.");
+        Assert.False(log.ReadAgainWithin(Quiet), "leaving the page did not stop the follow.");
 
         window.Close();
     }
@@ -146,19 +162,20 @@ public class TheLogPageStaysLiveTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
             .Apply(TestSurface.Settings().Current.Ui.Theme);
 
+        var log = new Log("[12:00:00] bound late\n");
         var view = new PanelView { Page = TranscriptPage.Log };
         var window = new Window { Content = view, Width = 900, Height = 500 };
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        view.DataContext = new PanelViewModel { LogSource = () => "[12:00:00] bound late\n" };
+        view.DataContext = new PanelViewModel { LogSource = log.Read };
         Dispatcher.UIThread.RunJobs();
         await view.Reading;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("bound late", Drawn(view), StringComparison.Ordinal);
-        Assert.True(view.FollowingLog, "the surface bound late read once and followed nothing.");
+        Assert.True(log.ReadAgainWithin(5), "the surface bound late read once and followed nothing.");
 
         window.Close();
     }
@@ -167,24 +184,27 @@ public class TheLogPageStaysLiveTests
     [AvaloniaFact]
     public void SwitchingToAnotherTabStopsTheFollowAndComingBackResumesIt()
     {
-        var (window, view, _) = Open(() => "[12:00:00] steady\n");
+        var log = new Log("[12:00:00] steady\n");
+        var (window, view, _) = Open(log.Read);
 
         view.Furnish(PanelTab.Commander, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
 
         view.Page = TranscriptPage.Log;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(view.FollowingLog);
+        Assert.True(log.ReadAgainWithin(5));
+        Assert.True(log.ReadAgainWithin(5), "the page read the file once and followed nothing.");
 
         view.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(view.FollowingLog, "another tab's page left the log being read behind it.");
+        Assert.False(log.ReadAgainWithin(Quiet), "another tab's page left the log being read behind it.");
 
         view.Tab = PanelTab.Transcript;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(view.FollowingLog, "coming back to the page did not resume the follow.");
+        Assert.True(log.ReadAgainWithin(5), "coming back to the page did not read the file.");
+        Assert.True(log.ReadAgainWithin(5), "coming back to the page did not resume the follow.");
 
         window.Close();
     }
@@ -193,16 +213,18 @@ public class TheLogPageStaysLiveTests
     [AvaloniaFact]
     public void ClosingTheWindowStopsTheFollow()
     {
-        var (window, view, _) = Open(() => "[12:00:00] steady\n");
+        var log = new Log("[12:00:00] steady\n");
+        var (window, view, _) = Open(log.Read);
 
         view.Page = TranscriptPage.Log;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(view.FollowingLog);
+        Assert.True(log.ReadAgainWithin(5));
+        Assert.True(log.ReadAgainWithin(5), "the page read the file once and followed nothing.");
 
         window.Close();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(view.FollowingLog, "a closed window was still reading the log every second.");
+        Assert.False(log.ReadAgainWithin(Quiet), "a closed window was still reading the log every second.");
     }
 }

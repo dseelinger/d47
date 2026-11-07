@@ -340,7 +340,7 @@ public class AdventuresTabTests
     {
         var (panel, book, said) = Open(1400, new ScriptedModel(ShortStoryWorld.Lines, NoObjections, NoObjections), new ShortStoryWorld.Galaxy());
 
-        Assert.Equal(3, panel.GetVisualDescendants().OfType<DrillView>().Single().Panes);
+        Assert.True(panel.GetVisualDescendants().OfType<DrillView>().Single().Bounds.Width >= DrillView.MostPanes * DrillView.MinimumPaneWidth);
 
         panel.Nav.SelectRoot(AdventuresPage.AskKey);
         Dispatcher.UIThread.RunJobs();

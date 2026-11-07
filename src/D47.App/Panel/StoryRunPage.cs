@@ -221,9 +221,6 @@ public sealed class StoryRunPage : UserControl, IPageSummary
 
     private void OnPlayerChanged() => Dispatcher.UIThread.Post(ShowPlayback);
 
-    /// <summary>The section rows and line rows the list draws, in order.</summary>
-    internal IReadOnlyList<object> Rows => _rows;
-
     private Adventure? ChapterOf(string? commander, Story run, string key) =>
         _director.Archive.Find(commander, run, key)?.Adventure ?? _surface.Book.Store.Find(commander, key);
 

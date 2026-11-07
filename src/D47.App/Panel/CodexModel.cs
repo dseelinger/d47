@@ -301,10 +301,6 @@ public static class CodexModel
     public static string? PositionOf(double? latitude, double? longitude) =>
         latitude is { } lat && longitude is { } lon ? $"{Degrees(lat)}, {Degrees(lon)}" : null;
 
-    /// <summary>"A 4 c · 12.4512, −108.2231": the body, then the position.</summary>
-    public static string Place(string? system, string? body, double? latitude, double? longitude) =>
-        new CodexEntryRow(0, string.Empty, system, false, BodyOf(system, body), PositionOf(latitude, longitude), default, false, null, null).Place;
-
     /// <summary>"Nothing logged this trip. Open one to see what is left to discover."</summary>
     public static string OtherRegionsLine(CodexPeriod period) =>
         period switch

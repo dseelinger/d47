@@ -175,9 +175,6 @@ public static class LoadoutPages
     public static NavCrumb Ship(D47.Core.Ships.FleetEntry entry) =>
         new(ShipPrefix + ShipsMode.Key(entry), entry.Name ?? entry.HullName) { Level = ShipPrefix };
 
-    public static NavCrumb Slot(string buildId, string slot) =>
-        new($"{SlotPrefix}{buildId}|{slot}", slot);
-
     /// <summary>A ship's Power page, which takes the whole strip.</summary>
     public static NavCrumb Power(string buildId) =>
         new(PowerPrefix + buildId, "Power") { Level = PowerPrefix, Whole = true };

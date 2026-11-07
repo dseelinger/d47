@@ -16,9 +16,9 @@ nav_order: 8
   same events seen another way rather than a fourth subject, which is why it is not an entry
   in the picker either.
 
-  Only describe controls a Commander can actually reach. ShowJournalNoise and ShowJournalDetail
-  are public methods with no production caller — there is no drawn toggle for either, and
-  documenting one would be the exact fault #251 was about.
+  Only describe controls a Commander can actually reach. The panel draws no toggle for the
+  journal's noise filter or its detail pane, and documenting one would be the exact fault #251
+  was about.
 -->
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">What the game did, in the order it did it — Elite's own journal, as sentences you can read.</p>

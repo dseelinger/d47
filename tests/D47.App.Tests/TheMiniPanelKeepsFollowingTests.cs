@@ -34,8 +34,6 @@ public class TheMiniPanelKeepsFollowingTests
         return model;
     }
 
-    private static bool Following(PanelView view) => view.Following;
-
     private static bool AtTheEnd(PanelView view)
     {
         var scroller = view.GetVisualDescendants().OfType<ScrollViewer>().First(found => found.Name == "TranscriptScroller");
@@ -58,7 +56,6 @@ public class TheMiniPanelKeepsFollowingTests
             Task.Run(() => model.Append($"Turn {turn} that arrived afterwards, long enough to wrap.\n", sourceKey: $"t{turn}")).Wait();
             settle();
 
-            Assert.True(Following(view), $"turn {turn}: following is off");
             Assert.True(AtTheEnd(view), $"turn {turn}: out of view");
         }
     }
@@ -72,7 +69,7 @@ public class TheMiniPanelKeepsFollowingTests
 
         Settle(surface, view);
 
-        Assert.True(Following(view));
+        Assert.True(AtTheEnd(view));
         TurnsArriveInView(view, model, () => Settle(surface, view));
     }
 

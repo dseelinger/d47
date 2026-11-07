@@ -265,7 +265,7 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
         game.Plans.Record(ThreeStops(), "Road to Riches", Now.AddHours(-1));
         var panel = Panel(game);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single().ShowPlan(RoutePlanKind.Riches);
         Dispatcher.UIThread.RunJobs();
 
         var mini = Mini(panel);

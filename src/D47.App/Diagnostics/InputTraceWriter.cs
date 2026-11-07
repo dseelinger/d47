@@ -116,9 +116,6 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
         return new InputTraceWriter(folder, files, now, status, music, capture, logger);
     }
 
-    /// <summary>Where the traces of this run are, for a log line and for a test to read.</summary>
-    public string Folder => _folder;
-
     public IInputTrace Open(string caller)
     {
         var name = $"{_now():yyyyMMdd-HHmmss-fff}-{Safe(caller)}";

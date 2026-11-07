@@ -19,9 +19,6 @@ public static class PageChrome
         return control;
     }
 
-    /// <summary>Whether this control was marked.</summary>
-    public static bool IsChrome(this Control control) => control.Classes.Contains(Class);
-
     /// <summary>The tile that opens a settings strip, for the page to hand to the title line; null without a strip.</summary>
     public static Control? ToolOf(Control? strip) => (strip as IPageChrome)?.BarTool;
 

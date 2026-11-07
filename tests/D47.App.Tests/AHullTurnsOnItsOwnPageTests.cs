@@ -34,6 +34,12 @@ public class AHullTurnsOnItsOwnPageTests
     /// <summary>A cube two metres across, written where the app reads a hull's mesh.</summary>
     private static void WriteCube(string path)
     {
+        using var file = File.Create(path);
+        Cube().Write(file);
+    }
+
+    private static HullMesh Cube()
+    {
         var positions = new List<Vector3>();
         var normals = new List<Vector3>();
         var indices = new List<int>();
@@ -53,12 +59,9 @@ public class AHullTurnsOnItsOwnPageTests
             indices.AddRange([first, first + 1, first + 2, first, first + 2, first + 3]);
         }
 
-        var mesh = new HullMesh(
+        return new HullMesh(
             [.. positions], [.. normals], [.. indices], [new HullPart("hull", 0, 12, false)], MathF.Sqrt(3),
             Vector3.Normalize(new Vector3(1, 0.6f, 1.4f)));
-
-        using var file = File.Create(path);
-        mesh.Write(file);
     }
 
     private static (Window Window, PanelView Panel) Page(
@@ -121,7 +124,18 @@ public class AHullTurnsOnItsOwnPageTests
 
     private static HullViewer Viewer(Visual root) => root.GetVisualDescendants().OfType<HullViewer>().Single();
 
-    private static HullPose Pose(HullViewer viewer) => viewer.Pose;
+    /// <summary>The viewer's own bitmap, as bytes.</summary>
+    private static byte[] Drawn(HullViewer viewer)
+    {
+        var bitmap = viewer.Frame ?? throw new InvalidOperationException("The viewer has not drawn.");
+
+        using var frame = bitmap.Lock();
+        var bytes = new byte[frame.RowBytes * frame.Size.Height];
+
+        System.Runtime.InteropServices.Marshal.Copy(frame.Address, bytes, 0, bytes.Length);
+
+        return bytes;
+    }
 
     private static Button Named(Visual root, string name) =>
         root.GetVisualDescendants().OfType<Button>().Single(button => AutomationProperties.GetName(button) == name);
@@ -192,38 +206,63 @@ public class AHullTurnsOnItsOwnPageTests
     {
         var (window, panel) = Page();
         var viewer = Viewer(panel);
-        var pose = Pose(viewer);
-        var rest = pose.Camera;
+        var rest = Drawn(viewer);
 
         viewer.Focus();
 
         Key(viewer, Avalonia.Input.Key.Right);
-        var turned = pose.Camera;
-        Assert.NotEqual(rest.Orbit, turned.Orbit);
+        var turned = Drawn(viewer);
+        Assert.NotEqual(rest, turned);
 
         Key(viewer, Avalonia.Input.Key.Up);
-        Assert.NotEqual(turned.Orbit, pose.Camera.Orbit);
+        Assert.NotEqual(turned, Drawn(viewer));
 
-        var before = pose.Camera;
+        var before = Drawn(viewer);
         Key(viewer, Avalonia.Input.Key.Left, KeyModifiers.Shift);
-        var rolled = pose.Camera;
-        Assert.NotEqual(before.Orbit, rolled.Orbit);
+        var rolled = Drawn(viewer);
+        Assert.NotEqual(before, rolled);
 
         Key(viewer, Avalonia.Input.Key.Right, KeyModifiers.Control);
-        Assert.NotEqual(Vector3.Zero, pose.Camera.Target);
-        Assert.Equal(rolled.Orbit, pose.Camera.Orbit);
+        var panned = Drawn(viewer);
+        Assert.NotEqual(rolled, panned);
 
-        var distance = pose.Camera.Distance;
         Key(viewer, Avalonia.Input.Key.PageUp);
-        Assert.True(pose.Camera.Distance < distance);
+        var nearer = Drawn(viewer);
+        Assert.NotEqual(panned, nearer);
         Key(viewer, Avalonia.Input.Key.OemMinus);
         Key(viewer, Avalonia.Input.Key.OemMinus);
-        Assert.True(pose.Camera.Distance > distance);
+        Assert.NotEqual(nearer, Drawn(viewer));
 
         Key(viewer, Avalonia.Input.Key.Home);
-        Assert.Equal(rest, pose.Camera);
+        Assert.Equal(rest, Drawn(viewer));
 
         window.Close();
+    }
+
+    [Fact]
+    public void EachKeyMovesTheCameraTheWayItSays()
+    {
+        const double Height = 400;
+        var rest = HullCamera.Rest(Cube());
+
+        HullCamera Moved(HullCamera from, Key key, KeyModifiers modifiers = KeyModifiers.None) =>
+            HullViewer.Moved(from, key, modifiers, Height) ?? throw new InvalidOperationException($"{key} moved nothing");
+
+        var turned = Moved(rest, Avalonia.Input.Key.Right);
+        Assert.NotEqual(rest.Orbit, turned.Orbit);
+        Assert.NotEqual(turned.Orbit, Moved(turned, Avalonia.Input.Key.Up).Orbit);
+
+        var rolled = Moved(turned, Avalonia.Input.Key.Left, KeyModifiers.Shift);
+        Assert.NotEqual(turned.Orbit, rolled.Orbit);
+
+        var panned = Moved(rolled, Avalonia.Input.Key.Right, KeyModifiers.Control);
+        Assert.NotEqual(Vector3.Zero, panned.Target);
+        Assert.Equal(rolled.Orbit, panned.Orbit);
+
+        Assert.True(Moved(rest, Avalonia.Input.Key.PageUp).Distance < rest.Distance);
+        Assert.True(Moved(Moved(rest, Avalonia.Input.Key.OemMinus), Avalonia.Input.Key.OemMinus).Distance > rest.Distance);
+
+        Assert.Null(HullViewer.Moved(rest, Avalonia.Input.Key.Home, KeyModifiers.None, Height));
     }
 
     [AvaloniaFact]
@@ -231,8 +270,7 @@ public class AHullTurnsOnItsOwnPageTests
     {
         var (window, panel) = Page();
         var viewer = Viewer(panel);
-        var pose = Pose(viewer);
-        var rest = pose.Camera;
+        var rest = Drawn(viewer);
         var centre = viewer.TranslatePoint(new Point(viewer.Bounds.Width / 2, viewer.Bounds.Height / 2), window)!.Value;
 
         void Drag(MouseButton button, RawInputModifiers modifiers = RawInputModifiers.None)
@@ -244,20 +282,20 @@ public class AHullTurnsOnItsOwnPageTests
         }
 
         Drag(MouseButton.Left);
-        Assert.NotEqual(rest.Orbit, pose.Camera.Orbit);
-        Assert.Equal(Vector3.Zero, pose.Camera.Target);
+        var turned = Drawn(viewer);
+        Assert.NotEqual(rest, turned);
 
-        var turned = pose.Camera;
         Drag(MouseButton.Left, RawInputModifiers.Shift);
-        Assert.NotEqual(turned.Orbit, pose.Camera.Orbit);
+        var rolled = Drawn(viewer);
+        Assert.NotEqual(turned, rolled);
 
         Drag(MouseButton.Right);
-        Assert.NotEqual(Vector3.Zero, pose.Camera.Target);
+        var panned = Drawn(viewer);
+        Assert.NotEqual(rolled, panned);
 
-        var distance = pose.Camera.Distance;
         window.MouseWheel(centre, new Avalonia.Vector(0, 1));
         Frame();
-        Assert.True(pose.Camera.Distance < distance);
+        Assert.NotEqual(panned, Drawn(viewer));
 
         // Clicking turns nothing and opens nothing: only the □ mark expands the viewer.
         window.MouseDown(centre, MouseButton.Left);
@@ -265,10 +303,29 @@ public class AHullTurnsOnItsOwnPageTests
         window.MouseDown(centre, MouseButton.Left);
         window.MouseUp(centre, MouseButton.Left);
         Frame();
-        Assert.Equal(rest, pose.Camera);
+        Assert.Equal(rest, Drawn(viewer));
         Assert.Empty(window.GetVisualDescendants().OfType<HullViewerFull>());
 
         window.Close();
+    }
+
+    [Fact]
+    public void EachDragMovesTheCameraTheWayItSays()
+    {
+        const double Height = 400;
+        var rest = HullCamera.Rest(Cube());
+
+        var turned = HullViewer.Dragged(rest, MouseButton.Left, KeyModifiers.None, 40, 25, Height);
+        Assert.NotEqual(rest.Orbit, turned.Orbit);
+        Assert.Equal(Vector3.Zero, turned.Target);
+
+        var rolled = HullViewer.Dragged(turned, MouseButton.Left, KeyModifiers.Shift, 40, 25, Height);
+        Assert.NotEqual(turned.Orbit, rolled.Orbit);
+        Assert.Equal(Vector3.Zero, rolled.Target);
+
+        var panned = HullViewer.Dragged(rolled, MouseButton.Right, KeyModifiers.None, 40, 25, Height);
+        Assert.NotEqual(Vector3.Zero, panned.Target);
+        Assert.Equal(rolled.Orbit, panned.Orbit);
     }
 
     private static RawInputModifiers Held(MouseButton button) => button switch
@@ -282,7 +339,8 @@ public class AHullTurnsOnItsOwnPageTests
     public void TheLightLevelRelightsTheHull()
     {
         var (window, panel) = Page();
-        var pose = Pose(Viewer(panel));
+        var viewer = Viewer(panel);
+        var before = Drawn(viewer);
         var level = panel.GetVisualDescendants().OfType<D47.App.Controls.Level>().Single(l => AutomationProperties.GetName(l) == "Light");
 
         Assert.Equal(1, level.Value, 3);
@@ -291,7 +349,8 @@ public class AHullTurnsOnItsOwnPageTests
         level.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Right, Source = level });
         Frame();
 
-        Assert.Equal(1.1f, pose.Camera.Light, 3);
+        Assert.Equal(1.1, level.Value, 3);
+        Assert.NotEqual(before, Drawn(viewer));
 
         window.Close();
     }
@@ -303,11 +362,9 @@ public class AHullTurnsOnItsOwnPageTests
 
         var (window, panel) = Page();
         var viewer = Viewer(panel);
-        var pose = Pose(viewer);
 
         viewer.Focus();
         Key(viewer, Avalonia.Input.Key.Right);
-        var page = pose.Camera;
 
         Named(panel, "Whole window").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Frame();
@@ -315,8 +372,6 @@ public class AHullTurnsOnItsOwnPageTests
         var full = window.GetVisualDescendants().OfType<HullViewerFull>().Single();
         var wide = full.GetVisualDescendants().OfType<HullViewer>().Single();
 
-        Assert.Same(pose, Pose(wide));
-        Assert.Equal(page, pose.Camera);
         Assert.True(wide.IsFocused);
 
         using (var frame = window.CaptureRenderedFrame()!)
@@ -325,13 +380,22 @@ public class AHullTurnsOnItsOwnPageTests
         }
 
         Key(wide, Avalonia.Input.Key.Down);
-        var turned = pose.Camera;
-        Assert.NotEqual(page, turned);
-
         Key(wide, Avalonia.Input.Key.Escape);
 
         Assert.Empty(window.GetVisualDescendants().OfType<HullViewerFull>());
-        Assert.Equal(turned, Pose(Viewer(panel)).Camera);
+
+        // The page now draws the turn made on the page and the one made in the whole window, so the whole
+        // window opened at the page's pose and handed its own back.
+        var back = Viewer(panel);
+        var both = Drawn(back);
+
+        back.Focus();
+        Key(back, Avalonia.Input.Key.Home);
+        Assert.NotEqual(both, Drawn(back));
+
+        Key(back, Avalonia.Input.Key.Right);
+        Key(back, Avalonia.Input.Key.Down);
+        Assert.Equal(both, Drawn(back));
 
         window.Close();
     }
@@ -348,7 +412,11 @@ public class AHullTurnsOnItsOwnPageTests
         var (window, panel) = Page(themeId: themeId);
         var viewer = Viewer(panel);
 
-        Assert.Equal(HullCamera.Rest(Pose(viewer).Mesh), Pose(viewer).Camera);
+        var opened = Drawn(viewer);
+
+        viewer.Focus();
+        Key(viewer, Avalonia.Input.Key.Home);
+        Assert.Equal(opened, Drawn(viewer));
 
         var path = $"hull-viewer-{themeId}.png";
 

@@ -283,18 +283,32 @@ public sealed class TheJournalPaneReadsTheEventTests
         window.Close();
     }
 
+    /// <summary>For each drawn label and value pair, whether the value sits under its label rather than beside it.</summary>
+    private static IReadOnlyList<bool> ValuesUnderLabels(JournalReadingPane pane)
+    {
+        var pairs = pane.GetVisualDescendants().OfType<Grid>()
+            .Where(grid => grid.Children.Count == 2 && grid.IsEffectivelyVisible && grid.Bounds.Height > 0)
+            .Select(grid => (Label: grid.Children[0].Bounds, Value: grid.Children[1].Bounds))
+            .Where(pair => pair.Label.Width > 0 && pair.Value.Width > 0)
+            .ToList();
+
+        Assert.NotEmpty(pairs);
+
+        return [.. pairs.Select(pair => pair.Value.Top >= pair.Label.Bottom)];
+    }
+
     [AvaloniaFact]
     public void ANarrowPanePutsEachLabelAboveItsValue()
     {
         using var look = AppLook.Put();
         var (pane, window) = Shown(EngineerCraft, width: 325, open: _ => () => { });
 
-        Assert.True(pane.Narrow);
+        Assert.All(ValuesUnderLabels(pane), Assert.True);
         Capture(window, "journal-reading-engineercraft-narrow.png");
         window.Close();
 
         var (wide, other) = Shown(EngineerCraft, open: _ => () => { });
-        Assert.False(wide.Narrow);
+        Assert.All(ValuesUnderLabels(wide), Assert.False);
         Capture(other, "journal-reading-engineercraft.png");
         other.Close();
     }
@@ -374,9 +388,11 @@ public sealed class TheJournalPaneReadsTheEventTests
             var model = (PanelViewModel)Panel.DataContext!;
 
             model.JournalSource = _ => [entry];
-            Panel.Page = TranscriptPage.Journal;
+            model.JournalNoise = true;
             model.RefreshJournal();
-            Panel.ShowJournalNoise(true);
+            Panel.Page = TranscriptPage.Conversation;
+            Dispatcher.UIThread.RunJobs();
+            Panel.Page = TranscriptPage.Journal;
             Dispatcher.UIThread.RunJobs();
         }
     }

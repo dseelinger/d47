@@ -80,7 +80,7 @@ public class CoverageRecorderTests
         probe.Recorder.Follow(probe.Registry, probe.Settings);
         probe.Recorder.Save();
 
-        var report = probe.Files.ReadText(probe.Recorder.ReportPath)!;
+        var report = probe.Files.ReadText(Path.Combine(probe.Paths.Data, "coverage.md"))!;
 
         Assert.Contains("Features you have tested", report, StringComparison.Ordinal);
         Assert.Contains("probe_tool", report, StringComparison.Ordinal);

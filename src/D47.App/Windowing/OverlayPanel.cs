@@ -183,9 +183,6 @@ public sealed class OverlayPanel : Window
         // answers for the phrase.
         IsVisible ? _view.Scroll(step) : PanelScrollOutcome.NothingToScroll;
 
-    /// <summary>Whether the strip is in place mode — taking clicks so it can be dragged.</summary>
-    public bool IsPlacing => _placing;
-
     /// <summary>Whether the strip should be on screen at all.</summary>
     public static bool ShouldShow(bool enabled, bool eliteForeground, bool placing) =>
         enabled && (placing || eliteForeground);

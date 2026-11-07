@@ -334,31 +334,14 @@ public sealed class FactionPage : UserControl, IPageSummary
     /// <summary>The clock the page reads; a test sets it.</summary>
     public Func<DateTimeOffset> Now { get; init; } = () => DateTimeOffset.UtcNow;
 
-    public FactionView View => _view;
-
-    /// <summary>The faction asked for last, or null before one is.</summary>
-    public string? Faction => _faction;
-
     /// <summary>The section showing: 0 Overview, 1 Systems, 2 Conflicts, 3 Assets.</summary>
     public int Section => _section;
 
     /// <summary>The rows the Systems table draws now: the page on the headset, every match on the desktop.</summary>
     public int RowsDrawn { get; private set; }
 
-    /// <summary>The sentence under the Failed head.</summary>
-    public string FailureText => _failure;
-
     /// <summary>Opens the page on <paramref name="faction"/> and asks for its report.</summary>
     public void Show(string faction) => Choose(faction);
-
-    /// <summary>Opens a section, as pressing its segment does.</summary>
-    public void ShowSection(int section)
-    {
-        _sections.SelectedIndex = section;
-        _section = section;
-        _page = 0;
-        DrawContent();
-    }
 
     /// <summary>Follows the squadron faction, the Commander's readings and the clock; true when it redrew.</summary>
     public bool Tick()

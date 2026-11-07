@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -174,6 +175,13 @@ public class TheGalaxyMapDrawsAStoredPlanTests
 
     private static GalaxyMapPage Open(PanelView panel)
     {
+        Show(panel);
+
+        return panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single();
+    }
+
+    private static void Show(PanelView panel)
+    {
         var window = new Window
         {
             Content = panel,
@@ -184,8 +192,6 @@ public class TheGalaxyMapDrawsAStoredPlanTests
 
         window.Show();
         Dispatcher.UIThread.RunJobs();
-
-        return panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single();
     }
 
     private static IReadOnlyList<StarPosition> Positioned(IEnumerable<RouteMapStop> stops) =>
@@ -199,7 +205,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var panel = Panel(game);
         var page = Open(panel);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
         Dispatcher.UIThread.RunJobs();
 
         var plan = RouteMapStop.From(game.Plans.Last(RoutePlanKind.Riches)!)!;
@@ -226,7 +232,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var panel = Panel(game);
         var page = Open(panel);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(ThemeManager.AKey, LineInk(page, At(1, 11), At(2, 11)));
@@ -249,7 +255,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var panel = Panel(game);
         var page = Open(panel);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
         Dispatcher.UIThread.RunJobs();
 
         game.Plans.Record(RichesRoute(), "Road to Riches", Now);
@@ -266,7 +272,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var panel = Panel(game);
         var page = Open(panel);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Null(page.PlanShown());
@@ -286,7 +292,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var panel = Panel(game);
         var page = Open(panel);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
         Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
 
         page.ShowPlan(null);
@@ -306,7 +312,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var panel = Panel(game);
         var page = Open(panel);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
         game.OffDuty = "Someone Else";
         page.Refresh();
         Dispatcher.UIThread.RunJobs();
@@ -322,9 +328,18 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         game.Plans.Record(RichesRoute(), "Road to Riches", Now.AddHours(-1));
         var panel = Panel(game, openMap: false);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        Show(panel);
 
-        var page = Open(panel);
+        // Plan, the plan, and its Show on galaxy map press, which builds the map page for the first time.
+        panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot);
+        panel.Nav.Drill(PanelTab.Navigation, RoutingPages.ResultCrumb(RoutePlanKind.Riches, "Road to Riches"));
+        Dispatcher.UIThread.RunJobs();
+        Assert.Empty(panel.GetVisualDescendants().OfType<GalaxyMapPage>());
+
+        ThePlanPageOffersTheGalaxyMapTests.Press(panel.GetVisualDescendants().OfType<Button>().Single(button =>
+            AutomationProperties.GetName(button) == RoutePlanResultPage.ShowOnGalaxyMapWords && button.Content is string));
+
+        var page = panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single();
 
         Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
         Assert.Equal(2, page.Framing().SelectedIndex);
@@ -337,7 +352,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var panel = Panel(game);
         var page = Open(panel);
 
-        panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
+        page.ShowPlan(RoutePlanKind.Riches);
         Assert.Null(page.PlanShown());
 
         game.Plans.Record(RichesRoute(), "Road to Riches", Now);

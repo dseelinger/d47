@@ -30,7 +30,6 @@ public sealed class TheExplainButtonAsksAboutTheSelectedEventTests
         var window = new Window { Content = panel, Width = 1180, Height = 800 };
         window.Show();
         panel.Page = TranscriptPage.Journal;
-        panel.ShowJournalDetail(true);
         Dispatcher.UIThread.RunJobs();
 
         return (panel, model, window);
@@ -60,9 +59,13 @@ public sealed class TheExplainButtonAsksAboutTheSelectedEventTests
     [AvaloniaFact]
     public void FoldingTheDetailPaneHidesTheButton()
     {
-        var (panel, _, window) = Shown();
+        var (panel, model, window) = Shown();
 
-        panel.ShowJournalDetail(false);
+        model.JournalDetail = false;
+        // Leaving the page and coming back draws it again from the model.
+        panel.Page = TranscriptPage.Conversation;
+        Dispatcher.UIThread.RunJobs();
+        panel.Page = TranscriptPage.Journal;
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(Explain(panel).IsVisible);

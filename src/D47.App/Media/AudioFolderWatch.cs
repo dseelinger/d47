@@ -61,11 +61,6 @@ public sealed class AudioFolderWatch : IDisposable
         _watcher.EnableRaisingEvents = true;
     }
 
-    /// <summary>Change notifications received, for tests that wait on the watcher.</summary>
-    internal int ChangesSeen => Volatile.Read(ref _changesSeen);
-
-    private int _changesSeen;
-
     private void Changed()
     {
         lock (_gate)
@@ -73,8 +68,6 @@ public sealed class AudioFolderWatch : IDisposable
             _quiet.Changed(_now());
             Arm();
         }
-
-        Interlocked.Increment(ref _changesSeen);
     }
 
     private void Expired()

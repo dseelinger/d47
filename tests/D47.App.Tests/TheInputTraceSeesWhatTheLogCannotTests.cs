@@ -380,7 +380,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
 
         // The real composition path, so what is asserted is where a run actually writes rather than a second
         // copy of the same string.
-        using var writer = InputTraceWriter.Create(
+        var writer = InputTraceWriter.Create(
             paths,
             _files,
             () => Noon,
@@ -390,8 +390,14 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
             NullLogger.Instance);
 
         Assert.NotNull(writer);
+
+        writer.Open("a test").Dispose();
+        writer.Dispose();
+
+        var trace = Assert.Single(_files.Enumerate(_folder, "trace.jsonl", recursive: true));
+
         Assert.Equal(
             Path.Combine(paths.Data, "flight", InputTraceWriter.FolderName),
-            writer.Folder);
+            Path.GetDirectoryName(Path.GetDirectoryName(trace)));
     }
 }

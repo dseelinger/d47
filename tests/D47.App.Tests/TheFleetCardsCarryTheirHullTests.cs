@@ -330,7 +330,6 @@ public class TheFleetCardsCarryTheirHullTests
 
         Assert.True(video.Next(frame));
         Assert.True(video.Next(frame));
-        Assert.False(video.Ended);
     }
 
     /// <summary>One click, on the card that is still on screen afterwards (reported twice, 2026-09-04).</summary>

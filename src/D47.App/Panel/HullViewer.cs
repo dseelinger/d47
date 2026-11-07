@@ -109,13 +109,9 @@ internal sealed class HullViewer : Control
     /// <summary>Takes whatever height it is given, rather than the still's shape.</summary>
     internal bool Fills { get; init; }
 
-    internal HullPose Pose => _pose;
-
     /// <summary>The last frame drawn, or null before the first.</summary>
     internal WriteableBitmap? Frame => _bitmap;
 
-    /// <summary>Whether this viewer is drawing through OpenGL.</summary>
-    internal bool OnGpu => _gl is not null;
 
     /// <summary>Where the setting is read from and where a fallback's reason is logged.</summary>
     internal static void Enable(Func<bool> onGpu, ILogger logger)
@@ -428,12 +424,14 @@ internal sealed class HullViewer : Control
         var dy = (float)(at.Y - _from.Y);
         _from = at;
 
-        var camera = _pose.Camera;
-
-        _pose.Camera = _dragging != MouseButton.Left ? camera.Pan(dx, dy, (int)Math.Round(Bounds.Height))
-            : e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? camera.Roll(dx)
-            : camera.Turn(dx, dy);
+        _pose.Camera = Dragged(_pose.Camera, _dragging, e.KeyModifiers, dx, dy, Bounds.Height);
     }
+
+    /// <summary>Where a drag of (<paramref name="dx"/>, <paramref name="dy"/>) px with <paramref name="button"/> held moves the camera.</summary>
+    internal static HullCamera Dragged(HullCamera camera, MouseButton button, KeyModifiers modifiers, float dx, float dy, double height) =>
+        button != MouseButton.Left ? camera.Pan(dx, dy, (int)Math.Round(height))
+        : modifiers.HasFlag(KeyModifiers.Shift) ? camera.Roll(dx)
+        : camera.Turn(dx, dy);
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {

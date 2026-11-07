@@ -56,7 +56,7 @@ public class TranscriptPagesTests
     public void TheLogPageReportsWhyItIsEmptyRatherThanBeingBlank()
     {
         var model = new PanelViewModel();
-        model.RefreshLog();
+        model.ShowLog(model.ReadLog());
 
         Assert.False(string.IsNullOrWhiteSpace(model.LogText));
     }
@@ -66,7 +66,7 @@ public class TranscriptPagesTests
     {
         var model = new PanelViewModel { LogSource = () => throw new IOException("it is locked") };
 
-        model.RefreshLog();
+        model.ShowLog(model.ReadLog());
 
         Assert.Contains("it is locked", model.LogText, StringComparison.Ordinal);
     }

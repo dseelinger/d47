@@ -82,9 +82,6 @@ internal sealed class CropSurface : Canvas
 
     public int PictureHeight => _height;
 
-    /// <summary>Source pixels per drawn pixel is the reciprocal.</summary>
-    public double Scale => _scale;
-
     public CropSquare Square => _square;
 
     public event Action<CropSquare>? SquareChanged;

@@ -306,8 +306,7 @@ public class TheCodexEntryPageShowsOneEntryTests
         Assert.True(Shows(page, CodexModel.FetchingText));
 
         surface.Release.Hold.SetResult();
-        Assert.True(surface.Store.Fetched(row.Key).Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
-        Dispatcher.UIThread.RunJobs();
+        UiWait.Until(() => Equals(Stock, Side(page, "CodexPicture")), seconds: 10);
 
         Assert.Equal(Stock, Side(page, "CodexPicture"));
         Assert.False(Shows(page, CodexModel.FetchingText));

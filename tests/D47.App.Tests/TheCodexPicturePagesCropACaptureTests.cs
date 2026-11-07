@@ -329,7 +329,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
         var start = crop.Surface.ToSurface(1000, 500);
         Assert.True(crop.Surface.Press(start));
-        crop.Surface.DragTo(start + new Point(100 * crop.Surface.Scale, 0));
+        crop.Surface.DragTo(crop.Surface.ToSurface(1100, 500));
         crop.Surface.Release();
         Assert.Equal(new CropSquare(600, 0, 1000), crop.Surface.Square);
 

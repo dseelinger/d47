@@ -63,9 +63,6 @@ public sealed class UsageReporter : IDisposable
         }
     }
 
-    /// <summary>The counts held, for the panel and tests.</summary>
-    public UsageLedger Ledger => _ledger;
-
     /// <summary>Starts counting tool calls.</summary>
     public void Follow(CapabilityRegistry registry) =>
         registry.ToolInvoked += invocation => Record(invocation.Tool, invocation.Caller);

@@ -254,7 +254,9 @@ public sealed class TheJournalIsAReadingTests
 
         Assert.Same(model.Journal[1], model.JournalSelected);
 
-        panel.ShowJournalDetail(true);
+        // A search both events match draws the list again.
+        panel.EnableSearch();
+        panel.GetVisualDescendants().OfType<TextBox>().Single(box => box.Name == "SearchInput").Text = "Jameson";
         Dispatcher.UIThread.RunJobs();
 
         Assert.Same(model.Journal[1], model.JournalSelected);
@@ -277,7 +279,14 @@ public sealed class TheJournalIsAReadingTests
 
         Assert.Equal(2, List(panel).ItemsSource!.Cast<JournalEntry>().Count());
 
-        panel.ShowJournalNoise(true);
+        var model = (PanelViewModel)panel.DataContext!;
+
+        model.JournalNoise = true;
+        model.RefreshJournal();
+        // Leaving the page and coming back draws it again from the model.
+        panel.Page = TranscriptPage.Conversation;
+        Dispatcher.UIThread.RunJobs();
+        panel.Page = TranscriptPage.Journal;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(3, List(panel).ItemsSource!.Cast<JournalEntry>().Count());
@@ -302,7 +311,11 @@ public sealed class TheJournalIsAReadingTests
 
         Assert.True(detail.IsVisible);
 
-        panel.ShowJournalDetail(false);
+        ((PanelViewModel)panel.DataContext!).JournalDetail = false;
+        // Leaving the page and coming back draws it again from the model.
+        panel.Page = TranscriptPage.Conversation;
+        Dispatcher.UIThread.RunJobs();
+        panel.Page = TranscriptPage.Journal;
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(detail.IsVisible);

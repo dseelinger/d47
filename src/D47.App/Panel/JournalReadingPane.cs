@@ -45,9 +45,6 @@ internal sealed class JournalReadingPane : Border
     /// <summary>The entry the pane is drawing, or null for the empty state.</summary>
     public JournalEntry? Shown => _shown;
 
-    /// <summary>Whether labels sit above their values.</summary>
-    public bool Narrow => _narrow;
-
     private readonly Func<ReadingLink, Action?> _open;
     private readonly Func<string?> _currentSystem;
     private readonly Action<SelectableTextBlock>? _watch;

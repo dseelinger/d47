@@ -97,7 +97,7 @@ public class ThePowerPageFollowsTheDesignTests
 
         if (retracted)
         {
-            view.Retracted = true;
+            Mode(view).PressOption(1);
         }
 
         if (selected is { } priority)
@@ -106,6 +106,56 @@ public class ThePowerPageFollowsTheDesignTests
         }
 
         return view;
+    }
+
+    /// <summary>The Deployed and Retracted switch.</summary>
+    private static Segment Mode(PowerView view) =>
+        view.GetLogicalDescendants().OfType<Segment>()
+            .Single(segment => segment.ItemsSource is IEnumerable<string> items && items.Contains("Retracted"));
+
+    /// <summary>The prototype's slots in its order, with <paramref name="moved"/> taken out and put last in turn, as a move does.</summary>
+    private static IReadOnlyList<string> Order(params string[] moved) =>
+        [.. Prototype.Select(module => module.Slot).Where(slot => !moved.Contains(slot)), .. moved];
+
+    /// <summary>The layout the chart draws for <see cref="Power"/> with these moves, mode, order and priority opened.</summary>
+    private static PowerChartLayout Layout(
+        IReadOnlyDictionary<string, int>? moves = null, bool retracted = false, int? selected = null, IReadOnlyList<string>? order = null)
+    {
+        var priorities = PowerPriorities.Of(Power(moves: moves).Gauge!.Modules, Plant, retracted, order ?? Order());
+
+        return PowerChartLayout.Of(priorities, selected ?? priorities.DefaultSelected, priorities.Deployed.Draw);
+    }
+
+    /// <summary>The middle of a priority's block of the stack, in the chart's coordinates.</summary>
+    private static Point CentreOf(PowerChartLayout layout, int priority) =>
+        new((PowerChartLayout.StackLeft + PowerChartLayout.StackRight) / 2, PowerChartLayout.Flip(layout.Blocks[priority - 1].Middle));
+
+    /// <summary>The middle of a drill-in bar, in the chart's coordinates.</summary>
+    private static Point CentreOfBar(PowerChartLayout layout, string slot) =>
+        new((PowerChartLayout.DrillLeft + PowerChartLayout.DrillRight) / 2, PowerChartLayout.Flip(layout.Bars.Single(bar => bar.Span.Module.Slot == slot).Middle));
+
+    /// <summary>A priority's block of the stack, in the chart's coordinates.</summary>
+    private static Rect BlockOf(PowerChartLayout layout, int priority)
+    {
+        var block = layout.Blocks[priority - 1];
+
+        return new Rect(PowerChartLayout.StackLeft, PowerChartLayout.Flip(block.Top), PowerChartLayout.StackRight - PowerChartLayout.StackLeft, block.Top - block.Bottom);
+    }
+
+    /// <summary>A module's slice of the stack, in the chart's coordinates.</summary>
+    private static Rect SliceOf(PowerChartLayout layout, string slot)
+    {
+        var slice = layout.Slices.Single(found => found.Span.Module.Slot == slot);
+
+        return new Rect(PowerChartLayout.StackLeft, PowerChartLayout.Flip(slice.Top), PowerChartLayout.StackRight - PowerChartLayout.StackLeft, slice.Top - slice.Bottom);
+    }
+
+    /// <summary>Each priority's P-label as drawn, for a label of the size a P-label takes.</summary>
+    private static IReadOnlyList<(Rect At, bool Inside)> Labels(PowerChartLayout layout)
+    {
+        var size = new Size(18, 16);
+
+        return [.. layout.Labels([.. layout.Blocks.Select(_ => size)]).Select(label => (new Rect(label.At, size), label.Inside))];
     }
 
     private static IReadOnlyList<string> Said(Control root) =>
@@ -282,7 +332,7 @@ public class ThePowerPageFollowsTheDesignTests
         Assert.NotNull(Pressable(view, "Undo moves"));
 
         view.Selected = 4;
-        Assert.NotNull(view.Chart!.CentreOfBar("pdt"));
+        Assert.Contains(Layout(moves, selected: 4, order: Order("pdt")).Bars, bar => bar.Span.Module.Slot == "pdt");
 
         // A second move pushes P4 over the line, and Point Defence comes back reading its moved priority.
         Press(Pressable(view, "Move Chaff Launcher to P4")!);
@@ -301,7 +351,7 @@ public class ThePowerPageFollowsTheDesignTests
             Checks(view));
 
         view.Selected = 5;
-        Assert.NotNull(view.Chart!.CentreOfBar("pdt"));
+        Assert.Contains(Layout(selected: 5).Bars, bar => bar.Span.Module.Slot == "pdt");
     }
 
     [AvaloniaFact]
@@ -362,13 +412,13 @@ public class ThePowerPageFollowsTheDesignTests
     {
         // P5 of the prototype: every bar clears the minimum, so each is its share of the column exactly.
         var p5 = new[] { 0.94, 0.60, 0.20, 0.20, 0.20, 0.20 };
-        var heights = PowerChart.Heights(p5, 480, 24);
+        var heights = PowerChartLayout.Heights(p5, 480, 24);
 
         Assert.Equal(480, heights.Sum(), 6);
         Assert.Equal(0.94 / 0.20, heights[0] / heights[2], 6);
 
         // One module too small to hold its label is raised to it, and the rest keep their ratio to each other.
-        var lopsided = PowerChart.Heights([6.70, 3.30, 0.05], 480, 24);
+        var lopsided = PowerChartLayout.Heights([6.70, 3.30, 0.05], 480, 24);
 
         Assert.Equal(24, lopsided[2], 6);
         Assert.Equal(480, lopsided.Sum(), 6);
@@ -406,13 +456,13 @@ public class ThePowerPageFollowsTheDesignTests
         view.Show(Power());
 
         Assert.Equal(3, view.Selected);
-        Assert.True(view.Retracted);
+        Assert.Equal(1, Mode(view).SelectedIndex);
 
         view.Forget();
         view.Show(Power());
 
         Assert.Equal(5, view.Selected);
-        Assert.False(view.Retracted);
+        Assert.Equal(0, Mode(view).SelectedIndex);
     }
 
     private sealed record Hosted(Window Window, PowerView View, IDisposable Look) : IDisposable
@@ -442,7 +492,7 @@ public class ThePowerPageFollowsTheDesignTests
     {
         using var host = Host(View());
 
-        var at = host.On(host.View.Chart!.CentreOf(3)!.Value);
+        var at = host.On(CentreOf(Layout(), 3));
 
         host.Window.MouseDown(at, MouseButton.Left);
         host.Window.MouseUp(at, MouseButton.Left);
@@ -469,30 +519,42 @@ public class ThePowerPageFollowsTheDesignTests
     {
         using var host = Host(View());
 
-        Assert.True(host.View.Chart!.CentreOfBar("ws")!.Value.Y < host.View.Chart.CentreOfBar("afm")!.Value.Y);
+        var before = Layout();
+
+        Assert.True(CentreOfBar(before, "ws").Y < CentreOfBar(before, "afm").Y);
 
         // Wake Scanner, at the top of P5, dropped on the lower half of Auto Field-Maintenance at the bottom.
-        var from = host.On(host.View.Chart.CentreOfBar("ws")!.Value);
-        var to = host.On(host.View.Chart.CentreOfBar("afm")!.Value + new Point(0, 20));
+        var from = host.On(CentreOfBar(before, "ws"));
+        var to = host.On(CentreOfBar(before, "afm") + new Point(0, 20));
 
-        var asked = 0;
+        var asked = new List<string>();
 
-        host.View.MoveAsked += (_, _) => asked++;
+        host.View.MoveAsked += (slot, _) => asked.Add(slot);
 
         Drag(host, from, to);
 
-        Assert.True(host.View.Chart!.CentreOfBar("ws")!.Value.Y > host.View.Chart.CentreOfBar("afm")!.Value.Y);
-
         // A drop inside the column is a what-if and asks for no move.
-        Assert.Equal(0, asked);
+        Assert.Empty(asked);
+
+        // Wake Scanner now sits under Auto Field-Maintenance, dropped ahead of it in the order: the bar drawn there is the one a drag onto P4 asks to move.
+        var after = Layout(order: [.. Order().Where(slot => slot != "ws").SelectMany(slot => slot == "afm" ? new[] { "ws", "afm" } : [slot])]);
+
+        Assert.True(CentreOfBar(after, "ws").Y > CentreOfBar(after, "afm").Y);
+
+        host.Window.UpdateLayout();
+        Drag(host, host.On(CentreOfBar(after, "ws")), host.On(CentreOf(after, 4)));
+        Assert.Equal(["ws"], asked);
 
         var reset = host.View.GetVisualDescendants().OfType<Button>()
             .First(button => Equals(button.Content, "Reset order"));
 
         reset.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
+        host.Window.UpdateLayout();
 
-        Assert.True(host.View.Chart!.CentreOfBar("ws")!.Value.Y < host.View.Chart.CentreOfBar("afm")!.Value.Y);
+        // And back at the top of P5 once the order is reset.
+        Drag(host, host.On(CentreOfBar(before, "ws")), host.On(CentreOf(before, 4)));
+        Assert.Equal(["ws", "ws"], asked);
     }
 
     private static void Drag(Hosted host, Point from, Point to, bool release = true)
@@ -526,13 +588,13 @@ public class ThePowerPageFollowsTheDesignTests
         return (view, moves);
     }
 
-    /// <summary>Drags a drill-in bar onto a priority's block of the stack and lets go.</summary>
-    private static void DropOn(Hosted host, string slot, int priority)
+    /// <summary>Drags a drill-in bar onto a priority's block of the stack, as <paramref name="layout"/> draws them, and lets go.</summary>
+    private static void DropOn(Hosted host, PowerChartLayout layout, string slot, int priority)
     {
         // A redraw puts in a new chart, which has no place in the window until it is laid out.
         host.Window.UpdateLayout();
 
-        Drag(host, host.On(host.View.Chart!.CentreOfBar(slot)!.Value), host.On(host.View.Chart.CentreOf(priority)!.Value));
+        Drag(host, host.On(CentreOfBar(layout, slot)), host.On(CentreOf(layout, priority)));
     }
 
     /// <summary>P4 and P5 emptied into P3.</summary>
@@ -555,19 +617,19 @@ public class ThePowerPageFollowsTheDesignTests
 
         using var host = Host(view);
 
-        DropOn(host, "gfb", 2);
+        DropOn(host, Layout(selected: 4), "gfb", 2);
 
         Assert.Equal(new Dictionary<string, int> { ["gfb"] = 2 }, moves);
 
-        var chart = view.Chart!;
-        var booster = chart.SliceOf("gfb")!.Value;
+        var moved = Layout(moves, order: Order("gfb"));
+        var booster = SliceOf(moved, "gfb");
 
-        Assert.True(chart.BlockOf(2)!.Value.Contains(booster.Center));
-        Assert.True(booster.Y < chart.SliceOf("thr")!.Value.Y);
+        Assert.True(BlockOf(moved, 2).Contains(booster.Center));
+        Assert.True(booster.Y < SliceOf(moved, "thr").Y);
 
-        view.Selected = 2;
+        var opened = Layout(moves, selected: 2, order: Order("gfb"));
 
-        Assert.True(view.Chart!.CentreOfBar("gfb")!.Value.Y < view.Chart.CentreOfBar("thr")!.Value.Y);
+        Assert.True(CentreOfBar(opened, "gfb").Y < CentreOfBar(opened, "thr").Y);
     }
 
     [AvaloniaFact]
@@ -579,7 +641,7 @@ public class ThePowerPageFollowsTheDesignTests
 
         using var host = Host(view);
 
-        DropOn(host, "gfb", 4);
+        DropOn(host, Layout(selected: 4), "gfb", 4);
 
         Assert.Empty(moves);
     }
@@ -593,10 +655,10 @@ public class ThePowerPageFollowsTheDesignTests
 
         using var host = Host(view);
 
-        var chart = view.Chart!;
-        var p3 = chart.BlockOf(3)!.Value;
-        var p4 = chart.BlockOf(4)!.Value;
-        var p5 = chart.BlockOf(5)!.Value;
+        var layout = Layout(EmptyTop, selected: 3);
+        var p3 = BlockOf(layout, 3);
+        var p4 = BlockOf(layout, 4);
+        var p5 = BlockOf(layout, 5);
 
         Assert.Equal(20, p4.Height);
         Assert.Equal(20, p5.Height);
@@ -605,15 +667,15 @@ public class ThePowerPageFollowsTheDesignTests
         Assert.Equal(3, p3.Y - p4.Bottom);
         Assert.Equal(3, p4.Y - p5.Bottom);
 
-        Assert.Contains(chart.PriorityLabels(), label => label is { Priority: 4, Inside: true });
-        Assert.Contains(chart.PriorityLabels(), label => label is { Priority: 5, Inside: true });
+        Assert.True(Labels(layout)[3].Inside);
+        Assert.True(Labels(layout)[4].Inside);
 
-        DropOn(host, "sb1", 5);
+        DropOn(host, layout, "sb1", 5);
 
         Assert.Equal(5, moves["sb1"]);
 
         view.Selected = 3;
-        DropOn(host, "sb2", 4);
+        DropOn(host, Layout(moves, selected: 3, order: Order("sb1")), "sb2", 4);
 
         Assert.Equal(4, moves["sb2"]);
     }
@@ -621,15 +683,11 @@ public class ThePowerPageFollowsTheDesignTests
     [AvaloniaFact]
     public void AnEmptyPriorityKeepsItsPlaceBetweenTwoUsedOnes()
     {
-        var (view, _) = Moving(EmptyMiddle);
+        var layout = Layout(EmptyMiddle);
 
-        using var host = Host(view);
-
-        var chart = view.Chart!;
-
-        Assert.True(chart.BlockOf(3)!.Value.Bottom < chart.BlockOf(2)!.Value.Y);
-        Assert.True(chart.BlockOf(4)!.Value.Bottom < chart.BlockOf(3)!.Value.Y);
-        Assert.Equal(20, chart.BlockOf(3)!.Value.Height);
+        Assert.True(BlockOf(layout, 3).Bottom < BlockOf(layout, 2).Y);
+        Assert.True(BlockOf(layout, 4).Bottom < BlockOf(layout, 3).Y);
+        Assert.Equal(20, BlockOf(layout, 3).Height);
     }
 
     [AvaloniaTheory]
@@ -639,21 +697,16 @@ public class ThePowerPageFollowsTheDesignTests
     {
         foreach (var moves in new[] { new Dictionary<string, int>(), EmptyTop, EmptyMiddle, ShortP1 })
         {
-            var view = new PowerView();
-
-            view.Show(Power(moves: moves));
-            view.Retracted = retracted;
-
-            var chart = view.Chart!;
             var priorities = PowerPriorities.Of(Power(moves: moves).Gauge!.Modules, Plant, retracted);
+            var layout = Layout(moves, retracted);
             var crossed = 0;
 
             for (var priority = 1; priority <= PowerPriorities.Lowest; priority++)
             {
                 foreach (var crossing in priorities.Drill(priority).Crossings)
                 {
-                    var line = chart.LineAt(priorities.Lines.ToList().IndexOf(crossing.Line))!.Value;
-                    var slice = chart.SliceOf(crossing.Module.Slot)!.Value;
+                    var line = PowerChartLayout.Flip(layout.At(crossing.Line.Megawatts));
+                    var slice = SliceOf(layout, crossing.Module.Slot);
 
                     Assert.InRange(line, slice.Y, slice.Bottom);
                     crossed++;
@@ -667,15 +720,11 @@ public class ThePowerPageFollowsTheDesignTests
     [AvaloniaFact]
     public void AShortPriorityIsLabelledBesideTheStack()
     {
-        var view = new PowerView();
+        var layout = Layout(ShortP1);
+        var labels = Labels(layout);
+        var p1 = BlockOf(layout, 1);
 
-        view.Show(Power(moves: ShortP1));
-
-        var chart = view.Chart!;
-        var labels = chart.PriorityLabels();
-        var p1 = chart.BlockOf(1)!.Value;
-
-        Assert.Equal([1, 2, 3, 4, 5], labels.Select(label => label.Priority));
+        Assert.Equal(5, labels.Count);
         Assert.True(p1.Height < 16);
 
         Assert.False(labels[0].Inside);
@@ -702,7 +751,9 @@ public class ThePowerPageFollowsTheDesignTests
             view.Selected = 4;
             host.Window.UpdateLayout();
 
-            Drag(host, host.On(view.Chart!.CentreOfBar("gfb")!.Value), host.On(view.Chart.CentreOf(2)!.Value), release: false);
+            var layout = Layout(selected: 4);
+
+            Drag(host, host.On(CentreOfBar(layout, "gfb")), host.On(CentreOf(layout, 2)), release: false);
 
             using var dragging = host.Window.CaptureRenderedFrame()!;
 

@@ -76,9 +76,6 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         Content = _strip;
     }
 
-    /// <summary>How many panes the strip is currently showing.</summary>
-    public int Panes => _panes;
-
     protected override Size ArrangeOverride(Size finalSize)
     {
         // Decided from the arranged width rather than from a window size or a settings value.

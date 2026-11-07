@@ -316,7 +316,7 @@ public sealed class TheCustomVoicesPageAddsAndListsVoicesTests : IDisposable
         var saved = Assert.Single(_store.List());
         Assert.Equal(("Night watch", "female", "mid", "brisk"), (saved.Name, saved.Gender, saved.Pitch, saved.Pace));
         Assert.True(Shows(page, "Female · Mid pitch · Brisk pace"));
-        Assert.False(draft.HasTake);
+        Assert.Null(draft.Kept);
         Assert.Equal(string.Empty, Named<TextBox>(page, "VoiceName").Text);
 
         window.Close();

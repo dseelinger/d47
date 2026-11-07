@@ -788,9 +788,6 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     private D47.Core.Ships.ShipPlanService? _shipPlans;
 
-    /// <summary>Gives this surface Asset Mgmt › Construction (#828); a surface without the fleet calls it before <see cref="EnableEngineers"/>.</summary>
-    public void EnableConstruction(ConstructionSurface construction) => _assets.EnableConstruction(construction);
-
     /// <summary>Redraws the Construction page when the journal has moved the sites, the hold or the carrier.</summary>
     public bool TickConstruction() => _assets.TickConstruction();
 
@@ -870,9 +867,6 @@ public partial class PanelView : UserControl, IPanelTabHost
         bool unsold = true,
         bool galaxyMap = true) =>
         _navigation.EnableRouting(surface, plan, progress, market, bestCargo, trade, bookmarks, body, unsold, galaxyMap);
-
-    /// <summary>Opens the Galaxy map root on the last plan of <paramref name="kind"/>.</summary>
-    public void ShowOnGalaxyMap(RoutePlanKind kind) => _navigation.ShowOnGalaxyMap(kind);
 
     /// <summary>
     /// Redraws the route being flown, from the host's tick, and says whether anything on it moved — the
@@ -1914,10 +1908,6 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Puts what is on the page above the top of the view, and deletes nothing (#413).</summary>
     public bool ScrollPastReading() => Tab == PanelTab.Transcript && _scroll.ScrollPastReading();
 
-    internal bool ReadingIsAboveTheFold => _scroll.ReadingIsAboveTheFold;
-
-    internal bool Following => _scroll.Following;
-
     /// <summary>Puts the cursor in the search box.</summary>
     public void FocusSearch()
     {
@@ -2748,9 +2738,6 @@ public partial class PanelView : UserControl, IPanelTabHost
     private void SettleLogFollow() =>
         FollowLogFile(Tab == PanelTab.Transcript && Page == TranscriptPage.Log);
 
-    /// <summary>Whether the log is being followed.</summary>
-    internal bool FollowingLog => _logTicker?.IsEnabled == true;
-
     private void FollowLogFile(bool following)
     {
         if (!following)
@@ -2766,9 +2753,6 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         _logTicker.Start();
     }
-
-    /// <summary>One tick of the log page's refresh.</summary>
-    internal async Task RefreshLogNow() => await KeepLogUp();
 
     private async Task KeepLogUp()
     {
@@ -3131,27 +3115,6 @@ public partial class PanelView : UserControl, IPanelTabHost
         }
 
         return () => PageTrail.Open(Nav, target.Root, target.Crumbs);
-    }
-
-    /// <summary>Whether the fields are drawn beside the list.</summary>
-    public void ShowJournalDetail(bool shown)
-    {
-        if (Model is { } model)
-        {
-            model.JournalDetail = shown;
-            DrawTranscript();
-        }
-    }
-
-    /// <summary>Whether the kinds nobody reads are listed.</summary>
-    public void ShowJournalNoise(bool shown)
-    {
-        if (Model is { } model)
-        {
-            model.JournalNoise = shown;
-            model.RefreshJournal();
-            DrawTranscript();
-        }
     }
 
     private void DrawTranscript(bool appended)

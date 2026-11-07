@@ -287,13 +287,17 @@ public class TheCodexTablesAreBuiltFromTheLedgerTests
         Assert.Null(Entries(CodexPeriod.Everything).Groups[0].Rows[^1].Origin);
     }
 
+    /// <summary>The body and position line of a row with these fields, as the model builds it.</summary>
+    private static string Place(string? system, string? body, double? latitude, double? longitude) =>
+        new CodexEntryRow(0, string.Empty, system, false, CodexModel.BodyOf(system, body), CodexModel.PositionOf(latitude, longitude), default, false, null, null).Place;
+
     [Fact]
     public void TheBodyAndPositionLineHandlesANameNoNameAndNeither()
     {
-        Assert.Equal("A 4 c · 12.4512, −108.2231", CodexModel.Place("Sol", "Sol A 4 c", 12.4512, -108.2231));
-        Assert.Equal("12.4512, −108.2231", CodexModel.Place("Sol", null, 12.4512, -108.2231));
-        Assert.Equal("A 4 c", CodexModel.Place("Sol", "Sol A 4 c", null, null));
-        Assert.Equal(string.Empty, CodexModel.Place("Sol", null, null, null));
+        Assert.Equal("A 4 c · 12.4512, −108.2231", Place("Sol", "Sol A 4 c", 12.4512, -108.2231));
+        Assert.Equal("12.4512, −108.2231", Place("Sol", null, 12.4512, -108.2231));
+        Assert.Equal("A 4 c", Place("Sol", "Sol A 4 c", null, null));
+        Assert.Equal(string.Empty, Place("Sol", null, null, null));
 
         var rows = Entries(CodexPeriod.Everything).Groups.SelectMany(group => group.Rows).ToList();
 
