@@ -12,8 +12,8 @@ namespace D47.App.Panel;
 /// <summary>A chapter's told entries as the chapter's page and the mini panel draw them: stamp line, speaker, text and portrait.</summary>
 internal sealed class ToldEntries(AdventureSurface surface, Func<SpeakerPortraits?> portraits)
 {
-    /// <summary>One told entry. Without <paramref name="copy"/> the trigger has no copy glyph.</summary>
-    public Control Entry(Adventure adventure, AdventureTold told, string? here, Func<string, Task<bool>>? copy)
+    /// <summary>One told entry. Without <paramref name="copy"/> the trigger has no copy glyph; without <paramref name="changeVoice"/> a cast line has no Change voice.</summary>
+    public Control Entry(Adventure adventure, AdventureTold told, string? here, Func<string, Task<bool>>? copy, Action<string>? changeVoice = null)
     {
         var stack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 8, 0, 0) };
 
@@ -55,6 +55,13 @@ internal sealed class ToldEntries(AdventureSurface surface, Func<SpeakerPortrait
         }
 
         column.Children.Add(AdventuresPage.Text(told.Text, TypeScale.Body));
+
+        if (told.Kind == AdventureToldKind.Beat && changeVoice is not null && told.Picture is { Length: > 0 } cast && surface.CastVoices?.Member(cast) is not null)
+        {
+            var button = new Button { Content = "Change voice", HorizontalAlignment = HorizontalAlignment.Left };
+            button.Click += (_, _) => changeVoice(cast);
+            column.Children.Add(button);
+        }
 
         stack.Children.Add(Pictured(
             column,

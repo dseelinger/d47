@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A chapter's page now has **Change voice** under each line spoken by a story character, primary or not. It opens the same provider and voice picker as the Waiting for your answer list. Lines by the Narrator or the ship have none.
+
 **Mark done** now works on a story's Guardian beacon objective. Marking it records the beacon scan on the story, so its Guardian cores come aboard as they would from a real scan. Use it when Elite does not write the event.
 
 A ship with no cargo rack is no longer judged able to make a story's Guardian beacon trip, because collecting the Ancient Key needs at least 1 t of cargo space. The chapter writer is told "no cargo rack is fitted" when that is what stands in the way, a stored ship needs a known cargo rack to be offered as the swap, and a Loadout with no cargo rack does not meet a "Fit out a ship that can reach the beacon" objective.

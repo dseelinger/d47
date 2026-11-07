@@ -795,7 +795,7 @@ the voice paired with it for the ship's provider. **Play sample** speaks the cha
 and one fixed sentence in that voice. **Change picture** and **Use the default** work as they do on a
 message.
 
-**Change voice**, on the row and on every message from a story character, primary or not, opens a picker
+**Change voice**, on the row, on an ending waiting for your answer, and under each of a story character's lines on its chapter's page, primary or not, opens a picker
 of every provider that speaks, then of every voice that provider lists, of either gender. The story's own
 voice is marked in the list. The story's text is not rewritten for the voice you choose. Each voice in the
 list can be played first; on a paid provider each sample is billed like any line. **Use the default**

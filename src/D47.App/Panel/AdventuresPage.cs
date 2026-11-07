@@ -1605,6 +1605,9 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         return null;
     }
 
+    private Action<string>? ChangeVoice() =>
+        _surface.CastVoices is { } voices ? key => CastVoiceChooser.Open(_prompts, voices, key, Rebuild) : null;
+
     /// <summary>A trigger phrase as a sentence: "arrive at X" reads badly without a capital and a stop.</summary>
     internal static string Sentence(string phrase) =>
         phrase.Length == 0 ? phrase : char.ToUpperInvariant(phrase[0]) + phrase[1..] + ".";
@@ -1622,7 +1625,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         foreach (var told in adventure.Told)
         {
-            page.Children.Add(_entries.Entry(adventure, told, here, copy));
+            page.Children.Add(_entries.Entry(adventure, told, here, copy, ChangeVoice()));
         }
     }
 
