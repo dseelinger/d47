@@ -29,10 +29,10 @@ public class TheGalaxyMapNamesThePlanDrawnTests
     {
         var (_, page) = Opened(headset);
 
-        Assert.Null(page.PlanDrawn);
-        Assert.Equal(string.Empty, page.PlanName);
-        Assert.False(page.PlanBandControl!.IsVisible);
-        Assert.Contains(page.PlanBandControl, page.PlottedRoute.GetVisualAncestors());
+        Assert.Null(page.PlanShown());
+        Assert.Equal(string.Empty, page.PlanName());
+        Assert.False(page.PlanBand()!.IsVisible);
+        Assert.Contains(page.PlanBand(), page.PlottedRoute().GetVisualAncestors());
     }
 
     [AvaloniaTheory]
@@ -44,11 +44,11 @@ public class TheGalaxyMapNamesThePlanDrawnTests
 
         panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
 
-        Assert.Equal(RoutePlanKind.Riches, page.PlanDrawn);
-        Assert.Equal("Road to Riches plan: Road to Riches", page.PlanName);
-        Assert.True(page.PlanBandControl!.IsVisible);
-        Assert.True(page.PlottedRoute.IsVisible);
-        Assert.Equal(44, page.PlanBandControl!.Height);
+        Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
+        Assert.Equal("ROAD TO RICHES PLAN: Road to Riches", page.PlanName());
+        Assert.True(page.PlanBand()!.IsVisible);
+        Assert.True(page.PlottedRoute().IsVisible);
+        Assert.Equal(44, page.PlanBand()!.Height);
     }
 
     [AvaloniaTheory]
@@ -59,11 +59,11 @@ public class TheGalaxyMapNamesThePlanDrawnTests
         var (panel, page) = Opened(headset);
 
         panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
-        ThePlanPageOffersTheGalaxyMapTests.Press(page.PlottedRoute);
+        ThePlanPageOffersTheGalaxyMapTests.Press(page.PlottedRoute());
 
-        Assert.Null(page.PlanDrawn);
-        Assert.Equal(string.Empty, page.PlanName);
-        Assert.False(page.PlanBandControl!.IsVisible);
+        Assert.Null(page.PlanShown());
+        Assert.Equal(string.Empty, page.PlanName());
+        Assert.False(page.PlanBand()!.IsVisible);
     }
 
     [AvaloniaFact]
@@ -73,7 +73,7 @@ public class TheGalaxyMapNamesThePlanDrawnTests
 
         panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
 
-        Assert.Equal(GalaxyMapPage.PanelMapHeight, page.Map.Bounds.Height);
+        Assert.Equal(GalaxyMapPage.PanelMapHeight, page.Map().Bounds.Height);
     }
 
     [AvaloniaTheory]
@@ -85,12 +85,14 @@ public class TheGalaxyMapNamesThePlanDrawnTests
 
         panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
 
+        var stops = ThePlanPageOffersTheGalaxyMapTests.RichesRoute().Stops;
+
         foreach (var stop in Enumerable.Range(0, 10))
         {
-            var at = page.Map.ScreenOf($"Stop {stop}");
+            var at = page.Map().Projected(stops[stop].Position!.Value);
 
-            Assert.NotNull(at);
-            Assert.True(at.Value.Y >= 44, $"Stop {stop} is drawn {at.Value.Y} px from the top, under the band");
+            Assert.True(at.Y >= 44, $"Stop {stop} is drawn {at.Y} px from the top, under the band");
+            Assert.True(at.Y <= page.Map().Bounds.Height, $"Stop {stop} is drawn {at.Y} px from the top, below the map");
         }
     }
 }

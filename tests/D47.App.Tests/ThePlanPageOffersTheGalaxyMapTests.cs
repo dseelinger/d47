@@ -256,12 +256,14 @@ public class ThePlanPageOffersTheGalaxyMapTests
         return panel;
     }
 
-    internal static void Show(PanelView panel, bool headset)
+    /// <summary>Shows the panel in a window, or on an offscreen surface for the headset, which is returned so it can draw again.</summary>
+    internal static OffscreenSurface? Show(PanelView panel, bool headset)
     {
         if (headset)
         {
-            new OffscreenSurface(panel, new PixelSize(1024, 640)).Render();
-            return;
+            var surface = new OffscreenSurface(panel, new PixelSize(1024, 640));
+            surface.Render();
+            return surface;
         }
 
         new Window
@@ -272,6 +274,8 @@ public class ThePlanPageOffersTheGalaxyMapTests
             Background = (IBrush)Application.Current!.Resources[ThemeManager.BgKey]!,
         }.Show();
         Dispatcher.UIThread.RunJobs();
+
+        return null;
     }
 
     [AvaloniaTheory]
@@ -282,12 +286,13 @@ public class ThePlanPageOffersTheGalaxyMapTests
         var game = new Game();
         game.Plans.Record(RichesRoute(), "Road to Riches", Now.AddHours(-1));
         var panel = Panel(game, headset);
-        Show(panel, headset);
+        using var surface = Show(panel, headset);
 
         Press(Tile(panel));
+        surface?.Render();
 
         Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
-        Assert.Equal(RoutePlanKind.Riches, panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single().PlanDrawn);
+        Assert.Equal(RoutePlanKind.Riches, panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single().PlanShown());
     }
 
     [AvaloniaTheory]
@@ -298,11 +303,12 @@ public class ThePlanPageOffersTheGalaxyMapTests
         var game = new Game();
         game.Plans.Record(RichesRoute(), "Road to Riches", Now.AddHours(-1));
         var panel = Panel(game, headset);
-        Show(panel, headset);
+        using var surface = Show(panel, headset);
 
         Press(MapPress(panel));
+        surface?.Render();
 
         Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
-        Assert.Equal(RoutePlanKind.Riches, panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single().PlanDrawn);
+        Assert.Equal(RoutePlanKind.Riches, panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single().PlanShown());
     }
 }

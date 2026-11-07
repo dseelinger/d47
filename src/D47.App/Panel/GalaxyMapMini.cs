@@ -37,11 +37,6 @@ public sealed class GalaxyMapMini : UserControl
         Refresh();
     }
 
-    internal GalaxyMapView Map => _map;
-
-    /// <summary>The words shown in place of the map; empty while the map is drawn.</summary>
-    internal string Note => Content is TextBlock note ? note.Text ?? string.Empty : string.Empty;
-
     /// <summary>Redraws when the route, the position or the plan moved; true when it did.</summary>
     public bool Tick()
     {
@@ -69,41 +64,15 @@ public sealed class GalaxyMapMini : UserControl
             return;
         }
 
-        var here = _here();
-        var route = _route();
-        var planStops = plan is null ? null : RouteMapStop.From(plan);
-        var planned = planStops is not null && planStops.Count(stop => stop.Position is not null) >= 2;
-        var stops = planned ? planStops! : route.IsPlotted ? RouteMapStop.From(route) : [];
-        var reached = planned ? RouteMapStop.ReachedIndex(plan!) : RouteProgress.For(route, here).Index;
+        var ahead = RouteAhead.Of(_route(), _here(), _commander()?.Location.StarPos, plan);
 
-        if (stops.Count == 0)
+        if (ahead.Scene is not { } scene)
         {
-            Content = Muted(route.LiveTarget is { } target
-                ? target.NextJump
-                : "No route is plotted.");
+            Content = Muted(ahead.Note!);
             return;
         }
 
-        if (reached >= stops.Count - 1)
-        {
-            Content = Muted("The destination is reached.");
-            return;
-        }
-
-        var ahead = stops.Skip(reached + 1).ToList();
-        var origin = reached >= 0 && stops[reached].Position is { } onRoute ? onRoute : _commander()?.Location.StarPos;
-
-        IReadOnlyList<RouteMapStop> drawn = origin is { } from
-            ? [new RouteMapStop(here ?? string.Empty, from, RouteStopMarks.None), .. ahead]
-            : ahead;
-
-        _map.Show(new GalaxyMapScene(
-            Regions: false,
-            Travels: null,
-            Route: drawn,
-            Reached: origin is null ? -1 : 0,
-            Commander: origin,
-            Here: here));
+        _map.Show(scene);
 
         Content = _map;
     }

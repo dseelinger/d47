@@ -83,7 +83,7 @@ public class TheRoutePanelsShowAChangedRouteFromItsTargetTests
         var mini = new GalaxyMapMini(() => null, Changed, () => "Sol", null, () => null);
         var window = Show(mini);
 
-        Assert.Equal(Target.NextJump, mini.Note);
+        Assert.Equal(Target.NextJump, mini.Note());
 
         using var frame = window.CaptureRenderedFrame()!;
         frame.SaveCapture("galaxy-mini-changed.png");

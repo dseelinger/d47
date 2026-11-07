@@ -32,7 +32,6 @@ public sealed class GalaxyMapLookups(ILogger? logger = null)
     private readonly Dictionary<string, Task<IReadOnlyList<SystemSummary>>> _nearby = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, Task<StarPosition?>> _positions = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _failed = new(StringComparer.OrdinalIgnoreCase);
-    private readonly List<Task> _sent = [];
     private int _generation;
 
     /// <summary>Changes each time a request finishes, answered or not.</summary>
@@ -50,7 +49,7 @@ public sealed class GalaxyMapLookups(ILogger? logger = null)
 
             var request = Task.Run(() => NearbyAsync(galaxy, system));
             _nearby[system] = request;
-            _sent.Add(Landed(request));
+            Landed(request);
         }
     }
 
@@ -77,7 +76,7 @@ public sealed class GalaxyMapLookups(ILogger? logger = null)
 
                 var request = Task.Run(() => PositionAsync(galaxy, system));
                 _positions[system] = request;
-                _sent.Add(Landed(request));
+                Landed(request);
                 asked++;
             }
         }
@@ -107,18 +106,9 @@ public sealed class GalaxyMapLookups(ILogger? logger = null)
         }
     }
 
-    /// <summary>Completes when every request sent so far has finished.</summary>
-    internal Task Settled()
-    {
-        lock (_gate)
-        {
-            return Task.WhenAll(_sent);
-        }
-    }
-
     /// <summary>Moves the generation on once the request has completed, so a reader that sees the new generation sees the answer.</summary>
-    private Task Landed(Task request) =>
-        request.ContinueWith(_ => Interlocked.Increment(ref _generation), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+    private void Landed(Task request) =>
+        _ = request.ContinueWith(_ => Interlocked.Increment(ref _generation), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
 
     private async Task<IReadOnlyList<SystemSummary>> NearbyAsync(IGalaxyService galaxy, string system)
     {

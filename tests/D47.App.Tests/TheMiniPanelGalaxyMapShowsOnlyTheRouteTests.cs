@@ -127,7 +127,13 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
 
     private static GalaxyMapMini Mini(PanelView panel) => panel.GetVisualDescendants().OfType<GalaxyMapMini>().Single();
 
-    private static string[] Names(GalaxyMapMini mini) => [.. mini.Map.Scene.Route!.Select(stop => stop.System)];
+    private static readonly StarPosition Hip22460 = new(Wregoe.X - (8 * 18), Wregoe.Y, Wregoe.Z + (8 * 14));
+
+    /// <summary>What the mini map draws for <paramref name="game"/>, asked for as the mini panel asks.</summary>
+    private static GalaxyMapScene Ahead(Game game, StoredRoutePlan? plan = null) =>
+        RouteAhead.Of(game.Route, game.OffDuty is null ? game.Commander.Location.StarSystem : null, game.Commander.Location.StarPos, plan).Scene!;
+
+    private static string[] Names(GalaxyMapScene scene) => [.. scene.Route!.Select(stop => stop.System)];
 
     private static void Arrive(Game game, string system, StarPosition at) =>
         game.Commander.Apply(Event(Arrival("FSDJump", Now, system, at)));
@@ -149,10 +155,13 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
     [AvaloniaFact]
     public void OnlyTheRouteAheadIsDrawnFromThePosition()
     {
-        var mini = Mini(Panel(new Game()));
-        var scene = mini.Map.Scene;
+        var game = new Game();
+        var mini = Mini(Panel(game));
+        var scene = Ahead(game);
 
-        Assert.Equal(["Wregoe TC-X b29-0", "Hop 1", "Hop 2", "Hop 3", "Hop 4", "Hop 5", "Hop 6", "Hop 7", "Hip 22460"], Names(mini));
+        Assert.Equal(string.Empty, mini.Note());
+        Assert.True(mini.Map().Drawn.Route);
+        Assert.Equal(["Wregoe TC-X b29-0", "Hop 1", "Hop 2", "Hop 3", "Hop 4", "Hop 5", "Hop 6", "Hop 7", "Hip 22460"], Names(scene));
         Assert.Null(scene.Travels);
         Assert.False(scene.Regions);
         Assert.Null(scene.Marks);
@@ -165,19 +174,19 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
     [AvaloniaFact]
     public void TheFrameHoldsThePositionAndEveryStopAheadWithTheInset()
     {
-        var mini = Mini(Panel(new Game()));
-        var width = mini.Map.Bounds.Width;
-        var height = mini.Map.Bounds.Height;
+        var game = new Game();
+        var mini = Mini(Panel(game));
+        var width = mini.Map().Bounds.Width;
+        var height = mini.Map().Bounds.Height;
+        var stops = Ahead(game).Route!.Select(stop => mini.Map().Projected(stop.Position!.Value)).ToList();
 
-        foreach (var name in Names(mini))
+        foreach (var at in stops)
         {
-            var at = mini.Map.ScreenOf(name)!.Value;
-
             Assert.InRange(at.X, 20 - 0.5, width - 20 + 0.5);
             Assert.InRange(at.Y, 20 - 0.5, height - 20 + 0.5);
         }
 
-        var ys = Names(mini).Select(name => mini.Map.ScreenOf(name)!.Value.Y).ToList();
+        var ys = stops.Select(at => at.Y).ToList();
 
         Assert.Equal(20, ys.Min(), 0.5);
         Assert.Equal(height - 20, ys.Max(), 0.5);
@@ -188,13 +197,13 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
     {
         var game = new Game();
         var mini = Mini(Panel(game));
-        var before = mini.Map.Viewport.LightYearsAcross;
+        var before = mini.Map().Viewport.LightYearsAcross;
 
         Arrive(game, "Hop 5", new StarPosition(Wregoe.X - 90, Wregoe.Y, Wregoe.Z + 70));
 
         Assert.True(mini.Tick());
-        Assert.Equal(["Hop 5", "Hop 6", "Hop 7", "Hip 22460"], Names(mini));
-        Assert.True(mini.Map.Viewport.LightYearsAcross < before);
+        Assert.Equal(["Hop 5", "Hop 6", "Hop 7", "Hip 22460"], Names(Ahead(game)));
+        Assert.True(mini.Map().Viewport.LightYearsAcross < before);
         Assert.False(mini.Tick());
     }
 
@@ -208,11 +217,14 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
         Arrive(game, "Elsewhere", away);
 
         Assert.True(mini.Tick());
-        Assert.Equal(10, Names(mini).Length);
-        Assert.Equal("Elsewhere", Names(mini)[0]);
-        Assert.Equal(away.X, mini.Map.Scene.Commander!.Value.X, 3);
-        Assert.Equal(away.Z, mini.Map.Scene.Commander!.Value.Z, 3);
-        Assert.Equal(20, mini.Map.ScreenOf("Hip 22460")!.Value.X, 0.5);
+
+        var scene = Ahead(game);
+
+        Assert.Equal(10, Names(scene).Length);
+        Assert.Equal("Elsewhere", Names(scene)[0]);
+        Assert.Equal(away.X, scene.Commander!.Value.X, 3);
+        Assert.Equal(away.Z, scene.Commander!.Value.Z, 3);
+        Assert.Equal(20, mini.Map().Projected(Hip22460).X, 0.5);
     }
 
     [AvaloniaFact]
@@ -229,10 +241,13 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(9, Names(mini).Length);
-        Assert.Equal("Wregoe TC-X b29-0", Names(mini)[0]);
-        Assert.Null(mini.Map.Scene.Commander);
-        Assert.Equal(-1, mini.Map.Scene.Reached);
+        var scene = RouteAhead.Of(route, null, unplaced.Location.StarPos, null).Scene!;
+
+        Assert.Equal(string.Empty, mini.Note());
+        Assert.Equal(9, Names(scene).Length);
+        Assert.Equal("Wregoe TC-X b29-0", Names(scene)[0]);
+        Assert.Null(scene.Commander);
+        Assert.Equal(-1, scene.Reached);
     }
 
     [AvaloniaFact]
@@ -240,7 +255,7 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
     {
         var mini = Mini(Panel(new Game { Route = NavRoute.None }));
 
-        Assert.Equal("No route is plotted.", mini.Note);
+        Assert.Equal("No route is plotted.", mini.Note());
     }
 
     [AvaloniaFact]
@@ -256,13 +271,17 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
         var mini = Mini(panel);
 
         Assert.True(mini.Tick());
-        Assert.Equal(["Wregoe TC-X b29-0", "Stop 0", "Stop 1", "Stop 2"], Names(mini));
-        Assert.Equal(0, mini.Map.Scene.Reached);
+        Assert.Equal(string.Empty, mini.Note());
+
+        var scene = Ahead(game, game.Plans.Last(RoutePlanKind.Riches));
+
+        Assert.Equal(["Wregoe TC-X b29-0", "Stop 0", "Stop 1", "Stop 2"], Names(scene));
+        Assert.Equal(0, scene.Reached);
 
         game.Plans.Apply([Event(Arrival("FSDJump", Now, "Stop 2", new StarPosition(400, 0, 0)))]);
 
         Assert.True(mini.Tick());
-        Assert.Equal("The destination is reached.", mini.Note);
+        Assert.Equal("The destination is reached.", mini.Note());
     }
 
     [AvaloniaFact]
@@ -270,7 +289,7 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
     {
         var mini = Mini(Panel(new Game { OffDuty = "Wren" }));
 
-        Assert.Equal($"CMDR Wren is in the game; their {OffDutyNote.Route} shows when they are the Commander shown.", mini.Note);
+        Assert.Equal($"CMDR Wren is in the game; their {OffDutyNote.Route} shows when they are the Commander shown.", mini.Note());
     }
 
     [AvaloniaFact]

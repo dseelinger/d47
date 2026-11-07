@@ -101,7 +101,10 @@ public class ATurnedAndTiltedGalaxyMapDrawsInPlaceTests
         return at;
     }
 
-    [AvaloniaFact]
+    private static Point TargetOf(GalaxyMapLayout layout, string name) =>
+        layout.Targets.Single(target => target.Star.Name == name).At;
+
+    [Fact]
     public void TwoSystemsAtOneXAndZDrawAsOneAtRestAndTwoAtTiltNinety()
     {
         var low = new StarPosition(100, 0, 200);
@@ -116,30 +119,31 @@ public class ATurnedAndTiltedGalaxyMapDrawsInPlaceTests
             Visited: [new GalaxyMapStar("Low", low), new GalaxyMapStar("High", high)]);
         var atRest = GalaxyViewport.Around(low).ZoomOut();
 
-        var (map, _) = Open(scene, atRest);
+        var size = new Size(Side, Side);
+        var flat = GalaxyMapLayout.Of(scene, atRest, size);
 
-        Assert.Equal(map.ScreenOf("Low"), map.ScreenOf("High"));
+        Assert.Equal(TargetOf(flat, "Low"), TargetOf(flat, "High"));
 
-        Turn(map, atRest with { Tilt = 90 });
+        var edgeOn = GalaxyMapLayout.Of(scene, atRest with { Tilt = 90 }, size);
 
-        var lowAt = map.ScreenOf("Low")!.Value;
-        var highAt = map.ScreenOf("High")!.Value;
+        var lowAt = TargetOf(edgeOn, "Low");
+        var highAt = TargetOf(edgeOn, "High");
 
         Assert.Equal(lowAt.X, highAt.X, 6);
         Assert.Equal(500 * Side / atRest.LightYearsAcross, lowAt.Y - highAt.Y, 6);
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void AroundACommanderAboveThePlaneDrawsYouAtTheCentreTurnedAndTilted()
     {
         var commander = new StarPosition(1_000, 1_000, -2_000);
         var scene = new GalaxyMapScene(true, null, null, -1, commander, "High Above");
 
-        var (map, _) = Open(scene, GalaxyViewport.Around(commander) with { Heading = 30, Tilt = 45 });
+        var layout = GalaxyMapLayout.Of(scene, GalaxyViewport.Around(commander) with { Heading = 30, Tilt = 45 }, new Size(Side, Side));
 
-        Assert.True(map.Drawn.You);
-        Assert.Equal(Side / 2, map.YouAt!.Value.X, 6);
-        Assert.Equal(Side / 2, map.YouAt!.Value.Y, 6);
+        Assert.True(layout.Drawn.You);
+        Assert.Equal(Side / 2, layout.You!.Value.X, 6);
+        Assert.Equal(Side / 2, layout.You!.Value.Y, 6);
     }
 
     [AvaloniaFact]

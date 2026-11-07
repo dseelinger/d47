@@ -220,8 +220,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     private static CheckBox Box(Control page, string label) =>
         page.GetVisualDescendants().OfType<CheckBox>().Single(box => (box.Content as string) == label);
 
-    private static RadioButton Option(Segment segment, string label) =>
-        segment.GetVisualDescendants().OfType<RadioButton>().Single(radio => (radio.Content as string) == label);
+    private static RadioButton Option(Segment segment, string label) => segment.Option(label);
 
     internal static bool Tap(OffscreenSurface surface, PanelView panel, Control control)
     {
@@ -249,19 +248,19 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         var (window, _, page) = InWindow(Played());
 
-        Assert.Equal(1, page.Framing.SelectedIndex);
-        Assert.Equal(GalaxyViewport.Around(Wregoe), page.Map.Viewport);
-        Assert.True(page.Map.Drawn.Travels);
-        Assert.True(page.Map.Drawn.Route);
-        Assert.True(page.Map.Drawn.You);
-        Assert.True(page.Map.Drawn.Destination);
-        Assert.Equal("120 jumps to 123 systems", page.CountLine);
-        Assert.True(page.Map.Bounds.Height >= GalaxyMapPage.WindowMapHeight);
+        Assert.Equal(1, page.Framing().SelectedIndex);
+        Assert.Equal(GalaxyViewport.Around(Wregoe), page.Map().Viewport);
+        Assert.True(page.Map().Drawn.Travels);
+        Assert.True(page.Map().Drawn.Route);
+        Assert.True(page.Map().Drawn.You);
+        Assert.True(page.Map().Drawn.Destination);
+        Assert.Contains("120 jumps to 123 systems", page.Lines());
+        Assert.True(page.Map().Bounds.Height >= GalaxyMapPage.WindowMapHeight);
 
-        var before = page.Map.Bounds.Height;
+        var before = page.Map().Bounds.Height;
         window.Height = 1200;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(before + 270, page.Map.Bounds.Height, 1);
+        Assert.Equal(before + 270, page.Map().Bounds.Height, 1);
         window.Height = 930;
         Dispatcher.UIThread.RunJobs();
 
@@ -270,11 +269,11 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             here.SaveCapture("galaxy-map-window-here.png");
         }
 
-        Option(page.Framing, "Galaxy").IsChecked = true;
+        Option(page.Framing(), "Galaxy").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(GalaxyViewport.WholeGalaxy, page.Map.Viewport);
-        Assert.True(page.Map.Drawn.StopsHidden);
+        Assert.Equal(GalaxyViewport.WholeGalaxy, page.Map().Viewport);
+        Assert.True(page.Map().Drawn.StopsHidden);
 
         using var galaxy = window.CaptureRenderedFrame()!;
         galaxy.SaveCapture("galaxy-map-window-galaxy.png");
@@ -289,7 +288,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         {
             surface.Render();
 
-            Assert.Equal(GalaxyMapPage.PanelMapHeight, page.Map.Bounds.Height);
+            Assert.Equal(GalaxyMapPage.PanelMapHeight, page.Map().Bounds.Height);
 
             var top = page.TranslatePoint(default, panel)!.Value.Y;
             var lowest = page.GetVisualDescendants().OfType<Control>()
@@ -299,8 +298,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
             surface.Render().SaveCapture("galaxy-map-panel-here.png");
 
-            Assert.True(Tap(surface, panel, Option(page.Framing, "Galaxy")));
-            Assert.Equal(GalaxyViewport.WholeGalaxy, page.Map.Viewport);
+            Assert.True(Tap(surface, panel, Option(page.Framing(), "Galaxy")));
+            Assert.Equal(GalaxyViewport.WholeGalaxy, page.Map().Viewport);
 
             surface.Render().SaveCapture("galaxy-map-panel-galaxy.png");
         }
@@ -313,48 +312,48 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         using (surface)
         {
-            var start = page.Map.Viewport;
+            var start = page.Map().Viewport;
 
             Assert.True(Tap(surface, panel, Tile(page, "Zoom in")));
-            Assert.Equal(100, page.Map.Viewport.LightYearsAcross);
-            Assert.Equal(-1, page.Framing.SelectedIndex);
+            Assert.Equal(100, page.Map().Viewport.LightYearsAcross);
+            Assert.Equal(-1, page.Framing().SelectedIndex);
             Assert.False(Tile(page, "Zoom in").IsEnabled);
 
             Assert.True(Tap(surface, panel, Tile(page, "Pan right")));
-            Assert.Equal(start.CentreX + 25, page.Map.Viewport.CentreX, 6);
+            Assert.Equal(start.CentreX + 25, page.Map().Viewport.CentreX, 6);
 
             Assert.True(Tap(surface, panel, Tile(page, "Pan up")));
-            Assert.Equal(start.CentreZ + 25, page.Map.Viewport.CentreZ, 6);
+            Assert.Equal(start.CentreZ + 25, page.Map().Viewport.CentreZ, 6);
 
-            Assert.False(page.Map.Drawn.Destination);
+            Assert.False(page.Map().Drawn.Destination);
             surface.Render().SaveCapture("galaxy-map-panel-zoomed.png");
 
             Assert.True(Tap(surface, panel, Tile(page, "Pan left")));
             Assert.True(Tap(surface, panel, Tile(page, "Pan down")));
-            Assert.Equal(start.CentreX, page.Map.Viewport.CentreX, 6);
-            Assert.Equal(start.CentreZ, page.Map.Viewport.CentreZ, 6);
+            Assert.Equal(start.CentreX, page.Map().Viewport.CentreX, 6);
+            Assert.Equal(start.CentreZ, page.Map().Viewport.CentreZ, 6);
 
             Assert.True(Tap(surface, panel, Tile(page, "Zoom out")));
-            Assert.Equal(400, page.Map.Viewport.LightYearsAcross);
+            Assert.Equal(400, page.Map().Viewport.LightYearsAcross);
 
-            Assert.True(Tap(surface, panel, Option(page.Framing, "Here")));
-            Assert.Equal(GalaxyViewport.Around(Wregoe), page.Map.Viewport);
+            Assert.True(Tap(surface, panel, Option(page.Framing(), "Here")));
+            Assert.Equal(GalaxyViewport.Around(Wregoe), page.Map().Viewport);
 
-            Assert.True(Tap(surface, panel, Option(page.Framing, "Route")));
-            Assert.Equal(2, page.Framing.SelectedIndex);
-            Assert.NotEqual(GalaxyViewport.Around(Wregoe), page.Map.Viewport);
+            Assert.True(Tap(surface, panel, Option(page.Framing(), "Route")));
+            Assert.Equal(2, page.Framing().SelectedIndex);
+            Assert.NotEqual(GalaxyViewport.Around(Wregoe), page.Map().Viewport);
 
-            Assert.True(Tap(surface, panel, Option(page.Range, "30 days")));
-            Assert.Equal("20 jumps to 21 systems", page.CountLine);
+            Assert.True(Tap(surface, panel, Option(page.Range(), "30 days")));
+            Assert.Contains("20 jumps to 21 systems", page.Lines());
 
-            Assert.True(Tap(surface, panel, Option(page.Range, "1 year")));
-            Assert.Equal("60 jumps to 62 systems", page.CountLine);
+            Assert.True(Tap(surface, panel, Option(page.Range(), "1 year")));
+            Assert.Contains("60 jumps to 62 systems", page.Lines());
 
             Assert.True(Tap(surface, panel, Box(page, "Travels")));
-            Assert.False(page.Map.Drawn.Travels);
+            Assert.False(page.Map().Drawn.Travels);
 
             Assert.True(Tap(surface, panel, Box(page, "Route")));
-            Assert.False(page.Map.Drawn.Route);
+            Assert.False(page.Map().Drawn.Route);
 
             Assert.True(Tap(surface, panel, Box(page, "Regions")));
             Assert.False(Box(page, "Regions").IsChecked);
@@ -370,11 +369,11 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         using (surface)
         {
-            Assert.True(Tap(surface, panel, Option(page.Framing, "Galaxy")));
+            Assert.True(Tap(surface, panel, Option(page.Framing(), "Galaxy")));
             Assert.False(Tile(page, "Zoom out").IsEnabled);
 
             Tap(surface, panel, Tile(page, "Zoom out"));
-            Assert.Equal(GalaxyViewport.WholeGalaxy, page.Map.Viewport);
+            Assert.Equal(GalaxyViewport.WholeGalaxy, page.Map().Viewport);
 
             var game = Played();
             game.Route = NavRoute.None;
@@ -382,13 +381,13 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
             using (bare)
             {
-                Assert.False(Option(barePage.Framing, "Route").IsEnabled);
+                Assert.False(Option(barePage.Framing(), "Route").IsEnabled);
 
-                var before = barePage.Map.Viewport;
-                Tap(bare, barePanel, Option(barePage.Framing, "Route"));
+                var before = barePage.Map().Viewport;
+                Tap(bare, barePanel, Option(barePage.Framing(), "Route"));
 
-                Assert.Equal(before, barePage.Map.Viewport);
-                Assert.Equal(1, barePage.Framing.SelectedIndex);
+                Assert.Equal(before, barePage.Map().Viewport);
+                Assert.Equal(1, barePage.Framing().SelectedIndex);
             }
         }
     }
@@ -399,9 +398,9 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var game = Played();
         var (_, _, page) = InWindow(game);
 
-        page.Map.View(page.Map.Viewport.ZoomOut().Pan(1, 0));
-        var view = page.Map.Viewport;
-        var before = page.CountLine;
+        page.Map().View(page.Map().Viewport.ZoomOut().Pan(1, 0));
+        var view = page.Map().Viewport;
+        Assert.Contains("120 jumps to 123 systems", page.Lines());
 
         var next = new StarPosition(Wregoe.X + 30, Wregoe.Y, Wregoe.Z + 10);
         var jump = Arrival("FSDJump", Now.AddMinutes(5), 5000, "Next Door", next);
@@ -409,14 +408,14 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.Commander = Located("Next Door", next);
 
         Assert.True(page.Tick());
-        Assert.Equal(view, page.Map.Viewport);
-        Assert.NotEqual(before, page.CountLine);
+        Assert.Equal(view, page.Map().Viewport);
+        Assert.Contains("121 jumps to 124 systems", page.Lines());
         Assert.False(page.Tick());
 
         game.Route = BubbleRoute() with { Hops = [.. BubbleRoute().Hops.Take(4)] };
 
         Assert.True(page.Tick());
-        Assert.Equal(view, page.Map.Viewport);
+        Assert.Equal(view, page.Map().Viewport);
     }
 
     [AvaloniaFact]
@@ -424,17 +423,17 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         var (_, _, page) = InWindow(Played());
 
-        page.Map.View(GalaxyViewport.Around(Wregoe) with { LightYearsAcross = 6_400 });
-        Assert.True(page.Map.Drawn.RegionNames);
-        Assert.True(page.Map.Drawn.Destination);
-        Assert.False(page.Map.Drawn.StopsHidden);
+        page.Map().View(GalaxyViewport.Around(Wregoe) with { LightYearsAcross = 6_400 });
+        Assert.True(page.Map().Drawn.RegionNames);
+        Assert.True(page.Map().Drawn.Destination);
+        Assert.False(page.Map().Drawn.StopsHidden);
 
-        page.Map.View(page.Map.Viewport.ZoomIn());
-        Assert.False(page.Map.Drawn.RegionNames);
+        page.Map().View(page.Map().Viewport.ZoomIn());
+        Assert.False(page.Map().Drawn.RegionNames);
 
-        page.Map.View(GalaxyViewport.WholeGalaxy);
-        Assert.True(page.Map.Drawn.RegionNames);
-        Assert.True(page.Map.Drawn.StopsHidden);
+        page.Map().View(GalaxyViewport.WholeGalaxy);
+        Assert.True(page.Map().Drawn.RegionNames);
+        Assert.True(page.Map().Drawn.StopsHidden);
     }
 
     [AvaloniaFact]
@@ -451,7 +450,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         game.Travel.FoldHistory([]);
         Assert.True(page.Tick());
-        Assert.Equal("120 jumps to 123 systems", page.CountLine);
+        Assert.Contains("120 jumps to 123 systems", page.Lines());
     }
 
     [AvaloniaFact]
@@ -461,10 +460,10 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.Route = NavRoute.None;
         var (window, _, page) = InWindow(game);
 
-        Assert.Equal(GalaxyMapPage.NoTravels, page.CountLine);
-        Assert.False(page.Map.Drawn.Travels);
-        Assert.False(page.Map.Drawn.Route);
-        Assert.True(page.Map.Drawn.You);
+        Assert.Contains(GalaxyMapPage.NoTravels, page.Lines());
+        Assert.False(page.Map().Drawn.Travels);
+        Assert.False(page.Map().Drawn.Route);
+        Assert.True(page.Map().Drawn.You);
 
         using var frame = window.CaptureRenderedFrame()!;
         frame.SaveCapture("galaxy-map-no-travels.png");
@@ -476,12 +475,12 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var game = Played(folded: false);
         var (_, _, page) = InWindow(game);
 
-        Assert.Equal(GalaxyMapPage.Reading, page.CountLine);
+        Assert.Contains(GalaxyMapPage.Reading, page.Lines());
 
         game.Travel.FoldHistory([]);
 
         Assert.True(page.Tick());
-        Assert.Equal("120 jumps to 123 systems", page.CountLine);
+        Assert.Contains("120 jumps to 123 systems", page.Lines());
     }
 
     [AvaloniaFact]
@@ -492,13 +491,13 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.Travel.FoldHistory([]);
         var (_, _, page) = InWindow(game);
 
-        Option(page.Range, "30 days").IsChecked = true;
+        Option(page.Range(), "30 days").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal("No jumps in the last 30 days.", page.CountLine);
+        Assert.Contains("No jumps in the last 30 days.", page.Lines());
 
-        Option(page.Range, "1 year").IsChecked = true;
+        Option(page.Range(), "1 year").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal("No jumps in the last year.", page.CountLine);
+        Assert.Contains("No jumps in the last year.", page.Lines());
     }
 
     [AvaloniaFact]
@@ -507,11 +506,11 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var (_, _, page) = InWindow(Played());
 
         Tile(page, "Zoom in").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Assert.Equal(100, page.Map.Viewport.LightYearsAcross);
+        Assert.Equal(100, page.Map().Viewport.LightYearsAcross);
         Assert.False(Tile(page, "Zoom in").IsEnabled);
         Assert.True(Tile(page, "Zoom out").IsEnabled);
 
-        Option(page.Framing, "Galaxy").IsChecked = true;
+        Option(page.Framing(), "Galaxy").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
         Assert.True(Tile(page, "Zoom in").IsEnabled);
         Assert.False(Tile(page, "Zoom out").IsEnabled);
@@ -539,11 +538,59 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         return Math.Sqrt((down * down) + (up * up)).ToString("N1", CultureInfo.CurrentCulture);
     }
 
-    private static Point MapPoint(GalaxyMapPage page, string system) => page.Map.ScreenOf(system)!.Value;
+    /// <summary>Where the fixtures put <paramref name="system"/>: the route's hops, the career's bubble wander and the nearby search's stars.</summary>
+    private static StarPosition Position(string system)
+    {
+        if (string.Equals(system, "Wregoe TC-X b29-0", StringComparison.OrdinalIgnoreCase))
+        {
+            return Wregoe;
+        }
+
+        var number = int.Parse(system[(system.LastIndexOf(' ') + 1)..], CultureInfo.InvariantCulture);
+
+        return system.StartsWith("Hop ", StringComparison.Ordinal)
+            ? new StarPosition(Wregoe.X - (number * 18), Wregoe.Y, Wregoe.Z + (number * 14) + (8 * Math.Sin(number)))
+            : system.StartsWith("Bubble ", StringComparison.Ordinal)
+                ? new StarPosition(80 * Math.Sin(number / 3.0), 0, 60 * Math.Cos(number / 4.0))
+                : Spansh.NearAt(number);
+    }
+
+    private static Point MapPoint(GalaxyMapPage page, string system) => page.Map().Projected(Position(system));
+
+    /// <summary>
+    /// The kind words the strip names for <paramref name="system"/> after a tap on <paramref name="at"/> with Travels off, so the
+    /// tap selects a visited system only through a mark drawn there; none when it selects another. Starts and leaves nothing selected.
+    /// </summary>
+    private static IReadOnlyList<string> MarkedAt(GalaxyMapPage page, string system, StarPosition at)
+    {
+        var travels = Box(page, "Travels");
+        var wasOn = travels.IsChecked;
+
+        page.Map().Clear();
+        travels.IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        var picked = page.Map().TapAt(page.Map().Projected(at));
+        IReadOnlyList<string> kinds = string.Equals(picked?.Name, system, StringComparison.OrdinalIgnoreCase)
+            ? [.. page.StripKinds().Select(kind => kind[..kind.IndexOf(':', StringComparison.Ordinal)])]
+            : [];
+
+        page.Map().Clear();
+        travels.IsChecked = wasOn;
+        Dispatcher.UIThread.RunJobs();
+
+        return kinds;
+    }
+
+    private static IReadOnlyList<string> MarkedAt(GalaxyMapPage page, string system) => MarkedAt(page, system, Position(system));
+
+    /// <summary>The line about items the map could not place, or empty while there is none.</summary>
+    private static string UnplacedLine(GalaxyMapPage page) =>
+        page.Lines().SingleOrDefault(line => line.Contains(" in a system ", StringComparison.Ordinal) || line.Contains(" in systems ", StringComparison.Ordinal)) ?? string.Empty;
 
     private static void TapMapInWindow(Window window, GalaxyMapPage page, Point at)
     {
-        var inWindow = page.Map.TranslatePoint(at, window)!.Value;
+        var inWindow = page.Map().TranslatePoint(at, window)!.Value;
         window.MouseDown(inWindow, Avalonia.Input.MouseButton.Left);
         window.MouseUp(inWindow, Avalonia.Input.MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
@@ -551,7 +598,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
     private static bool TapMapOnPanel(OffscreenSurface surface, PanelView panel, GalaxyMapPage page, Point at)
     {
-        var pressed = surface.Click(page.Map.TranslatePoint(at, panel)!.Value);
+        var pressed = surface.Click(page.Map().TranslatePoint(at, panel)!.Value);
         surface.Render();
 
         return pressed;
@@ -562,14 +609,14 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         var (window, _, page) = InWindow(Played());
 
-        Assert.False(page.StripShown);
+        Assert.False(page.StripShown());
 
         TapMapInWindow(window, page, MapPoint(page, "Hop 4"));
 
-        Assert.True(page.StripShown);
-        Assert.Equal("HOP 4", page.StripName);
-        Assert.Equal($"{HopFour()} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts);
-        Assert.Equal("Hop 4", page.Map.Selected!.Name);
+        Assert.True(page.StripShown());
+        Assert.Equal("HOP 4", page.StripName());
+        Assert.Equal($"{HopFour()} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts());
+        Assert.Equal("Hop 4", page.Map().Selected!.Name);
 
         using (var selected = window.CaptureRenderedFrame()!)
         {
@@ -577,12 +624,12 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         }
 
         TapMapInWindow(window, page, MapPoint(page, "Hop 4") + new Point(0, 60));
-        Assert.False(page.StripShown);
-        Assert.Null(page.Map.Selected);
+        Assert.False(page.StripShown());
+        Assert.Null(page.Map().Selected);
 
         TapMapInWindow(window, page, MapPoint(page, "Wregoe TC-X b29-0"));
-        Assert.Equal("WREGOE TC-X B29-0", page.StripName);
-        Assert.StartsWith($"{GalaxyMapPage.YouAreHere} · arrived once, last ", page.StripFacts);
+        Assert.Equal("WREGOE TC-X B29-0", page.StripName());
+        Assert.StartsWith($"{GalaxyMapPage.YouAreHere} · arrived once, last ", page.StripFacts());
     }
 
     [AvaloniaFact]
@@ -594,31 +641,31 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         using (surface)
         {
             Assert.True(TapMapOnPanel(surface, panel, page, MapPoint(page, "Hop 4")));
-            Assert.True(page.StripShown);
-            Assert.Equal($"{HopFour()} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts);
+            Assert.True(page.StripShown());
+            Assert.Equal($"{HopFour()} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts());
             Assert.Equal(TypeScale.MinimumTarget, Tile(page, GalaxyMapPage.CentreHere).Bounds.Height);
             Assert.Equal(TypeScale.MinimumTarget, Tile(page, GalaxyMapPage.Bookmark).Bounds.Height);
 
             surface.Render().SaveCapture("galaxy-map-panel-selected.png");
 
-            var star = page.Map.Selected!.At;
-            var across = page.Map.Viewport.LightYearsAcross;
+            var star = page.Map().Selected!.At;
+            var across = page.Map().Viewport.LightYearsAcross;
 
             Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.CentreHere)));
-            Assert.Equal(star.X, page.Map.Viewport.CentreX, 6);
-            Assert.Equal(star.Z, page.Map.Viewport.CentreZ, 6);
-            Assert.Equal(across, page.Map.Viewport.LightYearsAcross);
-            Assert.True(page.StripShown);
+            Assert.Equal(star.X, page.Map().Viewport.CentreX, 6);
+            Assert.Equal(star.Z, page.Map().Viewport.CentreZ, 6);
+            Assert.Equal(across, page.Map().Viewport.LightYearsAcross);
+            Assert.True(page.StripShown());
 
             Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.Bookmark)));
-            Assert.Equal("Bookmarked Hop 4.", page.StripReply);
+            Assert.Equal("Bookmarked Hop 4.", page.StripReply());
 
             Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.Bookmark)));
-            Assert.Equal("Hop 4 is already bookmarked under that name. The Bookmarks page renames it.", page.StripReply);
+            Assert.Equal("Hop 4 is already bookmarked under that name. The Bookmarks page renames it.", page.StripReply());
 
             surface.Render().SaveCapture("galaxy-map-panel-bookmarked.png");
 
-            Assert.Equal(TypeScale.MinimumTarget, page.StripControl.Bounds.Height);
+            Assert.Equal(TypeScale.MinimumTarget, page.Strip().Bounds.Height);
 
             var top = page.TranslatePoint(default, panel)!.Value.Y;
             var lowest = page.GetVisualDescendants().OfType<Control>()
@@ -627,14 +674,14 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             Assert.True(lowest <= top + page.Bounds.Height, $"The page starts at {top}, has {page.Bounds.Height} and draws down to {lowest}.");
 
             Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.ClearSelection)));
-            Assert.False(page.StripShown);
-            Assert.Null(page.Map.Selected);
+            Assert.False(page.StripShown());
+            Assert.Null(page.Map().Selected);
 
             Assert.True(TapMapOnPanel(surface, panel, page, MapPoint(page, "Hop 4") + new Point(20, -20)));
-            Assert.Equal("Hop 4", page.Map.Selected!.Name);
+            Assert.Equal("Hop 4", page.Map().Selected!.Name);
 
-            Assert.True(TapMapOnPanel(surface, panel, page, new Point(page.Map.Bounds.Width / 2, 8)));
-            Assert.False(page.StripShown);
+            Assert.True(TapMapOnPanel(surface, panel, page, new Point(page.Map().Bounds.Width / 2, 8)));
+            Assert.False(page.StripShown());
         }
     }
 
@@ -646,24 +693,29 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         TapMapInWindow(window, page, MapPoint(page, "Hop 4"));
         page.Refresh();
 
-        Assert.True(page.StripShown);
-        Assert.Equal("Hop 4", page.Map.Selected!.Name);
+        Assert.True(page.StripShown());
+        Assert.Equal("Hop 4", page.Map().Selected!.Name);
 
         Box(page, "Route").IsChecked = false;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(page.StripShown);
-        Assert.Equal("Hop 4", page.Map.Selected!.Name);
-        Assert.Null(page.Map.ScreenOf("Hop 4"));
+        Assert.True(page.StripShown());
+        Assert.Equal("Hop 4", page.Map().Selected!.Name);
 
         Box(page, "Route").IsChecked = true;
-        Option(page.Framing, "Galaxy").IsChecked = true;
+        Option(page.Framing(), "Galaxy").IsChecked = true;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(page.StripShown);
+        Assert.True(page.StripShown());
 
         Tile(page, GalaxyMapPage.ClearSelection).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
-        Assert.False(page.StripShown);
+        Assert.False(page.StripShown());
+
+        Option(page.Framing(), "Here").IsChecked = true;
+        Box(page, "Route").IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotEqual("Hop 4", page.Map().SelectsAt(Position("Hop 4")));
     }
 
     private const string Bubble5 = "Bubble 5";
@@ -706,18 +758,25 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         var (window, _, page) = InWindow(Keeping());
 
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9));
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Ships, Bubble12));
+        Box(page, "Travels").IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
 
-        TapMapInWindow(window, page, page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9)!.Value);
+        TapMapInWindow(window, page, MapPoint(page, Bubble5));
 
-        Assert.Equal(Bubble9.ToUpperInvariant(), page.StripName);
-        Assert.Equal(["Your carrier: BNH-T2F"], page.StripKinds);
+        Assert.Equal(Bubble5.ToUpperInvariant(), page.StripName());
+        Assert.Equal(["BOOKMARK: Near the bar"], page.StripKinds());
 
-        TapMapInWindow(window, page, page.Map.MarkScreenOf(GalaxyMapMarkKind.Ships, Bubble12)!.Value);
+        TapMapInWindow(window, page, MapPoint(page, Bubble9));
 
-        Assert.Equal(["Stored ships: Reaper and Python"], page.StripKinds);
+        Assert.Equal(Bubble9.ToUpperInvariant(), page.StripName());
+        Assert.Equal(["YOUR CARRIER: BNH-T2F"], page.StripKinds());
+
+        TapMapInWindow(window, page, MapPoint(page, Bubble12));
+
+        Assert.Equal(["STORED SHIPS: Reaper and Python"], page.StripKinds());
+
+        Box(page, "Travels").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
 
         using var frame = window.CaptureRenderedFrame()!;
         frame.SaveCapture("galaxy-map-window-markers.png");
@@ -730,15 +789,21 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         using (surface)
         {
-            Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
-            Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9));
-            Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Ships, Bubble12));
-
             surface.Render().SaveCapture("galaxy-map-panel-markers.png");
 
-            Assert.True(TapMapOnPanel(surface, panel, page, page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5)!.Value));
-            Assert.Equal(Bubble5.ToUpperInvariant(), page.StripName);
-            Assert.Equal(["Bookmark: Near the bar"], page.StripKinds);
+            Assert.True(Tap(surface, panel, Box(page, "Travels")));
+            Assert.True(TapMapOnPanel(surface, panel, page, MapPoint(page, Bubble9)));
+            Assert.Equal(["YOUR CARRIER: BNH-T2F"], page.StripKinds());
+
+            Assert.True(TapMapOnPanel(surface, panel, page, MapPoint(page, Bubble12)));
+            Assert.Equal(["STORED SHIPS: Reaper and Python"], page.StripKinds());
+
+            Assert.True(TapMapOnPanel(surface, panel, page, MapPoint(page, Bubble5)));
+            Assert.Equal(Bubble5.ToUpperInvariant(), page.StripName());
+            Assert.Equal(["BOOKMARK: Near the bar"], page.StripKinds());
+
+            Assert.True(Tap(surface, panel, Box(page, "Travels")));
+            Assert.Equal(Bubble5, page.Map().Selected!.Name);
 
             surface.Render().SaveCapture("galaxy-map-panel-markers-selected.png");
         }
@@ -749,15 +814,15 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         var (_, _, page) = InWindow(Keeping());
 
-        Assert.Equal("1 bookmark and 1 stored ship are in systems you have not visited.", page.UnplacedLine);
+        Assert.Equal("1 bookmark and 1 stored ship are in systems you have not visited.", UnplacedLine(page));
 
-        page.BookmarkSwitch.IsChecked = false;
+        page.Switch("Bookmarks").IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal("1 stored ship is in a system you have not visited.", page.UnplacedLine);
+        Assert.Equal("1 stored ship is in a system you have not visited.", UnplacedLine(page));
 
-        page.ShipSwitch.IsChecked = false;
+        page.Switch("Ships").IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(string.Empty, page.UnplacedLine);
+        Assert.Equal(string.Empty, UnplacedLine(page));
     }
 
     [AvaloniaFact]
@@ -770,12 +835,12 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.Commander.Apply(Event("""{"timestamp":"2026-10-21T11:01:00Z","event":"StoredShips","StarSystem":"Sol","StationName":"X","ShipsHere":[],"ShipsRemote":[{"ShipID":14,"ShipType":"anaconda","Name":"Big Slow","Value":1,"StarSystem":"Nowhere Known"}]}"""));
         var (_, _, page) = InWindow(game);
 
-        Assert.Equal("2 bookmarks, your carrier and 1 stored ship are in systems you have not visited.", page.UnplacedLine);
+        Assert.Equal("2 bookmarks, your carrier and 1 stored ship are in systems you have not visited.", UnplacedLine(page));
 
-        page.BookmarkSwitch.IsChecked = false;
-        page.ShipSwitch.IsChecked = false;
+        page.Switch("Bookmarks").IsChecked = false;
+        page.Switch("Ships").IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal("Your carrier is in a system you have not visited.", page.UnplacedLine);
+        Assert.Equal("Your carrier is in a system you have not visited.", UnplacedLine(page));
     }
 
     [AvaloniaFact]
@@ -783,30 +848,30 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     {
         var (_, _, page) = InWindow(Keeping());
 
-        foreach (var (kind, system, box) in new[]
+        foreach (var (word, system, box) in new[]
         {
-            (GalaxyMapMarkKind.Bookmark, Bubble5, page.BookmarkSwitch),
-            (GalaxyMapMarkKind.Carrier, Bubble9, page.CarrierSwitch),
-            (GalaxyMapMarkKind.Ships, Bubble12, page.ShipSwitch),
+            ("BOOKMARK", Bubble5, page.Switch("Bookmarks")),
+            ("YOUR CARRIER", Bubble9, page.Switch("Carrier")),
+            ("STORED SHIPS", Bubble12, page.Switch("Ships")),
         })
         {
             box.IsChecked = false;
             Dispatcher.UIThread.RunJobs();
-            Assert.Null(page.Map.MarkScreenOf(kind, system));
+            Assert.DoesNotContain(word, MarkedAt(page, system));
 
             box.IsChecked = true;
             Dispatcher.UIThread.RunJobs();
-            Assert.NotNull(page.Map.MarkScreenOf(kind, system));
+            Assert.Contains(word, MarkedAt(page, system));
         }
 
         var engineer = BubbleEngineer();
-        page.Map.View(GalaxyViewport.Around(engineer.Position!.Value));
+        page.Map().View(GalaxyViewport.Around(engineer.Position!.Value));
 
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Engineer, engineer.System!));
+        Assert.Contains(MarkedAt(page, engineer.System!, engineer.Position!.Value), word => word.StartsWith("ENGINEER", StringComparison.Ordinal));
 
-        page.EngineerSwitch.IsChecked = false;
+        page.Switch("Engineers").IsChecked = false;
         Dispatcher.UIThread.RunJobs();
-        Assert.Null(page.Map.MarkScreenOf(GalaxyMapMarkKind.Engineer, engineer.System!));
+        Assert.DoesNotContain(MarkedAt(page, engineer.System!, engineer.Position!.Value), word => word.StartsWith("ENGINEER", StringComparison.Ordinal));
     }
 
     [AvaloniaFact]
@@ -815,14 +880,36 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var (_, _, page) = InWindow(Keeping());
         var engineer = BubbleEngineer();
 
-        page.Map.View(GalaxyViewport.Around(engineer.Position!.Value) with { LightYearsAcross = 6_400 });
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Engineer, engineer.System!));
-        Assert.False(page.Map.Drawn.EngineersHidden);
+        page.Map().View(GalaxyViewport.Around(engineer.Position!.Value) with { LightYearsAcross = 6_400 });
+        Assert.Contains(MarkedAt(page, engineer.System!, engineer.Position!.Value), word => word.StartsWith("ENGINEER", StringComparison.Ordinal));
+        Assert.False(page.Map().Drawn.EngineersHidden);
 
-        page.Map.View(page.Map.Viewport.ZoomOut());
-        Assert.Null(page.Map.MarkScreenOf(GalaxyMapMarkKind.Engineer, engineer.System!));
-        Assert.True(page.Map.Drawn.EngineersHidden);
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9));
+        page.Map().View(page.Map().Viewport.ZoomOut());
+        Assert.True(page.Map().Drawn.EngineersHidden);
+    }
+
+    [Fact]
+    public void WiderThanSixThousandFourHundredLightYearsTheLayoutDropsEngineersAndKeepsOtherMarks()
+    {
+        var engineer = new StarPosition(100, 0, 100);
+        var carrier = new StarPosition(-200, 0, 300);
+        var scene = GalaxyMapScene.Empty with
+        {
+            Marks =
+            [
+                new GalaxyMapMark(GalaxyMapMarkKind.Engineer, "Workshop", engineer, ["Someone"]),
+                new GalaxyMapMark(GalaxyMapMarkKind.Carrier, "Parked", carrier, ["BNH-T2F"]),
+            ],
+        };
+        var size = new Size(600, 600);
+
+        var close = GalaxyMapLayout.Of(scene, GalaxyViewport.Around(engineer) with { LightYearsAcross = 6_400 }, size);
+        var wide = GalaxyMapLayout.Of(scene, GalaxyViewport.Around(engineer) with { LightYearsAcross = 12_800 }, size);
+
+        Assert.Equal([GalaxyMapMarkKind.Engineer, GalaxyMapMarkKind.Carrier], close.Marks.Select(mark => mark.Kind).Order());
+        Assert.Equal([GalaxyMapMarkKind.Carrier], wide.Marks.Select(mark => mark.Kind));
+        Assert.True(wide.Drawn.EngineersHidden);
+        Assert.DoesNotContain(wide.Targets, target => target.Star.Name == "Workshop");
     }
 
     [AvaloniaFact]
@@ -833,15 +920,38 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         KeepCarrierIn(game, Bubble9);
         var (window, _, page) = InWindow(game);
 
-        var bookmark = page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble9)!.Value;
-        var carrier = page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9)!.Value;
+        Box(page, "Travels").IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        TapMapInWindow(window, page, MapPoint(page, Bubble9) + new Point(-7, 0));
+
+        Assert.Equal(["BOOKMARK: Here too", "YOUR CARRIER: BNH-T2F"], page.StripKinds());
+    }
+
+    [Fact]
+    public void ARowOfMarksIsCentredOnItsSystemFourteenPixelsApartAndLiftedOffYou()
+    {
+        var at = new StarPosition(10, 0, 20);
+        var marks = new[]
+        {
+            new GalaxyMapMark(GalaxyMapMarkKind.Carrier, "Busy", at, ["BNH-T2F"]),
+            new GalaxyMapMark(GalaxyMapMarkKind.Bookmark, "Busy", at, ["Here too"]),
+        };
+        var view = GalaxyViewport.Around(at);
+        var size = new Size(600, 600);
+
+        var alone = GalaxyMapLayout.Of(GalaxyMapScene.Empty with { Marks = marks }, view, size);
+        var withYou = GalaxyMapLayout.Of(GalaxyMapScene.Empty with { Marks = marks, Commander = at, Here = "Busy" }, view, size);
+
+        var bookmark = alone.Marks.Single(mark => mark.Kind == GalaxyMapMarkKind.Bookmark).At;
+        var carrier = alone.Marks.Single(mark => mark.Kind == GalaxyMapMarkKind.Carrier).At;
 
         Assert.Equal(14, carrier.X - bookmark.X, 6);
         Assert.Equal(bookmark.Y, carrier.Y, 6);
-
-        TapMapInWindow(window, page, bookmark);
-
-        Assert.Equal(["Bookmark: Here too", "Your carrier: BNH-T2F"], page.StripKinds);
+        Assert.Equal(300, (bookmark.X + carrier.X) / 2, 6);
+        Assert.Equal(300, bookmark.Y, 6);
+        Assert.Equal(300 - 22, withYou.Marks[0].At.Y, 6);
+        Assert.Equal(2, alone.Targets.Count(target => target.Star.Name == "Busy"));
     }
 
     [AvaloniaFact]
@@ -850,15 +960,15 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var game = Keeping();
         var (_, _, page) = InWindow(game);
 
-        Assert.True(page.CarrierSwitch.IsEnabled);
+        Assert.True(page.Switch("Carrier").IsEnabled);
 
         game.OffDuty = "Jameson";
         Assert.True(page.Tick());
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(page.CarrierSwitch.IsEnabled);
-        Assert.Null(page.Map.MarkScreenOf(GalaxyMapMarkKind.Carrier, Bubble9));
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
+        Assert.False(page.Switch("Carrier").IsEnabled);
+        Assert.DoesNotContain("YOUR CARRIER", MarkedAt(page, Bubble9));
+        Assert.Contains("BOOKMARK", MarkedAt(page, Bubble5));
     }
 
     [AvaloniaFact]
@@ -868,14 +978,14 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var (window, _, page) = InWindow(game);
 
         TapMapInWindow(window, page, MapPoint(page, Bubble5));
-        Assert.Null(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
+        Assert.Empty(page.StripKinds());
 
         Tile(page, GalaxyMapPage.Bookmark).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, Bubble5));
-        Assert.Equal($"Bookmarked {Bubble5}.", page.StripReply);
-        Assert.Empty(page.StripKinds);
+        Assert.Equal($"Bookmarked {Bubble5}.", page.StripReply());
+        Assert.Empty(page.StripKinds());
+        Assert.Contains("BOOKMARK", MarkedAt(page, Bubble5));
     }
 
     /// <summary>Galaxy search as Spansh answers it: the reference and 99 systems within 25 ly of it, and positions for the systems it knows.</summary>
@@ -983,10 +1093,29 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         return game;
     }
 
-    /// <summary>Waits for every galaxy search request to land, then lets the page redraw from the tick.</summary>
-    private static void Landed(GalaxyMapPage page)
+    private static readonly StarPosition NowhereKnown = new(Wregoe.X + 12, Wregoe.Y, Wregoe.Z - 9);
+
+    /// <summary>
+    /// Lets the page act on the game, waits until every bookmark's position and, where the page asks for one, the
+    /// systems around the Commander have been answered and counted, then lets the page redraw from the tick.
+    /// </summary>
+    private static void Landed(GalaxyMapPage page, Game game)
     {
-        Assert.True(page.Lookups.Settled().Wait(TimeSpan.FromSeconds(10)));
+        page.Tick();
+        Dispatcher.UIThread.RunJobs();
+
+        var systems = game.Bookmarks.For("F1").Select(bookmark => bookmark.System).ToList();
+        var here = game.Commander.Location.StarSystem!;
+        var asksAround = game.OffDuty is null && !game.Galaxy.Failing && page.Switch("Unvisited").IsChecked == true;
+
+        Assert.True(
+            SpinWait.SpinUntil(
+                () => systems.All(system => game.Lookups.PositionOf(system).State != GalaxyMapLookup.Waiting)
+                    && (!asksAround || game.Lookups.Nearby(here).Count > 0)
+                    && game.Lookups.Generation >= game.Galaxy.Calls,
+                TimeSpan.FromSeconds(10)),
+            "The galaxy search answers did not land.");
+
         page.Tick();
         Dispatcher.UIThread.RunJobs();
     }
@@ -997,15 +1126,15 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var game = Searching();
         var (window, _, page) = InWindow(game);
 
-        Landed(page);
+        Landed(page, game);
 
-        Assert.True(page.Map.Drawn.Unvisited);
-        Assert.NotNull(page.Map.ScreenOf(Spansh.Near(1)));
-        Assert.NotNull(page.Map.ScreenOf(Spansh.Near(99)));
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, "Nowhere Known"));
-        Assert.True(page.UnvisitedSwitch.IsEnabled);
-        Assert.True(page.UnvisitedSwitch.IsChecked);
-        Assert.Equal("1 bookmark is in a system galaxy search does not know.", page.UnplacedLine);
+        Assert.True(page.Map().Drawn.Unvisited);
+        Assert.Equal(Spansh.Near(1), page.Map().SelectsAt(Spansh.NearAt(1)));
+        Assert.Equal(Spansh.Near(99), page.Map().SelectsAt(Spansh.NearAt(99)));
+        Assert.Contains("BOOKMARK", MarkedAt(page, "Nowhere Known", NowhereKnown));
+        Assert.True(page.Switch("Unvisited").IsEnabled);
+        Assert.True(page.Switch("Unvisited").IsChecked);
+        Assert.Equal("1 bookmark is in a system galaxy search does not know.", UnplacedLine(page));
         Assert.Equal(["Nowhere Else", "Nowhere Known"], game.Galaxy.PositionsAsked.Order(StringComparer.Ordinal));
 
         using var frame = window.CaptureRenderedFrame()!;
@@ -1016,45 +1145,60 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     public void WithGalaxySearchOnTheBigPanelDrawsUnvisitedStarsAndPlacesABookmarkInASystemNeverVisited()
     {
         var game = Searching();
-        var (surface, _, page) = OnThePanel(game);
+        var (surface, panel, page) = OnThePanel(game);
 
         using (surface)
         {
-            Landed(page);
+            Landed(page, game);
             surface.Render();
 
-            Assert.True(page.Map.Drawn.Unvisited);
-            Assert.NotNull(page.Map.ScreenOf(Spansh.Near(50)));
-            Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, "Nowhere Known"));
-            Assert.True(page.UnvisitedSwitch.Bounds.Bottom <= GalaxyMapPage.PanelMapHeight);
+            Assert.True(page.Map().Drawn.Unvisited);
+
+            Assert.True(TapMapOnPanel(surface, panel, page, page.Map().Projected(Spansh.NearAt(50))));
+            Assert.Equal(Spansh.Near(50), page.Map().Selected?.Name);
+
+            Assert.True(TapMapOnPanel(surface, panel, page, page.Map().Projected(NowhereKnown)));
+            Assert.Equal("Nowhere Known", page.Map().Selected?.Name);
+            Assert.Equal(["BOOKMARK: Lost cause"], page.StripKinds());
+
+            Assert.True(Tap(surface, panel, Tile(page, GalaxyMapPage.ClearSelection)));
+            Assert.True(page.Switch("Unvisited").Bounds.Bottom <= GalaxyMapPage.PanelMapHeight);
 
             surface.Render().SaveCapture("galaxy-map-panel-unvisited.png");
         }
     }
 
-    [AvaloniaFact]
+    [Fact]
     public void TheCommandersOwnSystemIsNotDrawnAsUnvisited()
     {
-        var (_, _, page) = InWindow(Searching());
+        var game = Played();
+        var fid = game.Commander.Identity.FrontierId;
+        IReadOnlyList<SystemSummary> nearby =
+        [
+            new SystemSummary { Name = "wregoe tc-x b29-0", Position = Wregoe },
+            new SystemSummary { Name = "Renamed Here", SystemAddress = game.Travel.Steps(fid)[^1].SystemAddress, Position = Wregoe },
+            new SystemSummary { Name = Spansh.Near(1), SystemAddress = 50_001, Position = Spansh.NearAt(1) },
+            new SystemSummary { Name = "No Position", SystemAddress = 50_002 },
+        ];
 
-        Landed(page);
+        var unvisited = UnvisitedStars.Among(nearby, game.Travel.Steps(fid));
 
-        Assert.Contains(Spansh.Near(1), page.Map.UnvisitedDrawn);
-        Assert.DoesNotContain("Wregoe TC-X b29-0", page.Map.UnvisitedDrawn, StringComparer.OrdinalIgnoreCase);
+        Assert.Equal([Spansh.Near(1)], unvisited.Select(star => star.Name));
     }
 
     [AvaloniaFact]
     public void ATapOnAnUnvisitedStarSaysHowFarAwayItIsAndThatItIsNotVisited()
     {
-        var (window, _, page) = InWindow(Searching());
+        var game = Searching();
+        var (window, _, page) = InWindow(game);
 
-        Landed(page);
+        Landed(page, game);
         TapMapInWindow(window, page, MapPoint(page, Spansh.Near(99)));
 
         var away = Spansh.NearAt(99).DistanceTo(Wregoe).ToString("N1", CultureInfo.CurrentCulture);
 
-        Assert.Equal(Spansh.Near(99).ToUpperInvariant(), page.StripName);
-        Assert.Equal($"{away} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts);
+        Assert.Equal(Spansh.Near(99).ToUpperInvariant(), page.StripName());
+        Assert.Equal($"{away} LY away · {GalaxyMapPage.NotVisited}", page.StripFacts());
 
         using var frame = window.CaptureRenderedFrame()!;
         frame.SaveCapture("galaxy-map-window-unvisited-selected.png");
@@ -1063,15 +1207,16 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     [AvaloniaFact]
     public void UnvisitedStarsAreNotDrawnWiderThanSixThousandFourHundredLightYears()
     {
-        var (_, _, page) = InWindow(Searching());
+        var game = Searching();
+        var (_, _, page) = InWindow(game);
 
-        Landed(page);
-        page.Map.View(GalaxyViewport.Around(Wregoe) with { LightYearsAcross = 6_400 });
-        Assert.True(page.Map.Drawn.Unvisited);
+        Landed(page, game);
+        page.Map().View(GalaxyViewport.Around(Wregoe) with { LightYearsAcross = 6_400 });
+        Assert.True(page.Map().Drawn.Unvisited);
 
-        page.Map.View(page.Map.Viewport.ZoomOut());
-        Assert.False(page.Map.Drawn.Unvisited);
-        Assert.Null(page.Map.ScreenOf(Spansh.Near(1)));
+        page.Map().View(page.Map().Viewport.ZoomOut());
+        Assert.False(page.Map().Drawn.Unvisited);
+        Assert.NotEqual(Spansh.Near(1), page.Map().SelectsAt(Spansh.NearAt(1)));
     }
 
     [AvaloniaFact]
@@ -1080,7 +1225,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var game = Searching();
         var (_, panel, page) = InWindow(game);
 
-        Landed(page);
+        Landed(page, game);
         Assert.Equal(1, game.Galaxy.Searches);
         Assert.Equal(2, game.Galaxy.PositionsAsked.Count);
 
@@ -1090,11 +1235,11 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         Dispatcher.UIThread.RunJobs();
 
         var reopened = Page(panel);
-        Landed(reopened);
+        Landed(reopened, game);
 
         Assert.Equal(1, game.Galaxy.Searches);
         Assert.Equal(2, game.Galaxy.PositionsAsked.Count);
-        Assert.True(reopened.Map.Drawn.Unvisited);
+        Assert.True(reopened.Map().Drawn.Unvisited);
     }
 
     [AvaloniaFact]
@@ -1103,10 +1248,10 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var game = Searching();
         var (_, _, page) = InWindow(game);
 
-        Landed(page);
+        Landed(page, game);
         game.Commander = Located("Hip 22460", new StarPosition(Wregoe.X - 144, Wregoe.Y, Wregoe.Z + 112));
-        Landed(page);
-        Landed(page);
+        Landed(page, game);
+        Landed(page, game);
 
         Assert.Equal(2, game.Galaxy.Searches);
     }
@@ -1114,29 +1259,30 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     [AvaloniaFact]
     public void AnArrivalDropsTheUnvisitedStarsAroundThePreviousSystemAndReturningBringsThemBackWithoutASearch()
     {
+        var onlyBy = new StarPosition(Wregoe.X + 1, Wregoe.Y, Wregoe.Z);
         var game = Searching();
         game.Galaxy.OnlyNear["Wregoe TC-X b29-0"] = "Only By Wregoe";
         game.Galaxy.OnlyNear["Hip 22460"] = "Only By Hip";
         var (_, _, page) = InWindow(game);
 
-        Landed(page);
-        Assert.Contains("Only By Wregoe", page.Map.UnvisitedDrawn);
-        Assert.DoesNotContain("Only By Hip", page.Map.UnvisitedDrawn);
+        Landed(page, game);
+        Assert.Equal("Only By Wregoe", page.Map().SelectsAt(onlyBy));
+        Assert.NotEqual("Only By Hip", page.Map().SelectsAt(onlyBy));
 
         game.Commander = Located("Hip 22460", new StarPosition(Wregoe.X - 144, Wregoe.Y, Wregoe.Z + 112));
-        Landed(page);
-        Landed(page);
+        Landed(page, game);
+        Landed(page, game);
 
-        Assert.Contains("Only By Hip", page.Map.UnvisitedDrawn);
-        Assert.DoesNotContain("Only By Wregoe", page.Map.UnvisitedDrawn);
+        Assert.Equal("Only By Hip", page.Map().SelectsAt(onlyBy));
+        Assert.NotEqual("Only By Wregoe", page.Map().SelectsAt(onlyBy));
         Assert.Equal(2, game.Galaxy.Searches);
 
         game.Commander = Located("Wregoe TC-X b29-0", Wregoe);
-        Landed(page);
-        Landed(page);
+        Landed(page, game);
+        Landed(page, game);
 
-        Assert.Contains("Only By Wregoe", page.Map.UnvisitedDrawn);
-        Assert.DoesNotContain("Only By Hip", page.Map.UnvisitedDrawn);
+        Assert.Equal("Only By Wregoe", page.Map().SelectsAt(onlyBy));
+        Assert.NotEqual("Only By Hip", page.Map().SelectsAt(onlyBy));
         Assert.Equal(2, game.Galaxy.Searches);
     }
 
@@ -1146,20 +1292,20 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         var game = Searching();
         var (_, _, page) = InWindow(game);
 
-        Landed(page);
-        page.UnvisitedSwitch.IsChecked = false;
+        Landed(page, game);
+        page.Switch("Unvisited").IsChecked = false;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(page.Map.Drawn.Unvisited);
+        Assert.False(page.Map().Drawn.Unvisited);
 
         game.Commander = Located("Hip 22460", new StarPosition(Wregoe.X - 144, Wregoe.Y, Wregoe.Z + 112));
-        Landed(page);
+        Landed(page, game);
 
         Assert.Equal(1, game.Galaxy.Searches);
-        Assert.False(page.UnvisitedSwitch.IsChecked);
+        Assert.False(page.Switch("Unvisited").IsChecked);
 
-        page.UnvisitedSwitch.IsChecked = true;
-        Landed(page);
+        page.Switch("Unvisited").IsChecked = true;
+        Landed(page, game);
 
         Assert.Equal(2, game.Galaxy.Searches);
     }
@@ -1179,10 +1325,10 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         var (_, panel, page) = InWindow(game);
 
-        Landed(page);
+        Landed(page, game);
 
         Assert.Equal(25, game.Galaxy.PositionsAsked.Count);
-        Assert.Equal("2 bookmarks are in systems not looked up yet. Open the map again to look them up.", page.UnplacedLine);
+        Assert.Equal("2 bookmarks are in systems not looked up yet. Open the map again to look them up.", UnplacedLine(page));
 
         Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot));
         Dispatcher.UIThread.RunJobs();
@@ -1190,10 +1336,10 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         Dispatcher.UIThread.RunJobs();
 
         var reopened = Page(panel);
-        Landed(reopened);
+        Landed(reopened, game);
 
         Assert.Equal(27, game.Galaxy.PositionsAsked.Count);
-        Assert.Equal(string.Empty, reopened.UnplacedLine);
+        Assert.Equal(string.Empty, UnplacedLine(reopened));
     }
 
     [AvaloniaFact]
@@ -1203,10 +1349,10 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.Galaxy.Failing = true;
         var (_, _, page) = InWindow(game);
 
-        Landed(page);
+        Landed(page, game);
 
-        Assert.False(page.Map.Drawn.Unvisited);
-        Assert.Equal("2 bookmarks are in systems you have not visited.", page.UnplacedLine);
+        Assert.False(page.Map().Drawn.Unvisited);
+        Assert.Equal("2 bookmarks are in systems you have not visited.", UnplacedLine(page));
     }
 
     [AvaloniaFact]
@@ -1216,12 +1362,12 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.OffDuty = "Jameson";
         var (_, _, page) = InWindow(game);
 
-        Landed(page);
+        Landed(page, game);
 
         Assert.Equal(0, game.Galaxy.Searches);
-        Assert.False(page.UnvisitedSwitch.IsEnabled);
-        Assert.False(page.Map.Drawn.Unvisited);
+        Assert.False(page.Switch("Unvisited").IsEnabled);
+        Assert.False(page.Map().Drawn.Unvisited);
         Assert.Equal(2, game.Galaxy.PositionsAsked.Count);
-        Assert.NotNull(page.Map.MarkScreenOf(GalaxyMapMarkKind.Bookmark, "Nowhere Known"));
+        Assert.Contains("BOOKMARK", MarkedAt(page, "Nowhere Known", NowhereKnown));
     }
 }

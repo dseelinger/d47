@@ -82,9 +82,7 @@ public sealed class GalaxyMapView : Control
 
     private const double NameOffset = 16;
     private const double EdgeMargin = 4;
-    private const double NearestSameMark = 8;
     private const double Visited = 3;
-    private const double Unvisited = 5;
     private const double ScaleInset = 12;
     private const double DragStart = 4;
     private const double AngleBaseline = 20;
@@ -95,9 +93,6 @@ public sealed class GalaxyMapView : Control
     private const double BracketGap = 8;
     private const int RegionNameWrap = 14;
     private const double NameGap = 2;
-    private const double MarkSpacing = 14;
-    private const double RowLift = 22;
-    private const double SameSystem = 3;
     private const double BracketClear = 5;
     private const double CountGap = 9;
 
@@ -109,8 +104,6 @@ public sealed class GalaxyMapView : Control
     private static readonly (double X, double Y)[] Hull = [(-7, 0), (-2, 0), (-2, -4), (2, -4), (2, 0), (7, 0), (7, 4), (-7, 4)];
     private static readonly (double X, double Y)[] ChevronHalo = [(0, -8.5), (7.5, 6.5), (0, 3.8), (-7.5, 6.5)];
     private static readonly (double X, double Y)[] Chevron = [(0, -6), (5.5, 5), (0, 2), (-5.5, 5)];
-
-    private readonly record struct DrawnMark(GalaxyMapMarkKind Kind, Point At, int Count, GalaxyMapStar Star);
 
     private static Color? _groundColour;
     private static WriteableBitmap? _ground;
@@ -126,16 +119,9 @@ public sealed class GalaxyMapView : Control
     private (double Heading, double Tilt) _legsFor;
     private StreamGeometry? _visited;
     private StreamGeometry? _unvisited;
-    private IReadOnlyList<(GalaxyMapStar Star, Point At)> _unvisitedAt = [];
-    private IReadOnlyList<Point> _route = [];
-    private IReadOnlyList<(RouteStar Kind, Point At)> _stars = [];
-    private Point? _you;
-    private int _hereIndex = -1;
-    private string? _destination;
+    private GalaxyMapLayout _layout = GalaxyMapLayout.Empty;
     private Size _builtFor;
     private bool _stale = true;
-    private IReadOnlyList<(GalaxyMapStar Star, Point At)> _targets = [];
-    private IReadOnlyList<DrawnMark> _marks = [];
     private GalaxyMapStar? _selected;
     private Point? _selectedAt;
     private double? _fitInset;
@@ -173,9 +159,6 @@ public sealed class GalaxyMapView : Control
 
     public GalaxyMapStar? Selected => _selected;
 
-    /// <summary>Where You is drawn now, or null when the scene has no Commander.</summary>
-    internal Point? YouAt => _you;
-
     public void Clear()
     {
         if (_selected is null)
@@ -188,20 +171,6 @@ public sealed class GalaxyMapView : Control
         InvalidateVisual();
         Picked?.Invoke(null);
     }
-
-    /// <summary>Where a selectable system is on the map now, or null when it is not selectable.</summary>
-    internal Point? ScreenOf(string name) =>
-        _targets.Where(target => string.Equals(target.Star.Name, name, StringComparison.OrdinalIgnoreCase)).Select(target => (Point?)target.At).FirstOrDefault();
-
-    internal GalaxyMapScene Scene => _scene;
-
-    /// <summary>The unvisited systems drawn now, by name.</summary>
-    internal IEnumerable<string> UnvisitedDrawn => _unvisitedAt.Select(star => star.Star.Name);
-
-    /// <summary>Where a system's mark of one kind is on the map now, or null when it is not drawn.</summary>
-    internal Point? MarkScreenOf(GalaxyMapMarkKind kind, string system) =>
-        _marks.Where(mark => mark.Kind == kind && string.Equals(mark.Star.Name, system, StringComparison.OrdinalIgnoreCase))
-            .Select(mark => (Point?)mark.At).FirstOrDefault();
 
     public void Show(GalaxyMapScene scene)
     {
@@ -239,8 +208,6 @@ public sealed class GalaxyMapView : Control
 
     private double Scale => Math.Min(Bounds.Width, Bounds.Height) / _viewport.LightYearsAcross;
 
-    private bool Detailed => _fitInset is not null || _viewport.LightYearsAcross <= DetailAcross;
-
     private bool Wide => _viewport.LightYearsAcross >= DetailAcross;
 
     private (double Heading, double Tilt) Angles => (_viewport.Heading, _viewport.Tilt);
@@ -268,19 +235,8 @@ public sealed class GalaxyMapView : Control
         _stale = false;
         _builtFor = Bounds.Size;
 
-        var stops = _scene.Route?.Where(stop => stop.Position is not null).ToList() ?? [];
-
-        if (_fitInset is { } inset)
-        {
-            var points = stops.Select(stop => stop.Position!.Value).ToList();
-
-            if ((_fitEachAxis
-                    ? GalaxyViewport.FittedIn(points, Bounds.Width, Bounds.Height, inset)
-                    : GalaxyViewport.Fitted(points, Math.Min(Bounds.Width, Bounds.Height), inset)) is { } fitted)
-            {
-                _viewport = fitted;
-            }
-        }
+        _layout = GalaxyMapLayout.Of(_scene, _viewport, Bounds.Size, _fitInset, _fitEachAxis);
+        _viewport = _layout.Viewport;
 
         if (_scene.Travels is { } travels && (_legs is null || _legsFor != Angles))
         {
@@ -289,133 +245,13 @@ public sealed class GalaxyMapView : Control
         }
 
         _visited = _scene.Travels is { } picture ? Squares(picture.Systems) : null;
-        _unvisitedAt = Detailed && _scene.Unvisited is { } unvisited
-            ? [.. unvisited.Select(star => (star, Screen(star.At))).Where(star => InView(star.Item2, Unvisited))]
-            : [];
-        _unvisited = _unvisitedAt.Count > 0 ? Outlines(_unvisitedAt.Select(star => star.At)) : null;
+        _unvisited = _layout.Unvisited.Count > 0 ? Outlines(_layout.Unvisited.Select(star => star.At)) : null;
 
-        _route = stops.Count >= 2 ? [.. stops.Select(stop => Screen(stop.Position!.Value))] : [];
-        _hereIndex = _scene.Route is { } all && _scene.Reached >= 0 && _scene.Reached < all.Count && all[_scene.Reached].Position is not null
-            ? all.Take(_scene.Reached).Count(stop => stop.Position is not null)
-            : -1;
-
-        var stars = new List<(RouteStar Kind, Point At)>();
-
-        if (_route.Count > 0 && Detailed)
-        {
-            for (var index = 0; index < stops.Count; index++)
-            {
-                if (RouteMarks.StarOf(stops[index].Marks) is not { } kind
-                    || !InView(_route[index], 8)
-                    || stars.Any(mark => mark.Kind == kind && Distance(mark.At, _route[index]) <= NearestSameMark))
-                {
-                    continue;
-                }
-
-                stars.Add((kind, _route[index]));
-            }
-        }
-
-        _stars = stars;
-        _you = _scene.Commander is { } commander ? Screen(commander) : null;
-        _destination = stops.Count >= 2 ? stops[^1].System : null;
-        _marks = Marks();
-        _targets = Targets(stops);
-
-        Drawn = new GalaxyMapDrawn(
-            Travels: _scene.Travels is { Lines.Count: > 0 },
-            Route: _route.Count > 0,
-            You: _you is { } you && InView(you, 0),
-            Start: _route.Count > 0 && Detailed && InView(_route[0], 0),
-            Destination: _route.Count > 0 && Detailed && InView(_route[^1], 0),
-            StopsHidden: _route.Count > 0 && !Detailed,
-            RegionNames: _scene.Regions && Wide,
-            Stars: [.. stars.Select(star => star.Kind).Distinct()],
-            EngineersHidden: !Detailed && _scene.Marks is { } marked && marked.Any(mark => mark.Kind == GalaxyMapMarkKind.Engineer),
-            Unvisited: _unvisitedAt.Count > 0);
+        Drawn = _layout.Drawn;
 
         Reselect();
 
         Redrawn?.Invoke(Drawn);
-    }
-
-    /// <summary>
-    /// Each system's markers as one row centred on it, a kind per mark in <see cref="GalaxyMapMarkKind"/> order; the row
-    /// sits above the system where You, a route mark or the destination is drawn there.
-    /// </summary>
-    private List<DrawnMark> Marks()
-    {
-        var drawn = new List<DrawnMark>();
-
-        if (_scene.Marks is not { Count: > 0 } placed)
-        {
-            return drawn;
-        }
-
-        var taken = new List<Point>();
-
-        if (_you is { } you)
-        {
-            taken.Add(you);
-        }
-
-        if (_route.Count > 0 && Detailed)
-        {
-            taken.Add(_route[0]);
-            taken.Add(_route[^1]);
-            taken.AddRange(_stars.Select(star => star.At));
-        }
-
-        var systems = placed
-            .Where(mark => mark.Kind != GalaxyMapMarkKind.Engineer || Detailed)
-            .GroupBy(mark => mark.System, StringComparer.OrdinalIgnoreCase);
-
-        foreach (var system in systems)
-        {
-            var first = system.First();
-            var centre = Screen(first.At);
-
-            if (!InView(centre, RowLift + MarkSpacing))
-            {
-                continue;
-            }
-
-            var star = new GalaxyMapStar(first.System, first.At);
-            var kinds = system.OrderBy(mark => mark.Kind).DistinctBy(mark => mark.Kind).ToList();
-            var lift = taken.Any(at => Distance(at, centre) <= SameSystem) ? -RowLift : 0;
-
-            for (var index = 0; index < kinds.Count; index++)
-            {
-                var across = (index - ((kinds.Count - 1) / 2.0)) * MarkSpacing;
-
-                drawn.Add(new DrawnMark(kinds[index].Kind, new Point(centre.X + across, centre.Y + lift), kinds[index].Names.Count, star));
-            }
-        }
-
-        return drawn;
-    }
-
-    /// <summary>
-    /// The systems a tap can select: unvisited ones drawn, visited ones while travels are drawn, route stops while their
-    /// marks are, and every mark drawn. Unvisited ones come first, so a tie goes to what is drawn over them.
-    /// </summary>
-    private List<(GalaxyMapStar Star, Point At)> Targets(List<RouteMapStop> stops)
-    {
-        var targets = new List<(GalaxyMapStar, Point)>(_unvisitedAt);
-
-        if (_scene.Travels is not null && _scene.Visited is { } visited)
-        {
-            targets.AddRange(visited.Select(star => (star, Screen(star.At))));
-        }
-
-        if (_route.Count > 0 && Detailed)
-        {
-            targets.AddRange(stops.Select((stop, index) => (new GalaxyMapStar(stop.System, stop.Position!.Value), _route[index])));
-        }
-
-        targets.AddRange(_marks.Select(mark => (mark.Star, mark.At)));
-
-        return targets;
     }
 
     /// <summary>Follows the selected system to where it is drawn now; it has no mark while it is not drawn.</summary>
@@ -426,7 +262,7 @@ public sealed class GalaxyMapView : Control
             return;
         }
 
-        var found = _targets.FirstOrDefault(target => string.Equals(target.Star.Name, was.Name, StringComparison.OrdinalIgnoreCase));
+        var found = _layout.Targets.FirstOrDefault(target => string.Equals(target.Star.Name, was.Name, StringComparison.OrdinalIgnoreCase));
 
         _selected = found.Star ?? was;
         _selectedAt = found.Star is null ? null : Screen(found.Star.At);
@@ -434,7 +270,7 @@ public sealed class GalaxyMapView : Control
 
     private void Pick(Point at)
     {
-        var near = _targets.Where(target => Math.Abs(target.At.X - at.X) <= TapSide / 2 && Math.Abs(target.At.Y - at.Y) <= TapSide / 2).ToList();
+        var near = _layout.Targets.Where(target => Math.Abs(target.At.X - at.X) <= TapSide / 2 && Math.Abs(target.At.Y - at.Y) <= TapSide / 2).ToList();
         var index = GalaxyMapHit.Nearest([.. near.Select(target => (target.At.X, target.At.Y))], (at.X, at.Y), double.MaxValue);
 
         _selected = index is { } i ? near[i].Star : null;
@@ -496,14 +332,14 @@ public sealed class GalaxyMapView : Control
     private static StreamGeometry Outlines(IEnumerable<Point> points)
     {
         var geometry = new StreamGeometry();
-        const double Inner = Unvisited - 1;
+        const double Inner = GalaxyMapLayout.UnvisitedSide - 1;
 
         using var open = geometry.Open();
 
         foreach (var at in points)
         {
-            var left = Math.Floor(at.X - (Unvisited / 2)) + 0.5;
-            var top = Math.Floor(at.Y - (Unvisited / 2)) + 0.5;
+            var left = Math.Floor(at.X - (GalaxyMapLayout.UnvisitedSide / 2)) + 0.5;
+            var top = Math.Floor(at.Y - (GalaxyMapLayout.UnvisitedSide / 2)) + 0.5;
 
             open.BeginFigure(new Point(left, top), false);
             open.LineTo(new Point(left + Inner, top));
@@ -579,42 +415,42 @@ public sealed class GalaxyMapView : Control
             taken.Add(readout);
         }
 
-        if (_route.Count > 0)
+        if (_layout.Route.Count > 0)
         {
-            Line(context, [.. _route.Take(_hereIndex + 1)], ThemeManager.GreyKey);
-            Line(context, [.. _route.Skip(Math.Max(_hereIndex, 0))], ThemeManager.AKey);
+            Line(context, [.. _layout.Route.Take(_layout.HereIndex + 1)], ThemeManager.GreyKey);
+            Line(context, [.. _layout.Route.Skip(Math.Max(_layout.HereIndex, 0))], ThemeManager.AKey);
 
-            if (Detailed)
+            if (_layout.Detailed)
             {
-                foreach (var (kind, at) in _stars)
+                foreach (var (kind, at) in _layout.Stars)
                 {
                     RouteMarks.Star(context, Brush, kind, at, 1);
                 }
 
-                RouteMarks.Start(context, Brush, _route[0]);
-                RouteMarks.Destination(context, Brush, _route[^1]);
+                RouteMarks.Start(context, Brush, _layout.Route[0]);
+                RouteMarks.Destination(context, Brush, _layout.Route[^1]);
             }
         }
 
-        foreach (var mark in _marks)
+        foreach (var mark in _layout.Marks)
         {
             DrawMark(context, mark);
         }
 
-        if (Detailed)
+        if (_layout.Detailed)
         {
-            if (_you is { } here && !string.IsNullOrEmpty(_scene.Here))
+            if (_layout.You is { } here && !string.IsNullOrEmpty(_scene.Here))
             {
                 taken.Add(DrawName(context, _scene.Here, here, ThemeManager.CyanKey, size, taken));
             }
 
-            if (_route.Count > 0 && !string.IsNullOrEmpty(_destination))
+            if (_layout.Route.Count > 0 && !string.IsNullOrEmpty(_layout.Destination))
             {
-                DrawName(context, _destination, _route[^1], ThemeManager.AKey, size, taken);
+                DrawName(context, _layout.Destination, _layout.Route[^1], ThemeManager.AKey, size, taken);
             }
         }
 
-        if (_you is { } you)
+        if (_layout.You is { } you)
         {
             RouteMarks.You(context, Brush, you);
         }
@@ -626,7 +462,7 @@ public sealed class GalaxyMapView : Control
             Brackets(context, bounds);
 
             var named = string.Equals(star.Name, _scene.Here, StringComparison.OrdinalIgnoreCase)
-                || (Detailed && _route.Count > 0 && string.Equals(star.Name, _destination, StringComparison.OrdinalIgnoreCase));
+                || (_layout.Detailed && _layout.Route.Count > 0 && string.Equals(star.Name, _layout.Destination, StringComparison.OrdinalIgnoreCase));
 
             if (!named)
             {
@@ -947,7 +783,7 @@ public sealed class GalaxyMapView : Control
     {
         var bounds = new Rect(at.X - BracketHalf, at.Y - BracketHalf, 2 * BracketHalf, 2 * BracketHalf);
 
-        foreach (var mark in _marks.Where(mark => string.Equals(mark.Star.Name, name, StringComparison.OrdinalIgnoreCase)))
+        foreach (var mark in _layout.Marks.Where(mark => string.Equals(mark.Star.Name, name, StringComparison.OrdinalIgnoreCase)))
         {
             bounds = bounds.Union(MarkBounds(mark).Inflate(BracketClear));
         }
@@ -955,7 +791,7 @@ public sealed class GalaxyMapView : Control
         return bounds;
     }
 
-    private static Rect MarkBounds(DrawnMark mark)
+    private static Rect MarkBounds(GalaxyMapLayout.Mark mark)
     {
         var (left, top, right, bottom) = mark.Kind switch
         {
@@ -968,7 +804,7 @@ public sealed class GalaxyMapView : Control
         return new Rect(mark.At.X + left, mark.At.Y + top, right - left, bottom - top);
     }
 
-    private void DrawMark(DrawingContext context, DrawnMark mark)
+    private void DrawMark(DrawingContext context, GalaxyMapLayout.Mark mark)
     {
         var (halo, ink, key) = mark.Kind switch
         {

@@ -22,7 +22,7 @@ public class TheGalaxyMapTurnsFromThePageTests
 
     private static void Drag(Window window, GalaxyMapPage page, MouseButton button, double dx, double dy)
     {
-        var from = page.Map.TranslatePoint(new Point(page.Map.Bounds.Width / 2, 20), window)!.Value;
+        var from = page.Map().TranslatePoint(new Point(page.Map().Bounds.Width / 2, 20), window)!.Value;
 
         window.MouseDown(from, button);
         window.MouseMove(from + new Point(dx / 2, dy / 2), RawInputModifiers.None);
@@ -38,29 +38,29 @@ public class TheGalaxyMapTurnsFromThePageTests
 
         void Tap(string says) => TheGalaxyMapDrawsWhereTheCommanderHasBeenTests.Tap(surface, panel, Tile(page, says));
 
-        var start = page.Map.Viewport;
+        var start = page.Map().Viewport;
 
         Assert.False(Tile(page, "Top down").IsEnabled);
         Assert.False(Tile(page, "Tilt down").IsEnabled);
 
         Tap("Turn clockwise");
-        Assert.Equal(start.Turned(1), page.Map.Viewport);
+        Assert.Equal(start.Turned(1), page.Map().Viewport);
 
         Tap("Turn anticlockwise");
         Tap("Turn anticlockwise");
-        Assert.Equal(15, page.Map.Viewport.Heading);
+        Assert.Equal(15, page.Map().Viewport.Heading);
 
         Tap("Tilt up");
-        Assert.Equal(15, page.Map.Viewport.Tilt);
+        Assert.Equal(15, page.Map().Viewport.Tilt);
         Assert.True(Tile(page, "Tilt down").IsEnabled);
 
         Tap("Tilt down");
-        Assert.Equal(0, page.Map.Viewport.Tilt);
+        Assert.Equal(0, page.Map().Viewport.Tilt);
 
         Tap("Tilt up");
         Tap("Top down");
-        Assert.Equal(0, page.Map.Viewport.Heading);
-        Assert.Equal(0, page.Map.Viewport.Tilt);
+        Assert.Equal(0, page.Map().Viewport.Heading);
+        Assert.Equal(0, page.Map().Viewport.Tilt);
         Assert.False(Tile(page, "Top down").IsEnabled);
     }
 
@@ -74,7 +74,7 @@ public class TheGalaxyMapTurnsFromThePageTests
             Press(window, Key.PageUp, PhysicalKey.PageUp);
         }
 
-        Assert.Equal(90, page.Map.Viewport.Tilt);
+        Assert.Equal(90, page.Map().Viewport.Tilt);
         Assert.False(Tile(page, "Tilt up").IsEnabled);
     }
 
@@ -84,36 +84,36 @@ public class TheGalaxyMapTurnsFromThePageTests
         var (window, _, page) = TheGalaxyMapDrawsWhereTheCommanderHasBeenTests.Show();
 
         Press(window, Key.OemCloseBrackets, PhysicalKey.BracketRight);
-        Assert.Equal(345, page.Map.Viewport.Heading);
+        Assert.Equal(345, page.Map().Viewport.Heading);
 
         Press(window, Key.OemOpenBrackets, PhysicalKey.BracketLeft);
         Press(window, Key.OemOpenBrackets, PhysicalKey.BracketLeft);
-        Assert.Equal(15, page.Map.Viewport.Heading);
+        Assert.Equal(15, page.Map().Viewport.Heading);
 
         Press(window, Key.PageUp, PhysicalKey.PageUp);
         Press(window, Key.PageUp, PhysicalKey.PageUp);
         Press(window, Key.PageDown, PhysicalKey.PageDown);
-        Assert.Equal(15, page.Map.Viewport.Tilt);
+        Assert.Equal(15, page.Map().Viewport.Tilt);
 
         Press(window, Key.Home, PhysicalKey.Home);
-        Assert.Equal(0, page.Map.Viewport.Heading);
-        Assert.Equal(0, page.Map.Viewport.Tilt);
+        Assert.Equal(0, page.Map().Viewport.Heading);
+        Assert.Equal(0, page.Map().Viewport.Tilt);
     }
 
     [AvaloniaFact]
     public void ALeftDragTurnsTheMapAndSelectsNothing()
     {
         var (window, _, page) = TheGalaxyMapDrawsWhereTheCommanderHasBeenTests.Show();
-        var before = page.Map.Viewport;
+        var before = page.Map().Viewport;
 
         Drag(window, page, MouseButton.Left, 75, 0);
 
-        Assert.Equal(330, page.Map.Viewport.Heading, 6);
-        Assert.Equal(0, page.Map.Viewport.Tilt, 6);
-        Assert.Equal(before.CentreX, page.Map.Viewport.CentreX);
-        Assert.Equal(before.CentreZ, page.Map.Viewport.CentreZ);
-        Assert.Null(page.Map.Selected);
-        Assert.False(page.StripShown);
+        Assert.Equal(330, page.Map().Viewport.Heading, 6);
+        Assert.Equal(0, page.Map().Viewport.Tilt, 6);
+        Assert.Equal(before.CentreX, page.Map().Viewport.CentreX);
+        Assert.Equal(before.CentreZ, page.Map().Viewport.CentreZ);
+        Assert.Null(page.Map().Selected);
+        Assert.False(page.StripShown());
     }
 
     [AvaloniaFact]
@@ -123,8 +123,8 @@ public class TheGalaxyMapTurnsFromThePageTests
 
         Drag(window, page, MouseButton.Left, 0, -50);
 
-        Assert.Equal(20, page.Map.Viewport.Tilt, 6);
-        Assert.Equal(0, page.Map.Viewport.Heading, 6);
+        Assert.Equal(20, page.Map().Viewport.Tilt, 6);
+        Assert.Equal(0, page.Map().Viewport.Heading, 6);
     }
 
     [AvaloniaTheory]
@@ -133,31 +133,31 @@ public class TheGalaxyMapTurnsFromThePageTests
     public void ARightOrMiddleDragPansTheMapAndSelectsNothing(MouseButton button)
     {
         var (window, _, page) = TheGalaxyMapDrawsWhereTheCommanderHasBeenTests.Show();
-        var before = page.Map.Viewport;
+        var before = page.Map().Viewport;
 
         Drag(window, page, button, 75, 0);
 
-        var expected = before.Dragged(75, 0, page.Map.Bounds.Width, page.Map.Bounds.Height);
+        var expected = before.Dragged(75, 0, page.Map().Bounds.Width, page.Map().Bounds.Height);
 
-        Assert.Equal(0, page.Map.Viewport.Heading);
-        Assert.Equal(0, page.Map.Viewport.Tilt);
-        Assert.Equal(expected.CentreX, page.Map.Viewport.CentreX, 6);
-        Assert.Equal(expected.CentreZ, page.Map.Viewport.CentreZ, 6);
-        Assert.Null(page.Map.Selected);
+        Assert.Equal(0, page.Map().Viewport.Heading);
+        Assert.Equal(0, page.Map().Viewport.Tilt);
+        Assert.Equal(expected.CentreX, page.Map().Viewport.CentreX, 6);
+        Assert.Equal(expected.CentreZ, page.Map().Viewport.CentreZ, 6);
+        Assert.Null(page.Map().Selected);
     }
 
     [AvaloniaFact]
     public void AnAngledViewKeepsItsAngleWhenAFramingIsChosen()
     {
         var (_, _, page) = TheGalaxyMapDrawsWhereTheCommanderHasBeenTests.Show();
-        page.Map.View(page.Map.Viewport with { Heading = 45, Tilt = 30 });
+        page.Map().View(page.Map().Viewport with { Heading = 45, Tilt = 30 });
 
         foreach (var framing in new[] { 0, 1, 2 })
         {
-            page.Framing.SelectedIndex = -1;
-            page.Framing.SelectedIndex = framing;
+            page.Framing().SelectedIndex = -1;
+            page.Framing().SelectedIndex = framing;
 
-            Assert.Equal((45, 30), (page.Map.Viewport.Heading, page.Map.Viewport.Tilt));
+            Assert.Equal((45, 30), (page.Map().Viewport.Heading, page.Map().Viewport.Tilt));
         }
     }
 
@@ -167,10 +167,10 @@ public class TheGalaxyMapTurnsFromThePageTests
         var (surface, panel, page) = TheGalaxyMapDrawsWhereTheCommanderHasBeenTests.OnThePanel(TheGalaxyMapDrawsWhereTheCommanderHasBeenTests.Played());
 
         Assert.NotNull(Tile(page, "Top down"));
-        page.Map.View(page.Map.Viewport with { Heading = 330, Tilt = 30 });
+        page.Map().View(page.Map().Viewport with { Heading = 330, Tilt = 30 });
         surface.Render().SaveCapture("galaxy-map-panel-turned.png");
 
-        page.Map.View(page.Map.Viewport with { Tilt = 90 });
+        page.Map().View(page.Map().Viewport with { Tilt = 90 });
         surface.Render().SaveCapture("galaxy-map-panel-edge-on.png");
     }
 

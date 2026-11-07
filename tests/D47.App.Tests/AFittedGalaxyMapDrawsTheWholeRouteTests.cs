@@ -83,7 +83,7 @@ public class AFittedGalaxyMapDrawsTheWholeRouteTests
         };
 
         var (map, _) = Open(stops, -1);
-        var drawn = map.Map.Drawn;
+        var drawn = map.Map().Drawn;
 
         Assert.True(drawn.Route);
         Assert.True(drawn.Start);
@@ -97,10 +97,10 @@ public class AFittedGalaxyMapDrawsTheWholeRouteTests
     {
         var (map, _) = Open([Stop("A", 0), Stop("B", 12), Stop("C", 30)], -1);
 
-        Assert.Equal(RouteMapView.LargestSide, map.Map.Bounds.Width);
-        Assert.Equal(RouteMapView.LargestSide, map.Map.Bounds.Height);
-        Assert.Equal(20, map.Map.ScreenOf("A")!.Value.X, 6);
-        Assert.Equal(RouteMapView.LargestSide - 20, map.Map.ScreenOf("C")!.Value.X, 6);
+        Assert.Equal(RouteMapView.LargestSide, map.Map().Bounds.Width);
+        Assert.Equal(RouteMapView.LargestSide, map.Map().Bounds.Height);
+        Assert.Equal(20, map.Map().Projected(new StarPosition(0, 0, 0)).X, 6);
+        Assert.Equal(RouteMapView.LargestSide - 20, map.Map().Projected(new StarPosition(30, 0, 0)).X, 6);
     }
 
     [AvaloniaFact]

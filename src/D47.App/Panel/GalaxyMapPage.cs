@@ -105,7 +105,6 @@ public sealed class GalaxyMapPage : UserControl
     private readonly TextBlock _planKindWord = Chrome(TypeScale.MetaSmall, ThemeManager.GreyKey);
     private readonly TextBlock _planHeadline = Chrome(14, ThemeManager.WhiteKey);
     private Border? _planBand;
-    private string _planName = string.Empty;
     private double _mapWidth;
     private readonly Border _strip = new() { IsVisible = false, Height = TypeScale.MinimumTarget };
     private Control[] _replaced = [];
@@ -113,15 +112,13 @@ public sealed class GalaxyMapPage : UserControl
     private Control? _mark;
     private bool _stripCurrent;
     private string? _stripFor;
-    private List<string> _kindWords = [];
     private IReadOnlyList<GalaxyMapMark> _placed = [];
     private Placement _placement = new([], []);
     private HashSet<string> _unvisitedNames = new(StringComparer.OrdinalIgnoreCase);
     private bool _stripUnvisited;
     private bool _unvisitedWanted = true;
     private bool _settingUnvisited;
-    private bool _opened;
-    private string? _askedAround;
+    private readonly NearbyAsking _asking = new();
     private string? _current;
     private readonly WrapPanel _legend = new() { Orientation = Orientation.Horizontal, ItemSpacing = 14, LineSpacing = 4 };
 
@@ -235,7 +232,7 @@ public sealed class GalaxyMapPage : UserControl
     {
         base.OnDetachedFromVisualTree(e);
 
-        _opened = false;
+        _asking.Closed();
 
         if (_bookmarks is not null)
         {
@@ -255,27 +252,6 @@ public sealed class GalaxyMapPage : UserControl
         }
     }
 
-    internal GalaxyMapView Map => _map;
-
-    internal Segment Framing => _framing;
-
-    internal Segment Range => _range;
-
-    internal CheckBox EngineerSwitch => _engineers;
-
-    internal CheckBox BookmarkSwitch => _bookmarkMarks;
-
-    internal CheckBox CarrierSwitch => _carrierMark;
-
-    internal CheckBox ShipSwitch => _shipMarks;
-
-    internal CheckBox UnvisitedSwitch => _unvisited;
-
-    internal GalaxyMapLookups Lookups => _lookups;
-
-    /// <summary>The kind of plan drawn, or null while the plotted route is.</summary>
-    internal RoutePlanKind? PlanDrawn => _planDrawn;
-
     /// <summary>Draws the shown Commander's last plan of <paramref name="kind"/> in place of the plotted route, or the plotted route for null.</summary>
     public void ShowPlan(RoutePlanKind? kind)
     {
@@ -292,13 +268,6 @@ public sealed class GalaxyMapPage : UserControl
 
     /// <summary>Raised by <see cref="ShowPlan"/> with the kind chosen, or null for the plotted route.</summary>
     public event Action<RoutePlanKind?>? PlanChosen;
-
-    /// <summary>The name over the map while a stored plan is drawn, as "&lt;kind&gt; plan: &lt;Headline&gt;"; empty otherwise.</summary>
-    internal string PlanName => _planBand is { IsVisible: true } ? _planName : string.Empty;
-
-    internal Control? PlanBandControl => _planBand;
-
-    internal Button PlottedRoute => _plotted;
 
     internal static string PlanKindWord(RoutePlanKind kind) => kind switch
     {
@@ -322,14 +291,12 @@ public sealed class GalaxyMapPage : UserControl
 
         if (!shown)
         {
-            _planName = string.Empty;
             return;
         }
 
         var word = PlanKindWord(_planDrawn!.Value);
-        _planName = $"{word} plan: {chosen!.Headline}";
         _planKindWord.Text = $"{word} plan:".ToUpperInvariant();
-        _planHeadline.Text = chosen.Headline;
+        _planHeadline.Text = chosen!.Headline;
         FitHeadline();
     }
 
@@ -353,31 +320,6 @@ public sealed class GalaxyMapPage : UserControl
     }
 
     private StoredRoutePlan? ChosenPlan() => _planKind is { } kind ? _plans?.Last(kind) : null;
-
-    /// <summary>The words about items the map could not place.</summary>
-    internal string UnplacedLine => _unplaced.IsVisible
-        ? string.Concat((_unplaced.Inlines ?? []).OfType<Run>().Select(run => run.Text))
-        : string.Empty;
-
-    /// <summary>The strip's second line, one entry per kind, as "Kind: names".</summary>
-    internal IReadOnlyList<string> StripKinds => _stripKinds.IsVisible ? _kindWords : [];
-
-    /// <summary>The words under the map where the counts go.</summary>
-    internal string CountLine => _counts.Inlines is { Count: > 0 } inlines
-        ? string.Concat(inlines.OfType<Run>().Select(run => run.Text))
-        : _counts.Text ?? string.Empty;
-
-    internal Control StripControl => _strip;
-
-    internal bool StripShown => _strip.IsVisible;
-
-    internal string StripName => _stripName.Text ?? string.Empty;
-
-    internal string StripFacts => string.Concat((_stripFacts.Inlines ?? []).OfType<Run>().Select(run => run.Text));
-
-    internal string StripReply => _stripResult.IsVisible ? _stripResult.Text ?? string.Empty : string.Empty;
-
-    internal string NoteLine => _note.IsVisible ? _note.Text ?? string.Empty : string.Empty;
 
     /// <summary>Redraws when the Commander, their travels, their position or the route has moved; true when it did.</summary>
     public bool Tick()
@@ -478,8 +420,7 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>The page being shown: asks for the stars around the Commander and the positions the map is missing.</summary>
     private void Open()
     {
-        _opened = true;
-        _askedAround = null;
+        _asking.Opened();
 
         Refresh();
 
@@ -498,14 +439,7 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>Asks for the systems nearest the Commander once per opening and arrival, while Unvisited is wanted.</summary>
     private void AskAround(string? here, IGalaxyService? galaxy)
     {
-        if (!_opened || string.Equals(here, _askedAround, StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        _askedAround = here;
-
-        if (here is not null && galaxy is not null && _unvisitedWanted)
+        if (_asking.Ask(here, galaxy is not null, _unvisitedWanted) && here is not null && galaxy is not null)
         {
             _lookups.AskNearby(galaxy, here);
         }
@@ -519,7 +453,7 @@ public sealed class GalaxyMapPage : UserControl
         }
 
         _unvisitedWanted = _unvisited.IsChecked == true;
-        _askedAround = null;
+        _asking.Forget();
         Refresh();
     }
 
@@ -540,14 +474,7 @@ public sealed class GalaxyMapPage : UserControl
             return [];
         }
 
-        var addresses = steps.Select(step => step.SystemAddress).ToHashSet();
-        var names = steps.Select(step => step.System).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        return [.. _lookups.Nearby(here)
-            .Where(system => system.Position is not null
-                && !names.Contains(system.Name)
-                && (system.SystemAddress is not { } address || !addresses.Contains(address)))
-            .Select(system => new GalaxyMapStar(system.Name, system.Position!.Value))];
+        return UnvisitedStars.Among(_lookups.Nearby(here), steps);
     }
 
     /// <summary>One kind of item in one system the map could not place.</summary>
@@ -826,7 +753,6 @@ public sealed class GalaxyMapPage : UserControl
     private void Kinds(GalaxyMapStar star)
     {
         _stripKinds.Children.Clear();
-        _kindWords = [];
 
         foreach (var mark in _placed.Where(mark => string.Equals(mark.System, star.Name, StringComparison.OrdinalIgnoreCase)).OrderBy(mark => mark.Kind))
         {
@@ -837,7 +763,6 @@ public sealed class GalaxyMapPage : UserControl
 
             var names = Chrome(13, ThemeManager.WhiteKey);
             names.Inlines = [.. Names(mark.Names)];
-            _kindWords.Add(KindWord(mark) + ": " + string.Concat(names.Inlines.OfType<Run>().Select(run => run.Text)));
 
             _stripKinds.Children.Add(new StackPanel
             {

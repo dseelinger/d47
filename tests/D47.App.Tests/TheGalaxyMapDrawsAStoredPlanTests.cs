@@ -1,6 +1,8 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Media;
@@ -71,6 +73,54 @@ public class TheGalaxyMapDrawsAStoredPlanTests
             }),
         ],
     };
+
+    private static readonly StarPosition HopFour = new(Wregoe.X - (4 * 18), Wregoe.Y, Wregoe.Z + (4 * 14));
+
+    private static readonly StarPosition Hip22460 = new(Wregoe.X - (8 * 18), Wregoe.Y, Wregoe.Z + (8 * 14));
+
+    /// <summary>Which of Grey and A the route line is drawn in halfway from <paramref name="from"/> to <paramref name="to"/>.</summary>
+    private static string LineInk(GalaxyMapPage page, StarPosition from, StarPosition to)
+    {
+        var map = page.Map();
+        var (a, b) = (map.Projected(from), map.Projected(to));
+        var window = (Window)TopLevel.GetTopLevel(page)!;
+        var middle = map.TranslatePoint(new Point((a.X + b.X) / 2, (a.Y + b.Y) / 2), window)!.Value;
+        var grey = Ink(ThemeManager.GreyKey);
+        var amber = Ink(ThemeManager.AKey);
+
+        using var frame = window.CaptureRenderedFrame()!;
+        using var buffer = frame.Lock();
+
+        var bytes = new byte[4];
+        var nearest = (Key: string.Empty, Apart: int.MaxValue);
+
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                var offset = (((int)middle.Y + dy) * buffer.RowBytes) + (((int)middle.X + dx) * 4);
+                Marshal.Copy(buffer.Address + offset, bytes, 0, 4);
+
+                var drawn = buffer.Format == Avalonia.Platform.PixelFormat.Bgra8888
+                    ? Color.FromRgb(bytes[2], bytes[1], bytes[0])
+                    : Color.FromRgb(bytes[0], bytes[1], bytes[2]);
+
+                foreach (var (key, ink) in new[] { (ThemeManager.GreyKey, grey), (ThemeManager.AKey, amber) })
+                {
+                    if (Apart(drawn, ink) < nearest.Apart)
+                    {
+                        nearest = (key, Apart(drawn, ink));
+                    }
+                }
+            }
+        }
+
+        return nearest.Key;
+    }
+
+    private static Color Ink(string key) => ((ISolidColorBrush)Application.Current!.Resources[key]!).Color;
+
+    private static int Apart(Color a, Color b) => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
     private static StarPosition At(int index, int count) =>
         new(1000 * Math.Cos(index * 2 * Math.PI / count), 0, 1000 * Math.Sin(index * 2 * Math.PI / count));
@@ -154,18 +204,18 @@ public class TheGalaxyMapDrawsAStoredPlanTests
 
         var plan = RouteMapStop.From(game.Plans.Last(RoutePlanKind.Riches)!)!;
 
-        Assert.Equal(RoutePlanKind.Riches, page.PlanDrawn);
+        Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
         Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
-        Assert.Equal(2, page.Framing.SelectedIndex);
-        Assert.Equal(GalaxyViewport.Fitting(Positioned(plan))!.LightYearsAcross, page.Map.Viewport.LightYearsAcross);
-        Assert.True(page.Map.Viewport.LightYearsAcross <= GalaxyMapView.DetailAcross);
+        Assert.Equal(2, page.Framing().SelectedIndex);
+        Assert.Equal(GalaxyViewport.Fitting(Positioned(plan))!.LightYearsAcross, page.Map().Viewport.LightYearsAcross);
+        Assert.True(page.Map().Viewport.LightYearsAcross <= GalaxyMapView.DetailAcross);
 
         foreach (var stop in Enumerable.Range(0, 10))
         {
-            Assert.NotNull(page.Map.ScreenOf($"Stop {stop}"));
+            Assert.Equal($"Stop {stop}", page.Map().SelectsAt(At(stop + 1, 11)));
         }
 
-        Assert.Null(page.Map.ScreenOf("Hop 4"));
+        Assert.NotEqual("Hop 4", page.Map().SelectsAt(HopFour));
     }
 
     [AvaloniaFact]
@@ -179,14 +229,16 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(-1, page.Map.Scene.Reached);
+        Assert.Equal(ThemeManager.AKey, LineInk(page, At(1, 11), At(2, 11)));
         Assert.False(page.Tick());
 
         game.Plans.Apply([Event(Arrival("FSDJump", Now, "Stop 5", At(6, 11)))]);
 
         Assert.True(page.Tick());
-        Assert.Equal(RouteMapStop.ReachedIndex(game.Plans.Last(RoutePlanKind.Riches)!), page.Map.Scene.Reached);
-        Assert.Equal(6, page.Map.Scene.Reached);
+        Assert.Equal(6, RouteMapStop.ReachedIndex(game.Plans.Last(RoutePlanKind.Riches)!));
+        Assert.Equal(ThemeManager.GreyKey, LineInk(page, At(1, 11), At(2, 11)));
+        Assert.Equal(ThemeManager.GreyKey, LineInk(page, At(5, 11), At(6, 11)));
+        Assert.Equal(ThemeManager.AKey, LineInk(page, At(6, 11), At(7, 11)));
     }
 
     [AvaloniaFact]
@@ -217,8 +269,13 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Null(page.PlanDrawn);
-        Assert.Equal("Hip 22460", page.Map.Scene.Route![^1].System);
+        Assert.Null(page.PlanShown());
+
+        page.Framing().Option("Route").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("Hip 22460", page.Map().SelectsAt(Hip22460));
+        Assert.NotEqual("Stop 0", page.Map().SelectsAt(At(1, 11)));
     }
 
     [AvaloniaFact]
@@ -230,15 +287,15 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var page = Open(panel);
 
         panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
-        Assert.Equal(RoutePlanKind.Riches, page.PlanDrawn);
+        Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
 
         page.ShowPlan(null);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Null(page.PlanDrawn);
-        Assert.Equal(2, page.Framing.SelectedIndex);
-        Assert.Equal("Hip 22460", page.Map.Scene.Route![^1].System);
-        Assert.Equal(GalaxyViewport.Fitting(Positioned(RouteMapStop.From(game.Route))), page.Map.Viewport);
+        Assert.Null(page.PlanShown());
+        Assert.Equal(2, page.Framing().SelectedIndex);
+        Assert.Equal("Hip 22460", page.Map().SelectsAt(Hip22460));
+        Assert.Equal(GalaxyViewport.Fitting(Positioned(RouteMapStop.From(game.Route))), page.Map().Viewport);
     }
 
     [AvaloniaFact]
@@ -254,8 +311,8 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         page.Refresh();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(page.Map.Drawn.Route);
-        Assert.Null(page.PlanDrawn);
+        Assert.False(page.Map().Drawn.Route);
+        Assert.Null(page.PlanShown());
     }
 
     [AvaloniaFact]
@@ -269,8 +326,8 @@ public class TheGalaxyMapDrawsAStoredPlanTests
 
         var page = Open(panel);
 
-        Assert.Equal(RoutePlanKind.Riches, page.PlanDrawn);
-        Assert.Equal(2, page.Framing.SelectedIndex);
+        Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
+        Assert.Equal(2, page.Framing().SelectedIndex);
     }
 
     [AvaloniaFact]
@@ -281,11 +338,11 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var page = Open(panel);
 
         panel.ShowOnGalaxyMap(RoutePlanKind.Riches);
-        Assert.Null(page.PlanDrawn);
+        Assert.Null(page.PlanShown());
 
         game.Plans.Record(RichesRoute(), "Road to Riches", Now);
 
         Assert.True(page.Tick());
-        Assert.Equal(RoutePlanKind.Riches, page.PlanDrawn);
+        Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
     }
 }

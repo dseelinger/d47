@@ -44,8 +44,6 @@ public sealed class RouteMapView : Control
         ActualThemeVariantChanged += (_, _) => InvalidateVisual();
     }
 
-    internal GalaxyMapView Map => _map;
-
     /// <summary>The square's side for a body of this height.</summary>
     internal static double SideFor(double height) =>
         double.IsInfinity(height) ? LargestSide : Math.Clamp(height - KeyHeight, SmallestSide, LargestSide);

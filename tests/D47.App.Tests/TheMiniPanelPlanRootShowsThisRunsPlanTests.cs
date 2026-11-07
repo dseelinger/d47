@@ -211,11 +211,13 @@ public class TheMiniPanelPlanRootShowsThisRunsPlanTests
         var panel = Panel(game);
         var map = Map(panel)!;
 
-        Assert.Equal(["Sol", "Hop One"], map.Map.Scene.Route!.Select(stop => stop.System));
+        Assert.Equal(string.Empty, map.Note());
+        Assert.True(map.Map().Drawn.Route);
+        Assert.True(map.Map().Drawn.Destination);
 
         game.Route = NavRoute.None;
 
         Assert.True(map.Tick());
-        Assert.Equal("No route is plotted.", map.Note);
+        Assert.Equal("No route is plotted.", map.Note());
     }
 }

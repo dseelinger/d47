@@ -34,35 +34,35 @@ public class TheGalaxyMapTakesKeysTests
     public void OpeningThePageFocusesTheMapAndRightPansLikeTheRightTile()
     {
         var page = Opened(out var window);
-        Assert.True(page.Map.IsFocused);
-        var before = page.Map.Viewport;
+        Assert.True(page.Map().IsFocused);
+        var before = page.Map().Viewport;
 
         Press(window, Key.Right, PhysicalKey.ArrowRight);
 
-        Assert.Equal(before.Pan(1, 0), page.Map.Viewport);
-        Assert.Equal(-1, page.Framing.SelectedIndex);
+        Assert.Equal(before.Pan(1, 0), page.Map().Viewport);
+        Assert.Equal(-1, page.Framing().SelectedIndex);
     }
 
     [AvaloniaFact]
     public void PlusAndMinusStepTheZoomAndStopAtTheEnds()
     {
         var page = Opened(out var window);
-        var before = page.Map.Viewport;
+        var before = page.Map().Viewport;
 
         Press(window, Key.OemPlus, PhysicalKey.Equal);
-        Assert.Equal(before.ZoomIn(), page.Map.Viewport);
+        Assert.Equal(before.ZoomIn(), page.Map().Viewport);
 
         Press(window, Key.OemMinus, PhysicalKey.Minus);
-        Assert.Equal(before, page.Map.Viewport);
+        Assert.Equal(before, page.Map().Viewport);
 
         for (var step = 0; step < 30; step++)
         {
             Press(window, Key.OemMinus, PhysicalKey.Minus);
         }
 
-        var widest = page.Map.Viewport;
+        var widest = page.Map().Viewport;
         Press(window, Key.OemMinus, PhysicalKey.Minus);
-        Assert.Equal(widest, page.Map.Viewport);
+        Assert.Equal(widest, page.Map().Viewport);
     }
 
     [AvaloniaFact]
@@ -71,36 +71,36 @@ public class TheGalaxyMapTakesKeysTests
         var page = Opened(out var window);
 
         Press(window, Key.OemCloseBrackets, PhysicalKey.BracketRight);
-        Assert.NotEqual(0, page.Map.Viewport.Heading);
+        Assert.NotEqual(0, page.Map().Viewport.Heading);
 
         Press(window, Key.Home, PhysicalKey.Home);
 
-        Assert.Equal(0, page.Map.Viewport.Heading);
-        Assert.Equal(0, page.Map.Viewport.Tilt);
+        Assert.Equal(0, page.Map().Viewport.Heading);
+        Assert.Equal(0, page.Map().Viewport.Tilt);
     }
 
     [AvaloniaFact]
     public void ControlPlusDoesNotZoomTheMap()
     {
         var page = Opened(out var window);
-        var before = page.Map.Viewport;
+        var before = page.Map().Viewport;
 
         Press(window, Key.OemPlus, PhysicalKey.Equal, RawInputModifiers.Control);
 
-        Assert.Equal(before, page.Map.Viewport);
+        Assert.Equal(before, page.Map().Viewport);
     }
 
     [AvaloniaFact]
     public void ArrowsOnTheFramingSegmentDoNotPanTheMap()
     {
         var page = Opened(out var window);
-        var before = page.Map.Viewport;
-        var radio = page.Framing.GetVisualDescendants().OfType<RadioButton>().First();
+        var before = page.Map().Viewport;
+        var radio = page.Framing().GetVisualDescendants().OfType<RadioButton>().First();
         radio.Focus();
 
         Press(window, Key.Right, PhysicalKey.ArrowRight);
 
-        Assert.NotEqual(before.Pan(1, 0), page.Map.Viewport);
-        Assert.NotEqual(-1, page.Framing.SelectedIndex);
+        Assert.NotEqual(before.Pan(1, 0), page.Map().Viewport);
+        Assert.NotEqual(-1, page.Framing().SelectedIndex);
     }
 }

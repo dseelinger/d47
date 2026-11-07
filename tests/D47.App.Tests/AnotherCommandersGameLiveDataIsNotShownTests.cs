@@ -73,24 +73,24 @@ public class AnotherCommandersGameLiveDataIsNotShownTests
 
         PageText.Of(page, 700);
 
-        Assert.Equal(0, page.Framing.SelectedIndex);
-        Assert.Equal(D47.Core.Knowledge.GalaxyViewport.WholeGalaxy, page.Map.Viewport);
-        Assert.Equal("CMDR Kestrel Vane is in the game; their position shows when they are the Commander shown.", page.NoteLine);
-        Assert.False(page.Map.Drawn.You);
-        Assert.False(page.Map.Drawn.Route);
-        Assert.True(page.Map.Drawn.Travels);
-        Assert.Equal("1 jump to 2 systems", page.CountLine);
+        Assert.Equal(0, page.Framing().SelectedIndex);
+        Assert.Equal(D47.Core.Knowledge.GalaxyViewport.WholeGalaxy, page.Map().Viewport);
+        Assert.Contains("CMDR Kestrel Vane is in the game; their position shows when they are the Commander shown.", page.Lines());
+        Assert.False(page.Map().Drawn.You);
+        Assert.False(page.Map().Drawn.Route);
+        Assert.True(page.Map().Drawn.Travels);
+        Assert.Contains("1 jump to 2 systems", page.Lines());
 
-        var options = page.Framing.GetVisualDescendants().OfType<RadioButton>().ToList();
+        var options = page.Framing().GetVisualDescendants().OfType<RadioButton>().ToList();
         Assert.False(options[1].IsEnabled);
         Assert.False(options[2].IsEnabled);
 
         duty.Off = false;
 
         Assert.True(page.Tick());
-        Assert.True(page.Map.Drawn.Route);
+        Assert.True(page.Map().Drawn.Route);
         Assert.True(options[1].IsEnabled);
-        Assert.Equal(string.Empty, page.NoteLine);
+        Assert.DoesNotContain(page.Lines(), line => line.StartsWith("CMDR Kestrel Vane is in the game", StringComparison.Ordinal));
     }
 
     [AvaloniaFact]
