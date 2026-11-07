@@ -14,6 +14,49 @@ namespace D47.Core.Tests.Stories;
 public sealed class ActOneWaitsForAShipThatCanReachTheBeaconTests
 {
     [Fact]
+    public void AShipWithNoCargoRackIsOutOfReachAndSaysSo()
+    {
+        var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: true, cargo: 0).Ship, carrier: false);
+
+        Assert.False(reach.InReach);
+        Assert.Equal("no cargo rack is fitted", reach.Why);
+    }
+
+    [Fact]
+    public void ANoCargoRackIsListedWithTheOtherMissingParts()
+    {
+        var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: false, hardpoint: null, cargo: 0).Ship, carrier: false);
+
+        Assert.Equal("no fuel scoop is fitted, no laser or railgun is fitted and no cargo rack is fitted", reach.Why);
+    }
+
+    [Fact]
+    public void AShipWithNoCargoRackIsOutOfReachForACarrierOwnerToo() =>
+        Assert.False(BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: false, cargo: 0).Ship, carrier: true).InReach);
+
+    [Fact]
+    public void AnUnreportedCargoCapacityCountsInTheCommandersFavour()
+    {
+        var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: true, cargo: null).Ship, carrier: false);
+
+        Assert.True(reach.InReach);
+        Assert.Null(reach.Why);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(64)]
+    public void AShipWithACargoRackIsInReach(int cargo) =>
+        Assert.True(BeaconReach.Of(BeyondTheBeacon(686), Flying(35, scoop: true, cargo: cargo).Ship, carrier: false).InReach);
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(null, false)]
+    [InlineData(1, true)]
+    public void CanMakeTheTripNeedsAKnownCargoRack(int? cargo, bool expected) =>
+        Assert.Equal(expected, BeaconReach.CanMakeTrip(Flying(35, scoop: true, cargo: cargo).Ship));
+
+    [Fact]
     public void AStockSidewinderWithNoScoopIsOutOfReach()
     {
         var reach = BeaconReach.Of(BeyondTheBeacon(686), Flying(7.6, scoop: false).Ship, carrier: false);

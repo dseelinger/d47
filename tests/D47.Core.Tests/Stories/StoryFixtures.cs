@@ -309,8 +309,8 @@ internal sealed class StoryFixtures : IDisposable
     /// <summary>The Guardian cores as the app sees them: held by this Commander's current story.</summary>
     public GuardianCores Cores(string frontierId) => new(() => Stories.Current(frontierId)?.CoreHold ?? CoreHold.None);
 
-    /// <summary>A Commander in a Sidewinder with this jump range, with or without a fuel scoop, a weapon (a pulse laser unless <paramref name="hardpoint"/> names another) and a fleet carrier.</summary>
-    public static CommanderGameState Flying(double jumpRange, bool scoop, bool carrier = false, string? hardpoint = "hpt_pulselaser_fixed_small")
+    /// <summary>A Commander in a Sidewinder with this jump range, with or without a fuel scoop, a cargo rack (<paramref name="cargo"/> t; null leaves it unreported), a weapon (a pulse laser unless <paramref name="hardpoint"/> names another) and a fleet carrier.</summary>
+    public static CommanderGameState Flying(double jumpRange, bool scoop, bool carrier = false, string? hardpoint = "hpt_pulselaser_fixed_small", int? cargo = 4)
     {
         var state = new CommanderGameState(new CommanderIdentity("F1", "Test"));
         var modules =
@@ -320,7 +320,7 @@ internal sealed class StoryFixtures : IDisposable
             + "]";
 
         state.Apply(AdventureFixtures.Event(
-            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"sidewinder", "ShipID":1, "MaxJumpRange":{{jumpRange.ToString(System.Globalization.CultureInfo.InvariantCulture)}}, "Modules":{{modules}} }"""));
+            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"sidewinder", "ShipID":1, "MaxJumpRange":{{jumpRange.ToString(System.Globalization.CultureInfo.InvariantCulture)}}{{(cargo is { } capacity ? $", \"CargoCapacity\":{capacity}" : string.Empty)}}, "Modules":{{modules}} }"""));
 
         if (carrier)
         {

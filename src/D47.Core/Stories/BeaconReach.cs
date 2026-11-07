@@ -24,7 +24,7 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
     public const double MostRangeNeeded = 28;
 
     /// <summary>
-    /// In reach with a laser or railgun fitted and either a fleet carrier or a fuel scoop. Jump range never decides it.
+    /// In reach with a laser or railgun fitted, a cargo rack and either a fleet carrier or a fuel scoop. Jump range never decides it.
     /// What the journal has not said counts in the Commander's favour.
     /// </summary>
     public static BeaconReach Of(StarPosition? here, ShipLoadout ship, bool carrier)
@@ -53,6 +53,11 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
         if (noWeapon)
         {
             parts.Add(NoWeapon);
+        }
+
+        if (ship.CargoCapacity is 0)
+        {
+            parts.Add(NoCargoRack);
         }
 
         var why = parts.Count switch
@@ -110,14 +115,16 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
     public static bool RangeEnough(double range, double needed) => range > 0 && range >= needed;
 
     /// <summary>
-    /// Whether the ship has a fuel scoop and, when <paramref name="weaponNeeded"/>, a laser or railgun fitted;
+    /// Whether the ship has a cargo rack, a fuel scoop and, when <paramref name="weaponNeeded"/>, a laser or railgun fitted;
     /// what the journal has not said counts against it.
     /// </summary>
     public static bool CanMakeTrip(ShipLoadout ship, bool weaponNeeded = true, bool carrier = false)
     {
         ArgumentNullException.ThrowIfNull(ship);
 
-        return (carrier || ship.Fitted(ShipLoadout.FuelScoop) is true) && (!weaponNeeded || HasWeapon(ship));
+        return ship.CargoCapacity is >= 1
+            && (carrier || ship.Fitted(ShipLoadout.FuelScoop) is true)
+            && (!weaponNeeded || HasWeapon(ship));
     }
 
     /// <summary>Whether a laser or railgun is fitted; what the journal has not said counts against it.</summary>
@@ -129,4 +136,6 @@ public sealed record BeaconReach(long Address, string System, double LightYears,
     }
 
     private const string NoWeapon = "no laser or railgun is fitted";
+
+    private const string NoCargoRack = "no cargo rack is fitted";
 }

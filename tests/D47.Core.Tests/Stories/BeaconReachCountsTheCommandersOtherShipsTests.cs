@@ -11,7 +11,7 @@ namespace D47.Core.Tests.Stories;
 /// <summary>The beacon is in reach when a stored ship with a remembered loadout can make the trip, and the chapter writer is told which.</summary>
 public sealed class BeaconReachCountsTheCommandersOtherShipsTests
 {
-    private static ShipLoadout Stored(bool scoop, bool weapon)
+    private static ShipLoadout Stored(bool scoop, bool weapon, string cargo = ", \"CargoCapacity\":4")
     {
         var modules =
             """[{"Slot":"FrameShiftDrive","Item":"int_hyperdrive_size2_class5","On":true}"""
@@ -20,7 +20,7 @@ public sealed class BeaconReachCountsTheCommandersOtherShipsTests
             + "]";
 
         return new ShipLoadout().Apply(AdventureFixtures.Event(
-            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"python", "ShipID":2, "MaxJumpRange":20, "Modules":{{modules}} }"""));
+            $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"Loadout", "Ship":"python", "ShipID":2, "MaxJumpRange":20{{cargo}}, "Modules":{{modules}} }"""));
     }
 
     private static FleetRegistry Fleet(bool inTransit = false) => new()
@@ -100,5 +100,23 @@ public sealed class BeaconReachCountsTheCommandersOtherShipsTests
 
         Assert.Equal(BeaconAddress, beacon.SystemAddress);
         Assert.Contains("Blue Jay", beacon.SwapTo);
+    }
+
+    [Fact]
+    public void AStoredShipWithNoCargoRackDoesNotCount()
+    {
+        var reach = Reach(Fleet(), Remembered(Stored(scoop: true, weapon: true, cargo: ", \"CargoCapacity\":0")));
+
+        Assert.False(reach.InReach);
+        Assert.Null(reach.SwapTo);
+    }
+
+    [Fact]
+    public void AStoredShipWithNoReportedCargoCapacityDoesNotCount()
+    {
+        var reach = Reach(Fleet(), Remembered(Stored(scoop: true, weapon: true, cargo: string.Empty)));
+
+        Assert.False(reach.InReach);
+        Assert.Null(reach.SwapTo);
     }
 }

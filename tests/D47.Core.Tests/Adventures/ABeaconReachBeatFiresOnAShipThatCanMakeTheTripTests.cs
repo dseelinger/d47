@@ -14,8 +14,8 @@ public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
 
     private static bool Fires(string json) => AdventureFold.Matches(Trigger, Event(json));
 
-    private static string Loadout(string range, bool scoop, string? weapon = "hpt_pulselaser_fixed_small") =>
-        $$"""{ "timestamp":"2026-10-14T10:00:00Z", "event":"Loadout", "Ship":"cobra_mk_iii", "ShipID":3{{range}}, "Modules":[{ "Slot":"FrameShiftDrive", "Item":"int_hyperdrive_size4_class5" }{{(scoop ? ", { \"Slot\":\"Slot02\", \"Item\":\"int_fuelscoop_size4_class5\" }" : string.Empty)}}{{(weapon is null ? string.Empty : $", {{ \"Slot\":\"SmallHardpoint1\", \"Item\":\"{weapon}\" }}")}}] }""";
+    private static string Loadout(string range, bool scoop, string? weapon = "hpt_pulselaser_fixed_small", string cargo = ", \"CargoCapacity\":4") =>
+        $$"""{ "timestamp":"2026-10-14T10:00:00Z", "event":"Loadout", "Ship":"cobra_mk_iii", "ShipID":3{{range}}{{cargo}}, "Modules":[{ "Slot":"FrameShiftDrive", "Item":"int_hyperdrive_size4_class5" }{{(scoop ? ", { \"Slot\":\"Slot02\", \"Item\":\"int_fuelscoop_size4_class5\" }" : string.Empty)}}{{(weapon is null ? string.Empty : $", {{ \"Slot\":\"SmallHardpoint1\", \"Item\":\"{weapon}\" }}")}}] }""";
 
     [Fact]
     public void ALoadoutBelowTheStoredRangeFiresWithAScoopAndAWeapon() =>
@@ -32,6 +32,12 @@ public sealed class ABeaconReachBeatFiresOnAShipThatCanMakeTheTripTests
     [Fact]
     public void ALoadoutWithNoRangeFieldFiresWithAScoopAndAWeapon() =>
         Assert.True(Fires(Loadout(string.Empty, scoop: true)));
+
+    [Theory]
+    [InlineData(", \"CargoCapacity\":0")]
+    [InlineData("")]
+    public void ALoadoutWithNoCargoRackDoesNotFire(string cargo) =>
+        Assert.False(Fires(Loadout(", \"MaxJumpRange\":30.0", scoop: true, cargo: cargo)));
 
     [Fact]
     public void BuyingAFleetCarrierFires() =>

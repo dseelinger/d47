@@ -2903,7 +2903,7 @@ public sealed partial class AdventureGenerator(
             text.AppendLine(
                 $"This is an act-one chapter, and the Guardian beacon the story needs, in {away.System}, is "
                 + $"{away.LightYears.ToString("0", CultureInfo.InvariantCulture)} light years away and out of reach: {away.Why}. "
-                + "The chapter works toward a ship that can make the trip: credits, a better ship, a laser or railgun or a fuel scoop. "
+                + "The chapter works toward a ship that can make the trip: credits, a better ship, a laser or railgun, a fuel scoop or a cargo rack. "
                 + "Its last objective is met once the Commander's ship can make the trip.");
         }
 
