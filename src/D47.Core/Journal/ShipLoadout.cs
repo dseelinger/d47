@@ -197,10 +197,6 @@ public sealed record ShipLoadout
     public IReadOnlyList<ShipModule> Engineered =>
         [.. Modules.Where(module => module.IsEngineered)];
 
-    /// <summary>Fitted but unpowered.</summary>
-    public IReadOnlyList<ShipModule> Unpowered =>
-        [.. Modules.Where(module => !module.Powered)];
-
     /// <summary>The Fuel Scoop symbol family.</summary>
     public const string FuelScoop = "int_fuelscoop";
 

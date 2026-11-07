@@ -312,16 +312,6 @@ public sealed record ViewState
         ExpandedCards = Without(ExpandedCards, id, add: expanded),
     };
 
-    /// <summary>
-    /// Forgets what the Commander said about one card, so <see
-    /// cref="SettingsPlace.StartCollapsed"/> decides again (#223).
-    /// </summary>
-    public ViewState Forgetting(string id) => this with
-    {
-        CollapsedCards = Without(CollapsedCards, id, add: false),
-        ExpandedCards = Without(ExpandedCards, id, add: false),
-    };
-
     private static IReadOnlyList<string> Without(IReadOnlyList<string> ids, string id, bool add)
     {
         var next = ids.Where(existing => !string.Equals(existing, id, StringComparison.Ordinal)).ToList();

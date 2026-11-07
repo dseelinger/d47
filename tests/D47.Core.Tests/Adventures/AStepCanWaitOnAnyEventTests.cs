@@ -179,9 +179,8 @@ public sealed class AStepCanWaitOnAnyEventTests
     }
 
     [Fact]
-    public void TheEventKindIsNotOfferedToAuthorsOrTheModel()
+    public void TheEventKindIsOneTheValidatorKnows()
     {
-        Assert.False(AdventureTrigger.IsAuthorable(TriggerKind.Event));
         Assert.Contains("event", AdventureValidation.Kinds);
     }
 

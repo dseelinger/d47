@@ -35,16 +35,6 @@ public static class GoalClimb
     private static readonly string[] SoldierMissions =
         ["Mission_OnFoot_Massacre", "Mission_OnFoot_Onslaught", "Mission_OnFoot_Assassination", "Mission_OnFoot_Defence"];
 
-    /// <summary>
-    /// The step for the unfinished arc in <see cref="GoalCatalogue.Every"/> with the lowest <see cref="GoalStanding.Fraction"/>,
-    /// a null one counting as 0 and ties going in catalogue order, except that a Commander known to be unpledged is asked
-    /// to pledge first; an arc with no step it can give now is passed over.
-    /// Null once every arc is done or none can give a step. A career or navy gives a limited draw only when
-    /// <paramref name="drawable"/> accepts one of its rows; without it, a row whose gates are held is drawable.
-    /// </summary>
-    public static GoalClimbStep? Next(CommanderGameState? state, GoalMine? mine, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null) =>
-        Next(Standings(state, mine), state, engineers, drawable);
-
     /// <summary>Every arc in <see cref="GoalCatalogue.Every"/>, evaluated, in catalogue order.</summary>
     public static IReadOnlyList<GoalStanding> Standings(CommanderGameState? state, GoalMine? mine) =>
         [.. GoalCatalogue.Every.Select(arc => GoalEvaluator.Evaluate(arc, state, mine))];
@@ -80,11 +70,7 @@ public static class GoalClimb
         return [.. standings.Where(standing => keys.Contains(standing.Arc.Key))];
     }
 
-    /// <summary>The same choice over <paramref name="standings"/>, which are in catalogue order.</summary>
-    public static GoalClimbStep? Next(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null) =>
-        Ranked(standings, state, engineers, drawable).FirstOrDefault();
-
-    /// <summary>The steps for the first <see cref="MostSteps"/> arcs, each a different arc, in the order <see cref="Next"/> ranks them.</summary>
+    /// <summary>The steps for the first <see cref="MostSteps"/> arcs, each a different arc, in the order of their rank.</summary>
     public static IReadOnlyList<GoalClimbStep> Steps(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null) =>
         [.. Ranked(standings, state, engineers, drawable).Take(MostSteps)];
 

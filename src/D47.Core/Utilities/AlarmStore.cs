@@ -5,9 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Utilities;
 
-/// <summary>One alarm the file was asked to hold, and why it was refused.</summary>
-public sealed record AlarmProblem(string Where, string Reason);
-
 /// <summary>The Commander's alarms, in one file beside the executable (Phase 24, "Timers and alarms").</summary>
 public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStore> logger)
 {
@@ -22,7 +19,6 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
     private readonly Lock _gate = new();
 
     private IReadOnlyList<Reminder> _alarms = [];
-    private IReadOnlyList<AlarmProblem> _problems = [];
 
     /// <summary>The file's contents as last read.</summary>
     private readonly WatchedTextFile _file = new(files, path, logger, "Could not read the alarm file");
@@ -41,18 +37,6 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
         }
     }
 
-    /// <summary>Alarms that were refused, and why.</summary>
-    public IReadOnlyList<AlarmProblem> Problems
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _problems;
-            }
-        }
-    }
-
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll() => _file.Poll(
         () =>
@@ -60,7 +44,6 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
             lock (_gate)
             {
                 _alarms = [];
-                _problems = [];
             }
 
             Changed?.Invoke();
@@ -113,7 +96,6 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
         {
             lock (_gate)
             {
-                _problems = [new AlarmProblem(System.IO.Path.GetFileName(path), ex.Message)];
                 _file.Seen(text);
             }
 
@@ -123,7 +105,6 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
         }
 
         var alarms = new List<Reminder>();
-        var problems = new List<AlarmProblem>();
 
         foreach (var line in file?.Alarms ?? [])
         {
@@ -131,28 +112,21 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
 
             if (name.Length == 0)
             {
-                problems.Add(new AlarmProblem("an alarm", "it has no name."));
                 continue;
             }
 
             if (name.Length > MaxNameLength)
             {
-                problems.Add(new AlarmProblem(
-                    name[..Math.Min(name.Length, 24)],
-                    $"the name is {name.Length} characters; the most is {MaxNameLength}."));
-
                 continue;
             }
 
             if (line.Due == default)
             {
-                problems.Add(new AlarmProblem(name, "it has no time to go off at."));
                 continue;
             }
 
             if (alarms.Count >= MaxAlarms)
             {
-                problems.Add(new AlarmProblem(name, $"the file already holds {MaxAlarms} alarms."));
                 continue;
             }
 
@@ -166,7 +140,6 @@ public sealed class AlarmStore(string path, IFileSystem files, ILogger<AlarmStor
         lock (_gate)
         {
             _alarms = alarms;
-            _problems = problems;
             _file.Seen(text);
         }
 

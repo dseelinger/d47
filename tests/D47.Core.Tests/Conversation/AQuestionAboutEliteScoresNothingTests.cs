@@ -22,7 +22,7 @@ public class AQuestionAboutEliteScoresNothingTests
     {
         var phrases = BuiltinPhrases();
 
-        Assert.Empty(PhraseScore.Rank(asked, phrases));
+        Assert.All(phrases, phrase => Assert.Null(PhraseScore.Score(asked, phrase)));
     }
 
     [Fact]
@@ -30,6 +30,6 @@ public class AQuestionAboutEliteScoresNothingTests
     {
         var phrases = BuiltinPhrases();
 
-        Assert.Empty(PhraseScore.Rank("elite", phrases));
+        Assert.All(phrases, phrase => Assert.Null(PhraseScore.Score("elite", phrase)));
     }
 }

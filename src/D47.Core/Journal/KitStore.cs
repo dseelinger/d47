@@ -31,16 +31,13 @@ public sealed class KitStore(string path, IFileSystem files, ILogger<KitStore> l
     /// <summary>The journal timestamp this file has already been folded through, or null for a file never written.</summary>
     public DateTimeOffset? FoldedThrough => _file.FoldedThrough;
 
-    /// <summary>What was on disk for this Commander, or null if nothing was.</summary>
-    public OwnedKit? For(string frontierId) => _file.TryGet(frontierId, out var kept) ? kept : null;
-
     /// <summary>Everything the file held, for the backfill to start from rather than rebuild over.</summary>
     public IReadOnlyDictionary<string, OwnedKit> All => _file.All;
 
     /// <summary>Reads the file.</summary>
     public void Load() => _file.Load();
 
-    /// <summary>Writes every Commander's state, and keeps what it wrote so <see cref="For"/> answers with it afterwards.</summary>
+    /// <summary>Writes every Commander's state, and keeps what it wrote so <see cref="All"/> answers with it afterwards.</summary>
     public void Save(IEnumerable<CommanderGameState> commanders, DateTimeOffset foldedThrough)
     {
         ArgumentNullException.ThrowIfNull(commanders);

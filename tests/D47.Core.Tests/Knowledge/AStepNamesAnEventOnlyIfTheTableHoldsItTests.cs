@@ -78,13 +78,14 @@ public sealed class AStepNamesAnEventOnlyIfTheTableHoldsItTests
     {
         Assert.Contains("StationName", Catalogue.FieldsOf("Docked"));
         Assert.False(Catalogue.AllowsValue("Docked", "StationName", "Jameson Memorial"));
-        Assert.Empty(Catalogue.ValuesOf("Docked", "StationName"));
     }
 
     [Fact]
     public void ABooleanFieldAllowsTrueAndFalse()
     {
-        Assert.Equal(["false", "true"], Catalogue.ValuesOf("Docked", "Taxi"));
+        Assert.True(Catalogue.AllowsValue("Docked", "Taxi", "true"));
+        Assert.True(Catalogue.AllowsValue("Docked", "Taxi", "false"));
+        Assert.False(Catalogue.AllowsValue("Docked", "Taxi", "maybe"));
     }
 
     [Fact]
@@ -115,7 +116,7 @@ public sealed class AStepNamesAnEventOnlyIfTheTableHoldsItTests
         Assert.True(shipped.Exists("ToolRun"));
         Assert.True(shipped.Exists("ChecklistLineAdded"));
         Assert.False(shipped.Exists("ChoiceMade"));
-        Assert.Equal(["custom", "planned ship", "ship", "suit", "system", "weapon"], shipped.ValuesOf("ChecklistLineAdded", "Group"));
+        Assert.Equal(["custom", "planned ship", "ship", "suit", "system", "weapon"], StepFieldValues.Shipped("ChecklistLineAdded", "Group"));
     }
 
     [Fact]
@@ -161,7 +162,7 @@ public sealed class AStepNamesAnEventOnlyIfTheTableHoldsItTests
     {
         var shipped = StepEventCatalogue.Default;
         var materials = MaterialCatalogue.All.Where(entry => entry.Ledger == MaterialLedger.Material).Select(entry => entry.Symbol).ToHashSet(StringComparer.Ordinal);
-        var stray = shipped.ValuesOf("MaterialCollected", "Name").Where(value => !materials.Contains(value)).ToList();
+        var stray = StepFieldValues.Shipped("MaterialCollected", "Name").Where(value => !materials.Contains(value)).ToList();
 
         Assert.Empty(stray);
         Assert.True(shipped.AllowsValue("MaterialCollected", "Name", "iron"));

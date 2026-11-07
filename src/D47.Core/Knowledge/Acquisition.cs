@@ -96,9 +96,6 @@ public static class AcquisitionGuide
     public static IReadOnlyList<string> Near(string spoken) =>
         string.IsNullOrWhiteSpace(spoken) ? [] : Catalogue.Near(Loaded.Value.Names, spoken);
 
-    /// <summary>Whether a rule here says how a module behind this outfitting gate is acquired.</summary>
-    public static bool Places(string? entitlement) => Gated(entitlement) is not null;
-
     private static Index Load()
     {
         var names = new List<string>();

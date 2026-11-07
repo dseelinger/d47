@@ -20,6 +20,16 @@ public class TheNeutralsAreFixedAndTheTilesAndLinesMixATests
         ThemeManager.WhiteKey, ThemeManager.GreyKey, ThemeManager.Grey2Key,
     ];
 
+    /// <summary>Every role a theme defines.</summary>
+    private static readonly string[] Roles =
+    [
+        .. ThemeManager.Tokens,
+        .. Enum.GetValues<BloomTier>().SelectMany(tier =>
+            Enumerable.Range(0, BloomTiers.Table(tier).Count).Select(stop => ThemeManager.BloomStopKey(tier, stop))),
+        ThemeManager.ScanlinesKey, ThemeManager.ScrimKey, ThemeManager.CyanGroundKey, ThemeManager.MapGroundKey,
+        ThemeManager.RedTileKey, ThemeManager.RedGroundKey, ThemeManager.WarnGroundKey, ThemeManager.YellowTrackKey,
+    ];
+
     /// <summary>A diagonal matrix taking Elite's a, #FF7A1A, to #1A7AFF.</summary>
     private static readonly GuiColourMatrix Blue = new(0x1A / 255.0, 0, 0, 0, 1, 0, 0, 0, 255.0 / 0x1A);
 
@@ -126,16 +136,18 @@ public class TheNeutralsAreFixedAndTheTilesAndLinesMixATests
     {
         Manager().Apply(ThemeCatalog.ElitePaletteId, Blue);
 
-        foreach (var key in ThemeManager.Roles)
+        foreach (var key in Roles)
         {
             if (Application.Current!.Resources[key] is not SolidColorBrush { Color: var c })
             {
                 continue;
             }
 
-            var lch = OklabColour.FromSrgb(c.R, c.G, c.B).ToOklch();
+            var lab = OklabColour.FromSrgb(c.R, c.G, c.B);
+            var chroma = Math.Sqrt((lab.A * lab.A) + (lab.B * lab.B));
+            var hue = (Math.Atan2(lab.B, lab.A) * 180.0 / Math.PI + 360.0) % 360.0;
 
-            Assert.False(lch.C > 0.02 && lch.H is >= 30 and <= 80, $"{key} is {c} at hue {lch.H:F0}°");
+            Assert.False(chroma > 0.02 && hue is >= 30 and <= 80, $"{key} is {c} at hue {hue:F0}°");
         }
     }
 
@@ -169,7 +181,7 @@ public class TheNeutralsAreFixedAndTheTilesAndLinesMixATests
     {
         Manager().Apply(themeId);
 
-        foreach (var role in ThemeManager.Roles.Where(role => role != ThemeManager.ScrimKey))
+        foreach (var role in Roles.Where(role => role != ThemeManager.ScrimKey))
         {
             if (Application.Current!.Resources[role] is SolidColorBrush brush)
             {

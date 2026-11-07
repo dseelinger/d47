@@ -291,33 +291,6 @@ public static class ShipsCapability
         return string.Join("\n", lines);
     }
 
-    internal static ToolResult Intend(ShipPlanService? ships, ToolArguments arguments)
-    {
-        if (ships is null)
-        {
-            return ToolResult.Error("I am not tracking any ships.");
-        }
-
-        if (!arguments.TryGetString("hull", out var hull))
-        {
-            return ToolResult.Error("Which hull?");
-        }
-
-        var name = arguments.TryGetString("name", out var called) ? called : null;
-
-        if (ships.Intend(hull, name) is not { } build)
-        {
-            var near = Knowledge.EliteSpecifications.NearShips(hull);
-
-            return ToolResult.Error(near.Count > 0
-                ? $"I do not know a hull called \"{hull}\". Did you mean {string.Join(", ", near)}?"
-                : $"I do not know a hull called \"{hull}\".");
-        }
-
-        return ToolResult.Ok(
-            $"{build.Describe()}. Buying one will point this plan at it rather than making you start again.");
-    }
-
     /// <summary>Whether the ship being flown has a build; reads the fleet without creating one.</summary>
     internal static bool FlownShipHasBuild(ShipPlanService? ships) =>
         ships?.Fleet().FirstOrDefault(entry => entry.IsActive)?.Build is not null;

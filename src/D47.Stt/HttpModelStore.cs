@@ -396,28 +396,6 @@ public sealed class HttpModelStore : IModelStore, IDisposable
             return false;
         }
     }
-    public bool Remove(WhisperModel model)
-    {
-        var path = Path.Combine(Directory, model.FileName);
-
-        if (!File.Exists(path))
-        {
-            return false;
-        }
-
-        try
-        {
-            File.Delete(path);
-            _logger.LogInformation("Removed {Model}", model.Id);
-            return true;
-        }
-        catch (IOException ex)
-        {
-            // Usually the model being loaded right now.
-            _logger.LogWarning(ex, "Could not remove {Model}", model.Id);
-            return false;
-        }
-    }
 
     /// <summary>The same suffix the settings and secret stores use for a pending write.</summary>
     private const string AtomicFileSuffix = ".writing";

@@ -236,8 +236,6 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Holding";
-
         public string DefaultModel => "claude-opus-5";
 
         public void Release() => _hold.TrySetResult();

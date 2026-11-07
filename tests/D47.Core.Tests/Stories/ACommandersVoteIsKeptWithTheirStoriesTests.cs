@@ -37,14 +37,15 @@ public sealed class ACommandersVoteIsKeptWithTheirStoriesTests
         var store = Reopen();
         store.Save("F1", Picked("a"));
 
-        Assert.Null(store.Voter("F1"));
+        Assert.Null(StoryFileVoters.Of(_files, StoryPath, "F1"));
 
         var voter = store.EnsureVoter("F1");
 
         Assert.Equal(32, voter.Length);
         Assert.True(DonorToken.IsWellFormed(voter));
         Assert.Equal(voter, store.EnsureVoter("F1"));
-        Assert.Equal(voter, Reopen().Voter("F1"));
+        Assert.Equal(voter, StoryFileVoters.Of(_files, StoryPath, "F1"));
+        Assert.Equal(voter, Reopen().EnsureVoter("F1"));
     }
 
     [Fact]
@@ -59,9 +60,9 @@ public sealed class ACommandersVoteIsKeptWithTheirStoriesTests
         store.Update("F1", "b", story => story with { Rating = 5 });
         var second = store.EnsureVoter("F2");
 
-        Assert.Equal(first, Reopen().Voter("F1"));
+        Assert.Equal(first, StoryFileVoters.Of(_files, StoryPath, "F1"));
         Assert.NotEqual(first, second);
-        Assert.Equal(second, Reopen().Voter("F2"));
+        Assert.Equal(second, StoryFileVoters.Of(_files, StoryPath, "F2"));
     }
 
     [Fact]
@@ -79,7 +80,7 @@ public sealed class ACommandersVoteIsKeptWithTheirStoriesTests
 
         Assert.Null(store.Find("F1", "a")!.Rating);
         Assert.False(store.Find("F1", "a")!.RatingPending);
-        Assert.Null(store.Voter("F1"));
+        Assert.Null(StoryFileVoters.Of(_files, StoryPath, "F1"));
     }
 
     [Fact]
@@ -89,7 +90,7 @@ public sealed class ACommandersVoteIsKeptWithTheirStoriesTests
             StoryPath,
             """{"commanders":[{"frontierId":"F1","voter":"NOT-A-TOKEN","stories":[{"id":"a","title":"A","publicLayer":"-","state":"running"}]}]}""");
 
-        Assert.Null(Reopen().Voter("F1"));
+        Assert.NotEqual("NOT-A-TOKEN", Reopen().EnsureVoter("F1"));
     }
 
     [Fact]

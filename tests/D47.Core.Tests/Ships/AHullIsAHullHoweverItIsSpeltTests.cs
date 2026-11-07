@@ -87,7 +87,6 @@ public class AHullIsAHullHoweverItIsSpeltTests
             var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
             Assert.True(store.Poll());
-            Assert.Empty(store.Problems);
             Assert.Equal("panthermkii", Assert.Single(store.Builds).Hull);
         }
         finally

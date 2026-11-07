@@ -74,29 +74,17 @@ public class AStickButtonWarnsAboutEliteTests
     [Fact]
     public void ADifferentButtonIsNotACollision()
     {
-        var text = ListeningCapability.DescribeInDetail(BoundTo(6), Surface(Joy(3, "SelectTarget")));
+        var text = ListeningCapability.Describe(BoundTo(6), Surface(Joy(3, "SelectTarget")));
 
         Assert.DoesNotContain("may collide", text, StringComparison.Ordinal);
-        Assert.Contains("No Elite binding uses a button of that number", text, StringComparison.Ordinal);
-    }
-
-    /// <summary>
-    /// The all-clear is plain, exactly as the key's is: nothing found means no button of that number is
-    /// bound on any device, so there is nothing left to be uncertain about.
-    /// </summary>
-    [Fact]
-    public void NothingFoundIsAPlainAllClear()
-    {
-        var text = ListeningCapability.DescribeInDetail(BoundTo(6), Surface());
-
-        Assert.Contains("No Elite binding uses a button of that number", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Warning", text, StringComparison.Ordinal);
     }
 
     /// <summary>Silence when the binds were never read.</summary>
     [Fact]
     public void UnreadBindsSayNothingEitherWay()
     {
-        var text = ListeningCapability.DescribeInDetail(BoundTo(6), Unread());
+        var text = ListeningCapability.Describe(BoundTo(6), Unread());
 
         Assert.DoesNotContain("may collide", text, StringComparison.Ordinal);
         Assert.DoesNotContain("No Elite binding uses a button", text, StringComparison.Ordinal);
@@ -111,7 +99,7 @@ public class AStickButtonWarnsAboutEliteTests
             Listening = new ListeningSettings { PushToTalkKey = "Oem4", InputDevice = "mic-1" },
         };
 
-        var text = ListeningCapability.DescribeInDetail(keyOnly, Surface(Joy(7, "SelectTarget")));
+        var text = ListeningCapability.Describe(keyOnly, Surface(Joy(7, "SelectTarget")));
 
         Assert.DoesNotContain("may collide", text, StringComparison.Ordinal);
         Assert.DoesNotContain("button of that number", text, StringComparison.Ordinal);

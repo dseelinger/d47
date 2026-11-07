@@ -49,10 +49,9 @@ public class APriorityIsPoweredInFullOrNotAtAllTests
     {
         var power = Deployed();
 
-        Assert.False(power.Deployed.Fits);
-        Assert.Equal(2.11, power.Deployed.Overage, 2);
-        Assert.True(power.Retracted.Fits);
-        Assert.Equal(0, power.Retracted.Overage);
+        Assert.True(power.Deployed.Draw > power.Output);
+        Assert.Equal(2.11, power.Deployed.Draw - power.Output, 2);
+        Assert.True(power.Retracted.Draw <= power.Output);
     }
 
     [Fact]

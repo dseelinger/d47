@@ -50,21 +50,6 @@ public static class CartographicValue
         return (long)Math.Round(value);
     }
 
-    public static long Star(string starType, double stellarMass, bool wasDiscovered)
-    {
-        double k = starType switch
-        {
-            "N" or "H" => 22628,
-            "SupermassiveBlackHole" => 33.5678,
-            _ when starType.StartsWith('D') => 14057,
-            _ => 1200,
-        };
-
-        var value = k + (stellarMass * k / 66.25);
-
-        return (long)Math.Round(wasDiscovered ? value : value * 2.6);
-    }
-
     private static double PlanetConstant(string planetClass, bool terraformable) => planetClass switch
     {
         "Metal rich body" => 21790,

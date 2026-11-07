@@ -72,10 +72,6 @@ public static class PcmConverter
         return joined;
     }
 
-    /// <summary>The stream itself when it is already standard. Takes ownership of <paramref name="source"/>.</summary>
-    public static IPcmStream ToStandard(WavPcmStream source) =>
-        source.Format == AudioFormat.Standard ? source : new ConvertingPcmStream(source);
-
     /// <summary>The stream itself when it is already <see cref="AudioFormat.Music"/>. Takes ownership of <paramref name="source"/>.</summary>
     public static IPcmStream ToMusic(WavPcmStream source) =>
         source.Format == AudioFormat.Music ? source : new ConvertingPcmStream(source, AudioFormat.Music);

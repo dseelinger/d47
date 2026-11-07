@@ -136,10 +136,6 @@ public static class VoiceGroups
     public static VoiceGroupInfo Info(VoiceGroup group) =>
         All.First(slot => slot.Group == group);
 
-    /// <summary>The slot with this settings key, or null for one d47 does not ship.</summary>
-    public static VoiceGroupInfo? ById(string? id) =>
-        All.FirstOrDefault(slot => string.Equals(slot.Id, id, StringComparison.OrdinalIgnoreCase));
-
     /// <summary>Which slot a line belongs to.</summary>
     /// <param name="channel">
     /// The in-game chat channel a re-voiced message arrived on, or null where the line is not one — a

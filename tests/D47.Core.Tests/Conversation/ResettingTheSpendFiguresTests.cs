@@ -130,7 +130,7 @@ public class ResettingTheSpendFiguresTests : IDisposable
 
     /// <summary>What each window comes to, by name, so an assertion reads as the dialog does.</summary>
     private static Dictionary<string, decimal> Windows(SpendLedger ledger) =>
-        ledger.Summary(Utc).ToDictionary(row => row.Period.Name, row => row.Totals.Dollars);
+        ledger.Immediate(Utc).Concat(ledger.Windows(Utc)).ToDictionary(row => row.Period.Name, row => row.Totals.Dollars);
 
     [Fact]
     public void ResettingAWindowShrinksEveryWindowThatContainedIt()

@@ -7,17 +7,13 @@ namespace D47.App.Tests;
 /// <summary>Grab-to-move needs the trigger, and the trigger arrives through <c>IVRInput</c>.</summary>
 public class VrPointerTests
 {
-    /// <summary>
-    /// The panel is grab-to-move and asks for the pointer; captions are read rather than touched, and
-    /// an interactive quad in front of the cockpit is a laser that stops on a label.
-    /// </summary>
+    /// <summary>The panel is grab-to-move and asks for the pointer.</summary>
     [Fact]
-    public void ThePanelAsksForThePointerAndTheCaptionsDoNot()
+    public void ThePanelAsksForThePointer()
     {
         Assert.True(typeof(VrPanelSurface).IsAssignableTo(typeof(IVrSurfaceSource)));
 
         Assert.True(Declared<VrPanelSurface>());
-        Assert.False(Declared<VrCaptionSurface>());
     }
 
     [Trait("Category", "Integration")]
@@ -72,7 +68,7 @@ public class VrPointerTests
 
     /// <summary>What a surface source says about the pointer, read off the type's own default.</summary>
     private static bool Declared<T>() =>
-        (bool)typeof(T).GetProperty(nameof(IVrSurfaceSource.TakesPointer))!
+        (bool)typeof(T).GetProperty(nameof(VrPanelSurface.TakesPointer))!
             .GetGetMethod()!
             .Invoke(System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(T)), null)!;
 }

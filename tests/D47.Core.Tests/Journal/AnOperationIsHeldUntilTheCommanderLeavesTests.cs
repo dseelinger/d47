@@ -86,7 +86,11 @@ public class AnOperationIsHeldUntilTheCommanderLeavesTests
         var state = new CommanderGameState(new CommanderIdentity("F1", "Tester"));
         Assert.True(JournalEvent.TryParse(Entered, NullLogger.Instance, out var parsed));
 
-        Assert.Equal("whether you are in an Operation", CommanderGameState.PhraseFor(nameof(CommanderGameState.InOperationSince)));
-        Assert.NotEqual(FoldReceipt.Nothing, state.Apply(parsed!));
+        var receipt = state.Apply(parsed!);
+
+        Assert.NotEqual(FoldReceipt.Nothing, receipt);
+        Assert.Equal(
+            "whether you are in an Operation",
+            Assert.Single(receipt.Changes, change => change.Part == nameof(CommanderGameState.InOperationSince)).Phrase);
     }
 }

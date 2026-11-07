@@ -15,17 +15,6 @@ public sealed class CommanderErases(IFileSystem fileSystem, ILogger<CommanderEra
     /// <summary>Raised with the Frontier id and time when a Commander's latest erase moves forward.</summary>
     public event Action<string, DateTimeOffset>? Changed;
 
-    /// <summary>The Commander's latest erase, or null when none is known.</summary>
-    public DateTimeOffset? Of(string frontierId)
-    {
-        ArgumentNullException.ThrowIfNull(frontierId);
-
-        lock (_gate)
-        {
-            return _erases.TryGetValue(frontierId, out var at) ? at : null;
-        }
-    }
-
     /// <summary>Folds every journal file, on the calling thread. Raises <see cref="Changed"/> for each Commander it moves.</summary>
     public void FoldHistory(IReadOnlyList<string> files, CancellationToken cancellation = default)
     {

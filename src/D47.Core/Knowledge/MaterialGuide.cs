@@ -15,9 +15,6 @@ public enum TradeDirection
     Across,
 }
 
-/// <summary>One material trader exchange: give <see cref="Give"/> of this material, get <see cref="Get"/> of the target.</summary>
-public sealed record MaterialTrade(TradeDirection Direction, int ToGrade, int Give, int Get);
-
 /// <summary>
 /// One material trader exchange that gives this material: <see cref="Give"/> of <see cref="From"/>, or of
 /// any grade-<see cref="FromGrade"/> material in another line of the category when <see cref="From"/> is
@@ -29,7 +26,6 @@ public sealed record MaterialTradeIn(TradeDirection Direction, MaterialEntry? Fr
 /// <param name="Held">What the Commander holds, or null before the journal's materials snapshot.</param>
 /// <param name="Capacity">The most the Commander can hold, or null for a material with no grade.</param>
 /// <param name="HowToFarm">One step per line, best first.</param>
-/// <param name="Trades">Empty for a material with no trader line.</param>
 public sealed record MaterialDetail(
     MaterialEntry Entry,
     MaterialLedger Ledger,
@@ -37,8 +33,7 @@ public sealed record MaterialDetail(
     int? Grade,
     int? Held,
     int? Capacity,
-    IReadOnlyList<string> HowToFarm,
-    IReadOnlyList<MaterialTrade> Trades);
+    IReadOnlyList<string> HowToFarm);
 
 public enum MaterialPlaceKind
 {
@@ -85,8 +80,7 @@ public static class MaterialGuide
             entry.Grade,
             held,
             capacity,
-            FarmingAdvice.HowToObtain(entry),
-            Trades(entry));
+            FarmingAdvice.HowToObtain(entry));
     }
 
     /// <summary>
@@ -132,30 +126,6 @@ public static class MaterialGuide
     public static bool Searchable(MaterialEntry entry) =>
         string.Equals(entry.Category, "Raw", StringComparison.OrdinalIgnoreCase)
         || EmissionRules.Holding(entry.Symbol) is not null;
-
-    private static List<MaterialTrade> Trades(MaterialEntry entry)
-    {
-        var trades = new List<MaterialTrade>();
-
-        if (!entry.IsTradeable || entry.Grade is not { } grade)
-        {
-            return trades;
-        }
-
-        Add(trades, TradeDirection.Up, grade, grade + 1, sameLine: true);
-        Add(trades, TradeDirection.Down, grade, grade - 1, sameLine: true);
-        Add(trades, TradeDirection.Across, grade, grade, sameLine: false);
-
-        return trades;
-    }
-
-    private static void Add(List<MaterialTrade> trades, TradeDirection direction, int from, int to, bool sameLine)
-    {
-        if (EngineeringRules.TradeRate(from, to, sameLine) is { } exchange)
-        {
-            trades.Add(new MaterialTrade(direction, to, exchange.Paid, exchange.Received));
-        }
-    }
 
     /// <summary>
     /// The nearest places for a raw material (landable bodies, richest first) or a high-grade-emission

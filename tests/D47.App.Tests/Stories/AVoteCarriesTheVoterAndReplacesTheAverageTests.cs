@@ -24,7 +24,7 @@ public sealed class AVoteCarriesTheVoterAndReplacesTheAverageTests
 
         var vote = worker.Requests[^1];
         Assert.Equal(("PUT", "/ratings/a", "1"), (vote.Method, vote.Path, vote.Format));
-        Assert.Equal(stories.Voter("F1"), vote.Voter);
+        Assert.Equal(stories.EnsureVoter("F1"), vote.Voter);
         Assert.Matches("^[0-9a-f]{32}$", vote.Voter!);
         Assert.Equal("""{"stars":4}""", vote.Body);
         Assert.Equal(new StoryRating(3, 2), client.Ratings.Get("a"));
@@ -46,7 +46,7 @@ public sealed class AVoteCarriesTheVoterAndReplacesTheAverageTests
         Assert.True(await client.Clear("F1", "a"));
 
         var withdrawal = worker.Requests[^1];
-        Assert.Equal(("DELETE", "/ratings/a", stories.Voter("F1"), null), (withdrawal.Method, withdrawal.Path, withdrawal.Voter, withdrawal.Body));
+        Assert.Equal(("DELETE", "/ratings/a", stories.EnsureVoter("F1"), null), (withdrawal.Method, withdrawal.Path, withdrawal.Voter, withdrawal.Body));
         Assert.Null(client.Ratings.Get("a"));
         Assert.Null(stories.Find("F1", "a")!.Rating);
         Assert.False(stories.Find("F1", "a")!.RatingPending);

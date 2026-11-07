@@ -10,9 +10,6 @@ public enum PhraseMatch
     Near,
 }
 
-/// <summary>One phrase a scoring pass matched, in rank order.</summary>
-public sealed record PhraseRank(string Phrase, PhraseMatch Match);
-
 /// <summary>
 /// Scores an utterance against a declared phrase, over strings alone — nothing here routes on the
 /// result (#164).
@@ -56,17 +53,6 @@ public static class PhraseScore
 
         return WordEditDistance(foldedUtterance, foldedPhrase) == 1 ? PhraseMatch.Near : null;
     }
-
-    /// <summary>
-    /// Every phrase that scores against the utterance, Equivalent before Near and in declaration
-    /// order within a tier.
-    /// </summary>
-    public static IReadOnlyList<PhraseRank> Rank(string utterance, IEnumerable<string> phrases) =>
-        [.. phrases
-            .Select(phrase => (Phrase: phrase, Match: Score(utterance, phrase)))
-            .Where(scored => scored.Match is not null)
-            .OrderBy(scored => scored.Match == PhraseMatch.Equivalent ? 0 : 1)
-            .Select(scored => new PhraseRank(scored.Phrase, scored.Match!.Value))];
 
     /// <summary>How many words apart two utterances are as said, before any folding.</summary>
     internal static int Distance(string utterance, string phrase) =>

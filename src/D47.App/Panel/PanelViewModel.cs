@@ -750,21 +750,6 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         TranscriptAppended?.Invoke();
     }
 
-    /// <summary>Empties what the transcript is showing (remediation.md 11, item 14).</summary>
-    public void ClearTranscript()
-    {
-        lock (_appendLock)
-        {
-            _runs.Clear();
-        }
-
-        // Outside the lock, like Append: this raises PropertyChanged, and holding a lock across a handler
-        // that marshals to the UI thread is how a deadlock is built.
-        TranscriptText = string.Empty;
-
-        TranscriptAppended?.Invoke();
-    }
-
     /// <summary>
     /// Notes something that happened to the conversation rather than something said in it — the core
     /// changing under it being the case this exists for.

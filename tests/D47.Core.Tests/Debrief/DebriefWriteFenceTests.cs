@@ -92,9 +92,8 @@ public class DebriefWriteFenceTests
     [Fact]
     public void NothingIsAPathAndIsRefusedAsOne()
     {
-        Assert.False(DebriefWriteFence.Permits(null));
-        Assert.False(DebriefWriteFence.Permits("   "));
         Assert.Throws<DebriefWriteRefused>(() => DebriefWriteFence.Enforce(null));
+        Assert.Throws<DebriefWriteRefused>(() => DebriefWriteFence.Enforce("   "));
     }
 
     /// <summary>

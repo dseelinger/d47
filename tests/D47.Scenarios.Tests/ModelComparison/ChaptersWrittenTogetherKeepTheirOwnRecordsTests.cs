@@ -85,8 +85,6 @@ public sealed class ChaptersWrittenTogetherKeepTheirOwnRecordsTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Delayed";
-
         public string DefaultModel => "claude-sonnet-5-5";
 
         public int Total

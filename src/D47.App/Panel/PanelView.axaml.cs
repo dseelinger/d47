@@ -392,8 +392,6 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     bool IPanelTabHost.Headset => Classes.Contains("headset");
 
-    Action<string>? IPanelTabHost.SettingsJump => SettingsJump();
-
     /// <summary>Whether <paramref name="control"/> is drawn on the headset's panel.</summary>
     internal static bool OnHeadset(Visual control) =>
         control.FindAncestorOfType<PanelView>()?.Classes.Contains("headset") == true;

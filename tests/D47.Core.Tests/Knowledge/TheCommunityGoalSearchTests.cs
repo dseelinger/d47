@@ -279,10 +279,8 @@ public class TheCommunityGoalSearchTests
     [Fact]
     public void ThePageAndTheEarKnowBothTagsAndNothingElse()
     {
-        Assert.True(CommunityGoalSearch.Owns(CommunityGoalSearch.Tag));
-        Assert.True(CommunityGoalSearch.Owns(CommunityGoalSearch.ShipTag));
-        Assert.False(CommunityGoalSearch.Owns("market-page"));
-        Assert.False(CommunityGoalSearch.Owns(null));
+        Assert.NotNull(CommunityGoalSearch.Whose(CommunityGoalSearch.Tag));
+        Assert.NotNull(CommunityGoalSearch.Whose(CommunityGoalSearch.ShipTag));
         Assert.Null(CommunityGoalSearch.Whose("market-page"));
         Assert.Null(CommunityGoalSearch.Whose(null));
     }

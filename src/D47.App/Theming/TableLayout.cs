@@ -46,11 +46,6 @@ public sealed class TableLayout
     /// <summary>The widths currently applied to the columns.</summary>
     public IReadOnlyList<double> Widths => _widths;
 
-    /// <summary>The widths the Commander has chosen, by column key.</summary>
-    public IReadOnlyDictionary<string, double> Chosen => _chosen;
-
-    public bool Resizable => _memory is not null;
-
     /// <summary>The control name of the grip after column <paramref name="key"/> of table <paramref name="id"/>.</summary>
     public static string GripName(string id, string key) => $"{id}.{key}.Grip";
 

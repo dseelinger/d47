@@ -24,8 +24,6 @@ internal sealed class RecordingModel(params IReadOnlyList<LlmStreamEvent>[] roun
 
     public string Id => "anthropic";
 
-    public string DisplayName => "Recording";
-
     public string DefaultModel => "claude-opus-5";
 
     /// <summary>Replies in order, every call waiting for <paramref name="hold"/>.</summary>
@@ -80,8 +78,6 @@ internal sealed class ScriptedReplies(params string[] replies) : ILlmProvider
     public List<LlmRequest> Requests { get; } = [];
 
     public string Id => "anthropic";
-
-    public string DisplayName => "Scripted";
 
     public string DefaultModel => "claude-sonnet-5-5";
 

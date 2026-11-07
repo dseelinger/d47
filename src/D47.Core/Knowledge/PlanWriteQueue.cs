@@ -127,14 +127,6 @@ public sealed class PlanWriteQueue
         Pump(now);
     }
 
-    /// <summary>Clears a key refusal and every dropped project, for a new key.</summary>
-    public void Reset()
-    {
-        _keyRefused = false;
-        _stopped.Clear();
-        _status = _status with { KeyRefused = false };
-    }
-
     private void Pump(DateTimeOffset now)
     {
         if (_keyRefused)

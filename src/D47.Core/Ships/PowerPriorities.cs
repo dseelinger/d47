@@ -30,13 +30,7 @@ public sealed record PowerModule(
 }
 
 /// <summary>Draw against output, deployed or retracted.</summary>
-public sealed record PowerVerdict(double Draw, double Output)
-{
-    public bool Fits => Draw <= Output + PowerPriorities.Tolerance;
-
-    /// <summary>Megawatts over the output, or zero for a build that fits.</summary>
-    public double Overage => Fits ? 0 : Draw - Output;
-}
+public sealed record PowerVerdict(double Draw);
 
 /// <summary>One priority on the cumulative axis.</summary>
 /// <param name="PoweredAt">Whether it keeps power at each of <see cref="PowerPriorities.Levels"/>, in order.</param>
@@ -121,8 +115,8 @@ public sealed class PowerPriorities
                 .OrderBy(module => rank.TryGetValue(module.Slot, out var index) ? index : int.MaxValue)
                 .ToList());
 
-        Deployed = new PowerVerdict(modules.Sum(module => module.Megawatts), output);
-        Retracted = new PowerVerdict(modules.Where(module => !module.IsHardpoint).Sum(module => module.Megawatts), output);
+        Deployed = new PowerVerdict(modules.Sum(module => module.Megawatts));
+        Retracted = new PowerVerdict(modules.Where(module => !module.IsHardpoint).Sum(module => module.Megawatts));
 
         Bands = BandsOf(retracted);
         Lines = Levels.Select((level, index) => Line(level, index, Bands)).ToList();

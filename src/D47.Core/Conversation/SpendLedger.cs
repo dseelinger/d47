@@ -249,10 +249,6 @@ public sealed class SpendLedger
         }
     }
 
-    /// <summary>Every window the dialog reports, against the clock this ledger was given.</summary>
-    public IReadOnlyList<(SpendPeriod Period, SpendTotals Totals)> Summary(TimeZoneInfo zone) =>
-        [.. Immediate(zone), .. Windows(zone)];
-
     /// <summary>The windows that read beside the turn and the session — today, and nothing else (#227).</summary>
     public IReadOnlyList<(SpendPeriod Period, SpendTotals Totals)> Immediate(TimeZoneInfo zone) =>
         [.. SpendPeriods.Immediate(_clock.UtcNow, zone).Select(period => (period, Total(period)))];

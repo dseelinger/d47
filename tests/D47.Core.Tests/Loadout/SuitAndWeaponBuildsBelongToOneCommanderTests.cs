@@ -259,7 +259,7 @@ public class SuitAndWeaponBuildsBelongToOneCommanderTests
         world.Active = Commander("F3", "Third");
         world.Kit.Observe([]);
 
-        Assert.Equal("F2", world.Store.Find("a")!.CommanderFid);
+        Assert.Equal("F2", world.Store.Builds.First(build => build.Id == "a").CommanderFid);
     }
 
     [Fact]

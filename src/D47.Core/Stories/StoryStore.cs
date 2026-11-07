@@ -150,15 +150,6 @@ public sealed class StoryStore
         Changed?.Invoke();
     }
 
-    /// <summary>The Commander's voter token, or null until they first rate a story.</summary>
-    public string? Voter(string? frontierId)
-    {
-        lock (_gate)
-        {
-            return _voters.GetValueOrDefault(frontierId ?? AdventureStore.NoCommander);
-        }
-    }
-
     /// <summary>Whether the Commander asked to fly to a Guardian beacon again, so no scan counts as on record.</summary>
     public bool BeaconForgotten(string? frontierId)
     {

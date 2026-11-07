@@ -932,12 +932,6 @@ public sealed class ChecklistService(
         _ => "Not in any ledger I recognise",
     };
 
-    /// <summary>
-    /// The filter row, generated from the three axes rather than hand-listed — kind, source and state —
-    /// so a fourth kind of plan appears without anybody remembering to add it.
-    /// </summary>
-    public IReadOnlyList<string> Filters() => [.. FilterAxes().Select(filter => filter.Key)];
-
     /// <summary>The same filters, each under the question it answers (asked for 2026-08-20).</summary>
     public const string HereKey = "here";
 
@@ -1592,12 +1586,6 @@ public sealed class ChecklistService(
     /// <summary>Rewords a line the Commander wrote (remediation.md 10, item 13).</summary>
     public ChecklistChange Reword(ChecklistItemId id, string text) =>
         list.Apply(Fid, Name, document => document.Reword(id, text));
-
-    public ChecklistChange Revise(
-        ChecklistScope scope,
-        ChecklistSource source,
-        IReadOnlyList<ChecklistItem> items) =>
-        list.Apply(Fid, Name, document => document.Revise(scope, source, items));
 
     /// <summary>Accepts everything waiting.</summary>
     public string Accept(string? id = null)

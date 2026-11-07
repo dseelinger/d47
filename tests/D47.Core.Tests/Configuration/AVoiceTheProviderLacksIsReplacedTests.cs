@@ -1,3 +1,4 @@
+using D47.Core.Tests.Persona;
 using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
@@ -108,7 +109,7 @@ public class AVoiceTheProviderLacksIsReplacedTests
     {
         var removed = SpeechCapability.WithoutVoicesNotIn(Holding(), Edge);
 
-        var paired = await VoicePairing.ChooseAsync(
+        var paired = await CoreVoiceChoice.ChooseAsync(
             Edge.Voices, removed.Persona.Voices, null, null, null, null, null, cancellationToken: TestContext.Current.CancellationToken);
 
         var offered = Edge.Voices.Select(voice => voice.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);

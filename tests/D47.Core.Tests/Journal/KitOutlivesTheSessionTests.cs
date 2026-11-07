@@ -26,7 +26,7 @@ public class KitOutlivesTheSessionTests
     {
         var gameState = new GameStateStore
         {
-            RestoreKit = fid => store?.For(fid),
+            RestoreKit = fid => store?.All.GetValueOrDefault(fid),
         };
 
         gameState.Apply(Event(
@@ -69,7 +69,7 @@ public class KitOutlivesTheSessionTests
         var reading = Store();
         reading.Load();
 
-        var kit = reading.For("F1")!;
+        var kit = reading.All.GetValueOrDefault("F1")!;
 
         var suit = kit.Suits[1837009111675068];
         Assert.Equal("tacticalsuit_class3", suit.Symbol);
@@ -102,11 +102,11 @@ public class KitOutlivesTheSessionTests
         var reading = Store();
         reading.Load();
 
-        Assert.NotNull(reading.For("F1")!.Suits.GetValueOrDefault(1));
-        Assert.Null(reading.For("F1")!.Weapons.GetValueOrDefault(2));
+        Assert.NotNull(reading.All.GetValueOrDefault("F1")!.Suits.GetValueOrDefault(1));
+        Assert.Null(reading.All.GetValueOrDefault("F1")!.Weapons.GetValueOrDefault(2));
 
-        Assert.NotNull(reading.For("F2")!.Weapons.GetValueOrDefault(2));
-        Assert.Null(reading.For("F2")!.Suits.GetValueOrDefault(1));
+        Assert.NotNull(reading.All.GetValueOrDefault("F2")!.Weapons.GetValueOrDefault(2));
+        Assert.Null(reading.All.GetValueOrDefault("F2")!.Suits.GetValueOrDefault(1));
     }
 
     /// <summary>Selling an item removes it from the file, not merely from memory.</summary>
@@ -124,7 +124,7 @@ public class KitOutlivesTheSessionTests
         var reading = Store();
         reading.Load();
 
-        Assert.Null(reading.For("F1")!.Suits.GetValueOrDefault(1));
+        Assert.Null(reading.All.GetValueOrDefault("F1")!.Suits.GetValueOrDefault(1));
     }
 
     /// <summary>Restoring merges stored under live rather than replacing what the session has already seen.</summary>
@@ -159,13 +159,13 @@ public class KitOutlivesTheSessionTests
         var reading = Store();
         reading.Load();
 
-        Assert.Null(reading.For("F1"));
+        Assert.Null(reading.All.GetValueOrDefault("F1"));
 
         _files.WriteText(File_, "{ this is not json");
 
         var corrupt = Store();
         corrupt.Load();
 
-        Assert.Null(corrupt.For("F1"));
+        Assert.Null(corrupt.All.GetValueOrDefault("F1"));
     }
 }

@@ -107,10 +107,6 @@ public static class ActionReachability
         IEnumerable<GameAction>? actions = null) =>
         [.. (actions ?? GameActions.All).Select(action => Resolve(action, binds, context))];
 
-    /// <summary>The ids currently on offer.</summary>
-    public static IReadOnlyList<string> OfferedIds(EliteBinds binds, ControlContext context) =>
-        [.. ResolveAll(binds, context).Where(reach => reach.IsOffered).Select(reach => reach.Action.Id)];
-
     private static ActionReach Deny(GameAction action, ActionAvailability availability, string reason) =>
         new() { Action = action, Availability = availability, Reason = reason };
 

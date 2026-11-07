@@ -97,18 +97,6 @@ public sealed class BookmarkStore(string path, IFileSystem files, ILogger<Bookma
         }
     }
 
-    /// <summary>The bookmark by that name, or null.</summary>
-    public Bookmark? Find(string frontierId, string name)
-    {
-        lock (_gate)
-        {
-            return _byCommander.TryGetValue(frontierId, out var bookmarks)
-                && bookmarks.TryGetValue(name.Trim(), out var bookmark)
-                ? bookmark
-                : null;
-        }
-    }
-
     /// <summary>Adds a bookmark. False, and no change, when this Commander already has that name.</summary>
     public bool Add(string frontierId, string name, string system, DateTimeOffset at)
     {

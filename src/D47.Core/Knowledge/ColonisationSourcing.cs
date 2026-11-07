@@ -54,8 +54,6 @@ public sealed record SourcingPlan(
 
     public long Total => Stops.Sum(stop => stop.Total);
 
-    /// <summary>Whether every outstanding commodity is covered somewhere, in full.</summary>
-    public bool IsComplete => Unpriced.Count == 0 && Shortfalls.Count == 0;
 }
 
 /// <summary>One commodity to buy and how many tonnes of it.</summary>

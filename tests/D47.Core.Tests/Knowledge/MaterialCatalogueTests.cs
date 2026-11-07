@@ -48,7 +48,7 @@ public class MaterialCatalogueTests
     [Fact]
     public void TheTraderLinesAreTwentyThreeLaddersWithOneMaterialPerGrade()
     {
-        var lines = MaterialCatalogue.Lines;
+        var lines = MaterialCatalogue.All.Select(entry => entry.Line).OfType<string>().Distinct().Order(StringComparer.Ordinal).ToList();
 
         Assert.Equal(23, lines.Count);
 

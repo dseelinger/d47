@@ -73,8 +73,6 @@ public sealed record MaterialEntry
     /// <summary>Whether a material trader will deal in it.</summary>
     public bool IsTradeable => Ledger == MaterialLedger.Material && Line is not null;
 
-    /// <summary>Whether the Bartender will exchange it.</summary>
-    public bool IsBarterable => BarterValue is not null && BarterCost is not null;
 }
 
 /// <summary>
@@ -143,14 +141,6 @@ public static class MaterialCatalogue
             : [.. Loaded.Value.BySymbol.Values
                 .Where(entry => string.Equals(entry.Line, line.Trim(), StringComparison.OrdinalIgnoreCase))
                 .OrderBy(entry => entry.Grade)];
-
-    /// <summary>Every trader line the table knows, in a stable order.</summary>
-    public static IReadOnlyList<string> Lines =>
-        [.. Loaded.Value.BySymbol.Values
-            .Select(entry => entry.Line)
-            .OfType<string>()
-            .Distinct(StringComparer.Ordinal)
-            .Order(StringComparer.Ordinal)];
 
     private static Tables Load()
     {

@@ -84,10 +84,10 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
         var store = OpenWithAHeldFirstWrite();
         var minting = StartHeldWrite(() => store.EnsureVoter("F1"));
 
-        var read = Task.Run(() => store.Voter("F1"), TestContext.Current.CancellationToken);
+        var read = Task.Run(() => store.BeaconForgotten("F1"), TestContext.Current.CancellationToken);
 
         var result = await read.WaitAsync(Patience, TestContext.Current.CancellationToken);
-        Assert.NotNull(result);
+        Assert.False(result);
 
         _release.Set();
         await minting;

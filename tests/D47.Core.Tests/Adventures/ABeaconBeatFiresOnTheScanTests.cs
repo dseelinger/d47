@@ -53,7 +53,7 @@ public sealed class ABeaconBeatFiresOnTheScanTests
         var scanned = AdventureFold.Apply(arrived, AncientKey(Accepted.AddMinutes(3)));
 
         Assert.True(scanned.IsDone);
-        Assert.Equal(Accepted.AddMinutes(3), scanned.FinishedAt);
+        Assert.Equal(Accepted.AddMinutes(3), scanned.LastFiredAt);
     }
 
     [Fact]

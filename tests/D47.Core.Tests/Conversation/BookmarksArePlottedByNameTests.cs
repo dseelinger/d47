@@ -40,8 +40,8 @@ public class BookmarksArePlottedByNameTests
         store.Add("F1", "Current CG", "Deciat", At);
         store.Add("F2", "Current CG", "Sol", At);
 
-        Assert.Equal("Deciat", store.Find("F1", "Current CG")?.System);
-        Assert.Equal("Sol", store.Find("F2", "Current CG")?.System);
+        Assert.Equal("Deciat", store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase))?.System);
+        Assert.Equal("Sol", store.For("F2").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase))?.System);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class BookmarksArePlottedByNameTests
 
         Assert.Null(BookmarkValidation.Problem("current CG", existingNames, taken));
         Assert.True(store.Rename("F1", "Current CG", "current CG"));
-        Assert.Equal("Deciat", store.Find("F1", "current CG")?.System);
+        Assert.Equal("Deciat", store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "current CG", StringComparison.OrdinalIgnoreCase))?.System);
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class BookmarksArePlottedByNameTests
         store.Add("F1", "Current CG", "Deciat", At);
 
         Assert.True(store.Delete("F1", "Current CG"));
-        Assert.Null(store.Find("F1", "Current CG"));
+        Assert.Null(store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]

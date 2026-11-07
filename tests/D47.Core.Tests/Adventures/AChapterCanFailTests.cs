@@ -138,8 +138,8 @@ public sealed class AChapterCanFailTests
 
         var standing = _book.Standing("F1", Key)!;
         Assert.True(standing.IsFailed);
-        Assert.Contains("failed", standing.Describe(At(2)));
-        Assert.Contains(stored.Ending.Reason, standing.Describe(At(2)));
+        Assert.Equal("failed", standing.Place());
+        Assert.Equal(stored.Ending.Reason, standing.Adventure.Ending!.Reason);
         Assert.Empty(_book.Active("F1"));
     }
 
@@ -164,7 +164,7 @@ public sealed class AChapterCanFailTests
 
         Assert.Empty(_book.Unstored("F1"));
         Assert.Empty(_book.Drain());
-        Assert.StartsWith("The Lantern Route: failed.", _book.Standing("F1", Key)!.Describe(At(3)), StringComparison.Ordinal);
+        Assert.Equal("failed", _book.Standing("F1", Key)!.Place());
     }
 
     [Fact]

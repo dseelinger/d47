@@ -17,7 +17,7 @@ public class AdventureFoldTests
 
         Assert.True(standing.IsDone);
         Assert.Equal(5, standing.Fired.Count);
-        Assert.Equal(Accepted.AddMinutes(5), standing.FinishedAt);
+        Assert.Equal(Accepted.AddMinutes(5), standing.LastFiredAt);
         Assert.Equal("finished", standing.Place());
     }
 

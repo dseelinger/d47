@@ -5,9 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Reminders;
 
-/// <summary>One reminder the file was asked to hold, and why it was refused.</summary>
-public sealed record JournalReminderProblem(string Where, string Reason);
-
 /// <summary>The Commanders' journal-triggered reminders, per Frontier id, in one file beside the executable.</summary>
 public sealed class JournalReminderStore(string path, IFileSystem files, ILogger<JournalReminderStore> logger)
 {
@@ -25,7 +22,6 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
     private readonly Lock _saveGate = new();
 
     private Dictionary<string, IReadOnlyList<JournalReminder>> _byCommander = new(StringComparer.Ordinal);
-    private IReadOnlyList<JournalReminderProblem> _problems = [];
 
     /// <summary>The file's contents as last read or written.</summary>
     private string? _seen;
@@ -38,18 +34,6 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
 
     /// <summary>Raised when the set changed, whoever changed it.</summary>
     public event Action? Changed;
-
-    /// <summary>Reminders that were refused, and why.</summary>
-    public IReadOnlyList<JournalReminderProblem> Problems
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _problems;
-            }
-        }
-    }
 
     /// <summary>One Commander's reminders, oldest first.</summary>
     public IReadOnlyList<JournalReminder> For(string frontierId)
@@ -77,7 +61,6 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
                 lock (_gate)
                 {
                     _byCommander = new Dictionary<string, IReadOnlyList<JournalReminder>>(StringComparer.Ordinal);
-                    _problems = [];
                     _seen = null;
                 }
 
@@ -121,7 +104,7 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
             if (_unreadable
                 || string.IsNullOrWhiteSpace(frontierId)
                 || string.IsNullOrWhiteSpace(reminder.Id)
-                || Refused(reminder.Sentence, reminder.Trigger, reminder.Argument, held.Count(existing => existing.Id != reminder.Id)) is not null)
+                || IsRefused(reminder.Sentence, reminder.Trigger, reminder.Argument, held.Count(existing => existing.Id != reminder.Id)))
             {
                 return false;
             }
@@ -308,7 +291,6 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
     private void Reload(string text)
     {
         var loaded = new Dictionary<string, List<JournalReminder>>(StringComparer.Ordinal);
-        var problems = new List<JournalReminderProblem>();
         var unreadable = false;
 
         try
@@ -317,7 +299,6 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
             {
                 if (string.IsNullOrWhiteSpace(commander.FrontierId))
                 {
-                    problems.Add(new JournalReminderProblem("a Commander", "it has no Frontier id."));
                     continue;
                 }
 
@@ -331,14 +312,9 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
                 foreach (var record in commander.Reminders ?? [])
                 {
                     var id = string.IsNullOrWhiteSpace(record.Id) ? Guid.NewGuid().ToString("N") : record.Id.Trim();
-                    var problem = Refused(record.Sentence, record.Trigger, record.Argument, reminders.Count)
-                        ?? (reminders.Any(held => held.Id == id)
-                            ? new JournalReminderProblem(id, "another reminder has this id.")
-                            : null);
-
-                    if (problem is not null)
+                    if (IsRefused(record.Sentence, record.Trigger, record.Argument, reminders.Count)
+                        || reminders.Any(held => held.Id == id))
                     {
-                        problems.Add(problem);
                         continue;
                     }
 
@@ -359,7 +335,6 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
         {
             unreadable = true;
             loaded.Clear();
-            problems.Add(new JournalReminderProblem(System.IO.Path.GetFileName(path), ex.Message));
             logger.LogWarning(ex, "The journal reminder file could not be read");
         }
 
@@ -367,26 +342,21 @@ public sealed class JournalReminderStore(string path, IFileSystem files, ILogger
         {
             _byCommander = loaded.ToDictionary(
                 pair => pair.Key, pair => (IReadOnlyList<JournalReminder>)pair.Value, StringComparer.Ordinal);
-            _problems = problems;
             _unreadable = unreadable;
             _seen = text;
         }
     }
 
-    private static JournalReminderProblem? Refused(string? said, JournalTrigger? triggered, string? argument, int held)
+    private static bool IsRefused(string? said, JournalTrigger? triggered, string? argument, int held)
     {
         var sentence = said?.Trim() ?? string.Empty;
-        var where = sentence.Length == 0 ? "a reminder" : sentence[..Math.Min(sentence.Length, 24)];
 
-        return sentence.Length == 0 ? new JournalReminderProblem(where, "it has nothing to say.")
-            : sentence.Length > MaxSentenceLength ? new JournalReminderProblem(
-                where, $"the sentence is {sentence.Length} characters; the most is {MaxSentenceLength}.")
-            : triggered is not { } trigger || !Enum.IsDefined(trigger)
-                ? new JournalReminderProblem(where, "it has no trigger.")
-            : JournalReminder.NeedsArgument(trigger) && string.IsNullOrWhiteSpace(argument)
-                ? new JournalReminderProblem(where, $"{trigger} needs a name to match.")
-            : held >= MaxReminders ? new JournalReminderProblem(where, $"this Commander already holds {MaxReminders}.")
-            : null;
+        return sentence.Length == 0
+            || sentence.Length > MaxSentenceLength
+            || triggered is not { } trigger
+            || !Enum.IsDefined(trigger)
+            || (JournalReminder.NeedsArgument(trigger) && string.IsNullOrWhiteSpace(argument))
+            || held >= MaxReminders;
     }
 
     private sealed class Document

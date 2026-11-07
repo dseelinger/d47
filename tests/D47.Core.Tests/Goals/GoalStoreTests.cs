@@ -28,7 +28,6 @@ public class GoalStoreTests
 
         Assert.Equal(4, mark?.Have);
         Assert.Equal(Now.AddDays(-90), mark?.Started);
-        Assert.Empty(reread.Problems);
     }
 
     [Fact]
@@ -56,10 +55,6 @@ public class GoalStoreTests
         store.Record([Mine("F1", new GoalMark { Key = "rank.soldier", Have = 0 })]);
 
         Assert.Contains("rank.soldier", store.SetAsideBy("F1"), StringComparer.Ordinal);
-
-        // And emptying everything mined leaves it standing, for the same reason.
-        store.Empty();
-        Assert.Contains("rank.soldier", store.SetAsideBy("F1"), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -74,7 +69,7 @@ public class GoalStoreTests
     }
 
     [Fact]
-    public void AMalformedFileIsReportedAndKeepsWhatWasLoaded()
+    public void AMalformedFileKeepsWhatWasLoaded()
     {
         var store = Store();
 
@@ -84,7 +79,6 @@ public class GoalStoreTests
         _files.WriteText(GoalsFile, "{ not json");
         store.Poll();
 
-        Assert.NotEmpty(store.Problems);
         Assert.Equal(3, store.MineFor("F1")?.For("rank.trade")?.Have);
         Assert.Contains("rank.soldier", store.SetAsideBy("F1"), StringComparer.Ordinal);
     }
@@ -107,7 +101,6 @@ public class GoalStoreTests
         var store = Store();
         store.Poll();
 
-        Assert.Empty(store.Problems);
         Assert.Contains("rank.soldier", store.SetAsideBy("F1"), StringComparer.Ordinal);
 
         store.SetAside("F1", "rank.trade", aside: true);

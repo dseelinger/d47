@@ -86,7 +86,7 @@ public class ASystemKeepsItsFactionsAndConflictsTests
             "FSDJump",
             JsonDocument.Parse("""{ "event":"FSDJump", "StarSystem":"Empty" }""").RootElement));
 
-        Assert.False(standings.IsKnown);
+        Assert.Empty(standings.Systems);
     }
 
     [Fact]

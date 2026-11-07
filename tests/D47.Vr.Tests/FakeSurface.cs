@@ -11,8 +11,6 @@ public sealed class FakeSurface : IVrSurfaceSource
 
     public SurfacePlacement Placement { get; set; } = new();
 
-    public bool TakesPointer { get; set; } = true;
-
     public (int Width, int Height) Size { get; set; } = (8, 8);
 
     public bool IsDirty { get; set; } = true;

@@ -21,13 +21,8 @@ public class WhatTheEngineerHereCanDoTests
         var here = Assert.Single(EngineersHere.For(items, state));
 
         Assert.Equal("Lei Cheung", here.Engineer.Name);
-        Assert.True(here.Unlocked);
         Assert.Single(here.Ready);
         Assert.Empty(here.OutOfRank);
-
-        // The sentence the callout says.
-        Assert.Contains("Lei Cheung is here", here.Describe(), StringComparison.Ordinal);
-        Assert.Contains("one item", here.Describe(), StringComparison.Ordinal);
     }
 
     /// <summary>Rank gates, it does not filter.</summary>
@@ -42,7 +37,6 @@ public class WhatTheEngineerHereCanDoTests
 
         Assert.Empty(here.Ready);
         Assert.Single(here.OutOfRank);
-        Assert.Contains("waiting on your grade", here.Describe(), StringComparison.Ordinal);
     }
 
     /// <summary>An engineer's grades are not the blueprint's.</summary>

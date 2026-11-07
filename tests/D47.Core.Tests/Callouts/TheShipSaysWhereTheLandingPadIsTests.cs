@@ -12,13 +12,15 @@ public class EveryRingPadHasAPlaceTests
     [Fact]
     public void PadsOneToFortyFiveAreAllInTheTable()
     {
-        Assert.Equal(Enumerable.Range(1, 45), LandingPads.All.Select(pad => pad.Number).Order());
+        Assert.All(Enumerable.Range(1, 45), number => Assert.Equal(number, LandingPads.Find(number)?.Number));
+        Assert.Null(LandingPads.Find(0));
+        Assert.Null(LandingPads.Find(46));
     }
 
     [Fact]
     public void EachPadResolvesToASegmentAndADepth()
     {
-        Assert.All(LandingPads.All, pad =>
+        Assert.All(Enumerable.Range(1, 45).Select(number => LandingPads.Find(number)!.Value), pad =>
         {
             Assert.InRange(pad.Segment, 1, 12);
             Assert.InRange(pad.Depth, 0, 4);

@@ -8,7 +8,6 @@ namespace D47.Core.Checklists;
 /// engineer can actually work on.
 /// </summary>
 /// <param name="Engineer">Who, and where their base is.</param>
-/// <param name="Unlocked">Whether the Commander has them at all.</param>
 /// <param name="Rank">The Commander's grade with them, where the journal has said.</param>
 /// <param name="Ready">Open items this engineer could roll today.</param>
 /// <param name="OutOfRank">
@@ -20,7 +19,6 @@ namespace D47.Core.Checklists;
 /// </param>
 public sealed record EngineerAtHand(
     Engineer Engineer,
-    bool Unlocked,
     int? Rank,
     IReadOnlyList<ChecklistItem> Ready,
     IReadOnlyList<ChecklistItem> OutOfRank,
@@ -34,34 +32,6 @@ public sealed record EngineerAtHand(
     /// worth announcing.
     /// </summary>
     public bool IsWorthListing => HasWork || Partial.Count > 0;
-
-    /// <summary>One sentence, for the opening callout and for a spoken answer.</summary>
-    public string Describe()
-    {
-        var where = Engineer.Station is { Length: > 0 } station
-            ? $"{Engineer.Name} is here, at {station}"
-            : $"{Engineer.Name} is here";
-
-        if (!Unlocked)
-        {
-            return $"{where} — {Count(Ready.Count + OutOfRank.Count)} on your list, and you have "
-                   + "not unlocked them.";
-        }
-
-        if (Ready.Count == 0)
-        {
-            return $"{where} — nothing on your list they can craft yet, "
-                   + $"{Count(OutOfRank.Count)} waiting on your grade with them.";
-        }
-
-        return OutOfRank.Count > 0
-            ? $"{where}, and can do {Count(Ready.Count)} on your list. "
-              + $"{Count(OutOfRank.Count)} more waiting on your grade with them."
-            : $"{where}, and can do {Count(Ready.Count)} on your list.";
-    }
-
-    private static string Count(int many) =>
-        many == 1 ? "one item" : $"{many.ToString(global::System.Globalization.CultureInfo.InvariantCulture)} items";
 }
 
 /// <summary>
@@ -191,7 +161,6 @@ public static class EngineersHere
 
                 return new EngineerAtHand(
                     engineer,
-                    standing?.IsUnlocked ?? false,
                     standing?.Rank,
                     ready,
                     waiting,

@@ -70,8 +70,6 @@ public sealed partial record CombatRecord
     /// <summary>True once the walk over earlier journals has been merged in.</summary>
     public bool IsWhole { get; init; }
 
-    public bool IsKnown => !Held.IsEmpty || OnRecordSince is not null;
-
     private ImmutableList<Kill> Held { get; init; } = [];
 
     private ImmutableDictionary<string, string> TargetNames { get; init; } = ImmutableDictionary<string, string>.Empty;

@@ -196,7 +196,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         ToolTip.SetShowOnDisabled(_run, true);
     }
 
-    public event EventHandler? SummaryChanged;
+    event EventHandler? IPageSummary.SummaryChanged
+    {
+        add { }
+        remove { }
+    }
 
     public Control? BarTool => _history.Button;
 
@@ -1597,6 +1601,4 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
-
-    protected void RaiseSummaryChanged() => SummaryChanged?.Invoke(this, EventArgs.Empty);
 }

@@ -147,17 +147,6 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         }
     }
 
-    /// <summary>Whether anything of this Commander's is owed a line, for the mini panel's one glance.</summary>
-    public bool IsStirringAnywhere(string? frontierId)
-    {
-        var prefix = StandingKey(frontierId ?? AdventureStore.NoCommander, string.Empty);
-
-        lock (_gate)
-        {
-            return _stirring.Any(key => key.StartsWith(prefix, StringComparison.Ordinal));
-        }
-    }
-
     /// <summary>
     /// Records what was actually said about a story and stops the waiting (asked for 2026-08-22).
     /// </summary>
@@ -253,18 +242,6 @@ public sealed class AdventureBook(AdventureStore store, ILogger<AdventureBook> l
         {
             _generation++;
             _needsCatchUp = true;
-        }
-    }
-
-    /// <summary>Whether a walk over the journal files is owed — at startup, and after a stamp moved.</summary>
-    public bool NeedsCatchUp
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _needsCatchUp;
-            }
         }
     }
 

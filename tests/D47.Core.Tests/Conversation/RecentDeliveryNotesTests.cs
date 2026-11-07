@@ -118,8 +118,6 @@ public sealed class RecentDeliveryNotesTests
 
         public string Id => "echo";
 
-        public string DisplayName => "Echo";
-
         public string DefaultModel => "echo";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

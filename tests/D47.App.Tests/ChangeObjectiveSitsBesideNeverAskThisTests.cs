@@ -379,8 +379,6 @@ public sealed class ChangeObjectiveSitsBesideNeverAskThisTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Scripted";
-
         public string DefaultModel => "claude-sonnet-5-5";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

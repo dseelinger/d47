@@ -11,8 +11,6 @@ public sealed class ScriptedReplies(params string[] replies) : ILlmProvider
 
     public string Id => "scripted";
 
-    public string DisplayName => "Scripted";
-
     public string DefaultModel => "scripted";
 
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()

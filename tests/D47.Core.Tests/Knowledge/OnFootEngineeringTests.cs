@@ -5,6 +5,8 @@ namespace D47.Core.Tests.Knowledge;
 
 public class OnFootEngineeringTests
 {
+    private static bool Barterable(MaterialEntry entry) => entry.BarterValue is not null && entry.BarterCost is not null;
+
     private static Blueprint Modification(string name) =>
         Assert.Single(BlueprintCatalogue.All, blueprint =>
             blueprint.Kind is BlueprintKind.Suit or BlueprintKind.Weapon && blueprint.Name == name);
@@ -128,24 +130,22 @@ public class OnFootEngineeringTests
 
         Assert.NotNull(graphene);
         Assert.NotNull(catalyst);
-        Assert.True(graphene.IsBarterable);
+        Assert.True(Barterable(graphene));
 
-        // The measured trade: four Graphene, at 13 each, bought seven Chemical Catalyst at 7.
-        Assert.Equal(7, OnFootRules.BarterYield(4 * graphene.BarterValue!.Value, catalyst.BarterCost));
-
-        // And back the other way, rounded up, because the shortfall is the Commander's to cover.
+        // The measured trade: four Graphene, at 13 each, bought seven Chemical Catalyst at 7. Rounded up,
+        // because the shortfall is the Commander's to cover.
         Assert.Equal(4, OnFootRules.BarterCostOf(7, graphene.BarterValue, catalyst.BarterCost));
     }
 
     [Fact]
     public void OnlyComponentsCanBeBartered()
     {
-        var barterable = MaterialCatalogue.All.Where(entry => entry.IsBarterable).ToArray();
+        var barterable = MaterialCatalogue.All.Where(Barterable).ToArray();
 
         Assert.Equal(33, barterable.Length);
         Assert.All(barterable, entry => Assert.Equal("Component", entry.Category));
 
-        Assert.False(MaterialCatalogue.Find("opinionpolls")?.IsBarterable);
+        Assert.False(Barterable(MaterialCatalogue.Find("opinionpolls")!));
     }
 
     /// <summary>

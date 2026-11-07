@@ -272,7 +272,7 @@ public class PlanWritesAreSentInOrderAndRetriedTests
     }
 
     [Fact]
-    public void ARefusedKeyStopsEveryWriteUntilReset()
+    public void ARefusedKeyStopsEveryWrite()
     {
         var rig = new Rig();
         rig.PlanHolds();
@@ -285,12 +285,5 @@ public class PlanWritesAreSentInOrderAndRetriedTests
 
         Assert.Single(rig.Writer.Calls);
         Assert.True(rig.Queue.Status.KeyRefused);
-
-        rig.Queue.Reset();
-        rig.Queue.Add([Needs(500, Start)], "Tester", Start.AddMinutes(2));
-        rig.Tick(Start.AddMinutes(2));
-
-        Assert.Equal(2, rig.Writer.Calls.Count);
-        Assert.False(rig.Queue.Status.KeyRefused);
     }
 }

@@ -1700,13 +1700,6 @@ public static class SpeechCapability
     }
 
     /// <summary>
-    /// Kept as the name the rest of the app already imports, now reading from the one place the
-    /// disclosures live (<see cref="TtsProviderCatalog"/>) rather than asserting Edge's text as though
-    /// it were every provider's.
-    /// </summary>
-    public static string EdgeEgress => TtsProviderCatalog.Edge.Egress;
-
-    /// <summary>
     /// The settings-to-policy conversion, in one place so the panel, the file and the turn loop cannot
     /// end up with three readings of the same four rows.
     /// </summary>
@@ -1719,12 +1712,6 @@ public static class SpeechCapability
             : Conversation.BackoffShape.Sequential,
         AttemptTimeout = TimeSpan.FromSeconds(speech.TurnTimeoutSeconds),
     };
-
-    /// <summary>
-    /// The same settings with every chosen voice dropped, for use when the speech provider changes.
-    /// </summary>
-    public static D47Settings WithoutChosenVoices(D47Settings settings, string chosenFor) =>
-        VoiceMemory.Switched(settings, settings.Speech.VoicesProvider, chosenFor);
 
     /// <summary>The same settings with one voice id removed from every place that could hold it.</summary>
     public static D47Settings WithoutTheVoice(D47Settings settings, string voiceId) => settings with

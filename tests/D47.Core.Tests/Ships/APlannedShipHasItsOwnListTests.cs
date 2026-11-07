@@ -118,7 +118,6 @@ public class APlannedShipHasItsOwnListTests
         var reread = new ChecklistStore(path, files, NullLogger<ChecklistStore>.Instance);
 
         Assert.True(reread.Poll());
-        Assert.Empty(reread.Problems);
 
         var item = Assert.Single(reread.For("F1").Items);
 

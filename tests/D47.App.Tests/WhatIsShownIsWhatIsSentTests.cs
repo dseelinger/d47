@@ -125,7 +125,7 @@ public class WhatIsShownIsWhatIsSentTests
 
         Assert.NotNull(endpoint.Last);
         Assert.Equal(
-            DonationEnvelope.HashOf(Ungzip(endpoint.Sent)),
+            DonationHash.Of(Ungzip(endpoint.Sent)),
             Header(endpoint.Last, DonationEnvelope.Sha256Header));
     }
 

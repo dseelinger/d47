@@ -13,9 +13,6 @@ public static class ElevenLabsModels
 
     private static ModelCatalog Catalog => ModelCatalogSource.Shared.Current;
 
-    /// <summary>What speaks when nobody has chosen.</summary>
-    public static string Default => Catalog.SpeechDefaultFor(TtsProviderCatalog.ElevenLabsId)!;
-
     /// <summary>The models offered, in the order the row lists them.</summary>
     public static IReadOnlyList<SpeechModel> All => Catalog.OfferedSpeechFor(TtsProviderCatalog.ElevenLabsId);
 

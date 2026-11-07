@@ -78,8 +78,6 @@ public sealed record CreditLedger
     /// <summary>True once the walk over earlier journals has been merged in.</summary>
     public bool IsWhole { get; init; }
 
-    public bool IsKnown => !Held.IsEmpty || OnRecordSince is not null;
-
     private ImmutableList<CreditEntry> Held { get; init; } = [];
 
     private ImmutableDictionary<string, long> Payments { get; init; } = ImmutableDictionary<string, long>.Empty;

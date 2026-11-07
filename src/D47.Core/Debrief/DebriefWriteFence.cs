@@ -23,11 +23,6 @@ public static class DebriefWriteFence
     /// </summary>
     public const string FolderName = AppPaths.DataFolderName;
 
-    /// <summary>
-    /// Whether this path is the one file, said as a question so the panel can ask without catching.
-    /// </summary>
-    public static bool Permits(string? path) => Refusal(path) is null;
-
     /// <summary>Refuses anything that is not the standing-directions file, and says why.</summary>
     public static void Enforce(string? path)
     {

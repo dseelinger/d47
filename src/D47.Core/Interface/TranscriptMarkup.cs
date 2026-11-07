@@ -72,10 +72,6 @@ public static class TranscriptMarkup
         return spans;
     }
 
-    /// <summary>What <see cref="Parse"/> would draw, as one string.</summary>
-    public static string Plain(string? text) =>
-        string.Concat(Parse(text).Select(span => span.Text));
-
     /// <summary>One line, once its leading marks have been read.</summary>
     private static void Block(List<MarkupSpan> spans, string line)
     {

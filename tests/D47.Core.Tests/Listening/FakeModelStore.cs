@@ -11,8 +11,6 @@ public sealed class FakeModelStore(params string[] installed) : IModelStore
 
     public string? PathOf(WhisperModel model) => IsInstalled(model) ? "nowhere" : null;
 
-    public IReadOnlyList<string> Installed() => installed;
-
     public Task<ModelOffer?> DescribeAsync(WhisperModel model, CancellationToken cancellationToken = default) =>
         Task.FromResult<ModelOffer?>(null);
 

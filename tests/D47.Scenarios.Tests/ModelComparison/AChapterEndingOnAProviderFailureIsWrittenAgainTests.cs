@@ -158,8 +158,6 @@ public sealed class AChapterEndingOnAProviderFailureIsWrittenAgainTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Scripted";
-
         public string DefaultModel => Model;
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

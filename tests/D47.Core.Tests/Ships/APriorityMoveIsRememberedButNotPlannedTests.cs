@@ -145,7 +145,6 @@ public class APriorityMoveIsRememberedButNotPlannedTests
 
         Assert.True(store.Poll());
         Assert.Empty(Assert.Single(store.Builds).PriorityMoves);
-        Assert.Empty(store.Problems);
     }
 
     [Fact]
@@ -167,6 +166,5 @@ public class APriorityMoveIsRememberedButNotPlannedTests
         var moves = Assert.Single(store.Builds).PriorityMoves;
 
         Assert.Equal(2, Assert.Single(moves).Value);
-        Assert.Single(store.Problems);
     }
 }

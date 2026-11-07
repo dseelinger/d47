@@ -5,8 +5,6 @@ namespace D47.Core.Input;
 /// <summary>Refuses every send while d47 shows a Commander other than the one Elite is running.</summary>
 public sealed class OffDutyGameInput(IGameInput inner, GameStateStore commanders) : IGameInput
 {
-    public bool IsGameRunning => inner.IsGameRunning;
-
     public bool IsGameForeground => inner.IsGameForeground;
 
     public Task<InjectionResult> SendAsync(IReadOnlyList<InputStep> steps, CancellationToken cancellationToken = default) =>

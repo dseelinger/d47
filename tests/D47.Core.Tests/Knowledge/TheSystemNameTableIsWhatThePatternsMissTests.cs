@@ -24,18 +24,6 @@ public class TheSystemNameTableIsWhatThePatternsMissTests
 
     [Trait("Category", "Integration")]
     [Fact]
-    public void NoRowIsSomethingAPatternAlreadyFinds()
-    {
-        var caught = Lines()
-            .Where(line => !line.StartsWith('#'))
-            .Where(row => SystemNameFinder.IsProcedural(row) || SystemNameFinder.IsCatalogue(row))
-            .ToArray();
-
-        Assert.Empty(caught);
-    }
-
-    [Trait("Category", "Integration")]
-    [Fact]
     public void TheHeaderNamesTheScriptAndTheSource()
     {
         var header = string.Join('\n', Lines().TakeWhile(line => line.StartsWith('#')));

@@ -106,8 +106,6 @@ public class TheTimeoutMeasuresSilenceTests
     {
         public string Id => "anthropic";
 
-        public string DisplayName => "Paced";
-
         public string DefaultModel => "claude-opus-5";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

@@ -26,9 +26,6 @@ public sealed record OperationRun(DateTimeOffset OpenedAt)
 
     public long? Reward => CreditsAfter - CreditsBefore;
 
-    /// <summary>True when the Commander's credits rose across the run.</summary>
-    public bool Finished => Reward > 0;
-
     public TimeSpan? Duration => ClosedAt - OpenedAt;
 
     internal bool MissionsSeen { get; init; }

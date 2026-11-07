@@ -41,29 +41,3 @@ public class AUtilityMountSaysWhereItSitsTests
         Assert.Equal("Large Hardpoint 1", hardpoint.Describe());
     }
 }
-
-public class TheMountPositionTableIsSoundTests
-{
-    [Fact]
-    public void EveryRowNamesAUtilityMountTheHullHas()
-    {
-        foreach (var row in UtilityMountPositions.All)
-        {
-            var slot = EliteSpecifications.Slots(row.Hull).FirstOrDefault(s => s.Name == row.Slot);
-
-            Assert.True(slot is not null, $"{row.Hull} has no slot {row.Slot}");
-            Assert.Equal(ShipSlotKind.Utility, slot.Kind);
-        }
-    }
-
-    [Fact]
-    public void NoHullAndSlotIsNamedTwice()
-    {
-        var repeated = UtilityMountPositions.All
-            .GroupBy(row => (row.Hull, row.Slot))
-            .Where(group => group.Count() > 1)
-            .Select(group => $"{group.Key.Hull} {group.Key.Slot}");
-
-        Assert.Empty(repeated);
-    }
-}

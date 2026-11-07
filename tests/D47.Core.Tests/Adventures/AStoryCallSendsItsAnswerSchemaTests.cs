@@ -181,8 +181,6 @@ public sealed class AStoryCallSendsItsAnswerSchemaTests
     {
         public List<(string Text, LlmResponseSchema Schema)> Calls { get; } = [];
 
-        public override string DisplayName => "Capturing";
-
         public override async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
             LlmRequest request,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)

@@ -62,7 +62,7 @@ public sealed class ErasedPilotDataDeletesStoriesAndAdventuresTests
         Assert.Equal([Later], fixtures.Stories.For("F1").Select(story => story.Id));
         Assert.Equal(["later-chapter"], fixtures.Book.Store.For("F1").Select(adventure => adventure.Key));
         Assert.Equal(["later-archived"], fixtures.Director.Archive.For("F1").Select(chapter => chapter.Adventure.Key));
-        Assert.Null(fixtures.Stories.Voter("F1"));
+        Assert.Null(StoryFileVoters.Of(fixtures.Files, fixtures.StoryPath, "F1"));
         Assert.False(fixtures.Stories.BeaconForgotten("F1"));
     }
 
@@ -102,14 +102,14 @@ public sealed class ErasedPilotDataDeletesStoriesAndAdventuresTests
         using var fixtures = Fixtures();
         Fill(fixtures, "F1");
         Fill(fixtures, "F2");
-        var voter = fixtures.Stories.Voter("F2");
+        var voter = fixtures.Stories.EnsureVoter("F2");
 
         fixtures.Director.ForgetErased("F1", Erased);
 
         Assert.Equal(3, fixtures.Stories.For("F2").Count);
         Assert.Equal(4, fixtures.Book.Store.For("F2").Count);
         Assert.Equal(2, fixtures.Director.Archive.For("F2").Count);
-        Assert.Equal(voter, fixtures.Stories.Voter("F2"));
+        Assert.Equal(voter, StoryFileVoters.Of(fixtures.Files, fixtures.StoryPath, "F2"));
         Assert.True(fixtures.Stories.BeaconForgotten("F2"));
     }
 
@@ -132,7 +132,7 @@ public sealed class ErasedPilotDataDeletesStoriesAndAdventuresTests
 
         Assert.Equal(0, changes);
         Assert.Equal(files, new[] { fixtures.StoryPath, fixtures.AdventuresPath, fixtures.ArchivePath }.Select(fixtures.Files.ReadText));
-        Assert.Equal(voter, fixtures.Stories.Voter("F1"));
+        Assert.Equal(voter, fixtures.Stories.EnsureVoter("F1"));
         Assert.True(fixtures.Stories.BeaconForgotten("F1"));
     }
 

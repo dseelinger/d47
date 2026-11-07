@@ -44,8 +44,6 @@ public sealed class ScancodeInjector(
     /// <summary>What a dry run composed, for a test or the diagnostics card to read back.</summary>
     public IReadOnlyList<InputStep> LastSequence { get; private set; } = [];
 
-    public bool IsGameRunning => window.IsRunning;
-
     public bool IsGameForeground => window.IsForeground;
 
     /// <summary>

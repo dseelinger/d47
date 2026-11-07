@@ -76,8 +76,6 @@ public static class PowerplayRanks
     public static int? MeritsNeeded(int rank) =>
         Loaded.Value.Merits.TryGetValue(rank, out var merits) ? merits : null;
 
-    public static bool GivesFullCarePackage(int rank) => rank > LastTabulatedRank;
-
     /// <summary>The words a perk is spoken as, or null for a key without a label.</summary>
     public static string? PerkLabel(string? key) =>
         key is not null && PerkLabels.TryGetValue(key, out var label) ? label : null;

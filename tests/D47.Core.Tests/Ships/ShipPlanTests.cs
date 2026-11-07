@@ -203,7 +203,7 @@ public class ShipPlanTests
 
     /// <summary>And a hand edit that puts two on one ship is reported rather than obeyed.</summary>
     [Fact]
-    public void AFileWithTwoBuildsForOneShipIsRefusedAndSaidSo()
+    public void AFileWithTwoBuildsForOneShipKeepsTheFirst()
     {
         var install = new MemoryInstall();
         var path = Path.Combine(install.Root, "ships.json");
@@ -221,7 +221,6 @@ public class ShipPlanTests
         store.Poll();
 
         Assert.Single(store.Builds);
-        Assert.Single(store.Problems);
     }
 
     /// <summary>The Commander is half the key: Elite's ship ids are per Commander and start small, so two Commanders' ship 12s are two ships and neither build is a duplicate of the other.</summary>
@@ -244,7 +243,6 @@ public class ShipPlanTests
         store.Poll();
 
         Assert.Equal(2, store.Builds.Count);
-        Assert.Empty(store.Problems);
         Assert.Equal("python", store.ForShip("F1", 12)!.Hull);
         Assert.Equal("anaconda", store.ForShip("F2", 12)!.Hull);
     }

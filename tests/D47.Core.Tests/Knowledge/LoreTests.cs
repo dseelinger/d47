@@ -53,7 +53,7 @@ public class LoreTests
     {
         // Beagle Point was Ceeckia ZQ-L c24-0 and kept its address, which is the entire argument for keying
         // on the address.
-        var beagle = LoreDirectory.ByName("Beagle Point");
+        var beagle = LoreDirectory.All.FirstOrDefault(entry => entry.Name == "Beagle Point");
 
         Assert.NotNull(beagle);
         Assert.Equal(beagle.SystemAddress, LoreDirectory.ByAddress(beagle.SystemAddress)?.SystemAddress);

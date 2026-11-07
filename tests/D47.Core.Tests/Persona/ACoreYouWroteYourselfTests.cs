@@ -203,7 +203,6 @@ public class ACoreYouWroteYourselfTests : IDisposable
             .SelectMany(section => section.Rows)
             .Single(candidate => candidate.Key == D47.Core.Capabilities.Builtin.PersonaCapability.PersonaKey);
 
-        Assert.False(row.IsOpenVocabulary);
         Assert.NotEmpty(row.Choices);
     }
 

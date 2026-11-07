@@ -908,9 +908,7 @@ public static class LoadoutPages
     /// <summary>The bar itself: a track, a fill, and a hairline per mark.</summary>
     private static Grid Bar(LoadoutGauge gauge, string fillKey)
     {
-        var track = gauge.Segments.Count > 0
-            ? SegmentedTrack(gauge, fillKey)
-            : Controls.Gauge.Track(gauge.Fill, fillKey);
+        var track = Controls.Gauge.Track(gauge.Fill, fillKey);
 
         // Each mark, as its own two-column grid over the same track.
         foreach (var mark in gauge.Marks)
@@ -953,50 +951,6 @@ public static class LoadoutPages
 
             Grid.SetColumnSpan(over, 2);
             track.Children.Add(over);
-        }
-
-        return track;
-    }
-
-    /// <summary>
-    /// A stacked bar, one solid span per priority group, separated by a gap in the track underneath
-    /// (#253).
-    /// </summary>
-    private static Grid SegmentedTrack(LoadoutGauge gauge, string fillKey)
-    {
-        var track = new Grid { Height = Controls.Gauge.TrackHeight };
-
-        var background = new Border();
-
-        ThemeInk.Bind(background, Border.BackgroundProperty, ThemeManager.TileKey);
-        track.Children.Add(background);
-
-        var at = 0.0;
-
-        foreach (var segment in gauge.Segments)
-        {
-            var start = Math.Clamp(at, 0, 1);
-            var width = Math.Clamp(segment.Share, 0, 1 - start);
-
-            var over = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions
-                {
-                    new(new GridLength(start, GridUnitType.Star)),
-                    new(new GridLength(width, GridUnitType.Star)),
-                    new(new GridLength(1 - start - width, GridUnitType.Star)),
-                },
-            };
-
-            var span = new Border { Margin = new Thickness(1, 0) };
-
-            ThemeInk.Bind(span, Border.BackgroundProperty, fillKey);
-            Grid.SetColumn(span, 1);
-            over.Children.Add(span);
-
-            track.Children.Add(over);
-
-            at += width;
         }
 
         return track;

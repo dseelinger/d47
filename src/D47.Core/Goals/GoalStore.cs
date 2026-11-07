@@ -5,9 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Goals;
 
-/// <summary>Why a line of the file was refused, naming the line and the problem.</summary>
-public sealed record GoalProblem(string Where, string Reason);
-
 /// <summary>The arcs on disk — <c>data/goals.json</c> (Phase 34).</summary>
 public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore> logger)
 {
@@ -20,21 +17,9 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
 
     private Dictionary<string, GoalMine> _mines = new(StringComparer.Ordinal);
     private Dictionary<string, IReadOnlyList<string>> _setAside = new(StringComparer.Ordinal);
-    private IReadOnlyList<GoalProblem> _problems = [];
     private readonly WatchedTextFile _file = new(files, path, logger);
 
     public event Action? Changed;
-
-    public IReadOnlyList<GoalProblem> Problems
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _problems;
-            }
-        }
-    }
 
     /// <summary>The last walk over this Commander's journals, or null where none has been done.</summary>
     public GoalMine? MineFor(string? frontierId)
@@ -61,7 +46,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
             {
                 _mines = new Dictionary<string, GoalMine>(StringComparer.Ordinal);
                 _setAside = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
-                _problems = [];
             }
 
             Changed?.Invoke();
@@ -132,31 +116,6 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
         return true;
     }
 
-    /// <summary>Throws away everything mined, for every Commander, and reports how many marks went.</summary>
-    public int Empty()
-    {
-        Poll();
-
-        int removed;
-
-        lock (_gate)
-        {
-            removed = _mines.Sum(pair => pair.Value.Marks.Count);
-
-            if (_mines.Count == 0 && _problems.Count == 0)
-            {
-                return 0;
-            }
-
-            _mines = new Dictionary<string, GoalMine>(StringComparer.Ordinal);
-            _problems = [];
-        }
-
-        Save();
-        Changed?.Invoke();
-        return removed;
-    }
-
     private void Save()
     {
         Document document;
@@ -225,7 +184,7 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
     {
         var mines = new Dictionary<string, GoalMine>(StringComparer.Ordinal);
         var aside = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
-        var problems = new List<GoalProblem>();
+        var refused = 0;
 
         try
         {
@@ -272,19 +231,18 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
         }
         catch (JsonException ex)
         {
-            problems.Add(new GoalProblem(System.IO.Path.GetFileName(path), ex.Message));
+            refused++;
             logger.LogWarning(ex, "Could not parse {Path}", path);
         }
 
         lock (_gate)
         {
-            if (problems.Count == 0 || mines.Count > 0)
+            if (refused == 0 || mines.Count > 0)
             {
                 _mines = mines;
                 _setAside = aside;
             }
 
-            _problems = problems;
             _file.Seen(text);
         }
 
@@ -292,7 +250,7 @@ public sealed class GoalStore(string path, IFileSystem files, ILogger<GoalStore>
             "Loaded goal progress for {Commanders} Commander(s) from {Path} ({Problems} refused)",
             _mines.Count,
             path,
-            problems.Count);
+            refused);
     }
 
     private sealed class Document

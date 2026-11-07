@@ -421,7 +421,7 @@ public class ChecklistStoreTests
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
         checklists.AddNote(ChecklistScope.System("Sol"), "ask Jim about the Krait build");
 
-        var filters = checklists.Filters();
+        var filters = checklists.FilterAxes().Select(filter => filter.Key);
 
         // Everything actually on the list, and nothing that is not.
         Assert.Contains("authored", filters);
@@ -435,7 +435,7 @@ public class ChecklistStoreTests
         // **No Ship row, ever** (the Commander's ruling, 2026-08-20).
         checklists.AddNote(ChecklistScope.Ship(12), "swap the shield booster");
 
-        Assert.DoesNotContain("ship", checklists.Filters());
+        Assert.DoesNotContain("ship", checklists.FilterAxes().Select(filter => filter.Key));
 
         // And every row says which question it answers, rather than the four axes arriving as one flat list
         // of enum spellings.

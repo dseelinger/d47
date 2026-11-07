@@ -148,7 +148,7 @@ public class GameKnowledgeTests
         Assert.Equal("Thermal Spread", engineered.Experimental);
 
         // An unpowered module is one the Commander believes they have.
-        var unpowered = Assert.Single(ship.Unpowered);
+        var unpowered = Assert.Single(ship.Modules, module => !module.Powered);
         Assert.Equal("Slot05_Size4", unpowered.Slot);
     }
 
@@ -297,11 +297,11 @@ public class GameKnowledgeTests
         var fleet = Fold(StoredShips).Fleet;
 
         // ShipsHere carries no StarSystem of its own.
-        var mule = Assert.Single(fleet.Here);
+        var mule = Assert.Single(fleet.Ships, ship => ship.Here);
         Assert.Equal("Shinrarta Dezhra", mule.StarSystem);
         Assert.Equal("Jameson Memorial", mule.StationName);
 
-        Assert.Equal(2, fleet.Elsewhere.Count);
+        Assert.Equal(2, fleet.Ships.Count(ship => !ship.Here));
         Assert.Equal(["Deciat", "Shinrarta Dezhra", "Sol"], fleet.Systems);
         Assert.Contains(fleet.Ships, ship => ship.InTransit);
     }
@@ -345,13 +345,16 @@ public class GameKnowledgeTests
         Assert.Equal("Shinrarta Dezhra", store.SnapshotSystem);
         Assert.Equal("Jameson Memorial", store.SnapshotStation);
 
-        var here = Assert.Single(store.Here);
+        bool IsHere(StoredModule module) =>
+            !module.InTransit && string.Equals(module.StarSystem, store.SnapshotSystem, StringComparison.OrdinalIgnoreCase);
+
+        var here = Assert.Single(store.Modules, IsHere);
         Assert.Equal("Beam Laser", here.Name);
         Assert.Equal("Jameson Memorial", here.StationName);
 
         // The remote one and the in-transit one are both "not here", which is the distinction a Commander
         // standing at an outfitting screen actually needs.
-        Assert.Equal(2, store.Elsewhere.Count);
+        Assert.Equal(2, store.Modules.Count(module => !IsHere(module)));
     }
 
     [Fact]

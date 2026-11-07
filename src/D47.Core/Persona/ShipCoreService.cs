@@ -48,9 +48,6 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
     /// <summary>This Commander's binding for one ship, or null when nothing is bound.</summary>
     public ShipCoreBinding? For(int shipId) => store.For(Fid, shipId);
 
-    /// <summary>The core bound to the ship they are in, or null.</summary>
-    public ShipCoreBinding? Current => CurrentShipId is { } id ? For(id) : null;
-
     /// <summary>Every ship the Commander could bind a core to, as an id and the words they call it by.</summary>
     public IReadOnlyList<(int ShipId, string Said)> Fleet()
     {
@@ -208,38 +205,6 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
 
         return Switch(ship, announce: true);
     }
-
-    /// <summary>Binds the ship the Commander is in to a core, and says what happened.</summary>
-    public string Bind(string core)
-    {
-        var state = game();
-
-        if (state?.Ship.ShipId is not { } shipId)
-        {
-            return "I do not know which ship you are in yet — nothing has said so this session.";
-        }
-
-        var persona = PersonaCatalog.Resolve(core);
-        var ship = state.Ship;
-
-        store.Bind(new ShipCoreBinding(Fid, shipId, persona.Id, ship.Type, ship.Name)
-        {
-            CommanderName = CommanderName,
-        });
-
-        // Marked as handled, so the ship they are already in does not then read as a change and switch to the
-        // core that is already aboard.
-        lock (_gate)
-        {
-            _started = true;
-            _aboard = shipId;
-            _waiting = null;
-            _waited = TimeSpan.Zero;
-        }
-
-        return $"{persona.Name} now flies {Describe(ship)}.";
-    }
-
 
     /// <summary>What the ship they are in is bound to.</summary>
     public string DescribeCurrent()

@@ -8,6 +8,9 @@ namespace D47.Core.Tests.Journal;
 /// <summary>What the Commander is wearing.</summary>
 public class OnFootLoadoutTests
 {
+    private static CarriedWeapon? InSlot(OnFootLoadout loadout, string slot) =>
+        loadout.Weapons.FirstOrDefault(weapon => string.Equals(weapon.Slot, slot, StringComparison.OrdinalIgnoreCase));
+
     private static JournalEvent Event(string json)
     {
         Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
@@ -63,7 +66,7 @@ public class OnFootLoadoutTests
     {
         var loadout = Worn();
 
-        var sniper = loadout.InSlot("PrimaryWeapon1");
+        var sniper = InSlot(loadout, "PrimaryWeapon1");
 
         Assert.NotNull(sniper);
         Assert.Equal("Manticore Executioner", sniper.Entry?.Name);
@@ -128,7 +131,6 @@ public class OnFootLoadoutTests
 
         Assert.Equal("Flight Suit", loadout.Suit?.Name);
         Assert.Null(loadout.Grade);
-        Assert.False(loadout.CanBeModified);
     }
 
     /// <summary>
@@ -161,7 +163,7 @@ public class OnFootLoadoutTests
 
         Assert.Equal("Artemis Suit", loadout.Suit?.Name);
         Assert.Single(loadout.Weapons);
-        Assert.Null(loadout.InSlot("PrimaryWeapon1"));
+        Assert.Null(InSlot(loadout, "PrimaryWeapon1"));
     }
 
  /// <summary>A weapon sold out of the loadout being carried leaves its slot.</summary>
@@ -178,7 +180,7 @@ public class OnFootLoadoutTests
                          "Class":1,"WeaponMods":[]}]}
             """));
 
-        Assert.NotNull(carried.InSlot("SecondaryWeapon"));
+        Assert.NotNull(InSlot(carried, "SecondaryWeapon"));
 
         var sold = carried.Apply(Event(
             """
@@ -188,7 +190,7 @@ public class OnFootLoadoutTests
             """));
 
         Assert.Empty(sold.Weapons);
-        Assert.Null(sold.InSlot("SecondaryWeapon"));
+        Assert.Null(InSlot(sold, "SecondaryWeapon"));
 
         // The suit is untouched.
         Assert.Equal("Flight Suit", sold.Suit?.Name);

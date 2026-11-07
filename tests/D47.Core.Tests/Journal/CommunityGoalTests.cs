@@ -95,8 +95,8 @@ public class CommunityGoalTests
             Board(id: 840, title: "Distant Worlds III", timestamp: "2026-08-15T11:00:00Z"));
 
         Assert.Equal(2, board.Goals.Count);
-        Assert.NotNull(board.For(726));
-        Assert.NotNull(board.For(840));
+        Assert.NotNull(board.Goals.FirstOrDefault(goal => goal.Id == 726));
+        Assert.NotNull(board.Goals.FirstOrDefault(goal => goal.Id == 840));
     }
 
     [Fact]

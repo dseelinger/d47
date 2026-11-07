@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using D47.Core.Storage;
 using D47.Core.Adventures;
 using D47.Core.Messages;
@@ -39,7 +40,6 @@ public class ASpokenBeatArrivesAsAMessageTests
         Assert.Equal("salvage", message.AdventureKey);
         Assert.Equal("narrator", message.From);
         Assert.False(message.Read);
-        Assert.Equal(1, store.UnreadCount);
     }
 
     [Fact]
@@ -55,10 +55,17 @@ public class ASpokenBeatArrivesAsAMessageTests
     [Fact]
     public void TheOldestReadMessageGoesFirstWhenTheStoreIsFull()
     {
-        var store = new MessageStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json"), new MemoryFileSystem(), NullLogger<MessageStore>.Instance);
-        var first = store.Post("narrator", "a", "a", Noon);
-        var second = store.Post("narrator", "b", "b", Noon.AddMinutes(1));
-        store.MarkRead(second.Key);
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json");
+        var files = new MemoryFileSystem();
+        var posting = new MessageStore(path, files, NullLogger<MessageStore>.Instance);
+        var first = posting.Post("narrator", "a", "a", Noon);
+        var second = posting.Post("narrator", "b", "b", Noon.AddMinutes(1));
+
+        var saved = JsonNode.Parse(files.ReadText(path)!)!.AsArray();
+        saved.Single(node => node!["key"]!.GetValue<string>() == second.Key)!["read"] = true;
+        files.WriteText(path, saved.ToJsonString());
+
+        var store = new MessageStore(path, files, NullLogger<MessageStore>.Instance);
 
         for (var i = 0; i < MessageStore.Capacity - 1; i++)
         {

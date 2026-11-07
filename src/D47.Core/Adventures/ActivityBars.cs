@@ -82,15 +82,6 @@ public sealed class ActivityBars(string? path, IFileSystem fileSystem, ILogger l
         }
     }
 
-    /// <summary>How many times the Commander has replaced an objective for <paramref name="key"/>.</summary>
-    public int Changed(string? commander, string key)
-    {
-        lock (_gate)
-        {
-            return _changed.GetValueOrDefault(commander ?? string.Empty)?.GetValueOrDefault(key) ?? 0;
-        }
-    }
-
     /// <summary>The keys the Commander has replaced <see cref="Threshold"/> times or more.</summary>
     public IReadOnlyList<string> Barred(string? commander)
     {

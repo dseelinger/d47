@@ -125,8 +125,6 @@ public sealed class MeteredLlmProvider : ILlmProvider
 
     public string Id => _inner.Id;
 
-    public string DisplayName => _inner.DisplayName;
-
     public string DefaultModel => _inner.DefaultModel;
 
     public LlmProviderCapabilities CapabilitiesFor(string model) => _inner.CapabilitiesFor(model);
@@ -262,8 +260,6 @@ public sealed class MeteredLlmProvider : ILlmProvider
         internal MeteredView(MeteredLlmProvider meter) => _meter = meter;
 
         public string Id => _meter.Id;
-
-        public string DisplayName => _meter.DisplayName;
 
         public string DefaultModel => _meter.DefaultModel;
 

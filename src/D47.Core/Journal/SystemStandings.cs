@@ -121,8 +121,6 @@ public sealed record SystemStandings
 
     private static readonly TimeSpan SpansKept = TimeSpan.FromDays(7);
 
-    public bool IsKnown => !Readings.IsEmpty;
-
     /// <summary>The names of the systems with a reading.</summary>
     public IEnumerable<string> Systems => Readings.Keys;
 

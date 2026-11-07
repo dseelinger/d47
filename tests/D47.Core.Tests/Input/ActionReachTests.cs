@@ -161,9 +161,9 @@ public class ActionReachTests
     {
         // A Commander who has not started the game gets an empty profile rather than the whole catalogue
         // advertised against a mode d47 is guessing at.
-        var offered = ActionReachability.OfferedIds(
+        var offered = ActionReachability.ResolveAll(
             Binds(("LandingGearToggle", "Keyboard", "Key_L")),
-            ControlContexts.Of(GameStatus.Unknown));
+            ControlContexts.Of(GameStatus.Unknown)).Where(reach => reach.IsOffered);
 
         Assert.Empty(offered);
     }
@@ -174,7 +174,9 @@ public class ActionReachTests
         var status = new GameStatus { Flags = StatusFlags.InMainShip | StatusFlags.FsdJump, ReadAt = DateTimeOffset.UnixEpoch };
 
         Assert.Equal(ControlContext.Hyperspace, ControlContexts.Of(status));
-        Assert.Empty(ActionReachability.OfferedIds(Binds(("LandingGearToggle", "Keyboard", "Key_L")), ControlContext.Hyperspace));
+        Assert.DoesNotContain(
+            ActionReachability.ResolveAll(Binds(("LandingGearToggle", "Keyboard", "Key_L")), ControlContext.Hyperspace),
+            reach => reach.IsOffered);
     }
 
     [Fact]

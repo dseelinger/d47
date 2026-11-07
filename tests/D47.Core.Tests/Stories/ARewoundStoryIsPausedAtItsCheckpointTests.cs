@@ -112,7 +112,6 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
         Assert.Null(_bench.Rewind(2, Now.AddHours(5)));
 
         Assert.Empty(_adventures.Find("F1", Key(2))!.Stepped);
-        Assert.True(_director.Book.NeedsCatchUp);
 
         _director.Book.CatchUp([]);
 

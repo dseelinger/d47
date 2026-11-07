@@ -383,8 +383,6 @@ public class AdventuresTabTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Scripted";
-
         public string DefaultModel => "claude-opus-5";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

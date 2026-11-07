@@ -48,6 +48,3 @@ public enum CharacterField
 
 /// <summary>Why a save was refused, in words the page shows under <see cref="Field"/>.</summary>
 public sealed record CharacterRefusal(CharacterField Field, string Reason);
-
-/// <summary>One entry the file was asked to hold, and why it was refused.</summary>
-public sealed record CharacterProblem(string Where, string Reason);

@@ -238,8 +238,6 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Clocked";
-
         public string DefaultModel => "claude-opus-5";
 
         public bool RunsOnThisMachine => local;

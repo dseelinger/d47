@@ -30,7 +30,7 @@ public class AProviderThatCannotHoldALanguageStaysOutOfCommsTests
     [InlineData("range")]
     public void AndTheOneAddedForItsVoiceLibraryIsEligibleWhereOpenAiIsBarred(string slotId)
     {
-        var slot = VoiceGroups.ById(slotId)!;
+        var slot = VoiceGroups.All.Single(candidate => candidate.Id == slotId);
 
         Assert.True(TtsProviderCatalog.Cartesia.LanguageCanBePinned);
         Assert.Contains(TtsProviderCatalog.Cartesia, TtsProviderCatalog.For(slot));
@@ -75,7 +75,7 @@ public class AProviderThatCannotHoldALanguageStaysOutOfCommsTests
     [InlineData("range")]
     public void TheSlotsCarryingOtherPeoplesWordsDoNot(string slotId)
     {
-        var slot = VoiceGroups.ById(slotId)!;
+        var slot = VoiceGroups.All.Single(candidate => candidate.Id == slotId);
 
         Assert.True(slot.OtherPeoplesWords);
         Assert.DoesNotContain(TtsProviderCatalog.OpenAi, TtsProviderCatalog.For(slot));

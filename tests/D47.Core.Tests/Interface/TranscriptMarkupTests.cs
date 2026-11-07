@@ -6,6 +6,9 @@ namespace D47.Core.Tests.Interface;
 /// <summary>Reading the markdown a model writes, so the transcript stops drawing the markers.</summary>
 public class TranscriptMarkupTests
 {
+    private static string Plain(string? text) =>
+        string.Concat(TranscriptMarkup.Parse(text).Select(span => span.Text));
+
     /// <summary>The line from the screenshot that started this: a bullet with a bold head.</summary>
     [Fact]
     public void ABulletWithABoldHeadIsDrawnAsOne()
@@ -61,7 +64,7 @@ public class TranscriptMarkupTests
     [Fact]
     public void AnUnterminatedMarkerStaysLiteral()
     {
-        Assert.Equal("Fit **A-rate thrust", TranscriptMarkup.Plain("Fit **A-rate thrust"));
+        Assert.Equal("Fit **A-rate thrust", Plain("Fit **A-rate thrust"));
     }
 
     /// <summary>Inside backticks an asterisk is an asterisk, and so is a fence's whole content.</summary>
@@ -76,7 +79,7 @@ public class TranscriptMarkupTests
     {
         var spans = TranscriptMarkup.Parse("Try:\n```json\n{\"ship\": \"sidewinder\"}\n```\nDone.");
 
-        Assert.Equal("Try:\n{\"ship\": \"sidewinder\"}\nDone.", TranscriptMarkup.Plain(
+        Assert.Equal("Try:\n{\"ship\": \"sidewinder\"}\nDone.", Plain(
             "Try:\n```json\n{\"ship\": \"sidewinder\"}\n```\nDone."));
 
         Assert.Contains(
@@ -94,7 +97,7 @@ public class TranscriptMarkupTests
     [InlineData("---")]
     public void WhatIsNotMarkupIsLeftExactlyAsItArrived(string line)
     {
-        Assert.Equal(line, TranscriptMarkup.Plain(line));
+        Assert.Equal(line, Plain(line));
     }
 
     /// <summary>
@@ -106,14 +109,14 @@ public class TranscriptMarkupTests
     {
         Assert.Equal(
             "[the wiki](https://example.test/ships)",
-            TranscriptMarkup.Plain("[the wiki](https://example.test/ships)"));
+            Plain("[the wiki](https://example.test/ships)"));
     }
 
     /// <summary>The panel's own note.</summary>
     [Fact]
     public void TheSwitchMarkerIsUnchanged()
     {
-        Assert.Equal("\n[Switched to Sentinel]\n", TranscriptMarkup.Plain("\n[Switched to Sentinel]\n"));
+        Assert.Equal("\n[Switched to Sentinel]\n", Plain("\n[Switched to Sentinel]\n"));
     }
 
     [Theory]
@@ -122,7 +125,7 @@ public class TranscriptMarkupTests
     public void NothingToReadIsNoSpansRatherThanAFailure(string? text)
     {
         Assert.Empty(TranscriptMarkup.Parse(text));
-        Assert.Equal(string.Empty, TranscriptMarkup.Plain(text));
+        Assert.Equal(string.Empty, Plain(text));
     }
 
     /// <summary>
@@ -141,7 +144,7 @@ public class TranscriptMarkupTests
             + "\n"
             + "The Sidewinder has only **60 armour and 40 base shields**.";
 
-        var drawn = TranscriptMarkup.Plain(reply);
+        var drawn = Plain(reply);
 
         Assert.DoesNotContain('*', drawn);
         Assert.Equal(

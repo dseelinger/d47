@@ -72,13 +72,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         CyanKey, BlueKey, RedKey, WarnKey, YellowKey, TileKey, Tile2Key, LineKey, Line2Key,
     ];
 
-    /// <summary>Every role a theme defines.</summary>
-    public static IReadOnlyList<string> Roles { get; } =
-    [
-        .. Tokens,
-        .. BloomStopKeys(), ScanlinesKey, ScrimKey, CyanGroundKey, MapGroundKey, RedTileKey, RedGroundKey, WarnGroundKey, YellowTrackKey,
-    ];
-
     /// <summary>Each token key and its colour in <paramref name="palette"/>.</summary>
     public static IReadOnlyDictionary<string, Color> TokenColours(Palette palette) => new Dictionary<string, Color>
     {
@@ -107,10 +100,6 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <see cref="BloomStack"/> ghost. Null on a theme that does not glow and past the stops the amount emits.
     /// </summary>
     public static string BloomStopKey(BloomTier tier, int stop) => $"D47.Bloom.{tier}.{stop}";
-
-    private static IEnumerable<string> BloomStopKeys() =>
-        Enum.GetValues<BloomTier>().SelectMany(tier =>
-            Enumerable.Range(0, BloomTiers.Table(tier).Count).Select(stop => BloomStopKey(tier, stop)));
 
     /// <summary>The palette a theme id resolves to, with the Commander's HUD matrix applied where the theme takes one.</summary>
     public Palette Resolve(string? themeId, GuiColourMatrix? matrixOverride = null)

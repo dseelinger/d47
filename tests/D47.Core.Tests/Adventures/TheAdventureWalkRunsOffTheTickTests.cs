@@ -43,7 +43,6 @@ public sealed class TheAdventureWalkRunsOffTheTickTests : IDisposable
         book.Store.Save("F1", LanternRoute(Accepted));
         book.Reconcile();
 
-        Assert.True(book.NeedsCatchUp);
         return book;
     }
 
@@ -158,7 +157,7 @@ public sealed class TheAdventureWalkRunsOffTheTickTests : IDisposable
 
         Assert.Single(Lantern(book).Fired);
         Assert.Equal([0], book.Drain().Select(moment => moment.Beat));
-        Assert.False(book.NeedsCatchUp);
+        Assert.Null(book.StartWalk(_folder, null));
 
         book.Observe(_route[1], "F1");
 

@@ -93,15 +93,6 @@ public class AButtonIsAWayToBeHeardTests
         Assert.Contains("Press button 7 on your stick to start", text, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void TheInventoryNamesTheButton()
-    {
-        var text = ListeningCapability.DescribeInDetail(With(button: Button), Working());
-
-        Assert.Contains("Push-to-talk: button 7 on your stick (hold).", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("Push-to-talk: not set", text, StringComparison.Ordinal);
-    }
-
     /// <summary>
     /// The pre-roll row applies to a button exactly as it does to a key — it covers the polling delay
     /// on whichever opened the gate, and both are polled on the same tick.

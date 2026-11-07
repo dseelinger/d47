@@ -158,9 +158,9 @@ public class AHostedProviderHearsInsteadOfTheLocalModelTests
     [Fact]
     public void TheStatusNamesTheProviderAndThatItsKeyIsStored()
     {
-        var text = ListeningCapability.DescribeInDetail(With(SttProviderCatalog.GroqId), Surface(keyStored: true));
+        var text = ListeningCapability.Describe(With(SttProviderCatalog.GroqId), Surface(keyStored: true));
 
-        Assert.Contains("Transcription: Groq, hosted, with whisper-large-v3-turbo. Its key is stored.", text, StringComparison.Ordinal);
+        Assert.Contains("Groq turns what you say into words with whisper-large-v3-turbo, and its key is stored", text, StringComparison.Ordinal);
         Assert.DoesNotContain("tiny.en", text, StringComparison.Ordinal);
     }
 

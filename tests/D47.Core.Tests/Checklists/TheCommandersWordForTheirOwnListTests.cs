@@ -73,7 +73,7 @@ public class TheCommandersWordForTheirOwnListTests
 
         checklists.AddNote(ChecklistScope.Universal, "buy limpets");
 
-        Assert.Contains("custom", checklists.Filters());
-        Assert.DoesNotContain("universal", checklists.Filters());
+        Assert.Contains("custom", checklists.FilterAxes().Select(filter => filter.Key));
+        Assert.DoesNotContain("universal", checklists.FilterAxes().Select(filter => filter.Key));
     }
 }

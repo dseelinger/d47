@@ -493,6 +493,4 @@ public sealed class AdventureCallout(AdventureBook book) : ICallout
 
     private static bool SameStory(AdventureMoment moment, AdventureMoment other) =>
         moment.FrontierId == other.FrontierId && moment.Adventure.Key == other.Adventure.Key;
-
-    private static bool IsShips(AdventureLine line) => line.Speaker is not { } speaker || speaker == Stories.StorySpeaker.Ship;
 }

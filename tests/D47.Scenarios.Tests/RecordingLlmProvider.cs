@@ -20,8 +20,6 @@ public sealed class RecordingLlmProvider(ILlmProvider inner) : ILlmProvider
 
     public bool RunsOnThisMachine => inner.RunsOnThisMachine;
 
-    public string DisplayName => inner.DisplayName;
-
     public string DefaultModel => inner.DefaultModel;
 
     public LlmProviderCapabilities CapabilitiesFor(string model) => inner.CapabilitiesFor(model);

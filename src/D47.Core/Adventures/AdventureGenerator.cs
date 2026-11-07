@@ -855,10 +855,6 @@ public sealed partial class AdventureGenerator(
         }
     }
 
-    /// <summary>The plain-wording check on named pieces of text, as each objection's part and the words it quotes.</summary>
-    public async Task<IReadOnlyList<(string Part, string Quote)>> PlainObjectionsAsync(IReadOnlyList<(string Name, string Text)> parts, CancellationToken cancellationToken) =>
-        [.. (await PlainAsync(new AdventureAsk(), [.. parts.Select(part => new PlainPart(part.Name, part.Text))], cancellationToken).ConfigureAwait(false)).Select(found => (found.Part, found.Quote))];
-
     /// <summary>
     /// <paramref name="text"/> with the first occurrence of <paramref name="quote"/>, ignoring case, replaced by
     /// <paramref name="plain"/>; null when the quote is not in it.

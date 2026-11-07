@@ -14,6 +14,9 @@ public class OnFootPlanTests
     private static OnFootBuildStore Store(MemoryInstall install) =>
         new(Path.Combine(install.Root, "on-foot.json"), install.Files, NullLogger<OnFootBuildStore>.Instance);
 
+    private static OnFootBuild? Find(OnFootBuildStore store, string id) =>
+        store.Builds.FirstOrDefault(build => string.Equals(build.Id, id, StringComparison.OrdinalIgnoreCase));
+
     private static ChecklistService Checklists(MemoryInstall install, CommanderGameState? state = null) =>
         new(
             new ChecklistStore(
@@ -103,7 +106,7 @@ public class OnFootPlanTests
 
         Assert.Single(said);
 
-        var adopted = store.Find(intended.Id);
+        var adopted = Find(store, intended.Id);
 
         Assert.NotNull(adopted);
         Assert.Equal(1837009111675068, adopted.ItemId);
@@ -132,9 +135,9 @@ public class OnFootPlanTests
             {"timestamp":"2026-08-18T09:00:00Z","event":"BuyWeapon","Name":"Wpn_M_AssaultRifle_Kinetic_FAuto","Name_Localised":"Karma AR-50","Class":1,"Price":125000,"SuitModuleID":1845784643934762,"WeaponMods":[]}
             """)]);
 
-        Assert.False(store.Find(suit.Id)!.IsOwned);
-        Assert.Equal(1845784643934762, store.Find(weapon.Id)!.ItemId);
-        Assert.Equal(OnFootKind.Weapon, store.Find(weapon.Id)!.Kind);
+        Assert.False(Find(store, suit.Id)!.IsOwned);
+        Assert.Equal(1845784643934762, Find(store, weapon.Id)!.ItemId);
+        Assert.Equal(OnFootKind.Weapon, Find(store, weapon.Id)!.Kind);
     }
 
     /// <summary>
@@ -155,7 +158,7 @@ public class OnFootPlanTests
             """)]);
 
         Assert.Single(said);
-        Assert.Equal(42, store.Find(intended.Id)!.ItemId);
+        Assert.Equal(42, Find(store, intended.Id)!.ItemId);
     }
 
     /// <summary>
@@ -177,7 +180,7 @@ public class OnFootPlanTests
             {"timestamp":"2026-08-18T09:00:00Z","event":"BuySuit","Name":"UtilitySuit_Class1","Name_Localised":"Maverick Suit","Price":150000,"SuitID":1837009111675068,"SuitMods":[]}
             """)]);
 
-        Assert.Equal("on you, grade 3", kit.Entry(intended.Id)!.Where());
+        Assert.Equal("on you, grade 3", kit.Kit().First(entry => entry.Build?.Id == intended.Id).Where());
 
         var said = kit.Observe([Event("""
             {"timestamp":"2026-08-18T10:00:00Z","event":"SellSuit","SuitID":1837009111675068,"SuitMods":[],"Name":"utilitysuit_class1","Name_Localised":"Maverick Suit","Price":90000}
@@ -185,14 +188,14 @@ public class OnFootPlanTests
 
         Assert.Single(said);
 
-        var kept = store.Find(intended.Id)!;
+        var kept = Find(store, intended.Id)!;
 
         // The item is gone and the intent is not: owned is derived and intended is authored.
         Assert.Null(kept.ItemId);
         Assert.False(kept.IsOwned);
         Assert.Null(kept.Scope);
         Assert.Equal(5, kept.PlannedGrade);
-        Assert.Equal("not bought yet", kit.Entry(intended.Id)!.Where());
+        Assert.Equal("not bought yet", kit.Kit().First(entry => entry.Build?.Id == intended.Id).Where());
     }
 
     /// <summary>
@@ -227,8 +230,8 @@ public class OnFootPlanTests
 
         // One sale, one thing said: the second weapon was never planned for.
         Assert.Single(said);
-        Assert.False(store.Find(weapon.Id)!.IsOwned);
-        Assert.True(store.Find(suit.Id)!.IsOwned);
+        Assert.False(Find(store, weapon.Id)!.IsOwned);
+        Assert.True(Find(store, suit.Id)!.IsOwned);
     }
 
     /// <summary>
@@ -257,7 +260,7 @@ public class OnFootPlanTests
                 {"timestamp":"2026-08-18T11:00:00Z","event":"BuySuit","Name":"UtilitySuit_Class1","Name_Localised":"Maverick Suit","Price":150000,"SuitID":1845810920854798,"SuitMods":[]}
                 """)]);
 
-        var again = store.Find(intended.Id)!;
+        var again = Find(store, intended.Id)!;
 
         Assert.Equal(1845810920854798, again.ItemId);
         Assert.Equal(5, again.PlannedGrade);
@@ -277,13 +280,13 @@ public class OnFootPlanTests
         kit.Plan(build.Id, new KitPlan(OnFootBuild.ModSlot(1), Modification: "Night Vision"));
         kit.Plan(build.Id, new KitPlan(OnFootBuild.ModSlot(1), Modification: "Extra Ammo Capacity"));
 
-        var slot = Assert.Single(store.Find(build.Id)!.Slots);
+        var slot = Assert.Single(Find(store, build.Id)!.Slots);
 
         Assert.Equal("Extra Ammo Capacity", slot.Modification);
     }
 
     [Fact]
-    public void ASlotThatIsNotAModSlotIsRefusedAndReported()
+    public void ASlotThatIsNotAModSlotIsRefused()
     {
         var install = new MemoryInstall();
         var store = Store(install);
@@ -301,7 +304,6 @@ public class OnFootPlanTests
         var build = Assert.Single(store.Builds);
 
         Assert.Equal("Mod 1", Assert.Single(build.Slots).Slot);
-        Assert.Contains(store.Problems, problem => problem.Reason.Contains("Hardpoint1", StringComparison.Ordinal));
     }
 
     /// <summary>One build per item, enforced where the file is read as well as where it is written.</summary>
@@ -321,7 +323,6 @@ public class OnFootPlanTests
 
         Assert.True(store.Poll());
         Assert.Single(store.Builds);
-        Assert.Single(store.Problems);
     }
 
     /// <summary>Promotion is a proposal.</summary>
@@ -383,15 +384,15 @@ public class OnFootPlanTests
         var build = kit.Intend("Maverick")!;
 
         // Grade 1 has no modification slots at all, which is the ordering constraint.
-        Assert.Null(kit.FirstFreeSlot(store.Find(build.Id)!, 1));
+        Assert.Null(kit.FirstFreeSlot(Find(store, build.Id)!, 1));
 
         kit.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 4));
 
-        Assert.Equal(OnFootBuild.ModSlot(1), kit.FirstFreeSlot(store.Find(build.Id)!, 1));
+        Assert.Equal(OnFootBuild.ModSlot(1), kit.FirstFreeSlot(Find(store, build.Id)!, 1));
 
         kit.Plan(build.Id, new KitPlan(OnFootBuild.ModSlot(1), Modification: "Night Vision"));
 
-        Assert.Equal(OnFootBuild.ModSlot(2), kit.FirstFreeSlot(store.Find(build.Id)!, 1));
+        Assert.Equal(OnFootBuild.ModSlot(2), kit.FirstFreeSlot(Find(store, build.Id)!, 1));
     }
 
     /// <summary>The suit being worn and the weapons carried are the index, and each keeps its own build.</summary>

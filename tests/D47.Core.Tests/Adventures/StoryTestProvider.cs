@@ -7,8 +7,6 @@ internal abstract class StoryTestProvider : ILlmProvider
 {
     public string Id => "anthropic";
 
-    public abstract string DisplayName { get; }
-
     public string DefaultModel => "claude-opus-5";
 
     public bool RunsOnThisMachine => true;

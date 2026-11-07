@@ -202,15 +202,6 @@ public sealed class CommodityLedger
         }
     }
 
-    /// <summary>The most recent sale of the commodity, or null.</summary>
-    public CommoditySale? LastSale(string? commander, string commodity)
-    {
-        lock (_gate)
-        {
-            return BookFor(commander)?.Sales.LastOrDefault(sale => Matches(sale, commodity));
-        }
-    }
-
     /// <summary>The calendar day <paramref name="now"/> falls in, in its own offset.</summary>
     public static LedgerWindow Today(DateTimeOffset now)
     {

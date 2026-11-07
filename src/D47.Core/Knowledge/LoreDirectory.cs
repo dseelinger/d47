@@ -21,16 +21,6 @@ public static class LoreDirectory
     /// <summary>The row for a system, or null for the overwhelming majority of the galaxy.</summary>
     public static LoreEntry? ByAddress(long systemAddress) => Loaded.Value.GetValueOrDefault(systemAddress);
 
-    /// <summary>
-    /// The row for a system named rather than jumped into — what a Commander asking about somewhere
-    /// reaches.
-    /// </summary>
-    public static LoreEntry? ByName(string? name) =>
-        string.IsNullOrWhiteSpace(name)
-            ? null
-            : Loaded.Value.Values.FirstOrDefault(
-                entry => string.Equals(entry.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
-
     private static Dictionary<long, LoreEntry> Load()
     {
         using var stream = typeof(LoreDirectory).GetTypeInfo().Assembly.GetManifestResourceStream(ResourceName);

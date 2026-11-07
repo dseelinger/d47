@@ -76,8 +76,6 @@ public sealed class TheLlmKeyCheckTests
     {
         public string Id => "other";
 
-        public string DisplayName => "Other";
-
         public string DefaultModel => "none";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => throw new NotSupportedException();

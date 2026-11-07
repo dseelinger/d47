@@ -83,15 +83,13 @@ public class AHullCameraOrbitsTheHullTests
     }
 
     [Fact]
-    public void ZoomAndRelightStopAtTheirClamps()
+    public void ZoomStopsAtItsClamps()
     {
         var c = HullCamera.Rest(Box());
 
         Assert.Equal(c.Radius * 0.2f, c.Zoom(1000).Distance, 3);
         Assert.Equal(c.Radius * 10f, c.Zoom(-1000).Distance, 3);
         Assert.Equal(c.Distance / 1.15f, c.Zoom(1).Distance, 3);
-        Assert.Equal(2f, c.Relight(5).Light);
-        Assert.Equal(0f, c.Relight(-5).Light);
     }
 
     [Fact]

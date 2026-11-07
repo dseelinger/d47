@@ -59,7 +59,7 @@ public class MarketBookTests
 
         // No _Localised on the second row, so the symbol is folded and cased rather than spoken as
         // "$painite_name;".
-        Assert.Equal(52_282, market.Pays("Painite"));
+        Assert.Equal(52_282, market.Quote("Painite")?.SellPrice);
 
         // Nothing changed on disk, so nothing is filed again.
         Assert.False(reader.Poll(new StarPosition(0, 0, 0)));

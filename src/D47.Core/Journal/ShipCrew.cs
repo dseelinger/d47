@@ -42,10 +42,6 @@ public sealed record ShipCrew
 
     public bool Any => Members.Count > 0;
 
-    /// <summary>Those posted to one hull.</summary>
-    public IReadOnlyList<CrewMember> For(string? ship) =>
-        ship is null ? [] : [.. Members.Where(m => string.Equals(m.PostedTo, ship, StringComparison.OrdinalIgnoreCase))];
-
     /// <summary>Folds one event.</summary>
     public ShipCrew Apply(JournalEvent journalEvent, string? activeShip = null) => journalEvent.Kind switch
     {

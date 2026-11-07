@@ -72,17 +72,9 @@ public sealed class UpdateChecker
         _logger = logger;
     }
 
-    public async Task<AvailableUpdate?> CheckAsync(string runningVersion, CancellationToken cancellationToken)
-    {
-        var result = await ResultAsync(runningVersion, cancellationToken).ConfigureAwait(false);
-
-        return result.Outcome == UpdateCheckOutcome.NewerAvailable ? result.Update : null;
-    }
-
     /// <summary>
-    /// The same check as <see cref="CheckAsync"/>, but telling apart the three outcomes it otherwise
-    /// answers with the same null: up to date, the request failed, and a running version that does not
-    /// parse (#193).
+    /// Asks GitHub for the latest release, telling apart up to date, a failed request and a running
+    /// version that does not parse (#193).
     /// </summary>
     public async Task<UpdateCheckResult> ResultAsync(string runningVersion, CancellationToken cancellationToken)
     {

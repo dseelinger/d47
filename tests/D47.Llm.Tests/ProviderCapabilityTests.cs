@@ -15,7 +15,6 @@ public class ProviderCapabilityTests
         var provider = Own();
 
         Assert.Equal("anthropic", provider.Id);
-        Assert.Equal("Anthropic", provider.DisplayName);
         Assert.False(string.IsNullOrWhiteSpace(provider.DefaultModel));
     }
 

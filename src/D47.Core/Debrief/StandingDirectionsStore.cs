@@ -175,34 +175,6 @@ public sealed class StandingDirectionsStore
         return changed;
     }
 
-    /// <summary>Removes one entry outright, by key.</summary>
-    public bool Remove(string? frontierId, string key)
-    {
-        Poll();
-
-        var commander = frontierId ?? NoCommander;
-
-        lock (_gate)
-        {
-            var existing = _byCommander.GetValueOrDefault(commander, []);
-            var kept = existing.Where(entry => !string.Equals(entry.Key, key, StringComparison.Ordinal)).ToArray();
-
-            if (kept.Length == existing.Count)
-            {
-                return false;
-            }
-
-            _byCommander = new Dictionary<string, IReadOnlyList<StandingDirection>>(_byCommander, StringComparer.Ordinal)
-            {
-                [commander] = kept,
-            };
-        }
-
-        Save();
-        Changed?.Invoke();
-        return true;
-    }
-
     private void Save()
     {
         // Again, and this is the check that matters.

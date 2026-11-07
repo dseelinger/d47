@@ -57,9 +57,6 @@ public sealed class HotasControllers : IHotasReader, IDisposable
     /// </summary>
     public string? Fault { get; private set; }
 
-    /// <summary>How many interfaces Windows is reporting right now, settled or not.</summary>
-    public int Interfaces => Count();
-
     /// <inheritdoc />
     /// <remarks>Windows is asked outside <c>_gate</c>, which its controller callbacks also take.</remarks>
     public bool IsSettled

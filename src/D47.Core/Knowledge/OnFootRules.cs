@@ -64,12 +64,6 @@ public static class OnFootRules
     public const int ConsumableCapacityPerItem = 100;
 
     /// <summary>
-    /// What the Bartender gives for a trade: offered barter value in, wanted item out, rounded down.
-    /// </summary>
-    public static int? BarterYield(int offeredValue, int? wantedCost) =>
-        offeredValue < 0 || wantedCost is not { } cost || cost <= 0 ? null : offeredValue / cost;
-
-    /// <summary>
     /// How much of <paramref name="offered"/> to hand over for <paramref name="wanted"/> units of
     /// something, or null when either side cannot be bartered.
     /// </summary>

@@ -219,8 +219,6 @@ public sealed class StoryProgressTests
     {
         public string Id => "anthropic";
 
-        public string DisplayName => "Cancelling";
-
         public string DefaultModel => "claude-opus-5";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

@@ -39,9 +39,6 @@ public readonly record struct InjectionResult(InjectionOutcome Outcome, string R
 /// <summary>Sending input to the game.</summary>
 public interface IGameInput
 {
-    /// <summary>Whether an Elite window can be found at all.</summary>
-    bool IsGameRunning { get; }
-
     /// <summary>Whether Elite has the foreground right now.</summary>
     bool IsGameForeground { get; }
 
@@ -67,8 +64,6 @@ public interface IGameInput
 /// <summary>An <see cref="IGameInput"/> with no game behind it: nothing is sent and every send reports that Elite is not running.</summary>
 public sealed class NoGameInput : IGameInput
 {
-    public bool IsGameRunning => false;
-
     public bool IsGameForeground => true;
 
     public Task<InjectionResult> SendAsync(IReadOnlyList<InputStep> steps, CancellationToken cancellationToken = default) =>

@@ -46,10 +46,9 @@ public class APowerHasItsRanksTests
         Assert.Equal(47_000, PowerplayRanks.MeritsNeeded(9));
 
     [Fact]
-    public void EveryRankPastOneHundredGivesAFullCarePackage()
+    public void TheMeritLadderStopsAtRankOneHundred()
     {
-        Assert.False(PowerplayRanks.GivesFullCarePackage(100));
-        Assert.True(PowerplayRanks.GivesFullCarePackage(101));
+        Assert.NotNull(PowerplayRanks.MeritsNeeded(100));
         Assert.Null(PowerplayRanks.MeritsNeeded(101));
     }
 

@@ -45,8 +45,6 @@ public sealed record SurfaceMiningSites
     /// <summary>True once the walk over earlier journals has been merged in.</summary>
     public bool IsWhole { get; init; }
 
-    public bool IsKnown => !Held.IsEmpty;
-
     private ImmutableDictionary<(long SystemAddress, int BodyId), SurfaceMiningSite> Held { get; init; } =
         ImmutableDictionary<(long SystemAddress, int BodyId), SurfaceMiningSite>.Empty;
 

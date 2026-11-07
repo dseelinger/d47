@@ -17,16 +17,4 @@ public class AWordAwayScoresNearTests
     [Fact]
     public void AOneWordUtteranceIsNeverNear() =>
         Assert.Null(PhraseScore.Score("elite", "focus on the game"));
-
-    [Fact]
-    public void RankPutsEquivalentBeforeNearInDeclarationOrder()
-    {
-        string[] phrases = ["focus on the game", "focus game", "set focus to elite"];
-
-        var ranked = PhraseScore.Rank("set focus on elite", phrases);
-
-        Assert.Equal(
-            [("set focus to elite", PhraseMatch.Equivalent), ("focus on the game", PhraseMatch.Near)],
-            ranked.Select(entry => (entry.Phrase, entry.Match)));
-    }
 }

@@ -7,9 +7,6 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Loadout;
 
-/// <summary>One build the file was asked to hold, and why it was refused.</summary>
-public sealed record OnFootBuildProblem(string Where, string Reason);
-
 /// <summary>
 /// The Commander's suit and weapon builds, in one file beside the executable (Phase 27, "The same page,
 /// on foot").
@@ -27,7 +24,6 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
     private readonly Lock _gate = new();
 
     private IReadOnlyList<OnFootBuild> _builds = [];
-    private IReadOnlyList<OnFootBuildProblem> _problems = [];
 
     /// <summary>The file's contents as last read.</summary>
     private readonly WatchedTextFile _file = new(files, path, logger, "Could not read the on-foot build file");
@@ -47,22 +43,6 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
             }
         }
     }
-
-    /// <summary>Builds that were refused, and why.</summary>
-    public IReadOnlyList<OnFootBuildProblem> Problems
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _problems;
-            }
-        }
-    }
-
-    /// <summary>The build with this identity, or null.</summary>
-    public OnFootBuild? Find(string id) =>
-        Builds.FirstOrDefault(build => string.Equals(build.Id, id, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>One Commander's build bound to a journal id, or null when nothing is planned for it.</summary>
     public OnFootBuild? ForItem(string? fid, OnFootKind kind, long itemId) =>
@@ -144,7 +124,6 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
             lock (_gate)
             {
                 _builds = [];
-                _problems = [];
             }
 
             Changed?.Invoke();
@@ -203,7 +182,6 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
         {
             lock (_gate)
             {
-                _problems = [new OnFootBuildProblem(System.IO.Path.GetFileName(path), ex.Message)];
                 _file.Seen(text);
             }
 
@@ -213,7 +191,6 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
         }
 
         var builds = new List<OnFootBuild>();
-        var problems = new List<OnFootBuildProblem>();
 
         foreach (var line in file?.Kit ?? [])
         {
@@ -221,7 +198,6 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
 
             if (equipment.Length == 0)
             {
-                problems.Add(new OnFootBuildProblem("a build", "it names no suit or weapon."));
                 continue;
             }
 
@@ -229,21 +205,16 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
 
             if (id.Length == 0)
             {
-                problems.Add(new OnFootBuildProblem(equipment, "it has no id, so nothing can point at it."));
                 continue;
             }
 
             if (builds.Any(existing => string.Equals(existing.Id, id, StringComparison.OrdinalIgnoreCase)))
             {
-                problems.Add(new OnFootBuildProblem(equipment, $"a second build is using the id \"{id}\"."));
                 continue;
             }
 
             if (line.Kind is not (OnFootKind.Suit or OnFootKind.Weapon))
             {
-                problems.Add(new OnFootBuildProblem(
-                    equipment, "a build is for a suit or a weapon, and that is neither."));
-
                 continue;
             }
 
@@ -256,15 +227,11 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
                                           && existing.Kind == line.Kind
                                           && string.Equals(existing.CommanderFid, fid, StringComparison.Ordinal)))
             {
-                problems.Add(new OnFootBuildProblem(
-                    equipment, $"item {itemId} already has a build, and an item has one."));
-
                 continue;
             }
 
             if (builds.Count >= MaxBuilds)
             {
-                problems.Add(new OnFootBuildProblem(equipment, $"the file already holds {MaxBuilds} builds."));
                 continue;
             }
 
@@ -276,32 +243,22 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
 
                 if (name.Length == 0)
                 {
-                    problems.Add(new OnFootBuildProblem(equipment, "a slot plan names no slot."));
                     continue;
                 }
 
                 // The mod slot read as the mod slot it is.
                 if (!OnFootBuild.IsSlot(name))
                 {
-                    problems.Add(new OnFootBuildProblem(
-                        equipment,
-                        $"\"{name}\" is not a slot on foot — it is {OnFootBuild.GradeSlot}, or "
-                        + $"{OnFootBuild.ModSlot(1)} to {OnFootBuild.ModSlot(OnFootRules.MaxSlots)}."));
-
                     continue;
                 }
 
                 if (slots.Any(existing => string.Equals(existing.Slot, name, StringComparison.OrdinalIgnoreCase)))
                 {
-                    problems.Add(new OnFootBuildProblem(
-                        equipment, $"{name} is planned twice, and a slot holds one plan."));
-
                     continue;
                 }
 
                 if (slots.Count >= MaxSlots)
                 {
-                    problems.Add(new OnFootBuildProblem(equipment, $"that build already plans {MaxSlots} slots."));
                     continue;
                 }
 
@@ -318,7 +275,6 @@ public sealed class OnFootBuildStore(string path, IFileSystem files, ILogger<OnF
         lock (_gate)
         {
             _builds = builds;
-            _problems = problems;
             _file.Seen(text);
         }
 

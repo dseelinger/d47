@@ -71,9 +71,6 @@ public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
     /// <summary>Hidden when there is nothing to say.</summary>
     public bool Visible => Enabled && _layer.Visible;
 
-    /// <summary>Captions are read, never touched.</summary>
-    public bool TakesPointer => false;
-
     /// <summary>Which of the two bands is up.</summary>
     public SurfacePlacement Placement =>
         _layer.Settings.Locking == SurfaceLock.WorldLocked ? Footwell : Placed;

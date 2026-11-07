@@ -71,7 +71,7 @@ public class AnOperationRunIsFoldedIntoGameStateTests
         Assert.Equal(1_000, run.CreditsBefore);
         Assert.Equal(51_000, run.CreditsAfter);
         Assert.Equal(50_000, run.Reward);
-        Assert.True(run.Finished);
+        Assert.True(run.Reward > 0);
         Assert.Equal(15, run.MercCoinsBefore);
         Assert.Equal(20, run.MercCoinsEarned);
     }
@@ -82,7 +82,7 @@ public class AnOperationRunIsFoldedIntoGameStateTests
         var run = RunsFrom(FinishedRun(1_000)).Last!;
 
         Assert.Equal(0, run.Reward);
-        Assert.False(run.Finished);
+        Assert.False(run.Reward > 0);
     }
 
     [Fact]
@@ -108,7 +108,6 @@ public class AnOperationRunIsFoldedIntoGameStateTests
         Assert.Null(operations.Open);
         Assert.Equal(DateTimeOffset.Parse("2026-10-20T18:20:00Z"), operations.Last!.ClosedAt);
         Assert.Null(operations.Last.Reward);
-        Assert.False(operations.Last.Finished);
     }
 
     [Fact]
@@ -128,7 +127,7 @@ public class AnOperationRunIsFoldedIntoGameStateTests
         Assert.Equal(DateTimeOffset.Parse("2026-10-20T18:40:00Z"), run.ClosedAt);
         Assert.Equal(1_000, run.CreditsBefore);
         Assert.Equal(9_000, run.CreditsAfter);
-        Assert.True(run.Finished);
+        Assert.True(run.Reward > 0);
         Assert.Null(run.MercCoinsEarned);
     }
 

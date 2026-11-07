@@ -339,7 +339,7 @@ public sealed class AChapterCanOfferAChoiceTests
         Assert.True(standing.IsDone);
         Assert.False(standing.IsFailed);
         Assert.Equal("Gone to ground", standing.Ended!.Name);
-        Assert.Equal(At(4), standing.FinishedAt);
+        Assert.Equal(At(4), standing.Ended.At);
 
         var moment = Assert.Single(_book.Drain());
         Assert.True(moment.IsEnding);
@@ -488,10 +488,9 @@ public sealed class AChapterCanOfferAChoiceTests
     }
 
     [Fact]
-    public void TheChoiceKindIsNotCountedOrAuthorableAndSaysItsPhrases()
+    public void TheChoiceKindIsNotCountedAndSaysItsPhrases()
     {
         Assert.False(AdventureTrigger.IsCountedKind(TriggerKind.Choice));
-        Assert.False(AdventureTrigger.IsAuthorable(TriggerKind.Choice));
         Assert.Contains("choice", AdventureValidation.Kinds);
         Assert.Equal(Offer, Choice(Fight(), Flee()).HandOff());
         Assert.Equal(

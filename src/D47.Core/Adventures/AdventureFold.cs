@@ -132,9 +132,6 @@ public sealed record AdventureStanding
 
     public DateTimeOffset? LastFiredAt => Fired.Count > 0 ? Fired[^1] : null;
 
-    /// <summary>Derived — the last beat's fire time, or when an option's ending was reached — and never written.</summary>
-    public DateTimeOffset? FinishedAt => IsDone ? Ended?.At ?? Fired[^1] : null;
-
     /// <summary>Whether the turn (the beat whose function says so) has fired, for the spoiler rule.</summary>
     public bool TurnReached => FunctionReached("midpoint", "turn");
 
@@ -204,18 +201,9 @@ public sealed record AdventureStanding
         return $"Objective {at.ToString(CultureInfo.InvariantCulture)} of {of.ToString(CultureInfo.InvariantCulture)}";
     }
 
-    /// <summary>What the Commander did to reach where they are — the last beat's trigger, in words.</summary>
-    public string? LastTrigger() =>
-        CurrentBeat is not null && StepsOf(Current) is var steps && CurrentStep > 0 && CurrentStep <= steps.Count
-            ? steps[CurrentStep - 1].Trigger.Describe()
-            : LastBeat?.Steps.LastOrDefault()?.Trigger.Describe();
-
     /// <summary>What the story is waiting for the Commander to do next, in words.</summary>
     public string? NextTrigger() =>
         Adventure.IsActive && CurrentTrigger is { } current ? current.Progress(Counted) ?? current.Describe() : null;
-
-    /// <summary>The last thing the ship's AI actually said about this story, beat or aside.</summary>
-    public AdventureTold? LastSaid() => Adventure.Told.Count > 0 ? Adventure.Told[^1] : null;
 
     /// <summary>Where the story is, in words a card can show.</summary>
     public string Place()
@@ -243,32 +231,6 @@ public sealed record AdventureStanding
         return CurrentBeatTitle() ?? "under way";
     }
 
-    /// <summary>The whole standing in one sentence, for the spoken path and the Technical transcript.</summary>
-    public string Describe(DateTimeOffset now)
-    {
-        var parts = new List<string> { $"{Adventure.Name}: {Place()}." };
-
-        if (IsFailed)
-        {
-            parts.Add(Adventure.Ending?.Reason ?? Failure!.Reason);
-            return string.Join(" ", parts);
-        }
-
-        if (Adventure.IsBegun && !IsDone && !Adventure.IsAbandoned && LastFiredAt is { } last)
-        {
-            parts.Add($"Last objective {Ago(now - last)}.");
-        }
-
-        if (Adventure.IsBegun && Adventure.Beats.Count > 0)
-        {
-            parts.Add(
-                $"({Math.Min(Fired.Count, Adventure.Beats.Count).ToString(CultureInfo.InvariantCulture)} of "
-                + $"{Adventure.Beats.Count.ToString(CultureInfo.InvariantCulture)} objectives)");
-        }
-
-        return string.Join(" ", parts);
-    }
-
     private string? CurrentBeatTitle() =>
         Current < Adventure.Beats.Count ? Adventure.Beats[Current].Title : null;
 
@@ -290,15 +252,6 @@ public sealed record AdventureStanding
 
         return false;
     }
-
-    private static string Ago(TimeSpan age) => age.TotalMinutes switch
-    {
-        < 1 => "just now",
-        < 60 => $"{(int)age.TotalMinutes} minutes ago",
-        < 1440 => $"{(int)age.TotalHours} hours ago",
-        < 20160 => $"{(int)age.TotalDays} days ago",
-        _ => $"{(int)(age.TotalDays / 7)} weeks ago",
-    };
 }
 
 /// <summary>The one fold, for the live tick and the startup catch-up alike (Phase 47).</summary>

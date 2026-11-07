@@ -143,8 +143,6 @@ public sealed class EndlessLlmProvider : ILlmProvider
 
     public string Id => "anthropic";
 
-    public string DisplayName => "Endless";
-
     public string DefaultModel => "claude-opus-5";
 
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()

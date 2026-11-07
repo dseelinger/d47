@@ -16,9 +16,6 @@ internal interface IPanelTabHost
 
     bool Headset { get; }
 
-    /// <summary>Opens the settings section of a capability, or null where this surface cannot.</summary>
-    Action<string>? SettingsJump { get; }
-
     Func<string, Task<bool>>? Copy { get; }
 
     /// <summary>Opens an address in the Commander's browser, or null where this surface has none.</summary>

@@ -88,14 +88,6 @@ public sealed class StoryRunRecord(
         }
     }
 
-    /// <summary>Whether a line posted under <paramref name="adventureKey"/> goes to a stock story run's record.</summary>
-    public bool Keeps(string adventureKey)
-    {
-        ArgumentNullException.ThrowIfNull(adventureKey);
-
-        return RunOf(adventureKey) is not null;
-    }
-
     /// <summary>The clip a recorded line kept, decrypted when it is in the Commander's own voice; null when it has none or it cannot be read.</summary>
     public AudioClip? Clip(string? frontierId, Story run, StoryRunLine line)
     {

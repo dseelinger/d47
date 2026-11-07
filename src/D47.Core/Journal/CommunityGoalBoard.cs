@@ -115,8 +115,6 @@ public sealed record CommunityGoalBoard
     /// </summary>
     public bool IsKnown => SeenAt is not null;
 
-    public CommunityGoal? For(int id) => Goals.FirstOrDefault(goal => goal.Id == id);
-
     /// <summary>Goals not expired as of <paramref name="now"/>, most recently reported first.</summary>
     public IReadOnlyList<CommunityGoal> Live(DateTimeOffset now) =>
         [.. Goals.Where(goal => goal.IsLive(now)).OrderByDescending(goal => goal.SeenAt)];

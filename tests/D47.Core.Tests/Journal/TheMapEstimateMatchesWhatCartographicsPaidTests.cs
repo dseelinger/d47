@@ -23,6 +23,22 @@ public class TheMapEstimateMatchesWhatCartographicsPaidTests
             .OfType<JournalEvent>(),
     ]);
 
+    /// <summary>What the sale paid for a star; d47 estimates planets only.</summary>
+    private static long StarValue(string starType, double stellarMass, bool wasDiscovered)
+    {
+        double k = starType switch
+        {
+            "N" or "H" => 22628,
+            "SupermassiveBlackHole" => 33.5678,
+            _ when starType.StartsWith('D') => 14057,
+            _ => 1200,
+        };
+
+        var value = k + (stellarMass * k / 66.25);
+
+        return (long)Math.Round(wasDiscovered ? value : value * 2.6);
+    }
+
     [Fact]
     public void EveryBodyInTheSaleSumsToWithinTwoPercentOfWhatWasPaid()
     {
@@ -50,7 +66,7 @@ public class TheMapEstimateMatchesWhatCartographicsPaidTests
 
             if (scan.String("StarType") is { } starType)
             {
-                estimate += CartographicValue.Star(starType, scan.Double("StellarMass") ?? 0, wasDiscovered);
+                estimate += StarValue(starType, scan.Double("StellarMass") ?? 0, wasDiscovered);
             }
             else if (scan.String("PlanetClass") is { } planetClass)
             {

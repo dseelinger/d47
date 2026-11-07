@@ -24,8 +24,6 @@ public sealed class ChatCompletionsLlmProvider : ILlmProvider, IModelLoader, IDi
 
     public string Id => LlmProviderCatalog.OpenAiCompatibleId;
 
-    public string DisplayName => "OpenAI-compatible endpoint";
-
     /// <summary>Empty, deliberately, and the only provider for which that is right.</summary>
     public string DefaultModel => string.Empty;
 

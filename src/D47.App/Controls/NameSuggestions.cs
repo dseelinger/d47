@@ -4,12 +4,8 @@ using Avalonia.Controls;
 namespace D47.App.Controls;
 
 /// <summary>What every <see cref="SystemNameSuggestions{T}"/> shares, whatever kind of name it lists.</summary>
-public sealed class NameSuggestions
+public static class NameSuggestions
 {
-    private NameSuggestions()
-    {
-    }
-
     /// <summary>The most names listed.</summary>
     public const int Most = 8;
 
@@ -24,7 +20,7 @@ public sealed class NameSuggestions
 
     /// <summary>The suggestions attached to a text box, for the drawn keyboard to offer the same names.</summary>
     public static readonly AttachedProperty<INameSuggestions?> OfProperty =
-        AvaloniaProperty.RegisterAttached<NameSuggestions, TextBox, INameSuggestions?>("Of");
+        AvaloniaProperty.RegisterAttached<TextBox, INameSuggestions?>("Of", typeof(NameSuggestions));
 
     public static INameSuggestions? GetOf(TextBox box) => box.GetValue(OfProperty);
 }

@@ -47,13 +47,11 @@ public class AdventureTellingTests
         book.Observe(Jump(Lantern, reached), "F1");
 
         Assert.True(book.IsStirring("F1", "the-lantern-route"));
-        Assert.True(book.IsStirringAnywhere("F1"));
         Assert.Equal(1, raised);
 
         book.Told("F1", "the-lantern-route", Beat("Scoop here, in my own words.", reached.AddSeconds(23)));
 
         Assert.False(book.IsStirring("F1", "the-lantern-route"));
-        Assert.False(book.IsStirringAnywhere("F1"));
         Assert.Equal(2, raised);
     }
 

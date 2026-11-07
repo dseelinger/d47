@@ -143,8 +143,6 @@ public class ASmallContextGetsTheShortToolListTests
 
         public string Id => LlmProviderCatalog.OpenAiCompatibleId;
 
-        public string DisplayName => "Overflowing";
-
         public string DefaultModel => "local";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

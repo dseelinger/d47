@@ -1,4 +1,5 @@
 ﻿using D47.Core.Capabilities;
+using D47.Core.Tests.Persona;
 using D47.Core.Conversation;
 using D47.Core.Logbook;
 using D47.Core.Lore;
@@ -79,7 +80,7 @@ public class TheSamplerIsChosenPerCallClassTests
     {
         var provider = FakeLlmProvider.Answering("warden = af_heart");
 
-        await VoicePairing.ChooseAsync(
+        await CoreVoiceChoice.ChooseAsync(
             [
                 new VoiceInfo("en-GB-SoniaNeural", "Sonia", "en-GB", "Female"),
                 new VoiceInfo("en-GB-RyanNeural", "Ryan", "en-GB", "Male"),

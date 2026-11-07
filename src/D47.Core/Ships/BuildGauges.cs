@@ -36,12 +36,6 @@ public sealed record SlotDraw(double Megawatts, FigureKind Kind);
 public sealed record PowerGauge(
     double Retracted, double Deployed, double? Capacity, FigureKind Kind, IReadOnlyDictionary<string, SlotDraw> Draw)
 {
-    /// <summary>The retracted draw as a fraction of capacity, or null with no plant.</summary>
-    public double? RetractedShare => Capacity is > 0 ? Retracted / Capacity : null;
-
-    /// <summary>The deployed draw as a fraction of capacity, or null with no plant.</summary>
-    public double? DeployedShare => Capacity is > 0 ? Deployed / Capacity : null;
-
     /// <summary>
     /// Megawatts over the plant's output with the hardpoints out, or null for a build that fits.
     /// </summary>

@@ -56,7 +56,13 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
     private static IReadOnlyList<string> Titles(StoryFixtures fixtures) =>
         [.. fixtures.Book.Store.Find("F1", Key)!.Beats.Select(beat => beat.Title)];
 
-    private static ActivityBars Bars() => new(null, new MemoryFileSystem(), NullLogger.Instance);
+    private const string BarsPath = "activity-bars.json";
+
+    private readonly MemoryFileSystem _barFiles = new();
+
+    private ActivityBars Bars() => new(BarsPath, _barFiles, NullLogger.Instance);
+
+    private int Counted(string commander, string key) => BarCounts.Of(_barFiles, BarsPath, commander, key);
 
     [Fact]
     public async Task AShortStorysRemarkIsWrittenToTheLogOnce()
@@ -95,7 +101,6 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         Assert.Equal("A bounty does the same.", proposal.Reply);
         Assert.Equal(["New One", "New Two"], proposal.Beats.Select(beat => beat.Title));
         Assert.Contains(proposal.Beats, beat => beat.Trigger is { Kind: TriggerKind.Bounty, Count: >= 3 and <= 8 });
-        Assert.Same(proposal, fixtures.Director.AdventureProposal("F1", Key));
         Assert.Null(fixtures.Director.Detour("F1"));
         Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
         Assert.Null(ask.Story);
@@ -114,7 +119,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         Assert.Null(fixtures.Director.ApplyAdventureObjective("F1", Key));
         Assert.Equal(["The Lantern", "First Blood", "New One", "New Two"], Titles(fixtures));
         Assert.Equal("New One", fixtures.Book.Standing("F1", Key)!.CurrentBeat!.Title);
-        Assert.Null(fixtures.Director.AdventureProposal("F1", Key));
+        Assert.Equal("There is no change to apply.", fixtures.Director.ApplyAdventureObjective("F1", Key));
     }
 
     [Fact]
@@ -130,7 +135,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         }
 
         Assert.Equal("The story has moved on from that objective.", fixtures.Director.ApplyAdventureObjective("F1", Key));
-        Assert.Null(fixtures.Director.AdventureProposal("F1", Key));
+        Assert.Equal("There is no change to apply.", fixtures.Director.ApplyAdventureObjective("F1", Key));
         Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
     }
 
@@ -142,7 +147,6 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
         fixtures.Director.DiscardAdventureObjective("F1", Key);
 
-        Assert.Null(fixtures.Director.AdventureProposal("F1", Key));
         Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
         Assert.Equal("There is no change to apply.", fixtures.Director.ApplyAdventureObjective("F1", Key));
     }
@@ -155,10 +159,10 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
 
         fixtures.Director.Bars = bars;
         await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
-        Assert.Equal(0, bars.Changed("F1", "bond"));
+        Assert.Equal(0, Counted("F1", "bond"));
 
         Assert.Null(fixtures.Director.ApplyAdventureObjective("F1", Key));
-        Assert.Equal(1, bars.Changed("F1", "bond"));
+        Assert.Equal(1, Counted("F1", "bond"));
     }
 
     [Fact]
@@ -183,7 +187,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         Assert.Equal(["bond", "scan"], ask.Barred!.Order());
         Assert.Equal(["The Lantern", "First Blood", "New One", "New Two"], Titles(fixtures));
         Assert.DoesNotContain(fixtures.Book.Store.Find("F1", Key)!.Beats.Skip(2), beat => beat.Trigger.Kind is TriggerKind.Bond or TriggerKind.Scan);
-        Assert.Equal(0, bars.Changed("F1", "bond"));
+        Assert.Equal(0, Counted("F1", "bond"));
     }
 
     [Fact]
@@ -293,7 +297,7 @@ public sealed class AShortStorysObjectiveCanBeRewrittenTests
         var outcome = await fixtures.Director.ReviseAdventureObjectiveAsync("F1", Key, "I would rather hunt a bounty.", [], TestContext.Current.CancellationToken);
 
         Assert.Equal("The story changed while the objective was being written.", outcome.Refusal);
-        Assert.Null(fixtures.Director.AdventureProposal("F1", Key));
+        Assert.Equal("There is no change to apply.", fixtures.Director.ApplyAdventureObjective("F1", Key));
         Assert.Equal(["The Lantern", "First Blood", "The Wing", "Home"], Titles(fixtures));
         Assert.False(fixtures.Director.IsRewriting("F1"));
     }

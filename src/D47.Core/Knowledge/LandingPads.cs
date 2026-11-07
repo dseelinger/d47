@@ -17,8 +17,6 @@ public static class LandingPads
     private static readonly Lazy<Dictionary<int, LandingPad>> Loaded =
         new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
-    public static IReadOnlyCollection<LandingPad> All => Loaded.Value.Values;
-
     /// <summary>Whether a <c>StationType</c> has the ring layout.</summary>
     public static bool IsRing(string? stationType) =>
         stationType is "Coriolis" or "Orbis" or "Ocellus" or "Bernal" or "AsteroidBase";

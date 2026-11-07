@@ -16,8 +16,6 @@ public sealed class FakeLlmProvider : ILlmProvider
 
     public string Id { get; init; } = "anthropic";
 
-    public string DisplayName => "Fake";
-
     public string DefaultModel { get; init; } = "claude-opus-5";
 
     /// <summary>Whether this endpoint advertises tools and executes tool_use replies.</summary>
@@ -86,8 +84,6 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
     public Action<LlmRequest>? OnRequest { get; init; }
 
     public string Id { get; init; } = "anthropic";
-
-    public string DisplayName => "Rounds";
 
     public string DefaultModel { get; init; } = "claude-opus-5";
 
@@ -175,8 +171,6 @@ public sealed class ThrowingLlmProvider : ILlmProvider
 
     public string Id => "anthropic";
 
-    public string DisplayName => "Throwing";
-
     public string DefaultModel => "claude-opus-5";
 
     public LlmProviderCapabilities CapabilitiesFor(string model) => new()
@@ -207,8 +201,6 @@ public sealed class FlakyLlmProvider(int failuresBeforeSuccess) : ILlmProvider
     private int _calls;
 
     public string Id => "anthropic";
-
-    public string DisplayName => "Flaky";
 
     public string DefaultModel => "claude-opus-5";
 

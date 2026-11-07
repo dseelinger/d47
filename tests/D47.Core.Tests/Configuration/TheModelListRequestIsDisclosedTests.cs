@@ -27,9 +27,15 @@ public class TheModelListRequestIsDisclosedTests
     [Fact]
     public void TheElevenLabsEntrySaysTheListIsAskedForWithTheVoices()
     {
+        var settings = new D47Settings { Speech = new SpeechSettings { Provider = TtsProviderCatalog.ElevenLabsId } };
+
+        var entry = Assert.Single(
+            EgressDisclosure.For(settings, llmKeyPresent: true),
+            entry => entry.Id == EgressDisclosure.TextToSpeech);
+
         Assert.Contains(
             "Each time D47 fetches the voice list, it also asks ElevenLabs for its list of models, with the same key",
-            EgressDisclosure.TextToSpeechFor(TtsProviderCatalog.ElevenLabs).What,
+            entry.What,
             StringComparison.Ordinal);
     }
 }

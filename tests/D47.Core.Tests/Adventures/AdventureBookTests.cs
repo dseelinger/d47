@@ -108,7 +108,7 @@ public class AdventureBookTests : IDisposable
 
         // In the past: nothing is owed to the callout.
         Assert.Empty(book.Drain());
-        Assert.False(book.NeedsCatchUp);
+        Assert.Null(book.StartWalk("journals", null));
     }
 
     [Fact]
@@ -217,14 +217,14 @@ public class AdventureBookTests : IDisposable
         book.Reconcile();
 
         Assert.Single(book.Standing("F1", "the-lantern-route")!.Fired);
-        Assert.False(book.NeedsCatchUp);
+        Assert.Null(book.StartWalk("journals", null));
 
         // The stamp moved to before the observed jump: the standing is gone and a walk is owed.
         book.Store.Save("F1", LanternRoute(Accepted.AddSeconds(30)));
         book.Reconcile();
 
         Assert.Empty(book.Standing("F1", "the-lantern-route")!.Fired);
-        Assert.True(book.NeedsCatchUp);
+        Assert.NotNull(book.StartWalk("journals", null));
     }
 
     [Fact]
@@ -238,7 +238,7 @@ public class AdventureBookTests : IDisposable
         Assert.Null(book.Begin("F1", "the-lantern-route", Accepted.AddMinutes(10)));
         book.Reconcile();
 
-        Assert.False(book.NeedsCatchUp);
+        Assert.Null(book.StartWalk("journals", null));
 
         book.Observe(Jump(Lantern, Accepted.AddMinutes(11)), "F1");
 
@@ -256,12 +256,12 @@ public class AdventureBookTests : IDisposable
         book.Store.Save("F1", LanternRoute(Accepted.AddDays(1)));
         book.Reconcile();
 
-        Assert.False(book.NeedsCatchUp);
+        Assert.Null(book.StartWalk("journals", null));
 
         book.Store.Save("F1", LanternRoute(Accepted.AddSeconds(30)));
         book.Reconcile();
 
-        Assert.True(book.NeedsCatchUp);
+        Assert.NotNull(book.StartWalk("journals", null));
     }
 
     [Fact]

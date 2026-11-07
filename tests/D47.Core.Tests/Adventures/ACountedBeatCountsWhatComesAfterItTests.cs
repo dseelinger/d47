@@ -72,7 +72,7 @@ public class ACountedBeatCountsWhatComesAfterItTests : IDisposable
         standing = AdventureFold.Apply(standing, Bond(At(6)));
 
         Assert.True(standing.IsDone);
-        Assert.Equal(At(6), standing.FinishedAt);
+        Assert.Equal(At(6), standing.LastFiredAt);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class ACountedBeatCountsWhatComesAfterItTests : IDisposable
         var standing = Fold(adventure, [Jump(Lantern, At(1)), Refined(At(2), "$platinum_name;"), Refined(At(3), "$painite_name;"), Refined(At(4), "$platinum_name;")]);
 
         Assert.True(standing.IsDone);
-        Assert.Equal(At(4), standing.FinishedAt);
+        Assert.Equal(At(4), standing.LastFiredAt);
     }
 
     [Fact]

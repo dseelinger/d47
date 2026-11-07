@@ -114,8 +114,6 @@ public class AStreamThatSentContentIsNotRetriedTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Stalling";
-
         public string DefaultModel => "claude-opus-5";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

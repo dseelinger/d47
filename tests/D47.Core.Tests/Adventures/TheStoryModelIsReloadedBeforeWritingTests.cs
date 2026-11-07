@@ -150,8 +150,6 @@ public sealed class TheStoryModelIsReloadedBeforeWritingTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Loader";
-
         public string DefaultModel => "story-model";
 
         public bool RunsOnThisMachine => true;

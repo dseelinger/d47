@@ -24,7 +24,13 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
         ]}
         """;
 
-    private static ActivityBars Bars() => new(null, new MemoryFileSystem(), NullLogger.Instance);
+    private const string BarsPath = "activity-bars.json";
+
+    private readonly MemoryFileSystem _barFiles = new();
+
+    private ActivityBars Bars() => new(BarsPath, _barFiles, NullLogger.Instance);
+
+    private int Counted(string commander, string key) => BarCounts.Of(_barFiles, BarsPath, commander, key);
 
     private static void Change(ActivityBars bars, string commander, string key, int times)
     {
@@ -55,7 +61,7 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
 
         Assert.Equal([Courier], bars.Barred("F1"));
         Assert.Empty(bars.Barred("F2"));
-        Assert.Equal(0, bars.Changed("F2", Courier));
+        Assert.Equal(0, Counted("F2", Courier));
     }
 
     [Fact]
@@ -88,7 +94,7 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
             second.Load();
 
             Assert.Equal([Courier], second.Barred("F1"));
-            Assert.Equal(2, second.Changed("F1", "bounty"));
+            Assert.Equal(2, BarCounts.Of(new DiskFileSystem(), path, "F1", "bounty"));
         }
         finally
         {
@@ -106,11 +112,11 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
 
         await fixtures.Director.ProposeDetourAsync("F1", "Go to Anlave.", null, TestContext.Current.CancellationToken);
         fixtures.Director.DiscardDetour("F1");
-        Assert.Equal(0, bars.Changed("F1", "bond"));
+        Assert.Equal(0, Counted("F1", "bond"));
 
         await fixtures.Director.ProposeDetourAsync("F1", "Go to Anlave.", null, TestContext.Current.CancellationToken);
         Assert.Null(fixtures.Director.ApplyDetour("F1"));
-        Assert.Equal(1, bars.Changed("F1", "bond"));
+        Assert.Equal(1, Counted("F1", "bond"));
     }
 
     [Fact]
@@ -128,7 +134,7 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
             Assert.Null(fixtures.Director.ApplyDetour("F1"));
         }
 
-        Assert.Equal(1, bars.Changed("F1", "bond"));
+        Assert.Equal(1, Counted("F1", "bond"));
         Assert.Equal(["bounty"], bars.Barred("F1"));
 
         var refused = await fixtures.Director.ProposeDetourAsync("F1", "Hunt bounties.", null, TestContext.Current.CancellationToken);
@@ -192,7 +198,7 @@ public sealed class FiveChangedObjectivesBarAnActivityTests
 
         Assert.Null(await fixtures.Director.RefuseBeatAsync("F1", TestContext.Current.CancellationToken));
 
-        Assert.Equal(0, bars.Changed("F1", "bond"));
+        Assert.Equal(0, Counted("F1", "bond"));
         Assert.Equal(["bond"], fixtures.Stories.Current("F1")!.Refused);
     }
 

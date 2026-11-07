@@ -174,11 +174,11 @@ public class SurfaceMiningSitesAreFoldedFromJournalsTests
             store.Apply(Event(line));
         }
 
-        Assert.True(store.Active!.SurfaceMining.IsKnown);
+        Assert.NotEmpty(store.Active!.SurfaceMining.Sites);
 
         store.Apply(Event(erase));
 
-        Assert.False(store.Active!.SurfaceMining.IsKnown);
+        Assert.Empty(store.Active!.SurfaceMining.Sites);
         Assert.Empty(Walk([.. OneRun, erase, Login("13:00:00")]).Sites);
     }
 

@@ -35,14 +35,6 @@ public sealed class FoldedCommanderFile<TKept, TRecord>(
         }
     }
 
-    public bool TryGet(string frontierId, out TKept? kept)
-    {
-        lock (_gate)
-        {
-            return _byCommander.TryGetValue(frontierId, out kept);
-        }
-    }
-
     public IReadOnlyDictionary<string, TKept> All
     {
         get

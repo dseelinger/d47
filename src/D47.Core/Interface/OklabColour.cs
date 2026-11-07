@@ -38,20 +38,6 @@ public readonly record struct OklabColour(double L, double A, double B)
         return (LinearToSrgb(rl), LinearToSrgb(gl), LinearToSrgb(bl));
     }
 
-    public OklchColour ToOklch()
-    {
-        var c = Math.Sqrt((A * A) + (B * B));
-        var h = Math.Atan2(B, A) * 180.0 / Math.PI;
-
-        return new OklchColour(L, c, h < 0 ? h + 360.0 : h);
-    }
-
-    public static OklabColour FromOklch(OklchColour oklch)
-    {
-        var radians = oklch.H * Math.PI / 180.0;
-        return new OklabColour(oklch.L, oklch.C * Math.Cos(radians), oklch.C * Math.Sin(radians));
-    }
-
     private static double SrgbToLinear(byte channel)
     {
         var c = channel / 255.0;
@@ -66,9 +52,6 @@ public readonly record struct OklabColour(double L, double A, double B)
         return (byte)Math.Clamp(Math.Round(encoded * 255.0), 0, 255);
     }
 }
-
-/// <summary>OKLab in cylindrical form: <see cref="L"/> unchanged, <see cref="A"/> and <see cref="B"/> as chroma and hue degrees.</summary>
-public readonly record struct OklchColour(double L, double C, double H);
 
 /// <summary>Colour arithmetic done in OKLab rather than sRGB, so a mix or a hue swap matches how the eye sees lightness.</summary>
 public static class OklabMixing

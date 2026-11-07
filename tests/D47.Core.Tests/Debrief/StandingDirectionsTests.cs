@@ -229,21 +229,15 @@ public class StandingDirectionsTests
             StandingDirections.Render(entries.Reverse()));
     }
 
-    /// <summary>
-    /// Declining keeps the refusal, so the pass does not redraft it from the same sentence next session
-    /// — and forgetting removes it outright, for the Commander who changed their mind.
-    /// </summary>
+    /// <summary>Declining keeps the refusal, so the pass does not redraft it from the same sentence next session.</summary>
     [Fact]
-    public void DecliningIsATombstoneAndForgettingIsNot()
+    public void DecliningIsATombstone()
     {
         var book = Book();
         var drafted = Assert.Single(book.Propose(Session("stop calling it the Anaconda"), [], Now));
 
         Assert.True(book.Decline(drafted.Key));
         Assert.Empty(book.Propose(Session("stop calling it the Anaconda"), [], Now.AddDays(1)));
-
-        Assert.True(book.Forget(drafted.Key));
-        Assert.Single(book.Propose(Session("stop calling it the Anaconda"), [], Now.AddDays(2)));
     }
 
     /// <summary>A hand-written entry with no state is a proposal: an unlabelled fact about a person is their own word, and an unlabelled instruction going into a prompt is something nobody has agreed to yet.</summary>
@@ -268,7 +262,7 @@ public class StandingDirectionsTests
         var book = Book(store);
 
         Assert.Empty(book.Adopted);
-        Assert.Single(book.Waiting);
+        Assert.Single(book.Mine, entry => entry.State == DirectionState.Proposed);
     }
 
     /// <summary>

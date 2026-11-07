@@ -88,9 +88,6 @@ public sealed record MarketSnapshot
     public MarketQuote? Quote(string commodity) =>
         Quotes.TryGetValue(commodity, out var quote) ? quote : null;
 
-    /// <summary>What the station pays for a commodity, or zero where it does not buy it.</summary>
-    public int Pays(string commodity) => Quote(commodity) is { Demand: > 0 } quote ? quote.SellPrice : 0;
-
     /// <summary>Light years to another market, from the coordinates both carry.</summary>
     public double DistanceTo(MarketSnapshot other)
     {

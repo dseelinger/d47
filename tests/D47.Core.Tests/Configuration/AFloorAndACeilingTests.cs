@@ -145,8 +145,8 @@ public class AFloorAndACeilingTests
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
-        Assert.False(Row(surface, ConversationCapability.EffortFloorKey).IsOpenVocabulary);
-        Assert.False(Row(surface, ConversationCapability.EffortCeilingKey).IsOpenVocabulary);
+        Assert.NotEmpty(Row(surface, ConversationCapability.EffortFloorKey).ChoicesFor(surface.Settings.Current));
+        Assert.NotEmpty(Row(surface, ConversationCapability.EffortCeilingKey).ChoicesFor(surface.Settings.Current));
 
         // The model rows are the other kind, and stay that way.
         Assert.True(Row(surface, ConversationCapability.BackgroundModelKey).AllowsFreeText);

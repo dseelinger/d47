@@ -51,12 +51,6 @@ public sealed record UnlockStep(
     string? Meeting,
     string? Tribute)
 {
-    /// <summary>Whether the trip is a shopping run rather than a visit.</summary>
-    public bool IsDelivery => Tribute is { Length: > 0 };
-
-    /// <summary>Whether this stop costs something that is not a trip.</summary>
-    public bool IsOpenEnded => Meeting is { Length: > 0 };
-
     /// <summary>
     /// The reputation climb this stop wants on top of the unlock, priced where Frontier priced it.
     /// </summary>
@@ -123,9 +117,6 @@ public sealed record UnlockChain(IReadOnlyList<UnlockStep> Steps)
         Steps.Count > 0 && Steps.All(step => step.LightYears is not null)
             ? Steps.Sum(step => step.LightYears!.Value)
             : null;
-
-    /// <summary>How many stops cost something that is not a trip.</summary>
-    public int OpenEnded => Steps.Count(step => step.IsOpenEnded);
 }
 
 /// <summary>

@@ -89,7 +89,7 @@ public class SpendLedgerTests
 
         clock.UtcNow = Noon;
 
-        var summary = ledger.Summary(TimeZoneInfo.Utc).ToDictionary(row => row.Period.Name, row => row.Totals);
+        var summary = ledger.Immediate(TimeZoneInfo.Utc).Concat(ledger.Windows(TimeZoneInfo.Utc)).ToDictionary(row => row.Period.Name, row => row.Totals);
 
         Assert.Equal(0.25m, summary["Last 7 days"].Dollars);
         Assert.Equal(0.75m, summary["Last 30 days"].Dollars);

@@ -168,10 +168,6 @@ public sealed class OnFootPlanService(
         return entries;
     }
 
-    /// <summary>The entry for one build, or null.</summary>
-    public KitEntry? Entry(string buildId) =>
-        Kit().FirstOrDefault(entry => entry.Build?.Id == buildId);
-
     /// <summary>
     /// The build a phrase means, made if it does not exist yet: the item named, the suit being worn
     /// when nothing is named, or a fresh intended build for something the Commander has not bought.

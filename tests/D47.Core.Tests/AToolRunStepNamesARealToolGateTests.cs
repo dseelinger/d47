@@ -11,7 +11,7 @@ public partial class DocumentationGateTests
     public void EveryToolRunStepNamesAToolTheRegistryHas()
     {
         var registered = Registry().ToolNames.ToHashSet(StringComparer.Ordinal);
-        var tools = StepEventCatalogue.Default.ValuesOf("ToolRun", "Tool");
+        var tools = StepFieldValues.Shipped("ToolRun", "Tool");
 
         Assert.NotEmpty(tools);
 

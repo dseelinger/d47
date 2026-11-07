@@ -75,13 +75,14 @@ public class EverythingNamedSaysHowItIsAcquiredTests
     [Fact]
     public void EveryOutfittingGateInTheTableIsPlacedByARule()
     {
-        var entitlements = EliteSpecifications.Modules
-            .Select(module => module.Entitlement)
-            .Distinct(StringComparer.Ordinal)
+        var names = EliteSpecifications.Modules
+            .GroupBy(module => module.Name, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Any(module => module.Entitlement != "?"))
+            .Select(group => group.Key)
             .ToList();
 
-        Assert.All(entitlements, entitlement =>
-            Assert.True(AcquisitionGuide.Places(entitlement), $"no rule places '{entitlement}'"));
+        Assert.All(names, name =>
+            Assert.NotEmpty(AcquisitionGuide.For(name)?.Methods ?? []));
     }
 
     [Fact]

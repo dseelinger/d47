@@ -5,9 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Ships;
 
-/// <summary>One build the file was asked to hold, and why it was refused.</summary>
-public sealed record ShipBuildProblem(string Where, string Reason);
-
 /// <summary>
 /// The Commander's ship builds, in one file beside the executable (Phase 26, "The fleet, and the fleet
 /// you intend").
@@ -25,7 +22,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
     private readonly Lock _gate = new();
 
     private IReadOnlyList<ShipBuild> _builds = [];
-    private IReadOnlyList<ShipBuildProblem> _problems = [];
 
     /// <summary>The file's contents as last read.</summary>
     private readonly WatchedTextFile _file = new(files, path, logger, "Could not read the ship build file");
@@ -42,18 +38,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
             lock (_gate)
             {
                 return _builds;
-            }
-        }
-    }
-
-    /// <summary>Builds that were refused, and why.</summary>
-    public IReadOnlyList<ShipBuildProblem> Problems
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _problems;
             }
         }
     }
@@ -95,7 +79,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
             lock (_gate)
             {
                 _builds = [];
-                _problems = [];
             }
 
             Changed?.Invoke();
@@ -162,7 +145,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
         {
             lock (_gate)
             {
-                _problems = [new ShipBuildProblem(System.IO.Path.GetFileName(path), ex.Message)];
                 _file.Seen(text);
             }
 
@@ -172,7 +154,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
         }
 
         var builds = new List<ShipBuild>();
-        var problems = new List<ShipBuildProblem>();
 
         foreach (var line in file?.Ships ?? [])
         {
@@ -180,7 +161,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
 
             if (written.Length == 0)
             {
-                problems.Add(new ShipBuildProblem("a build", "it names no hull."));
                 continue;
             }
 
@@ -194,13 +174,11 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
 
             if (id.Length == 0)
             {
-                problems.Add(new ShipBuildProblem(hull, "it has no id, so nothing can point at it."));
                 continue;
             }
 
             if (builds.Any(existing => string.Equals(existing.Id, id, StringComparison.OrdinalIgnoreCase)))
             {
-                problems.Add(new ShipBuildProblem(hull, $"a second build is using the id \"{id}\"."));
                 continue;
             }
 
@@ -212,15 +190,11 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
                 && builds.Any(existing => existing.ShipId == shipId
                                           && string.Equals(existing.CommanderFid, fid, StringComparison.Ordinal)))
             {
-                problems.Add(new ShipBuildProblem(
-                    hull, $"ship {shipId} already has a build, and a ship has one."));
-
                 continue;
             }
 
             if (builds.Count >= MaxBuilds)
             {
-                problems.Add(new ShipBuildProblem(hull, $"the file already holds {MaxBuilds} builds."));
                 continue;
             }
 
@@ -232,19 +206,16 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
 
                 if (name.Length == 0)
                 {
-                    problems.Add(new ShipBuildProblem(hull, "a slot plan names no slot."));
                     continue;
                 }
 
                 if (slots.Any(existing => string.Equals(existing.Slot, name, StringComparison.OrdinalIgnoreCase)))
                 {
-                    problems.Add(new ShipBuildProblem(hull, $"{name} is planned twice, and a slot holds one plan."));
                     continue;
                 }
 
                 if (slots.Count >= MaxSlots)
                 {
-                    problems.Add(new ShipBuildProblem(hull, $"that build already plans {MaxSlots} slots."));
                     continue;
                 }
 
@@ -274,15 +245,11 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
 
                 if (name.Length == 0)
                 {
-                    problems.Add(new ShipBuildProblem(hull, "a priority move names no slot."));
                     continue;
                 }
 
                 if (priority is < 1 or > 5)
                 {
-                    problems.Add(new ShipBuildProblem(
-                        hull, $"{name} is moved to priority {priority}, and priorities run 1 to 5."));
-
                     continue;
                 }
 
@@ -300,7 +267,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
         lock (_gate)
         {
             _builds = builds;
-            _problems = problems;
             _file.Seen(text);
         }
 

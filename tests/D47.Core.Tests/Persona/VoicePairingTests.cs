@@ -25,7 +25,7 @@ public class VoicePairingTests
     {
         var existing = new Dictionary<string, string>(StringComparer.Ordinal) { ["warden"] = "en-GB-ThomasNeural" };
 
-        var paired = await VoicePairing.ChooseAsync(
+        var paired = await CoreVoiceChoice.ChooseAsync(
             Voices(),
             existing,
             FakeLlmProvider.Answering("warden = en-US-GuyNeural\ncora = en-US-AriaNeural"),
@@ -42,7 +42,7 @@ public class VoicePairingTests
     [Fact]
     public async Task NoVoicesMeansNoPairingsRatherThanAnError()
     {
-        var paired = await VoicePairing.ChooseAsync(
+        var paired = await CoreVoiceChoice.ChooseAsync(
             [],
             Nothing(),
             FakeLlmProvider.Answering("warden = en-US-GuyNeural"),
@@ -60,7 +60,7 @@ public class VoicePairingTests
     {
         var offered = Voices().Select(voice => voice.Id).ToHashSet();
 
-        var paired = await VoicePairing.ChooseAsync(
+        var paired = await CoreVoiceChoice.ChooseAsync(
             Voices(),
             Nothing(),
             FakeLlmProvider.Answering("warden = en-GB-RyanNeural\ncora = a-voice-nobody-offers\nkex = kex"),

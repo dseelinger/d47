@@ -13,11 +13,12 @@ public class KeyIsPrintedAsWrittenTests
         DeviceLabel = id => id,
         CaptureState = () => (true, null),
         TranscriberState = () => (false, null, "No speech model is selected."),
-        // Known, with nothing bound, so the collision line is produced and can be read.
+        // Known, with the key bound to an action, so the collision line is produced and can be read.
         Binds = () => new D47.Core.Input.EliteBinds
         {
             PresetName = "KeyboardMouseOnly",
             SourceFile = "KeyboardMouseOnly.binds",
+            Bindings = [new D47.Core.Input.EliteBinding("SelectTarget", "Primary", "Keyboard", "Key_Oem4")],
         },
         InstalledModels = () => [],
         KeyLabel = label,
@@ -31,18 +32,9 @@ public class KeyIsPrintedAsWrittenTests
     [Fact]
     public void ThePushToTalkKeyIsReportedInItsPrintableForm()
     {
-        // The unconditional inventory, which is where the key and the all-clear now live; Describe answers a
-        // Commander's question and says neither when nothing is wrong.
-        var text = ListeningCapability.DescribeInDetail(Bound(), Surface(key => key == "Oem4" ? "[" : key));
+        var text = ListeningCapability.Describe(Bound(), Surface(key => key == "Oem4" ? "[" : key));
 
-        Assert.Contains("Push-to-talk: [ (hold).", text, StringComparison.Ordinal);
-
-        // The collision line too.
-        Assert.Contains(
-            "No Elite binding uses [ in the KeyboardMouseOnly preset.",
-            text,
-            StringComparison.Ordinal);
-
+        Assert.Contains("Warning: [ is also bound in Elite (KeyboardMouseOnly)", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Oem4", text, StringComparison.Ordinal);
     }
 
@@ -54,8 +46,8 @@ public class KeyIsPrintedAsWrittenTests
     public void WithNoLabellerItFallsBackToWhatIsStored()
     {
         Assert.Contains(
-            "Push-to-talk: Oem4 (hold).",
-            ListeningCapability.DescribeInDetail(Bound(), Surface(label: null)),
+            "Warning: Oem4 is also bound in Elite",
+            ListeningCapability.Describe(Bound(), Surface(label: null)),
             StringComparison.Ordinal);
     }
 }

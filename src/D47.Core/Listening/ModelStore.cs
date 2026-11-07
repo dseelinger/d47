@@ -53,9 +53,6 @@ public interface IModelStore
     /// <summary>The path to an installed model, or null.</summary>
     string? PathOf(WhisperModel model);
 
-    /// <summary>Installed model ids, for the settings row to mark which are ready.</summary>
-    IReadOnlyList<string> Installed();
-
     /// <summary>Downloads a model.</summary>
     Task<ModelInstallResult> InstallAsync(
         WhisperModel model,

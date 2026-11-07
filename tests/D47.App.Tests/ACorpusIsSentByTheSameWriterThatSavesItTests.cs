@@ -170,13 +170,13 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
         Assert.NotNull(endpoint.Last);
 
         Assert.Equal(
-            DonationEnvelope.HashOf(Ungzip(endpoint.Sent)),
+            DonationHash.Of(Ungzip(endpoint.Sent)),
             Header(endpoint.Last, DonationEnvelope.Sha256Header));
 
         // Of the payload and not of the wire, which is the whole reason the hash is taken above the
         // compressor: gzip output is not reproducible from its input across levels.
         Assert.NotEqual(
-            DonationEnvelope.HashOf(endpoint.Sent),
+            DonationHash.Of(endpoint.Sent),
             Header(endpoint.Last, DonationEnvelope.Sha256Header));
     }
 
@@ -236,7 +236,7 @@ public class ACorpusIsSentByTheSameWriterThatSavesItTests : IDisposable
 
         Assert.Equal(payload, Ungzip(endpoint.Sent));
         Assert.Equal(
-            DonationEnvelope.HashOf(payload),
+            DonationHash.Of(payload),
             Header(endpoint.Last, DonationEnvelope.Sha256Header));
 
         Assert.Equal(

@@ -221,12 +221,11 @@ public sealed class StoryStepsCanFollowOneNamedMissionTests
     }
 
     [Fact]
-    public void TheMissionKindsAreNotCountedOrAuthorable()
+    public void TheMissionKindsAreNotCounted()
     {
         foreach (var kind in new[] { TriggerKind.MissionTaken, TriggerKind.MissionDestination, TriggerKind.MissionComplete, TriggerKind.MissionAbandon })
         {
             Assert.False(AdventureTrigger.IsCountedKind(kind));
-            Assert.False(AdventureTrigger.IsAuthorable(kind));
             Assert.Contains(kind.ToString().ToLowerInvariant(), AdventureValidation.Kinds);
         }
     }

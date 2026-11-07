@@ -54,7 +54,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     [Fact]
     public void TheLowestFractionWins()
     {
-        var step = GoalClimb.Next(Standings(0.5, At("rank.explore", 0.2)), State(), null);
+        var step = FirstGoalStep.Of(Standings(0.5, At("rank.explore", 0.2)), State(), null);
 
         Assert.Equal("rank.explore", step?.Key);
         Assert.Equal("Explore", step?.Draw);
@@ -67,14 +67,14 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
         var unknown = new GoalStanding { Arc = GoalCatalogue.Find("rank.trade")!, Source = GoalSource.Unknown };
 
         Assert.Null(unknown.Fraction);
-        Assert.Equal("rank.trade", GoalClimb.Next(Standings(0.01, unknown), State(), null)?.Key);
+        Assert.Equal("rank.trade", FirstGoalStep.Of(Standings(0.01, unknown), State(), null)?.Key);
     }
 
     [Fact]
     public void TiesGoInCatalogueOrder()
     {
-        Assert.Equal("rank.combat", GoalClimb.Next(Standings(0.4), State(), null)?.Key);
-        Assert.Equal("rank.trade", GoalClimb.Next(Standings(0.4, Done(At("rank.combat", 0.4))), State(), null)?.Key);
+        Assert.Equal("rank.combat", FirstGoalStep.Of(Standings(0.4), State(), null)?.Key);
+        Assert.Equal("rank.trade", FirstGoalStep.Of(Standings(0.4, Done(At("rank.combat", 0.4))), State(), null)?.Key);
     }
 
     [Fact]
@@ -82,8 +82,8 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     {
         var standings = Standings(0.6, At(GoalCatalogue.Ships, 0.1), At("rank.trade", 0.3));
 
-        var poor = GoalClimb.Next(standings, State(credits: 1_000), null);
-        var rich = GoalClimb.Next(standings, State(), null);
+        var poor = FirstGoalStep.Of(standings, State(credits: 1_000), null);
+        var rich = FirstGoalStep.Of(standings, State(), null);
 
         Assert.Equal("rank.trade", poor?.Key);
         Assert.Equal(GoalCatalogue.Ships, rich?.Key);
@@ -97,7 +97,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
         var unpledged = State(events: """{ "timestamp":"2026-09-30T12:00:00Z", "event":"PowerplayLeave", "Power":"Aisling Duval" }""");
         var standing = GoalEvaluator.Evaluate(GoalCatalogue.Find(GoalCatalogue.Powerplay)!, unpledged, null);
 
-        var step = GoalClimb.Next(Standings(0.5, standing), unpledged, null);
+        var step = FirstGoalStep.Of(Standings(0.5, standing), unpledged, null);
 
         Assert.Equal(GoalCatalogue.Powerplay, step?.Key);
         Assert.Equal(TriggerKind.Pledge, step?.Objective?.Kind);
@@ -109,8 +109,8 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
         var unpledged = State(events: """{ "timestamp":"2026-09-30T12:00:00Z", "event":"PowerplayLeave", "Power":"Aisling Duval" }""");
         var standing = GoalEvaluator.Evaluate(GoalCatalogue.Find(GoalCatalogue.Powerplay)!, unpledged, null);
 
-        Assert.Equal(GoalCatalogue.Powerplay, GoalClimb.Next(Standings(0, standing), unpledged, null)?.Key);
-        Assert.Equal("rank.combat", GoalClimb.Next(Standings(0, standing), State(), null)?.Key);
+        Assert.Equal(GoalCatalogue.Powerplay, FirstGoalStep.Of(Standings(0, standing), unpledged, null)?.Key);
+        Assert.Equal("rank.combat", FirstGoalStep.Of(Standings(0, standing), State(), null)?.Key);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
         var pledged = State(events: """{ "timestamp":"2026-09-30T12:00:00Z", "event":"Powerplay", "Power":"Aisling Duval", "Rank":20, "Merits":100000 }""");
         var standing = GoalEvaluator.Evaluate(GoalCatalogue.Find(GoalCatalogue.Powerplay)!, pledged, null);
 
-        var step = GoalClimb.Next(Standings(0.99, standing), pledged, null);
+        var step = FirstGoalStep.Of(Standings(0.99, standing), pledged, null);
 
         Assert.Equal(TriggerKind.PowerRank, step?.Objective?.Kind);
         Assert.Equal(21, step?.Objective?.Rank);
@@ -130,7 +130,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     {
         var standing = GoalEvaluator.Evaluate(GoalCatalogue.Find(GoalCatalogue.Powerplay)!, State(), null);
 
-        Assert.Equal("rank.trade", GoalClimb.Next(Standings(0.5, standing, At("rank.trade", 0.2)), State(), null)?.Key);
+        Assert.Equal("rank.trade", FirstGoalStep.Of(Standings(0.5, standing, At("rank.trade", 0.2)), State(), null)?.Key);
     }
 
     [Fact]
@@ -139,24 +139,24 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
         var engineer = EngineerDirectory.All[0];
         var report = new EngineerReport { Route = [new UnlockCandidate { Engineer = engineer, Chain = UnlockChain.Done }] };
 
-        var step = GoalClimb.Next(Standings(0.5, At(GoalCatalogue.Engineers, 0.1)), State(), report);
+        var step = FirstGoalStep.Of(Standings(0.5, At(GoalCatalogue.Engineers, 0.1)), State(), report);
 
         Assert.Equal(TriggerKind.Engineer, step?.Objective?.Kind);
         Assert.Equal(engineer.Name, step?.Objective?.Engineer);
         Assert.Equal("Invited", step?.Objective?.Stage);
-        Assert.Equal("rank.combat", GoalClimb.Next(Standings(0.5, At(GoalCatalogue.Engineers, 0.1)), State(), null)?.Key);
+        Assert.Equal("rank.combat", FirstGoalStep.Of(Standings(0.5, At(GoalCatalogue.Engineers, 0.1)), State(), null)?.Key);
     }
 
     [Fact]
     public void NothingComesBackOnceEveryArcIsDone()
     {
-        Assert.Null(GoalClimb.Next([.. Standings(1).Select(Done)], State(), null));
+        Assert.Null(FirstGoalStep.Of([.. Standings(1).Select(Done)], State(), null));
     }
 
     [Fact]
     public void ACareerNearItsNextRankIsAskedForThePromotion()
     {
-        var step = GoalClimb.Next(Standings(0.9, Rank("rank.combat", 5, 0.8)), State(), null);
+        var step = FirstGoalStep.Of(Standings(0.9, Rank("rank.combat", 5, 0.8)), State(), null);
 
         Assert.Equal(TriggerKind.Rank, step?.Objective?.Kind);
         Assert.Equal("Combat", step?.Objective?.Career);
@@ -167,7 +167,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     [Fact]
     public void ANavyNearItsNextRankIsAskedForThePromotion()
     {
-        var step = GoalClimb.Next(Standings(0.9, Rank("rank.empire", 3, 0.9) with { Need = GoalCatalogue.NavyTop }), State(), null);
+        var step = FirstGoalStep.Of(Standings(0.9, Rank("rank.empire", 3, 0.9) with { Need = GoalCatalogue.NavyTop }), State(), null);
 
         Assert.Equal(TriggerKind.Rank, step?.Objective?.Kind);
         Assert.Equal(Careers.Empire, step?.Objective?.Career);
@@ -177,7 +177,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     [Fact]
     public void ACareerFarFromItsNextRankLimitsTheDrawToItsRows()
     {
-        var step = GoalClimb.Next(Standings(0.9, Rank("rank.explore", 5, 0.3)), State(), null);
+        var step = FirstGoalStep.Of(Standings(0.9, Rank("rank.explore", 5, 0.3)), State(), null);
 
         Assert.Equal("Explore", step?.Draw);
 
@@ -193,7 +193,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     [Fact]
     public void AMercenaryArcAtRankZeroIsDrawnOnFootKillBonds()
     {
-        var step = GoalClimb.Next(Standings(0.5, Rank("rank.soldier", 0, 0.1), At("rank.trade", 0.2)), State(), null);
+        var step = FirstGoalStep.Of(Standings(0.5, Rank("rank.soldier", 0, 0.1), At("rank.trade", 0.2)), State(), null);
 
         Assert.Equal("rank.soldier", step?.Key);
         Assert.Equal("Soldier", step?.Draw);
@@ -211,7 +211,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
         var state = State();
         var held = ChapterActivities.Held(state.Ranks, state.Ship, odyssey: true);
 
-        var step = GoalClimb.Next(
+        var step = FirstGoalStep.Of(
             Standings(0.5, Rank("rank.soldier", 0, 0.1), At("rank.trade", 0.2)), state, null, row => row.Kind != TriggerKind.OnFootBond && ChapterActivities.Passes(row, held));
 
         Assert.Equal("rank.trade", step?.Key);
@@ -222,9 +222,9 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     {
         var standings = Standings(0.5, Rank("rank.explore", 2, 0.1), At("rank.trade", 0.2));
 
-        var refused = GoalClimb.Next(standings, State(), null, row => !GoalClimb.Earns("Explore", row));
+        var refused = FirstGoalStep.Of(standings, State(), null, row => !GoalClimb.Earns("Explore", row));
 
-        Assert.Equal("rank.explore", GoalClimb.Next(standings, State(), null)?.Key);
+        Assert.Equal("rank.explore", FirstGoalStep.Of(standings, State(), null)?.Key);
         Assert.Equal("rank.trade", refused?.Key);
     }
 

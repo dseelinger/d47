@@ -131,10 +131,9 @@ public sealed class ASiteObjectiveFiresOnTheGuardianApproachOrTheTouristScanTest
     }
 
     [Fact]
-    public void ASiteIsNeitherCountedNorAuthorable()
+    public void ASiteIsNotCounted()
     {
         Assert.False(AdventureTrigger.IsCountedKind(TriggerKind.Site));
-        Assert.False(AdventureTrigger.IsAuthorable(TriggerKind.Site));
     }
 
     [Fact]

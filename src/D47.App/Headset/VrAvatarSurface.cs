@@ -36,8 +36,6 @@ public sealed class VrAvatarSurface(VrPanelSurface panel) : IVrSurfaceSource, ID
             ? VrPlacementMath.Over(panel.Placement.Sane(), panel.DrawnSize, area)
             : panel.Placement;
 
-    public bool TakesPointer => false;
-
     public (int Width, int Height) Size => _size;
 
     public bool IsDirty => Visible && _showing != _drawn;

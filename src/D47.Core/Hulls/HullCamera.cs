@@ -64,8 +64,6 @@ public readonly record struct HullCamera(Quaternion Orbit, float Distance, Vecto
     public HullCamera Zoom(float notches) =>
         this with { Distance = Math.Clamp(Distance * MathF.Pow(ZoomStep, -notches), Radius * MinDistanceRadii, Radius * MaxDistanceRadii) };
 
-    public HullCamera Relight(float delta) => this with { Light = Math.Clamp(Light + delta, 0f, MaxLight) };
-
     public Matrix4x4 View()
     {
         var eye = Target + Vector3.Transform(Vector3.UnitZ, Orbit) * Distance;

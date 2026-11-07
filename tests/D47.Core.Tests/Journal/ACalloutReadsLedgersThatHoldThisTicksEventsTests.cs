@@ -43,7 +43,7 @@ public class ACalloutReadsLedgersThatHoldThisTicksEventsTests
             Read.Add((
                 context.IsPriming,
                 fixture.Exobiology.Unsold("F1").Held.Count,
-                fixture.CommodityLedger.LastSale("F1", "gold") is not null));
+                fixture.CommodityLedger.Session("F1", "gold").Sales > 0));
 
             return [];
         }

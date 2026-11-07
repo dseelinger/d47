@@ -38,7 +38,7 @@ public class NoTwoCoresShareAVoiceTests
             "\n",
             PersonaCatalog.Shipped.Select(core => $"{core.Id} = en-GB-RyanNeural"));
 
-        var paired = await VoicePairing.ChooseAsync(
+        var paired = await CoreVoiceChoice.ChooseAsync(
             Voices(),
             Nothing(),
             FakeLlmProvider.Answering(said),
@@ -65,7 +65,7 @@ public class NoTwoCoresShareAVoiceTests
             ["warden"] = "neutral-one",
         };
 
-        var paired = await VoicePairing.ChooseAsync(
+        var paired = await CoreVoiceChoice.ChooseAsync(
             Voices(),
             existing,
             FakeLlmProvider.Answering("cora = neutral-one"),

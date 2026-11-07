@@ -63,7 +63,7 @@ public sealed class AFinishedStoryPostsItsEndingOnceTests
 
         Assert.Equal(Now, story.EndingPostedAt);
         Assert.Null(story.EndingChoice);
-        Assert.Single(fixtures.Director.EndingOptions("F1"));
+        Assert.Null(fixtures.Director.Answer("F1", 1).Refusal);
     }
 
     [Fact]

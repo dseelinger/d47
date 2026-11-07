@@ -26,9 +26,6 @@ public sealed record ShipCoreBinding(
     public string? CommanderName { get; init; }
 }
 
-/// <summary>One binding the file was asked to hold, and why it was refused.</summary>
-public sealed record ShipCoreProblem(string Where, string Reason);
-
 /// <summary>
 /// The Commander's ship-to-core bindings, in one file beside the executable (Phase 35, "Nothing is
 /// bound until it is asked for").
@@ -43,7 +40,6 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
     private readonly Lock _gate = new();
 
     private IReadOnlyList<ShipCoreBinding> _bindings = [];
-    private IReadOnlyList<ShipCoreProblem> _problems = [];
 
     private readonly WatchedTextFile _file = new(files, path, logger, "Could not read the ship core file");
 
@@ -57,18 +53,6 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
             lock (_gate)
             {
                 return _bindings;
-            }
-        }
-    }
-
-    /// <summary>Bindings that were refused, and why.</summary>
-    public IReadOnlyList<ShipCoreProblem> Problems
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _problems;
             }
         }
     }
@@ -101,7 +85,6 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
             lock (_gate)
             {
                 _bindings = [];
-                _problems = [];
             }
 
             Changed?.Invoke();
@@ -187,7 +170,6 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
         {
             lock (_gate)
             {
-                _problems = [new ShipCoreProblem(System.IO.Path.GetFileName(path), ex.Message)];
                 _file.Seen(text);
             }
 
@@ -197,15 +179,11 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
         }
 
         var bindings = new List<ShipCoreBinding>();
-        var problems = new List<ShipCoreProblem>();
 
         foreach (var line in file?.Ships ?? [])
         {
-            var where = line.Name is { Length: > 0 } named ? named : $"ship {line.ShipId?.ToString() ?? "(none)"}";
-
             if (line.ShipId is not { } shipId)
             {
-                problems.Add(new ShipCoreProblem(where, "it names no ship id, and that is the key."));
                 continue;
             }
 
@@ -213,14 +191,12 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
 
             if (core.Length == 0)
             {
-                problems.Add(new ShipCoreProblem(where, "it names no core."));
                 continue;
             }
 
             // A core d47 does not know is refused rather than resolved to the default.
             if (!PersonaCatalog.Knows(core))
             {
-                problems.Add(new ShipCoreProblem(where, $"there is no core called \"{core}\"."));
                 continue;
             }
 
@@ -229,13 +205,11 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
 
             if (bindings.Any(existing => Same(existing, fid, shipId)))
             {
-                problems.Add(new ShipCoreProblem(where, $"ship {shipId} is bound twice, and a ship has one core."));
                 continue;
             }
 
             if (bindings.Count >= MaxBindings)
             {
-                problems.Add(new ShipCoreProblem(where, $"the file already holds {MaxBindings} bindings."));
                 continue;
             }
 
@@ -248,7 +222,6 @@ public sealed class ShipCoreStore(string path, IFileSystem files, ILogger<ShipCo
         lock (_gate)
         {
             _bindings = bindings;
-            _problems = problems;
             _file.Seen(text);
         }
 

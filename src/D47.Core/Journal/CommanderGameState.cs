@@ -195,10 +195,6 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         return changes.Count == 0 ? FoldReceipt.Nothing : new FoldReceipt(changes);
     }
 
-    /// <summary>The phrase a receipt uses for this part, or null for a name that is not a folded part.</summary>
-    public static string? PhraseFor(string part) =>
-        Parts.FirstOrDefault(each => each.Name == part)?.Phrase;
-
     /// <summary>A part of the state an event can replace, in the order <see cref="Fold"/> applies them.</summary>
     private sealed record Part(string Name, string Phrase, Func<CommanderGameState, object?> Read);
 

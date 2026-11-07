@@ -57,7 +57,6 @@ public class ShipCoreStoreTests
         reopened.Poll();
 
         Assert.Equal(2, reopened.Bindings.Count);
-        Assert.Empty(reopened.Problems);
         Assert.Equal("sentinel", reopened.For("F1", 12)!.Core);
         Assert.Equal("quartermaster", reopened.For("F2", 12)!.Core);
 
@@ -115,11 +114,11 @@ public class ShipCoreStoreTests
     }
 
     /// <summary>
-    /// A hand edit is the route this file is meant to be usable by, so a bad line is reported and the
+    /// A hand edit is the route this file is meant to be usable by, so a bad line is skipped and the
     /// rest still loads — one typo must not cost somebody the other five ships they bound.
     /// </summary>
     [Fact]
-    public void ABadLineIsReportedAndTheRestOfTheFileStillLoads()
+    public void ABadLineIsSkippedAndTheRestOfTheFileStillLoads()
     {
         var folder = new TempFolder();
 
@@ -139,12 +138,6 @@ public class ShipCoreStoreTests
         store.Poll();
 
         Assert.Equal([12, 27], store.Bindings.Select(binding => binding.ShipId));
-        Assert.Equal(3, store.Problems.Count);
-
-        // A core d47 does not ship is refused rather than resolved to the default, which is the one place
-        // this differs from the settings row: resolving would put a core the Commander never chose aboard a
-        // ship they did, silently, every time they boarded it.
-        Assert.Contains(store.Problems, problem => problem.Reason.Contains("not-a-core", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -289,23 +282,6 @@ public class ShipCoreWatchTests
     }
 
     /// <summary>
-    /// Binding is an act and applying is a consequence: binding the ship they are sitting in must not
-    /// then read as an arrival and announce the core that is already aboard.
-    /// </summary>
-    [Fact]
-    public void BindingTheShipTheyAreInDoesNotThenSwitchToIt()
-    {
-        var state = State(12);
-        var service = Service(state);
-
-        var said = service.Bind("sentinel");
-
-        Assert.Contains("Sentinel", said, StringComparison.Ordinal);
-        Assert.Equal("sentinel", service.For(12)!.Core);
-        Assert.Null(Settled(service));
-    }
-
-    /// <summary>
     /// The bug the key exists for (the Phase 44 defect item): another Commander's ship 12 is a
     /// different ship, so their binding must not put a core aboard this Commander's.
     /// </summary>
@@ -317,7 +293,7 @@ public class ShipCoreWatchTests
 
         Assert.Null(service.Observe(TimeSpan.Zero));
         Assert.Null(Settled(service));
-        Assert.Null(service.Current);
+        Assert.Null(service.For(12));
     }
 
     /// <summary>
@@ -343,7 +319,6 @@ public class ShipCoreWatchTests
         var service = Service(new GameStateStore(), out var store);
 
         Assert.Null(Settled(service));
-        Assert.Contains("do not know which ship", service.Bind("sentinel"), StringComparison.Ordinal);
         Assert.Empty(store.Bindings);
     }
 

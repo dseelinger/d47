@@ -279,7 +279,7 @@ public class OnFootLoadoutTabTests
             Dispatcher.UIThread.RunJobs();
         }
 
-        int? Planned() => surface.Kit.Entry(build.Id)?.Build?.PlannedGrade;
+        int? Planned() => surface.Kit.Kit().FirstOrDefault(entry => entry.Build?.Id == build.Id)?.Build?.PlannedGrade;
 
         AskForTheGrade();
 
@@ -352,7 +352,7 @@ public class OnFootLoadoutTabTests
             Dispatcher.UIThread.RunJobs();
         }
 
-        string? Planned() => surface.Kit.Entry(build.Id)?.Build?.For(OnFootBuild.ModSlot(1))?.Modification;
+        string? Planned() => surface.Kit.Kit().FirstOrDefault(entry => entry.Build?.Id == build.Id)?.Build?.For(OnFootBuild.ModSlot(1))?.Modification;
 
         AskForMod1();
 
@@ -462,7 +462,7 @@ public class OnFootLoadoutTabTests
 
         surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.ModSlot(1), Modification: "Stowed reloading"));
 
-        var planned = surface.Kit.Entry(build.Id)!.Build!.For(OnFootBuild.ModSlot(1))!.Describe();
+        var planned = surface.Kit.Kit().FirstOrDefault(entry => entry.Build?.Id == build.Id)!.Build!.For(OnFootBuild.ModSlot(1))!.Describe();
 
         surface.Panel.Nav.SelectRoot(OnFootMode.Root);
         surface.Panel.Nav.GoTo(
@@ -538,7 +538,7 @@ public class OnFootLoadoutTabTests
         nudges.Single(button => (string)button.Content! == "▼").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(4, surface.Kit.Entry(build.Id)?.Build?.PlannedGrade);
+        Assert.Equal(4, surface.Kit.Kit().FirstOrDefault(entry => entry.Build?.Id == build.Id)?.Build?.PlannedGrade);
 
         shown = Text(surface.Panel);
 
@@ -575,7 +575,7 @@ public class OnFootLoadoutTabTests
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(5, surface.Kit.Entry(build.Id)?.Build?.PlannedGrade);
+        Assert.Equal(5, surface.Kit.Kit().FirstOrDefault(entry => entry.Build?.Id == build.Id)?.Build?.PlannedGrade);
 
         surface.Window.Close();
     }

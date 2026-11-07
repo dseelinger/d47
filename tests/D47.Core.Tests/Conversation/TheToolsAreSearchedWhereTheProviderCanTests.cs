@@ -178,8 +178,6 @@ public class TheToolsAreSearchedWhereTheProviderCanTests
 
         public string Id => "anthropic";
 
-        public string DisplayName => "Demoting";
-
         public string DefaultModel => "claude-opus-5";
 
         public LlmProviderCapabilities CapabilitiesFor(string model) => new()

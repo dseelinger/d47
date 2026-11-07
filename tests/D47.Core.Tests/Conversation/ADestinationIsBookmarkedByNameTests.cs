@@ -75,7 +75,7 @@ public class ADestinationIsBookmarkedByNameTests
         var result = await Bookmark(registry);
 
         Assert.False(result.IsError);
-        Assert.Equal("LTT 7786", store.Find("F1", "LTT 7786")?.System);
+        Assert.Equal("LTT 7786", store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "LTT 7786", StringComparison.OrdinalIgnoreCase))?.System);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class ADestinationIsBookmarkedByNameTests
         var result = await Bookmark(registry);
 
         Assert.False(result.IsError);
-        Assert.Equal("Deciat", store.Find("F1", "Farseer Inc")?.System);
+        Assert.Equal("Deciat", store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Farseer Inc", StringComparison.OrdinalIgnoreCase))?.System);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class ADestinationIsBookmarkedByNameTests
 
         await Bookmark(registry);
 
-        Assert.NotNull(store.Find("F1", "Col 285 Sector AB C d1 23"));
+        Assert.NotNull(store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Col 285 Sector AB C d1 23", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class ADestinationIsBookmarkedByNameTests
 
         await Bookmark(registry);
 
-        Assert.NotNull(store.Find("F1", "Bookmark 1"));
+        Assert.NotNull(store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Bookmark 1", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class ADestinationIsBookmarkedByNameTests
 
         await Bookmark(registry);
 
-        Assert.NotNull(store.Find("F1", "Clean Name 2"));
+        Assert.NotNull(store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Clean Name 2", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public class ADestinationIsBookmarkedByNameTests
             match.ToolName, match.Arguments, TestContext.Current.CancellationToken, caller: ToolCaller.Commander);
 
         Assert.False(result.IsError);
-        Assert.Null(store.Find("F1", "Current CG"));
+        Assert.Null(store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public class ADestinationIsBookmarkedByNameTests
             caller: ToolCaller.Model);
 
         Assert.True(result.IsError);
-        Assert.NotNull(store.Find("F1", "Current CG"));
+        Assert.NotNull(store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]

@@ -44,7 +44,6 @@ public class ACharacterIsKeptAcrossARestartTests
         Assert.Equal("By the book.", reread.NotesFor("F1", CarrierCharacter.Tower));
         Assert.Equal("Softer with me.", reread.CastNotes("F1", "the-long-dark", "mara"));
         Assert.Null(reread.CastNotes("F1", "the-long-dark", "someone-else"));
-        Assert.Empty(reread.Problems);
     }
 
     [Fact]
@@ -218,7 +217,7 @@ public class ACharacterBreakingARuleIsNotSavedTests
     }
 
     [Fact]
-    public void AHandEditedFileKeepsTheGoodEntriesAndNamesTheBadOnes()
+    public void AHandEditedFileKeepsTheGoodEntriesAndSkipsTheBadOnes()
     {
         var files = new MemoryFileSystem();
         files.WriteText(Characters.Location, """
@@ -251,11 +250,10 @@ public class ACharacterBreakingARuleIsNotSavedTests
         Assert.Equal(["Vex"], store.CharactersOf("F1").Select(character => character.Name));
         Assert.Null(store.NotesFor("F1", CarrierCharacter.Tower));
         Assert.Equal("Kept.", store.CastNotes("F1", "story", "mara"));
-        Assert.Equal(8, store.Problems.Count);
     }
 
     [Fact]
-    public void AFileThatIsNotJsonIsOneProblemAndNoCharacters()
+    public void AFileThatIsNotJsonIsNoCharacters()
     {
         var files = new MemoryFileSystem();
         files.WriteText(Characters.Location, "{ not json");
@@ -264,7 +262,6 @@ public class ACharacterBreakingARuleIsNotSavedTests
         store.Poll();
 
         Assert.Empty(store.CharactersOf("F1"));
-        Assert.Single(store.Problems);
     }
 
     private static void Refused(CustomCharacter character, CharacterField field, string reason)
@@ -365,14 +362,13 @@ public class EachCommanderKeepsTheirOwnCharactersTests
 
         Assert.Single(store.CharactersOf("F1"));
         Assert.Empty(store.CharactersOf("F2"));
-        Assert.Single(store.Problems);
     }
 }
 
 public class AMissingCharacterFileReadsAsEmptyTests
 {
     [Fact]
-    public void NoFileIsNoCharactersAndNoProblems()
+    public void NoFileIsNoCharacters()
     {
         var store = Characters.Store(new MemoryFileSystem());
 
@@ -380,7 +376,6 @@ public class AMissingCharacterFileReadsAsEmptyTests
         Assert.Empty(store.CharactersOf("F1"));
         Assert.Null(store.NotesFor("F1", CarrierCharacter.Captain));
         Assert.Null(store.CastNotes("F1", "story", "mara"));
-        Assert.Empty(store.Problems);
     }
 
     [Fact]

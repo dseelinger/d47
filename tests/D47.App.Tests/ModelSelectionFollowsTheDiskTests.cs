@@ -259,10 +259,6 @@ public class ModelSelectionFollowsTheDiskTests
 
         public string? PathOf(WhisperModel model) => null;
 
-        public IReadOnlyList<string> Installed() => [];
-
-        public bool Remove(WhisperModel model) => false;
-
         public Task<ModelOffer?> DescribeAsync(WhisperModel model, CancellationToken cancellationToken = default) =>
             Task.FromResult<ModelOffer?>(null);
 

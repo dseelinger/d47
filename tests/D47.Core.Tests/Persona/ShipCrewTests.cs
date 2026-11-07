@@ -95,9 +95,8 @@ public class ShipCrewTests
             .Apply(Event("CrewAssign", ("Name", "Vance"), ("CrewID", 1L), ("Role", "Active")), "Long Way Home");
 
         Assert.Equal("Long Way Home", crew.Active?.PostedTo);
-        Assert.Single(crew.For("Long Way Home"));
-        Assert.Empty(crew.For("Some Other Ship"));
-        Assert.Empty(crew.For(null));
+        Assert.Single(crew.Members, member => member.PostedTo == "Long Way Home");
+        Assert.DoesNotContain(crew.Members, member => member.PostedTo == "Some Other Ship");
     }
 
     [Fact]

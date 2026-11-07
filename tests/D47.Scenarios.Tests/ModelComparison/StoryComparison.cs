@@ -87,8 +87,6 @@ public sealed class ModelRoutedProvider(Func<string, ILlmProvider> forModel, str
 {
     public string Id => "routed";
 
-    public string DisplayName => "Routed by model";
-
     public string DefaultModel => defaultModel;
 
     public LlmProviderCapabilities CapabilitiesFor(string model) => forModel(model).CapabilitiesFor(model);

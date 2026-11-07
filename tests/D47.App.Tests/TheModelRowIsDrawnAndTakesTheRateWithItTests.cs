@@ -64,7 +64,6 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
         var host = OnElevenLabs(out var settings);
 
         Assert.Equal(ElevenLabsModels.V4Turbo, ElevenLabsModels.Named(settings.Current.Speech.ElevenLabsModel));
-        Assert.Equal(ElevenLabsModels.V4Turbo, ElevenLabsModels.Default);
     }
 
     /// <summary>

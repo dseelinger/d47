@@ -54,7 +54,7 @@ public class LiveScenarioTests
         var report = new ScenarioReport
         {
             Mode = ScenarioReport.ModeOf(provider, scripted: false),
-            Answered = $"{provider.DisplayName} ({provider.Id})",
+            Answered = provider.Id,
             Model = model,
             Endpoint = Endpoint ?? "the provider's own default address",
             Runs = Runs,
@@ -130,7 +130,7 @@ public class LiveScenarioTests
         var report = new ScenarioReport
         {
             Mode = ScenarioReport.ModeOf(provider, scripted: false),
-            Answered = $"{provider.DisplayName} ({provider.Id})",
+            Answered = provider.Id,
             Model = model,
             Endpoint = Endpoint ?? "the provider's own default address",
             Runs = Runs,

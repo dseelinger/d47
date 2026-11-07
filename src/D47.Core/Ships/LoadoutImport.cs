@@ -14,8 +14,6 @@ public sealed record LoadoutImport(
     IReadOnlyList<string> Unread,
     string? Refusal = null)
 {
-    public bool IsRefused => Refusal is not null;
-
     /// <summary>
     /// Reads a SLEF array holding one loadout, a bare <c>{ header, data }</c> object or a bare
     /// <c>Loadout</c> event.

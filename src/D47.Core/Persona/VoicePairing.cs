@@ -49,42 +49,6 @@ public static class VoicePairing
         });
 
     /// <summary>
-    /// A voice for every core not already in <paramref name="existing"/>, merged with it. The same
-    /// instance comes back when nothing was added.
-    /// </summary>
-    public static async Task<IReadOnlyDictionary<string, string>> ChooseAsync(
-        IReadOnlyList<VoiceInfo> voices,
-        IReadOnlyDictionary<string, string> existing,
-        ILlmProvider? provider,
-        string? model,
-        SpendTracker? spend,
-        PriceTable? prices,
-        ILogger? logger,
-        Random? random = null,
-        CancellationToken cancellationToken = default)
-    {
-        var unpaired = Cores.Where(slot => !existing.ContainsKey(slot.Id)).ToArray();
-
-        var chosen = await ChooseForAsync(
-            voices, unpaired, existing.Values, provider, model, spend, prices, logger, random, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (chosen.Count == 0)
-        {
-            return existing;
-        }
-
-        var paired = new Dictionary<string, string>(existing, StringComparer.Ordinal);
-
-        foreach (var (id, voice) in chosen)
-        {
-            paired[id] = voice;
-        }
-
-        return paired;
-    }
-
-    /// <summary>
     /// A voice for each slot, by slot id: the model's choice where there is a model, otherwise a free
     /// voice whose metadata fits, otherwise a free voice at random. Voices in <paramref name="taken"/>
     /// and voices already handed out are reused only once no free one fits.

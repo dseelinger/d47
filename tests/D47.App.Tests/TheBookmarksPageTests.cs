@@ -158,7 +158,7 @@ public class TheBookmarksPageTests
         Click(Named(surface.Panel, "Add"));
         Type(surface, string.Empty);
 
-        Assert.Equal("LTT 7786", surface.Store.Find("F1", "LTT 7786")?.System);
+        Assert.Equal("LTT 7786", surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "LTT 7786", StringComparison.OrdinalIgnoreCase))?.System);
         Assert.Contains(Drawn(surface.Panel), text => text.Contains("LTT 7786", StringComparison.Ordinal));
 
         surface.Window.Close();
@@ -173,7 +173,7 @@ public class TheBookmarksPageTests
         Click(Named(surface.Panel, "Add"));
         Type(surface, "Mining Spot");
 
-        Assert.Equal("LTT 7786", surface.Store.Find("F1", "Mining Spot")?.System);
+        Assert.Equal("LTT 7786", surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Mining Spot", StringComparison.OrdinalIgnoreCase))?.System);
 
         surface.Window.Close();
     }
@@ -187,7 +187,7 @@ public class TheBookmarksPageTests
         Click(Named(surface.Panel, "Add"));
         Type(surface, "Current CG");
 
-        Assert.Null(surface.Store.Find("F1", "LTT 7786"));
+        Assert.Null(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "LTT 7786", StringComparison.OrdinalIgnoreCase)));
         Assert.Contains(Drawn(surface.Panel), text => text.Contains("Current CG", StringComparison.Ordinal));
         Assert.Single(surface.Store.For("F1"));
 
@@ -325,7 +325,7 @@ public class TheBookmarksPageTests
                 "taken name", StringComparison.OrdinalIgnoreCase));
 
         Assert.True(state is not null, $"drawn: {string.Join(" | ", Drawn(surface.Panel))}");
-        Assert.NotNull(surface.Store.Find("F1", "Current CG"));
+        Assert.NotNull(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
 
         surface.Window.Close();
     }
@@ -347,8 +347,8 @@ public class TheBookmarksPageTests
 
         Click(Named(surface.Panel, "Done"));
 
-        Assert.Null(surface.Store.Find("F1", "Current CG"));
-        Assert.NotNull(surface.Store.Find("F1", "New Name"));
+        Assert.Null(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
+        Assert.NotNull(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "New Name", StringComparison.OrdinalIgnoreCase)));
         Assert.Contains(Drawn(surface.Panel), text => text.Contains("NEW NAME", StringComparison.Ordinal));
 
         surface.Window.Close();
@@ -362,7 +362,7 @@ public class TheBookmarksPageTests
 
         Click(Named(surface.Panel, "Delete"));
 
-        Assert.Null(surface.Store.Find("F1", "Current CG"));
+        Assert.Null(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
         Assert.Contains(Drawn(surface.Panel), text => text.Contains("Say 'bookmark this'", StringComparison.Ordinal));
 
         surface.Window.Close();

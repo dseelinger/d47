@@ -62,8 +62,6 @@ public sealed class AStoryPromptTooBigForTheContextSaysSoTests
     {
         public int Calls { get; private set; }
 
-        public override string DisplayName => "Refusing";
-
         public override async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
             LlmRequest request,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)

@@ -270,7 +270,7 @@ public class BuildGaugeTests
         Assert.False(power.Fits);
         Assert.NotNull(power.Overage);
         Assert.Equal(power.Deployed - power.Capacity!.Value, power.Overage.Value, 6);
-        Assert.True(power.DeployedShare > 1);
+        Assert.True(power.Deployed > power.Capacity.Value);
     }
 
     [Fact]
@@ -531,7 +531,6 @@ public class BuildGaugeTests
 
         Assert.NotNull(power);
         Assert.Null(power.Capacity);
-        Assert.Null(power.RetractedShare);
 
         // Not fitting is a comparison, and there is nothing to compare against — so it does not claim the
         // build fails.

@@ -56,17 +56,6 @@ public sealed class FullyFoundSystems(IFileSystem fileSystem, ILogger logger)
         }
     }
 
-    /// <summary>How many systems a Commander has found whole.</summary>
-    public int Count(string fid)
-    {
-        ArgumentNullException.ThrowIfNull(fid);
-
-        lock (_gate)
-        {
-            return _found.TryGetValue(fid, out var set) ? set.Count : 0;
-        }
-    }
-
     private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "Commander", "NewCommander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "FSSAllBodiesFound",
         "FSSDiscoveryScan");

@@ -26,25 +26,12 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
     private readonly Lock _gate = new();
 
     private IReadOnlyDictionary<string, Held> _commanders = new Dictionary<string, Held>(StringComparer.Ordinal);
-    private IReadOnlyList<CharacterProblem> _problems = [];
 
     /// <summary>The file's contents as last read.</summary>
     private string? _seen;
 
     /// <summary>Raised when the set changed, whoever wrote it.</summary>
     public event Action? Changed;
-
-    /// <summary>Entries that were refused, and why.</summary>
-    public IReadOnlyList<CharacterProblem> Problems
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _problems;
-            }
-        }
-    }
 
     /// <summary>This Commander's characters, in the order they were added.</summary>
     public IReadOnlyList<CustomCharacter> CharactersOf(string? fid) => HeldBy(fid).Characters;
@@ -187,7 +174,6 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
                 lock (_gate)
                 {
                     _commanders = new Dictionary<string, Held>(StringComparer.Ordinal);
-                    _problems = [];
                     _seen = null;
                 }
 
@@ -288,7 +274,6 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
         {
             lock (_gate)
             {
-                _problems = [new CharacterProblem(System.IO.Path.GetFileName(path), ex.Message)];
                 _seen = text;
             }
 
@@ -298,31 +283,27 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
         }
 
         var commanders = new Dictionary<string, Held>(StringComparer.Ordinal);
-        var problems = new List<CharacterProblem>();
         var ids = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var line in file?.Commanders ?? [])
         {
             var fid = (line.FrontierId ?? NoCommander).Trim();
-            var where = fid.Length > 0 ? $"Commander {fid}" : "no Commander";
 
             if (commanders.ContainsKey(fid))
             {
-                problems.Add(new CharacterProblem(where, "the Commander appears twice, and a Commander has one entry."));
                 continue;
             }
 
             commanders[fid] = new Held(
-                ReadCharacters(line, where, ids, problems),
-                ReadNotes(line.CaptainNotes, $"{where}, the captain", problems),
-                ReadNotes(line.TowerNotes, $"{where}, the tower", problems),
-                ReadCast(line, where, problems));
+                ReadCharacters(line, ids),
+                ReadNotes(line.CaptainNotes),
+                ReadNotes(line.TowerNotes),
+                ReadCast(line));
         }
 
         lock (_gate)
         {
             _commanders = commanders;
-            _problems = problems;
             _seen = text;
         }
 
@@ -330,19 +311,16 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
         return true;
     }
 
-    private static List<CustomCharacter> ReadCharacters(
-        CommanderLine line, string commander, HashSet<string> ids, List<CharacterProblem> problems)
+    private static List<CustomCharacter> ReadCharacters(CommanderLine line, HashSet<string> ids)
     {
         var kept = new List<CustomCharacter>();
 
         foreach (var entry in line.Characters)
         {
             var name = Blank(entry.Name);
-            var where = name is null ? commander : $"{commander}, {name}";
 
             if (!CustomCharacter.IsId(entry.Id))
             {
-                problems.Add(new CharacterProblem(where, "its id is not eight hex characters."));
                 continue;
             }
 
@@ -353,15 +331,13 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
             var character = new CustomCharacter(
                 entry.Id!, name ?? string.Empty, voice, Blank(entry.Notes), entry.Aboard, Blank(entry.System));
 
-            if (Refusal(character, kept) is { } refusal)
+            if (Refusal(character, kept) is not null)
             {
-                problems.Add(new CharacterProblem(where, refusal.Reason));
                 continue;
             }
 
             if (!ids.Add(character.Id))
             {
-                problems.Add(new CharacterProblem(where, $"the id {character.Id} is already in use."));
                 continue;
             }
 
@@ -371,20 +347,19 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
         return kept;
     }
 
-    private static string? ReadNotes(string? notes, string where, List<CharacterProblem> problems)
+    private static string? ReadNotes(string? notes)
     {
         var tidy = Blank(notes);
 
-        if (NotesRefusal(tidy) is { } refusal)
+        if (NotesRefusal(tidy) is not null)
         {
-            problems.Add(new CharacterProblem(where, refusal.Reason));
             return null;
         }
 
         return tidy;
     }
 
-    private static List<CastNote> ReadCast(CommanderLine line, string commander, List<CharacterProblem> problems)
+    private static List<CastNote> ReadCast(CommanderLine line)
     {
         var kept = new List<CastNote>();
 
@@ -392,21 +367,18 @@ public sealed class CharacterStore(string path, IFileSystem files, ILogger<Chara
         {
             var story = Blank(entry.StoryId);
             var cast = Blank(entry.CastId);
-            var where = $"{commander}, story {story ?? "(none)"}, cast {cast ?? "(none)"}";
 
             if (story is null || cast is null)
             {
-                problems.Add(new CharacterProblem(where, "it names no story id or no cast id, and those are the key."));
                 continue;
             }
 
             if (kept.Any(other => other.Is(story, cast)))
             {
-                problems.Add(new CharacterProblem(where, "the cast member appears twice, and a cast member has one set of notes."));
                 continue;
             }
 
-            if (ReadNotes(entry.Notes, where, problems) is { } notes)
+            if (ReadNotes(entry.Notes) is { } notes)
             {
                 kept.Add(new CastNote(story, cast, notes));
             }

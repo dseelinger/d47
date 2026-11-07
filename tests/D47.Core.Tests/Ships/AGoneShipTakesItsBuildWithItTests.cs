@@ -104,15 +104,15 @@ public class AGoneShipTakesItsBuildWithItTests
         Assert.NotNull(ships.ForShip(Kept));
     }
 
-    /// <summary>A revision drops a line outright, so nothing is left for the sale to clean up.</summary>
+    /// <summary>Dropping the line outright leaves nothing for the sale to clean up.</summary>
     [Fact]
     public void NothingDerivedFromTheBuildIsLeftInTheFile()
     {
         var install = new MemoryInstall();
         var (_, checklists, ships) = Set(install);
 
-        // A revision that drops the line entirely.
-        checklists.Revise(ChecklistScope.Ship(Gone), ChecklistSource.EngineeringPlan, []);
+        // A pass that drops the line entirely.
+        checklists.ForgetShip(Gone, _ => true);
 
         Assert.Empty(Derived(checklists.Document, Gone));
 

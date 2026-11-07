@@ -30,7 +30,6 @@ public class AStoredSlotEngineerIsForgottenOnSaveTests
             var store = new ShipBuildStore(path, new DiskFileSystem(), NullLogger<ShipBuildStore>.Instance);
 
             Assert.True(store.Poll());
-            Assert.Empty(store.Problems);
 
             var build = Assert.Single(store.Builds);
             var plan = Assert.Single(build.Slots);

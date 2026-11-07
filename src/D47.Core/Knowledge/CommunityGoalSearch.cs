@@ -81,12 +81,6 @@ public sealed class CommunityGoalSearch
     /// </summary>
     public string? GoalSystem => OriginOf(Board(), Now(), Commodity);
 
-    /// <summary>The saved question, as the galaxy search takes it.</summary>
-    /// <param name="fromShip">
-    /// Ask it from wherever the ship is, rather than from the goal's system.
-    /// </param>
-    public ToolArguments Arguments(bool fromShip = false) => new(Values(fromShip));
-
     /// <summary>Which live goal's system the search measures from.</summary>
     public static string? OriginOf(CommunityGoalBoard? board, DateTimeOffset now, string commodity)
     {
@@ -151,11 +145,6 @@ public sealed class CommunityGoalSearch
 
     /// <summary>The same posting, measured from the ship rather than from the goal (#331).</summary>
     public const string ShipTag = "community-goal-ship";
-
-    /// <summary>Whether a posting's tag is one of this search's own.</summary>
-    public static bool Owns(string? tag) =>
-        string.Equals(tag, Tag, StringComparison.Ordinal)
-        || string.Equals(tag, ShipTag, StringComparison.Ordinal);
 
     /// <summary>
     /// Whose system a tagged posting was measured from, in the words a Commander reads and hears.

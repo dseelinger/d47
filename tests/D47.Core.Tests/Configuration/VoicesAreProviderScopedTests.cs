@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using Xunit;
@@ -27,10 +28,17 @@ public class VoicesAreProviderScopedTests
         },
     };
 
+    private static D47Settings WithoutChosenVoices(D47Settings settings, string chosenFor) =>
+        VoiceMemory.Switched(
+            VoiceMemory.Switched(settings, VoiceGroup.Aboard, settings.Speech.VoicesProvider, chosenFor),
+            VoiceGroup.Carrier,
+            settings.Speech.VoicesProvider,
+            chosenFor);
+
     [Fact]
     public void SwitchingProviderDropsTheShipsVoiceAndBothNamedRoles()
     {
-        var after = SpeechCapability.WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId);
+        var after = WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId);
 
         Assert.Null(after.Speech.Voice);
         Assert.Null(after.Speech.CarrierCaptainVoice);
@@ -44,7 +52,7 @@ public class VoicesAreProviderScopedTests
     [Fact]
     public void SwitchingProviderDropsEveryPersonaPairing()
     {
-        var after = SpeechCapability.WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId);
+        var after = WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId);
 
         Assert.Empty(after.Persona.Voices);
     }
@@ -57,7 +65,7 @@ public class VoicesAreProviderScopedTests
     public void PairingIsAllowedToRunAgainForTheNewProvider()
     {
         Assert.True(Chosen().Persona.VoicesPaired);
-        Assert.False(SpeechCapability.WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId).Persona.VoicesPaired);
+        Assert.False(WithoutChosenVoices(Chosen(), SpeechCapability.ElevenLabsId).Persona.VoicesPaired);
     }
 
     /// <summary>Only the voices.</summary>
@@ -75,7 +83,7 @@ public class VoicesAreProviderScopedTests
             },
         };
 
-        var after = SpeechCapability.WithoutChosenVoices(before, SpeechCapability.ElevenLabsId);
+        var after = WithoutChosenVoices(before, SpeechCapability.ElevenLabsId);
 
         Assert.Equal(before.Speech.Rate, after.Speech.Rate);
         Assert.Equal(before.Speech.OutputDevice, after.Speech.OutputDevice);
@@ -96,7 +104,7 @@ public class VoicesAreProviderScopedTests
     {
         var fresh = new D47Settings();
 
-        var after = SpeechCapability.WithoutChosenVoices(fresh, SpeechCapability.ElevenLabsId);
+        var after = WithoutChosenVoices(fresh, SpeechCapability.ElevenLabsId);
 
         Assert.Null(after.Speech.Voice);
         Assert.Empty(after.Persona.Voices);

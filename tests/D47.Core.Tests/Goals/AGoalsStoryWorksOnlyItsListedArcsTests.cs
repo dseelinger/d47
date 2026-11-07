@@ -84,7 +84,7 @@ public sealed class AGoalsStoryWorksOnlyItsListedArcsTests
     [Fact]
     public void AnUnlistedArcIsNeverTheChaptersStep()
     {
-        var step = GoalClimb.Next(GoalClimb.Listed(Standings(0.5, 0), Careers), Loaded(1_000_000_000), null);
+        var step = FirstGoalStep.Of(GoalClimb.Listed(Standings(0.5, 0), Careers), Loaded(1_000_000_000), null);
 
         Assert.NotNull(step);
         Assert.Contains(step.Key, Careers);
@@ -100,11 +100,11 @@ public sealed class AGoalsStoryWorksOnlyItsListedArcsTests
                 : standing)
             .ToList();
 
-        var step = GoalClimb.Next(GoalClimb.Listed(standings, Careers), unpledged, null);
+        var step = FirstGoalStep.Of(GoalClimb.Listed(standings, Careers), unpledged, null);
 
         Assert.NotEqual(GoalCatalogue.Powerplay, step?.Key);
         Assert.NotEqual(TriggerKind.Pledge, step?.Objective?.Kind);
-        Assert.Equal(TriggerKind.Pledge, GoalClimb.Next(GoalClimb.Listed(standings, [.. Careers, GoalCatalogue.Powerplay]), unpledged, null)?.Objective?.Kind);
+        Assert.Equal(TriggerKind.Pledge, FirstGoalStep.Of(GoalClimb.Listed(standings, [.. Careers, GoalCatalogue.Powerplay]), unpledged, null)?.Objective?.Kind);
     }
 
     [Fact]

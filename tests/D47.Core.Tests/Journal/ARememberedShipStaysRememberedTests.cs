@@ -64,7 +64,7 @@ public class ARememberedShipStaysRememberedTests : IDisposable
     {
         var reading = Store();
         reading.Load();
-        return [.. (reading.For("F1")?.Ships.Keys ?? [])];
+        return [.. (reading.All.GetValueOrDefault("F1")?.Ships.Keys ?? [])];
     }
 
     /// <summary>
@@ -126,7 +126,7 @@ public class ARememberedShipStaysRememberedTests : IDisposable
     {
         var store = StoredFleet(42, 51);
 
-        var gameState = new GameStateStore { RestoreLoadouts = store.For };
+        var gameState = new GameStateStore { RestoreLoadouts = fid => store.All.GetValueOrDefault(fid) };
 
         gameState.Apply(Event(Commander("2026-09-25T03:29:40Z")));
         gameState.Apply(Event("""{"timestamp":"2026-09-25T03:30:00Z","event":"ShipyardSell","SellShipID":42}"""));

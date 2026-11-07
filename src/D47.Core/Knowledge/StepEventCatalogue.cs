@@ -109,13 +109,6 @@ public sealed class StepEventCatalogue
         && byField.TryGetValue(field, out var values)
         && values.Contains(value);
 
-    /// <summary>The values a step may compare the field with, in order; none where the field allows none.</summary>
-    public IReadOnlyList<string> ValuesOf(string? name, string? field) =>
-        Exists(name) && field is not null && _fields.TryGetValue(name!, out var byField)
-            && byField.TryGetValue(field, out var values)
-            ? [.. values.Order(StringComparer.Ordinal)]
-            : [];
-
     /// <summary>The events a story may draw as a step, in name order, each with its gates and career.</summary>
     public IReadOnlyList<StepEvent> Drawable =>
         [.. _events.Values.Where(row => row.Drawable && Exists(row.Event)).OrderBy(row => row.Event, StringComparer.Ordinal)];

@@ -1023,9 +1023,6 @@ public sealed class StoryDirector(
     public Task<string?> RefuseBeatAsync(string? frontierId, CancellationToken cancellationToken) =>
         RefuseObjectiveAsync(new ChapterObjective(this, frontierId), cancellationToken);
 
-    /// <summary>The proposal held for this Commander's short story, or null.</summary>
-    public ObjectiveProposal? AdventureProposal(string? frontierId, string key) => new ShortStoryObjective(this, frontierId, key).Held;
-
     /// <summary>
     /// Has the current objective of the active short story <paramref name="key"/> and the ones after it written again from the
     /// Commander's remark, and holds the result as that story's proposal. Changes nothing in the adventure.
@@ -3134,10 +3131,6 @@ public sealed class StoryDirector(
         stories.Update(frontierId, storyId, story => story is { State: StoryState.Finished, EndingPostedAt: null }
             ? story with { EndingPostedAt = now }
             : story);
-
-    /// <summary>The options of the ending waiting for an answer, or none.</summary>
-    public IReadOnlyList<StoryOption> EndingOptions(string? frontierId) =>
-        Unanswered(frontierId) is { EndingPostedAt: not null } story && Hidden(story.Id) is { } secret ? secret.Options : [];
 
     /// <summary>
     /// Records the Commander's answer to the ending, <paramref name="choice"/> counting from one, and returns the

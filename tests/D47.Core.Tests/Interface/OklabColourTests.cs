@@ -41,16 +41,4 @@ public class OklabColourTests
         Assert.Equal(g, b);
         Assert.True(r < 0x80, $"expected darker than #808080, got #{r:X2}{g:X2}{b:X2}");
     }
-
-    [Fact]
-    public void WithHueKeepsLightnessAndChroma()
-    {
-        var accent = OklabColour.FromSrgb(0xF5, 0x85, 0x0F).ToOklch();
-
-        var swapped = OklabColour.FromOklch(accent with { H = 27 }).ToOklch();
-
-        Assert.Equal(accent.L, swapped.L, 3);
-        Assert.Equal(accent.C, swapped.C, 3);
-        Assert.Equal(27, swapped.H, 3);
-    }
 }

@@ -197,8 +197,6 @@ public interface ILlmProvider
     /// </summary>
     bool RunsOnThisMachine => false;
 
-    string DisplayName { get; }
-
     string DefaultModel { get; }
 
     LlmProviderCapabilities CapabilitiesFor(string model);

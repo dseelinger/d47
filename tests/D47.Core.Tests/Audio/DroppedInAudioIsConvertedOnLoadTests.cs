@@ -79,10 +79,10 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
     {
         var bytes = WavWriter.ToBytes(Pcm(3000, (frame, _) => frame * 7, channels: 1), new AudioFormat(44_100, 1));
 
-        var whole = PcmConverter.ToStandard(WavReader.Read(new MemoryStream(bytes), "whole")).Pcm.ToArray();
-        using var stream = WavReader.OpenStandard(new MemoryStream(bytes), "pieces");
+        using var whole = WavReader.OpenMusic(new MemoryStream(bytes), "whole");
+        using var stream = WavReader.OpenMusic(new MemoryStream(bytes), "pieces");
 
-        Assert.Equal(whole, ReadAll(stream, chunk: 10));
+        Assert.Equal(ReadAll(whole, chunk: 1 << 20), ReadAll(stream, chunk: 8));
     }
 
     [Fact]

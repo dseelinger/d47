@@ -47,7 +47,6 @@ public class RemindersAreKeptPerCommanderTests
         var store = bench.Open();
 
         Assert.Equal("Buy limpets.", Assert.Single(store.For("F1")).Sentence);
-        Assert.Single(store.Problems);
     }
 
     [Fact]
@@ -74,7 +73,6 @@ public class RemindersAreKeptPerCommanderTests
         var store = bench.Open();
 
         Assert.Equal("Buy limpets.", Assert.Single(store.For("F1")).Sentence);
-        Assert.Single(store.Problems);
     }
 
     [Fact]

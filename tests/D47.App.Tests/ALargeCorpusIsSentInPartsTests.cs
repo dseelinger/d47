@@ -116,7 +116,7 @@ public class ALargeCorpusIsSentInPartsTests : IDisposable
             });
 
         Assert.Equal(
-            DonationEnvelope.HashOf("b.log\nc.log\n"),
+            DonationHash.Of("b.log\nc.log\n"),
             endpoint.Requests[1].Headers.GetValues(DonationEnvelope.Sha256Header).Single());
 
         var receipts = Directory.GetFiles(new AppPaths(_root).Donations, "*.receipt.md");

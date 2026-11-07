@@ -80,10 +80,17 @@ public class ARefusedVoiceIsForgottenTests
     [Fact]
     public void ClearingTheVoicesRecordsWhichProviderTheNextOnesBelongTo()
     {
-        var after = SpeechCapability.WithoutChosenVoices(Holding(), SpeechCapability.EdgeId);
+        var after = WithoutChosenVoices(Holding(), SpeechCapability.EdgeId);
 
         Assert.Equal(SpeechCapability.EdgeId, after.Speech.VoicesProvider);
     }
+
+    private static D47Settings WithoutChosenVoices(D47Settings settings, string chosenFor) =>
+        VoiceMemory.Switched(
+            VoiceMemory.Switched(settings, VoiceGroup.Aboard, settings.Speech.VoicesProvider, chosenFor),
+            VoiceGroup.Carrier,
+            settings.Speech.VoicesProvider,
+            chosenFor);
 
     /// <summary>The fault the repair hangs off.</summary>
     [Fact]

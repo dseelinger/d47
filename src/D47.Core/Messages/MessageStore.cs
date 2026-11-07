@@ -44,17 +44,6 @@ public sealed class MessageStore(string path, IFileSystem files, ILogger<Message
         }
     }
 
-    public int UnreadCount
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return Loaded().Count(message => !message.Read);
-            }
-        }
-    }
-
     /// <summary>Posts a message, keeping <paramref name="spoken"/> as its clip. Writes files, so never call it on the tick.</summary>
     public D47Message Post(string from, string subject, string body, DateTimeOffset sent, string? adventureKey = null, IReadOnlyList<MessageAnswer>? answers = null, string? picture = null, SpokenClip? spoken = null, string? cast = null)
     {
@@ -201,27 +190,6 @@ public sealed class MessageStore(string path, IFileSystem files, ILogger<Message
         }
 
         return forgotten;
-    }
-
-    /// <summary>Marks one read; false when there is no such message or it already was.</summary>
-    public bool MarkRead(string key)
-    {
-        lock (_gate)
-        {
-            var messages = Loaded();
-            var index = messages.FindIndex(message => message.Key == key);
-
-            if (index < 0 || messages[index].Read)
-            {
-                return false;
-            }
-
-            messages[index] = messages[index] with { Read = true };
-            Write(messages);
-        }
-
-        Changed?.Invoke();
-        return true;
     }
 
     /// <summary>Removes every message keyed to something <paramref name="owned"/> rejects; returns the count.</summary>

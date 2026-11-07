@@ -194,7 +194,7 @@ public class EngineerAccessTests
         Assert.True(climb.Steps[0].NeedsRanking);
 
         // Nothing open-ended is invented for somebody already unlocked: the invitation happened.
-        Assert.False(climb.Steps[0].IsOpenEnded);
+        Assert.True(string.IsNullOrEmpty(climb.Steps[0].Meeting));
     }
 
     /// <summary>An invitation already extended is not an open-ended requirement.</summary>
@@ -206,13 +206,13 @@ public class EngineerAccessTests
 
         var offered = EngineerAccess.ChainTo(Named("Felicity Farseer"), 1, invited, null, null);
 
-        Assert.False(offered.Steps[0].IsOpenEnded);
-        Assert.True(offered.Steps[0].IsDelivery);
-        Assert.Equal(0, offered.OpenEnded);
+        Assert.True(string.IsNullOrEmpty(offered.Steps[0].Meeting));
+        Assert.False(string.IsNullOrEmpty(offered.Steps[0].Tribute));
+        Assert.DoesNotContain(offered.Steps, step => !string.IsNullOrEmpty(step.Meeting));
 
         var unmet = EngineerAccess.ChainTo(Named("Felicity Farseer"), 1, EngineerProgressState.Empty, null, null);
 
-        Assert.True(unmet.Steps[0].IsOpenEnded);
+        Assert.False(string.IsNullOrEmpty(unmet.Steps[0].Meeting));
         Assert.Contains("exploration rank", unmet.Steps[0].Meeting);
     }
 

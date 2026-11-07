@@ -33,7 +33,7 @@ public class ALoadoutPastedFromAnOutfittingSiteBecomesAPlanTests
     {
         var read = LoadoutImport.Read(Slef(Data));
 
-        Assert.False(read.IsRefused);
+        Assert.Null(read.Refusal);
         Assert.Equal("python", read.Hull);
         Assert.Equal(["MainEngines", "PowerPlant"], read.Slots.Select(slot => slot.Slot));
         Assert.Empty(read.Unread);
@@ -90,7 +90,7 @@ public class ALoadoutPastedFromAnOutfittingSiteBecomesAPlanTests
     {
         var read = LoadoutImport.Read(Slef("""{"Ship":"notahull","Modules":[]}"""));
 
-        Assert.True(read.IsRefused);
+        Assert.NotNull(read.Refusal);
     }
 
     [Fact]

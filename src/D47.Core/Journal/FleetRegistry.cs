@@ -59,10 +59,6 @@ public sealed record FleetRegistry
 
     public bool IsKnown => TakenAt is not null;
 
-    public IReadOnlyList<StoredShip> Here => [.. Ships.Where(ship => ship.Here)];
-
-    public IReadOnlyList<StoredShip> Elsewhere => [.. Ships.Where(ship => !ship.Here)];
-
     /// <summary>Systems holding at least one stored ship, each named once.</summary>
     public IReadOnlyList<string> Systems =>
         [.. Ships.Select(ship => ship.StarSystem).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase)];

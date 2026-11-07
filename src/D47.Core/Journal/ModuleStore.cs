@@ -70,18 +70,6 @@ public sealed record ModuleStore
     /// <summary>Whether a snapshot has been seen at all.</summary>
     public bool IsKnown => TakenAt is not null;
 
-    public IReadOnlyList<StoredModule> Here =>
-        [.. Modules.Where(module =>
-            !module.InTransit
-            && SnapshotSystem is not null
-            && string.Equals(module.StarSystem, SnapshotSystem, StringComparison.OrdinalIgnoreCase))];
-
-    public IReadOnlyList<StoredModule> Elsewhere =>
-        [.. Modules.Where(module =>
-            module.InTransit
-            || SnapshotSystem is null
-            || !string.Equals(module.StarSystem, SnapshotSystem, StringComparison.OrdinalIgnoreCase))];
-
     /// <summary>Stored modules whose name contains what was said, case-insensitively.</summary>
     public IReadOnlyList<StoredModule> Matching(string fragment)
     {

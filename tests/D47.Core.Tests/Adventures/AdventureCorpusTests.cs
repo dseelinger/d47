@@ -68,7 +68,7 @@ public class AdventureCorpusTests
 
         var standing = book.Standing(Commander, "june-2026")!;
 
-        Assert.True(standing.IsDone, standing.Describe(Accepted.AddDays(10)));
+        Assert.True(standing.IsDone, standing.Place());
 
         // The scan beat fires at 21:29:26 and not at 21:29:39, and the thirteen seconds are #77 priced on the
         // Commander's own journal.

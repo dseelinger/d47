@@ -18,9 +18,6 @@ public interface IVrSurfaceSource
     /// <summary>Where it goes and what it looks like.</summary>
     SurfacePlacement Placement { get; }
 
-    /// <summary>Whether a controller ray is cast at this quad at all, and so whether it can be carried.</summary>
-    bool TakesPointer { get; }
-
     /// <summary>The pixel size it wants.</summary>
     (int Width, int Height) Size { get; }
 

@@ -258,7 +258,6 @@ public class TimekeepingTests
 
         Assert.Single(store.Alarms);
         Assert.Equal("wake up", store.Alarms[0].Name);
-        Assert.Single(store.Problems);
     }
 
     /// <summary>Change is detected by content rather than by a last-write time.</summary>

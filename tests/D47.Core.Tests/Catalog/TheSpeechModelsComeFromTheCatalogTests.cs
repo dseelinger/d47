@@ -15,7 +15,6 @@ public class TheSpeechModelsComeFromTheCatalogTests
         With(SpeechSection.Json(elevenLabsDefault: ElevenLabsModels.V3), () =>
         {
             Assert.Equal(ElevenLabsModels.V3, ElevenLabsModels.Named(null));
-            Assert.Equal(ElevenLabsModels.V3, ElevenLabsModels.Default);
             Assert.Equal(ElevenLabsModels.V3, ElevenLabsModels.Named(ElevenLabsModels.Flash));
             Assert.Equal([ElevenLabsModels.V4Turbo, ElevenLabsModels.V3], ElevenLabsModels.All.Select(m => m.Id));
         });

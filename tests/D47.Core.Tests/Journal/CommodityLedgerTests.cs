@@ -286,15 +286,14 @@ public class CommodityLedgerTests
             Sell(Noon.AddMinutes(3), 50, 50_000, paid: 0, market: 3),
         ]);
 
-        Assert.Equal(2, ledger.Session(Fid, "Palladium").Sales);
+        var total = ledger.Session(Fid, "Palladium");
+
+        Assert.Equal(2, total.Sales);
 
         // The second sale must not fall back to the first lot's 40,000-a-tonne cost: with the purchase drawn
- // down to nothing, it is gross.
-        var second = ledger.LastSale(Fid, "Palladium");
-
-        Assert.NotNull(second);
-        Assert.Equal(0, second!.CostBasis);
-        Assert.Equal(2_500_000, second.Net);
+        // down to nothing, it is gross.
+        Assert.Equal(2_000_000, total.Cost);
+        Assert.Equal(3_000_000, total.Net);
     }
 
     [Fact]

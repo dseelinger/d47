@@ -737,16 +737,13 @@ public static class EliteSpecifications
             "core" => ShipSlotKind.Core,
             _ => ShipSlotKind.Optional,
         };
-        var position = kind == ShipSlotKind.Utility ? UtilityMountPositions.Of(hull, name) : null;
 
         return new ShipSlot(
             hull,
             name,
             kind,
             Integer(cells, 3) ?? 0,
-            Words(cells, 4),
-            position?.Height,
-            position?.Length);
+            Words(cells, 4));
     }
 
     /// <summary>Mounts, in the spelling a Commander hears.</summary>

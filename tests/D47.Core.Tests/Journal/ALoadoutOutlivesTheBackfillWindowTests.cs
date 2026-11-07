@@ -63,7 +63,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
     {
         var gameState = new GameStateStore
         {
-            RestoreLoadouts = fid => store?.For(fid),
+            RestoreLoadouts = fid => store?.All.GetValueOrDefault(fid),
         };
 
         gameState.Apply(Event(
@@ -123,7 +123,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         reading.Load();
 
         // Gone from the file, not merely gone from memory.
-        Assert.Null(reading.For("F1")!.For(42));
+        Assert.Null(reading.All.GetValueOrDefault("F1")!.For(42));
 
         // And the id coming back alive on a different hull reports what is actually there rather than the
         // Type 9's modules.
@@ -182,7 +182,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         var store = Store();
         store.Save([flown], Folded);
 
-        Assert.NotNull(store.For("F1")!.For(42));
+        Assert.NotNull(store.All.GetValueOrDefault("F1")!.For(42));
 
         // One journal the Commander flew while d47 was closed, which sells the Type 9.
         var journal = Path.Combine(_root, "Journal.2026-08-21T100000.01.log");
@@ -411,7 +411,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         var reading = Store();
         reading.Load();
 
-        var module = Assert.Single(reading.For("F1")!.For(51)!.Loadout.Modules);
+        var module = Assert.Single(reading.All.GetValueOrDefault("F1")!.For(51)!.Loadout.Modules);
 
         Assert.Equal("Engine_Tuned", module.Blueprint);
         Assert.Equal(3, module.BlueprintLevel);
@@ -461,12 +461,12 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         var reading = Store();
         reading.Load();
 
-        Assert.NotNull(reading.For("F1")!.For(51));
-        Assert.NotNull(reading.For("F2")!.For(7));
+        Assert.NotNull(reading.All.GetValueOrDefault("F1")!.For(51));
+        Assert.NotNull(reading.All.GetValueOrDefault("F2")!.For(7));
 
         // And neither was handed the other's ship, which is what keying on the Frontier id is for.
-        Assert.Null(reading.For("F1")!.For(7));
-        Assert.Null(reading.For("F2")!.For(51));
+        Assert.Null(reading.All.GetValueOrDefault("F1")!.For(7));
+        Assert.Null(reading.All.GetValueOrDefault("F2")!.For(51));
     }
 
     /// <summary>Deleting the file loses nothing the journals can still supply.</summary>
@@ -476,14 +476,14 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         var reading = Store();
         reading.Load();
 
-        Assert.Null(reading.For("F1"));
+        Assert.Null(reading.All.GetValueOrDefault("F1"));
 
         System.IO.File.WriteAllText(File_, "{ this is not json");
 
         var corrupt = Store();
         corrupt.Load();
 
-        Assert.Null(corrupt.For("F1"));
+        Assert.Null(corrupt.All.GetValueOrDefault("F1"));
 
         // And the journals put it back.
         var journal = Path.Combine(_root, "Journal.2026-08-21T100000.01.log");
@@ -529,7 +529,7 @@ public class ALoadoutOutlivesTheBackfillWindowTests : IDisposable
         reading.Load();
 
         var before = flown.Loadouts.For(51)!.Loadout;
-        var after = reading.For("F1")!.For(51)!.Loadout;
+        var after = reading.All.GetValueOrDefault("F1")!.For(51)!.Loadout;
 
         foreach (var name in settable)
         {

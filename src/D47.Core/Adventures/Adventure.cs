@@ -335,9 +335,6 @@ public sealed record AdventureTrigger
     public static bool IsOnceKind(TriggerKind kind) =>
         kind is TriggerKind.CarrierBuy or TriggerKind.Squadron or TriggerKind.SquadronFound or TriggerKind.Claim;
 
-    /// <summary>Whether a Commander can write this kind on the authored form.</summary>
-    public static bool IsAuthorable(TriggerKind kind) => kind <= TriggerKind.Beacon;
-
     /// <summary>Whether the ids this kind matches on are all present.</summary>
     public bool IsResolved => IsCounted
         ? Count >= 1 && (Kind != TriggerKind.Faction || !string.IsNullOrWhiteSpace(Faction)) && (Kind != TriggerKind.Event || !string.IsNullOrWhiteSpace(Event))

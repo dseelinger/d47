@@ -98,18 +98,6 @@ public static class VoiceMemory
         _ => settings with { Speech = settings.Speech with { VoicesProvider = provider } },
     };
 
-    /// <summary>
-    /// The same settings with the live voice slots emptied of <paramref name="from"/>'s choices, those
-    /// choices filed under <paramref name="from"/>, and whatever was filed under <paramref name="to"/>
-    /// put back.
-    /// </summary>
-    /// <paramref name="from"/>
-    /// 's choices, those choices filed under <paramref name="from"/>, and whatever was filed under
-    /// <paramref name="to"/> put back.
-    /// </paramref>
-    public static D47Settings Switched(D47Settings settings, string? from, string to) =>
-        Switched(Switched(settings, VoiceGroup.Aboard, from, to), VoiceGroup.Carrier, from, to);
-
     /// <summary>The same move for one slot's voices only (Phase 57).</summary>
     public static D47Settings Switched(D47Settings settings, VoiceGroup group, string? from, string to)
     {

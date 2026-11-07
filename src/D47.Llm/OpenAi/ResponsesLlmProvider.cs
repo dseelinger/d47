@@ -59,8 +59,6 @@ public sealed class ResponsesLlmProvider : ILlmProvider, IDisposable
 
     public string Id => LlmProviderCatalog.OpenAiId;
 
-    public string DisplayName => "OpenAI";
-
     public string DefaultModel => _catalog.Current.DefaultFor(Id) ?? string.Empty;
 
     public bool RunsOnThisMachine => _endpoint.IsLoopback;

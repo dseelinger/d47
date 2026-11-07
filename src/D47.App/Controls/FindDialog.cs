@@ -172,9 +172,6 @@ public sealed class FindDialog : ModalDialog
     /// <summary>The results drawn, best first.</summary>
     internal IReadOnlyList<PanelFindResult> Shown => _shown;
 
-    /// <summary>Every result held, not only the ones drawn.</summary>
-    internal IReadOnlyList<PanelFindResult> All => _all;
-
     internal bool TileSelected => _tile.IsVisible && _selected == _shown.Count;
 
     private bool HasTile => _openAll is not null && _all.Count > 0;

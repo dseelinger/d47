@@ -48,7 +48,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
         var steps = GoalClimb.Steps(standings, Loaded(1_000_000_000), null);
 
         Assert.Equal(["rank.explore", "rank.trade"], steps.Select(step => step.Key));
-        Assert.Equal(GoalClimb.Next(standings, Loaded(1_000_000_000), null), steps[0]);
+        Assert.Equal(FirstGoalStep.Of(standings, Loaded(1_000_000_000), null), steps[0]);
     }
 
     [Fact]

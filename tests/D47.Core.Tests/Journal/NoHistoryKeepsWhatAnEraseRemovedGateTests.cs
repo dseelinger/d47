@@ -145,7 +145,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
             [nameof(HistoryBackfill.Mail)] = () => mail.Compose(F),
             [nameof(HistoryBackfill.MetCommanders)] = () => Snapshot(met.Met(F)),
             [nameof(HistoryBackfill.Travel)] = () => Snapshot(travel.Steps(F)),
-            [nameof(HistoryBackfill.FullyFound)] = () => fullyFound.Count(F).ToString(),
+            [nameof(HistoryBackfill.FullyFound)] = () => fullyFound.Contains(F, 1).ToString(),
         };
 
         return new Run(backfill, ledgers);

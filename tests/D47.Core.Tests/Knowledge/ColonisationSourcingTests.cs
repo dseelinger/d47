@@ -7,6 +7,8 @@ namespace D47.Core.Tests.Knowledge;
 /// <summary>Everything one build still needs, and where to buy it.</summary>
 public class ColonisationSourcingTests
 {
+    private static bool IsComplete(SourcingPlan plan) => plan.Unpriced.Count == 0 && plan.Shortfalls.Count == 0;
+
     private static SourcingNeed Needs(string name, int required, int provided = 0, string? symbol = null) =>
         new(name, symbol ?? JournalJson.Symbol(name), Math.Max(0, required - provided));
 
@@ -47,7 +49,7 @@ public class ColonisationSourcingTests
 
         Assert.Equal(100, lot.Tonnes);
         Assert.Empty(plan.Unpriced);
-        Assert.True(plan.IsComplete);
+        Assert.True(IsComplete(plan));
     }
 
     /// <summary>Why the join is on the name and not the symbol, asserted so nobody puts it back.</summary>
@@ -85,7 +87,7 @@ public class ColonisationSourcingTests
 
         Assert.Single(plan.Stops);
         Assert.Equal("Insulating Membrane", Assert.Single(plan.Unpriced));
-        Assert.False(plan.IsComplete);
+        Assert.False(IsComplete(plan));
     }
 
     /// <summary>
@@ -102,7 +104,7 @@ public class ColonisationSourcingTests
 
         Assert.Empty(plan.Unpriced);
         Assert.Equal(600, plan.Shortfalls["Steel"]);
-        Assert.False(plan.IsComplete);
+        Assert.False(IsComplete(plan));
     }
 
     // ---- The covering ------------------------------------------------------------------------
@@ -125,7 +127,7 @@ public class ColonisationSourcingTests
 
         Assert.Equal("Everything", stop.Market.Station);
         Assert.Equal(3, stop.Covers);
-        Assert.True(plan.IsComplete);
+        Assert.True(IsComplete(plan));
     }
 
     [Fact]
@@ -142,7 +144,7 @@ public class ColonisationSourcingTests
 
         Assert.Equal(2, plan.Stops.Count);
         Assert.Equal("Two of them", plan.Stops[0].Market.Station);
-        Assert.True(plan.IsComplete);
+        Assert.True(IsComplete(plan));
     }
 
     /// <summary>
@@ -236,7 +238,7 @@ public class ColonisationSourcingTests
             Origin());
 
         Assert.Empty(plan.Stops);
-        Assert.True(plan.IsComplete);
+        Assert.True(IsComplete(plan));
     }
 
     /// <summary>The carrier is out of the arithmetic entirely.</summary>
@@ -299,7 +301,7 @@ public class ColonisationSourcingTests
 
         Assert.Equal(2, plan.Stops.Count);
         Assert.Equal(4, plan.Shortfalls.Count);
-        Assert.False(plan.IsComplete);
+        Assert.False(IsComplete(plan));
     }
 
     /// <summary>Nothing outstanding is a finished build rather than an empty answer to explain.</summary>
@@ -309,7 +311,7 @@ public class ColonisationSourcingTests
         var plan = ColonisationSourcing.Plan([], [Market("Somewhere", quotes: [("Steel", 500, 1000)])], Origin());
 
         Assert.Empty(plan.Stops);
-        Assert.True(plan.IsComplete);
+        Assert.True(IsComplete(plan));
     }
 
     /// <summary>

@@ -149,17 +149,6 @@ public sealed record DonationEnvelope(
     public static string Stamp(DateTimeOffset at) =>
         at.ToUniversalTime().ToString("yyyyMMdd'T'HHmmss'Z'", CultureInfo.InvariantCulture);
 
-    /// <summary>
-    /// SHA-256 of some bytes, lowercase hex — the one spelling used by the envelope, the receipt and
-    /// the endpoint, so a donor comparing two of them is comparing the same alphabet.
-    /// </summary>
-    public static string HashOf(ReadOnlySpan<byte> payload) =>
-        Convert.ToHexStringLower(SHA256.HashData(payload));
-
-    /// <inheritdoc cref="HashOf(System.ReadOnlySpan{byte})"/>
-    public static string HashOf(string payload) =>
-        HashOf(Utf8.GetBytes(payload));
-
     private static string Trim(string value)
     {
         var clean = new string([.. value.Where(character => character is >= ' ' and <= '~')]);

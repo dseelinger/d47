@@ -58,8 +58,6 @@ public sealed class AnthropicLlmProvider : ILlmProvider
 
     public string Id => "anthropic";
 
-    public string DisplayName => "Anthropic";
-
     public string DefaultModel => _catalog.Current.DefaultFor(Id) ?? string.Empty;
 
     public LlmProviderCapabilities CapabilitiesFor(string model)

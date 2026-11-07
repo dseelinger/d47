@@ -13,6 +13,8 @@ namespace D47.Core.Tests.Knowledge;
 /// </summary>
 public class TheFourInaraKnobsReachTheSearchTests
 {
+    private static IReadOnlyDictionary<string, string> GoalArguments() => new CommunityGoalSearch().Phrases().First().Arguments;
+
     private sealed class Capturing(CommodityAnswer answer) : StubTradePlanService
     {
         public CommoditySearch? Last { get; private set; }
@@ -138,7 +140,7 @@ public class TheFourInaraKnobsReachTheSearchTests
     [Fact]
     public async Task NearestFirstSpeaksOneStationAndCountsTheRest()
     {
-        var query = new CommunityGoalSearch().Arguments();
+        var query = GoalArguments();
         var typed = new CommodityQuery("Palladium", MaxDistance: 250, OrderBy: CommodityOrder.Distance, Limit: 10);
 
         var origin = new MarketSnapshot { Station = "Ega", System = "Ega" };
@@ -149,7 +151,7 @@ public class TheFourInaraKnobsReachTheSearchTests
 
         var (said, _) = await AskAsync(
             new CommodityAnswer(offers, 3, 0, true),
-            [.. query.Values.Where(pair => pair.Key != "commodity").Select(pair => (pair.Key, pair.Value))]);
+            [.. query.Where(pair => pair.Key != "commodity").Select(pair => (pair.Key, pair.Value))]);
 
  // Trimmed to essentials: what was searched for, the winning station, its system, and the
         // distance — the price, stock and pad-distance detail is already on the Routing
@@ -207,7 +209,7 @@ public class TheFourInaraKnobsReachTheSearchTests
     [Fact]
     public async Task NearestFirstStillSpeaksOneStationWithNoKnownOrigin()
     {
-        var query = new CommunityGoalSearch().Arguments();
+        var query = GoalArguments();
         var typed = new CommodityQuery("Palladium", MaxDistance: 250, OrderBy: CommodityOrder.Distance, Limit: 10);
 
         // No origin: Rank() falls back to price, and every offer omits a distance.
@@ -218,7 +220,7 @@ public class TheFourInaraKnobsReachTheSearchTests
 
         var (said, _) = await AskAsync(
             new CommodityAnswer(offers, 3, 0, false),
-            [.. query.Values.Where(pair => pair.Key != "commodity").Select(pair => (pair.Key, pair.Value))]);
+            [.. query.Where(pair => pair.Key != "commodity").Select(pair => (pair.Key, pair.Value))]);
 
         Assert.StartsWith("Nearest to Ega, your ship's system, for buying Palladium", said, StringComparison.Ordinal);
         Assert.Contains("ranked on price alone", said, StringComparison.Ordinal);
@@ -237,7 +239,7 @@ public class TheFourInaraKnobsReachTheSearchTests
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
-        var typed = new CommunityGoalSearch().Arguments();
+        var typed = GoalArguments();
         var trade = new Capturing(new CommodityAnswer(
             CommodityMarketSearch.Rank(
                 new CommodityQuery("Palladium", MaxDistance: 250, OrderBy: CommodityOrder.Distance, Limit: 10),
@@ -259,7 +261,7 @@ public class TheFourInaraKnobsReachTheSearchTests
 
         var values = new Dictionary<string, string>(StringComparer.Ordinal) { ["commodity"] = "Palladium" };
 
-        foreach (var (key, value) in typed.Values.Where(pair => pair.Key != "commodity"))
+        foreach (var (key, value) in typed.Where(pair => pair.Key != "commodity"))
         {
             values[key] = value;
         }

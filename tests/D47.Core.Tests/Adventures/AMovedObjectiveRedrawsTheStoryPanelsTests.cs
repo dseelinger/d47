@@ -95,9 +95,11 @@ public sealed class AMovedObjectiveRedrawsTheStoryPanelsTests
 
         _book.Store.Save("F1", FirstBeat(Accepted, FourBounties));
         _book.Reconcile();
-        Assert.True(_book.NeedsCatchUp);
 
-        _book.Adopt(_book.StartWalk(Folder, null)!.Run());
+        var walk = _book.StartWalk(Folder, null);
+        Assert.NotNull(walk);
+
+        _book.Adopt(walk.Run());
 
         Assert.Equal(1, _raised);
         Assert.Contains("1 of 4", Next(), StringComparison.Ordinal);

@@ -1047,23 +1047,6 @@ public static class EgressDisclosure
                 provider.Egress,
                 summary: "Speech is turned into words on this machine. No audio leaves it.");
 
-    /// <summary>What one named voice provider receives, whether or not it is the one selected.</summary>
-    public static EgressEntry TextToSpeechFor(Audio.TtsProviderInfo provider)
-    {
-        provider = Speech.LocalVoiceStandIn.Live(provider);
-
-        return provider.Speaks
-            ? new EgressEntry(
-                TextToSpeech,
-                NameOf(TextToSpeech),
-                provider.Destination,
-                provider.Egress,
-                Active: true,
-                Summary: $"{provider.Name} receives the text D47 speaks in this voice.")
-            : EgressEntry.Silent(
-                TextToSpeech, NameOf(TextToSpeech), provider.Egress, $"{provider.Name} sends nothing.");
-    }
-
     public static IReadOnlyList<EgressEntry> For(
         D47Settings settings,
         bool llmKeyPresent,

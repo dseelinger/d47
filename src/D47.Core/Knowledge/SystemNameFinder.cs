@@ -37,18 +37,6 @@ public static partial class SystemNameFinder
     [GeneratedRegex($"{Before}{Catalogue}{After}", RegexOptions.CultureInvariant)]
     private static partial Regex CatalogueInText { get; }
 
-    [GeneratedRegex($"^{Sector} {Boxel}$", RegexOptions.CultureInvariant)]
-    private static partial Regex ProceduralWhole { get; }
-
-    [GeneratedRegex($"^{Catalogue}$", RegexOptions.CultureInvariant)]
-    private static partial Regex CatalogueWhole { get; }
-
-    /// <summary>Whether the whole of a name is a procedural name. <c>tools/gen-system-names.py</c> ports this pattern.</summary>
-    public static bool IsProcedural(string name) => ProceduralWhole.IsMatch(name);
-
-    /// <summary>Whether the whole of a name is a catalogue number. <c>tools/gen-system-names.py</c> ports this pattern.</summary>
-    public static bool IsCatalogue(string name) => CatalogueWhole.IsMatch(name);
-
     private const int KnownRank = 0;
     private const int TableRank = 1;
     private const int PatternRank = 2;

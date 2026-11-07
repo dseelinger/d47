@@ -71,14 +71,8 @@ public sealed record OnFootLoadout
     public int? FreeSlots =>
         Grade is { } grade ? OnFootRules.SlotsAt(grade) - SuitModifications.Count : null;
 
-    /// <summary>Whether the suit can be modified at all.</summary>
-    public bool CanBeModified => Grade >= OnFootRules.ModifiableFrom;
-
     public string Speak() =>
         Suit?.Speak() ?? (SuitSymbol is null ? "nothing I have seen" : ModuleNames.Readable(SuitSymbol));
-
-    public CarriedWeapon? InSlot(string slot) =>
-        Weapons.FirstOrDefault(weapon => string.Equals(weapon.Slot, slot, StringComparison.OrdinalIgnoreCase));
 
     public OnFootLoadout Apply(JournalEvent journalEvent) => journalEvent.Kind switch
     {

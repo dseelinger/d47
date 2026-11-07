@@ -22,8 +22,10 @@ public class UpdateLiveTests
         var checker = new UpdateChecker(NullLogger<UpdateChecker>.Instance);
 
         // A version that will always be older than whatever is published.
-        var update = await checker.CheckAsync("0.0.1", TestContext.Current.CancellationToken);
+        var result = await checker.ResultAsync("0.0.1", TestContext.Current.CancellationToken);
 
+        Assert.Equal(UpdateCheckOutcome.NewerAvailable, result.Outcome);
+        var update = result.Update;
         Assert.NotNull(update);
         Assert.True(update.CanInstall, "the published release carries both d47.zip and its checksum");
 

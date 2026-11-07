@@ -69,20 +69,6 @@ public class EachEventSaysWhatItChangedTests
         Assert.Same(FoldReceipt.Nothing, new GameStateStore().Apply(Event(Music)));
 
     [Fact]
-    public void EveryFoldedPartHasAPhrase()
-    {
-        var parts = typeof(CommanderGameState)
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(property => property.SetMethod is not null)
-            .Select(property => property.Name)
-            .Where(name => name is not (nameof(CommanderGameState.Suit) or nameof(CommanderGameState.Hold)))
-            .ToList();
-
-        Assert.NotEmpty(parts);
-        Assert.All(parts, part => Assert.NotNull(CommanderGameState.PhraseFor(part)));
-    }
-
-    [Fact]
     public void TheLogKeepsEachEventsReceiptAsWords()
     {
         var store = new GameStateStore();

@@ -12,10 +12,6 @@ public sealed class DebriefBook(StandingDirectionsStore store, Func<string?> com
     /// <summary>Everything filed for whoever is aboard right now.</summary>
     public IReadOnlyList<StandingDirection> Mine => store.For(commander());
 
-    /// <summary>What the pass drafted and nobody has ruled on.</summary>
-    public IReadOnlyList<StandingDirection> Waiting =>
-        [.. Mine.Where(entry => entry.State == DirectionState.Proposed)];
-
     /// <summary>What the Commander took.</summary>
     public IReadOnlyList<StandingDirection> Adopted =>
         [.. Mine.Where(entry => entry.State == DirectionState.Adopted)];
@@ -94,9 +90,6 @@ public sealed class DebriefBook(StandingDirectionsStore store, Func<string?> com
         store.Write(commander(), entry with { State = DirectionState.Declined, AdoptedAt = null });
         return true;
     }
-
-    /// <summary>Removes one outright, whatever state it was in.</summary>
-    public bool Forget(string key) => store.Remove(commander(), key);
 
     /// <summary>The line the pane's header and the settings row both read.</summary>
     public string Summarise()

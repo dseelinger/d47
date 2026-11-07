@@ -6,35 +6,14 @@ namespace D47.Core.Tests.Knowledge;
 public class AMaterialGuideSaysWhatTheToolsSayTests
 {
     [Fact]
-    public void AGrade4RawMaterialTradesUpDownAndAcross()
+    public void AGrade4RawMaterialHasItsGradeCapacityAndFarming()
     {
         var detail = MaterialGuide.For("selenium", null)!;
 
         Assert.Equal(4, detail.Grade);
         Assert.Equal(150, detail.Capacity);
         Assert.Null(detail.Held);
-        Assert.Equal(new MaterialTrade(TradeDirection.Up, 5, 6, 1), Assert.Single(detail.Trades, t => t.Direction == TradeDirection.Up));
-        Assert.Equal(new MaterialTrade(TradeDirection.Down, 3, 1, 3), Assert.Single(detail.Trades, t => t.Direction == TradeDirection.Down));
-        Assert.Equal(new MaterialTrade(TradeDirection.Across, 4, 6, 1), Assert.Single(detail.Trades, t => t.Direction == TradeDirection.Across));
         Assert.NotEmpty(detail.HowToFarm);
-    }
-
-    [Fact]
-    public void AGrade5MaterialHasNoTradeUp()
-    {
-        var detail = MaterialGuide.For("adaptiveencryptors", null)!;
-
-        Assert.Equal(5, detail.Grade);
-        Assert.DoesNotContain(detail.Trades, t => t.Direction == TradeDirection.Up);
-        Assert.Contains(detail.Trades, t => t.Direction == TradeDirection.Down);
-    }
-
-    [Fact]
-    public void AGuardianMaterialHasNoTrades()
-    {
-        var detail = MaterialGuide.For("guardian_powercell", null)!;
-
-        Assert.Empty(detail.Trades);
     }
 
     [Fact]
