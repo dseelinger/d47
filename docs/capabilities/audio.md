@@ -429,11 +429,17 @@ Its buttons are Previous, Pause (Play while paused or idle), Next and Thumbs dow
 above do, and Thumbs down does what `thumbs_down_music` does. All four are greyed out when nothing plays or
 the music is muted. The level stays usable while muted and is drawn in its muted style.
 
+A bar between the track and the buttons shows how far through the track it is, with the time played on the left and
+the track's length on the right as minutes and seconds. In the d47 window you can drag the bar to a point in the
+track; the music jumps there when you let go, and the time shows where you would land while you drag. The bar on
+the headset's big panel only shows the position. Until the length is known, between tracks, with nothing
+playing and while the music is muted, the times read –:–– and the bar is empty and greyed out.
+
 Open and close it with the **Audio player** hotkey, which is Ctrl+Shift+P until you change it in Settings ›
 Hearing and sound › Sounds and levels, group Ambient music, or with a stick button. The key works while Elite
 has the foreground and does not take the foreground. It opens the dialog in the d47 window and on the headset's
 big panel at once. The two mini panels carry no buttons: while the player is open they show the track, whether
-it is playing or paused and the phrases to say. Esc, the Close button or the same key closes it everywhere.
+it is playing or paused, the time played and the length either side of a thin bar, and the phrases to say. Esc, the Close button or the same key closes it everywhere.
 
 By voice, "audio player" opens it when it is closed and closes it when it is open. "Open the audio player" and
 "show the audio player" only open it. "Close the audio player" and "hide the audio player" only close it.

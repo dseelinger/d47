@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 using D47.Core.Callouts;
@@ -397,6 +397,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         get => _audioPlayer;
         set => Set(ref _audioPlayer, value);
     }
+
+    /// <summary>Reads the live track's position and length for the mini read-outs; set by the host.</summary>
+    public Func<D47.Core.Audio.TrackProgress?>? AudioProgress { get; set; }
 
     public bool SwitchesVisible =>!string.IsNullOrEmpty(_switchesText);
 

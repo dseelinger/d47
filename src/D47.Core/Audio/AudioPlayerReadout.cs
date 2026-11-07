@@ -12,6 +12,13 @@ public sealed record AudioPlayerReadout(
 {
     public const string Nothing = "—";
 
+    /// <summary>The text shown for an unknown time.</summary>
+    public const string UnknownClock = "–:––";
+
+    /// <summary>A time as <c>m:ss</c>, minutes unpadded and not wrapped at an hour; <see cref="UnknownClock"/> for null.</summary>
+    public static string Clock(TimeSpan? time) =>
+        time is not { } t ? UnknownClock : $"{(int)Math.Max(0, t.TotalMinutes)}:{Math.Max(0, t.Seconds):00}";
+
     public static AudioPlayerReadout From(MusicState state, bool muted)
     {
         var paused = state.Paused || state.Idle;

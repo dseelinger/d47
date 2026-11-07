@@ -182,6 +182,7 @@ public sealed class AppHost : IDisposable
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
         Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile);
         Music.Changed += state => Panel.AudioPlayer = AudioPlayerReadout.From(state, Settings.Current.Audio.Music.Muted);
+        Panel.AudioProgress = Music.Progress;
         _cues = cues;
         Voice = voice;
         _binds = binds;

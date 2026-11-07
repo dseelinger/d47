@@ -97,7 +97,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var dialog = new AudioPlayerDialog(_model, host.Settings, action => host.Music.Control(action), ThumbsDownMusic);
+        var dialog = new AudioPlayerDialog(_model, host.Settings, action => host.Music.Control(action), ThumbsDownMusic, host.Music.Progress, host.Music.Seek);
 
         _audioPlayer = dialog;
         dialog.Closed += (_, _) =>

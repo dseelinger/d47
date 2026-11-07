@@ -431,6 +431,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             AudioReadoutBar.Update(_bound!.AudioPlayer);
         }
+
+        AudioReadoutBar.Watch(open ? _bound!.AudioProgress : null);
     }
 
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

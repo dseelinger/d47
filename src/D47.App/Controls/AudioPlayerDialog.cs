@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
@@ -37,10 +37,26 @@ public sealed class AudioPlayerDialog : ModalDialog
 
     public const string HintName = "AudioPlayerHint";
 
+    public const string SeekName = "AudioPlayerSeek";
+
+    public const string ElapsedName = "AudioPlayerElapsed";
+
+    public const string LengthName = "AudioPlayerLength";
+
+    /// <summary>How often the bar and times are read while the dialog is open.</summary>
+    public static readonly TimeSpan PollEvery = TimeSpan.FromMilliseconds(250);
+
     private readonly PanelViewModel _model;
     private readonly SettingsService _settings;
     private readonly Func<MusicAction, string> _control;
     private readonly Action _thumbsDown;
+    private readonly Func<TrackProgress?>? _progress;
+    private readonly Func<TimeSpan, bool>? _seek;
+    private readonly DispatcherTimer _poll = new() { Interval = PollEvery };
+    private readonly SeekBar _bar = new() { Name = SeekName };
+    private readonly TextBlock _elapsed = new() { Name = ElapsedName };
+    private readonly TextBlock _length = new() { Name = LengthName };
+    private TimeSpan? _known;
 
     private readonly TextBlock _state = new() { Name = StateName };
     private readonly TextBlock _track = new() { Name = TrackName };
@@ -56,12 +72,30 @@ public sealed class AudioPlayerDialog : ModalDialog
         PanelViewModel model,
         SettingsService settings,
         Func<MusicAction, string> control,
-        Action thumbsDown)
+        Action thumbsDown,
+        Func<TrackProgress?>? progress = null,
+        Func<TimeSpan, bool>? seek = null)
     {
         _model = model;
         _settings = settings;
         _control = control;
         _thumbsDown = thumbsDown;
+        _progress = progress;
+        _seek = seek;
+        _bar.Draggable = seek is not null;
+        _bar.Dragged += OnDragged;
+        _bar.Released += OnReleased;
+        _poll.Tick += (_, _) => Poll();
+
+        foreach (var time in new[] { _elapsed, _length })
+        {
+            time.FontFamily = new FontFamily(Fonts.MonoFamily);
+            time.FontSize = TypeScale.Small;
+            time.VerticalAlignment = VerticalAlignment.Center;
+            time.Width = 48;
+        }
+
+        _length.TextAlignment = TextAlignment.Right;
 
         Title = "Audio player";
         Width = Modal.Width;
@@ -120,11 +154,14 @@ public sealed class AudioPlayerDialog : ModalDialog
             _model.PropertyChanged += OnModelChanged;
             _settings.Changed += OnSettingsChanged;
             Refresh();
+            Poll();
+            _poll.Start();
         };
         DetachedFromVisualTree += (_, _) =>
         {
             _model.PropertyChanged -= OnModelChanged;
             _settings.Changed -= OnSettingsChanged;
+            _poll.Stop();
         };
 
         Refresh();
@@ -153,7 +190,14 @@ public sealed class AudioPlayerDialog : ModalDialog
         Grid.SetColumn(_level, 1);
         level.Children.Add(_level);
 
-        return new StackPanel { Spacing = 16, Children = { data, tiles, level } };
+        var seek = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), ColumnSpacing = 12 };
+        seek.Children.Add(_elapsed);
+        Grid.SetColumn(_bar, 1);
+        seek.Children.Add(_bar);
+        Grid.SetColumn(_length, 2);
+        seek.Children.Add(_length);
+
+        return new StackPanel { Spacing = 16, Children = { data, seek, tiles, level } };
     }
 
     private Control Hint()
@@ -206,6 +250,51 @@ public sealed class AudioPlayerDialog : ModalDialog
         }
     }
 
+    internal bool Polling => _poll.IsEnabled;
+
+    /// <summary>Reads the track's position and length and redraws the bar and times; a held drag keeps its own.</summary>
+    internal void Poll()
+    {
+        var read = _model.AudioPlayer;
+        var on = read.Enabled;
+        TrackProgress? now = on ? _progress?.Invoke() : null;
+        var timeInk = on ? ThemeManager.GreyKey : ThemeManager.Grey2Key;
+
+        _bar.Active = on && now is not null;
+        _known = now?.Length;
+        ThemeInk.Bind(_elapsed, TextBlock.ForegroundProperty, timeInk);
+        ThemeInk.Bind(_length, TextBlock.ForegroundProperty, timeInk);
+        _length.Text = AudioPlayerReadout.Clock(_known);
+
+        if (_bar.IsDragging)
+        {
+            return;
+        }
+
+        _elapsed.Text = AudioPlayerReadout.Clock(now?.Elapsed);
+        _bar.Position = now is { Length: { } length } && length > TimeSpan.Zero ? now.Value.Elapsed / length : 0;
+    }
+
+    private TimeSpan? Target(double fraction) => _known is { } length ? length * fraction : null;
+
+    private void OnDragged(double fraction)
+    {
+        if (Target(fraction) is { } to)
+        {
+            _elapsed.Text = AudioPlayerReadout.Clock(to);
+        }
+    }
+
+    private void OnReleased(double fraction)
+    {
+        if (Target(fraction) is { } to)
+        {
+            _seek?.Invoke(to);
+        }
+
+        Poll();
+    }
+
     /// <summary>Redraws from the model's readout and the music channel's setting.</summary>
     internal void Refresh()
     {
@@ -228,6 +317,8 @@ public sealed class AudioPlayerDialog : ModalDialog
         {
             button.IsEnabled = live;
         }
+
+        Poll();
 
         _refreshing = true;
         _level.Value = mix.Level;
