@@ -1,4 +1,5 @@
-﻿using D47.Core.Conversation;
+﻿using D47.Core.Journal;
+using D47.Core.Conversation;
 using Xunit;
 
 namespace D47.Core.Tests.Conversation;

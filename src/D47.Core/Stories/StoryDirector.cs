@@ -378,15 +378,12 @@ public sealed class StoryDirector(
     /// The current story's cast ids aboard the ship at <paramref name="beat"/> of its current chapter, -1 for the opening and by
     /// default the last beat that fired; for a story with no recorded chapter, those aboard by span. Empty when no story is current.
     /// </summary>
-    public IReadOnlyList<string> CastAboard(string? frontierId, int? beat = null) =>
-        stories.Current(frontierId) is { } story && Hidden(story.Id) is { } secret ? CastAboard(frontierId, story, secret, beat) : [];
-
-    private IReadOnlyList<string> CastAboard(string? frontierId, Story story, StorySecret secret, int? beat = null) =>
+    internal IReadOnlyList<string> CastAboard(string? frontierId, Story story, StorySecret secret, int? beat = null) =>
         story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: not null } chapter
             ? StoryAboard.At(secret, chapter, beat ?? (book.Standing(frontierId, key)?.Fired.Count ?? 0) - 1)
             : StoryAboard.BySpan(secret, story);
 
-    /// <summary>The cast aboard the Commander's carrier at <paramref name="beat"/>, read as <see cref="CastAboard(string?, int?)"/> reads the ship.</summary>
+    /// <summary>The cast aboard the Commander's carrier at <paramref name="beat"/>, read as <see cref="CastAboard(string?, Story, StorySecret, int?)"/> reads the ship.</summary>
     private IReadOnlyList<string> CastOnCarrier(string? frontierId, Story story, StorySecret secret, int? beat = null) =>
         story.CurrentChapter is { } key && book.Store.Find(frontierId, key) is { Aboard: not null } chapter
             ? StoryAboard.OnCarrierAt(secret, story, chapter, beat ?? (book.Standing(frontierId, key)?.Fired.Count ?? 0) - 1)
@@ -457,10 +454,6 @@ public sealed class StoryDirector(
 
     /// <summary>Whether the story has a cast member in two versions, so the Commander's gender must be set to pick it.</summary>
     public bool NeedsGenderFor(string id) => catalog().Secret(id) is { } secret && (secret.Parent is not null || secret.Cast.Any(speaker => speaker.Versions is not null));
-
-    /// <summary>A cast member of the current story as this Commander meets them, or null.</summary>
-    public StorySpeakerShown? Speaker(string? frontierId, string castId) =>
-        stories.Current(frontierId) is { } story ? catalog().Secret(story.Id)?.Speaker(castId, Gender()) : null;
 
     /// <summary>A cast member of story <paramref name="storyId"/>, current or not, as this Commander meets them, or null.</summary>
     public StorySpeakerShown? Speaker(string? frontierId, string storyId, string castId) =>

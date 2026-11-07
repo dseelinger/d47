@@ -94,7 +94,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         var plotter = new OutfittingPlotter(registry, plans, () => game.Active?.Location.StarSystem);
         var mode = new ShipsMode(ships, checklists, () => game.Active, outfitting: plotter);
 
-        return new Bench(new ItemPage(mode, nav, build.Id), nav, galaxy, plans, build.Id, mode, plotter);
+        return new Bench(new ItemPage(mode, nav, build.Id, prompts: null), nav, galaxy, plans, build.Id, mode, plotter);
     }
 
     private static Button Plot(Control root) =>

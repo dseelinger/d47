@@ -68,7 +68,8 @@ public sealed class AShortStoryIsPlannedInCodeTests
 
         for (var seed = 1u; seed <= 16; seed++)
         {
-            var planned = await generator.ShortPlanAsync(new AdventureAsk(AdventureReach.Session, length), AdventureGenerator.ShortWants.None, seed, TestContext.Current.CancellationToken);
+            var ask = new AdventureAsk(AdventureReach.Session, length);
+            var planned = await generator.ShortPlanAsync(ask, AdventureGenerator.Facts.Of(PlannedChapterWorld.State(), ask), AdventureGenerator.ShortWants.None, seed, TestContext.Current.CancellationToken);
 
             Assert.True(planned.Succeeded, planned.Refusal?.Text);
 

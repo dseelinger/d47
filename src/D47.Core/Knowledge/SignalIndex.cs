@@ -57,9 +57,6 @@ public sealed class SignalIndex : IReadOnlyList<SignalSighting>
         }
     }
 
-    /// <summary>Reads UTF-8 TSV text; see <see cref="Read(TextReader)"/>.</summary>
-    public static SignalIndex Read(Stream tsv) => Read(new StreamReader(tsv));
-
     /// <summary>
     /// Reads the index. A malformed row is skipped and counted, and a row whose signal d47 does not show is left
     /// out. Throws <see cref="InvalidDataException"/> when the header is missing or the file is too large.

@@ -1737,11 +1737,6 @@ public sealed class ItemPage : LoadoutPage
         Margin = new Thickness(0, 0, 0, 10),
     };
 
-    public ItemPage(ILoadoutMode mode, PanelNavigator nav, string item)
-        : this(mode, nav, item, prompts: null)
-    {
-    }
-
     public ItemPage(
         ILoadoutMode mode,
         PanelNavigator nav,

@@ -11,11 +11,6 @@ public sealed class ModuleRestarts(IReadOnlyList<TimeSpan> waits)
 
     private readonly List<DateTimeOffset> _exits = [];
 
-    public ModuleRestarts()
-        : this(Waits)
-    {
-    }
-
     /// <summary>Records an exit at <paramref name="at"/>: the wait before starting the module again, or null when it stays stopped.</summary>
     public TimeSpan? Exited(DateTimeOffset at)
     {

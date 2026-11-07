@@ -45,12 +45,6 @@ public static class PageTrail
             _ => null,
         };
 
-    /// <summary>
-    /// Puts a surface on the root, then on the page; true when it arrived. A surface holding a modal page stays
-    /// where it is.
-    /// </summary>
-    public static bool Open(PanelNavigator nav, string root, NavCrumb crumb) => Open(nav, root, [crumb]);
-
     /// <summary>Puts a surface on the root, then at the end of the crumbs; true when it arrived.</summary>
     public static bool Open(PanelNavigator nav, string root, IReadOnlyList<NavCrumb> crumbs)
     {

@@ -1536,10 +1536,6 @@ public sealed class ChecklistService(
         return change;
     }
 
-    /// <summary>Moves an item in the Commander's own order (Phase 25).</summary>
-    public ChecklistChange Move(ChecklistItemId id, int by) =>
-        list.Apply(Fid, Name, document => document.Move(id, by));
-
     /// <summary>
     /// The same, said the way a Commander says it — up, down, to the top, to the bottom (reported
     /// 2026-08-21).

@@ -3447,7 +3447,7 @@ public sealed partial class AdventureGenerator(
     /// Where the Commander is, what they can move, and what they hold — read from the game state, never
     /// asked, because asking would be asking them to describe their own ships.
     /// </summary>
-    private sealed record Facts(
+    internal sealed record Facts(
         string? System,
         StarPosition? Position,
         double RadiusLightYears,

@@ -1,3 +1,4 @@
+using D47.Core.Journal;
 using System.Globalization;
 using Avalonia.Automation;
 using Avalonia.Controls;

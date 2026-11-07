@@ -67,8 +67,6 @@ public sealed record FleetRegistry
     public IReadOnlyList<string> Systems =>
         [.. Ships.Select(ship => ship.StarSystem).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase)];
 
-    public FleetRegistry Apply(JournalEvent journalEvent) => Apply(journalEvent, null, null);
-
     /// <summary>
     /// <param name="atSystem">Where the Commander is standing, for the events that store a ship without
     /// naming a place.

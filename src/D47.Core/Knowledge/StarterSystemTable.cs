@@ -17,13 +17,6 @@ public static class StarterSystemTable
     public static bool Contains(string? system) =>
         system is { Length: > 0 } named && Loaded.Value.Contains(named);
 
-    /// <summary>Reads table text: one name per line, lines starting with '#' ignored.</summary>
-    public static HashSet<string> Parse(string text)
-    {
-        using var reader = new StringReader(text);
-        return Read(reader);
-    }
-
     private static HashSet<string> Read(Stream? stream)
     {
         if (stream is null)
@@ -38,7 +31,7 @@ public static class StarterSystemTable
         }
     }
 
-    private static HashSet<string> Read(TextReader reader)
+    internal static HashSet<string> Read(TextReader reader)
     {
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 

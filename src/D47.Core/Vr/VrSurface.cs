@@ -104,9 +104,6 @@ public sealed record SurfacePlacement
         return VrPose.FromMatrix(Where(head).ToMatrix() * inverse);
     }
 
-    /// <summary>The offset against a head at the origin, which is one that is already level.</summary>
-    public VrPose AgainstTheHead() => AgainstTheHead(VrPose.Origin);
-
     /// <summary>Where this surface goes, given where the head is now.</summary>
     public VrPose Where(VrPose head)
     {

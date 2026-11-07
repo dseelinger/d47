@@ -107,16 +107,6 @@ public sealed class EddnComposer(
         _run.Clear();
     }
 
-    /// <summary>Folds the event into the state, then returns the message it calls for, or null. Runs of FSSSignalDiscovered are not handled here.</summary>
-    public EddnEnvelope? Compose(JournalEvent journalEvent)
-    {
-        ArgumentNullException.ThrowIfNull(journalEvent);
-
-        Fold(journalEvent);
-
-        return ComposeOwn(journalEvent);
-    }
-
     /// <summary>
     /// Folds the event, then returns the messages it calls for. A FSSSignalDiscovered event joins the open run;
     /// any other event first closes the run, whose message comes before the event's own.

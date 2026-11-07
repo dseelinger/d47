@@ -503,22 +503,6 @@ public sealed class PanelNavigator
         return true;
     }
 
-    /// <summary>Back to the crumb with this word - what a spoken crumb does.</summary>
-    public bool JumpTo(string word)
-    {
-        var trail = Trail;
-
-        for (var index = trail.Count - 2; index >= 0; index--)
-        {
-            if (string.Equals(trail[index].Word, word, StringComparison.OrdinalIgnoreCase))
-            {
-                return JumpTo(index);
-            }
-        }
-
-        return false;
-    }
-
     /// <summary>
     /// Puts the Commander at the end of a trail they did not walk (Phase 25, "Voice jumps levels").
     /// </summary>

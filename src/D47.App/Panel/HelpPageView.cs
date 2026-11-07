@@ -235,11 +235,6 @@ public static class HelpPageView
             : Build(howTo, works, nav, openUrl, openSettings);
     }
 
-    /// <summary>A page with a How it works band and no how-to band.</summary>
-    public static Control Build(
-        HelpArticle article, PanelNavigator nav, Action<string>? openUrl, Action<string>? openSettings = null) =>
-        Build(null, article, nav, openUrl, openSettings);
-
     /// <summary>The title, the how-to band, the How it works band, then where to go next; a missing band is left out.</summary>
     public static Control Build(
         HelpArticle? howTo,

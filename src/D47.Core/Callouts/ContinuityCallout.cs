@@ -75,9 +75,6 @@ public sealed class ContinuityCallout : ICallout
         };
     }
 
-    /// <summary>The line.</summary>
-    public string Compose(DateTimeOffset now) => Compose(now, null);
-
     /// <summary>
     /// The line, naming the Commander where there is one to name — after a login, not at launch (see
     /// <see cref="Rearm"/>).

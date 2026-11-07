@@ -131,7 +131,7 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
         Assert.Null(await fixtures.Director.PickAsync("F1", Id, Now, CancellationToken.None));
 
         var first = fixtures.Stories.Current("F1")!.CurrentChapter!;
-        Assert.Equal(["rider"], fixtures.Director.CastAboard("F1"));
+        Assert.Equal(["rider"], fixtures.CastAboard("F1"));
         Assert.Null(fixtures.Director.LineVoice("F1", "rider")!.Pinned!.Link);
 
         var reopened = new AdventureStore(fixtures.AdventuresPath, fixtures.Files, NullLogger<AdventureStore>.Instance);
@@ -142,7 +142,7 @@ public sealed class ACastMemberAboardIsHeardInTheCockpitTests
         Assert.Null(await fixtures.Director.Tick("F1", Now.AddDays(3))!);
 
         Assert.Equal(2, fixtures.Stories.Current("F1")!.Chapters.Count);
-        Assert.Empty(fixtures.Director.CastAboard("F1"));
+        Assert.Empty(fixtures.CastAboard("F1"));
         Assert.Equal(0.3, fixtures.Director.LineVoice("F1", "rider")!.Pinned!.Link);
     }
 

@@ -35,7 +35,7 @@ public class HelpLinksTests
     private static (Window Window, Control Page) Open(
         HelpArticle article, PanelNavigator nav, Action<string>? openUrl)
     {
-        var page = HelpPageView.Build(article, nav, openUrl);
+        var page = HelpPageView.Build(null, article, nav, openUrl);
         var window = new Window { Content = page, Width = 900, Height = 700 };
 
         window.Show();
@@ -241,6 +241,7 @@ public class HelpLinksTests
         var revealed = new List<string>();
 
         var page = HelpPageView.Build(
+            null,
             Article(new HelpLink { Title = "Speech", Article = "speech", Settings = "speech" }),
             nav,
             openUrl: null,

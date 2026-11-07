@@ -42,7 +42,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
 
         Assert.Equal(
             new StorySpeakerShown("cray", "Ellie", StorySpeaker.Kokoro, "af_heart", $"{Id}.cray.for-man"),
-            fixtures.Director.Speaker("F1", "cray"));
+            fixtures.Director.Speaker("F1", fixtures.Stories.Current("F1")!.Id, "cray"));
     }
 
     [Trait("Category", "Integration")]
@@ -53,7 +53,7 @@ public sealed class TheCommandersGenderPicksTheVersionTests
 
         Assert.Equal(
             new StorySpeakerShown("cray", "Ellis", StorySpeaker.Chatterbox, "ellis-sample", $"{Id}.cray.for-woman"),
-            fixtures.Director.Speaker("F1", "cray"));
+            fixtures.Director.Speaker("F1", fixtures.Stories.Current("F1")!.Id, "cray"));
     }
 
     [Fact]

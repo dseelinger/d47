@@ -1,3 +1,4 @@
+using D47.Core.Journal;
 using D47.Core.Storage;
 using Avalonia;
 using Avalonia.Controls;
@@ -101,7 +102,7 @@ public class LearnedPhrasesHelpAndTheDialogsAreDrawnOnTheKitTests
     private static string CaptureHelp(string themeId, double width, double height)
     {
         var nav = new PanelNavigator();
-        var page = HelpPageView.Build(D47.Core.Help.HelpLibrary.For("help")!, nav, _ => { });
+        var page = HelpPageView.Build(null, D47.Core.Help.HelpLibrary.For("help")!, nav, _ => { });
 
         var window = new Window { Content = page, Width = width, Height = height };
         window.Show();

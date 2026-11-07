@@ -495,12 +495,6 @@ public sealed class TurnLoop(
     /// <summary>Who answered the last model turn, or null for the ship's AI.</summary>
     private string? _lastSpeaker;
 
-    public IAsyncEnumerable<TurnEvent> RunAsync(
-        string input,
-        InputSource source = InputSource.Typed,
-        CancellationToken cancellationToken = default) =>
-        RunAsync(input, source, PttTarget.Core, cancellationToken);
-
     public async IAsyncEnumerable<TurnEvent> RunAsync(
         string input,
         InputSource source,

@@ -148,11 +148,6 @@ public sealed class CueLibrary
         return folder.ToString();
     }
 
-    public static CueLibrary Load() => Load(new EmbeddedCueSource(typeof(CueLibrary).Assembly));
-
-    /// <summary>One source, which is the shipped set and every test that is about it.</summary>
-    public static CueLibrary Load(ICueSource source) => Load(logger: null, source);
-
     /// <summary>Loads from every source in order; a later shipped clip replaces an earlier one.</summary>
     /// <param name="logger">Where a skipped drop-in is reported.</param>
     public static CueLibrary Load(ILogger? logger, params ICueSource[] sources) => Load(logger, random: null, sources);

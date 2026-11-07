@@ -97,14 +97,6 @@ public sealed class FallingBackTtsProvider(ITtsProvider chosen, ITtsProvider pin
 /// <summary>The sound a story gives a cast member: Guardian effects, then a comms link.</summary>
 public static class CastVoice
 {
-    /// <summary>The treatment for a member's voice, or null when it has no link and no effects. The Commander's Guardian Voice settings play no part.</summary>
-    public static Func<AudioClip, AudioClip>? Treatment(StorySpeaker speaker)
-    {
-        ArgumentNullException.ThrowIfNull(speaker);
-
-        return Treatment(speaker.Link, speaker.Effects);
-    }
-
     /// <summary>The treatment a pinned voice carries, or null when it has no link and no effects.</summary>
     public static Func<AudioClip, AudioClip>? Treatment(PinnedVoice pinned)
     {

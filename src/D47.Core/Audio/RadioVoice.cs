@@ -9,13 +9,6 @@ public static class RadioVoice
     /// <summary>Which roles arrive over a link rather than from the next seat.</summary>
     public static bool IsOverTheAir(VoiceRole role) => role is not (VoiceRole.ShipAi or VoiceRole.Crew or VoiceRole.Narrator);
 
-    /// <summary>The treatment for a role, or null where there is none.</summary>
-    public static Func<AudioClip, AudioClip>? Colours(VoiceRole role) => Colours(role, 1);
-
-    /// <summary>The treatment for a role over a link of <paramref name="strength"/>, 0 to 1, or null where there is none.</summary>
-    public static Func<AudioClip, AudioClip>? Colours(VoiceRole role, double strength) =>
-        Colours(role, strength, overheard: false);
-
     /// <summary>The treatment for a role, thinner and hissier when the line is <paramref name="overheard"/>.</summary>
     public static Func<AudioClip, AudioClip>? Colours(VoiceRole role, double strength, bool overheard) =>
         IsOverTheAir(role) ? clip => Apply(clip, strength, overheard) : null;
@@ -104,9 +97,6 @@ public static class RadioVoice
 
     /// <summary>How long the very end is faded over.</summary>
     private static readonly TimeSpan Cut = TimeSpan.FromMilliseconds(3);
-
-    /// <summary>The same speech, over a link.</summary>
-    public static AudioClip Apply(AudioClip clip) => Apply(clip, 1);
 
     /// <summary>
     /// The same speech, over a link of <paramref name="strength"/>, 0 to 1. Below 1 the static rises, the

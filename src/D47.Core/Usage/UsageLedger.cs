@@ -63,9 +63,6 @@ public sealed class UsageLedger
         }
     }
 
-    /// <summary>The body the usage Worker accepts for one day, or null when the day holds no counts.</summary>
-    public string? Report(DateOnly day) => Counts(day) is { } counts ? Report(day, counts) : null;
-
     /// <summary>The body for <paramref name="counts"/>, a copy taken with <see cref="Counts"/>.</summary>
     public static string Report(DateOnly day, IReadOnlyDictionary<(string Tool, ToolCaller Caller), int> counts)
     {

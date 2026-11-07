@@ -203,6 +203,12 @@
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
           "ModelContextProtocol.Core": "[2.2.0, )"
         }
+      },
+      "d47.testsupport": {
+        "type": "Project",
+        "dependencies": {
+          "D47.Core": "[0.1.0, )"
+        }
       }
     }
   }

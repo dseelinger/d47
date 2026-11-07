@@ -121,7 +121,7 @@ public class AProposalIsReviewedOnTheShipPageTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
         var bench = Set(ThreeChanges);
-        var page = new ItemPage(bench.Mode, new PanelNavigator(), bench.BuildId);
+        var page = new ItemPage(bench.Mode, new PanelNavigator(), bench.BuildId, prompts: null);
         var window = Show(page);
 
         var section = Assert.Single(page.GetVisualDescendants().OfType<BuildTalkSection>());
@@ -147,7 +147,7 @@ public class AProposalIsReviewedOnTheShipPageTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
         var bench = Set(ThreeChanges);
-        var page = new ItemPage(bench.Mode, new PanelNavigator(), bench.BuildId);
+        var page = new ItemPage(bench.Mode, new PanelNavigator(), bench.BuildId, prompts: null);
         var window = Show(page);
 
         await bench.Talk.AskAsync(bench.BuildId, "Make it jump further. I don't care about the shields.", InputSource.Typed, CancellationToken.None);
@@ -196,7 +196,7 @@ public class AProposalIsReviewedOnTheShipPageTests
         var bench = Set(_ => Task.FromResult(new BuildAdvice(
             BuildRemarkKind.Question, null, [], null, [], "The model's answer was not one I could read. Try again.", "unreadable")));
 
-        var page = new ItemPage(bench.Mode, new PanelNavigator(), bench.BuildId);
+        var page = new ItemPage(bench.Mode, new PanelNavigator(), bench.BuildId, prompts: null);
         var window = Show(page);
 
         await bench.Talk.AskAsync(bench.BuildId, "Make it a better explorer.", InputSource.Spoken, CancellationToken.None);

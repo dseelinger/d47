@@ -86,7 +86,7 @@ public sealed class ACastMemberWithNoSeatIsHeardOverCommsTests
         Assert.Equal(before.Switched, after.Switched);
         Assert.Equal(before.AwaitingSeat, after.AwaitingSeat);
         Assert.Equal(["first", "second"], StoryAboard.BySpan(Two, after));
-        Assert.Equal(["first", "second"], fixtures.Director.CastAboard("F1"));
+        Assert.Equal(["first", "second"], fixtures.CastAboard("F1"));
 
         ship = Anaconda;
 

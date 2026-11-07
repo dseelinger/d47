@@ -37,9 +37,6 @@ public sealed record StoryFilter(
     /// <summary>Whether the filter keeps every card in catalogue order.</summary>
     public bool IsDefault => AnyLevel && LengthIndex is null && MinStars is null && Sort == StorySort.Catalogue && !InTheBlack;
 
-    /// <summary>Whether the card matches ignoring ratings; <see cref="MinStars"/>, if set, then fails every card.</summary>
-    public bool Matches(StoryCard card) => Matches(card, StoryRatings.Empty);
-
     /// <summary>
     /// Whether the card has the level, if one is set, a length that satisfies the comparison and, if <see cref="MinStars"/>
     /// is set, a rated <see cref="StoryRating.Stars"/> at least that high; an unknown <see cref="Length"/> compares as Any.

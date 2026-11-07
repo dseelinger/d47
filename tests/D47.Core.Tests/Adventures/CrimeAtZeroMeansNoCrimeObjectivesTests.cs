@@ -42,7 +42,8 @@ public sealed class CrimeAtZeroMeansNoCrimeObjectivesTests
 
         for (var seed = 1u; seed <= 200; seed++)
         {
-            var planned = await generator.ShortPlanAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Short, CrimeRefused: true), AdventureGenerator.ShortWants.None, seed, TestContext.Current.CancellationToken);
+            var ask = new AdventureAsk(AdventureReach.Session, AdventureLength.Short, CrimeRefused: true);
+            var planned = await generator.ShortPlanAsync(ask, AdventureGenerator.Facts.Of(PlannedChapterWorld.State(), ask), AdventureGenerator.ShortWants.None, seed, TestContext.Current.CancellationToken);
 
             if (planned.Plan is { } plan)
             {

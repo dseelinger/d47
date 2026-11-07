@@ -188,7 +188,7 @@ public class TheChecklistAndTheBuildDriftApartTests
         // ordering is what there is to lose.
         var scope = bench.Store.Builds.Single(build => build.ShipId == 12).Scope!;
 
-        bench.Checklists.Move(new ChecklistItemId(scope, promoted[^1]), -1);
+        bench.Checklists.Move(new ChecklistItemId(scope, promoted[^1]), ChecklistMove.Up);
 
         var theirs = Order(bench.Checklists);
 

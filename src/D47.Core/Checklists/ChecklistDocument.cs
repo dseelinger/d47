@@ -284,9 +284,6 @@ public sealed record ChecklistDocument
             $"Removed \"{item.Text}\".");
     }
 
-    /// <summary>Removes every Done line, whatever its kind, source or scope (#259).</summary>
-    public ChecklistChange DeleteCompleted() => DeleteCompleted(_ => true);
-
     /// <summary>Removes the completed lines that satisfy <paramref name="within"/>.</summary>
     public ChecklistChange DeleteCompleted(Func<ChecklistItem, bool> within)
     {

@@ -239,13 +239,13 @@ public sealed class AStoryCharacterBoardsAndLeavesAtAnObjectiveTests
         Assert.True(reopened.Poll());
         Assert.Equal(["rider"], reopened.Find("F1", first)!.Beats[0].Boards);
 
-        Assert.Empty(fixtures.Director.CastAboard("F1"));
+        Assert.Empty(fixtures.CastAboard("F1"));
         Assert.Equal(0.3, fixtures.Director.LineVoice("F1", "rider")!.Pinned!.Link);
         Assert.Null(fixtures.Director.LineVoice("F1", "rider", 0)!.Pinned!.Link);
 
         fixtures.Book.Observe(AdventureFixtures.Jump(chapter.Beats[0].Trigger.SystemAddress!.Value, Now.AddMinutes(1)), "F1");
 
-        Assert.Equal(["rider"], fixtures.Director.CastAboard("F1"));
+        Assert.Equal(["rider"], fixtures.CastAboard("F1"));
         Assert.Null(fixtures.Director.LineVoice("F1", "rider")!.Pinned!.Link);
         Assert.Equal(0.3, fixtures.Director.LineVoice("F1", "rider", -1)!.Pinned!.Link);
 

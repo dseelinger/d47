@@ -437,16 +437,10 @@ public sealed class SettingsService
     public bool HasSecret(SettingRow row) => HasSecret(SecretNameFor(row));
 
     /// <summary>
-    /// Whether this row's secret is stored, from the names alone, for whoever is flying when the row is the
-    /// Commander's.
-    /// </summary>
-    public bool HoldsSecret(SettingRow row) => SecretNameFor(row) is { } name && HoldsSecret(name);
-
-    /// <summary>
     /// The name a secret row is stored under: its own for the installation, the flying Commander's for a
     /// Commander row, and null for a Commander row before anyone has been identified.
     /// </summary>
-    private string? SecretNameFor(SettingRow row) =>
+    internal string? SecretNameFor(SettingRow row) =>
         row.Scope != SettingScope.Commander ? row.SecretName
         : row.SecretName is { } secretName && _commanderFid is { } fid ? CommanderSecret.Name(secretName, fid)
         : null;

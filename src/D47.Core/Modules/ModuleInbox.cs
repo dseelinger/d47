@@ -51,9 +51,6 @@ public sealed class ModuleInbox
         }
     }
 
-    /// <summary>Takes every notice, in the order posted.</summary>
-    public IReadOnlyList<ModuleNotice> Drain() => Drain<ModuleNotice>();
-
     /// <summary>Takes the notices of one kind, in the order posted, and leaves the rest queued.</summary>
     public IReadOnlyList<T> Drain<T>()
         where T : ModuleNotice

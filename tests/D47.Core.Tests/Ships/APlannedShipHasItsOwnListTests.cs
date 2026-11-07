@@ -259,7 +259,7 @@ public class APlannedShipHasItsOwnListTests
 
         for (var step = 0; step < 10; step++)
         {
-            checklists.Move(note.Id, -1);
+            checklists.Move(note.Id, ChecklistMove.Up);
         }
 
         var listed = Listed(checklists, build);

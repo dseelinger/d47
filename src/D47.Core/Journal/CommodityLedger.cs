@@ -107,8 +107,6 @@ public sealed class CommodityLedger
         }
     }
 
-    public void Apply(JournalEvent journalEvent) => Apply([journalEvent]);
-
     /// <summary>Folds the journal files on disk that cover a window, oldest first.</summary>
     public int FoldHistory(IFileSystem fileSystem, string directory, DateTimeOffset since, ILogger logger)
     {

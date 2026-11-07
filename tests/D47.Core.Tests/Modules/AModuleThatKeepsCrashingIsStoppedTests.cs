@@ -10,7 +10,7 @@ public class AModuleThatKeepsCrashingIsStoppedTests
     [Fact]
     public void ThreeExitsAreRestartedAfterTwoTenAndThirtySeconds()
     {
-        var restarts = new ModuleRestarts();
+        var restarts = new ModuleRestarts(ModuleRestarts.Waits);
 
         Assert.Equal(TimeSpan.FromSeconds(2), restarts.Exited(Start));
         Assert.Equal(TimeSpan.FromSeconds(10), restarts.Exited(Start.AddMinutes(1)));
@@ -20,7 +20,7 @@ public class AModuleThatKeepsCrashingIsStoppedTests
     [Fact]
     public void TheFourthExitWithinTenMinutesStopsIt()
     {
-        var restarts = new ModuleRestarts();
+        var restarts = new ModuleRestarts(ModuleRestarts.Waits);
 
         restarts.Exited(Start);
         restarts.Exited(Start.AddMinutes(3));
@@ -32,7 +32,7 @@ public class AModuleThatKeepsCrashingIsStoppedTests
     [Fact]
     public void AnExitTenMinutesOldNoLongerCounts()
     {
-        var restarts = new ModuleRestarts();
+        var restarts = new ModuleRestarts(ModuleRestarts.Waits);
 
         restarts.Exited(Start);
         restarts.Exited(Start.AddMinutes(3));
@@ -44,7 +44,7 @@ public class AModuleThatKeepsCrashingIsStoppedTests
     [Fact]
     public void ExitsSpreadOverHoursAreAlwaysRestartedAfterTwoSeconds()
     {
-        var restarts = new ModuleRestarts();
+        var restarts = new ModuleRestarts(ModuleRestarts.Waits);
 
         for (var hour = 0; hour < 6; hour++)
         {
@@ -55,7 +55,7 @@ public class AModuleThatKeepsCrashingIsStoppedTests
     [Fact]
     public void RestartClearsTheCount()
     {
-        var restarts = new ModuleRestarts();
+        var restarts = new ModuleRestarts(ModuleRestarts.Waits);
 
         restarts.Exited(Start);
         restarts.Exited(Start.AddSeconds(10));

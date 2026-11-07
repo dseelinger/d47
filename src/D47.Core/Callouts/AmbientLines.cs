@@ -96,16 +96,8 @@ public static class AmbientLines
         _ => [],
     };
 
-    /// <summary>One of them, chosen by an index the caller supplies.</summary>
-    public static string? Pick(AmbientSituation situation, int index)
-    {
-        var lines = For(situation);
-
-        return lines.Count == 0 ? null : lines[Math.Abs(index) % lines.Count];
-    }
-
     /// <summary>
-    /// <see cref="Pick(AmbientSituation, int)"/>, skipping forward past a line the ship makes false: the
+    /// One of the lines, chosen by an index the caller supplies, skipping forward past a line the ship makes false: the
     /// shields line unless shields are up, the docking computer line unless one is fitted.
     /// </summary>
     public static string? Pick(AmbientSituation situation, int index, GameStatus status, ShipLoadout? ship)

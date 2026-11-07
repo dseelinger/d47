@@ -4,6 +4,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.11" />
     <InternalsVisibleTo Include="D47.Core.Tests" />
+    <InternalsVisibleTo Include="D47.TestSupport" />
   </ItemGroup>
 
   <ItemGroup>

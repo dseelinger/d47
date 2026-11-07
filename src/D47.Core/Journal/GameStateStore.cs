@@ -264,10 +264,6 @@ public sealed class GameStateStore
         }
     }
 
-    public FoldReceipt Apply(JournalEvent journalEvent) => Apply(journalEvent, null);
-
-    public FoldReceipt Apply(JournalEvent journalEvent, SurfaceFix? at) => Apply(journalEvent, at, priming: false);
-
     /// <summary>Folds one event in, says so when it moved the Commander to another system, and returns what it changed.</summary>
     /// <param name="at">
     /// Where the Commander was standing when this event landed, from <c>Status.json</c>.

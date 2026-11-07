@@ -271,6 +271,12 @@ internal sealed class StoryFixtures : IDisposable
 
     public StoryDirector Director { get; }
 
+    /// <summary>The current story's cast aboard at <paramref name="beat"/>; empty when no story is current.</summary>
+    public IReadOnlyList<string> CastAboard(string? frontierId, int? beat = null) =>
+        Stories.Current(frontierId) is { } story && Director.Catalog.Secret(story.Id) is { } secret
+            ? Director.CastAboard(frontierId, story, secret, beat)
+            : [];
+
     public string? Backstory { get; set; }
 
     /// <summary>Where the Commander is, for the nearest beacon.</summary>

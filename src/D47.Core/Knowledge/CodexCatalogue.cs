@@ -112,9 +112,6 @@ public static class CodexCatalogue
 
     public static CodexTable Table => Loaded.Value;
 
-    /// <summary>The entries reported in the region, most systems first.</summary>
-    public static IReadOnlyList<CodexRegionEntry> InRegion(int regionId) => Loaded.Value.InRegion(regionId);
-
     private static CodexTable Load()
     {
         using var stream = typeof(CodexCatalogue).GetTypeInfo().Assembly.GetManifestResourceStream(ResourceName);

@@ -54,15 +54,7 @@ public sealed partial class AdventureGenerator
     /// then drawn ones from the Commander's career weights, the barred activities refused, stops to fill the count for its length, and
     /// the arrival in the system named last.
     /// </summary>
-    internal async Task<ChapterPlanResult> ShortPlanAsync(AdventureAsk ask, ShortWants wants, uint seed, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(ask);
-        ArgumentNullException.ThrowIfNull(wants);
-
-        return await ShortPlanAsync(ask, Facts.Of(state(), ask), wants, seed, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task<ChapterPlanResult> ShortPlanAsync(AdventureAsk ask, Facts facts, ShortWants wants, uint seed, CancellationToken cancellationToken)
+    internal async Task<ChapterPlanResult> ShortPlanAsync(AdventureAsk ask, Facts facts, ShortWants wants, uint seed, CancellationToken cancellationToken)
     {
         if (wants.LeaveOut.Count > 0)
         {
