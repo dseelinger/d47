@@ -105,6 +105,7 @@ public sealed class TheAudioPlayerSeeksTests
         var bar = Named<SeekBar>(dialog, AudioPlayerDialog.SeekName);
 
         Assert.False(bar.Draggable);
+        Assert.Equal(AudioPlayerDialog.PollEveryInHeadset, dialog.PollInterval);
         bar.Press(0.5);
         bar.Release(0.5);
 

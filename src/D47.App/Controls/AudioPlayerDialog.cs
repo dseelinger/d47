@@ -43,8 +43,11 @@ public sealed class AudioPlayerDialog : ModalDialog
 
     public const string LengthName = "AudioPlayerLength";
 
-    /// <summary>How often the bar and times are read while the dialog is open.</summary>
+    /// <summary>How often the bar and times are read while a draggable dialog is open.</summary>
     public static readonly TimeSpan PollEvery = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>How often they are read on the headset's big panel, where each update redraws the overlay.</summary>
+    public static readonly TimeSpan PollEveryInHeadset = TimeSpan.FromSeconds(1);
 
     private readonly PanelViewModel _model;
     private readonly SettingsService _settings;
@@ -83,6 +86,7 @@ public sealed class AudioPlayerDialog : ModalDialog
         _progress = progress;
         _seek = seek;
         _bar.Draggable = seek is not null;
+        _poll.Interval = seek is null ? PollEveryInHeadset : PollEvery;
         _bar.Dragged += OnDragged;
         _bar.Released += OnReleased;
         _poll.Tick += (_, _) => Poll();
@@ -251,6 +255,8 @@ public sealed class AudioPlayerDialog : ModalDialog
     }
 
     internal bool Polling => _poll.IsEnabled;
+
+    internal TimeSpan PollInterval => _poll.Interval;
 
     /// <summary>Reads the track's position and length and redraws the bar and times; a held drag keeps its own.</summary>
     internal void Poll()
