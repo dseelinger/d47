@@ -205,8 +205,20 @@ public static class FirstRun
             }
         }
 
-        return draft;
+        return EverySlotFollowsTheShip(draft);
     }
+
+    /// <summary>The settings with no per-slot provider, so every voice slot follows the ship's provider.</summary>
+    public static D47Settings EverySlotFollowsTheShip(D47Settings settings) =>
+        settings.Speech.GroupProviders is { Count: 0 }
+            ? settings
+            : settings with
+            {
+                Speech = settings.Speech with
+                {
+                    GroupProviders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                },
+            };
 
     private static bool IsListeningKey(string key) =>
         key is ListeningCapability.ProviderKey or ListeningCapability.PushToTalkKeyKey
@@ -234,11 +246,16 @@ public static class FirstRun
     {
         var effective = Effective(choices, name => settings.HasSecret(name), microphone);
 
-        return [.. Changes(effective)
+        var refused = Changes(effective)
             .Where(change => microphone || !IsListeningKey(change.Key))
             .Select(change => change.Value is { Length: > 0 } && IsBinding(change.Key)
                 ? settings.Move(change.Key, change.Value, SettingsCaller.Panel)
                 : settings.Apply(change.Key, change.Value, SettingsCaller.Panel))
-            .Where(result => !result.Ok)];
+            .Where(result => !result.Ok)
+            .ToList();
+
+        settings.Replace("setup voice for every slot", EverySlotFollowsTheShip);
+
+        return refused;
     }
 }

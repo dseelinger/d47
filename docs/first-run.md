@@ -55,7 +55,7 @@ is not stored. **SKIP SETUP** and Esc close it with every setting unchanged. Not
    only)* leaves D47 answering only what it understands without a model. The providers are compared
    under [Conversation](choosing-providers.html#conversation).
 3. **Voice.** How D47 speaks. The default is Edge Neural, which needs no account. *None* leaves
-   replies as text. See [Voice](choosing-providers.html#voice).
+   replies as text. The choice applies to every voice slot. See [Voice](choosing-providers.html#voice).
 4. **Listening.** How your speech becomes text. The default is This computer, running Whisper, so
    audio stays here. See [Listening](choosing-providers.html#listening).
 5. **Keys.** Appears only when a chosen provider needs a key. Each key is asked for once, however
@@ -82,7 +82,8 @@ The Talk button step also offers a comms key, on a key, a stick button or both. 
 unless you bind it. Hold it to speak to whoever the comms channel names instead of to D47, as
 [Comms](capabilities/comms.html#choose-who-your-comms-key-reaches) describes.
 
-Everything setup chooses can be changed later in Settings.
+Everything setup chooses can be changed later in Settings. Saving setup again puts every voice slot
+back on the chosen voice.
 
 ## Keys
 

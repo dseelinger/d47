@@ -283,9 +283,8 @@ is cast rather than merely given a larynx, and the same core on Edge or ElevenLa
 nothing to switch on: it happens whenever the core speaks through OpenAI with personality on.
 
 One limitation. Directive 47 keeps **one connection per provider** shared across all six voice
-slots, so if you also put the carrier or the NPCs on OpenAI, they are performed the same way. The
-default puts everything carrying another player's words on Edge, so this usually reaches the core
-and nothing else.
+slots, so when the carrier and the NPCs follow a setup voice of OpenAI, they are performed the same way
+as the core.
 
 **Cartesia is here for the size of the library.** Cartesia has the largest voice library here,
 tagged with a language, an accent, a country and a gender — which
@@ -531,16 +530,18 @@ from somewhere else, and each of these rows says where:
 | Slot | Who is in it | Where it starts |
 |---|---|---|
 | Aboard | Your core and your crew | The [voice provider](#provider) row above |
-| Carrier | Your fleet carrier's captain and its tower | Edge Neural |
-| NPCs | Stations, police, and every other ship the game speaks for | Edge Neural |
-| People you know | Your friends, your wing and your squadron | Edge Neural |
-| Direct messages | A Commander messaging you directly | Edge Neural |
-| Anyone in range | Local and system chat — anybody at all | Edge Neural |
+| Carrier | Your fleet carrier's captain and its tower | The voice you chose in setup |
+| NPCs | Stations, police, and every other ship the game speaks for | The voice you chose in setup |
+| People you know | Your friends, your wing and your squadron | The voice you chose in setup |
+| Direct messages | A Commander messaging you directly | The voice you chose in setup |
+| Anyone in range | Local and system chat — anybody at all | The voice you chose in setup |
 
-Leaving a row empty puts that slot back on your ship's provider. Nothing has to be set: a fresh
-install has the two voices in your cockpit on whatever you chose, and everybody else on Edge.
+Leaving a row empty puts that slot back on your ship's provider. Nothing has to be set: every slot
+uses the voice you chose in setup, and saving setup again puts every slot back on that voice.
 
-Slots carrying other players' text start on Edge because a paid provider bills by the character.
+A paid provider in the Carrier, NPCs, People you know, Direct messages or Anyone in range slots bills
+by the character, including for text other players wrote. OpenAI cannot be told a language, so it is
+never used for People you know, Direct messages or Anyone in range; those three speak on Edge.
 
 **Free is not the same as private.** Edge Neural costs nothing and still sends every line to
 `speech.platform.bing.com`. Putting local chat on Edge means nobody can run up a bill with it; it

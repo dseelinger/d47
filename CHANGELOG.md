@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Setup now puts every voice slot on the voice you choose there: Aboard, Carrier, NPCs, People you know, Direct messages and Anyone in range. Before, only the cockpit used it and the other five stayed on Edge Neural. Saving setup again puts every slot back on that voice. OpenAI is still never used for People you know, Direct messages or Anyone in range; those speak on Edge. A paid voice chosen in setup now also voices invented NPC chatter from the first launch, which is billed by the character.
+
 On **Commander › Ledgers**, a ledger now opens in place under its row instead of on a page of its own: press BGS work, Combat stats, Credits, Codex or This session and its content appears below the row, and pressing the row again closes it. One ledger is open at a time. Going into a Codex region or a Credits transaction page and pressing Back returns to Ledgers with that ledger still open. **This session** is now a ledger on that list and no longer a Commander sub-tab; saying or searching for it, or for any ledger, opens Ledgers with that ledger open.
 
 The **Activities** page has moved from Commander › Checklist to Commander › Statistics, where it is an entry in the sidebar below the game's sections and shows before the game has written any statistics. The Checklist no longer has an Activities button. D47 no longer suggests activities, since Goals-based stories do that: the Suggest checkbox is gone and every activity name is white, "what haven't I done in a while" and "don't suggest mining" are no longer commands, and the page lists the activities with no date in your journals first. "When did I last go mining" still answers.
