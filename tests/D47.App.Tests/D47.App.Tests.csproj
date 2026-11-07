@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <None Include="Fixtures\ships\*" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="UnreachableSymbols.txt" LogicalName="UnreachableSymbols.txt" />
     <None Include="..\D47.Knowledge.Tests\Fixtures\spansh-fleetcarrier-route-sol-colonia-sol.json" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
