@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -127,6 +127,11 @@ public sealed class StandingPage : UserControl
             _body.Children.Add(new StackPanel { Spacing = 10, Children = { heading, chooser } });
         }
 
+        if (_goals is not null)
+        {
+            _body.Children.Add(_goals);
+        }
+
         _body.Children.Add(TitleText.Group("Reputation", "Where you stand with each power, from −100 to 100."));
 
         var rows = new StackPanel { Spacing = 2 };
@@ -149,11 +154,6 @@ public sealed class StandingPage : UserControl
         navies.Children.Add(federal);
 
         _body.Children.Add(navies);
-
-        if (_goals is not null)
-        {
-            _body.Children.Add(_goals);
-        }
     }
 
     private static Control ReputationRow(string label, FactionReading? reading)
