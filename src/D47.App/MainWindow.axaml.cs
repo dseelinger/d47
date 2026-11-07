@@ -258,7 +258,7 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
-            // Commander roots land in call order: Checklist, Watches, Missions, Progress, Statistics, This session, Ledgers, Commanders.
+            // Commander roots land in call order: Checklist, Watches, Missions, Progress, Statistics, Ledgers, Commanders.
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book);
             if (host.WatchesDesk is { } watchesDesk)
             {
@@ -272,7 +272,6 @@ public partial class MainWindow : Window
                 host.Clipboard is { } missionClipboard ? text => missionClipboard.SetTextAsync(text) : null);
             Panel.EnableStanding(() => host.GameState.Active, host.Goals?.Book, host.Goals?.Backfill);
             Panel.EnableStatistics(() => host.GameState.Active, host.Activities);
-            Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableBgsWork(
                 () => host.GameState.Active,
                 () => host.BgsTick?.Last,
@@ -282,6 +281,7 @@ public partial class MainWindow : Window
             Panel.EnableCombatStats(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCredits(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCodex(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow, host.CodexPictureSet);
+            Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableCommanders(host.Commanders);
 
             if (ModulesSource is { } modulesSource)

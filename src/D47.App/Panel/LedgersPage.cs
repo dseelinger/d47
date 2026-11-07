@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -13,12 +13,12 @@ public sealed record LedgerRow(NavCrumb Crumb, string Description)
     public string Name => Crumb.Word;
 }
 
-/// <summary>Commander › Ledgers: one pressable row per ledger this surface declared under it (#1291).</summary>
+/// <summary>Commander › Ledgers: one pressable row per ledger this surface declared under it; the open one is drawn below its row (#1291).</summary>
 public sealed class LedgersPage : UserControl, IPageSummary
 {
     public const string RootKey = "ledgers";
 
-    public const string SummaryText = "Your record from the journals, one ledger to a page.";
+    public const string SummaryText = "Your record from the journals, one ledger at a time.";
 
     private const double NameWidth = 180;
 
@@ -30,20 +30,34 @@ public sealed class LedgersPage : UserControl, IPageSummary
         (CombatStatsPage.PageKey, "Your kills and the credits they were awarded."),
         (CreditsPage.PageKey, "Where your credits came from and where they went."),
         (CodexPage.PageKey, "The codex entries you have logged, by region."),
+        (SessionPage.RootKey, "What you have earned and done since the game started."),
     ];
 
-    public LedgersPage(PanelNavigator nav)
+    /// <param name="nav">The surface's navigator; a ledger is open while it is the trail's leaf.</param>
+    /// <param name="content">Draws an open ledger's page.</param>
+    /// <param name="open">The key of the ledger drawn open, or null.</param>
+    public LedgersPage(PanelNavigator nav, Func<NavCrumb, Control>? content = null, string? open = null)
     {
         var list = new StackPanel { Spacing = Gaps.Tile };
 
         foreach (var row in Rows(nav))
         {
-            list.Children.Add(Row(row, () => nav.Drill(row.Crumb)));
+            var isOpen = content is not null && row.Crumb.Key == open;
+
+            list.Children.Add(Row(row, isOpen, () => _ = isOpen ? nav.Back() : nav.Drill(row.Crumb)));
+
+            if (isOpen)
+            {
+                list.Children.Add(content!(row.Crumb));
+            }
         }
 
         Margin = new Thickness(14);
         Content = LoadoutPages.Scrolling(list);
     }
+
+    /// <summary>A ledger's crumb: the level that is drawn as the Ledgers page with this ledger open.</summary>
+    public static NavCrumb Ledger(string key, string word) => new(key, word) { Whole = true, Level = RootKey };
 
     public static NavCrumb Root => new(RootKey, "Ledgers")
     {
@@ -74,7 +88,7 @@ public sealed class LedgersPage : UserControl, IPageSummary
         ];
     }
 
-    private static Button Row(LedgerRow row, Action pressed)
+    private static Button Row(LedgerRow row, bool open, Action pressed)
     {
         var name = ListRow.Name(new TextBlock
         {
@@ -95,7 +109,7 @@ public sealed class LedgersPage : UserControl, IPageSummary
 
         var chevron = new TextBlock
         {
-            Text = "›",
+            Text = open ? "−" : "›",
             FontSize = TypeScale.Figure,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -120,7 +134,7 @@ public sealed class LedgersPage : UserControl, IPageSummary
             Padding = new Thickness(16, 6),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center,
-        });
+        }, open);
 
         Avalonia.Automation.AutomationProperties.SetName(button, row.Name);
         button.Click += (_, _) => pressed();

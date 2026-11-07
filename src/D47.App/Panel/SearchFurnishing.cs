@@ -577,7 +577,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
 
     private void OpenCodexEntry(CodexEntry entry) =>
         PageTrail.Open(host.Nav, LedgersPage.RootKey, [
-            new NavCrumb(CodexPage.PageKey, "Codex"),
+            LedgersPage.Ledger(CodexPage.PageKey, "Codex"),
             CodexPage.RegionCrumb(null),
             CodexPage.EntryCrumb(null, entry.EntryId, entry.Name)]);
 

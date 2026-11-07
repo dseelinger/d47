@@ -1,9 +1,9 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Commander tab: Checklist, Watches, Missions, Progress, Statistics, This session, Ledgers and Commanders.</summary>
+/// <summary>The Commander tab: Checklist, Watches, Missions, Progress, Statistics, Ledgers (with This session among them) and Commanders.</summary>
 internal sealed class CommanderFurnishing(IPanelTabHost host)
 {
     private Func<NavCrumb, Control>? _checklistBuild;
@@ -212,13 +212,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
         _sessionBuild = _ => _session = new SessionPage(state, clock);
 
-        host.Furnish(
-            PanelTab.Commander,
-            BuildCommander,
-            new NavCrumb(SessionPage.RootKey, "This session")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            });
+        DeclareLedger(SessionPage.RootKey, "This session");
     }
 
     public void EnableBgsWork(
@@ -231,7 +225,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
         _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, headset, host.ColumnWidths, host.Copy, squadronFaction);
 
-        DeclareLedger(new NavCrumb(BgsWorkPage.PageKey, "BGS work"));
+        DeclareLedger(BgsWorkPage.PageKey, "BGS work");
     }
 
     public void EnableCombatStats(
@@ -243,7 +237,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
         _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset, host.ColumnWidths, host.Copy);
 
-        DeclareLedger(new NavCrumb(CombatStatsPage.PageKey, "Combat stats"));
+        DeclareLedger(CombatStatsPage.PageKey, "Combat stats");
     }
 
     public void EnableCredits(
@@ -264,7 +258,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             return _creditTransactions = new CreditTransactionsPage(state, history, now, choice, CreditsPage.KindOf(crumb.Key), headset, host.ColumnWidths);
         };
 
-        DeclareLedger(new NavCrumb(CreditsPage.PageKey, "Credits"));
+        DeclareLedger(CreditsPage.PageKey, "Credits");
     }
 
     public void EnableCodex(
@@ -287,7 +281,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav, columnWidths: host.ColumnWidths, copy: host.Copy)
             : _codex = new CodexPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths);
 
-        DeclareLedger(new NavCrumb(CodexPage.PageKey, "Codex"));
+        DeclareLedger(CodexPage.PageKey, "Codex");
     }
 
     private Control PicturePage(string crumb, CodexPictureKey picture, CodexPictureSet pictures, CodexPictureWork work) =>
@@ -295,11 +289,11 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             ? new CodexChoosePage(picture, pictures, host.Nav, work)
             : new CodexCropPage(picture, pictures, host.Nav, work, CodexPage.IsRecrop(crumb));
 
-    /// <summary>Furnishes the Ledgers root, once, and declares <paramref name="ledger"/> under it as a page that fills the strip.</summary>
-    private void DeclareLedger(NavCrumb ledger)
+    /// <summary>Furnishes the Ledgers root, once, and declares a ledger under it that is drawn open on the Ledgers page.</summary>
+    private void DeclareLedger(string key, string word)
     {
         host.Furnish(PanelTab.Commander, BuildCommander, LedgersPage.Root);
-        host.Nav.Declare(LedgersPage.RootKey, ledger with { Whole = true });
+        host.Nav.Declare(LedgersPage.RootKey, LedgersPage.Ledger(key, word));
     }
 
     public void EnableCommanders(CommanderRoster roster)
@@ -348,7 +342,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= statistics.Tick();
         }
 
-        if (_session is { } session && root == SessionPage.RootKey)
+        if (_session is { } session && leaf == SessionPage.RootKey)
         {
             changed |= session.Tick();
         }
@@ -387,12 +381,19 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
     /// <summary>Draws a Commander level: Missions, Progress, Statistics, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
+        IsLedger(crumb.Key) ? new LedgersPage(host.Nav, Page, crumb.Key)
+        : Page(crumb);
+
+    private static bool IsLedger(string key) =>
+        key is BgsWorkPage.PageKey or CombatStatsPage.PageKey or CreditsPage.PageKey or CodexPage.PageKey or SessionPage.RootKey;
+
+    private Control Page(NavCrumb crumb) =>
         IsWatches(crumb.Key) && _watchesBuild is { } watches ? watches(crumb)
         : crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
         : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
         : (crumb.Key == StatisticsPage.RootKey || crumb.Key == StatisticsPage.ActivitiesKey) && _statisticsBuild is { } statistics ? statistics(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
-        : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav)
+        : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav, Page)
         : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)

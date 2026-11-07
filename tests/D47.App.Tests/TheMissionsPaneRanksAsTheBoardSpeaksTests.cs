@@ -155,7 +155,7 @@ public class TheMissionsPaneRanksAsTheBoardSpeaksTests
         var (window, panel) = Open(State(Board));
 
         string[] keys = [.. panel.Nav.Roots(PanelTab.Commander).Select(root => root.Key)];
-        Assert.Equal(["checklist", MissionsPage.RootKey, StandingPage.RootKey, StatisticsPage.RootKey, SessionPage.RootKey], keys);
+        Assert.Equal(["checklist", MissionsPage.RootKey, StandingPage.RootKey, StatisticsPage.RootKey, LedgersPage.RootKey], keys);
         Assert.Equal("Missions", panel.Nav.Roots(PanelTab.Commander)[1].Word);
 
         window.Close();

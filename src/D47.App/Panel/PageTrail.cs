@@ -1,4 +1,4 @@
-using D47.Core.Capabilities;
+﻿using D47.Core.Capabilities;
 using D47.Core.Interface;
 using D47.Core.Knowledge;
 using D47.Core.Ships;
@@ -14,7 +14,7 @@ public static class PageTrail
             ? (single.Root, [single.Crumb])
             : page.Kind == PageKind.CodexEntry
                 ? (LedgersPage.RootKey, [
-                    new NavCrumb(CodexPage.PageKey, "Codex"),
+                    LedgersPage.Ledger(CodexPage.PageKey, "Codex"),
                     CodexPage.RegionCrumb(page.Region),
                     CodexPage.EntryCrumb(page.Region, page.Id, page.Name ?? "Entry")])
                 : null;

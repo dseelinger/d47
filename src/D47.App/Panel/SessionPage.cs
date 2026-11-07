@@ -9,7 +9,7 @@ using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › This session: what the session has earned and done since the game started (#554).</summary>
+/// <summary>Commander › Ledgers › This session: what the session has earned and done since the game started (#554).</summary>
 public sealed class SessionPage : UserControl
 {
     public const string RootKey = "session";

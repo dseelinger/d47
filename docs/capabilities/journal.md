@@ -1,4 +1,4 @@
----
+﻿---
 title: Journal
 group: Foundation
 nav_order: 102
@@ -495,7 +495,7 @@ worse than a missing one.
 
 ### Combat stats {#combat-stats}
 
-The Combat stats ledger (Commander › Ledgers › Combat stats) lists your kills and the credits they were
+The Combat stats ledger (Commander › Ledgers, open Combat stats) lists your kills and the credits they were
 awarded, counted from the journals on this PC. Choose a period (24 hours, 7 days, 30 days or Everything) and a grouping (Enemy ship,
 Own ship, System or Faction). Press a column heading to sort, and the panel search narrows the rows by name.
 
@@ -517,7 +517,7 @@ else is sent: no key, no Commander name, no position and nothing else from your 
 
 Pictures you save yourself are kept in the same folder and never leave this PC.
 
-To make your own, say "take a picture" in game, then open the entry's page in the main window (Commander › Ledgers › Codex, then the
+To make your own, say "take a picture" in game, then open the entry's page in the main window (Commander › Ledgers, open Codex, then the
 region and the entry) and press **Choose a picture**. The captures are listed newest first,
 those taken with this entry ahead of the rest. Press one to crop it: drag inside the square to move it and
 drag a corner to resize it. The square stays inside the capture and is never smaller than 384 pixels of it.
@@ -550,7 +550,7 @@ act on the active Commander's picture only. Stock pictures are shared either way
 ### Open new codex entries {#open-new-codex-entries}
 
 When you log a codex entry for the first time, the panel opens that entry's page, in the window and on the
-headset panel, under Commander › Ledgers › Codex, in the region and then the entry. It is on by default. A surface showing a
+headset panel, under Commander › Ledgers, with Codex open, in the region and then the entry. It is on by default. A surface showing a
 dialog page or a keyboard entry stays where it is, and the others still move. When several entries are
 logged at once, the last one's page is shown. Entries replayed from the journal when D47 starts open nothing.
 

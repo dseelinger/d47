@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -71,7 +71,7 @@ public class TheSessionScreenCountsFromTheLoadGameTests
         window.Show();
 
         panel.Tab = PanelTab.Commander;
-        panel.Nav.SelectRoot(PanelTab.Commander, SessionPage.RootKey);
+        panel.Nav.Show(SessionPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel, state);
@@ -84,13 +84,16 @@ public class TheSessionScreenCountsFromTheLoadGameTests
         panel.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == text);
 
     [AvaloniaFact]
-    public void ThisSessionIsTheCommanderTabsThirdRoot()
+    public void ThisSessionIsALedgerAndNotACommanderSubTab()
     {
         var (window, panel, _) = Open(Flight);
 
-        var roots = panel.Nav.Roots(PanelTab.Commander);
-        Assert.Equal(SessionPage.RootKey, roots[2].Key);
-        Assert.Equal("This session", roots[2].Word);
+        Assert.DoesNotContain(panel.Nav.Roots(PanelTab.Commander), root => root.Key == SessionPage.RootKey);
+        Assert.Contains(
+            panel.Nav.Destinations,
+            destination => destination.Root.Key == LedgersPage.RootKey && destination.SubPage?.Key == SessionPage.RootKey);
+        Assert.Equal(["Ledgers", "This session"], panel.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Single(panel.GetVisualDescendants().OfType<LedgersPage>());
 
         window.Close();
     }

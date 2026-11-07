@@ -667,7 +667,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Activities.ActivityLedger? activities = null) => _commander.EnableStatistics(state, activities);
 
-    /// <summary>Gives this surface Commander › This session, after Statistics.</summary>
+    /// <summary>Gives this surface Commander › Ledgers › This session.</summary>
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableSession(state);
 
     /// <summary>Gives this surface Commander › Ledgers › BGS work.</summary>
@@ -2557,7 +2557,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         var showing = Nav.RootKeyOf(Nav.Tab);
         showing = showing == RawJournalRoot ? JournalRoot : showing;
 
-        ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtRoot;
+        ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && (Nav.AtRoot || LedgerOpenInPlace);
         ModeReadings.ItemSpacing = Classes.Contains("headset") ? 16 : 24;
 
         ShowPageBar();
@@ -2691,6 +2691,9 @@ public partial class PanelView : UserControl, IPanelTabHost
         Nav.SelectRoot(roots[index].Key);
     }
 
+    /// <summary>A ledger is open on the Ledgers page itself, which stays the level the Commander is on.</summary>
+    private bool LedgerOpenInPlace => Nav.Trail is [_, { Level: LedgersPage.RootKey }];
+
     /// <summary>The trail, rebuilt.</summary>
     private void DrawCrumbs()
     {
@@ -2698,7 +2701,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         var trail = Nav.Trail;
 
-        if (trail.Count <= 1)
+        if (trail.Count <= 1 || LedgerOpenInPlace)
         {
             return;
         }

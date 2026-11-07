@@ -129,7 +129,6 @@ public sealed record MiniPanelServices
                 Clipboard is null ? null : text => Clipboard.SetTextAsync(text));
             view.EnableStanding(gameState, Goals, BackfillGoals);
             view.EnableStatistics(gameState, Activities);
-            view.EnableSession(gameState);
             view.EnableBgsWork(
                 gameState,
                 BgsTick ?? (() => null),
@@ -138,6 +137,7 @@ public sealed record MiniPanelServices
             view.EnableCombatStats(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCredits(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCodex(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow, CodexPictures);
+            view.EnableSession(gameState);
         }
 
         if (Commanders is not null)
