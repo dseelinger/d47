@@ -75,7 +75,7 @@ public class ToolCallingTests
             clock: new InstantClock());
 
         loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
+        return loop.Recording();
     }
 
     private static async Task<(TurnResult Result, List<TurnEvent> Events)> RunAsync(TurnLoop loop, string input)
@@ -270,7 +270,7 @@ public class ToolCallingTests
         Assert.Equal(2, provider.CallCount);
         Assert.Single(spy.Calls);
         Assert.DoesNotContain(
-            loop.History.SelectMany(message => message.Content),
+            loop.History().SelectMany(message => message.Content),
             part => part is ConversationContent.ToolUse { Id: "c2" });
     }
 
@@ -366,16 +366,16 @@ public class ToolCallingTests
         await RunAsync(loop, "how far is Colonia");
 
         Assert.Contains(
-            loop.History.SelectMany(message => message.Content).OfType<ConversationContent.ToolUse>(),
+            loop.History().SelectMany(message => message.Content).OfType<ConversationContent.ToolUse>(),
             call => call.Name == "look_up_distance");
 
         Assert.Contains(
-            loop.History.SelectMany(message => message.Content).OfType<ConversationContent.ToolResult>(),
+            loop.History().SelectMany(message => message.Content).OfType<ConversationContent.ToolResult>(),
             result => result.ToolUseId == "call_1");
 
         // The prose is still readable straight off the transcript: tool blocks are how an answer was reached,
         // not part of what was said.
-        Assert.Equal("About 22,000 light years.", loop.History[^1].Text);
+        Assert.Equal("About 22,000 light years.", loop.History()[^1].Text);
     }
 
     [Fact]
@@ -393,7 +393,7 @@ public class ToolCallingTests
         var (result, _) = await RunAsync(loop, "how far is Colonia");
 
         Assert.Equal(TurnOutcome.Failed, result.Outcome);
-        Assert.Empty(loop.History);
+        Assert.Empty(loop.History());
     }
 
     [Fact]

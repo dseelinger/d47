@@ -10,9 +10,6 @@ public static class Changelog
     /// <summary>The whole file, newest release first, exactly as it shipped.</summary>
     public static string Text => Loaded.Value;
 
-    /// <summary>Whether there is one at all.</summary>
-    public static bool Exists => Text.Length > 0;
-
     private static string Read()
     {
         var assembly = typeof(Changelog).Assembly;

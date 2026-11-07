@@ -130,7 +130,6 @@ public sealed class PlayAllPlaysAStoryRunInOrderTests
 
         rig.Player.Play(Run, Lines, 0);
         rig.Settle();
-        Assert.Equal(PlaybackHold.Playing, rig.Audio.Playback);
 
         rig.Finish();
         Assert.Equal(2, rig.Player.Now!.Index);
@@ -139,7 +138,6 @@ public sealed class PlayAllPlaysAStoryRunInOrderTests
 
         Assert.Equal(["first", "third", "fifth"], rig.Sink.Names);
         Assert.Null(rig.Player.Now);
-        Assert.Equal(PlaybackHold.Off, rig.Audio.Playback);
     }
 
     [Fact]
@@ -166,7 +164,6 @@ public sealed class PlayAllPlaysAStoryRunInOrderTests
         rig.Sink.FinishUntil("the reply");
 
         Assert.Equal(StoryRunPause.PushToTalk, rig.Player.Now!.Pause);
-        Assert.Equal(PlaybackHold.Paused, rig.Audio.Playback);
 
         rig.Finish();
         rig.Player.Resume();
@@ -236,7 +233,6 @@ public sealed class PlayAllPlaysAStoryRunInOrderTests
         rig.Audio.Enqueue(Reply("the reply"));
 
         Assert.Null(rig.Player.Now);
-        Assert.Equal(PlaybackHold.Off, rig.Audio.Playback);
         Assert.Equal(["first", "the reply"], rig.Sink.Names);
     }
 
@@ -279,6 +275,5 @@ public sealed class PlayAllPlaysAStoryRunInOrderTests
         rig.Audio.Silence();
 
         Assert.Null(rig.Player.Now);
-        Assert.Equal(PlaybackHold.Off, rig.Audio.Playback);
     }
 }

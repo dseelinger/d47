@@ -88,7 +88,7 @@ public class PlotTheRedirectedHandInTests
         state.Apply(completed);
         Run(callout, state, completed);
 
-        Assert.False(offer.IsStanding);
+        Assert.Null(offer.System);
     }
 
     private static JournalEvent Disembark(string system) =>
@@ -108,7 +108,7 @@ public class PlotTheRedirectedHandInTests
         var said = Run(new MissionCallout { Offer = offer }, state, redirect);
 
         Assert.Equal("That's Courier 1 done. Hand-in moved to Jameson Memorial in Sol.", Assert.Single(said).Text);
-        Assert.False(offer.IsStanding);
+        Assert.Null(offer.System);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class PlotTheRedirectedHandInTests
         var said = Run(callout, state, disembark, redirect);
 
         Assert.Equal("That's Courier 1 done. Hand-in moved to Jameson Memorial in Sol.", Assert.Single(said).Text);
-        Assert.False(offer.IsStanding);
+        Assert.Null(offer.System);
 
         var embark = Embark("Anlave");
         state.Apply(embark);
@@ -151,7 +151,7 @@ public class PlotTheRedirectedHandInTests
         state.Apply(redirect);
 
         Assert.Single(Run(callout, state, srv, redirect));
-        Assert.False(offer.IsStanding);
+        Assert.Null(offer.System);
 
         var ship = Embark("Anlave");
         state.Apply(ship);
@@ -174,7 +174,7 @@ public class PlotTheRedirectedHandInTests
         state.Apply(embark);
 
         Assert.Empty(Run(callout, state, embark));
-        Assert.False(offer.IsStanding);
+        Assert.Null(offer.System);
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class PlotTheRedirectedHandInTests
         state.Apply(embark);
 
         Assert.Empty(Run(callout, state, abandoned, embark));
-        Assert.False(offer.IsStanding);
+        Assert.Null(offer.System);
     }
 
     [Fact]

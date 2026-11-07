@@ -103,14 +103,11 @@ public class ANameCanSuggestAnAccentTests
 
         var first = new NameAccents(files, file, givenFile: given) { Ask = Ask };
         first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
+        await StreamingTtsProvider.Eventually(() => first.Get("kokoro", "lucien marchand") is not null, "the name was never answered");
         first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
-        await first.WhenIdleAsync();
-        first.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
-        await first.WhenIdleAsync();
 
         var restarted = new NameAccents(files, file, givenFile: given) { Ask = Ask };
         restarted.Enqueue("kokoro", ["American", "French"], ["Lucien Marchand"]);
-        await restarted.WhenIdleAsync();
 
         Assert.Equal(1, calls);
         Assert.Equal("French", restarted.Get("kokoro", "lucien marchand")?.Accent);
@@ -128,7 +125,7 @@ public class ANameCanSuggestAnAccentTests
         var voice = cast.ForSender("Lucien Marchand", isPlayer: false);
 
         Assert.NotNull(voice.VoiceId);
-        Assert.False(accents.WhenIdleAsync().IsCompleted);
+        Assert.Null(accents.Get("kokoro", "Lucien Marchand"));
     }
 
     [Fact]

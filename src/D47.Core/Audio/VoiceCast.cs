@@ -579,18 +579,6 @@ public sealed class VoiceCast
         }
     }
 
-    /// <summary>How many senders currently hold a voice.</summary>
-    public (int Lasting, int PerSystem) Assignments
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return (_lasting.Count, _perSystem.Count);
-            }
-        }
-    }
-
     /// <summary>A seed and slot mixed so that nearby seeds and consecutive slots give unrelated indexes.</summary>
     private static uint Mixed(uint seed, uint slot)
     {

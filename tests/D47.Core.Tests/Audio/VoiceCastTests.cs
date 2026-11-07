@@ -85,11 +85,8 @@ public class VoiceCastTests
         var wingmate = cast.ForSender("Commander Vex", isPlayer: true).VoiceId;
         cast.ForSender("Pirate Lord", isPlayer: false);
 
-        Assert.Equal((1, 1), cast.Assignments);
-
         cast.EnteredSystem();
 
-        Assert.Equal((1, 0), cast.Assignments);
         Assert.Equal(wingmate, cast.ForSender("Commander Vex", isPlayer: true).VoiceId);
     }
 
@@ -168,10 +165,6 @@ public class VoiceCastTests
         cast.EnteredSystem();
 
         Assert.Equal(gunner, cast.ForSender("Ilse Bruhn", isPlayer: false, VoiceRole.Crew).VoiceId);
-
-        // One assignment left, and it is the gunner's: the pirate was the only one in the table the jump
-        // cleared.
-        Assert.Equal((1, 0), cast.Assignments);
     }
 
     /// <summary>No stranger is handed a voice that already belongs to somebody in the ship.</summary>
@@ -204,7 +197,6 @@ public class VoiceCastTests
         var cast = new VoiceCast { Pool = ["ship-ai"], DefaultVoice = "ship-ai" };
 
         Assert.Equal("ship-ai", cast.ForSender("Pirate Lord", isPlayer: false).VoiceId);
-        Assert.Equal((0, 0), cast.Assignments);
     }
 
     [Fact]

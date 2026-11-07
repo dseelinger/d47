@@ -132,7 +132,6 @@ public class AboutTests
     [Fact]
     public void TheChangelogIsInsideTheBuild()
     {
-        Assert.True(D47.Core.Help.Changelog.Exists);
         Assert.Contains("## 0.75", D47.Core.Help.Changelog.Text, StringComparison.Ordinal);
 
         // Newest first, which is the order the file is already written in and the reason the window shows the

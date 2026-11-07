@@ -100,12 +100,11 @@ public sealed class APressBetweenTwoPollsIsCountedTests
 
         Assert.Equal(0, pressed);
         Assert.Equal(0, released);
-        Assert.False(button.IsDown);
 
         button.Poll(reader.Counting(Stick, Presses(3, 3), 3).Poll());
 
         Assert.Equal(1, pressed);
-        Assert.True(button.IsDown);
+        Assert.Equal(0, released);
     }
 
     [Fact]

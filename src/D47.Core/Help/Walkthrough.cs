@@ -36,9 +36,6 @@ public sealed class Walkthrough
     public Walkthrough(Func<IEnumerable<HelpArticle>> pages) =>
         _pages = new Lazy<IReadOnlyList<HelpArticle>>(() => [.. pages()]);
 
-    /// <summary>Whether a walkthrough is running at <paramref name="now"/>.</summary>
-    public bool IsRunning(DateTimeOffset now) => _page is not null && now - _last < Idle;
-
     /// <summary>
     /// The line to say for a walkthrough phrase, or null when the utterance is not one, which falls
     /// through to the turn and leaves a running walkthrough where it is.

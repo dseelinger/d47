@@ -42,7 +42,7 @@ public class TheCrewAnswersOnTheIntercomTests
 
         loop.Lines.Add(line);
 
-        return loop;
+        return loop.Recording();
     }
 
     private static string Text(ConversationMessage message) =>
@@ -105,7 +105,7 @@ public class TheCrewAnswersOnTheIntercomTests
 
         await OnComms.SayAsync(loop, "how is the fighter");
 
-        Assert.Empty(loop.History);
+        Assert.Empty(loop.History());
 
         await OnComms.AskAsync(loop, $"{ShipAi}, summarise that exchange for me");
 
@@ -117,7 +117,7 @@ public class TheCrewAnswersOnTheIntercomTests
         Assert.Contains("Vance answered \"Holding steady, Commander.\"", carried, StringComparison.Ordinal);
 
         Assert.DoesNotContain(
-            loop.History,
+            loop.History(),
             message => message.Role == ConversationRole.Assistant
                        && Text(message).Contains("Holding steady", StringComparison.Ordinal));
     }

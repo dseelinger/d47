@@ -48,7 +48,7 @@ public class ChecklistTrustBoundaryTests
         var install = new MemoryInstall();
         var registry = Registry(install);
 
-        var advertised = ToolSurface.All(registry)
+        var advertised = ToolProfiles.All(registry)
             .SelectMany(profile => profile.Tools)
             .Select(tool => tool.Name)
             .ToHashSet(StringComparer.Ordinal);

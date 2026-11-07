@@ -245,7 +245,7 @@ public class ActionReachTests
     [Fact]
     public void ActionIdsAreUniqueBecauseTheyAreAToolsClosedVocabulary()
     {
-        var ids = GameActions.Ids;
+        var ids = GameActions.All.Select(action => action.Id).ToList();
 
         Assert.Equal(ids.Count, ids.Distinct(StringComparer.Ordinal).Count());
     }

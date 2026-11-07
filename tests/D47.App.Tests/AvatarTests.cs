@@ -147,7 +147,6 @@ public class AvatarLibraryTests
         // The overwhelmingly common case.
         var library = AvatarLibrary.Load(_files, _paths);
 
-        Assert.False(library.Any);
         Assert.All(Enum.GetValues<LoopState>(), state => Assert.Empty(library.For(state)));
     }
 
@@ -159,8 +158,9 @@ public class AvatarLibraryTests
 
         var library = AvatarLibrary.Load(_files, _paths);
 
-        Assert.True(library.Any);
-        Assert.Equal([LoopState.Thinking], library.Replaced);
+        Assert.All(
+            Enum.GetValues<LoopState>().Where(state => state != LoopState.Thinking),
+            state => Assert.Empty(library.For(state)));
         Assert.Equal(2, library.For(LoopState.Thinking).Count);
         Assert.Empty(library.For(LoopState.Idle));
     }

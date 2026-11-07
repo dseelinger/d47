@@ -209,15 +209,6 @@ public sealed class NameAccents
         _draining = Task.Run(DrainAsync);
     }
 
-    /// <summary>Completes once every queued name has been asked.</summary>
-    public Task WhenIdleAsync()
-    {
-        lock (_gate)
-        {
-            return _draining;
-        }
-    }
-
     private async Task DrainAsync()
     {
         while (true)

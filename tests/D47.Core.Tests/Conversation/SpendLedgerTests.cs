@@ -26,6 +26,8 @@ public class SpendLedgerTests
     private SpendLedger Ledger(IWallClock clock) =>
         new(File, _files, clock, NullLogger.Instance);
 
+    private IReadOnlyList<SpendEntry> Entries() => SpendFile.Entries(_files, File);
+
     private static SpendEntry Model(decimal dollars, bool priced = true) => new()
     {
         Kind = SpendKind.Model,
@@ -45,13 +47,10 @@ public class SpendLedgerTests
 
         Ledger(clock).Append(Model(0.0125m));
 
-        // A second ledger over the same file, which is what the next launch has.
-        var next = Ledger(clock);
-
-        Assert.Single(next.Entries);
-        Assert.Equal(0.0125m, next.Entries[0].Dollars);
-        Assert.Equal("claude-opus-5", next.Entries[0].Model);
-        Assert.Equal(Noon, next.Entries[0].At);
+        var entry = Assert.Single(Entries());
+        Assert.Equal(0.0125m, entry.Dollars);
+        Assert.Equal("claude-opus-5", entry.Model);
+        Assert.Equal(Noon, entry.At);
     }
 
     /// <summary>
@@ -69,7 +68,7 @@ public class SpendLedgerTests
         clock.UtcNow = Noon.AddDays(3);
         ledger.Append(Model(0.02m));
 
-        Assert.Equal([Noon, Noon.AddDays(3)], ledger.Entries.Select(e => e.At));
+        Assert.Equal([Noon, Noon.AddDays(3)], Entries().Select(e => e.At));
     }
 
     /// <summary>The windows are the point.</summary>
@@ -158,12 +157,11 @@ public class SpendLedgerTests
 
         var next = Ledger(clock);
 
-        Assert.Single(next.Entries);
-        Assert.Equal(0.10m, next.Entries[0].Dollars);
+        Assert.Equal(0.10m, next.Total(SpendPeriods.Rolling("d", Noon, 30)).Dollars);
 
         // And it can still be appended to afterwards, so a broken tail is not a dead ledger.
         next.Append(Model(0.30m));
-        Assert.Equal(2, Ledger(clock).Entries.Count);
+        Assert.Equal(0.40m, Ledger(clock).Total(SpendPeriods.Rolling("d", Noon, 30)).Dollars);
     }
 
     /// <summary>Nothing written yet is an empty history, not a failure.</summary>
@@ -172,7 +170,7 @@ public class SpendLedgerTests
     {
         var ledger = Ledger(new StoppedClock(Noon));
 
-        Assert.Empty(ledger.Entries);
+        Assert.Empty(Entries());
         Assert.Equal(SpendTotals.Nothing, ledger.Total(SpendPeriods.Rolling("d", Noon, 30)));
     }
 }

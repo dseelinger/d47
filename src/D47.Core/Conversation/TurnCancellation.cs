@@ -9,18 +9,6 @@ public sealed class TurnCancellation(ILogger<TurnCancellation> logger)
 
     private CancellationTokenSource? _current;
 
-    /// <summary>Whether there is a turn that <see cref="Cancel"/> would abandon.</summary>
-    public bool InFlight
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _current is not null;
-            }
-        }
-    }
-
     /// <summary>Claims the turn slot and returns the token the turn must run under.</summary>
     public CancellationTokenSource Begin(CancellationToken linkedTo = default)
     {

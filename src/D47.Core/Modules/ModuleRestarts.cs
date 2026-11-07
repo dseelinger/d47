@@ -19,7 +19,4 @@ public sealed class ModuleRestarts(IReadOnlyList<TimeSpan> waits)
 
         return _exits.Count <= waits.Count ? waits[_exits.Count - 1] : null;
     }
-
-    /// <summary>Forgets every exit, as RESTART does.</summary>
-    public void Clear() => _exits.Clear();
 }

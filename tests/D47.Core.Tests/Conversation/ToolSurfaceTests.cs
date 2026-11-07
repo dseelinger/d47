@@ -40,9 +40,9 @@ public class ToolSurfaceTests
         var install = new MemoryInstall();
         var registry = Registry(install);
 
-        foreach (var profile in ToolSurface.All(registry))
+        foreach (var profile in ToolProfiles.All(registry))
         {
-            var again = ToolSurface.All(registry).First(p => p.Id == profile.Id && p.Tools.Count == profile.Tools.Count);
+            var again = ToolProfiles.All(registry).First(p => p.Id == profile.Id && p.Tools.Count == profile.Tools.Count);
 
             Assert.Equal(profile.Tools, again.Tools);
         }
@@ -56,7 +56,7 @@ public class ToolSurfaceTests
         var install = new MemoryInstall();
         var registry = Registry(install);
 
-        var names = ToolSurface.All(registry).Select(profile => profile.Id).Distinct().ToArray();
+        var names = ToolProfiles.All(registry).Select(profile => profile.Id).Distinct().ToArray();
 
         Assert.True(names.Length <= 12, $"Too many distinct profiles to stay warm: {string.Join(", ", names)}");
     }
@@ -121,7 +121,7 @@ public class ToolSurfaceTests
     {
         var install = new MemoryInstall();
 
-        foreach (var profile in ToolSurface.All(Registry(install)))
+        foreach (var profile in ToolProfiles.All(Registry(install)))
         {
             Assert.Contains(profile.Tools, tool => tool.Name == "get_capabilities");
         }

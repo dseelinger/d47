@@ -54,7 +54,7 @@ public class TheCaptainAnswersOnTheCarrierChannelTests
 
         loop.Lines.Add(line);
 
-        return loop;
+        return loop.Recording();
     }
 
     private static string Text(ConversationMessage message) =>
@@ -211,7 +211,7 @@ public class TheCaptainAnswersOnTheCarrierChannelTests
 
         await OnComms.SayAsync(loop, "how much fuel have we got");
 
-        Assert.Empty(loop.History);
+        Assert.Empty(loop.History());
 
         await OnComms.AskAsync(loop, ToShipAi);
 
@@ -223,7 +223,7 @@ public class TheCaptainAnswersOnTheCarrierChannelTests
         Assert.Contains("Captain answered \"Seven hundred ninety-two tonnes, Commander.\"", carried, StringComparison.Ordinal);
 
         Assert.DoesNotContain(
-            loop.History,
+            loop.History(),
             message => message.Role == ConversationRole.Assistant
                        && Text(message).Contains("Seven hundred", StringComparison.Ordinal));
     }

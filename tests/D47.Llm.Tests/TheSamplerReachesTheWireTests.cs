@@ -11,7 +11,7 @@ public class TheSamplerReachesTheWireTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public TheSamplerReachesTheWireTests() => EndpointDemotions.Clear();
+    public TheSamplerReachesTheWireTests() => EndpointDemotionsReset.Run();
 
     private static JsonElement Body(RecordedEndpoint endpoint) =>
         JsonDocument.Parse(Assert.Single(endpoint.Requests)).RootElement.Clone();

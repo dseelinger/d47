@@ -14,7 +14,7 @@ public class GameStateRidesInTheLastMessageTests
 {
     private const string State = "Fuel 12.4 of 32 tonnes.";
 
-    public GameStateRidesInTheLastMessageTests() => EndpointDemotions.Clear();
+    public GameStateRidesInTheLastMessageTests() => EndpointDemotionsReset.Run();
 
     [Fact]
     public void TheCommandersQuestionCarriesTheReminder()

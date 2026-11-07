@@ -97,8 +97,10 @@ public class LogbookBookTests
     {
         Evening1();
 
+        var files = new MemoryFileSystem();
+        var ledgerFile = Path.Combine(_folder, "spend.jsonl");
         var ledger = new SpendLedger(
-            Path.Combine(_folder, "spend.jsonl"), new MemoryFileSystem(),
+            ledgerFile, files,
             SystemWallClock.Instance,
             NullLogger<SpendLedger>.Instance);
 
@@ -111,7 +113,7 @@ public class LogbookBookTests
         book.Estimate(null, null, null, out _);
         await book.WriteAsync(CancellationToken.None);
 
-        var row = Assert.Single(ledger.Entries);
+        var row = Assert.Single(SpendFile.Entries(files, ledgerFile));
 
         Assert.Equal(SpendKind.Model, row.Kind);
         Assert.Equal("claude-opus-5", row.Model);

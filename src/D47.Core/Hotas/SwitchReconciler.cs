@@ -171,10 +171,6 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
     /// <summary>Every mapped switch as it stands.</summary>
     public IReadOnlyList<SwitchState> States => _states;
 
-    /// <summary>The switches that currently sit against the game's state.</summary>
-    public IReadOnlyList<SwitchState> Disagreeing =>
-        [.. _states.Where(state => state.Disagrees is not null)];
-
     /// <summary>
     /// What became of a headset press: the watch on it starts with the next poll once it was sent, and ends when
     /// it was not.

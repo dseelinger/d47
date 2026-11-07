@@ -52,12 +52,6 @@ public sealed class AvatarLibrary
     public string? ClipFor(string coreId, LoopState state) =>
         ClipFolder is { } folder ? CoreClips.For(_fileSystem, folder, coreId, state) : null;
 
-    /// <summary>Whether anything has been dropped in at all.</summary>
-    public bool Any => _frames.Count > 0;
-
-    /// <summary>Which states the Commander has replaced.</summary>
-    public IReadOnlyList<LoopState> Replaced => [.. _frames.Keys.Order()];
-
     private static IReadOnlyList<string> Scan(IFileSystem fileSystem, string folder)
     {
         try

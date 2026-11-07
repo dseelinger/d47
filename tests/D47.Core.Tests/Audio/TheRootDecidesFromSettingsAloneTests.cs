@@ -22,6 +22,8 @@ public class TheRootDecidesFromSettingsAloneTests
 
     private static Func<string, bool> Keys(bool present) => _ => present;
 
+    private static bool Moved(SpeechWiringPlan plan) => plan.Build.Count > 0 || plan.Dispose.Count > 0 || plan.Rewire.Count > 0;
+
     /// <summary>What the root would be holding after one apply of these settings.</summary>
     private static SpeechWiringState Holding(IReadOnlyDictionary<VoiceGroup, string> selected, bool key = true) =>
         SpeechWiring.Plan(SpeechWiringState.Nothing, selected, Keys(key)).Next;
@@ -43,7 +45,7 @@ public class TheRootDecidesFromSettingsAloneTests
         var second = SpeechWiring.Plan(Holding(Everywhere(Edge)), Everywhere(Edge), Keys(true));
 
         // Settings are applied on every change of any row, so this is the common case by a wide margin.
-        Assert.False(second.Anything);
+        Assert.False(Moved(second));
         Assert.Empty(second.RefetchVoices);
     }
 
@@ -71,7 +73,7 @@ public class TheRootDecidesFromSettingsAloneTests
 
         // And it is a refetch, not a rebuild.
         Assert.Empty(keyPasted.Build);
-        Assert.False(keyPasted.Anything);
+        Assert.False(Moved(keyPasted));
     }
 
     [Fact]
@@ -125,7 +127,7 @@ public class TheRootDecidesFromSettingsAloneTests
         var first = SpeechWiring.Plan(SpeechWiringState.Nothing, Everywhere("festival"), Keys(false));
 
         Assert.Equal(Edge, first.Next.Of(VoiceGroup.Aboard)?.ProviderId);
-        Assert.False(SpeechWiring.Plan(first.Next, Everywhere("festival"), Keys(false)).Anything);
+        Assert.False(Moved(SpeechWiring.Plan(first.Next, Everywhere("festival"), Keys(false))));
     }
 
     [Fact]

@@ -10,7 +10,7 @@ public class OpenAiResponsesTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public OpenAiResponsesTests() => EndpointDemotions.Clear();
+    public OpenAiResponsesTests() => EndpointDemotionsReset.Run();
 
     [Trait("Category", "Integration")]
     [Fact]

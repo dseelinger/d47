@@ -311,13 +311,17 @@ public class VoiceActivityTests
         var gate = Gate();
         var now = Start;
 
-        // A loud room, learned.
+        // In a loud room, a steady sound lower than the room is not speech.
         Feed(gate, Room(TimeSpan.FromSeconds(3), level: 0.15f), ref now);
-        Assert.True(gate.Voice.NoiseFloor > -40);
+        Feed(gate, Room(TimeSpan.FromMilliseconds(500), level: 0.05f), ref now);
+        Assert.False(gate.IsListening);
 
         gate.Reset();
 
         Assert.False(gate.Voice.Settled);
-        Assert.True(gate.Voice.NoiseFloor < -90);
+
+        Feed(gate, Room(TimeSpan.FromSeconds(2)), ref now);
+        Feed(gate, Room(TimeSpan.FromMilliseconds(500), level: 0.05f), ref now);
+        Assert.True(gate.IsListening);
     }
 }

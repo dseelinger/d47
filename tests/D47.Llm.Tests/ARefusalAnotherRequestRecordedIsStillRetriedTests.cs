@@ -9,7 +9,7 @@ public sealed class ARefusalAnotherRequestRecordedIsStillRetriedTests
 {
     private const string Address = "http://127.0.0.1:1/v1";
 
-    public ARefusalAnotherRequestRecordedIsStillRetriedTests() => EndpointDemotions.Clear();
+    public ARefusalAnotherRequestRecordedIsStillRetriedTests() => EndpointDemotionsReset.Run();
 
     [Fact]
     public void TheFirstRefusalOfAFieldIsRetried()

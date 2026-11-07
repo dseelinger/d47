@@ -132,7 +132,7 @@ public class PreviousTrackStepsBackInTheShuffleTests : IDisposable
 
         _bench.Music.Control(MusicAction.Previous);
 
-        Assert.False(_bench.Music.Paused);
+        Assert.False(_bench.Music.State.Paused);
         Assert.True(_bench.Music.State.Playing);
     }
 

@@ -33,9 +33,6 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
     /// <summary>The manifest paths, written on the first attempt and reused by every retry.</summary>
     private (string Actions, string Application)? _manifest;
 
-    /// <summary>Whether the trigger can be read at all.</summary>
-    public bool Ready => _input is not null;
-
     /// <summary>Whether this frame is claiming the controllers, for the diagnostic line.</summary>
     public bool HoldingPriority { get; private set; }
 

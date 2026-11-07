@@ -13,35 +13,34 @@ public class AStreamedTrackPlaysUntilItEndsOrFailsTests
     [Fact]
     public void ItRendersTheWholeTrackAndThenEnds()
     {
-        using var provider = Provider(() => new FakePcm(frames: 4_800, sample: 16_384));
-        WaitUntilDrained(provider);
+        var pcm = new FakePcm(frames: 4_800, sample: 16_384);
+        using var provider = Provider(() => pcm);
+        WaitUntil(() => pcm.ReachedEnd);
 
         var buffer = new float[10_000];
 
-        Assert.Equal(4_800, provider.Read(buffer, 0, buffer.Length));
+        Assert.Equal(4_800, provider.Read(buffer, 0, 4_800));
         Assert.All(buffer[..4_800], sample => Assert.Equal(0.5f, sample));
-        Assert.Equal(0, provider.Read(buffer, 0, buffer.Length));
+        WaitUntilEnded(provider);
     }
 
     [Fact]
     public void ATrackThatWillNotOpenEndsAtOnce()
     {
         using var provider = Provider(() => throw new FileNotFoundException("gone"));
-        WaitUntilDrained(provider);
 
-        Assert.Equal(0, provider.Read(new float[100], 0, 100));
+        WaitUntilEnded(provider);
     }
 
     [Fact]
     public void ATrackThatFailsMidwayEndsAfterWhatItRead()
     {
-        using var provider = Provider(() => new FakePcm(frames: 240, sample: 1, failAfter: true));
-        WaitUntilDrained(provider);
+        var pcm = new FakePcm(frames: 240, sample: 1, failAfter: true);
+        using var provider = Provider(() => pcm);
+        WaitUntil(() => pcm.ReachedEnd);
 
-        var buffer = new float[1_000];
-
-        Assert.Equal(240, provider.Read(buffer, 0, buffer.Length));
-        Assert.Equal(0, provider.Read(buffer, 0, buffer.Length));
+        Assert.Equal(240, provider.Read(new float[1_000], 0, 240));
+        WaitUntilEnded(provider);
     }
 
     /// <summary>A read the feeder has not caught up with is silence, and the track is not over.</summary>
@@ -57,9 +56,7 @@ public class AStreamedTrackPlaysUntilItEndsOrFailsTests
         Assert.All(buffer, sample => Assert.Equal(0f, sample));
 
         release.Set();
-        WaitUntilDrained(provider);
-
-        Assert.Equal(0, provider.Read(buffer, 0, buffer.Length));
+        WaitUntilEnded(provider);
     }
 
     /// <summary>Stopping a track releases its file; nothing keeps reading it in the background.</summary>
@@ -70,7 +67,7 @@ public class AStreamedTrackPlaysUntilItEndsOrFailsTests
         var provider = Provider(() => pcm);
 
         provider.Dispose();
-        WaitUntilDrained(provider);
+        WaitUntil(() => pcm.Disposed);
 
         Assert.True(pcm.Disposed);
 
@@ -81,13 +78,16 @@ public class AStreamedTrackPlaysUntilItEndsOrFailsTests
     private static StreamSampleProvider Provider(Func<IPcmStream> open) =>
         new(new MusicTrack("test", open), NullLogger.Instance);
 
-    private static void WaitUntilDrained(StreamSampleProvider provider)
+    private static void WaitUntilEnded(StreamSampleProvider provider) =>
+        WaitUntil(() => provider.Read(new float[100], 0, 100) == 0);
+
+    private static void WaitUntil(Func<bool> condition)
     {
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
 
-        while (!provider.Drained)
+        while (!condition())
         {
-            Assert.True(DateTime.UtcNow < deadline, "the feeder never finished");
+            Assert.True(DateTime.UtcNow < deadline, "the condition never held");
             Thread.Sleep(5);
         }
     }
@@ -97,8 +97,12 @@ public class AStreamedTrackPlaysUntilItEndsOrFailsTests
         : IPcmStream
     {
         private long _left = frames;
+        private volatile bool _disposed;
+        private volatile bool _reachedEnd;
 
-        public bool Disposed { get; private set; }
+        public bool ReachedEnd => _reachedEnd;
+
+        public bool Disposed => _disposed;
 
         public long FramesRead { get; private set; }
 
@@ -107,6 +111,11 @@ public class AStreamedTrackPlaysUntilItEndsOrFailsTests
             gate?.Wait();
 
             var count = (int)Math.Min(buffer.Length / 2, _left);
+
+            if (count == 0)
+            {
+                _reachedEnd = true;
+            }
 
             if (count == 0 && failAfter)
             {
@@ -131,6 +140,6 @@ public class AStreamedTrackPlaysUntilItEndsOrFailsTests
         {
         }
 
-        public void Dispose() => Disposed = true;
+        public void Dispose() => _disposed = true;
     }
 }

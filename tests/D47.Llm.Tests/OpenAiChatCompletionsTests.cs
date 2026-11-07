@@ -10,7 +10,7 @@ public class OpenAiChatCompletionsTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public OpenAiChatCompletionsTests() => EndpointDemotions.Clear();
+    public OpenAiChatCompletionsTests() => EndpointDemotionsReset.Run();
 
     [Trait("Category", "Integration")]
     [Fact]

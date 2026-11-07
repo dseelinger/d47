@@ -83,7 +83,7 @@ public class AmbientMusicPlaysOnlyWhileEliteRunsTests : IDisposable
     public void PauseStillPausesWithEliteClosed()
     {
         Assert.Equal("Music paused.", _bench.Music.Control(MusicAction.Pause));
-        Assert.True(_bench.Music.Paused);
+        Assert.True(_bench.Music.State.Paused);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class AmbientMusicPlaysOnlyWhileEliteRunsTests : IDisposable
         _bench.Music.Follow(Docked, musicTrack: null);
 
         Assert.Single(_bench.Sink.Started);
-        Assert.True(_bench.Music.Paused);
+        Assert.True(_bench.Music.State.Paused);
     }
 
     private static bool IsDocked(string name) =>

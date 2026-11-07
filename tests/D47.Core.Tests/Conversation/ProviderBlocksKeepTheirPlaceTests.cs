@@ -27,7 +27,7 @@ public class ProviderBlocksKeepTheirPlaceTests
             clock: new InstantClock());
 
         loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
+        return loop.Recording();
     }
 
     private static async Task<List<TurnEvent>> RunAsync(TurnLoop loop, string input)
@@ -88,7 +88,7 @@ public class ProviderBlocksKeepTheirPlaceTests
         await RunAsync(loop, "how far is Colonia");
 
         Assert.Collection(
-            loop.History[^1].Content,
+            loop.History()[^1].Content,
             part => Assert.Equal(new ConversationContent.Text("Searching."), part),
             part => Assert.IsType<ConversationContent.Opaque>(part),
             part => Assert.Equal(new ConversationContent.Text("Nothing needed."), part));
@@ -118,10 +118,10 @@ public class ProviderBlocksKeepTheirPlaceTests
 
         await RunAsync(loop, "how far is Colonia");
 
-        Assert.DoesNotContain(loop.History, message => ReferenceEquals(message, atTheCut));
-        Assert.DoesNotContain(loop.History[0].Content, part => part is ConversationContent.Opaque);
+        Assert.DoesNotContain(transcript, message => ReferenceEquals(message, atTheCut));
+        Assert.DoesNotContain(transcript[0].Content, part => part is ConversationContent.Opaque);
 
-        var kept = Assert.Single(loop.History, message => message.Content.Any(part => part is ConversationContent.Opaque));
+        var kept = Assert.Single(transcript, message => message.Content.Any(part => part is ConversationContent.Opaque));
         Assert.Same(later, kept);
         Assert.Equal(2, kept.Content.Count);
     }

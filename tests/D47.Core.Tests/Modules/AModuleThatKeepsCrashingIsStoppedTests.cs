@@ -51,19 +51,4 @@ public class AModuleThatKeepsCrashingIsStoppedTests
             Assert.Equal(TimeSpan.FromSeconds(2), restarts.Exited(Start.AddHours(hour)));
         }
     }
-
-    [Fact]
-    public void RestartClearsTheCount()
-    {
-        var restarts = new ModuleRestarts(ModuleRestarts.Waits);
-
-        restarts.Exited(Start);
-        restarts.Exited(Start.AddSeconds(10));
-        restarts.Exited(Start.AddSeconds(30));
-        Assert.Null(restarts.Exited(Start.AddSeconds(70)));
-
-        restarts.Clear();
-
-        Assert.Equal(TimeSpan.FromSeconds(2), restarts.Exited(Start.AddSeconds(80)));
-    }
 }

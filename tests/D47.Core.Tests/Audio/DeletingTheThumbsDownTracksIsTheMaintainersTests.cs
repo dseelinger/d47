@@ -51,7 +51,7 @@ public sealed class DeletingTheThumbsDownTracksIsTheMaintainersTests
     {
         var registry = CapabilityRegistry.Build([Capability()]);
 
-        foreach (var profile in ToolSurface.All(registry))
+        foreach (var profile in ToolProfiles.All(registry))
         {
             Assert.DoesNotContain(profile.Tools, tool => tool.Name == AudioCapability.DeleteRejectsTool);
         }

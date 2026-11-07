@@ -73,7 +73,7 @@ public class PauseHoldsTheMusicWhereItIsTests : IDisposable
         _bench.Music.Control(MusicAction.Next);
 
         Assert.Equal(2, _bench.Sink.Started.Count);
-        Assert.False(_bench.Music.Paused);
+        Assert.False(_bench.Music.State.Paused);
         Assert.True(_bench.Music.State.Playing);
     }
 
@@ -110,7 +110,7 @@ public class PauseHoldsTheMusicWhereItIsTests : IDisposable
 
         // Unmuting does not override the Commander's pause.
         Assert.Single(_bench.Sink.Started);
-        Assert.True(_bench.Music.Paused);
+        Assert.True(_bench.Music.State.Paused);
     }
 
     [Fact]

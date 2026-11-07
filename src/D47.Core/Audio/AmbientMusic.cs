@@ -89,17 +89,6 @@ public sealed class AmbientMusic(
     /// <summary>Raised after the track or the paused state changes, outside any lock.</summary>
     public event Action<MusicState>? Changed;
 
-    public bool Paused
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _paused;
-            }
-        }
-    }
-
     public MusicState State
     {
         get

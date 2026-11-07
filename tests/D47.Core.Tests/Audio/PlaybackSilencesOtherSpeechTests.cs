@@ -85,7 +85,6 @@ public class PlaybackSilencesOtherSpeechTests
         sink.PlayOutAll();
 
         Assert.Equal(1, pauses);
-        Assert.Equal(PlaybackHold.Paused, arbiter.Playback);
         Assert.Contains(line, sink.Stopped);
         Assert.Equal(["line one", "interdiction"], Names(sink));
     }
@@ -105,7 +104,6 @@ public class PlaybackSilencesOtherSpeechTests
         sink.PlayOutAll();
 
         Assert.Equal(1, pauses);
-        Assert.Equal(PlaybackHold.Paused, arbiter.Playback);
         Assert.Equal(["line one", "hull critical"], Names(sink));
     }
 
@@ -150,7 +148,6 @@ public class PlaybackSilencesOtherSpeechTests
         arbiter.Enqueue(On(AudioChannel.Overheard, "chatter", "comms"));
         sink.PlayOutAll();
 
-        Assert.Equal(PlaybackHold.Off, arbiter.Playback);
         Assert.Equal(["a reply", "chatter"], Names(sink));
     }
 
@@ -168,7 +165,6 @@ public class PlaybackSilencesOtherSpeechTests
         arbiter.Enqueue(On(AudioChannel.Speech, "line one", Run));
         sink.PlayOutAll();
 
-        Assert.Equal(PlaybackHold.Playing, arbiter.Playback);
         Assert.Equal(["a reply", "line one"], Names(sink));
     }
 

@@ -13,7 +13,7 @@ public class ThinkingIsTurnedOffWhereTheModelAllowsItTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public ThinkingIsTurnedOffWhereTheModelAllowsItTests() => EndpointDemotions.Clear();
+    public ThinkingIsTurnedOffWhereTheModelAllowsItTests() => EndpointDemotionsReset.Run();
 
     private static LlmRequest Request(string model, bool thinking, ThinkingEffort effort = ThinkingEffort.Low) =>
         Recordings.Request(model) with { Effort = effort, ThinkingAllowed = thinking };

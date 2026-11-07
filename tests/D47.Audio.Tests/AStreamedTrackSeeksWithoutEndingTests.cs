@@ -18,8 +18,9 @@ public class AStreamedTrackSeeksWithoutEndingTests
     [Fact]
     public void ProgressCountsTheFramesReadOutAndPublishesTheLength()
     {
-        using var provider = Provider(new IndexedPcm(seconds: 2));
-        WaitUntil(() => provider.Drained);
+        var pcm = new IndexedPcm(seconds: 2);
+        using var provider = Provider(pcm);
+        WaitUntil(() => pcm.ReachedEnd);
 
         Assert.Equal(new TrackProgress(TimeSpan.Zero, TimeSpan.FromSeconds(2)), provider.Progress);
 
@@ -43,8 +44,9 @@ public class AStreamedTrackSeeksWithoutEndingTests
     [Fact]
     public void ElapsedIsClampedToALengthThatWasAnEstimate()
     {
-        using var provider = Provider(new IndexedPcm(seconds: 2, reportedLength: TimeSpan.FromSeconds(1)));
-        WaitUntil(() => provider.Drained);
+        var pcm = new IndexedPcm(seconds: 2, reportedLength: TimeSpan.FromSeconds(1));
+        using var provider = Provider(pcm);
+        WaitUntil(() => pcm.ReachedEnd);
 
         Read(provider, TimeSpan.FromSeconds(1.5));
 
@@ -57,7 +59,7 @@ public class AStreamedTrackSeeksWithoutEndingTests
         using var release = new ManualResetEventSlim();
         var pcm = new IndexedPcm(seconds: 2, seekGate: release);
         using var provider = Provider(pcm);
-        WaitUntil(() => provider.Drained);
+        WaitUntil(() => pcm.ReachedEnd);
         Read(provider, TimeSpan.FromSeconds(1.5));
 
         Assert.True(provider.Seek(TimeSpan.FromSeconds(0.5)));
@@ -68,7 +70,7 @@ public class AStreamedTrackSeeksWithoutEndingTests
 
         release.Set();
         WaitUntil(() => provider.Progress.Elapsed == TimeSpan.FromSeconds(0.5));
-        WaitUntil(() => provider.Drained);
+        WaitUntil(() => pcm.ReachedEnd);
 
         var rest = new float[(Rate * 2) * 2];
         Assert.Equal((int)(Rate * 1.5) * 2, provider.Read(rest, 0, rest.Length));
@@ -79,26 +81,24 @@ public class AStreamedTrackSeeksWithoutEndingTests
     [Fact]
     public void ASeekToTheLengthOrBeyondPlaysOutTheEnd()
     {
-        using var provider = Provider(new IndexedPcm(seconds: 2));
-        WaitUntil(() => provider.Drained);
+        var pcm = new IndexedPcm(seconds: 2);
+        using var provider = Provider(pcm);
+        WaitUntil(() => pcm.ReachedEnd);
 
         Assert.True(provider.Seek(TimeSpan.FromSeconds(30)));
         WaitUntil(() => provider.Progress.Elapsed == TimeSpan.FromSeconds(2));
-        WaitUntil(() => provider.Drained);
-
-        Assert.Equal(0, provider.Read(new float[960], 0, 960));
+        WaitUntil(() => provider.Read(new float[960], 0, 960) == 0);
     }
 
     [Fact]
     public void ATrackThatHasEndedOrFailedRefusesASeek()
     {
         using var ended = Provider(new IndexedPcm(seconds: 0.01));
-        WaitUntil(() => ended.Drained);
-        Read(ended, TimeSpan.FromSeconds(1));
+        WaitUntil(() => ended.Read(new float[960], 0, 960) == 0);
 
         using var failed = new StreamSampleProvider(
             new MusicTrack("gone", () => throw new FileNotFoundException("gone")), NullLogger.Instance);
-        WaitUntil(() => failed.Drained);
+        WaitUntil(() => failed.Read(new float[960], 0, 960) == 0);
 
         Assert.False(ended.Seek(TimeSpan.Zero));
         Assert.False(failed.Seek(TimeSpan.Zero));
@@ -241,6 +241,7 @@ public class AStreamedTrackSeeksWithoutEndingTests
 
         public void Seek(TimeSpan to)
         {
+            _reachedEnd = false;
             seekGate?.Wait();
             _position = Math.Min(_frames, to.Ticks * Rate / TimeSpan.TicksPerSecond);
         }

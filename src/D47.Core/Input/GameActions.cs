@@ -1182,8 +1182,6 @@ public static class GameActions
 
     public static GameAction? Find(string id) => ById.GetValueOrDefault(id);
 
-    public static IReadOnlyList<string> Ids => [.. All.Select(action => action.Id)];
-
     /// <summary>A one-shot with a ship form and, optionally, an SRV and an on-foot twin.</summary>
     private static GameAction Simple(
         string id,

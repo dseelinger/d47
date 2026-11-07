@@ -14,7 +14,7 @@ public class AnOverflowTeachesTheContextSizeTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public AnOverflowTeachesTheContextSizeTests() => EndpointDemotions.Clear();
+    public AnOverflowTeachesTheContextSizeTests() => EndpointDemotionsReset.Run();
 
     [Trait("Category", "Integration")]
     [Fact]

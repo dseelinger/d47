@@ -7,8 +7,6 @@ public sealed class NeutronOffer
 
     public string? System { get; private set; }
 
-    public bool IsStanding => System is { Length: > 0 };
-
     /// <summary>Stands the offer for the system, replacing any earlier one.</summary>
     public void Open(string system) => System = system;
 

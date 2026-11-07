@@ -133,7 +133,6 @@ public class WakeWordTests
 
         gate.Admit("D47", Now);
 
-        Assert.False(gate.IsAwake(Now));
         Assert.Equal(WakeOutcome.Ignored, gate.Admit("gear up", Now).Outcome);
     }
 

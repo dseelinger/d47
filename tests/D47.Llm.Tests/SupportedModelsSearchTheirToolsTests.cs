@@ -27,7 +27,7 @@ public class SupportedModelsSearchTheirToolsTests
     private static readonly ToolAdvertisement Srv =
         new("control_srv", "Operates the SRV.", """{"type":"object"}""", Deferred: true);
 
-    public SupportedModelsSearchTheirToolsTests() => EndpointDemotions.Clear();
+    public SupportedModelsSearchTheirToolsTests() => EndpointDemotionsReset.Run();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 

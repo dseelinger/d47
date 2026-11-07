@@ -46,7 +46,7 @@ public class APictureRidesOnItsToolResultTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public APictureRidesOnItsToolResultTests() => EndpointDemotions.Clear();
+    public APictureRidesOnItsToolResultTests() => EndpointDemotionsReset.Run();
 
     [Fact]
     public void AnthropicSendsTheTextThenTheImageInsideTheToolResult()

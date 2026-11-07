@@ -20,7 +20,7 @@ public class AContextOverflowSaysHowToFixItTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public AContextOverflowSaysHowToFixItTests() => EndpointDemotions.Clear();
+    public AContextOverflowSaysHowToFixItTests() => EndpointDemotionsReset.Run();
 
     private static async Task<LlmStreamEvent.Failed> FailureFor(params string[] frames)
     {

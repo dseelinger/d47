@@ -22,16 +22,11 @@ public sealed class BoundButton
     /// <summary>What is bound, or null.</summary>
     public HotasButton? Bound => _bound;
 
-    public bool IsDown => _wasDown;
-
     /// <summary>Whether <see cref="Pressed"/> follows the reader's press counts, so a press between two polls is not lost.</summary>
     public bool CountsPresses { get; init; }
 
     /// <summary>How many polls the bound device gets to turn up in before its absence is called.</summary>
     public const int PollsBeforeAbsenceIsCalled = 15;
-
-    /// <summary>Whether the bound device has been seen at all since binding.</summary>
-    public bool? DevicePresent => _bound is null ? null : _sawDevice;
 
     /// <summary>The button whose device has not turned up, once per binding, or null.</summary>
     public HotasButton? MissingDeviceNotice()

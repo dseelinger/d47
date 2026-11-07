@@ -32,7 +32,6 @@ public class AnUnsettledPollIsNotAChanceTheStickMissedTests
         }
 
         Assert.Empty(log.Lines);
-        Assert.True(pushToTalk.DevicePresent);
     }
 
     [Fact]

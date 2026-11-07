@@ -9,7 +9,7 @@ public class OpenAiHandshakeAndDemotionTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public OpenAiHandshakeAndDemotionTests() => EndpointDemotions.Clear();
+    public OpenAiHandshakeAndDemotionTests() => EndpointDemotionsReset.Run();
 
     [Trait("Category", "Integration")]
     [Fact]

@@ -120,11 +120,10 @@ public class EachCommanderKeepsTheirOwnConversationTests
 
         Assert.Equal(2, commanderAs.Count);
         Assert.Empty(host.Transcript);
-        Assert.Same(host.Transcript, loop.History);
     }
 
     [Fact]
-    public void APickRaisedByTheGameStateAlreadyShowsThePickedCommander()
+    public async Task APickRaisedByTheGameStateAlreadyShowsThePickedCommander()
     {
         var store = new GameStateStore();
         store.Pick(new CommanderIdentity("F1", "Alice"));
@@ -138,12 +137,23 @@ public class EachCommanderKeepsTheirOwnConversationTests
         store.CommanderChanged += _ => loop.UseTranscript(host.Transcript);
         store.Pick(new CommanderIdentity("F2", "Bob"));
 
-        Assert.Empty(loop.History);
-        Assert.Same(host.Transcript, loop.History);
+        Assert.Empty(host.Transcript);
+        await AskAsync(loop);
+        Assert.NotEmpty(host.Transcript);
+        Assert.Single(alices);
 
         store.Pick(new CommanderIdentity("F1", "Alice"));
+        await AskAsync(loop);
 
-        Assert.Same(alices, loop.History);
+        Assert.Same(alices, host.Transcript);
+        Assert.True(alices.Count > 1);
+    }
+
+    private static async Task AskAsync(TurnLoop loop)
+    {
+        await foreach (var _ in loop.RunAsync("tell me about hyperspace physics", cancellationToken: TestContext.Current.CancellationToken))
+        {
+        }
     }
 
     [Fact]

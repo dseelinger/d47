@@ -72,7 +72,6 @@ public sealed record SpendShare(
     string Model,
     decimal Dollars,
     long Characters,
-    int Charges,
     bool Priced)
 {
     /// <summary>What to call it: the model where there is one, and the provider where there is not.</summary>
@@ -161,18 +160,6 @@ public sealed class SpendLedger
         }
     }
 
-    /// <summary>Every charge, oldest first.</summary>
-    public IReadOnlyList<SpendEntry> Entries
-    {
-        get
-        {
-            lock (_lock)
-            {
-                return [.. _entries];
-            }
-        }
-    }
-
     /// <summary>Records a charge, stamping it with the current instant.</summary>
     public void Append(SpendEntry entry)
     {
@@ -255,7 +242,6 @@ public sealed class SpendLedger
                         group.Key.Model,
                         group.Sum(entry => entry.Dollars),
                         group.Sum(entry => entry.Characters),
-                        group.Count(),
                         group.All(entry => entry.Priced)))
                     .OrderByDescending(share => share.Dollars)
                     .ThenBy(share => share.Name, StringComparer.OrdinalIgnoreCase)],

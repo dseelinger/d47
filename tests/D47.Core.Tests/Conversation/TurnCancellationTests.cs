@@ -14,7 +14,6 @@ public class TurnCancellationTests
     {
         var cancellation = New();
 
-        Assert.False(cancellation.InFlight);
         Assert.False(cancellation.Cancel());
     }
 
@@ -24,7 +23,6 @@ public class TurnCancellationTests
         var cancellation = New();
         var source = cancellation.Begin(TestContext.Current.CancellationToken);
 
-        Assert.True(cancellation.InFlight);
         Assert.True(cancellation.Cancel());
         Assert.True(source.Token.IsCancellationRequested);
 
@@ -38,7 +36,6 @@ public class TurnCancellationTests
         var source = cancellation.Begin(TestContext.Current.CancellationToken);
         cancellation.End(source);
 
-        Assert.False(cancellation.InFlight);
         Assert.False(cancellation.Cancel());
     }
 
@@ -74,7 +71,6 @@ public class TurnCancellationTests
 
         cancellation.End(first);
 
-        Assert.True(cancellation.InFlight);
         Assert.True(cancellation.Cancel());
         Assert.True(second.Token.IsCancellationRequested);
     }

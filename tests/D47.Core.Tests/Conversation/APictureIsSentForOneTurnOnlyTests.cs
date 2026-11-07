@@ -56,7 +56,7 @@ public class APictureIsSentForOneTurnOnlyTests
             clock: new InstantClock());
 
         loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
+        return loop.Recording();
     }
 
     private static async Task RunAsync(TurnLoop loop, string input)
@@ -84,7 +84,7 @@ public class APictureIsSentForOneTurnOnlyTests
         var sent = Assert.Single(Results(provider.Requests[1].Prompt.History));
         Assert.Same(Jpeg, sent.Image?.Data);
 
-        var kept = Assert.Single(Results(loop.History));
+        var kept = Assert.Single(Results(loop.History()));
         Assert.Null(kept.Image);
         Assert.Equal(ResultText, kept.Content);
 

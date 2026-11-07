@@ -10,18 +10,6 @@ public sealed class MishearingWatch
     private string? _outstanding;
     private bool _asked;
 
-    /// <summary>Whether a correction is being waited on, for the wording to know which to use.</summary>
-    public bool Waiting
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _outstanding is not null;
-            }
-        }
-    }
-
     /// <summary>
     /// Records a name that did not resolve, and answers whether this is the first time of asking.
     /// </summary>

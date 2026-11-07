@@ -17,7 +17,7 @@ public class LmStudioReportsAndReloadsTheLoadedContextTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public LmStudioReportsAndReloadsTheLoadedContextTests() => EndpointDemotions.Clear();
+    public LmStudioReportsAndReloadsTheLoadedContextTests() => EndpointDemotionsReset.Run();
 
     private static string LoadAt(int tokens) =>
         $"POST http://127.0.0.1:1234/api/v1/models/load {{\"model\":\"google/gemma-4-e4b\",\"context_length\":{tokens}}}";

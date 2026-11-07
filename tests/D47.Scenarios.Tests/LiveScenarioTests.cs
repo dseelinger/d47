@@ -184,7 +184,7 @@ public class LiveScenarioTests
     }
 
     private static decimal Banked(SpendLedger ledger) =>
-        ledger.Entries.Where(entry => entry.Kind == SpendKind.Model).Sum(entry => entry.Dollars);
+        ledger.Total(SpendPeriods.Rolling("all", DateTimeOffset.UtcNow.AddDays(1), 36_500)).ModelDollars;
 
     private static string Sanitise(string? model) =>
         string.Join('-', (model ?? "default").Split(Path.GetInvalidFileNameChars().Append(':').ToArray()));

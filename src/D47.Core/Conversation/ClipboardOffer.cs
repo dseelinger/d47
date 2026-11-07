@@ -9,8 +9,6 @@ public sealed class ClipboardOffer
     /// <summary>What would go on the clipboard — a system name, almost always.</summary>
     public string? Text { get; private set; }
 
-    public bool IsStanding => Text is { Length: > 0 };
-
     /// <summary>Records what is being offered and returns the sentence to say.</summary>
     public string? Offer(string? text, string subject)
     {

@@ -87,7 +87,7 @@ public class TheCovasGainIsTheLowestLevellingOfSpokenClipsTests
     private static double Levelling(AudioClip clip)
     {
         var dry = Samples(clip);
-        var wet = CovasVoice.Reverberate(dry, Rate);
+        var wet = Samples(CovasVoice.Apply(clip)).Select(sample => sample / CovasVoice.Gain).ToArray();
         var gain = Rms(dry, dry.Length) / Rms(wet, dry.Length);
         var peak = wet.Max(Math.Abs);
 

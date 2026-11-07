@@ -68,6 +68,6 @@ public class ABusyFolderRebuildsOnceItGoesQuietTests
         Assert.True(quiet.Start(during + TimeSpan.FromSeconds(10)));
         quiet.Finished();
 
-        Assert.False(quiet.Pending);
+        Assert.Null(quiet.Wait(during + TimeSpan.FromSeconds(20)));
     }
 }

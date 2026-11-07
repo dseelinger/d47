@@ -38,15 +38,6 @@ internal sealed partial class ChatterboxTokeniser
         _suffix = suffix;
     }
 
-    /// <summary>The bracketed tags the model performs, without their brackets, in id order.</summary>
-    public IReadOnlyList<string> Tags =>
-    [
-        .. _added
-            .Where(a => a.Key.Length > 2 && a.Key[0] == '[' && a.Key[^1] == ']')
-            .OrderBy(a => a.Value)
-            .Select(a => a.Key[1..^1]),
-    ];
-
     /// <summary>Whether <paramref name="tag"/>, written without brackets, is one of the model's own tokens.</summary>
     public bool Performs(string tag) => _added.ContainsKey($"[{tag}]");
 

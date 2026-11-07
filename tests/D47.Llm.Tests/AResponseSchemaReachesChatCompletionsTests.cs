@@ -17,7 +17,7 @@ public class AResponseSchemaReachesChatCompletionsTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    public AResponseSchemaReachesChatCompletionsTests() => EndpointDemotions.Clear();
+    public AResponseSchemaReachesChatCompletionsTests() => EndpointDemotionsReset.Run();
 
     [Fact]
     public void ASchemaBecomesAStrictResponseFormatWithTheSchemaUnchanged()

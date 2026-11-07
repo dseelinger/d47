@@ -32,7 +32,7 @@ public class ARefusedRegistrationIsRetriedQuietlyTests
             Assert.False(Directory.Exists(folder));
             Assert.Equal(100, openVr.Count(nameof(FakeOpenVr.SetActionManifestPath)));
             Assert.Single(lines, line => line.Contains("would not load the action manifest", StringComparison.Ordinal));
-            Assert.False(input.Ready);
+            Assert.DoesNotContain(lines, line => line.Contains("Controller input is on", StringComparison.Ordinal));
         }
         finally
         {
@@ -53,7 +53,6 @@ public class ARefusedRegistrationIsRetriedQuietlyTests
             openVr.ManifestRefused = EVRInputError.None;
             input.Register(new DiskFileSystem(), folder);
 
-            Assert.True(input.Ready);
             Assert.Contains(lines, line => line.Contains("Controller input is on", StringComparison.Ordinal));
 
             openVr.Calls.Clear();

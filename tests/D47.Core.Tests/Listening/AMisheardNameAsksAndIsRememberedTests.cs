@@ -129,12 +129,10 @@ public class AMisheardNameAsksAndIsRememberedTests : IDisposable
         var watch = new MishearingWatch();
 
         Assert.True(watch.Rejected("Eurebia"));
-        Assert.True(watch.Waiting);
 
         var learned = watch.Confirmed("Eurybia");
 
         Assert.Equal(("Eurebia", "Eurybia"), learned);
-        Assert.False(watch.Waiting);
 
         // And nothing is outstanding afterwards, so the next successful lookup cannot pick up a correction
         // that belongs to an exchange that is over.
@@ -151,7 +149,6 @@ public class AMisheardNameAsksAndIsRememberedTests : IDisposable
         Assert.False(watch.Rejected("Yourebia"));
 
         // Nothing is held after the second one, so a later success cannot attach itself to it.
-        Assert.False(watch.Waiting);
         Assert.Null(watch.Confirmed("Eurybia"));
 
         var asked = MishearingWatch.Ask("system", "Yourebia", ["Eurybia"], firstTime: false);

@@ -23,7 +23,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
 
     private const string FirstSignature = "c2lnbmF0dXJlLW9uZQ+/==";
 
-    public ThinkingIsReplayedBetweenToolRoundsTests() => EndpointDemotions.Clear();
+    public ThinkingIsReplayedBetweenToolRoundsTests() => EndpointDemotionsReset.Run();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -61,23 +61,23 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
     ];
 
     /// <summary>A two-round turn whose tool changes the recall and, when asked, the game state.</summary>
-    private static async Task<(JsonElement First, JsonElement Second, TurnLoop Loop)> TwoRoundsAsync(
+    private static async Task<(JsonElement First, JsonElement Second, IReadOnlyList<ConversationMessage> Transcript)> TwoRoundsAsync(
         string model,
         bool stateChanges,
         int maxToolRounds = 8,
         bool redacted = false)
     {
-        var (requests, loop) = await RequestsAsync(model, stateChanges, maxToolRounds, redacted, followUp: null);
+        var (requests, transcript) = await RequestsAsync(model, stateChanges, maxToolRounds, redacted, followUp: null);
 
         Assert.Equal(2, requests.Count);
 
-        return (requests[0], requests[1], loop);
+        return (requests[0], requests[1], transcript);
     }
 
     /// <summary>
     /// The two-round turn, then, when <paramref name="followUp"/> is given, a one-round turn asking it.
     /// </summary>
-    private static async Task<(IReadOnlyList<JsonElement> Requests, TurnLoop Loop)> RequestsAsync(
+    private static async Task<(IReadOnlyList<JsonElement> Requests, IReadOnlyList<ConversationMessage> Transcript)> RequestsAsync(
         string model,
         bool stateChanges,
         int maxToolRounds,
@@ -147,6 +147,8 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
             Recall = "The Commander flies a Python.",
             LiveGameState = () => state,
         };
+        var transcript = new List<ConversationMessage>();
+        loop.UseTranscript(transcript);
 
         await foreach (var _ in loop.RunAsync("how far is Sol", cancellationToken: Token))
         {
@@ -159,7 +161,7 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
             }
         }
 
-        return ([.. endpoint.Requests.Select(Parse)], loop);
+        return ([.. endpoint.Requests.Select(Parse)], transcript);
     }
 
     private static JsonElement Parse(string body) => JsonDocument.Parse(body).RootElement.Clone();
@@ -332,9 +334,9 @@ public class ThinkingIsReplayedBetweenToolRoundsTests
     [Fact]
     public async Task TheTranscriptKeepsNoThinking()
     {
-        var (_, _, loop) = await TwoRoundsAsync(Operator, stateChanges: true);
+        var (_, _, transcript) = await TwoRoundsAsync(Operator, stateChanges: true);
 
-        var parts = loop.History.SelectMany(message => message.Content).ToList();
+        var parts = transcript.SelectMany(message => message.Content).ToList();
 
         Assert.Contains(parts, part => part is ConversationContent.ToolUse);
         Assert.DoesNotContain(parts, part => part is ConversationContent.ThinkingBlock or ConversationContent.TrailingState);

@@ -56,15 +56,6 @@ public sealed class WakeWordGate
 
     private IReadOnlyList<string> _phrases = [];
 
-    /// <summary>Whether the window from a bare wake word is still open at <paramref name="now"/>.</summary>
-    public bool IsAwake(DateTimeOffset now)
-    {
-        lock (_gate)
-        {
-            return _awake is { } since && now - since < Window;
-        }
-    }
-
     /// <summary>
     /// Decides whether <paramref name="transcript"/> was addressed to d47, and returns it from the wake
     /// phrase on.

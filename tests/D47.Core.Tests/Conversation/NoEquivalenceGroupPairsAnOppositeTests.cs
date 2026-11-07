@@ -19,9 +19,9 @@ public class NoEquivalenceGroupPairsAnOppositeTests
 
     [Theory]
     [MemberData(nameof(Opposites))]
-    public void NoGroupHoldsBothWordsOfAPair(string first, string second) =>
-        Assert.DoesNotContain(
-            PhraseScore.EquivalenceTable,
-            group => group.Contains(first, StringComparer.OrdinalIgnoreCase)
-                && group.Contains(second, StringComparer.OrdinalIgnoreCase));
+    public void NoGroupHoldsBothWordsOfAPair(string first, string second)
+    {
+        Assert.Null(PhraseScore.Score(first, second));
+        Assert.Null(PhraseScore.Score(second, first));
+    }
 }

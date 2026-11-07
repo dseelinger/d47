@@ -113,8 +113,4 @@ public static class HelpLinks
 
         return built.ToString();
     }
-
-    /// <summary>Every target this help points at, a capability id or a <c>place:</c> id, in the order it points at them.</summary>
-    public static IReadOnlyList<string> TargetsIn(string? help) =>
-        [.. Parse(help).Where(segment => segment.Target is not null).Select(segment => segment.Target!)];
 }

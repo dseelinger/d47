@@ -11,9 +11,6 @@ public sealed class QuietPeriod(TimeSpan quiet)
 
     public TimeSpan Quiet { get; } = quiet;
 
-    /// <summary>Whether a change has arrived that no rebuild has yet picked up.</summary>
-    public bool Pending => _lastChange is not null;
-
     public void Changed(DateTimeOffset now) => _lastChange = now;
 
     /// <summary>

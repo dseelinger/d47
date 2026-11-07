@@ -7,8 +7,6 @@ public sealed class HandInOffer
 
     public string? System { get; private set; }
 
-    public bool IsStanding => System is { Length: > 0 };
-
     /// <summary>Stands the offer for the mission, replacing any earlier one.</summary>
     public void Open(long missionId, string system)
     {

@@ -70,7 +70,7 @@ public class AnAnswerOffersTheClipboardTests
             "find_material",
             ("material", "Imperial Shielding"));
 
-        Assert.True(offer.IsStanding);
+        Assert.NotNull(offer.Text);
 
         var said = await AskAsync(
             offer,
@@ -78,7 +78,7 @@ public class AnAnswerOffersTheClipboardTests
             "find_material",
             ("material", "Imperial Shielding"));
 
-        Assert.False(offer.IsStanding);
+        Assert.Null(offer.Text);
         Assert.DoesNotContain("copy that", said, StringComparison.Ordinal);
     }
 

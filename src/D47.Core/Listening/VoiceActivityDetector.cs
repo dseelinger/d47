@@ -55,9 +55,6 @@ public sealed class VoiceActivityDetector
     /// <summary>How much has to be loud before the gate opens.</summary>
     public int Onset { get; set; } = 3;
 
-    /// <summary>What the room is currently measured at, in dBFS.</summary>
-    public double NoiseFloor => _floorDb;
-
     /// <summary>Whether enough of the room has been heard for the floor to mean anything.</summary>
     public bool Settled => _framesSeen >= SettleFrames;
 

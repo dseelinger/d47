@@ -46,7 +46,7 @@ public sealed class ADraftIsActedOnByVoiceTests
     [Fact]
     public void NoneOfThemIsAdvertisedToTheModel()
     {
-        var advertised = ToolSurface.All(Registry(new AdventureCapability.AdventureDesk { HasDraft = () => true }))
+        var advertised = ToolProfiles.All(Registry(new AdventureCapability.AdventureDesk { HasDraft = () => true }))
             .SelectMany(profile => profile.Tools)
             .Select(tool => tool.Name)
             .ToHashSet(StringComparer.Ordinal);

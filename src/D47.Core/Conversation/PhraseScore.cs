@@ -35,9 +35,6 @@ public static class PhraseScore
             .SelectMany(group => group.Select(member => (Canonical: group[0], Words: member.Split(' '))))
             .OrderByDescending(entry => entry.Words.Length)];
 
-    /// <summary>The equivalence table itself, for tests that walk it rather than score against it.</summary>
-    public static IReadOnlyList<IReadOnlyList<string>> EquivalenceTable => EquivalenceClasses;
-
     /// <summary>Scores one utterance against one phrase.</summary>
     public static PhraseMatch? Score(string utterance, string phrase)
     {

@@ -26,7 +26,7 @@ public sealed class ChangingAnObjectiveIsTheCommandersTests
     [Fact]
     public void ItIsNotAdvertisedToTheModel()
     {
-        var advertised = ToolSurface.All(Registry(new AdventureCapability.AdventureDesk()))
+        var advertised = ToolProfiles.All(Registry(new AdventureCapability.AdventureDesk()))
             .SelectMany(profile => profile.Tools)
             .Select(tool => tool.Name);
 

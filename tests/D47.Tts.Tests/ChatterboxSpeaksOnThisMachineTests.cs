@@ -134,6 +134,6 @@ public class ChatterboxSpeaksOnThisMachineTests
         var tokeniser = ChatterboxTokeniser.Load(folder.Files, Path.Combine(folder.Models, "tokenizer.json"));
 
         Assert.Equal([5, 4, 50275, 6, 50256, 50256], tokeniser.Encode("hi [Laugh] hi"));
-        Assert.Equal(["sigh", "laugh"], tokeniser.Tags);
+        Assert.Equal([50268, 50256, 50256], tokeniser.Encode("[sigh]"));
     }
 }

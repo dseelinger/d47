@@ -46,9 +46,6 @@ public sealed record SpeechWiringPlan
     public required IReadOnlyList<string> RefetchVoices { get; init; }
 
     public required SpeechWiringState Next { get; init; }
-
-    /// <summary>Whether anything at all moved.</summary>
-    public bool Anything => Build.Count > 0 || Dispose.Count > 0 || Rewire.Count > 0;
 }
 
 /// <summary>

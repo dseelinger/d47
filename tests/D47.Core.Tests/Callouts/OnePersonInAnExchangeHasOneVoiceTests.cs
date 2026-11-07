@@ -27,7 +27,7 @@ public class OnePersonInAnExchangeHasOneVoiceTests
     }
 
     [Fact]
-    public void TheExchangeIsSpokenInOneVoicePerPersonAndLeavesTwoEntriesInTheCast()
+    public void TheExchangeIsSpokenInOneVoicePerPerson()
     {
         var cast = new VoiceCast { Pool = ["voice-a", "voice-b", "voice-c", "voice-d"] };
 
@@ -38,9 +38,6 @@ public class OnePersonInAnExchangeHasOneVoiceTests
         Assert.Equal(voices[0], voices[2]);
         Assert.Equal(voices[1], voices[3]);
         Assert.NotEqual(voices[0], voices[1]);
-
-        // No leftover second entry for the same person survives in the per-system cast.
-        Assert.Equal(2, cast.Assignments.PerSystem);
     }
 
     [Fact]

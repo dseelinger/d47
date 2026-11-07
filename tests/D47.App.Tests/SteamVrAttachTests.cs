@@ -332,8 +332,6 @@ public class SteamVrLiveTests
 
             input.Register(new DiskFileSystem(), folder);
 
-            Assert.True(input.Ready, "the action set and both action handles should resolve against a real runtime");
-
             // No press can be injected, so what is proved here is that the two action structs marshal at the
             // sizes the installed runtime expects: a claim that goes through and comes back.
             input.TriggerHeld(true);

@@ -77,7 +77,7 @@ public class AFirstHeardNpcWaitsForItsGivenNamesSexTests
     {
         var rig = new Rig(Model(given => All(given, "female")));
         rig.Names.Enqueue("p", Accents, ["Marianne Hobbs"]);
-        await rig.Names.WhenIdleAsync();
+        await StreamingTtsProvider.Eventually(() => rig.Names.SexOfGivenName("Marianne") == "female", "the sex was never recorded");
 
         Assert.Null(rig.Waits("Marianne Okafor"));
         Assert.True(IsFemale(rig.Cast.ForSender("Marianne Okafor", isPlayer: false).VoiceId));
@@ -95,7 +95,7 @@ public class AFirstHeardNpcWaitsForItsGivenNamesSexTests
         Assert.NotNull(first);
         Assert.NotNull(second);
         await first;
-        await rig.Names.WhenIdleAsync();
+        await second;
 
         Assert.Equal(["Dan"], asked.SelectMany(given => given));
     }
@@ -219,7 +219,8 @@ public class AFirstHeardNpcWaitsForItsGivenNamesSexTests
 
         names.Ask = (n, g, _, _) => Task.FromResult<NameAnswers?>(new NameAnswers(new Dictionary<string, NameReading>(), All(g, "male")));
         names.Enqueue("p", Accents, ["Dan Roberts"]);
-        await names.WhenIdleAsync();
+        await StreamingTtsProvider.Eventually(
+            () => new NameAccents(files, file, givenFile: given).SexOfGivenName("Dan") == "male", "the sex was never saved");
 
         var restarted = new NameAccents(files, file, givenFile: given);
 

@@ -30,7 +30,7 @@ public class HelpCrossReferencesResolveTests
         {
             foreach (var row in capability.Settings)
             {
-                foreach (var target in HelpLinks.TargetsIn(row.Help))
+                foreach (var target in TargetsIn(row.Help))
                 {
                     if (HelpLinks.PlaceIdOf(target) is null && !ids.Contains(target))
                     {
@@ -57,7 +57,7 @@ public class HelpCrossReferencesResolveTests
 
         foreach (var row in Registered().SelectMany(capability => capability.Settings))
         {
-            broken.AddRange(HelpLinks.TargetsIn(row.Help)
+            broken.AddRange(TargetsIn(row.Help)
                 .Select(HelpLinks.PlaceIdOf)
                 .Where(id => id is not null && !places.Contains(id))
                 .Select(id => $"{row.Key} -> place:{id}"));
@@ -67,7 +67,7 @@ public class HelpCrossReferencesResolveTests
         {
             foreach (var group in place.Groups)
             {
-                broken.AddRange(HelpLinks.TargetsIn(group.Help)
+                broken.AddRange(TargetsIn(group.Help)
                     .Where(target => HelpLinks.PlaceIdOf(target) is { } id && !places.Contains(id))
                     .Select(target => $"{place.Id}/{group.Title} -> {target}"));
             }
@@ -89,7 +89,7 @@ public class HelpCrossReferencesResolveTests
     {
         var linked = Registered()
             .SelectMany(capability => capability.Settings)
-            .Count(row => HelpLinks.TargetsIn(row.Help).Count > 0);
+            .Count(row => TargetsIn(row.Help).Count > 0);
 
         Assert.True(linked >= 4, $"only {linked} settings rows carry a cross-reference link");
     }
@@ -130,7 +130,7 @@ public class HelpCrossReferencesResolveTests
     public void TheParserReadsWhatIsWrittenAndNothingElse(string markup, string plain, int links)
     {
         Assert.Equal(plain, HelpLinks.Plain(markup));
-        Assert.Equal(links, HelpLinks.TargetsIn(markup).Count);
+        Assert.Equal(links, TargetsIn(markup).Count);
     }
 
     /// <summary>
@@ -148,4 +148,7 @@ public class HelpCrossReferencesResolveTests
         Assert.Equal(HelpLinks.Plain(Markup), rebuilt);
         Assert.Equal("Off by default; see Privacy for what is sent.", rebuilt);
     }
+
+    private static IReadOnlyList<string> TargetsIn(string? help) =>
+        [.. HelpLinks.Parse(help).Where(segment => segment.Target is not null).Select(segment => segment.Target!)];
 }

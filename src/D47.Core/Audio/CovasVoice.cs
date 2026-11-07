@@ -53,26 +53,6 @@ public static class CovasVoice
         };
     }
 
-    /// <summary>One channel with the reverb and the faded tail, before <see cref="Gain"/>.</summary>
-    internal static double[] Reverberate(double[] signal, int rate)
-    {
-        var room = new Room(rate);
-        var tail = TailFrames(rate);
-        var output = new double[signal.Length + tail];
-
-        for (var index = 0; index < signal.Length; index++)
-        {
-            output[index] = room.Next(signal[index]);
-        }
-
-        for (var index = 0; index < tail; index++)
-        {
-            output[signal.Length + index] = room.Next(0) * Fade(index, tail);
-        }
-
-        return output;
-    }
-
     private static int TailFrames(int rate) => (int)Math.Round(TailSeconds * rate);
 
     private static double Fade(int index, int tail) => (double)(tail - 1 - index) / tail;

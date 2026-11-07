@@ -88,7 +88,7 @@ public class ANeutronPlotOffersItsFirstWaypointTests
 
         Run(new RouteCallout { Offer = offer }, Event(kind));
 
-        Assert.False(offer.IsStanding);
+        Assert.Null(offer.System);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class ANeutronPlotOffersItsFirstWaypointTests
 
         Run(new RouteCallout { Offer = offer }, Event("Music"));
 
-        Assert.True(offer.IsStanding);
+        Assert.NotNull(offer.System);
     }
 
     [Fact]

@@ -122,8 +122,8 @@ public class SwitchReconcilerTests
         reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
 
         Assert.Empty(reconciler.Drain());
-        Assert.Single(reconciler.Disagreeing);
-        Assert.Equal("the landing gear is off", reconciler.Disagreeing[0].Disagrees);
+        Assert.Single(Disagreeing(reconciler));
+        Assert.Equal("the landing gear is off", Disagreeing(reconciler)[0].Disagrees);
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class SwitchReconcilerTests
 
         reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown), [GearSwitch()]);
 
-        Assert.Empty(reconciler.Disagreeing);
+        Assert.Empty(Disagreeing(reconciler));
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class SwitchReconcilerTests
             },
             [GearSwitch()]);
 
-        Assert.Empty(reconciler.Disagreeing);
+        Assert.Empty(Disagreeing(reconciler));
     }
 
     [Fact]
@@ -740,4 +740,7 @@ public class SwitchReconcilerTests
         Assert.Empty(reconciler.Drain());
         Assert.Contains("not up yet", reconciler.States[0].Note, StringComparison.Ordinal);
     }
+
+    private static IReadOnlyList<SwitchState> Disagreeing(SwitchReconciler reconciler) =>
+        [.. reconciler.States.Where(state => state.Disagrees is not null)];
 }

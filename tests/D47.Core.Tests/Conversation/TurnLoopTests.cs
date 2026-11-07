@@ -35,7 +35,7 @@ public class TurnLoopTests
         // One attempt, so a provider call count in these tests means a turn rather than a turn times the
         // retry budget.
         loop.Retry = RetryPolicy.Default with { Attempts = 1 };
-        return loop;
+        return loop.Recording();
     }
 
     [Fact]
@@ -459,10 +459,10 @@ public class TurnLoopTests
         var loop = Build(BuiltinRegistry(install), provider, out _, out _);
 
         await RunWithTextAsync(loop, "tell me about hyperspace physics");
-        Assert.Equal(2, loop.History.Count);
+        Assert.Equal(2, loop.History().Count);
 
-        Assert.Equal(ConversationRole.User, loop.History[0].Role);
-        Assert.Equal(ConversationRole.Assistant, loop.History[1].Role);
+        Assert.Equal(ConversationRole.User, loop.History()[0].Role);
+        Assert.Equal(ConversationRole.Assistant, loop.History()[1].Role);
 
         // The model's own history is what it sees next turn; the request carries it plus the new user turn.
         await RunWithTextAsync(loop, "and what about witchspace");
@@ -501,7 +501,7 @@ public class TurnLoopTests
         // But it is still in the transcript, which is what makes the *next* question about it answerable
         // rather than only the first.
         Assert.Contains(
-            loop.History,
+            loop.History(),
             message => Text(message).Contains("Elvira Martuuk", StringComparison.Ordinal));
     }
 
@@ -540,18 +540,18 @@ public class TurnLoopTests
         for (var turn = 0; turn < TurnLoop.TranscriptKept; turn++)
         {
             await RunWithTextAsync(loop, $"question {turn.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
-            Assert.InRange(loop.History.Count, 0, TurnLoop.TranscriptKept);
+            Assert.InRange(loop.History().Count, 0, TurnLoop.TranscriptKept);
         }
 
-        Assert.InRange(loop.History.Count, TurnLoop.TranscriptTrimmedTo, TurnLoop.TranscriptKept);
+        Assert.InRange(loop.History().Count, TurnLoop.TranscriptTrimmedTo, TurnLoop.TranscriptKept);
 
         // The oldest went first, which is the ordinary meaning of a conversation you can follow.
         Assert.DoesNotContain(
-            loop.History,
+            loop.History(),
             message => Text(message).Contains("question 0", StringComparison.Ordinal));
 
         Assert.Contains(
-            loop.History,
+            loop.History(),
             message => Text(message).Contains(
                 $"question {(TurnLoop.TranscriptKept - 1).ToString(System.Globalization.CultureInfo.InvariantCulture)}",
                 StringComparison.Ordinal));
@@ -573,25 +573,25 @@ public class TurnLoopTests
             await RunWithTextAsync(loop, $"question {(asked++).ToString(System.Globalization.CultureInfo.InvariantCulture)}");
 
         // Two messages a turn: the turn that passes the ceiling is the one that trims.
-        while (loop.History.Count + 2 <= TurnLoop.TranscriptKept)
+        while (loop.History().Count + 2 <= TurnLoop.TranscriptKept)
         {
             await AskAsync();
         }
 
         await AskAsync();
-        Assert.Equal(TurnLoop.TranscriptTrimmedTo, loop.History.Count);
+        Assert.Equal(TurnLoop.TranscriptTrimmedTo, loop.History().Count);
 
-        var first = loop.History[0];
+        var first = loop.History()[0];
 
-        while (loop.History.Count + 2 <= TurnLoop.TranscriptKept)
+        while (loop.History().Count + 2 <= TurnLoop.TranscriptKept)
         {
             await AskAsync();
-            Assert.Same(first, loop.History[0]);
+            Assert.Same(first, loop.History()[0]);
         }
 
         await AskAsync();
-        Assert.Equal(TurnLoop.TranscriptTrimmedTo, loop.History.Count);
-        Assert.NotSame(first, loop.History[0]);
+        Assert.Equal(TurnLoop.TranscriptTrimmedTo, loop.History().Count);
+        Assert.NotSame(first, loop.History()[0]);
     }
 
     private static string Text(ConversationMessage message) =>

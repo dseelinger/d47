@@ -16,7 +16,7 @@ public class AnthropicDemotionTests
     private const string VagueRefusal =
         """{"type":"error","error":{"type":"invalid_request_error","message":"could not process that request"}}""";
 
-    public AnthropicDemotionTests() => EndpointDemotions.Clear();
+    public AnthropicDemotionTests() => EndpointDemotionsReset.Run();
 
     private static async Task<List<LlmStreamEvent>> DrainAsync(RecordedEndpoint endpoint, string model) =>
         await Recordings.DrainAsync(endpoint, Recordings.Request(model), Token);

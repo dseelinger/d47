@@ -65,18 +65,6 @@ internal sealed class StreamSampleProvider : ISampleProvider, IDisposable
 
     public WaveFormat WaveFormat { get; }
 
-    /// <summary>Whether the feeder has read to the end, failed or stopped.</summary>
-    internal bool Drained
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _atEnd || _exited;
-            }
-        }
-    }
-
     /// <summary>The frames copied out so far, clamped to the length once it is known. Takes no lock.</summary>
     public TrackProgress Progress
     {

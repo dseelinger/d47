@@ -58,13 +58,6 @@ internal static class EndpointDemotions
     /// <summary>The context size recorded for this endpoint and model, or null when none has been.</summary>
     public static int? ContextOf(string endpoint, string model) =>
         Contexts.TryGetValue(new Key(endpoint, model), out var tokens) ? tokens : null;
-
-    /// <summary>Forgets everything.</summary>
-    internal static void Clear()
-    {
-        Refused.Clear();
-        Contexts.Clear();
-    }
 }
 
 /// <summary>The parts of a request that can be dropped and still leave a turn worth having.</summary>

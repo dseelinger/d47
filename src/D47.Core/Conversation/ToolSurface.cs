@@ -9,19 +9,6 @@ public sealed record ToolProfile(string Id, IReadOnlyList<ToolAdvertisement> Too
 /// <summary>The registry's tools as a turn advertises them: one mode's list, or every tool for tool search.</summary>
 public static class ToolSurface
 {
-    private static readonly ControlContext[] Contexts =
-    [
-        ControlContext.None,
-        ControlContext.Docked,
-        ControlContext.Landed,
-        ControlContext.NormalSpace,
-        ControlContext.Supercruise,
-        ControlContext.Hyperspace,
-        ControlContext.Srv,
-        ControlContext.OnFoot,
-        ControlContext.Fighter,
-    ];
-
     /// <summary>The tools for one mode and key-press setting, none deferred.</summary>
     public static ToolProfile ForMode(CapabilityRegistry registry, ControlContext context, bool actionsEnabled) =>
         new(
@@ -47,20 +34,6 @@ public static class ToolSurface
     /// </summary>
     public static ToolProfile Searchable(CapabilityRegistry registry) =>
         new("searchable", Advertise(registry, _ => true, deferring: true));
-
-    /// <summary>Every tool list that can ever ship: each mode's full and compact, with key presses on and off, and the searchable one.</summary>
-    public static IEnumerable<ToolProfile> All(CapabilityRegistry registry)
-    {
-        foreach (var context in Contexts)
-        {
-            yield return ForMode(registry, context, actionsEnabled: true);
-            yield return ForMode(registry, context, actionsEnabled: false);
-            yield return Compact(registry, context, actionsEnabled: true);
-            yield return Compact(registry, context, actionsEnabled: false);
-        }
-
-        yield return Searchable(registry);
-    }
 
     private static List<ToolAdvertisement> Advertise(
         CapabilityRegistry registry,

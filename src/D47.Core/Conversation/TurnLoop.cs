@@ -165,8 +165,6 @@ public sealed class TurnLoop(
     /// <summary>How many times in one turn the model may ask for tools and be answered.</summary>
     public int MaxToolRounds { get; set; } = 8;
 
-    public IReadOnlyList<ConversationMessage> History => _history;
-
     /// <summary>
     /// Records something d47 said without being asked, so the next turn knows it said it
     /// (remediation.md 17, item 4).

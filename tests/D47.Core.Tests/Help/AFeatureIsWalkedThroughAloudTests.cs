@@ -93,7 +93,6 @@ public class AFeatureIsWalkedThroughAloudTests
         walk.Take("what is the weather", Start.AddMinutes(9));
 
         Assert.Equal("Step 2. Say 2.", walk.Take("next", Start.AddMinutes(9.5)));
-        Assert.True(walk.IsRunning(Start.AddMinutes(19)));
         Assert.Null(walk.Take("next", Start.AddMinutes(19.5)));
     }
 

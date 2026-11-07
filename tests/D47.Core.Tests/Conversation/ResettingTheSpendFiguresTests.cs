@@ -45,7 +45,9 @@ public class ResettingTheSpendFiguresTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private SpendLedger Ledger(IWallClock clock) => new(File, new MemoryFileSystem(), clock, NullLogger.Instance);
+    private readonly MemoryFileSystem _files = new();
+
+    private SpendLedger Ledger(IWallClock clock) => new(File, _files, clock, NullLogger.Instance);
 
     private static SpendEntry Model(DateTimeOffset at, decimal dollars) => new()
     {
@@ -93,7 +95,6 @@ public class ResettingTheSpendFiguresTests : IDisposable
 
         // The two opus charges are one group, not two rows.
         Assert.Equal(1.25m, today.Shares[0].Dollars);
-        Assert.Equal(2, today.Shares[0].Charges);
 
         // A free provider is a group with a figure of zero rather than an absence — it was used, and a
         // provider that shows nothing looks like one that was not.
@@ -203,10 +204,11 @@ public class ResettingTheSpendFiguresTests : IDisposable
         ledger.Append(Model(Now.AddHours(-2), 0.25m));
         ledger.Reset(SpendPeriods.Today(Now, Utc));
 
-        var charges = ledger.Entries.Where(entry => !entry.IsReset).ToList();
+        var entries = SpendFile.Entries(_files, File);
+        var charges = entries.Where(entry => !entry.IsReset).ToList();
 
         Assert.Equal(0.25m, Assert.Single(charges).Dollars);
-        Assert.Contains(ledger.Entries, entry => entry.IsReset);
+        Assert.Contains(entries, entry => entry.IsReset);
     }
 
     /// <summary>And the mark survives a restart, or the figures would come back on the next launch.</summary>

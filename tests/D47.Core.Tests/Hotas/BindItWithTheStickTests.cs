@@ -214,7 +214,7 @@ public class BindItWithTheStickTests
         button.Poll([Reading(Throttle, 32, 6)]);
 
         Assert.Empty(edges.Seen);
-        Assert.False(button.DevicePresent);
+        Assert.True(Missing(button));
     }
 
     /// <summary>
@@ -242,15 +242,17 @@ public class BindItWithTheStickTests
     [Fact]
     public void NothingBoundIsNotTheSameAsADeviceThatIsMissing()
     {
-        var button = new BoundButton();
+        var unbound = new BoundButton();
+        Assert.False(Missing(unbound));
 
-        Assert.Null(button.DevicePresent);
+        var absent = new BoundButton();
+        absent.Bind(new HotasButton(Stick, 6));
+        Assert.True(Missing(absent));
 
-        button.Bind(new HotasButton(Stick, 6));
-        Assert.False(button.DevicePresent);
-
-        button.Poll([Reading(Stick, 32)]);
-        Assert.True(button.DevicePresent);
+        var present = new BoundButton();
+        present.Bind(new HotasButton(Stick, 6));
+        present.Poll([Reading(Stick, 32)]);
+        Assert.False(Missing(present));
     }
 
     [Fact]
@@ -425,8 +427,6 @@ public class BindItWithTheStickTests
             button.Poll([Reading(Stick, 32)]);
             Assert.Null(button.MissingDeviceNotice());
         }
-
-        Assert.True(button.DevicePresent);
     }
 
     /// <summary>
@@ -447,7 +447,6 @@ public class BindItWithTheStickTests
         button.Poll([Reading(Stick, 32)]);
 
         Assert.Null(button.MissingDeviceNotice());
-        Assert.True(button.DevicePresent);
     }
 
     [Fact]
@@ -462,6 +461,16 @@ public class BindItWithTheStickTests
         }
 
         Assert.Null(button.MissingDeviceNotice());
-        Assert.Null(button.DevicePresent);
+    }
+
+    /// <summary>Polls with no devices for as long as absence takes to be called, and says whether it was.</summary>
+    private static bool Missing(BoundButton button)
+    {
+        for (var i = 0; i < BoundButton.PollsBeforeAbsenceIsCalled; i++)
+        {
+            button.Poll([]);
+        }
+
+        return button.MissingDeviceNotice() is not null;
     }
 }

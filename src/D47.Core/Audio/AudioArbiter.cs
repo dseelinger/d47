@@ -64,19 +64,6 @@ public sealed record AudioActivity(
     long? Utterance = null,
     string? Picture = null);
 
-/// <summary>Whether a playback holds the speech channels.</summary>
-public enum PlaybackHold
-{
-    /// <summary>No playback; speech plays as usual.</summary>
-    Off,
-
-    /// <summary>Speech and Overheard from any other group are dropped, not queued.</summary>
-    Playing,
-
-    /// <summary>Held but paused; speech plays as usual until playback resumes.</summary>
-    Paused,
-}
-
 /// <summary>The one queue in front of every audible thing.</summary>
 public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) : IDisposable
 {
@@ -206,18 +193,6 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
                 _listening = value;
                 Relevel();
-            }
-        }
-    }
-
-    /// <summary>Whether a playback holds the speech channels, and whether it is paused.</summary>
-    public PlaybackHold Playback
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _playbackGroup is null ? PlaybackHold.Off : _playbackPaused ? PlaybackHold.Paused : PlaybackHold.Playing;
             }
         }
     }
