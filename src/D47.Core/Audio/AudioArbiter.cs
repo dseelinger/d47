@@ -597,8 +597,14 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             activity = Snapshot();
         }
 
+        logger.LogInformation("Music started: {Folder}, {Source}, {File}", folder, MusicSource(track), MusicFile(track));
         ActivityChanged?.Invoke(activity);
     }
+
+    private static string MusicSource(MusicTrack track) => track.OwnPath is null ? "library" : "own";
+
+    private static string MusicFile(MusicTrack track) =>
+        track.OwnPath is { } own ? Path.GetFileName(own) : track.PackFile ?? track.Name;
 
     /// <summary>
     /// Holds the live track, paused, under its folder to continue later; a gap is stopped instead. Drops
@@ -697,6 +703,8 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             activity = Snapshot();
         }
 
+        logger.LogInformation(
+            "Music resumed: {Folder}, {Source}, {File}", shelved.Folder, MusicSource(shelved.Track), MusicFile(shelved.Track));
         ActivityChanged?.Invoke(activity);
         return shelved.Track;
     }
