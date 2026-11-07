@@ -1611,9 +1611,25 @@ public sealed class StoryDirector(
             return "The story has moved on from that objective.";
         }
 
+        long? beaconAddress = null;
+        if (standing.CurrentTrigger is { Kind: TriggerKind.Beacon } beacon)
+        {
+            if (beacon.SystemAddress is not { } address || !GuardianCores.Beacons.ContainsKey(address))
+            {
+                return "The beacon beat has no beacon system to scan.";
+            }
+
+            beaconAddress = address;
+        }
+
         if (book.Step(frontierId, key, now, AdventureFold.CommanderSource) is { } stepped)
         {
             return stepped;
+        }
+
+        if (beaconAddress is not null && RecordSteppedScan(frontierId, beaconAddress, now) is { } unrecorded)
+        {
+            return unrecorded;
         }
 
         logger.LogInformation("{Adventure}: beat {Beat} was marked done by the Commander", standing.Adventure.Name, standing.Current + 1);
@@ -1687,12 +1703,6 @@ public sealed class StoryDirector(
         if (IsWriting(frontierId) || IsRewriting(frontierId))
         {
             return "A different objective is being written.";
-        }
-
-        if (standing.CurrentTrigger is { Kind: TriggerKind.Beacon } beacon)
-        {
-            return "The Ancient Key is the one objective the journal has to show. "
-                   + (string.IsNullOrWhiteSpace(beacon.System) ? "Collect the Ancient Key at the beacon." : $"Collect the Ancient Key at the beacon in {beacon.System}.");
         }
 
         return null;

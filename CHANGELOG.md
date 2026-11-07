@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+**Mark done** now works on a story's Guardian beacon objective. Marking it records the beacon scan on the story, so its Guardian cores come aboard as they would from a real scan. Use it when Elite does not write the event.
+
 A ship with no cargo rack is no longer judged able to make a story's Guardian beacon trip, because collecting the Ancient Key needs at least 1 t of cargo space. The chapter writer is told "no cargo rack is fitted" when that is what stands in the way, a stored ship needs a known cargo rack to be offered as the swap, and a Loadout with no cargo rack does not meet a "Fit out a ship that can reach the beacon" objective.
 
 A story's Guardian beacon objective is now met by collecting the Ancient Key in a beacon system, not by a data-link scan. Elite does not always write the scan, and the key is the one event you can still produce after it. Scanning without collecting the key no longer moves the story on or brings the Guardian cores aboard, and a key collected outside a beacon system does not count.

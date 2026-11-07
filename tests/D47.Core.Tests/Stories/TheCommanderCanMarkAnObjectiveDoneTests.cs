@@ -3,6 +3,7 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Logbook;
+using D47.Core.Persona;
 using D47.Core.Stories;
 using D47.Core.Tests.Conversation;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -12,7 +13,7 @@ using static D47.Core.Tests.Stories.StoryFixtures;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>The Commander fires the objective a story is waiting on as if the journal had shown it, except the beacon scan.</summary>
+/// <summary>The Commander fires the objective a story is waiting on as if the journal had shown it; marking the beacon objective records its scan.</summary>
 public sealed class TheCommanderCanMarkAnObjectiveDoneTests
 {
     private static StoryFixtures Fixtures(params string[] answers) =>
@@ -118,7 +119,7 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
     }
 
     [Fact]
-    public async Task ABeaconScanIsRefusedWithTheReasonAndTheBenchCanStillStepIt()
+    public async Task MarkingTheBeaconObjectiveDoneRecordsTheScanAndWakesTheCores()
     {
         var (fixtures, key) = await AtTheLanding();
         using var _ = fixtures;
@@ -126,17 +127,21 @@ public sealed class TheCommanderCanMarkAnObjectiveDoneTests
         var landing = fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger;
         fixtures.Book.Observe(Touchdown(landing.SystemAddress!.Value, landing.BodyId!.Value, Now.AddMinutes(2)), "F1");
         Settle(fixtures, Now.AddMinutes(2));
-        Assert.Equal(TriggerKind.Beacon, fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger.Kind);
+        var trigger = fixtures.Book.Standing("F1", key)!.CurrentBeat!.Trigger;
+        Assert.Equal(TriggerKind.Beacon, trigger.Kind);
+        Assert.Null(fixtures.Stories.Current("F1")!.BeaconScanAt);
 
-        const string Refusal = $"The Ancient Key is the one objective the journal has to show. Collect the Ancient Key at the beacon in {Beacon}.";
+        Assert.Null(fixtures.Director.MarkDoneRefusal("F1", key));
+        Assert.Null(fixtures.Director.MarkObjectiveDone("F1", Now.AddMinutes(5)));
 
-        Assert.Equal(Refusal, fixtures.Director.MarkObjectiveDone("F1", Now.AddMinutes(5)));
-        Assert.Equal(Refusal, fixtures.Director.MarkDoneRefusal("F1", key));
-        Assert.Equal(2, fixtures.Book.Standing("F1", key)!.Current);
-        Assert.Empty(fixtures.Book.Store.Find("F1", key)!.Stepped);
+        var standing = fixtures.Book.Standing("F1", key)!;
+        Assert.True(standing.IsDone);
+        Assert.Equal(AdventureFold.CommanderSource, standing.FiredBy[^1]);
 
-        Assert.Null(fixtures.Book.Step("F1", key, Now.AddMinutes(6)));
-        Assert.True(fixtures.Book.Standing("F1", key)!.IsDone);
+        var story = fixtures.Stories.Current("F1")!;
+        Assert.Equal(Now.AddMinutes(5), story.BeaconScanAt);
+        Assert.Contains(trigger.SystemAddress!.Value, story.BeaconSystems!);
+        Assert.Equal(CoreWaking.Cores, fixtures.Director.TakeSteppedWaking("F1"));
     }
 
     [Fact]

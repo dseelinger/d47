@@ -53,7 +53,7 @@ nav_order: 115
 <p class="say">Wait for the game to move. If you did the objective and the story has not moved, say "mark this objective done". On a stock story chapter you can also say "never ask this" to be given a different objective, or "change this objective" to be sent on a detour, one objective of your own, before the chapter goes on. Say "write this chapter again" to have the chapter written again from where you are.</p>
 <p class="expect">After three play sessions and seven days at the same objective, your core nudges you toward it. The nudge does not apply to a short story.</p>
 <p class="expect">A short story you have begun and not finished shows Change objective and Never ask this under NEXT on its page. They work as on a story chapter and change only that short story. Neither has a voice phrase for a short story.</p>
-<p class="expect">Mark done, under NEXT on a story chapter's page or a short story's page, moves the story on as if the journal had shown the objective. The Guardian beacon scan cannot be marked done.</p>
+<p class="expect">Mark done, under NEXT on a story chapter's page or a short story's page, moves the story on as if the journal had shown the objective. Marking the Guardian beacon objective done records the scan and brings the story's Guardian cores aboard.</p>
 <p class="expect">An objective to board a ship has a button beside Change objective and Never ask this that plans that ship, or shows it when you own it or have planned it. An objective to reach a stage with an engineer, sell data or apply suit mods has one that opens the engineer's page, the unsold data page or the suits page, when that page is on.</p>
 <svg viewBox="0 0 880 192" role="img" aria-label="A story only moves when Elite writes something to the journal">
  <rect x="20" y="20" width="840" height="152" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -1260,8 +1260,9 @@ or use the button. With no story under way it marks the one short story under wa
 and asks you to press **Mark done** on the page of the one you mean. A chapter is not marked while the game runs without
 Odyssey.
 
-The Guardian beacon objective cannot be marked done: d47 says "The Ancient Key is the one objective the journal has to show.
-Collect the Ancient Key at the beacon in" and the beacon's system. An objective to fit out a ship for the trip can be marked. A marked
+The Guardian beacon objective can be marked done: d47 records the beacon scan on the story, so its Guardian cores come aboard on
+the next tick as they would from a real scan. A beacon objective with no beacon system is refused with "The beacon beat has no
+beacon system to scan." An objective to fit out a ship for the trip can be marked. A marked
 objective stays fired after a restart, and the logbook names it as marked done by the Commander. Marking does not bar
 the activity or count toward a bar. The model is refused this tool.
 
