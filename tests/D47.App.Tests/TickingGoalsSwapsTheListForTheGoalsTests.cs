@@ -17,14 +17,14 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Ticking Goals replaces the checklist with the goals, full height, and unticking brings the list back.</summary>
+/// <summary>The goals are a section of Commander › Progress, and the Checklist root holds only the lists.</summary>
 public class TickingGoalsSwapsTheListForTheGoalsTests
 {
     private static readonly DateTimeOffset Now = new(3311, 6, 1, 0, 0, 0, TimeSpan.Zero);
 
     private static Window? _window;
 
-    private static (PanelView Panel, ChecklistService Checklists) Open(double height = 640, double width = 820)
+    private static (PanelView Panel, ChecklistService Checklists, GoalBook Goals) Open(double height = 640, double width = 820)
     {
         var paths = new D47.Core.AppPaths(TestSurface.MemoryFolder("d47-goals-mode-tests"));
 
@@ -47,6 +47,7 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.EnableChecklist(checklists, goals);
+        panel.EnableStanding(() => state, goals);
 
         var window = _window = new Window { Content = panel, Width = width, Height = height };
 
@@ -54,7 +55,7 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
         panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
-        return (panel, checklists);
+        return (panel, checklists, goals);
     }
 
     private static JournalEvent Event(string kind, string fields)
@@ -67,16 +68,14 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
     private static ScrollViewer Named(PanelView panel, string name) =>
         panel.GetVisualDescendants().OfType<ScrollViewer>().First(scroller => scroller.Name == name);
 
-    private static CheckBox Goals(PanelView panel) =>
+    private static bool HasGoalsBox(PanelView panel) =>
         panel.GetVisualDescendants()
             .OfType<CheckBox>()
-            .First(box => box.Content is string label && label.StartsWith("Goals", StringComparison.Ordinal));
+            .Any(box => box.Content is string label && label.StartsWith("Goals", StringComparison.Ordinal));
 
-    private static void Toggle(PanelView panel)
+    private static void ToProgress(PanelView panel)
     {
-        var goals = Goals(panel);
-
-        goals.IsChecked = goals.IsChecked != true;
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Commander, StandingPage.RootKey));
         Dispatcher.UIThread.RunJobs();
     }
 
@@ -85,19 +84,32 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
             .OfType<TextBlock>()
             .Any(block => block.Text == text && block.IsEffectivelyVisible);
 
+    private static bool ShownStarting(PanelView panel, string text) =>
+        panel.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Any(block => block.Text is { } shown && shown.StartsWith(text, StringComparison.OrdinalIgnoreCase) && block.IsEffectivelyVisible);
+
     [AvaloniaFact]
-    public void TickingGoalsLeavesOnlyTheGoalsCheckboxAndTheGoals()
+    public void TheChecklistRootHasNoGoalsBoxAndNoGoalsView()
     {
-        var (panel, _) = Open();
+        var (panel, _, _) = Open();
 
-        // The list of lists, whose row for the Commander's notes is drawn.
         Assert.True(Shown(panel, "YOUR NOTES"));
+        Assert.False(HasGoalsBox(panel));
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<ScrollViewer>(), scroller => scroller.Name == "GoalsView");
+        Assert.True(Named(panel, "ChecklistView").IsEffectivelyVisible);
+        Assert.False(ShownStarting(panel, "Goals ("));
+    }
 
-        Toggle(panel);
+    [AvaloniaFact]
+    public void ProgressDrawsTheGoalsAndNoChecklistChrome()
+    {
+        var (panel, _, _) = Open();
 
-        Assert.True(Goals(panel).IsEffectivelyVisible);
-        Assert.True(Named(panel, "GoalsView").IsEffectivelyVisible);
-        Assert.False(Named(panel, "ChecklistView").IsEffectivelyVisible);
+        ToProgress(panel);
+
+        Assert.True(ShownStarting(panel, "Goals ("));
+        Assert.False(HasGoalsBox(panel));
         Assert.False(Shown(panel, "YOUR NOTES"));
         Assert.False(Shown(panel, "Delete completed"));
         Assert.DoesNotContain(
@@ -107,50 +119,43 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
     }
 
     [AvaloniaFact]
-    public void UntickingRestoresTheListWithItsQuery()
+    public void ReturningToTheChecklistFromProgressDrawsEveryList()
     {
-        var (panel, checklists) = Open();
+        var (panel, _, _) = Open();
 
-        checklists.Search("limpets");
+        ToProgress(panel);
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Commander, "checklist"));
         Dispatcher.UIThread.RunJobs();
 
-        Toggle(panel);
-        Toggle(panel);
-
-        Assert.Equal("limpets", checklists.Query);
         Assert.True(Named(panel, "ChecklistView").IsEffectivelyVisible);
-        Assert.False(Named(panel, "GoalsView").IsEffectivelyVisible);
-        Assert.True(Shown(panel, "Buy limpets"));
-        Assert.False(Shown(panel, "Get a new paint job"));
+        Assert.True(Shown(panel, "YOUR NOTES"));
+        Assert.False(ShownStarting(panel, "Goals ("));
     }
 
-    [AvaloniaFact]
-    public void ATallWindowShowsEveryGoalWithoutScrolling()
-    {
-        var (panel, _) = Open(height: 1600);
-
-        Toggle(panel);
-
-        var view = Named(panel, "GoalsView");
-
-        Assert.True(
-            view.Extent.Height <= view.Viewport.Height,
-            $"the goals were {view.Extent.Height} pixels in a {view.Viewport.Height} pixel window");
-    }
+    private static ScrollViewer ProgressScroller(PanelView panel) =>
+        panel.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .First(block => block.Text is { } text && text.StartsWith("Goals (", StringComparison.OrdinalIgnoreCase))
+            .FindAncestorOfType<ScrollViewer>()!;
 
     [AvaloniaFact]
-    public void AShortWindowScrollsTheGoalsDownToThePageFoot()
+    public void AShortWindowScrollsProgressDownToTheLastGoal()
     {
-        var (panel, _) = Open(height: 360);
+        var (panel, _, goals) = Open(height: 360);
 
-        Toggle(panel);
+        ToProgress(panel);
 
-        var view = Named(panel, "GoalsView");
-        var page = view.FindAncestorOfType<ChecklistPage>()!;
-        var bottom = view.TranslatePoint(new Point(0, view.Bounds.Height), page)!.Value.Y;
+        var view = ProgressScroller(panel);
 
-        Assert.True(view.Extent.Height > view.Viewport.Height, "the goals fit, so this proves nothing about scrolling");
-        Assert.True(bottom >= page.Bounds.Height - 15, $"the goals stop {page.Bounds.Height - bottom} pixels above the page's foot");
+        Assert.True(view.Extent.Height > view.Viewport.Height, "the page fits, so this proves nothing about scrolling");
+
+        view.ScrollToEnd();
+        Dispatcher.UIThread.RunJobs();
+
+        var last = Card(panel, goals.Standings[^1].Arc.Name);
+        var bottom = last.TranslatePoint(new Point(0, last.Bounds.Height), view)!.Value.Y;
+
+        Assert.True(bottom <= view.Viewport.Height + 1, $"the last goal ends {bottom - view.Viewport.Height} pixels below the window");
     }
 
     private static Border Card(PanelView panel, string name) =>
@@ -161,9 +166,9 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
     [AvaloniaFact]
     public void EliteIVAtFiftySixPercentDrawsOneTrackAndNoSecondBar()
     {
-        var (panel, _) = Open();
+        var (panel, _, _) = Open();
 
-        Toggle(panel);
+        ToProgress(panel);
 
         var texts = Card(panel, "Elite V in Trade").GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
 
@@ -179,11 +184,13 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
     {
         using var look = AppLook.Put();
 
-        var (panel, _) = Open(height: 1200);
+        var (panel, _, _) = Open(height: 1200);
 
-        Toggle(panel);
+        ToProgress(panel);
 
         var head = Card(panel, "Elite V in Trade");
+        head.BringIntoView();
+        Dispatcher.UIThread.RunJobs();
         var center = head.TranslatePoint(new Point(head.Bounds.Width / 2, head.Bounds.Height / 2), _window!)!.Value;
 
         _window!.MouseDown(center, Avalonia.Input.MouseButton.Left);
@@ -217,9 +224,9 @@ public class TickingGoalsSwapsTheListForTheGoalsTests
     {
         using var look = AppLook.Put();
 
-        var (panel, _) = Open(height);
+        var (panel, _, _) = Open(height);
 
-        Toggle(panel);
+        ToProgress(panel);
 
         _window!.CaptureRenderedFrame()!.SaveCapture(file);
     }

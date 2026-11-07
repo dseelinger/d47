@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
@@ -88,28 +88,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// <summary>The Commander's long arcs (Phase 34, "The checklist points at the arc").</summary>
     private readonly D47.Core.Goals.GoalBook? _goals;
 
-    private readonly Action? _backfill;
-
-    /// <summary>Sends a question to D47 as a typed turn.</summary>
-    private readonly Action<string>? _ask;
-
-    private readonly Func<DateTimeOffset> _now;
-
-    /// <summary>The goals, rebuilt with the page because a goal's figure moves with the journal.</summary>
-    private readonly StackPanel _arcs = new() { Spacing = 2, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Stretch };
-
-    /// <summary>The goals mode: the height below the bar, scrolling only when the goals are taller.</summary>
-    private readonly ScrollViewer _band = new()
-    {
-        Name = "GoalsView",
-        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-        IsVisible = false,
-    };
-
-    /// <summary>Switches the page between the list and the goals (#646).</summary>
-    private readonly CheckBox _arcsToggle;
-
     private readonly StackPanel _list = new() { Spacing = 2 };
 
     private readonly ScrollViewer _listView = new()
@@ -178,16 +156,8 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// <summary>Which line is selected.</summary>
     private ChecklistItemId? Selected => _checklists.Selected;
 
-    /// <summary>Whether the page is in goals mode.</summary>
-    private bool _showArcs;
-
     /// <summary>The floor under anything on this page a ray has to hit, in pixels.</summary>
     private const double TouchTarget = TypeScale.MinimumTarget;
-
-    /// <summary>Which arc is open, by key.</summary>
-    private string? _openArc;
-
-    private bool _allRanksShown;
 
     /// <param name="crumb">The level this page draws: the Checklist root, <see cref="AllLists"/>, or a
     /// <see cref="ListCrumb"/>.</param>
@@ -196,18 +166,12 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         PanelNavigator nav,
         PanelPrompts prompts,
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfill = null,
-        Func<DateTimeOffset>? now = null,
-        NavCrumb? crumb = null,
-        Action<string>? ask = null)
+        NavCrumb? crumb = null)
     {
         _checklists = checklists;
         _nav = nav;
         _prompts = prompts;
         _goals = goals;
-        _backfill = backfill;
-        _ask = ask;
-        _now = now ?? (() => DateTimeOffset.Now);
 
         if (crumb?.Key == AllKey)
         {
@@ -219,9 +183,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             _listId = key[ListKeyPrefix.Length..];
             _listWord = crumb.Word;
         }
-
-        _arcsToggle = LabeledCheckBox.Caps(string.Empty);
-        _arcsToggle.IsVisible = false;
 
         _partial = LabeledCheckBox.Caps("Include Partial Grades");
         _hereOnly = LabeledCheckBox.Caps("Only what engineers here do");
@@ -239,14 +200,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         _activities.Click += (_, _) => _nav.Drill(Activities);
 
-        // The checkbox owns the flag rather than mirroring it: nothing else writes _showArcs, so RebuildArcs
-        // never assigns IsChecked back and there is no loop to break.
-        _arcsToggle.IsCheckedChanged += (_, _) =>
-        {
-            _showArcs = _arcsToggle.IsChecked == true;
-            Rebuild();
-        };
-
         _add = D47.App.Controls.Glyphs.Quiet(new Button(), "ADD A LINE", "Add a line");
         _add.VerticalAlignment = VerticalAlignment.Top;
 
@@ -262,7 +215,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         switch (_level)
         {
             case Level.Lists:
-                _controls.Children.Add(_arcsToggle);
                 _right.Children.Add(_add);
                 _right.Children.Add(_suggestions);
                 _right.Children.Add(_activities);
@@ -295,15 +247,13 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
 
         _problems.Margin = new Thickness(0, 0, 0, 10);
 
-        _band.Content = _arcs;
         _listView.Content = _list;
 
         root.Children.Add(_heading);
         root.Children.Add(bar);
         root.Children.Add(_problems);
 
-        // One of the two fills the height below the bar; the other is hidden.
-        root.Children.Add(new Grid { Children = { _listView, _band } });
+        root.Children.Add(_listView);
 
         Content = root;
 
@@ -496,17 +446,10 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             SettleScope();
         }
 
-        var goalsMode = _level == Level.Lists && _showArcs && _goals is not null;
-
-        _listView.IsVisible = !goalsMode;
         // The bar itself is chrome and is never assigned, so an output-only surface's style can hide it.
         _controls.IsVisible = !(_mini && _level == Level.Lists);
         _right.IsVisible = _controls.IsVisible;
 
-        if (_level == Level.Lists)
-        {
-            _add.IsVisible = !goalsMode;
-        }
         _bar.Margin = new Thickness(0, 0, 0, _controls.IsVisible ? 10 : 0);
 
         var list = _level == Level.One ? _checklists.Lists().FirstOrDefault(found => found.Id == _listId) : null;
@@ -526,19 +469,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         else if (!offerPartial)
         {
             _controls.Children.Remove(_partial);
-        }
-
-        if (_level == Level.Lists)
-        {
-            RebuildArcs();
-        }
-
-        // The list keeps its filter, query and selection in the service, so unticking redraws it as it was.
-        if (goalsMode)
-        {
-            Summarise(string.Empty);
-            _problems.IsVisible = false;
-            return;
         }
 
         switch (_level)
@@ -1039,429 +969,6 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                 _list.Children.Add(Line(item, null, placed: true));
             }
         }
-    }
-
-    /// <summary>The goals mode (Phase 34, "The checklist points at the arc").</summary>
-    private void RebuildArcs()
-    {
-        _arcs.Children.Clear();
-
-        if (_goals is null)
-        {
-            _arcsToggle.IsVisible = false;
-            _band.IsVisible = false;
-            return;
-        }
-
-        var standings = _goals.Standings;
-        var running = standings.Count(standing => !standing.IsDone);
-
-        _arcsToggle.IsVisible = true;
-
-        // The count, whichever way the box is set (#203).
-        _arcsToggle.Content = $"Goals ({running} running)";
-        _band.IsVisible = _showArcs;
-
-        if (!_showArcs)
-        {
-            return;
-        }
-
-        if (standings.Count == 0)
-        {
-            _arcs.Children.Add(Muted("Every goal is removed."));
-        }
-
-        foreach (var standing in standings)
-        {
-            _arcs.Children.Add(Arc(standing));
-        }
-
-        // The button that gives every arc its age.
-        if (_goals.Mine is null && _backfill is not null)
-        {
-            var read = new Button
-            {
-                Content = "Read my journals",
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 4, 0, 0),
-            };
-
-            read.Click += (_, _) => _backfill();
-
-            _arcs.Children.Add(Muted(
-                "Nothing here has an age yet, and the milestones have no figures. Reading back "
-                + "through the journals already on this disk is what gives them one."));
-
-            _arcs.Children.Add(read);
-        }
-
-        AddRemoved();
-    }
-
-    /// <summary>The Removed list: each removed goal with a Recover button. Nothing is drawn when none is removed.</summary>
-    private void AddRemoved()
-    {
-        var removed = _goals!.Removed;
-
-        if (removed.Count == 0)
-        {
-            return;
-        }
-
-        var names = _goals.Everything()
-            .Where(standing => removed.Contains(standing.Arc.Key, StringComparer.OrdinalIgnoreCase))
-            .ToList();
-
-        if (names.Count == 0)
-        {
-            return;
-        }
-
-        _arcs.Children.Add(Muted("Removed"));
-
-        foreach (var standing in names)
-        {
-            var recover = new Button
-            {
-                Content = "Recover",
-                HorizontalAlignment = HorizontalAlignment.Right,
-            };
-
-            AutomationProperties.SetName(recover, $"Recover {standing.Arc.Name}");
-
-            recover.Click += (_, _) =>
-            {
-                Say(_goals.Recover(standing.Arc.Key));
-                Rebuild();
-            };
-
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-            var name = Named(standing.Arc.Name, null, sentence: false);
-
-            Grid.SetColumn(recover, 1);
-            row.Children.Add(name);
-            row.Children.Add(recover);
-
-            _arcs.Children.Add(ListRow.Dress(new Border { Child = row }, selected: false));
-        }
-    }
-
-    /// <summary>
-    /// One arc: what it is, how far along, how long it has run. Open, its head is the only part filled with A,
-    /// and below it, on Slab, sit the figures, the track, what the ranks give and what to do about it.
-    /// </summary>
-    private Control Arc(D47.Core.Goals.GoalStanding standing)
-    {
-        var open = standing.Arc.Key == _openArc;
-        var track = standing.Track;
-
-        var head = new StackPanel { Spacing = 2 };
-        head.Children.Add(NameLine(standing));
-        head.Children.Add(ListRow.Sub(new TextBlock { Text = Caption(standing), TextWrapping = TextWrapping.Wrap }));
-
-        var press = ListRow.Dress(new Border { Child = head }, selected: open);
-
-        ListRow.Opens(press, () =>
-        {
-            _openArc = open ? null : standing.Arc.Key;
-            _allRanksShown = false;
-            Rebuild();
-        });
-
-        if (!open)
-        {
-            if (track is not null)
-            {
-                head.Children.Add(Spaced(GoalTrackBar.Build(track, GoalTrackBar.RowHeight)));
-            }
-            else if (CountTrack(standing) is { } count)
-            {
-                head.Children.Add(Spaced(count));
-            }
-
-            AutomationProperties.SetName(press, standing.Arc.Name);
-
-            return press;
-        }
-
-        var body = new StackPanel { Spacing = 8 };
-
-        if (track is not null)
-        {
-            if (standing.Arc.Kind != D47.Core.Goals.GoalKind.Story)
-            {
-                body.Children.Add(Figures(standing, track));
-            }
-
-            body.Children.Add(GoalTrackBar.Build(track, GoalTrackBar.OpenHeight, standing.Benefits));
-
-            if (standing.Benefits is { } benefits)
-            {
-                if (benefits.Closeup is { } closeup)
-                {
-                    body.Children.Add(PowerplayCloseupView.Build(
-                        closeup,
-                        benefits.Rank,
-                        standing.Merits is null ? null : track.Fill,
-                        standing.Merits));
-                }
-
-                body.Children.Add(PowerplayBenefitsView.Build(
-                    benefits,
-                    _allRanksShown,
-                    () =>
-                    {
-                        _allRanksShown = true;
-                        Rebuild();
-                    }));
-            }
-        }
-        else if (CountTrack(standing) is { } count)
-        {
-            body.Children.Add(count);
-        }
-
-        body.Children.Add(Step(standing));
-
-        var ground = ListRow.Dress(new Border { Child = body, Padding = new Thickness(12, 10) }, selected: false);
-        ground.MinHeight = 0;
-        ThemeInk.Bind(ground, Border.BackgroundProperty, ThemeManager.SlabKey);
-
-        var card = new StackPanel { Spacing = 0, Children = { press, ground } };
-        AutomationProperties.SetName(card, standing.Arc.Name);
-
-        return card;
-    }
-
-    /// <summary>A count goal's single unsegmented track; null where the figure is unknown.</summary>
-    private static Control? CountTrack(D47.Core.Goals.GoalStanding standing)
-    {
-        var fill = standing.IsDone ? 1 : standing.Fraction;
-
-        return fill is { } known && standing.Arc.Top is null
-            ? D47.App.Controls.Gauge.Track(known, ThemeManager.AKey)
-            : null;
-    }
-
-    private static Control Spaced(Control control)
-    {
-        control.Margin = new Thickness(0, 4, 0, 0);
-        return control;
-    }
-
-    /// <summary>The goal's name, led by a tick once done, with its whole percent in mono at the right.</summary>
-    private static Control NameLine(D47.Core.Goals.GoalStanding standing)
-    {
-        var name = Named(standing.Arc.Name, standing.IsDone ? Met : null, sentence: false);
-
-        if (standing.Track is not { } track)
-        {
-            return name;
-        }
-
-        var percent = ListRow.NameInk(new TextBlock
-        {
-            Text = GoalTrackBar.Whole(track),
-            FontFamily = new FontFamily(Fonts.MonoFamily),
-            FontSize = ListRow.NameSize,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 0, 0),
-        });
-
-        DockPanel.SetDock(percent, Dock.Right);
-
-        return new DockPanel { Children = { percent, name } };
-    }
-
-    /// <summary>Rank, the percent into it, the next rank and the ranks to go, as four figures with no tile behind them.</summary>
-    private static Control Figures(D47.Core.Goals.GoalStanding standing, D47.Core.Goals.GoalTrack track)
-    {
-        var powerplay = standing.Benefits is not null;
-        var next = standing.Have is { } rank ? (int)rank + 1 : 0;
-
-        var rankName = powerplay
-            ? standing.Have?.ToString(CultureInfo.CurrentCulture) ?? "—"
-            : track.IsDone ? standing.Arc.Top ?? "—" : track.Segments[track.Current].Name;
-
-        var known = powerplay ? standing.Merits is not null : track.Fill is not null;
-
-        var into = track.IsDone
-            ? "—"
-            : known && track.Fill is { } fill ? ((int)Math.Floor(fill * 100)).ToString(CultureInfo.InvariantCulture) + "%" : "not known yet";
-
-        var toGo = standing.Have is { } have && standing.Need is { } need
-            ? Math.Max(0, need - have).ToString("N0", CultureInfo.CurrentCulture)
-            : "not known yet";
-
-        (string Label, string Value, bool Chrome, string Key, string Sub)[] figures;
-
-        if (powerplay)
-        {
-            var top = D47.Core.Goals.GoalCatalogue.PowerplayTop;
-            var floor = D47.Core.Knowledge.PowerplayRanks.MeritsNeeded((int)(standing.Have ?? 0)) ?? 0;
-            var span = (D47.Core.Knowledge.PowerplayRanks.MeritsNeeded(next) ?? floor) - floor;
-
-            var done = standing.Merits is { } merits && !track.IsDone
-                ? $"{Math.Clamp(merits - floor, 0, span).ToString("N0", CultureInfo.CurrentCulture)} / {span.ToString("N0", CultureInfo.CurrentCulture)} merits"
-                : string.Empty;
-
-            figures =
-            [
-                ("Rank", rankName, true, ThemeManager.WhiteKey, $"of {top}"),
-                (track.IsDone ? "To rank" : $"To rank {next}", into, false, ThemeManager.CyanKey, done),
-                ("Merits", standing.Merits?.ToString("N0", CultureInfo.CurrentCulture) ?? "not known yet", false, ThemeManager.WhiteKey, $"of {(D47.Core.Knowledge.PowerplayRanks.MeritsNeeded(top) ?? 0).ToString("N0", CultureInfo.CurrentCulture)} for rank {top}"),
-                ("Ranks to go", toGo, false, ThemeManager.WhiteKey, $"to rank {top}"),
-            ];
-        }
-        else
-        {
-            figures =
-            [
-                ("Rank", rankName, true, ThemeManager.WhiteKey, standing.Arc.Top is { } topRank ? $"of {topRank}" : string.Empty),
-                ("Into this rank", into, false, ThemeManager.CyanKey, string.Empty),
-                ("Next rank", standing.NextRank ?? "—", true, ThemeManager.WhiteKey, string.Empty),
-                ("Ranks to go", toGo, false, ThemeManager.WhiteKey, standing.Arc.Top is { } toRank ? $"to {toRank}" : string.Empty),
-            ];
-        }
-
-        var strip = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*") };
-
-        for (var index = 0; index < figures.Length; index++)
-        {
-            var figure = Figure(figures[index].Label, figures[index].Value, figures[index].Chrome, figures[index].Key, figures[index].Sub);
-            Grid.SetColumn(figure, index);
-            strip.Children.Add(figure);
-        }
-
-        return strip;
-    }
-
-    private static Control Figure(string label, string value, bool chrome, string key, string sub)
-    {
-        var name = new TextBlock
-        {
-            Text = label.ToUpperInvariant(),
-            FontFamily = new FontFamily(Fonts.ChromeFamily),
-            FontSize = TypeScale.MetaSmall,
-            FontWeight = FontWeight.Medium,
-            LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-
-        var reading = new TextBlock
-        {
-            Text = value,
-            FontFamily = new FontFamily(chrome ? Fonts.ChromeFamily : Fonts.MonoFamily),
-            FontSize = chrome ? TypeScale.Title : TypeScale.Readout,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        ThemeInk.Bind(reading, TextBlock.ForegroundProperty, key);
-
-        var panel = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 8, 0), Children = { name, reading } };
-
-        if (sub.Length > 0)
-        {
-            var line = new TextBlock { Text = sub, FontSize = TypeScale.Meta, TextWrapping = TextWrapping.Wrap };
-            ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            panel.Children.Add(line);
-        }
-
-        return panel;
-    }
-
-    /// <summary>The caption under an arc: where it stands, where the figure came from, and its age.</summary>
-    private string Caption(D47.Core.Goals.GoalStanding standing)
-    {
-        var parts = new List<string>();
-
-        if (standing.IsDone)
-        {
-            parts.Add("done");
-        }
-        else if (standing.Note is { Length: > 0 } note)
-        {
-            parts.Add(note);
-        }
-        else if (standing.Have is { } have && standing.Need is { } need)
-        {
-            parts.Add($"{have:N0} of {need:N0}");
-        }
-        else
-        {
-            // Never "0".
-            parts.Add("not known yet");
-        }
-
-        if (standing.Source == D47.Core.Goals.GoalSource.Mined && standing.AsOf is { } stamp)
-        {
-            parts.Add($"as of {stamp:d MMM yyyy}");
-        }
-
-        if (!standing.IsDone && standing.Age(_now()) is { TotalDays: >= 1 } age)
-        {
-            parts.Add($"running {(int)age.TotalDays} days");
-        }
-
-        return string.Join(" · ", parts);
-    }
-
-    /// <summary>
-    /// What to do about this arc today, and the two things a Commander can do about the arc itself.
-    /// </summary>
-    private Control Step(D47.Core.Goals.GoalStanding standing)
-    {
-        var panel = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0) };
-
-        var step = _goals?.Next(standing.Arc.Key);
-
-        panel.Children.Add(ListRow.NameInk(new TextBlock
-        {
-            Text = step?.Say ?? standing.Arc.Done,
-            FontSize = TypeScale.Secondary,
-            TextWrapping = TextWrapping.Wrap,
-        }));
-
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
-
-        if (step is { CanPropose: true })
-        {
-            var promote = new Button { Content = "Suggest a line" };
-
-            promote.Click += (_, _) =>
-            {
-                Say(_goals!.Promote(standing.Arc.Key));
-                Rebuild();
-            };
-
-            buttons.Children.Add(promote);
-        }
-
-        if (!standing.IsDone && standing.Arc.Ask is { } question && _ask is not null)
-        {
-            var ask = new Button { Content = "Ask D47" };
-
-            ask.Click += (_, _) => _ask(question);
-
-            buttons.Children.Add(ask);
-        }
-
-        var remove = new Button { Content = "Remove" };
-
-        remove.Click += (_, _) =>
-        {
-            Say(_goals!.Remove(standing.Arc.Key));
-            _openArc = null;
-            Rebuild();
-        };
-
-        buttons.Children.Add(remove);
-        panel.Children.Add(buttons);
-
-        return panel;
     }
 
     private bool Matches(ChecklistItem item)
@@ -1976,11 +1483,11 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         return button;
     }
 
-    private static TextBlock Muted(string text) =>
+    internal static TextBlock Muted(string text) =>
         Typeset.Text(text, TypeScale.Body, ThemeManager.GreyKey, wrap: true);
 
     /// <summary>The status ladder's mark for a line or goal that is met, in Blue.</summary>
-    private static readonly (string Glyph, string Key) Met = ("✓", ThemeManager.BlueKey);
+    internal static readonly (string Glyph, string Key) Met = ("✓", ThemeManager.BlueKey);
 
     /// <summary>The mark for a derived line not yet met, in Grey.</summary>
     private static readonly (string Glyph, string Key) NotMet = ("•", ThemeManager.GreyKey);
@@ -1989,7 +1496,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
     /// A row's name, led by <paramref name="mark"/> where one is given. A sentence, such as a checklist line,
     /// keeps its own case and prose type.
     /// </summary>
-    private static Control Named(string text, (string Glyph, string Key)? mark, bool sentence)
+    internal static Control Named(string text, (string Glyph, string Key)? mark, bool sentence)
     {
         var block = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap };
         var name = sentence ? ListRow.NameInk(block) : ListRow.Name(block);

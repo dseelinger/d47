@@ -640,12 +640,11 @@ public partial class PanelView : UserControl, IPanelTabHost
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfill = null,
         D47.Core.Activities.ActivityLedger? activities = null)
     {
         // Read by the conversation's proposal cards.
         _checklists = checklists;
-        _commander.EnableChecklist(checklists, goals, backfill, activities);
+        _commander.EnableChecklist(checklists, goals, activities);
     }
 
     /// <summary>Gives this surface Commander › Watches, after the checklist.</summary>
@@ -658,10 +657,13 @@ public partial class PanelView : UserControl, IPanelTabHost
         D47.Core.Capabilities.CapabilityRegistry? registry = null,
         Func<string, Task<bool>>? copy = null) => _commander.EnableMissions(state, now, registry, copy);
 
-    /// <summary>Gives this surface Commander › Standing, after the checklist.</summary>
-    public void EnableStanding(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableStanding(state);
+    /// <summary>Gives this surface Commander › Progress, after the checklist.</summary>
+    public void EnableStanding(
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        D47.Core.Goals.GoalBook? goals = null,
+        Action? backfill = null) => _commander.EnableStanding(state, goals, backfill);
 
-    /// <summary>Gives this surface Commander › Statistics, after Standing.</summary>
+    /// <summary>Gives this surface Commander › Statistics, after Progress.</summary>
     public void EnableStatistics(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableStatistics(state);
 
     /// <summary>Gives this surface Commander › This session, after Statistics.</summary>

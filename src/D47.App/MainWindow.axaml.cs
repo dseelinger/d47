@@ -258,8 +258,8 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
-            // Commander roots land in call order: Checklist, Watches, Missions, Standing, Statistics, This session, Ledgers, Commanders.
-            Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Goals?.Backfill, host.Activities);
+            // Commander roots land in call order: Checklist, Watches, Missions, Progress, Statistics, This session, Ledgers, Commanders.
+            Panel.EnableChecklist(host.Checklists, host.Goals?.Book, host.Activities);
             if (host.WatchesDesk is { } watchesDesk)
             {
                 Panel.EnableWatches(watchesDesk);
@@ -270,7 +270,7 @@ public partial class MainWindow : Window
                 () => DateTimeOffset.Now,
                 host.Capabilities,
                 host.Clipboard is { } missionClipboard ? text => missionClipboard.SetTextAsync(text) : null);
-            Panel.EnableStanding(() => host.GameState.Active);
+            Panel.EnableStanding(() => host.GameState.Active, host.Goals?.Book, host.Goals?.Backfill);
             Panel.EnableStatistics(() => host.GameState.Active);
             Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableBgsWork(
@@ -566,7 +566,7 @@ public partial class MainWindow : Window
             host.Tick.Add("loadout", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickLoadout()));
 
-            // And Commander › Standing, by the same route again (#552).
+            // And Commander › Progress, by the same route again (#552).
             host.Tick.Add("commander", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {

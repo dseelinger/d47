@@ -112,7 +112,7 @@ public sealed record MiniPanelServices
 
         if (Checklists is not null)
         {
-            view.EnableChecklist(Checklists, Goals, BackfillGoals, Activities);
+            view.EnableChecklist(Checklists, Goals, Activities);
         }
 
         if (Watches is not null)
@@ -127,7 +127,7 @@ public sealed record MiniPanelServices
                 () => DateTimeOffset.Now,
                 Capabilities,
                 Clipboard is null ? null : text => Clipboard.SetTextAsync(text));
-            view.EnableStanding(gameState);
+            view.EnableStanding(gameState, Goals, BackfillGoals);
             view.EnableStatistics(gameState);
             view.EnableSession(gameState);
             view.EnableBgsWork(

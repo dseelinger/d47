@@ -34,9 +34,9 @@ nav_order: 147
 </section>
 <section>
 <h2><span class="num">2</span> Open the goals and give them an age.</h2>
-<p class="say">Open Commander › Checklist, tick Goals, then press Read my journals.</p>
+<p class="say">Open Commander › Progress, then press Read my journals.</p>
 <p class="expect">Each goal shows its progress. Read my journals reads the journals on your disk once, and every goal then shows how long it has been running. The button is there until that has been done.</p>
-<svg viewBox="0 0 880 246" role="img" aria-label="The Goals view on the Checklist page">
+<svg viewBox="0 0 880 246" role="img" aria-label="Goals on the Progress page">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Goals (10 running)</text>
@@ -52,7 +52,7 @@ nav_order: 147
 <section>
 <h2><span class="num">3</span> Take a goal off the page, or bring it back.</h2>
 <p class="say">Say "remove the trade goal", then "recover the trade goal".</p>
-<p class="expect">The goal leaves the Goals view and D47 says so, then comes back. Removed goals wait under Removed until you press Recover.</p>
+<p class="expect">The goal leaves Goals on the Progress page and D47 says so, then comes back. Removed goals wait under Removed until you press Recover.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="Spoken phrases that remove and recover a goal">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">remove the trade goal</text>
@@ -218,8 +218,8 @@ story itself.
 
 ### Ages come from your journals
 
-Nothing happens until you ask. Tick **Goals** on the Checklist bar — it says how many arcs are
-running — and the goals replace the list until you untick it. Each rank goal has two bars: one to
+Nothing happens until you ask. Open Commander › Progress — the Goals heading says how many arcs are
+running — and the goals are below the ranks. Each rank goal has two bars: one to
 the top of its ladder, labelled **To Elite V**, **To King** or **To Admiral**, and one to the next
 rank. Press **Read my journals** at the bottom of the goals. One pass
 over the journals already on your disk gives every arc its start date. It is arithmetic over
@@ -288,8 +288,8 @@ going* is a thing you say mid-flight and an arc d47 cannot see is an arc it cann
 #### `get_goal_step`
 
 Says what to do about one arc today, and offers it as a checklist line. Protected — it writes to the
-pending proposals, and writing is yours. No phrase calls it: open a goal on the Checklist page's
-Goals view and press **Suggest a line**.
+pending proposals, and writing is yours. No phrase calls it: open a goal on the Progress page
+and press **Suggest a line**.
 
 ```json
 {"type":"object","properties":{"goal":{"type":"string","description":"Which goal, by name or key, as read back by get_goals."}},"required":["goal"],"additionalProperties":false}

@@ -481,7 +481,7 @@ public sealed class VrHost : IDisposable
             // underneath the Commander to change (#53).
             _panel.TickLoadout();
 
-            // And Commander › Standing, which a Reputation or Progress event moves on (#552).
+            // And Commander › Progress, which a Reputation or Progress event moves on (#552).
             _panel.TickCommander();
 
             Serve(context.Now);

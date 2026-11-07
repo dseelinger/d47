@@ -11,7 +11,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › Standing: reputation with the four superpowers and the two navy ranks (#552).</summary>
+/// <summary>Commander › Progress: reputation with the four superpowers, the two navy ranks and the goals (#552).</summary>
 public sealed class StandingPage : UserControl
 {
     public const string RootKey = "standing";
@@ -44,14 +44,19 @@ public sealed class StandingPage : UserControl
     private string? _pictureSeen;
     private readonly SpeakerPictures? _pictures;
     private readonly Func<string?>? _picture;
+    private readonly GoalsSection? _goals;
 
     public StandingPage(
         Func<CommanderGameState?> state,
         Func<string?> name,
         JournalClock clock,
         SpeakerPictures? pictures = null,
-        Func<string?>? picture = null)
+        Func<string?>? picture = null,
+        D47.Core.Goals.GoalBook? goals = null,
+        Action? backfill = null,
+        Action<string>? ask = null)
     {
+        _goals = goals is null ? null : new GoalsSection(goals, backfill, ask);
         _state = state;
         _name = name;
         _pictures = pictures;
@@ -65,13 +70,14 @@ public sealed class StandingPage : UserControl
     public bool Tick()
     {
         var state = _state();
+        var goalsMoved = _goals?.Tick() ?? false;
 
         if (ReferenceEquals(state?.Reputation, _reputationSeen)
             && ReferenceEquals(state?.Ranks, _ranksSeen)
             && string.Equals(_name(), _nameSeen, StringComparison.Ordinal)
             && string.Equals(_picture?.Invoke(), _pictureSeen, StringComparison.Ordinal))
         {
-            return false;
+            return goalsMoved;
         }
 
         Draw();
@@ -143,6 +149,11 @@ public sealed class StandingPage : UserControl
         navies.Children.Add(federal);
 
         _body.Children.Add(navies);
+
+        if (_goals is not null)
+        {
+            _body.Children.Add(_goals);
+        }
     }
 
     private static Control ReputationRow(string label, FactionReading? reading)

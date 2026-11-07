@@ -132,12 +132,12 @@ public class MiniCarriesNoPageChromeTests
         var (mini, miniView, _) = Headset("mini", all: false);
         using var _mini = mini;
 
-        Assert.DoesNotContain("Goals (9 running)", DrawnWords(miniView));
+        Assert.DoesNotContain("ADD A LINE", DrawnWords(miniView));
 
         var (full, fullView, _) = Headset("full", all: false);
         using var _full = full;
 
-        Assert.Contains("Goals (9 running)", DrawnWords(fullView));
+        Assert.Contains("ADD A LINE", DrawnWords(fullView));
     }
 
     [AvaloniaFact]

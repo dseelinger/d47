@@ -43,17 +43,13 @@ public class TheOpenPowerplayGoalIsDrawnFromItsFiguresTests
             checklists);
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.EnableChecklist(checklists, goals);
+        panel.EnableChecklist(checklists);
+        panel.EnableStanding(() => state, goals);
 
         var window = new Window { Content = panel, Width = width, Height = 1400 };
         window.Show();
         panel.Tab = PanelTab.Commander;
-        Dispatcher.UIThread.RunJobs();
-
-        panel.GetVisualDescendants().OfType<CheckBox>()
-            .First(box => box.Content is string label && label.StartsWith("Goals", StringComparison.Ordinal))
-            .IsChecked = true;
-
+        panel.Nav.SelectRoot(PanelTab.Commander, StandingPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         var head = panel.GetVisualDescendants().OfType<Border>()

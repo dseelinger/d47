@@ -342,8 +342,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         _colonia.IsChecked = memory?.HideColonia ?? false;
         _onFoot.IsChecked = memory?.HideOnFoot ?? false;
 
-        // The checkbox owns the flag rather than mirroring it back — the same reason the goals band's
-        // toggle does (ChecklistPage._arcsToggle).
+        // The checkbox owns the flag rather than mirroring it back — so a redraw never writes the
+        // box back and there is no loop to break.
         _colonia.IsCheckedChanged += (_, _) =>
         {
             _memory?.RememberColonia(_colonia.IsChecked == true);

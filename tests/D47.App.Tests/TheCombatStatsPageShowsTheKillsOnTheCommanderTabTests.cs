@@ -150,7 +150,7 @@ public class TheCombatStatsPageShowsTheKillsOnTheCommanderTabTests
         new MiniPanelServices { Checklists = checklists, GameState = () => state, HistoryState = () => HistoryState.Done }.Furnish(view);
 
         Assert.Equal(
-            ["Checklist", "Missions", "Standing", "Statistics", "This session", "Ledgers"],
+            ["Checklist", "Missions", "Progress", "Statistics", "This session", "Ledgers"],
             view.Nav.Roots(PanelTab.Commander).Select(root => root.Word));
 
         Assert.True(view.Nav.Show(CombatStatsPage.PageKey));

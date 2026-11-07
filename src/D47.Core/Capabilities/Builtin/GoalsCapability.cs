@@ -69,7 +69,7 @@ public static class GoalsCapability
                 {
                     Name = "get_goal_step",
                     Exercise =
-                        "On the Checklist page's goals view, open a goal and press Suggest a line. D47 says what "
+                        "On the Progress page, open a goal and press Suggest a line. D47 says what "
                         + "to do about that goal today and offers it as a checklist line. The model cannot call "
                         + "it: it is refused if it asks.",
                     Description =

@@ -19,7 +19,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Checklist, its goals band and its suggestions, rendered on each theme and at the three panel sizes
+/// The Checklist, the Progress page's goals and the suggestions, rendered on each theme and at the three panel sizes
 /// and saved to <see cref="TestSurface.CaptureDirectory"/> for comparison with brief 03 (#402).
 /// </summary>
 [Trait("Category", "Integration")]
@@ -54,6 +54,7 @@ public class TheChecklistIsDrawnOnTheKitTests
         };
 
         panel.EnableChecklist(checklists, goals);
+        panel.EnableStanding(() => null, goals);
 
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
@@ -86,13 +87,16 @@ public class TheChecklistIsDrawnOnTheKitTests
         panel.Nav.ToRoot();
         Dispatcher.UIThread.RunJobs();
 
-        var band = panel.GetVisualDescendants().OfType<CheckBox>()
-            .First(box => box.Content is string label && label.StartsWith("Goals", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            panel.GetVisualDescendants().OfType<CheckBox>(),
+            box => box.Content is string label && label.StartsWith("Goals", StringComparison.Ordinal));
 
-        band.IsChecked = true;
+        panel.Nav.SelectRoot(PanelTab.Commander, StandingPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
-        var goals = surface.Window.SaveFrame($"checklist-goals-{themeId}-{width}x{height}.png");
+        var goals = surface.Window.SaveFrame($"progress-goals-{themeId}-{width}x{height}.png");
+
+        panel.Nav.SelectRoot(PanelTab.Commander, "checklist");
 
         panel.Nav.Drill(new NavCrumb(ChecklistPage.SuggestionsKey, "Suggestions"));
         var suggestions = surface.Window.SaveFrame($"checklist-suggestions-{themeId}-{width}x{height}.png");

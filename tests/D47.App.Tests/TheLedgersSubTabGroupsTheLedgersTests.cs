@@ -26,7 +26,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     private static readonly DateTimeOffset BgsTick = DateTimeOffset.Parse("2026-10-10T16:14:00Z", CultureInfo.InvariantCulture);
 
     private static readonly string[] SevenSubTabs =
-        ["Checklist", "Missions", "Standing", "Statistics", "This session", "Ledgers", "Commanders"];
+        ["Checklist", "Missions", "Progress", "Statistics", "This session", "Ledgers", "Commanders"];
 
     private static readonly string[] Work =
     [

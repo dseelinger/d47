@@ -3,7 +3,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Commander tab: Checklist, Watches, Missions, Standing, Statistics, This session, Ledgers and Commanders.</summary>
+/// <summary>The Commander tab: Checklist, Watches, Missions, Progress, Statistics, This session, Ledgers and Commanders.</summary>
 internal sealed class CommanderFurnishing(IPanelTabHost host)
 {
     private Func<NavCrumb, Control>? _checklistBuild;
@@ -36,7 +36,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     public void EnableChecklist(
         D47.Core.Checklists.ChecklistService checklists,
         D47.Core.Goals.GoalBook? goals = null,
-        Action? backfill = null,
         D47.Core.Activities.ActivityLedger? activities = null)
     {
         ChecklistPage? page = null;
@@ -47,7 +46,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         };
 
         ChecklistPage Page(NavCrumb crumb) =>
-            new(checklists, host.Nav, host.Prompts, goals, backfill, crumb: crumb, ask: question => host.Model?.AskNow(question));
+            new(checklists, host.Nav, host.Prompts, goals, crumb: crumb);
 
         _checklistBuild = crumb => crumb.Key switch
         {
@@ -126,17 +125,21 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             });
     }
 
-    public void EnableStanding(Func<D47.Core.Journal.CommanderGameState?> state)
+    public void EnableStanding(
+        Func<D47.Core.Journal.CommanderGameState?> state,
+        D47.Core.Goals.GoalBook? goals = null,
+        Action? backfill = null)
     {
         _commanderClock = new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
 
         _standingBuild = _ => _standing = new StandingPage(
-            state, () => host.CommanderName?.Invoke(), _commanderClock, host.Portraits?.Pictures, () => host.Model?.CommanderPictureSource?.Invoke());
+            state, () => host.CommanderName?.Invoke(), _commanderClock, host.Portraits?.Pictures, () => host.Model?.CommanderPictureSource?.Invoke(),
+            goals, backfill, question => host.Model?.AskNow(question));
 
         host.Furnish(
             PanelTab.Commander,
             BuildCommander,
-            new NavCrumb(StandingPage.RootKey, "Standing")
+            new NavCrumb(StandingPage.RootKey, "Progress")
             {
                 Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
             });
@@ -338,7 +341,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Missions, Standing, Statistics, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Missions, Progress, Statistics, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
         IsWatches(crumb.Key) && _watchesBuild is { } watches ? watches(crumb)
         : crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
