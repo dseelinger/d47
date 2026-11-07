@@ -308,6 +308,10 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
         {
         }
 
+        public TrackProgress? Progress(long playbackId) => null;
+
+        public bool Seek(long playbackId, TimeSpan to) => false;
+
         private sealed class NoTap : IRenderReferenceTap
         {
             public event Action<RenderReferenceFrame>? Rendered;

@@ -139,6 +139,10 @@ public class ChatterStopsWhenEliteClosesTests
         {
         }
 
+        public TrackProgress? Progress(long playbackId) => null;
+
+        public bool Seek(long playbackId, TimeSpan to) => false;
+
         public void Finish(long id) => Finished?.Invoke(id);
 
         public bool Played(string text) =>

@@ -465,6 +465,16 @@ public sealed class AmbientMusic(
             : $"Could not delete {name}; it may be locked or read-only. {next}";
     }
 
+    /// <summary>How far the live track has played and how long it is; see <see cref="AudioArbiter.MusicProgress"/>.</summary>
+    public TrackProgress? Progress() => audio.MusicProgress();
+
+    /// <summary>Moves the live track to <paramref name="to"/>, counted as Commander activity; see <see cref="AudioArbiter.SeekMusic"/>.</summary>
+    public bool Seek(TimeSpan to)
+    {
+        Interlocked.Exchange(ref _stirred, 1);
+        return audio.SeekMusic(to);
+    }
+
     /// <summary>Carries out one transport action and says what happened. Any action ends idle.</summary>
     public string Control(MusicAction action)
     {

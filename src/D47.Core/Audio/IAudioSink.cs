@@ -33,6 +33,9 @@ public sealed record PlaybackRequest(long Id, AudioClip? Clip, bool Loop, float 
         new(id, Clip: null, Loop: false, gain) { Arriving = arriving };
 }
 
+/// <summary>How far a streamed track has played, and its length when the file says.</summary>
+public readonly record struct TrackProgress(TimeSpan Elapsed, TimeSpan? Length);
+
 /// <summary>The hardware end of the arbiter.</summary>
 public interface IAudioSink
 {
@@ -58,6 +61,15 @@ public interface IAudioSink
     /// With <paramref name="holdAtEnd"/>, holds the playback at its position once the ramp ends.
     /// </summary>
     void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false);
+
+    /// <summary>How far a streamed track has played and how long it is; null for any other playback or an id not playing.</summary>
+    TrackProgress? Progress(long playbackId);
+
+    /// <summary>
+    /// Moves a streamed track to <paramref name="to"/>, leaving its pause, hold, fade and gain as they are. False for
+    /// any other playback or an id not playing.
+    /// </summary>
+    bool Seek(long playbackId, TimeSpan to);
 
     /// <summary>
     /// Raised when a clip, track or arriving clip reaches its end on its own, including a track that failed

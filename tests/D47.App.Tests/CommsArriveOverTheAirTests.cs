@@ -132,6 +132,10 @@ public class CommsArriveOverTheAirTests
         {
         }
 
+        public TrackProgress? Progress(long playbackId) => null;
+
+        public bool Seek(long playbackId, TimeSpan to) => false;
+
         /// <summary>Never raised here; the assertions are about what was started.</summary>
         public void Ignore() => Finished?.Invoke(0);
 

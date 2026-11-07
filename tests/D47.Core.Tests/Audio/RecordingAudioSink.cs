@@ -84,6 +84,21 @@ public sealed class RecordingAudioSink : IAudioSink
         _log.Add($"fade {playbackId} {to:0.##} {over.TotalSeconds:0.##}s{(holdAtEnd ? " hold" : string.Empty)}");
     }
 
+    /// <summary>What <see cref="Progress"/> answers, per id; an id not set answers null.</summary>
+    public Dictionary<long, TrackProgress> Progresses { get; } = [];
+
+    public List<(long Id, TimeSpan To)> Seeks { get; } = [];
+
+    public TrackProgress? Progress(long playbackId) =>
+        Progresses.TryGetValue(playbackId, out var progress) ? progress : null;
+
+    public bool Seek(long playbackId, TimeSpan to)
+    {
+        Seeks.Add((playbackId, to));
+        _log.Add($"seek {playbackId} {to.TotalSeconds:0.##}s");
+        return Progresses.ContainsKey(playbackId);
+    }
+
     /// <summary>Stands in for a clip reaching its end.</summary>
     public void CompletePlayback(long playbackId)
     {

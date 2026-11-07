@@ -60,6 +60,10 @@ internal sealed class SteppedSink : IAudioSink
     public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false)
     {
     }
+
+    public TrackProgress? Progress(long playbackId) => null;
+
+    public bool Seek(long playbackId, TimeSpan to) => false;
 }
 
 public sealed class PlayAllPlaysAStoryRunInOrderTests

@@ -39,7 +39,12 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
     private bool _disposed;
 
     /// <summary>One playing input; <paramref name="Owned"/> is released when it stops or ends.</summary>
-    private sealed record Input(VolumeSampleProvider Volume, FadeSampleProvider Fade, TrackedSampleProvider Root, IDisposable? Owned);
+    private sealed record Input(
+        VolumeSampleProvider Volume,
+        FadeSampleProvider Fade,
+        TrackedSampleProvider Root,
+        IDisposable? Owned,
+        StreamSampleProvider? Stream);
 
     public WasapiAudioSink(ILogger<WasapiAudioSink> logger)
         : this(logger, new WasapiEndpointEnumerator(logger))
@@ -161,12 +166,13 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
 
             ISampleProvider source;
             IDisposable? owned = null;
+            StreamSampleProvider? streamed = null;
 
             if (request.Track is { } track)
             {
-                var stream = new StreamSampleProvider(track, _logger);
-                source = stream;
-                owned = stream;
+                streamed = new StreamSampleProvider(track, _logger);
+                source = streamed;
+                owned = streamed;
             }
             else if (request.Arriving is { } arriving)
             {
@@ -190,7 +196,7 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             var fade = new FadeSampleProvider(volume);
             var tracked = new TrackedSampleProvider(request.Id, fade);
 
-            _inputs[request.Id] = new Input(volume, fade, tracked, owned);
+            _inputs[request.Id] = new Input(volume, fade, tracked, owned, streamed);
             _mixer.AddMixerInput(tracked);
         }
     }
@@ -256,6 +262,22 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
             {
                 input.Fade.Fade(to, over, holdAtEnd);
             }
+        }
+    }
+
+    public TrackProgress? Progress(long playbackId)
+    {
+        lock (_gate)
+        {
+            return _inputs.TryGetValue(playbackId, out var input) && input.Stream is { } stream ? stream.Progress : null;
+        }
+    }
+
+    public bool Seek(long playbackId, TimeSpan to)
+    {
+        lock (_gate)
+        {
+            return _inputs.TryGetValue(playbackId, out var input) && input.Stream is { } stream && stream.Seek(to);
         }
     }
 

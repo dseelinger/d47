@@ -48,6 +48,10 @@ internal sealed class SilentSink : IAudioSink
 
     public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false) =>
         Fades.Add((playbackId, to, over, holdAtEnd));
+
+    public TrackProgress? Progress(long playbackId) => null;
+
+    public bool Seek(long playbackId, TimeSpan to) => false;
 }
 
 /// <summary>Keeps each clip it is asked to play and never finishes one.</summary>
@@ -89,6 +93,10 @@ internal sealed class CollectingSink : IAudioSink
 
     public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false) =>
         Fades.Add((playbackId, to, over, holdAtEnd));
+
+    public TrackProgress? Progress(long playbackId) => null;
+
+    public bool Seek(long playbackId, TimeSpan to) => false;
 }
 
 /// <summary>A reference tap that never renders.</summary>
@@ -143,6 +151,10 @@ internal sealed class HandDrivenSink : IAudioSink
 
     public void Fade(long playbackId, float to, TimeSpan over, bool holdAtEnd = false) =>
         Fades.Add((playbackId, to, over, holdAtEnd));
+
+    public TrackProgress? Progress(long playbackId) => null;
+
+    public bool Seek(long playbackId, TimeSpan to) => false;
 
     public void Finish(long playbackId) => Finished?.Invoke(playbackId);
 }

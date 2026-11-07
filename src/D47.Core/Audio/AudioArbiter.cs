@@ -855,6 +855,40 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    /// <summary>
+    /// How far the live track has played and how long it is: null with no live track, and no length and no time
+    /// played during the gap before it. Shelved tracks are not reported.
+    /// </summary>
+    public TrackProgress? MusicProgress()
+    {
+        lock (_gate)
+        {
+            if (_music is not { } playing)
+            {
+                return null;
+            }
+
+            return _musicAfterGap is null ? sink.Progress(playing) : new TrackProgress(TimeSpan.Zero, null);
+        }
+    }
+
+    /// <summary>
+    /// Moves the live track to <paramref name="to"/>, leaving it paused, held or fading as it was. False with no live
+    /// track, during the gap before it, and while its length is not known.
+    /// </summary>
+    public bool SeekMusic(TimeSpan to)
+    {
+        lock (_gate)
+        {
+            if (_music is not { } playing || _musicAfterGap is not null || sink.Progress(playing)?.Length is null)
+            {
+                return false;
+            }
+
+            return sink.Seek(playing, to);
+        }
+    }
+
     /// <summary>Whether an ambience track is held by <see cref="PauseMusic"/> or <see cref="FadeOutMusic"/>.</summary>
     public bool MusicHeld
     {
