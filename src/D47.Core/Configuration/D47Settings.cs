@@ -1341,6 +1341,12 @@ public sealed record HotkeySettings
     /// <summary>The stick button for <see cref="ThumbsDownMusic"/>, or null.</summary>
     public string? ThumbsDownMusicButton { get; init; }
 
+    /// <summary>Opens and closes the audio player.</summary>
+    public string? AudioPlayer { get; init; } = "Ctrl+Shift+P";
+
+    /// <summary>The stick button for <see cref="AudioPlayer"/>, or null.</summary>
+    public string? AudioPlayerButton { get; init; }
+
     public string? CommsChannelUp { get; init; }
 
     public string? CommsChannelDown { get; init; }

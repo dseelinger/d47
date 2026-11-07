@@ -181,6 +181,7 @@ public sealed class AppHost : IDisposable
         RunPlayer = new StoryRunPlayer(audio, RunLineClip, speakAgain: RunVoicing.SpeakAsync);
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
         Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile);
+        Music.Changed += state => Panel.AudioPlayer = AudioPlayerReadout.From(state, Settings.Current.Audio.Music.Muted);
         _cues = cues;
         Voice = voice;
         _binds = binds;
@@ -449,6 +450,26 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Recycles the playing own track, or queues the playing library track with a token, and skips it.</summary>
     internal string ThumbsDownMusic() => Music.ThumbsDown(MusicMaintainer);
+
+    /// <summary>Opens, closes or toggles the audio player on every surface, and says which.</summary>
+    internal string ControlAudioPlayer(AudioPlayerAction action)
+    {
+        var open = action switch
+        {
+            AudioPlayerAction.Open => true,
+            AudioPlayerAction.Close => false,
+            _ => !Panel.AudioPlayerOpen,
+        };
+
+        if (Panel.AudioPlayerOpen == open)
+        {
+            return open ? "The audio player is already open." : "The audio player is already closed.";
+        }
+
+        Panel.AudioPlayerOpen = open;
+
+        return open ? "Audio player opened." : "Audio player closed.";
+    }
 
     private static bool RecycleFile(string path)
     {
@@ -2622,6 +2643,7 @@ public sealed class AppHost : IDisposable
                 openAudioFolder: () => OpenWithShell(paths.Audio),
                 controlMusic: action => late.Host?.Music.Control(action) ?? "Ambient music is not available.",
                 thumbsDownMusic: () => late.Host?.ThumbsDownMusic() ?? "Ambient music is not available.",
+                audioPlayer: action => late.Host?.ControlAudioPlayer(action) ?? "The audio player is not available.",
                 musicMaintainer: () => late.Host?.MusicMaintainer == true,
                 deleteMusicRejects: () => late.Host?.DeleteMusicRejects() ?? "Ambient music is not available.",
                 musicRejectCount: () => late.Host?.MusicRejects.Count ?? 0,

@@ -381,7 +381,24 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _comms, value ?? CommsIndicatorState.NoChannel);
     }
 
-    public bool SwitchesVisible => !string.IsNullOrEmpty(_switchesText);
+    private bool _audioPlayerOpen;
+    private D47.Core.Audio.AudioPlayerReadout _audioPlayer = D47.Core.Audio.AudioPlayerReadout.From(new D47.Core.Audio.MusicState(null, false, false), false);
+
+    /// <summary>Whether the audio player is open; the dialogs and the mini read-outs all follow this.</summary>
+    public bool AudioPlayerOpen
+    {
+        get => _audioPlayerOpen;
+        set => Set(ref _audioPlayerOpen, value);
+    }
+
+    /// <summary>What the audio player says about the music, kept current while the music changes.</summary>
+    public D47.Core.Audio.AudioPlayerReadout AudioPlayer
+    {
+        get => _audioPlayer;
+        set => Set(ref _audioPlayer, value);
+    }
+
+    public bool SwitchesVisible =>!string.IsNullOrEmpty(_switchesText);
 
     /// <summary>What startup is still doing, or null once it is doing nothing (#148).</summary>
     public string? StartupText

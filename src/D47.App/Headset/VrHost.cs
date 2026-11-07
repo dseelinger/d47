@@ -193,7 +193,8 @@ public sealed class VrHost : IDisposable
 
         // Which fleet carrier model each carrier is drawn as, on the window's record.
         Panel.CarrierHullMemory? carrierHulls = null,
-        D47.App.Settings.ModulesSource? modules = null)
+        D47.App.Settings.ModulesSource? modules = null,
+        Func<D47.App.Controls.AudioPlayerDialog>? audioPlayer = null)
     {
         VrHost? self = null;
 
@@ -219,6 +220,7 @@ public sealed class VrHost : IDisposable
             historyState: historyState,
             carrierHulls: carrierHulls,
             modules: modules,
+            audioPlayer: audioPlayer,
             portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(files, paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The **Audio player** opens and closes with Ctrl+Shift+P, which works while Elite has the foreground and can be rebound, or given a stick button, in Settings › Hearing and sound › Sounds and levels, group Ambient music. It shows the playing track, the situation folder it plays from and the Music level, with Previous, Pause or Play, Next and Thumbs down buttons that are greyed out when nothing plays or the music is muted. It opens in the d47 window and on the headset's big panel; the two mini panels show a read-out of the track and whether it is playing or paused while it is open. Say "audio player" to open or close it, "open the audio player" or "show the audio player" to open it, and "close the audio player" to close it. "Play" and "pause" now resume and pause the music.
+
 The log now has a line each time an ambient music track starts or resumes, naming the situation folder, whether the track is from the library or your own folder, and the file name.
 
 A voice quieter than the others is now raised to the same loudness, so a story character with a quiet voice is heard as clearly as the rest of the cast. This covers what is spoken, messages and story lines played again, and voice samples. A voice already at that loudness or louder is not turned down.

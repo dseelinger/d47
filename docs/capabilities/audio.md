@@ -409,16 +409,38 @@ Sounds and levels; the **Ambient music** group, above Levels, holds three rows. 
 track's file name, or Paused, Muted or Nothing playing, and its button reads Pause while a track plays and
 Resume while paused. **Next track** has a Next button that starts another track from the same folder. **Previous track**
 has a Previous button that plays the track before the current one. All
-buttons are greyed out when nothing plays or the music is muted.
+buttons are greyed out when nothing plays or the music is muted. The [Audio player](#audio-player) has the same
+buttons in a dialog of its own.
 
 Windows sends the media keys to whichever media session was used last. With Spotify or another
 player also open, the keys may go to that player instead.
 
-The same four actions work by voice — "pause the music", "resume the music", "next track",
+The same four actions work by voice — "pause", "play", "pause the music", "resume the music", "next track",
 "skip track" or "previous track" — through `manage_music`, which the model can also call:
 
 ```json
 {"type":"object","properties":{"action":{"type":"string","description":"What to do to the music.","enum":["pause","resume","next","previous"]}},"required":["action"],"additionalProperties":false}
+```
+
+### Audio player {#audio-player}
+
+The Audio player shows the track that is playing, the situation folder it plays from, and the **Music level**.
+Its buttons are Previous, Pause (Play while paused or idle), Next and Thumbs down; they do what the rows
+above do, and Thumbs down does what `thumbs_down_music` does. All four are greyed out when nothing plays or
+the music is muted. The level stays usable while muted and is drawn in its muted style.
+
+Open and close it with the **Audio player** hotkey, which is Ctrl+Shift+P until you change it in Settings ›
+Hearing and sound › Sounds and levels, group Ambient music, or with a stick button. The key works while Elite
+has the foreground and does not take the foreground. It opens the dialog in the d47 window and on the headset's
+big panel at once. The two mini panels carry no buttons: while the player is open they show the track, whether
+it is playing or paused and the phrases to say. Esc, the Close button or the same key closes it everywhere.
+
+By voice, "audio player" opens it when it is closed and closes it when it is open. "Open the audio player" and
+"show the audio player" only open it. "Close the audio player" and "hide the audio player" only close it.
+The phrases reach `audio_player`, which the model can also call:
+
+```json
+{"type":"object","properties":{"action":{"type":"string","description":"Whether to open, close or toggle the audio player.","enum":["open","close","toggle"]}},"required":["action"],"additionalProperties":false}
 ```
 
 ### Thumbs down a track {#thumbs-down-music}

@@ -340,6 +340,7 @@ public partial class PanelView : UserControl, IPanelTabHost
                 ApplySpeaker();
                 ApplyMicrophone();
                 ApplyAskHint();
+                ApplyAudioReadout();
             }
 
             // The model handed over is rarely empty — the window binds one that has already been written to —
@@ -419,6 +420,19 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     BodySearchLink? IPanelTabHost.BodySearch => _searchFurnishing.BodySearch;
 
+    /// <summary>Shows the audio player's read-out on a mini surface while the player is open.</summary>
+    private void ApplyAudioReadout()
+    {
+        var open = Mode == PanelMode.Mini && _bound?.AudioPlayerOpen == true;
+
+        AudioReadoutBar.IsVisible = open;
+
+        if (open)
+        {
+            AudioReadoutBar.Update(_bound!.AudioPlayer);
+        }
+    }
+
     private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (_bound is null)
@@ -460,6 +474,11 @@ public partial class PanelView : UserControl, IPanelTabHost
                 }
 
                 Dispatcher.UIThread.Post(ApplySpeaker);
+                return;
+
+            case nameof(PanelViewModel.AudioPlayer):
+            case nameof(PanelViewModel.AudioPlayerOpen):
+                Dispatcher.UIThread.Post(ApplyAudioReadout);
                 return;
 
             case nameof(PanelViewModel.Microphone):
@@ -2337,6 +2356,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         CrumbBar.IsVisible = full && CrumbRow.Children.Count > 0;
 
         PlaceAvatar();
+        ApplyAudioReadout();
 
         var modal = ModalPane.Child is not null;
 

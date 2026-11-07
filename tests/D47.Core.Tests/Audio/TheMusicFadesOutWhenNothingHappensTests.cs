@@ -41,7 +41,7 @@ public class TheMusicFadesOutWhenNothingHappensTests
         Assert.Equal((berth.Id, 0f, TimeSpan.FromSeconds(10), true), Assert.Single(_sink.Fades));
         Assert.Contains(berth.Id, _sink.Held);
         Assert.Empty(_sink.Stopped);
-        Assert.Equal(new MusicState(berth.Name, Playing: false, Paused: false, Idle: true), music.State);
+        Assert.Equal(new MusicState(berth.Name, Playing: false, Paused: false, Idle: true, Folder: Situations.Docked), music.State);
     }
 
     [Fact]

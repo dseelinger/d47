@@ -50,6 +50,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Where a modal opened from this copy of the panel is drawn (#530).</summary>
     private readonly Windowing.ModalHost _modals = new();
 
+    private readonly Func<Controls.AudioPlayerDialog>? _audioPlayer;
+    private Controls.AudioPlayerDialog? _player;
+
     private readonly ScaleTransform _scale = new();
     private readonly OffscreenSurface _offscreen;
 
@@ -137,9 +140,13 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // Which fleet carrier model each carrier is drawn as, on the window's record.
         Panel.CarrierHullMemory? carrierHulls = null,
-        D47.App.Settings.ModulesSource? modules = null)
+        D47.App.Settings.ModulesSource? modules = null,
+
+        // Builds this surface's own copy of the audio player, which opens while the model says it is open.
+        Func<Controls.AudioPlayerDialog>? audioPlayer = null)
     {
         _dumpTo = dumpTo;
+        _audioPlayer = audioPlayer;
 
         _model = model;
         _settings = settings;
@@ -698,6 +705,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         _view.Mode = Mode;
         _dirty = true;
+        SyncAudioPlayer();
     }
 
     /// <summary>Forces the next serve to redraw — after a reconnect, or a mode change.</summary>
@@ -788,7 +796,51 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     private VrSurfaceSettings Settings() =>
         Mode == PanelMode.Mini ? _settings.Current.Vr.Mini : _settings.Current.Vr.Panel;
 
-    private void OnModelChanged(object? sender, PropertyChangedEventArgs e) => _dirty = true;
+    private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        _dirty = true;
+
+        if (e.PropertyName == nameof(PanelViewModel.AudioPlayerOpen))
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(SyncAudioPlayer);
+        }
+    }
+
+    /// <summary>
+    /// Shows the player as a dialog while the big panel is up and the model says it is open; the mini panel
+    /// shows the read-out instead, so a dialog never sits on it.
+    /// </summary>
+    internal void SyncAudioPlayer()
+    {
+        var wanted = _model.AudioPlayerOpen && Mode == PanelMode.Full && _audioPlayer is not null;
+
+        if (!wanted)
+        {
+            _player?.Close();
+            return;
+        }
+
+        if (_player is not null)
+        {
+            return;
+        }
+
+        var dialog = _audioPlayer!();
+
+        _player = dialog;
+        dialog.Closed += (_, _) =>
+        {
+            _player = null;
+            _dirty = true;
+
+            if (Mode == PanelMode.Full)
+            {
+                _model.AudioPlayerOpen = false;
+            }
+        };
+        _ = _modals.Show(dialog);
+        _dirty = true;
+    }
 
     private void OnNavChanged(object? sender, EventArgs e) => _dirty = true;
 }

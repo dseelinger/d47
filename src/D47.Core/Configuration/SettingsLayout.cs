@@ -500,6 +500,7 @@ public static class SettingsLayout
                                 E(Capabilities.Builtin.AudioCapability.MusicPublishTokenKey),
                                 E(Capabilities.Builtin.AudioCapability.MusicRejectsKey),
                                 E(Capabilities.Builtin.AudioCapability.ThumbsDownHotkeyKey),
+                                E(Capabilities.Builtin.AudioCapability.AudioPlayerHotkeyKey),
                             ],
                             toggleColumns: 0),
                         G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0) with

@@ -208,6 +208,9 @@ public static class BuiltinCapabilities
         Action? deleteMusicRejectsNow = null,
         Func<Action, Action>? watchMusicRejects = null,
 
+        // Opens, closes or toggles the audio player; null where there is no window to show it in.
+        Func<Audio.AudioPlayerAction, string>? audioPlayer = null,
+
         // What the Commander's own audio folder holds, for the status rows and their page.
         Func<D47.Core.Audio.OwnAudioReport>? ownAudio = null,
 
@@ -455,7 +458,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,

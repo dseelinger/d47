@@ -133,7 +133,12 @@ public partial class App(AppHost? host) : Application
                 bgsTick: () => host.BgsTick?.Last,
                 historyState: () => host.History.State,
                 carrierHulls: new Panel.CarrierHullMemory(host.ViewState),
-                modules: window?.ModulesSource);
+                modules: window?.ModulesSource,
+                audioPlayer: () => new Controls.AudioPlayerDialog(
+                    host.Panel,
+                    host.Settings,
+                    action => host.Music.Control(action),
+                    () => host.Announcer.SayAside(host.ThumbsDownMusic())));
 
             host.Speech.Spend.Recorded += host.Vr.RefreshSessionSpend;
 

@@ -11,11 +11,19 @@ public enum MusicAction
     Previous,
 }
 
+/// <summary>What the audio player tool does to the player.</summary>
+public enum AudioPlayerAction
+{
+    Open,
+    Close,
+    Toggle,
+}
+
 /// <summary>
 /// What the transport controls show: the track, whether it is playing, whether the Commander paused it, and
 /// whether it faded out with nothing happening.
 /// </summary>
-public sealed record MusicState(string? Track, bool Playing, bool Paused, bool Idle = false);
+public sealed record MusicState(string? Track, bool Playing, bool Paused, bool Idle = false, string? Folder = null);
 
 /// <summary>
 /// The ambience layer and its transport: follows the situation, starts the next track, and holds the
@@ -643,7 +651,7 @@ public sealed class AmbientMusic(
     {
         var live = _current is not null && audio.Activity.MusicPlaying;
         var idle = live && _idle && !_paused;
-        return new MusicState(live ? _current!.Name : null, live && !_paused && !_idle, _paused, idle);
+        return new MusicState(live ? _current!.Name : null, live && !_paused && !_idle, _paused, idle, live ? audio.MusicFolder : null);
     }
 
     private void Raise()

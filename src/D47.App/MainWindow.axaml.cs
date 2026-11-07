@@ -58,6 +58,56 @@ public partial class MainWindow : Window
             AudioCapability.ThumbsDownHotkeyKey, () => Avalonia.Threading.Dispatcher.UIThread.Post(ThumbsDownMusic));
     }
 
+    /// <summary>The gesture that opens and closes the audio player.</summary>
+    private void BindAudioPlayerKey()
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        BindHotkey(_audioPlayerKey, _host.Settings.Current.Hotkeys.AudioPlayer, "audio-player",
+            AudioCapability.AudioPlayerHotkeyKey, () => Avalonia.Threading.Dispatcher.UIThread.Post(ToggleAudioPlayer));
+    }
+
+    private void ToggleAudioPlayer()
+    {
+        if (_host is not null)
+        {
+            _host.ControlAudioPlayer(AudioPlayerAction.Toggle);
+        }
+    }
+
+    /// <summary>Opens or closes this window's copy of the player to match <see cref="PanelViewModel.AudioPlayerOpen"/>.</summary>
+    private void ShowAudioPlayer()
+    {
+        if (_host is not { } host)
+        {
+            return;
+        }
+
+        if (!_model.AudioPlayerOpen)
+        {
+            _audioPlayer?.Close();
+            return;
+        }
+
+        if (_audioPlayer is not null)
+        {
+            return;
+        }
+
+        var dialog = new AudioPlayerDialog(_model, host.Settings, action => host.Music.Control(action), ThumbsDownMusic);
+
+        _audioPlayer = dialog;
+        dialog.Closed += (_, _) =>
+        {
+            _audioPlayer = null;
+            _model.AudioPlayerOpen = false;
+        };
+        _ = dialog.Over(this);
+    }
+
     /// <summary>Thumbs down the playing track and says what happened; UI thread.</summary>
     private void ThumbsDownMusic()
     {
@@ -76,6 +126,8 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _commsSubChannelUp;
     private readonly GlobalHotkey _commsSubChannelDown;
     private readonly GlobalHotkey _thumbsDownMusic;
+    private readonly GlobalHotkey _audioPlayerKey;
+    private AudioPlayerDialog? _audioPlayer;
 
     private readonly PanelViewModel _model;
 
@@ -123,6 +175,7 @@ public partial class MainWindow : Window
         _commsSubChannelUp = new GlobalHotkey(hotkeyLogger);
         _commsSubChannelDown = new GlobalHotkey(hotkeyLogger);
         _thumbsDownMusic = new GlobalHotkey(hotkeyLogger);
+        _audioPlayerKey = new GlobalHotkey(hotkeyLogger);
 
         InitializeComponent();
 
@@ -644,6 +697,14 @@ public partial class MainWindow : Window
         BindHeadsetZoomAndResizeKeys();
         BindCommsChannelKeys();
         BindThumbsDownKey();
+        BindAudioPlayerKey();
+        _model.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(PanelViewModel.AudioPlayerOpen))
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(ShowAudioPlayer);
+            }
+        };
 
         // The stick's half of the same actions, read on the tick and run here.
         _host.ActionButtons.Pressed += key => Avalonia.Threading.Dispatcher.UIThread.Post(() => OnActionButton(key));
@@ -729,6 +790,11 @@ public partial class MainWindow : Window
             if (change.Key == AudioCapability.ThumbsDownHotkeyKey)
             {
                 BindThumbsDownKey();
+            }
+
+            if (change.Key == AudioCapability.AudioPlayerHotkeyKey)
+            {
+                BindAudioPlayerKey();
             }
 
             if (change.Key == ShipsCapability.HullArtKey
@@ -1649,6 +1715,7 @@ public partial class MainWindow : Window
             [VrCapability.ResetZoomButtonKey] = window => window.StepHeadsetZoom("reset"),
             [VrCapability.ResizeButtonKey] = window => window.ToggleHeadsetResize(),
             [AudioCapability.ThumbsDownButtonKey] = window => window.ThumbsDownMusic(),
+            [AudioCapability.AudioPlayerButtonKey] = window => window.ToggleAudioPlayer(),
             [CommsCapability.ChannelUpButtonKey] = window => window.StepComms(CommsCapability.Next, null),
             [CommsCapability.ChannelDownButtonKey] = window => window.StepComms(CommsCapability.Previous, null),
             [CommsCapability.SubChannelUpButtonKey] = window => window.StepComms(CommsCapability.Current, CommsCapability.Next),

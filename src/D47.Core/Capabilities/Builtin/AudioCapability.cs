@@ -94,7 +94,8 @@ public static class AudioCapability
         Func<int>? rejectCount = null,
         Func<bool>? rejectsRunning = null,
         Action? deleteRejectsNow = null,
-        Func<Action, Action>? watchRejects = null) => new()
+        Func<Action, Action>? watchRejects = null,
+        Func<AudioPlayerAction, string>? audioPlayer = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -131,8 +132,21 @@ public static class AudioCapability
                         + "starts. With a Music publish token set and a library track playing, the track is added to "
                         + "data\\music-rejects.tsv and the next track starts. Without a token a library track "
                         + "keeps playing.")),
+            .. InterfaceCapability.HotkeyRows(
+                AudioPlayerHotkeyKey,
+                AudioPlayerButtonKey,
+                "Audio player",
+                "audio-player",
+                s => s.Hotkeys.AudioPlayer,
+                (s, v) => s with { Hotkeys = s.Hotkeys with { AudioPlayer = v } },
+                systemWide: true,
+                exercise: new(
+                    "Settings › Hearing and sound › Sounds and levels, group Ambient music",
+                    "Ctrl+Shift+P",
+                    "the Audio player opens in the d47 window and on the headset's big panel, and the mini panels "
+                        + "show its read-out. Press it again and all of them close.")),
         ],
-        Tools = [ManageMusic(music), ThumbsDownMusic(thumbsDown), DeleteMusicRejects(deleteRejects, maintainer)],
+        Tools = [ManageMusic(music), AudioPlayer(audioPlayer), ThumbsDownMusic(thumbsDown), DeleteMusicRejects(deleteRejects, maintainer)],
     };
 
     public const string ThumbsDownTool = "thumbs_down_music";
@@ -142,6 +156,12 @@ public static class AudioCapability
     public const string ThumbsDownHotkeyKey = "hotkeys.thumbsDownMusic";
 
     public const string ThumbsDownButtonKey = "hotkeys.thumbsDownMusicButton";
+
+    public const string AudioPlayerHotkeyKey = "hotkeys.audioPlayer";
+
+    public const string AudioPlayerButtonKey = "hotkeys.audioPlayerButton";
+
+    public const string AudioPlayerTool = "audio_player";
 
     private static readonly SettingRow TokenRow = new()
     {
@@ -265,6 +285,55 @@ public static class AudioCapability
                 : ToolResult.Ok(deleteRejects())),
     };
 
+    private static readonly Dictionary<string, AudioPlayerAction> PlayerActions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["open"] = AudioPlayerAction.Open,
+        ["close"] = AudioPlayerAction.Close,
+        ["toggle"] = AudioPlayerAction.Toggle,
+    };
+
+    private static ToolCommandPhrase PlayerPhrase(string phrase, string action) =>
+        new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });
+
+    /// <summary>Opens or closes the audio player: the track, its folder and the transport buttons.</summary>
+    private static ToolDefinition AudioPlayer(Func<AudioPlayerAction, string>? audioPlayer) => new()
+    {
+        Name = AudioPlayerTool,
+        Exercise =
+            "Say \"audio player\": the Audio player opens in the d47 window and on the headset's big panel, and the "
+            + "mini panels show its read-out. Say \"audio player\" again, or \"close the audio player\": all of them "
+            + "close. \"Open the audio player\" and \"show the audio player\" only open it, and \"close the audio player\" "
+            + "does nothing while it is closed. The reply says what the player did.",
+        Description = "Opens, closes or toggles the audio player, which shows the playing ambient music track with "
+                      + "previous, play or pause, next and thumbs down buttons.",
+        Parameters =
+        [
+            ToolParameter.OneOf("action", "Whether to open, close or toggle the audio player.", ["open", "close", "toggle"], required: true),
+        ],
+        Commands =
+        [
+            PlayerPhrase("audio player", "toggle"),
+            PlayerPhrase("open the audio player", "open"),
+            PlayerPhrase("open audio player", "open"),
+            PlayerPhrase("show the audio player", "open"),
+            PlayerPhrase("show audio player", "open"),
+            PlayerPhrase("close the audio player", "close"),
+            PlayerPhrase("close audio player", "close"),
+            PlayerPhrase("hide the audio player", "close"),
+        ],
+        Handler = (arguments, _) =>
+        {
+            if (!arguments.TryGetString("action", out var said) || !PlayerActions.TryGetValue(said, out var action))
+            {
+                return Task.FromResult(ToolResult.Error("The action is open, close or toggle."));
+            }
+
+            return Task.FromResult(audioPlayer is null
+                ? ToolResult.Error("The audio player is not available.")
+                : ToolResult.Ok(audioPlayer(action)));
+        },
+    };
+
     public const string ManageMusicTool = "manage_music";
 
     private static readonly Dictionary<string, MusicAction> Actions = new(StringComparer.OrdinalIgnoreCase)
@@ -280,8 +349,8 @@ public static class AudioCapability
     {
         Name = ManageMusicTool,
         Exercise =
-            "With ambient music playing, say \"pause the music\" and it holds on the track. \"Resume "
-            + "the music\" restarts it, \"next track\" starts another track from the same folder and "
+            "With ambient music playing, say \"pause the music\" or \"pause\" and it holds on the track. "
+            + "\"Resume the music\" or \"play\" restarts it,\"next track\" starts another track from the same folder and "
             + "\"previous track\" plays the one before the current track. The reply says what the music did.",
         Description = "Pauses, resumes or skips D47's ambient music. Pause holds the track where it is; next "
                       + "starts another track from the same folder; previous plays the track before the current one.",
@@ -300,6 +369,8 @@ public static class AudioCapability
             Phrase("skip track", "next"),
             Phrase("skip this track", "next"),
             Phrase("previous track", "previous"),
+            Phrase("play", "resume"),
+            Phrase("pause", "pause"),
         ],
         Handler = (arguments, _) =>
         {

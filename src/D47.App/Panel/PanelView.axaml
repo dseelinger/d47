@@ -202,6 +202,10 @@
       The footer shows whenever the transcript tab does, so the microphone state survives mini; the
       ask band goes with it.
     -->
+    <controls:AudioReadout x:Name="AudioReadoutBar"
+                           DockPanel.Dock="Bottom"
+                           IsVisible="False" />
+
     <Border x:Name="Footer"
             DockPanel.Dock="Bottom"
             Margin="0,16,0,0"

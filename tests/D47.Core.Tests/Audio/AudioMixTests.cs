@@ -140,13 +140,13 @@ public class AudioMixTests
         }
     }
 
-    /// <summary>The tools are the music transport, the protected thumbs down and the protected delete; no tool sets a level or a mute.</summary>
+    /// <summary>The tools are the music transport, the audio player, the protected thumbs down and the protected delete; no tool sets a level or a mute.</summary>
     [Fact]
     public void TheModelCannotReachTheMixer()
     {
         var tools = AudioCapability.Create().Tools;
         Assert.Equal(
-            [AudioCapability.ManageMusicTool, AudioCapability.ThumbsDownTool, AudioCapability.DeleteRejectsTool],
+            [AudioCapability.ManageMusicTool, AudioCapability.AudioPlayerTool, AudioCapability.ThumbsDownTool, AudioCapability.DeleteRejectsTool],
             tools.Select(tool => tool.Name));
         Assert.True(tools.Single(tool => tool.Name == AudioCapability.ThumbsDownTool).Protected);
         Assert.True(tools.Single(tool => tool.Name == AudioCapability.DeleteRejectsTool).Protected);
