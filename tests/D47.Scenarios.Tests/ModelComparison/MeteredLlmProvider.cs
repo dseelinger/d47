@@ -147,6 +147,16 @@ public sealed class MeteredLlmProvider : ILlmProvider
     public IAsyncEnumerable<LlmStreamEvent> StreamAsync(LlmRequest request, CancellationToken cancellationToken) =>
         StreamAsync(request, _requests, cancellationToken);
 
+    private static string? StepOf(LlmRequest request) =>
+        request.Prompt.History.Count == 0 ? null
+        : request.Prompt.History[0].Text switch
+        {
+            var text when text.Contains("You are checking the wording of a draft", StringComparison.Ordinal) => "plain",
+            var text when text.Contains("You are checking a draft of a story", StringComparison.Ordinal) => "fidelity",
+            var text when text.Contains("The Commander is flying a story and wants to change", StringComparison.Ordinal) => "heading",
+            _ => null,
+        };
+
     private async IAsyncEnumerable<LlmStreamEvent> StreamAsync(
         LlmRequest request,
         List<MeteredRequest> sink,
@@ -157,7 +167,7 @@ public sealed class MeteredLlmProvider : ILlmProvider
             throw new BudgetSpentException(Spent, _cap);
         }
 
-        var step = AdventureGenerator.StepInFlight;
+        var step = StepOf(request);
         var clock = Stopwatch.StartNew();
         LlmUsage? usage = null;
         string? failure = null;

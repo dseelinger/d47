@@ -28,7 +28,7 @@ public sealed class TheAveragesAreFetchedOncePerSessionTests
         var client = worker.Client(InMemoryStories.Create());
 
         Assert.Null(await client.Open());
-        Assert.Equal(0, client.Ratings.Count);
+        Assert.Null(client.Ratings.Get("a"));
 
         worker.Down = false;
 

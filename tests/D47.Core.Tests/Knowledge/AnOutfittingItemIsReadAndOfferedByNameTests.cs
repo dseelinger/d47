@@ -112,6 +112,15 @@ public class AnOutfittingItemIsReadAndOfferedByNameTests
     [Fact]
     public void ASpecificationNameWithNoCatalogueNameIsListedHereWhenItAppears()
     {
-        Assert.Equal(ExpectedUnmapped, OutfittingItem.Unmapped);
+        var catalogue = OutfittingCatalogue.Modules.Select(Catalogue.Relax).ToHashSet(StringComparer.Ordinal);
+
+        var unmapped = EliteSpecifications.Modules
+            .Where(spec => (spec.Class is not null || spec.Rating is not null) && !spec.Name.EndsWith("(free)", StringComparison.Ordinal))
+            .Select(spec => spec.Name)
+            .Where(name => !catalogue.Contains(Catalogue.Relax(name == "Vessel Hangar" ? "Fighter Hangar" : name)))
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal);
+
+        Assert.Equal(ExpectedUnmapped, unmapped);
     }
 }

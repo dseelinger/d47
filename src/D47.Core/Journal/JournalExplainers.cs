@@ -10,9 +10,6 @@ public static class JournalExplainers
 
     private static readonly Lazy<FrozenDictionary<string, string>> Paragraphs = new(Read);
 
-    /// <summary>Every kind that has a paragraph.</summary>
-    public static IReadOnlyCollection<string> Kinds => Paragraphs.Value.Keys;
-
     /// <summary>The paragraph under the kind's heading, or null when the page has none.</summary>
     public static string? For(string kind) =>
         Paragraphs.Value.TryGetValue(kind, out var paragraph) ? paragraph : null;

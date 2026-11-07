@@ -15,9 +15,6 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
     /// <summary>The most individual facts one category contributes.</summary>
     public const int MaxPerKind = 25;
 
-    /// <summary>Events that never reach a digest, whatever else changes.</summary>
-    public static IReadOnlyList<string> ExcludedEvents { get; } = ["ReceiveText", "SendText"];
-
     /// <summary>Which categories survive the global cap, most notable first.</summary>
     private static readonly LogFactKind[] Priority =
     [

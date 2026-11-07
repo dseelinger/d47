@@ -47,7 +47,7 @@ public sealed class AShelvedStoryClearsTheBenchCheckpointsTests
         var story = _stories.Current("F1") ?? new Story { Id = Id, Title = Card.Title, PublicLayer = "-", PickedAt = Now, BeaconScanAt = Now };
 
         _stories.Save("F1", story with { Chapters = [.. story.Chapters, $"chapter-{number}"] });
-        await _bench.Settled();
+        await Wait.Until(() => _bench.Checkpoints("F1").Any(checkpoint => checkpoint.Chapter == number), $"chapter {number} never got a checkpoint");
     }
 
     [Fact]
@@ -58,13 +58,13 @@ public sealed class AShelvedStoryClearsTheBenchCheckpointsTests
         Assert.Equal([1, 2], _bench.Checkpoints("F1").Select(checkpoint => checkpoint.Chapter));
 
         Assert.Null(_director.ShelveCurrent("F1", Now.AddHours(1)));
-        await _bench.Settled();
+        await Wait.Until(() => _files.ReadText(MetaOf(1)) is null && _files.ReadText(MetaOf(2)) is null, "the checkpoints were never deleted");
 
         Assert.Null(_files.ReadText(MetaOf(1)));
         Assert.Null(_files.ReadText(MetaOf(2)));
 
         Assert.Null(await _director.PickAsync("F1", Id, Now.AddHours(2), CancellationToken.None));
-        await _bench.Settled();
+        await Wait.Until(() => _bench.Checkpoints("F1").Select(checkpoint => checkpoint.Chapter).SequenceEqual([2]), "the checkpoint was never taken again");
 
         Assert.Equal([2], _bench.Checkpoints("F1").Select(checkpoint => checkpoint.Chapter));
         Assert.Null(_files.ReadText(MetaOf(1)));

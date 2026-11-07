@@ -37,8 +37,6 @@ public sealed class ShipCoreService(ShipCoreStore store, Func<CommanderGameState
     /// <summary>Whether the first ship has been seen.</summary>
     private bool _started;
 
-    public ShipCoreStore Store => store;
-
     /// <summary>Whose bindings are being read and written.</summary>
     private string Fid => game()?.Identity.FrontierId ?? string.Empty;
 

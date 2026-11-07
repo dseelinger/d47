@@ -31,14 +31,8 @@ public static class TechBrokerCatalogue
 
     private static readonly string[] Mounts = ["Fixed", "Gimballed", "Turreted"];
 
-    /// <summary>Every tech broker row, joined or not.</summary>
-    public static IReadOnlyList<TechBrokerRow> Rows => Loaded.Value;
-
     /// <summary>The rows that join to at least one module symbol.</summary>
     public static IReadOnlyList<TechBrokerRow> Joined => [.. Loaded.Value.Where(row => row.Symbols.Count > 0)];
-
-    /// <summary>The rows that join to nothing.</summary>
-    public static IReadOnlyList<TechBrokerRow> Unjoined => [.. Loaded.Value.Where(row => row.Symbols.Count == 0)];
 
     /// <summary>The joined row with this name, or null.</summary>
     public static TechBrokerRow? ForName(string? name) =>

@@ -891,52 +891,6 @@ public sealed class StoryCatalog
         return faults;
     }
 
-    /// <summary>
-    /// Every cast member with no role, or with a role that breaks the format, named by story id and cast index. A
-    /// publishing rule only: the load path does not apply it, so a story published without roles still loads.
-    /// </summary>
-    public IReadOnlyList<string> RoleFaults() =>
-        [.. Secrets.SelectMany(secret => RoleFaults(secret).Select(fault => $"{secret.Id}: {fault}"))];
-
-    private static IEnumerable<string> RoleFaults(StorySecret secret)
-    {
-        foreach (var (speaker, at) in secret.Cast.Select((speaker, at) => (speaker, at)))
-        {
-            var name = $"cast[{at.ToString(CultureInfo.InvariantCulture)}]";
-
-            if (string.IsNullOrWhiteSpace(speaker.Role))
-            {
-                yield return $"{name} has no role.";
-                continue;
-            }
-
-            var role = speaker.Role;
-
-            if (char.IsUpper(role[0]))
-            {
-                yield return $"{name} has a role that starts with a capital letter.";
-            }
-
-            if (role.TrimEnd().EndsWith('.'))
-            {
-                yield return $"{name} has a role that ends with a full stop.";
-            }
-
-            if (role.Length > StorySpeaker.MostRoleLength)
-            {
-                yield return $"{name} has a role of {role.Length.ToString(CultureInfo.InvariantCulture)} characters, more than {StorySpeaker.MostRoleLength.ToString(CultureInfo.InvariantCulture)}.";
-            }
-
-            var names = (speaker.Versions?.All().Select(version => version.Version.Name) ?? [speaker.Name]).Where(member => !string.IsNullOrWhiteSpace(member));
-
-            if (role.Contains("{name:", StringComparison.Ordinal)
-                || names.Any(member => Regex.IsMatch(role, $@"\b{Regex.Escape(member!)}\b", RegexOptions.CultureInvariant)))
-            {
-                yield return $"{name} has a role that holds a name or a {{name:}} token.";
-            }
-        }
-    }
-
     private static HashSet<string> Personas() =>
         new([PersonaCatalog.Covas.Id, .. PersonaCatalog.Shipped.Select(persona => persona.Id)], StringComparer.Ordinal);
 

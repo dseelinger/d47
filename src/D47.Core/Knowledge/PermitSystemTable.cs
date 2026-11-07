@@ -14,8 +14,6 @@ public static class PermitSystemTable
     private static readonly Lazy<HashSet<string>> Loaded =
         new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
-    public static IReadOnlyCollection<string> Names => Loaded.Value;
-
     /// <summary>Whether entering this system needs a permit. Matched on the index's own spelling.</summary>
     public static bool Locked(string? system) =>
         system is { Length: > 0 } named && Loaded.Value.Contains(named);

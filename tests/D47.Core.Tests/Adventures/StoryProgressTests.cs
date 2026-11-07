@@ -169,13 +169,17 @@ public sealed class StoryProgressTests
     public async Task AShortStoryReportsItsStagesThenIsDone()
     {
         var progress = new StoryProgress(TimeProvider.System);
-        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.ShortLines()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections));
+        var stages = new List<WriteStage>();
+        var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(PlannedChapterWorld.ShortLines()), RoundScriptedLlmProvider.Saying(PlannedChapterWorld.NoObjections))
+        {
+            OnRequest = _ => stages.Add(progress.Stage),
+        };
 
         var outcome = await PlannedChapterWorld.Generator(provider, PlannedChapterWorld.Roomy())
             .DraftAsync(new AdventureAsk(AdventureReach.Session, AdventureLength.Evening, Progress: progress), Now, null, CancellationToken.None);
 
         Assert.True(outcome.Succeeded, outcome.Refusal);
-        Assert.Equal([WriteStage.Places, WriteStage.Objectives, WriteStage.Checking], progress.Visited);
+        Assert.Equal([WriteStage.Objectives, WriteStage.Checking], stages.Distinct());
         Assert.Equal(1, progress.Fill);
     }
 

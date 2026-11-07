@@ -12,7 +12,7 @@ public sealed record OutfittingItem
         ["Vessel Hangar"] = "Fighter Hangar",
     };
 
-    private sealed record Tables(IReadOnlyList<OutfittingItem> All, IReadOnlyList<string> Unmapped);
+    private sealed record Tables(IReadOnlyList<OutfittingItem> All);
 
     private OutfittingItem()
     {
@@ -39,9 +39,6 @@ public sealed record OutfittingItem
 
     /// <summary>Every ship, every catalogue module bare, and each size and rating the specification table lists.</summary>
     public static IReadOnlyList<OutfittingItem> All => Loaded.Value.All;
-
-    /// <summary>Specification-table module names that map to no catalogue name and carry a size or rating.</summary>
-    public static IReadOnlyList<string> Unmapped => Loaded.Value.Unmapped;
 
     /// <summary>Reads "5A Frame Shift Drive (SCO)", "fuel scoop" or "Python Mk II"; otherwise says why not.</summary>
     public static bool TryParse(string? text, out OutfittingItem item, out string failure)
@@ -226,7 +223,6 @@ public sealed record OutfittingItem
         }
 
         var catalogue = OutfittingCatalogue.Modules.ToDictionary(Catalogue.Relax, name => name);
-        var unmapped = new SortedSet<string>(StringComparer.Ordinal);
         var seen = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var spec in EliteSpecifications.Modules.OrderBy(spec => spec.Class).ThenBy(spec => spec.Rating, StringComparer.Ordinal))
@@ -240,7 +236,6 @@ public sealed record OutfittingItem
 
             if (!catalogue.TryGetValue(Catalogue.Relax(name), out var mapped))
             {
-                unmapped.Add(spec.Name);
                 continue;
             }
 
@@ -252,6 +247,6 @@ public sealed record OutfittingItem
             }
         }
 
-        return new Tables(items, [.. unmapped]);
+        return new Tables(items);
     }
 }

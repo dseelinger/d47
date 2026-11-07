@@ -21,8 +21,6 @@ public sealed class StoryRatings
 
     private StoryRatings(IReadOnlyDictionary<string, StoryRating> byStory) => _byStory = byStory;
 
-    public int Count => _byStory.Count;
-
     /// <summary>The story's rating, or null when it has no votes.</summary>
     public StoryRating? Get(string id) => _byStory.TryGetValue(id, out var rating) ? rating : null;
 

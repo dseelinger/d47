@@ -178,7 +178,6 @@ public class CommodityLedgerTests
         Assert.Equal(100_000, ledger.Session(Fid, "Palladium").Net);
         Assert.Equal(80_000, ledger.Session(Fid, "Gold").Net);
         Assert.Equal(100_000, ledger.Session("F9", "Palladium").Net);
-        Assert.Equal("F9", ledger.CurrentCommander);
     }
 
     [Fact]

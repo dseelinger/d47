@@ -64,7 +64,7 @@ public sealed class ReadMyMailSaysItOnceTests
         Complete(ledger, 1, "10:00:00");
 
         Assert.StartsWith("I'm still reading", await Ask(ledger), StringComparison.Ordinal);
-        Assert.Null(ledger.ReadThrough(Doug));
+        Assert.Null(_files.ReadText(Path.Combine(@"C:\d47-test", MailLedger.FileName)));
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public sealed class ReadMyMailSaysItOnceTests
         Complete(ledger, 1, "10:00:00");
 
         Assert.StartsWith("I don't know which Commander", await Ask(ledger, commander: null), StringComparison.Ordinal);
-        Assert.Null(ledger.ReadThrough(Doug));
+        Assert.Null(_files.ReadText(Path.Combine(@"C:\d47-test", MailLedger.FileName)));
     }
 
     [Fact]

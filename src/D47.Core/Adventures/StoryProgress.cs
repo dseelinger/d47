@@ -56,7 +56,6 @@ public sealed class StoryProgress(TimeProvider time)
     private static readonly (double From, double To)[] Bands = [(0, 0.10), (0.10, 0.45), (0.45, 0.90), (0.90, 0.99)];
 
     private readonly object _gate = new();
-    private readonly List<WriteStage> _visited = [];
     private readonly long _began = time.GetTimestamp();
     private StoryPace? _pace;
     private WriteStage _stage;
@@ -76,18 +75,6 @@ public sealed class StoryProgress(TimeProvider time)
             lock (_gate)
             {
                 return _stage;
-            }
-        }
-    }
-
-    /// <summary>The stages entered, in order.</summary>
-    public IReadOnlyList<WriteStage> Visited
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return [.. _visited];
             }
         }
     }
@@ -167,7 +154,6 @@ public sealed class StoryProgress(TimeProvider time)
             _characters = 0;
             _stopped = false;
             _line = null;
-            _visited.Add(stage);
         }
     }
 

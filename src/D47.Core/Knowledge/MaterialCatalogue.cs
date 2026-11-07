@@ -87,14 +87,9 @@ public static class MaterialCatalogue
 
     private static readonly Lazy<Tables> Loaded = new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
-    private sealed record Tables(
-        IReadOnlyDictionary<string, MaterialEntry> BySymbol,
-        IReadOnlyList<string> KnownButUnkeyed);
+    private sealed record Tables(IReadOnlyDictionary<string, MaterialEntry> BySymbol);
 
     public static IReadOnlyCollection<MaterialEntry> All => [.. Loaded.Value.BySymbol.Values];
-
-    /// <summary>Things a source describes and no id list has a symbol for.</summary>
-    public static IReadOnlyList<string> KnownButUnkeyed => Loaded.Value.KnownButUnkeyed;
 
     /// <summary>A material by the journal's symbol, or by the name a Commander says.</summary>
     public static MaterialEntry? Find(string? spoken)
@@ -166,13 +161,12 @@ public static class MaterialCatalogue
         {
             // Nothing can be answered without it, and answering anyway is the failure the whole table exists
             // to avoid.
-            return new Tables(new Dictionary<string, MaterialEntry>(StringComparer.Ordinal), []);
+            return new Tables(new Dictionary<string, MaterialEntry>(StringComparer.Ordinal));
         }
 
         using var reader = new StreamReader(stream);
 
         var entries = new Dictionary<string, MaterialEntry>(StringComparer.Ordinal);
-        var unkeyed = new List<string>();
         var unkeyedSection = false;
 
         while (reader.ReadLine() is { } line)
@@ -190,7 +184,6 @@ public static class MaterialCatalogue
 
             if (unkeyedSection)
             {
-                unkeyed.Add(line);
                 continue;
             }
 
@@ -198,7 +191,7 @@ public static class MaterialCatalogue
             entries[entry.Symbol] = entry;
         }
 
-        return new Tables(entries, unkeyed);
+        return new Tables(entries);
     }
 
     private static MaterialEntry Read(string[] cells) => new()

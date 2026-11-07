@@ -27,7 +27,7 @@ public sealed class StoryLinesClaimOnlyWhatTheirObjectivesConfirmTests
     [Fact]
     public void EveryTriggerKindSaysWhatItConfirms()
     {
-        var missing = Enum.GetValues<TriggerKind>().Where(kind => !TriggerConfirms.Kinds.Contains(kind)).ToList();
+        var missing = Enum.GetValues<TriggerKind>().Where(kind => Record.Exception(() => TriggerConfirms.Of(kind)) is KeyNotFoundException).ToList();
 
         Assert.True(missing.Count == 0, $"Add an entry to TriggerConfirms for: {string.Join(", ", missing)}.");
         Assert.All(Enum.GetValues<TriggerKind>(), kind => Assert.False(string.IsNullOrWhiteSpace(TriggerConfirms.Of(kind))));

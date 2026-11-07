@@ -3,6 +3,7 @@ using Avalonia.Media;
 using D47.App.Panel;
 using D47.Core;
 using D47.Core.Hulls;
+using D47.TestSupport;
 using D47.Core.Storage;
 using Xunit;
 

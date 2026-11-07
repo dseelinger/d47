@@ -127,7 +127,7 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
         {
             reading = Dedicated(() => ledger.Read("F1"));
 
-            Assert.True(Eventually(() => ledger.ReadThrough("F1") is not null));
+            Assert.True(Eventually(() => ledger.Compose("F1").StartsWith("Nothing I know of", StringComparison.Ordinal)));
             Assert.False(File.Exists(path));
         }
         finally

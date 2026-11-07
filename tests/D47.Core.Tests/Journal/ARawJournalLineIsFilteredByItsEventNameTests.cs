@@ -31,6 +31,9 @@ public sealed class ARawJournalLineIsFilteredByItsEventNameTests
         Assert.False(filter.Matches(Line("FSDJump")));
     }
 
+    private static IEnumerable<string> KindsOf(JournalLineFilter filter) =>
+        (IEnumerable<string>)typeof(JournalLineFilter).GetField("_kinds", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(filter)!;
+
     [Fact]
     public void EveryNameAFilterMatchesIsActedOn()
     {
@@ -45,7 +48,7 @@ public sealed class ARawJournalLineIsFilteredByItsEventNameTests
                 {
                     filters++;
 
-                    foreach (var kind in filter.Kinds.Where(kind => !HandledEvents.ActedOn.Contains(kind)))
+                    foreach (var kind in KindsOf(filter).Where(kind => !HandledEvents.ActedOn.Contains(kind)))
                     {
                         _ = unhandled.Add($"{type.Name}.{field.Name}: {kind}");
                     }

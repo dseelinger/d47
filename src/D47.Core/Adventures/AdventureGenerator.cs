@@ -2550,11 +2550,6 @@ public sealed partial class AdventureGenerator(
             local: provider() is { RunsOnThisMachine: true },
             chapter: ask.Story is not null));
 
-    private static readonly AsyncLocal<string?> StepAsked = new();
-
-    /// <summary>The step of the model call in progress on this flow of execution, or null outside one.</summary>
-    public static string? StepInFlight => StepAsked.Value;
-
     private const string FidelityStep = "fidelity";
     private const string PlainStep = "plain";
     private const string HeadingStep = "heading";
@@ -2571,7 +2566,6 @@ public sealed partial class AdventureGenerator(
 
     private async Task<Asked> AskJsonAsync(string step, StoryCall call, int budget, StoryProgress? progress, CancellationToken cancellationToken, ThinkingEffort? effort = null)
     {
-        StepAsked.Value = step;
         var asking = provider();
         var writing = WritingModel(asking);
         var chosen = writing ?? asking?.DefaultModel ?? "no model";

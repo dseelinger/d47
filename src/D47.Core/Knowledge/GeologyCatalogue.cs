@@ -49,8 +49,6 @@ public sealed class GeologyTable
         return Parse(reader);
     }
 
-    public IReadOnlyList<GeologyFeature> All => features;
-
     /// <summary>The features whose row admits this planet class, atmosphere and volcanism, in table order.</summary>
     public IReadOnlyList<GeologyFeature> Likely(string? planetClass, string? atmosphere, string? volcanism)
     {

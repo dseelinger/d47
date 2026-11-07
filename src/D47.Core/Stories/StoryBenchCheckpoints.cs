@@ -22,15 +22,6 @@ public sealed partial class StoryBench
     /// <summary>Raised on the pool after a checkpoint has been written.</summary>
     public event Action? CheckpointsChanged;
 
-    /// <summary>Completes once the checkpoints queued so far are written.</summary>
-    public Task Settled()
-    {
-        lock (_queueGate)
-        {
-            return _tail;
-        }
-    }
-
     /// <summary>The checkpoints of the story <paramref name="frontierId"/> has current, oldest chapter first.</summary>
     public IReadOnlyList<BenchCheckpoint> Checkpoints(string? frontierId)
     {

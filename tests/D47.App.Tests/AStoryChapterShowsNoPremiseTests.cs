@@ -29,7 +29,7 @@ public class AStoryChapterShowsNoPremiseTests
 
     private const string OwnPremise = "A courier run that goes wrong at the last dock.";
 
-    private sealed record Surface(Window Window, PanelView Panel, AdventureBook Book, StoryDirector Director);
+    private sealed record Surface(Window Window, PanelView Panel, AdventureBook Book, StoryDirector Director, StoryStore Stories);
 
     private static Adventure Chapter(string key, string name, string premise, string? storyId) => new()
     {
@@ -92,7 +92,7 @@ public class AStoryChapterShowsNoPremiseTests
         panel.Tab = PanelTab.Stories;
         Dispatcher.UIThread.RunJobs();
 
-        return new Surface(window, panel, book, director);
+        return new Surface(window, panel, book, director, stories);
     }
 
     private static void Read(PanelView panel, string key, string name)
@@ -159,7 +159,7 @@ public class AStoryChapterShowsNoPremiseTests
         Assert.True(box.IsChecked);
 
         box.IsChecked = false;
-        Assert.True(surface.Director.IsOff("F1"));
+        Assert.True(surface.Stories.Current("F1")!.IsOff);
         Assert.True(surface.Book.Standing("F1", "the-first-light")?.Adventure.IsActive);
 
         Read(surface.Panel, "the-last-dock", "The Last Dock");

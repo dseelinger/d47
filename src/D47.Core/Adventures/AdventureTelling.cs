@@ -67,8 +67,6 @@ public static class AdventureAcks
         "Right where it should be.",
     ];
 
-    public static int Count => Lines.Length;
-
     /// <summary>The line at an index, wrapped.</summary>
     public static string Pick(int index) => Lines[Math.Abs(index) % Lines.Length];
 }

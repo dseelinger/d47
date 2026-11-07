@@ -15,6 +15,7 @@ using D47.App.Panel;
 using D47.App.Theming;
 using D47.Core.Checklists;
 using D47.Core.Hulls;
+using D47.TestSupport;
 using D47.Core.Interface;
 using D47.Core.Ships;
 using D47.Core.Storage;

@@ -18,6 +18,6 @@ public class EveryPowerHasACapitalTests
     [Fact]
     public void NoCapitalNamesAPowerTheGalaxySearchDoesNotKnow()
     {
-        Assert.Empty(PowerCapitals.Powers.Except(GalaxyFilters.Powers, StringComparer.Ordinal));
+        Assert.Empty(TableContents.PowersWithCapitals.Except(GalaxyFilters.Powers, StringComparer.Ordinal));
     }
 }

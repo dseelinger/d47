@@ -63,7 +63,7 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
         var story = _stories.Current("F1") ?? new Story { Id = Id, Title = Card.Title, PublicLayer = "-", PickedAt = Now, BeaconScanAt = Now };
 
         _stories.Save("F1", story with { Chapters = [.. story.Chapters.Take(number - 1), Key(number)] });
-        await _bench.Settled();
+        await Wait.Until(() => _bench.Checkpoints("F1").Any(checkpoint => checkpoint.Chapter == number), $"chapter {number} never got a checkpoint");
     }
 
     [Fact]
@@ -291,7 +291,7 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
         _stories.Update("F1", Id, story => story.Resumed(Now.AddHours(6)));
         _adventures.Save("F1", AdventureFixtures.LanternRoute(Now.AddHours(6)) with { Key = "alternative-2", StoryId = Id });
         _stories.Update("F1", Id, story => story with { Chapters = [Key(1), "alternative-2"] });
-        await _bench.Settled();
+        await Wait.Until(() => _bench.Checkpoints("F1").Select(checkpoint => checkpoint.Chapter).SequenceEqual([1, 2]), "the later checkpoints were never replaced");
 
         Assert.Equal([1, 2], _bench.Checkpoints("F1").Select(checkpoint => checkpoint.Chapter));
         Assert.Contains("alternative-2", _files.ReadText(Path.Combine(CheckpointFolder("mine", 2), "story.json")));

@@ -76,18 +76,6 @@ public sealed class CommodityLedger
     /// <summary>Raised after a fold that changed something, so a page can redraw without polling.</summary>
     public event Action? Changed;
 
-    /// <summary>The Commander the most recent journal event belonged to, by Frontier id.</summary>
-    public string? CurrentCommander
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _current;
-            }
-        }
-    }
-
     /// <summary>Folds a tick's events, in order.</summary>
     public void Apply(IReadOnlyList<JournalEvent> events)
     {

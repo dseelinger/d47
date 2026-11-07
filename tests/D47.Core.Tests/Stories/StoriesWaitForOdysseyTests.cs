@@ -107,6 +107,6 @@ public sealed class StoriesWaitForOdysseyTests
         fixtures.Director.Observe(LoadGame(Now.AddDays(1), odyssey: true), "F1");
 
         Assert.False(fixtures.Director.WithoutOdyssey("F1"));
-        Assert.True(fixtures.Director.IsOff("F1"));
+        Assert.True(fixtures.Stories.Current("F1")!.IsOff);
     }
 }

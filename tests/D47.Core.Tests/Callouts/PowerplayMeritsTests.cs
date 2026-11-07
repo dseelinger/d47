@@ -1,4 +1,3 @@
-using System.Reflection;
 using D47.Core.Callouts;
 using D47.Core.Configuration;
 using D47.Core.Journal;
@@ -219,26 +218,6 @@ public class PowerplayMeritsTests
             "Merits here: undermining +15%; +25% more if the galaxy map marks it for undermining.",
             Situation.Describe(state),
             StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void EveryRuleNamesItsGameVersionAndCheckDate()
-    {
-        var rules = typeof(PowerplayRules)
-            .GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(f => f.FieldType == typeof(PowerplayRule))
-            .Select(f => (PowerplayRule)f.GetValue(null)!)
-            .ToList();
-
-        Assert.Equal(PowerplayRules.All.Count, rules.Count);
-
-        foreach (var rule in rules)
-        {
-            Assert.Matches(@"^\d+\.\d+\.\d+\.\d+$", rule.Since);
-            Assert.Matches(@"^\d+\.\d+\.\d+\.\d+$", rule.CheckedAgainst);
-            Assert.Matches(@"^\d{4}-\d{2}-\d{2}$", rule.CheckedOn);
-            Assert.Contains(rule, PowerplayRules.All);
-        }
     }
 
     [Fact]

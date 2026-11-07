@@ -2889,9 +2889,6 @@ public sealed class StoryDirector(
             ? PersonaCatalog.Resolve(card.Core)
             : null;
 
-    /// <summary>Whether the Commander has the current story switched off.</summary>
-    public bool IsOff(string? frontierId) => stories.Current(frontierId) is { IsOff: true };
-
     /// <summary>Switches the current story on or off. Returns a refusal or null.</summary>
     public string? SetOn(string? frontierId, bool on, DateTimeOffset now)
     {

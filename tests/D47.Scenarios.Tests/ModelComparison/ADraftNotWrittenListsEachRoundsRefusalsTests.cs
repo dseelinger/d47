@@ -38,10 +38,4 @@ public sealed class ADraftNotWrittenListsEachRoundsRefusalsTests
         Assert.Equal(("1", "plain", "The goal is vague."), Read(rounds[0]));
         Assert.Equal(("2", "plain", "The goal is\nstill vague."), Read(rounds[1]));
     }
-
-    [Fact]
-    public void NoCallIsInFlightOutsideTheGenerator()
-    {
-        Assert.Null(D47.Core.Adventures.AdventureGenerator.StepInFlight);
-    }
 }

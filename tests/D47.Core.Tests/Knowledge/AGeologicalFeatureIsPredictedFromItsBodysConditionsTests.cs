@@ -87,6 +87,21 @@ public class AGeologicalFeatureIsPredictedFromItsBodysConditionsTests
         Assert.Contains(GeologyCatalogue.Likely(scan), feature => feature.Name == "Water Ice Geyser");
     }
 
+    private static IEnumerable<(long EntryId, string Name)> ShippedRows()
+    {
+        using var reader = new StreamReader(typeof(GeologyTable).Assembly.GetManifestResourceStream("D47.Core.Geology")!);
+
+        while (reader.ReadLine() is { } line)
+        {
+            var cells = line.Split('\t');
+
+            if (line.Length > 0 && line[0] != '#' && cells.Length >= 2 && long.TryParse(cells[0], out var entryId))
+            {
+                yield return (entryId, cells[1]);
+            }
+        }
+    }
+
     [Fact]
     public void TheShippedTableHasOneRowForEachGeologySurfaceFeatureInTheCodex()
     {
@@ -99,7 +114,7 @@ public class AGeologicalFeatureIsPredictedFromItsBodysConditionsTests
         Assert.Equal(23, geology.Count);
         Assert.Equal(
             geology.Select(entry => (entry.EntryId, entry.Name)).Order(),
-            GeologyCatalogue.Table.All.Select(feature => (feature.EntryId, feature.Name)).Order());
+            ShippedRows().Order());
     }
 
     [Fact]

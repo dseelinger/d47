@@ -171,7 +171,7 @@ public sealed class ADrawnChapterIsPlannedInCodeTests
     [Fact]
     public void NoStepIsInAPermitOrStarterSystem()
     {
-        string[] locked = ["Shinrarta Dezhra", StarterSystemTable.Names.First()];
+        string[] locked = ["Shinrarta Dezhra", Knowledge.TableContents.StarterSystems.First()];
         var places = Places() with
         {
             Systems = [.. Places().Systems, Place(locked[0], 90, 105), Place(locked[1], 91, 115)],

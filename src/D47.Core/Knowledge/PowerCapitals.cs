@@ -19,9 +19,6 @@ public static class PowerCapitals
         ["Zemina Torval"] = "Synteini",
     };
 
-    /// <summary>Every power with a capital, as spelled by <see cref="GalaxyFilters.Powers"/>.</summary>
-    public static IReadOnlyCollection<string> Powers => Table.Keys;
-
     /// <summary>The capital of a power, or false when the name is not one of the twelve.</summary>
     public static bool TryGet(string power, out string capital) => Table.TryGetValue(power, out capital!);
 }

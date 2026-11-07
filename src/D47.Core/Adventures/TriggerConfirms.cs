@@ -77,9 +77,6 @@ internal static class TriggerConfirms
         + "story stands and recount what any objective confirmed, in that order; it may not say the Commander did something no objective confirms. "
         + "A mission objective confirms only that its missions were handed in, so no line says how a mission went, what was at its site or in its cargo, or what it paid.";
 
-    /// <summary>The kinds that have an entry.</summary>
-    internal static IReadOnlyCollection<TriggerKind> Kinds => Entries.Keys;
-
     /// <summary>The entry for a kind; in a stock story the beacon's entry says the story's cores came aboard.</summary>
     internal static string Of(TriggerKind kind, bool story = false) => story && kind == TriggerKind.Beacon ? StockBeacon : Entries[kind];
 

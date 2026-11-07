@@ -40,9 +40,6 @@ public sealed class JournalLog(int keep = 4000)
     /// <summary>What is held, oldest first.</summary>
     public IReadOnlyList<JournalEntry> Entries => [.. _entries];
 
-    /// <summary>How many are held.</summary>
-    public int Count => _entries.Count;
-
     /// <summary>Takes a poll's worth of events.</summary>
     public void Add(IReadOnlyList<JournalEvent> events) => Add(events, []);
 

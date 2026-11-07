@@ -47,6 +47,12 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
         return path;
     }
 
+    private void WriteWatermark(string commander, DateTimeOffset through) =>
+        File.WriteAllText(Store, System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, DateTimeOffset> { [commander] = through }));
+
+    private Dictionary<string, DateTimeOffset> Watermarks() =>
+        File.Exists(Store) ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, DateTimeOffset>>(File.ReadAllText(Store))! : [];
+
     private static void Walk(MailLedger ledger, IReadOnlyList<string> files) =>
         ledger.FoldHistory(files, TestContext.Current.CancellationToken);
 
@@ -114,8 +120,7 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
             Journal("110000", Commander(Alt, "11:00:00"), Failed(3, "11:01:00")),
         };
 
-        var first = Ledger();
-        first.MarkRead(Doug, DateTimeOffset.Parse("2026-09-05T10:10:00Z", System.Globalization.CultureInfo.InvariantCulture));
+        WriteWatermark(Doug, DateTimeOffset.Parse("2026-09-05T10:10:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
         var ledger = Ledger();
         Walk(ledger, files);
@@ -123,7 +128,7 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
         Assert.Contains("one mission completed", ledger.Compose(Doug), StringComparison.Ordinal);
         Assert.DoesNotContain("failed", ledger.Compose(Doug), StringComparison.Ordinal);
         Assert.Contains("one mission failed", ledger.Compose(Alt), StringComparison.Ordinal);
-        Assert.Null(ledger.ReadThrough(Alt));
+        Assert.DoesNotContain(Alt, Watermarks().Keys);
     }
 
     [Fact]
@@ -168,22 +173,26 @@ public sealed class MailCountsWhatWasNotAlreadySaidTests : IDisposable
         var files = new[] { Journal("100000", Commander(Doug, "10:00:00"), Completed(1, "10:01:00"), Completed(2, "10:30:00")) };
         var through = DateTimeOffset.Parse("2026-09-05T10:10:00Z", System.Globalization.CultureInfo.InvariantCulture);
 
+        WriteWatermark(Doug, through);
+
         var ledger = Ledger();
         Walk(ledger, files);
-        ledger.MarkRead(Doug, through);
 
         Assert.Contains("one mission completed", ledger.Compose(Doug), StringComparison.Ordinal);
 
         var reloaded = Ledger();
         Walk(reloaded, files);
 
-        Assert.Equal(through, reloaded.ReadThrough(Doug));
+        Assert.Equal(through, Watermarks()[Doug]);
         Assert.Contains("one mission completed", reloaded.Compose(Doug), StringComparison.Ordinal);
 
-        reloaded.MarkRead(Doug, through.AddHours(1));
+        WriteWatermark(Doug, through.AddHours(1));
+
+        var later = Ledger();
+        Walk(later, files);
 
         Assert.Equal(
             "Nothing I know of since you last asked. Frontier's own notices never reach the journal.",
-            reloaded.Compose(Doug));
+            later.Compose(Doug));
     }
 }

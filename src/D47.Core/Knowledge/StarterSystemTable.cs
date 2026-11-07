@@ -11,8 +11,6 @@ public static class StarterSystemTable
         new(() => Read(typeof(StarterSystemTable).GetTypeInfo().Assembly.GetManifestResourceStream(ResourceName)),
             LazyThreadSafetyMode.ExecutionAndPublication);
 
-    public static IReadOnlyCollection<string> Names => Loaded.Value;
-
     /// <summary>Whether this is a starter system, which a Commander loses access to early on.</summary>
     public static bool Contains(string? system) =>
         system is { Length: > 0 } named && Loaded.Value.Contains(named);

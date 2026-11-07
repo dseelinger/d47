@@ -328,23 +328,23 @@ public class ShipCoreWatchTests
     public void ALegacyBindingIsAdoptedAndStillAnswers()
     {
         var state = State(12);
-        var service = Service(state, ("", 12, "sentinel"));
+        var service = Service(state, out var store, ("", 12, "sentinel"));
 
         var due = service.Observe(TimeSpan.Zero);
 
         Assert.NotNull(due);
         Assert.Equal("sentinel", due!.Core);
-        Assert.Equal("F1", service.Store.Bindings.Single().CommanderFid);
+        Assert.Equal("F1", store.Bindings.Single().CommanderFid);
     }
 
     [Fact]
     public void NothingHappensBeforeTheJournalHasSaidWhichShip()
     {
-        var service = Service(new GameStateStore());
+        var service = Service(new GameStateStore(), out var store);
 
         Assert.Null(Settled(service));
         Assert.Contains("do not know which ship", service.Bind("sentinel"), StringComparison.Ordinal);
-        Assert.Empty(service.Store.Bindings);
+        Assert.Empty(store.Bindings);
     }
 
     /// <summary>Runs a whole settle window through, in the ticks the app would.</summary>
@@ -393,11 +393,15 @@ public class ShipCoreWatchTests
         Assert.Null(service.Observe(TimeSpan.FromSeconds(1)));
     }
 
+    private static ShipCoreService Service(GameStateStore state, params (string Fid, int Ship, string Core)[] bound) =>
+        Service(state, out _, bound);
+
     private static ShipCoreService Service(
         GameStateStore state,
+        out ShipCoreStore store,
         params (string Fid, int Ship, string Core)[] bound)
     {
-        var store = new ShipCoreStore(
+        store = new ShipCoreStore(
             Path.Combine(MemoryInstall.FakeRoot, $"d47-ship-cores-{Guid.NewGuid():N}.json"), new MemoryFileSystem(),
             NullLogger<ShipCoreStore>.Instance);
 

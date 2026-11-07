@@ -144,7 +144,11 @@ public class MaterialCatalogueTests
     public void GeographicalDataIsNotGeologicalDataAndIsSaidToBeUnkeyed()
     {
         // The near-miss that must not be aliased.
-        Assert.Contains("Geographical Data", MaterialCatalogue.KnownButUnkeyed);
+        using (var reader = new StreamReader(typeof(MaterialCatalogue).Assembly.GetManifestResourceStream("D47.Core.Materials")!))
+        {
+            Assert.Contains("Geographical Data", reader.ReadToEnd().Split('\n').SkipWhile(line => line.Trim() != "[known-but-unkeyed]").Select(line => line.Trim()));
+        }
+
         Assert.Null(MaterialCatalogue.Find("geographicaldata"));
 
         var geological = MaterialCatalogue.Find("geologicaldata");

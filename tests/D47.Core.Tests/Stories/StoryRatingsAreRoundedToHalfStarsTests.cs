@@ -39,7 +39,8 @@ public sealed class StoryRatingsAreRoundedToHalfStarsTests
     {
         var ratings = StoryRatings.Parse("""{"format":1,"stories":{"zero":{"average":4,"count":0},"high":{"average":6,"count":1},"ok":{"average":2,"count":1}}}""")!;
 
-        Assert.Equal(1, ratings.Count);
+        Assert.Null(ratings.Get("zero"));
+        Assert.Null(ratings.Get("high"));
         Assert.NotNull(ratings.Get("ok"));
     }
 

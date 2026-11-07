@@ -63,42 +63,6 @@ public sealed class HullMesh
         }
     }
 
-    public void Write(Stream stream)
-    {
-        using var w = new BinaryWriter(stream, new UTF8Encoding(false), leaveOpen: true);
-        w.Write(Magic);
-        w.Write(Version);
-        w.Write((uint)Positions.Length);
-        w.Write((uint)(Indices.Length / 3));
-        w.Write((uint)Parts.Count);
-        w.Write(Radius);
-        WriteVector(w, RestView);
-        foreach (var p in Positions)
-        {
-            WriteVector(w, p);
-        }
-
-        foreach (var n in Normals)
-        {
-            WriteVector(w, n);
-        }
-
-        foreach (var i in Indices)
-        {
-            w.Write((uint)i);
-        }
-
-        foreach (var part in Parts)
-        {
-            var name = Encoding.UTF8.GetBytes(part.Name);
-            w.Write((ushort)name.Length);
-            w.Write(name);
-            w.Write((uint)part.FirstTriangle);
-            w.Write((uint)part.TriangleCount);
-            w.Write((byte)(part.Glass ? 1 : 0));
-        }
-    }
-
     private static HullMesh? Parse(ReadOnlySpan<byte> data)
     {
         if (data.Length < HeaderBytes || !data[..4].SequenceEqual(Magic))
@@ -202,11 +166,4 @@ public sealed class HullMesh
 
     private static Vector3 Vec(ReadOnlySpan<byte> data, ref int at) =>
         new(F32(data, ref at), F32(data, ref at), F32(data, ref at));
-
-    private static void WriteVector(BinaryWriter w, Vector3 v)
-    {
-        w.Write(v.X);
-        w.Write(v.Y);
-        w.Write(v.Z);
-    }
 }

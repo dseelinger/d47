@@ -2,8 +2,8 @@ using D47.Core.Journal;
 
 namespace D47.Core.Knowledge;
 
-/// <summary>One merit modifier from Frontier's update notes, with where it came from and when it was last checked.</summary>
-public sealed record PowerplayRule(int Percent, string Since, string CheckedAgainst, string CheckedOn)
+/// <summary>One merit modifier from Frontier's update notes.</summary>
+public sealed record PowerplayRule(int Percent)
 {
     /// <summary>The modifier as written in speech and text: "-35%", "+15%".</summary>
     public string Signed => Percent < 0 ? $"\u2212{-Percent}%" : $"+{Percent}%";
@@ -30,44 +30,29 @@ public enum MeritSituation
 /// <summary>Powerplay merit modifiers from Frontier's update notes.</summary>
 public static class PowerplayRules
 {
-    public const string GameVersion = "4.4.1.1";
-    public const string CheckedOn = "2026-09-28";
-
     /// <summary>Reinforcing the Commander's own Power's system.</summary>
-    public static readonly PowerplayRule OwnReinforcement = new(-35, "4.1.2.0", GameVersion, CheckedOn);
+    public static readonly PowerplayRule OwnReinforcement = new(-35);
 
     /// <summary>Reinforcing, in addition, when nothing undermined the system in the past 24 hours.</summary>
-    public static readonly PowerplayRule OwnReinforcementNotUndermined = new(-20, "4.1.2.103", GameVersion, CheckedOn);
+    public static readonly PowerplayRule OwnReinforcementNotUndermined = new(-20);
 
     /// <summary>Reinforcing, in addition, at the most undermined end of the sliding scale.</summary>
-    public static readonly PowerplayRule OwnReinforcementMostUndermined = new(30, "4.1.2.103", GameVersion, CheckedOn);
+    public static readonly PowerplayRule OwnReinforcementMostUndermined = new(30);
 
     /// <summary>Undermining a rival Power's system.</summary>
-    public static readonly PowerplayRule RivalUndermining = new(15, "4.1.2.103", GameVersion, CheckedOn);
+    public static readonly PowerplayRule RivalUndermining = new(15);
 
     /// <summary>Acquiring an unoccupied system.</summary>
-    public static readonly PowerplayRule UnoccupiedAcquisition = new(0, "4.1.2.103", GameVersion, CheckedOn);
+    public static readonly PowerplayRule UnoccupiedAcquisition = new(0);
 
     /// <summary>Undermining, in addition, in a system the galaxy map marks for undermining.</summary>
-    public static readonly PowerplayRule MarkedUndermining = new(25, "4.3.0.0", GameVersion, CheckedOn);
+    public static readonly PowerplayRule MarkedUndermining = new(25);
 
     /// <summary>Reinforcing, in addition, in a system the galaxy map marks for reinforcement.</summary>
-    public static readonly PowerplayRule MarkedReinforcement = new(35, "4.3.0.0", GameVersion, CheckedOn);
+    public static readonly PowerplayRule MarkedReinforcement = new(35);
 
     /// <summary>Salvage collected in the Commander's own Power's system earns reinforcement merits only when handed in at a Power contact in that system; escape pods earn none.</summary>
-    public static readonly PowerplayRule OwnSalvageHandIn = new(0, "4.2.2.0", GameVersion, CheckedOn);
-
-    public static IReadOnlyList<PowerplayRule> All { get; } =
-    [
-        OwnReinforcement,
-        OwnReinforcementNotUndermined,
-        OwnReinforcementMostUndermined,
-        RivalUndermining,
-        UnoccupiedAcquisition,
-        MarkedUndermining,
-        MarkedReinforcement,
-        OwnSalvageHandIn,
-    ];
+    public static readonly PowerplayRule OwnSalvageHandIn = new(0);
 
     /// <summary>Which rule applies where the pledged Commander is; None for an unpledged Commander or a state the rules do not cover.</summary>
     public static MeritSituation Classify(PowerplayPledge pledge, JournalLocation location)

@@ -120,7 +120,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
 
     }
 
-    private static readonly string LockedSystem = PermitSystemTable.Names.First();
+    private static readonly string LockedSystem = Knowledge.TableContents.PermitSystems.First();
 
     private static CommanderGameState Flying(string ship = "cobramkiii")
     {

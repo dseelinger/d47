@@ -48,6 +48,6 @@ public class ThePermitTableIsWhatTheStationIndexCannotSayTests
     [Fact]
     public void ItCarriesTheWholeGalaxysWorthRatherThanTheFamousFew() =>
         Assert.True(
-            PermitSystemTable.Names.Count > 1_000,
-            $"The permit table holds {PermitSystemTable.Names.Count} systems; the generator measured 2,702.");
+            TableContents.PermitSystems.Count > 1_000,
+            $"The permit table holds {TableContents.PermitSystems.Count} systems; the generator measured 2,702.");
 }

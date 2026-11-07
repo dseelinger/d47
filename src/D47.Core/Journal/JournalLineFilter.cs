@@ -17,9 +17,6 @@ internal sealed class JournalLineFilter
         _prefixes = prefixes;
     }
 
-    /// <summary>The event names the filter matches exactly.</summary>
-    public IReadOnlyCollection<string> Kinds => _kinds;
-
     /// <summary>Lines whose event is one of <paramref name="kinds"/>.</summary>
     public static JournalLineFilter Events(params string[] kinds) =>
         new(kinds.ToFrozenSet(StringComparer.Ordinal), []);

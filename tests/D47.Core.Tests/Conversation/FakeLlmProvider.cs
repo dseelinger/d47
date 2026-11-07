@@ -82,6 +82,9 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
 
     public int CallCount => _requests.Count;
 
+    /// <summary>Called with each request as it arrives.</summary>
+    public Action<LlmRequest>? OnRequest { get; init; }
+
     public string Id { get; init; } = "anthropic";
 
     public string DisplayName => "Rounds";
@@ -120,6 +123,7 @@ public sealed class RoundScriptedLlmProvider(params IReadOnlyList<LlmStreamEvent
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         _requests.Add(request);
+        OnRequest?.Invoke(request);
 
         if (!ScriptsPlainChecks && request.Prompt.History.Count > 0 && request.Prompt.History[0].Text.Contains(PlainCheckMarker, StringComparison.Ordinal))
         {

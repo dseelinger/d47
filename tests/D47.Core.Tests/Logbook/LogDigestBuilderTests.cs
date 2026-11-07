@@ -31,11 +31,6 @@ public class LogDigestBuilderTests
         Assert.DoesNotContain("BANANA", rendered, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Hostile", rendered, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("o7", rendered, StringComparison.Ordinal);
-
-        // And the two are excluded by name rather than by having no handler that happens to fire, so a later
-        // phase adding one is a deliberate act.
-        Assert.Contains("ReceiveText", LogDigestBuilder.ExcludedEvents);
-        Assert.Contains("SendText", LogDigestBuilder.ExcludedEvents);
     }
 
     /// <summary>

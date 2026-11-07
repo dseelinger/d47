@@ -84,15 +84,6 @@ public sealed class MailLedger
         }
     }
 
-    /// <summary>The moment <paramref name="commander"/> last heard their mail, or null when never.</summary>
-    public DateTimeOffset? ReadThrough(string commander)
-    {
-        lock (_gate)
-        {
-            return _readThrough.TryGetValue(commander, out var through) ? through : null;
-        }
-    }
-
     /// <summary>
     /// Folds events in order, attributed to <paramref name="commander"/> until one names another. With
     /// <paramref name="live"/> true, promotions are skipped because the callout speaks them, unless
@@ -300,24 +291,6 @@ public sealed class MailLedger
         }
 
         return answer;
-    }
-
-    /// <summary>Moves <paramref name="commander"/>'s watermark to <paramref name="through"/> and saves it.</summary>
-    public void MarkRead(string commander, DateTimeOffset through)
-    {
-        ArgumentNullException.ThrowIfNull(commander);
-
-        Watermarks? moved;
-
-        lock (_gate)
-        {
-            moved = Advance(commander, through);
-        }
-
-        if (moved is { } watermarks)
-        {
-            Save(watermarks);
-        }
     }
 
     /// <summary>Called under <see cref="_gate"/>; null when the watermark is already at or past <paramref name="through"/>.</summary>

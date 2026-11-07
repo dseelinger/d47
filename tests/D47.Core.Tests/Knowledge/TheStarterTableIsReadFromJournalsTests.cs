@@ -13,7 +13,7 @@ public sealed class TheStarterTableIsReadFromJournalsTests
 
     [Fact]
     public void EveryStarterSystemIsPermitLocked() =>
-        Assert.All(StarterSystemTable.Names, name => Assert.True(PermitSystemTable.Locked(name), name));
+        Assert.All(TableContents.StarterSystems, name => Assert.True(PermitSystemTable.Locked(name), name));
 
     [Fact]
     public void TheTableTextIsReadWithoutCommentsOrCase()

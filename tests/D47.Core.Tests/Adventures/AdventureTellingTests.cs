@@ -249,13 +249,11 @@ public class AdventureTellingTests
     [Fact]
     public void TheAcknowledgementsAreTenShortLinesAndTheIndexWraps()
     {
-        Assert.Equal(10, AdventureAcks.Count);
-
-        var lines = Enumerable.Range(0, AdventureAcks.Count).Select(AdventureAcks.Pick).ToList();
+        var lines = Enumerable.Range(0, 10).Select(AdventureAcks.Pick).ToList();
 
         Assert.Equal(lines.Count, lines.Distinct(StringComparer.Ordinal).Count());
         Assert.All(lines, line => Assert.InRange(line.Split(' ').Length, 1, 5));
-        Assert.Equal(AdventureAcks.Pick(0), AdventureAcks.Pick(AdventureAcks.Count));
+        Assert.Equal(AdventureAcks.Pick(0), AdventureAcks.Pick(10));
         Assert.Equal(AdventureAcks.Pick(3), AdventureAcks.Pick(-3));
     }
 

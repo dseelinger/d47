@@ -22,7 +22,7 @@ public class ATechBrokerUnlockIsRememberedTests
         lines.Aggregate(TechBrokerUnlocks.Empty, (unlocks, line) => unlocks.Apply(Event(line)));
 
     private static bool Has(TechBrokerUnlocks unlocks, string name) =>
-        unlocks.IsKnownUnlocked(TechBrokerCatalogue.Rows.Single(row => row.Name == name));
+        unlocks.IsKnownUnlocked(TechBrokerCatalogue.ForName(name)!);
 
     [Fact]
     public void ABrokerEventMarksTheUnlockedRow()
@@ -110,7 +110,11 @@ public class ATechBrokerUnlockIsRememberedTests
             "Trident (Fighter)",
         ];
 
-        Assert.Equal(expected, TechBrokerCatalogue.Unjoined.Select(row => row.Name).Order(StringComparer.Ordinal));
+        var unjoined = BlueprintCatalogue.All
+            .Where(blueprint => blueprint.Kind == BlueprintKind.TechBroker && TechBrokerCatalogue.ForName(blueprint.Name) is null)
+            .Select(blueprint => blueprint.Name);
+
+        Assert.Equal(expected, unjoined.Order(StringComparer.Ordinal));
     }
 
     [Fact]
@@ -119,6 +123,8 @@ public class ATechBrokerUnlockIsRememberedTests
         var symbols = TechBrokerCatalogue.Joined.SelectMany(row => row.Symbols).ToArray();
 
         Assert.Equal(symbols.Length, symbols.Distinct(StringComparer.Ordinal).Count());
-        Assert.Equal(TechBrokerCatalogue.Rows.Select(row => row.Name).Distinct().Count(), TechBrokerCatalogue.Rows.Count);
+        var rows = BlueprintCatalogue.All.Where(blueprint => blueprint.Kind == BlueprintKind.TechBroker).ToArray();
+
+        Assert.Equal(rows.Select(row => row.Name).Distinct().Count(), rows.Length);
     }
 }

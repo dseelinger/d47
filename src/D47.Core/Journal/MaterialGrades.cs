@@ -25,7 +25,4 @@ public static partial class MaterialGrades
     /// <summary>How many of this material can be held, or null when d47 does not recognise it.</summary>
     public static int? CapacityOf(string? journalName) =>
         GradeOf(journalName) is { } grade ? CapacityOfGrade(grade) : null;
-
-    /// <summary>How many materials the table knows.</summary>
-    public static int Count => ByName.Count;
 }

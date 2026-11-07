@@ -53,7 +53,7 @@ public class TheJournalIsReadableTests
             Event("Docked", """{"event":"Docked"}"""),
         ]);
 
-        Assert.Equal(2, log.Count);
+        Assert.Equal(2, log.Entries.Count);
         Assert.Equal("Docked", Assert.Single(log.Read()).Kind);
         Assert.Equal(2, log.Read(noise: true).Count);
     }
@@ -69,7 +69,7 @@ public class TheJournalIsReadableTests
             log.Add([Event("Docked", $$"""{"event":"Docked","n":{{i}}}""")]);
         }
 
-        Assert.Equal(3, log.Count);
+        Assert.Equal(3, log.Entries.Count);
         Assert.Contains("\"n\": 9", log.Read()[0].Raw);
     }
 

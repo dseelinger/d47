@@ -12,7 +12,7 @@ public class MaterialGradeTests
     {
         // 137 from the canonical id list, and three the id list does not name at all — see
         // tools/curated_materials.py and #127.
-        Assert.Equal(140, MaterialGrades.Count);
+        Assert.Equal(140, Knowledge.TableContents.GradedMaterials);
     }
 
     [Theory]
