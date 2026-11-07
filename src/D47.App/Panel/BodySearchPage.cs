@@ -97,14 +97,8 @@ public sealed class BodySearchPage : GalaxySearchPage
         ("power_state", Choices("power_state")),
     ];
 
-    /// <summary>Sets a dropdown field to <paramref name="value"/>, or to Any for a value it does not offer.</summary>
-    public void Pick(string name, string value) => ShowPick(_pickers, _picked, name, value, several: false);
-
     /// <summary>Sets a text field by its tool argument name.</summary>
     public void Type(string name, string value) => TextField(name).Text = value;
-
-    /// <summary>Ticks or clears a flag by its tool argument name.</summary>
-    public void TickFlag(string name, bool ticked) => FlagField(name).IsChecked = ticked;
 
     public override IReadOnlyDictionary<string, string> FormArguments()
     {

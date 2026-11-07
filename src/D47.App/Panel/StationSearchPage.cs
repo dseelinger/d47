@@ -109,9 +109,6 @@ public sealed class StationSearchPage : GalaxySearchPage
     protected override string Noun => "Stations";
     protected override string NounOne => "Station";
 
-    /// <summary>The services the form asks for.</summary>
-    public IReadOnlyList<string> Services => _services;
-
     private static IReadOnlyList<(string Name, IReadOnlyList<string> Choices)> PickerChoices { get; } =
     [
         .. new[] { "allegiance", "government", "station_economy", "station_state", "state", "primary_economy", "power", "acquiring_power" }
@@ -120,24 +117,8 @@ public sealed class StationSearchPage : GalaxySearchPage
         ("module_rating", OutfittingCatalogue.Ratings),
     ];
 
-    /// <summary>
-    /// Sets a dropdown field to <paramref name="value"/>, or to Any for a value it does not offer. A list of
-    /// choices, as a spoken search can give a filter that takes several, is kept as given.
-    /// </summary>
-    public void Pick(string name, string value) => ShowPick(_pickers, _picked, name, value, several: true);
-
-    /// <summary>The age in hours MAX REPORT AGE shows, 0 for any.</summary>
-    public int MaxReportAgeHours
-    {
-        get => _age.Value;
-        set => _age.Value = value;
-    }
-
     /// <summary>Sets a text field by its tool argument name.</summary>
     public void Type(string name, string value) => TextField(name).Text = value;
-
-    /// <summary>Ticks or clears a station type's tile.</summary>
-    public void TickType(string type, bool ticked) => _types[type].IsChecked = ticked;
 
     /// <summary>Sets the services the form asks for, as CHOOSE SERVICES does.</summary>
     public void ChooseServices(IReadOnlyList<string> services)

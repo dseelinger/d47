@@ -151,9 +151,6 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     /// <summary>The Near field's text.</summary>
     public string NearText => _near.Text ?? string.Empty;
 
-    /// <summary>The distance the field holds.</summary>
-    public decimal? MaxDistance => _distance.Value;
-
     /// <summary>Runs the form's search; the answer arrives through the board.</summary>
     public async Task RunAsync(IReadOnlyDictionary<string, string> arguments)
     {

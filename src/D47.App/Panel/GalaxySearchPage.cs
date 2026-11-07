@@ -249,9 +249,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The sentence drawn for the current state, where it has one.</summary>
     public string? Sentence { get; private set; }
 
-    /// <summary>Whether the headset draws the answer view rather than the form view.</summary>
-    public bool ShowsAnswer => _showingAnswer ?? false;
-
     /// <summary>Whether RUN SEARCH can be pressed.</summary>
     public bool CanRun => _run.IsEnabled;
 

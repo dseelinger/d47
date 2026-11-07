@@ -161,7 +161,7 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
         page.Type("memorial");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Null(page.Picked);
+        Assert.Equal("memorial", page.FormArguments()["signal"]);
 
         await RunAsync(panel, world.Board);
 
@@ -202,7 +202,7 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
             Assert.Equal(4, Rows(panel).Count);
         });
 
-        Assert.Equal("Hazardous RES", Page(open).Picked);
+        Assert.Equal("Hazardous RES", Page(open).FormArguments()["signal"]);
 
         openHost.Close();
         elsewhereHost.Close();
@@ -255,7 +255,7 @@ public sealed class TheSignalsSearchPageDrawsTheLastAnswerTests
             Press(Named(panel, GalaxySearchPage.EditName));
         }
 
-        page.Picker.IsOpen = true;
+        SearchPageView.SignalPicker(page).IsOpen = true;
         Dispatcher.UIThread.RunJobs();
 
         var pressable = page.GetVisualDescendants()

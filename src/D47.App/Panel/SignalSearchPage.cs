@@ -100,12 +100,6 @@ public sealed class SignalSearchPage : GalaxySearchPage
     /// <summary>The kinds the picker offers, Any RES first.</summary>
     public static IReadOnlyList<string> Choices { get; } = [SignalSearch.AnyRes, .. SignalKind.All.Select(kind => kind.Name)];
 
-    /// <summary>The kind the picker holds, or null while none is chosen.</summary>
-    public string? Picked => _picked;
-
-    /// <summary>The picker, for a test to open.</summary>
-    public InlinePicker Picker => _signal;
-
     /// <summary>Chooses a kind as the picker does, which clears the name; null leaves the picker unset.</summary>
     public void Pick(string? kind)
     {

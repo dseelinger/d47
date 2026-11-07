@@ -172,35 +172,12 @@ public sealed class FindDialog : ModalDialog
     /// <summary>The results drawn, best first.</summary>
     internal IReadOnlyList<PanelFindResult> Shown => _shown;
 
-    internal int SelectedIndex => _selected;
-
     /// <summary>Every result held, not only the ones drawn.</summary>
     internal IReadOnlyList<PanelFindResult> All => _all;
-
-    /// <summary>The All results tile's text, or null when it is not drawn.</summary>
-    /// <summary>The All results tile's label, or null when it is not drawn.</summary>
-    internal string? TileText => _tile.IsVisible ? _tileText.Text : null;
 
     internal bool TileSelected => _tile.IsVisible && _selected == _shown.Count;
 
     private bool HasTile => _openAll is not null && _all.Count > 0;
-
-    /// <summary>The footer's count, such as "5 RESULTS · ASKING SPANSH".</summary>
-    internal string? Count => _count.Text;
-
-    internal bool HintShown => _hint.IsVisible;
-
-    /// <summary>The path line of the row at <paramref name="index"/>, run by run.</summary>
-    internal IReadOnlyList<Run> PathRuns(int index) =>
-        _list.Children[index] is Border { Tag: (TextBlock _, TextBlock path, TextBlock _) }
-            ? [.. path.Inlines!.OfType<Run>()]
-            : [];
-
-    internal string Query
-    {
-        get => _field.Text ?? string.Empty;
-        set => _field.Text = value;
-    }
 
     /// <summary>Moves the selection by <paramref name="step"/>, wrapping at either end.</summary>
     internal void Move(int step)

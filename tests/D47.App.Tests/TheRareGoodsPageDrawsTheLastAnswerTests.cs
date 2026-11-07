@@ -121,7 +121,7 @@ public sealed class TheRareGoodsPageDrawsTheLastAnswerTests
             var page = Page(panel);
 
             Assert.Equal(GalaxySearchView.Answer, page.View);
-            Assert.Equal(99999m, page.MaxDistance);
+            Assert.Equal("99999", page.FormArguments()["max_distance"]);
             Assert.Equal(RareCatalogue.All.Count, page.Rows.Count);
             Assert.Equal(page.Rows.OrderBy(row => row.Rare.Name, StringComparer.OrdinalIgnoreCase).Select(row => row.Rare.Name), page.Rows.Select(row => row.Rare.Name));
         });

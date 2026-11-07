@@ -101,9 +101,6 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     protected override string Noun => "Stations";
     protected override string NounOne => "Station";
 
-    /// <summary>The items the form asks for.</summary>
-    public IReadOnlyList<OutfittingItem> Items => _items;
-
     /// <summary>Adds an item as the type-ahead does; a second ship, or an item already added, is left out.</summary>
     public void Add(OutfittingItem item)
     {
@@ -126,15 +123,8 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     /// <summary>Types into the add field.</summary>
     public void Type(string text) => _add.Text = text;
 
-    /// <summary>The suggestions the add field lists.</summary>
-    public SystemNameSuggestions<OutfittingItem> Suggestions => _addNames;
-
     /// <summary>Sets the landing pad: Any, Medium or Large.</summary>
     public void Pad(string pad) => _pad.SelectedIndex = Math.Max(0, Pads.ToList().FindIndex(known => string.Equals(known, pad, StringComparison.OrdinalIgnoreCase)));
-
-    public void TickSurface(bool ticked) => _surface.IsChecked = ticked;
-
-    public void TickCarriers(bool ticked) => _carriers.IsChecked = ticked;
 
     public override IReadOnlyDictionary<string, string> FormArguments()
     {

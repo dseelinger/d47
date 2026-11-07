@@ -143,17 +143,8 @@ public sealed class RouteMarketPage : UserControl
         Build();
     }
 
-    /// <summary>The commodities the form asks for, in the order added.</summary>
-    public IReadOnlyList<CommodityWant> Items => _items;
-
-    /// <summary>The suggestions the add field lists.</summary>
-    public SystemNameSuggestions<string> Suggestions => _names;
-
     /// <summary>Types into the add field.</summary>
     public void Type(string text) => _add.Text = text;
-
-    /// <summary>Sets the Tonnes box; null is any amount.</summary>
-    public void Weigh(int? tonnes) => _tonnes.Value = tonnes;
 
     /// <summary>Adds a commodity as picking a suggestion does; one already added, or a sixth, is left out.</summary>
     public void Add(string commodity, int? tonnes)

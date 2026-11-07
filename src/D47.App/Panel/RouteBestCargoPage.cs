@@ -175,16 +175,6 @@ public sealed class RouteBestCargoPage : UserControl
     /// <summary>The ranked rows drawn.</summary>
     public IReadOnlyList<CargoPick> Rows { get; private set; } = [];
 
-    /// <summary>Whether FIND CARGO can be pressed.</summary>
-    public bool CanFind => _find.IsEnabled;
-
-    /// <summary>The Sell in field's text.</summary>
-    public string SellIn
-    {
-        get => _sellIn.Text ?? string.Empty;
-        set => SetSellIn(value);
-    }
-
     /// <summary>The last system of a plotted route, or null when nothing is plotted.</summary>
     private string? RouteEndNow() => _offDuty?.Invoke(OffDutyNote.Route) is null ? EndOf(_route()) : null;
 

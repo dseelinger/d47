@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -57,6 +58,11 @@ public class SwitchCommandersFromTheTitleBarTests
 
     private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
+    private static Popup MenuPopup(CommanderSwitcher switcher) => switcher.Children.OfType<Popup>().Single();
+
+    private static void Open(CommanderSwitcher switcher) =>
+        Press(In<Button>(switcher).First(button => button.Name == "CommanderSwitcher"));
+
     private static IEnumerable<T> In<T>(Control root) => root.GetVisualDescendants().OfType<T>();
 
     private static TextBlock Text(Control root, string text) => In<TextBlock>(root).First(block => block.Text == text);
@@ -90,9 +96,9 @@ public class SwitchCommandersFromTheTitleBarTests
 
     private static Control MenuOf(CommanderSwitcher switcher)
     {
-        switcher.Open();
+        Open(switcher);
         Dispatcher.UIThread.RunJobs();
-        return (Control)switcher.Menu.Child!;
+        return (Control)MenuPopup(switcher).Child!;
     }
 
     [AvaloniaFact]
@@ -102,7 +108,7 @@ public class SwitchCommandersFromTheTitleBarTests
         var button = In<Button>(switcher).First(b => b.Name == "CommanderSwitcher");
 
         MenuOf(switcher);
-        switcher.Menu.IsOpen = false;
+        MenuPopup(switcher).IsOpen = false;
         Dispatcher.UIThread.RunJobs();
 
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Dark);
@@ -142,7 +148,7 @@ public class SwitchCommandersFromTheTitleBarTests
         }
 
         MenuOf(switcher);
-        switcher.Menu.IsOpen = false;
+        MenuPopup(switcher).IsOpen = false;
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(Published(ThemeManager.GreyKey), Ink(button.Foreground));
 
@@ -252,7 +258,7 @@ public class SwitchCommandersFromTheTitleBarTests
         Press(In<Button>(menu).Single(button => button.Name == "OtherCommander"));
 
         Assert.Equal([new CommanderIdentity(Kestrel.FrontierId, Kestrel.Name)], journals.Picked);
-        Assert.False(switcher.Menu.IsOpen);
+        Assert.False(MenuPopup(switcher).IsOpen);
 
         journals.Shown = Kestrel.FrontierId;
         switcher.Tick();
@@ -348,7 +354,7 @@ public class SwitchCommandersFromTheTitleBarTests
             page.SaveCapture("commander-commanders.png");
         }
 
-        switcher.Open();
+        Open(switcher);
         Dispatcher.UIThread.RunJobs();
 
         using var menu = window.CaptureRenderedFrame()!;

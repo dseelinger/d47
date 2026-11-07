@@ -260,7 +260,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
             Assert.Equal(2, Rows(panel).Count);
         });
 
-        Assert.Equal("6A Fuel Scoop", Assert.Single(Page(open).Items).Display);
+        Assert.Equal("6A Fuel Scoop", Page(open).FormArguments()["items"]);
 
         openHost.Close();
         elsewhereHost.Close();

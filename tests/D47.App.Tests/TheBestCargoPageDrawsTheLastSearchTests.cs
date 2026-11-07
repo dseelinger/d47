@@ -171,9 +171,15 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Assert.Empty(Copied(opened.Page));
     }
 
+    private static TextBox Sell(RouteBestCargoPage page) =>
+        page.GetVisualDescendants().OfType<TextBox>().Single(box => Avalonia.Automation.AutomationProperties.GetName(box) == "Sell in");
+
+    private static Button Find(RouteBestCargoPage page) =>
+        page.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Find cargo");
+
     private static void Search(RouteBestCargoPage page, string system)
     {
-        page.SellIn = system;
+        Sell(page).Text = system;
         page.SearchAsync().GetAwaiter().GetResult();
         Dispatcher.UIThread.RunJobs();
     }
@@ -259,7 +265,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(BestCargoView.Picks, opened.Page.View);
-        Assert.Equal("Sothis", opened.Page.SellIn);
+        Assert.Equal("Sothis", Sell(opened.Page).Text);
     }
 
     [Trait("Category", "Integration")]
@@ -269,7 +275,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         using var opened = Open(docked: false);
 
         Assert.Equal(BestCargoView.NotDocked, opened.Page.View);
-        Assert.False(opened.Page.CanFind);
+        Assert.False(Find(opened.Page).IsEnabled);
     }
 
     [Trait("Category", "Integration")]
@@ -320,7 +326,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
 
         opened.Page.UseRouteEnd();
 
-        Assert.Equal("Diaguandri", opened.Page.SellIn);
+        Assert.Equal("Diaguandri", Sell(opened.Page).Text);
     }
 
     [Trait("Category", "Integration")]

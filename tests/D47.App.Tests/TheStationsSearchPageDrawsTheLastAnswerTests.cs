@@ -195,7 +195,6 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         Press(tiles[0]);
 
-        Assert.Equal(["Interstellar Factors"], page.Services);
         Assert.Equal("Interstellar Factors", page.FormArguments()["services"]);
 
         window.Close();

@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -5,8 +6,10 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
+using D47.App.Theming;
 using D47.App.Windowing;
 using D47.Core.Interface;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
@@ -27,6 +30,8 @@ public sealed class FindOpensAndChoosesTests
 
     private static (FindDialog Dialog, Window Window, List<PanelFindResult> Opened) Shown()
     {
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+
         var opened = new List<PanelFindResult>();
         var window = new Window { Content = new Grid(), Width = 900, Height = 700 };
         window.Show();

@@ -103,19 +103,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
     protected override string Noun => "Systems";
     protected override string NounOne => "System";
 
-    /// <summary>
-    /// Sets a dropdown field to <paramref name="value"/>, or to Any for a value it does not offer. A list of
-    /// choices, as a spoken search can give a filter that takes several, is kept as given.
-    /// </summary>
-    public void Pick(string name, string value) => ShowPick(_pickers, _picked, name, value, several: true);
-
-    /// <summary>The age in hours MAX REPORT AGE shows, 0 for any.</summary>
-    public int MaxReportAgeHours
-    {
-        get => _age.Value;
-        set => _age.Value = value;
-    }
-
     /// <summary>Sets a text field by its tool argument name.</summary>
     public void Type(string name, string value) => TextField(name).Text = value;
 

@@ -106,9 +106,6 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
     /// <summary>The label, as shown.</summary>
     public string Label => _name.Text ?? "";
 
-    /// <summary>The menu, for tests.</summary>
-    internal Popup Menu => _menu;
-
     /// <summary>Redraws the label and visibility when the roster has changed. Call on the UI thread.</summary>
     public void Tick()
     {
@@ -116,13 +113,6 @@ public sealed class CommanderSwitcher : Avalonia.Controls.Panel
         {
             Refresh();
         }
-    }
-
-    /// <summary>Opens the menu. Call on the UI thread.</summary>
-    public void Open()
-    {
-        Fill();
-        _menu.IsOpen = true;
     }
 
     private void Refresh()
