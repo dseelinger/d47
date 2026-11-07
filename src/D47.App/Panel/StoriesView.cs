@@ -1016,7 +1016,11 @@ public sealed class StoriesView : UserControl, IPageSummary
             }
         }
 
-        void Changed() => Dispatcher.UIThread.Post(Draw);
+        void Changed() => Dispatcher.UIThread.Post(() =>
+        {
+            Draw();
+            ShowCast(cast, card.Id, commander);
+        });
 
         void Again(string line) => Dispatcher.UIThread.Post(() => status.Say(line));
 

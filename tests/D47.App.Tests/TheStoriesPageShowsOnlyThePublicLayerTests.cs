@@ -501,6 +501,42 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         unpicked.Window.Close();
     }
 
+    [AvaloniaFact]
+    public void AMemberIntroducedAfterThePageWasDrawnAppearsInItsCast()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var secret = StoryFixture.Secret with
+        {
+            Cast =
+            [
+                new StorySpeaker { Id = "ren", Name = "Ren", Who = "A dock hand.", Provider = StorySpeaker.Kokoro, Voice = "bm_george", Primary = true },
+                new StorySpeaker { Id = "dane", Name = "Dane", Who = "A broker.", Provider = StorySpeaker.Kokoro, Voice = "bm_lewis" },
+            ],
+        };
+        var catalog = new StoryCatalog([StoryFixture.Story, StoryFixture.Other], () => [secret]);
+        var surface = Open(running: false, catalog, onRecord: new Story
+        {
+            Id = StoryFixture.Story.Id,
+            Title = StoryFixture.Story.Title,
+            PublicLayer = StoryFixture.Story.Describe(),
+            PickedAt = Now.AddHours(-1),
+        });
+
+        surface.Panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Story.Id, StoryFixture.Story.Title));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("Ren", Drawn(surface.Panel));
+        Assert.DoesNotContain("Dane", Drawn(surface.Panel));
+
+        surface.Director.Introduced("F1", StoryFixture.Story.Id, "dane");
+        Dispatcher.UIThread.RunJobs();
+
+        var drawn = Drawn(surface.Panel);
+        Assert.True(drawn.IndexOf("Ren") >= 0 && drawn.IndexOf("Ren") < drawn.IndexOf("Dane"));
+        surface.Window.Close();
+    }
+
     private static List<CheckBox> BeaconAgainBoxes(PanelView panel) =>
         [.. panel.GetVisualDescendants().OfType<CheckBox>().Where(box => box.Name == "BeaconAgain")];
 
