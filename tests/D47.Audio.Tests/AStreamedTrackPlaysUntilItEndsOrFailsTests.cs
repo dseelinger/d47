@@ -125,6 +125,12 @@ public class AStreamedTrackPlaysUntilItEndsOrFailsTests
             return count * 2;
         }
 
+        public TimeSpan? Length => null;
+
+        public void Seek(TimeSpan to)
+        {
+        }
+
         public void Dispose() => Disposed = true;
     }
 }

@@ -158,6 +158,17 @@ internal sealed class ConvertingPcmStream : IPcmStream
         return written;
     }
 
+    public TimeSpan? Length => _source.Length;
+
+    /// <summary>Seeks the source and drops every frame held from before the target.</summary>
+    public void Seek(TimeSpan to)
+    {
+        _source.Seek(to);
+        _count = 0;
+        _position = 0;
+        _ended = false;
+    }
+
     public void Dispose() => _source.Dispose();
 
     /// <summary>Drops the frames already passed and reads more behind the rest.</summary>

@@ -4,6 +4,12 @@ namespace D47.Core.Audio;
 public interface IPcmStream : IDisposable
 {
     int Read(Span<byte> buffer);
+
+    /// <summary>The track's length, read when it opened; null where the file does not say.</summary>
+    TimeSpan? Length { get; }
+
+    /// <summary>Moves to <paramref name="to"/>, clamped to the length. Called on the thread that opened the stream.</summary>
+    void Seek(TimeSpan to);
 }
 
 /// <summary>

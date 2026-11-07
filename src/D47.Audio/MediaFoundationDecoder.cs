@@ -41,7 +41,7 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
         try
         {
             reader = new MediaFoundationReader(path);
-            return new PcmStream(reader, Standardise(reader, target.Channels));
+            return new PcmStream(path, reader, target.Channels);
         }
         catch (Exception ex) when (IsCodecFailure(ex))
         {
@@ -87,9 +87,15 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
             ? new("Windows has no decoder for this file. On a Windows N edition, install the Media Feature Pack.", ex)
             : new($"Windows cannot decode it: {ex.Message}", ex);
 
-    private sealed class PcmStream(WaveStream reader, IWaveProvider pcm) : IPcmStream
+    private sealed class PcmStream(string path, WaveStream reader, int channels) : IPcmStream
     {
+        private readonly bool _decodeToSeek = Path.GetExtension(path).Equals(".flac", StringComparison.OrdinalIgnoreCase);
+        private WaveStream _reader = reader;
+        private IWaveProvider _pcm = Standardise(reader, channels);
         private byte[] _chunk = [];
+
+        /// <summary>Null where the file carries no duration.</summary>
+        public TimeSpan? Length { get; } = reader.TotalTime > TimeSpan.Zero ? reader.TotalTime : null;
 
         /// <summary>Reads whole samples only.</summary>
         public int Read(Span<byte> buffer)
@@ -105,7 +111,7 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
 
             try
             {
-                read = pcm.Read(_chunk, 0, wanted);
+                read = _pcm.Read(_chunk, 0, wanted);
             }
             catch (Exception ex) when (IsCodecFailure(ex))
             {
@@ -117,7 +123,65 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
             return read;
         }
 
-        public void Dispose() => reader.Dispose();
+        /// <summary>Moves the reader and builds the conversion afresh, so no resampler state crosses the seek.</summary>
+        public void Seek(TimeSpan to)
+        {
+            var target = to < TimeSpan.Zero ? TimeSpan.Zero : to;
+
+            if (Length is { } length && target > length)
+            {
+                target = length;
+            }
+
+            try
+            {
+                if (_decodeToSeek)
+                {
+                    DecodeTo(target);
+                }
+                else
+                {
+                    _reader.CurrentTime = target;
+                }
+
+                _pcm = Standardise(_reader, channels);
+            }
+            catch (Exception ex) when (IsCodecFailure(ex))
+            {
+                throw Undecodable(ex);
+            }
+        }
+
+        public void Dispose() => _reader.Dispose();
+
+        /// <summary>
+        /// Media Foundation's FLAC source ignores a seek made before the first read and misplaces one made after it,
+        /// so a FLAC is opened again and decoded up to the target.
+        /// </summary>
+        private void DecodeTo(TimeSpan target)
+        {
+            var opened = new MediaFoundationReader(path);
+            _reader.Dispose();
+            _reader = opened;
+
+            var format = _reader.WaveFormat;
+            var skip = target.Ticks * format.AverageBytesPerSecond / TimeSpan.TicksPerSecond;
+            skip -= skip % format.BlockAlign;
+
+            var discard = new byte[65_536];
+
+            while (skip > 0)
+            {
+                var read = _reader.Read(discard, 0, (int)Math.Min(discard.Length, skip));
+
+                if (read == 0)
+                {
+                    break;
+                }
+
+                skip -= read;
+            }
+        }
     }
 
     /// <summary>Averages the even-numbered channels into left and the odd-numbered into right.</summary>

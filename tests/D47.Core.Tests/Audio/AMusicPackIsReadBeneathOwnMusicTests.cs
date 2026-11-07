@@ -57,6 +57,12 @@ public class AMusicPackIsReadBeneathOwnMusicTests
     {
         public int Read(Span<byte> buffer) => 0;
 
+        public TimeSpan? Length => null;
+
+        public void Seek(TimeSpan to)
+        {
+        }
+
         public void Dispose()
         {
         }

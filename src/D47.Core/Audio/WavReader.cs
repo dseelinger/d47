@@ -155,16 +155,23 @@ public static class WavReader
 public sealed class WavPcmStream : IPcmStream
 {
     private readonly Stream _stream;
+    private readonly long _start;
+    private readonly int _length;
     private int _remaining;
 
+    /// <summary><paramref name="stream"/> must be seekable and positioned at the first sample.</summary>
     internal WavPcmStream(Stream stream, AudioFormat format, int length)
     {
         _stream = stream;
+        _start = stream.Position;
+        _length = length;
         _remaining = length;
         Format = format;
     }
 
     public AudioFormat Format { get; }
+
+    public TimeSpan? Length => Format.DurationOf(_length);
 
     /// <summary>Reads whole frames only.</summary>
     public int Read(Span<byte> buffer)
@@ -182,6 +189,18 @@ public sealed class WavPcmStream : IPcmStream
         _remaining = read < wanted ? 0 : _remaining - read;
 
         return read;
+    }
+
+    /// <summary>Moves to the whole frame at or before <paramref name="to"/>, clamped to the data.</summary>
+    public void Seek(TimeSpan to)
+    {
+        var ticks = Math.Max(0, to.Ticks);
+        var frame = ticks / TimeSpan.TicksPerSecond * Format.SampleRate
+            + (ticks % TimeSpan.TicksPerSecond * Format.SampleRate / TimeSpan.TicksPerSecond);
+        var offset = (int)Math.Min(frame * Format.BytesPerFrame, _length - (_length % Format.BytesPerFrame));
+
+        _stream.Position = _start + offset;
+        _remaining = _length - offset;
     }
 
     public void Dispose() => _stream.Dispose();
