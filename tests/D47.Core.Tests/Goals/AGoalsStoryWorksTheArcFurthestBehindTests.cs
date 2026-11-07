@@ -232,7 +232,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     public void ARequiredObjectiveTakesTheLastSlot()
     {
         var drawn = ChapterDraw.Draw(
-            CareerWeights.Even, RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 7u,
+            CareerWeights.From(null, CareerStatistics.Empty), RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 7u,
             slots: ChapterDraw.Slots - 1);
 
         Assert.Equal(ChapterDraw.Slots - 1, drawn.Count);
@@ -241,9 +241,9 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
     [Fact]
     public void ALimitThatLeavesNoRowFallsBackToTheWholeTable()
     {
-        var plain = ChapterDraw.Draw(CareerWeights.Even, RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 11u);
+        var plain = ChapterDraw.Draw(CareerWeights.From(null, CareerStatistics.Empty), RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 11u);
         var limited = ChapterDraw.Draw(
-            CareerWeights.Even, RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 11u, limits: [_ => false, _ => false, _ => false]);
+            CareerWeights.From(null, CareerStatistics.Empty), RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 11u, limits: [_ => false, _ => false, _ => false]);
 
         Assert.Equal(plain, limited);
     }
@@ -270,7 +270,7 @@ public sealed class AGoalsStoryWorksTheArcFurthestBehindTests
 
     private static IReadOnlyList<DrawnActivity> Draw(GoalClimbStep step, uint seed) =>
         ChapterDraw.Draw(
-            CareerWeights.Even,
+            CareerWeights.From(null, CareerStatistics.Empty),
             RankState.Empty,
             ShipLoadout.Unknown,
             odyssey: true,

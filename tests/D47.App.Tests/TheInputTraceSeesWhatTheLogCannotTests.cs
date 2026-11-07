@@ -68,7 +68,7 @@ public class TheInputTraceSeesWhatTheLogCannotTests : IDisposable
         GuiFocus focus = GuiFocus.GalaxyMap,
         string? music = "GalaxyMap",
         Func<DateTimeOffset>? now = null) =>
-        InputTraceWriter.Regardless(
+        new InputTraceWriter(
             _folder,
             _files,
             now ?? (() => Noon),

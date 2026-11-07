@@ -163,6 +163,6 @@ public class TheWholeFleetIsAnswerableNotOnlyTheOneYouAreInTests
                 () => state),
             () => state);
 
-        Assert.Equal("Fleet: 3 ships, none with a build planned.", ShipsCapability.Live(ships));
+        Assert.Equal("Fleet: 3 ships, none with a build planned.", D47.Core.Tests.Ships.ShipsLine.Of(ships));
     }
 }

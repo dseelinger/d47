@@ -21,7 +21,7 @@ public class APickedAgainStoryKeepsItsEarlierRunTests
     [Fact]
     public void ASecondPickIsAddedBesideTheFirst()
     {
-        var store = StoryStore.InMemory();
+        var store = InMemoryStories.Create();
         store.Save("F1", Run(First, StoryState.Finished, "a"));
         store.Save("F1", Run(Second));
 
@@ -33,7 +33,7 @@ public class APickedAgainStoryKeepsItsEarlierRunTests
     [Fact]
     public void ASaveWithTheSamePickedAtReplacesItsOwnRun()
     {
-        var store = StoryStore.InMemory();
+        var store = InMemoryStories.Create();
         store.Save("F1", Run(First));
         store.Save("F1", Run(First) with { State = StoryState.Paused });
 
@@ -43,7 +43,7 @@ public class APickedAgainStoryKeepsItsEarlierRunTests
     [Fact]
     public void FindAndUpdateTakeTheNewestRun()
     {
-        var store = StoryStore.InMemory();
+        var store = InMemoryStories.Create();
         store.Save("F1", Run(Second));
         store.Save("F1", Run(First, StoryState.Finished));
 
@@ -58,7 +58,7 @@ public class APickedAgainStoryKeepsItsEarlierRunTests
     [Fact]
     public void ErasingRemovesEveryRunPickedAtOrBeforeTheTime()
     {
-        var store = StoryStore.InMemory();
+        var store = InMemoryStories.Create();
         store.Save("F1", Run(First, StoryState.Finished));
         store.Save("F1", Run(Second));
 

@@ -25,7 +25,7 @@ public sealed class AComfortChapterPointsAtANeverRunMissionFamilyTests
 
     private static DrawnActivity First(uint seed, ShipLoadout? ship = null, bool odyssey = true, IReadOnlyList<string>? refused = null, Func<string, bool>? neverCompleted = null) =>
         ChapterDraw.Draw(
-            CareerWeights.Even, Ranks, ship ?? Ship, odyssey, [], refused, true, CareerStatistics.Empty, 0, seed, comfortFirst: (int)seed, neverCompleted: neverCompleted ?? NeverRun)[0];
+            CareerWeights.From(null, CareerStatistics.Empty), Ranks, ship ?? Ship, odyssey, [], refused, true, CareerStatistics.Empty, 0, seed, comfortFirst: (int)seed, neverCompleted: neverCompleted ?? NeverRun)[0];
 
     [Fact]
     public void ACompletedMissionIsFiledUnderItsFamilyAndUnderMissions()
@@ -94,7 +94,7 @@ public sealed class AComfortChapterPointsAtANeverRunMissionFamilyTests
     {
         for (uint seed = 0; seed < Seeds; seed++)
         {
-            var plain = ChapterDraw.Draw(CareerWeights.Even, Ranks, Ship, true, [], null, true, CareerStatistics.Empty, 0, seed, comfortFirst: (int)seed);
+            var plain = ChapterDraw.Draw(CareerWeights.From(null, CareerStatistics.Empty), Ranks, Ship, true, [], null, true, CareerStatistics.Empty, 0, seed, comfortFirst: (int)seed);
 
             Assert.Equal(plain[0], First(seed, neverCompleted: _ => false));
         }

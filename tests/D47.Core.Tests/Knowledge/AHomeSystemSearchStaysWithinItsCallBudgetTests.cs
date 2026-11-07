@@ -13,7 +13,7 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
         var galaxy = new Galaxy(30);
 
         var result = await new HomeSystemGatherer(galaxy).SuggestAsync(
-            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.Even }, CancellationToken.None);
+            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.From(null, CareerStatistics.Empty) }, CancellationToken.None);
 
         Assert.True(galaxy.BodyCalls is > 0 and <= 12);
         Assert.Equal(3, result.Count);
@@ -27,7 +27,7 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
         var claim = new ColonisationClaim("Mine", DateTimeOffset.UnixEpoch) { SystemAddress = 99, BeaconDeployedAt = DateTimeOffset.UnixEpoch };
 
         var result = await new HomeSystemGatherer(galaxy).SuggestAsync(
-            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.Even, Claims = [claim] }, CancellationToken.None);
+            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.From(null, CareerStatistics.Empty), Claims = [claim] }, CancellationToken.None);
 
         Assert.Equal("Mine", Assert.Single(result).Name);
         Assert.Equal(0, galaxy.StationCalls);
@@ -39,7 +39,7 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
         var galaxy = new Galaxy(4) { LargePads = false };
 
         var result = await new HomeSystemGatherer(galaxy).SuggestAsync(
-            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.Even, Pad = PadSize.Large }, CancellationToken.None);
+            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.From(null, CareerStatistics.Empty), Pad = PadSize.Large }, CancellationToken.None);
 
         Assert.Empty(result);
         Assert.Equal(0, galaxy.BodyCalls);
@@ -55,7 +55,7 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
         };
 
         var result = await new HomeSystemGatherer(galaxy).SuggestAsync(
-            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.Even, Power = "Aisling Duval", SquadronFaction = "Faction" },
+            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.From(null, CareerStatistics.Empty), Power = "Aisling Duval", SquadronFaction = "Faction" },
             CancellationToken.None);
 
         Assert.Equal(3, result.Count);
@@ -69,7 +69,7 @@ public sealed class AHomeSystemSearchStaysWithinItsCallBudgetTests
         var galaxy = new Galaxy(0) { Power = [new("S1", 1, 10), new("S2", 2, 20)] };
 
         var result = await new HomeSystemGatherer(galaxy).SuggestAsync(
-            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.Even, Power = "Aisling Duval" },
+            new HomeSystemRequest { CurrentSystem = "Sol", Weights = CareerWeights.From(null, CareerStatistics.Empty), Power = "Aisling Duval" },
             CancellationToken.None);
 
         Assert.Equal(["S1", "S2", "Cubeo"], result.Select(suggestion => suggestion.Name));

@@ -29,7 +29,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
     private static IReadOnlyList<DrawnActivity> Draw(
         uint seed, bool stationsInReach, bool comfort = false, CareerStatistics? statistics = null, ShipLoadout? ship = null) =>
         ChapterDraw.Draw(
-            CareerWeights.Even, Ranks, ship ?? Ship, odyssey: true, [], null, comfort, statistics ?? CareerStatistics.Empty, 0, seed, stationsInReach: stationsInReach);
+            CareerWeights.From(null, CareerStatistics.Empty), Ranks, ship ?? Ship, odyssey: true, [], null, comfort, statistics ?? CareerStatistics.Empty, 0, seed, stationsInReach: stationsInReach);
 
     private static CareerStatistics Statistics(string figures) =>
         CareerStatistics.Empty.Apply(AdventureFixtures.Event($$"""{ "timestamp":"2026-10-19T10:00:00Z", "event":"Statistics", {{figures}} }"""));
@@ -58,7 +58,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
         for (uint seed = 0; seed < Seeds; seed++)
         {
             var asked = Draw(seed, stationsInReach: true);
-            var plain = ChapterDraw.Draw(CareerWeights.Even, Ranks, Ship, odyssey: true, [], null, false, CareerStatistics.Empty, 0, seed);
+            var plain = ChapterDraw.Draw(CareerWeights.From(null, CareerStatistics.Empty), Ranks, Ship, odyssey: true, [], null, false, CareerStatistics.Empty, 0, seed);
 
             Assert.Equal(plain, asked);
         }
@@ -97,7 +97,7 @@ public sealed class ADrawnChapterNeedsAStationInReachTests
 
         foreach (var seed in Enumerable.Range(0, Seeds))
         {
-            var slots = ChapterDraw.Draw(CareerWeights.Even, Ranks, Ship, odyssey: false, [], null, true, statistics, 0, (uint)seed, stationsInReach: false);
+            var slots = ChapterDraw.Draw(CareerWeights.From(null, CareerStatistics.Empty), Ranks, Ship, odyssey: false, [], null, true, statistics, 0, (uint)seed, stationsInReach: false);
 
             Assert.All(slots, slot => Assert.Contains(slot.Kind, ungated));
             Assert.DoesNotContain(slots, slot => slot.Kind is TriggerKind.Mine or TriggerKind.Organic);

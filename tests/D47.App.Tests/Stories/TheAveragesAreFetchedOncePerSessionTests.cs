@@ -10,7 +10,7 @@ public sealed class TheAveragesAreFetchedOncePerSessionTests
     public async Task OpeningThePageTwiceAsksForTheAveragesOnce()
     {
         using var worker = new RatingsWorker { List = """{"format":1,"stories":{"a":{"average":3.8,"count":5}}}""" };
-        var client = worker.Client(StoryStore.InMemory());
+        var client = worker.Client(InMemoryStories.Create());
 
         Assert.Null(await client.Open());
         Assert.Null(await client.Open());
@@ -25,7 +25,7 @@ public sealed class TheAveragesAreFetchedOncePerSessionTests
     public async Task AFailedFetchLeavesEveryStoryUnratedWithNoErrorAndIsTriedAgainOnTheNextOpen()
     {
         using var worker = new RatingsWorker { Down = true };
-        var client = worker.Client(StoryStore.InMemory());
+        var client = worker.Client(InMemoryStories.Create());
 
         Assert.Null(await client.Open());
         Assert.Equal(0, client.Ratings.Count);

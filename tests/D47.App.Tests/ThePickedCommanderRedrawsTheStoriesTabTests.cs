@@ -55,7 +55,7 @@ public class ThePickedCommanderRedrawsTheStoriesTabTests
         var book = new AdventureBook(
             new AdventureStore(Path.Combine(paths.Data, "adventures.json"), new DiskFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
-        var stories = StoryStore.InMemory();
+        var stories = InMemoryStories.Create();
         var generator = AdventureFixture.Generator();
         var director = new StoryDirector(
             stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);

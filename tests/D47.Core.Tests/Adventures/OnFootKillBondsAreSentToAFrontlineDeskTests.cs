@@ -34,7 +34,7 @@ public sealed class OnFootKillBondsAreSentToAFrontlineDeskTests
         var ship = new ShipLoadout { Type = "cobramkiii", CargoCapacity = 64 };
 
         IReadOnlyList<DrawnActivity> Draw(uint seed, bool desk) =>
-            ChapterDraw.Draw(CareerWeights.Even, ranks, ship, odyssey: true, [], null, false, CareerStatistics.Empty, 0, seed, frontlineInReach: desk);
+            ChapterDraw.Draw(CareerWeights.From(null, CareerStatistics.Empty), ranks, ship, odyssey: true, [], null, false, CareerStatistics.Empty, 0, seed, frontlineInReach: desk);
 
         for (uint seed = 0; seed < 1000; seed++)
         {

@@ -26,7 +26,7 @@ public sealed class MessageOrphanRig : IDisposable
 
     public MessageStore Messages { get; }
 
-    public StoryStore Stories { get; } = StoryStore.InMemory();
+    public StoryStore Stories { get; } = InMemoryStories.Create();
 
     public int Sweep() =>
         Messages.RemoveOrphans(key => MessageOwnership.Owned(key, Adventures, Stories, () => StoryFixtures.Catalog));

@@ -1,3 +1,4 @@
+using D47.Core.Ticking;
 using Xunit;
 
 namespace D47.Core.Tests;
@@ -22,7 +23,7 @@ public class CoreDependencyTests
     [Fact]
     public void CoreReferencesNoUiHardwareOrProviderAssemblies()
     {
-        var violations = CoreAssembly.Reference
+        var violations = typeof(TickLoop).Assembly
             .GetReferencedAssemblies()
             .Select(a => a.Name ?? string.Empty)
             .Where(name => Forbidden.Any(f => name.StartsWith(f, StringComparison.OrdinalIgnoreCase)))

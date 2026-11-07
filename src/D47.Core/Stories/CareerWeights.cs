@@ -24,9 +24,6 @@ public sealed class CareerWeights
 
     private CareerWeights(Dictionary<Career, double> weights) => this.weights = weights;
 
-    /// <summary>Every career at <see cref="Default"/>.</summary>
-    public static CareerWeights Even { get; } = From(null, CareerStatistics.Empty);
-
     public double Weight(Career career) => weights[career];
 
     /// <summary>

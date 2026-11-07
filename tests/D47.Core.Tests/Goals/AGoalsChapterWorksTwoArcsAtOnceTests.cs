@@ -91,7 +91,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
         foreach (var chapter in Enumerable.Range(1, 40))
         {
             var drawn = ChapterDraw.Draw(
-                CareerWeights.Even, RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0,
+                CareerWeights.From(null, CareerStatistics.Empty), RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0,
                 ChapterDraw.Seed("the-test-story", chapter), limits: [bounties, bounties, Trade.Earns]);
 
             Assert.Equal(3, drawn.Count);
@@ -126,7 +126,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
         Assert.Empty(GoalClimb.Limits([CombatRank, Pledge]));
 
         var plain = ChapterDraw.Draw(
-            CareerWeights.Even, RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 5u, slots: 1);
+            CareerWeights.From(null, CareerStatistics.Empty), RankState.Empty, ShipLoadout.Unknown, odyssey: true, [], null, comfort: false, CareerStatistics.Empty, 0, 5u, slots: 1);
 
         Assert.Equal(plain, Draw([CombatRank, Pledge], 5u));
     }
@@ -230,7 +230,7 @@ public sealed class AGoalsChapterWorksTwoArcsAtOnceTests
 
     private static IReadOnlyList<DrawnActivity> Draw(IReadOnlyList<GoalClimbStep> steps, uint seed) =>
         ChapterDraw.Draw(
-            CareerWeights.Even,
+            CareerWeights.From(null, CareerStatistics.Empty),
             RankState.Empty,
             ShipLoadout.Unknown,
             odyssey: true,

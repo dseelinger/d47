@@ -925,23 +925,8 @@ public sealed class SpeechClients : IDisposable
 
     /// <summary>What one provider offers, read without the gate. The caller holds <c>_speechGate</c>.</summary>
     private VoiceCatalogue HeldVoices(string providerId) =>
-        _heldForTest.GetValueOrDefault(providerId)
-        ?? _voicesByProvider.GetValueOrDefault(providerId)
+        _voicesByProvider.GetValueOrDefault(providerId)
         ?? VoiceCatalogue.Silent;
-
-    private readonly Dictionary<string, VoiceCatalogue> _heldForTest = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>Holds a voice list for a provider that no fetch or <see cref="Apply"/> replaces.</summary>
-    internal void HoldVoicesForTest(string providerId, VoiceCatalogue catalogue)
-    {
-        lock (_speechGate)
-        {
-            _heldForTest[providerId] = catalogue;
-        }
-    }
-
-    /// <summary>Raises <see cref="VoicesReady"/> as a list arriving does.</summary>
-    internal void AnnounceVoicesForTest(string providerId) => VoicesReady?.Invoke(providerId);
 
     /// <summary>What one slot's provider offers.</summary>
     public VoiceCatalogue VoicesFor(VoiceGroup group) =>

@@ -20,7 +20,7 @@ public sealed class ALongHaulStoryDrawsSightseeingChaptersTests
 
     private static NotablePlace Sight(string name, string system, double x) => new(name, "Nebulae", system, null, new StarPosition(x, 0, 0));
 
-    private static bool Rolls(string id) => ChapterDraw.Sightsee(CareerWeights.Even, false, ChapterDraw.SightSeed(id, 1));
+    private static bool Rolls(string id) => ChapterDraw.Sightsee(CareerWeights.From(null, CareerStatistics.Empty), false, ChapterDraw.SightSeed(id, 1));
 
     private static string StoryThat(bool sightsees) =>
         Enumerable.Range(0, 200).Select(index => $"sight-story-{index}").First(id => Rolls(id) == sightsees);

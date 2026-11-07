@@ -57,7 +57,7 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
     private readonly Thread _writer;
     private volatile bool _closed;
 
-    private InputTraceWriter(
+    internal InputTraceWriter(
         string folder,
         IFileSystem files,
         Func<DateTimeOffset> now,
@@ -115,20 +115,6 @@ public sealed class InputTraceWriter : IInputStepObserver, IDisposable
 
         return new InputTraceWriter(folder, files, now, status, music, capture, logger);
     }
-
-    /// <summary>
-    /// A writer without consulting the environment, so a test can exercise the writing without setting
-    /// a process-wide variable every other test in the run would also see.
-    /// </summary>
-    internal static InputTraceWriter Regardless(
-        string folder,
-        IFileSystem files,
-        Func<DateTimeOffset> now,
-        Func<GameStatus> status,
-        Func<string?> music,
-        IWindowCapture? capture,
-        ILogger logger) =>
-        new(folder, files, now, status, music, capture, logger);
 
     /// <summary>Where the traces of this run are, for a log line and for a test to read.</summary>
     public string Folder => _folder;

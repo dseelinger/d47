@@ -221,6 +221,7 @@
         "type": "Project",
         "dependencies": {
           "D47.Core": "[0.1.0, )",
+          "D47.TestSupport": "[0.1.0, )",
           "Microsoft.CodeAnalysis.CSharp": "[5.9.0, )",
           "Microsoft.NET.Test.Sdk": "[18.8.1, )",
           "xunit.v3": "[3.2.2, )"
@@ -236,6 +237,12 @@
         "type": "Project",
         "dependencies": {
           "Anthropic": "[12.40.0, )",
+          "D47.Core": "[0.1.0, )"
+        }
+      },
+      "d47.testsupport": {
+        "type": "Project",
+        "dependencies": {
           "D47.Core": "[0.1.0, )"
         }
       }

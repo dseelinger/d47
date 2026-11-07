@@ -21,6 +21,19 @@ public class HostSurfaceTests
         "HeadsetSurface",
     ];
 
+    /// <summary>Surfaces whose <c>Inert</c> is built in test code, because no running app uses it.</summary>
+    private static readonly Dictionary<string, Func<object>> TestSideInert = new(StringComparer.Ordinal)
+    {
+        [nameof(AboutSurface)] = () => AboutSurface.Inert,
+        [nameof(SpokenNamesSurface)] = () => SpokenNamesSurface.Inert,
+        [nameof(ShipsCapability.ShipsSurface)] = () => ShipsCapability.ShipsSurface.Inert,
+    };
+
+    private static object? InertOf(Type type) =>
+        type.GetProperty("Inert", BindingFlags.Public | BindingFlags.Static) is { } inert
+            ? inert.GetValue(null)
+            : TestSideInert.TryGetValue(type.Name, out var make) ? make() : null;
+
     private static IEnumerable<Type> Surfaces() =>
         typeof(AboutSurface).Assembly
             .GetTypes()
@@ -31,7 +44,7 @@ public class HostSurfaceTests
     public void EverySurfaceEitherOffersAnInertOrIsKnownNotTo()
     {
         var missing = Surfaces()
-            .Where(t => t.GetProperty("Inert", BindingFlags.Public | BindingFlags.Static) is null)
+            .Where(t => InertOf(t) is null)
             .Select(t => t.Name)
             .Where(name => !WithoutInert.Contains(name))
             .ToList();
@@ -49,7 +62,7 @@ public class HostSurfaceTests
         // silently excuses a guard that is now available.
         var stale = WithoutInert
             .Where(name => Surfaces().FirstOrDefault(t => t.Name == name) is { } type
-                           && type.GetProperty("Inert", BindingFlags.Public | BindingFlags.Static) is not null)
+                           && InertOf(type) is not null)
             .ToList();
 
         Assert.True(
@@ -70,14 +83,10 @@ public class HostSurfaceTests
 
         foreach (var type in Surfaces())
         {
-            if (type.GetProperty("Inert", BindingFlags.Public | BindingFlags.Static) is not { } inert)
+            if (InertOf(type) is not { } instance)
             {
                 continue;
             }
-
-            var instance = inert.GetValue(null);
-
-            Assert.NotNull(instance);
 
             foreach (var member in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {

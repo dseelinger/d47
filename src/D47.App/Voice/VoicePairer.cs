@@ -38,17 +38,22 @@ public sealed class VoicePairer
         _spend = spend;
         _logger = logger;
 
-        speech.VoicesReady += provider =>
+        speech.VoicesReady += VoicesArrived;
+    }
+
+    /// <summary>A provider's voice list arrived: pairs the ship and the story cast when the provider is the ship's or the carrier's.</summary>
+    internal void VoicesArrived(string provider)
+    {
+        if (!IsAboardOrCarrier(provider))
         {
-            if (IsAboardOrCarrier(provider))
-            {
-                _ = Task.Run(async () =>
-                {
-                    await PairVoicesAsync().ConfigureAwait(false);
-                    await PairStoryCastAsync().ConfigureAwait(false);
-                });
-            }
-        };
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            await PairVoicesAsync().ConfigureAwait(false);
+            await PairStoryCastAsync().ConfigureAwait(false);
+        });
     }
 
     /// <summary>The current story's hidden layer and title, or null when no story is current.</summary>
@@ -114,7 +119,7 @@ public sealed class VoicePairer
 
     private TurnLoop Turns => _turns;
 
-    private bool IsAboardOrCarrier(string provider)
+    internal bool IsAboardOrCarrier(string provider)
     {
         var speech = _settings.Current.Speech;
 

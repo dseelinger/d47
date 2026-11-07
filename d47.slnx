@@ -20,6 +20,7 @@
     <Project Path="tests/D47.Modules.FakeModule/D47.Modules.FakeModule.csproj" />
     <Project Path="tests/D47.Modules.Tests/D47.Modules.Tests.csproj" />
     <Project Path="tests/D47.Scenarios.Tests/D47.Scenarios.Tests.csproj" />
+    <Project Path="tests/D47.TestSupport/D47.TestSupport.csproj" />
     <Project Path="tests/D47.Tts.Tests/D47.Tts.Tests.csproj" />
     <Project Path="tests/D47.Vr.Tests/D47.Vr.Tests.csproj" />
   </Folder>

@@ -65,7 +65,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         var book = new AdventureBook(
             new AdventureStore("adventures.json", files, NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
-        var stories = StoryStore.InMemory();
+        var stories = InMemoryStories.Create();
         var record = new StoryRunRecord(files, "story-runs", stories, () => Commander, null, new NoopProtector(), NullLogger.Instance);
         var messages = new MessageStore("messages.json", files, NullLogger<MessageStore>.Instance) { Record = record };
         var generator = AdventureFixture.Generator();

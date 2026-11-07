@@ -34,7 +34,7 @@ public sealed class ALineWithNoClipIsSpokenAgainOnceTests
     private static Rig Build(MemoryFileSystem? files = null, PinnedVoice? pinned = null, bool fails = false, Func<string, bool>? forgotten = null)
     {
         files ??= Recorded();
-        var record = new StoryRunRecord(files, "story-runs", StoryStore.InMemory(), () => Commander, null, new NoopProtector(), NullLogger.Instance);
+        var record = new StoryRunRecord(files, "story-runs", InMemoryStories.Create(), () => Commander, null, new NoopProtector(), NullLogger.Instance);
         var provider = new Recording(TtsProviderCatalog.EdgeId, fails);
         var chatterbox = new Recording(TtsProviderCatalog.ChatterboxId, fails);
         var voice = new VoicePipeline(new AudioArbiter(new SilentSink(), NullLogger<AudioArbiter>.Instance).Start(), CueLibrary.Load, NullLoggerFactory.Instance)

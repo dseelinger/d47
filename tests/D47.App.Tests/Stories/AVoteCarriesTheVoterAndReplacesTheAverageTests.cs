@@ -15,7 +15,7 @@ public sealed class AVoteCarriesTheVoterAndReplacesTheAverageTests
             List = """{"format":1,"stories":{"a":{"average":2,"count":1}}}""",
             Reply = """{"average":3,"count":2}""",
         };
-        var stories = StoryStore.InMemory();
+        var stories = InMemoryStories.Create();
         stories.Save("F1", Picked("a"));
         var client = worker.Client(stories);
         await client.Open();
@@ -36,7 +36,7 @@ public sealed class AVoteCarriesTheVoterAndReplacesTheAverageTests
     public async Task ClearingIsADeleteAndALastVoteWithdrawnLeavesNoAverage()
     {
         using var worker = new RatingsWorker { Reply = """{"average":4,"count":1}""" };
-        var stories = StoryStore.InMemory();
+        var stories = InMemoryStories.Create();
         stories.Save("F1", Picked("a"));
         var client = worker.Client(stories);
 
@@ -56,7 +56,7 @@ public sealed class AVoteCarriesTheVoterAndReplacesTheAverageTests
     public async Task AStoryTheCommanderHasNotPickedIsNotRated()
     {
         using var worker = new RatingsWorker();
-        var client = worker.Client(StoryStore.InMemory());
+        var client = worker.Client(InMemoryStories.Create());
 
         Assert.False(await client.Rate("F1", "a", 5));
         Assert.Empty(worker.Requests);

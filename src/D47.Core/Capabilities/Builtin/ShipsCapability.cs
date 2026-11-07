@@ -35,14 +35,6 @@ public static class ShipsCapability
 
         /// <summary>The conversation about each build's plan, or null where nothing composed one.</summary>
         public Func<BuildTalk?>? Talk { get; init; }
-
-        /// <summary>Every member supplied and none of them doing anything, for a test registry to bind.</summary>
-        public static ShipsSurface Inert => new()
-        {
-            Remembered = () => "Nothing is remembered in a test.",
-            Rescan = () => (_, _) => Task.FromResult<string?>(null),
-            Talk = () => null,
-        };
     }
 
     /// <summary>
@@ -277,37 +269,6 @@ public static class ShipsCapability
                 (s, on) => s with { Ui = s.Ui with { HullGpu = on } }),
         },
     ];
-
-    /// <summary>What the model is told about the fleet on every turn, below the cache breakpoint.</summary>
-    public static string? Live(ShipPlanService? ships)
-    {
-        if (ships is null)
-        {
-            return null;
-        }
-
-        var fleet = ships.Fleet();
-        var planned = fleet.Count(entry => entry.Build is { Slots.Count: > 0 });
-        var intended = fleet.Count(entry => !entry.IsOwned);
-
-        if (fleet.Count == 0)
-        {
-            return null;
-        }
-
-        var said = $"Fleet: {fleet.Count} ship{(fleet.Count == 1 ? string.Empty : "s")}";
-
-        if (intended > 0)
-        {
-            said += $", {intended} of them intended rather than owned";
-        }
-
-        said += planned > 0
-            ? $", {planned} with a build planned."
-            : ", none with a build planned.";
-
-        return said;
-    }
 
     internal static string Fleet(ShipPlanService? ships)
     {

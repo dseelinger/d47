@@ -29,7 +29,7 @@ public sealed class AFixedSeedDrawsTheSameSlotsTests
     private static string[] Draw(uint seed) =>
     [
         .. ChapterDraw.Draw(
-                CareerWeights.Even, RankState.Empty, new ShipLoadout { Type = "cobramkiii", CargoCapacity = 64, Modules = [] }, odyssey: true, Recent, null,
+                CareerWeights.From(null, CareerStatistics.Empty), RankState.Empty, new ShipLoadout { Type = "cobramkiii", CargoCapacity = 64, Modules = [] }, odyssey: true, Recent, null,
                 comfort: false, CareerStatistics.Empty, 0, seed, events: Catalogue, tools: Tools)
             .Select(slot => $"{slot.Kind}|{slot.Family}|{slot.Count}|{slot.Organic}|{slot.PlaceBefore}|{slot.Event}|{string.Join(",", slot.Where.Select(pair => $"{pair.Field}={pair.Value}"))}|{slot.Say}"),
     ];

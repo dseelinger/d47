@@ -49,7 +49,7 @@ public sealed record NavigationSurface
     /// <summary>A surface that reaches no clipboard and no game.</summary>
     public static NavigationSurface Inert => new()
     {
-        Clipboard = new RecordingClipboard { Works = false },
+        Clipboard = new NoClipboard(),
         Actions = ActionSurface.Inert,
         AutoPlotEnabled = () => false,
         WatchRoute = () => new FixedPlotWatch(null),
@@ -100,26 +100,10 @@ public sealed class FixedPlotWatch(bool? answer, string? endsAt = null, int? jum
         Task.FromResult(new PlotConfirmation(answer, jumpsRemaining, distanceRemaining));
 }
 
-/// <summary>A clipboard that records instead of writing.</summary>
-public sealed class RecordingClipboard : IClipboard
+/// <summary>A clipboard with nothing behind it: every write reports failure.</summary>
+public sealed class NoClipboard : IClipboard
 {
-    private readonly List<string> _written = [];
-
-    public bool Works { get; set; } = true;
-
-    public IReadOnlyList<string> Written => _written;
-
-    public string? Last => _written.Count == 0 ? null : _written[^1];
-
-    public Task<bool> SetTextAsync(string text, CancellationToken cancellationToken = default)
-    {
-        if (Works)
-        {
-            _written.Add(text);
-        }
-
-        return Task.FromResult(Works);
-    }
+    public Task<bool> SetTextAsync(string text, CancellationToken cancellationToken = default) => Task.FromResult(false);
 }
 
 /// <summary>Getting a destination out of d47 and into the game (Phase 10, items 10 and 11).</summary>

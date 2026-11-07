@@ -9,7 +9,7 @@ public sealed class TurningStoryRatingsOffSendsNothingTests
     public async Task NeitherTheAveragesNorAVoteNorAPendingVoteIsSent()
     {
         using var worker = new RatingsWorker();
-        var stories = StoryStore.InMemory();
+        var stories = InMemoryStories.Create();
         stories.Save("F1", new Story { Id = "a", Title = "a", PublicLayer = "-", Rating = 3, RatingPending = true });
         stories.Save("F1", new Story { Id = "b", Title = "b", PublicLayer = "-" });
         var client = worker.Client(stories, allowed: false);

@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\D47.Core\D47.Core.csproj" />
+    <ProjectReference Include="..\D47.TestSupport\D47.TestSupport.csproj" />
   </ItemGroup>
 
   <ItemGroup>

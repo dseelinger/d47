@@ -43,10 +43,6 @@ public sealed class StoryStore
         _defaults = defaults;
     }
 
-    /// <summary>Held in memory only.</summary>
-    public static StoryStore InMemory() =>
-        new(null, null, new(StringComparer.Ordinal), new(StringComparer.Ordinal), new(StringComparer.Ordinal), new(StringComparer.Ordinal), new MemoryFileSystem());
-
     public static StoryStore Open(string path, IFileSystem files, ILogger<StoryStore> logger)
     {
         var (byCommander, voters, forgotten, defaults) = Read(path, files, logger);

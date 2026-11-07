@@ -26,7 +26,7 @@ public sealed class StoryRunRecordsAreFilledFromExistingLinesTests
 
     private readonly MemoryFileSystem _files = new();
 
-    private readonly StoryStore _stories = StoryStore.InMemory();
+    private readonly StoryStore _stories = InMemoryStories.Create();
 
     private readonly MessageClips _clips;
 

@@ -25,7 +25,11 @@ public class AListArrivingPairsTheShipsProviderTests : IDisposable
     private readonly SpeechClients _speech;
     private readonly SettingsService _settings;
     private readonly PersonaHost _personas = new();
-    private readonly VoicePairer _pairer;
+    private readonly MemoryFileSystem _files = new();
+    private readonly Func<VoicePairer> _startPairing;
+    private VoicePairer? _paired;
+
+    private VoicePairer Pairer => _paired ?? throw new InvalidOperationException("Call StartPairing first.");
 
     public AListArrivingPairsTheShipsProviderTests()
     {
@@ -33,13 +37,15 @@ public class AListArrivingPairsTheShipsProviderTests : IDisposable
         var arbiter = new AudioArbiter(new SilentSink(), NullLogger<AudioArbiter>.Instance).Start();
         var voice = new VoicePipeline(arbiter, CueLibrary.Load, NullLoggerFactory.Instance);
 
+        SeededKokoro.Install(_files, Path.Combine(paths.Data, "models", "kokoro"));
+
         _settings = settings;
         _speech = new SpeechClients(
             settings,
             secrets,
             NullLoggerFactory.Instance,
             paths,
-            new DiskFileSystem(),
+            _files,
             _personas,
             voice,
             arbiter,
@@ -52,7 +58,7 @@ public class AListArrivingPairsTheShipsProviderTests : IDisposable
 
         var spend = new SpendTracker();
 
-        _pairer = new VoicePairer(
+        _startPairing = () => _paired = new VoicePairer(
             _speech,
             settings,
             _personas,
@@ -70,23 +76,20 @@ public class AListArrivingPairsTheShipsProviderTests : IDisposable
     public void Dispose() => _speech.Dispose();
 
     [Fact]
-    public async Task AListForAProviderNeitherSlotIsOnWritesNoVoice()
+    public void AListForAProviderNeitherSlotIsOnIsNotPaired()
     {
-        _speech.HoldVoicesForTest(TtsProviderCatalog.KokoroId, Offering());
-        _speech.HoldVoicesForTest(TtsProviderCatalog.CartesiaId, Offering());
+        _startPairing();
 
-        _speech.AnnounceVoicesForTest(TtsProviderCatalog.CartesiaId);
-        await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
-
-        Assert.DoesNotContain(_personas.Current.Id, _settings.Current.Persona.Voices.Keys);
+        Assert.True(_paired!.IsAboardOrCarrier(TtsProviderCatalog.KokoroId));
+        Assert.False(_paired.IsAboardOrCarrier(TtsProviderCatalog.CartesiaId));
     }
 
     [Fact]
     public async Task AListForTheShipsProviderGivesTheCoreAboardAVoice()
     {
-        _speech.HoldVoicesForTest(TtsProviderCatalog.KokoroId, Offering());
+        _startPairing();
 
-        _speech.AnnounceVoicesForTest(TtsProviderCatalog.KokoroId);
+        _speech.Apply();
 
         await WaitForAsync(() => _settings.Current.Persona.Voices.ContainsKey(_personas.Current.Id));
     }
@@ -106,23 +109,24 @@ public class AListArrivingPairsTheShipsProviderTests : IDisposable
             ],
         };
 
-        _pairer.CurrentStory = () => (secret, "A Story");
-        _speech.HoldVoicesForTest(TtsProviderCatalog.KokoroId, Offering());
+        _startPairing();
+        Pairer.CurrentStory = () => (secret, "A Story");
 
-        _speech.AnnounceVoicesForTest(TtsProviderCatalog.KokoroId);
+        _speech.Apply();
 
         await WaitForAsync(() => StoryCastPairing.On(_settings.Current, TtsProviderCatalog.KokoroId)?.ContainsKey("a-story.hand") == true);
         Assert.False(StoryCastPairing.On(_settings.Current, TtsProviderCatalog.KokoroId)!.ContainsKey("a-story.kept"));
     }
 
     [Fact]
-    public void AChatterboxVoicesGenderIsReadFromTheShippedCatalogue() =>
+    public void AChatterboxVoicesGenderIsReadFromTheShippedCatalogue()
+    {
+        SeededKokoro.CopyShippedChatterboxClips(_files);
+
         Assert.Equal(
             D47.Core.Persona.VoiceGender.Female,
             StoryCastPairing.GenderOf(StorySpeaker.Chatterbox, "isolde", _speech.ChatterboxCatalogue()));
-
-    private static VoiceCatalogue Offering() =>
-        VoiceCatalogue.Of([.. Enumerable.Range(1, 40).Select(number => new VoiceInfo($"voice{number}", $"Voice {number}", "en-US"))]);
+    }
 
     private static async Task WaitForAsync(Func<bool> condition)
     {

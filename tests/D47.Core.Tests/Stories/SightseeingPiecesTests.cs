@@ -56,7 +56,7 @@ public sealed class SightseeingPiecesTests
 
     [Fact]
     public void ASightChapterIsOneInFiveAtAnEvenWeight() =>
-        Assert.Equal(0.2, ChapterDraw.SightChance(CareerWeights.Even, false), 10);
+        Assert.Equal(0.2, ChapterDraw.SightChance(CareerWeights.From(null, CareerStatistics.Empty), false), 10);
 
     [Fact]
     public void TheSightChanceScalesWithTheExplorationWeight()
@@ -71,21 +71,21 @@ public sealed class SightseeingPiecesTests
 
     [Fact]
     public void ASightChapterMakesTheNextLessLikely() =>
-        Assert.Equal(0.2 * ChapterDraw.RecentFactor, ChapterDraw.SightChance(CareerWeights.Even, true), 10);
+        Assert.Equal(0.2 * ChapterDraw.RecentFactor, ChapterDraw.SightChance(CareerWeights.From(null, CareerStatistics.Empty), true), 10);
 
     [Fact]
     public void TheSameSeedGivesTheSameSightseeingAnswer()
     {
         for (uint seed = 0; seed < 50; seed++)
         {
-            Assert.Equal(ChapterDraw.Sightsee(CareerWeights.Even, false, seed), ChapterDraw.Sightsee(CareerWeights.Even, false, seed));
+            Assert.Equal(ChapterDraw.Sightsee(CareerWeights.From(null, CareerStatistics.Empty), false, seed), ChapterDraw.Sightsee(CareerWeights.From(null, CareerStatistics.Empty), false, seed));
         }
     }
 
     [Fact]
     public void SightseeingFollowsTheChance()
     {
-        var hits = Enumerable.Range(0, 2000).Count(index => ChapterDraw.Sightsee(CareerWeights.Even, false, ChapterDraw.SightSeed("story", index)));
+        var hits = Enumerable.Range(0, 2000).Count(index => ChapterDraw.Sightsee(CareerWeights.From(null, CareerStatistics.Empty), false, ChapterDraw.SightSeed("story", index)));
 
         Assert.InRange(hits, 300, 500);
     }

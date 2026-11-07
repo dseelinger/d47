@@ -116,6 +116,6 @@ public class AFittedPlanIsNotCountedAsPlannedTests
     {
         var (ships, _) = Rig(Loadout(Fitted("MainEngines", Thrusters), Fitted("FrameShiftDrive", Drive)));
 
-        Assert.Contains("1 with a build planned", ShipsCapability.Live(ships), StringComparison.Ordinal);
+        Assert.Contains("1 with a build planned", D47.Core.Tests.Ships.ShipsLine.Of(ships), StringComparison.Ordinal);
     }
 }

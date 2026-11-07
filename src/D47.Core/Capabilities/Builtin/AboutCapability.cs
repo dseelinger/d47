@@ -334,24 +334,4 @@ public sealed record AboutSurface
 
     /// <summary>The version <see cref="CheckForUpdate"/> found, or null while none is pending (#193).</summary>
     public Func<string?>? PendingUpdateVersion { get; init; }
-
-    /// <summary>
-    /// Every member supplied, each doing nothing — the surface a test binds when the test is not about
-    /// About (#79).
-    /// </summary>
-    public static AboutSurface Inert => new()
-    {
-        Build = "0.0.0-test+0000000",
-        Channel = () => Updates.ReleaseChannel.Unknown,
-        ShowChangelog = () => { },
-        ShowChangelogOnline = () => { },
-        AddToStartMenu = () => { },
-        StartMenuWanted = () => true,
-        SetUpKeys = () => { },
-        ShowCommunity = () => { },
-        OpenDataFolder = () => { },
-        CheckForUpdate = (_, _) => Task.FromResult<string?>(null),
-        InstallUpdate = (_, _) => Task.FromResult<string?>(null),
-        PendingUpdateVersion = () => null,
-    };
 }

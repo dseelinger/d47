@@ -22,7 +22,7 @@ public sealed class EachStoryRunKeepsItsOwnRecordTests
 
     private readonly MemoryFileSystem _files = new();
 
-    private readonly StoryStore _stories = StoryStore.InMemory();
+    private readonly StoryStore _stories = InMemoryStories.Create();
 
     private static Story Run(DateTimeOffset at, StoryState state, params string[] chapters) => new()
     {

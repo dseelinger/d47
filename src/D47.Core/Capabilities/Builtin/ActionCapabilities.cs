@@ -38,7 +38,7 @@ public sealed record ActionSurface
     {
         Binds = () => EliteBinds.None,
         Status = () => GameStatus.Unknown,
-        Input = new RecordingGameInput { IsGameRunning = false },
+        Input = new NoGameInput(),
         Enabled = () => false,
     };
 }

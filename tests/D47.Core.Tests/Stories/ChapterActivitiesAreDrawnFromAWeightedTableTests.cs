@@ -38,7 +38,7 @@ public sealed class ChapterActivitiesAreDrawnFromAWeightedTableTests
         CareerStatistics? statistics = null,
         int fixedPlaces = 0,
         CareerWeights? weights = null) =>
-        ChapterDraw.Draw(weights ?? CareerWeights.Even, ranks ?? Ranks(), ship ?? Ship(), odyssey, recent ?? [], refused, comfort, statistics ?? CareerStatistics.Empty, fixedPlaces, seed);
+        ChapterDraw.Draw(weights ?? CareerWeights.From(null, CareerStatistics.Empty), ranks ?? Ranks(), ship ?? Ship(), odyssey, recent ?? [], refused, comfort, statistics ?? CareerStatistics.Empty, fixedPlaces, seed);
 
     private static IEnumerable<IReadOnlyList<DrawnActivity>> Many(Func<uint, IReadOnlyList<DrawnActivity>> draw) =>
         Enumerable.Range(0, Seeds).Select(seed => draw((uint)seed));

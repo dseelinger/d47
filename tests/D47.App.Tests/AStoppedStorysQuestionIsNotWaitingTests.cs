@@ -21,7 +21,7 @@ public class AStoppedStorysQuestionIsNotWaitingTests
         var book = new AdventureBook(
             new AdventureStore("adventures.json", new MemoryFileSystem(), NullLogger<AdventureStore>.Instance),
             NullLogger<AdventureBook>.Instance);
-        var stories = StoryStore.InMemory();
+        var stories = InMemoryStories.Create();
         var generator = AdventureFixture.Generator();
         var director = new StoryDirector(
             stories, book, () => catalog, generator.GenerateAsync, () => null, _ => { }, NullLogger.Instance);

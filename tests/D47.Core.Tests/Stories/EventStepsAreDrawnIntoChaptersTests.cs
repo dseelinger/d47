@@ -44,7 +44,7 @@ public sealed class EventStepsAreDrawnIntoChaptersTests
         IReadOnlyList<DrawableTool>? tools = null,
         ShipLoadout? ship = null) =>
         ChapterDraw.Draw(
-            CareerWeights.Even, RankState.Empty, ship ?? Ship(), odyssey: true, [], refused, comfort: false, CareerStatistics.Empty, 0, seed,
+            CareerWeights.From(null, CareerStatistics.Empty), RankState.Empty, ship ?? Ship(), odyssey: true, [], refused, comfort: false, CareerStatistics.Empty, 0, seed,
             events: events, tools: tools);
 
     private static IEnumerable<DrawnActivity> Events(Func<uint, IReadOnlyList<DrawnActivity>> draw) =>

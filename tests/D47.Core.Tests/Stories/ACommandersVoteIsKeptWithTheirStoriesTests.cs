@@ -66,7 +66,7 @@ public sealed class ACommandersVoteIsKeptWithTheirStoriesTests
 
     [Fact]
     public void AVoterIsNotTheDonorToken() =>
-        Assert.NotEqual(DonorToken.NewToken(), StoryStore.InMemory().EnsureVoter("F1"));
+        Assert.NotEqual(DonorToken.NewToken(), InMemoryStories.Create().EnsureVoter("F1"));
 
     [Fact]
     public void AStoryFileWrittenBeforeRatingsLoadsWithNoRatingsAndNoVoter()

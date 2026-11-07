@@ -19,12 +19,6 @@ public sealed record SpokenNamesSurface(
     Listening.MishearingWatch Watch,
     Action<string, string> Learn)
 {
-    /// <summary>Every member supplied and none of them learning anything, for a test registry to bind.</summary>
-    public static SpokenNamesSurface Inert => new(
-        () => Listening.SpokenNames.Empty,
-        new Listening.MishearingWatch(),
-        (_, _) => { });
-
     /// <summary>A name resolved: learn the correction if one was outstanding.</summary>
     public void Confirm(string resolved)
     {

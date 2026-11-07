@@ -10,7 +10,7 @@ public sealed class AFailedVoteIsSentWhenThePageOpensAgainTests
     public async Task TheVoteStaysPendingUntilTheNextOpenSendsIt()
     {
         using var worker = new RatingsWorker { Down = true, Reply = """{"average":5,"count":1}""" };
-        var stories = StoryStore.InMemory();
+        var stories = InMemoryStories.Create();
         stories.Save("F1", new Story { Id = "a", Title = "a", PublicLayer = "-" });
         var client = worker.Client(stories);
 
@@ -32,7 +32,7 @@ public sealed class AFailedVoteIsSentWhenThePageOpensAgainTests
     public async Task AResendThatFailsSaysTheRatingIsSaved()
     {
         using var worker = new RatingsWorker { RefuseVotes = true };
-        var stories = StoryStore.InMemory();
+        var stories = InMemoryStories.Create();
         stories.Save("F1", new Story { Id = "a", Title = "a", PublicLayer = "-", Rating = 3, RatingPending = true });
         var client = worker.Client(stories);
 

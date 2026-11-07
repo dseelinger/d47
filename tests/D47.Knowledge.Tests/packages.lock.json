@@ -187,6 +187,12 @@
         "dependencies": {
           "D47.Core": "[0.1.0, )"
         }
+      },
+      "d47.testsupport": {
+        "type": "Project",
+        "dependencies": {
+          "D47.Core": "[0.1.0, )"
+        }
       }
     }
   }

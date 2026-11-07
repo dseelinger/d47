@@ -32,7 +32,7 @@ public sealed class ARecordedLinesClipCanBeReadBackTests
 
     private readonly MemoryFileSystem _files = new();
 
-    private readonly StoryStore _stories = StoryStore.InMemory();
+    private readonly StoryStore _stories = InMemoryStories.Create();
 
     private StoryRunLine Recorded(IClipCompressor? compressor, string? voiceId, ISecretProtector? protector = null)
     {
