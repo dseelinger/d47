@@ -46,8 +46,8 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
 
         Assert.Equal(SettingsLayout.Areas.Select(area => area.Title), Nav(host.View, SettingsView.NavAreaClass).Select(Words));
 
-        // Every place is built, whether or not its area is the one open right now (#220).
-        Assert.Equal(places.Select(place => place.Id), host.View.SectionIds);
+        // Every place has a nav item, whether or not its area is the one open right now (#220).
+        Assert.Equal(places.Select(place => place.Title), Nav(host.View, SettingsView.NavPlaceClass).Select(Words));
 
         host.Close();
     }
@@ -94,7 +94,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     {
         var host = Open(out var settings);
 
-        host.View.ShowPlaceOf(SpeechCapability.RetryAttemptsKey);
+        host.ShowPlaceOf(SpeechCapability.RetryAttemptsKey);
         Jobs();
 
         Assert.Contains(
@@ -150,7 +150,7 @@ public sealed class EverySettingSitsWhereTheLayoutPutsItTests
     {
         var host = Open(out var settings);
 
-        host.View.ShowPlaceOf(SpeechCapability.RetryAttemptsKey);
+        host.ShowPlaceOf(SpeechCapability.RetryAttemptsKey);
         Jobs();
 
         var provider = settings.Sections.SelectMany(section => section.Rows)

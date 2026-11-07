@@ -35,7 +35,7 @@ public sealed class TheStoriesStripOffersCastReactionsTests
             frame.SaveCapture("stories-strip-cast-reactions.png");
         }
 
-        var box = Assert.IsType<CheckBox>(view.ControlFor(AdventureCapability.CastReactionsKey));
+        var box = Assert.IsType<CheckBox>(view.ControlFor(settings, AdventureCapability.CastReactionsKey));
 
         Assert.True(box.IsEffectivelyVisible);
         Assert.True(box.IsChecked);

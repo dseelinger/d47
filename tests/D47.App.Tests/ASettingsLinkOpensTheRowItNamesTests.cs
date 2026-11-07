@@ -39,7 +39,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
     public void TheBannerOpensItsVoicesPlaceBeforeSettingsWasEverOpened()
     {
         using var look = AppLook.Put();
-        var (view, window, model, page) = Shown();
+        var (view, window, model, page, _) = Shown();
 
         Assert.NotEqual(PanelTab.Settings, view.Nav.Tab);
 
@@ -49,7 +49,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Click(window, Banner(view), "Settings");
 
         Assert.Equal(PanelTab.Settings, view.Nav.Tab);
-        Assert.Equal("speech-synthesis", page.SectionIds[page.ActiveSection]);
+        Assert.Equal("speech-synthesis", page.OpenPlaceId());
 
         window.Close();
     }
@@ -58,7 +58,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
     public void AFailedTurnOpensItsRowWhenTheLinkWraps()
     {
         using var look = AppLook.Put();
-        var (view, window, model, page) = Shown();
+        var (view, window, model, page, settings) = Shown();
 
         model.AppendError(Hotkey, ListeningCapability.CancelHotkeyKey);
         Jobs();
@@ -72,8 +72,8 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Click(window, block, "Settings");
 
         Assert.Equal(PanelTab.Settings, view.Nav.Tab);
-        Assert.Equal("voice-input", page.SectionIds[page.ActiveSection]);
-        Assert.True(page.LabelFor(ListeningCapability.CancelHotkeyKey)?.IsEffectivelyVisible);
+        Assert.Equal("voice-input", page.OpenPlaceId());
+        Assert.True(page.LabelFor(settings, ListeningCapability.CancelHotkeyKey)?.IsEffectivelyVisible);
 
         window.Close();
     }
@@ -82,7 +82,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
     public void TwoFailedTurnsInARowEachOpenTheirOwnRow()
     {
         using var look = AppLook.Put();
-        var (view, window, model, page) = Shown();
+        var (view, window, model, page, _) = Shown();
 
         model.AppendError(Hotkey, ListeningCapability.CancelHotkeyKey);
         model.AppendError(NoVoice, SpeechCapability.ChatterboxVoiceKey);
@@ -93,7 +93,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Click(window, second, "Settings");
 
         Assert.Equal(PanelTab.Settings, view.Nav.Tab);
-        Assert.Equal("speech-synthesis", page.SectionIds[page.ActiveSection]);
+        Assert.Equal("speech-synthesis", page.OpenPlaceId());
 
         window.Close();
     }
@@ -102,14 +102,15 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
     public void ARowUnderTheFoldIsDrawnWhenALinkOpensIt()
     {
         using var look = AppLook.Put();
-        var (view, window, model, page) = Shown();
+        var (view, window, model, page, settings) = Shown();
 
         view.Tab = PanelTab.Settings;
         Jobs();
-        page.ShowPlaceOf(ListeningCapability.ModelKey);
+        page.ShowPlaceOf(settings, ListeningCapability.ModelKey);
         Jobs();
 
-        Assert.False(page.LabelFor(ListeningCapability.ModelKey)?.IsEffectivelyVisible ?? false);
+        Assert.Equal(SettingsRowLookup.PlaceIndexOf(settings, ListeningCapability.ModelKey), page.ActiveSection);
+        Assert.False(page.LabelFor(settings, ListeningCapability.ModelKey)?.IsEffectivelyVisible ?? false);
 
         view.Tab = PanelTab.Transcript;
         model.AppendError("The speech model is missing. Pick one in Settings.", ListeningCapability.ModelKey);
@@ -118,7 +119,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Click(window, view.TranscriptBlocks.Single(), "Settings");
 
         Assert.Equal(PanelTab.Settings, view.Nav.Tab);
-        Assert.True(page.LabelFor(ListeningCapability.ModelKey)?.IsEffectivelyVisible);
+        Assert.True(page.LabelFor(settings, ListeningCapability.ModelKey)?.IsEffectivelyVisible);
 
         window.Close();
     }
@@ -127,11 +128,11 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
     public void ABannerWithNoRowOpensTheSettingsTabWhereItWas()
     {
         using var look = AppLook.Put();
-        var (view, window, model, page) = Shown();
+        var (view, window, model, page, settings) = Shown();
 
         view.Tab = PanelTab.Settings;
         Jobs();
-        page.ShowPlaceOf(ListeningCapability.CancelHotkeyKey);
+        page.ShowPlaceOf(settings, ListeningCapability.CancelHotkeyKey);
         view.Tab = PanelTab.Transcript;
         Jobs();
 
@@ -144,7 +145,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Click(window, Banner(view), "Settings");
 
         Assert.Equal(PanelTab.Settings, view.Nav.Tab);
-        Assert.Equal("voice-input", page.SectionIds[page.ActiveSection]);
+        Assert.Equal("voice-input", page.OpenPlaceId());
 
         window.Close();
     }
@@ -183,7 +184,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         Jobs();
 
         Assert.Equal(PanelTab.Settings, headset.Nav.Tab);
-        Assert.Equal("speech-synthesis", page.SectionIds[page.ActiveSection]);
+        Assert.Equal("speech-synthesis", page.OpenPlaceId());
 
         headset.Dispose();
     }
@@ -199,7 +200,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         return (settings, viewState, paths);
     }
 
-    private static (PanelView View, Window Window, PanelViewModel Model, SettingsView Page) Shown()
+    private static (PanelView View, Window Window, PanelViewModel Model, SettingsView Page, SettingsService Settings) Shown()
     {
         var (settings, viewState, paths) = Surface();
         var model = new PanelViewModel();
@@ -216,7 +217,7 @@ public sealed class ASettingsLinkOpensTheRowItNamesTests
         window.Show();
         Jobs();
 
-        return (view, window, model, page);
+        return (view, window, model, page, settings);
     }
 
     private static TextBlock Banner(PanelView view) =>

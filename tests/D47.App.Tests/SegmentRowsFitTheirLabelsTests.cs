@@ -77,7 +77,7 @@ public sealed class SegmentRowsFitTheirLabelsTests
         host.View.Reveal(D47.Core.Capabilities.Builtin.ListeningCapability.Id);
         Jobs();
 
-        var segment = Assert.IsType<Segment>(host.View.ControlFor(D47.Core.Capabilities.Builtin.ListeningCapability.ModeKey));
+        var segment = Assert.IsType<Segment>(host.ControlFor(D47.Core.Capabilities.Builtin.ListeningCapability.ModeKey));
         var buttons = segment.GetVisualDescendants().OfType<RadioButton>().ToList();
 
         Assert.Equal(4, buttons.Count);

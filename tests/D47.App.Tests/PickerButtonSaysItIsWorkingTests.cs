@@ -23,7 +23,7 @@ public class PickerButtonSaysItIsWorkingTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.ShowPlaceOf(SpeechCapability.OutputDeviceKey);
+        host.ShowPlaceOf(SpeechCapability.OutputDeviceKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         return host;

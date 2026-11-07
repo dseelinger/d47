@@ -32,7 +32,7 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
     public void TheRowIsDrawnWithEveryModelOnIt()
     {
         var host = OnElevenLabs(out _);
-        host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
+        host.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
         var stepper = SettingsPageReading.CompactRow(host, ModelLabel).GetVisualDescendants().OfType<D47.App.Controls.Stepper>().First();
 
@@ -46,7 +46,7 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
         var (created, viewState, paths) = TestSurface.Create();
         created.Apply(SpeechCapability.ProviderKey, TtsProviderCatalog.ElevenLabsId, SettingsCaller.Panel);
         var host = SettingsHost.Open(created, viewState, paths, width: 820, height: 1100);
-        host.View.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
+        host.ShowPlaceOf(SpeechCapability.ElevenLabsModelKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         host.Window.CaptureRenderedFrame()!.SaveCapture("elevenlabs-model-row.png");
@@ -75,7 +75,7 @@ public class TheModelRowIsDrawnAndTakesTheRateWithItTests
     public void ChoosingV3TakesTheSpeakingRateOffThePageAndFlashBringsItBack()
     {
         var host = OnElevenLabs(out var settings);
-        host.View.ShowPlaceOf(SpeechCapability.RateKey);
+        host.ShowPlaceOf(SpeechCapability.RateKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         settings.Apply(SpeechCapability.ElevenLabsModelKey, ElevenLabsModels.Flash, SettingsCaller.Panel);

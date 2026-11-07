@@ -24,7 +24,7 @@ public class LeavingATextBoxForAnotherPageKeepsTheTextTests
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
         var host = SettingsHost.Open(settings, viewState, paths, width: 1180, height: 800);
 
-        Assert.True(host.View.ShowPlaceOf(CalloutCapability.HomeSystemKey));
+        Assert.True(host.ShowPlaceOf(CalloutCapability.HomeSystemKey));
         Dispatcher.UIThread.RunJobs();
 
         var here = host.View.ActiveSection;

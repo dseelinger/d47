@@ -93,8 +93,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
     private readonly List<Action> _barToolRefreshes = [];
 
-    private readonly Dictionary<string, Control> _barToolControls = new(StringComparer.Ordinal);
-
     /// <summary>Marks an area's heading in the nav, for a test to tell it from a place.</summary>
     public const string NavAreaClass = "nav-area";
 
@@ -108,10 +106,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// The name on a row's reset glyph, so a lookup for the row's own control can exclude it (#61).
     /// </summary>
     public const string RowResetName = "RowReset";
-
-    /// <summary>Whether a button is the row's chrome rather than the control the row is about.</summary>
-    public static bool IsRowChrome(Button button) =>
-        button?.Name is { } name && name == RowResetName;
 
     /// <summary>Which sections a jump or a "Show N more" press has unfolded for this session (#60, #221).
     /// Not saved: a fresh Build folds every place again.</summary>
@@ -343,7 +337,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _otherPagesNote = null;
         _barTool = null;
         _barToolRefreshes.Clear();
-        _barToolControls.Clear();
         _groups.Clear();
         _tileGrids.Clear();
         _tabPlaceRows.Clear();
@@ -982,23 +975,11 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 }
             };
 
-            _barToolControls[row.Key] = box;
             _barToolRefreshes.Add(() => box.IsChecked = _settings!.Read(row.Key) is "true");
             strip.Children.Add(box);
         }
 
         return strip;
-    }
-
-    /// <summary>Opens an area's first place (#220).</summary>
-    public void SelectArea(int areaIndex)
-    {
-        if (_nav is not { } nav || areaIndex < 0 || areaIndex >= nav.AreaCount)
-        {
-            return;
-        }
-
-        ShowPlace(nav.FirstShownPlace(areaIndex, _sift));
     }
 
     /// <summary>Replaces the page with one place, filtered by the current query.</summary>
@@ -1042,10 +1023,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// <summary>Whether a change of page is worth writing down yet.</summary>
     private bool _rememberingSection;
 
-    /// <summary>The sections' place ids, in nav order, and which one is open (−1 for none).</summary>
-    internal IReadOnlyList<string> SectionIds => [.. _sections.Select(section => section.PlaceId)];
-
-    /// <inheritdoc cref="SectionIds"/>
+    /// <summary>Which section is open, in nav order (−1 for none).</summary>
     internal int ActiveSection => _nav?.ActiveSection ?? -1;
 
     private void RememberSection()
@@ -1089,16 +1067,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _revealedSections.Add(index);
 
         ShowPlace(index);
-    }
-
-    /// <summary>Opens the page holding a setting's row, and says whether there is one.</summary>
-    internal bool ShowPlaceOf(string key)
-    {
-        var index = SectionOf(DrawnOn(key));
-
-        ShowPlace(index);
-
-        return index >= 0;
     }
 
     /// <summary>
@@ -1159,15 +1127,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     private Control MarkTarget(RowView view) =>
         _mixers.SelectMany(mixer => mixer.Channels).FirstOrDefault(channel => channel.Views.Contains(view))?.Row
         ?? view.Container;
-
-    /// <summary>The control a row is marked on, for a test to find it.</summary>
-    internal Control? FrameFor(string key) =>
-        _rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal)) is { } view
-            ? MarkTarget(view)
-            : null;
-
-    /// <summary>The control carrying the landing mark now, or null.</summary>
-    internal Control? LandedOn => _landing?.Target;
 
     private (Control Target, AvaloniaProperty Property, IDisposable Ink, DispatcherTimer Timer)? _landing;
 
@@ -2025,15 +1984,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
     /// spends a model round trip between the Commander picking a core and that core saying its first
     /// word, and the affordance they touched is this row.
     /// </summary>
-    internal Control? ControlFor(string key) =>
-        _rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))?.Control
-        ?? _controls.DrawnByGroup.GetValueOrDefault(key)
-        ?? _barToolControls.GetValueOrDefault(key);
-
-    /// <summary>The row's own label, which carries its help as a tooltip on hover and focus (#333).</summary>
-    internal TextBlock? LabelFor(string key) =>
-        _rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))?.Label;
-
     public void ShowBusy(string key, bool busy)
     {
         if (_rows.FirstOrDefault(row => string.Equals(row.Row.Key, key, StringComparison.Ordinal))

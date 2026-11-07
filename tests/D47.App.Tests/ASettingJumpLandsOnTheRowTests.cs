@@ -56,7 +56,7 @@ public sealed class ASettingJumpLandsOnTheRowTests
         return page;
     }
 
-    private static (SettingsView Page, Window Window) ShownPage(double height = 420)
+    private static (SettingsView Page, Window Window, SettingsService Settings) ShownPage(double height = 420)
     {
         var (settings, viewState) = Surface();
         var page = new SettingsView();
@@ -67,7 +67,7 @@ public sealed class ASettingJumpLandsOnTheRowTests
         window.Show();
         Jobs();
 
-        return (page, window);
+        return (page, window, settings);
     }
 
     private static void AssertInView(SettingsView page, Control frame)
@@ -83,15 +83,13 @@ public sealed class ASettingJumpLandsOnTheRowTests
     public void ARowBelowTheFoldIsScrolledIntoViewAndMarked()
     {
         using var look = AppLook.Put();
-        var (page, window) = ShownPage();
+        var (page, window, settings) = ShownPage();
 
         page.RevealRow(SpeechCapability.ChatterboxVoiceKey);
         Jobs();
 
-        var frame = page.FrameFor(SpeechCapability.ChatterboxVoiceKey)!;
-
-        Assert.Same(frame, page.LandedOn);
-        AssertInView(page, frame);
+        Assert.True(page.MarksRow(settings, SpeechCapability.ChatterboxVoiceKey));
+        AssertInView(page, page.LandedOn()!);
 
         window.Close();
     }
@@ -100,14 +98,14 @@ public sealed class ASettingJumpLandsOnTheRowTests
     public void AFoldedAdvancedRowIsUnfoldedScrolledAndMarked()
     {
         using var look = AppLook.Put();
-        var (page, window) = ShownPage();
+        var (page, window, settings) = ShownPage();
 
         page.RevealRow(ListeningCapability.ModelKey);
         Jobs();
 
-        Assert.True(page.LabelFor(ListeningCapability.ModelKey)?.IsEffectivelyVisible);
-        Assert.Same(page.FrameFor(ListeningCapability.ModelKey), page.LandedOn);
-        AssertInView(page, page.FrameFor(ListeningCapability.ModelKey)!);
+        Assert.True(page.LabelFor(settings, ListeningCapability.ModelKey)?.IsEffectivelyVisible);
+        Assert.True(page.MarksRow(settings, ListeningCapability.ModelKey));
+        AssertInView(page, page.LandedOn()!);
 
         window.Close();
     }
@@ -116,13 +114,13 @@ public sealed class ASettingJumpLandsOnTheRowTests
     public void ARowInTheLevelsMixerIsMarkedOnItsTableRow()
     {
         using var look = AppLook.Put();
-        var (page, window) = ShownPage();
+        var (page, window, _) = ShownPage();
         var key = AudioCapability.LevelKey(Enum.GetValues<AudioChannel>().Last());
 
         page.RevealRow(key);
         Jobs();
 
-        var landed = Assert.IsType<Grid>(page.LandedOn);
+        var landed = Assert.IsType<Grid>(page.LandedOn());
 
         Assert.Contains(SettingsView.MixerRowClass, landed.Classes);
         AssertInView(page, landed);
@@ -134,13 +132,13 @@ public sealed class ASettingJumpLandsOnTheRowTests
     public void APlaceOpensByItsIdAndMarksItsTitle()
     {
         using var look = AppLook.Put();
-        var (page, window) = ShownPage();
+        var (page, window, _) = ShownPage();
 
         page.RevealPlace("chatter");
         Jobs();
 
-        Assert.Equal("chatter", page.SectionIds[page.ActiveSection]);
-        Assert.Equal(SettingsView.PageHeadName, page.LandedOn?.Name);
+        Assert.Equal("chatter", page.OpenPlaceId());
+        Assert.Equal(SettingsView.PageHeadName, page.LandedOn()?.Name);
 
         window.Close();
     }
@@ -149,7 +147,7 @@ public sealed class ASettingJumpLandsOnTheRowTests
     public void AKeyOrPlaceNoLayoutPlacesChangesNothing()
     {
         using var look = AppLook.Put();
-        var (page, window) = ShownPage();
+        var (page, window, _) = ShownPage();
         var before = page.ActiveSection;
 
         page.RevealRow("nothing.here");
@@ -157,7 +155,7 @@ public sealed class ASettingJumpLandsOnTheRowTests
         Jobs();
 
         Assert.Equal(before, page.ActiveSection);
-        Assert.Null(page.LandedOn);
+        Assert.Null(page.LandedOn());
 
         window.Close();
     }
@@ -166,18 +164,18 @@ public sealed class ASettingJumpLandsOnTheRowTests
     public void APressTakesTheMarkOff()
     {
         using var look = AppLook.Put();
-        var (page, window) = ShownPage();
+        var (page, window, _) = ShownPage();
 
         page.RevealRow(SpeechCapability.ChatterboxVoiceKey);
         Jobs();
 
-        Assert.NotNull(page.LandedOn);
+        Assert.NotNull(page.LandedOn());
 
         window.MouseDown(new Point(600, 10), MouseButton.Left);
         window.MouseUp(new Point(600, 10), MouseButton.Left);
         Jobs();
 
-        Assert.Null(page.LandedOn);
+        Assert.Null(page.LandedOn());
 
         window.Close();
     }
@@ -227,8 +225,8 @@ public sealed class ASettingJumpLandsOnTheRowTests
         Assert.Equal("loadout.ships", view.Nav.RootKeyOf(PanelTab.Assets));
 
         Assert.StartsWith("▾ SETTINGS ", ((Button)strip.BarTool!).Content as string, StringComparison.Ordinal);
-        Assert.Same(strip.FrameFor("ships.art"), strip.LandedOn);
-        Assert.Null(other.LandedOn);
+        Assert.True(strip.MarksRow(settings, "ships.art"));
+        Assert.Null(other.LandedOn());
 
         window.Close();
     }

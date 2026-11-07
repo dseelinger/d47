@@ -55,7 +55,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         panel.Tab = PanelTab.Settings;
         Jobs();
 
-        view.ShowPlaceOf(DiagnosticsCapability.CoverageKey);
+        view.RevealRow(DiagnosticsCapability.CoverageKey);
         Jobs();
 
         return (window, panel, view);
@@ -193,7 +193,7 @@ public class AWideDialogOpensAsAPageOfThePanelTests
         Jobs();
         surface.Render();
 
-        view.ShowPlaceOf(DiagnosticsCapability.CoverageKey);
+        view.RevealRow(DiagnosticsCapability.CoverageKey);
         Jobs();
         surface.Render();
 

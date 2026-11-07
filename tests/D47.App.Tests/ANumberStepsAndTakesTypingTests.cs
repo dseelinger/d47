@@ -37,7 +37,7 @@ public class ANumberStepsAndTakesTypingTests
 
     private static Amount AmountOn(SettingsHost host, string key, string label)
     {
-        host.View.ShowPlaceOf(key);
+        host.ShowPlaceOf(key);
         Jobs();
 
         return host.View.GetVisualDescendants().OfType<Grid>()

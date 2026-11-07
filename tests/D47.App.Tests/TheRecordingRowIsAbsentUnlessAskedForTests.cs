@@ -77,7 +77,7 @@ public class TheRecordingRowIsAbsentUnlessAskedForTests : IDisposable
         var host = SettingsHost.Open(settings, viewState, paths, recording: (log, () => Noon));
 
         // Privacy and egress' own area (#220).
-        host.View.ShowPlaceOf(D47.Core.Capabilities.Builtin.PrivacyCapability.AudioRecordingKey);
+        host.ShowPlaceOf(D47.Core.Capabilities.Builtin.PrivacyCapability.AudioRecordingKey);
         Dispatcher.UIThread.RunJobs();
 
         return (log, host);

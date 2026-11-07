@@ -138,7 +138,7 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
                 StepperFor(host, key).SelectedIndex = SttProviderCatalog.Ids.ToList().IndexOf(SttProviderCatalog.DeepgramId);
             }
 
-            host.View.ControlFor(key)?.BringIntoView();
+            host.ControlFor(key)?.BringIntoView();
             Dispatcher.UIThread.RunJobs();
 
             var path = $"provider-rows-{key}-{width}x{height}.png";
@@ -164,7 +164,7 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
         new ThemeManager(Avalonia.Application.Current!, NullLogger<ThemeManager>.Instance).FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.ShowPlaceOf(ListeningCapability.ProviderKey);
+        host.ShowPlaceOf(ListeningCapability.ProviderKey);
         Dispatcher.UIThread.RunJobs();
 
         return (host, secrets);
@@ -183,7 +183,7 @@ public class AProviderSaysWhereItRunsAndWhetherItHasItsKeyTests
 
     private static Stepper StepperFor(SettingsHost host, string key)
     {
-        var control = host.View.ControlFor(key);
+        var control = host.ControlFor(key);
 
         Assert.NotNull(control);
 

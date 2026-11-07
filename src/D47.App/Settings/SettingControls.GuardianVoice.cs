@@ -162,11 +162,8 @@ internal sealed partial class SettingControls
             byId[effect.Id] = strip;
             strips.Children.Add(strip.Strip);
             WireGuardianHandle(strip, strips, byId, message);
-            _drawnByGroup[SpeechCapability.GuardianEffectKey(effect.Id)] = strip.Box;
-            _drawnByGroup[SpeechCapability.GuardianLevelKey(effect.Id)] = strip.Level;
         }
 
-        _drawnByGroup[SpeechCapability.GuardianTestKey] = test;
 
         var title = new TextBlock { Text = "Effects", FontFamily = Fonts.ProseFamily, FontSize = TypeScale.Secondary };
         ThemeInk.Bind(title, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
@@ -909,8 +906,7 @@ internal sealed partial class SettingControls
     }
 
     /// <summary>
-    /// A TEST tile for a press row drawn beside a toggle; <see cref="SettingsView.ControlFor"/> returns it
-    /// for the row's key.
+    /// A TEST tile for a press row drawn beside a toggle.
     /// </summary>
     internal Button BuildTestTile(SettingRow pressRow, StatusLine message)
     {
@@ -922,7 +918,6 @@ internal sealed partial class SettingControls
         AutomationProperties.SetName(test, pressRow.Label);
         test.Click += async (_, _) => await PlayGuardianTestAsync(pressRow, test, message);
 
-        _drawnByGroup[pressRow.Key] = test;
 
         return test;
     }

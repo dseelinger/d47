@@ -78,7 +78,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
     }
 
     private static SecretEditor Editor(SettingsHost host, string key) =>
-        Assert.IsType<SecretEditor>(host.View.ControlFor(key));
+        Assert.IsType<SecretEditor>(host.ControlFor(key));
 
     private static Button Press(SecretEditor editor, string label) =>
         editor.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == label);
@@ -281,7 +281,7 @@ public sealed class AStoredKeyShowsOnlyBulletsTests
             foreach (var (place, key) in new[] { ("speech-recognition", DeepgramRow), ("speech-synthesis", ElevenLabsRow) })
             {
                 ShowPlace(host, place);
-                host.View.ControlFor(key)!.BringIntoView();
+                host.ControlFor(key)!.BringIntoView();
                 Jobs();
 
                 using var frame = host.Window.CaptureRenderedFrame()!;

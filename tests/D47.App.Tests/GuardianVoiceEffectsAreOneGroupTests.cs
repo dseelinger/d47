@@ -72,11 +72,11 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
             .Single(button => button.Classes.Contains(InlinePicker.OptionClass) && AutomationProperties.GetName(button) == label));
     }
 
-    private static CheckBox Box(SettingsView view, string id) =>
-        (CheckBox)view.ControlFor(SpeechCapability.GuardianEffectKey(id))!;
+    private static CheckBox Box(SettingsHost host, string id) =>
+        (CheckBox)host.ControlFor(SpeechCapability.GuardianEffectKey(id))!;
 
-    private static Level LevelOf(SettingsView view, string id) =>
-        (Level)view.ControlFor(SpeechCapability.GuardianLevelKey(id))!;
+    private static Level LevelOf(SettingsHost host, string id) =>
+        (Level)host.ControlFor(SpeechCapability.GuardianLevelKey(id))!;
 
     /// <summary>A point along a level's track, as a share of its width, in window coordinates.</summary>
     private static Point Along(SettingsHost host, Level level, double share)
@@ -144,8 +144,8 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
 
         Assert.Equal("vocoder", settings.Read(SpeechCapability.GuardianPresetKey));
         Assert.Equal("Vocoder", PickerValue(host.View));
-        Assert.True(Box(host.View, "cylon").IsChecked);
-        Assert.False(Box(host.View, "glitch").IsChecked);
+        Assert.True(Box(host, "cylon").IsChecked);
+        Assert.False(Box(host, "glitch").IsChecked);
         Assert.False(Picker(host.View).IsOpen);
 
         host.Close();
@@ -160,10 +160,10 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
 
         Assert.Equal("Hull breach", PickerValue(host.View));
         Assert.Equal("Hull breach", settings.Current.Speech.GuardianVoice.Basis);
-        Assert.True(Box(host.View, "reverb").IsChecked);
+        Assert.True(Box(host, "reverb").IsChecked);
         Assert.Equal("3", settings.Read(SpeechCapability.GuardianLevelKey("reverb")));
 
-        Box(host.View, "cylon").IsChecked = true;
+        Box(host, "cylon").IsChecked = true;
         Jobs();
 
         Assert.Equal("Custom  · changed from Hull breach", PickerValue(host.View));
@@ -176,7 +176,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     {
         var (host, settings) = OpenVoice();
 
-        Box(host.View, "reverb").IsChecked = true;
+        Box(host, "reverb").IsChecked = true;
         Jobs();
         var before = settings.Current;
 
@@ -195,7 +195,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
 
         foreach (var id in new[] { "cylon", "chorus", "reverb" })
         {
-            Box(host.View, id).IsChecked = true;
+            Box(host, id).IsChecked = true;
             Jobs();
             Assert.Equal("true", settings.Read(SpeechCapability.GuardianEffectKey(id)));
         }
@@ -209,7 +209,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     public void ClickingSegmentNSetsLevelN()
     {
         var (host, settings) = OpenVoice();
-        var level = LevelOf(host.View, "glitch");
+        var level = LevelOf(host, "glitch");
 
         var point = Along(host, level, 4.5 / 20);
         host.Window.MouseDown(point, MouseButton.Left);
@@ -226,7 +226,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     public void DraggingAcrossTheTrackSetsTheLevelWhereItStops()
     {
         var (host, settings) = OpenVoice();
-        var level = LevelOf(host.View, "chorus");
+        var level = LevelOf(host, "chorus");
 
         var from = Along(host, level, 1.5 / 20);
         var to = Along(host, level, 11.5 / 20);
@@ -281,7 +281,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
 
         Assert.Equal("1", settings.Read(key));
 
-        var point = Along(host, LevelOf(host.View, "reverb"), 0.001);
+        var point = Along(host, LevelOf(host, "reverb"), 0.001);
         host.Window.MouseDown(point, MouseButton.Left);
         host.Window.MouseUp(point, MouseButton.Left);
         Jobs();
@@ -323,7 +323,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     {
         var playing = new TaskCompletionSource<string?>();
         var (host, _) = OpenVoice(guardianTest: _ => playing.Task);
-        var test = (Button)host.View.ControlFor(SpeechCapability.GuardianTestKey)!;
+        var test = (Button)host.ControlFor(SpeechCapability.GuardianTestKey)!;
 
         Assert.True(test.IsEnabled);
         Press(test);
@@ -341,7 +341,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
     {
         var (host, _) = OpenVoice(guardianTest: _ =>
             Task.FromException<string?>(new TtsException("Edge Neural returned no audio for \"Commander.\".")));
-        var test = (Button)host.View.ControlFor(SpeechCapability.GuardianTestKey)!;
+        var test = (Button)host.ControlFor(SpeechCapability.GuardianTestKey)!;
 
         Press(test);
         Jobs();
@@ -385,7 +385,7 @@ public sealed class GuardianVoiceEffectsAreOneGroupTests
         foreach (var effect in GuardianVoice.Table)
         {
             var strip = Strip(host.View, effect.Id);
-            var level = LevelOf(host.View, effect.Id);
+            var level = LevelOf(host, effect.Id);
             var right = strip.TranslatePoint(new Point(strip.Bounds.Width, 0), effects)!.Value.X;
 
             Assert.True(level.Bounds.Width >= SettingsView.GuardianTrackMinWidth, $"{effect.Label}'s track is {level.Bounds.Width} wide");

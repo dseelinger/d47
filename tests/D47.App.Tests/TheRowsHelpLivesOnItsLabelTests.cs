@@ -38,7 +38,7 @@ public class TheRowsHelpLivesOnItsLabelTests
     }
 
     private static TextBlock Label(SettingsHost host, string key) =>
-        host.View.LabelFor(key) ?? throw new InvalidOperationException($"{key} has no label");
+        host.LabelFor(key) ?? throw new InvalidOperationException($"{key} has no label");
 
     /// <summary>The help is on the row's own label rather than printed under it.</summary>
     [AvaloniaFact]

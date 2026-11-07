@@ -178,7 +178,7 @@ public sealed class ACheckboxIsElitesBoxAndItsRowTests
 
         SettingsPageReading.Open(host.View, "voice-input");
 
-        var box = (CheckBox)host.View.ControlFor(D47.Core.Capabilities.Builtin.ListeningCapability.EchoKey)!;
+        var box = (CheckBox)host.ControlFor(D47.Core.Capabilities.Builtin.ListeningCapability.EchoKey)!;
         var label = (TextBlock)box.Content!;
         var tile = box.FindAncestorOfType<Control>(includeSelf: false)!;
 

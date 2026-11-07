@@ -88,7 +88,7 @@ public class AVoiceRowNamesItsStandInTests
 
         var host = SettingsHost.Open(settings, viewState, paths, width: 1180, height: 900);
 
-        host.View.ShowPlaceOf(SpeechCapability.VoiceKey);
+        host.ShowPlaceOf(SpeechCapability.VoiceKey);
         Jobs();
 
         return host;

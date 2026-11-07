@@ -56,7 +56,7 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
 
         Assert.Equal("Manage", button.Content);
 
-        Assert.Equal("Custom cores (1)", host.View.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
+        Assert.Equal("Custom cores (1)", host.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
 
         Assert.DoesNotContain(
             host.View.GetVisualDescendants().OfType<SelectableTextBlock>(),
@@ -85,7 +85,7 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
         var button = host.View.GetVisualDescendants().OfType<Button>()
             .Single(found => found.Name == "OpenOwnPersonas");
 
-        Assert.Equal("Custom cores (0)", host.View.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
+        Assert.Equal("Custom cores (0)", host.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
         Assert.Equal("Write a core", button.Content);
 
         Assert.Contains(
@@ -95,7 +95,7 @@ public class AWrittenCoreIsReachableFromThePanelTests : IDisposable
         store.Save([new OwnPersona("own.rusty", "Rusty", "You are Rusty."), new OwnPersona("own.vesper", "Vesper", "You are Vesper.")]);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("Custom cores (2)", host.View.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
+        Assert.Equal("Custom cores (2)", host.LabelFor(D47.Core.Capabilities.Builtin.PersonaCapability.OwnKey)?.Text);
         Assert.Equal("Manage", button.Content);
 
         host.Close();

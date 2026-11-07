@@ -130,7 +130,7 @@ public sealed class ReadOnlyValuesSitOnGreyDataBlocksTests
     public void WhatItCostsShowsEachFigureAsItsOwnTile()
     {
         var host = Open(spend: Spoken());
-        host.View.ShowPlaceOf(SpeechCapability.SpentKey);
+        host.ShowPlaceOf(SpeechCapability.SpentKey);
         Jobs();
 
         var tiles = DataBlocks(host)
@@ -153,7 +153,7 @@ public sealed class ReadOnlyValuesSitOnGreyDataBlocksTests
     {
         var host = Open();
         var key = $"egress.{EgressDisclosure.Ids.First()}";
-        host.View.ShowPlaceOf(key);
+        host.ShowPlaceOf(key);
         Jobs();
 
         var toggle = Named(host, $"Disclose_{key.Replace('.', '_')}");
@@ -175,7 +175,7 @@ public sealed class ReadOnlyValuesSitOnGreyDataBlocksTests
 
         foreach (var key in new[] { ListeningCapability.CorrectionsKey, SpeechCapability.ResetVoicesKey })
         {
-            host.View.ShowPlaceOf(key);
+            host.ShowPlaceOf(key);
             Jobs();
 
             var press = Named(host, $"Press_{key.Replace('.', '_')}");
@@ -199,18 +199,18 @@ public sealed class ReadOnlyValuesSitOnGreyDataBlocksTests
             Capture(host, $"data-blocks-{placeId}-{width}.png");
         }
 
-        host.View.ShowPlaceOf(SpeechCapability.SpentKey);
+        host.ShowPlaceOf(SpeechCapability.SpentKey);
         Jobs();
         Reveal(host, DataBlocks(host).Last());
         Capture(host, $"data-blocks-voice-cost-{width}.png");
 
-        host.View.ShowPlaceOf(ListeningCapability.CorrectionsKey);
+        host.ShowPlaceOf(ListeningCapability.CorrectionsKey);
         Jobs();
         Reveal(host, Named(host, $"Press_{ListeningCapability.CorrectionsKey.Replace('.', '_')}"));
         Capture(host, $"data-blocks-voice-input-corrections-{width}.png");
 
         var egress = $"egress.{EgressDisclosure.Ids.First()}";
-        host.View.ShowPlaceOf(egress);
+        host.ShowPlaceOf(egress);
         Jobs();
         var disclose = Named(host, $"Disclose_{egress.Replace('.', '_')}");
         Click(disclose);

@@ -22,7 +22,8 @@ public sealed class UnfoldingOneSectionsHiddenSettingsTests
     private const string MayDoPlace = "What D47 may do";
     private const string KeyboardLabel = "Let D47 press keys in Elite";
 
-    private const string AiArea = "The ship's AI";
+    private const string ProvidersArea = "Providers";
+    private const string LanguageModelPlace = "Language model";
     private const string EffortLabel = "Never think harder than this";
 
     private static int AreaIndex(string title) => SettingsLayout.Areas.ToList().FindIndex(a => a.Title == title);
@@ -84,9 +85,10 @@ public sealed class UnfoldingOneSectionsHiddenSettingsTests
         Assert.True(LabelShown(host.View, KeyboardLabel));
         Assert.Equal("Show fewer", button.Content);
 
-        host.View.SelectArea(AreaIndex(AiArea));
+        host.View.SelectArea(AreaIndex(ProvidersArea));
         Jobs();
 
+        Assert.Equal(LanguageModelPlace.ToUpperInvariant(), SettingsPageReading.Words(SettingsPageReading.Title(host.View)));
         Assert.False(LabelShown(host.View, EffortLabel), "another place's fold must not have opened too");
 
         host.Close();

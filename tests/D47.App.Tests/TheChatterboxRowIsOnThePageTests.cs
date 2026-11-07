@@ -28,7 +28,7 @@ public class TheChatterboxRowIsOnThePageTests
         var host = SettingsHost.Open(settings, viewState, paths);
         Dispatcher.UIThread.RunJobs();
 
-        host.View.ShowPlaceOf(SpeechCapability.ProviderKey);
+        host.ShowPlaceOf(SpeechCapability.ProviderKey);
         Dispatcher.UIThread.RunJobs();
 
         return host;

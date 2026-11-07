@@ -25,11 +25,12 @@ internal sealed class SettingsHost
 
     private const double DefaultHeight = 880;
 
-    private SettingsHost(Window window, PanelView panel, SettingsView view)
+    private SettingsHost(Window window, PanelView panel, SettingsView view, SettingsService settings)
     {
         Window = window;
         Panel = panel;
         View = view;
+        Settings = settings;
     }
 
     /// <summary>The window it all hangs in.</summary>
@@ -39,6 +40,18 @@ internal sealed class SettingsHost
 
     /// <summary>The settings surface itself.</summary>
     public SettingsView View { get; }
+
+    /// <summary>The settings the view draws.</summary>
+    public SettingsService Settings { get; }
+
+    /// <inheritdoc cref="SettingsRowLookup.ShowPlaceOf"/>
+    public bool ShowPlaceOf(string key) => View.ShowPlaceOf(Settings, key);
+
+    /// <inheritdoc cref="SettingsRowLookup.ControlFor"/>
+    public Control? ControlFor(string key) => View.ControlFor(Settings, key);
+
+    /// <inheritdoc cref="SettingsRowLookup.LabelFor"/>
+    public TextBlock? LabelFor(string key) => View.LabelFor(Settings, key);
 
     public static SettingsHost Open(
         SettingsService settings,
@@ -118,7 +131,7 @@ internal sealed class SettingsHost
 
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        return new SettingsHost(window, panel, view);
+        return new SettingsHost(window, panel, view, settings);
     }
 
     /// <summary>Opens on the Voice Input place with the theme following the settings.</summary>

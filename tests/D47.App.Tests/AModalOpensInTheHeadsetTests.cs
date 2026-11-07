@@ -207,7 +207,7 @@ public class AModalOpensInTheHeadsetTests
     /// <summary>Opens one opener's modal on the headset, by the ray.</summary>
     private static ModalDialog Open(VrPanelSurface surface, SettingsView view, string opener)
     {
-        for (var i = 0; i < view.SectionIds.Count; i++)
+        for (var i = 0; i < SettingsRowLookup.PlaceIds.Count; i++)
         {
             view.ShowPlace(i);
             Jobs();
@@ -237,7 +237,7 @@ public class AModalOpensInTheHeadsetTests
 
         var openers = new List<Button>();
 
-        for (var i = 0; i < view.SectionIds.Count; i++)
+        for (var i = 0; i < SettingsRowLookup.PlaceIds.Count; i++)
         {
             view.ShowPlace(i);
             Jobs();
@@ -441,7 +441,7 @@ public class AModalOpensInTheHeadsetTests
         window.Show();
         Jobs();
 
-        view.ShowPlaceOf(MacroCapability.ListKey);
+        view.ShowPlaceOf(settings, MacroCapability.ListKey);
         Jobs();
 
         view.GetVisualDescendants().OfType<Button>()

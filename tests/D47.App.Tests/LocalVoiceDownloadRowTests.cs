@@ -39,7 +39,7 @@ public class LocalVoiceDownloadRowTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
+        host.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
         Dispatcher.UIThread.RunJobs();
 
         var button = Find<Button>(host.View, ButtonName);
@@ -91,7 +91,7 @@ public class LocalVoiceDownloadRowTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
+        host.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
         Dispatcher.UIThread.RunJobs();
         var button = Find<Button>(host.View, ButtonName);
 
@@ -120,7 +120,7 @@ public class LocalVoiceDownloadRowTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
+        host.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
         Dispatcher.UIThread.RunJobs();
 
         Find<Button>(host.View, ButtonName).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

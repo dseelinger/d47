@@ -50,7 +50,7 @@ public class YourOwnAudioIsFourStatusRowsTests
 
         window.Content = view;
         window.Show();
-        view.ShowPlaceOf(AudioCapability.OwnMusicKey);
+        view.ShowPlaceOf(settings, AudioCapability.OwnMusicKey);
         Dispatcher.UIThread.RunJobs();
 
         return view;

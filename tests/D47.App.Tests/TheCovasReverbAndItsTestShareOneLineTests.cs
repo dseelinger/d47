@@ -35,7 +35,7 @@ public sealed class TheCovasReverbAndItsTestShareOneLineTests
     public void TheTileTheHintAndTheTestButtonShareOneRow()
     {
         var (host, _) = OpenVoice(_ => Task.FromResult<string?>(null));
-        var test = (Button)host.View.ControlFor(SpeechCapability.CovasTestKey)!;
+        var test = (Button)host.ControlFor(SpeechCapability.CovasTestKey)!;
         var line = Line(host.View);
 
         Assert.Same(line, test.GetVisualParent());
@@ -43,7 +43,7 @@ public sealed class TheCovasReverbAndItsTestShareOneLineTests
 
         var hint = line.GetVisualDescendants().OfType<TextBlock>()
             .Single(text => text.Text == "Hear the COVAS reverb without paying for it.");
-        var tile = host.View.ControlFor(SpeechCapability.CovasReverbKey)!;
+        var tile = host.ControlFor(SpeechCapability.CovasReverbKey)!;
 
         Assert.Contains(tile, line.GetVisualDescendants());
         Assert.Contains(hint, line.GetVisualDescendants());
@@ -64,7 +64,8 @@ public sealed class TheCovasReverbAndItsTestShareOneLineTests
     {
         var (host, _) = OpenVoice(_ => Task.FromResult<string?>(null));
 
-        Assert.Null(host.View.LabelFor(SpeechCapability.CovasTestKey));
+        Assert.NotNull(host.LabelFor(SpeechCapability.CovasReverbKey));
+        Assert.Null(host.LabelFor(SpeechCapability.CovasTestKey));
 
         var loose = Page(host.View).GetVisualDescendants().OfType<TextBlock>()
             .Where(text => text.Text == "Test" && !text.GetVisualAncestors().OfType<Button>().Any());
@@ -78,7 +79,7 @@ public sealed class TheCovasReverbAndItsTestShareOneLineTests
     {
         var (host, settings) = OpenVoice();
         var before = settings.Current.Speech.CovasReverb;
-        var box = (CheckBox)host.View.ControlFor(SpeechCapability.CovasReverbKey)!;
+        var box = (CheckBox)host.ControlFor(SpeechCapability.CovasReverbKey)!;
 
         box.IsChecked = !before;
         Jobs();
@@ -93,7 +94,7 @@ public sealed class TheCovasReverbAndItsTestShareOneLineTests
     {
         var playing = new TaskCompletionSource<string?>();
         var (host, _) = OpenVoice(_ => playing.Task);
-        var test = (Button)host.View.ControlFor(SpeechCapability.CovasTestKey)!;
+        var test = (Button)host.ControlFor(SpeechCapability.CovasTestKey)!;
 
         test.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Jobs();

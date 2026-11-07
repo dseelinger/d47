@@ -27,8 +27,10 @@ public sealed class ASpokenFindOpensItOnEverySurfaceTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    private sealed class Shown(PanelView view, Window window, Func<SettingsView?> page, SettingsView strip)
+    private sealed class Shown(PanelView view, Window window, Func<SettingsView?> page, SettingsView strip, SettingsService settings)
     {
+        public SettingsService Settings => settings;
+
         public PanelView View => view;
 
         public SettingsView? Page => page();
@@ -74,7 +76,7 @@ public sealed class ASpokenFindOpensItOnEverySurfaceTests
         window.Show();
         Jobs();
 
-        return new Shown(view, window, () => page, strip);
+        return new Shown(view, window, () => page, strip, settings);
     }
 
     private static (PanelRouting Routing, Shown Window, Shown Headset, PanelNavigator Mini) Routed()
@@ -116,7 +118,7 @@ public sealed class ASpokenFindOpensItOnEverySurfaceTests
         {
             Assert.Equal(PanelTab.Settings, surface.View.Nav.Tab);
             Assert.NotNull(surface.Page);
-            Assert.Same(surface.Page.FrameFor(CalloutCapability.FuelKey), surface.Page.LandedOn);
+            Assert.True(surface.Page.MarksRow(surface.Settings, CalloutCapability.FuelKey));
         }
 
         Assert.Equal(PanelTab.Transcript, mini.Tab);
@@ -140,7 +142,7 @@ public sealed class ASpokenFindOpensItOnEverySurfaceTests
             Assert.Equal(PanelTab.Assets, surface.View.Nav.Tab);
             Assert.Equal("loadout.ships", surface.View.Nav.RootKeyOf(PanelTab.Assets));
             Assert.StartsWith("▾ SETTINGS ", ((Button)surface.Strip.BarTool!).Content as string, StringComparison.Ordinal);
-            Assert.Same(surface.Strip.FrameFor("ships.art"), surface.Strip.LandedOn);
+            Assert.True(surface.Strip.MarksRow(surface.Settings, "ships.art"));
         }
 
         window.Close();

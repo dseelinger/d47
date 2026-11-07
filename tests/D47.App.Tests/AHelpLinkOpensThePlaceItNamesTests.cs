@@ -52,7 +52,7 @@ public sealed class AHelpLinkOpensThePlaceItNamesTests
         host.View.RevealPlace(open);
         Jobs();
 
-        Assert.Equal(open, host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal(open, host.View.OpenPlaceId());
 
         var note = Note(host.View, group);
         var text = note.Inlines!.Text!;
@@ -63,7 +63,7 @@ public sealed class AHelpLinkOpensThePlaceItNamesTests
 
         Press(host.Window, note, label);
 
-        Assert.Equal(expected, host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal(expected, host.View.OpenPlaceId());
 
         host.Close();
     }

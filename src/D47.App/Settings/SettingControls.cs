@@ -74,11 +74,6 @@ internal readonly record struct SettingControl(Control Control, Action Refresh, 
 /// <summary>Builds the control for each settings row.</summary>
 internal sealed partial class SettingControls(SettingRowHost host, SettingServices services)
 {
-    /// <summary>Controls a group's own builder draws for rows that have none of their own, by key.</summary>
-    private readonly Dictionary<string, Control> _drawnByGroup = new(StringComparer.Ordinal);
-
-    public IReadOnlyDictionary<string, Control> DrawnByGroup => _drawnByGroup;
-
     /// <summary>One download at a time, and the row that is showing it.</summary>
     private bool _downloadingModel;
 

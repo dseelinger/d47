@@ -45,7 +45,7 @@ public class AProtectedRowGetsABarAndTheScreenGetsALegendTests
 
         ShowPageOf(host, settings, ListeningCapability.PushToTalkKeyKey);
 
-        var label = host.View.LabelFor(ListeningCapability.PushToTalkKeyKey);
+        var label = host.LabelFor(ListeningCapability.PushToTalkKeyKey);
         Assert.NotNull(label);
 
         var bars = label!.GetVisualAncestors()
@@ -102,7 +102,7 @@ public class AProtectedRowGetsABarAndTheScreenGetsALegendTests
 
         ShowPageOf(host, settings, PersonaCapability.PersonaKey);
 
-        var label = host.View.LabelFor(PersonaCapability.PersonaKey);
+        var label = host.LabelFor(PersonaCapability.PersonaKey);
         Assert.NotNull(label);
 
         Assert.DoesNotContain(

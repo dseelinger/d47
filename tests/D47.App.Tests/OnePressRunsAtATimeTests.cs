@@ -46,11 +46,11 @@ public class OnePressRunsAtATimeTests
         var message = new StatusLine();
         var press = controls.Build(settings.Find(ShipsCapability.RescanKey)!, message);
         var guardian = controls.Build(settings.Find(SpeechCapability.GuardianPresetKey)!, message);
-        var test = (Button)controls.DrawnByGroup[SpeechCapability.GuardianTestKey];
-
         var window = new Window { Content = new StackPanel { Children = { press.Control, guardian.Control } } };
         window.Show();
         Dispatcher.UIThread.RunJobs();
+
+        var test = guardian.Control.GetVisualDescendants().OfType<Button>().Single(found => found.Name == "GuardianTest");
 
         var button = press.Control.GetVisualDescendants().OfType<Button>().Single(found => found.Name == "Press_ships_remembered");
 

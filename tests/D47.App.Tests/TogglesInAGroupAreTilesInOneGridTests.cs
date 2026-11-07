@@ -71,7 +71,7 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
         Open(host.View, "voice-input");
 
         var before = settings.Read(key);
-        var tile = (CheckBox)host.View.ControlFor(key)!;
+        var tile = (CheckBox)host.ControlFor(key)!;
         var label = (TextBlock)tile.Content!;
 
         var middle = label.TranslatePoint(new Point(label.Bounds.Width / 2, label.Bounds.Height / 2), host.Window)!.Value;

@@ -33,7 +33,7 @@ public class ALevelIsABarOfTwentySegmentsTests
     /// <summary>The bar that writes <paramref name="key"/>: moved one step, it is the one whose setting changes.</summary>
     private static Level LevelOn(SettingsHost host, SettingsService settings, string key)
     {
-        host.View.ShowPlaceOf(key);
+        host.ShowPlaceOf(key);
         Jobs();
 
         foreach (var level in host.View.GetVisualDescendants().OfType<Level>().Where(level => level.IsEffectivelyVisible))

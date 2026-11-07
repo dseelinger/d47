@@ -61,8 +61,8 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
                 && Avalonia.Automation.AutomationProperties.GetName(button) == label));
     }
 
-    private static CheckBox Box(SettingsView view, string id) =>
-        (CheckBox)view.ControlFor(SpeechCapability.GuardianEffectKey(id))!;
+    private static CheckBox Box(SettingsHost host, string id) =>
+        (CheckBox)host.ControlFor(SpeechCapability.GuardianEffectKey(id))!;
 
     [AvaloniaFact]
     public void UpdateOnlyShowsWhenCustomIsChangedFromASavedPreset()
@@ -72,7 +72,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
         PickSaved(host.View, "Hull breach");
         Assert.False(Update(host.View).IsVisible);
 
-        Box(host.View, "cylon").IsChecked = true;
+        Box(host, "cylon").IsChecked = true;
         Jobs();
 
         Assert.Equal("custom", settings.Read(SpeechCapability.GuardianPresetKey));
@@ -88,7 +88,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
         var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         PickSaved(host.View, "Hull breach");
-        Box(host.View, "cylon").IsChecked = true;
+        Box(host, "cylon").IsChecked = true;
         Jobs();
 
         Press(Update(host.View));
@@ -109,7 +109,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
         var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
         PickSaved(host.View, "Hull breach");
-        Box(host.View, "cylon").IsChecked = true;
+        Box(host, "cylon").IsChecked = true;
         Jobs();
         Press(Update(host.View));
 
@@ -165,7 +165,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
     {
         var (host, settings) = OpenVoice();
 
-        Box(host.View, "reverb").IsChecked = true;
+        Box(host, "reverb").IsChecked = true;
         Jobs();
         Press(Named(host.View, SettingsView.GuardianSaveAsName));
         var field = Page(host.View).GetVisualDescendants().OfType<TextBox>()
@@ -175,7 +175,7 @@ public sealed class UpdateAndDeleteVoicePresetsWithUndoTests
         Press(Named(host.View, SettingsView.GuardianNameActionName));
 
         PickSaved(host.View, "Hull breach");
-        Box(host.View, "cylon").IsChecked = true;
+        Box(host, "cylon").IsChecked = true;
         Jobs();
         Press(Update(host.View));
         Assert.True(Notice(host.View).IsVisible);

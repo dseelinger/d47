@@ -35,10 +35,10 @@ public sealed class SavedBindingProfilesAreListedWithADeleteTests
         Assert.True(store.Save("desk").Done);
 
         var host = SettingsHost.Open(settings, viewState, paths, bindingProfiles: store);
-        host.View.ShowPlaceOf(BindingProfilesCapability.ListKey);
+        host.ShowPlaceOf(BindingProfilesCapability.ListKey);
         Jobs();
 
-        var row = Assert.IsAssignableFrom<Control>(host.View.ControlFor(BindingProfilesCapability.ListKey));
+        var row = Assert.IsAssignableFrom<Control>(host.ControlFor(BindingProfilesCapability.ListKey));
         Assert.Contains("2 saved: desk, sim pit.", Texts(row));
         Assert.Equal(2, Deletes(row).Count);
 
@@ -72,10 +72,10 @@ public sealed class SavedBindingProfilesAreListedWithADeleteTests
         var store = new D47.Core.Input.BindingProfiles(bindings, paths.BindingProfiles, () => running, NullLogger.Instance);
 
         var host = SettingsHost.Open(settings, viewState, paths, bindingProfiles: store);
-        host.View.ShowPlaceOf(BindingProfilesCapability.ListKey);
+        host.ShowPlaceOf(BindingProfilesCapability.ListKey);
         Jobs();
 
-        var row = Assert.IsAssignableFrom<Control>(host.View.ControlFor(BindingProfilesCapability.ListKey));
+        var row = Assert.IsAssignableFrom<Control>(host.ControlFor(BindingProfilesCapability.ListKey));
         var box = row.GetVisualDescendants().OfType<TextBox>().Single();
         var save = Buttons(row, "Save").Single();
         Assert.False(save.IsEnabled);

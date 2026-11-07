@@ -46,7 +46,6 @@ public sealed class PressingAHumorSegmentSetsThatLevelTests
 
     private static ScaleTrack TrackOn(SettingsView view, string key, string label)
     {
-        view.ShowPlaceOf(key);
         view.RevealRow(key);
         Jobs();
 

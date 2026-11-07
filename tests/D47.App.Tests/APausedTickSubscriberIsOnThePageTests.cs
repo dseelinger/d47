@@ -22,7 +22,7 @@ public class APausedTickSubscriberIsOnThePageTests
         var host = SettingsHost.Open(settings, viewState, paths);
 
         // Diagnostics' own place (#220).
-        host.View.ShowPlaceOf(D47.Core.Capabilities.Builtin.DiagnosticsCapability.PausedKey);
+        host.ShowPlaceOf(D47.Core.Capabilities.Builtin.DiagnosticsCapability.PausedKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         return host;

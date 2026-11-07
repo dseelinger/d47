@@ -118,7 +118,7 @@ public class VoiceRowFitsItsColumnTests
         // Not the reset glyph or the info glyph beside the label — those are different buttons about
         // different things (#61, and the 2026-09-01 callout).
         var button = RowFor(host, "Voice").GetVisualDescendants().OfType<Button>()
-            .First(control => !D47.App.Settings.SettingsView.IsRowChrome(control));
+            .First(control => control.Name != D47.App.Settings.SettingsView.RowResetName);
 
         Assert.Contains("Christopher", ToolTip.GetTip(button) as string ?? string.Empty, StringComparison.Ordinal);
 
@@ -137,7 +137,7 @@ public class VoiceRowFitsItsColumnTests
             : SettingsHost.Open(settings, viewState, paths);
 
         settings.Apply(SpeechCapability.VoiceKey, voice, SettingsCaller.Panel);
-        host.View.ShowPlaceOf(SpeechCapability.VoiceKey);
+        host.ShowPlaceOf(SpeechCapability.VoiceKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         return host;

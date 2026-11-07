@@ -23,7 +23,7 @@ public class TheLocalVoiceRowIsOnThePageTests
         var host = SettingsHost.Open(settings, viewState, paths);
         Dispatcher.UIThread.RunJobs();
 
-        host.View.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
+        host.ShowPlaceOf(SpeechCapability.LocalVoiceKey);
         Dispatcher.UIThread.RunJobs();
 
         return host;
@@ -41,7 +41,7 @@ public class TheLocalVoiceRowIsOnThePageTests
 
         // Up until the container also holds the row's own controls.
         while (at is not null && at.GetVisualDescendants().OfType<Button>()
-                   .Any(button => !D47.App.Settings.SettingsView.IsRowChrome(button)) is false)
+                   .Any(button => button.Name != D47.App.Settings.SettingsView.RowResetName) is false)
         {
             at = at.GetVisualParent() as Control;
         }

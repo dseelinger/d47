@@ -86,7 +86,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
         Assert.True(SaveAs(host.View).IsVisible);
         Assert.False(SaveAs(host.View).IsEnabled);
 
-        Box(host.View, "reverb").IsChecked = true;
+        Box(host, "reverb").IsChecked = true;
         Jobs();
 
         Assert.Equal("custom", settings.Read(SpeechCapability.GuardianPresetKey));
@@ -117,7 +117,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     {
         var (host, settings) = OpenVoice();
 
-        Box(host.View, "reverb").IsChecked = true;
+        Box(host, "reverb").IsChecked = true;
         Jobs();
 
         Press(SaveAs(host.View));
@@ -170,7 +170,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     {
         var (host, settings) = OpenVoice(arrange: s => SavedGuardianPreset.WithSaved(s, "Hull breach", "reverb", 3));
 
-        Box(host.View, "cylon").IsChecked = true;
+        Box(host, "cylon").IsChecked = true;
         Jobs();
 
         Press(SaveAs(host.View));
@@ -190,7 +190,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     {
         var (host, settings) = OpenVoice();
 
-        Box(host.View, "reverb").IsChecked = true;
+        Box(host, "reverb").IsChecked = true;
         Jobs();
         Press(SaveAs(host.View));
 
@@ -217,7 +217,7 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
     {
         var (host, settings) = OpenVoice();
 
-        Box(host.View, "reverb").IsChecked = true;
+        Box(host, "reverb").IsChecked = true;
         Jobs();
         Press(SaveAs(host.View));
         Type(NameField(host.View), "Hull breach");
@@ -254,6 +254,6 @@ public sealed class SaveAndRenameYourOwnVoicePresetsTests
         host.Close();
     }
 
-    private static CheckBox Box(SettingsView view, string id) =>
-        (CheckBox)view.ControlFor(SpeechCapability.GuardianEffectKey(id))!;
+    private static CheckBox Box(SettingsHost host, string id) =>
+        (CheckBox)host.ControlFor(SpeechCapability.GuardianEffectKey(id))!;
 }

@@ -176,7 +176,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         // The next launch, over the same store.
         var (_, next, second) = Settings(settings, viewState, paths);
 
-        Assert.Equal(section, next.SectionIds[next.ActiveSection]);
+        Assert.Equal(section, next.OpenPlaceId());
 
         second.Close();
     }
@@ -197,7 +197,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (_, view, window) = Settings(settings, viewState, paths);
 
-        Assert.Equal(section, view.SectionIds[view.ActiveSection]);
+        Assert.Equal(section, view.OpenPlaceId());
 
         var fold = view.GetVisualDescendants().OfType<Button>()
             .Single(button => button.IsEffectivelyVisible && button.Content is string text

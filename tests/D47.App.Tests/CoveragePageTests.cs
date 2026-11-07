@@ -461,7 +461,7 @@ public class CoveragePageTests
 
         Assert.Empty(host.Window.Modals());
         Assert.DoesNotContain(host.Panel.GetVisualDescendants(), c => c.Name == "CoverageGo");
-        Assert.NotNull(host.View.LandedOn);
+        Assert.NotNull(host.View.LandedOn());
 
         host.Close();
     }

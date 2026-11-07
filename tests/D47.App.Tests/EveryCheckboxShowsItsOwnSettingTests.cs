@@ -13,6 +13,12 @@ namespace D47.App.Tests;
 public class EveryCheckboxShowsItsOwnSettingTests
 {
     /// <summary>
+    /// The checkboxes the settings page draws for a row of its own, less the one whose caption another row
+    /// on its page shares (privacy.usageCounts and egress.usagecounts are both "Usage counts").
+    /// </summary>
+    private const int DrawnCheckboxes = 154;
+
+    /// <summary>
     /// Through the real drawn control, because the drawn control is the only place this fault was ever
     /// visible.
     /// </summary>
@@ -22,17 +28,21 @@ public class EveryCheckboxShowsItsOwnSettingTests
         var (settings, viewState, paths, registry, _) = TestSurface.CreateFull();
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        var toggles = Rows(registry)
-            .Select(row => (row.Key, Box: host.View.ControlFor(row.Key) as CheckBox))
-            .Where(found => found.Box is not null)
-            .ToList();
-
-        Assert.NotEmpty(toggles);
-
         var lying = new List<string>();
+        var checkedBoxes = 0;
 
-        foreach (var (key, toggle) in toggles)
+        foreach (var key in Rows(registry).Select(row => row.Key))
         {
+            // Each row is read on its own page, the only place a Commander sees its checkbox.
+            if (!host.ShowPlaceOf(key) || Unambiguous(host, key) is not CheckBox toggle)
+            {
+                continue;
+            }
+
+            checkedBoxes++;
+
+            var before = settings.Read(key);
+
             foreach (var wanted in new[] { true, false })
             {
                 // A row that refuses the value is a different subject — an AppliesWhen that is off, or one
@@ -45,12 +55,18 @@ public class EveryCheckboxShowsItsOwnSettingTests
 
                 Dispatcher.UIThread.RunJobs();
 
-                if (toggle!.IsChecked != wanted)
+                if (toggle.IsChecked != wanted)
                 {
                     lying.Add($"{key} is {wanted} and its checkbox reads {toggle.IsChecked}");
                 }
             }
+
+            // Put back, so a switch that folds or hides other rows leaves them drawn for their own turn.
+            settings.Apply(key, before ?? "false", SettingsCaller.Panel);
+            Dispatcher.UIThread.RunJobs();
         }
+
+        Assert.Equal(DrawnCheckboxes, checkedBoxes);
 
         Assert.True(
             lying.Count == 0,
@@ -59,6 +75,18 @@ public class EveryCheckboxShowsItsOwnSettingTests
             + $"ever: {string.Join("; ", lying)}");
 
         host.Close();
+    }
+
+    private static Control? Unambiguous(SettingsHost host, string key)
+    {
+        try
+        {
+            return host.ControlFor(key);
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     /// <summary>

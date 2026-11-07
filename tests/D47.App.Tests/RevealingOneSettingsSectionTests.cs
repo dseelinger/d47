@@ -52,12 +52,12 @@ public class RevealingOneSettingsSectionTests
         host.View.Reveal(MemoryCapability.Id);
         Jobs();
 
-        Assert.Equal("memory", host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal("memory", host.View.OpenPlaceId());
 
         host.View.Reveal(ListeningCapability.Id);
         Jobs();
 
-        Assert.Equal("voice-input", host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal("voice-input", host.View.OpenPlaceId());
 
         host.Close();
     }

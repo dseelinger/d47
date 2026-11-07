@@ -25,13 +25,17 @@ public sealed class TheHomeSystemBoxSuggestsSystemNamesTests
 
     private sealed record Shown(SettingsService Settings, SettingsView View, Window Window, List<string> Asked)
     {
-        public TextBox Box(string key) =>
-            View.ControlFor(key) is TextBox box
+        public TextBox Box(string key)
+        {
+            Assert.True(View.ShowPlaceOf(Settings, key));
+
+            return View.ControlFor(Settings, key) is TextBox box
                 ? box
-                : View.ControlFor(key)!.GetVisualDescendants().OfType<TextBox>().First();
+                : View.ControlFor(Settings, key)!.GetVisualDescendants().OfType<TextBox>().First();
+        }
 
         public IEnumerable<Button> Listed(string key) =>
-            View.ControlFor(key)!.GetVisualDescendants()
+            View.ControlFor(Settings, key)!.GetVisualDescendants()
                 .OfType<Border>()
                 .Where(border => border.Name == NameSuggestions.ListName && border.IsEffectivelyVisible)
                 .SelectMany(border => border.GetVisualDescendants().OfType<Button>());

@@ -62,7 +62,7 @@ internal static class SettingsPageReading
     /// <summary>Opens a place by id, the way a click on its nav item does.</summary>
     public static void Open(SettingsView view, string placeId)
     {
-        view.ShowPlace(view.SectionIds.ToList().IndexOf(placeId));
+        view.ShowPlace(SettingsRowLookup.PlaceIds.ToList().IndexOf(placeId));
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
     }
 

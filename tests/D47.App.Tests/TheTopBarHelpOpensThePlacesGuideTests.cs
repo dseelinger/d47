@@ -92,7 +92,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
         Assert.False(host.Panel.Nav.Modal, "help was dismissed");
         Assert.Equal(PanelTab.Settings, host.Panel.Tab);
         Assert.Equal("Settings", host.Panel.Nav.Trail[^1].Word);
-        Assert.Equal("voice-input", host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal("voice-input", host.View.OpenPlaceId());
 
         host.Close();
     }
@@ -134,7 +134,7 @@ public class TheTopBarHelpOpensThePlacesGuideTests
 
         SettingsPageReading.Open(host.View, bandless.Id);
 
-        if (host.View.SectionIds[host.View.ActiveSection] != bandless.Id)
+        if (host.View.OpenPlaceId() != bandless.Id)
         {
             // That place has no page on a fresh surface.
             host.Close();

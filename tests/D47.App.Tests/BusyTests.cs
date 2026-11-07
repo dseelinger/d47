@@ -169,7 +169,7 @@ public class BusyTests
             .FollowSettings(settings);
 
         var host = SettingsHost.Open(settings, viewState, paths);
-        host.View.ShowPlaceOf(D47.Core.Capabilities.Builtin.SpeechCapability.VoiceKey);
+        host.ShowPlaceOf(D47.Core.Capabilities.Builtin.SpeechCapability.VoiceKey);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         var glyphs = host.View.GetVisualDescendants().OfType<BusyGlyph>().ToList();

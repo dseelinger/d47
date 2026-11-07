@@ -109,8 +109,8 @@ public sealed class AGroupHeadCarriesItsOwnResetTests
         Jobs();
 
         Assert.True(OnPage(host.View, Head(host.View, "Wake word")));
-        Assert.True(OnPage(host.View, host.View.ControlFor(ListeningCapability.WakeWordsKey)));
-        Assert.True(OnPage(host.View, host.View.ControlFor(ListeningCapability.WakeWindowKey)));
+        Assert.True(OnPage(host.View, host.ControlFor(ListeningCapability.WakeWordsKey)));
+        Assert.True(OnPage(host.View, host.ControlFor(ListeningCapability.WakeWindowKey)));
 
         host.Close();
     }
@@ -125,7 +125,7 @@ public sealed class AGroupHeadCarriesItsOwnResetTests
         Open(host.View, "sounds");
 
         Assert.True(OnPage(host.View, Head(host.View, "Cues")));
-        Assert.True(OnPage(host.View, host.View.ControlFor(SpeechCapability.CuesKey)));
+        Assert.True(OnPage(host.View, host.ControlFor(SpeechCapability.CuesKey)));
 
         host.Close();
     }

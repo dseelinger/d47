@@ -69,7 +69,7 @@ public sealed class ANewModelIsDrawnOnItsRowTests : IDisposable
         string shown)
     {
         var host = SettingsHost.Open(settings, viewState, paths, width: 820, height: 1100);
-        host.View.ShowPlaceOf(key);
+        host.ShowPlaceOf(key);
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
         host.Window.CaptureRenderedFrame()!.SaveCapture(file);

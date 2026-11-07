@@ -43,7 +43,7 @@ public class ALongListOpensFromADropdownTileTests
 
         var host = SettingsHost.Open(settings, viewState, paths, width: width, height: 800);
 
-        host.View.ShowPlaceOf(ListeningCapability.DeviceKey);
+        host.ShowPlaceOf(ListeningCapability.DeviceKey);
         Jobs();
 
         return host;
@@ -110,7 +110,7 @@ public class ALongListOpensFromADropdownTileTests
 
         Capture(host.Window, $"dropdown-tile-voice-input-{width}");
 
-        host.View.ShowPlaceOf(SpeechCapability.VoiceKey);
+        host.ShowPlaceOf(SpeechCapability.VoiceKey);
         Jobs();
 
         Assert.NotNull(Tile(host.View, "Voice"));

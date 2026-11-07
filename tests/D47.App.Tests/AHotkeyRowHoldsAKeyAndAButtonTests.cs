@@ -40,7 +40,7 @@ public sealed class AHotkeyRowHoldsAKeyAndAButtonTests
         settings.Apply(buttonKey, $"{Stick}#4", SettingsCaller.Panel);
 
         var host = SettingsHost.Open(settings, viewState, paths, width: 820, height: 1100);
-        host.View.ShowPlaceOf(key);
+        host.ShowPlaceOf(key);
         Dispatcher.UIThread.RunJobs();
 
         host.Window.CaptureRenderedFrame()!.SaveCapture(file);

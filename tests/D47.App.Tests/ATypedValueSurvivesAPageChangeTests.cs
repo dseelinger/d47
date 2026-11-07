@@ -21,7 +21,7 @@ public sealed class ATypedValueSurvivesAPageChangeTests
         var host = SettingsHost.Open(settings, viewState, paths);
         var view = host.View;
 
-        var ids = view.SectionIds;
+        var ids = SettingsRowLookup.PlaceIds;
         TextBox? box = null;
         var place = -1;
 

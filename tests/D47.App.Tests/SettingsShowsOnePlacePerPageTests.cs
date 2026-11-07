@@ -44,16 +44,18 @@ public sealed class SettingsShowsOnePlacePerPageTests
         Assert.Equal(crumb, Crumb(host.View).Text);
         Assert.Equal(place.Title.ToUpperInvariant(), Words(Title(host.View)));
 
-        Assert.Contains(Keys(settings, place), key => OnPage(host.View, host.View.ControlFor(key)));
+        Assert.Contains(Keys(settings, place), key => OnPage(host.View, host.ControlFor(key)));
 
-        var ownKeys = Keys(settings, place).ToHashSet();
+        // Every row label on the page is the caption of one of this place's own rows.
+        var captions = Keys(settings, place)
+            .Select(key => settings.Find(key)?.CaptionFor(settings.Current))
+            .ToHashSet();
+        var drawn = host.View.RowLabels().Select(Words).ToList();
 
-        foreach (var other in SettingsLayout.Areas.SelectMany(a => a.Places).Where(p => p.Id != placeId))
-        {
-            Assert.DoesNotContain(
-                Keys(settings, other).Where(key => !ownKeys.Contains(key)),
-                key => OnPage(host.View, host.View.ControlFor(key)));
-        }
+        Assert.NotEmpty(drawn);
+        var foreign = drawn.Where(caption => !captions.Contains(caption)).ToList();
+
+        Assert.True(foreign.Count == 0, "drawn here but not this place's: " + string.Join(", ", foreign));
 
         host.Close();
     }
@@ -71,7 +73,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         host.View.Reveal(ListeningCapability.Id);
         Jobs();
 
-        Assert.Equal("voice-input", host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal("voice-input", host.View.OpenPlaceId());
         Assert.Equal("VOICE INPUT", Words(Title(host.View)));
 
         host.Close();
@@ -88,7 +90,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         var host = SettingsHost.Open(settings, viewState, paths);
         Jobs();
 
-        Assert.Equal("turn-fails", host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal("turn-fails", host.View.OpenPlaceId());
         Assert.Equal("PROVIDERS ›", Crumb(host.View).Text);
         Assert.Equal("WHEN A TURN FAILS", Words(Title(host.View)));
 
@@ -105,7 +107,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
         host.View.SelectArea(AreaIndex("Providers"));
         Jobs();
 
-        Assert.Equal("language-model", host.View.SectionIds[host.View.ActiveSection]);
+        Assert.Equal("language-model", host.View.OpenPlaceId());
 
         host.Close();
     }
@@ -148,7 +150,7 @@ public sealed class SettingsShowsOnePlacePerPageTests
 
         Jobs();
 
-        Assert.Equal("turn-fails", view.SectionIds[view.ActiveSection]);
+        Assert.Equal("turn-fails", view.OpenPlaceId());
         Assert.Equal("WHEN A TURN FAILS", Words(Title(view)));
 
         host.Close();

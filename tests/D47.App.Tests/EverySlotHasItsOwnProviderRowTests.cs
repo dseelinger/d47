@@ -23,7 +23,7 @@ public class EverySlotHasItsOwnProviderRowTests
         var host = SettingsHost.Open(settings, viewState, paths);
 
         var missing = OverTheAir
-            .Where(slot => host.View.ControlFor(SpeechCapability.SlotProviderKey(slot)) is null)
+            .Where(slot => !host.ShowPlaceOf(SpeechCapability.SlotProviderKey(slot)) || host.ControlFor(SpeechCapability.SlotProviderKey(slot)) is null)
             .Select(slot => slot.Name)
             .ToArray();
 
@@ -39,8 +39,10 @@ public class EverySlotHasItsOwnProviderRowTests
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths);
 
-        Assert.NotNull(host.View.ControlFor(SpeechCapability.ProviderKey));
-        Assert.Null(host.View.ControlFor("speech.provider.aboard"));
+        Assert.True(host.ShowPlaceOf(SpeechCapability.ProviderKey));
+        Assert.NotNull(host.ControlFor(SpeechCapability.ProviderKey));
+        Assert.False(host.ShowPlaceOf("speech.provider.aboard"));
+        Assert.Null(host.ControlFor("speech.provider.aboard"));
 
         host.Close();
     }
@@ -96,7 +98,9 @@ public class EverySlotHasItsOwnProviderRowTests
     /// <summary>What a choice row is displaying, whichever of the two controls it drew.</summary>
     private static string Shown(SettingsHost host, string key)
     {
-        var control = host.View.ControlFor(key);
+        Assert.True(host.ShowPlaceOf(key));
+
+        var control = host.ControlFor(key);
 
         Assert.NotNull(control);
 

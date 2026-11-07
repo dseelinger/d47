@@ -80,7 +80,7 @@ public class ARayPressOnAnArrowStepsTheNumberTests
 
     private static RepeatButton Arrow(VrPanelSurface surface, SettingsView view, string key, string label, string name)
     {
-        view.ShowPlaceOf(key);
+        view.RevealRow(key);
         Jobs();
         Render(surface);
 

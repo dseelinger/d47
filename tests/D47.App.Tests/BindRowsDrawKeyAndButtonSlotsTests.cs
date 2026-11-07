@@ -55,7 +55,7 @@ public sealed class BindRowsDrawKeyAndButtonSlotsTests
     public void ARowWithoutControllersKeepsItsKeySlotInTheSameColumn()
     {
         var host = Open("voice-input");
-        host.View.ShowPlaceOf(InterfaceCapability.ShowOverlayHotkeyKey);
+        host.ShowPlaceOf(InterfaceCapability.ShowOverlayHotkeyKey);
         Dispatcher.UIThread.RunJobs();
 
         var overlay = Row(host, "Show or hide the overlay");
