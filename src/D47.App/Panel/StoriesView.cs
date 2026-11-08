@@ -1045,7 +1045,7 @@ public sealed class StoriesView : UserControl, IPageSummary
     }
 
     /// <summary>
-    /// The story page's buttons: Pick or Switch while the story is not the Commander's, otherwise "This is your story." with
+    /// The story page's buttons: Begin story, Continue story or Switch while the story is not the Commander's, otherwise "This is your story." with
     /// Write it again once its chapter could not be written. <paramref name="gated"/> is the button the gender choice enables.
     /// </summary>
     private StackPanel ReadingActions(StoryCard card, StatusLine status, string? commander, bool withoutOdyssey, int missing, out Button? gated)
@@ -1066,7 +1066,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         if (current is null)
         {
             Button? pick = null;
-            pick = Act("Pick", () => Start(card, switching: false, status, pick, commander));
+            pick = Act(shelved ? "Continue story" : "Begin story", () => Start(card, switching: false, status, pick, commander));
             pick.IsEnabled = !withoutOdyssey && GenderReady(card) && missing == 0;
             bar.Children.Add(gated = pick);
         }
@@ -1162,7 +1162,7 @@ public sealed class StoriesView : UserControl, IPageSummary
         var average = new ContentControl();
         var label = AdventuresPage.Text("Your rating", TypeScale.Small, ThemeManager.GreyKey);
         var mine = StarRating.Interactive(null);
-        var pickFirst = AdventuresPage.Muted("Pick this story to rate it.");
+        var pickFirst = AdventuresPage.Muted("Begin this story to rate it.");
         var pending = AdventuresPage.Muted("Not sent yet; it will be sent next time the Stories page opens.");
 
         label.Margin = new Thickness(0, 4, 0, 0);
@@ -1373,15 +1373,15 @@ public sealed class StoriesView : UserControl, IPageSummary
     }
 
     internal const string PickingLine =
-        "Picking one makes its words your Backstory until it stops, and has the core write chapter one. Act one ends at a Guardian beacon "
+        "Beginning a story makes its words your Backstory until it stops, and has the core write chapter one. Act one ends at a Guardian beacon "
         + "once your ship can reach it. While a story runs, the Guardian cores wait for its beacon scan. Pause or abandon the story to have them back at once.";
 
     internal const string PickingLineRemembered =
-        "Picking one makes its words your Backstory until it stops, and has the core write chapter one. You scanned a Guardian beacon in an "
+        "Beginning a story makes its words your Backstory until it stops, and has the core write chapter one. You scanned a Guardian beacon in an "
         + "earlier story, so this one opens with that scan behind you and its core comes aboard as it begins.";
 
     internal const string ShelvedLine =
-        "You shelved this story. Picking it brings it back paused where you left it, with its words as your Backstory; "
+        "You shelved this story. Continuing it brings it back paused where you left it, with its words as your Backstory; "
         + "Resume writes its chapter again from where you are.";
 
     /// <summary>The Switch confirmation's text: the current story is shelved, and the other is picked or comes back.</summary>
@@ -1395,7 +1395,7 @@ public sealed class StoriesView : UserControl, IPageSummary
     private bool IsShelved(string? commander, StoryCard card) =>
         _director.Stories.Find(commander, card.Id) is { State: StoryState.Shelved };
 
-    internal const string DownloadFailed = "The story could not be downloaded. Check your connection and pick it again.";
+    internal const string DownloadFailed = "The story could not be downloaded. Check your connection and try again.";
 
     private void Begin(StoryCard card, bool switching, StatusLine status, string? commander)
     {

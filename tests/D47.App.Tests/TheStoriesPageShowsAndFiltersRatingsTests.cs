@@ -217,7 +217,7 @@ public class TheStoriesPageShowsAndFiltersRatingsTests
 
         Read(page, "story-3");
 
-        Assert.Contains("Pick this story to rate it.", Drawn(page.Panel));
+        Assert.Contains("Begin this story to rate it.", Drawn(page.Panel));
         Assert.Contains(StarRating.Unrated, Drawn(page.Panel));
         Assert.DoesNotContain(page.Panel.GetVisualDescendants().OfType<StarRating>(), stars => stars.IsInteractive && stars.IsEffectivelyVisible);
         Save(page.Window, "stories-ratings-unrated-elite.png");

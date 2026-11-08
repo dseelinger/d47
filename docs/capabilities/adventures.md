@@ -530,12 +530,12 @@ A story whose children call the Commander Mum or Dad writes `{parent}`, the word
 D47 puts in the word for your Commander's gender in the same places it puts in a name. A story with these words
 needs your Commander's gender before it can be picked, as one with two versions does.
 
-For such a story, the story's page asks **Your Commander is**: **A man** or **A woman**, above **Pick**.
-**Pick** and **Switch** stay disabled until you choose, and the page says why. The choice is kept per
+For such a story, the story's page asks **Your Commander is**: **A man** or **A woman**, above **Begin story**.
+**Begin story**, **Continue story** and **Switch** stay disabled until you choose, and the page says why. The choice is kept per
 Commander and is asked only by a story that needs it. The same control is on
 the page of your running story; changing it there takes effect from the story's next line.
 
-**Pick** makes the card's words your Backstory until the story stops, and has the core write
+**Begin story** makes the card's words your Backstory until the story stops, and has the core write
 chapter one, which then begins. D47 keeps the Backstory you had before as your default; a Backstory that is some
 story's own words counts as none. Each story keeps the Backstory it had when you shelved it or switched it off, edits included. Act one ends when you collect the Ancient Key at the Guardian beacon nearest to you; arriving in the beacon's system is not enough. The beacon's three pylons must be charged by laser
 or railgun fire, all within a few minutes, before the scan opens its core and releases the key; the objective's hand-off says so. Before each act-one chapter D47 checks whether
@@ -552,13 +552,12 @@ and begins. **Switch** shelves the running story and picks another; it never aba
 You have one active story at a time, running or paused. Switching to another story shelves the active one:
 the chapter under way is abandoned and the story is switched off. A shelved story gives no objectives, nudges
 or clues, holds back no Guardian cores, has no objective on the panel, and its days do not count; its
-messages and its last two chapters are kept. Any number of stories can be shelved. Picking a shelved story,
-or switching to it, makes that same run active again rather than starting it over. It comes back paused,
+messages and its last two chapters are kept. Any number of stories can be shelved. **Continue story** on a shelved story, or **Switch** to it, makes that same run active again rather than starting it over. It comes back paused,
 and **Resume** writes the chapter that was under way again from where you are. A shelved story's chapter
 offers no **Begin again** on its page. To end a shelved story, make it active and **Abandon** it.
 
 A story of 3 days, 1 week or 2 weeks has no trip to a beacon: it begins after you have scanned one. At
-**Pick**, the scan is narrated in the words the story was written with, kept on the story's page on the Story bench
+**Begin story**, the scan is narrated in the words the story was written with, kept on the story's page on the Story bench
 from its speaker and said aloud. Then the cores wake and the story's core comes aboard, as for a real scan, and
 chapter one begins in act one with no beacon objective. The story's days count from the pick. A story of 1
 month or longer keeps the real scan, unless a scan is on record.
@@ -593,7 +592,7 @@ the same as asking for a short story. A chapter or short story is written by the
 
 Stories need Elite Dangerous: Odyssey, because most chapters use it: on-foot missions, settlements,
 exobiology and suits. D47 reads the `Odyssey` flag on each `LoadGame`. When the last one says
-`"Odyssey":false`, the Stories page says why stories are off, **Pick** and **Switch** are disabled, a
+`"Odyssey":false`, the Stories page says why stories are off, **Begin story**, **Continue story** and **Switch** are disabled, a
 running story writes no chapter and gives no clue, and the time does not count toward a clue's day. The
 next `LoadGame` with Odyssey brings the story back where it was, and a story you switched off stays off.
 Before D47 has seen a `LoadGame`, stories run.
@@ -607,9 +606,9 @@ Stock stories are files on the `stories-1` release of the repository. The first 
 opens in a session, D47 fetches `index.json` into `data\stories`, shows the stories already on disk at
 once and redraws when the new list lands. Opening a story's page fetches its hidden file and every
 cast picture it names when the hidden file is not on disk, and the page redraws with its **Cast**
-section when they land. **Pick** on a story whose hidden file is still not on disk fetches it, reads
+section when they land. **Begin story** on a story whose hidden file is still not on disk fetches it, reads
 **Downloading** while it does, and starts the story when every file is in place. On a failure the page says "The story could not be downloaded. Check your
-connection and pick it again." and nothing starts. At startup, a story that is running or paused and
+connection and try again." and nothing starts. At startup, a story that is running or paused and
 has no hidden file on disk is fetched, and one that has fetches any cast picture the release has and
 `data\stories` does not.
 
@@ -768,7 +767,7 @@ is the one reacted to.
 A story cannot be picked until every voice its cast speaks in is ready, the voices you chose included. A
 member that is not pinned needs only the ship's provider, so a story with no pinned member starts without the
 Kokoro download.
-**Pick** and **Switch** are disabled, and the story's page lists what is missing:
+**Begin story**, **Continue story** and **Switch** are disabled, and the story's page lists what is missing:
 
 - the Chatterbox download and its size, when a member speaks through Chatterbox and it is not downloaded;
 - the Kokoro download and its size, when a member speaks through Kokoro and it is not downloaded;

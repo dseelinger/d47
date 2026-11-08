@@ -18,7 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Stories page lists every card by title, level and blurb, and the running story, a card reads in full with Pick or Switch,
+/// The Stories page lists every card by title, level and blurb, and the running story, a card reads in full with Begin story, Continue story or Switch,
 /// and no hidden sentence is drawn anywhere. Captures are saved to <see cref="TestSurface.CaptureDirectory"/>.
 /// </summary>
 [Trait("Category", "Integration")]
@@ -158,7 +158,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Other.Id, StoryFixture.Other.Title));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Pick", Buttons(panel));
+        Assert.Contains("Begin story", Buttons(panel));
         Assert.True(Shows(panel, "1 year · For a new commander: no engineering done yet."));
         Assert.False(Shows(panel, "Buddy Love"));
         Assert.True(Shows(panel, "Core: Archivist"));
@@ -237,6 +237,33 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
     }
 
     [AvaloniaFact]
+    public void AShelvedStorysPageOffersContinueStoryInPlaceOfBeginStory()
+    {
+        using var look = AppLook.Put(ThemeCatalog.Elite, null);
+
+        var card = StoryFixture.Story;
+
+        var surface = Open(running: false, onRecord: new Story
+        {
+            Id = card.Id,
+            Title = card.Title,
+            PublicLayer = card.Describe(),
+            State = StoryState.Shelved,
+            PickedAt = Now.AddHours(-1),
+        });
+
+        var panel = surface.Panel;
+
+        panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + card.Id, card.Title));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("Continue story", Buttons(panel));
+        Assert.DoesNotContain("Begin story", Buttons(panel));
+        Assert.DoesNotContain("Pick", Buttons(panel));
+        Assert.True(Shows(panel, StoriesView.ShelvedLine));
+    }
+
+    [AvaloniaFact]
     public void PickWaitsForTheCommandersGender()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
@@ -250,7 +277,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Story.Id, StoryFixture.Story.Title));
         Dispatcher.UIThread.RunJobs();
 
-        Button Pick() => panel.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Pick");
+        Button Pick() => panel.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Begin story");
 
         Assert.True(Shows(panel, "Your Commander is"));
         Assert.True(Shows(panel, StoryDirector.NeedsGender));
@@ -323,7 +350,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
 
         Assert.True(Until(() => Shows(panel, "Ren")));
         Assert.True(Shows(panel, "Cast"));
-        Assert.Contains("Pick", Buttons(panel));
+        Assert.Contains("Begin story", Buttons(panel));
         Assert.Equal(1, release.Asked.Count(file => file == id + StoryCatalog.SealedExtension));
         NoHiddenSentence(panel);
         Save(surface.Window, "stories-card-cast-fetched.png");
@@ -409,7 +436,7 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("Switch", Buttons(panel));
-        Assert.DoesNotContain("Pick", Buttons(panel));
+        Assert.DoesNotContain("Begin story", Buttons(panel));
         Assert.True(Shows(panel, StoriesView.PickingLine));
 
         panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Story.Id, StoryFixture.Story.Title));
@@ -590,14 +617,14 @@ public class TheStoriesPageShowsOnlyThePublicLayerTests
         panel.Nav.GoTo(new NavCrumb(StoriesView.ReadPrefix + StoryFixture.Other.Id, StoryFixture.Other.Title));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("Pick", Buttons(panel));
+        Assert.Contains("Begin story", Buttons(panel));
         Assert.DoesNotContain("Write it again", Buttons(panel));
 
-        panel.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Pick")
+        panel.GetVisualDescendants().OfType<Button>().Single(button => button.Content as string == "Begin story")
             .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.True(Until(() => surface.Director.WriteFailed("F1") && Buttons(panel).Contains("Write it again")));
-        Assert.DoesNotContain("Pick", Buttons(panel));
+        Assert.DoesNotContain("Begin story", Buttons(panel));
         Assert.True(Shows(panel, "This is your story."));
         Save(surface.Window, "stories-card-write-again.png");
 

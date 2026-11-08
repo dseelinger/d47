@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story's page now has a **Begin story** button where it had **Pick**, and **Continue story** on a story you shelved, which brings it back paused. **Switch** is unchanged. The lines on the page and the download failure message say "begin" and "try again" instead of "pick".
+
 In the headset, the chapter-writing bar now moves every second for the whole write. Before, it sometimes skipped a second and stayed frozen until something else redrew the panel.
 
 In the headset, the panel now shows each change as soon as it is drawn. Before, it showed each change only at the next one, so during a story the avatar kept the last speaker's picture through the next speaker's line and showed theirs only when the line ended.
