@@ -118,7 +118,7 @@ public static class CaptionStrip
             Height = 16,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        // A test-drive or local-release build marks its diamond in its icon's colour, whatever the theme.
+        // A test-drive, local-release or new-install build marks its diamond in its icon's colour, whatever the theme.
         if (Palettes.BuildMark(BuildInfo.Mark) is { } mark)
         {
             diamond.Fill = new SolidColorBrush(mark);

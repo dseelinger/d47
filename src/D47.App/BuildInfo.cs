@@ -26,7 +26,7 @@ public static class BuildInfo
     /// </summary>
     public static string? Label { get; } = LabelOf(Full);
 
-    /// <summary>"test-drive" or "local-release" for a build marked as one, or null for a published build.</summary>
+    /// <summary>"test-drive", "local-release" or "new-install" for a build marked as one, or null for a published build.</summary>
     public static string? Mark { get; } =
         Assembly.GetEntryAssembly()
             ?.GetCustomAttributes<AssemblyMetadataAttribute>()

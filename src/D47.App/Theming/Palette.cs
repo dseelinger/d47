@@ -164,13 +164,14 @@ public static class Palettes
         yellow: Color.Parse("#8A6D00"));
 
     /// <summary>
-    /// The caption diamond's colour for a build marked "test-drive" or "local-release", matching the frame of
+    /// The caption diamond's colour for a build marked "test-drive", "local-release" or "new-install", matching the frame of
     /// its icon in <c>assets/</c> whatever the theme; null for a published build.
     /// </summary>
     public static Color? BuildMark(string? mark) => mark switch
     {
         "test-drive" => Color.Parse("#29B6F6"),
         "local-release" => Color.Parse("#4CD964"),
+        "new-install" => Color.Parse("#FFFFFF"),
         _ => null,
     };
 
