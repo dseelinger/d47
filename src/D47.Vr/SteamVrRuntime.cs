@@ -894,6 +894,13 @@ public sealed class SteamVrRuntime(
                 ? overlay.Submit(pixels.Address, pixels.Width, pixels.Height)
                 : overlay.SubmitTexture(pair.Current);
 
+            // SteamVR copies the texture with commands on this device's context; flushed now, or the headset shows
+            // this frame only once the next one is flushed.
+            if (pair is not null)
+            {
+                textures!.Flush();
+            }
+
             var outcome = FrameDelivery.Took(held, accepted);
 
             if (outcome.Recovered)

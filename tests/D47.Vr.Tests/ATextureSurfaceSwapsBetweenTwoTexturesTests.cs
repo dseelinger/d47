@@ -76,7 +76,7 @@ public class ATextureSurfaceSwapsBetweenTwoTexturesTests
     }
 
     [Fact]
-    public void EachFrameIsFlushedBeforeItIsSubmitted()
+    public void EachFrameIsFlushedBeforeAndAfterItIsSubmitted()
     {
         var openVr = new FakeOpenVr();
         var device = new FakeTextureDevice(openVr);
@@ -95,8 +95,9 @@ public class ATextureSurfaceSwapsBetweenTwoTexturesTests
                 Assert.True(runtime.Serve(Tick(n)));
             }
 
-            // The nth flush comes after n - 1 submits: each frame reaches the GPU before SteamVR is handed it.
-            Assert.Equal([0, 1, 2], device.FlushedAfterSubmits);
+            // Before each submit, so the frame reaches the GPU before SteamVR is handed it; and after, so SteamVR's copy
+            // of it does too, rather than waiting for the next frame's flush (#2229).
+            Assert.Equal([0, 1, 1, 2, 2, 3], device.FlushedAfterSubmits);
         }
         finally
         {
