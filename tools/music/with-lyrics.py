@@ -39,6 +39,7 @@ LOG = os.path.join(DATA, "with-lyrics.log")
 TMP = os.path.join(DATA, "_with-lyrics_tmp")
 EXPERIMENT = os.path.join(DATA, "experiments", "lyrics")
 OWN = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "d47", "data", "audio", "music")
+SUNG_OFF = os.path.join(DATA, "sung-off")
 FIELDS = ["folder", "file", "title", "chorus", "vocal", "mood", "seed", "lyrics"]
 MODEL = "opus"
 
@@ -360,6 +361,9 @@ def main():
     if os.path.normcase(os.path.abspath(args.out)) != os.path.normcase(OWN):
         global LEDGER
         LEDGER = os.path.join(args.out, "with-lyrics.tsv")
+    elif os.path.isdir(SUNG_OFF) and any(f.endswith(".mp3") for _, _, files in os.walk(SUNG_OFF) for f in files):
+        print(f"The sung songs are off, in {SUNG_OFF}; run sung.py on first, or every one would be written again.")
+        return
 
     if not generate.take_lock():
         print("The library generator or another song run holds the lock.")
