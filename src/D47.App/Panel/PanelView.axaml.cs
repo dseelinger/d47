@@ -842,7 +842,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             if (bar.IsEffectivelyVisible)
             {
-                moved |= bar.Refresh();
+                bar.Refresh();
+                moved |= bar.TakeMoved();
             }
         }
 

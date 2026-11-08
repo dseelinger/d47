@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+In the headset, the chapter-writing bar now moves every second for the whole write. Before, it sometimes skipped a second and stayed frozen until something else redrew the panel.
+
 In the headset, the panel now shows each change as soon as it is drawn. Before, it showed each change only at the next one, so during a story the avatar kept the last speaker's picture through the next speaker's line and showed theirs only when the line ended.
 
 Setup now puts every voice slot on the voice you choose there: Aboard, Carrier, NPCs, People you know, Direct messages and Anyone in range. Before, only the cockpit used it and the other five stayed on Edge Neural. Saving setup again puts every slot back on that voice. OpenAI is still never used for People you know, Direct messages or Anyone in range; those speak on Edge. A paid voice chosen in setup now also voices invented NPC chatter from the first launch, which is billed by the character.

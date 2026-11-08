@@ -17,6 +17,7 @@ internal sealed class WriteProgressBar : StackPanel
     private readonly TextBlock _hint = AdventuresPage.Muted("");
     private readonly Func<StoryProgress?> _source;
     private (WriteStage Stage, string Clock, string Hint)? _drawn;
+    private (WriteStage Stage, string Clock, string Hint)? _reported;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(250) };
 
     public WriteProgressBar(string automationName, Func<StoryProgress?> source)
@@ -44,8 +45,22 @@ internal sealed class WriteProgressBar : StackPanel
         _timer.Stop();
     }
 
-    /// <summary>Shows what the source returns now, keeping the last reading when it returns null; true when the stage, the clock second or the hint changed. The gauge moves continuously and is drawn with those, not reported on its own.</summary>
-    internal bool Refresh() => _source() is { } progress && Show(progress);
+    /// <summary>Shows what the source returns now, keeping the last reading when it returns null.</summary>
+    internal void Refresh()
+    {
+        if (_source() is { } progress)
+        {
+            Show(progress);
+        }
+    }
+
+    /// <summary>True once per change of stage, clock second or hint since the last call, whoever drew it. The gauge moves continuously and is drawn with those, not reported on its own.</summary>
+    internal bool TakeMoved()
+    {
+        var moved = _drawn != _reported;
+        _reported = _drawn;
+        return moved;
+    }
 
     public bool Show(StoryProgress progress)
     {
