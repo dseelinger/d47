@@ -59,6 +59,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                         : null,
                     Chronicle = [.. (record.Chronicle ?? []).Select(Entry).OfType<ChronicleEntry>()],
                     Arc = Arc(record.Arc),
+                    Informant = Informant(record.Informant),
                 };
             }
 
@@ -102,6 +103,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             Intents = clearIntents ? campaign.Intents.Clear() : campaign.Intents,
             Chosen = null,
             Arc = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Arc : null,
+            Informant = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Informant : null,
         });
     }
 
@@ -181,6 +183,14 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         return Change(frontierId, campaign => campaign with { Arc = arc });
     }
 
+    /// <summary>Sets the Informant and the leaks given, or clears it with null. False when the write failed.</summary>
+    public bool SetInformant(string frontierId, CampaignInformant? informant)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return Change(frontierId, campaign => campaign with { Informant = informant });
+    }
+
     private static bool Is(ChosenFront chosen, FrontKind kind, string system) =>
         chosen.Kind == kind && string.Equals(chosen.System, system, StringComparison.OrdinalIgnoreCase);
 
@@ -252,6 +262,17 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                             Arc = pair.Value.Arc is { } arc
                                 ? new ArcRecord { Kind = arc.Kind, Rival = arc.Rival, Leader = arc.Leader, Since = arc.Since, Answered = arc.Answered }
                                 : null,
+                            Informant = pair.Value.Informant is { } informant
+                                ? new InformantRecord
+                                {
+                                    Name = informant.Name,
+                                    Since = informant.Since,
+                                    Leaks = [.. informant.Leaks.Select(leak => new LeakRecord
+                                    {
+                                        Kind = leak.Kind, System = leak.System, Rival = leak.Rival, Influence = leak.Influence, Level = leak.Level, At = leak.At,
+                                    })],
+                                }
+                                : null,
                         }),
                 ],
             };
@@ -282,6 +303,16 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             ? new CampaignArc(record.Kind, rival, leader, record.Since, Math.Max(0, record.Answered))
             : null;
 
+    private static CampaignInformant? Informant(InformantRecord? record) =>
+        record is { Name: { Length: > 0 } name }
+            ? new CampaignInformant(
+                name,
+                record.Since,
+                [.. (record.Leaks ?? [])
+                    .Where(leak => Enum.IsDefined(leak.Kind) && !string.IsNullOrWhiteSpace(leak.System) && !string.IsNullOrWhiteSpace(leak.Rival))
+                    .Select(leak => new Leak(leak.Kind, leak.System!, leak.Rival!, leak.Influence, Math.Clamp(leak.Level, 1, CampaignLeaks.MostLevels), leak.At))])
+            : null;
+
     private static EntryRecord ToRecord(ChronicleEntry entry) => new()
     {
         Kind = entry.Kind,
@@ -310,6 +341,32 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public IReadOnlyList<EntryRecord>? Chronicle { get; set; }
 
         public ArcRecord? Arc { get; set; }
+
+        public InformantRecord? Informant { get; set; }
+    }
+
+    private sealed class InformantRecord
+    {
+        public string? Name { get; set; }
+
+        public DateTimeOffset Since { get; set; }
+
+        public IReadOnlyList<LeakRecord>? Leaks { get; set; }
+    }
+
+    private sealed class LeakRecord
+    {
+        public LeakKind Kind { get; set; }
+
+        public string? System { get; set; }
+
+        public string? Rival { get; set; }
+
+        public double Influence { get; set; }
+
+        public int Level { get; set; }
+
+        public DateTimeOffset At { get; set; }
     }
 
     private sealed class ArcRecord

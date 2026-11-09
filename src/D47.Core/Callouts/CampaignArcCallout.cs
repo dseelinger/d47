@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Campaigns;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Stories;
 
 namespace D47.Core.Callouts;
@@ -26,7 +27,12 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
     /// <summary>The Nemesis's voice for a rival and the campaign faction, or null for the comms role's own.</summary>
     public Func<string, string, PinnedVoice?> Voice { get; set; } = (_, _) => null;
 
+    /// <summary>The Informant's voice for the Informant's name, the campaign faction and the rival it leaks about, or null for the comms role's own.</summary>
+    public Func<string, string, string, PinnedVoice?> InformantVoice { get; set; } = (_, _, _) => null;
+
     private string? _commander;
+    private FactionReport? _report;
+    private FactionReport? _previous;
     private IReadOnlyList<Front>? _before;
     private int _chronicled;
 
@@ -42,8 +48,12 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
         {
             _commander = null;
             _before = null;
+            _report = null;
+            _previous = null;
             return [];
         }
+
+        Track(held.Report);
 
         if (context.IsPriming || !string.Equals(_commander, id, StringComparison.Ordinal) || held.Report is null)
         {
@@ -78,8 +88,36 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
             return [];
         }
 
-        return [.. step.Lines.Select(Spoken)];
+        var leaks = CampaignLeaks.Step(
+            campaign.Informant,
+            new LeakView(held.Faction, view.SeedKey, held.Report, _previous, state.Standings, context.Now));
+
+        if (leaks.Informant != campaign.Informant && !Campaigns.SetInformant(id, leaks.Informant))
+        {
+            return [.. step.Lines.Select(Spoken)];
+        }
+
+        return [.. step.Lines.Select(Spoken), .. leaks.Lines.Select(Whispered)];
     }
+
+    private void Track(FactionReport? report)
+    {
+        if (report is not null && !ReferenceEquals(report, _report))
+        {
+            _previous = _report;
+            _report = report;
+        }
+    }
+
+    private Announcement Whispered(CampaignArcLine line) =>
+        new(KeyPrefix + line.Act.ToString().ToLowerInvariant(), line.Text)
+        {
+            Voice = VoiceRole.Comms,
+            Speaker = line.Leader,
+            InRoleVoice = true,
+            Pinned = InformantVoice(line.Leader, line.Faction, line.Rival),
+            Arc = line,
+        };
 
     private Announcement Spoken(CampaignArcLine line) =>
         new(KeyPrefix + line.Act.ToString().ToLowerInvariant(), line.Text)

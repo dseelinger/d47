@@ -68,6 +68,9 @@ public sealed record Campaign
     /// <summary>The arc under way, or null.</summary>
     public CampaignArc? Arc { get; init; }
 
+    /// <summary>The Informant and the leaks given, or null before the first leak.</summary>
+    public CampaignInformant? Informant { get; init; }
+
     /// <summary>The faction named, else <paramref name="squadronFaction"/>.</summary>
     public string? FactionOr(string? squadronFaction) =>
         Faction is { Length: > 0 } named ? named : squadronFaction is { Length: > 0 } ? squadronFaction : null;
@@ -79,5 +82,5 @@ public sealed record Campaign
     /// <summary>The intent of a system with none set: Hold where the faction controls it, else LeaveAlone.</summary>
     public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
-    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null;
+    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Informant is null;
 }

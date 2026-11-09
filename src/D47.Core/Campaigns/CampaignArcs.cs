@@ -14,6 +14,8 @@ public enum ArcAct
     Broadcast,
     Concession,
     Revenge,
+    Leak,
+    Escalation,
 }
 
 /// <summary>A rival faction ranked for the Nemesis: conflicts fought, systems shared, and the closest influence gap in those systems.</summary>
@@ -183,10 +185,14 @@ public static class CampaignArcs
     {
         ArgumentNullException.ThrowIfNull(line);
 
+        var leak = line.Act is ArcAct.Leak or ArcAct.Escalation;
+
         return new FlavourBrief
         {
-            Speaker =
-                $"You are {line.Leader}, who leads {line.Rival}, a minor faction and the rival of {line.Faction}. You speak on "
+            Speaker = leak
+                ? $"You are {line.Leader}, an informant inside {line.Rival}, a minor faction and the rival of {line.Faction}. You speak "
+                  + $"over an encrypted line to the Commander, an independent pilot working for {line.Faction}, and you are afraid of being traced."
+                : $"You are {line.Leader}, who leads {line.Rival}, a minor faction and the rival of {line.Faction}. You speak on "
                 + $"an open broadcast that the Commander, an independent pilot working for {line.Faction}, picks up.",
             Instruction =
                 $"{Asking(line.Act)} The facts: {line.Text} {FictionRule} Say it in two or three short sentences, as yourself. "
@@ -344,6 +350,8 @@ public static class CampaignArcs
     private static string Asking(ArcAct act) => act switch
     {
         ArcAct.Introduction => "Introduce yourself to the Commander as the rival they now face.",
+        ArcAct.Leak => "Deliver the intercepted plan to the Commander, as a warning, in your own words.",
+        ArcAct.Escalation => "Warn the Commander that the plan has moved on since your last message, and what it now threatens.",
         ArcAct.Broadcast => "Taunt the Commander over your gain.",
         ArcAct.Concession => "Concede the defeat, with what grace you can find.",
         _ => "Vow revenge for the defeat.",
@@ -371,7 +379,7 @@ public static class CampaignArcs
     }
 
     /// <summary>FNV-1a over the upper-cased text, the same in every process.</summary>
-    private static uint Hash(string text)
+    internal static uint Hash(string text)
     {
         var hash = 2166136261u;
 

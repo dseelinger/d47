@@ -232,6 +232,20 @@ public sealed record SystemStandings
                 : null;
     }
 
+    /// <summary>
+    /// A faction's influence in each kept span of a system, oldest first, leaving out spans that lack the faction.
+    /// Empty when the system has no spans.
+    /// </summary>
+    public IReadOnlyList<double> InfluenceRun(string system, string faction)
+    {
+        ArgumentNullException.ThrowIfNull(system);
+        ArgumentNullException.ThrowIfNull(faction);
+
+        return Spans.TryGetValue(system, out var spans)
+            ? [.. spans.Select(span => span.InfluenceOf(faction)).OfType<double>()]
+            : [];
+    }
+
     public SystemStandings Apply(JournalEvent journalEvent)
     {
         ArgumentNullException.ThrowIfNull(journalEvent);

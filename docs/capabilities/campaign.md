@@ -341,6 +341,37 @@ see [Campaign Nemesis](callouts.md#campaign-arcs).
 public sealed record CampaignArcLine(ArcAct Act, string Faction, string Rival, string Leader, string System, IReadOnlyList<string> Facts)
 ```
 
+The second arc is **Leaked plans**. An Informant, invented once with a call sign drawn from your squadron the way the
+Nemesis's leader is, delivers an intercepted plan when d47 computes a rising threat from the rival's influence over the
+last readings: your own readings of the system over the past week, or else the faction's previous and current galaxy
+reports. Three threats open a leak, in this rank:
+
+| Threat | When |
+|---|---|
+| Coup | A rival is rising and between 50% and 60% in a system your faction controls. |
+| Expansion | A rival has an Expansion pending in a system your faction is in. |
+| Spread | A rival is rising in three or more of your faction's systems. The leak names the one where it is strongest. |
+
+```csharp
+public enum LeakKind
+{
+    Coup,
+    Expansion,
+    Spread,
+}
+```
+
+A system already in a conflict is left out, since the threat has become one. The leak names a real system and states
+only what d47 computed: the rival's influence, its rise in points and the 60% line. At most one leak is given at a
+look. The same threat leaks again, a level higher, when the rival's influence has risen five points since the last leak,
+to a most of three levels, and each later leak says what the earlier one found. A threat that passes is forgotten, so
+its return is a new leak. The Informant and its leaks are kept in `data/campaigns.json` until you name another campaign
+faction.
+
+The Informant speaks in a pool voice picked by its name, stepped past the Liaison's and the Nemesis's, through a weak
+link of strength 0.55 that thins the voice and drops it out. It waits as the Nemesis does, and the Campaign Nemesis row
+turns it off.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

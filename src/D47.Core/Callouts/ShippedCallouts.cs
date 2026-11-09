@@ -121,6 +121,8 @@ public static class ShippedCallouts
         /// <summary>The campaign Nemesis's voice for a rival and the campaign faction, or null.</summary>
         public Func<string, string, PinnedVoice?> NemesisVoice { get; init; } = (_, _) => null;
 
+        public Func<string, string, string, PinnedVoice?> InformantVoice { get; init; } = (_, _, _) => null;
+
         /// <summary>The GalNet articles that arrived in the last poll, newest first.</summary>
         public Func<IReadOnlyList<GalNetArticle>> GalNetArrived { get; init; } = () => [];
 
@@ -405,6 +407,7 @@ public static class ShippedCallouts
                     arcs.Campaigns = services.Campaigns;
                     arcs.Fronts = services.CampaignFronts;
                     arcs.Voice = services.NemesisVoice;
+                    arcs.InformantVoice = services.InformantVoice;
                     break;
 
                 case GalNetCallout galNet:

@@ -3241,6 +3241,7 @@ public sealed class AppHost : IDisposable
             CampaignProposal = () => stores.CampaignFocus.Proposal,
             LiaisonVoice = faction => D47.Core.Campaigns.CampaignLiaison.Voice(faction, settings.Current.Speech, services.Speech.Casting.Of),
             NemesisVoice = (rival, faction) => D47.Core.Campaigns.CampaignArcs.Voice(rival, faction, settings.Current.Speech, services.Speech.Casting.Of),
+            InformantVoice = (informant, faction, rival) => D47.Core.Campaigns.CampaignLeaks.Voice(informant, faction, stores.Campaigns.For(gameState.Active?.Identity.FrontierId).Arc?.Rival ?? rival, settings.Current.Speech, services.Speech.Casting.Of),
             GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
             ServerStatusAnnounce = () => late.Host?.ServerStatus?.Announce,
             WatchesReady = () => late.Host?.Watches?.Ready ?? [],
