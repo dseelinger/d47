@@ -137,6 +137,7 @@ public sealed class JournalTick(JournalTick.Sources sources)
         }
 
         JournalLog.Add(events, journal.Receipts);
+        status.Observe(events);
         status.Poll();
         route.Poll();
 

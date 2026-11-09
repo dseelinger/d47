@@ -206,7 +206,7 @@ public class ASwitchPositionCanSetThePipsTests
     {
         foreach (var target in PipTargets.All)
         {
-            Assert.Equal(ControlContext.AnyShip | ControlContext.Fighter | ControlContext.Srv, target.Contexts);
+            Assert.Equal(ControlContext.AnyShip | ControlContext.Fighter | ControlContext.Srv | ControlContext.Nomad, target.Contexts);
 
             foreach (var id in target.Presses)
             {

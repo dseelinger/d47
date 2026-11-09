@@ -128,8 +128,15 @@ public static class GameActions
     public const string OnFoot = "On foot";
     public const string Weapons = "Weapons";
 
-    /// <summary>Every action, in the order a Commander would meet them.</summary>
-    public static readonly IReadOnlyList<GameAction> All =
+    private static readonly string[] RefusedInTheNomad =
+    [
+        "HyperSuperCombination",
+        "Supercruise",
+        "Hyperspace",
+        "TargetNextRouteSystem",
+    ];
+
+    private static readonly GameAction[] Declared =
     [
         // ---- Flight and navigation (item 6) -------------------------------------------------
         new()
@@ -1177,10 +1184,38 @@ public static class GameActions
         },
     ];
 
+    /// <summary>Every action, in the order a Commander would meet them.</summary>
+    public static readonly IReadOnlyList<GameAction> All = [.. Declared.Select(Nomadic)];
+
     private static readonly Dictionary<string, GameAction> ById =
         All.ToDictionary(action => action.Id, StringComparer.Ordinal);
 
     public static GameAction? Find(string id) => ById.GetValueOrDefault(id);
+
+    private const ControlContext ShipLike = ControlContext.Landed | ControlContext.NormalSpace | ControlContext.Fighter;
+
+    /// <summary>
+    /// Extends every ship-binding variant to the Nomad, except the jump and exploration ones. A switch other
+    /// than the landing gear presses without reading the game's report in the Nomad.
+    /// </summary>
+    private static GameAction Nomadic(GameAction action)
+    {
+        var variants = action.Variants.Select(variant =>
+            (variant.Contexts & ShipLike) != 0
+            && !variant.EliteAction.StartsWith("ExplorationFSS", StringComparison.Ordinal)
+            && !RefusedInTheNomad.Contains(variant.EliteAction)
+                ? variant with { Contexts = variant.Contexts | ControlContext.Nomad }
+                : variant).ToArray();
+
+        var reportsIn = action.ReportsIn;
+
+        if (action.Reports is not null && reportsIn is null && action.Id != "landing_gear")
+        {
+            reportsIn = (ControlContext)~(int)ControlContext.Nomad;
+        }
+
+        return action with { Variants = variants, ReportsIn = reportsIn };
+    }
 
     /// <summary>A one-shot with a ship form and, optionally, an SRV and an on-foot twin.</summary>
     private static GameAction Simple(

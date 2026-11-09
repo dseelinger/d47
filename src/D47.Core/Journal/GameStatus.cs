@@ -120,6 +120,12 @@ public sealed record GameStatus
     /// </summary>
     public bool OnFoot => Has2(StatusFlags2.OnFoot);
 
+    /// <summary>
+    /// The journal shows the Commander in the Nomad. Status.json sets <see cref="StatusFlags.InSrv"/> for
+    /// the Nomad and cannot tell it from an SRV.
+    /// </summary>
+    public bool InNomad { get; init; }
+
     /// <summary>Which full-screen interface is showing, if any.</summary>
     public GuiFocus GuiFocus { get; init; }
 
@@ -223,7 +229,27 @@ public sealed class GameStatusReader(string directory, IFileSystem files, ILogge
 
     private DateTime _stamp;
 
+    private readonly NomadTracker _nomad = new();
+
+    private GameStatus _read = GameStatus.Unknown;
+
     public GameStatus Current { get; private set; } = GameStatus.Unknown;
+
+    /// <summary>Follows the journal events that put the Commander in or out of the Nomad.</summary>
+    public void Observe(IEnumerable<JournalEvent> events)
+    {
+        var before = _nomad.Aboard;
+
+        foreach (var journalEvent in events)
+        {
+            _nomad.Observe(journalEvent);
+        }
+
+        if (_nomad.Aboard != before)
+        {
+            Current = _read with { InNomad = _nomad.Aboard };
+        }
+    }
 
     /// <summary>Re-reads if the file changed.</summary>
     public bool Poll()
@@ -258,7 +284,8 @@ public sealed class GameStatusReader(string directory, IFileSystem files, ILogge
             return false;
         }
 
-        Current = status;
+        _read = status;
+        Current = status with { InNomad = _nomad.Aboard };
         return true;
     }
 

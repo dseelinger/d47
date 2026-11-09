@@ -169,7 +169,7 @@ Pressed Numpad_7 for power to engines.
 ```
 
 In the SRV the same words reach the SRV's own power bindings, because Elite binds those
-separately and you meant the vehicle you are sitting in.
+separately and you meant the vehicle you are sitting in. In the Nomad they reach the ship's.
 
 In a ship-launched fighter, power to engines, weapons and systems, and "balance power", press the
 same bindings as in the ship. Heat sinks and silent running are refused there with "in a fighter".

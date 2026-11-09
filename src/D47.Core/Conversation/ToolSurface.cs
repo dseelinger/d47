@@ -115,6 +115,7 @@ public static class ToolSurface
             ControlContext.Docked => "docked",
             ControlContext.Landed => "landed",
             ControlContext.Fighter => "fighter",
+            ControlContext.Nomad => "nomad",
             ControlContext.Hyperspace => "hyperspace",
             _ => "no-game",
         };

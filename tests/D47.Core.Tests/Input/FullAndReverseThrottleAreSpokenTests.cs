@@ -27,11 +27,11 @@ public class FullAndReverseThrottleAreSpokenTests
         Assert.Equal(id, Route(phrase));
 
     [Fact]
-    public void TheReverseSettingsAreNormalSpaceOnly()
+    public void TheReverseSettingsAreNormalSpaceAndTheNomadOnly()
     {
         var reverse = GameActions.All.Where(a => a.Id.StartsWith("throttle_reverse_", StringComparison.Ordinal) || a.Id == "reverse_thrust");
 
-        Assert.All(reverse, action => Assert.Equal(ControlContext.NormalSpace, action.Contexts));
+        Assert.All(reverse, action => Assert.Equal(ControlContext.NormalSpace | ControlContext.Nomad, action.Contexts));
     }
 
     [Fact]

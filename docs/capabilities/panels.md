@@ -189,7 +189,7 @@ means the vehicle they are sitting in.
 The galaxy map, the system map and the comms panel also work on foot, through the
 `GalaxyMapOpen_Humanoid`, `SystemMapOpen_Humanoid` and `FocusCommsPanel_Humanoid` bindings. Next
 and previous fire group work in the SRV through `BuggyCycleFireGroupNext` and
-`BuggyCycleFireGroupPrevious`. Sending a chat message still needs the ship or the SRV; it refuses
+`BuggyCycleFireGroupPrevious`. In the Nomad they use `CycleFireGroupNext` and `CycleFireGroupPrevious`. Sending a chat message still needs the ship or the SRV; it refuses
 on foot.
 
 </details>

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+"Gear down" and "gear up" now work in the Nomad. In the Nomad, voice commands press the ship's bindings instead of the SRV's, and the frame shift drive, supercruise, hyperspace and the FSS are refused with "in the Nomad".
+
 A helium-rich gas giant in the codex is now named "Helium-rich gas giant" instead of "Standard gas giant". A new codex discovery of a planet or gas giant is said and opened under the same name the codex list uses, such as "Discovered Class II gas giant."
 
 A Commander who logs in for the first time now starts blank in every per-Commander row: Home system, About me, the character sheet, the scenario, who knows about it, gender, core for this ship and the career ratings. Before, those rows showed another Commander's values, so a new Commander could be told their ships were waiting at someone else's base. A row set before Elite names a Commander goes to the next Commander named, if they have no value of their own. Values already in an installation's file are kept but no Commander reads them. Reset on one of these rows puts back its default.

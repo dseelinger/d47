@@ -239,6 +239,12 @@ scoop, hardpoints, the frame shift drive, supercruise and the hyperspace jump ar
 with "in a fighter". In a fighter "flight assist on" and "lights on" press the toggle without
 checking the game's report first.
 
+In the Nomad, which Elite reports as an SRV, the same words press the ship's bindings, never the
+SRV ones. Gear, the lights, the throttle, boost, the power distributor and the fire groups work as in
+the ship. The frame shift drive, supercruise, the hyperspace jump, targeting the next system in the
+route and the FSS are refused there with "in the Nomad". Only landing gear checks the game's report
+first; every other switch presses its toggle without checking.
+
 Landing gear, ship lights, night vision, cargo scoop, hardpoints, the frame shift drive,
 supercruise, the hyperspace jump, flight assist, throttle at zero, twenty-five, fifty or
 seventy-five per cent ("military thrust") or a hundred ("full throttle"), the reverse settings in normal space ("full reverse", "half reverse", "throttle to minus twenty-five"), the reverse thrust toggle ("reverse thrust"), boost, and targeting the next system in a plotted route.

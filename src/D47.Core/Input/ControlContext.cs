@@ -32,6 +32,9 @@ public enum ControlContext
     /// <summary>In a ship-launched fighter, which has its own much smaller control set.</summary>
     Fighter = 1 << 7,
 
+    /// <summary>In the Nomad, which Status.json reports as an SRV and which flies on the ship's bindings.</summary>
+    Nomad = 1 << 8,
+
     /// <summary>Everything a main ship can be doing.</summary>
     AnyShip = Docked | Landed | NormalSpace | Supercruise,
 
@@ -57,7 +60,7 @@ public static class ControlContexts
 
         if (status.Has(StatusFlags.InSrv))
         {
-            return ControlContext.Srv;
+            return status.InNomad ? ControlContext.Nomad : ControlContext.Srv;
         }
 
         if (status.Has(StatusFlags.InFighter))
@@ -101,6 +104,7 @@ public static class ControlContexts
         ControlContext.Srv => "in the SRV",
         ControlContext.OnFoot => "on foot",
         ControlContext.Fighter => "in a fighter",
+        ControlContext.Nomad => "in the Nomad",
         _ => "somewhere D47 cannot identify",
     };
 }
