@@ -18,7 +18,7 @@ public sealed class TheCompositionKeepsItsOrderTests
     [
         "journal", "journal history", "commander pick", "screenshots", "push-to-talk", "default-audio-devices", "macros",
         "binds", "switches", "reminders", "ships", "own cores", "codex entry page", "core absences", "chat-box commands", "ship cores", "memory", "goals", "adventures",
-        "callout-drain", "ambience", "bgs-tick", "galnet", "watches", "server-status", "colonisation-plans", "colonisation-progress", "voice-scope", "comms-channels", "autonomous-drain", "switch-drain", "module-pages",
+        "callout-drain", "ambience", "bgs-tick", "galnet", "campaign-fronts", "watches", "server-status", "colonisation-plans", "colonisation-progress", "voice-scope", "comms-channels", "autonomous-drain", "switch-drain", "module-pages",
     ];
 
     private static MethodDeclarationSyntax Start() =>

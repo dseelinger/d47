@@ -564,6 +564,8 @@ public sealed class AppHost : IDisposable
 
     public GalNetWatch? GalNet { get; private set; }
 
+    public D47.Core.Campaigns.CampaignFrontsWatch? CampaignFronts { get; private set; }
+
     public ServerStatusWatch? ServerStatus { get; private set; }
 
     /// <summary>Checks the Commander's background watches.</summary>
@@ -2744,6 +2746,7 @@ public sealed class AppHost : IDisposable
                 squadronFactions: stores.SquadronFactions,
                 campaigns: stores.Campaigns,
                 campaignSystems: stores.CampaignSystems,
+                campaignFronts: () => late.Host?.CampaignFronts?.Snapshot,
                 neutronOffer: stores.NeutronOffer,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
@@ -3948,6 +3951,18 @@ public sealed class AppHost : IDisposable
             foundations.LoggerFactory.CreateLogger<GalNetWatch>());
 
         tick.Add("galnet", context => galNet.Poll(context.Now));
+
+        // After bgs-tick, so a new tick is seen on the poll it arrives.
+        var campaignFronts = host.CampaignFronts = new D47.Core.Campaigns.CampaignFrontsWatch(
+            (faction, refresh, cancellationToken) => services.Galaxy.FactionAsync(faction, cancellationToken, refresh),
+            () => gameState.Active,
+            stores.Campaigns,
+            stores.SquadronFactions,
+            () => bgsTick.Last,
+            stores.CampaignSystems,
+            foundations.LoggerFactory.CreateLogger<D47.Core.Campaigns.CampaignFrontsWatch>());
+
+        tick.Add("campaign-fronts", context => campaignFronts.Poll(context.Now));
 
         // After bgs-tick, so it reads this tick's BGS tick.
         var watches = host.Watches = new D47.Core.Watches.WatchRunner(

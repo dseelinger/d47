@@ -16,6 +16,10 @@ public static class CampaignCapability
 
     public const string SetIntentTool = "set_system_intent";
 
+    public const string FrontsTool = "get_campaign_fronts";
+
+    private const int FrontsSpoken = 3;
+
     private const int ChronicleSpoken = 3;
 
     /// <summary>The intents, by the name the tools take.</summary>
@@ -23,12 +27,15 @@ public static class CampaignCapability
 
     private static readonly string[] Questions = ["what is our campaign", "what's our campaign", "campaign report"];
 
+    private static readonly string[] FrontQuestions = ["what are our fronts", "what are the campaign fronts", "campaign fronts"];
+
     public static CapabilityDescriptor Create(
         CampaignStore? store,
         Func<CommanderGameState?> gameState,
         SquadronFactions? squadronFactions = null,
         IGalaxyService? galaxy = null,
-        FactionSystemsSeen? seen = null) => new()
+        FactionSystemsSeen? seen = null,
+        Func<CampaignFrontsSnapshot?>? fronts = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -50,6 +57,21 @@ public static class CampaignCapability
                     + "resolved fronts. The faction is the squadron's unless the Commander named another.",
                 Commands = [.. Questions.Select(phrase => new ToolCommandPhrase(phrase))],
                 Handler = (_, cancellationToken) => GetAsync(store, gameState(), squadronFactions, galaxy, seen, cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = FrontsTool,
+                Exercise =
+                    "Say \"what are our fronts\". The reply names the campaign faction's top three fronts, each with "
+                    + "its system and why it is a front, and counts the rest.",
+                Description =
+                    "The campaign faction's fronts, ranked by d47 from the faction report fetched after the last BGS "
+                    + "tick and the Commander's own readings: conflicts, coup threats, retreats, thin margins, bad "
+                    + "states, unwanted expansion, expansion under way and stale reports. The top three with the reason "
+                    + "for each, a count of the rest, and when they were computed. The ranking is d47's; do not reorder "
+                    + "it or add fronts.",
+                Commands = [.. FrontQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
+                Handler = (_, _) => Task.FromResult(Fronts(store, gameState(), squadronFactions, fronts?.Invoke())),
             },
             new ToolDefinition
             {
@@ -322,6 +344,61 @@ public static class CampaignCapability
 
         return ToolResult.Ok(content.ToString(), spoken);
     }
+
+    private static ToolResult Fronts(
+        CampaignStore? store,
+        CommanderGameState? state,
+        SquadronFactions? squadronFactions,
+        CampaignFrontsSnapshot? snapshot)
+    {
+        if (store is null || state?.Identity.FrontierId is not { Length: > 0 } frontierId)
+        {
+            return ToolResult.Error("No Elite Dangerous journal has been detected yet, so there is no campaign to read.");
+        }
+
+        if (store.For(frontierId).FactionOr(SquadronFactionResolver.Resolve(state, squadronFactions)) is not { } faction)
+        {
+            return ToolResult.Ok(
+                "There is no campaign faction: D47 knows no squadron faction for you and none is named. "
+                + "Say 'our campaign faction is' and its name.");
+        }
+
+        if (snapshot is null
+            || !string.Equals(snapshot.FrontierId, frontierId, StringComparison.Ordinal)
+            || !string.Equals(snapshot.Faction, faction, StringComparison.OrdinalIgnoreCase)
+            || snapshot.Report is null)
+        {
+            return ToolResult.Ok(snapshot?.Failure is { } failure && string.Equals(snapshot.Faction, faction, StringComparison.OrdinalIgnoreCase)
+                ? $"There are no fronts for {faction} yet: the faction report could not be fetched. {failure} D47 tries again later."
+                : $"There are no fronts for {faction} yet. D47 is fetching the faction report.");
+        }
+
+        var count = snapshot.Fronts.Count;
+        var top = snapshot.Fronts.Take(FrontsSpoken)
+            .Select(front => $"{CampaignFronts.Describe(front.Kind)} in {front.System}: {front.Reason}")
+            .ToList();
+
+        var said = count == 0
+            ? $"{faction} has no fronts: nothing in its {Plural(snapshot.Report.Systems.Count, "system")} needs attention."
+            : $"{faction} has {Plural(count, "front")}. {string.Join(" ", top)}"
+                + (count > FrontsSpoken ? $" And {count - FrontsSpoken} more." : "");
+
+        var computed = snapshot.ComputedAt is { } at ? $" Computed {AsOf(at)}." : "";
+
+        if (snapshot.Failure is { } failed)
+        {
+            var fetched = snapshot.ReportFetchedAt is { } fetchedAt ? $" fetched {AsOf(fetchedAt)}" : "";
+
+            return ToolResult.Ok(
+                $"{said}{computed} The last fetch failed: {failed} These fronts are from the report{fetched}.",
+                $"{said} The last fetch failed, so these fronts are from an older report.");
+        }
+
+        return ToolResult.Ok($"{said}{computed}", said);
+    }
+
+    private static string AsOf(DateTimeOffset at) =>
+        at.UtcDateTime.ToString("yyyy-MM-dd HH:mm 'UTC'", System.Globalization.CultureInfo.InvariantCulture);
 
     private static string Chronicle(IReadOnlyList<ChronicleEntry> chronicle)
     {
