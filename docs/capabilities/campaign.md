@@ -260,6 +260,8 @@ A war says that trade does not count, an election that combat does not count and
 may void some election missions, a Lockdown that only bounties help, and an Outbreak that bounty
 vouchers do nothing. The model reads the answer and does not compose it.
 
+The first sentence of the next action also shows on the NEXT strip under every tab of the full panel, with a Story and Campaign toggle; see [The NEXT strip](adventures.md#the-next-strip).
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

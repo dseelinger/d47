@@ -795,10 +795,12 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Gives this surface the Commander's adventures (Phase 47).</summary>
     /// <param name="settingsStrip">Adventures' own settings, on the tab they only affect (#218).</param>
     /// <param name="desk">Where the voice commands for the draft on screen reach this page.</param>
+    /// <param name="nextBar">Which source the NEXT strip shows; with <paramref name="nextAction"/> it lets the strip show the campaign front.</param>
     public void EnableAdventures(
-        AdventureSurface surface, Func<Control?>? settingsStrip = null, D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? desk = null)
+        AdventureSurface surface, Func<Control?>? settingsStrip = null, D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? desk = null,
+        NextBarMemory? nextBar = null, Func<D47.Core.Campaigns.CampaignNextAction?>? nextAction = null)
     {
-        _stories.EnableAdventures(surface, settingsStrip, desk);
+        _stories.EnableAdventures(surface, settingsStrip, desk, nextBar, nextAction);
         ApplyChrome();
     }
 

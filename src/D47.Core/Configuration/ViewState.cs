@@ -62,6 +62,9 @@ public sealed record ViewState
     /// <summary>Which way the journal's Raw switch was left (#267): the file's own JSON, or sentences.</summary>
     public bool JournalRaw { get; init; }
 
+    /// <summary>What the NEXT bar shows when both a story objective and a chosen campaign front exist.</summary>
+    public NextBarSource NextBar { get; init; }
+
     /// <summary>Whether In Ship leaves out relayed comms traffic.</summary>
     public bool HideComms { get; init; }
 
@@ -323,6 +326,14 @@ public sealed record ViewState
 
         return next;
     }
+}
+
+/// <summary>What the NEXT bar shows.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum NextBarSource
+{
+    Story,
+    Campaign,
 }
 
 /// <summary>A surface that has been put down: where it went, and where the head was when it did.</summary>

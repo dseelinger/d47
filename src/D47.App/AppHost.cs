@@ -139,6 +139,7 @@ public sealed class AppHost : IDisposable
         Settings = settings;
         Secrets = secrets;
         ViewState = viewState;
+        NextBar = new Panel.NextBarMemory(viewState);
         GameState = gameState;
         Tick = tick;
         Callouts = callouts;
@@ -323,6 +324,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>How the panel was left.</summary>
     public ViewStateStore ViewState { get; }
+
+    /// <summary>What the NEXT bar shows; shared by the desktop panel and the headset's.</summary>
+    public Panel.NextBarMemory NextBar { get; }
 
     public GameStateStore GameState { get; }
 

@@ -40,6 +40,8 @@ public sealed record MiniPanelServices
 
     public CarrierHullMemory? CarrierHulls { get; init; }
 
+    public NextBarMemory? NextBar { get; init; }
+
     public ConstructionSurface? Construction { get; init; }
 
     public AdventureSurface? Adventures { get; init; }
@@ -174,7 +176,9 @@ public sealed record MiniPanelServices
                 settingsStrip: BuildSettingsStrip is null
                     ? null
                     : () => BuildSettingsStrip(AdventuresPage.RootKey),
-                desk: AdventureDesk);
+                desk: AdventureDesk,
+                nextBar: NextBar,
+                nextAction: Campaign?.NextAction);
         }
 
         if (CarrierHulls is not null)

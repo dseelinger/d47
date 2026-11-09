@@ -7,6 +7,9 @@ namespace D47.Core.Campaigns;
 /// <summary>The one thing to do for a front, and at most one sentence naming work that does not count there.</summary>
 public sealed record CampaignNextAction(Front Front, string Sentence, string? NotCounting)
 {
+    /// <summary>The campaign faction the action is for.</summary>
+    public string Faction { get; init; } = "";
+
     /// <summary>
     /// The next action for <paramref name="front"/>, from the Commander's kills and BGS work over the last week.
     /// Page numbers are from The Complete BGS Guide 2025.
@@ -27,7 +30,7 @@ public sealed record CampaignNextAction(Front Front, string Sentence, string? No
                 ? $"Redeem your {Credits(bounties)} in bounties for {faction} at a station in {system}, then {what}."
                 : $"{char.ToUpperInvariant(what[0])}{what[1..]}.";
 
-        return front.Kind switch
+        var action = front.Kind switch
         {
             FrontKind.Conflict when front.Conflict is { } conflict && conflict.Type.Contains("election", StringComparison.OrdinalIgnoreCase) =>
                 new(front, $"Run missions or trade for {faction} in {system}.", "Combat does not count in an election, and firing a weapon may void some election missions (guide p.61)."),
@@ -46,6 +49,8 @@ public sealed record CampaignNextAction(Front Front, string Sentence, string? No
             FrontKind.Expansion => new(front, $"Leave {faction}'s influence in {system} as it is until the expansion completes.", null),
             _ => new(front, $"Visit {system} to refresh the report of {faction}'s standing there.", null),
         };
+
+        return action with { Faction = faction };
     }
 
     private static CampaignNextAction BadState(Front front, string faction, long bounties)

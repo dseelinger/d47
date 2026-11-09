@@ -352,7 +352,8 @@ public partial class MainWindow : Window
                     host.RunVoicing);
 
                 Panel.EnableAdventures(
-                    Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk);
+                    Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk,
+                    nextBar: host.NextBar, nextAction: () => host.CampaignFocus?.NextAction());
             }
 
             // The fleet and its builds, what the Commander is wearing, and the arithmetic between them

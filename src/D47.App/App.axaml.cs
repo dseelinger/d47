@@ -134,6 +134,7 @@ public partial class App(AppHost? host) : Application
                 campaign: MainWindow.CampaignSourcesOf(host),
                 historyState: () => host.History.State,
                 carrierHulls: new Panel.CarrierHullMemory(host.ViewState),
+                nextBar: host.NextBar,
                 modules: window?.ModulesSource,
                 audioPlayer: () => new Controls.AudioPlayerDialog(
                     host.Panel,
@@ -199,6 +200,7 @@ public partial class App(AppHost? host) : Application
                     OnFoot = host.OnFootPlans,
                     EngineersMemory = new Panel.EngineerDirectoryMemory(host.ViewState),
                     CarrierHulls = new Panel.CarrierHullMemory(host.ViewState),
+                    NextBar = host.NextBar,
                     Construction = window?.Construction,
                     Adventures = window?.Adventures,
                     Routing = window?.Routing,

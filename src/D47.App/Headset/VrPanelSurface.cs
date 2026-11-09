@@ -141,6 +141,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         // Which fleet carrier model each carrier is drawn as, on the window's record.
         Panel.CarrierHullMemory? carrierHulls = null,
+        Panel.NextBarMemory? nextBar = null,
         D47.App.Settings.ModulesSource? modules = null,
 
         // Builds this surface's own copy of the audio player, which opens while the model says it is open.
@@ -186,6 +187,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             OnFoot = onFoot,
             EngineersMemory = engineersMemory,
             CarrierHulls = carrierHulls,
+            NextBar = nextBar,
             Construction = construction,
             Adventures = adventures,
             Routing = routing,

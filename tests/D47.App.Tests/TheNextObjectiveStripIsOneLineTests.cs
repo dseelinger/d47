@@ -47,7 +47,7 @@ public class TheNextObjectiveStripIsOneLineTests
         Assert.Equal("Shinrarta Dezhra", text.CopyValue);
         Assert.False(text.InSystem);
         Assert.False(text.Grey);
-        Assert.Equal("THE SALT ROAD", text.StoryName);
+        Assert.Equal("THE SALT ROAD", text.Tag);
         Assert.EndsWith(" ", text.Before);
         Assert.Null(text.After);
     }
@@ -122,5 +122,40 @@ public class TheNextObjectiveStripIsOneLineTests
         Assert.True(system.Bounds.Width >= system.DesiredSize.Width);
         Assert.Equal(44, glyph.Bounds.Height);
         Assert.InRange(right, 0, 820);
+    }
+
+    [AvaloniaFact]
+    public void ALongCampaignSentenceIsCutWhileTheToggleStaysWhole()
+    {
+        var memory = new NextBarMemory(new D47.Core.Configuration.ViewStateStore(
+            new D47.Core.AppPaths("d47-strip-tests"),
+            new D47.Core.Storage.MemoryFileSystem(),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<D47.Core.Configuration.ViewStateStore>.Instance));
+        var strip = new ObjectiveStrip(AdventureFixture.Surface(), () => (_ => Task.FromResult(true)), memory);
+        var text = new ObjectiveStripText(
+            "NEXT",
+            "Hand in your bounty vouchers for the Kestrel Union at Hale Orbital, the one port under lockdown that still takes them, in ",
+            "LHS 1914",
+            "LHS 1914",
+            null,
+            false,
+            false,
+            "LOCKDOWN · KESTREL UNION",
+            D47.Core.Configuration.NextBarSource.Campaign,
+            Toggle: true);
+
+        var window = new Window { Width = 720, Height = 200, Content = strip.Build(text) };
+        window.Show();
+
+        var blocks = window.GetVisualDescendants().OfType<TextBlock>().ToList();
+        var sentence = blocks.Single(block => block.Text!.StartsWith("Hand in", StringComparison.Ordinal));
+        var system = blocks.Single(block => block.Text == "LHS 1914");
+        var toggle = window.GetVisualDescendants().OfType<Segment>().Single();
+
+        Assert.True(sentence.Bounds.Width >= 160);
+        Assert.True(system.Bounds.Width >= system.DesiredSize.Width);
+        Assert.Equal(232, toggle.Bounds.Width);
+        Assert.Equal(44, toggle.Bounds.Height);
+        Assert.InRange(toggle.TranslatePoint(new Point(toggle.Bounds.Width, 0), window)!.Value.X, 0, 720);
     }
 }

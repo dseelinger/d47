@@ -38,7 +38,8 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
     }
 
     public void EnableAdventures(
-        AdventureSurface surface, Func<Control?>? settingsStrip = null, D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? desk = null)
+        AdventureSurface surface, Func<Control?>? settingsStrip = null, D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? desk = null,
+        NextBarMemory? nextBar = null, Func<D47.Core.Campaigns.CampaignNextAction?>? nextAction = null)
     {
         AdventuresPage? page = null;
 
@@ -94,6 +95,6 @@ internal sealed class StoriesFurnishing(IPanelTabHost host)
         }
 
         Mini = new AdventureMini(surface, () => host.Portraits, () => host.Copy);
-        Strip = new ObjectiveStrip(surface, () => host.Copy);
+        Strip = new ObjectiveStrip(surface, () => host.Copy, nextBar, nextAction);
     }
 }

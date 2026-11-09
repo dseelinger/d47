@@ -196,6 +196,7 @@ public sealed class VrHost : IDisposable
 
         // Which fleet carrier model each carrier is drawn as, on the window's record.
         Panel.CarrierHullMemory? carrierHulls = null,
+        Panel.NextBarMemory? nextBar = null,
         D47.App.Settings.ModulesSource? modules = null,
         Func<D47.App.Controls.AudioPlayerDialog>? audioPlayer = null)
     {
@@ -223,6 +224,7 @@ public sealed class VrHost : IDisposable
             campaign: campaign,
             historyState: historyState,
             carrierHulls: carrierHulls,
+            nextBar: nextBar,
             modules: modules,
             audioPlayer: audioPlayer,
             portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(files, paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
