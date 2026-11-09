@@ -36,7 +36,19 @@ public sealed record ChosenFront(FrontKind Kind, string System, DateTimeOffset S
     public DateTimeOffset? Reported { get; init; }
 }
 
-/// <summary>One Commander's campaign: the faction, an intent per system, the front being worked and the chronicle of resolved fronts.</summary>
+/// <summary>A kind of campaign arc.</summary>
+public enum ArcKind
+{
+    Nemesis,
+}
+
+/// <summary>
+/// A campaign arc under way: its kind, the rival faction it is about, the leader invented for that rival, when it began,
+/// and how many chronicle entries it has already answered.
+/// </summary>
+public sealed record CampaignArc(ArcKind Kind, string Rival, string Leader, DateTimeOffset Since, int Answered);
+
+/// <summary>One Commander's campaign: the faction, an intent per system, the front being worked, the chronicle of resolved fronts and the arc.</summary>
 public sealed record Campaign
 {
     public static readonly Campaign None = new();
@@ -53,6 +65,9 @@ public sealed record Campaign
 
     public IReadOnlyList<ChronicleEntry> Chronicle { get; init; } = [];
 
+    /// <summary>The arc under way, or null.</summary>
+    public CampaignArc? Arc { get; init; }
+
     /// <summary>The faction named, else <paramref name="squadronFaction"/>.</summary>
     public string? FactionOr(string? squadronFaction) =>
         Faction is { Length: > 0 } named ? named : squadronFaction is { Length: > 0 } ? squadronFaction : null;
@@ -64,5 +79,5 @@ public sealed record Campaign
     /// <summary>The intent of a system with none set: Hold where the faction controls it, else LeaveAlone.</summary>
     public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
-    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0;
+    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null;
 }

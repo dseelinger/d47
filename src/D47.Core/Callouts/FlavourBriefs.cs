@@ -212,6 +212,11 @@ public static class FlavourBriefs
             return Campaigns.CampaignLiaison.Brief(liaison);
         }
 
+        if (announcement.Arc is { } arc)
+        {
+            return Campaigns.CampaignArcs.Brief(arc);
+        }
+
         if (announcement.StoryAside is { } aside
             && announcement.Key.StartsWith(MissionCallout.AcceptedKey, StringComparison.Ordinal))
         {

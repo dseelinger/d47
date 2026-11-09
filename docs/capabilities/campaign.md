@@ -297,6 +297,50 @@ public sealed record CampaignLiaisonLine(
     bool Conflict)
 ```
 
+### Arcs
+
+An arc is fiction around the campaign's facts. D47 picks the arc, who is in it and when each act is due; the language
+model writes the act. The model may invent people, motives, documents, history and grudges, and never a game fact: every
+number, state, outcome and place comes from D47. Every act follows a change in the fronts or the chronicle.
+
+The first arc is the **Nemesis**, a rival faction with an invented leader. D47 ranks the rivals: the one that has fought
+the campaign faction most, counting the chronicle and current conflicts, first; then the one in the most of the faction's
+systems; then the one closest to it in influence in a shared system:
+
+```csharp
+.OrderByDescending(score => score.Fought)
+.ThenByDescending(score => score.Shared)
+.ThenBy(score => score.Gap ?? double.MaxValue)
+.ThenBy(score => score.Name, StringComparer.Ordinal),
+```
+
+The Nemesis is the highest-ranked rival leading a front against the faction (a conflict against it, a coup threat by it,
+or a thin margin over it), fixed the first time one does. Its leader is named then, a title and a surname drawn from the rival's name and your squadron, so
+everyone in a squadron meets the same leader; outside a squadron the campaign faction stands in for the squadron. The
+Nemesis and its leader are kept in `data/campaigns.json` until you name another campaign faction.
+
+| When | What the Nemesis says |
+|---|---|
+| It first leads a front against the faction | The introduction: the leader, the front and why it is a front. |
+| It wins a day in a conflict you have visited | A broadcast with the days won. |
+| It moves ahead of the faction in a system where it leads a front | A broadcast with its lead in points. |
+| The faction wins a conflict against it for the first time in that system | A concession. |
+| The faction wins a conflict against it in a system they have contested before | A vow of revenge. |
+
+Each act counts the grudge: in a system the two factions have contested before, by the chronicle, the act says which
+time this is, such as "This is the third time Lave Purple Gang and Kestrel Reach Compact have contested Lave."
+
+The leader speaks on the NPC voices' provider in a voice picked by the rival's name, through a broadcast link of strength
+0.9; when that is the Liaison's voice and the provider has another, the next one is used. Like the Liaison, the Nemesis
+waits while you are in a fight, in supercruise or a jump, or in an Operation. The first fronts computed after d47 starts
+are what later broadcasts are measured against, so a lead or a day the Nemesis already held is not broadcast; an
+introduction that is due is said. The Campaign Nemesis row turns it off;
+see [Campaign Nemesis](callouts.md#campaign-arcs).
+
+```csharp
+public sealed record CampaignArcLine(ArcAct Act, string Faction, string Rival, string Leader, string System, IReadOnlyList<string> Facts)
+```
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

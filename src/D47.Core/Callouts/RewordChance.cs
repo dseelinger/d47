@@ -25,6 +25,7 @@ public sealed class RewordChance(Random? choice = null)
             || announcement.Key.StartsWith(RecapCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.StoryAside is not null
             || announcement.Liaison is not null
+            || announcement.Arc is not null
             || string.Equals(announcement.Key, IncomingMessages.CarrierCannedKey, StringComparison.Ordinal)
             || _choice.Next(100) < Math.Clamp(rewordPercent, 0, 100);
     }

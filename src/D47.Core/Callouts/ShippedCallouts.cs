@@ -118,6 +118,9 @@ public static class ShippedCallouts
         /// <summary>The campaign Liaison's voice for a faction, or null.</summary>
         public Func<string, PinnedVoice?> LiaisonVoice { get; init; } = _ => null;
 
+        /// <summary>The campaign Nemesis's voice for a rival and the campaign faction, or null.</summary>
+        public Func<string, string, PinnedVoice?> NemesisVoice { get; init; } = (_, _) => null;
+
         /// <summary>The GalNet articles that arrived in the last poll, newest first.</summary>
         public Func<IReadOnlyList<GalNetArticle>> GalNetArrived { get; init; } = () => [];
 
@@ -251,6 +254,8 @@ public static class ShippedCallouts
             .Add(new CampaignWarningCallout())
 
             .Add(new CampaignLiaisonCallout(sources.Fight))
+
+            .Add(new CampaignArcCallout(sources.Fight))
 
             .Add(new FriendsCallout(sources.Friends))
 
@@ -396,6 +401,12 @@ public static class ShippedCallouts
                     liaison.Voice = services.LiaisonVoice;
                     break;
 
+                case CampaignArcCallout arcs:
+                    arcs.Campaigns = services.Campaigns;
+                    arcs.Fronts = services.CampaignFronts;
+                    arcs.Voice = services.NemesisVoice;
+                    break;
+
                 case GalNetCallout galNet:
                     galNet.Arrived = () => services.GalNetArrived();
                     galNet.OpeningDone = () =>
@@ -498,6 +509,7 @@ public static class ShippedCallouts
         engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
         engine.SetEnabled("campaign-warnings", callouts.CampaignWarnings, now);
         engine.SetEnabled("campaign-liaison", callouts.CampaignLiaison, now);
+        engine.SetEnabled("campaign-arcs", callouts.CampaignArcs, now);
         engine.SetEnabled("friends", callouts.FriendsOnline, now);
         engine.SetEnabled("wing", callouts.Wing, now);
         engine.SetEnabled("galnet", callouts.GalNet, now);

@@ -172,6 +172,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>The campaign Liaison's line before it is written, or null for anything else.</summary>
     public Campaigns.CampaignLiaisonLine? Liaison { get; init; }
 
+    /// <summary>A campaign arc's line before it is written, or null for anything else.</summary>
+    public Campaigns.CampaignArcLine? Arc { get; init; }
+
     /// <summary>Words said unchanged after <see cref="Text"/>. Never given to a model, so never put in a brief or the conversation feed.</summary>
     public string? Verbatim { get; init; }
 

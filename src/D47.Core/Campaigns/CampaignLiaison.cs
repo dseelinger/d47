@@ -388,7 +388,7 @@ public static partial class CampaignLiaison
         };
     }
 
-    private static string Named(Front front) =>
+    internal static string Named(Front front) =>
         front.Kind == FrontKind.Conflict && front.Conflict is { Type.Length: > 0 } conflict
             ? conflict.Type.ToLowerInvariant()
             : CampaignFronts.Describe(front.Kind).ToLowerInvariant();

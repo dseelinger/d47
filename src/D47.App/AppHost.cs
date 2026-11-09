@@ -3240,6 +3240,7 @@ public sealed class AppHost : IDisposable
             CampaignFronts = () => late.Host?.CampaignFronts?.Snapshot,
             CampaignProposal = () => stores.CampaignFocus.Proposal,
             LiaisonVoice = faction => D47.Core.Campaigns.CampaignLiaison.Voice(faction, settings.Current.Speech, services.Speech.Casting.Of),
+            NemesisVoice = (rival, faction) => D47.Core.Campaigns.CampaignArcs.Voice(rival, faction, settings.Current.Speech, services.Speech.Casting.Of),
             GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
             ServerStatusAnnounce = () => late.Host?.ServerStatus?.Announce,
             WatchesReady = () => late.Host?.Watches?.Ready ?? [],

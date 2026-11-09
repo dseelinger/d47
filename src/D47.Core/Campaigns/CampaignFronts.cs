@@ -41,6 +41,9 @@ public sealed record Front(
 
     /// <summary>The bad states, active or pending, for a <see cref="FrontKind.BadState"/> front.</summary>
     public IReadOnlyList<string> States { get; init; } = [];
+
+    /// <summary>The faction's influence less the nearest rival's, or null when either is unknown.</summary>
+    public double? Lead { get; init; }
 }
 
 /// <summary>Lists the campaign faction's fronts from its galaxy report and the Commander's readings, ranked.</summary>
@@ -126,7 +129,7 @@ public static class CampaignFronts
         var nearest = rivals.Count == 0 ? default : rivals[0];
 
         Front Make(FrontKind kind, string reason, string? opponent, double? margin, string stake = "") =>
-            new(kind, row.System, reason, intent, row.Controls, opponent, stake, margin, row.Updated, row.OwnReading);
+            new(kind, row.System, reason, intent, row.Controls, opponent, stake, margin, row.Updated, row.OwnReading) { Lead = Lead(row, nearest) };
 
         if (conflict is not null)
         {

@@ -647,6 +647,20 @@ fight, in supercruise or a jump, or in an Operation. What is already true when d
 what the last tick owes: the request to fly in, or the dispatch. Turn this one off with the Campaign Liaison row; the
 [Liaison voice](speech.md#liaison-voice) row picks its voice. See [The Liaison](campaign.md#the-liaison).
 
+#### Campaign Nemesis {#campaign-arcs}
+
+The leader of the rival faction D47 picks as your campaign faction's Nemesis, on an open broadcast: an introduction when
+it first leads a front against the faction, a broadcast when it wins a day in a conflict or moves ahead of the faction,
+and a concession, or a vow of revenge in a system contested before, when the faction wins a conflict against it.
+
+```text
+Lave Purple Gang has won a day in the war in Lave. Days won stand at 2 for Lave Purple Gang and 1 for Kestrel Reach Compact.
+```
+
+D47 decides every fact and the model writes the leader's words, free to invent a motive or a grudge but no number,
+state, outcome or place. A lead or a day won that the Nemesis already held when d47 started is not broadcast. Turn this one off with the Campaign Nemesis
+row. See [Arcs](campaign.md#arcs).
+
 #### Background watches {#watches}
 
 When a stock watch's condition holds, the commodity, the station, the system and the stock, at most once per BGS

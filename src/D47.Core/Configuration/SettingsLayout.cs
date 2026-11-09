@@ -412,6 +412,10 @@ public static class SettingsLayout
                                 E("speech.liaisonVoice", under: true),
                             ]),
                         G(
+                            "Campaign Nemesis",
+                            $"The rival faction's leader, who broadcasts about the fronts it leads against you. {OtherVoicesSwitchHelp}",
+                            [E("callouts.campaignArcs")]),
+                        G(
                             "Messages read aloud",
                             "Which comms tabs D47 reads out, once incoming messages are on.",
                             [

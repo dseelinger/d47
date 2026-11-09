@@ -643,6 +643,9 @@ public sealed record CalloutSettings
     /// <summary>The campaign faction's Liaison: briefings, dispatches after a tick, acknowledgements and outcomes.</summary>
     public bool CampaignLiaison { get; init; } = true;
 
+    /// <summary>The campaign's arc: the Nemesis's introduction, broadcasts, concessions and vows of revenge.</summary>
+    public bool CampaignArcs { get; init; } = true;
+
     /// <summary>A friend coming online, said once for a burst of arrivals.</summary>
     public bool FriendsOnline { get; init; } = true;
 

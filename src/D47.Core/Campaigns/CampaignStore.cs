@@ -58,6 +58,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                         ? new ChosenFront(chosen.Kind, chosenSystem, chosen.Since, chosen.Ticks ?? []) { Reported = chosen.Reported }
                         : null,
                     Chronicle = [.. (record.Chronicle ?? []).Select(Entry).OfType<ChronicleEntry>()],
+                    Arc = Arc(record.Arc),
                 };
             }
 
@@ -100,6 +101,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             Faction = faction.Trim(),
             Intents = clearIntents ? campaign.Intents.Clear() : campaign.Intents,
             Chosen = null,
+            Arc = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Arc : null,
         });
     }
 
@@ -171,6 +173,14 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             && resolved;
     }
 
+    /// <summary>Sets the arc under way, or clears it with null. False when the write failed.</summary>
+    public bool SetArc(string frontierId, CampaignArc? arc)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return Change(frontierId, campaign => campaign with { Arc = arc });
+    }
+
     private static bool Is(ChosenFront chosen, FrontKind kind, string system) =>
         chosen.Kind == kind && string.Equals(chosen.System, system, StringComparison.OrdinalIgnoreCase);
 
@@ -239,6 +249,9 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                                 ? new ChosenRecord { Kind = held.Kind, System = held.System, Since = held.Since, Ticks = [.. held.Ticks], Reported = held.Reported }
                                 : null,
                             Chronicle = [.. pair.Value.Chronicle.Select(ToRecord)],
+                            Arc = pair.Value.Arc is { } arc
+                                ? new ArcRecord { Kind = arc.Kind, Rival = arc.Rival, Leader = arc.Leader, Since = arc.Since, Answered = arc.Answered }
+                                : null,
                         }),
                 ],
             };
@@ -263,6 +276,11 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                 record.Outcome,
                 record.Ticks ?? [],
                 [.. (record.Work ?? []).Where(work => Enum.IsDefined(work.Kind)).Select(work => new ChronicleWork(work.Kind, work.Amount))]);
+
+    private static CampaignArc? Arc(ArcRecord? record) =>
+        record is { Rival: { Length: > 0 } rival, Leader: { Length: > 0 } leader } && Enum.IsDefined(record.Kind)
+            ? new CampaignArc(record.Kind, rival, leader, record.Since, Math.Max(0, record.Answered))
+            : null;
 
     private static EntryRecord ToRecord(ChronicleEntry entry) => new()
     {
@@ -290,6 +308,21 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public ChosenRecord? Chosen { get; set; }
 
         public IReadOnlyList<EntryRecord>? Chronicle { get; set; }
+
+        public ArcRecord? Arc { get; set; }
+    }
+
+    private sealed class ArcRecord
+    {
+        public ArcKind Kind { get; set; }
+
+        public string? Rival { get; set; }
+
+        public string? Leader { get; set; }
+
+        public DateTimeOffset Since { get; set; }
+
+        public int Answered { get; set; }
     }
 
     private sealed class ChosenRecord

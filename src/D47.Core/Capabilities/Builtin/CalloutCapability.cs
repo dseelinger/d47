@@ -73,6 +73,7 @@ public static class CalloutCapability
     public const string BgsTickKey = "callouts.bgsTick";
     public const string CampaignWarningsKey = "callouts.campaignWarnings";
     public const string CampaignLiaisonKey = "callouts.campaignLiaison";
+    public const string CampaignArcsKey = "callouts.campaignArcs";
     public const string FriendsOnlineKey = "callouts.friendsOnline";
 
     public const string WingKey = "callouts.wing";
@@ -1002,6 +1003,23 @@ public static class CalloutCapability
                 "the campaign Liaison",
                 s => s.Callouts.CampaignLiaison,
                 (s, v) => s with { Callouts = s.Callouts with { CampaignLiaison = v } }),
+
+            Toggle(
+                CampaignArcsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Campaign Nemesis, and find Campaign Nemesis "
+                + "(on by default). Once the rival faction D47 picks as the Nemesis leads a front against your campaign "
+                + "faction, its leader introduces themselves over comms, and broadcasts when it wins a day or takes the "
+                + "lead. Say \"stop calling out the campaign Nemesis\": the row shows off and the Nemesis says nothing. Say "
+                + "\"start calling out the campaign Nemesis\" and the row shows on. The row is absent while Speak without "
+                + "being asked is off.",
+                "Campaign Nemesis",
+                "The rival faction's leader: an introduction, broadcasts when it gains, and a concession or a vow of revenge "
+                + "when it loses.",
+                "campaign-arcs",
+                "the campaign Nemesis",
+                s => s.Callouts.CampaignArcs,
+                (s, v) => s with { Callouts = s.Callouts with { CampaignArcs = v } }),
 
             Toggle(
                 GalNetKey,
