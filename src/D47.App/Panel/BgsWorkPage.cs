@@ -26,7 +26,6 @@ public sealed record BgsWorkRow(
     long? Sold,
     long? Profit,
     long? Cartography,
-    long? Organic,
     InfluenceAcrossResult? Influence)
 {
     public string SystemText => System ?? BgsWorkPage.UnnamedSystem;
@@ -35,7 +34,7 @@ public sealed record BgsWorkRow(
 
     internal long? Combat => Bounties is null && Bonds is null ? null : (Bounties ?? 0) + (Bonds ?? 0);
 
-    internal long? Data => Cartography is null && Organic is null ? null : (Cartography ?? 0) + (Organic ?? 0);
+    internal long? Data => Cartography;
 
     internal double? InfluenceChange => Influence is { } across ? across.After - across.Before : null;
 }
@@ -71,7 +70,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         SortColumn<BgsWorkRow>.Figure("Missions", row => row.Marks, SortDirection.Descending) with { Second = "Up · down" },
         SortColumn<BgsWorkRow>.Figure("Combat", row => row.Combat, SortDirection.Descending) with { Second = "Bounties · bonds" },
         SortColumn<BgsWorkRow>.Figure("Trade", row => row.Profit, SortDirection.Descending) with { Second = "Sold · profit" },
-        SortColumn<BgsWorkRow>.Figure("Data", row => row.Data, SortDirection.Descending) with { Second = "Cartography · organic" },
+        SortColumn<BgsWorkRow>.Figure("Data", row => row.Data, SortDirection.Descending) with { Second = "Cartography" },
         SortColumn<BgsWorkRow>.Figure("Influence", row => row.InfluenceChange, SortDirection.Descending) with { Second = "Tick → visit" },
     ];
 
@@ -282,7 +281,6 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
             Total(entries, BgsWorkKind.Trade),
             trade.Count > 0 ? trade.Sum(entry => entry.Profit) : null,
             Total(entries, BgsWorkKind.Cartography),
-            Total(entries, BgsWorkKind.Organic),
             tick is { } boundary && name is not null ? standings.InfluenceAcross(name, faction, boundary) : null);
     }
 
@@ -460,7 +458,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         Place(grid, 1, Values((MarksUpText(row.MarksUp), Key(row.MarksUp)), (MarksDownText(row.MarksDown), row.MarksDown is null ? ThemeManager.Grey2Key : ThemeManager.RedKey)));
         Place(grid, 2, Values((Credits(row.Bounties), Key(row.Bounties)), (Credits(row.Bonds), Key(row.Bonds))));
         Place(grid, 3, Values((Credits(row.Sold), Key(row.Sold)), (Credits(row.Profit), row.Profit switch { null => ThemeManager.Grey2Key, < 0 => ThemeManager.RedKey, _ => ThemeManager.AKey })));
-        Place(grid, 4, Values((Credits(row.Cartography), Key(row.Cartography)), (Credits(row.Organic), Key(row.Organic))));
+        Place(grid, 4, Values((Credits(row.Cartography), Key(row.Cartography))));
 
         if (withInfluence)
         {

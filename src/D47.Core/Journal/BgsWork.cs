@@ -10,7 +10,6 @@ public enum BgsWorkKind
     CombatBond,
     Trade,
     Cartography,
-    Organic,
 }
 
 /// <summary>One piece of BGS work. <c>Amount</c> is signed marks for a mission and credits otherwise; <c>Profit</c> is set for trade.</summary>
@@ -234,15 +233,6 @@ public sealed record BgsWork
                     yield return new BgsEntry(at, market.SystemAddress, market.Faction!, BgsWorkKind.Trade, sale, profit);
                 }
 
-                break;
-
-            case "SellOrganicData" when SoldAt(journalEvent) is { } organicMarket:
-                yield return new BgsEntry(
-                    at,
-                    organicMarket.SystemAddress,
-                    organicMarket.Faction!,
-                    BgsWorkKind.Organic,
-                    journalEvent.Items("BioData").Sum(data => (data.Long("Value") ?? 0) + (data.Long("Bonus") ?? 0)));
                 break;
 
             case "SellExplorationData" or "MultiSellExplorationData"

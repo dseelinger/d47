@@ -9,7 +9,7 @@ public static class BgsWorkBackfill
 {
     private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "FSDJump", "Location", "CarrierJump", "Docked", "Undocked", "MissionCompleted",
-        "RedeemVoucher", "MarketSell", "SellOrganicData", "SellExplorationData", "MultiSellExplorationData");
+        "RedeemVoucher", "MarketSell", "SellExplorationData", "MultiSellExplorationData");
 
     /// <summary>
     /// Each Commander's work, keyed by Frontier id, over journals oldest-first. Files written more than a

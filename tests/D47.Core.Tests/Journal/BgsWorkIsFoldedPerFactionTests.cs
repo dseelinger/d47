@@ -69,15 +69,13 @@ public class BgsWorkIsFoldedPerFactionTests
     }
 
     [Fact]
-    public void OrganicSalesSumValueAndBonus()
+    public void AnOrganicSaleAddsNoBgsWork()
     {
         var work = Fold(
             Docked,
             At("2026-10-10T10:08:00Z", "\"event\":\"SellOrganicData\",\"MarketID\":100,\"BioData\":[{\"Value\":1000,\"Bonus\":500},{\"Value\":200,\"Bonus\":0}]"));
 
-        var entry = Assert.Single(work.Entries);
-
-        Assert.Equal((BgsWorkKind.Organic, 1700L), (entry.Kind, entry.Amount));
+        Assert.Empty(work.Entries);
     }
 
     [Theory]

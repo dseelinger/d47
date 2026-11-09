@@ -384,7 +384,7 @@ public static class JournalCapability
                     Description =
                         "Report the BGS work the Commander has done since the last BGS tick, per system and "
                         + "faction: mission influence marks, bounty and combat bond vouchers, trade sold and its "
-                        + "profit, and cartographic and organic data sold. It reports the work done, not the "
+                        + "profit, and cartographic data sold. It reports the work done, not the "
                         + "influence it produced.",
                     Parameters =
                     [
@@ -2618,7 +2618,6 @@ public static class JournalCapability
             (BgsWorkKind.CombatBond, "combat bonds"),
             (BgsWorkKind.Trade, "trade"),
             (BgsWorkKind.Cartography, "cartography"),
-            (BgsWorkKind.Organic, "organic data"),
         })
         {
             var ofKind = all.Where(entry => entry.Kind == kind).ToList();

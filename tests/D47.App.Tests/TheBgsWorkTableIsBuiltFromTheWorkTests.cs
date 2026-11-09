@@ -94,7 +94,7 @@ public class TheBgsWorkTableIsBuiltFromTheWorkTests
             Order(Rows(), Trade, SortDirection.Descending));
 
     [Fact]
-    public void DataSortsByCartographyPlusOrganicWithEmptyRowsLast() =>
+    public void DataSortsByCartographyWithEmptyRowsLast() =>
         Assert.Equal(
             ["Alpha Mining", "Beta Union", "Gamma Pirates", "Delta Party", "Epsilon Front"],
             Order(Rows(), Data, SortDirection.Descending));

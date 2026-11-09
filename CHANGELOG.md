@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Selling exobiology data no longer counts as BGS work. Exobiology data has no BGS effect, so the BGS work page's Data column now shows cartography only, and "what's my BGS work" no longer reports organic data sold.
+
 Faction influence and conflict readings from the last week of your journals now survive a restart. The BGS work page's Influence column, the influence in "what's my BGS work", and the days won on Search › Faction › Conflicts no longer go blank after d47 restarts until you visit the system again.
 
 A stock story's span in the black can now travel toward any system, given with its position, or through a list of systems in order, moving on to the next once you are within 1,000 light years of the current one. The finale waits for the last.
