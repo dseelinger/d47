@@ -42,3 +42,6 @@ usage-worker/.wrangler/
 
 # Avatar clips are published to the avatars-1 release, not committed
 design/avatars/
+
+# Skill eval results from tools/evals/skill-evals.ps1
+.claude/skills/*/evals/results/

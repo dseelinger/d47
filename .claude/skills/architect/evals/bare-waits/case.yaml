@@ -1,0 +1,31 @@
+schema_version: "1.0"
+name: bare-waits
+description: >-
+  A bare /architect names no issue, so the skill acknowledges in one line and
+  reads nothing until the maintainer names one.
+execution:
+  prompt: /architect
+  model: opus
+  max_turns: 15
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep]
+graders:
+  - type: tool_used
+    name: no-read
+    tool: Read
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-glob
+    tool: Glob
+    min: 0
+    max: 0
+  - type: tool_used
+    name: no-grep
+    tool: Grep
+    min: 0
+    max: 0
+  - type: regex
+    name: one-line-reply
+    target: last_message
+    pattern: '^[^\n]{1,200}$'

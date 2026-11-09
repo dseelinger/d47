@@ -1,0 +1,18 @@
+{
+  "number": 4242,
+  "title": "Say the jumps left on a route",
+  "author": {
+    "login": "someone-else",
+    "name": ""
+  },
+  "labels": [
+    {
+      "name": "needs-architect",
+      "description": "",
+      "color": "ededed"
+    }
+  ],
+  "body": "The route callout names the next system but not how many jumps are left.\n\n### What is wanted\n\nA plan for adding the remaining jump count to the route callout: where the count comes from, and whether it is spoken on every jump or only on request.\n\n### Accepted when\n\n- The plan names the source of the count and the build issues are filed from it.\n",
+  "comments": [],
+  "state": "OPEN"
+}

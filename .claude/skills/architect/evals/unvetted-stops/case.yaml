@@ -1,0 +1,30 @@
+schema_version: "1.0"
+name: unvetted-stops
+description: >-
+  Issue 4242 was opened by someone-else and carries needs-architect but not
+  Vetted. The skill names the author and stops before any planning. Pins
+  "Check who opened it" in architect/SKILL.md.
+context:
+  scaffold_script: fixture.sh
+execution:
+  prompt: /architect 4242
+  model: opus
+  max_turns: 15
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep]
+  append_system_prompt: 'gh and Bash are unavailable in this session. The output of each gh command this skill runs is already in a file in the working directory: `gh issue view 4242 --json author,labels,title,body,comments`, and `gh issue view 4242 --comments`, are in issue-4242.json; `gh issue list --state open --search "#4242" --limit 30` is in issue-list.json. Read those files in place of running gh. There is no claude-voice skill here; skip that step.'
+graders:
+  - type: regex
+    name: names-the-author
+    target: last_message
+    pattern: 'someone-else'
+  - type: regex
+    name: no-size-line
+    target: last_message
+    pattern: 'Size:'
+    match: not_contains
+  - type: regex
+    name: no-issue-text
+    target: last_message
+    pattern: '### What is wanted'
+    match: not_contains

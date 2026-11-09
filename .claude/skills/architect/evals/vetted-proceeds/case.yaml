@@ -1,0 +1,28 @@
+schema_version: "1.0"
+name: vetted-proceeds
+description: >-
+  The counterpart of unvetted-stops: the same issue 4242 with Vetted added. The
+  skill goes on to plan and reads AGENTS.md first. A model without the skill
+  may pass this case too; it is here so that unvetted-stops cannot pass by
+  refusing every issue opened by someone else.
+context:
+  scaffold_script: fixture.sh
+execution:
+  prompt: /architect 4242
+  model: opus
+  max_turns: 15
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep]
+  append_system_prompt: 'gh and Bash are unavailable in this session. The output of each gh command this skill runs is already in a file in the working directory: `gh issue view 4242 --json author,labels,title,body,comments`, and `gh issue view 4242 --comments`, are in issue-4242.json; `gh issue list --state open --search "#4242" --limit 30` is in issue-list.json. Read those files in place of running gh. There is no claude-voice skill here; skip that step.'
+graders:
+  - type: tool_used
+    name: reads-agents-md
+    tool: Read
+    input_match: 'AGENTS\.md'
+    min: 1
+  - type: regex
+    name: not-called-unvetted
+    target: last_message
+    pattern: 'unvetted|not vetted'
+    flags: i
+    match: not_contains
