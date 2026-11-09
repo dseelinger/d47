@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+"Hide VR panel" and "show VR panel" hide and show the headset panel and its avatar by voice. The captions keep showing and the SteamVR session stays up; a hidden panel is not remembered after a restart. "Show VR panel" also turns Show D47 in the headset on if it was off. "Hide 2D overlay" and "show 2D overlay" (or "panel") turn Show the overlay off and on.
+
 Voice navigation accepts "page" after a destination as well as "tab": "story page" and "open the checklist page" go where "story tab" and "open the checklist tab" go.
 
 The first organic sample of a run now says what the run will be worth once all three are analysed, with the first footfall bonus where it applies. It does not say the unsold total.

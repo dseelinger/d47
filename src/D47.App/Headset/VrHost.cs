@@ -72,6 +72,8 @@ public sealed class VrHost : IDisposable
     /// <summary>Whether the panels answer to their edges (#107). Set from a tool call, read by the tick.</summary>
     private volatile bool _resizeMode;
 
+    private volatile bool _panelHidden;
+
     /// <summary>The resize drag a hand is holding, and the device holding it.</summary>
     private VrResizeGrab? _resizing;
 
@@ -398,6 +400,17 @@ public sealed class VrHost : IDisposable
         return VrResizeOutcome.On;
     }
 
+    /// <summary>Hides the panel and its avatar, or shows them again. Not saved; leaves resize mode when hiding.</summary>
+    public void SetPanelHidden(bool hidden)
+    {
+        _panelHidden = hidden;
+
+        if (hidden)
+        {
+            _resizeMode = false;
+        }
+    }
+
     /// <summary>Where a surface was put down, if it has been.</summary>
     public (VrPose Placed, VrPose Against)? AnchorFor(string slot) =>
         _anchors.TryGetValue(slot, out var anchor)
@@ -509,7 +522,7 @@ public sealed class VrHost : IDisposable
         }
 
         _now = now;
-        _panel.Enabled = true;
+        _panel.Enabled = !_panelHidden;
         _captions.Enabled = _settings.Current.Vr.Captions.Enabled;
         _layer.Tick(now);
         _avatar.Advance(now);
@@ -619,7 +632,7 @@ public sealed class VrHost : IDisposable
         }
 
         // Asked of the surface rather than assumed here.
-        if (!_panel.TakesPointer || _runtime.Head is not { } head)
+        if (_panelHidden || !_panel.TakesPointer || _runtime.Head is not { } head)
         {
             // Withdrawn before the return, so the aim loop stops placing a ray against geometry this serve
             // has just declined to stand behind.

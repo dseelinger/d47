@@ -154,6 +154,8 @@ is.
 > "headset overlay off"
 > "mini panel"
 > "full panel"
+> "hide VR panel"
+> "show VR panel"
 
 ### The order does not matter
 
@@ -337,6 +339,13 @@ On by default, which costs nothing if you have no headset — it looks, finds no
 Turn it off if you use SteamVR for other things and would rather Directive 47 stayed out of it.
 
 > "headset overlay on" / "headset overlay off"
+
+"Headset overlay off" switches everything off: the panel, the avatar, the captions and the SteamVR
+session. To hide the panel alone, say "hide VR panel". The avatar goes with it; the captions keep
+showing and the session stays up. "Show VR panel" brings it back where it was, and also turns this
+setting on if it was off. A hidden panel is not remembered across a restart.
+
+> "hide VR panel" / "show VR panel"
 
 #### Panel content {#mode}
 
@@ -589,6 +598,16 @@ not the same as it appearing: with no runtime installed the setting takes and no
 
 ```json
 {"type":"object","properties":{"on":{"type":"boolean","description":"True to show D47 in the headset, false to leave SteamVR alone."}},"required":["on"],"additionalProperties":false}
+```
+
+#### `show_headset_panel`
+
+Hides the headset panel and its avatar, or shows them again. Captions and the SteamVR session are
+untouched, and the hidden state is not saved. Showing the panel while `vr.enabled` is off turns
+that row on.
+
+```json
+{"type":"object","properties":{"on":{"type":"boolean","description":"True to show the headset panel, false to hide it."}},"required":["on"],"additionalProperties":false}
 ```
 
 #### `move_headset_panel`

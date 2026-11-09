@@ -230,7 +230,15 @@ public static class InterfaceCapability
                     + "showing the transcript's last few lines and the story if one is running. It cannot be clicked: "
                     + "the pointer passes through to the game. Switch to another window and it goes. Turn the row off "
                     + "and it stays gone with Elite in front. The Elite's display mode row below it says whether the "
-                    + "game's display mode hides it.",
+                    + "game's display mode hides it. Say \"hide 2D overlay\" and the row turns off; say \"show 2D "
+                    + "overlay\" and it turns on.",
+                Commands =
+                [
+                    new SettingCommandPhrase("hide 2d panel", "false"),
+                    new SettingCommandPhrase("hide 2d overlay", "false"),
+                    new SettingCommandPhrase("show 2d panel", "true"),
+                    new SettingCommandPhrase("show 2d overlay", "true"),
+                ],
                 Label = "Show the overlay",
                 Help = "Pins the mini panel over the game: the transcript's last few lines, and "
                        + "the story if one is running. It shows itself only while Elite is in "

@@ -360,6 +360,8 @@ public sealed class KeywordRouter(
                 ("heatsink", "heat sink"),
                 ("hard points", "hardpoints"),
                 ("e c m", "ecm"),
+                ("2 d", "2d"),
+                ("two d", "2d"),
             }
             .Select(entry => (Run: entry.Run.Split(' '), entry.Spelling))
             .OrderByDescending(entry => entry.Run.Length)];

@@ -2391,6 +2391,7 @@ public sealed class AppHost : IDisposable
                         late.Host?.Vr?.Nudge(nudge, steps) ?? Core.Vr.VrNudgeOutcome.NoHeadset,
                     Resize = on => late.Host?.Vr?.Resize(on) ?? Core.Vr.VrResizeOutcome.NoHeadset,
                     PlaceWhereLooking = () => late.Host?.Vr?.PlaceWhereLooking() ?? Core.Vr.VrGazeOutcome.NoHeadset,
+                    SetPanelHidden = hidden => late.Host?.Vr?.SetPanelHidden(hidden),
                     ResetPlacement = slot =>
                         late.Host?.Vr?.ResetPlacement(slot) ?? Core.Vr.VrResetOutcome.ResetNoHeadset,
                 },

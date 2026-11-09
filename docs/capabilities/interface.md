@@ -306,6 +306,8 @@ The box is in the window only. The headset has no text keyboard, so ask there in
 
 **The mini panel, on your monitor.** Off out of the box.
 
+> "show 2D overlay" / "hide 2D overlay"
+
 Turn it on and Directive 47 pins a small strip over the game: the transcript's last few lines,
 and the story if one is running. It is the same panel the headset shows in mini — the same view,
 the same model, the same reduced set of things — put on a monitor instead of a quad. Nothing is

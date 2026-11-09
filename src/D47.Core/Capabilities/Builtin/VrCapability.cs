@@ -89,6 +89,9 @@ public static class VrCapability
         /// <summary>Places whichever panel is on screen along the line the headset is facing (#161).</summary>
         public Func<VrGazeOutcome> PlaceWhereLooking { get; init; } = () => VrGazeOutcome.NoHeadset;
 
+        /// <summary>Hides the panel on screen, or shows it again; captions and the session are untouched.</summary>
+        public Action<bool> SetPanelHidden { get; init; } = _ => { };
+
         /// <summary>
         /// Puts a surface back where a fresh install puts it (#162). Takes <see cref="PanelSlot"/>,
         /// <see cref="MiniSlot"/> or <see cref="CurrentSlot"/>.
@@ -146,6 +149,28 @@ public static class VrCapability
                         required: true),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Show(settings, headset, arguments)),
+            },
+
+            new ToolDefinition
+            {
+                Name = "show_headset_panel",
+                Exercise =
+                    "With the headset on, say \"hide VR panel\". The panel and avatar disappear, captions still show "
+                    + "when D47 speaks, and the reply is \"The headset panel is hidden.\" Say \"show VR panel\": the "
+                    + "panel is back where it was and the reply is \"The headset panel is showing.\"",
+                Description =
+                    "Hide the headset panel and its avatar, or show them again. Captions and the SteamVR session "
+                    + "are untouched; show_in_headset switches everything off. Showing the panel also turns the "
+                    + "headset overlays on if they were off.",
+                Parameters =
+                [
+                    ToolParameter.Flag(
+                        "on",
+                        "True to show the headset panel, false to hide it.",
+                        required: true),
+                ],
+                Commands = [.. PanelVisibilityPhrases()],
+                Handler = (arguments, _) => Task.FromResult(ShowPanel(settings, headset, arguments)),
             },
 
             // **Placing a panel without a controller** (#199), and since #219 the only way to move one by
@@ -989,6 +1014,49 @@ public static class VrCapability
         }
 
         return ToolResult.Ok(Describe(settings, headset));
+    }
+
+    private static IEnumerable<ToolCommandPhrase> PanelVisibilityPhrases()
+    {
+        (string On, string[] Spellings)[] all =
+        [
+            ("false", ["hide vr panel", "hide vr overlay", "hide headset panel"]),
+            ("true", ["show vr panel", "show vr overlay", "show headset panel"]),
+        ];
+
+        foreach (var (on, spellings) in all)
+        {
+            var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = on };
+
+            foreach (var spelling in spellings)
+            {
+                yield return new ToolCommandPhrase(spelling, arguments);
+            }
+        }
+    }
+
+    private static ToolResult ShowPanel(SettingsService settings, HeadsetSurface headset, ToolArguments arguments)
+    {
+        if (!arguments.TryGetBoolean("on", out var on))
+        {
+            return ToolResult.Error("Say whether to show the headset panel or hide it.");
+        }
+
+        if (!on)
+        {
+            headset.SetPanelHidden(true);
+
+            return ToolResult.Ok("The headset panel is hidden.");
+        }
+
+        headset.SetPanelHidden(false);
+
+        if (settings.Current.Vr.Enabled)
+        {
+            return ToolResult.Ok("The headset panel is showing.");
+        }
+
+        return Show(settings, headset, new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = "true" }));
     }
 
     /// <summary>What the Commander is told after a reset (#162).</summary>
