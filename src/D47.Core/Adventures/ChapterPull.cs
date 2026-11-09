@@ -18,6 +18,15 @@ public sealed record ChapterLeg(string Target, StarPosition There, bool Home, bo
 
     /// <summary>Whether the leg is a place the Commander asked for in an earlier chapter, still not reached.</summary>
     public bool Chosen { get; init; }
+
+    /// <summary>Whether the leg is a drawn span's, toward its target or back to where it opened.</summary>
+    public bool Drawn { get; init; }
+
+    /// <summary>Whether the leg is the drawn span's way back to where it opened.</summary>
+    public bool Back { get; init; }
+
+    /// <summary>Whether the leg travels at the story's <see cref="AdventureStory.SpanReach"/>: a drawn span's, an authored span's toward its destination, or the way home.</summary>
+    public bool AtSpanReach => !Asked && !Chosen;
 }
 
 /// <summary>The one rule for a chapter that travels toward a target: how far it must go and where its places are searched.</summary>
@@ -25,6 +34,12 @@ public static class ChapterPull
 {
     /// <summary>The share of the reach a last stop must be nearer the target than the start.</summary>
     public const double Share = 0.75;
+
+    /// <summary>What a drawn span's leg out calls its target, which is a point rather than a place.</summary>
+    public const string SpanTarget = "the span's target";
+
+    /// <summary>What a drawn span's leg back calls where the span opened.</summary>
+    public const string SpanStart = "where the span set out";
 
     /// <summary>How far along the line from the start to the target, as a share of the reach, places are searched for.</summary>
     public const double WaypointAt = 0.85;
@@ -59,6 +74,11 @@ public static class ChapterPull
             return Toward(chosen, at) with { Asked = false, Chosen = true };
         }
 
+        if (story.Span is { } span)
+        {
+            return Drawn(span, at);
+        }
+
         if (HomeLeg.Of(ask) is { } home && HomeLeg.PositionOf(home) is { } homeAt)
         {
             return new ChapterLeg(home, homeAt, true, at.DistanceTo(homeAt) <= HomeLeg.Home);
@@ -67,6 +87,19 @@ public static class ChapterPull
         return story is { InTheBlack: true, Toward: { } toward } && StoryDestinations.PositionOf(toward) is { } there
             ? new ChapterLeg(toward, there, false, !Pulls(toward, at))
             : null;
+    }
+
+    /// <summary>A drawn span's leg from <paramref name="start"/>: toward its target while Out, back to where it opened within 1,000 light years while Back, none while There.</summary>
+    public static ChapterLeg? Drawn(DrawnSpan span, StarPosition start)
+    {
+        ArgumentNullException.ThrowIfNull(span);
+
+        return span.Phase switch
+        {
+            DrawnSpanPhase.Out => new ChapterLeg(SpanTarget, span.TargetAt, false, start.DistanceTo(span.TargetAt) <= span.Within) { Within = span.Within, Drawn = true },
+            DrawnSpanPhase.Back => new ChapterLeg(SpanStart, span.StartAt, false, start.DistanceTo(span.StartAt) <= HomeLeg.Home) { Within = HomeLeg.Home, Drawn = true, Back = true },
+            _ => null,
+        };
     }
 
     /// <summary>The leg from <paramref name="start"/> toward a changed objective's heading: arrived within 1,000 light years of Sol or Colonia on the way home, otherwise only in the system itself.</summary>

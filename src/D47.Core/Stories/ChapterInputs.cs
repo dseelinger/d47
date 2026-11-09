@@ -15,6 +15,9 @@ public sealed record ChapterInputs
     /// <summary>The longest one hop may be, in light years.</summary>
     public double Reach { get; init; }
 
+    /// <summary>The most the hops from the start through each place objective may add up to, in any chapter of a drawn span; null for no limit.</summary>
+    public double? Travel { get; init; }
+
     public ShipLoadout Ship { get; init; } = ShipLoadout.Unknown;
 
     /// <summary>Hull symbols the Commander owns, the ship aboard included.</summary>
@@ -114,6 +117,7 @@ public sealed record ChapterInputs
             System = state?.Location.StarSystem,
             Position = position,
             Reach = AdventureGenerator.ReachOf(ask, position, ship.MaxJumpRange, carrier.Owned),
+            Travel = story?.Span is null ? null : story.SpanReach?.LightYears,
             Ship = ship,
             OwnedHulls = [.. new[] { ship.Type }.Concat(ships.Select(stored => stored.Type)).OfType<string>().Select(type => EliteSpecifications.HullSymbol(type) ?? type)],
             Credits = state?.Session.Balance,

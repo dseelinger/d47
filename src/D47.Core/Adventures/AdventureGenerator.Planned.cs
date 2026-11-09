@@ -943,6 +943,10 @@ public sealed partial class AdventureGenerator
             text.AppendLine(
                 leg.Chosen
                     ? $"The Commander asked to head for {leg.Target}, {far} light years away, and has not got there. This chapter travels toward it, and its words say why."
+                : leg.Back
+                    ? $"This part of the story, in the black, heads back toward where it set out, {far} light years away. Its words say why the chapter travels."
+                : leg.Drawn
+                    ? $"This part of the story travels out into the black, toward an uncharted point {far} light years away. Its words say why the chapter travels."
                 : leg.Home
                     ? $"The Commander is {far} light years from {leg.Target} and has turned down the last chapters out here, so the story heads home to {leg.Target}. Its words say why the chapter travels."
                     : $"The Commander is {far} light years from {leg.Target}, and this part of the story travels toward {leg.Target}, in the black. Its words say why the chapter travels.");
@@ -954,7 +958,7 @@ public sealed partial class AdventureGenerator
         {
             text.AppendLine();
 
-            if (leg is { Arrived: true })
+            if (leg is { Arrived: true, Drawn: false })
             {
                 text.AppendLine($"The Commander has arrived at {leg.Target}.");
             }

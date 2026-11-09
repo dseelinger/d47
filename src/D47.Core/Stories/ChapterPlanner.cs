@@ -414,6 +414,8 @@ public static class ChapterPlanner
 
         private string? flown;
 
+        private double travelled;
+
         private bool missionUsed;
 
         public (List<AdventureTrigger>? Steps, ChapterPlanRefusal? Refusal) Activity(DrawnActivity slot)
@@ -479,7 +481,7 @@ public static class ChapterPlanner
                 {
                     var left = position.DistanceTo(target);
                     var way = Arrivals().Concat(Lands())
-                        .Where(stop => !places.Sights.Any(sight => AtSight(sight, stop.Trigger)) && !Closed(stop.System) && Fresh(stop) && Within(stop) && stop.Position.DistanceTo(target) < left)
+                        .Where(stop => !places.Sights.Any(sight => AtSight(sight, stop.Trigger)) && !Closed(stop.System) && Fresh(stop) && Within(stop) && InTravel(stop) && stop.Position.DistanceTo(target) < left)
                         .MinBy(stop => stop.Position.DistanceTo(target));
 
                     if (way is null)
@@ -600,7 +602,7 @@ public static class ChapterPlanner
             var supplied = places.Systems
                 .Where(found => Supply(found, slot.Kind) >= slot.Count && found.Position is not null)
                 .Select(found => new Stop(new AdventureTrigger { Kind = TriggerKind.Arrive, System = found.Name, SystemAddress = found.Address }, found.Position!.Value, TagsOf(found.Name)))
-                .Where(stop => !Closed(stop.System) && Within(stop))
+                .Where(stop => !Closed(stop.System) && Within(stop) && InTravel(stop))
                 .ToList();
 
             return supplied.Count == 0 ? null : Pick(supplied);
@@ -634,6 +636,7 @@ public static class ChapterPlanner
                 (ChapterRules.Pad, "docks at a station with no pad for the ship", stop => stop.Station is null || inputs.NeedsPad(flown) is not { } pad || stop.Station.Admits(pad)),
                 (rule, "arrives in the system the Commander is already in, or uses a body already used", stop => Fresh(stop)),
                 (ChapterRules.Hop, $"is beyond the reach of {inputs.Reach.ToString("0", CultureInfo.InvariantCulture)} light years from the stop before", Within),
+                (ChapterRules.Hop, $"takes the chapter's travel past {inputs.Travel?.ToString("0", CultureInfo.InvariantCulture)} light years", InTravel),
             };
 
             foreach (var (filter, why, keeps) in filters)
@@ -698,6 +701,9 @@ public static class ChapterPlanner
         private bool Within(Stop stop) =>
             string.Equals(stop.System, system, StringComparison.OrdinalIgnoreCase) || position.DistanceTo(stop.Position) <= inputs.Reach;
 
+        private bool InTravel(Stop stop) =>
+            inputs.Travel is not { } most || string.Equals(stop.System, system, StringComparison.OrdinalIgnoreCase) || travelled + position.DistanceTo(stop.Position) <= most;
+
         private bool Closed(string name) =>
             PermitSystemTable.ClosedTo(name, inputs.Ranks, () => places.WasVisited(name));
 
@@ -716,6 +722,11 @@ public static class ChapterPlanner
 
         private void Move(Stop stop)
         {
+            if (!string.Equals(stop.System, system, StringComparison.OrdinalIgnoreCase))
+            {
+                travelled += position.DistanceTo(stop.Position);
+            }
+
             system = stop.System;
             position = stop.Position;
 

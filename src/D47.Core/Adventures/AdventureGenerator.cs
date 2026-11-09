@@ -197,6 +197,12 @@ public sealed record AdventureStory(
 
     /// <summary>The system the Commander named when changing an objective and has not reached; null when none or when the chapter has a purpose of its own.</summary>
     public AdventureHeading? Chosen { get; init; }
+
+    /// <summary>The span in the black the draw opened, in the phase this chapter plays; null when none is open.</summary>
+    public Stories.DrawnSpan? Span { get; init; }
+
+    /// <summary>The reach a chapter that travels in the black takes in place of the long-haul reach, and the ship that gives it; null where none applies or none is known.</summary>
+    public SpanReach? SpanReach { get; init; }
 }
 
 /// <summary>A story's cast member as the chapter writer is told it: the id a line names, the name, and who they are.</summary>
@@ -407,6 +413,9 @@ public sealed partial class AdventureGenerator(
     /// <summary>Output ceiling for the step that reads where a changed objective asks to go.</summary>
     public const int HeadingOutputCeiling = 4000;
 
+    /// <summary>The most notable places a chapter is offered.</summary>
+    public const int MostNotable = 12;
+
     /// <summary>The hop a long-haul story chapter may make: from the bubble to Sagittarius A*.</summary>
     public const double LongHaulLightYears = 30000;
 
@@ -423,14 +432,22 @@ public sealed partial class AdventureGenerator(
         };
     }
 
-    /// <summary>The longest one hop of a chapter of <paramref name="ask"/> may be: a long haul's, or the <see cref="Radius"/> of its reach.</summary>
-    public static double ReachOf(AdventureAsk ask, StarPosition? position, double? jumpRange, bool carrier)
+    /// <summary>
+    /// The longest one hop of a chapter of <paramref name="ask"/> may be: the story's <see cref="AdventureStory.SpanReach"/> on a leg that
+    /// travels at it, a long haul's, or the <see cref="Radius"/> of its reach. A drawn span's chapter at its target takes the session reach.
+    /// </summary>
+    public static double ReachOf(AdventureAsk ask, StarPosition? position, double? jumpRange, bool carrier) =>
+        SpanReachOf(ask, position)?.LightYears
+        ?? (ask is { Reach: AdventureReach.Anywhere, Story: { LongHaul: true, Home: null, Span: null } } && ChapterPull.Of(ask, position) is not { Arrived: false }
+            ? LongHaulLightYears
+            : Radius(ask.Story?.Span is { Phase: Stories.DrawnSpanPhase.There } ? AdventureReach.Session : ask.Reach, jumpRange, carrier));
+
+    /// <summary>The story's <see cref="AdventureStory.SpanReach"/> where the chapter's leg travels at it; null otherwise.</summary>
+    public static SpanReach? SpanReachOf(AdventureAsk ask, StarPosition? position)
     {
         ArgumentNullException.ThrowIfNull(ask);
 
-        return ask is { Reach: AdventureReach.Anywhere, Story: { LongHaul: true, Home: null } } && ChapterPull.Of(ask, position) is not { Arrived: false }
-            ? LongHaulLightYears
-            : Radius(ask.Reach, jumpRange, carrier);
+        return ask.Story?.SpanReach is { } reach && ChapterPull.Of(ask, position) is { AtSpanReach: true } leg && (leg.Drawn || !leg.Arrived) ? reach : null;
     }
 
     /// <summary>
@@ -1638,7 +1655,11 @@ public sealed partial class AdventureGenerator(
         return null;
     }
 
-    private async Task<IReadOnlyList<NotablePlace>> NotableAsync(Facts facts, CancellationToken cancellationToken, List<string> notes)
+    /// <summary>
+    /// The best-rated notable places within reach of the start; for a chapter that travels toward a target, those around the
+    /// waypoint, nearest it first.
+    /// </summary>
+    private async Task<IReadOnlyList<NotablePlace>> NotableAsync(AdventureAsk ask, Facts facts, CancellationToken cancellationToken, List<string> notes)
     {
         if (places() is not { } catalogue || facts.Position is not { } here)
         {
@@ -1647,7 +1668,15 @@ public sealed partial class AdventureGenerator(
 
         try
         {
-            return await catalogue.NearAsync(here, facts.RadiusLightYears, 12, cancellationToken).ConfigureAwait(false);
+            if (ChapterPull.Of(ask, here) is { Arrived: false } leg)
+            {
+                var waypoint = ChapterPull.Waypoint(here, leg.There, facts.RadiusLightYears);
+                var around = await catalogue.NearAsync(waypoint, ChapterPull.PlacesWithin * facts.RadiusLightYears, int.MaxValue, cancellationToken).ConfigureAwait(false);
+
+                return [.. around.OrderBy(place => place.DistanceFrom(waypoint)).Take(MostNotable)];
+            }
+
+            return await catalogue.NearAsync(here, facts.RadiusLightYears, MostNotable, cancellationToken).ConfigureAwait(false);
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -1731,7 +1760,7 @@ public sealed partial class AdventureGenerator(
         var sights = ask.Story?.Sights ?? [];
         var used = UsedSystems(ask.Chapter, ask.Story?.Id);
         var notes = Enumerable.Range(0, 14).Select(_ => new List<string>()).ToArray();
-        var notableTask = NotableAsync(facts, cancellationToken, notes[0]);
+        var notableTask = NotableAsync(ask, facts, cancellationToken, notes[0]);
 
         if (galaxy() is not { } search || facts.System is not { } here)
         {
@@ -3452,7 +3481,9 @@ public sealed partial class AdventureGenerator(
         IReadOnlyList<string>? OwnedHulls = null,
         SystemStandings? Standings = null,
         IReadOnlyList<Mission>? Missions = null,
-        long? ClosedMarketId = null)
+        long? ClosedMarketId = null,
+        SpanReach? SpanReach = null,
+        bool SpanTotal = false)
     {
         public static Facts Of(CommanderGameState? state, AdventureAsk ask)
         {
@@ -3485,7 +3516,9 @@ public sealed partial class AdventureGenerator(
                 OwnedHulls: [.. new[] { ship.Type }.Concat((state?.Fleet.Ships ?? []).Select(stored => stored.Type)).OfType<string>().Select(type => EliteSpecifications.HullSymbol(type) ?? type)],
                 Standings: state?.Standings,
                 Missions: state?.Missions.Missions,
-                ClosedMarketId: ask.Rewrite?.ClosedMarketId);
+                ClosedMarketId: ask.Rewrite?.ClosedMarketId,
+                SpanReach: SpanReachOf(ask, state?.Location.StarPos),
+                SpanTotal: ask.Story?.Span is not null);
         }
 
         public bool Owns(string symbol) =>
@@ -3506,7 +3539,25 @@ public sealed partial class AdventureGenerator(
 
             text.AppendLine("What is true right now, read from the Commander's journal:");
             text.AppendLine($"- Position: {System ?? "unknown"}.");
-            text.AppendLine($"- Reach: {Reach switch { AdventureReach.NearHere => "near here", AdventureReach.Session => "a session's flying", _ => "anywhere" }} — about {RadiusLightYears:0} light years, the longest one hop may be. A place farther away is reached over several hops.");
+            if (SpanReach is { } span)
+            {
+                var source = span.Ship is null ? "the reach the Commander's fleet carrier gives" : "a hundred jumps of the best jump range in the Commander's fleet";
+
+                text.AppendLine(SpanTotal
+                    ? $"- Reach: about {RadiusLightYears:0} light years, {source}. It is both the longest one hop may be and the most the chapter's hops may add up to."
+                    : $"- Reach: about {RadiusLightYears:0} light years, {source}, the longest one hop may be. A place farther away is reached over several hops.");
+
+                if (span.Ship is { Aboard: false } giver)
+                {
+                    var name = giver.Name is { Length: > 0 } named ? $" \"{named}\"" : string.Empty;
+
+                    text.AppendLine($"- That reach is the {giver.Hull ?? "ship"}{name}'s, which is stored {(giver.Where is { } where ? $"in {where}" : "where the journal does not say")}; the Commander is not aboard it.");
+                }
+            }
+            else
+            {
+                text.AppendLine($"- Reach: {Reach switch { AdventureReach.NearHere => "near here", AdventureReach.Session => "a session's flying", _ => "anywhere" }} — about {RadiusLightYears:0} light years, the longest one hop may be. A place farther away is reached over several hops.");
+            }
 
             if (Fleet.Count > 0)
             {

@@ -1,7 +1,9 @@
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Stories;
 using D47.Core.Tests.Adventures;
 using D47.Core.Tests.Conversation;
+using D47.Core.Tests.Knowledge;
 using Xunit;
 using static D47.Core.Tests.Conversation.RoundScriptedLlmProvider;
 using static D47.Core.Tests.Stories.StoryFixtures;
@@ -133,13 +135,101 @@ public sealed class ADrawnSpanPutsChaptersInTheBlackUntilItClosesTests
         Assert.Equal(3, story.SpanClosedAt);
     }
 
+    [Fact]
+    public async Task ASpanDoesNotOpenWhenTheGalaxySearchFindsNoPlaceAroundItsFirstWaypoint()
+    {
+        async Task<DrawnSpan?> SecondChapter(bool placesOnTheWay)
+        {
+            using var fixtures = At(Bubble, new RoundScriptedLlmProvider(Saying(Lines()), Saying(NothingObjected), Saying(NextLines), Saying(NothingObjected)));
+            fixtures.Director.Galaxy = () => new Waypoints(placesOnTheWay);
+
+            Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now, CancellationToken.None));
+            fixtures.Finish("F1", fixtures.Stories.Current("F1")!.CurrentChapter!, Now);
+            Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now.AddDays(3), CancellationToken.None));
+
+            return fixtures.Stories.Current("F1")!.DrawnSpan;
+        }
+
+        Assert.NotNull(await SecondChapter(placesOnTheWay: true));
+        Assert.Null(await SecondChapter(placesOnTheWay: false));
+    }
+
+    [Fact]
+    public async Task ALaterChapterOutTurnsBackWhenTheGalaxySearchFindsNoPlaceOnTheWay()
+    {
+        using var fixtures = At(new StarPosition(0, 0, 1500), Finale(), Away);
+        fixtures.Director.Galaxy = () => new Waypoints(placesOnTheWay: false);
+
+        Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now, CancellationToken.None));
+
+        Assert.Equal(DrawnSpanPhase.Back, fixtures.Stories.Current("F1")!.DrawnSpan!.Phase);
+        Assert.Equal(DrawnSpanPhase.Back, Assert.Single(fixtures.Asks).Story!.Span!.Phase);
+    }
+
+    [Fact]
+    public async Task ALaterChapterOutStaysOutWhenAPlaceLiesOnTheWay()
+    {
+        using var fixtures = At(new StarPosition(0, 0, 1500), Finale(), Away);
+        fixtures.Director.Galaxy = () => new Waypoints(placesOnTheWay: true);
+
+        Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now, CancellationToken.None));
+
+        Assert.Equal(DrawnSpanPhase.Out, fixtures.Stories.Current("F1")!.DrawnSpan!.Phase);
+    }
+
     private static D47.Core.Stories.Career? Career(DrawnActivity slot) => ChapterActivities.Find(slot.Kind, slot.Family, slot.Organic)?.Career;
 
     private static RoundScriptedLlmProvider Finale() => new(Saying(NextLines), Saying(NothingObjected));
 
+    /// <summary>
+    /// Stations 0.85 of the fixture's reach of 3,050 light years out from the bubble, every 5 degrees across the headings a drawn span
+    /// may take, so a chapter out has a last stop toward any target.
+    /// </summary>
+    private static IReadOnlyList<StationSummary> OnTheWayOut() =>
+    [
+        .. Enumerable.Range(-13, 27).Select(step =>
+        {
+            var heading = step * 5 * Math.PI / 180;
+            var away = 0.85 * 3050;
+
+            return new StationSummary
+            {
+                Name = $"Outpost {step + 13}",
+                SystemName = $"Far Reach {step + 13}",
+                SystemAddress = 9_000_000 + step,
+                MarketId = 9_100_000 + step,
+                Distance = away,
+                HasLargePad = true,
+                Type = "Coriolis Starport",
+                Position = new StarPosition(Bubble.X + (away * Math.Sin(heading)), Bubble.Y, Bubble.Z + (away * Math.Cos(heading))),
+            };
+        }),
+    ];
+
+    /// <summary>A galaxy with an open station beside the Commander for every named-system search, and one at the point searched around only when <c>placesOnTheWay</c>.</summary>
+    private sealed class Waypoints(bool placesOnTheWay) : StubGalaxyService
+    {
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<StationSummary> found = query.ReferencePosition is { } centre
+                ? placesOnTheWay ? [Port with { Position = centre }] : []
+                : [Port];
+
+            return Task.FromResult(new StationSearchResult(query.ReferenceSystem, found.Count, found));
+        }
+
+        public override Task<BodySearchResult> FindBodiesAsync(BodyQuery query, CancellationToken cancellationToken) =>
+            Task.FromResult(new BodySearchResult(query.ReferenceSystem, 0, []));
+
+        private static readonly StationSummary Port = new()
+        {
+            Name = "Near Port", SystemName = "Near", SystemAddress = 8, MarketId = 8_000, Distance = 5, HasLargePad = true, Type = "Coriolis Starport", Position = Bubble,
+        };
+    }
+
     private static StoryFixtures At(StarPosition at, RoundScriptedLlmProvider provider, DrawnSpan? span = null, int clues = 0, int? closedAt = null)
     {
-        var fixtures = new StoryFixtures(provider);
+        var fixtures = new StoryFixtures(provider, stations: OnTheWayOut());
         var game = Loaded(1_000_000, cargo: 4);
 
         game.Apply(AdventureFixtures.Event(

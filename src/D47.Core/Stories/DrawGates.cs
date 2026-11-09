@@ -10,6 +10,41 @@ namespace D47.Core.Stories;
 public static class DrawGates
 {
     /// <summary>
+    /// Whether the galaxy search lists a fixed station or a landable body, in a system with no permit, around the waypoint from
+    /// <paramref name="start"/> toward <paramref name="target"/> at <paramref name="reach"/>, as a travelling chapter's places are searched.
+    /// True when it cannot be told.
+    /// </summary>
+    public static async Task<bool> PlacesOnTheWayAsync(IGalaxyService? galaxy, StarPosition start, StarPosition target, double reach, ILogger logger, CancellationToken cancellationToken)
+    {
+        if (galaxy is not { } search)
+        {
+            return true;
+        }
+
+        var centre = ChapterPull.Waypoint(start, target, reach);
+        var radius = ChapterPull.PlacesWithin * reach;
+
+        try
+        {
+            var stations = await search.FindStationsAsync(StationQuery.Near(centre, radius, ChapterPull.PlacesPerKind), cancellationToken).ConfigureAwait(false);
+
+            if (stations.Stations.Any(station => station is { Position: not null, IsFixed: true } && !PermitSystemTable.Locked(station.SystemName)))
+            {
+                return true;
+            }
+
+            var bodies = await search.FindBodiesAsync(BodyQuery.LandableNear(centre, radius, ChapterPull.PlacesPerKind), cancellationToken).ConfigureAwait(false);
+
+            return bodies.Bodies.Any(body => body is { Position: not null, IsLandable: true } && !PermitSystemTable.Locked(body.SystemName));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "The galaxy search could not list places on the way to a span's target, so the span is not turned back");
+            return true;
+        }
+    }
+
+    /// <summary>
     /// Whether a fixed station with a pad for the ship aboard, in a system needing no permit, lies within a story's reach.
     /// True when it cannot be told: no galaxy search, no known position, or the query failed.
     /// </summary>

@@ -3451,6 +3451,13 @@ public sealed class StoryDirector(
         var span = replacing || story.DrawnSpan is not { } open
             ? story.DrawnSpan
             : DrawnSpans.Next(open, Game()?.Location.StarPos, story.Chapters, story.ChangedChapters, Weights(Game()?.Statistics ?? CareerStatistics.Empty).Weight(Career.Exploration));
+
+        if (!replacing && span is { Phase: DrawnSpanPhase.Out } outward && Game() is { Location.StarPos: { } from } current && SpanReach.Of(current) is { } outReach
+            && !await PlacesOnTheWayAsync(from, outward.TargetAt, outReach.LightYears, cancellationToken).ConfigureAwait(false))
+        {
+            span = DrawnSpans.NothingOut(outward, from);
+        }
+
         var spanClosedAt = !replacing && story.DrawnSpan is not null && span is null ? number - 1 : story.SpanClosedAt;
         var finaleFrom = replacing ? story.FinaleFrom : story.FinaleFrom ?? (FinaleDue(story, now) && span is null && !StillTravelling(secret, story, Game()?.Location.StarPos) ? number : null);
         var finaleChapter = number - finaleFrom + 1;
@@ -3479,6 +3486,7 @@ public sealed class StoryDirector(
 
         var heading = ordinary ? chosen : null;
         var homeLeg = heading is null ? home : null;
+        var spanTravels = span is { Phase: DrawnSpanPhase.Out or DrawnSpanPhase.Back } travelsOn && number > travelsOn.Opened;
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         IReadOnlyList<NotablePlace> sights = [];
@@ -3488,6 +3496,7 @@ public sealed class StoryDirector(
             && homeLeg is null
             && heading is null
             && !pulled
+            && !spanTravels
             && ChapterFit.IsLongHaul(story.Pacing, game)
             && ChapterDraw.Sightsee(Weights(statistics), previous?.Previous.Sight is not null, ChapterDraw.SightSeed(story.Id, number, rewrites)))
         {
@@ -3505,7 +3514,7 @@ public sealed class StoryDirector(
                 row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach, warInReach))
             : [];
         var weights = Weights(statistics);
-        var fixedPlaces = FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || homeLeg is not null || heading is not null || pulled) ? 1 : 0) + (sightseeing ? 1 : 0)
+        var fixedPlaces = FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || homeLeg is not null || heading is not null || pulled || spanTravels) ? 1 : 0) + (sightseeing ? 1 : 0)
             + (span is { } first && first.Opened == number ? 1 : 0);
         IReadOnlyList<Func<DrawableActivity, bool>> limits = span is { } later && number > later.Opened
             ? [DrawnSpans.FirstSlot, .. GoalClimb.Limits(goals).Skip(1)]
@@ -3537,6 +3546,7 @@ public sealed class StoryDirector(
                 : null;
 
         var slots = Draws(story.BeaconScanAt is not null, number, finaleChapter, reach) ? Drawn(fixedPlaces) : null;
+        var spanReach = game is null ? null : SpanReach.Of(game);
         var gates = new DrawnSpanGates
         {
             NewChapter = !replacing,
@@ -3546,7 +3556,7 @@ public sealed class StoryDirector(
             SpanOpen = span is not null,
             Heading = home is not null || chosen is not null,
             ExplorationWeight = weights.Weight(Career.Exploration),
-            Reach = game is null ? null : SpanReach.Of(game),
+            Reach = spanReach,
             At = game?.Location.StarPos,
         };
 
@@ -3555,7 +3565,8 @@ public sealed class StoryDirector(
             && gates.Hold
             && Drawn(fixedPlaces + 1) is { } travelling
             && DrawnSpans.Explores(travelling)
-            && DrawnSpans.Open(story.Id, number, story.Pacing, gates, spanClosedAt == number - 1) is { } opened)
+            && DrawnSpans.Open(story.Id, number, story.Pacing, gates, spanClosedAt == number - 1) is { } opened
+            && await PlacesOnTheWayAsync(opened.StartAt, opened.TargetAt, spanReach!.LightYears, cancellationToken).ConfigureAwait(false))
         {
             span = opened;
             slots = travelling;
@@ -3566,12 +3577,13 @@ public sealed class StoryDirector(
         goals = GoalClimb.Worked(goals, slots);
 
         var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (story.BeaconScanAt is null || finaleChapter is not null || homeLeg is not null || heading is not null || pulled || ChapterFit.ServesLongHaul(slots, [.. goals.Select(goal => goal.Objective).OfType<AdventureTrigger>()], sightseeing));
+            && (story.BeaconScanAt is null || finaleChapter is not null || homeLeg is not null || heading is not null || pulled || spanTravels || ChapterFit.ServesLongHaul(slots, [.. goals.Select(goal => goal.Objective).OfType<AdventureTrigger>()], sightseeing));
 
         var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne), game?.Ship.Type);
 
         var ask = new AdventureAsk(
-            longHaul || homeLeg is not null || heading is not null || pulled ? AdventureReach.Anywhere : AdventureReach.Session,
+            span is { Phase: DrawnSpanPhase.There } && heading is null ? AdventureReach.Session
+            : longHaul || homeLeg is not null || heading is not null || pulled || span is not null ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
             Story: Asked(
@@ -3594,7 +3606,9 @@ public sealed class StoryDirector(
                 sightseeing ? sights : null,
                 toward,
                 heading,
-                laterActOne: laterActOne),
+                laterActOne: laterActOne,
+                span: span,
+                spanReach: spanReach),
             LastDraftRefused: lastDraftRefused,
             Progress: Progress(frontierId),
             Draft: draftNumber,
@@ -3710,7 +3724,9 @@ public sealed class StoryDirector(
         IReadOnlyList<NotablePlace>? sights = null,
         string? toward = null,
         AdventureHeading? chosen = null,
-        bool laterActOne = false)
+        bool laterActOne = false,
+        DrawnSpan? span = null,
+        SpanReach? spanReach = null)
     {
         var card = catalog().Find(story.Id);
 
@@ -3752,6 +3768,8 @@ public sealed class StoryDirector(
             InTheBlack = inTheBlack,
             Toward = toward,
             Chosen = chosen,
+            Span = span,
+            SpanReach = spanReach,
         };
     }
 
@@ -3759,6 +3777,9 @@ public sealed class StoryDirector(
     private static bool Reached(AdventureHeading chosen, CommanderGameState? game) =>
         game?.Location is { } location
         && (location.SystemAddress == chosen.SystemAddress || (chosen.Home && location.StarPos is { } at && at.DistanceTo(chosen.Position) <= HomeLeg.Home));
+
+    private Task<bool> PlacesOnTheWayAsync(StarPosition start, StarPosition target, double reach, CancellationToken cancellationToken) =>
+        DrawGates.PlacesOnTheWayAsync(Galaxy?.Invoke(), start, target, reach, logger, cancellationToken);
 
     /// <summary>Whether the story's current stage lies in a span whose destination the Commander has not reached.</summary>
     private static bool StillTravelling(StorySecret secret, Story story, StarPosition? at) =>

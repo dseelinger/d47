@@ -188,6 +188,14 @@ public static class DrawnSpans
         return span.Phase == DrawnSpanPhase.Back && at is { } now && now.DistanceTo(span.StartAt) <= HomeLeg.Home ? null : span;
     }
 
+    /// <summary>The span turned back because no place lies on the way out; null when <paramref name="at"/> is already within <see cref="HomeLeg.Home"/> of where it opened.</summary>
+    public static DrawnSpan? NothingOut(DrawnSpan span, StarPosition? at)
+    {
+        ArgumentNullException.ThrowIfNull(span);
+
+        return at is { } now && now.DistanceTo(span.StartAt) <= HomeLeg.Home ? null : span with { Phase = DrawnSpanPhase.Back };
+    }
+
     private static int Band(StoryPacing pacing) =>
         new[] { StoryPacing.ThreeDays, StoryPacing.OneWeek, StoryPacing.TwoWeeks }.Any(brief => brief.Key == pacing.Key) ? 0
         : new[] { StoryPacing.OneMonth, StoryPacing.ThreeMonths }.Any(middle => middle.Key == pacing.Key) ? 1
