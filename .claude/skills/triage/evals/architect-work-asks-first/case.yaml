@@ -1,0 +1,33 @@
+schema_version: "1.0"
+name: architect-work-asks-first
+description: >-
+  The issues of the eligibility case plus 906, the maintainer's, carrying
+  needs-architect without tabled. The skill names 906 and asks whether to
+  continue before ranking anything, so neither 904 nor 905 is in the last
+  message. AskUserQuestion is not offered under claude -p, so the session asks
+  in its last message. Pins "Design and architect work comes first" in
+  triage/SKILL.md.
+context:
+  scaffold_script: fixture.sh
+execution:
+  prompt: /triage
+  model: opus
+  max_turns: 20
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep]
+  append_system_prompt: 'gh, git and Bash are unavailable in this session, and so are the Write and AskUserQuestion tools. The output of each gh command this skill runs is already in a file in the working directory: `gh issue list --state open --limit 300 --json number,title,labels,author,createdAt` is in issue-list.json, and `gh issue list --state open --limit 300 --json number,body` is in issue-bodies.json; apply each `--jq` filter yourself to that file. Read those files in place of running gh. The newest tag is v1.67.2, `git log main --format=%B` has no `Fixes` line for any of these issues, and CHANGELOG.md has nothing above v1.67.2. Where the skill asks with AskUserQuestion, ask the question in your last message and stop there. Skip Save the grid. There is no claude-voice skill here; skip that step.'
+graders:
+  - type: regex
+    name: names-906
+    target: last_message
+    pattern: '\b906\b'
+  - type: regex
+    name: asks-to-continue
+    target: last_message
+    pattern: '\b(continue|carry on|go on|proceed)\b[^\n]*\?'
+    flags: i
+  - type: regex
+    name: ranks-nothing-yet
+    target: last_message
+    pattern: '\b90[45]\b'
+    match: not_contains

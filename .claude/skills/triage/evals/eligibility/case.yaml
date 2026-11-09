@@ -1,0 +1,32 @@
+schema_version: "1.0"
+name: eligibility
+description: >-
+  Five open issues. 905 is the maintainer's, 904 is someone else's with
+  Vetted, 903 is someone else's without it, and 901 and 902 carry
+  needs-architect and design with tabled. The report ranks 904 and 905, names
+  none of the other three, and does not stop to ask, since the architect and
+  design issues are tabled. Pins "The eligible set" and "Design and architect
+  work comes first" in triage/SKILL.md.
+context:
+  scaffold_script: fixture.sh
+execution:
+  prompt: /triage
+  model: opus
+  max_turns: 20
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep]
+  append_system_prompt: 'gh, git and Bash are unavailable in this session, and so are the Write and AskUserQuestion tools. The output of each gh command this skill runs is already in a file in the working directory: `gh issue list --state open --limit 300 --json number,title,labels,author,createdAt` is in issue-list.json, and `gh issue list --state open --limit 300 --json number,body` is in issue-bodies.json; apply each `--jq` filter yourself to that file. Read those files in place of running gh. The newest tag is v1.67.2, `git log main --format=%B` has no `Fixes` line for any of these issues, and CHANGELOG.md has nothing above v1.67.2. Where the skill asks with AskUserQuestion, ask the question in your last message and stop there. Skip Save the grid. There is no claude-voice skill here; skip that step.'
+graders:
+  - type: regex
+    name: ranks-904
+    target: last_message
+    pattern: '\|[^|\n]*\b904\b[^|\n]*\|'
+  - type: regex
+    name: ranks-905
+    target: last_message
+    pattern: '\|[^|\n]*\b905\b[^|\n]*\|'
+  - type: regex
+    name: names-no-ineligible-issue
+    target: last_message
+    pattern: '\b90[123]\b'
+    match: not_contains

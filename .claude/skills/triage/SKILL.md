@@ -33,8 +33,9 @@ Keep an issue only if **all** of these hold:
   be built. Neither is implementable as written.
 - Either `dseelinger` opened it, or it carries `Vetted`. Anything else is unvetted.
 
-Say in one line how many survived and how many each rule removed. Then stop justifying: the point
-of the report is the order, not the filter.
+Say in one line how many survived and how many each rule removed. The line gives counts only and
+does not name the removed issues. Then stop justifying: the point of the report is the order, not
+the filter.
 
 ## Design and architect work comes first
 

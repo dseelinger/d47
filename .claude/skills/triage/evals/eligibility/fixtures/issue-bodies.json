@@ -1,0 +1,22 @@
+[
+  {
+    "body": "The jump callout names the system but not the fuel left in the main tank.\n\n### What is wanted\n\nAppend the fuel left to the jump callout.\n\nSize: /issue-worker, Sonnet, medium effort.\n",
+    "number": 905
+  },
+  {
+    "body": "The panel shows the carrier's destination but not when it can jump again.\n\n### What is wanted\n\nA cooldown line under the carrier destination.\n\nSize: /issue-worker, Sonnet, medium effort.\n",
+    "number": 904
+  },
+  {
+    "body": "A fifth theme in dark red.\n\n### What is wanted\n\nA theme option named Dark red.\n\nSize: /issue-worker, Sonnet, medium effort.\n",
+    "number": 903
+  },
+  {
+    "body": "The Fleet tab lists ships in one long column.\n\n### What is wanted\n\nA grid layout, drawn in Claude Design first.\n\nSize: /issue-worker, Sonnet, medium effort.\n",
+    "number": 902
+  },
+  {
+    "body": "A route planner for exobiology samples.\n\n### What is wanted\n\nA plan for where the planner's data comes from.\n\nSize: /issue-worker, Opus, high effort.\n",
+    "number": 901
+  }
+]
