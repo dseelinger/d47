@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A Commander who logs in for the first time now starts blank in every per-Commander row: Home system, About me, the character sheet, the scenario, who knows about it, gender, core for this ship and the career ratings. Before, those rows showed another Commander's values, so a new Commander could be told their ships were waiting at someone else's base. A row set before Elite names a Commander goes to the next Commander named, if they have no value of their own. Values already in an installation's file are kept but no Commander reads them. Reset on one of these rows puts back its default.
+
 A story chapter far from your Home system no longer tells you to transfer ships there when you have no stored ship. Before, with only the ship you were flying, the opening could say your ships were still at home and send you to move them.
 
 A story's page now has a **Begin story** button where it had **Pick**, and **Continue story** on a story you shelved, which brings it back paused. **Switch** is unchanged. The lines on the page and the download failure message say "begin" and "try again" instead of "pick".

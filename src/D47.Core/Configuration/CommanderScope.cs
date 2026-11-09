@@ -7,49 +7,51 @@ namespace D47.Core.Configuration;
 public static class CommanderScope
 {
     /// <summary>
-    /// The settings as this Commander sees them: the installation's, with their own values laid over
-    /// the fields that are theirs.
+    /// The settings as this Commander sees them: the installation's, with the fields that are theirs
+    /// taken from their own entry, or from the row's default where they have set none. With no Commander
+    /// known, <paramref name="pending"/> stands in for the entry.
     /// </summary>
-    public static D47Settings Project(D47Settings stored, string? fid)
+    public static D47Settings Project(D47Settings stored, string? fid, CommanderSettings? pending = null)
     {
-        if (OverlayFor(stored, fid) is not { } overlay)
-        {
-            return stored;
-        }
+        var overlay = OverlayFor(stored, fid) ?? (fid is { Length: > 0 } ? null : pending) ?? new CommanderSettings { CommanderFid = string.Empty };
+        var defaults = new D47Settings();
 
         return stored with
         {
-            CommanderGender = Read(overlay.CommanderGender, stored.CommanderGender),
+            CommanderGender = Read(overlay.CommanderGender, defaults.CommanderGender),
             Llm = stored.Llm with
             {
-                AboutMe = Read(overlay.AboutMe, stored.Llm.AboutMe),
-                CharacterSheet = Read(overlay.CharacterSheet, stored.Llm.CharacterSheet),
-                Scenario = Read(overlay.Scenario, stored.Llm.Scenario),
-                ScenarioAudience = overlay.ScenarioAudience ?? stored.Llm.ScenarioAudience,
+                AboutMe = Read(overlay.AboutMe, defaults.Llm.AboutMe),
+                CharacterSheet = Read(overlay.CharacterSheet, defaults.Llm.CharacterSheet),
+                Scenario = Read(overlay.Scenario, defaults.Llm.Scenario),
+                ScenarioAudience = overlay.ScenarioAudience ?? defaults.Llm.ScenarioAudience,
             },
             Persona = stored.Persona with
             {
-                ShipCoreShip = overlay.ShipCoreShip ?? stored.Persona.ShipCoreShip,
+                ShipCoreShip = overlay.ShipCoreShip ?? defaults.Persona.ShipCoreShip,
             },
             Callouts = stored.Callouts with
             {
-                HomeSystem = Read(overlay.HomeSystem, stored.Callouts.HomeSystem),
+                HomeSystem = Read(overlay.HomeSystem, defaults.Callouts.HomeSystem),
             },
             CareerRatings = stored.CareerRatings with
             {
-                Combat = overlay.CombatRating ?? stored.CareerRatings.Combat,
-                Trading = overlay.TradingRating ?? stored.CareerRatings.Trading,
-                Mining = overlay.MiningRating ?? stored.CareerRatings.Mining,
-                Exploration = overlay.ExplorationRating ?? stored.CareerRatings.Exploration,
-                Exobiology = overlay.ExobiologyRating ?? stored.CareerRatings.Exobiology,
-                Passengers = overlay.PassengersRating ?? stored.CareerRatings.Passengers,
-                SearchAndRescue = overlay.SearchAndRescueRating ?? stored.CareerRatings.SearchAndRescue,
-                Crime = overlay.CrimeRating ?? stored.CareerRatings.Crime,
+                Combat = overlay.CombatRating ?? defaults.CareerRatings.Combat,
+                Trading = overlay.TradingRating ?? defaults.CareerRatings.Trading,
+                Mining = overlay.MiningRating ?? defaults.CareerRatings.Mining,
+                Exploration = overlay.ExplorationRating ?? defaults.CareerRatings.Exploration,
+                Exobiology = overlay.ExobiologyRating ?? defaults.CareerRatings.Exobiology,
+                Passengers = overlay.PassengersRating ?? defaults.CareerRatings.Passengers,
+                SearchAndRescue = overlay.SearchAndRescueRating ?? defaults.CareerRatings.SearchAndRescue,
+                Crime = overlay.CrimeRating ?? defaults.CareerRatings.Crime,
             },
         };
     }
 
-    /// <summary>The document to write after a change made against the projected view.</summary>
+    /// <summary>
+    /// The document to write after a change made against the projected view. The installation's copy of
+    /// the Commander fields is never written; with no Commander known, <see cref="Pending"/> holds them.
+    /// </summary>
     public static D47Settings Persist(
         D47Settings stored,
         D47Settings effective,
@@ -57,13 +59,6 @@ public static class CommanderScope
         string? fid,
         string? name)
     {
-        if (fid is not { Length: > 0 })
-        {
-            return next;
-        }
-
-        // The installation's copy of the Commander fields is never written through a Commander: whatever the
-        // row did to them is moved into the overlay below.
         var install = next with
         {
             CommanderGender = stored.CommanderGender,
@@ -85,7 +80,82 @@ public static class CommanderScope
             CareerRatings = stored.CareerRatings,
         };
 
+        if (fid is not { Length: > 0 })
+        {
+            return install == stored ? stored : install;
+        }
+
         var overlay = OverlayFor(stored, fid) ?? new CommanderSettings { CommanderFid = fid };
+        var updated = Changed(overlay, effective, next);
+
+        if (updated == overlay)
+        {
+            // Nothing of this Commander's moved.
+            return install == stored ? stored : install;
+        }
+
+        // The name is written beside the id for a person reading the file, and only when the entry is being
+        // written anyway: a file that differs from disk by a name the journal just restated is not worth a
+        // write.
+        updated = updated with { CommanderName = name ?? overlay.CommanderName };
+
+        return install with
+        {
+            Commanders =
+            [
+                .. stored.Commanders.Where(entry => !IsFor(entry, fid)),
+                updated,
+            ],
+        };
+    }
+
+    /// <summary>The per-Commander values held while no Commander is known, after a change.</summary>
+    public static CommanderSettings Pending(CommanderSettings pending, D47Settings effective, D47Settings next) =>
+        Changed(pending, effective, next);
+
+    /// <summary>
+    /// Gives <paramref name="pending"/> to this Commander for each field they have no value of their own
+    /// for. Returns <paramref name="stored"/> when nothing is taken.
+    /// </summary>
+    public static D47Settings Adopt(D47Settings stored, string fid, string? name, CommanderSettings pending)
+    {
+        var overlay = OverlayFor(stored, fid) ?? new CommanderSettings { CommanderFid = fid };
+
+        var updated = overlay with
+        {
+            AboutMe = overlay.AboutMe ?? pending.AboutMe,
+            CharacterSheet = overlay.CharacterSheet ?? pending.CharacterSheet,
+            Scenario = overlay.Scenario ?? pending.Scenario,
+            ScenarioAudience = overlay.ScenarioAudience ?? pending.ScenarioAudience,
+            ShipCoreShip = overlay.ShipCoreShip ?? pending.ShipCoreShip,
+            HomeSystem = overlay.HomeSystem ?? pending.HomeSystem,
+            CommanderGender = overlay.CommanderGender ?? pending.CommanderGender,
+            CombatRating = overlay.CombatRating ?? pending.CombatRating,
+            TradingRating = overlay.TradingRating ?? pending.TradingRating,
+            MiningRating = overlay.MiningRating ?? pending.MiningRating,
+            ExplorationRating = overlay.ExplorationRating ?? pending.ExplorationRating,
+            ExobiologyRating = overlay.ExobiologyRating ?? pending.ExobiologyRating,
+            PassengersRating = overlay.PassengersRating ?? pending.PassengersRating,
+            SearchAndRescueRating = overlay.SearchAndRescueRating ?? pending.SearchAndRescueRating,
+            CrimeRating = overlay.CrimeRating ?? pending.CrimeRating,
+        };
+
+        if (updated == overlay)
+        {
+            return stored;
+        }
+
+        updated = updated with { CommanderName = name ?? overlay.CommanderName };
+
+        return stored with
+        {
+            Commanders = [.. stored.Commanders.Where(entry => !IsFor(entry, fid)), updated],
+        };
+    }
+
+    /// <summary>The overlay with every per-Commander field the change moved written into it.</summary>
+    private static CommanderSettings Changed(CommanderSettings overlay, D47Settings effective, D47Settings next)
+    {
         var updated = overlay;
 
         if (!string.Equals(next.Llm.AboutMe, effective.Llm.AboutMe, StringComparison.Ordinal))
@@ -163,25 +233,7 @@ public static class CommanderScope
             updated = updated with { CrimeRating = next.CareerRatings.Crime };
         }
 
-        if (updated == overlay)
-        {
-            // Nothing of this Commander's moved.
-            return install == stored ? stored : install;
-        }
-
-        // The name is written beside the id for a person reading the file, and only when the entry is being
-        // written anyway: a file that differs from disk by a name the journal just restated is not worth a
-        // write.
-        updated = updated with { CommanderName = name ?? overlay.CommanderName };
-
-        return install with
-        {
-            Commanders =
-            [
-                .. stored.Commanders.Where(entry => !IsFor(entry, fid)),
-                updated,
-            ],
-        };
+        return updated;
     }
 
     /// <summary>
@@ -249,11 +301,11 @@ public static class CommanderScope
     private static bool IsFor(CommanderSettings entry, string fid) =>
         string.Equals(entry.CommanderFid, fid, StringComparison.Ordinal);
 
-    /// <summary>Null reads through; empty reads as nothing; text reads as text.</summary>
-    private static string? Read(string? overlay, string? install) =>
+    /// <summary>Null reads as the default; empty reads as nothing; text reads as text.</summary>
+    private static string? Read(string? overlay, string? @default) =>
         overlay switch
         {
-            null => install,
+            null => @default,
             { Length: 0 } => null,
             _ => overlay,
         };

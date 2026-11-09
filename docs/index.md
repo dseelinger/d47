@@ -125,7 +125,7 @@ Two things reset never touches:
   logged out of ElevenLabs.
 - **Anyone else's settings.** On a row that is yours rather than the installation's — backstory,
   your character sheet, the core paired to your ship — reset means *stop having my own answer*, so
-  the installation's value shows through again. Clearing the box by hand still means deliberately
+  the row goes back to its default. Clearing the box by hand still means deliberately
   blank, which is a different thing and stays different.
 
 **Directive 47 cannot reset anything by itself**, and that is deliberate rather than an

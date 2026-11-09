@@ -1617,7 +1617,7 @@ less the limpets aboard is under this, which keeps it quiet in a ship you are no
 #### Home system {#home-system}
 
 Where you consider home, for the arrival callout. It is per Commander: each Commander on the
-machine has their own, and it reads the installation's value until they set one. There is no
+machine has their own, and it is blank until they set one. There is no
 default — no journal event reports that.
 
 ---

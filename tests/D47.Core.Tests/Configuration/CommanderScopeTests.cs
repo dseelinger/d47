@@ -72,37 +72,43 @@ public class CommanderScopeTests
 
     /// <summary>d47 runs before Elite has said who is flying.</summary>
     [Fact]
-    public void WithNobodyFlyingAWriteIsTheInstallations()
+    public void AWriteWithNobodyFlyingGoesToTheNextCommanderNamedAndNotTheInstallation()
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
 
         var result = surface.Settings.Apply(AboutMe, "Whoever sits here", SettingsCaller.Panel);
         Assert.Equal(SettingApplyStatus.Applied, result.Status);
+        Assert.Equal("Whoever sits here", surface.Settings.Current.Llm.AboutMe);
+
+        surface.Settings.UseCommander("F1", "Alice");
+        Assert.Equal("Whoever sits here", surface.Settings.Current.Llm.AboutMe);
+
+        surface.Settings.UseCommander("F2", "Bob");
+        Assert.Null(surface.Settings.Current.Llm.AboutMe);
 
         var reloaded = TestSurface.For(install).Settings.Current;
-        Assert.Equal("Whoever sits here", reloaded.Llm.AboutMe);
-        Assert.Empty(reloaded.Commanders);
+        Assert.Null(reloaded.Llm.AboutMe);
+        Assert.Equal("Whoever sits here", Assert.Single(reloaded.Commanders).AboutMe);
     }
 
     [Fact]
-    public void ACommandersWriteLandsInTheirOverlayAndTheInstallationsValueStands()
+    public void ACommandersWriteLandsInTheirOverlayAndNoOneElseReadsIt()
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        surface.Settings.Apply(AboutMe, "The installation's story", SettingsCaller.Panel);
 
-        // Alice has never set one, so she reads the installation's.
+        // Alice has set nothing, so she reads the default.
         surface.Settings.UseCommander("F1", "Alice");
-        Assert.Equal("The installation's story", surface.Settings.Current.Llm.AboutMe);
+        Assert.Null(surface.Settings.Current.Llm.AboutMe);
 
         surface.Settings.Apply(AboutMe, "Alice's story", SettingsCaller.Panel);
         Assert.Equal("Alice's story", surface.Settings.Current.Llm.AboutMe);
 
-        // On disk: the installation's untouched, and Alice's in her own entry, keyed inside the document with
-        // her name beside the id for a person reading it.
+        // On disk: the installation's copy stays null, and Alice's is in her own entry, with her name
+        // beside the id for a person reading it.
         var reloaded = TestSurface.For(install);
-        Assert.Equal("The installation's story", reloaded.Settings.Current.Llm.AboutMe);
+        Assert.Null(reloaded.Settings.Current.Llm.AboutMe);
 
         var overlay = Assert.Single(reloaded.Settings.Current.Commanders);
         Assert.Equal("F1", overlay.CommanderFid);
@@ -110,12 +116,47 @@ public class CommanderScopeTests
         Assert.Equal("Alice's story", overlay.AboutMe);
         Assert.Null(overlay.CharacterSheet);
 
-        // And Bob, who has never set one, still reads the installation's — not Alice's.
+        // Bob has set nothing and reads the default, not Alice's.
         reloaded.Settings.UseCommander("F2", "Bob");
-        Assert.Equal("The installation's story", reloaded.Settings.Current.Llm.AboutMe);
+        Assert.Null(reloaded.Settings.Current.Llm.AboutMe);
 
         reloaded.Settings.UseCommander("F1", "Alice");
         Assert.Equal("Alice's story", reloaded.Settings.Current.Llm.AboutMe);
+    }
+
+    [Fact]
+    public void ACommanderReadsANullFieldAsItsDefaultNotTheInstallations()
+    {
+        var stored = new D47Settings
+        {
+            Llm = new LlmSettings { AboutMe = "old install story" },
+            Callouts = new CalloutSettings { HomeSystem = "Sol" },
+            Commanders = [new CommanderSettings { CommanderFid = "F1", CommanderName = "Alice" }],
+        };
+
+        foreach (var projected in new[] { CommanderScope.Project(stored, "F1"), CommanderScope.Project(stored, "F2") })
+        {
+            Assert.Null(projected.Llm.AboutMe);
+            Assert.Null(projected.Callouts.HomeSystem);
+        }
+    }
+
+    [Fact]
+    public void AValueHeldWithNobodyFlyingDoesNotReplaceTheNextCommandersOwn()
+    {
+        var install = new MemoryInstall();
+
+        var surface = TestSurface.For(install, settings: new D47Settings
+        {
+            Commanders = [new CommanderSettings { CommanderFid = "F1", AboutMe = "Alice's story" }],
+        });
+
+        surface.Settings.Apply(AboutMe, "Whoever sits here", SettingsCaller.Panel);
+        surface.Settings.Apply(CharacterSheet, "A sheet", SettingsCaller.Panel);
+        surface.Settings.UseCommander("F1", "Alice");
+
+        Assert.Equal("Alice's story", surface.Settings.Current.Llm.AboutMe);
+        Assert.Equal("A sheet", surface.Settings.Current.Llm.CharacterSheet);
     }
 
     [Fact]
@@ -137,7 +178,7 @@ public class CommanderScopeTests
     }
 
     [Fact]
-    public void ACommanderWithNoAnswerReadsTheInstallationsStoryGender()
+    public void AStoryGenderSetWithNobodyFlyingGoesToTheNextCommander()
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
@@ -159,7 +200,7 @@ public class CommanderScopeTests
         Assert.Equal("Shinrarta Dezhra", surface.Settings.Current.Callouts.HomeSystem);
 
         surface.Settings.UseCommander("F2", "Bob");
-        Assert.Equal("Sol", surface.Settings.Current.Callouts.HomeSystem);
+        Assert.Null(surface.Settings.Current.Callouts.HomeSystem);
 
         surface.Settings.UseCommander("F1", "Alice");
         Assert.Equal("Shinrarta Dezhra", surface.Settings.Current.Callouts.HomeSystem);
@@ -188,9 +229,8 @@ public class CommanderScopeTests
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-        surface.Settings.Apply(AboutMe, "The installation's story", SettingsCaller.Panel);
-
         surface.Settings.UseCommander("F1", "Alice");
+        surface.Settings.Apply(AboutMe, "Alice's story", SettingsCaller.Panel);
         var cleared = surface.Settings.Apply(AboutMe, null, SettingsCaller.Panel);
 
         Assert.Equal(SettingApplyStatus.Applied, cleared.Status);
@@ -198,7 +238,7 @@ public class CommanderScopeTests
 
         var reloaded = TestSurface.For(install);
 
-        // Blank in the file, which is the distinction: null would read through.
+        // Blank in the file, which is the distinction: null would read as the default.
         var overlay = Assert.Single(reloaded.Settings.Current.Commanders);
         Assert.Equal(string.Empty, overlay.AboutMe);
 
@@ -206,7 +246,7 @@ public class CommanderScopeTests
         Assert.Null(reloaded.Settings.Current.Llm.AboutMe);
 
         reloaded.Settings.UseCommander("F2", "Bob");
-        Assert.Equal("The installation's story", reloaded.Settings.Current.Llm.AboutMe);
+        Assert.Null(reloaded.Settings.Current.Llm.AboutMe);
     }
 
     [Fact]

@@ -210,17 +210,16 @@ value there, and a second Commander on the same machine never sees the first one
 
 In the file:
 
-- A per-Commander row reads the installation's value until that Commander sets their own. The
-  installation's value is whatever was there before anyone logged in — including everything in a
-  settings file from before this existed.
+- A per-Commander row starts at its default until that Commander sets it. Nothing reads through
+  from the installation or from another Commander, so a new Commander starts blank.
 - Once a Commander sets a row, their value lives in their own entry under `commanders` in
-  `settings.json`, keyed by their Frontier id with their name written beside it. The
-  installation's value is untouched.
+  `settings.json`, keyed by their Frontier id with their name written beside it.
 - **Clearing a per-Commander row is a choice, not a reset.** A Commander who empties the backstory
-  reads nothing — not the installation's story, and not somebody else's. In the file that is an
+  reads nothing — not an installation story, and not somebody else's. In the file that is an
   empty string; a value that was never set is `null`, and the two are deliberately different.
-- Anything set before Elite has said who is flying is the installation's. It is not handed to
-  whoever logs in first.
+- A per-Commander row set before Elite has said who is flying goes to the next Commander Elite
+  names, unless they have their own value for that row. It is held in memory, not written, so
+  closing d47 before Elite names anyone drops it.
 
 What is *not* per Commander, and on purpose: the running cost of the AI. That is the person's
 bill across every character they play, so the spend ledger is one ledger for the installation.

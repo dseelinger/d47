@@ -78,6 +78,9 @@ public sealed class SettingsService
 
     private string? _commanderName;
 
+    /// <summary>Per-Commander values set before Elite named anyone; the next Commander named takes them. Not saved.</summary>
+    private CommanderSettings _pending = new() { CommanderFid = string.Empty };
+
     /// <summary>
     /// True when what this service holds is defaults standing in for a file that refused to load.
     /// </summary>
@@ -119,7 +122,21 @@ public sealed class SettingsService
 
         _commanderFid = fid;
         _commanderName = name;
-        Current = CommanderScope.Project(_stored, fid);
+
+        if (fid is { Length: > 0 })
+        {
+            var adopted = CommanderScope.Adopt(_stored, fid, name, _pending);
+
+            if (!ReferenceEquals(adopted, _stored))
+            {
+                SaveUnlessTheFileRefusedToLoad(adopted);
+                _stored = adopted;
+            }
+
+            _pending = new CommanderSettings { CommanderFid = string.Empty };
+        }
+
+        Current = Project(_stored);
 
         _logger.LogInformation(
             "Settings now read for Commander {Name} ({Fid})",
@@ -150,19 +167,28 @@ public sealed class SettingsService
     private bool Persist(D47Settings next)
     {
         var stored = CommanderScope.Persist(_stored, Current, next, _commanderFid, _commanderName);
+        var pending = _commanderFid is { Length: > 0 }
+            ? _pending
+            : CommanderScope.Pending(_pending, Current, next);
 
-        if (ReferenceEquals(stored, _stored))
+        if (ReferenceEquals(stored, _stored) && pending == _pending)
         {
             return false;
         }
 
-        SaveUnlessTheFileRefusedToLoad(stored);
+        if (!ReferenceEquals(stored, _stored))
+        {
+            SaveUnlessTheFileRefusedToLoad(stored);
+        }
 
         _stored = stored;
-        Current = CommanderScope.Project(stored, _commanderFid);
+        _pending = pending;
+        Current = Project(stored);
 
         return true;
     }
+
+    private D47Settings Project(D47Settings stored) => CommanderScope.Project(stored, _commanderFid, _pending);
 
     /// <summary>Writes the document, unless the file it would land on refused to load (#368).</summary>
     private void SaveUnlessTheFileRefusedToLoad(D47Settings stored)
@@ -278,7 +304,7 @@ public sealed class SettingsService
         {
             return CommanderScope.WithOneFieldForgotten(_stored, _commanderFid).Any(candidate =>
                 !string.Equals(
-                    binding.Read(CommanderScope.Project(candidate, _commanderFid)),
+                    binding.Read(Project(candidate)),
                     binding.Read(Current),
                     StringComparison.Ordinal));
         }
@@ -396,7 +422,7 @@ public sealed class SettingsService
 
         foreach (var candidate in CommanderScope.WithOneFieldForgotten(_stored, _commanderFid))
         {
-            var without = CommanderScope.Project(candidate, _commanderFid);
+            var without = Project(candidate);
 
             if (string.Equals(binding.Read(without), mine, StringComparison.Ordinal))
             {
@@ -405,9 +431,9 @@ public sealed class SettingsService
 
             SaveUnlessTheFileRefusedToLoad(candidate);
             _stored = candidate;
-            Current = CommanderScope.Project(candidate, _commanderFid);
+            Current = Project(candidate);
 
-            _logger.LogInformation("Reset {Key} to the installation's value", row.Key);
+            _logger.LogInformation("Reset {Key} to its default", row.Key);
             Changed?.Invoke(new SettingsChanged(row.Key, Current, caller));
 
             // The same fence, and the same telling, as an ordinary change (#368): live for this run, refused

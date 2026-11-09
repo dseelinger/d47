@@ -127,13 +127,10 @@ public class AWayBackTests
     /// write.
     /// </summary>
     [Fact]
-    public void ResettingACommanderRowRevealsTheInstallationsValueRatherThanBlankingIt()
+    public void ResettingACommanderRowPutsBackItsDefaultNotAnotherCommandersValue()
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
-
-        // The installation's answer, set before anybody is flying.
-        surface.Settings.Apply("llm.aboutMe", "the house story", SettingsCaller.Panel);
 
         surface.Settings.UseCommander("F1", "HADESD");
         surface.Settings.Apply("llm.aboutMe", "my own story", SettingsCaller.Panel);
@@ -145,8 +142,8 @@ public class AWayBackTests
 
         Assert.Equal(SettingApplyStatus.Applied, reset.Status);
 
-        // Back to the installation's, not to nothing.
-        Assert.Equal("the house story", surface.Settings.Read("llm.aboutMe"));
+        Assert.Null(surface.Settings.Read("llm.aboutMe"));
+        Assert.False(surface.Settings.IsChanged("llm.aboutMe"));
     }
 
     /// <summary>

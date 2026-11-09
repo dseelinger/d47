@@ -750,8 +750,8 @@ when it might land. Which remark is chosen by the same count that picks the stoc
 clock, so a recorded session replays to the same calls.
 
 **Per Commander, and empty is meaningful.** Each Commander on this machine has their own story;
-one who has never written one reads the installation's, and one who clears the box reads nothing —
-not the installation's, and not another Commander's. When a different Commander logs in, the
+one who has never written one has none, and one who clears the box reads nothing —
+not an installation story, and not another Commander's. When a different Commander logs in, the
 prompt is rebuilt around their story, and because the story sits inside the cached prefix that
 rebuild throws the cache away. That is one slower first turn per login, accepted on purpose: a
 login is rare, and a Commander must never be answered from somebody else's cached history.
