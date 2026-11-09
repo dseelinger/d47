@@ -139,6 +139,10 @@ changed. Run those by class name: `--filter FullyQualifiedName~<ClassName>`. Do 
 `D47.App.Tests` unfiltered, and never `dotnet test d47.slnx`: the whole suite, all of
 `D47.App.Tests` included, is the release gate and runs in `/pre-release` and `tools/release.ps1`.
 
+When the diff changes a file under `.claude/skills/<name>/` and that folder has an `evals/` folder, run
+`tools/evals/skill-evals.ps1 -Skill <name>` before committing. It runs paid cases on the maintainer's
+credential. A case scoring below 1 is handled like a failing test.
+
 Before committing, stage the change and run the check script. It runs the Debug build and both
 gate filters, then stamps the index; the pre-commit hook refuses a commit whose staged tree is not
 stamped. The gate tests check the whole tree against a list or a rule — a journal event dispatched
