@@ -246,6 +246,89 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
         return Assert.Single(new SamplingCallout { Ledger = ledger }.Examine(context)).Text;
     }
 
+    private static string Log(string at, int body, string species, string symbol) =>
+        Analyse(at, body, species, symbol).Replace("\"Analyse\"", "\"Log\"");
+
+    private static string SaidAtFirstSample(ExobiologyLedger ledger, string log)
+    {
+        var store = new GameStateStore();
+        store.Apply(Parse(Commander));
+        store.Apply(Parse(log));
+
+        var context = new CalloutContext(
+            DateTimeOffset.UnixEpoch,
+            IsPriming: false,
+            State: store.Active,
+            Status: GameStatus.Unknown,
+            Route: NavRoute.None,
+            Events: [Parse(log)]);
+
+        return Assert.Single(new SamplingCallout { Ledger = ledger }.Examine(context)).Text;
+    }
+
+    private const string FirstLog = "2026-09-26T20:00:00Z";
+
+    [Fact]
+    public void TheFirstSampleSaysWhatTheRunWillBeWorthWhenTheBodyWasWalkedOn()
+    {
+        var ledger = Ledger(BodyScan("2026-09-26T19:30:00Z", 41, "Detailed", footfalled: true));
+        var said = SaidAtFirstSample(ledger, Log(FirstLog, 41, "Cactoida Cortexum", "$Codex_Ent_Cactoid_01_Name;"));
+
+        Assert.EndsWith(" Worth 3.7 million once analysed. No first footfall bonus.", said);
+        Assert.DoesNotContain("unsold", said);
+    }
+
+    [Fact]
+    public void TheFirstSampleSaysTheBonusWhenNobodyHasWalkedThere()
+    {
+        var ledger = Ledger(BodyScan("2026-09-26T19:30:00Z", 41, "Detailed", footfalled: false));
+        var said = SaidAtFirstSample(ledger, Log(FirstLog, 41, "Cactoida Cortexum", "$Codex_Ent_Cactoid_01_Name;"));
+
+        Assert.EndsWith(" Worth 18.3 million once analysed, with the first footfall bonus.", said);
+    }
+
+    [Fact]
+    public void TheFirstSampleSaysWhenNoScanSaidEitherWay()
+    {
+        var said = SaidAtFirstSample(Ledger(), Log(FirstLog, 41, "Cactoida Cortexum", "$Codex_Ent_Cactoid_01_Name;"));
+
+        Assert.EndsWith(" Worth 3.7 million once analysed; whether the first footfall bonus applies is not known.", said);
+    }
+
+    [Fact]
+    public void TheFirstSampleSaysWhenTheTableHasNoValue()
+    {
+        var said = SaidAtFirstSample(Ledger(), Log(FirstLog, 41, "Tessera Nova", "$Codex_Ent_Tessera_01_Name;"));
+
+        Assert.EndsWith(" I have no value for Tessera Nova.", said);
+    }
+
+    [Fact]
+    public void TheFirstSampleIsUnchangedWithoutALedger()
+    {
+        var log = Log(FirstLog, 41, "Cactoida Cortexum", "$Codex_Ent_Cactoid_01_Name;");
+        var store = new GameStateStore();
+        store.Apply(Parse(Commander));
+        store.Apply(Parse(log));
+
+        var context = new CalloutContext(
+            DateTimeOffset.UnixEpoch, IsPriming: false, State: store.Active, Status: GameStatus.Unknown,
+            Route: NavRoute.None, Events: [Parse(log)]);
+
+        Assert.DoesNotContain("Worth", Assert.Single(new SamplingCallout().Examine(context)).Text);
+    }
+
+    [Fact]
+    public void AFirstSampleAddsNothingToTheUnsoldData()
+    {
+        var ledger = Ledger(Cactoida("2026-09-26T19:40:00Z"));
+        var before = ledger.Unsold().Held;
+
+        ledger.Apply([Parse(Log(FirstLog, 41, "Frutexa Acus", "$Codex_Ent_Shrubs_02_Name;"))]);
+
+        Assert.Equal(before, ledger.Unsold().Held);
+    }
+
     [Fact]
     public void TheAnalysisCalloutSaysTheValueAndTheUnsoldTotal()
     {

@@ -241,11 +241,12 @@ a species, because a sale row's total covers an unstated number of specimens.
 
 ### On the surface: how many, and how far
 
-Once you take the first specimen, Directive 47 tracks the run and speaks each one as it lands:
+Once you take the first specimen, Directive 47 tracks the run and speaks each one as it lands. The first specimen says what the run will be worth:
 
 ```text
+Stratum Paleas, 1 of 3. 2 to go, 500 metres from here. Worth 1.4 million once analysed. No first footfall bonus.
 Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go, 500 metres from here.
-Stratum Paleas analysed. That run is complete. Worth 1.8 million. No first footfall bonus. 21.4 million unsold.
+Stratum Paleas analysed. That run is complete. Worth 1.4 million. No first footfall bonus. 21.4 million unsold.
 ```
 
 Ask at any point and it will answer from where you are standing right now, which is the question you

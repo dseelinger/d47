@@ -126,6 +126,20 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
         }
     }
 
+    /// <summary>The value the run will have once analysed, from a <c>ScanOrganic</c> Log; null for any other event. Adds nothing held.</summary>
+    public HeldAnalysis? PriceRun(JournalEvent journalEvent)
+    {
+        if (AnalysisOf(journalEvent, "Log") is not { } analysis)
+        {
+            return null;
+        }
+
+        lock (Gate)
+        {
+            return Priced(analysis);
+        }
+    }
+
     private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "Commander", "NewCommander", "LoadGame", "Died", "FSDJump", "Location", "CarrierJump", "SellOrganicData");
 
@@ -207,9 +221,9 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
         }
     }
 
-    private static Analysis? AnalysisOf(JournalEvent journalEvent) =>
+    private static Analysis? AnalysisOf(JournalEvent journalEvent, string scanType = "Analyse") =>
         journalEvent.Kind == "ScanOrganic"
-        && journalEvent.String("ScanType") == "Analyse"
+        && journalEvent.String("ScanType") == scanType
         && journalEvent.Named("Species") is { Length: > 0 } species
         && journalEvent.Long("SystemAddress") is { } system
         && journalEvent.Int("Body") is { } body

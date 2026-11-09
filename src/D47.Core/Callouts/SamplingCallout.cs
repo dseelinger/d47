@@ -37,7 +37,7 @@ public sealed class SamplingCallout : ICallout
 
             var line = journalEvent.String("ScanType") == "Analyse"
                 ? $"{genus.Species ?? genusName} analysed. That run is complete." + Value(journalEvent, state)
-                : Progress(genus, genusName);
+                : Progress(genus, genusName) + RunValue(journalEvent);
 
             yield return new Announcement($"sampling.{journalEvent.Timestamp.Ticks}", line);
         }
@@ -70,6 +70,22 @@ public sealed class SamplingCallout : ICallout
         return line + (unpriced == 0
             ? $" {BiologyCallout.Credits(unsold.Total)} unsold."
             : $" {BiologyCallout.Credits(unsold.Total)} unsold, not counting {unpriced} sample{(unpriced == 1 ? "" : "s")} I have no value for.");
+    }
+
+    private string RunValue(JournalEvent journalEvent)
+    {
+        if (Ledger?.PriceRun(journalEvent) is not { } run)
+        {
+            return string.Empty;
+        }
+
+        return run switch
+        {
+            { Worth: not { } } => $" I have no value for {run.Species}.",
+            { FirstFootfall: true } => $" Worth {BiologyCallout.Credits(run.Worth.Value)} once analysed, with the first footfall bonus.",
+            { FirstFootfall: false } => $" Worth {BiologyCallout.Credits(run.Worth.Value)} once analysed. No first footfall bonus.",
+            _ => $" Worth {BiologyCallout.Credits(run.Worth.Value)} once analysed; whether the first footfall bonus applies is not known.",
+        };
     }
 
     private static string Progress(GenusProgress genus, string genusName)

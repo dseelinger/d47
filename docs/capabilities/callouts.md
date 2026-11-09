@@ -948,11 +948,12 @@ on older journals. Switching this off silences this warning and nothing else.
 Each organic specimen as it lands, with the distance you covered to get it:
 
 ```text
+Stratum Paleas, 1 of 3. 2 to go, 500 metres from here. Worth 1.4 million once analysed. No first footfall bonus.
 Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go, 500 metres from here.
 Stratum Paleas analysed. That run is complete.
 ```
 
-The analysed line then adds what the species is worth, whether the first footfall bonus applies,
+The first specimen line says what the run will be worth once analysed, as the analysed line does. The analysed line then adds what the species is worth, whether the first footfall bonus applies,
 and your unsold total, where D47 has a value for it.
 
 The distance is what the callout is for — you can see the genus and you can count to three, but nobody can

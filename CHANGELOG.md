@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The first organic sample of a run now says what the run will be worth once all three are analysed, with the first footfall bonus where it applies. It does not say the unsold total.
+
 "Gear down" and "gear up" now work in the Nomad. In the Nomad, voice commands press the ship's bindings instead of the SRV's, and the frame shift drive, supercruise, hyperspace and the FSS are refused with "in the Nomad".
 
 A helium-rich gas giant in the codex is now named "Helium-rich gas giant" instead of "Standard gas giant". A new codex discovery of a planet or gas giant is said and opened under the same name the codex list uses, such as "Discovered Class II gas giant."
