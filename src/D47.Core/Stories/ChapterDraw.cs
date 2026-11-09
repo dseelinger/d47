@@ -69,6 +69,14 @@ public static class ChapterDraw
         return Hash(rewrites > 0 ? $"{storyId}|{chapter}|sight|{rewrites}" : $"{storyId}|{chapter}|sight");
     }
 
+    /// <summary>The seed of a chapter's roll for a drawn span in the black.</summary>
+    public static uint BlackSeed(string storyId, int chapter)
+    {
+        ArgumentNullException.ThrowIfNull(storyId);
+
+        return Hash($"{storyId}|{chapter}|black");
+    }
+
     /// <summary>The chance a chapter is a sightseeing chapter: scaled by the Exploration weight, capped, and reduced after a sightseeing chapter.</summary>
     public static double SightChance(CareerWeights weights, bool previousWasSight)
     {

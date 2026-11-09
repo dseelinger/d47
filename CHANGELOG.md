@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A story chapter after the beacon scan can now go out into the black on its own when its draw holds an exploration or exobiology activity. For such a chapter the chance rises with your Exploration rating, to one in two at 100, and a rating of 0 never sends a story out. While it is out, the story stays in the black, the finale waits until you are back within 1,000 light years of where it set out, and each chapter after the first starts with an exploration or exobiology objective.
+
 "Hide VR panel" and "show VR panel" hide and show the headset panel and its avatar by voice. The captions keep showing and the SteamVR session stays up; a hidden panel is not remembered after a restart. "Show VR panel" also turns Show D47 in the headset on if it was off. "Hide 2D overlay" and "show 2D overlay" (or "panel") turn Show the overlay off and on.
 
 Voice navigation accepts "page" after a destination as well as "tab": "story page" and "open the checklist page" go where "story tab" and "open the checklist tab" go.

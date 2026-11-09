@@ -172,6 +172,12 @@ public sealed record Story
     /// <summary>The system, Sol or Colonia, the story's chapters head for after changed chapters in the black; null when none.</summary>
     public string? HomeTarget { get; init; }
 
+    /// <summary>The span in the black the draw opened, while it is open; null when none.</summary>
+    public DrawnSpan? DrawnSpan { get; init; }
+
+    /// <summary>The number of the last chapter of the last drawn span to close; null before one has.</summary>
+    public int? SpanClosedAt { get; init; }
+
     /// <summary>The system the Commander named when changing an objective, which later chapters travel toward until they arrive; null when none.</summary>
     public AdventureHeading? ChosenDestination { get; init; }
 

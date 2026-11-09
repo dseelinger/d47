@@ -936,6 +936,20 @@ every span both rules apply.
 
 A span may name a destination with `"toward"`: Sol, Colonia, Sagittarius A* or Beagle Point. From the beacon scan on, each chapter in such a span travels toward it by the rule for a chapter heading home: at the long-haul reach, with no sights, its last stop at least three quarters of the reach nearer the destination (about 1,125 light years a chapter, or 3,750 with a fleet carrier, so Colonia is about 20 chapters from the bubble without a carrier) or within 1,000 light years of it, and the places listed on the way. A chapter that starts within 1,000 light years of the destination is told it has arrived, and the rest of the span plays as a span with no destination. A span with a destination may not reach the finale or, in a story that flies to a real beacon, start before `breakIntoTwo`. A span with a destination that covers the last stage before the finale holds the finale until the Commander arrives: with every clue given and the finale's day passed, chapters are still written in that stage and pulled toward the destination until the Commander is within 1,000 light years of it. With no known position the finale starts as usual.
 
+**Spans the draw opens.** A span in the black can also be opened by the activity draw (`DrawnSpans`). A chapter may open one only when it is a new chapter, not a rewrite or a replacement; the beacon has been scanned; it is not a finale chapter; no span of the hidden entry covers its stage; no drawn span is open; no home target and no heading you chose are set; your Exploration weight is above 0; your position is known; and `SpanReach.Of` gives a reach R, 100 times the best jump range in your fleet with a 5,000 light year floor when you own a fleet carrier. The chapter's activities are drawn twice with the same seed, the second time with one more place objective kept for the stop the span travels to. When the second draw holds an Exploration or Exobiology row, a roll seeded by `{storyId}|{chapter}|black` is made against a chance of min(0.5, 0.25 × Exploration weight / 50): 0 at a weight of 0, 0.25 at 50 and 0.5 at 100, and a quarter of that when the chapter before was the last of a drawn span. Under the chance the span opens and the second draw is used; otherwise the first.
+
+The span's shape is seeded with the roll: K chapters out and S chapters at the target.
+
+| Story length | K | S |
+| --- | --- | --- |
+| 3 days, 1 week, 2 weeks | 1 | 0 |
+| 1 month, 3 months | 1 (70%), 2 (30%) | 0 (50%), 1 (35%), 2 (15%) |
+| 6 months, 1 year | 1 (50%), 2 (35%), 3 (15%) | 0 (50%), 1 (35%), 2 (15%) |
+
+The target is a point, not a catalogued place: K × 0.75 × R light years from where you are, at your height, heading away from the nearer of Sol and Colonia and turned by a seeded angle from -60° to +60° in the galactic plane. Within 1 light year of either in the plane, the heading is the angle alone, measured from the +Z axis. You have arrived within 0.25 × R of it. No galaxy search is made.
+
+The span has three phases, settled from your position when each new chapter is written. Out becomes There once you are within 0.25 × R of the target, or Back when S is 0. There counts S down one per chapter and becomes Back at 0. Back closes the span once you are within 1,000 light years of where it opened. Out or There becomes Back when the last two chapters were both changed, by the rule for heading home, or when your Exploration weight is 0. While a drawn span is open, every chapter is in the black as above, the finale waits until it closes, a rewrite or replacement keeps it and never rolls, and each chapter after the first draws its first activity from Exploration and Exobiology rows only. The span and the number of the chapter the last one closed at are kept with the story across a restart.
+
 **The comfort zone.** Every third chapter after the beacon scan, d47 picks the activity your
 `Statistics` show you have done least, and it is the first of the chapter's drawn activities:
 

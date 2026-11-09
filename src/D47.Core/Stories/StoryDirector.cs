@@ -2403,7 +2403,7 @@ public sealed class StoryDirector(
                 slots,
                 finaleChapter is null ? null : story.FinaleDestination,
                 hull: game?.Ship.Type,
-                inTheBlack: StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne)),
+                inTheBlack: story.DrawnSpan is not null || StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne)),
                 laterActOne: laterActOne,
                 sights: sightseeing ? sights : null),
             Rewrite: rewrite,
@@ -3448,7 +3448,11 @@ public sealed class StoryDirector(
             return new("The chapter before is no longer on file.");
         }
 
-        var finaleFrom = replacing ? story.FinaleFrom : story.FinaleFrom ?? (FinaleDue(story, now) && !StillTravelling(secret, story, Game()?.Location.StarPos) ? number : null);
+        var span = replacing || story.DrawnSpan is not { } open
+            ? story.DrawnSpan
+            : DrawnSpans.Next(open, Game()?.Location.StarPos, story.Chapters, story.ChangedChapters, Weights(Game()?.Statistics ?? CareerStatistics.Empty).Weight(Career.Exploration));
+        var spanClosedAt = !replacing && story.DrawnSpan is not null && span is null ? number - 1 : story.SpanClosedAt;
+        var finaleFrom = replacing ? story.FinaleFrom : story.FinaleFrom ?? (FinaleDue(story, now) && span is null && !StillTravelling(secret, story, Game()?.Location.StarPos) ? number : null);
         var finaleChapter = number - finaleFrom + 1;
         var keptDestination = rewriting && finaleChapter == 1 ? story.FinaleDestination : null;
         var stage = finaleChapter is null ? StoryClues.Stage(story) : StoryStage.Finale;
@@ -3460,8 +3464,9 @@ public sealed class StoryDirector(
         var game = Game();
         var sinceBeacon = SinceBeacon(frontierId, story) + (replacing ? 0 : 1);
         var beaconChapter = reach is { InReach: true };
-        var inTheBlack = StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne));
-        var toward = inTheBlack && story.BeaconScanAt is not null ? StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne)) : null;
+        var authored = StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne));
+        var inTheBlack = authored || span is not null;
+        var toward = authored && story.BeaconScanAt is not null ? StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne)) : null;
         var pulled = finaleChapter is null && !beaconChapter && ChapterPull.Pulls(toward, game?.Location.StarPos);
         var home = inTheBlack ? null : HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
         var chosen = story.ChosenDestination;
@@ -3499,10 +3504,16 @@ public sealed class StoryDirector(
                 Engineers?.Invoke(),
                 row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach, warInReach))
             : [];
-        var slots = !Draws(story.BeaconScanAt is not null, number, finaleChapter, reach)
-            ? null
-            : ChapterDraw.Draw(
-                Weights(statistics),
+        var weights = Weights(statistics);
+        var fixedPlaces = FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || homeLeg is not null || heading is not null || pulled) ? 1 : 0) + (sightseeing ? 1 : 0)
+            + (span is { } first && first.Opened == number ? 1 : 0);
+        IReadOnlyList<Func<DrawableActivity, bool>> limits = span is { } later && number > later.Opened
+            ? [DrawnSpans.FirstSlot, .. GoalClimb.Limits(goals).Skip(1)]
+            : GoalClimb.Limits(goals);
+
+        IReadOnlyList<DrawnActivity>? Drawn(int places) =>
+            ChapterDraw.Draw(
+                weights,
                 game?.Ranks ?? RankState.Empty,
                 game?.Ship ?? ShipLoadout.Unknown,
                 odyssey: true,
@@ -3510,7 +3521,7 @@ public sealed class StoryDirector(
                 story.Refused,
                 ChapterFit.IsComfortChapter(sinceBeacon),
                 statistics,
-                FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || homeLeg is not null || heading is not null || pulled) ? 1 : 0) + (sightseeing ? 1 : 0),
+                places,
                 ChapterDraw.Seed(story.Id, number, replacing ? -rewrites : null),
                 sinceBeacon / ChapterFit.ComfortEvery,
                 stationsInReach,
@@ -3518,12 +3529,38 @@ public sealed class StoryDirector(
                 Tools is null ? null : StepEventCatalogue.Default,
                 Tools?.Invoke(),
                 GoalClimb.Slots(goals),
-                GoalClimb.Limits(goals),
+                limits,
                 frontlineInReach,
                 stateFamiliesInReach,
                 warInReach) is { Count: > 0 } drawn
                 ? drawn
                 : null;
+
+        var slots = Draws(story.BeaconScanAt is not null, number, finaleChapter, reach) ? Drawn(fixedPlaces) : null;
+        var gates = new DrawnSpanGates
+        {
+            NewChapter = !replacing,
+            BeaconScanned = story.BeaconScanAt is not null,
+            Finale = finaleChapter is not null,
+            AuthoredSpan = authored,
+            SpanOpen = span is not null,
+            Heading = home is not null || chosen is not null,
+            ExplorationWeight = weights.Weight(Career.Exploration),
+            Reach = game is null ? null : SpanReach.Of(game),
+            At = game?.Location.StarPos,
+        };
+
+        // The second draw keeps a place for the stop the span travels to.
+        if (slots is not null
+            && gates.Hold
+            && Drawn(fixedPlaces + 1) is { } travelling
+            && DrawnSpans.Explores(travelling)
+            && DrawnSpans.Open(story.Id, number, story.Pacing, gates, spanClosedAt == number - 1) is { } opened)
+        {
+            span = opened;
+            slots = travelling;
+            inTheBlack = true;
+        }
 
         // A limited draw that fell back to the whole table works no arc.
         goals = GoalClimb.Worked(goals, slots);
@@ -3602,6 +3639,8 @@ public sealed class StoryDirector(
             FinaleFrom = finaleFrom,
             FinaleDestination = finaleChapter == 1 && keptDestination is null ? outcome.Destination : still.FinaleDestination,
             HomeTarget = home,
+            DrawnSpan = span,
+            SpanClosedAt = spanClosedAt,
             ChosenDestination = chosen,
             Detour = setAside ? null : still.Detour,
             Rewrite = null,
