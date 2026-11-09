@@ -121,18 +121,18 @@ public sealed class StoryProgressTests
     }
 
     [Theory]
-    [InlineData(false, 75)]
-    [InlineData(true, 130)]
-    public void ALocalHintNamesTheLocalTimeThenSaysItIsTakingLonger(bool chapter, int seconds)
+    [InlineData(false, 75, "1:15")]
+    [InlineData(true, 130, "2:10")]
+    public void ALocalHintNamesTheLocalTimeThenSaysItIsTakingLonger(bool chapter, int seconds, string clock)
     {
         var time = new ManualTime();
         var progress = new StoryProgress(time);
         progress.Enter(WriteStage.Places, StoryPace.For("gemma-4-e4b", local: true, chapter: chapter));
 
-        Assert.Equal($"Usually ready in about {seconds} seconds.", progress.Hint);
+        Assert.Equal($"Usually ready in about {clock}.", progress.Hint);
 
         time.Advance(TimeSpan.FromSeconds(seconds * 2));
-        Assert.Equal($"Usually ready in about {seconds} seconds.", progress.Hint);
+        Assert.Equal($"Usually ready in about {clock}.", progress.Hint);
 
         time.Advance(TimeSpan.FromSeconds(1));
         Assert.Equal("Taking longer than usual.", progress.Hint);
@@ -144,10 +144,10 @@ public sealed class StoryProgressTests
         var time = new ManualTime();
         var progress = Started(time, "claude-haiku-5-5", WriteStage.Places);
 
-        Assert.Equal("Usually ready in about 40 seconds.", progress.Hint);
+        Assert.Equal("Usually ready in about 0:40.", progress.Hint);
 
         time.Advance(TimeSpan.FromSeconds(80));
-        Assert.Equal("Usually ready in about 40 seconds.", progress.Hint);
+        Assert.Equal("Usually ready in about 0:40.", progress.Hint);
 
         time.Advance(TimeSpan.FromSeconds(1));
         Assert.Equal("Taking longer than usual.", progress.Hint);
@@ -162,7 +162,7 @@ public sealed class StoryProgressTests
         Assert.Equal("That took too long. Trying again…", progress.Hint);
 
         progress.Enter(WriteStage.Outline, StoryPace.For("claude-sonnet-5-5"));
-        Assert.Equal("Usually ready in about 150 seconds.", progress.Hint);
+        Assert.Equal("Usually ready in about 2:30.", progress.Hint);
     }
 
     [Fact]

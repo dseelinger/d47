@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+The time estimate under a story write now reads in minutes and seconds, like the clock beside it: "Usually ready in about 2:30." instead of "150 seconds".
+
 Selling exobiology data no longer counts as BGS work. Exobiology data has no BGS effect, so the BGS work page's Data column now shows cartography only, and "what's my BGS work" no longer reports organic data sold.
 
 Faction influence and conflict readings from the last week of your journals now survive a restart. The BGS work page's Influence column, the influence in "what's my BGS work", and the days won on Search › Faction › Conflicts no longer go blank after d47 restarts until you visit the system again.

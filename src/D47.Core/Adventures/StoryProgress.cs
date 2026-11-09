@@ -126,9 +126,14 @@ public sealed class StoryProgress(TimeProvider time)
 
                 var total = _pace.Total;
 
-                return time.GetElapsedTime(_draftBegan).TotalSeconds > 2 * total
-                    ? "Taking longer than usual."
-                    : string.Create(CultureInfo.InvariantCulture, $"Usually ready in about {Math.Round(total / 5) * 5:0} seconds.");
+                if (time.GetElapsedTime(_draftBegan).TotalSeconds > 2 * total)
+                {
+                    return "Taking longer than usual.";
+                }
+
+                var seconds = (int)(Math.Round(total / 5) * 5);
+
+                return string.Create(CultureInfo.InvariantCulture, $"Usually ready in about {seconds / 60}:{seconds % 60:00}.");
             }
         }
     }
