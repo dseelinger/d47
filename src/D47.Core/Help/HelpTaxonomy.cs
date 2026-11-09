@@ -172,7 +172,11 @@ public static class HelpTaxonomy
                 HelpNode.Leaf(
                     "Stories",
                     "Follow stories you fly, moved forward by your own journal.",
-                    "adventures"))),
+                    "adventures")),
+            HelpNode.Leaf(
+                "Campaign",
+                "Keep a plan for one minor faction: what you mean to do in each of its systems.",
+                "campaign")),
 
         HelpNode.Category(
             "Ship and engineering",

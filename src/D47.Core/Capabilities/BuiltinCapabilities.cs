@@ -357,7 +357,11 @@ public static class BuiltinCapabilities
         Func<IReadOnlyList<Modules.InstalledModule>>? installedModules = null,
 
         // The Commander's background watches, for the list_watches tool.
-        Func<IReadOnlyList<Watches.Watch>>? watches = null) =>
+        Func<IReadOnlyList<Watches.Watch>>? watches = null,
+
+        // Each Commander's campaign, and the systems the galaxy reports fetched this session placed each faction in.
+        Campaigns.CampaignStore? campaigns = null,
+        Campaigns.FactionSystemsSeen? campaignSystems = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -576,6 +580,8 @@ public static class BuiltinCapabilities
         CharactersCapability.Create(),
 
         WatchesCapability.Create(watches ?? (() => [])),
+
+        CampaignCapability.Create(campaigns, () => gameState.Active, squadronFactions, galaxy, campaignSystems),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

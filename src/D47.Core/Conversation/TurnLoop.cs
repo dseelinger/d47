@@ -1623,6 +1623,32 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        // 0. The campaign's faction name, which no declared phrase can carry.
+        if (capabilities.Find(Capabilities.Builtin.CampaignCapability.Id) is not null
+            && CampaignFactionPhrase.Read(input) is { } campaignFaction)
+        {
+            routing.Handled = true;
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var named = await capabilities
+                .InvokeAsync(
+                    Capabilities.Builtin.CampaignCapability.SetFactionTool,
+                    new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["faction"] = campaignFaction }),
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            Said(named.Spoken, input);
+
+            yield return new TurnEvent.TextDelta(named.Spoken);
+            yield return new TurnEvent.Completed(new TurnResult(
+                named.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                named.Spoken,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
         // 0. A faction's name in a report request, which no declared phrase can carry.
         if (capabilities.Find(Capabilities.Builtin.GalaxyCapability.Id) is not null
             && FactionReportPhrase.Read(input) is { } reportFaction)

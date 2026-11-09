@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+A campaign keeps a plan for one minor faction: your squadron's faction unless you say "our campaign faction is" and another's name. Give each of its systems an intent by voice, with no AI model: "hold Lave", "grow Lave", "expand from Lave", "keep Lave under seventy-five", "take control of Lave" or "leave Lave alone". These work for a system you have seen the faction in during the last week, and for all of its systems once you have named the faction or asked for the campaign that session. A system with no intent is hold where the faction controls it and leave alone elsewhere. "What is our campaign" names the faction and counts its systems by intent. The plan is kept per Commander in data\campaigns.json, and the AI model can read it but not change it.
+
 Chapter estimates now match how long a chapter takes. The bar under a story write follows the three stages a write goes through, and each model's usual time is re-measured: Sonnet 5.5 about 1:25, Sol 0:40, Opus 5.5 2:15, Terra 3:20.
 
 Short-story estimates are now measured apart from chapters. Each model has its own usual time for a short story: Sonnet 5.5 about 1:20, Sol 1:15, Opus 5.5 1:05, Terra 2:40.

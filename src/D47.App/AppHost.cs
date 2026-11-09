@@ -1109,6 +1109,10 @@ public sealed class AppHost : IDisposable
 
         squadronFactions.Load();
 
+        var campaigns = new D47.Core.Campaigns.CampaignStore(foundations.Data("campaigns.json"), files, foundations.Log<D47.Core.Campaigns.CampaignStore>());
+
+        campaigns.Load();
+
         // Every run, not only behind the timers switch (#90).
         var journalReminders = new D47.Core.Reminders.JournalReminderStore(foundations.Data("journal-reminders.json"), files, foundations.Log<D47.Core.Reminders.JournalReminderStore>());
 
@@ -1597,6 +1601,8 @@ public sealed class AppHost : IDisposable
             SavedSearches = savedSearches,
             SearchHistory = searchHistory,
             SquadronFactions = squadronFactions,
+            Campaigns = campaigns,
+            CampaignSystems = new D47.Core.Campaigns.FactionSystemsSeen(),
             Callouts = callouts,
             CargoBoard = cargoBoard,
             Cartography = cartography,
@@ -2736,6 +2742,8 @@ public sealed class AppHost : IDisposable
                 visitedStars: services.VisitedStars,
                 searchHistory: stores.SearchHistory,
                 squadronFactions: stores.SquadronFactions,
+                campaigns: stores.Campaigns,
+                campaignSystems: stores.CampaignSystems,
                 neutronOffer: stores.NeutronOffer,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
@@ -2822,6 +2830,9 @@ public sealed class AppHost : IDisposable
 
                 // And "what's my reputation with Mother Gaia" (#418), one set per faction a reading is held for.
                 .Concat(JournalCapability.StandingPhrases(() => gameState.Active))
+
+                // And "hold Lave" / "leave Lave alone", one set per system the campaign faction is known to be in.
+                .Concat(CampaignCapability.Phrases(stores.Campaigns, () => gameState.Active, stores.SquadronFactions, stores.CampaignSystems))
 
                 // And "forget 'set focus on elite'" (#171), one per phrase the flying Commander has taught
                 // d47 stands for a declared phrase.
@@ -4178,6 +4189,10 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Knowledge.SearchHistory SearchHistory { get; init; }
 
         public required D47.Core.Knowledge.SquadronFactions SquadronFactions { get; init; }
+
+        public required D47.Core.Campaigns.CampaignStore Campaigns { get; init; }
+
+        public required D47.Core.Campaigns.FactionSystemsSeen CampaignSystems { get; init; }
 
         public required CalloutEngine Callouts { get; init; }
 

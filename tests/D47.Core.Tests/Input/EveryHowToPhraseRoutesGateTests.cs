@@ -141,7 +141,7 @@ public partial class EveryHowToPhraseRoutesGateTests
     private static HashSet<(string Page, string Phrase)> Listed() =>
         new([.. ModelAnswers, .. NotYetReviewed], new EntryComparer());
 
-    /// <summary>The router, with the things the pages tell the Commander to make first (a checklist line, bookmarks, a macro, a mark on the body, a carrier, a pilot on duty and a character) and the fixed quick searches.</summary>
+    /// <summary>The router, with the things the pages tell the Commander to make first (a checklist line, bookmarks, a macro, a mark on the body, a carrier, a pilot on duty, a character and a campaign faction seen in two systems) and the fixed quick searches.</summary>
     private static KeywordRouter Router()
     {
         var surface = TestSurface.For(new MemoryInstall());
@@ -163,6 +163,18 @@ public partial class EveryHowToPhraseRoutesGateTests
             NullLogger.Instance,
             out var touchdown));
         state.Apply(touchdown!, null);
+
+        var campaigns = new D47.Core.Campaigns.CampaignStore(@"C:\gate/campaigns.json", files, NullLogger<D47.Core.Campaigns.CampaignStore>.Instance);
+        campaigns.SetFaction(commander, "Hutton Truckers", clearIntents: false);
+
+        foreach (var system in new[] { "Lave", "Shinrarta Dezhra" })
+        {
+            Assert.True(JournalEvent.TryParse(
+                $"{{\"timestamp\":\"2026-08-16T09:00:00Z\",\"event\":\"FSDJump\",\"StarSystem\":\"{system}\",\"SystemAddress\":1,\"StarPos\":[0,0,0],\"Factions\":[{{\"Name\":\"Hutton Truckers\",\"Influence\":0.4}}]}}",
+                NullLogger.Instance,
+                out var jump));
+            state.Apply(jump!, null);
+        }
         var marks = new SurfaceMarks();
         marks.Add(state.Surface, null, new SurfaceFix(0, 0, 1_000_000), DateTimeOffset.Parse("2026-08-16T10:30:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
@@ -189,6 +201,7 @@ public partial class EveryHowToPhraseRoutesGateTests
                         ["F2"] = new("F2", "Kestrel Vane", DateTimeOffset.UnixEpoch, null, null),
                     },
                     () => commander))
+                .Concat(CampaignCapability.Phrases(campaigns, () => state))
                 .Concat(D47.Core.Knowledge.QuickSearches.Phrases()));
     }
 
@@ -200,6 +213,7 @@ public partial class EveryHowToPhraseRoutesGateTests
         || LogsOrReadsTheCaptainsLog(phrase)
         || LooksUpByName(phrase)
         || ReadsAJournalReminder(phrase)
+        || NamesTheCampaignFaction(phrase)
         || AnswersAFiredReminder(phrase);
 
     /// <summary>Whether the phrase is a reply the turn loop takes while a teaching exchange is open, before the router and the model.</summary>
@@ -212,6 +226,9 @@ public partial class EveryHowToPhraseRoutesGateTests
 
     /// <summary>Whether the turn loop's model-free captain's log grammar takes the phrase, before the router and the model.</summary>
     private static bool LogsOrReadsTheCaptainsLog(string phrase) => D47.Core.CaptainsLog.CaptainsLogPhrase.Read(phrase) is not null;
+
+    /// <summary>Whether the turn loop's model-free campaign faction grammar takes the phrase, before the router and the model.</summary>
+    private static bool NamesTheCampaignFaction(string phrase) => CampaignFactionPhrase.Read(phrase) is not null;
 
     /// <summary>Whether the turn loop's model-free journal reminder grammar takes the phrase, with timers and alarms off.</summary>
     private static bool ReadsAJournalReminder(string phrase) => D47.Core.Reminders.JournalReminderPhrase.Read(phrase, timersRegistered: false) is not null;
