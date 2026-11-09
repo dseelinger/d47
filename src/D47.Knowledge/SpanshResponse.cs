@@ -612,6 +612,7 @@ internal static class SpanshResponse
                         .Where(presence => String(presence, "name") != faction)
                         .Select(presence => new FactionNeighbour(String(presence, "name")!, Number(presence, "influence"))
                         {
+                            Government = String(presence, "government"),
                             ActiveStates = Strings(presence, "active_states"),
                             PendingStates = Strings(presence, "pending_states"),
                         }),

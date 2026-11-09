@@ -44,6 +44,9 @@ public sealed record FactionSystem
 /// <summary>Another faction present in the same system, with its influence as a fraction of 1.</summary>
 public sealed record FactionNeighbour(string Name, double? Influence)
 {
+    /// <summary>The faction's form of government as the service spells it, or null when it did not say.</summary>
+    public string? Government { get; init; }
+
     public IReadOnlyList<string> ActiveStates { get; init; } = [];
 
     public IReadOnlyList<string> PendingStates { get; init; } = [];

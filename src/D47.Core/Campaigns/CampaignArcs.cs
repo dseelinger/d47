@@ -16,6 +16,11 @@ public enum ArcAct
     Revenge,
     Leak,
     Escalation,
+    Propaganda,
+    Defection,
+    Election,
+    Argument,
+    Sided,
 }
 
 /// <summary>A rival faction ranked for the Nemesis: conflicts fought, systems shared, and the closest influence gap in those systems.</summary>
@@ -185,15 +190,9 @@ public static class CampaignArcs
     {
         ArgumentNullException.ThrowIfNull(line);
 
-        var leak = line.Act is ArcAct.Leak or ArcAct.Escalation;
-
         return new FlavourBrief
         {
-            Speaker = leak
-                ? $"You are {line.Leader}, an informant inside {line.Rival}, a minor faction and the rival of {line.Faction}. You speak "
-                  + $"over an encrypted line to the Commander, an independent pilot working for {line.Faction}, and you are afraid of being traced."
-                : $"You are {line.Leader}, who leads {line.Rival}, a minor faction and the rival of {line.Faction}. You speak on "
-                + $"an open broadcast that the Commander, an independent pilot working for {line.Faction}, picks up.",
+            Speaker = SpeakerOf(line),
             Instruction =
                 $"{Asking(line.Act)} The facts: {line.Text} {FictionRule} Say it in two or three short sentences, as yourself. "
                 + "Mention no game, developer or AI.",
@@ -347,8 +346,32 @@ public static class CampaignArcs
         return new RivalScore(name, fought, shared.Count, gaps.Count == 0 ? null : gaps.Min());
     }
 
+    private static string SpeakerOf(CampaignArcLine line) => line.Act switch
+    {
+        ArcAct.Leak or ArcAct.Escalation =>
+            $"You are {line.Leader}, an informant inside {line.Rival}, a minor faction and the rival of {line.Faction}. You speak "
+            + $"over an encrypted line to the Commander, an independent pilot working for {line.Faction}, and you are afraid of being traced.",
+        ArcAct.Defection =>
+            $"You are a member of {line.Rival}, a minor faction and the rival of {line.Faction}, who has defected to {line.Faction}. You "
+            + "speak over a hailing frequency to the Commander, an independent pilot working for it.",
+        ArcAct.Election =>
+            $"You are the Liaison of {line.Faction}, a minor faction. You speak to the Commander, an independent pilot working for it, "
+            + $"for the idea of rule that {line.Faction}'s government stands for.",
+        ArcAct.Argument or ArcAct.Sided =>
+            $"You are {line.Leader}, a councillor of {line.Faction}, a minor faction. You speak to the Commander, an independent "
+            + $"pilot working for {line.Faction}.",
+        _ =>
+            $"You are {line.Leader}, who leads {line.Rival}, a minor faction and the rival of {line.Faction}. You speak on "
+            + $"an open broadcast that the Commander, an independent pilot working for {line.Faction}, picks up.",
+    };
+
     private static string Asking(ArcAct act) => act switch
     {
+        ArcAct.Propaganda => "Broadcast propaganda for your government's idea of rule against the Commander's faction's, in your own words.",
+        ArcAct.Defection => "Say why you have left, in your own words, and what you bring.",
+        ArcAct.Election => "Frame the election as a contest between two ideas of rule, and speak for your government's idea.",
+        ArcAct.Argument => "Argue your case for the front you urge, in your own words.",
+        ArcAct.Sided => "Say what you make of being passed over, in your own words, and that you will remember it.",
         ArcAct.Introduction => "Introduce yourself to the Commander as the rival they now face.",
         ArcAct.Leak => "Deliver the intercepted plan to the Commander, as a warning, in your own words.",
         ArcAct.Escalation => "Warn the Commander that the plan has moved on since your last message, and what it now threatens.",
@@ -357,7 +380,7 @@ public static class CampaignArcs
         _ => "Vow revenge for the defeat.",
     };
 
-    private static string Ordinal(int count) => count switch
+    internal static string Ordinal(int count) => count switch
     {
         2 => "second",
         3 => "third",

@@ -372,6 +372,37 @@ The Informant speaks in a pool voice picked by its name, stepped past the Liaiso
 link of strength 0.55 that thins the voice and drops it out. It waits as the Nemesis does, and the Campaign Nemesis row
 turns it off.
 
+The third arc is **Ideology**. It opens when your faction's government differs from that of a rival leading a front
+against it; both governments come from the faction report. The rival's leader, the same one the Nemesis would have,
+broadcasts propaganda naming both governments and the front. The arc then acts on three things, and only on these:
+
+| Act | When |
+|---|---|
+| Propaganda | A front against the rival appears in a system it has not yet broadcast on. The fronts there when the arc opened are the baseline. One a look. |
+| Defection | A front your faction won against the rival enters the chronicle. A defector from the rival speaks over a hailing frequency, link strength 0.7. |
+| Election | An election is active or pending in a system both factions are in. The Liaison frames it as a contest of ideas and speaks for your government's idea of rule. Once for each of active and pending. One a look. |
+
+The arc says nothing while the two governments are the same or either is unknown.
+
+The fourth arc is **Internal politics**. When two or more fronts are open at once in different systems (every front but a
+stale one), your faction's council gets two members, invented once from your squadron the way the Nemesis's leader is: a
+Hawk and a Dove. The Hawk urges the first conflict or coup front, else the first front; the Dove urges another front.
+Each argues once for theirs. When you then choose a front, a conflict or coup front sides with the Hawk and any other
+with the Dove, and the one passed over speaks: what they had urged, and, from the second time, how many times they have
+been passed over and the system of the last. A front chosen before the council opened is not sided. The Hawk and the Dove
+speak in pool voices picked by their names, stepped past the Liaison's and each other's, over a clear link.
+
+```csharp
+public enum CouncilSide
+{
+    Hawk,
+    Dove,
+}
+```
+
+Both arcs are kept in `data/campaigns.json` until you name another campaign faction, wait as the Nemesis does, and the
+Campaign Nemesis row turns them off.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

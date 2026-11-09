@@ -48,6 +48,36 @@ public enum ArcKind
 /// </summary>
 public sealed record CampaignArc(ArcKind Kind, string Rival, string Leader, DateTimeOffset Since, int Answered);
 
+/// <summary>
+/// The Ideology arc under way: the rival whose government differs from the faction's, the two governments when it opened,
+/// the systems whose fronts it has broadcast on, the elections it has framed (system and state) and how many chronicle
+/// entries it has answered.
+/// </summary>
+public sealed record IdeologyArc(
+    string Rival,
+    string OurGovernment,
+    string TheirGovernment,
+    DateTimeOffset Since,
+    int Answered,
+    IReadOnlyList<string> Fronts,
+    IReadOnlyList<string> Elections);
+
+/// <summary>Which of the two councillors a front suits.</summary>
+public enum CouncilSide
+{
+    Hawk,
+    Dove,
+}
+
+/// <summary>A front the Commander chose, which councillor it sided with and when.</summary>
+public sealed record CouncilSiding(string System, CouncilSide Sided, DateTimeOffset At);
+
+/// <summary>
+/// The faction's council: the Hawk and the Dove, invented once; when it opened; the Since of the last front chosen that has
+/// been answered; and every siding so far.
+/// </summary>
+public sealed record CampaignCouncil(string Hawk, string Dove, DateTimeOffset Since, DateTimeOffset? Noted, IReadOnlyList<CouncilSiding> Sidings);
+
 /// <summary>One Commander's campaign: the faction, an intent per system, the front being worked, the chronicle of resolved fronts and the arc.</summary>
 public sealed record Campaign
 {
@@ -71,6 +101,12 @@ public sealed record Campaign
     /// <summary>The Informant and the leaks given, or null before the first leak.</summary>
     public CampaignInformant? Informant { get; init; }
 
+    /// <summary>The Ideology arc under way, or null.</summary>
+    public IdeologyArc? Ideology { get; init; }
+
+    /// <summary>The Hawk and the Dove and the front choices they have answered, or null before two fronts were open.</summary>
+    public CampaignCouncil? Council { get; init; }
+
     /// <summary>The faction named, else <paramref name="squadronFaction"/>.</summary>
     public string? FactionOr(string? squadronFaction) =>
         Faction is { Length: > 0 } named ? named : squadronFaction is { Length: > 0 } ? squadronFaction : null;
@@ -82,5 +118,5 @@ public sealed record Campaign
     /// <summary>The intent of a system with none set: Hold where the faction controls it, else LeaveAlone.</summary>
     public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
-    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Informant is null;
+    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Informant is null && Ideology is null && Council is null;
 }

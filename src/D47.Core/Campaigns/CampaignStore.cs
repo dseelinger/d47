@@ -60,6 +60,8 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                     Chronicle = [.. (record.Chronicle ?? []).Select(Entry).OfType<ChronicleEntry>()],
                     Arc = Arc(record.Arc),
                     Informant = Informant(record.Informant),
+                    Ideology = Ideology(record.Ideology),
+                    Council = Council(record.Council),
                 };
             }
 
@@ -104,6 +106,8 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             Chosen = null,
             Arc = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Arc : null,
             Informant = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Informant : null,
+            Ideology = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Ideology : null,
+            Council = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Council : null,
         });
     }
 
@@ -191,6 +195,22 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         return Change(frontierId, campaign => campaign with { Informant = informant });
     }
 
+    /// <summary>Sets the Ideology arc, or clears it with null. False when the write failed.</summary>
+    public bool SetIdeology(string frontierId, IdeologyArc? ideology)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return Change(frontierId, campaign => campaign with { Ideology = ideology });
+    }
+
+    /// <summary>Sets the council, or clears it with null. False when the write failed.</summary>
+    public bool SetCouncil(string frontierId, CampaignCouncil? council)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return Change(frontierId, campaign => campaign with { Council = council });
+    }
+
     private static bool Is(ChosenFront chosen, FrontKind kind, string system) =>
         chosen.Kind == kind && string.Equals(chosen.System, system, StringComparison.OrdinalIgnoreCase);
 
@@ -273,6 +293,28 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                                     })],
                                 }
                                 : null,
+                            Ideology = pair.Value.Ideology is { } ideology
+                                ? new IdeologyRecord
+                                {
+                                    Rival = ideology.Rival,
+                                    OurGovernment = ideology.OurGovernment,
+                                    TheirGovernment = ideology.TheirGovernment,
+                                    Since = ideology.Since,
+                                    Answered = ideology.Answered,
+                                    Fronts = [.. ideology.Fronts],
+                                    Elections = [.. ideology.Elections],
+                                }
+                                : null,
+                            Council = pair.Value.Council is { } council
+                                ? new CouncilRecord
+                                {
+                                    Hawk = council.Hawk,
+                                    Dove = council.Dove,
+                                    Since = council.Since,
+                                    Noted = council.Noted,
+                                    Sidings = [.. council.Sidings.Select(siding => new SidingRecord { System = siding.System, Sided = siding.Sided, At = siding.At })],
+                                }
+                                : null,
                         }),
                 ],
             };
@@ -313,6 +355,30 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                     .Select(leak => new Leak(leak.Kind, leak.System!, leak.Rival!, leak.Influence, Math.Clamp(leak.Level, 1, CampaignLeaks.MostLevels), leak.At))])
             : null;
 
+    private static IdeologyArc? Ideology(IdeologyRecord? record) =>
+        record is { Rival: { Length: > 0 } rival, OurGovernment: { Length: > 0 } ours, TheirGovernment: { Length: > 0 } theirs }
+            ? new IdeologyArc(
+                rival,
+                ours,
+                theirs,
+                record.Since,
+                Math.Max(0, record.Answered),
+                [.. (record.Fronts ?? []).Where(system => !string.IsNullOrWhiteSpace(system))],
+                [.. (record.Elections ?? []).Where(key => !string.IsNullOrWhiteSpace(key))])
+            : null;
+
+    private static CampaignCouncil? Council(CouncilRecord? record) =>
+        record is { Hawk: { Length: > 0 } hawk, Dove: { Length: > 0 } dove }
+            ? new CampaignCouncil(
+                hawk,
+                dove,
+                record.Since,
+                record.Noted,
+                [.. (record.Sidings ?? [])
+                    .Where(siding => Enum.IsDefined(siding.Sided) && !string.IsNullOrWhiteSpace(siding.System))
+                    .Select(siding => new CouncilSiding(siding.System!, siding.Sided, siding.At))])
+            : null;
+
     private static EntryRecord ToRecord(ChronicleEntry entry) => new()
     {
         Kind = entry.Kind,
@@ -343,6 +409,49 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public ArcRecord? Arc { get; set; }
 
         public InformantRecord? Informant { get; set; }
+
+        public IdeologyRecord? Ideology { get; set; }
+
+        public CouncilRecord? Council { get; set; }
+    }
+
+    private sealed class IdeologyRecord
+    {
+        public string? Rival { get; set; }
+
+        public string? OurGovernment { get; set; }
+
+        public string? TheirGovernment { get; set; }
+
+        public DateTimeOffset Since { get; set; }
+
+        public int Answered { get; set; }
+
+        public IReadOnlyList<string>? Fronts { get; set; }
+
+        public IReadOnlyList<string>? Elections { get; set; }
+    }
+
+    private sealed class CouncilRecord
+    {
+        public string? Hawk { get; set; }
+
+        public string? Dove { get; set; }
+
+        public DateTimeOffset Since { get; set; }
+
+        public DateTimeOffset? Noted { get; set; }
+
+        public IReadOnlyList<SidingRecord>? Sidings { get; set; }
+    }
+
+    private sealed class SidingRecord
+    {
+        public string? System { get; set; }
+
+        public CouncilSide Sided { get; set; }
+
+        public DateTimeOffset At { get; set; }
     }
 
     private sealed class InformantRecord

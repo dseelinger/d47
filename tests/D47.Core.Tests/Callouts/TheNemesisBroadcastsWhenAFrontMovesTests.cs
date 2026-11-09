@@ -98,7 +98,7 @@ public sealed class TheNemesisBroadcastsWhenAFrontMovesTests
         Assert.Empty(Examine(arcs));
 
         Hold(Thin(-0.03), War(1, 1));
-        Assert.Empty(Examine(arcs));
+        Assert.DoesNotContain(Examine(arcs), said => !said.Key.EndsWith("argument", StringComparison.Ordinal));
     }
 
     [Fact]

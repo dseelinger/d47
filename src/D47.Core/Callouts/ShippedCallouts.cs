@@ -123,6 +123,9 @@ public static class ShippedCallouts
 
         public Func<string, string, string, PinnedVoice?> InformantVoice { get; init; } = (_, _, _) => null;
 
+        /// <summary>A councillor's or defector's voice for a name, the campaign faction and the names voiced before it, or null.</summary>
+        public Func<string, string, IReadOnlyList<string>, PinnedVoice?> PoliticsVoice { get; init; } = (_, _, _) => null;
+
         /// <summary>The GalNet articles that arrived in the last poll, newest first.</summary>
         public Func<IReadOnlyList<GalNetArticle>> GalNetArrived { get; init; } = () => [];
 
@@ -408,6 +411,8 @@ public static class ShippedCallouts
                     arcs.Fronts = services.CampaignFronts;
                     arcs.Voice = services.NemesisVoice;
                     arcs.InformantVoice = services.InformantVoice;
+                    arcs.LiaisonVoice = services.LiaisonVoice;
+                    arcs.PoliticsVoice = services.PoliticsVoice;
                     break;
 
                 case GalNetCallout galNet:
