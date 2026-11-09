@@ -1035,6 +1035,12 @@ galaxy search or the Commander's own reading puts at war or civil war. It is not
 position is unknown or the query fails: with no station checked, onfootbond is never drawn. A drawn onfootbond slot is
 planned with a dock objective just before it, at a station with Frontline Solutions in a system at war.
 
+The front objective is drawn only while a campaign front is chosen. `StoryDirector` asks the campaign for the chosen front and the
+galaxy search for its distance from the Commander's system; the front counts when that distance is within the chapter's reach.
+With none in reach, when the distance cannot be told, or when d47 has not worked in the front's system and so holds no address for it, the Work for a faction row is never drawn. A drawn front objective is
+"Work for a faction" for the campaign faction in the front's system, one to three influence marks, and the chapter's brief tells the
+writer it is the Commander's own cause. A conflict front gets the same objective; the war row is not tied to the front.
+
 A row weighs its career's weight, and a quarter of that when the last three chapters asked for it. `CareerWeights.From`
 reads the ratings of 0 to 100; while every rating but Crime's is still 50, a career with activity in `Statistics`
 weighs 75, and Crime weighs its rating. A career rated 0 is never drawn. In a comfort-zone chapter the first slot is a mission family never completed, else the least-done activity that passes

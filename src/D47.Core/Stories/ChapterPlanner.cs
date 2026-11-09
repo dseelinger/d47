@@ -428,6 +428,9 @@ public static class ChapterPlanner
                 Organic = slot.Organic,
                 Event = slot.Event,
                 Where = slot.Where,
+                Faction = slot.Faction,
+                System = slot.System,
+                SystemAddress = slot.SystemAddress,
             };
 
             if (slot.Kind is TriggerKind.Map or TriggerKind.Signal or TriggerKind.Organic)

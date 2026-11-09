@@ -108,6 +108,9 @@ public sealed class StoryDirector(
     /// <summary>The galaxy search, or null while it is off; with none, a chapter's draw is not gated on stations.</summary>
     public Func<IGalaxyService?>? Galaxy { get; set; }
 
+    /// <summary>The campaign's chosen front, or null while none is chosen; with none, no chapter draws a front objective.</summary>
+    public Func<ChapterFront?>? Front { get; set; }
+
     /// <summary>The catalogue of notable places, or null while it is off; with none, no chapter is a sightseeing chapter.</summary>
     public Func<INotablePlacesService?>? Places { get; set; }
 
@@ -2526,7 +2529,8 @@ public sealed class StoryDirector(
                 stationsInReach: await StationsInReachAsync(game, cancellationToken).ConfigureAwait(false),
                 frontlineInReach: await FrontlineInReachAsync(game, cancellationToken).ConfigureAwait(false),
                 stateFamiliesInReach: await StateFamiliesInReachAsync(game, cancellationToken).ConfigureAwait(false),
-                warInReach: await WarInReachAsync(game, cancellationToken).ConfigureAwait(false));
+                warInReach: await WarInReachAsync(game, cancellationToken).ConfigureAwait(false),
+                front: await FrontInReachAsync(game, cancellationToken).ConfigureAwait(false));
 
             others.AddRange(redrawn.Take(1));
         }
@@ -2545,6 +2549,9 @@ public sealed class StoryDirector(
 
     private Task<bool> FrontlineInReachAsync(CommanderGameState? game, CancellationToken cancellationToken) =>
         DrawGates.FrontlineInReachAsync(Galaxy?.Invoke(), game, logger, cancellationToken);
+
+    private Task<ChapterFront?> FrontInReachAsync(CommanderGameState? game, CancellationToken cancellationToken) =>
+        DrawGates.FrontInReachAsync(Front?.Invoke(), Galaxy?.Invoke(), game, logger, cancellationToken);
 
     private Task<bool> WarInReachAsync(CommanderGameState? game, CancellationToken cancellationToken) =>
         DrawGates.WarInReachAsync(Galaxy?.Invoke(), game, logger, cancellationToken);
@@ -3347,6 +3354,9 @@ public sealed class StoryDirector(
             var warInReach = drawing
                 ? await WarInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
                 : true;
+            var front = drawing
+                ? await FrontInReachAsync(Game(), cancellationToken).ConfigureAwait(false)
+                : null;
 
             for (var draft = 1; draft <= Drafts; draft++)
             {
@@ -3360,7 +3370,7 @@ public sealed class StoryDirector(
                 // A throw counts as a failure, so the tick does not start another paid write on every pass.
                 try
                 {
-                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, attempt.Plan, stationsInReach, frontlineInReach, stateFamiliesInReach, warInReach, cancellationToken).ConfigureAwait(false);
+                    attempt = await WriteAsync(frontierId, now, draft, attempt.Detail, attempt.Plan, stationsInReach, frontlineInReach, stateFamiliesInReach, warInReach, front, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -3437,7 +3447,7 @@ public sealed class StoryDirector(
     private sealed record Attempt(string? Refusal, bool Retry = false, string? Detail = null, ChapterPlan? Plan = null);
 
     private async Task<Attempt> WriteAsync(
-        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, ChapterPlan? plan, bool stationsInReach, bool frontlineInReach, IReadOnlySet<string>? stateFamiliesInReach, bool warInReach, CancellationToken cancellationToken)
+        string? frontierId, DateTimeOffset now, int draftNumber, string? lastDraftRefused, ChapterPlan? plan, bool stationsInReach, bool frontlineInReach, IReadOnlySet<string>? stateFamiliesInReach, bool warInReach, ChapterFront? front, CancellationToken cancellationToken)
     {
         if (stories.Current(frontierId) is not { State: StoryState.Running } story)
         {
@@ -3587,7 +3597,7 @@ public sealed class StoryDirector(
                     listed,
                     game,
                     engineerReport,
-                    row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach, warInReach),
+                    row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach, warInReach, front is not null),
                     offered);
 
             var travellingToEngineer = span is { Kind: DrawnSpanKind.Engineers, Phase: DrawnSpanPhase.Out or DrawnSpanPhase.Back };
@@ -3625,7 +3635,8 @@ public sealed class StoryDirector(
                 limits,
                 frontlineInReach,
                 stateFamiliesInReach,
-                warInReach) is { Count: > 0 } drawn
+                warInReach,
+                front) is { Count: > 0 } drawn
                 ? drawn
                 : null;
 

@@ -48,6 +48,10 @@ public sealed record BgsWork
     /// <summary>The name of a system by address, or null when none has been seen.</summary>
     public string? NameOf(long address) => Names.GetValueOrDefault(address);
 
+    /// <summary>The address of a system the Commander has worked in, from its name.</summary>
+    public long? AddressOf(string system) =>
+        Names.Where(pair => string.Equals(pair.Value, system, StringComparison.OrdinalIgnoreCase)).Select(pair => (long?)pair.Key).FirstOrDefault();
+
     /// <summary>The faction names in the newest <c>Factions</c> list seen for a system, or empty when none has been seen.</summary>
     public IReadOnlyList<string> FactionsIn(long systemAddress) =>
         Factions.TryGetValue(systemAddress, out var names) ? names : [];

@@ -3107,6 +3107,9 @@ public sealed class AppHost : IDisposable
         {
             Archive = stores.StoryArchive,
             Galaxy = () => galaxy,
+            Front = () => stores.CampaignFocus.Chosen() is { } front && late.Host?.CampaignFronts?.Snapshot is { } held
+                ? new D47.Core.Stories.ChapterFront(held.Faction, front.System, gameState.Active?.BgsWork.AddressOf(front.System))
+                : null,
             Places = () => notablePlaces,
             Ledger = () => late.Host?.Activities,
             Bars = stores.ActivityBars,

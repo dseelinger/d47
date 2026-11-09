@@ -149,6 +149,32 @@ public static class DrawGates
     }
 
     /// <summary>
+    /// The chosen campaign front when its system address is known and the system lies within a story's reach, else null.
+    /// Null when it cannot be told: no galaxy search, no known position, or the query failed.
+    /// </summary>
+    public static async Task<ChapterFront?> FrontInReachAsync(ChapterFront? front, IGalaxyService? galaxy, CommanderGameState? game, ILogger logger, CancellationToken cancellationToken)
+    {
+        if (front is not { SystemAddress: not null } || galaxy is not { } search || game?.Location.StarSystem is not { Length: > 0 } system)
+        {
+            return null;
+        }
+
+        var radius = AdventureGenerator.Radius(AdventureReach.Session, game.Ship.MaxJumpRange, game.Carrier.Owned);
+
+        try
+        {
+            var distance = await search.DistanceAsync(system, front.System, cancellationToken).ConfigureAwait(false);
+
+            return distance is { } away && away <= radius ? front : null;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "The galaxy search could not measure the distance to the campaign front, so no front objective is drawn");
+            return null;
+        }
+    }
+
+    /// <summary>
     /// The state-gated mission families with a ranked station in a story's reach whose system has a faction in a required state.
     /// Empty when it cannot be told: no galaxy search, no known position, or the query failed.
     /// </summary>

@@ -412,7 +412,7 @@ public sealed record AdventureTrigger
         TriggerKind.Squadron => "join a squadron",
         TriggerKind.SquadronFound => "found a squadron",
         TriggerKind.Conflict => $"take part {Times()} in {WarWord()}{For()}",
-        TriggerKind.Faction => $"earn {Counted("influence mark", "influence marks")} for {Faction?.Trim()}",
+        TriggerKind.Faction => $"earn {Counted("influence mark", "influence marks")} for {Faction?.Trim()}{FactionIn()}",
         TriggerKind.Boost => $"supercharge your frame shift drive in {BoostStar()} jet cone {Times()}",
         TriggerKind.Footfall => $"be the first to walk on {Counted("world", "worlds")}",
         TriggerKind.Discover => $"be the first to scan {Counted(DiscoverWord(one: true), DiscoverWord(one: false))}",
@@ -485,7 +485,7 @@ public sealed record AdventureTrigger
             TriggerKind.Squadron => "joined a squadron",
             TriggerKind.SquadronFound => "founded a squadron",
             TriggerKind.Conflict => $"took part {Times()} in {WarWord()}{For()}",
-            TriggerKind.Faction => $"earned {Counted("influence mark", "influence marks")} for {Faction?.Trim()}",
+            TriggerKind.Faction => $"earned {Counted("influence mark", "influence marks")} for {Faction?.Trim()}{FactionIn()}",
             TriggerKind.Boost => $"supercharged your frame shift drive in {BoostStar()} jet cone {Times()}",
             TriggerKind.Footfall => $"were the first to walk on {Counted("world", "worlds")}",
             TriggerKind.Discover => $"were the first to scan {Counted(DiscoverWord(one: true), DiscoverWord(one: false))}",
@@ -548,7 +548,7 @@ public sealed record AdventureTrigger
             TriggerKind.Wing => $"Wing joins: {of}",
             TriggerKind.Multicrew => $"Crews joined: {of}",
             TriggerKind.Conflict => $"Contributions to {WarWord()}{For()}: {of}",
-            TriggerKind.Faction => $"Influence marks for {Faction?.Trim()}: {of}",
+            TriggerKind.Faction => $"Influence marks for {Faction?.Trim()}{FactionIn()}: {of}",
             TriggerKind.Boost => $"{Capital(BoostWord())} boosts: {of}",
             TriggerKind.Footfall => $"First footfalls: {of}",
             TriggerKind.Discover => $"{Capital(DiscoverWord(one: false))} scanned: {of}",
@@ -613,7 +613,7 @@ public sealed record AdventureTrigger
             TriggerKind.Wing => $"{of} wing joins made.",
             TriggerKind.Multicrew => $"{of} crews joined.",
             TriggerKind.Conflict => $"{of} contributions to {WarWord()}{For()} made.",
-            TriggerKind.Faction => $"{of} influence marks for {Faction?.Trim()} earned.",
+            TriggerKind.Faction => $"{of} influence marks for {Faction?.Trim()}{FactionIn()} earned.",
             TriggerKind.Boost => $"{of} {BoostWord()} boosts made.",
             TriggerKind.Footfall => $"{of} first footfalls made.",
             TriggerKind.Discover => $"{of} {DiscoverWord(one: false)} scanned.",
@@ -692,6 +692,8 @@ public sealed record AdventureTrigger
         : $"unlock {Filter?.Trim() ?? "an item"} at a tech broker";
 
     private string Tons() => $"{(Count ?? 0).ToString(CultureInfo.InvariantCulture)} t";
+
+    private string FactionIn() => string.IsNullOrWhiteSpace(System) ? string.Empty : $" in {System.Trim()}";
 
     private string For() => string.IsNullOrWhiteSpace(Faction) ? string.Empty : $" for {Faction.Trim()}";
 

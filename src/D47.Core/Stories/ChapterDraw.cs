@@ -20,9 +20,21 @@ public sealed record DrawnActivity(TriggerKind Kind, string? Family, int Count)
     /// <summary>For an event slot: the field test the step carries, or none.</summary>
     public EventFilter Where { get; init; } = EventFilter.None;
 
+    /// <summary>For a front slot: the faction the campaign works for.</summary>
+    public string? Faction { get; init; }
+
+    /// <summary>For a front slot: the front's system.</summary>
+    public string? System { get; init; }
+
+    /// <summary>For a front slot: the front's system address, or null when it is not known.</summary>
+    public long? SystemAddress { get; init; }
+
     /// <summary>For a tool run slot: the phrase the Commander says to run the tool.</summary>
     public string? Say { get; init; }
 }
+
+/// <summary>The campaign's chosen front, as a chapter's draw sees it.</summary>
+public sealed record ChapterFront(string Faction, string System, long? SystemAddress = null);
 
 /// <summary>A tool a story may send the Commander to run, with the first phrase that runs it.</summary>
 public sealed record DrawableTool(string Name, string Phrase);
@@ -116,7 +128,7 @@ public static class ChapterDraw
     /// is how many place objectives the chapter already must have. A comfort chapter's first slot is the least-done activity that
     /// passes the gates, counting ties from row <paramref name="comfortFirst"/>; a mission family in <paramref name="neverCompleted"/>
     /// that passes the gates takes that slot first. With <paramref name="stationsInReach"/> false, rows that need a station are
-    /// never drawn, and with <paramref name="frontlineInReach"/> false, so is the on-foot bond row, and with <paramref name="warInReach"/> false, so is the space bond row. A mission family that requires faction states is drawn only when <paramref name="stateFamiliesInReach"/> holds it; null does not gate. <paramref name="limits"/> holds each slot's limit by index: a limited slot draws only rows its limit accepts,
+    /// never drawn, and with <paramref name="frontlineInReach"/> false, so is the on-foot bond row, and with <paramref name="warInReach"/> false, so is the space bond row. The faction row is drawn only with a <paramref name="front"/>, which it works for. A mission family that requires faction states is drawn only when <paramref name="stateFamiliesInReach"/> holds it; null does not gate. <paramref name="limits"/> holds each slot's limit by index: a limited slot draws only rows its limit accepts,
     /// unless that leaves no row the gates allow, when it draws from the whole table. A slot whose rows are all drawn takes the
     /// first later slot's rows that are not. No event slot is drawn while a limit holds.
     /// </summary>
@@ -140,7 +152,8 @@ public static class ChapterDraw
         IReadOnlyList<Func<DrawableActivity, bool>>? limits = null,
         bool frontlineInReach = true,
         IReadOnlySet<string>? stateFamiliesInReach = null,
-        bool warInReach = true)
+        bool warInReach = true,
+        ChapterFront? front = null)
     {
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(ship);
@@ -148,7 +161,7 @@ public static class ChapterDraw
         ArgumentNullException.ThrowIfNull(statistics);
 
         var held = ChapterActivities.Held(ranks, ship, odyssey);
-        var all = ChapterActivities.All.Where(row => weights.Weight(row.Career) > 0 && Drawable(row, held, stationsInReach, refused, frontlineInReach, stateFamiliesInReach, warInReach)).ToList();
+        var all = ChapterActivities.All.Where(row => weights.Weight(row.Career) > 0 && Drawable(row, held, stationsInReach, refused, frontlineInReach, stateFamiliesInReach, warInReach, front is not null)).ToList();
         var pools = Enumerable.Range(0, Math.Max(1, slots))
             .Select(slot => limits?.ElementAtOrDefault(slot) is { } limit && all.Where(limit).ToList() is { Count: > 0 } limited ? limited : all)
             .ToList();
@@ -201,7 +214,7 @@ public static class ChapterDraw
             places += chosen.PlaceBefore ? 1 : 0;
         }
 
-        var result = drawn.Select(row => new DrawnActivity(row.Kind, row.Family, Count(row, ship, random)) { Organic = row.Organic, PlaceBefore = row.PlaceBefore }).ToList();
+        var result = drawn.Select(row => ForFront(new DrawnActivity(row.Kind, row.Family, Count(row, ship, random)) { Organic = row.Organic, PlaceBefore = row.PlaceBefore }, front)).ToList();
 
         if (!limitHolds && events is not null && random.NextDouble() < EventShare
             && DrawEvent(events, tools ?? [], held, refused, recent, weights, [.. drawn.Take(Math.Min(drawn.Count, slots - 1))], random) is { } slot)
@@ -217,12 +230,12 @@ public static class ChapterDraw
         return result;
     }
 
-    /// <summary>Whether <see cref="Draw"/> may draw <paramref name="row"/>: its gates are held, it needs no station out of reach, it needs no Frontline Solutions station out of reach, it needs no war out of reach, a state-gated mission family is in <paramref name="stateFamiliesInReach"/> (null does not gate), and it is not refused.</summary>
-    public static bool Drawable(DrawableActivity row, ActivityGate held, bool stationsInReach, IReadOnlyList<string>? refused, bool frontlineInReach = true, IReadOnlySet<string>? stateFamiliesInReach = null, bool warInReach = true)
+    /// <summary>Whether <see cref="Draw"/> may draw <paramref name="row"/>: its gates are held, it needs no station out of reach, it needs no Frontline Solutions station out of reach, it needs no war out of reach, a front row needs <paramref name="frontInReach"/>, a state-gated mission family is in <paramref name="stateFamiliesInReach"/> (null does not gate), and it is not refused.</summary>
+    public static bool Drawable(DrawableActivity row, ActivityGate held, bool stationsInReach, IReadOnlyList<string>? refused, bool frontlineInReach = true, IReadOnlySet<string>? stateFamiliesInReach = null, bool warInReach = true, bool frontInReach = false)
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        return ChapterActivities.Passes(row, held) && (stationsInReach || !ChapterActivities.NeedsStation(row)) && (frontlineInReach || !ChapterActivities.NeedsFrontline(row)) && (warInReach || !ChapterActivities.NeedsWar(row))
+        return ChapterActivities.Passes(row, held) && (frontInReach || !ChapterActivities.NeedsFront(row)) && (stationsInReach || !ChapterActivities.NeedsStation(row)) && (frontlineInReach || !ChapterActivities.NeedsFrontline(row)) && (warInReach || !ChapterActivities.NeedsWar(row))
             && (stateFamiliesInReach is null || !ChapterActivities.NeedsStateInReach(row) || stateFamiliesInReach.Contains(row.Family!)) && !RefusedActivities.Refuses(refused, row.Kind, row.Family);
     }
 
@@ -301,6 +314,11 @@ public static class ChapterDraw
             Where = pair,
         };
     }
+
+    private static DrawnActivity ForFront(DrawnActivity slot, ChapterFront? front) =>
+        front is not null && slot.Kind == TriggerKind.Faction
+            ? slot with { Faction = front.Faction, System = front.System, SystemAddress = front.SystemAddress }
+            : slot;
 
     private static bool Same(AdventureActivity activity, DrawableActivity row) =>
         activity.Kind == row.Kind

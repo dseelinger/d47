@@ -886,7 +886,23 @@ public sealed partial class AdventureGenerator
         AppendStory(text, story);
 
         AppendJourney(text, ask, facts, plan);
+        AppendFront(text, plan);
         AppendAway(text, away, ask, facts);
+    }
+
+    /// <summary>Names the faction and system of a front objective as the Commander's own cause, which the story does not invent.</summary>
+    internal static void AppendFront(StringBuilder text, ChapterPlan plan)
+    {
+        foreach (var front in plan.Objectives
+            .SelectMany(objective => objective.Steps)
+            .Where(step => step is { Kind: TriggerKind.Faction, Faction: { Length: > 0 }, System: { Length: > 0 } })
+            .DistinctBy(step => (step.Faction, step.System)))
+        {
+            text.AppendLine();
+            text.AppendLine(
+                $"The influence marks for {front.Faction!.Trim()} in {front.System!.Trim()} are the Commander's own cause, the faction they work for. "
+                + "Write them as that cause, not as an errand for a stranger.");
+        }
     }
 
     /// <summary>The rules every line, reason, title and task of a planned objective is written to.</summary>

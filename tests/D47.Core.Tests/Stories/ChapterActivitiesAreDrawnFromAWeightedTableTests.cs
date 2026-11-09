@@ -199,13 +199,13 @@ public sealed class ChapterActivitiesAreDrawnFromAWeightedTableTests
     public void NothingThatIsNeverDrawnIsInTheTable()
     {
         Assert.DoesNotContain(ChapterActivities.All, row => Banned.Contains(row.Family) || MissionFamilies.IsSetAside(row.Family));
-        Assert.DoesNotContain(ChapterActivities.All, row => row.Kind is TriggerKind.OnFoot or TriggerKind.Collect or TriggerKind.SuitMod or TriggerKind.Faction);
+        Assert.DoesNotContain(ChapterActivities.All, row => row.Kind is TriggerKind.OnFoot or TriggerKind.Collect or TriggerKind.SuitMod);
 
         var ship = Ship(64, Module("a", "x"), Module("b", "x"), Module("c", "x"));
 
         foreach (var slots in Many(seed => Draw(seed, ship, Ranks(3, 3), odyssey: true)))
         {
-            Assert.DoesNotContain(slots, slot => Banned.Contains(slot.Family) || MissionFamilies.IsSetAside(slot.Family));
+            Assert.DoesNotContain(slots, slot => Banned.Contains(slot.Family) || MissionFamilies.IsSetAside(slot.Family) || slot.Kind == TriggerKind.Faction);
         }
     }
 

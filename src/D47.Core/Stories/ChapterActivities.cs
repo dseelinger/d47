@@ -132,6 +132,7 @@ public static class ChapterActivities
     public static DrawableActivity? Find(TriggerKind kind, string? family, bool? organic) =>
         All.FirstOrDefault(row =>
             row.Kind == kind
+            && !NeedsFront(row)
             && (row.Family is null || string.Equals(row.Family, family?.Trim(), StringComparison.OrdinalIgnoreCase))
             && (row.Organic is null || organic is null || row.Organic == organic));
 
@@ -139,6 +140,9 @@ public static class ChapterActivities
     public static bool NeedsStation(DrawableActivity activity) =>
         activity.Kind is TriggerKind.Bounty or TriggerKind.Bond or TriggerKind.OnFootBond or TriggerKind.Conflict or TriggerKind.Sell
             or TriggerKind.DataSale or TriggerKind.Rescue or TriggerKind.Mission;
+
+    /// <summary>Whether the row works for the campaign's chosen front: the faction objective, drawn only while a front is in reach and never matched back to a step.</summary>
+    public static bool NeedsFront(DrawableActivity activity) => activity.Kind == TriggerKind.Faction;
 
     /// <summary>Whether the row can only be done after docking at a station with Frontline Solutions in a system at war: the on-foot bond.</summary>
     public static bool NeedsFrontline(DrawableActivity activity) => activity.Kind == TriggerKind.OnFootBond;
@@ -171,6 +175,7 @@ public static class ChapterActivities
             new(TriggerKind.Bond, null, Career.Combat, ActivityGate.Danger, 5, 15),
             new(TriggerKind.OnFootBond, null, Career.Combat, ActivityGate.Odyssey, 5, 15, PlaceBefore: true),
             new(TriggerKind.Conflict, null, Career.Combat, ActivityGate.Danger, 1, 2, PlaceBefore: true),
+            new(TriggerKind.Faction, null, Career.Combat, ActivityGate.None, 1, 3),
             new(TriggerKind.Sell, null, Career.Trading, ActivityGate.Cargo, 10, 40),
             new(TriggerKind.Mine, null, Career.Mining, ActivityGate.MiningKit | ActivityGate.Cargo, 10, 40),
             new(TriggerKind.Map, null, Career.Exploration, ActivityGate.SurfaceScanner, 2, 5),
