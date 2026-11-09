@@ -100,6 +100,11 @@ internal static partial class DocumentationLinks
     /// <summary>Why a link does not resolve, or null. <paramref name="folder"/> is the page's folder from the repository root.</summary>
     internal static string? Problem(string link, string folder, Func<string, bool> exists)
     {
+        if (link.StartsWith("{{", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
         var target = link;
         var hash = target.IndexOfAny(['#', '?']);
         if (hash >= 0)
@@ -263,6 +268,8 @@ public static class DocumentationLinkReaderTests
         Assert.Null(DocumentationLinks.Problem("capabilities/real.html#top", "docs", Has));
         Assert.Null(DocumentationLinks.Problem("../real.html", "docs/capabilities", p => p == "docs/real.md"));
         Assert.Null(DocumentationLinks.Problem("#section", "docs", Has));
+        Assert.Null(DocumentationLinks.Problem("{{", "docs", Has));
+        Assert.NotNull(DocumentationLinks.Problem("{gone.html", "docs", Has));
         Assert.Null(DocumentationLinks.Problem("https://example.com/x", "docs", Has));
         Assert.Null(DocumentationLinks.Problem(DocumentationLinks.BlobPrefix + "blob/main/src/Real.cs", "docs", Has));
         Assert.Null(DocumentationLinks.Problem(DocumentationLinks.SitePrefix + "exists.html", "docs", Has));

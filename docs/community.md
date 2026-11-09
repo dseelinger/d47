@@ -11,15 +11,16 @@ people are — it is the fastest way to get an answer, and the only place where 
 odd thing" turns into a fix without you having to write a formal report first.
 
 <!--
-  THE INVITE LIVES HERE AND NOWHERE ELSE.
+  THE INVITE LIVES IN _config.yml AS discord_invite.
 
-  The README links to this page, and so does the Community row in the app's About area, so
-  this is the single line to edit if the invite ever has to be revoked and reissued. Putting
-  the raw discord.gg link in the app would bake it into every build ever installed, and a
-  revoked invite would then be a dead button that only a new release could fix.
+  This page and the site footer both read it, so it is the single line to edit if the invite
+  ever has to be revoked and reissued. The README and the Community row in the app's About
+  area link to this page, not to the invite: putting the invite in the app would bake it into
+  every build ever installed, and a revoked invite would then be a dead button that only a
+  new release could fix.
 -->
 
-**[Join the Discord](https://discord.gg/DPJFjx6x9d)**
+**[Join the Discord]({{ site.discord_invite }})**
 
 ## What to use it for
 

@@ -39,6 +39,9 @@
 
       <div class="footer-col footer-col-2">
         {%- include social.html -%}
+        {%- if site.discord_invite %}
+        <p><a href="{{ site.discord_invite }}">Join our Discord</a></p>
+        {%- endif %}
       </div>
 
       <div class="footer-col footer-col-3">

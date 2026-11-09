@@ -21,6 +21,10 @@ frontier_attribution: >-
 # Elite Dangerous source.
 elite_official_url: https://www.elitedangerous.com/
 
+# The Discord invite, stated once. _includes/footer.html and community.md read it. The app links to
+# community.html, never to the invite, so reissuing the invite is this one line.
+discord_invite: https://discord.gg/DPJFjx6x9d
+
 # Every page renders through _layouts/default.html, and no page under docs/ declares a layout of
 # its own. Without this the site builds with no layout at all: no nav, no footer, and no link to
 # assets/main.css.
