@@ -26,6 +26,8 @@ public static class CampaignCapability
 
     public const string NextActionTool = "next_campaign_action";
 
+    public const string ChronicleTool = "read_campaign_chronicle";
+
     private const int FrontsSpoken = 3;
 
     private const int ChronicleSpoken = 3;
@@ -91,6 +93,19 @@ public static class CampaignCapability
                     + "it or add fronts.",
                 Commands = [.. FrontQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
                 Handler = (_, _) => Task.FromResult(Fronts(store, gameState(), squadronFactions, fronts?.Invoke())),
+            },
+            new ToolDefinition
+            {
+                Name = ChronicleTool,
+                Exercise =
+                    "Say \"read the chronicle\". The reply is the Chronicler's passages for the latest three resolved "
+                    + "fronts, newest first.",
+                Description =
+                    "Read the faction's chronicle aloud: the passage the Chronicler wrote once for each resolved front, newest "
+                    + "first, at most three, with a count of the rest. Read the passages as given; add nothing to them. "
+                    + "Call it only when the Commander asks for the chronicle.",
+                Commands = [new ToolCommandPhrase("read the chronicle"), new ToolCommandPhrase("read the legend")],
+                Handler = (_, _) => Task.FromResult(ReadChronicle(store, gameState(), squadronFactions)),
             },
             new ToolDefinition
             {
@@ -252,6 +267,36 @@ public static class CampaignCapability
     private static string FrontNoun(Front front) => front.Kind == FrontKind.Conflict && front.Conflict is { } conflict
         ? conflict.Type.ToLowerInvariant()
         : CampaignFronts.Describe(front.Kind).ToLowerInvariant();
+
+    private static ToolResult ReadChronicle(CampaignStore? store, CommanderGameState? state, SquadronFactions? squadronFactions)
+    {
+        if (store is null || state?.Identity.FrontierId is not { Length: > 0 } frontierId)
+        {
+            return ToolResult.Error("No Elite Dangerous journal has been detected yet, so there is no chronicle to read.");
+        }
+
+        var campaign = store.For(frontierId);
+
+        if (campaign.Chronicle.Count == 0)
+        {
+            return ToolResult.Ok("No front has resolved yet, so the chronicle is empty.");
+        }
+
+        var written = campaign.Chronicle.Where(entry => !string.IsNullOrWhiteSpace(entry.Legend)).Reverse().ToList();
+
+        if (written.Count == 0)
+        {
+            return ToolResult.Ok("The Chronicler has not written any passage yet.");
+        }
+
+        var faction = campaign.FactionOr(SquadronFactionResolver.Resolve(state, squadronFactions)) ?? string.Empty;
+        var chronicler = CampaignArcs.Chronicler(CampaignArcs.SeedKey(state.Squadron.Key, faction));
+        var read = string.Join(" ", written.Take(ChronicleSpoken).Select(entry => entry.Legend));
+        var rest = written.Count - ChronicleSpoken;
+
+        return ToolResult.Ok(
+            $"{chronicler}: {read}{(rest > 0 ? $" There are {Plural(rest, "older passage")}." : string.Empty)}");
+    }
 
     private static ToolResult NextAction(CampaignFocus? focus, CampaignStore? store, CommanderGameState? state)
     {

@@ -54,6 +54,9 @@ public static class CampaignFronts
             .Select(FactionStates.Display),
         StringComparer.Ordinal);
 
+    /// <summary>Whether <paramref name="state"/>, as the service spells it, is a bad state.</summary>
+    public static bool IsBadState(string state) => BadStates.Contains(FactionStates.Display(state));
+
     private static readonly string ExpansionState = FactionStates.Display("Expansion");
 
     private static readonly string RetreatState = FactionStates.Display("Retreat");

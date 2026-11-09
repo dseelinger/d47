@@ -27,7 +27,11 @@ public sealed record ChronicleEntry(
     string? Opponent,
     string Outcome,
     IReadOnlyList<DateTimeOffset> Ticks,
-    IReadOnlyList<ChronicleWork> Work);
+    IReadOnlyList<ChronicleWork> Work)
+{
+    /// <summary>The Chronicler's passage for this entry, written once and kept; null until written.</summary>
+    public string? Legend { get; init; }
+}
 
 /// <summary>The one front the Commander is working: where it is, when it was taken and the BGS ticks it has spanned.</summary>
 public sealed record ChosenFront(FrontKind Kind, string System, DateTimeOffset Since, IReadOnlyList<DateTimeOffset> Ticks)
@@ -78,6 +82,9 @@ public sealed record CouncilSiding(string System, CouncilSide Sided, DateTimeOff
 /// </summary>
 public sealed record CampaignCouncil(string Hawk, string Dove, DateTimeOffset Since, DateTimeOffset? Noted, IReadOnlyList<CouncilSiding> Sidings);
 
+/// <summary>A bad state active in a system the faction controls: where, which state, the rival blamed, when it landed, and whether the rival's exploit has been broadcast.</summary>
+public sealed record OpenCrisis(string System, string State, string? Blamed, DateTimeOffset Since, bool Exploited);
+
 /// <summary>One Commander's campaign: the faction, an intent per system, the front being worked, the chronicle of resolved fronts and the arc.</summary>
 public sealed record Campaign
 {
@@ -107,6 +114,9 @@ public sealed record Campaign
     /// <summary>The Hawk and the Dove and the front choices they have answered, or null before two fronts were open.</summary>
     public CampaignCouncil? Council { get; init; }
 
+    /// <summary>The crises open now, one per system and state.</summary>
+    public IReadOnlyList<OpenCrisis> Crises { get; init; } = [];
+
     /// <summary>The faction named, else <paramref name="squadronFaction"/>.</summary>
     public string? FactionOr(string? squadronFaction) =>
         Faction is { Length: > 0 } named ? named : squadronFaction is { Length: > 0 } ? squadronFaction : null;
@@ -118,5 +128,5 @@ public sealed record Campaign
     /// <summary>The intent of a system with none set: Hold where the faction controls it, else LeaveAlone.</summary>
     public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
-    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Informant is null && Ideology is null && Council is null;
+    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Informant is null && Ideology is null && Council is null && Crises.Count == 0;
 }

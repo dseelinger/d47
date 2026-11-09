@@ -10,7 +10,7 @@ namespace D47.Core.Callouts;
 /// The campaign's arc: the Nemesis introduced when it first leads a front against the campaign faction, its broadcasts when
 /// it wins a day or takes the lead, and its concession or vow of revenge when it loses. Acts wait while the Commander is in
 /// a fight, in supercruise or a jump, or in an Operation. The first fronts computed from a report are the baseline for
-/// broadcasts, not news. It also speaks the Informant's leaks, the Ideology arc's lines and the council's Hawk and Dove.
+/// broadcasts, not news. It also speaks the Informant's leaks, the Ideology arc's lines, the council's Hawk and Dove, and the Crisis arc.
 /// </summary>
 public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
 {
@@ -135,8 +135,22 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
 
         spoken.AddRange(council.Lines.Select(line => Councillor(line, council.Council)));
 
+        var crises = CampaignCrisis.Step(
+            campaign.Crises,
+            new CrisisView(held.Faction, view.SeedKey, held.Report, _previous, context.Now));
+
+        if (!crises.Crises.SequenceEqual(campaign.Crises) && !Campaigns.SetCrises(id, crises.Crises))
+        {
+            return spoken;
+        }
+
+        spoken.AddRange(crises.Lines.Select(line => Crisis(line, held.Faction)));
+
         return spoken;
     }
+
+    private Announcement Crisis(CampaignArcLine line, string faction) =>
+        line.Act == ArcAct.Exploit ? Said(line, Voice(line.Rival, line.Faction)) : Said(line, LiaisonVoice(faction));
 
     private Announcement Ideological(CampaignArcLine line, string faction) =>
         line.Act switch

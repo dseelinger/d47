@@ -659,7 +659,7 @@ Lave Purple Gang has won a day in the war in Lave. Days won stand at 2 for Lave 
 
 D47 decides every fact and the model writes the leader's words, free to invent a motive or a grudge but no number,
 state, outcome or place. A lead or a day won that the Nemesis already held when d47 started is not broadcast. Turn this one off with the Campaign Nemesis
-row. It also turns off the Informant's leaks, the Ideology arc and the council. See [Arcs](campaign.md#arcs).
+row. It also turns off the Informant's leaks, the Ideology arc, the council and the Crisis arc. See [Arcs](campaign.md#arcs).
 
 #### Background watches {#watches}
 

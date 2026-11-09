@@ -21,6 +21,10 @@ public enum ArcAct
     Election,
     Argument,
     Sided,
+    Crisis,
+    Exploit,
+    Relief,
+    Legend,
 }
 
 /// <summary>A rival faction ranked for the Nemesis: conflicts fought, systems shared, and the closest influence gap in those systems.</summary>
@@ -115,6 +119,14 @@ public static class CampaignArcs
         var hash = Hash($"{rival.Trim()}|{seedKey.Trim()}");
 
         return $"{Titles[hash % (uint)Titles.Length]} {Surnames[(hash >> 8) % (uint)Surnames.Length]}";
+    }
+
+    /// <summary>The Chronicler's name, a surname drawn from <paramref name="seedKey"/>, the same on every PC that has the same key.</summary>
+    public static string Chronicler(string seedKey)
+    {
+        ArgumentNullException.ThrowIfNull(seedKey);
+
+        return $"Chronicler {Surnames[(Hash($"chronicler|{seedKey.Trim()}") >> 8) % (uint)Surnames.Length]}";
     }
 
     /// <summary>The seed key: the squadron's key, so squadron members draw the same leader, else the campaign faction.</summary>
@@ -357,6 +369,14 @@ public static class CampaignArcs
         ArcAct.Election =>
             $"You are the Liaison of {line.Faction}, a minor faction. You speak to the Commander, an independent pilot working for it, "
             + $"for the idea of rule that {line.Faction}'s government stands for.",
+        ArcAct.Crisis or ArcAct.Relief =>
+            $"You are the Liaison of {line.Faction}, a minor faction. You speak to the Commander, an independent pilot working for it, "
+            + $"about a crisis in one of {line.Faction}'s systems.",
+        ArcAct.Exploit =>
+            $"You are {line.Leader}, who leads {line.Rival}, a minor faction and the rival of {line.Faction}. You speak on "
+            + $"an open broadcast that the Commander, an independent pilot working for {line.Faction}, picks up, and you are taking advantage of a crisis in {line.Faction}'s system.",
+        ArcAct.Legend =>
+            $"You are {line.Leader}, the Chronicler of {line.Faction}, a minor faction. You write its history, and the Commander, an independent pilot working for it, appears in it.",
         ArcAct.Argument or ArcAct.Sided =>
             $"You are {line.Leader}, a councillor of {line.Faction}, a minor faction. You speak to the Commander, an independent "
             + $"pilot working for {line.Faction}.",
@@ -371,6 +391,10 @@ public static class CampaignArcs
         ArcAct.Defection => "Say why you have left, in your own words, and what you bring.",
         ArcAct.Election => "Frame the election as a contest between two ideas of rule, and speak for your government's idea.",
         ArcAct.Argument => "Argue your case for the front you urge, in your own words.",
+        ArcAct.Crisis => "Tell the Commander the crisis has landed, who is blamed, that a relief effort has begun and that refugees are leaving, in your own words.",
+        ArcAct.Exploit => "Gloat over the crisis and say how you mean to profit from it.",
+        ArcAct.Relief => "Tell the Commander the crisis is over and what the relief effort achieved, in your own words.",
+        ArcAct.Legend => "Write this entry of the faction's history.",
         ArcAct.Sided => "Say what you make of being passed over, in your own words, and that you will remember it.",
         ArcAct.Introduction => "Introduce yourself to the Commander as the rival they now face.",
         ArcAct.Leak => "Deliver the intercepted plan to the Commander, as a warning, in your own words.",

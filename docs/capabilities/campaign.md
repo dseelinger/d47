@@ -403,6 +403,30 @@ public enum CouncilSide
 Both arcs are kept in `data/campaigns.json` until you name another campaign faction, wait as the Nemesis does, and the
 Campaign Nemesis row turns them off.
 
+The fifth arc is **Crisis and blame**. It opens when a bad state (Lockdown, Civil unrest, Famine, Blight, Drought, Outbreak,
+Infrastructure failure, Pirate attack, Terrorist attack or Bust) becomes active in a system your faction controls and the
+previous report did not have it. The Liaison announces it and names the rival with the most influence there as the one
+blamed; the relief effort and the refugees are the Liaison's invention. When the blamed rival's influence in that system
+then rises, its leader speaks once, exploiting the crisis. When the state is no longer active the Liaison says the crisis
+is over and it closes. A state already active when d47 starts is the baseline, not news. The open crises are kept in
+`data/campaigns.json`:
+
+```csharp
+public sealed record OpenCrisis(string System, string State, string? Blamed, DateTimeOffset Since, bool Exploited);
+```
+
+The sixth arc is **Legend**. A Chronicler, whose name d47 invents once from your squadron the way the Nemesis's leader is,
+writes each chronicle entry once as faction history with you in it, from the entry's facts only: the kind of front, the
+system, the opponent, the outcome and the ticks it spanned. The passage is stored on the entry and never written again.
+It is written in the background on the turn model after a front resolves and at launch for entries that have none, and a
+failed write is tried again at the next launch or resolved front. A passage that gives a number the facts did not, or runs
+over 700 characters, is refused. The passage shows under its entry in the Chronicle section of the Campaign page and is read
+aloud only on request:
+
+> "read the chronicle"
+
+D47 reads the latest three passages, newest first, and counts the older ones.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
@@ -416,6 +440,12 @@ model is refused.
 ```
 
 #### `get_campaign_fronts`
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `read_campaign_chronicle`
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

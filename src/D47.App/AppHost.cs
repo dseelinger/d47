@@ -3430,6 +3430,7 @@ public sealed class AppHost : IDisposable
         host.Goals = (stores.GoalBook, stores.BackfillGoals);
         host.SquadronFactions = stores.SquadronFactions;
         host.Campaigns = stores.Campaigns;
+        stores.Campaigns.ChronicleGrew += _ => host.WriteLegends();
         host.CampaignFocus = stores.CampaignFocus;
         host.Activities = stores.Activities;
         host.Adventures = (stores.AdventureBook, crew.AdventureGenerator);
@@ -3502,6 +3503,22 @@ public sealed class AppHost : IDisposable
 
         BackfillRunRecords();
         gameState.CommanderChanged += _ => BackfillRunRecords();
+
+        // Chronicle entries without a Chronicler's passage are written once a launch, when the Commander is known.
+        var legendsStarted = 0;
+
+        void WriteLegendsOnce()
+        {
+            if (gameState.Active?.Identity.FrontierId is null || Interlocked.Exchange(ref legendsStarted, 1) == 1)
+            {
+                return;
+            }
+
+            host.WriteLegends();
+        }
+
+        WriteLegendsOnce();
+        gameState.CommanderChanged += _ => WriteLegendsOnce();
 
         // Deleting the recording deletes every clip spoken in it; the messages keep their text.
         host.OwnVoice.Changed += () =>
@@ -5758,6 +5775,46 @@ public sealed class AppHost : IDisposable
             Spend,
             PriceTable.Default,
             _logger));
+    }
+
+    private int _writingLegends;
+
+    /// <summary>
+    /// Has the model write the Chronicler's passage for every chronicle entry without one, once each, on the pool. One run
+    /// at a time; an entry the model fails is asked again at the next launch or the next resolved front.
+    /// </summary>
+    public void WriteLegends()
+    {
+        if (Campaigns is not { } campaigns
+            || GameState.Active is not { } state
+            || state.Identity.FrontierId is not { Length: > 0 } fid
+            || D47.Core.Campaigns.CampaignLegend.Pending(campaigns.For(fid).Chronicle).Count == 0
+            || !LlmAvailability.CanAttemptModelTurn
+            || Turns.Provider is not { } provider
+            || campaigns.For(fid).FactionOr(SquadronFactionResolver.Resolve(state, SquadronFactions)) is not { } faction
+            || Interlocked.Exchange(ref _writingLegends, 1) == 1)
+        {
+            return;
+        }
+
+        var ask = D47.Core.Campaigns.CampaignLegend.Asker(provider, Turns.Model, Spend, PriceTable.Default, _logger);
+        var seed = D47.Core.Campaigns.CampaignArcs.SeedKey(state.Squadron.Key, faction);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await D47.Core.Campaigns.CampaignLegend.RunAsync(campaigns, fid, faction, seed, ask, _logger, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "Could not write the chronicle passages");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _writingLegends, 0);
+            }
+        });
     }
 
     /// <summary>

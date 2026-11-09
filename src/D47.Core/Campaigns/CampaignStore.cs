@@ -62,6 +62,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                     Informant = Informant(record.Informant),
                     Ideology = Ideology(record.Ideology),
                     Council = Council(record.Council),
+                    Crises = [.. (record.Crises ?? []).Where(crisis => !string.IsNullOrWhiteSpace(crisis.System) && !string.IsNullOrWhiteSpace(crisis.State)).Select(crisis => new OpenCrisis(crisis.System!, crisis.State!, string.IsNullOrWhiteSpace(crisis.Blamed) ? null : crisis.Blamed, crisis.Since, crisis.Exploited))],
                 };
             }
 
@@ -108,6 +109,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             Informant = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Informant : null,
             Ideology = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Ideology : null,
             Council = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Council : null,
+            Crises = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Crises : [],
         });
     }
 
@@ -163,7 +165,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
 
         var resolved = false;
 
-        return Change(
+        var kept = Change(
             frontierId,
             campaign =>
             {
@@ -177,7 +179,63 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                 return campaign with { Chosen = null, Chronicle = [.. campaign.Chronicle, entry] };
             })
             && resolved;
+
+        if (kept)
+        {
+            ChronicleGrew?.Invoke(frontierId);
+        }
+
+        return kept;
     }
+
+    /// <summary>Raised, with the Commander's Frontier id, after a front enters the chronicle. Handlers must not block.</summary>
+    public event Action<string>? ChronicleGrew;
+
+    /// <summary>Keeps <paramref name="legend"/> on chronicle entry <paramref name="index"/>, only while that entry is still <paramref name="asked"/> and has none. False otherwise, or when the write failed.</summary>
+    public bool SetLegend(string frontierId, int index, ChronicleEntry asked, string legend)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+        ArgumentNullException.ThrowIfNull(asked);
+        ArgumentException.ThrowIfNullOrWhiteSpace(legend);
+
+        var set = false;
+
+        return Change(
+            frontierId,
+            campaign =>
+            {
+                if (index < 0
+                    || index >= campaign.Chronicle.Count
+                    || !string.IsNullOrWhiteSpace(campaign.Chronicle[index].Legend)
+                    || !SameEntry(campaign.Chronicle[index], asked))
+                {
+                    return campaign;
+                }
+
+                set = true;
+
+                return campaign with
+                {
+                    Chronicle = [.. campaign.Chronicle.Select((entry, at) => at == index ? entry with { Legend = legend.Trim() } : entry)],
+                };
+            })
+            && set;
+    }
+
+    /// <summary>Sets the open crises. False when the write failed.</summary>
+    public bool SetCrises(string frontierId, IReadOnlyList<OpenCrisis> crises)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+        ArgumentNullException.ThrowIfNull(crises);
+
+        return Change(frontierId, campaign => campaign with { Crises = crises });
+    }
+
+    private static bool SameEntry(ChronicleEntry left, ChronicleEntry right) =>
+        left.Kind == right.Kind
+        && string.Equals(left.System, right.System, StringComparison.OrdinalIgnoreCase)
+        && left.Outcome == right.Outcome
+        && left.Ticks.SequenceEqual(right.Ticks);
 
     /// <summary>Sets the arc under way, or clears it with null. False when the write failed.</summary>
     public bool SetArc(string frontierId, CampaignArc? arc)
@@ -315,6 +373,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                                     Sidings = [.. council.Sidings.Select(siding => new SidingRecord { System = siding.System, Sided = siding.Sided, At = siding.At })],
                                 }
                                 : null,
+                            Crises = [.. pair.Value.Crises.Select(crisis => new CrisisRecord { System = crisis.System, State = crisis.State, Blamed = crisis.Blamed, Since = crisis.Since, Exploited = crisis.Exploited })],
                         }),
                 ],
             };
@@ -338,7 +397,10 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                 string.IsNullOrWhiteSpace(record.Opponent) ? null : record.Opponent,
                 record.Outcome,
                 record.Ticks ?? [],
-                [.. (record.Work ?? []).Where(work => Enum.IsDefined(work.Kind)).Select(work => new ChronicleWork(work.Kind, work.Amount))]);
+                [.. (record.Work ?? []).Where(work => Enum.IsDefined(work.Kind)).Select(work => new ChronicleWork(work.Kind, work.Amount))])
+            {
+                Legend = string.IsNullOrWhiteSpace(record.Legend) ? null : record.Legend,
+            };
 
     private static CampaignArc? Arc(ArcRecord? record) =>
         record is { Rival: { Length: > 0 } rival, Leader: { Length: > 0 } leader } && Enum.IsDefined(record.Kind)
@@ -387,6 +449,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         Outcome = entry.Outcome,
         Ticks = [.. entry.Ticks],
         Work = [.. entry.Work.Select(work => new WorkRecord { Kind = work.Kind, Amount = work.Amount })],
+        Legend = entry.Legend,
     };
 
     private sealed class Document
@@ -413,6 +476,21 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public IdeologyRecord? Ideology { get; set; }
 
         public CouncilRecord? Council { get; set; }
+
+        public IReadOnlyList<CrisisRecord>? Crises { get; set; }
+    }
+
+    private sealed class CrisisRecord
+    {
+        public string? System { get; set; }
+
+        public string? State { get; set; }
+
+        public string? Blamed { get; set; }
+
+        public DateTimeOffset Since { get; set; }
+
+        public bool Exploited { get; set; }
     }
 
     private sealed class IdeologyRecord
@@ -517,6 +595,8 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public IReadOnlyList<DateTimeOffset>? Ticks { get; set; }
 
         public IReadOnlyList<WorkRecord>? Work { get; set; }
+
+        public string? Legend { get; set; }
     }
 
     private sealed class WorkRecord

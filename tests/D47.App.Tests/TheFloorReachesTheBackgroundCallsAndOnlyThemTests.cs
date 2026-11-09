@@ -27,6 +27,9 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         // Whether a journal condition would tick a line typed into the checklist's Add box (#1058).
         "var ask = TypedLineWatch.Asker(provider, Turns.Model, Spend, PriceTable.Default);",
 
+        // The Chronicler's passages are prose fiction, which the background model never writes.
+        "var ask = D47.Core.Campaigns.CampaignLegend.Asker(provider, Turns.Model, Spend, PriceTable.Default, _logger);",
+
         // Flagged, not fixed: correct today because web search is endpoint-gated in all three providers, and
         // the contract says it is model-gated in principle.
         "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;",

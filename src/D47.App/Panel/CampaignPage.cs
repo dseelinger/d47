@@ -1082,7 +1082,18 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
         CreditsKit.Place(grid, 4, Typeset.Mono(entry.Ticks.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), TypeScale.ControlLarge, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
         CreditsKit.Place(grid, 5, work);
 
-        return RowBorder(grid);
+        if (string.IsNullOrWhiteSpace(entry.Legend))
+        {
+            return RowBorder(grid);
+        }
+
+        var bordered = RowBorder(grid);
+        var legend = Typeset.Prose(entry.Legend, TypeScale.Description, ThemeManager.GreyKey, wrap: true);
+
+        legend.Margin = new Thickness(0, 4, 0, 4);
+        bordered.Child = new StackPanel { Spacing = 2, Children = { grid, legend } };
+
+        return bordered;
     }
 
     private static Border RowBorder(Grid grid)
