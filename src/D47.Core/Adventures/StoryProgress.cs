@@ -6,29 +6,26 @@ namespace D47.Core.Adventures;
 public enum WriteStage
 {
     Places,
-    Outline,
     Objectives,
     Checking,
 }
 
 /// <summary>A model's typical seconds per stage at the catalog's story effort for the model, else medium, and the total the Commander is told to expect.</summary>
-public sealed record StoryPace(double Places, double Outline, double Objectives)
+public sealed record StoryPace(double Places, double Objectives, double Checking)
 {
-    private static readonly StoryPace Other = new(5, 13, 22);
-    private static readonly StoryPace LocalStory = new(5, 20, 50);
-    private static readonly StoryPace LocalChapter = new(5, 20, 105);
+    private static readonly StoryPace Other = new(5, 49, 52);
+    private static readonly StoryPace LocalStory = new(5, 46, 24);
+    private static readonly StoryPace LocalChapter = new(5, 82, 43);
 
     private static readonly Dictionary<string, StoryPace> Models = new(StringComparer.Ordinal)
     {
-        ["claude-sonnet-5-5"] = new(5, 22, 122),
-        ["claude-haiku-5-5"] = new(5, 12, 23),
-        ["claude-opus-5-5"] = new(5, 26, 27),
-        ["gpt-6.1-sol"] = new(5, 23, 25),
-        ["gpt-6-luna"] = new(5, 14, 47),
-        ["gpt-5.6-terra"] = new(5, 9, 12),
+        ["claude-sonnet-5-5"] = new(4, 52, 27),
+        ["claude-opus-5-5"] = new(7, 53, 76),
+        ["gpt-6.1-sol"] = new(4, 28, 8),
+        ["gpt-5.6-terra"] = new(6, 46, 146),
     };
 
-    public double Total => Places + Outline + Objectives;
+    public double Total => Places + Objectives + Checking;
 
     /// <summary>The pace for <paramref name="model"/>; a model outside the table gets the local row when it runs on this machine, else the median of the measured models.</summary>
     public static StoryPace For(string? model, bool local = false, bool chapter = false) =>
@@ -39,8 +36,8 @@ public sealed record StoryPace(double Places, double Outline, double Objectives)
     internal double Seconds(WriteStage stage) => stage switch
     {
         WriteStage.Places => Places,
-        WriteStage.Outline => Outline,
-        _ => Objectives,
+        WriteStage.Objectives => Objectives,
+        _ => Checking,
     };
 }
 
@@ -53,7 +50,7 @@ public sealed class StoryProgress(TimeProvider time)
     private const double Ceiling = 0.99;
     private const double CharactersPerStage = 20000;
 
-    private static readonly (double From, double To)[] Bands = [(0, 0.10), (0.10, 0.45), (0.45, 0.90), (0.90, 0.99)];
+    private static readonly (double From, double To)[] Bands = [(0, 0.05), (0.05, 0.70), (0.70, 0.99)];
 
     private readonly object _gate = new();
     private readonly long _began = time.GetTimestamp();
@@ -180,7 +177,7 @@ public sealed class StoryProgress(TimeProvider time)
         }
     }
 
-    /// <summary>A further draft begins: the four bands are laid again between the fill so far and 0.99.</summary>
+    /// <summary>A further draft begins: the three bands are laid again between the fill so far and 0.99.</summary>
     public void NextDraft()
     {
         lock (_gate)

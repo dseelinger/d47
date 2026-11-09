@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Chapter estimates now match how long a chapter takes. The bar under a story write follows the three stages a write goes through, and each model's usual time is re-measured: Sonnet 5.5 about 1:25, Sol 0:40, Opus 5.5 2:15, Terra 3:20.
+
 The time estimate under a story write now reads in minutes and seconds, like the clock beside it: "Usually ready in about 2:30." instead of "150 seconds".
 
 Selling exobiology data no longer counts as BGS work. Exobiology data has no BGS effect, so the BGS work page's Data column now shows cartography only, and "what's my BGS work" no longer reports organic data sold.

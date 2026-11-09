@@ -1218,7 +1218,6 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
     internal static string Doing(WriteStage stage) => stage switch
     {
         WriteStage.Places => "Finding places nearby…",
-        WriteStage.Outline => "Writing the outline…",
         WriteStage.Objectives => "Writing your objectives…",
         _ => "Checking the objectives…",
     };
