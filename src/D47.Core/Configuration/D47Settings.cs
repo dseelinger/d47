@@ -640,6 +640,9 @@ public sealed record CalloutSettings
     /// <summary>Work that helps a rival of the campaign faction or hurts the faction.</summary>
     public bool CampaignWarnings { get; init; } = true;
 
+    /// <summary>The campaign faction's Liaison: briefings, dispatches after a tick, acknowledgements and outcomes.</summary>
+    public bool CampaignLiaison { get; init; } = true;
+
     /// <summary>A friend coming online, said once for a burst of arrivals.</summary>
     public bool FriendsOnline { get; init; } = true;
 
@@ -1056,6 +1059,9 @@ public sealed record SpeechSettings
 
     /// <summary>The Narrator's voice, from the ship's provider, or null for the first that is not the ship's.</summary>
     public string? NarratorVoice { get; init; }
+
+    /// <summary>The campaign Liaison's voice, from the NPC voices, or null for one picked by the faction's name.</summary>
+    public string? LiaisonVoice { get; init; }
 
     /// <summary>
     /// The Commander's own name for the carrier captain, spoken in place of "Captain" alone. Empty

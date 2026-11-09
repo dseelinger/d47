@@ -262,6 +262,41 @@ vouchers do nothing. The model reads the answer and does not compose it.
 
 The first sentence of the next action also shows on the NEXT strip under every tab of the full panel, with a Story and Campaign toggle; see [The NEXT strip](adventures.md#the-next-strip).
 
+### The Liaison
+
+The campaign faction has a Liaison, who speaks to you over comms about the front you work. D47 decides every
+fact the Liaison states; the language model only words them, and is told to add nothing.
+
+| When | What the Liaison says |
+|---|---|
+| You choose a front | The briefing: the situation, the margin, what is at stake and the next action, with what does not count there. |
+| A BGS tick passes, and your journal has read the front's system since | The dispatch: what you handed in for the faction there since the tick, and what moved by your newest reading, with its age. |
+| A BGS tick passes, and your journal has not read the system since | A request to fly in to the system for the morning report. The dispatch follows once you have. |
+| You hand in work that counts on the front | A short acknowledgement, at most once every 30 minutes. |
+| The faction wins its first day in a conflict, or a margin is back within its threshold | A short acknowledgement. |
+| The front resolves | The outcome, then the next front proposed. |
+
+The dispatch keeps your work and the movement as two separate facts. It never says how much of the change
+your work caused, because the BGS does not report that. In a conflict influence is frozen, so the Liaison
+speaks of days won and never of influence. Each tick has one dispatch, kept across restarts.
+
+The Liaison's part follows the front: a field officer in a war, a campaign manager in an election, a relief
+coordinator in a bad state, and a liaison officer otherwise. Its manner follows the faction's government. It
+speaks whatever core is aboard, a stock core included, and waits while you are in a fight, in supercruise or
+a jump, or in an Operation. Its voice is picked by the faction's name, so it is the same in every session; the
+Liaison voice row chooses another. The Campaign Liaison row turns it off; see
+[Campaign Liaison](callouts.md#campaign-liaison).
+
+```csharp
+public sealed record CampaignLiaisonLine(
+    LiaisonBeat Beat,
+    string Faction,
+    string Part,
+    string Manner,
+    IReadOnlyList<string> Facts,
+    bool Conflict)
+```
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

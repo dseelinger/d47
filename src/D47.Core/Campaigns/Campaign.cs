@@ -30,7 +30,11 @@ public sealed record ChronicleEntry(
     IReadOnlyList<ChronicleWork> Work);
 
 /// <summary>The one front the Commander is working: where it is, when it was taken and the BGS ticks it has spanned.</summary>
-public sealed record ChosenFront(FrontKind Kind, string System, DateTimeOffset Since, IReadOnlyList<DateTimeOffset> Ticks);
+public sealed record ChosenFront(FrontKind Kind, string System, DateTimeOffset Since, IReadOnlyList<DateTimeOffset> Ticks)
+{
+    /// <summary>The BGS tick the Liaison last gave its dispatch for, or null.</summary>
+    public DateTimeOffset? Reported { get; init; }
+}
 
 /// <summary>One Commander's campaign: the faction, an intent per system, the front being worked and the chronicle of resolved fronts.</summary>
 public sealed record Campaign

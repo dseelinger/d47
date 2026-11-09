@@ -169,6 +169,9 @@ public sealed record Announcement(string Key, string Text, CalloutUrgency Urgenc
     /// <summary>The running story's aside for a line about a mission, or null. A line with no text is spoken only as the model writes it.</summary>
     public Stories.MissionAside? StoryAside { get; init; }
 
+    /// <summary>The campaign Liaison's line before it is written, or null for anything else.</summary>
+    public Campaigns.CampaignLiaisonLine? Liaison { get; init; }
+
     /// <summary>Words said unchanged after <see cref="Text"/>. Never given to a model, so never put in a brief or the conversation feed.</summary>
     public string? Verbatim { get; init; }
 

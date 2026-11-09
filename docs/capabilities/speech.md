@@ -878,6 +878,13 @@ provider that speaks for your ship, because the Narrator is heard in the cockpit
 the radio. Left empty, or set to the ship's own voice, the Narrator takes the first voice on that
 list that is not the ship's, so a narration is never mistaken for your core talking to you.
 
+#### Liaison voice {#liaison-voice}
+
+Who speaks for your campaign faction, for the [campaign Liaison](callouts.md#campaign-liaison). It is
+picked from the NPC voices, because the Liaison is heard over comms. Left empty, or set to a voice that
+provider no longer offers, the Liaison takes a voice picked by the campaign faction's name, so it sounds
+the same in every session.
+
 #### Break the fourth wall {#narrator-fourth-wall}
 
 Off by default. When on, the [Narrator](callouts.md#narrator) joins the STORY channel while a story is

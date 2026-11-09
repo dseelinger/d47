@@ -72,6 +72,7 @@ public static class CalloutCapability
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
     public const string BgsTickKey = "callouts.bgsTick";
     public const string CampaignWarningsKey = "callouts.campaignWarnings";
+    public const string CampaignLiaisonKey = "callouts.campaignLiaison";
     public const string FriendsOnlineKey = "callouts.friendsOnline";
 
     public const string WingKey = "callouts.wing";
@@ -985,6 +986,22 @@ public static class CalloutCapability
                 "campaign warnings",
                 s => s.Callouts.CampaignWarnings,
                 (s, v) => s with { Callouts = s.Callouts with { CampaignWarnings = v } }),
+
+            Toggle(
+                CampaignLiaisonKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group Campaign Liaison, and find Campaign Liaison "
+                + "(on by default). With a campaign front chosen, the Liaison briefs it, and after the next BGS tick asks "
+                + "you to fly in to its system or gives the dispatch. Say \"stop calling out the campaign Liaison\": the "
+                + "row shows off and the Liaison says nothing. Say \"start calling out the campaign Liaison\" and the row "
+                + "shows on. The row is absent while Speak without being asked is off.",
+                "Campaign Liaison",
+                "Your campaign faction's Liaison: a briefing when you choose a front, a dispatch after each BGS tick, "
+                + "acknowledgements and the outcome.",
+                "campaign-liaison",
+                "the campaign Liaison",
+                s => s.Callouts.CampaignLiaison,
+                (s, v) => s with { Callouts = s.Callouts with { CampaignLiaison = v } }),
 
             Toggle(
                 GalNetKey,

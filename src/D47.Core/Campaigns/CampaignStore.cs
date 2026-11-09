@@ -55,7 +55,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                             ImmutableDictionary.Create<string, SystemIntent>(StringComparer.OrdinalIgnoreCase),
                             (intents, pair) => intents.SetItem(pair.Key, pair.Value)),
                     Chosen = record.Chosen is { System: { Length: > 0 } chosenSystem } chosen && Enum.IsDefined(chosen.Kind)
-                        ? new ChosenFront(chosen.Kind, chosenSystem, chosen.Since, chosen.Ticks ?? [])
+                        ? new ChosenFront(chosen.Kind, chosenSystem, chosen.Since, chosen.Ticks ?? []) { Reported = chosen.Reported }
                         : null,
                     Chronicle = [.. (record.Chronicle ?? []).Select(Entry).OfType<ChronicleEntry>()],
                 };
@@ -129,6 +129,18 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             frontierId,
             campaign => campaign.Chosen is { } chosen && Is(chosen, kind, system) && !chosen.Ticks.Contains(tick)
                 ? campaign with { Chosen = chosen with { Ticks = [.. chosen.Ticks, tick] } }
+                : campaign);
+    }
+
+    /// <summary>Notes the BGS tick the Liaison gave its dispatch for on the front being worked.</summary>
+    public bool NoteReported(string frontierId, FrontKind kind, string system, DateTimeOffset tick)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return Change(
+            frontierId,
+            campaign => campaign.Chosen is { } chosen && Is(chosen, kind, system) && chosen.Reported != tick
+                ? campaign with { Chosen = chosen with { Reported = tick } }
                 : campaign);
     }
 
@@ -224,7 +236,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                                 .OrderBy(intent => intent.Key, StringComparer.OrdinalIgnoreCase)
                                 .ToDictionary(intent => intent.Key, intent => intent.Value, StringComparer.OrdinalIgnoreCase),
                             Chosen = pair.Value.Chosen is { } held
-                                ? new ChosenRecord { Kind = held.Kind, System = held.System, Since = held.Since, Ticks = [.. held.Ticks] }
+                                ? new ChosenRecord { Kind = held.Kind, System = held.System, Since = held.Since, Ticks = [.. held.Ticks], Reported = held.Reported }
                                 : null,
                             Chronicle = [.. pair.Value.Chronicle.Select(ToRecord)],
                         }),
@@ -289,6 +301,8 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public DateTimeOffset Since { get; set; }
 
         public IReadOnlyList<DateTimeOffset>? Ticks { get; set; }
+
+        public DateTimeOffset? Reported { get; set; }
     }
 
     private sealed class EntryRecord

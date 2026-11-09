@@ -423,6 +423,29 @@ public sealed class VoiceCast
         }
     }
 
+    /// <summary>
+    /// A pool voice for a speaker heard in every session: the pool walked from a hash of <paramref name="name"/>, skipping
+    /// voices aboard. Null with an empty pool.
+    /// </summary>
+    public string? Lasting(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+
+        lock (_gate)
+        {
+            if (Pool.Count == 0)
+            {
+                return null;
+            }
+
+            var start = (int)(Hash(name) % (uint)Pool.Count);
+
+            return Enumerable.Range(0, Pool.Count)
+                .Select(offset => Pool[(start + offset) % Pool.Count])
+                .FirstOrDefault(voice => !Aboard(voice)) ?? Pool[start];
+        }
+    }
+
     /// <summary>The NPCs holding a voice here, with it: people in this system, stations in this drop and each group ship's latest.</summary>
     public IReadOnlyList<(string Name, string VoiceId)> MetHere
     {

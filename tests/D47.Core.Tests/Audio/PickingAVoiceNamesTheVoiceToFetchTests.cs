@@ -32,6 +32,14 @@ public class PickingAVoiceNamesTheVoiceToFetchTests
     }
 
     [Fact]
+    public void TheLiaisonNamesAnNpcVoice()
+    {
+        var settings = D47Settings.Defaults with { Speech = D47Settings.Defaults.Speech with { LiaisonVoice = "bram" } };
+
+        Assert.Equal((VoiceGroup.Npcs, "bram"), SpeechCapability.PickedVoice(SpeechCapability.LiaisonVoiceKey, settings));
+    }
+
+    [Fact]
     public void AClearedRowOrAnotherKeyPicksNothing()
     {
         Assert.Null(SpeechCapability.PickedVoice(SpeechCapability.NarratorVoiceKey, D47Settings.Defaults));

@@ -207,6 +207,11 @@ public static class FlavourBriefs
             return announcement.StoryAside is { } told ? NarratingMission(told) : Narration;
         }
 
+        if (announcement.Liaison is { } liaison)
+        {
+            return Campaigns.CampaignLiaison.Brief(liaison);
+        }
+
         if (announcement.StoryAside is { } aside
             && announcement.Key.StartsWith(MissionCallout.AcceptedKey, StringComparison.Ordinal))
         {

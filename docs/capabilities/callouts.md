@@ -629,6 +629,24 @@ faction is not said); a mission failed for the faction; a mission accepted again
 murder in the faction's jurisdiction; and a sale to a fleet carrier where the faction is present, which does not count
 toward the BGS. Turn this one off with the Campaign warnings row.
 
+#### Campaign Liaison {#campaign-liaison}
+
+The campaign faction's Liaison, on comms, about the front you work: a briefing when you choose it, a request to fly
+in for the morning report or the dispatch after each BGS tick, an acknowledgement when you hand in work that counts
+there (at most once every 30 minutes), when the faction wins its first day in a conflict and when a margin is back
+within its threshold, and the outcome when the front resolves, with the next front proposed.
+
+```text
+Since the tick you have completed 3 missions for Lave Revolutionary Party in Lave. By your reading from 2 hours ago, Lave Revolutionary Party's influence in Lave moved from 41.2% before the tick to 43%.
+```
+
+D47 decides every fact and the model words them; with no model, or when the model's line fails its checks, the facts
+are said as written. The dispatch never says how much of a change your work caused, and in a conflict it gives days
+won, never influence. The Liaison speaks under a stock core, since it is not your core, and waits while you are in a
+fight, in supercruise or a jump, or in an Operation. What is already true when d47 starts is not said, except
+what the last tick owes: the request to fly in, or the dispatch. Turn this one off with the Campaign Liaison row; the
+[Liaison voice](speech.md#liaison-voice) row picks its voice. See [The Liaison](campaign.md#the-liaison).
+
 #### Background watches {#watches}
 
 When a stock watch's condition holds, the commodity, the station, the system and the stock, at most once per BGS

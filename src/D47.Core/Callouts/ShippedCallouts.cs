@@ -1,4 +1,5 @@
 ﻿using D47.Core.Adventures;
+using D47.Core.Campaigns;
 using D47.Core.Checklists;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
@@ -104,6 +105,18 @@ public static class ShippedCallouts
 
         /// <summary>The shown Commander's campaign faction, or null.</summary>
         public Func<string?> CampaignFaction { get; init; } = () => null;
+
+        /// <summary>The campaigns, or null where there are none.</summary>
+        public CampaignStore? Campaigns { get; init; }
+
+        /// <summary>The shown Commander's campaign report and fronts, or null.</summary>
+        public Func<CampaignFrontsSnapshot?> CampaignFronts { get; init; } = () => null;
+
+        /// <summary>The campaign front proposed while none is chosen, or null.</summary>
+        public Func<FrontProposal?> CampaignProposal { get; init; } = () => null;
+
+        /// <summary>The campaign Liaison's voice for a faction, or null.</summary>
+        public Func<string, PinnedVoice?> LiaisonVoice { get; init; } = _ => null;
 
         /// <summary>The GalNet articles that arrived in the last poll, newest first.</summary>
         public Func<IReadOnlyList<GalNetArticle>> GalNetArrived { get; init; } = () => [];
@@ -236,6 +249,8 @@ public static class ShippedCallouts
             })
 
             .Add(new CampaignWarningCallout())
+
+            .Add(new CampaignLiaisonCallout(sources.Fight))
 
             .Add(new FriendsCallout(sources.Friends))
 
@@ -373,6 +388,14 @@ public static class ShippedCallouts
                     campaign.Faction = services.CampaignFaction;
                     break;
 
+                case CampaignLiaisonCallout liaison:
+                    liaison.Campaigns = services.Campaigns;
+                    liaison.Fronts = services.CampaignFronts;
+                    liaison.Proposal = services.CampaignProposal;
+                    liaison.LastTick = services.BgsLastTick;
+                    liaison.Voice = services.LiaisonVoice;
+                    break;
+
                 case GalNetCallout galNet:
                     galNet.Arrived = () => services.GalNetArrived();
                     galNet.OpeningDone = () =>
@@ -474,6 +497,7 @@ public static class ShippedCallouts
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
         engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
         engine.SetEnabled("campaign-warnings", callouts.CampaignWarnings, now);
+        engine.SetEnabled("campaign-liaison", callouts.CampaignLiaison, now);
         engine.SetEnabled("friends", callouts.FriendsOnline, now);
         engine.SetEnabled("wing", callouts.Wing, now);
         engine.SetEnabled("galnet", callouts.GalNet, now);

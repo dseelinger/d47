@@ -405,6 +405,13 @@ public static class SettingsLayout
                                 E("callouts.scenes"),
                             ]),
                         G(
+                            "Campaign Liaison",
+                            $"Your campaign faction's Liaison, who briefs and reports on the front you work. {OtherVoicesSwitchHelp}",
+                            [
+                                E("callouts.campaignLiaison"),
+                                E("speech.liaisonVoice", under: true),
+                            ]),
+                        G(
                             "Messages read aloud",
                             "Which comms tabs D47 reads out, once incoming messages are on.",
                             [

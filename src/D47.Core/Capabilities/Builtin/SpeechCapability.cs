@@ -33,6 +33,7 @@ public static class SpeechCapability
     public const string CarrierCaptainVoiceKey = "speech.carrierCaptainVoice";
     public const string TowerVoiceKey = "speech.towerVoice";
     public const string NarratorVoiceKey = "speech.narratorVoice";
+    public const string LiaisonVoiceKey = "speech.liaisonVoice";
     public const string NarratorFourthWallKey = "speech.narratorFourthWall";
     public const string CarrierCaptainNameKey = "speech.carrierCaptainName";
     public const string TowerNameKey = "speech.towerName";
@@ -1082,6 +1083,42 @@ public static class SpeechCapability
             },
             new SettingRow
             {
+                Key = LiaisonVoiceKey,
+                Exercise =
+                    "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
+                    + "Settings › Other voices › Chatter and messages, group Campaign Liaison, and pick a Liaison voice, using "
+                    + "the audition button to hear it. Choose a campaign front: the Liaison's briefing is in that voice. Clear "
+                    + "the row and the Liaison takes the voice picked by your campaign faction's name. The row is absent while "
+                    + "the Voice provider is None.",
+                Advanced = true,
+                Label = "Liaison voice",
+                Help = "Who speaks for your campaign faction. From the NPC voices; left empty, d47 picks one by the "
+                       + "faction's name, the same every session.",
+                Kind = SettingKind.Choice,
+                DefaultDisplay = "(picked by the faction's name)",
+                AllowsFreeText = true,
+                ChoiceSource = _ => surface.Voices?.Invoke(VoiceGroup.Npcs) ?? [],
+                ChoiceLabel = id => surface.VoiceLabel?.Invoke(VoiceGroup.Npcs, id) ?? id,
+                WhyNoChoices = WhyNoVoices(surface, VoiceGroup.Npcs),
+                Facet = _ => GenderFacet(surface, VoiceGroup.Npcs),
+                Facets = s => ChatterboxFacets(surface, VoiceGroup.Npcs, s),
+                ChoiceNoun = "voices",
+                Audition = AuditionOf(surface, VoiceRole.Comms),
+                ChoiceClips = ClipsOf(surface, VoiceRole.Comms),
+                AppliesWhen = s => s.Speech.Provider != NoneId,
+                Group = "Other voices",
+                DocsAnchor = "liaison-voice",
+                Binding = new SettingBinding
+                {
+                    Read = s => s.Speech.LiaisonVoice,
+                    Write = (s, v) => s with
+                    {
+                        Speech = s.Speech with { LiaisonVoice = string.IsNullOrWhiteSpace(v) ? null : v.Trim() },
+                    },
+                },
+            },
+            new SettingRow
+            {
                 Key = NarratorFourthWallKey,
                 Exercise =
                     "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
@@ -1722,6 +1759,7 @@ public static class SpeechCapability
             CarrierCaptainVoice = Unless(settings.Speech.CarrierCaptainVoice, voiceId),
             TowerVoice = Unless(settings.Speech.TowerVoice, voiceId),
             NarratorVoice = Unless(settings.Speech.NarratorVoice, voiceId),
+            LiaisonVoice = Unless(settings.Speech.LiaisonVoice, voiceId),
         },
         Persona = settings.Persona with
         {
@@ -1823,6 +1861,7 @@ public static class SpeechCapability
             CarrierCaptainVoiceKey => (VoiceRole.CarrierCaptain, settings.Speech.CarrierCaptainVoice),
             TowerVoiceKey => (VoiceRole.TowerControl, settings.Speech.TowerVoice),
             NarratorVoiceKey => (VoiceRole.Narrator, settings.Speech.NarratorVoice),
+            LiaisonVoiceKey => (VoiceRole.Comms, settings.Speech.LiaisonVoice),
             _ => (VoiceRole.Crew, null),
         };
 
