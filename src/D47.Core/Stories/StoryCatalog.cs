@@ -416,9 +416,9 @@ public sealed record StorySpeakerAboard(
 /// <summary>
 /// A span of a story in the black: from the <see cref="From"/> beat up to, not including, the <see cref="To"/> beat, each a key of
 /// the story length's <see cref="StoryPacing.BeatKeys"/>. Null from is the story's start; null to is its end. Toward, when set,
-/// names a <see cref="StoryDestinations"/> system the chapters in the span travel toward.
+/// names the systems the chapters in the span travel toward, in order.
 /// </summary>
-public sealed record StoryBlackSpan(string? From, string? To, string? Toward = null);
+public sealed record StoryBlackSpan(string? From, string? To, StoryToward? Toward = null);
 
 /// <summary>Reads a cast member's <c>"aboard"</c> as one span object or a list of them, and writes one span as an object.</summary>
 internal sealed class StorySpeakerAboardConverter : JsonConverter<IReadOnlyList<StorySpeakerAboard>>
@@ -1346,6 +1346,32 @@ public sealed class StoryCatalog
     }
 
     /// <summary>Where the spans in the black name a beat outside the length's sheet, end at or before they start, or overlap.</summary>
+    private static IEnumerable<string> TowardFaults(string name, StoryToward toward)
+    {
+        if (toward.Stops.Count == 0)
+        {
+            yield return $"{name}.toward is an empty list.";
+        }
+
+        foreach (var (stop, index) in toward.Stops.Select((stop, index) => (stop, index)))
+        {
+            var at = toward.IsList ? $"{name}.toward[{index.ToString(CultureInfo.InvariantCulture)}]" : $"{name}.toward";
+
+            if (string.IsNullOrWhiteSpace(stop.System))
+            {
+                yield return $"{at} has no system name.";
+            }
+            else if (stop.Position is not null && stop.Position.Count != 3)
+            {
+                yield return $"{at}.position has {stop.Position.Count.ToString(CultureInfo.InvariantCulture)} numbers, not three.";
+            }
+            else if (stop.Position is null && StoryDestinations.PositionOf(stop.System) is null)
+            {
+                yield return $"{at} is {stop.System}, which is not one of {string.Join(", ", StoryDestinations.Names)}.";
+            }
+        }
+    }
+
     private static IEnumerable<string> BlackFaults(StorySecret secret, IReadOnlyList<string> keys, StoryPacing pacing)
     {
         var spans = secret.Black ?? [];
@@ -1388,9 +1414,9 @@ public sealed class StoryCatalog
 
             if (span.Toward is { } toward)
             {
-                if (StoryDestinations.PositionOf(toward) is null)
+                foreach (var fault in TowardFaults(name, toward))
                 {
-                    yield return $"{name}.toward is {toward}, which is not one of {string.Join(", ", StoryDestinations.Names)}.";
+                    yield return fault;
                 }
 
                 if (to > StoryAboard.Order("breakIntoThree"))

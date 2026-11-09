@@ -195,6 +195,9 @@ public sealed record AdventureStory(
     /// <summary>The destination of the span the chapter lies in, once the beacon has been scanned; null for a chapter outside the black or in a span with none.</summary>
     public string? Toward { get; init; }
 
+    /// <summary>Where <see cref="Toward"/> is, when the span named the position; null for a <see cref="StoryDestinations"/> name.</summary>
+    public StarPosition? TowardAt { get; init; }
+
     /// <summary>The system the Commander named when changing an objective and has not reached; null when none or when the chapter has a purpose of its own.</summary>
     public AdventureHeading? Chosen { get; init; }
 

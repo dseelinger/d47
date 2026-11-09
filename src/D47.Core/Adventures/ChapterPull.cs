@@ -50,9 +50,9 @@ public static class ChapterPull
     /// <summary>The most stations, and the most landable bodies, searched for around the waypoint.</summary>
     public const int PlacesPerKind = 20;
 
-    /// <summary>Whether a chapter starting at <paramref name="start"/> in a span that names <paramref name="toward"/> is pulled toward it.</summary>
-    public static bool Pulls(string? toward, StarPosition? start) =>
-        toward is not null && start is { } at && StoryDestinations.PositionOf(toward) is { } there && at.DistanceTo(there) > StoryDestinations.Arrived;
+    /// <summary>Whether a chapter starting at <paramref name="start"/> in a span travelling to <paramref name="target"/> is pulled toward it.</summary>
+    public static bool Pulls(StarPosition? target, StarPosition? start) =>
+        target is { } there && start is { } at && at.DistanceTo(there) > StoryDestinations.Arrived;
 
     /// <summary>The leg <paramref name="ask"/> travels from <paramref name="start"/>, or null where it travels none.</summary>
     public static ChapterLeg? Of(AdventureAsk ask, StarPosition? start)
@@ -84,8 +84,8 @@ public static class ChapterPull
             return new ChapterLeg(home, homeAt, true, at.DistanceTo(homeAt) <= HomeLeg.Home);
         }
 
-        return story is { InTheBlack: true, Toward: { } toward } && StoryDestinations.PositionOf(toward) is { } there
-            ? new ChapterLeg(toward, there, false, !Pulls(toward, at))
+        return story is { InTheBlack: true, Toward: { } toward } && (story.TowardAt ?? StoryDestinations.PositionOf(toward)) is { } there
+            ? new ChapterLeg(toward, there, false, !Pulls(there, at))
             : null;
     }
 

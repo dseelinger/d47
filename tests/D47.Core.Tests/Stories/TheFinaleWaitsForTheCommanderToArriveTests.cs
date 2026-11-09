@@ -12,6 +12,11 @@ public sealed class TheFinaleWaitsForTheCommanderToArriveTests
 {
     private static readonly StorySecret HomeBound = Secret with { Black = [new StoryBlackSpan("breakIntoTwo", "breakIntoThree", "Sol")] };
 
+    private static readonly StorySecret TwoStops = Secret with
+    {
+        Black = [new StoryBlackSpan("breakIntoTwo", "breakIntoThree", new StoryToward([new StoryStop("A", null, [0, 0, 25000]), new StoryStop("Home", null, [0, 0, 0])]) { IsList = true })],
+    };
+
     private static readonly StorySecret NoDestination = Secret with { Black = [new StoryBlackSpan("breakIntoTwo", "breakIntoThree")] };
 
     [Fact]
@@ -26,6 +31,31 @@ public sealed class TheFinaleWaitsForTheCommanderToArriveTests
         Assert.Null(asked.FinaleChapter);
         Assert.Equal("Sol", asked.Toward);
         Assert.Null(fixtures.Stories.Current("F1")!.FinaleFrom);
+    }
+
+    [Fact]
+    public async Task TheFinaleWaitsForTheLastStopOfAListNotTheFirst()
+    {
+        using var fixtures = At(TwoStops, new StarPosition(0, 0, 24500), false, legs: new Dictionary<int, int> { [0] = 0 });
+
+        Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now.AddDays(361), CancellationToken.None));
+
+        var asked = Assert.Single(fixtures.Asks).Story!;
+
+        Assert.Null(asked.FinaleChapter);
+        Assert.Equal("Home", asked.Toward);
+        Assert.Equal(StarPosition.Origin, asked.TowardAt);
+        Assert.Equal(1, fixtures.Stories.Current("F1")!.TowardLegs[0]);
+    }
+
+    [Fact]
+    public async Task TheFinaleStartsOnceTheCommanderIsNearTheLastStopOfAList()
+    {
+        using var fixtures = At(TwoStops, new StarPosition(0, 0, 500), legs: new Dictionary<int, int> { [0] = 1 });
+
+        Assert.Null(await fixtures.Director.WriteNextAsync("F1", Now.AddDays(361), CancellationToken.None));
+
+        Assert.Equal(1, Assert.Single(fixtures.Asks).Story!.FinaleChapter);
     }
 
     [Fact]
@@ -58,7 +88,7 @@ public sealed class TheFinaleWaitsForTheCommanderToArriveTests
         Assert.Equal(1, Assert.Single(fixtures.Asks).Story!.FinaleChapter);
     }
 
-    private static StoryFixtures At(StorySecret secret, StarPosition? position, bool finale = true)
+    private static StoryFixtures At(StorySecret secret, StarPosition? position, bool finale = true, IReadOnlyDictionary<int, int>? legs = null)
     {
         var fixtures = new StoryFixtures(finale
             ? new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(NextLines), RoundScriptedLlmProvider.Saying(NothingObjected))
@@ -80,6 +110,7 @@ public sealed class TheFinaleWaitsForTheCommanderToArriveTests
             PickedAt = Now,
             BeaconScanAt = Now,
             CluesGiven = 14,
+            TowardLegs = legs ?? new Dictionary<int, int>(),
         });
 
         return fixtures;

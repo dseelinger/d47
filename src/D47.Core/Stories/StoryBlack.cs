@@ -1,3 +1,4 @@
+using D47.Core.Journal;
 namespace D47.Core.Stories;
 
 /// <summary>How much of a story's length takes place in the black.</summary>
@@ -66,32 +67,55 @@ public static class StoryBlack
         }
     }
 
-    /// <summary>The destination of the span covering the latest of <paramref name="stageBeats"/> that any span covers, or null.</summary>
-    public static string? Toward(StorySecret secret, IReadOnlyList<string> stageBeats)
+    /// <summary>The stop the span covering the latest of <paramref name="stageBeats"/> that any span covers travels to, or null.</summary>
+    public static StoryLeg? Leg(StorySecret secret, IReadOnlyList<string> stageBeats, IReadOnlyDictionary<int, int> legs, StarPosition? at)
     {
         ArgumentNullException.ThrowIfNull(secret);
         ArgumentNullException.ThrowIfNull(stageBeats);
+        ArgumentNullException.ThrowIfNull(legs);
 
         var latest = -1;
-        string? toward = null;
+        var found = -1;
 
-        foreach (var span in (secret.Black ?? []).OfType<StoryBlackSpan>())
+        foreach (var (span, index) in (secret.Black ?? []).Select((span, index) => (span, index)))
         {
-            var from = span.From is null ? 0 : StoryAboard.Order(span.From);
-            var to = span.To is null ? StoryBeats.Keys.Count : StoryAboard.Order(span.To);
+            var from = span?.From is null ? 0 : StoryAboard.Order(span.From);
+            var to = span?.To is null ? StoryBeats.Keys.Count : StoryAboard.Order(span.To);
 
-            if (from < 0 || to < 0)
+            if (span is null || from < 0 || to < 0)
             {
                 continue;
             }
 
-            foreach (var at in stageBeats.Select(StoryAboard.Order).Where(at => at > latest && from <= at && at < to))
+            foreach (var beat in stageBeats.Select(StoryAboard.Order).Where(beat => beat > latest && from <= beat && beat < to))
             {
-                latest = at;
-                toward = span.Toward;
+                latest = beat;
+                found = index;
             }
         }
 
-        return toward;
+        if (found < 0 || secret.Black![found].Toward is not { } toward)
+        {
+            return null;
+        }
+
+        var places = toward.Stops.Select(stop => stop.Place()).OfType<StoryTowardPlace>().ToList();
+
+        if (places.Count == 0)
+        {
+            return null;
+        }
+
+        var leg = Math.Clamp(legs.GetValueOrDefault(found), 0, places.Count - 1);
+
+        while (leg < places.Count - 1 && at is { } here && here.DistanceTo(places[leg].Position) <= StoryDestinations.Arrived)
+        {
+            leg++;
+        }
+
+        return new StoryLeg(found, leg, places[leg]);
     }
 }
+
+/// <summary>The stop a span is travelling to: the span's index in the hidden entry's <c>black</c>, the stop's index in its <c>toward</c> list, and the stop.</summary>
+public sealed record StoryLeg(int Span, int Leg, StoryTowardPlace To);

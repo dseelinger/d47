@@ -3518,8 +3518,9 @@ public sealed class StoryDirector(
         var beaconChapter = reach is { InReach: true };
         var authored = StoryBlack.Covers(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne));
         var inTheBlack = authored || span is not null;
-        var toward = authored && story.BeaconScanAt is not null ? StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne)) : null;
-        var pulled = finaleChapter is null && !beaconChapter && ChapterPull.Pulls(toward, game?.Location.StarPos);
+        var leg = authored && story.BeaconScanAt is not null ? StoryBlack.Leg(secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne), story.TowardLegs, game?.Location.StarPos) : null;
+        var toward = leg?.To.System;
+        var pulled = finaleChapter is null && !beaconChapter && ChapterPull.Pulls(leg?.To.Position, game?.Location.StarPos);
         var home = inTheBlack ? null : HomeLeg.Next(story.HomeTarget, game?.Location.StarPos, replacing ? story.Chapters.SkipLast(1).ToList() : story.Chapters, story.ChangedChapters, finaleChapter is not null || beaconChapter);
         var chosen = story.ChosenDestination;
         var ordinary = finaleChapter is null && !beaconChapter && toward is null;
@@ -3732,6 +3733,7 @@ public sealed class StoryDirector(
                 sightseeing ? sights : null,
                 toward,
                 heading,
+                towardAt: leg?.To.Position,
                 laterActOne: laterActOne,
                 span: span,
                 spanReach: spanReach),
@@ -3782,6 +3784,7 @@ public sealed class StoryDirector(
             DrawnSpan = span,
             SpanClosedAt = spanClosedAt,
             ChosenDestination = chosen,
+            TowardLegs = leg is null ? still.TowardLegs : new Dictionary<int, int>(still.TowardLegs) { [leg.Span] = leg.Leg },
             Detour = setAside ? null : still.Detour,
             Rewrite = null,
             Rewrites = rewrites,
@@ -3850,6 +3853,7 @@ public sealed class StoryDirector(
         IReadOnlyList<NotablePlace>? sights = null,
         string? toward = null,
         AdventureHeading? chosen = null,
+        StarPosition? towardAt = null,
         bool laterActOne = false,
         DrawnSpan? span = null,
         SpanReach? spanReach = null)
@@ -3893,6 +3897,7 @@ public sealed class StoryDirector(
             OnCarrier = StoryAboard.OnCarrierBySpan(secret, story),
             InTheBlack = inTheBlack,
             Toward = toward,
+            TowardAt = towardAt,
             Chosen = chosen,
             Span = span,
             SpanReach = spanReach,
@@ -3909,7 +3914,7 @@ public sealed class StoryDirector(
 
     /// <summary>Whether the story's current stage lies in a span whose destination the Commander has not reached.</summary>
     private static bool StillTravelling(StorySecret secret, Story story, StarPosition? at) =>
-        ChapterPull.Pulls(StoryBlack.Toward(secret, StoryClues.BeatKeys(story.Pacing, StoryClues.Stage(story), true, null)), at);
+        ChapterPull.Pulls(StoryBlack.Leg(secret, StoryClues.BeatKeys(story.Pacing, StoryClues.Stage(story), true, null), story.TowardLegs, at)?.To.Position, at);
 
     private bool FinaleDue(Story story, DateTimeOffset now) =>
         StoryClues.FinaleDue(story, now, story.GoalsAtPick is not null && GoalClimb.AllDone(GoalsOf(story.Id)));

@@ -24,7 +24,7 @@ public sealed class AStoryBlackSpanCanNameADestinationTests
     public void ASpanWithNoTowardIsUnchanged()
     {
         Assert.Empty(StoryCatalog.Faults(Card, Spanning(new StoryBlackSpan("breakIntoTwo", "midpoint"))));
-        Assert.Null(StoryBlack.Toward(Spanning(new StoryBlackSpan("breakIntoTwo", "midpoint")), ["bStory"]));
+        Assert.Null(TowardOf(Spanning(new StoryBlackSpan("breakIntoTwo", "midpoint")), ["bStory"]));
     }
 
     [Fact]
@@ -65,19 +65,22 @@ public sealed class AStoryBlackSpanCanNameADestinationTests
             new StoryBlackSpan("breakIntoTwo", "bStory", "Sol"),
             new StoryBlackSpan("bStory", "midpoint", "Colonia"));
 
-        Assert.Equal("Sol", StoryBlack.Toward(secret, ["breakIntoTwo"]));
-        Assert.Equal("Colonia", StoryBlack.Toward(secret, ["breakIntoTwo", "bStory"]));
-        Assert.Equal("Colonia", StoryBlack.Toward(secret, ["bStory", "breakIntoTwo"]));
-        Assert.Null(StoryBlack.Toward(secret, ["midpoint"]));
+        Assert.Equal("Sol", TowardOf(secret, ["breakIntoTwo"]));
+        Assert.Equal("Colonia", TowardOf(secret, ["breakIntoTwo", "bStory"]));
+        Assert.Equal("Colonia", TowardOf(secret, ["bStory", "breakIntoTwo"]));
+        Assert.Null(TowardOf(secret, ["midpoint"]));
     }
 
     [Fact]
     public void TheLatestCoveredBeatDecidesEvenWhenALaterBeatIsOutsideEverySpan() =>
-        Assert.Equal("Sol", StoryBlack.Toward(Spanning(new StoryBlackSpan("breakIntoTwo", "bStory", "Sol")), ["breakIntoTwo", "bStory"]));
+        Assert.Equal("Sol", TowardOf(Spanning(new StoryBlackSpan("breakIntoTwo", "bStory", "Sol")), ["breakIntoTwo", "bStory"]));
 
     [Fact]
     public void ASealedEntryReadsTowardBack() =>
-        Assert.Equal("Sol", Assert.Single(StoryCatalog.Unseal(SealedWith(Spanning(new StoryBlackSpan("breakIntoTwo", "midpoint", "Sol"))))).Black![0].Toward);
+        Assert.Equal("Sol", Assert.Single(StoryCatalog.Unseal(SealedWith(Spanning(new StoryBlackSpan("breakIntoTwo", "midpoint", "Sol"))))).Black![0].Toward!.Stops[0].System);
+
+    private static string? TowardOf(StorySecret secret, IReadOnlyList<string> beats) =>
+        StoryBlack.Leg(secret, beats, new Dictionary<int, int>(), null)?.To.System;
 
     private static string SealedWith(StorySecret secret)
     {

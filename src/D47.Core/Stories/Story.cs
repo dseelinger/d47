@@ -181,6 +181,9 @@ public sealed record Story
     /// <summary>The system the Commander named when changing an objective, which later chapters travel toward until they arrive; null when none.</summary>
     public AdventureHeading? ChosenDestination { get; init; }
 
+    /// <summary>For each span of the hidden entry's <c>black</c>, by index, the stop of its <c>toward</c> list it has reached.</summary>
+    public IReadOnlyDictionary<int, int> TowardLegs { get; init; } = new Dictionary<int, int>();
+
     /// <summary>The stretches the Commander had the story switched off, oldest first. The last is open while it is off.</summary>
     public IReadOnlyList<StoryOffSpan> OffSpans { get; init; } = [];
 
