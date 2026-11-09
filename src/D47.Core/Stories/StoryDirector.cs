@@ -2398,12 +2398,8 @@ public sealed class StoryDirector(
         var slots = afterBeacon
             ? await RewriteSlotsAsync(story, chapter, rewrite, game, previous, number, finaleChapter, sightseeing, cancellationToken).ConfigureAwait(false)
             : null;
-        var ranks = chapter.Beats.SelectMany(beat => beat.Steps).Select(step => step.Trigger).Where(trigger => trigger.Kind == TriggerKind.Rank).ToList();
-        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (!afterBeacon || finaleChapter is not null || ChapterFit.ServesLongHaul(slots, ranks, sightseeing));
-
         return new AdventureAsk(
-            longHaul ? AdventureReach.Anywhere : AdventureReach.Session,
+            AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
             Story: Asked(
@@ -2416,7 +2412,6 @@ public sealed class StoryDirector(
                 beaconBeat,
                 reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why, reach.Unarmed, reach.Carrier, reach.EasierWith) : null,
                 reach?.InReach != false,
-                longHaul,
                 slots,
                 finaleChapter is null ? null : story.FinaleDestination,
                 hull: game?.Ship.Type,
@@ -3703,14 +3698,11 @@ public sealed class StoryDirector(
         // A limited draw that fell back to the whole table works no arc.
         goals = GoalClimb.Worked(goals, slots);
 
-        var longHaul = ChapterFit.IsLongHaul(story.Pacing, game)
-            && (story.BeaconScanAt is null || finaleChapter is not null || homeLeg is not null || heading is not null || pulled || spanTravels || ChapterFit.ServesLongHaul(slots, [.. goals.Select(goal => goal.Objective).OfType<AdventureTrigger>()], sightseeing));
-
         var opening = Opening(frontierId, story, secret, StoryClues.BeatKeys(story.Pacing, stage, reach?.InReach != false, finaleChapter, laterActOne), game?.Ship.Type);
 
         var ask = new AdventureAsk(
             span is { Phase: DrawnSpanPhase.There } && heading is null ? AdventureReach.Session
-            : longHaul || homeLeg is not null || heading is not null || pulled || span is not null ? AdventureReach.Anywhere : AdventureReach.Session,
+            : homeLeg is not null || heading is not null || pulled || span is not null ? AdventureReach.Anywhere : AdventureReach.Session,
             AdventureLength.Evening,
             Chapter: previous,
             Story: Asked(
@@ -3723,7 +3715,6 @@ public sealed class StoryDirector(
                 reach is { InReach: true } ? new AdventureBeacon(reach.Address, reach.System, reach.EasierWith, reach.SwapTo) { SwapHull = reach.SwapHull, SwapSystem = reach.SwapSystem } : null,
                 reach is { InReach: false, Why: { } why } ? new AdventureBeaconAway(reach.System, reach.LightYears, why, reach.Unarmed, reach.Carrier, reach.EasierWith) : null,
                 reach?.InReach != false,
-                longHaul,
                 slots,
                 finaleChapter > 1 ? story.FinaleDestination : keptDestination,
                 homeLeg,
@@ -3843,7 +3834,6 @@ public sealed class StoryDirector(
         AdventureBeacon? beacon,
         AdventureBeaconAway? away,
         bool beaconInReach,
-        bool longHaul,
         IReadOnlyList<DrawnActivity>? slots,
         AdventureDestination? destination,
         string? home = null,
@@ -3879,7 +3869,6 @@ public sealed class StoryDirector(
             card?.Genre,
             card?.Genre is { } genre ? ChapterFit.Elements.GetValueOrDefault(genre) : null,
             ChapterFit.Size(story.Pacing),
-            longHaul,
             slots,
             destination,
             story.Refused,

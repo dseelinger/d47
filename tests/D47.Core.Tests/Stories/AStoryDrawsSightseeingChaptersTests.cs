@@ -45,7 +45,7 @@ public sealed class AStoryDrawsSightseeingChaptersTests
     private static string StoryThat(bool sightsees) =>
         Enumerable.Range(0, 200).Select(index => $"sight-story-{index}").First(id => Rolls(id) == sightsees);
 
-    private static StoryFixtures AfterTheScan(string id, double x, long credits = 300_000_000, bool scanned = true, IReadOnlyList<StationSummary>? stations = null)
+    private static StoryFixtures AfterTheScan(string id, double x, long credits = 300_000_000, bool scanned = true, IReadOnlyList<StationSummary>? stations = null, string ship = "sidewinder")
     {
         var fixtures = new StoryFixtures(
             new RoundScriptedLlmProvider(
@@ -71,7 +71,7 @@ public sealed class AStoryDrawsSightseeingChaptersTests
             });
         }
 
-        var state = Loaded(credits);
+        var state = Loaded(credits, ship);
 
         state.Apply(AdventureFixtures.Event(
             $$"""{ "timestamp":"{{AdventureFixtures.Stamp(Now)}}", "event":"FSDJump", "StarSystem":"Here", "SystemAddress":7, "StarPos":[{{x}},0,0] }"""));
@@ -88,7 +88,7 @@ public sealed class AStoryDrawsSightseeingChaptersTests
 
     [Trait("Category", "Integration")]
     [Fact]
-    public async Task ADrawnChapterIsAskedForAnywhereWithOneOfItsSights()
+    public async Task ADrawnChapterIsAskedAtTheSessionReachWithOneOfItsSights()
     {
         var id = StoryThat(sightsees: true);
         using var fixtures = AfterTheScan(id, 100);
@@ -97,9 +97,8 @@ public sealed class AStoryDrawsSightseeingChaptersTests
 
         var ask = await Asked(fixtures, id);
 
-        Assert.Equal(AdventureReach.Anywhere, ask.Reach);
-        Assert.True(ask.Story!.LongHaul);
-        Assert.Single(ask.Story.Sights!);
+        Assert.Equal(AdventureReach.Session, ask.Reach);
+        Assert.Single(ask.Story!.Sights!);
         Assert.Contains(ask.Story.Sights![0].Name, new[] { "Veil", "Cave" });
     }
 
@@ -156,7 +155,7 @@ public sealed class AStoryDrawsSightseeingChaptersTests
 
     [Trait("Category", "Integration")]
     [Fact]
-    public async Task AStoryThatIsNotLongHaulSightsees()
+    public async Task AStoryWithFewCreditsSightsees()
     {
         var id = StoryThat(sightsees: true);
         using var fixtures = AfterTheScan(id, 100, credits: 1_000);
@@ -167,6 +166,23 @@ public sealed class AStoryDrawsSightseeingChaptersTests
 
         Assert.Equal(["Veil"], ask.Story!.Sights!.Select(sight => sight.Name));
         Assert.Equal(AdventureReach.Session, ask.Reach);
+    }
+
+    [Trait("Category", "Integration")]
+    [Fact]
+    public async Task AnOrdinaryChapterOfALongStoryPlansAtTheSessionReachWithAnExplorerOwned()
+    {
+        var id = StoryThat(sightsees: true);
+        using var fixtures = AfterTheScan(id, 100, credits: 1_000, scanned: false, ship: "explorer_nx");
+
+        fixtures.Director.Places = () => new Places(() => [Sight("Veil", "Alpha", 20_000)]);
+
+        var ask = await Asked(fixtures, id);
+
+        Assert.Equal(AdventureReach.Session, ask.Reach);
+        Assert.Null(ask.Story!.Span);
+        Assert.Null(ask.Story.Sights);
+        Assert.Equal(AdventureGenerator.Radius(AdventureReach.Session, 30.5, carrier: false), AdventureGenerator.ReachOf(ask, new StarPosition(100, 0, 0), 30.5, carrier: false));
     }
 
     [Trait("Category", "Integration")]

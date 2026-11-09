@@ -59,13 +59,13 @@ public sealed class ASpanChapterTravelsTowardItsTargetTests
     }
 
     [Fact]
-    public void AChapterAtTheTargetPlansAtTheSessionReachEvenInALongHaulStory()
+    public void AChapterAtTheTargetPlansAtTheSessionReach()
     {
         var ask = Ask(Span(DrawnSpanPhase.There));
 
         Assert.Equal(
             AdventureGenerator.Radius(AdventureReach.Session, 30, carrier: false),
-            AdventureGenerator.ReachOf(ask with { Story = ask.Story! with { LongHaul = true } }, Target, 30, carrier: false));
+            AdventureGenerator.ReachOf(ask, Target, 30, carrier: false));
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public sealed class ASpanChapterTravelsTowardItsTargetTests
     }
 
     [Fact]
-    public void WithNoKnownRAnAuthoredSpanKeepsTheLongHaulReach()
+    public void WithNoKnownRAnAuthoredSpanTakesTheOrdinaryRadius()
     {
         var authored = new AdventureAsk(AdventureReach.Anywhere, Story: PlannedChapterWorld.Story with { InTheBlack = true, Toward = "Colonia" });
 

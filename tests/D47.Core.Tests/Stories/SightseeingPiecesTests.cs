@@ -129,8 +129,4 @@ public sealed class SightseeingPiecesTests
             Assert.NotEqual(ChapterDraw.Seed("story", chapter, 0), ChapterDraw.SightSeed("story", chapter));
         }
     }
-
-    [Fact]
-    public void ASightseeingChapterServesALongHaul() =>
-        Assert.True(ChapterFit.ServesLongHaul(null, null, sightseeing: true));
 }

@@ -88,16 +88,6 @@ public sealed class APickedCommandersOwnRecordsReachAChapterTests
         Assert.True(outcome.Result.Succeeded, outcome.Result.Refusal);
     }
 
-    [Fact]
-    public void ALocalisedExplorerInTheFleetAllowsALongHaul()
-    {
-        var store = PickedWhileAnotherIsInGame(fleet: false);
-
-        store.Active!.Fleet = Fleet with { Ships = [new StoredShip(12, "Caspian Explorer", null, "LTT 7786")] };
-
-        Assert.True(ChapterFit.IsLongHaul(StoryPacing.ThreeMonths, store.Active));
-    }
-
     private static (AdventureOutcome Result, int Requests) Generate(GameStateStore store)
     {
         var provider = new RoundScriptedLlmProvider(RoundScriptedLlmProvider.Saying(Lines()), RoundScriptedLlmProvider.Saying(NothingObjected));

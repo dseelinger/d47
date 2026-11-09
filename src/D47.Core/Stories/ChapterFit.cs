@@ -5,7 +5,7 @@ using D47.Core.Journal;
 namespace D47.Core.Stories;
 
 /// <summary>
-/// What a story chapter is fitted to: the genre's three Save the Cat elements, the long-haul threshold, the chapter
+/// What a story chapter is fitted to: the genre's three Save the Cat elements, the chapter
 /// size, and the activity a comfort-zone chapter must contain.
 /// </summary>
 public static class ChapterFit
@@ -24,9 +24,6 @@ public static class ChapterFit
         ["Out of the Bottle"] = ["a deserving hero", "a spell", "a lesson"],
         ["Superhero"] = ["a special power", "a nemesis", "a curse"],
     };
-
-    /// <summary>Credits at the last load from which a chapter may go anywhere.</summary>
-    public const long LongHaulCredits = 250_000_000;
 
     /// <summary>Credits at the last load from which a chapter may have the Commander buy a fleet carrier.</summary>
     public const long FleetCarrierCredits = 7_000_000_000;
@@ -76,12 +73,6 @@ public static class ChapterFit
             : $"a {name} costs {price.ToString("N0", CultureInfo.InvariantCulture)} and the Commander needs {needed.ToString("N0", CultureInfo.InvariantCulture)} credits at the last load to buy it";
     }
 
-    /// <summary>The hull that allows a long haul whatever the credits: the Caspian Explorer.</summary>
-    public const string LongHaulHull = "explorer_nx";
-
-    /// <summary>The shortest story length a long haul is allowed in.</summary>
-    public static readonly StoryPacing LongHaulFrom = StoryPacing.ThreeMonths;
-
     /// <summary>Every how many chapters after the beacon a chapter must leave the comfort zone.</summary>
     public const int ComfortEvery = 3;
 
@@ -95,30 +86,6 @@ public static class ChapterFit
         (new AdventureActivity("rescue", TriggerKind.Rescue), "Search_And_Rescue.SearchRescue_Count"),
         (new AdventureActivity("passenger mission", TriggerKind.Mission, "Mission_Passenger"), "Passengers.Passengers_Missions_Delivered"),
     ];
-
-    /// <summary>Whether a chapter of a story this long may go anywhere, for these credits and this game state.</summary>
-    public static bool IsLongHaul(StoryPacing pacing, CommanderGameState? state)
-    {
-        ArgumentNullException.ThrowIfNull(pacing);
-
-        return pacing.FinaleDay >= LongHaulFrom.FinaleDay
-               && state is not null
-               && (state.Session.Balance >= LongHaulCredits
-                   || IsLongHaulHull(state.Ship.Type)
-                   || state.Fleet.Ships.Any(ship => IsLongHaulHull(ship.Type)));
-    }
-
-    /// <summary>
-    /// Whether a chapter built on these drawn activities and these objectives serves a long haul: a discovery, map, footfall or
-    /// organic slot, or an objective that is a rank on the Explore or Exobiologist ladder, or a sightseeing chapter.
-    /// </summary>
-    public static bool ServesLongHaul(IReadOnlyList<DrawnActivity>? slots, IReadOnlyList<AdventureTrigger>? objectives, bool sightseeing = false) =>
-        sightseeing
-        || slots?.Any(slot => slot.Kind is TriggerKind.Discover or TriggerKind.Map or TriggerKind.Footfall or TriggerKind.Organic) == true
-        || objectives?.Any(objective => objective is { Kind: TriggerKind.Rank, Career: "Explore" or "Exobiologist" }) == true;
-
-    private static bool IsLongHaulHull(string? type) =>
-        string.Equals(Knowledge.EliteSpecifications.HullSymbol(type) ?? type, LongHaulHull, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The chapter size the writer is given for a story this long.</summary>
     public static string Size(StoryPacing pacing)

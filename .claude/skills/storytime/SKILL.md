@@ -257,10 +257,8 @@ add.
   `{"from": <beat>, "to": <beat>}`, each a beat key of the length's sheet or null for the story's start or end,
   `from` included and `to` not, as with `aboard`. `[{"from": null, "to": null}]` is the whole story. Spans do not
   overlap. A chapter whose stage hands the writer a beat inside a span is held to neither the Sol band nor the home
-  leg, so it may stay far from the bubble. Leave `black` out of a story that never goes far out. A chapter still
-  travels far only at the long-haul reach (#1585), so a story with a span needs a premise and a level that can reach a
-  long-haul ship: a story of 3 months or longer for a Commander with the credits or the hull `ChapterFit.IsLongHaul`
-  names. Rule 10 still applies in a span: no beat or clue sends the Commander to a permit system.
+  leg, so it may stay far from the bubble. Leave `black` out of a story that never goes far out. A chapter
+  travels far only in a span, at the span reach. Rule 10 still applies in a span: no beat or clue sends the Commander to a permit system.
   A span may also carry `"toward"`: `Sol`, `Colonia`, `Sagittarius A*` or `Beagle Point`, any system as an
   object `{"system": "...", "address": 123, "position": [x, y, z]}` (`address` optional, position required for a
   system that is not one of the four), or an ordered list of names and objects; the span travels to each in turn,
@@ -327,7 +325,7 @@ python tools/story-image.py --file <scratchpad>/<story-id>.<cast-id>.txt --name 
    repository file.
 3. **Check for gaps.** Where the story needs something the format or rule 5's beat kinds cannot
    express, record it on the draft page as a gap and name the issue it would change. Do not
-   invent a kind. A finale that needs long-haul flying is a gap against #728 until that is
+   invent a kind. A finale that needs far flying outside a span is a gap against #728 until that is
    decided.
 4. **Publish** both layers on the story's draft page. Once the cast is settled,
    generate the cast pictures and add them to it.

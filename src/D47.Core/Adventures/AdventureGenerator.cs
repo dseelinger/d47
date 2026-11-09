@@ -169,7 +169,6 @@ public sealed record AdventureStory(
     string? Genre = null,
     IReadOnlyList<string>? GenreElements = null,
     string? ChapterSize = null,
-    bool LongHaul = false,
     IReadOnlyList<DrawnActivity>? Slots = null,
     AdventureDestination? Destination = null,
     IReadOnlyList<string>? Refused = null,
@@ -204,7 +203,7 @@ public sealed record AdventureStory(
     /// <summary>The span in the black the draw opened, in the phase this chapter plays; null when none is open.</summary>
     public Stories.DrawnSpan? Span { get; init; }
 
-    /// <summary>The reach a chapter that travels in the black takes in place of the long-haul reach, and the ship that gives it; null where none applies or none is known.</summary>
+    /// <summary>The reach a chapter that travels in the black takes in place of the ordinary reach, and the ship that gives it; null where none applies or none is known.</summary>
     public SpanReach? SpanReach { get; init; }
 }
 
@@ -419,9 +418,6 @@ public sealed partial class AdventureGenerator(
     /// <summary>The most notable places a chapter is offered.</summary>
     public const int MostNotable = 12;
 
-    /// <summary>The hop a long-haul story chapter may make: from the bubble to Sagittarius A*.</summary>
-    public const double LongHaulLightYears = 30000;
-
     /// <summary>Light years for a reach, from what the Commander can actually move.</summary>
     public static double Radius(AdventureReach reach, double? jumpRange, bool carrier)
     {
@@ -437,13 +433,11 @@ public sealed partial class AdventureGenerator(
 
     /// <summary>
     /// The longest one hop of a chapter of <paramref name="ask"/> may be: the story's <see cref="AdventureStory.SpanReach"/> on a leg that
-    /// travels at it, a long haul's, or the <see cref="Radius"/> of its reach. A drawn span's chapter at its target takes the session reach.
+    /// travels at it, or the <see cref="Radius"/> of its reach. A drawn span's chapter at its target takes the session reach.
     /// </summary>
     public static double ReachOf(AdventureAsk ask, StarPosition? position, double? jumpRange, bool carrier) =>
         SpanReachOf(ask, position)?.LightYears
-        ?? (ask is { Reach: AdventureReach.Anywhere, Story: { LongHaul: true, Home: null, Span: null } } && ChapterPull.Of(ask, position) is not { Arrived: false }
-            ? LongHaulLightYears
-            : Radius(ask.Story?.Span is { Phase: Stories.DrawnSpanPhase.There } ? AdventureReach.Session : ask.Reach, jumpRange, carrier));
+        ?? Radius(ask.Story?.Span is { Phase: Stories.DrawnSpanPhase.There } ? AdventureReach.Session : ask.Reach, jumpRange, carrier);
 
     /// <summary>The story's <see cref="AdventureStory.SpanReach"/> where the chapter's leg travels at it; null otherwise.</summary>
     public static SpanReach? SpanReachOf(AdventureAsk ask, StarPosition? position)

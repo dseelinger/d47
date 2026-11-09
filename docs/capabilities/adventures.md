@@ -875,13 +875,6 @@ step is, for example "Next: collect 3 bounties." Change objective, Mark done and
 are on. A chapter has as many steps as its story needs. In a chapter built on drawn activities, d47 builds the
 steps: the place an activity needs comes first in its objective, and a sight beyond reach is reached through stops on the way.
 
-**The long haul.** A chapter keeps to a session's flying unless you had 250,000,000 credits or more at
-the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
-may go anywhere, as far as Colonia or Sagittarius A*, but only after the beacon scan and before the finale,
-and only when the chapter draws a discovery, map, footfall or organic activity or its Goals step is an
-Exploration or Exobiologist rank. Any other chapter keeps to a session's flying. Below the credits, the
-writer is not told it exists.
-
 **Sightseeing.** With notable places on, any story's chapter after the beacon scan and before the finale,
 other than one heading home or in a span, may be drawn as a sightseeing chapter, with a chance that grows with
 your Exploration record and falls after a sightseeing chapter. d47 offers the eight places nearest you, none
@@ -939,7 +932,7 @@ objectives for this stop.
 **In the black.** A story's hidden entry may mark spans of its beat sheet as in the black. A chapter whose stage hands
 the writer a beat inside a span is held to neither rule above: it has no Sol band, keeps no place objective for one,
 is not sent home, and clears a home target already set. The writer is told the chapter takes place in the black and
-its stops may be far from the bubble. A chapter in the black still travels far only at the long-haul reach. Outside
+its stops may be far from the bubble. A chapter in the black travels far only in a span, at the span reach. Outside
 every span both rules apply.
 
 A span may name a destination with `"toward"`: Sol, Colonia, Sagittarius A* or Beagle Point, or any system as an object `{ "system": "...", "address": 123, "position": [x, y, z] }` (`address` optional; the position comes from the entry, so no network call places it). `"toward"` may also be an ordered list of names and objects: the span travels to each in turn, and the next becomes the destination once the Commander is within 1,000 light years of the current one; the span plays on as one with no destination after the last. The stop reached is kept with the story across a restart. A position has three numbers and a system name is not empty. From the beacon scan on, each chapter in such a span travels toward it by the rule for a chapter heading home: at the span reach R, with no sights, its last stop at least three quarters of R nearer the destination (2,250 light years a chapter for a fleet whose best jump range is 30 light years, so Colonia is about 10 chapters from the bubble, or 3,750 at a fleet carrier's 5,000, about 6) or within 1,000 light years of it, and the places listed on the way. A chapter that starts within 1,000 light years of the destination is told it has arrived, and the rest of the span plays as a span with no destination. A span with a destination may not reach the finale or, in a story that flies to a real beacon, start before `breakIntoTwo`. A span with a destination that covers the last stage before the finale holds the finale until the Commander arrives at the last destination in its list: with every clue given and the finale's day passed, chapters are still written in that stage and pulled toward the destination until the Commander is within 1,000 light years of it. With no known position the finale starts as usual.
@@ -1018,7 +1011,7 @@ An activity is excluded unless the ship aboard and the Commander pass its gate:
 | A station with Frontline Solutions in a system at war, within reach | onfootbond |
 
 The station gate is checked once per chapter, before the draw. `StoryDirector` asks the galaxy search for fixed stations
-within the chapter's reach of the Commander's system (300 light years or more, or the long-haul reach) and counts one that
+within the chapter's reach of the Commander's system (300 light years or more, or the span reach in a span) and counts one that
 needs no permit and has a pad for the ship aboard. With none, the rows in the last gate row are never drawn, and a comfort
 chapter's first slot can only be mine or organic. When the position is unknown or the query
 fails, the draw is not gated. A redrawn slot after **Never ask this** follows the same gate.
