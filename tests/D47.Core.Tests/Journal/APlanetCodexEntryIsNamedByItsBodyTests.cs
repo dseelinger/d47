@@ -34,6 +34,7 @@ public class APlanetCodexEntryIsNamedByItsBodyTests
     [InlineData("Standard_Giant_With_Water_Life", "Gas giant with water-based life")]
     [InlineData("Standard_Giant_With_Ammonia_Life", "Gas giant with ammonia-based life")]
     [InlineData("Standard_Water_Giant", "Water giant")]
+    [InlineData("Standard_Helium_Rich", "Helium-rich gas giant")]
     [InlineData("TRF_Metal_Rich_No_Atmos", "Terraformable metal-rich world, no atmosphere")]
     public void TheSymbolGivesTheName(string body, string expected)
     {

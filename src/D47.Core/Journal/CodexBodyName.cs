@@ -27,6 +27,7 @@ public static partial class CodexBodyName
         ["Giant_With_Water_Life"] = "Gas giant with water-based life",
         ["Giant_With_Ammonia_Life"] = "Gas giant with ammonia-based life",
         ["Water_Giant"] = "Water giant",
+        ["Helium_Rich"] = "Helium-rich gas giant",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     private static readonly FrozenDictionary<string, string> ScanClasses = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -46,6 +47,7 @@ public static partial class CodexBodyName
         ["Giant_With_Water_Life"] = "Gas giant with water based life",
         ["Giant_With_Ammonia_Life"] = "Gas giant with ammonia based life",
         ["Water_Giant"] = "Water giant",
+        ["Helium_Rich"] = "Helium rich gas giant",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>True when a <c>Scan</c> body with these values is the body a planet or gas giant codex symbol describes.</summary>

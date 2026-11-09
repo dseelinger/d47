@@ -71,6 +71,28 @@ public class NewCodexEntriesAreSaidAsDiscoveredTests
         Assert.Equal(new CodexDiscovery(7, 18, "T Tauri Star"), found);
     }
 
+    private static string Body(string symbol, string? localised) => $$"""
+        {"timestamp":"2026-08-16T10:00:00Z","event":"CodexEntry","EntryID":1201001,"Name":"{{symbol}}",
+         {{(localised is null ? "" : $"\"Name_Localised\":\"{localised}\",")}}"SubCategory":"$Codex_SubCategory_Planets;","Region":"$Codex_RegionName_18;",
+         "Region_Localised":"Inner Orion Spur","IsNewEntry":true}
+        """;
+
+    [Fact]
+    public void AGasGiantIsSaidByItsBodyNotElitesGenericName()
+    {
+        var said = Assert.Single(Say(false, Body("$Codex_Ent_Standard_Sudarsky_Class_II_Name;", "Standard gas giant")));
+
+        Assert.Equal("Discovered Class II gas giant.", said.Text);
+    }
+
+    [Fact]
+    public void AHeliumRichGasGiantIsNamedFromItsSymbol() =>
+        Assert.Equal("Helium-rich gas giant", CodexDiscovery.Of(Parse(Body("$Codex_Ent_Standard_Helium_Rich_Name;", "Standard gas giant")))!.Name);
+
+    [Fact]
+    public void ABodySymbolWithNoLocalisedNameIsStillADiscovery() =>
+        Assert.Equal("Helium-rich gas giant", CodexDiscovery.Of(Parse(Body("$Codex_Ent_Standard_Helium_Rich_Name;", null)))!.Name);
+
     [Fact]
     public void AnEventThatIsNotACodexEntryIsNotADiscovery() =>
         Assert.Null(CodexDiscovery.Of(Parse("""{"timestamp":"2026-08-16T10:00:00Z","event":"Music","MusicTrack":"x"}""")));

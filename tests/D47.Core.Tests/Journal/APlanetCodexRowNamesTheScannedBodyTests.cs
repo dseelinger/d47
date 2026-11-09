@@ -81,6 +81,10 @@ public class APlanetCodexRowNamesTheScannedBodyTests
         Assert.Equal("Sol 5", BodyAfter(Scan(Now, "Sol 5", "Sudarsky class II gas giant", ""), Codex(Now, "$Codex_Ent_Standard_Sudarsky_Class_II_Name;")));
 
     [Fact]
+    public void AHeliumRichGasGiantIsMatchedByItsClass() =>
+        Assert.Equal("Sol 6", BodyAfter(Scan(Now, "Sol 6", "Helium rich gas giant", ""), Codex(Now, "$Codex_Ent_Standard_Helium_Rich_Name;")));
+
+    [Fact]
     public void AnEntryOfAnotherKindHoldsNoBody()
     {
         var ledger = CodexLedger.None;

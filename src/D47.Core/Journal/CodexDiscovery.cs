@@ -8,7 +8,7 @@ public sealed record CodexDiscovery(long EntryId, int? RegionId, string Name)
         journalEvent.Kind == "CodexEntry"
         && journalEvent.Bool("IsNewEntry")
         && journalEvent.Long("EntryID") is { } entryId
-        && journalEvent.String("Name_Localised") is { Length: > 0 } name
+        && (CodexBodyName.Of(journalEvent.String("Name")) ?? journalEvent.String("Name_Localised")) is { Length: > 0 } name
             ? new CodexDiscovery(entryId, CodexLedger.RegionIdOf(journalEvent.String("Region")), name)
             : null;
 }
