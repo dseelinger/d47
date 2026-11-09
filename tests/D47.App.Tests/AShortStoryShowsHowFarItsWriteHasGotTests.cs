@@ -42,8 +42,8 @@ public class AShortStoryShowsHowFarItsWriteHasGotTests
         Assert.True(Progress(panel).IsVisible);
         Assert.Contains("WRITING YOUR OBJECTIVES…", Texts(Progress(panel)));
         Assert.Contains("0:27", Texts(Progress(panel)));
-        Assert.Contains("Usually ready in about 0:40.", Texts(Progress(panel)));
-        Assert.InRange(Fill(panel), 0.45, 0.90);
+        Assert.Contains("Usually ready in about 1:10.", Texts(Progress(panel)));
+        Assert.InRange(Fill(panel), 0.30, 0.90);
         Assert.False(Button(panel, "Go").IsEnabled);
         Assert.True(Button(panel, "Stop").IsVisible);
 

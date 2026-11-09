@@ -14,6 +14,7 @@ public enum WriteStage
 public sealed record StoryPace(double Places, double Objectives, double Checking)
 {
     private static readonly StoryPace Other = new(5, 49, 52);
+    private static readonly StoryPace OtherShort = new(12, 38, 20);
     private static readonly StoryPace LocalStory = new(5, 46, 24);
     private static readonly StoryPace LocalChapter = new(5, 82, 43);
 
@@ -25,12 +26,20 @@ public sealed record StoryPace(double Places, double Objectives, double Checking
         ["gpt-5.6-terra"] = new(6, 46, 146),
     };
 
+    private static readonly Dictionary<string, StoryPace> ShortModels = new(StringComparer.Ordinal)
+    {
+        ["claude-sonnet-5-5"] = new(14, 40, 25),
+        ["claude-opus-5-5"] = new(11, 37, 16),
+        ["gpt-6.1-sol"] = new(11, 55, 10),
+        ["gpt-5.6-terra"] = new(14, 35, 113),
+    };
+
     public double Total => Places + Objectives + Checking;
 
     /// <summary>The pace for <paramref name="model"/>; a model outside the table gets the local row when it runs on this machine, else the median of the measured models.</summary>
     public static StoryPace For(string? model, bool local = false, bool chapter = false) =>
-        model is not null && Models.TryGetValue(model, out var pace) ? pace
-        : !local ? Other
+        model is not null && (chapter ? Models : ShortModels).TryGetValue(model, out var pace) ? pace
+        : !local ? (chapter ? Other : OtherShort)
         : chapter ? LocalChapter : LocalStory;
 
     internal double Seconds(WriteStage stage) => stage switch

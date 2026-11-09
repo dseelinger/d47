@@ -89,7 +89,7 @@ public sealed class TheBenchShowsHowFarAJumpedChapterHasGotTests
             stories, book, () => catalog,
             async (ask, _, _) =>
             {
-                ask.Progress!.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5"));
+                ask.Progress!.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5", chapter: true));
                 await gate.Task.ConfigureAwait(false);
                 return new AdventureOutcome(null, null, "Not written.", []);
             },

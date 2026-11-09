@@ -36,7 +36,7 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
         Assert.Contains("YOUR STORY — WRITING CHAPTER 1…", Texts(run.View));
         Assert.Contains("WRITING YOUR OBJECTIVES…", Texts(run.View));
         Assert.Contains(Texts(run.View), text => text?.StartsWith("Usually ready in about", StringComparison.Ordinal) == true);
-        Assert.InRange(Fill(run.View), 0.3, 0.95);
+        Assert.InRange(Fill(run.View), 0.15, 0.95);
 
         run.Window.SaveFrame("stories-tab-chapter-writing.png");
         run.Release();
@@ -84,7 +84,7 @@ public sealed class TheStoriesTabShowsHowFarAChapterHasGotTests
             stories, surface.Book, () => catalog,
             async (ask, _, _) =>
             {
-                ask.Progress!.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5"));
+                ask.Progress!.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5", chapter: true));
                 await gate.Task.ConfigureAwait(false);
                 return new AdventureOutcome(null, null, "Not written.", []);
             },

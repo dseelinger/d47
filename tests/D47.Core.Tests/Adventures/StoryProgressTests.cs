@@ -14,7 +14,7 @@ public sealed class StoryProgressTests
     private static StoryProgress Started(ManualTime time, string model, WriteStage stage)
     {
         var progress = new StoryProgress(time);
-        progress.Enter(stage, StoryPace.For(model));
+        progress.Enter(stage, StoryPace.For(model, chapter: true));
         return progress;
     }
 
@@ -23,7 +23,7 @@ public sealed class StoryProgressTests
     {
         var time = new ManualTime();
         var progress = new StoryProgress(time);
-        var pace = StoryPace.For("claude-sonnet-5-5");
+        var pace = StoryPace.For("claude-sonnet-5-5", chapter: true);
         var last = 0.0;
 
         void Check()
@@ -100,10 +100,19 @@ public sealed class StoryProgressTests
     [Fact]
     public void TheTotalForAModelWithACatalogStoryEffortIsAMeasuredChapterTime()
     {
-        Assert.Equal(83, StoryPace.For("claude-sonnet-5-5").Total);
-        Assert.Equal(40, StoryPace.For("gpt-6.1-sol").Total);
-        Assert.Equal(136, StoryPace.For("claude-opus-5-5").Total);
-        Assert.Equal(198, StoryPace.For("gpt-5.6-terra").Total);
+        Assert.Equal(83, StoryPace.For("claude-sonnet-5-5", chapter: true).Total);
+        Assert.Equal(40, StoryPace.For("gpt-6.1-sol", chapter: true).Total);
+        Assert.Equal(136, StoryPace.For("claude-opus-5-5", chapter: true).Total);
+        Assert.Equal(198, StoryPace.For("gpt-5.6-terra", chapter: true).Total);
+    }
+
+    [Fact]
+    public void TheTotalForAModelWithACatalogStoryEffortIsAMeasuredShortStoryTime()
+    {
+        Assert.Equal(79, StoryPace.For("claude-sonnet-5-5").Total);
+        Assert.Equal(76, StoryPace.For("gpt-6.1-sol").Total);
+        Assert.Equal(64, StoryPace.For("claude-opus-5-5").Total);
+        Assert.Equal(162, StoryPace.For("gpt-5.6-terra").Total);
     }
 
     [Theory]
@@ -111,7 +120,7 @@ public sealed class StoryProgressTests
     [InlineData("claude-haiku-5-5")]
     public void AModelThatCannotWriteStoriesGetsTheOtherRow(string model)
     {
-        Assert.Equal(StoryPace.For("some-new-model"), StoryPace.For(model));
+        Assert.Equal(StoryPace.For("some-new-model", chapter: true), StoryPace.For(model, chapter: true));
     }
 
     [Fact]
@@ -120,7 +129,7 @@ public sealed class StoryProgressTests
         var progress = Started(new ManualTime(), "claude-sonnet-5-5", WriteStage.Places);
         var before = progress.Fill;
 
-        progress.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5"));
+        progress.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5", chapter: true));
 
         Assert.InRange(progress.Fill - before, 0, 0.05);
     }
@@ -128,8 +137,9 @@ public sealed class StoryProgressTests
     [Fact]
     public void AModelNotInTheTableUsesTheLastRow()
     {
-        Assert.Equal(new StoryPace(5, 49, 52), StoryPace.For("some-new-model"));
-        Assert.Equal(StoryPace.For("some-new-model"), StoryPace.For(null));
+        Assert.Equal(new StoryPace(5, 49, 52), StoryPace.For("some-new-model", chapter: true));
+        Assert.Equal(new StoryPace(12, 38, 20), StoryPace.For("some-new-model"));
+        Assert.Equal(StoryPace.For("some-new-model", chapter: true), StoryPace.For(null, chapter: true));
     }
 
     [Fact]
@@ -138,7 +148,8 @@ public sealed class StoryProgressTests
         Assert.Equal(new StoryPace(5, 46, 24), StoryPace.For("some-new-model", local: true));
         Assert.Equal(new StoryPace(5, 82, 43), StoryPace.For("some-new-model", local: true, chapter: true));
         Assert.Equal(new StoryPace(5, 49, 52), StoryPace.For("some-new-model", chapter: true));
-        Assert.Equal(StoryPace.For("claude-sonnet-5-5"), StoryPace.For("claude-sonnet-5-5", local: true, chapter: true));
+        Assert.Equal(StoryPace.For("claude-sonnet-5-5"), StoryPace.For("claude-sonnet-5-5", local: true));
+        Assert.Equal(StoryPace.For("claude-sonnet-5-5", chapter: true), StoryPace.For("claude-sonnet-5-5", local: true, chapter: true));
     }
 
     [Theory]
@@ -182,7 +193,7 @@ public sealed class StoryProgressTests
         progress.CallStopped();
         Assert.Equal("That took too long. Trying again…", progress.Hint);
 
-        progress.Enter(WriteStage.Places, StoryPace.For("claude-sonnet-5-5"));
+        progress.Enter(WriteStage.Places, StoryPace.For("claude-sonnet-5-5", chapter: true));
         Assert.Equal("Usually ready in about 1:25.", progress.Hint);
     }
 

@@ -17,7 +17,7 @@ public sealed class TheWriteProgressBarRefreshesItselfTests
     {
         var clock = new Clock();
         var progress = new StoryProgress(clock);
-        progress.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5"));
+        progress.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5", chapter: true));
         StoryProgress? source = progress;
 
         var bar = new WriteProgressBar("Writing the chapter", () => source);
