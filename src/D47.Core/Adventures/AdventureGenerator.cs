@@ -2914,10 +2914,10 @@ public sealed partial class AdventureGenerator(
         }
     }
 
-    /// <summary>For a chapter exempt from the base rule that starts or heads beyond the near-here reach of the base, the reason to give and the ships to transfer.</summary>
+    /// <summary>For a chapter exempt from the base rule that starts or heads beyond the near-here reach of a base holding stored ships, the reason to give and the ships to transfer.</summary>
     private static void AppendAway(StringBuilder text, BaseStep? home, AdventureAsk ask, Facts facts)
     {
-        if (home?.Position is not { } there || facts.Position is not { } here)
+        if (home is null || home.Base.IsHomeSystem || home.Position is not { } there || facts.Position is not { } here)
         {
             return;
         }
@@ -2932,7 +2932,7 @@ public sealed partial class AdventureGenerator(
 
         text.AppendLine();
         text.AppendLine(
-            $"The Commander has no fleet carrier, so their ships stay {(home.Base.IsHomeSystem ? $"at their home system, {home.System}" : $"where they are stored, mostly {(home.Docks ? $"at {home.Station} in {home.System}" : $"in {home.System}")}")}, "
+            $"The Commander has no fleet carrier, so their ships stay where they are stored, mostly {(home.Docks ? $"at {home.Station} in {home.System}" : $"in {home.System}")}, "
             + $"and this chapter is not held to ending near them. Its opening must say why the story stays away from {home.System}, "
             + "and tell the Commander to transfer there the ships they will need. Once the ships are moved, the base moves with them.");
     }

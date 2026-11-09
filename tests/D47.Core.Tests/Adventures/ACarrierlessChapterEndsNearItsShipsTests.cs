@@ -158,6 +158,19 @@ public sealed class ACarrierlessChapterEndsNearItsShipsTests
     }
 
     [Fact]
+    public async Task AnExemptChapterFarFromAHomeSystemBaseIsToldNothingAboutIt()
+    {
+        var provider = Provider();
+
+        Succeeded(await Generator(provider, new Galaxy(), stored: false, home: "Hale's Berth").GenerateAsync(new AdventureAsk(Story: Chapter with { InTheBlack = true }), Now, CancellationToken.None));
+
+        var brief = Prompt(provider);
+        Assert.DoesNotContain(TransferLine, brief);
+        Assert.DoesNotContain("stays away from", brief);
+        Assert.DoesNotContain("the base moves with them", brief);
+    }
+
+    [Fact]
     public async Task AChapterHeldToTheBaseIsNotToldToTransfer()
     {
         var provider = Provider();
