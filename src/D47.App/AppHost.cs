@@ -3224,6 +3224,7 @@ public sealed class AppHost : IDisposable
             StoryAsides = storyDirector.MissionAsides,
             StockCoreAboard = () => personas.Current.Stock,
             BgsLastTick = () => late.Host?.BgsTick?.Last,
+            CampaignFaction = () => stores.Campaigns.For(gameState.Active?.Identity.FrontierId).FactionOr(D47.Core.Journal.SquadronFactionResolver.Resolve(gameState.Active, stores.SquadronFactions)),
             GalNetArrived = () => late.Host?.GalNet?.Arrived ?? [],
             ServerStatusAnnounce = () => late.Host?.ServerStatus?.Announce,
             WatchesReady = () => late.Host?.Watches?.Ready ?? [],

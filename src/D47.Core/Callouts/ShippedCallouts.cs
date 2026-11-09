@@ -102,6 +102,9 @@ public static class ShippedCallouts
         /// <summary>The time of the last BGS tick, or null.</summary>
         public required Func<DateTimeOffset?> BgsLastTick { get; init; }
 
+        /// <summary>The shown Commander's campaign faction, or null.</summary>
+        public Func<string?> CampaignFaction { get; init; } = () => null;
+
         /// <summary>The GalNet articles that arrived in the last poll, newest first.</summary>
         public Func<IReadOnlyList<GalNetArticle>> GalNetArrived { get; init; } = () => [];
 
@@ -231,6 +234,8 @@ public static class ShippedCallouts
                 LastSaidTick = () => sources.ViewState.Load().BgsTickSaidFor,
                 RememberSaidTick = tick => sources.ViewState.Save(sources.ViewState.Load() with { BgsTickSaidFor = tick }),
             })
+
+            .Add(new CampaignWarningCallout())
 
             .Add(new FriendsCallout(sources.Friends))
 
@@ -364,6 +369,10 @@ public static class ShippedCallouts
                     bgs.LastTick = () => services.BgsLastTick();
                     break;
 
+                case CampaignWarningCallout campaign:
+                    campaign.Faction = services.CampaignFaction;
+                    break;
+
                 case GalNetCallout galNet:
                     galNet.Arrived = () => services.GalNetArrived();
                     galNet.OpeningDone = () =>
@@ -464,6 +473,7 @@ public static class ShippedCallouts
         engine.SetEnabled("powerplay-salvage", callouts.PowerplaySalvage, now);
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
         engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
+        engine.SetEnabled("campaign-warnings", callouts.CampaignWarnings, now);
         engine.SetEnabled("friends", callouts.FriendsOnline, now);
         engine.SetEnabled("wing", callouts.Wing, now);
         engine.SetEnabled("galnet", callouts.GalNet, now);

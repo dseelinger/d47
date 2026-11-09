@@ -71,6 +71,7 @@ public static class CalloutCapability
     public const string PowerplaySalvageKey = "callouts.powerplaySalvage";
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
     public const string BgsTickKey = "callouts.bgsTick";
+    public const string CampaignWarningsKey = "callouts.campaignWarnings";
     public const string FriendsOnlineKey = "callouts.friendsOnline";
 
     public const string WingKey = "callouts.wing";
@@ -968,6 +969,22 @@ public static class CalloutCapability
                 "BGS tick",
                 s => s.Callouts.BgsTick,
                 (s, v) => s with { Callouts = s.Callouts with { BgsTick = v } }),
+
+            Toggle(
+                CampaignWarningsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Campaign warnings (on "
+                + "by default). With a campaign faction set, handing in a bounty for a rival of it, failing a "
+                + "mission for it, accepting a mission against it, a murder in its jurisdiction or a sale to a "
+                + "fleet carrier is said once per kind per session. Say \"stop calling out campaign warnings\": the "
+                + "row shows off and that is no longer said. Say \"start calling out campaign warnings\" and the "
+                + "row shows on. The row is absent while Speak without being asked is off.",
+                "Campaign warnings",
+                "Work that helps a rival of your campaign faction or hurts it, said once per kind per session.",
+                "campaign-warnings",
+                "campaign warnings",
+                s => s.Callouts.CampaignWarnings,
+                (s, v) => s with { Callouts = s.Callouts with { CampaignWarnings = v } }),
 
             Toggle(
                 GalNetKey,

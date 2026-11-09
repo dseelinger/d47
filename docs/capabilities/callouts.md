@@ -615,6 +615,20 @@ A tick more than fifteen minutes old is said with its age, rounded to the neares
 gap stays quiet. A tick within an hour after the one already said is treated as the same tick and is not said again.
 Turn this one off with the BGS tick row.
 
+#### Campaign warnings {#campaign-warnings}
+
+When work helps a rival of the campaign faction or hurts the faction, once per kind per session. Nothing is said
+until a campaign faction is known, and nothing while d47 catches up on the journal at startup.
+
+```text
+That bounty voucher raises Lave Pirates here, where Lave Revolutionary Party is present. It works against the campaign.
+```
+
+Five kinds are said: a bounty voucher handed in for a rival where the campaign faction is present (a voucher naming no
+faction is not said); a mission failed for the faction; a mission accepted against the faction by another issuer; a
+murder in the faction's jurisdiction; and a sale to a fleet carrier where the faction is present, which does not count
+toward the BGS. Turn this one off with the Campaign warnings row.
+
 #### Background watches {#watches}
 
 When a stock watch's condition holds, the commodity, the station, the system and the stock, at most once per BGS

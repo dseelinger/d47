@@ -637,6 +637,9 @@ public sealed record CalloutSettings
     /// <summary>The BGS tick, said when the detector reports it.</summary>
     public bool BgsTick { get; init; } = true;
 
+    /// <summary>Work that helps a rival of the campaign faction or hurts the faction.</summary>
+    public bool CampaignWarnings { get; init; } = true;
+
     /// <summary>A friend coming online, said once for a burst of arrivals.</summary>
     public bool FriendsOnline { get; init; } = true;
 

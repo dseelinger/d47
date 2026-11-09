@@ -234,6 +234,7 @@ public static class SettingsLayout
                                 E("callouts.colonisation"),
                                 E("callouts.powerplayCycle"),
                                 E("callouts.bgsTick"),
+                                E("callouts.campaignWarnings"),
                                 E("callouts.friendsOnline"),
                                 E("callouts.wing"),
                                 E("callouts.metBefore"),
