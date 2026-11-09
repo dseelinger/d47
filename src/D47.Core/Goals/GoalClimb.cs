@@ -1,6 +1,7 @@
 using D47.Core.Adventures;
 using D47.Core.Engineers;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Stories;
 
 namespace D47.Core.Goals;
@@ -21,6 +22,19 @@ public sealed record GoalClimbStep(string Key, string Name)
     public bool Earns(DrawableActivity row) => Draw is { } ladder && GoalClimb.Earns(ladder, row);
 }
 
+/// <summary>Which engineers the engineers step may name.</summary>
+public enum EngineerSteps
+{
+    /// <summary>Every engineer on the route.</summary>
+    All,
+
+    /// <summary>Not an engineer out at Colonia while the Commander is more than <see cref="GoalClimb.FarAway"/> light years from them.</summary>
+    NotFarAway,
+
+    /// <summary>None.</summary>
+    None,
+}
+
 /// <summary>Picks the unfinished Goals arcs that are furthest behind, so a Goals story's chapters raise the arcs together.</summary>
 public static class GoalClimb
 {
@@ -29,6 +43,9 @@ public static class GoalClimb
 
     /// <summary>The most arcs one chapter works.</summary>
     public const int MostSteps = 2;
+
+    /// <summary>The light years from a far engineer beyond which a chapter does not carry their objective plainly.</summary>
+    public const double FarAway = 1000;
 
     private static readonly string[] CombatMissions = ["Mission_Massacre", "Mission_Assassinate"];
 
@@ -71,8 +88,25 @@ public static class GoalClimb
     }
 
     /// <summary>The steps for the first <see cref="MostSteps"/> arcs, each a different arc, in the order of their rank.</summary>
-    public static IReadOnlyList<GoalClimbStep> Steps(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null) =>
-        [.. Ranked(standings, state, engineers, drawable).Take(MostSteps)];
+    public static IReadOnlyList<GoalClimbStep> Steps(
+        IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable = null, EngineerSteps offered = EngineerSteps.All) =>
+        [.. Ranked(standings, state, engineers, drawable, offered).Take(MostSteps)];
+
+    /// <summary>The engineer an engineers step in <paramref name="steps"/> names when they are out at Colonia and more than <see cref="FarAway"/> light years from <paramref name="at"/>; otherwise null.</summary>
+    public static Engineer? FarEngineer(IReadOnlyList<GoalClimbStep> steps, EngineerReport? engineers, StarPosition? at)
+    {
+        ArgumentNullException.ThrowIfNull(steps);
+
+        return engineers is not null
+            && GoalBook.NextEngineer(engineers)?.Engineer is { } engineer
+            && steps.Any(step => step.Objective is { Kind: TriggerKind.Engineer } objective && string.Equals(objective.Engineer, engineer.Name, StringComparison.Ordinal))
+            && IsFarAway(engineer, at)
+                ? engineer
+                : null;
+    }
+
+    private static bool IsFarAway(Engineer engineer, StarPosition? at) =>
+        engineer.IsFarFromTheBubble == true && engineer.DistanceFrom(at) > FarAway;
 
     /// <summary>How many activities a chapter with these steps draws: <see cref="ChapterDraw.Slots"/>, less one for each objective.</summary>
     public static int Slots(IReadOnlyList<GoalClimbStep> steps)
@@ -131,7 +165,7 @@ public static class GoalClimb
     private static int Share(IReadOnlyList<GoalClimbStep> steps, int index) =>
         steps[index].Draw is null ? 0 : steps.Count == 1 ? ChapterDraw.Slots : index == 0 ? ChapterDraw.Slots - 1 : 1;
 
-    private static IEnumerable<GoalClimbStep> Ranked(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable)
+    private static IEnumerable<GoalClimbStep> Ranked(IReadOnlyList<GoalStanding> standings, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool>? drawable, EngineerSteps offered)
     {
         ArgumentNullException.ThrowIfNull(standings);
 
@@ -142,7 +176,7 @@ public static class GoalClimb
         return standings
             .Where(standing => !standing.IsDone)
             .OrderBy(standing => unpledged && standing.Arc.Key == GoalCatalogue.Powerplay ? -1 : standing.Fraction ?? 0)
-            .Select(standing => Step(standing, state, engineers, drawable))
+            .Select(standing => Step(standing, state, engineers, drawable, offered))
             .OfType<GoalClimbStep>();
     }
 
@@ -166,7 +200,7 @@ public static class GoalClimb
     private static bool IsMission(DrawableActivity row, string[] families) =>
         row.Kind == TriggerKind.Mission && families.Contains(row.Family, StringComparer.Ordinal);
 
-    private static GoalClimbStep? Step(GoalStanding standing, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool> drawable)
+    private static GoalClimbStep? Step(GoalStanding standing, CommanderGameState? state, EngineerReport? engineers, Func<DrawableActivity, bool> drawable, EngineerSteps offered)
     {
         var arc = standing.Arc;
         var step = new GoalClimbStep(arc.Key, arc.Name);
@@ -199,7 +233,8 @@ public static class GoalClimb
                 };
 
             case GoalCatalogue.Engineers:
-                if (engineers is null || GoalBook.NextEngineer(engineers) is not { } candidate)
+                if (offered == EngineerSteps.None || engineers is null || GoalBook.NextEngineer(engineers) is not { } candidate
+                    || (offered == EngineerSteps.NotFarAway && IsFarAway(candidate.Engineer, state?.Location.StarPos)))
                 {
                     return null;
                 }

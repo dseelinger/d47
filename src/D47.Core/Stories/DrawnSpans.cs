@@ -1,5 +1,6 @@
 using D47.Core.Adventures;
 using D47.Core.Checklists;
+using D47.Core.Goals;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -51,7 +52,10 @@ public sealed record DrawnSpanGates
     public StarPosition? At { get; init; }
 
     /// <summary>Whether every gate holds: a new, non-finale chapter after the scan, with no span or heading, Exploration above 0, a reach and a position.</summary>
-    public bool Hold => NewChapter && BeaconScanned && !Finale && !AuthoredSpan && !SpanOpen && !Heading && ExplorationWeight > 0 && Reach is not null && At is not null;
+    public bool Hold => ExplorationWeight > 0 && HoldsWithoutWeight;
+
+    /// <summary>Whether every gate but the Exploration weight holds.</summary>
+    public bool HoldsWithoutWeight => NewChapter && BeaconScanned && !Finale && !AuthoredSpan && !SpanOpen && !Heading && Reach is not null && At is not null;
 }
 
 /// <summary>The seeded rules that open, shape and close a <see cref="DrawnSpan"/>.</summary>
@@ -114,6 +118,28 @@ public static class DrawnSpans
 
     /// <summary>Light years from a sight's position within which a sight span's Commander is in its system, allowing for rounded coordinates.</summary>
     public const double SightArrival = 0.1;
+
+    /// <summary>The light years from an engineer's system within which a span has arrived.</summary>
+    public const double EngineerArrival = GoalClimb.FarAway;
+
+    /// <summary>
+    /// The span chapter <paramref name="chapter"/> opens toward <paramref name="engineer"/> from <paramref name="at"/> in a story of three months or
+    /// longer; null for a shorter story, an engineer not out at Colonia, or one already within <see cref="EngineerArrival"/>. Nothing is rolled.
+    /// </summary>
+    public static DrawnSpan? OpenEngineer(int chapter, StoryPacing pacing, Engineer engineer, StarPosition at)
+    {
+        ArgumentNullException.ThrowIfNull(pacing);
+        ArgumentNullException.ThrowIfNull(engineer);
+
+        if (!new[] { StoryPacing.ThreeMonths, StoryPacing.SixMonths, StoryPacing.OneYear }.Any(length => length.Key == pacing.Key)
+            || engineer is not { IsFarFromTheBubble: true, Position: { } target }
+            || target.DistanceTo(at) <= EngineerArrival)
+        {
+            return null;
+        }
+
+        return new DrawnSpan(DrawnSpanKind.Engineers, engineer.System, null, target, EngineerArrival, at, DrawnSpanPhase.Out, 0, chapter);
+    }
 
     /// <summary>The most chapters out a span of this length takes.</summary>
     public static int MostOut(StoryPacing pacing)
@@ -201,9 +227,10 @@ public static class DrawnSpans
     /// The span's state when the next chapter is written, settled from <paramref name="at"/>; null once it closes. Out or There turns back after
     /// two changed chapters in a row, or for an Exploration span at an Exploration weight of 0. Out reaches the target within
     /// <see cref="DrawnSpan.Within"/>, There counts down a chapter at a time, and Back closes within <see cref="HomeLeg.Home"/> of
-    /// the start, in the same call that turns it back.
+    /// the start, in the same call that turns it back. An Engineers span has no count at the target: There holds while
+    /// <paramref name="engineerFar"/>, whether the next engineer on the route is out at Colonia.
     /// </summary>
-    public static DrawnSpan? Next(DrawnSpan span, StarPosition? at, IReadOnlyList<string> chapters, IReadOnlyList<string> changed, double explorationWeight)
+    public static DrawnSpan? Next(DrawnSpan span, StarPosition? at, IReadOnlyList<string> chapters, IReadOnlyList<string> changed, double explorationWeight, bool engineerFar = false)
     {
         ArgumentNullException.ThrowIfNull(span);
         ArgumentNullException.ThrowIfNull(chapters);
@@ -217,7 +244,11 @@ public static class DrawnSpans
         }
         else if (span.Phase == DrawnSpanPhase.Out && at is { } here && here.DistanceTo(span.TargetAt) <= span.Within)
         {
-            span = span with { Phase = span.ThereLeft > 0 ? DrawnSpanPhase.There : DrawnSpanPhase.Back };
+            span = span with { Phase = (span.Kind == DrawnSpanKind.Engineers ? engineerFar : span.ThereLeft > 0) ? DrawnSpanPhase.There : DrawnSpanPhase.Back };
+        }
+        else if (span.Phase == DrawnSpanPhase.There && span.Kind == DrawnSpanKind.Engineers)
+        {
+            span = engineerFar ? span : span with { Phase = DrawnSpanPhase.Back };
         }
         else if (span.Phase == DrawnSpanPhase.There)
         {

@@ -1118,7 +1118,7 @@ takes its other place. Each step is one of these:
   sales. Mercenary: kill bonds earned on foot, and on-foot massacre, onslaught, assassination and defence missions.
   A navy: missions, and the writer is told they are for that superpower's factions.
 - Powerplay: a pledge objective while you are unpledged, otherwise an objective for the next Powerplay rank.
-- Engineers: an objective to reach the next stage with the first engineer on the unlock route.
+- Engineers: an objective to reach the next stage with the first engineer on the unlock route. An engineer out at Colonia (more than 5,000 light years from Sol) more than 1,000 light years from the Commander is never carried plainly. In a story of three months or longer the chapter opens a span of kind Engineers toward their system, whatever the Exploration weight, arriving within 1,000 light years; the span stays There while the next engineer on the route is out at Colonia, each chapter there carrying this step, then turns Back as any span does. In a shorter story the step is not offered for such an engineer.
 - Ships: an objective to board the cheapest hull you do not own.
 
 An arc is passed over for the next one when it has no step to give now: a pledge while d47 has not read whether you

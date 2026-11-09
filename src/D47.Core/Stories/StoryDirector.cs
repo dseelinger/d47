@@ -3490,9 +3490,12 @@ public sealed class StoryDirector(
             return new("The chapter before is no longer on file.");
         }
 
+        var engineerReport = Engineers?.Invoke();
         var span = replacing || story.DrawnSpan is not { } open
             ? story.DrawnSpan
-            : DrawnSpans.Next(open, Game()?.Location.StarPos, story.Chapters, story.ChangedChapters, Weights(Game()?.Statistics ?? CareerStatistics.Empty).Weight(Career.Exploration));
+            : DrawnSpans.Next(
+                open, Game()?.Location.StarPos, story.Chapters, story.ChangedChapters, Weights(Game()?.Statistics ?? CareerStatistics.Empty).Weight(Career.Exploration),
+                engineerReport is not null && GoalBook.NextEngineer(engineerReport)?.Engineer.IsFarFromTheBubble == true);
 
         if (!replacing && span is { Phase: DrawnSpanPhase.Out } outward && Game() is { Location.StarPos: { } from } current && SpanReach.Of(current) is { } outReach
             && !await PlacesOnTheWayAsync(from, outward.TargetAt, outReach.LightYears, cancellationToken).ConfigureAwait(false))
@@ -3576,13 +3579,28 @@ public sealed class StoryDirector(
         }
 
         var sightseeing = sights.Count > 0;
-        IReadOnlyList<GoalClimbStep> goals = story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id) is { Goals: true } goalsCard
-            ? GoalClimb.Steps(
-                GoalClimb.Listed(GoalClimb.Standings(game, Mine?.Invoke()), goalsCard.GoalArcs),
-                game,
-                Engineers?.Invoke(),
-                row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach, warInReach))
-            : [];
+        IReadOnlyList<GoalClimbStep> goals = [];
+        Engineer? farEngineer = null;
+
+        if (story.BeaconScanAt is not null && finaleChapter is null && catalog().Find(story.Id) is { Goals: true } goalsCard)
+        {
+            var listed = GoalClimb.Listed(GoalClimb.Standings(game, Mine?.Invoke()), goalsCard.GoalArcs);
+
+            IReadOnlyList<GoalClimbStep> Climb(EngineerSteps offered) =>
+                GoalClimb.Steps(
+                    listed,
+                    game,
+                    engineerReport,
+                    row => ChapterDraw.Drawable(row, ChapterActivities.Held(game?.Ranks ?? RankState.Empty, game?.Ship ?? ShipLoadout.Unknown, odyssey: true), stationsInReach, story.Refused, frontlineInReach, stateFamiliesInReach, warInReach),
+                    offered);
+
+            var travellingToEngineer = span is { Kind: DrawnSpanKind.Engineers, Phase: DrawnSpanPhase.Out or DrawnSpanPhase.Back };
+
+            // A far engineer is never carried plainly; a long enough story opens a span for them below.
+            goals = Climb(travellingToEngineer ? EngineerSteps.None : EngineerSteps.NotFarAway);
+            farEngineer = travellingToEngineer ? null : GoalClimb.FarEngineer(Climb(EngineerSteps.All), engineerReport, position);
+        }
+
         var weights = Weights(statistics);
         var fixedPlaces = FixedPlaces(story, finaleChapter) + (finaleChapter is null && (ChapterBand.ReservesAPlace(game?.Location.StarPos, inTheBlack) || homeLeg is not null || heading is not null || pulled || spanTravels) ? 1 : 0) + (sightseeing ? 1 : 0)
             + (span is { } first && first.Opened == number ? 1 : 0);
@@ -3647,8 +3665,29 @@ public sealed class StoryDirector(
             }
         }
 
+        // The engineer span opens in place of the objective, whatever the Exploration weight; a second draw keeps a place for its travel stop.
+        var engineerOpened = false;
+
+        if (slots is not null
+            && farEngineer is not null
+            && !authored
+            && !sightseeing
+            && span is null
+            && gates.HoldsWithoutWeight
+            && gates is { At: { } engineerFrom }
+            && DrawnSpans.OpenEngineer(number, story.Pacing, farEngineer, engineerFrom) is { } engineerSpan
+            && Drawn(fixedPlaces + 1) is { } engineerTravelling
+            && await PlacesOnTheWayAsync(engineerSpan.StartAt, engineerSpan.TargetAt, spanReach!.LightYears, cancellationToken).ConfigureAwait(false))
+        {
+            span = engineerSpan;
+            slots = engineerTravelling;
+            inTheBlack = true;
+            engineerOpened = true;
+        }
+
         // The second draw keeps a place for the stop the span travels to.
         if (slots is not null
+            && !engineerOpened
             && gates.Hold
             && Drawn(fixedPlaces + 1) is { } travelling
             && DrawnSpans.Explores(travelling)
