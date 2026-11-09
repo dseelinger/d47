@@ -1,0 +1,39 @@
+schema_version: "1.0"
+name: title-seven-words
+description: >-
+  A dictated bug whose natural title is a long claim-colon-cause. The skill
+  shows a title of seven words or fewer, ends the body with a Size line in the
+  fixed form, and files nothing before the maintainer acknowledges. Pins "The
+  body", "Size it before filing" and "Nothing reaches the tracker until he has
+  acknowledged it" in new-issue/SKILL.md.
+context:
+  scaffold_script: fixture.sh
+execution:
+  prompt: >-
+    /new-issue After fuel scooping, the Ship tab's fuel line says "Tank full."
+    when the tank is not full, because FuelStatus.ApplyFuelScoop also stores
+    the FuelScoop event's Total as the tank's capacity, when Total is only the
+    fuel now in the main tank. Remove that assignment and leave Capacity to
+    come from the Loadout event. The desktop window and the VR panel both read
+    FuelStatus.Describe, so the one fix covers both.
+  model: opus
+  max_turns: 25
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep]
+  append_system_prompt: 'The d47 repository is not present in this session. The files in the working directory are the only code there is; read them in place of the tree. gh, Bash and the Commander''s journals are unavailable: journal-excerpt.log holds the journal lines this request turns on, and `gh issue list --state open` returns no issues. There is no docs/ folder and no Exercise string names this. The Model and effort table of the triage skill is in triage-model-and-effort.md. There is no claude-voice skill here; skip that step.'
+graders:
+  - type: regex
+    name: title-seven-words-or-fewer
+    target: last_message
+    pattern: '(?:^|\n)[ \t>#*_-]*title\b[^:\n]{0,24}:[ \t*_`"]*(?:[^\s]+[ \t]+){0,6}[^\s]+(?:[ \t]+[*_]*\(\d+ words?\)[*_]*)?[ \t]*(?=\n|$)'
+    flags: i
+  - type: regex
+    name: size-line
+    target: last_message
+    pattern: 'Size: /issue-worker, (Opus|Sonnet|Haiku), (low|medium|high|xhigh|max) effort(, Opus advisor)?\.'
+  - type: regex
+    name: not-filed
+    target: last_message
+    pattern: '\b(filed|created)\b[^\n]{0,20}#\d+'
+    flags: i
+    match: not_contains

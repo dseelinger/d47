@@ -223,7 +223,9 @@ if you want it checked.
 - **`### Not this issue`** — the neighbouring work it will be confused with.
 - **One label that already exists**: `bug`, `change-request`, `enhancement`, `documentation`,
   `accessibility`, `data-accuracy`, `needs-architect`, `design`, `vr`. Do not invent one. `design`
-  means Claude Design has to draw it first.
+  means Claude Design has to draw it first. A request that changes how a page, panel or card looks
+  or is laid out takes `design`, unless it only brings the code back in line with the design
+  system, which is a `bug`.
 
 Write the body to a file and pass `--body-file`. A heredoc mangles backslashes and long bodies.
 

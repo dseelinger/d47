@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="D47.App.Fleet.ShipCard">
+  <StackPanel Orientation="Vertical" Spacing="4">
+    <Image Source="{Binding HullArt}" Height="120" Stretch="Uniform" />
+    <TextBlock Text="{Binding Name}" Classes="title" />
+    <TextBlock Text="{Binding TypeName}" />
+    <TextBlock Text="{Binding Location}" />
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,26 @@
+schema_version: "1.0"
+name: look-change-gets-design
+description: >-
+  A dictated change to how a page is laid out. The skill shows the issue with
+  the label `design`, since Claude Design draws a look change before it is
+  built. Pins the label list in "The body" of new-issue/SKILL.md.
+context:
+  scaffold_script: fixture.sh
+execution:
+  prompt: >-
+    /new-issue On the Fleet tab of the desktop window, lay the ship cards out
+    in two columns instead of one long column, and inside each card put the
+    hull picture on the left with the name, type and location stacked on its
+    right. Desktop window only; the VR panel stays as it is. Nothing else on
+    the page changes.
+  model: opus
+  max_turns: 25
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep]
+  append_system_prompt: 'The d47 repository is not present in this session. The files in the working directory are the only code there is; read them in place of the tree. gh, Bash and the Commander''s journals are unavailable, and `gh issue list --state open` returns no issues. There is no docs/ folder and no Exercise string names this. The Model and effort table of the triage skill is in triage-model-and-effort.md. There is no claude-voice skill here; skip that step.'
+graders:
+  - type: regex
+    name: label-is-design
+    target: last_message
+    pattern: 'label\W{0,8}design\b'
+    flags: i

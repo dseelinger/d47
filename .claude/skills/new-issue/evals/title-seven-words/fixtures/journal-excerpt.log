@@ -1,0 +1,3 @@
+{ "timestamp":"2026-11-01T18:02:11Z", "event":"Loadout", "Ship":"krait_mkii", "FuelCapacity":{ "Main":32.000000, "Reserve":0.630000 } }
+{ "timestamp":"2026-11-01T18:20:45Z", "event":"FuelScoop", "Scooped":4.812000, "Total":19.406000 }
+{ "timestamp":"2026-11-01T18:20:51Z", "event":"FuelScoop", "Scooped":5.013000, "Total":24.419000 }
