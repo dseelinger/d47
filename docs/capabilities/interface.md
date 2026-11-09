@@ -493,9 +493,9 @@ cannot glance at a second monitor. Every crumb but the last can be pressed — *
 Back is four routes that agree: the breadcrumb, the **grip button** on either controller, the
 phrase, and on the keyboard Escape or Alt+Left. Say the name of the tab you are already on and you go back to its top, exactly as
 pressing it does. A tab answers to its bare name, to "show", "open", "go to", "switch to" or
-"select" in front of it, and to "tab" after it — and to nothing looser, because a phrase that
+"select" in front of it, and to "tab" or "page" after it — and to nothing looser, because a phrase that
 merely mentions a tab is not a request for it. The Stories tab also answers to "story", so
-"story tab" and "show the story" open it.
+"story tab", "story page" and "show the story" open it.
 
 **Voice jumps levels.** Asking for something three levels down takes you there with the whole
 trail behind it, rather than dropping you somewhere with nothing above.

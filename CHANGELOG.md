@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Voice navigation accepts "page" after a destination as well as "tab": "story page" and "open the checklist page" go where "story tab" and "open the checklist tab" go.
+
 The first organic sample of a run now says what the run will be worth once all three are analysed, with the first footfall bonus where it applies. It does not say the unsold total.
 
 "Gear down" and "gear up" now work in the Nomad. In the Nomad, voice commands press the ship's bindings instead of the SRV's, and the frame shift drive, supercruise, hyperspace and the FSS are refused with "in the Nomad".

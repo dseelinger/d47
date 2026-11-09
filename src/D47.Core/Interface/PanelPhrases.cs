@@ -49,6 +49,7 @@ public static class PanelPhrases
     [
         string.Empty,
         " tab",
+        " page",
     ];
 
     /// <summary>Names a tab answers to besides its own.</summary>

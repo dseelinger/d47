@@ -41,6 +41,9 @@ public class PanelPhrasesTests
     [InlineData("go to tab checklist")]
     [InlineData("tab checklist")]
     [InlineData("set checklist")]
+    [InlineData("checklist page")]
+    [InlineData("select the checklist page")]
+    [InlineData("open the checklist page")]
     public void ATabIsReachedByName(string spoken)
     {
         var nav = Furnished();
@@ -73,6 +76,8 @@ public class PanelPhrasesTests
     [InlineData("show the story")]
     [InlineData("stories")]
     [InlineData("stories tab")]
+    [InlineData("story page")]
+    [InlineData("open the story page")]
     public void TheStoriesTabAnswersToStory(string spoken)
     {
         var nav = Furnished();
@@ -192,6 +197,22 @@ public class PanelPhrasesTests
         Assert.Null(PanelPhrases.Apply("corsair", nav));
     }
 
+    /// <summary>"Next page" and "previous page" scroll; no scroll phrase navigates.</summary>
+    [Fact]
+    public void ScrollPhrasesAreNeverNavigation()
+    {
+        var nav = Furnished();
+        nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your story"));
+        nav.Register(PanelTab.Assets, new NavCrumb("suits", "Suits"));
+        nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
+        nav.Register(PanelTab.Navigation, new NavCrumb("engineers", "Engineers"));
+
+        foreach (var phrase in PanelScroll.Phrases.Keys)
+        {
+            Assert.Null(PanelPhrases.Apply(phrase, nav));
+        }
+    }
+
     /// <summary>A mode of the tab showing, at its root and nowhere else.</summary>
     [Fact]
     public void AModeIsReachedAtTheRoot()
@@ -207,6 +228,8 @@ public class PanelPhrasesTests
     [InlineData("suits", PanelTab.Assets, "suits")]
     [InlineData("show me the suits", PanelTab.Assets, "suits")]
     [InlineData("engineers", PanelTab.Navigation, "engineers")]
+    [InlineData("suits page", PanelTab.Assets, "suits")]
+    [InlineData("open the engineers page", PanelTab.Navigation, "engineers")]
     public void ARootOfAnyTabIsReachedByName(string spoken, PanelTab tab, string key)
     {
         var nav = Furnished();
