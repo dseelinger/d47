@@ -39,6 +39,10 @@ public sealed class Stepper : ContentControl, IChoiceControl
     public static readonly StyledProperty<bool> WrapsProperty =
         AvaloniaProperty.Register<Stepper, bool>(nameof(Wraps), true);
 
+    /// <summary>Whether the value is a default the Commander has not chosen, drawn in grey.</summary>
+    public static readonly StyledProperty<bool> IsInheritedProperty =
+        AvaloniaProperty.Register<Stepper, bool>(nameof(IsInherited));
+
     /// <summary>Raised when the choice changes by a press — never by setting <see cref="SelectedIndex"/>.</summary>
     public event EventHandler? SelectionChanged;
 
@@ -46,6 +50,8 @@ public sealed class Stepper : ContentControl, IChoiceControl
     public const double MaximumWidth = 420;
 
     private IDisposable? _statusInk;
+
+    private IDisposable? _valueInk;
 
     private readonly TextBlock _value = new()
     {
@@ -96,7 +102,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         MaxWidth = MaximumWidth;
         FontFamily = new FontFamily(Theming.Fonts.ChromeFamily);
 
-        _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
+        _valueInk = _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
         _position.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.Grey2Key));
         _consequence.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.GreyKey));
 
@@ -175,6 +181,12 @@ public sealed class Stepper : ContentControl, IChoiceControl
         set => SetValue(WrapsProperty, value);
     }
 
+    public bool IsInherited
+    {
+        get => GetValue(IsInheritedProperty);
+        set => SetValue(IsInheritedProperty, value);
+    }
+
     public string? SelectedItem =>
         SelectedIndex >= 0 && SelectedIndex < ItemsSource.Count ? ItemsSource[SelectedIndex] : null;
 
@@ -189,6 +201,14 @@ public sealed class Stepper : ContentControl, IChoiceControl
             || change.Property == WrapsProperty)
         {
             Sync();
+        }
+
+        if (change.Property == IsInheritedProperty)
+        {
+            _valueInk?.Dispose();
+            _valueInk = _value.Bind(
+                TextBlock.ForegroundProperty,
+                Application.Current!.Resources.GetResourceObservable(IsInherited ? Theming.ThemeManager.GreyKey : Theming.ThemeManager.WhiteKey));
         }
     }
 

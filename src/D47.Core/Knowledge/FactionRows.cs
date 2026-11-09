@@ -87,8 +87,14 @@ public sealed record FactionRow(
     /// <summary>The faction has a war, civil war or election here, active or pending.</summary>
     public bool InConflict => Active.Concat(Pending).Any(FactionStates.IsConflict);
 
+    /// <summary>A galaxy report older than this is marked old.</summary>
+    public static readonly TimeSpan OldAfter = TimeSpan.FromDays(30);
+
     public double? AgeMinutes(DateTimeOffset now) =>
         Updated is { } at ? Math.Max(0, (now - at).TotalMinutes) : null;
+
+    /// <summary>Whether the row's galaxy report is older than <see cref="OldAfter"/>; the Commander's own readings never are.</summary>
+    public bool IsOld(DateTimeOffset now) => !OwnReading && Updated is { } at && now - at > OldAfter;
 }
 
 /// <summary>Builds the rows of a faction's systems from a galaxy report and the Commander's own readings.</summary>

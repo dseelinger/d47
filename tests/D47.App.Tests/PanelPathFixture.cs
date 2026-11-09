@@ -88,6 +88,13 @@ internal sealed class PanelPathFixture : IDisposable
         panel.EnableMissions(state, now);
         panel.EnableStanding(state);
         panel.EnableStatistics(state, new D47.Core.Activities.ActivityLedger(memory(), NullLogger.Instance));
+        panel.EnableCampaign(new CampaignSources(
+            state,
+            new D47.Core.Campaigns.CampaignStore(Path.Combine(root, "campaigns.json"), memory(), NullLogger<D47.Core.Campaigns.CampaignStore>.Instance),
+            () => null,
+            () => null,
+            () => null,
+            CapabilityRegistry.Build([])));
         panel.EnableSession(state);
         panel.EnableBgsWork(state, () => null, now);
         panel.EnableCombatStats(state, () => HistoryState.Done, now);

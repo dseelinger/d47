@@ -25,7 +25,7 @@ public sealed record FactionOverview(
 public static class FactionModel
 {
     /// <summary>A Spansh report older than this is marked old.</summary>
-    public static readonly TimeSpan OldAfter = TimeSpan.FromDays(30);
+    public static readonly TimeSpan OldAfter = FactionRow.OldAfter;
 
     /// <summary>Rows the headset shows to a page.</summary>
     public const int PageSize = 25;
@@ -95,8 +95,7 @@ public static class FactionModel
     public static readonly SortOrder DefaultOrder = new(1, SortDirection.Descending);
 
     /// <summary>Whether a row's Spansh report is older than <see cref="OldAfter"/>; the Commander's own readings never are.</summary>
-    public static bool IsOld(FactionRow row, DateTimeOffset now) =>
-        !row.OwnReading && row.Updated is { } at && now - at > OldAfter;
+    public static bool IsOld(FactionRow row, DateTimeOffset now) => row.IsOld(now);
 
     /// <summary>The Updated cell: <c>1 hour ago</c>, or <c>you saw it 2 hours ago</c> for the Commander's own reading.</summary>
     public static string Age(FactionRow row, DateTimeOffset now) => row.Updated is not { } at

@@ -15,7 +15,7 @@ nav_order: 166
 </section>
 <section>
 <h2><span class="num">2</span> Say what you mean to do in a system.</h2>
-<p class="say">Say "hold Shinrarta Dezhra", "grow Lave" or "leave Lave alone".</p>
+<p class="say">Say "hold Shinrarta Dezhra", "grow Lave" or "leave Lave alone", or step the intent on Commander › Campaign.</p>
 <p class="expect">D47 confirms the system and the intent, such as "Lave: grow."</p>
 </section>
 <section>
@@ -94,7 +94,9 @@ Hold where the faction controls it and Leave alone elsewhere:
 
 ```csharp
 public SystemIntent IntentFor(string system, bool controls) =>
-    Intents.TryGetValue(system, out var set) ? set : controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
+    Intents.TryGetValue(system, out var set) ? set : DefaultIntent(controls);
+
+public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 ```
 
 ### Reading it back
@@ -105,6 +107,42 @@ The answer names the faction and counts the systems by intent. The model reads t
 line per system, with "(default)" after an intent nobody set, and the chronicle's latest three
 fronts. Asking fetches the faction's systems from galaxy search; when that is not available, only
 the systems with an intent set are listed.
+
+### The Campaign page
+
+The page is **Commander › Campaign**, on the desktop window and on the headset's big panel. At the
+top are the campaign faction, how many systems it is in and how many it controls, when the fronts were
+computed, and a **CHANGE FACTION** tile.
+
+**CHANGE FACTION** opens **Campaign faction**, a list with your squadron's faction first, then every
+faction your journal has seen and where. You can also type a name. **Use this** sets the faction exactly
+as "our campaign faction is" does. With no campaign faction known, the tile reads **CHOOSE FACTION**.
+
+**Systems** lists every system in the faction's last galaxy report, most influence first, with your
+newer journal readings in place of the report's figures. Each row shows:
+
+- the system, and whether the faction controls it;
+- the faction's influence;
+- its lead over the nearest rival in points, marked "frozen" during a war, civil war or election;
+- its state;
+- its intent.
+
+System, Influence and Lead sort when you press the heading. A report more than 30 days old shows its
+age and OLD REPORT, and the rest of the row is grey. On the big panel the table shows 25 systems to
+a page.
+
+The intent is a stepper over the six intents, in this order: Hold, Grow, Expand from here, Stay
+under 75%, Take control, Leave alone. A system you have not set shows its default in grey, such as
+"Hold · default". A step sets the intent exactly as the phrase does, and every row carries the
+protected bar because the model cannot change it. The rows come from code:
+
+```csharp
+public static IReadOnlyList<CampaignSystemRow> Of(
+    FactionReport report,
+    SystemStandings standings,
+    IReadOnlyDictionary<string, SystemIntent> intents,
+    DateTimeOffset now)
+```
 
 ### The chronicle
 

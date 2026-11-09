@@ -55,7 +55,10 @@ public sealed record Campaign
 
     /// <summary>The intent set for <paramref name="system"/>, else Hold where the faction controls it and LeaveAlone where it does not.</summary>
     public SystemIntent IntentFor(string system, bool controls) =>
-        Intents.TryGetValue(system, out var set) ? set : controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
+        Intents.TryGetValue(system, out var set) ? set : DefaultIntent(controls);
+
+    /// <summary>The intent of a system with none set: Hold where the faction controls it, else LeaveAlone.</summary>
+    public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
     public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0;
 }

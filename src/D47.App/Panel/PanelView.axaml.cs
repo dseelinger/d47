@@ -665,6 +665,9 @@ public partial class PanelView : UserControl, IPanelTabHost
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Activities.ActivityLedger? activities = null) => _commander.EnableStatistics(state, activities);
 
+    /// <summary>Gives this surface Commander › Campaign, after Statistics.</summary>
+    public void EnableCampaign(CampaignSources sources) => _commander.EnableCampaign(sources);
+
     /// <summary>Gives this surface Commander › Ledgers › This session.</summary>
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableSession(state);
 

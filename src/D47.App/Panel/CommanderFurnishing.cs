@@ -3,7 +3,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Commander tab: Checklist, Watches, Missions, Progress, Statistics, Ledgers (with This session among them) and Commanders.</summary>
+/// <summary>The Commander tab: Checklist, Watches, Missions, Progress, Statistics, Campaign, Ledgers (with This session among them) and Commanders.</summary>
 internal sealed class CommanderFurnishing(IPanelTabHost host)
 {
     private Func<NavCrumb, Control>? _checklistBuild;
@@ -16,6 +16,8 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private Func<NavCrumb, Control>? _creditsBuild;
     private Func<NavCrumb, Control>? _codexBuild;
     private Func<NavCrumb, Control>? _commandersBuild;
+    private Func<NavCrumb, Control>? _campaignBuild;
+    private CampaignPage? _campaign;
     private string? _statisticsOpening;
     private StatisticsPage? _statisticsRoot;
     private MissionsPage? _missions;
@@ -205,6 +207,22 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         return moved;
     }
 
+    public void EnableCampaign(CampaignSources sources)
+    {
+        var headset = host.Headset;
+        var note = new CampaignNote();
+
+        _campaignBuild = _ => _campaign = new CampaignPage(sources, host.Prompts, headset, host.ColumnWidths, host.Copy, note);
+
+        host.Furnish(
+            PanelTab.Commander,
+            BuildCommander,
+            new NavCrumb(CampaignPage.RootKey, "Campaign")
+            {
+                Help = D47.Core.Capabilities.Builtin.CampaignCapability.Id,
+            });
+    }
+
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state)
     {
         _commanderClock ??= new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
@@ -342,6 +360,11 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= statistics.Tick();
         }
 
+        if (_campaign is { } campaign && root == CampaignPage.RootKey && leaf == CampaignPage.RootKey)
+        {
+            changed |= campaign.Tick();
+        }
+
         if (_session is { } session && leaf == SessionPage.RootKey)
         {
             changed |= session.Tick();
@@ -379,7 +402,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Missions, Progress, Statistics, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Missions, Progress, Statistics, Campaign, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
         IsLedger(crumb.Key) ? new LedgersPage(host.Nav, Page, crumb.Key)
         : Page(crumb);
@@ -392,6 +415,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == MissionsPage.RootKey && _missionsBuild is { } missions ? missions(crumb)
         : crumb.Key == StandingPage.RootKey && _standingBuild is { } standing ? standing(crumb)
         : (crumb.Key == StatisticsPage.RootKey || crumb.Key == StatisticsPage.ActivitiesKey) && _statisticsBuild is { } statistics ? statistics(crumb)
+        : crumb.Key == CampaignPage.RootKey && _campaignBuild is { } campaign ? campaign(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
         : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav, Page)
         : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)

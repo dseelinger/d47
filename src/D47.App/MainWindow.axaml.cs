@@ -258,7 +258,7 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
-            // Commander roots land in call order: Checklist, Watches, Missions, Progress, Statistics, Ledgers, Commanders.
+            // Commander roots land in call order: Checklist, Watches, Missions, Progress, Statistics, Campaign, Ledgers, Commanders.
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book);
             if (host.WatchesDesk is { } watchesDesk)
             {
@@ -272,6 +272,12 @@ public partial class MainWindow : Window
                 host.Clipboard is { } missionClipboard ? text => missionClipboard.SetTextAsync(text) : null);
             Panel.EnableStanding(() => host.GameState.Active, host.Goals?.Book, host.Goals?.Backfill);
             Panel.EnableStatistics(() => host.GameState.Active, host.Activities);
+
+            if (CampaignSourcesOf(host) is { } campaignSources)
+            {
+                Panel.EnableCampaign(campaignSources);
+            }
+
             Panel.EnableBgsWork(
                 () => host.GameState.Active,
                 () => host.BgsTick?.Last,
@@ -1025,6 +1031,17 @@ public partial class MainWindow : Window
     }
 
     private FindDialog? _find;
+
+    /// <summary>What the Campaign page reads, or null before the campaign store is set up.</summary>
+    internal static CampaignSources? CampaignSourcesOf(AppHost host) => host.Campaigns is { } campaigns
+        ? new CampaignSources(
+            () => host.GameState.Active,
+            campaigns,
+            () => host.CampaignFronts?.Snapshot,
+            () => D47.Core.Journal.SquadronFactionResolver.Resolve(host.GameState.Active, host.SquadronFactions),
+            () => host.BgsTick?.Last,
+            host.Capabilities)
+        : null;
 
     private static Func<IReadOnlyList<D47.Core.Conversation.Bookmark>> Bookmarks(AppHost host) =>
         () => host.GameState.Active?.Identity.FrontierId is { } id && host.Bookmarks is { } store ? store.For(id) : [];

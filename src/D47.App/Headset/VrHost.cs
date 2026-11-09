@@ -191,6 +191,7 @@ public sealed class VrHost : IDisposable
         D47.Core.Ships.BuildTalk? buildTalk = null,
         Panel.SpendDesk? spend = null,
         Func<DateTimeOffset?>? bgsTick = null,
+        Panel.CampaignSources? campaign = null,
         Func<D47.Core.Journal.HistoryState>? historyState = null,
 
         // Which fleet carrier model each carrier is drawn as, on the window's record.
@@ -219,6 +220,7 @@ public sealed class VrHost : IDisposable
             buildTalk: buildTalk,
             spend: spend,
             bgsTick: bgsTick,
+            campaign: campaign,
             historyState: historyState,
             carrierHulls: carrierHulls,
             modules: modules,

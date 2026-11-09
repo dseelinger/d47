@@ -68,6 +68,8 @@ public sealed record MiniPanelServices
 
     public CommanderRoster? Commanders { get; init; }
 
+    public CampaignSources? Campaign { get; init; }
+
     public WatchesDesk? Watches { get; init; }
 
     public D47.App.Settings.ModulesSource? Modules { get; init; }
@@ -129,6 +131,12 @@ public sealed record MiniPanelServices
                 Clipboard is null ? null : text => Clipboard.SetTextAsync(text));
             view.EnableStanding(gameState, Goals, BackfillGoals);
             view.EnableStatistics(gameState, Activities);
+
+            if (Campaign is not null)
+            {
+                view.EnableCampaign(Campaign);
+            }
+
             view.EnableBgsWork(
                 gameState,
                 BgsTick ?? (() => null),

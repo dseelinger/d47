@@ -204,7 +204,7 @@ public static class CampaignFronts
     }
 
     /// <summary>The other factions' influence, largest first, all from the same source as the row's own influence.</summary>
-    private static List<(string? Name, double Influence)> Rivals(string faction, FactionRow row, FactionSystem system, SystemStandings standings)
+    internal static List<(string? Name, double Influence)> Rivals(string faction, FactionRow row, FactionSystem system, SystemStandings standings)
     {
         IEnumerable<(string? Name, double? Influence)> others = row.OwnReading && standings.Latest(row.System) is { } reading
             ? reading.Factions
@@ -222,7 +222,8 @@ public static class CampaignFronts
         ];
     }
 
-    private static double? Lead(FactionRow row, (string? Name, double Influence) nearest) =>
+    /// <summary>The faction's influence less the nearest rival's, or null when either is unknown.</summary>
+    internal static double? Lead(FactionRow row, (string? Name, double Influence) nearest) =>
         row.Influence is { } ours && nearest.Name is not null ? ours - nearest.Influence : null;
 
     private static string? Status(FactionRow row, string state) =>

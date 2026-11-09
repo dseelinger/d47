@@ -26,7 +26,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     private static readonly DateTimeOffset BgsTick = DateTimeOffset.Parse("2026-10-10T16:14:00Z", CultureInfo.InvariantCulture);
 
     private static readonly string[] SubTabs =
-        ["Checklist", "Missions", "Progress", "Statistics", "Ledgers", "Commanders"];
+        ["Checklist", "Missions", "Progress", "Statistics", "Campaign", "Ledgers", "Commanders"];
 
     private static readonly string[] Work =
     [
@@ -107,6 +107,14 @@ public class TheLedgersSubTabGroupsTheLedgersTests
 
     private static CommanderRoster Roster() => new(() => null, () => 0, () => null, () => false, _ => { });
 
+    private static CampaignSources Campaign(CommanderGameState state) => new(
+        () => state,
+        new D47.Core.Campaigns.CampaignStore("campaigns.json", new MemoryFileSystem(), NullLogger<D47.Core.Campaigns.CampaignStore>.Instance),
+        () => null,
+        () => null,
+        () => null,
+        D47.Core.Capabilities.CapabilityRegistry.Build([]));
+
     /// <summary>The desktop's Commander tab, enabled in the order MainWindow enables it.</summary>
     private static PanelView Desktop(CommanderGameState state)
     {
@@ -115,6 +123,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         view.EnableMissions(() => state, () => Now);
         view.EnableStanding(() => state);
         view.EnableStatistics(() => state);
+        view.EnableCampaign(Campaign(state));
         view.EnableBgsWork(() => state, () => BgsTick, () => Now);
         view.EnableCombatStats(() => state, () => HistoryState.Done, () => Now);
         view.EnableCredits(() => state, () => HistoryState.Done, () => Now);
@@ -135,6 +144,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
             GameState = () => state,
             HistoryState = () => HistoryState.Done,
             Commanders = Roster(),
+            Campaign = Campaign(state),
         }.Furnish(view);
 
         return view;

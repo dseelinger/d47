@@ -131,6 +131,7 @@ public partial class App(AppHost? host) : Application
                 buildTalk: host.BuildTalk,
                 spend: MainWindow.SpendDeskFor(host),
                 bgsTick: () => host.BgsTick?.Last,
+                campaign: MainWindow.CampaignSourcesOf(host),
                 historyState: () => host.History.State,
                 carrierHulls: new Panel.CarrierHullMemory(host.ViewState),
                 modules: window?.ModulesSource,
