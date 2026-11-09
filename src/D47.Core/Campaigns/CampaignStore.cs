@@ -54,6 +54,9 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                         .Aggregate(
                             ImmutableDictionary.Create<string, SystemIntent>(StringComparer.OrdinalIgnoreCase),
                             (intents, pair) => intents.SetItem(pair.Key, pair.Value)),
+                    Chosen = record.Chosen is { System: { Length: > 0 } chosenSystem } chosen && Enum.IsDefined(chosen.Kind)
+                        ? new ChosenFront(chosen.Kind, chosenSystem, chosen.Since, chosen.Ticks ?? [])
+                        : null,
                     Chronicle = [.. (record.Chronicle ?? []).Select(Entry).OfType<ChronicleEntry>()],
                 };
             }
@@ -96,8 +99,68 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         {
             Faction = faction.Trim(),
             Intents = clearIntents ? campaign.Intents.Clear() : campaign.Intents,
+            Chosen = null,
         });
     }
+
+    /// <summary>Makes <paramref name="kind"/> in <paramref name="system"/> the front being worked. False when the write failed.</summary>
+    public bool Choose(string frontierId, FrontKind kind, string system, DateTimeOffset since)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(system);
+
+        return Change(frontierId, campaign => campaign with { Chosen = new ChosenFront(kind, system.Trim(), since, []) });
+    }
+
+    /// <summary>Drops the front being worked without a chronicle entry. False when the write failed or none was chosen.</summary>
+    public bool Drop(string frontierId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return For(frontierId).Chosen is not null && Change(frontierId, campaign => campaign with { Chosen = null });
+    }
+
+    /// <summary>Notes a BGS tick on the front being worked, once per tick.</summary>
+    public bool NoteTick(string frontierId, FrontKind kind, string system, DateTimeOffset tick)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return Change(
+            frontierId,
+            campaign => campaign.Chosen is { } chosen && Is(chosen, kind, system) && !chosen.Ticks.Contains(tick)
+                ? campaign with { Chosen = chosen with { Ticks = [.. chosen.Ticks, tick] } }
+                : campaign);
+    }
+
+    /// <summary>
+    /// Adds <paramref name="entry"/> to the chronicle and clears the chosen front, only while that front is still the
+    /// one chosen. False when it is not, or the write failed.
+    /// </summary>
+    public bool Resolve(string frontierId, FrontKind kind, string system, ChronicleEntry entry)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+        ArgumentNullException.ThrowIfNull(entry);
+
+        var resolved = false;
+
+        return Change(
+            frontierId,
+            campaign =>
+            {
+                if (campaign.Chosen is not { } chosen || !Is(chosen, kind, system))
+                {
+                    return campaign;
+                }
+
+                resolved = true;
+
+                return campaign with { Chosen = null, Chronicle = [.. campaign.Chronicle, entry] };
+            })
+            && resolved;
+    }
+
+    private static bool Is(ChosenFront chosen, FrontKind kind, string system) =>
+        chosen.Kind == kind && string.Equals(chosen.System, system, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Sets the intent for one system. False when the write failed.</summary>
     public bool SetIntent(string frontierId, string system, SystemIntent intent)
@@ -160,6 +223,9 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                             Intents = pair.Value.Intents
                                 .OrderBy(intent => intent.Key, StringComparer.OrdinalIgnoreCase)
                                 .ToDictionary(intent => intent.Key, intent => intent.Value, StringComparer.OrdinalIgnoreCase),
+                            Chosen = pair.Value.Chosen is { } held
+                                ? new ChosenRecord { Kind = held.Kind, System = held.System, Since = held.Since, Ticks = [.. held.Ticks] }
+                                : null,
                             Chronicle = [.. pair.Value.Chronicle.Select(ToRecord)],
                         }),
                 ],
@@ -209,7 +275,20 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
 
         public Dictionary<string, SystemIntent>? Intents { get; set; }
 
+        public ChosenRecord? Chosen { get; set; }
+
         public IReadOnlyList<EntryRecord>? Chronicle { get; set; }
+    }
+
+    private sealed class ChosenRecord
+    {
+        public FrontKind Kind { get; set; }
+
+        public string? System { get; set; }
+
+        public DateTimeOffset Since { get; set; }
+
+        public IReadOnlyList<DateTimeOffset>? Ticks { get; set; }
     }
 
     private sealed class EntryRecord

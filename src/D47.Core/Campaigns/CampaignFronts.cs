@@ -38,6 +38,9 @@ public sealed record Front(
 {
     /// <summary>The conflict as the faction page draws it, for a <see cref="FrontKind.Conflict"/> front.</summary>
     public FactionConflict? Conflict { get; init; }
+
+    /// <summary>The bad states, active or pending, for a <see cref="FrontKind.BadState"/> front.</summary>
+    public IReadOnlyList<string> States { get; init; } = [];
 }
 
 /// <summary>Lists the campaign faction's fronts from its galaxy report and the Commander's readings, ranked.</summary>
@@ -173,7 +176,7 @@ public static class CampaignFronts
                 FrontKind.BadState,
                 string.Join(" ", bad.Select(entry => $"{entry.state} is {entry.Item2}.")),
                 null,
-                Lead(row, nearest));
+                Lead(row, nearest)) with { States = [.. bad.Select(entry => entry.state)] };
         }
 
         if (intent == SystemIntent.StayUnder75 && row.Influence is { } influence && influence >= FrontThresholds.ExpansionApproach)

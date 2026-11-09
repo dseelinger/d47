@@ -1605,6 +1605,12 @@ public sealed class AppHost : IDisposable
             SquadronFactions = squadronFactions,
             Campaigns = campaigns,
             CampaignSystems = new D47.Core.Campaigns.FactionSystemsSeen(),
+            CampaignFocus = new D47.Core.Campaigns.CampaignFocus(
+                campaigns,
+                () => late.Host?.CampaignFronts?.Snapshot,
+                () => gameState.Active,
+                () => late.Host?.BgsTick?.Last,
+                () => SystemWallClock.Instance.UtcNow),
             Callouts = callouts,
             CargoBoard = cargoBoard,
             Cartography = cartography,
@@ -2747,6 +2753,7 @@ public sealed class AppHost : IDisposable
                 campaigns: stores.Campaigns,
                 campaignSystems: stores.CampaignSystems,
                 campaignFronts: () => late.Host?.CampaignFronts?.Snapshot,
+                campaignFocus: stores.CampaignFocus,
                 neutronOffer: stores.NeutronOffer,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
@@ -2835,7 +2842,7 @@ public sealed class AppHost : IDisposable
                 .Concat(JournalCapability.StandingPhrases(() => gameState.Active))
 
                 // And "hold Lave" / "leave Lave alone", one set per system the campaign faction is known to be in.
-                .Concat(CampaignCapability.Phrases(stores.Campaigns, () => gameState.Active, stores.SquadronFactions, stores.CampaignSystems))
+                .Concat(CampaignCapability.Phrases(stores.Campaigns, () => gameState.Active, stores.SquadronFactions, stores.CampaignSystems, stores.CampaignFocus, () => late.Host?.CampaignFronts?.Snapshot))
 
                 // And "forget 'set focus on elite'" (#171), one per phrase the flying Commander has taught
                 // d47 stands for a declared phrase.
@@ -3962,7 +3969,15 @@ public sealed class AppHost : IDisposable
             stores.CampaignSystems,
             foundations.LoggerFactory.CreateLogger<D47.Core.Campaigns.CampaignFrontsWatch>());
 
-        tick.Add("campaign-fronts", context => campaignFronts.Poll(context.Now));
+        tick.Add(
+            "campaign-fronts",
+            context =>
+            {
+                campaignFronts.Poll(context.Now);
+
+                // Reads the fronts that poll computed.
+                stores.CampaignFocus.Poll();
+            });
 
         // After bgs-tick, so it reads this tick's BGS tick.
         var watches = host.Watches = new D47.Core.Watches.WatchRunner(
@@ -4208,6 +4223,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Campaigns.CampaignStore Campaigns { get; init; }
 
         public required D47.Core.Campaigns.FactionSystemsSeen CampaignSystems { get; init; }
+
+        public required D47.Core.Campaigns.CampaignFocus CampaignFocus { get; init; }
 
         public required CalloutEngine Callouts { get; init; }
 

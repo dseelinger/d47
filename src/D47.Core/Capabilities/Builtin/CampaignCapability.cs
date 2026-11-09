@@ -18,6 +18,14 @@ public static class CampaignCapability
 
     public const string FrontsTool = "get_campaign_fronts";
 
+    public const string TakeFrontTool = "take_campaign_front";
+
+    public const string NextFrontTool = "next_campaign_front";
+
+    public const string DropFrontTool = "drop_campaign_front";
+
+    public const string NextActionTool = "next_campaign_action";
+
     private const int FrontsSpoken = 3;
 
     private const int ChronicleSpoken = 3;
@@ -27,6 +35,16 @@ public static class CampaignCapability
 
     private static readonly string[] Questions = ["what is our campaign", "what's our campaign", "campaign report"];
 
+    private static readonly string[] ActionQuestions =
+    [
+        "what should i do for the faction",
+        "what should we do for the faction",
+        "what is the next campaign action",
+    ];
+
+    /// <summary>The kinds of front, by the name the tools take.</summary>
+    public static readonly IReadOnlyList<string> FrontKindNames = Enum.GetNames<FrontKind>();
+
     private static readonly string[] FrontQuestions = ["what are our fronts", "what are the campaign fronts", "campaign fronts"];
 
     public static CapabilityDescriptor Create(
@@ -35,7 +53,8 @@ public static class CampaignCapability
         SquadronFactions? squadronFactions = null,
         IGalaxyService? galaxy = null,
         FactionSystemsSeen? seen = null,
-        Func<CampaignFrontsSnapshot?>? fronts = null) => new()
+        Func<CampaignFrontsSnapshot?>? fronts = null,
+        CampaignFocus? focus = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -72,6 +91,56 @@ public static class CampaignCapability
                     + "it or add fronts.",
                 Commands = [.. FrontQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
                 Handler = (_, _) => Task.FromResult(Fronts(store, gameState(), squadronFactions, fronts?.Invoke())),
+            },
+            new ToolDefinition
+            {
+                Name = NextActionTool,
+                Exercise =
+                    "Say \"what should I do for the faction\" with a front chosen. The reply is one sentence naming "
+                    + "the work, then at most one sentence naming work that does not count.",
+                Description =
+                    "The single next action for the front the Commander has chosen, built by d47 from the front and the "
+                    + "Commander's unredeemed bounties and combat bonds: one sentence, then at most one sentence naming "
+                    + "work that does not count there. With no front chosen it names the front d47 proposes.",
+                Commands = [.. ActionQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
+                Handler = (_, _) => Task.FromResult(NextAction(focus, store, gameState())),
+            },
+            new ToolDefinition
+            {
+                Name = TakeFrontTool,
+                Exercise =
+                    "With a front proposed, say \"take it\". The reply names the front and its next action.",
+                Description =
+                    "Choose the front to work. With no arguments it takes the front d47 proposes. With a system, and "
+                    + "optionally a kind, it takes the faction's front there. The Commander's own decision.",
+                Parameters =
+                [
+                    ToolParameter.Text("system", "The star system of the front; leave out to take the proposed front."),
+                    ToolParameter.OneOf("kind", "The kind of front there, when the system has more than one.", FrontKindNames),
+                ],
+                Protected = true,
+                RefusalExample = "take it",
+                Handler = (arguments, _) => Task.FromResult(Take(focus, store, gameState(), arguments)),
+            },
+            new ToolDefinition
+            {
+                Name = NextFrontTool,
+                Exercise = "Say \"next front\". The reply names the next front d47 proposes.",
+                Description = "Skip the proposed front and propose the next one. The Commander's own decision.",
+                Commands = [new ToolCommandPhrase("next front")],
+                Protected = true,
+                RefusalExample = "next front",
+                Handler = (_, _) => Task.FromResult(NextFront(focus)),
+            },
+            new ToolDefinition
+            {
+                Name = DropFrontTool,
+                Exercise = "Say \"drop the front\". The reply says the front is dropped.",
+                Description = "Stop working the chosen front. Nothing is added to the chronicle. The Commander's own decision.",
+                Commands = [new ToolCommandPhrase("drop the front")],
+                Protected = true,
+                RefusalExample = "drop the front",
+                Handler = (_, _) => Task.FromResult(Drop(focus)),
             },
             new ToolDefinition
             {
@@ -117,11 +186,33 @@ public static class CampaignCapability
         CampaignStore? store,
         Func<CommanderGameState?> gameState,
         SquadronFactions? squadronFactions = null,
-        FactionSystemsSeen? seen = null)
+        FactionSystemsSeen? seen = null,
+        CampaignFocus? focus = null,
+        Func<CampaignFrontsSnapshot?>? fronts = null)
     {
         if (store is null || gameState() is not { } state || state.Identity.FrontierId is not { Length: > 0 } frontierId)
         {
             yield break;
+        }
+
+        if (focus?.Proposal is not null)
+        {
+            yield return new DynamicCommand("take it", Id, TakeFrontTool, new Dictionary<string, string>(StringComparer.Ordinal));
+        }
+
+        if (fronts?.Invoke() is { } held && string.Equals(held.FrontierId, frontierId, StringComparison.Ordinal))
+        {
+            foreach (var front in held.Fronts)
+            {
+                var arguments = new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["system"] = front.System,
+                    ["kind"] = front.Kind.ToString(),
+                };
+
+                yield return new DynamicCommand($"take the {FrontNoun(front)} in {front.System}", Id, TakeFrontTool, arguments);
+                yield return new DynamicCommand($"take the front in {front.System}", Id, TakeFrontTool, arguments);
+            }
         }
 
         var campaign = store.For(frontierId);
@@ -157,6 +248,106 @@ public static class CampaignCapability
         ($"take control of {system}", SystemIntent.TakeControl),
         ($"leave {system} alone", SystemIntent.LeaveAlone),
     ];
+
+    private static string FrontNoun(Front front) => front.Kind == FrontKind.Conflict && front.Conflict is { } conflict
+        ? conflict.Type.ToLowerInvariant()
+        : CampaignFronts.Describe(front.Kind).ToLowerInvariant();
+
+    private static ToolResult NextAction(CampaignFocus? focus, CampaignStore? store, CommanderGameState? state)
+    {
+        if (focus is null || store is null || state?.Identity.FrontierId is not { Length: > 0 } frontierId)
+        {
+            return ToolResult.Error("No Elite Dangerous journal has been detected yet, so there is no campaign to work.");
+        }
+
+        if (focus.NextAction() is { } action)
+        {
+            return ToolResult.Ok(Said(action));
+        }
+
+        if (store.For(frontierId).Chosen is { } chosen)
+        {
+            return ToolResult.Ok(
+                $"You are working the {CampaignFronts.Describe(chosen.Kind).ToLowerInvariant()} in {chosen.System}, "
+                + "but its front is not in the faction report D47 holds yet. D47 will say when it resolves.");
+        }
+
+        return ToolResult.Ok(focus.Proposal is { } proposal
+            ? $"No front is chosen. D47 proposes the {Proposed(proposal.Front)} Say 'take it' or 'next front'."
+            : "No front is chosen and D47 has none to propose yet. Ask 'what are our fronts'.");
+    }
+
+    private static string Said(CampaignNextAction action) =>
+        action.NotCounting is { } excluded ? $"{action.Sentence} {excluded}" : action.Sentence;
+
+    private static string Proposed(Front front) =>
+        $"{CampaignFronts.Describe(front.Kind).ToLowerInvariant()} in {front.System}: {front.Reason}";
+
+    private static ToolResult Take(CampaignFocus? focus, CampaignStore? store, CommanderGameState? state, ToolArguments arguments)
+    {
+        if (focus is null || store is null || state?.Identity.FrontierId is null)
+        {
+            return ToolResult.Error("No Elite Dangerous journal has been detected yet, so there is no campaign to work.");
+        }
+
+        FrontKind? kind = null;
+
+        if (arguments.TryGetString("kind", out var named) && !string.IsNullOrWhiteSpace(named))
+        {
+            if (!Enum.TryParse<FrontKind>(named, ignoreCase: true, out var parsed) || !Enum.IsDefined(parsed))
+            {
+                return ToolResult.Error($"The kind has to be one of {string.Join(", ", FrontKindNames)}.");
+            }
+
+            kind = parsed;
+        }
+
+        Front? taken;
+
+        if (arguments.TryGetString("system", out var system) && !string.IsNullOrWhiteSpace(system))
+        {
+            taken = focus.Take(kind, system);
+
+            if (taken is null)
+            {
+                return ToolResult.Error($"The faction has no front in {system.Trim()} to take.");
+            }
+        }
+        else
+        {
+            taken = focus.Accept();
+
+            if (taken is null)
+            {
+                return ToolResult.Error("D47 has no front proposed to take.");
+            }
+        }
+
+        var action = focus.NextAction();
+
+        return ToolResult.Ok(
+            $"Working the {CampaignFronts.Describe(taken.Kind).ToLowerInvariant()} in {taken.System}."
+            + (action is null ? "" : " " + Said(action)));
+    }
+
+    private static ToolResult NextFront(CampaignFocus? focus)
+    {
+        if (focus is null)
+        {
+            return ToolResult.Error("No Elite Dangerous journal has been detected yet, so there is no campaign to work.");
+        }
+
+        return focus.Next() is { } proposal
+            ? ToolResult.Ok($"The next front is the {Proposed(proposal.Front)} Say 'take it' or 'next front'.")
+            : ToolResult.Ok("There is no front to propose: one is already chosen, or the faction has none.");
+    }
+
+    private static ToolResult Drop(CampaignFocus? focus) =>
+        focus is null
+            ? ToolResult.Error("No Elite Dangerous journal has been detected yet, so there is no campaign to work.")
+            : focus.Drop()
+                ? ToolResult.Ok("The front is dropped.")
+                : ToolResult.Ok("No front is chosen.");
 
     /// <summary>The intent as a short instruction.</summary>
     public static string Describe(SystemIntent intent) => intent switch

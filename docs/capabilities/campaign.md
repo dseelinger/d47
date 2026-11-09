@@ -152,10 +152,42 @@ to the galaxy search service, as the Faction search on the Search tab does. When
 report are kept, the answer says when they were computed, and D47 tries again after half an hour.
 Asking for the fronts never fetches.
 
+### One front at a time
+
+Naming a front to work keeps you on it. While none is chosen, D47 proposes the most pressing front
+after each fetch and at the start of a session. A proposal writes nothing.
+
+| Say | Effect |
+|---|---|
+| "take it" | Works the front D47 proposes. Heard only while one is proposed. |
+| "next front" | Proposes the next front in the ranking, wrapping to the top. |
+| "take the war in Lave" | Works that front. The noun is the front's kind: "war", "civil war", "election", "coup threat", "retreat", "bad state" and so on. |
+| "take the front in Lave" | Works the front there, whatever its kind. |
+| "drop the front" | Stops working it. Nothing is added to the chronicle. |
+| "what should I do for the faction" | One sentence naming the work, then at most one sentence naming work that does not count. |
+
+A chosen front stays chosen across restarts until it resolves or you drop it. Naming another campaign
+faction drops it. D47 notes each BGS tick the front spans. A front resolves when the fronts computed
+after you chose it no longer hold it: the conflict ended, the state is gone, the margin is restored.
+A thin margin that disappears because a conflict or coup threat now covers the system has not resolved.
+D47 then adds the front to the chronicle, with the BGS work you did for the faction there, and clears the choice.
+A conflict that ended with a result in your journal is recorded as won or lost.
+
+The next action is built in code from the front and from the bounties and combat bonds your journal
+shows the faction paid you for in the last week and no redemption has followed:
+
+```csharp
+public sealed record CampaignNextAction(Front Front, string Sentence, string? NotCounting)
+```
+
+A war says that trade does not count, an election that combat does not count and that firing a weapon
+may void some election missions, a Lockdown that only bounties help, and an Outbreak that bounty
+vouchers do nothing. The model reads the answer and does not compose it.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-`set_campaign_faction` and `set_system_intent` are protected: the phrases above reach them, and the
+`set_campaign_faction`, `set_system_intent`, `take_campaign_front`, `next_campaign_front` and `drop_campaign_front` are protected: the phrases above reach them, and the
 model is refused.
 
 #### `get_campaign`
@@ -165,6 +197,30 @@ model is refused.
 ```
 
 #### `get_campaign_fronts`
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `next_campaign_action`
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `take_campaign_front`
+
+```json
+{"type":"object","properties":{"kind":{"type":"string","description":"The kind of front there, when the system has more than one.","enum":["Conflict","Coup","Retreat","ThinMargin","BadState","UnwantedExpansion","Expansion","Stale"]},"system":{"type":"string","description":"The star system of the front; leave out to take the proposed front."}},"required":[],"additionalProperties":false}
+```
+
+#### `next_campaign_front`
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `drop_campaign_front`
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

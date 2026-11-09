@@ -364,7 +364,10 @@ public static class BuiltinCapabilities
         Campaigns.FactionSystemsSeen? campaignSystems = null,
 
         // The campaign faction's last report and ranked fronts, for get_campaign_fronts.
-        Func<Campaigns.CampaignFrontsSnapshot?>? campaignFronts = null) =>
+        Func<Campaigns.CampaignFrontsSnapshot?>? campaignFronts = null,
+
+        // The one front the Commander is working, and the one proposed.
+        Campaigns.CampaignFocus? campaignFocus = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -584,7 +587,7 @@ public static class BuiltinCapabilities
 
         WatchesCapability.Create(watches ?? (() => [])),
 
-        CampaignCapability.Create(campaigns, () => gameState.Active, squadronFactions, galaxy, campaignSystems, campaignFronts),
+        CampaignCapability.Create(campaigns, () => gameState.Active, squadronFactions, galaxy, campaignSystems, campaignFronts, campaignFocus),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

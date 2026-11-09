@@ -29,7 +29,10 @@ public sealed record ChronicleEntry(
     IReadOnlyList<DateTimeOffset> Ticks,
     IReadOnlyList<ChronicleWork> Work);
 
-/// <summary>One Commander's campaign: the faction, an intent per system, and the chronicle of resolved fronts.</summary>
+/// <summary>The one front the Commander is working: where it is, when it was taken and the BGS ticks it has spanned.</summary>
+public sealed record ChosenFront(FrontKind Kind, string System, DateTimeOffset Since, IReadOnlyList<DateTimeOffset> Ticks);
+
+/// <summary>One Commander's campaign: the faction, an intent per system, the front being worked and the chronicle of resolved fronts.</summary>
 public sealed record Campaign
 {
     public static readonly Campaign None = new();
@@ -41,6 +44,9 @@ public sealed record Campaign
     public ImmutableDictionary<string, SystemIntent> Intents { get; init; } =
         ImmutableDictionary.Create<string, SystemIntent>(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The front being worked, or null.</summary>
+    public ChosenFront? Chosen { get; init; }
+
     public IReadOnlyList<ChronicleEntry> Chronicle { get; init; } = [];
 
     /// <summary>The faction named, else <paramref name="squadronFaction"/>.</summary>
@@ -51,5 +57,5 @@ public sealed record Campaign
     public SystemIntent IntentFor(string system, bool controls) =>
         Intents.TryGetValue(system, out var set) ? set : controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
-    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chronicle.Count == 0;
+    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0;
 }
