@@ -85,13 +85,28 @@ $lines.Add('')
 $lines.Add("Commit: $commit")
 $lines.Add('')
 
-dotnet restore $sln --nologo 2>&1 | Out-File (Join-Path $run 'restore.txt')
+# --force: a no-op restore skips the vulnerability audit.
+$restoreLog = Join-Path $run 'restore.txt'
+dotnet restore $sln --force --nologo 2>&1 | Out-File $restoreLog
 
 # From here on nothing reaches the internet.
 $env:HTTP_PROXY = 'http://127.0.0.1:9'
 $env:HTTPS_PROXY = 'http://127.0.0.1:9'
 $env:ALL_PROXY = 'http://127.0.0.1:9'
 $env:NO_PROXY = 'localhost,127.0.0.1,::1'
+
+# --- Dependencies: NU1901-NU1904 from restore, as errors under TreatWarningsAsErrors or as warnings.
+$lines.Add('## Dependencies')
+$lines.Add('')
+$advisories = @(Select-String -LiteralPath $restoreLog -Pattern '(?:error|warning) NU190[1-4]:' | ForEach-Object {
+    ($_.Line -replace '^.*?(?:error|warning) (NU190[1-4]):\s*(?:Warning As Error:\s*)?', '$1: ' -replace '\s*\[[^\]]*\]\s*$', '').Trim()
+} | Sort-Object -Unique)
+if ($advisories.Count -eq 0) {
+    $lines.Add('No known vulnerable packages.')
+} else {
+    foreach ($a in $advisories) { $lines.Add((Mark "- $a")) }
+}
+$lines.Add('')
 
 # --- Build
 $buildLog = Join-Path $run 'build.txt'
