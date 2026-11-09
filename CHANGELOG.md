@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Faction influence and conflict readings from the last week of your journals now survive a restart. The BGS work page's Influence column, the influence in "what's my BGS work", and the days won on Search › Faction › Conflicts no longer go blank after d47 restarts until you visit the system again.
+
 A stock story's span in the black can now travel toward any system, given with its position, or through a list of systems in order, moving on to the next once you are within 1,000 light years of the current one. The finale waits for the last.
 
 In a Goals story of three months or longer, an engineers step for an engineer out at Colonia, more than 1,000 light years from you, now sends the story out into the black toward their system, in place of asking for the unlock in a chapter with no travel planned. It does not depend on your Exploration rating. The story stays out while the next engineer on your unlock route is also at Colonia, then heads back. In a shorter story that engineer is not offered.

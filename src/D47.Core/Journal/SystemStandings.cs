@@ -98,6 +98,9 @@ public sealed record StandingsSpan(
 
     internal bool Holds(SystemReading reading) =>
         Factions.SequenceEqual(reading.Factions) && Conflicts.SequenceEqual(reading.Conflicts);
+
+    internal bool Matches(StandingsSpan other) =>
+        Factions.SequenceEqual(other.Factions) && Conflicts.SequenceEqual(other.Conflicts);
 }
 
 /// <summary>A faction's influence in the span before a boundary and in the latest span, with the latest span's last sighting.</summary>
@@ -123,6 +126,61 @@ public sealed record SystemStandings
 
     /// <summary>The names of the systems with a reading.</summary>
     public IEnumerable<string> Systems => Readings.Keys;
+
+    /// <summary>Whether any system has a reading.</summary>
+    public bool IsKnown => !Readings.IsEmpty;
+
+    /// <summary>
+    /// This, recovered from older journals, with what the live journal has folded since laid over it, system by
+    /// system. A reading or span in both is kept once.
+    /// </summary>
+    public SystemStandings With(SystemStandings live)
+    {
+        ArgumentNullException.ThrowIfNull(live);
+
+        var readings = Readings;
+
+        foreach (var (system, held) in live.Readings)
+        {
+            readings = readings.SetItem(
+                system,
+                readings.TryGetValue(system, out var recovered)
+                    ? recovered.Concat(held).OrderBy(reading => reading.SeenAt).Aggregate(ImmutableList<SystemReading>.Empty, Remember)
+                    : held);
+        }
+
+        var spans = Spans;
+
+        foreach (var (system, held) in live.Spans)
+        {
+            spans = spans.SetItem(system, spans.TryGetValue(system, out var recovered) ? Merged(recovered, held) : held);
+        }
+
+        return this with { Readings = readings, Spans = spans };
+    }
+
+    private static ImmutableList<StandingsSpan> Merged(ImmutableList<StandingsSpan> recovered, ImmutableList<StandingsSpan> live)
+    {
+        var merged = ImmutableList<StandingsSpan>.Empty;
+
+        foreach (var span in recovered.Concat(live).OrderBy(span => span.FirstSeen))
+        {
+            merged = !merged.IsEmpty && merged[^1].Matches(span)
+                ? merged.SetItem(
+                    merged.Count - 1,
+                    merged[^1] with { LastSeen = span.LastSeen > merged[^1].LastSeen ? span.LastSeen : merged[^1].LastSeen })
+                : merged.Add(span);
+        }
+
+        if (merged.IsEmpty)
+        {
+            return merged;
+        }
+
+        var newest = merged.Max(span => span.LastSeen);
+
+        return merged.RemoveAll(span => span.LastSeen < newest - SpansKept);
+    }
 
     /// <summary>The newest reading of a system, or null when it has none.</summary>
     public SystemReading? Latest(string system)

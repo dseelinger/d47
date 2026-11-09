@@ -153,6 +153,9 @@ public sealed class GameStateStore
     /// <summary>The BGS work this Commander did over the last week, on the same terms as <see cref="RestoreFleet"/>.</summary>
     public Func<string, BgsWork?>? RestoreBgsWork { get; init; }
 
+    /// <summary>The system factions and conflicts of the last week, on the same terms as <see cref="RestoreBgsWork"/>.</summary>
+    public Func<string, SystemStandings?>? RestoreStandings { get; init; }
+
     /// <summary>
     /// The kills this Commander has made, on the same terms as <see cref="RestoreFleet"/> but merged whenever a
     /// record comes back, so an empty one still marks the record whole.
@@ -400,6 +403,7 @@ public sealed class GameStateStore
         Part<Listening.SpokenNames>(s => s.RestoreNames, v => v.IsKnown, (c, v) => c.Names = v, (c, v) => c.Names = v.With(c.Names.Names)),
         Part<PowerplayCycleMerits>(s => s.RestoreCycleMerits, v => v.IsKnown, (c, v) => c.CycleMerits = v, (c, v) => c.CycleMerits = v.With(c.CycleMerits)),
         Part<BgsWork>(s => s.RestoreBgsWork, v => v.IsKnown, (c, v) => c.BgsWork = v, (c, v) => c.BgsWork = v.With(c.BgsWork)),
+        Part<SystemStandings>(s => s.RestoreStandings, v => v.IsKnown, (c, v) => c.Standings = v, (c, v) => c.Standings = v.With(c.Standings)),
         Merged<CombatRecord>(s => s.RestoreCombat, (c, v) => c.Combat = v.With(c.Combat)),
         Merged<SurfaceMiningSites>(s => s.RestoreSurfaceMining, (c, v) => c.SurfaceMining = v.With(c.SurfaceMining)),
         Merged<CreditLedger>(s => s.RestoreCreditLedger, (c, v) => c.CreditLedger = v.With(c.CreditLedger)),

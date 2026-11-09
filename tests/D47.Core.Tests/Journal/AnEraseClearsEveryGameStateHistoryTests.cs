@@ -233,6 +233,26 @@ public sealed class AnEraseClearsEveryGameStateHistoryTests
     }
 
     [Fact]
+    public void StandingsFromBeforeTheEraseAreGoneAndAnotherCommandersAreKept()
+    {
+        var files = new MemoryFileSystem();
+        var paths = Journals(
+            files,
+            [Login(G, "10"), JumpWithFactions("10", "Elsewhere")],
+            [Login(F, "11"), JumpWithFactions("11", "Before")],
+            [Erase(F, "12")],
+            [Login(F, "13"), JumpWithFactions("13", "After")]);
+
+        var standings = SystemStandingsBackfill.FromHistory(files, paths, NullLogger.Instance, Cancel);
+
+        Assert.Equal(["After"], standings[F].Systems);
+        Assert.Equal(["Elsewhere"], standings[G].Systems);
+    }
+
+    private static string JumpWithFactions(string day, string system) =>
+        Line(day + "T09:20:00", "\"event\":\"FSDJump\",\"StarSystem\":\"" + system + "\",\"SystemAddress\":1,\"Factions\":[{\"Name\":\"Diamond Frogs\",\"Influence\":0.5}]");
+
+    [Fact]
     public void MiningRunsFromBeforeTheEraseAreGoneAndAnotherCommandersAreKept()
     {
         var files = new MemoryFileSystem();

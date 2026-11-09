@@ -150,6 +150,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's BGS work over the last week.</summary>
     public IReadOnlyDictionary<string, BgsWork>? BgsWork { get; private set; }
 
+    /// <summary>Each Commander's system factions and conflicts over the last week.</summary>
+    public IReadOnlyDictionary<string, SystemStandings>? Standings { get; private set; }
+
     /// <summary>Each Commander's kills.</summary>
     public IReadOnlyDictionary<string, CombatRecord>? Combat { get; private set; }
 
@@ -312,6 +315,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(BgsWorkBackfill)),
+                    cancellation));
+
+            Standings = Timed(
+                "system standings backfill",
+                () => SystemStandingsBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(SystemStandingsBackfill)),
                     cancellation));
 
             Combat = Timed(

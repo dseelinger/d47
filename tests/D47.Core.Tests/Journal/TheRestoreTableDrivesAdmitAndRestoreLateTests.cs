@@ -549,6 +549,51 @@ public class TheRestoreTableDrivesAdmitAndRestoreLateTests
         Assert.Same(BgsWork.None, state.BgsWork);
     }
 
+    // SystemStandings
+
+    private static SystemStandings Standing(string time, double influence) =>
+        SystemStandings.Empty.Apply(Parsed(
+            "{\"timestamp\":\"" + time + "Z\",\"event\":\"FSDJump\",\"StarSystem\":\"Sol\",\"SystemAddress\":10477373803,"
+            + "\"Factions\":[{\"Name\":\"Mother Gaia\",\"Influence\":" + influence.ToString(System.Globalization.CultureInfo.InvariantCulture) + "}]}"));
+
+    private static JournalEvent Parsed(string line)
+    {
+        Assert.True(JournalEvent.TryParse(line, Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance, out var parsed));
+        return parsed!;
+    }
+
+    [Fact]
+    public void KnownStandingsAreTakenWhenACommanderIsMet()
+    {
+        var standings = Standing("2026-09-05T10:00:00", 0.5);
+        var store = new GameStateStore { RestoreStandings = _ => standings };
+
+        Assert.Same(standings, Met(store).Standings);
+    }
+
+    [Fact]
+    public void EmptyStandingsAreIgnoredWhenACommanderIsMet()
+    {
+        var store = new GameStateStore { RestoreStandings = _ => SystemStandings.Empty };
+
+        Assert.Same(SystemStandings.Empty, Met(store).Standings);
+    }
+
+    [Fact]
+    public void RestoredStandingsTakeTheLiveReadingOnTopOnRestoreLate()
+    {
+        SystemStandings? restored = null;
+        var store = new GameStateStore { RestoreStandings = _ => restored };
+        var state = Met(store);
+        state.Standings = Standing("2026-09-06T10:00:00", 0.6);
+        restored = Standing("2026-09-05T10:00:00", 0.5);
+
+        store.RestoreLate();
+
+        Assert.Equal(0.6, state.Standings.Latest("Sol")!.InfluenceOf("Mother Gaia"));
+        Assert.Equal(0.5, state.Standings.Earlier("Sol")!.InfluenceOf("Mother Gaia"));
+    }
+
     // UnlockEvidence
 
     [Fact]

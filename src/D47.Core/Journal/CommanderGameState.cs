@@ -72,7 +72,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     public ReputationState Reputation { get; internal set; } = ReputationState.Empty;
 
     /// <summary>The factions' influence and the conflicts in each system they have been in.</summary>
-    public SystemStandings Standings { get; private set; } = SystemStandings.Empty;
+    public SystemStandings Standings { get; internal set; } = SystemStandings.Empty;
 
     /// <summary>What they have contributed to each engineer.</summary>
     public EngineerContributions Contributions { get; internal set; } = EngineerContributions.Empty;

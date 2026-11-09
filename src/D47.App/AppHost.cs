@@ -1251,6 +1251,7 @@ public sealed class AppHost : IDisposable
             // And the merits earned for the Commander's Power earlier this cycle.
             RestoreCycleMerits = fid => history.CycleMerits?.GetValueOrDefault(fid),
             RestoreBgsWork = fid => history.BgsWork?.GetValueOrDefault(fid),
+            RestoreStandings = fid => history.Standings?.GetValueOrDefault(fid),
 
             // And every kill, offered only once the walk is done so that a record is whole when it arrives.
             RestoreCombat = fid => history.State is HistoryState.Done
