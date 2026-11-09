@@ -879,13 +879,19 @@ steps: the place an activity needs comes first in its objective, and a sight bey
 the last load, or own a Caspian Explorer, and the story is three months long or more. Then the chapter
 may go anywhere, as far as Colonia or Sagittarius A*, but only after the beacon scan and before the finale,
 and only when the chapter draws a discovery, map, footfall or organic activity or its Goals step is an
-Exploration or Exobiologist rank. A chapter may also be a sightseeing chapter: with notable places on, a long-haul story's chapter after the beacon scan
-and before the finale, other than one heading home, is drawn as one with a chance that grows with your Exploration
-record and falls after a sightseeing chapter. It is offered up to eight notable places from the catalogue, none in a
-system an earlier chapter of the story sent you to, and d47 builds an arrive, land or scan objective at one. That
-chapter goes anywhere. Outside the bubble the offered places are only those in the Sol band above. Changing the
-objective of a sightseeing chapter whose sight is still ahead gives another sight. Any other chapter keeps to a
-session's flying. Below the credits, the writer is not told it exists.
+Exploration or Exobiologist rank. Any other chapter keeps to a session's flying. Below the credits, the
+writer is not told it exists.
+
+**Sightseeing.** With notable places on, any story's chapter after the beacon scan and before the finale,
+other than one heading home or in a span, may be drawn as a sightseeing chapter, with a chance that grows with
+your Exploration record and falls after a sightseeing chapter. d47 offers the eight places nearest you, none
+in a system an earlier chapter of the story sent you to and none farther than the story's span can reach,
+picks one by the chapter's seed in proportion to its rating, and builds an arrive, land or scan objective
+there. A sight within 33 jumps of the best jump range in your fleet is an ordinary sightseeing chapter. A
+sight farther away opens a span in the black toward the sight's system: the chapters out travel toward it,
+and the one that can reach it carries the objective. Outside the bubble and not in the black, the sights
+are only those in the Sol band above. Changing the objective of a sightseeing chapter whose sight is still
+ahead gives another sight, and inside such a span the span heads for the new one.
 
 **A credit reserve.** A chapter never spends the Commander to nothing. A story objective that buys something,
 which is a `board` into a hull they do not own, `carrierbuy` or `squadronfound`, is allowed only when the

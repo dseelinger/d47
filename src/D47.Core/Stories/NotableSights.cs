@@ -19,8 +19,8 @@ public static class NotableSights
         "Notable Stellar Phenomena",
     ];
 
-    /// <summary>The first <see cref="Most"/> places of a sight type, in input order, outside <paramref name="seen"/> systems and, with a <paramref name="band"/>, within it of Sol.</summary>
-    public static IReadOnlyList<NotablePlace> Pick(IReadOnlyList<NotablePlace> near, IReadOnlyCollection<string> seen, ChapterBand.Range? band)
+    /// <summary>The <see cref="Most"/> places of a sight type nearest <paramref name="from"/> and within <paramref name="within"/> light years of it, outside <paramref name="seen"/> systems and, with a <paramref name="band"/>, within it of Sol; nearest first.</summary>
+    public static IReadOnlyList<NotablePlace> Pick(IReadOnlyList<NotablePlace> near, IReadOnlyCollection<string> seen, ChapterBand.Range? band, StarPosition from, double within)
     {
         ArgumentNullException.ThrowIfNull(near);
         ArgumentNullException.ThrowIfNull(seen);
@@ -30,8 +30,18 @@ public static class NotableSights
             .. near
                 .Where(place => Types.Contains(place.Type, StringComparer.Ordinal)
                     && !seen.Contains(place.System, StringComparer.OrdinalIgnoreCase)
+                    && place.DistanceFrom(from) <= within
                     && (band is not { } range || place.DistanceFrom(StarPosition.Origin) is var distance && distance >= range.Min && distance <= range.Max))
+                .OrderBy(place => place.DistanceFrom(from))
                 .Take(Most),
         ];
+    }
+
+    /// <summary>One of <paramref name="offered"/> drawn by <paramref name="seed"/> in proportion to its rating; uniformly when none is rated. Null when none is offered.</summary>
+    public static NotablePlace? Choose(IReadOnlyList<NotablePlace> offered, uint seed)
+    {
+        ArgumentNullException.ThrowIfNull(offered);
+
+        return offered.Count == 0 ? null : offered[new Random32(seed).Weighted([.. offered.Select(place => Math.Max(0, place.Rating ?? 0))])];
     }
 }

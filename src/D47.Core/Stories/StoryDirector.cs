@@ -2149,6 +2149,7 @@ public sealed class StoryDirector(
     {
         private Story _story = null!;
         private StorySecret _secret = null!;
+        private IReadOnlyList<NotablePlace> _sights = [];
 
         /// <summary>The running story, as <see cref="Unrewritable"/> found it.</summary>
         public Story Story => _story;
@@ -2185,7 +2186,10 @@ public sealed class StoryDirector(
 
             _secret = secret;
             var refused = !refusing || RefusedKey is not { } key || _story.Refused.Contains(key) ? _story.Refused : [.. _story.Refused, key];
-            return (await Director.RewriteAskAsync(FrontierId, _story with { Refused = refused }, secret, Standing.Adventure, rewrite, now, cancellationToken).ConfigureAwait(false), null);
+            var ask = await Director.RewriteAskAsync(FrontierId, _story with { Refused = refused }, secret, Standing.Adventure, rewrite, now, cancellationToken).ConfigureAwait(false);
+
+            _sights = ask.Story?.Sights ?? [];
+            return (ask, null);
         }
 
         public override string? Replace(Adventure draft, long? closedMarketId)
@@ -2204,8 +2208,15 @@ public sealed class StoryDirector(
             }
 
             var refusedKey = closedMarketId is null ? RefusedKey : null;
+            var moved = draft.Sight is { } sight && !string.Equals(sight, chapter.Sight, StringComparison.OrdinalIgnoreCase)
+                ? _sights.FirstOrDefault(place => string.Equals(place.System, sight, StringComparison.OrdinalIgnoreCase))
+                : null;
             Director.Stories.Update(FrontierId, _story.Id, current =>
-                refusedKey is null || current.Refused.Contains(refusedKey) ? current : current with { Refused = [.. current.Refused, refusedKey] });
+            {
+                current = refusedKey is null || current.Refused.Contains(refusedKey) ? current : current with { Refused = [.. current.Refused, refusedKey] };
+
+                return moved is not null && current.DrawnSpan is { } span ? current with { DrawnSpan = DrawnSpans.MoveSight(span, moved) } : current;
+            });
 
             Director.Logger.LogInformation(
                 "{Title}: beat {Beat} of {Chapter} was replaced, {Why}", _story.Title, from + 1, chapter.Name, closedMarketId is null ? "refused" : "its docks offline");
@@ -2365,7 +2376,7 @@ public sealed class StoryDirector(
         var afterBeacon = story.BeaconScanAt is { } scanned && chapter.Written >= scanned;
         IReadOnlyList<NotablePlace> sights = [];
 
-        if (afterBeacon && finaleChapter is null && SightBeat(chapter) is { } sightBeat && sightBeat >= rewrite.From && ChapterFit.IsLongHaul(story.Pacing, game))
+        if (afterBeacon && finaleChapter is null && SightBeat(chapter) is { } sightBeat && sightBeat >= rewrite.From && game?.Location.StarPos is { } at)
         {
             var seen = before.Chapters.Select(key => ChapterOf(frontierId, story, key)?.Sight).OfType<string>().ToList();
 
@@ -2374,7 +2385,13 @@ public sealed class StoryDirector(
                 seen.Add(chapter.Sight!);
             }
 
-            sights = await SightsAsync(game?.Location.StarPos, null, seen, cancellationToken).ConfigureAwait(false);
+            var within = SpanReach.Of(game) is { } spanReach ? (story.DrawnSpan is { Kind: DrawnSpanKind.Sight } ? spanReach.LightYears : spanReach.SessionLightYears) : 0;
+            var offered = await SightsAsync(at, null, seen, within, cancellationToken).ConfigureAwait(false);
+
+            if (NotableSights.Choose(offered, ChapterDraw.SightPickSeed(story.Id, number, seen.Count)) is { } picked)
+            {
+                sights = [picked];
+            }
         }
 
         var sightseeing = sights.Count > 0;
@@ -2430,8 +2447,33 @@ public sealed class StoryDirector(
         return null;
     }
 
-    /// <summary>The sights within a long haul of <paramref name="position"/>; empty with no catalogue, no position or an unreachable catalogue.</summary>
-    private async Task<IReadOnlyList<NotablePlace>> SightsAsync(StarPosition? position, ChapterBand.Range? band, IReadOnlyCollection<string> seen, CancellationToken cancellationToken)
+    /// <summary>Light years around a sight span's target within which its place is looked up again.</summary>
+    private const double SightLookup = 10;
+
+    /// <summary>The place a sight span is heading for; null with no catalogue or when it is not listed.</summary>
+    private async Task<NotablePlace?> SpanSightAsync(DrawnSpan span, CancellationToken cancellationToken)
+    {
+        if (Places?.Invoke() is not { } places)
+        {
+            return null;
+        }
+
+        try
+        {
+            return (await places.NearAsync(span.TargetAt, SightLookup, int.MaxValue, cancellationToken).ConfigureAwait(false))
+                .FirstOrDefault(place => span.TargetAddress is { } address && place.SystemAddress is { } placeAddress
+                    ? address == placeAddress
+                    : string.Equals(place.System, span.Target, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            logger.LogWarning(ex, "The catalogue of notable places could not be reached, so the chapter is not a sightseeing chapter");
+            return null;
+        }
+    }
+
+    /// <summary>The sights within <paramref name="within"/> light years of <paramref name="position"/>, nearest first; empty with no catalogue, no position or an unreachable catalogue.</summary>
+    private async Task<IReadOnlyList<NotablePlace>> SightsAsync(StarPosition? position, ChapterBand.Range? band, IReadOnlyCollection<string> seen, double within, CancellationToken cancellationToken)
     {
         if (Places?.Invoke() is not { } places || position is not { } at)
         {
@@ -2440,7 +2482,7 @@ public sealed class StoryDirector(
 
         try
         {
-            return NotableSights.Pick(await places.NearAsync(at, AdventureGenerator.LongHaulLightYears, int.MaxValue, cancellationToken).ConfigureAwait(false), seen, band);
+            return NotableSights.Pick(await places.NearAsync(at, within, int.MaxValue, cancellationToken).ConfigureAwait(false), seen, band, at, within);
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -3490,19 +3532,47 @@ public sealed class StoryDirector(
 
         var statistics = game?.Statistics ?? CareerStatistics.Empty;
         IReadOnlyList<NotablePlace> sights = [];
+        DrawnSpan? sightSpan = null;
+        var position = game?.Location.StarPos;
+        var sightReach = game is null ? null : SpanReach.Of(game);
 
-        if (story.BeaconScanAt is not null
+        if (span is { Kind: DrawnSpanKind.Sight, Phase: DrawnSpanPhase.Out } sightOut && number > sightOut.Opened && position is { } here && sightReach is { } sightOutReach)
+        {
+            if (await SpanSightAsync(sightOut, cancellationToken).ConfigureAwait(false) is { } target && DrawnSpans.ChaptersOut(target.DistanceFrom(here), sightOutReach.LightYears) == 1)
+            {
+                sights = [target];
+            }
+        }
+        else if (story.BeaconScanAt is not null
             && finaleChapter is null
             && homeLeg is null
             && heading is null
             && !pulled
-            && !spanTravels
-            && ChapterFit.IsLongHaul(story.Pacing, game)
+            && span is null
+            && position is { } at
+            && sightReach is { } reachOfSpans
             && ChapterDraw.Sightsee(Weights(statistics), previous?.Previous.Sight is not null, ChapterDraw.SightSeed(story.Id, number, rewrites)))
         {
             var earlier = (replacing ? story.Chapters.SkipLast(1) : story.Chapters).Select(chapterKey => ChapterOf(frontierId, story, chapterKey)?.Sight).OfType<string>().ToList();
+            var offered = await SightsAsync(at, inTheBlack ? null : ChapterBand.Of(at), earlier, DrawnSpans.SightRadius(story.Pacing, reachOfSpans.LightYears), cancellationToken).ConfigureAwait(false);
 
-            sights = await SightsAsync(game?.Location.StarPos, inTheBlack ? null : ChapterBand.Of(game?.Location.StarPos), earlier, cancellationToken).ConfigureAwait(false);
+            if (NotableSights.Choose(offered, ChapterDraw.SightPickSeed(story.Id, number, rewrites)) is { } chosenSight)
+            {
+                if (chosenSight.DistanceFrom(at) <= reachOfSpans.SessionLightYears)
+                {
+                    sights = [chosenSight];
+                }
+                else if (!replacing)
+                {
+                    sightSpan = DrawnSpans.OpenSight(story.Id, number, story.Pacing, chosenSight, at);
+
+                    // A span one chapter out reaches its sight in the chapter that opens it.
+                    if (DrawnSpans.ChaptersOut(chosenSight.DistanceFrom(at), reachOfSpans.LightYears) == 1)
+                    {
+                        sights = [chosenSight];
+                    }
+                }
+            }
         }
 
         var sightseeing = sights.Count > 0;
@@ -3553,12 +3623,29 @@ public sealed class StoryDirector(
             BeaconScanned = story.BeaconScanAt is not null,
             Finale = finaleChapter is not null,
             AuthoredSpan = authored,
-            SpanOpen = span is not null,
+            SpanOpen = span is not null || sightSpan is not null || sights.Count > 0,
             Heading = home is not null || chosen is not null,
             ExplorationWeight = weights.Weight(Career.Exploration),
             Reach = spanReach,
             At = game?.Location.StarPos,
         };
+
+        // A span that reaches its sight in this chapter has the sight for its stop; one farther out keeps a place for the stop it travels to.
+        if (sightSpan is not null && slots is not null)
+        {
+            if (sights.Count > 0)
+            {
+                span = sightSpan;
+                inTheBlack = true;
+            }
+            else if (Drawn(fixedPlaces + 1) is { } sightTravelling
+                && await PlacesOnTheWayAsync(sightSpan.StartAt, sightSpan.TargetAt, spanReach!.LightYears, cancellationToken).ConfigureAwait(false))
+            {
+                span = sightSpan;
+                slots = sightTravelling;
+                inTheBlack = true;
+            }
+        }
 
         // The second draw keeps a place for the stop the span travels to.
         if (slots is not null

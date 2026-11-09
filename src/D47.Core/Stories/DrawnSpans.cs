@@ -1,6 +1,7 @@
 using D47.Core.Adventures;
 using D47.Core.Checklists;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Stories;
 
@@ -109,6 +110,46 @@ public static class DrawnSpans
         ArgumentNullException.ThrowIfNull(pacing);
 
         return Band(pacing) == 0 ? 0 : roll < 0.5 ? 0 : roll < 0.85 ? 1 : 2;
+    }
+
+    /// <summary>Light years from a sight's position within which a sight span's Commander is in its system, allowing for rounded coordinates.</summary>
+    public const double SightArrival = 0.1;
+
+    /// <summary>The most chapters out a span of this length takes.</summary>
+    public static int MostOut(StoryPacing pacing)
+    {
+        ArgumentNullException.ThrowIfNull(pacing);
+
+        return Band(pacing) + 1;
+    }
+
+    /// <summary>How far a sight may lie for a span of this length to reach it: the most chapters out times the share of the reach each covers.</summary>
+    public static double SightRadius(StoryPacing pacing, double reach) => MostOut(pacing) * OutShare * reach;
+
+    /// <summary>Chapters out to cover <paramref name="distance"/> at <see cref="OutShare"/> of <paramref name="reach"/> each, rounded up.</summary>
+    public static int ChaptersOut(double distance, double reach) => Math.Max(1, (int)Math.Ceiling(distance / (OutShare * reach)));
+
+    /// <summary>
+    /// The sight span chapter <paramref name="chapter"/> opens toward <paramref name="sight"/> from <paramref name="at"/>, arriving in the sight's system,
+    /// with the chapters at the target from the seeded roll for the story's length.
+    /// </summary>
+    public static DrawnSpan OpenSight(string storyId, int chapter, StoryPacing pacing, NotablePlace sight, StarPosition at)
+    {
+        ArgumentNullException.ThrowIfNull(storyId);
+        ArgumentNullException.ThrowIfNull(sight);
+
+        var there = There(pacing, new Random32(ChapterDraw.BlackSeed(storyId, chapter)).NextDouble());
+
+        return new DrawnSpan(DrawnSpanKind.Sight, sight.System, sight.SystemAddress, sight.Position, SightArrival, at, DrawnSpanPhase.Out, there, chapter);
+    }
+
+    /// <summary>A sight span turned toward <paramref name="sight"/>, as when the Commander changes the sight objective; any other span unchanged.</summary>
+    public static DrawnSpan MoveSight(DrawnSpan span, NotablePlace sight)
+    {
+        ArgumentNullException.ThrowIfNull(span);
+        ArgumentNullException.ThrowIfNull(sight);
+
+        return span.Kind == DrawnSpanKind.Sight ? span with { Target = sight.System, TargetAddress = sight.SystemAddress, TargetAt = sight.Position } : span;
     }
 
     /// <summary>

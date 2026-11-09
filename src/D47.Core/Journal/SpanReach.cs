@@ -11,7 +11,16 @@ public sealed record SpanReach(double LightYears, SpanShip? Ship)
 {
     public const double JumpsPerSpan = 100;
 
+    /// <summary>Jumps of the best jump range in a session's flying.</summary>
+    public const double JumpsPerSession = 33;
+
     public const double CarrierFloorLightYears = 5000;
+
+    /// <summary>The best jump range in the fleet; null when no ship has a known one.</summary>
+    public double? JumpRange { get; init; }
+
+    /// <summary>How far a session flies: <see cref="JumpsPerSession"/> jumps of <see cref="JumpRange"/>, or that share of <see cref="LightYears"/> when no range is known.</summary>
+    public double SessionLightYears => JumpRange is { } range ? range * JumpsPerSession : LightYears * JumpsPerSession / JumpsPerSpan;
 
     /// <summary>Null when no ship has a known jump range and there is no carrier.</summary>
     public static SpanReach? Of(CommanderGameState state)
@@ -46,13 +55,13 @@ public sealed record SpanReach(double LightYears, SpanShip? Ship)
 
         if (carrier && reach < CarrierFloorLightYears)
         {
-            return new SpanReach(CarrierFloorLightYears, null);
+            return new SpanReach(CarrierFloorLightYears, null) { JumpRange = range };
         }
 
         var isAboard = ReferenceEquals(best, aboard);
         var stored = isAboard ? null : state.Fleet.Ships.FirstOrDefault(ship => ship.ShipId == best.ShipId);
         var where = isAboard ? state.Location.StarSystem : stored is { HasSystem: true } ? stored.StarSystem : null;
 
-        return new SpanReach(reach, new SpanShip(best.ShipId, best.TypeSaid, best.Name, where, isAboard));
+        return new SpanReach(reach, new SpanShip(best.ShipId, best.TypeSaid, best.Name, where, isAboard)) { JumpRange = range };
     }
 }

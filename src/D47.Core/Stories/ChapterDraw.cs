@@ -69,6 +69,14 @@ public static class ChapterDraw
         return Hash(rewrites > 0 ? $"{storyId}|{chapter}|sight|{rewrites}" : $"{storyId}|{chapter}|sight");
     }
 
+    /// <summary>The seed of the draw of a chapter's sight from those offered; <paramref name="salt"/> tells apart draws within one chapter.</summary>
+    public static uint SightPickSeed(string storyId, int chapter, int salt = 0)
+    {
+        ArgumentNullException.ThrowIfNull(storyId);
+
+        return Hash($"{storyId}|{chapter}|sightpick|{salt}");
+    }
+
     /// <summary>The seed of a chapter's roll for a drawn span in the black.</summary>
     public static uint BlackSeed(string storyId, int chapter)
     {

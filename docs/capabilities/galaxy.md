@@ -145,10 +145,11 @@ place it suggests is still checked against spansh's id for the system before a s
 offered — two sources, and a disagreement refuses the place. Its content is CC BY-NC-SA 3.0,
 acknowledged in `NOTICE`; d47 is non-commercial.
 
-A long-haul story's chapter may also be a sightseeing chapter, which sends you to one of these places. The same
-request serves it, and the choosing by distance is again done on this machine. When the catalogue
-cannot be reached, no chapter is a sightseeing chapter and the chapter is still written, and a generated
-short story chooses its stops from the galaxy search and the model's own knowledge.
+A story's chapter may also be a sightseeing chapter, which sends you to one of these places. The same
+request serves it, and the choosing by distance and rating is again done on this machine. A sight more than
+33 jumps of your fleet's best jump range away opens a span in the black toward it. When the catalogue cannot be reached, no chapter is a
+sightseeing chapter and the chapter is still written, and a generated short story chooses its stops from the
+galaxy search and the model's own knowledge.
 
 ### Earlier biology finds from Canonn {#earlier-biology-finds-from-canonn}
 
