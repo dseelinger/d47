@@ -1,0 +1,9 @@
+#!/bin/sh
+# Refuses a commit unless tools/check-commit.py stamped the staged tree.
+stamp=$(git rev-parse --git-path d47-checked-tree)
+tree=$(git write-tree) || exit 1
+if [ "$(cat "$stamp" 2>/dev/null)" != "$tree" ]; then
+  echo "pre-commit: the staged tree has not passed the build and gate tests." >&2
+  echo "Stage the change, then run: python tools/check-commit.py" >&2
+  exit 1
+fi

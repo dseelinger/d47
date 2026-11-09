@@ -109,6 +109,9 @@ closes one, and no `Co-Authored-By:` or `Claude-Session:` trailer (CLAUDE.md). A
 gets a `CHANGELOG.md` entry in the same commit, folded into the current unreleased heading; a
 test-only or tooling fix gets none.
 
+Stage the fix, then run `python tools/check-commit.py` before `git commit`: the pre-commit hook
+refuses a commit whose staged tree it has not stamped.
+
 ## Push once, at the end
 
 The workflow builds `origin/main`, so a commit still sitting locally is a fix that does not ship.

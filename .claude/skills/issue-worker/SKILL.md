@@ -139,17 +139,18 @@ changed. Run those by class name: `--filter FullyQualifiedName~<ClassName>`. Do 
 `D47.App.Tests` unfiltered, and never `dotnet test d47.slnx`: the whole suite, all of
 `D47.App.Tests` included, is the release gate and runs in `/pre-release` and `tools/release.ps1`.
 
-Before committing, also run the gate tests. They check the whole tree against a list or a rule — a
-journal event dispatched on must be in `HandledEvents.ActedOn`, `AppHost.cs` call sites are
-counted, a capability must have a docs page — so a change can break one without matching the area
-filter (each takes a few seconds):
+Before committing, stage the change and run the check script. It runs the Debug build and both
+gate filters, then stamps the index; the pre-commit hook refuses a commit whose staged tree is not
+stamped. The gate tests check the whole tree against a list or a rule — a journal event dispatched
+on must be in `HandledEvents.ActedOn`, `AppHost.cs` call sites are counted, a capability must have a
+docs page — so a change can break one without matching the area filter. Staging anything after the
+script, or amending a commit, needs another run:
 
 ```bash
-dotnet test tests/D47.Core.Tests --filter "Category=Gate"
-dotnet test tests/D47.App.Tests --filter "Category=Gate"
+python tools/check-commit.py
 ```
 
-Run the second one whenever the diff touches `src/D47.App/`, `docs/` or `installer/`. A new App test
+A new App test
 that reads shipped files (src, docs, assets, tools) against a rule carries `[Trait("Category", "Gate")]`, on the
 method when its class also has rendering tests.
 
