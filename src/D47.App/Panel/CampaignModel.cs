@@ -2,6 +2,7 @@ using System.Globalization;
 using D47.App.Theming;
 using D47.Core.Campaigns;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
@@ -30,6 +31,157 @@ public static class CampaignModel
     public const string PickerHelp =
         "The campaign starts with your squadron's faction. Choose any faction D47 has seen in your journal, or type a "
         + "name; its report comes from the same source as Search › Faction.";
+
+    /// <summary>The sections under the frame, in order.</summary>
+    public static readonly IReadOnlyList<string> Sections = ["FRONTS", "SYSTEMS", "CHRONICLE"];
+
+    public const int FrontsSection = 0;
+    public const int SystemsSection = 1;
+    public const int ChronicleSection = 2;
+
+    public const string NoFrontsText = "The faction has no front that needs work.";
+
+    public const string NoChronicleText = "No front has resolved yet.";
+
+    public const string NoMatchingFrontText = "No front is in a system with that name.";
+
+    public const string ProposalNote = "D47 proposes the top front after each tick. Nothing is chosen until you take it.";
+
+    public const string ChronicleHint =
+        "A front enters the chronicle when fresh data shows it resolved. Each entry says how it ended and what you did "
+        + "while it ran. D47 sees only your own work, so it claims no share of the outcome.";
+
+    public const string FailedLabel = "Faction report not fetched";
+
+    public const string OldLabel = "OLD REPORT";
+
+    /// <summary>The phrases beside the chosen front's tiles.</summary>
+    public const string ChosenPhrases = "Or say \"next front\", \"drop the front\" or \"what should I do for the faction?\"";
+
+    /// <summary>One front with its place in the ranking.</summary>
+    public sealed record FrontRow(int Rank, Front Front, bool Chosen);
+
+    /// <summary>One resolved front as the Chronicle section draws it.</summary>
+    public sealed record ChronicleRow(ChronicleEntry Entry, DateTimeOffset? Ended);
+
+    /// <summary>The fronts in rank order; the one being worked is marked chosen.</summary>
+    public static IReadOnlyList<FrontRow> FrontRows(IReadOnlyList<Front> fronts, ChosenFront? chosen) =>
+    [
+        .. fronts.Select((front, index) => new FrontRow(
+            index + 1,
+            front,
+            chosen is not null && chosen.Kind == front.Kind && string.Equals(chosen.System, front.System, StringComparison.OrdinalIgnoreCase))),
+    ];
+
+    /// <summary>The chronicle newest first. An entry ended at the last tick it spanned; it has no end time when it spanned none.</summary>
+    public static IReadOnlyList<ChronicleRow> ChronicleRows(Campaign campaign) =>
+    [
+        .. campaign.Chronicle.Reverse().Select(entry => new ChronicleRow(entry, entry.Ticks.Count == 0 ? null : entry.Ticks.Max())),
+    ];
+
+    /// <summary>The Fronts columns. Rank, Kind, System and Data age sort; Reason does not.</summary>
+    public static IReadOnlyList<SortColumn<FrontRow>> FrontHeads() =>
+    [
+        SortColumn<FrontRow>.Figure("Rank", row => (int?)row.Rank, SortDirection.Ascending),
+        SortColumn<FrontRow>.Text("Kind", row => CampaignFronts.Describe(row.Front.Kind)),
+        SortColumn<FrontRow>.Text("System", row => row.Front.System),
+        SortColumn<FrontRow>.Plain("Reason"),
+        SortColumn<FrontRow>.Figure("Data age", row => row.Front.Updated, SortDirection.Descending),
+        SortColumn<FrontRow>.Plain(string.Empty),
+    ];
+
+    public static readonly SortOrder FrontOrder = new(0, SortDirection.Ascending);
+
+    /// <summary>The Chronicle columns. Ended, Kind, System and Ticks sort; Outcome and Your work do not.</summary>
+    public static IReadOnlyList<SortColumn<ChronicleRow>> ChronicleHeads() =>
+    [
+        SortColumn<ChronicleRow>.Figure("Ended", row => row.Ended, SortDirection.Descending),
+        SortColumn<ChronicleRow>.Text("Kind", row => row.Entry.Kind),
+        SortColumn<ChronicleRow>.Text("System", row => row.Entry.System) with { Second = "Opponent" },
+        SortColumn<ChronicleRow>.Plain("Outcome"),
+        SortColumn<ChronicleRow>.Figure("Ticks", row => (int?)row.Entry.Ticks.Count, SortDirection.Descending),
+        SortColumn<ChronicleRow>.Plain("Your work") with { Second = "While it ran" },
+    ];
+
+    public static readonly SortOrder ChronicleOrder = new(0, SortDirection.Descending);
+
+    /// <summary>The count under a section's name on the desktop: <c>7 fronts</c>, <c>12 systems</c>, <c>4 resolved</c>.</summary>
+    public static IReadOnlyList<string> SectionCounts(int fronts, int systems, int resolved) =>
+    [
+        fronts == 1 ? "1 front" : $"{fronts} fronts",
+        systems == 1 ? "1 system" : $"{systems} systems",
+        $"{resolved} resolved",
+    ];
+
+    /// <summary>Whether the front was read from a galaxy report older than <see cref="FactionRow.OldAfter"/>; the Commander's own readings never are.</summary>
+    public static bool IsOld(Front front, DateTimeOffset now) =>
+        !front.OwnReading && front.Updated is { } at && now - at > FactionRow.OldAfter;
+
+    /// <summary>The Data age cell: <c>2 hours ago</c>, or <c>you saw it 2 hours ago</c> for the Commander's own reading.</summary>
+    public static string AgeText(Front front, DateTimeOffset now) =>
+        front.Updated is not { } at ? Dash : front.OwnReading ? "you saw it " + FactionModel.Ago(now - at) : FactionModel.Ago(now - at);
+
+    /// <summary>The days won in a conflict the Commander has seen, <c>2 – 1</c>; null otherwise.</summary>
+    public static string? DaysWonText(Front front) =>
+        front.Conflict is { Visited: true } conflict ? $"{conflict.OursWon} – {conflict.TheirsWon}" : null;
+
+    /// <summary>The cyan note beside the days won: <c>days won · you saw it 20 minutes ago</c>.</summary>
+    public static string DaysWonNote(Front front, DateTimeOffset now) =>
+        front.Updated is not { } at
+            ? "days won"
+            : "days won · " + (front.OwnReading ? "you saw it " : string.Empty) + FactionModel.Ago(now - at);
+
+    /// <summary>The count beside the chosen front's heading: <c>3 ticks</c>.</summary>
+    public static string TicksText(ChosenFront chosen) => chosen.Ticks.Count == 1 ? "1 tick" : $"{chosen.Ticks.Count} ticks";
+
+    /// <summary>The phrase that takes <paramref name="front"/>, as the campaign tool is told it.</summary>
+    public static string TakePhrase(Front front)
+    {
+        var noun = front.Kind == FrontKind.Conflict && front.Conflict is { } conflict
+            ? conflict.Type.ToLowerInvariant()
+            : CampaignFronts.Describe(front.Kind).ToLowerInvariant();
+
+        return $"take the {noun} in {front.System}";
+    }
+
+    /// <summary>The phrases beside the proposal's tiles; the one that names a front is a phrase the tool takes.</summary>
+    public static string ProposalPhrases(Front front) =>
+        $"Or say \"take it\", \"next front\", or name one: \"{TakePhrase(front)}\".";
+
+    /// <summary>The note under the Fronts table: how the ranking is made and how a front is taken.</summary>
+    public static string FrontsHint(IReadOnlyList<Front> fronts) =>
+        "D47 ranks the fronts from the faction report and your own readings after each tick: conflicts first, stale reports last. "
+        + "TAKE makes one the chosen front"
+        + (fronts.Count > 0 ? $", as \"{TakePhrase(fronts[0])}\" does." : ".");
+
+    /// <summary>The warning after a failed fetch: the fronts shown were computed before it.</summary>
+    public static string FailedText(string faction, CampaignFrontsSnapshot snapshot, DateTimeOffset? tick)
+    {
+        var computed = ComputedText(snapshot, tick);
+        var when = computed.StartsWith("After", StringComparison.Ordinal) ? "after" + computed[5..] : "at " + computed;
+
+        return $"The report for {faction} could not be fetched. These fronts were computed {when}. "
+            + $"D47 tries again in {(int)CampaignFrontsWatch.RetryAfter.TotalMinutes} minutes.";
+    }
+
+    /// <summary>The Commander's work on a resolved front, one line per kind: <c>+12 marks</c>, <c>1,200,000 CR in bounties</c>; <c>none</c> without any.</summary>
+    public static IReadOnlyList<string> WorkLines(ChronicleEntry entry) =>
+        entry.Work.Count == 0
+            ? ["none"]
+            : [.. entry.Work.Select(WorkLine)];
+
+    private static string WorkLine(ChronicleWork work) => work.Kind switch
+    {
+        BgsWorkKind.Mission => (work.Amount < 0 ? "−" : "+") + Math.Abs(work.Amount).ToString(CultureInfo.InvariantCulture) + (Math.Abs(work.Amount) == 1 ? " mark" : " marks"),
+        BgsWorkKind.Bounty => BgsWorkPage.Credits(work.Amount) + " in bounties",
+        BgsWorkKind.CombatBond => BgsWorkPage.Credits(work.Amount) + " in bonds",
+        BgsWorkKind.Trade => BgsWorkPage.Credits(work.Amount) + " of trade",
+        _ => BgsWorkPage.Credits(work.Amount) + " in data sales",
+    };
+
+    /// <summary>The date a chronicle entry ended: <c>2 Nov</c>, or a dash when it spanned no tick.</summary>
+    public static string EndedText(DateTimeOffset? ended) =>
+        ended is { } at ? at.ToString("d MMM", CultureInfo.InvariantCulture) : Dash;
 
     /// <summary>The intents in the order the Stepper steps through them.</summary>
     public static readonly IReadOnlyList<SystemIntent> Intents = Enum.GetValues<SystemIntent>();

@@ -151,6 +151,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
         };
         window.Show();
         Dispatcher.UIThread.RunJobs();
+        ShowSection(page, CampaignModel.SystemsSection);
 
         return (window, page);
     }
@@ -192,11 +193,23 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
         view.Tab = PanelTab.Commander;
         view.Nav.SelectRoot(PanelTab.Commander, CampaignPage.RootKey);
         Dispatcher.UIThread.RunJobs();
+        ShowSection(view, CampaignModel.SystemsSection);
 
         return (window, view);
     }
 
     private static IEnumerable<T> In<T>(Control root) where T : Visual => root.GetVisualDescendants().OfType<T>();
+
+    /// <summary>The page opens on Fronts; these tests read the Systems section.</summary>
+    private static void ShowSection(Control root, int section)
+    {
+        if (In<Segment>(root).FirstOrDefault(segment => segment.Name == CampaignPage.SectionsName) is { } segment)
+        {
+            segment.PressOption(section);
+        }
+
+        Dispatcher.UIThread.RunJobs();
+    }
 
     private static bool Shows(Control root, string text) => In<TextBlock>(root).Any(block => block.Text == text);
 
@@ -272,7 +285,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
 
         Assert.True(Shows(page, CampaignModel.NoReportText));
         Assert.Equal("CHANGE FACTION", In<Button>(page).Single(button => button.Name == CampaignPage.ChangeName).Content);
-        Assert.Equal($"Your campaign for {Us}: what you mean to do in each of its systems.", page.Summary);
+        Assert.Equal($"Your campaign for {Us}: the front you chose, and what to do next.", page.Summary);
 
         window.Close();
     }

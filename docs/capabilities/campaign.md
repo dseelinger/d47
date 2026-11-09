@@ -144,6 +144,44 @@ public static IReadOnlyList<CampaignSystemRow> Of(
     DateTimeOffset now)
 ```
 
+Above the sections the page shows the front you are working. With one chosen, **Chosen front** gives
+its kind, its system with a copy glyph, how many BGS ticks it has spanned, the sentence that says why
+it is a front, and **NEXT**: the one thing to do, with at most one grey line saying what does not
+count there. In a conflict you have visited it also gives the days won, in cyan with when you saw
+them. **NEXT FRONT** and **DROP THE FRONT** sit under it, with the phrases that do the same.
+
+With no front chosen, **Proposed front** shows the one D47 proposes in the same place, with **TAKE IT**
+and **NEXT FRONT**. With neither, the block is left out. Each tile calls the protected tool its
+phrase calls, as you, so "take it", "next front" and "drop the front" and the tiles do the same thing.
+**NEXT FRONT** with a front chosen shows the tool's reply, "There is no front to propose: one is
+already chosen, or the faction has none."
+
+When the last fetch failed, a warning at the top says when the fronts were computed, and **Fronts
+computed** is in the warning colour.
+
+Under that, **Fronts**, **Systems** and **Chronicle** are one row of three, with a count on each on
+the desktop and none in the headset.
+
+**Fronts** lists the fronts in rank order, each with its kind, system, the reason, and how old its
+data is, "you saw it" for your own reading. A report more than 30 days old is marked OLD REPORT. Each
+row ends in **TAKE**, which chooses that front as "take the coup threat in Lave" does, or **CHOSEN**
+on the front you are working. The rows come from code:
+
+```csharp
+public static IReadOnlyList<FrontRow> FrontRows(IReadOnlyList<Front> fronts, ChosenFront? chosen) =>
+[
+    .. fronts.Select((front, index) => new FrontRow(
+        index + 1,
+        front,
+        chosen is not null && chosen.Kind == front.Kind && string.Equals(chosen.System, front.System, StringComparison.OrdinalIgnoreCase))),
+];
+```
+
+**Chronicle** lists the resolved fronts, newest first: when it ended, the kind, the system and
+opponent, the outcome (Won, Lost, Ended or Resolved), the ticks it spanned, and your own work while
+it ran, as influence marks and credits. A front ends on the last tick D47 saw it span, shown as a dash
+when it spanned none. The page claims no share of the outcome.
+
 ### The chronicle
 
 Each resolved front is kept with its kind, the system, the opponent if there was one, the outcome,

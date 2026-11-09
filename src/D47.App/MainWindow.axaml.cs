@@ -1041,6 +1041,10 @@ public partial class MainWindow : Window
             () => D47.Core.Journal.SquadronFactionResolver.Resolve(host.GameState.Active, host.SquadronFactions),
             () => host.BgsTick?.Last,
             host.Capabilities)
+        {
+            Proposal = () => host.CampaignFocus?.Proposal,
+            NextAction = () => host.CampaignFocus?.NextAction(),
+        }
         : null;
 
     private static Func<IReadOnlyList<D47.Core.Conversation.Bookmark>> Bookmarks(AppHost host) =>

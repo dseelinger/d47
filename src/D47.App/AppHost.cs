@@ -568,6 +568,8 @@ public sealed class AppHost : IDisposable
 
     public D47.Core.Campaigns.CampaignStore? Campaigns { get; private set; }
 
+    public D47.Core.Campaigns.CampaignFocus? CampaignFocus { get; private set; }
+
     public ServerStatusWatch? ServerStatus { get; private set; }
 
     /// <summary>Checks the Commander's background watches.</summary>
@@ -3414,6 +3416,7 @@ public sealed class AppHost : IDisposable
         host.Goals = (stores.GoalBook, stores.BackfillGoals);
         host.SquadronFactions = stores.SquadronFactions;
         host.Campaigns = stores.Campaigns;
+        host.CampaignFocus = stores.CampaignFocus;
         host.Activities = stores.Activities;
         host.Adventures = (stores.AdventureBook, crew.AdventureGenerator);
         host.Stories = storyDirector;
