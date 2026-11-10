@@ -3047,7 +3047,8 @@ public sealed class AppHost : IDisposable
             () => late.Host?.Announcer.NpcsHere,
             heardAs => late.Host?.AddressedVoices.AccentHeardAs(heardAs),
             () => gameState.Active?.Location.StarSystem,
-            DockedStation));
+            DockedStation,
+            () => SystemWallClock.Instance.UtcNow));
 
         // The pilot of the shuttle the Commander rides.
         turns.Lines.Add(new ShuttleLine(

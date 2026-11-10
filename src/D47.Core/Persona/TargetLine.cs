@@ -18,6 +18,7 @@ namespace D47.Core.Persona;
 /// <param name="accentHeardAs">The accent of the voice an incoming message resolves to, or null for none.</param>
 /// <param name="system">The Commander's current star system, or null.</param>
 /// <param name="station">The station the Commander is docked at, or null.</param>
+/// <param name="now">The wall clock, which dates the last scan; null leaves the age out.</param>
 public sealed class TargetLine(
     Func<TargetedShip?> target,
     Func<string?>? model = null,
@@ -27,7 +28,8 @@ public sealed class TargetLine(
     Func<NpcsHeardHere?>? roster = null,
     Func<Announcement, string?>? accentHeardAs = null,
     Func<string?>? system = null,
-    Func<string?>? station = null) : ILine
+    Func<string?>? station = null,
+    Func<DateTimeOffset>? now = null) : ILine
 {
     private const string KeyPrefix = "target.reply";
 
@@ -75,7 +77,7 @@ public sealed class TargetLine(
             new Speaker(
                 VoiceRole.Comms,
                 name,
-                Brief(name, ship, personality, SpeakerAccent.Sentence(accentHeardAs?.Invoke(heardAs))),
+                Brief(name, ship, personality, SpeakerAccent.Sentence(accentHeardAs?.Invoke(heardAs)), now?.Invoke()),
                 Conversation(name),
                 OffersTools: false,
                 Signal: 1,
@@ -144,7 +146,7 @@ public sealed class TargetLine(
         return written;
     }
 
-    private static string Brief(string name, TargetedShip ship, string? personality, string? accent)
+    private static string Brief(string name, TargetedShip ship, string? personality, string? accent, DateTimeOffset? now)
     {
         var facts = new List<string>();
 
@@ -158,6 +160,26 @@ public sealed class TargetLine(
             facts.Add($"Your legal status is {status}.");
         }
 
+        if (ship.Rank is { Length: > 0 } rank)
+        {
+            facts.Add($"Your combat rank is {rank}.");
+        }
+
+        if (ship.Faction is { Length: > 0 } faction)
+        {
+            facts.Add($"You fly for {faction}.");
+        }
+
+        if (ship.Bounty is { } bounty)
+        {
+            facts.Add($"There is a bounty of {bounty:N0} credits on you.");
+        }
+
+        if (LastScan(ship, now) is { } scan)
+        {
+            facts.Add(scan);
+        }
+
         return $"""
                 You are {name}, the pilot of the ship the Commander has just targeted and hailed. {string.Join(' ', facts)}
                 You are a human being, not an artificial intelligence, and you never claim to be one.{(personality is null ? string.Empty : $"\nYour personality: {personality}")}
@@ -166,6 +188,65 @@ public sealed class TargetLine(
                 You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
                 them docking, give them or take their cargo, or send them a wing or friend invite.{(accent is null ? string.Empty : " " + accent)}
                 """;
+    }
+
+    private static string? LastScan(TargetedShip ship, DateTimeOffset? now)
+    {
+        if (ship.ShieldHealth is null && ship.HullHealth is null)
+        {
+            return null;
+        }
+
+        var when = now is { } clock && ship.ScannedAt is { } at ? $", {Age(clock - at)} ago," : string.Empty;
+
+        var held = new List<string>();
+
+        if (ship.ShieldHealth is { } shields)
+        {
+            held.Add($"your shields were at {shields}%");
+        }
+
+        if (ship.HullHealth is { } hull)
+        {
+            held.Add($"your hull at {hull}%");
+        }
+
+        var text = $"When the Commander last scanned you{when} {string.Join(" and ", held)}";
+
+        if (ship.Subsystem is { } subsystem)
+        {
+            text += ship.SubsystemHealth is { } health
+                ? $", and their sights were on your {subsystem}, at {health}%"
+                : $", and their sights were on your {subsystem}";
+        }
+
+        text += ".";
+
+        if (ship.ShieldHealth is not null)
+        {
+            text += " Shields recharge, so yours may have changed since";
+            text += ship.HullHealth is not null ? "; your hull is no better than that now." : ".";
+        }
+        else
+        {
+            text += " Your hull is no better than that now.";
+        }
+
+        return text;
+    }
+
+    private static string Age(TimeSpan age)
+    {
+        var seconds = (int)Math.Max(0, age.TotalSeconds);
+
+        if (seconds < 60)
+        {
+            return seconds == 1 ? "1 second" : $"{seconds} seconds";
+        }
+
+        var minutes = seconds / 60;
+
+        return minutes == 1 ? "1 minute" : $"{minutes} minutes";
     }
 
     private string Screened(string reply, string name)

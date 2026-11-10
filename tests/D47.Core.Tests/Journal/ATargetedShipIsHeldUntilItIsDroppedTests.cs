@@ -13,6 +13,28 @@ public class ATargetedShipIsHeldUntilItIsDroppedTests
     private const string Dropped = """{ "timestamp":"2025-07-03T23:38:15Z", "event":"ShipTargeted", "TargetLocked":false }""";
     private const string CommanderStage3 = """{ "timestamp":"2025-07-03T23:38:14Z", "event":"ShipTargeted", "TargetLocked":true, "Ship":"corsair", "ScanStage":3, "PilotName":"$RolePanel2_unmanned; $cmdr_decorate:#name=CALVIN INSTI;", "PilotName_Localised":"unmanned CMDR CALVIN INSTI", "PilotRank":"Mostly Harmless", "SquadronID":"OV40", "ShieldHealth":100.000000, "HullHealth":100.000000, "LegalStatus":"Clean", "Power":"Edmund Mahon" }""";
 
+    private static DateTimeOffset At(int minute, int second) => new(2025, 7, 5, 2, minute, second, TimeSpan.Zero);
+
+    private const string Subsystem = """{ "timestamp":"2025-07-05T02:19:10Z", "event":"ShipTargeted", "TargetLocked":true, "Ship":"adder", "ScanStage":3, "PilotName":"$npc_name_decorate:#name=Doug Quiad;", "PilotName_Localised":"Doug Quiad", "ShieldHealth":62.4, "HullHealth":88.0, "Subsystem":"$int_powerplant_size4_class5;", "Subsystem_Localised":"Power Plant", "SubsystemHealth":75.0 }""";
+
+    [Fact]
+    public void ATargetedSubsystemHoldsItsNameAndHealthAndEarlierStagesHoldNone()
+    {
+        var target = Fold(Subsystem).Target!;
+
+        Assert.Equal("Power Plant", target.Subsystem);
+        Assert.Equal(75, target.SubsystemHealth);
+        Assert.Equal(62, target.ShieldHealth);
+        Assert.Equal(88, target.HullHealth);
+
+        var early = Fold(Stage0, Stage1).Target!;
+
+        Assert.Null(early.ShieldHealth);
+        Assert.Null(early.HullHealth);
+        Assert.Null(early.Subsystem);
+        Assert.Null(early.SubsystemHealth);
+    }
+
     private static CommanderGameState Fold(params string[] lines)
     {
         var state = new CommanderGameState(new CommanderIdentity("F1", "Tester"));
@@ -31,7 +53,7 @@ public class ATargetedShipIsHeldUntilItIsDroppedTests
     {
         var target = Fold(Stage0).Target;
 
-        Assert.Equal(new TargetedShip("adder"), target);
+        Assert.Equal(new TargetedShip("adder", ScannedAt: At(18, 48)), target);
         Assert.False(target!.IsNameable);
     }
 
@@ -40,21 +62,23 @@ public class ATargetedShipIsHeldUntilItIsDroppedTests
     {
         var target = Fold(Stage0, Stage1).Target;
 
-        Assert.Equal(new TargetedShip("adder", "Doug Quiad", "Master"), target);
+        Assert.Equal(new TargetedShip("adder", "Doug Quiad", "Master", ScannedAt: At(18, 50)), target);
         Assert.True(target!.IsNameable);
     }
 
     [Fact]
     public void AStageTwoTargetKeepsTheNameAndRank()
     {
-        Assert.Equal(new TargetedShip("adder", "Doug Quiad", "Master"), Fold(Stage0, Stage1, Stage2).Target);
+        Assert.Equal(
+            new TargetedShip("adder", "Doug Quiad", "Master", ShieldHealth: 100, HullHealth: 100, ScannedAt: At(18, 52)),
+            Fold(Stage0, Stage1, Stage2).Target);
     }
 
     [Fact]
     public void AStageThreeTargetAddsFactionLegalStatusAndBounty()
     {
         Assert.Equal(
-            new TargetedShip("adder", "Doug Quiad", "Master", "The Prime Spade", "Wanted", Bounty: 92454),
+            new TargetedShip("adder", "Doug Quiad", "Master", "The Prime Spade", "Wanted", Bounty: 92454, ShieldHealth: 100, HullHealth: 100, ScannedAt: At(18, 54)),
             Fold(Stage0, Stage1, Stage2, Stage3).Target);
     }
 
@@ -69,7 +93,7 @@ public class ATargetedShipIsHeldUntilItIsDroppedTests
     {
         var target = Fold(CommanderStage3).Target;
 
-        Assert.Equal(new TargetedShip("corsair", null, "Mostly Harmless", null, "Clean", true), target);
+        Assert.Equal(new TargetedShip("corsair", null, "Mostly Harmless", null, "Clean", true, ShieldHealth: 100, HullHealth: 100, ScannedAt: new DateTimeOffset(2025, 7, 3, 23, 38, 14, TimeSpan.Zero)), target);
         Assert.False(target!.IsNameable);
     }
 
