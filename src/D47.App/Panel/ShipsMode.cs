@@ -189,21 +189,29 @@ public sealed class ShipsMode(
     [
         new("Ship", hull => hull),
         new("Size", hull => PadWord(EliteSpecifications.Ship(hull)?.Pad), hull => PadRank(EliteSpecifications.Ship(hull)?.Pad)),
-        Figures("Speed", hull => hull.Speed, " m/s"),
-        Figures("Boost", hull => hull.Boost, " m/s"),
-        Figures("Armour", hull => hull.Armour, string.Empty),
-        Figures("Shields", hull => hull.Shields, string.Empty),
-        Figures("Seats", hull => hull.Crew is > 0 ? hull.Crew : null, string.Empty),
+        new(
+            "Jump",
+            hull => EliteSpecifications.Ship(hull)?.BaseJumpRange is { } range
+                ? range.ToString("0.0", CultureInfo.InvariantCulture) + " ly"
+                : "—",
+            hull => EliteSpecifications.Ship(hull)?.BaseJumpRange is { } range ? (long)Math.Round(range * 100) : null,
+            Right: true,
+            Descending: true),
+        Figures("Speed", hull => hull.Speed),
+        Figures("Boost", hull => hull.Boost),
+        Figures("Armour", hull => hull.Armour),
+        Figures("Shields", hull => hull.Shields),
+        Figures("Seats", hull => hull.Crew is > 0 ? hull.Crew : null),
         new("Price", hull => BgsWorkPage.Credits(EliteSpecifications.Ship(hull)?.Cost), hull => EliteSpecifications.Ship(hull)?.Cost, Right: true),
     ];
 
-    private static EntryColumn Figures(string label, Func<ShipSpecification, int?> read, string unit)
+    private static EntryColumn Figures(string label, Func<ShipSpecification, int?> read)
     {
         long? Read(string hull) => EliteSpecifications.Ship(hull) is { } spec ? read(spec) : null;
 
         return new(
             label,
-            hull => Read(hull) is { } figure ? figure.ToString(CultureInfo.InvariantCulture) + unit : "—",
+            hull => Read(hull) is { } figure ? figure.ToString(CultureInfo.InvariantCulture) : "—",
             hull => Read(hull),
             Right: true,
             Descending: true);

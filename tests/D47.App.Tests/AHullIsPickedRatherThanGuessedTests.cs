@@ -228,14 +228,14 @@ public class AHullIsPickedRatherThanGuessedTests
         Assert.Contains("PickHead.Size", names);
         Assert.Contains("PickHead.Price", names);
 
-        foreach (var label in new[] { "Speed", "Boost", "Armour", "Shields", "Seats" })
+        foreach (var label in new[] { "Jump", "Speed", "Boost", "Armour", "Shields", "Seats" })
         {
             Assert.Contains($"PickHead.{label}", names);
         }
 
         var row = pick.ContainerFromIndex(0)!.GetVisualDescendants().OfType<D47.App.Theming.TableGrid>().Single();
 
-        Assert.Equal(8, row.Children.Count);
+        Assert.Equal(9, row.Children.Count);
 
         using var frame = ((Window)TopLevel.GetTopLevel(panel)!).CaptureRenderedFrame()!;
         frame.SaveCapture("hull-picker.png");
@@ -243,7 +243,7 @@ public class AHullIsPickedRatherThanGuessedTests
 
     /// <summary>At the main window's default width every column stays and a long hull name wraps (#2294).</summary>
     [AvaloniaFact]
-    public void TheEightColumnsFitTheDefaultWindowWidth()
+    public void TheNineColumnsFitTheDefaultWindowWidth()
     {
         using var look = AppLook.Put();
         var (panel, _, _) = Asking();
@@ -254,7 +254,7 @@ public class AHullIsPickedRatherThanGuessedTests
 
         var names = panel.GetVisualDescendants().OfType<Control>().Select(control => control.Name).ToHashSet();
 
-        foreach (var label in new[] { "Ship", "Size", "Speed", "Boost", "Armour", "Shields", "Seats", "Price" })
+        foreach (var label in new[] { "Ship", "Size", "Jump", "Speed", "Boost", "Armour", "Shields", "Seats", "Price" })
         {
             Assert.Contains($"PickHead.{label}", names);
         }
@@ -264,7 +264,7 @@ public class AHullIsPickedRatherThanGuessedTests
     }
 
     [AvaloniaFact]
-    public void TheEightColumnsFitTheBigPanel()
+    public void TheNineColumnsFitTheBigPanel()
     {
         using var look = AppLook.Put();
         var (panel, _, _) = Asking();

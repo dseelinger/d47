@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: the ship list you pick a hull from now shows each hull's base jump range beside its size: how far the ship jumps as the shipyard sells it, with one jump's fuel and an empty hold. It is the same figure as the first needle of the jump gauge on a ship's page. A first press on Jump sorts the longest jump first. Speed and boost lose their "m/s" so every column fits at the default window size.
+
 Added: the ship list you pick a hull from now shows each hull's speed, boost, armour, shields and crew seats beside its size and price, so hulls can be compared before one is chosen. A first press on any of the new columns sorts largest first, and typing in the box narrows on them too.
 
 Added: A targeted pilot now knows who flies on your side: a fighter you have out and who flies it, and how many wingmates are on your roster. Wingmates are counted, never named.

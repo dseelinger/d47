@@ -61,11 +61,35 @@ public class TheHullTableSortsAndFiltersOnEveryColumnTests
     }
 
     [Fact]
+    public void TheFirstPressOnJumpSortsTheLongestJumpFirstAndAnUnknownHullLast()
+    {
+        var columns = PanelPrompts.PickTable.SortColumns(ShipsMode.HullColumns);
+        var jump = ShipsMode.HullColumns.ToList().FindIndex(column => column.Label == "Jump");
+
+        Assert.Equal(2, jump);
+
+        var order = ColumnSort.Next(columns, null, jump);
+
+        Assert.Equal(SortDirection.Descending, order!.Value.Direction);
+
+        var sorted = ColumnSort.Sorted(["Prototype", "Anaconda", "Sidewinder", "Hauler"], columns, order!.Value);
+        var ranges = sorted.Take(3).Select(hull => Core.Knowledge.EliteSpecifications.Ship(hull)!.BaseJumpRange).ToList();
+
+        Assert.Equal(ranges.OrderByDescending(range => range), ranges);
+        Assert.Equal("Prototype", sorted[^1]);
+        Assert.Equal("—", ShipsMode.HullColumns[jump].Text("Prototype"));
+    }
+
+    [Fact]
+    public void TheJumpCellIsTheBaseRangeToOneDecimal() =>
+        Assert.Equal("8.1 ly", ShipsMode.HullColumns.Single(column => column.Label == "Jump").Text("Sidewinder"));
+
+    [Fact]
     public void TheFilterMatchesASpeedCell()
     {
         var speed = Core.Knowledge.EliteSpecifications.Ship("Sidewinder")!.Speed;
 
-        Assert.True(PanelPrompts.PickTable.Matches("Sidewinder", $"{speed} m/s", ShipsMode.HullColumns));
+        Assert.True(PanelPrompts.PickTable.Matches("Sidewinder", $"{speed}", ShipsMode.HullColumns));
     }
 
     [Fact]

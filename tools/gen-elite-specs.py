@@ -104,7 +104,7 @@ OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledg
 SHIP_COLUMNS = [
     "symbol", "name", "manufacturer", "pad", "speed", "boost", "armour", "shields",
     "hardness", "hull_mass", "fuel", "crew", "masslock", "cost", "hardpoints", "internals",
-    "requirement",
+    "requirement", "stock",
 ]
 
 MODULE_COLUMNS = [
@@ -347,7 +347,8 @@ def build_ships(
     leaves blank. EDSY fills `pad`, `crew`, `fuel` and `masslock` where coriolis-data does not.
     A hull coriolis-data does not match takes its manufacturer from `MANUFACTURERS` in
     `curated_ships.py`. `cost` is coriolis-data's
-    `hullCost`, else EDSY's `cost`, and is empty for an `arx-early-access` hull.
+    `hullCost`, else EDSY's `cost`, and is empty for an `arx-early-access` hull. `stock` is
+    EDSY's alone.
     """
     by_edid = {ship.get("edID"): ship for ship in documents}
 
@@ -414,6 +415,7 @@ def build_ships(
             sizes_of("hardpoint", "hardpoints"),
             sizes_of("internal", "internal", unrestricted=True),
             "arx-early-access" if symbol in ARX_EARLY_ACCESS else requirement(ship) if ship else "",
+            ",".join(edsy.get("stock") or []),
         ])
 
     # A hull no source measures cannot be keyed to anything the journal writes, so its
@@ -1051,14 +1053,18 @@ def edsy_ships(database: str) -> dict[str, dict]:
     """Every hull EDSY declares, keyed by the symbol the journal writes.
 
     `figures` carries the hull figures `build_ships` reads; see there for which columns.
+    `stock` is the stock fitting's module symbols, lower case, empty slots left out.
     """
     ships = {}
     block = section(database, "ship")
+    generic = dict(entries(section(database, "module")))
 
     for found in re.finditer(r"\n\t\t *\d+\s*:\s*\{", block):
         start = found.end()
-        stock = block.find("stock:", start)
-        head = block[start: stock if stock > 0 else len(block)]
+        end = block.find("\n\t\t},", start)
+        whole = block[start: end if end > 0 else len(block)]
+        stock = whole.find("stock:")
+        head = whole[: stock if stock >= 0 else len(whole)]
 
         symbol = re.search(r"fdname\s*:\s*'([^']+)'", head)
         identifier = re.search(r"\bid\s*:\s*(\d+)", head)
@@ -1071,7 +1077,29 @@ def edsy_ships(database: str) -> dict[str, dict]:
         reserved = re.search(r"\n\t\t\treserved:\{(.*?)\n\t\t\t\},", head, re.S)
         groups = ("hardpoint", "utility", "component", "military", "internal")
 
-        ships[symbol.group(1).lower()] = {
+        hull = symbol.group(1).lower()
+        fitted = []
+
+        if stock >= 0:
+            stocked = re.search(r"stock:\{(.*?)\n\t\t\t\},", whole, re.S)
+            armoury = re.search(r"module:\{(.*?)\n\t\t\t\},", whole, re.S)
+            own = dict(entries(armoury.group(1))) if armoury else {}
+
+            for group in groups:
+                for module in numbers(stocked.group(1) if stocked else "", group):
+                    if module == 0:
+                        continue
+
+                    cell = own.get(abs(module)) or generic.get(abs(module), "")
+                    name = re.search(r"\bfdname\s*:\s*'([^']+)'", cell)
+
+                    if not name:
+                        raise SystemExit(f"EDSY's stock fitting for {hull} names id {module}, "
+                                         f"which resolves to no module symbol")
+
+                    fitted.append(name.group(1).lower())
+
+        ships[hull] = {
             "id": int(identifier.group(1)) if identifier else None,
             "sizes": {group: numbers(slots.group(1), group) for group in groups},
             "names": {group: strings(named.group(1), group) for group in groups} if named else {},
@@ -1090,6 +1118,7 @@ def edsy_ships(database: str) -> dict[str, dict]:
                 "fuelreserve": edsy_number(head, "fuelreserve"),
                 "masslock": edsy_number(head, "masslock"),
             },
+            "stock": fitted,
         }
 
     return ships
@@ -1445,6 +1474,16 @@ def main() -> None:
     # coriolis-data figures, so `build_modules` never saw it, and `eddb_only_modules` above
     # found no full row for it either.
     named = {row[0] for row in modules}
+
+    unstocked = sorted(
+        f"{hull} names {symbol}"
+        for hull, edsy in hulls.items()
+        for symbol in edsy["stock"]
+        if symbol not in named)
+
+    if unstocked:
+        raise SystemExit("stock modules with no row in the module table: " + ", ".join(unstocked))
+
     unnamed_modules = sorted(
         [symbol, edsy[0]] for symbol, edsy in types.items() if symbol not in named and edsy[0])
     untyped = []

@@ -899,7 +899,7 @@ public sealed class PanelPrompts : IHearsText
                 _table = new TableLayout(
                     "Pick",
                     [.. columns.Select((column, i) => new TableColumn(column.Label, i == 0 ? ColumnFit.Fill : ColumnFit.Content) { Whole = i > 0 })],
-                    spacing: 16);
+                    spacing: 12);
                 _header = new Border { Margin = new Thickness(12, 0, 12, 2) };
                 _sort.Changed += () =>
                 {

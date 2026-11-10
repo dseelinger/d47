@@ -366,8 +366,7 @@ public static partial class ShipGauges
             return null;
         }
 
-        double At(double mass) =>
-            Math.Pow(fuelPerJump / multiplier, 1 / power) * optimalMass / mass + boost;
+        double At(double mass) => JumpRange.At(mass, optimalMass, fuelPerJump, power, multiplier, boost);
 
         return new JumpGauge(
             At(empty + fuelPerJump),

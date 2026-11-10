@@ -1,4 +1,5 @@
 using static D47.Core.Knowledge.TsvCells;
+using D47.Core.Ships;
 using System.Globalization;
 using System.Reflection;
 
@@ -60,6 +61,16 @@ public sealed record ShipSpecification
     /// for a Horizons early-adoption hull, <c>arx-early-access</c> for a hull sold for ARX only, null otherwise.
     /// </summary>
     public string? Requirement { get; init; }
+
+    /// <summary>The stock fitting's module symbols, one per fitted slot.</summary>
+    public IReadOnlyList<string> Stock { get; init; } = [];
+
+    /// <summary>
+    /// The stock fitting's jump range with one jump's fuel and an empty hold, in light years — Elite's
+    /// <c>MaxJumpRange</c> for an unmodified ship. Null without a stock drive or with a stock module the
+    /// table does not have.
+    /// </summary>
+    public double? BaseJumpRange { get; init; }
 }
 
 /// <summary>One outfitting module, at one class and rating.</summary>
@@ -605,6 +616,11 @@ public static class EliteSpecifications
             }
         }
 
+        foreach (var ship in ships.Values.ToList())
+        {
+            ships[ship.Symbol] = ship with { BaseJumpRange = BaseJumpRange(ship, modules) };
+        }
+
         return new Tables(
             ships,
             modules,
@@ -681,16 +697,46 @@ public static class EliteSpecifications
         Shields = Integer(cells, 7),
         Hardness = Integer(cells, 8),
         HullMass = Integer(cells, 9),
-
-        // 10 is the reserve fuel tank, which nobody asks about and which the jump arithmetic this table does
-        // not do would need.
         Crew = Integer(cells, 11),
         MassLock = Integer(cells, 12),
         Cost = Long(cells, 13),
         Hardpoints = Sizes(cells, 14),
         Internals = Sizes(cells, 15),
         Requirement = Text(cells, 16),
+        Stock = Text(cells, 17) is { } stock ? stock.Split(',', StringSplitOptions.RemoveEmptyEntries) : [],
     };
+
+    /// <summary>The hull plus its stock fitting, with one jump's fuel, through the stock drive.</summary>
+    private static double? BaseJumpRange(
+        ShipSpecification ship, IReadOnlyDictionary<string, ModuleSpecification> modules)
+    {
+        if (ship.HullMass is not { } hull || ship.Stock.Count == 0)
+        {
+            return null;
+        }
+
+        var mass = (double)hull;
+        ModuleSpecification? drive = null;
+
+        foreach (var symbol in ship.Stock)
+        {
+            if (!modules.TryGetValue(symbol, out var module))
+            {
+                return null;
+            }
+
+            mass += module.Mass ?? 0;
+            drive ??= module.IsDrive ? module : null;
+        }
+
+        if (drive is not { OptimalMass: { } optimal, MaxFuelPerJump: { } perJump, FuelPower: { } power, FuelMultiplier: { } multiplier }
+            || perJump <= 0 || multiplier <= 0 || power == 0)
+        {
+            return null;
+        }
+
+        return JumpRange.At(mass + perJump, optimal, perJump, power, multiplier);
+    }
 
     private static ModuleSpecification ReadModule(string[] cells) => new()
     {
