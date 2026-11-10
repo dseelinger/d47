@@ -898,7 +898,7 @@ public sealed class PanelPrompts : IHearsText
                 _sort = new SortHeader<string>("PickHead", PickTable.SortColumns(columns), new SortOrder(0, SortDirection.Ascending));
                 _table = new TableLayout(
                     "Pick",
-                    [.. columns.Select((column, i) => new TableColumn(column.Label, i == 0 ? ColumnFit.Fill : ColumnFit.Content))],
+                    [.. columns.Select((column, i) => new TableColumn(column.Label, i == 0 ? ColumnFit.Fill : ColumnFit.Content) { Whole = i > 0 })],
                     spacing: 16);
                 _header = new Border { Margin = new Thickness(12, 0, 12, 2) };
                 _sort.Changed += () =>
@@ -1201,11 +1201,11 @@ public sealed class PanelPrompts : IHearsText
     /// <summary>The sort and filter of a picker drawn as a table, over its suggestions.</summary>
     internal static class PickTable
     {
-        /// <summary>A sort column per entry column: by figure where it has one, smallest first, otherwise A–Z.</summary>
+        /// <summary>A sort column per entry column: by figure where it has one, smallest first unless the column sets Descending, otherwise A–Z.</summary>
         public static IReadOnlyList<SortColumn<string>> SortColumns(IReadOnlyList<EntryColumn> columns) =>
         [
             .. columns.Select(column => column.Figure is { } figure
-                ? SortColumn<string>.Figure(column.Label, figure, SortDirection.Ascending)
+                ? SortColumn<string>.Figure(column.Label, figure, column.Descending ? SortDirection.Descending : SortDirection.Ascending)
                 : SortColumn<string>.Text(column.Label, column.Text)),
         ];
 

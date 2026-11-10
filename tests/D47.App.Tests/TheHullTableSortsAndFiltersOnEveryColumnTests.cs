@@ -39,7 +39,33 @@ public class TheHullTableSortsAndFiltersOnEveryColumnTests
     {
         var columns = PanelPrompts.PickTable.SortColumns(ShipsMode.HullColumns);
 
-        Assert.Equal(new SortOrder(2, SortDirection.Ascending), ColumnSort.Next(columns, null, 2));
+        var price = ShipsMode.HullColumns.ToList().FindIndex(column => column.Label == "Price");
+
+        Assert.Equal(new SortOrder(price, SortDirection.Ascending), ColumnSort.Next(columns, null, price));
+    }
+
+    [Fact]
+    public void TheFirstPressOnSpeedSortsTheFastestHullFirst()
+    {
+        var columns = PanelPrompts.PickTable.SortColumns(ShipsMode.HullColumns);
+        var speed = ShipsMode.HullColumns.ToList().FindIndex(column => column.Label == "Speed");
+        var order = ColumnSort.Next(columns, null, speed);
+
+        Assert.Equal(SortDirection.Descending, order!.Value.Direction);
+
+        var sorted = ColumnSort.Sorted(["Anaconda", "Sidewinder", "Eagle"], columns, order!.Value);
+        var figures = sorted.Select(hull => Core.Knowledge.EliteSpecifications.Ship(hull)!.Speed).ToList();
+
+        Assert.Equal(figures.OrderByDescending(figure => figure), figures);
+        Assert.Equal("Anaconda", sorted[^1]);
+    }
+
+    [Fact]
+    public void TheFilterMatchesASpeedCell()
+    {
+        var speed = Core.Knowledge.EliteSpecifications.Ship("Sidewinder")!.Speed;
+
+        Assert.True(PanelPrompts.PickTable.Matches("Sidewinder", $"{speed} m/s", ShipsMode.HullColumns));
     }
 
     [Fact]

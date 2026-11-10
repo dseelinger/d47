@@ -20,6 +20,9 @@ public sealed record TableColumn(string Key, ColumnFit Fit = ColumnFit.Content)
 
     /// <summary>The narrowest the column goes; the header label's width when null.</summary>
     public double? Min { get; init; }
+
+    /// <summary>The column never narrows below its widest cell; other columns give way first.</summary>
+    public bool Whole { get; init; }
 }
 
 /// <summary>Column widths for a table whose columns fit their content.</summary>

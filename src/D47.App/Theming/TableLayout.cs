@@ -60,7 +60,9 @@ public sealed class TableLayout
     public TableGrid Row(IReadOnlyList<Control> cells) => Build(cells, header: false);
 
     internal double MinimumOf(int column) =>
-        Columns[column].Fit == ColumnFit.Fixed ? Columns[column].Fixed : Columns[column].Min ?? _headerWidth[column];
+        Columns[column].Fit == ColumnFit.Fixed
+            ? Columns[column].Fixed
+            : Math.Max(Columns[column].Min ?? _headerWidth[column], Columns[column].Whole ? _natural[column] : 0);
 
     internal void Compute(double available)
     {

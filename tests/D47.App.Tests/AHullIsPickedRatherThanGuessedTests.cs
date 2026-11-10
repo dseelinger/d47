@@ -215,7 +215,7 @@ public class AHullIsPickedRatherThanGuessedTests
             block => block.Text?.Contains("not in your fleet", StringComparison.OrdinalIgnoreCase) == true);
     }
 
-    /// <summary>The picker is drawn as a table of ship, size and price.</summary>
+    /// <summary>The picker is drawn as a table of ship, size, base figures and price.</summary>
     [AvaloniaFact]
     public void TheHullsAreDrawnAsATable()
     {
@@ -228,12 +228,59 @@ public class AHullIsPickedRatherThanGuessedTests
         Assert.Contains("PickHead.Size", names);
         Assert.Contains("PickHead.Price", names);
 
+        foreach (var label in new[] { "Speed", "Boost", "Armour", "Shields", "Seats" })
+        {
+            Assert.Contains($"PickHead.{label}", names);
+        }
+
         var row = pick.ContainerFromIndex(0)!.GetVisualDescendants().OfType<D47.App.Theming.TableGrid>().Single();
 
-        Assert.Equal(3, row.Children.Count);
+        Assert.Equal(8, row.Children.Count);
 
         using var frame = ((Window)TopLevel.GetTopLevel(panel)!).CaptureRenderedFrame()!;
         frame.SaveCapture("hull-picker.png");
+    }
+
+    /// <summary>At the main window's default width every column stays and a long hull name wraps (#2294).</summary>
+    [AvaloniaFact]
+    public void TheEightColumnsFitTheDefaultWindowWidth()
+    {
+        using var look = AppLook.Put();
+        var (panel, _, _) = Asking();
+        var window = (Window)TopLevel.GetTopLevel(panel)!;
+
+        window.Width = 820;
+        Dispatcher.UIThread.RunJobs();
+
+        var names = panel.GetVisualDescendants().OfType<Control>().Select(control => control.Name).ToHashSet();
+
+        foreach (var label in new[] { "Ship", "Size", "Speed", "Boost", "Armour", "Shields", "Seats", "Price" })
+        {
+            Assert.Contains($"PickHead.{label}", names);
+        }
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("hull-picker-820.png");
+    }
+
+    [AvaloniaFact]
+    public void TheEightColumnsFitTheBigPanel()
+    {
+        using var look = AppLook.Put();
+        var (panel, _, _) = Asking();
+        var window = (Window)TopLevel.GetTopLevel(panel)!;
+        var (width, height) = D47.Core.Interface.PanelResolution.Default;
+
+        window.Width = width;
+        window.Height = height;
+        Dispatcher.UIThread.RunJobs();
+
+        var names = panel.GetVisualDescendants().OfType<Control>().Select(control => control.Name).ToHashSet();
+
+        Assert.Contains("PickHead.Seats", names);
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("hull-picker-big-panel.png");
     }
 
     /// <summary>Pressing Price sorts cheapest first, keeps the highlight, and plans nothing.</summary>

@@ -95,7 +95,8 @@ public sealed record EntryRequest(
 /// What the column sorts on, smallest first, with a null figure last either way; null sorts on <paramref name="Text"/>.
 /// </param>
 /// <param name="Right">Right-aligned, in mono numbers.</param>
-public sealed record EntryColumn(string Label, Func<string, string> Text, Func<string, long?>? Figure = null, bool Right = false);
+/// <param name="Descending">A first press sorts largest first.</param>
+public sealed record EntryColumn(string Label, Func<string, string> Text, Func<string, long?>? Figure = null, bool Right = false, bool Descending = false);
 
 /// <summary>One value offered as a button: what it says, and what pressing it commits.</summary>
 public sealed record EntryButton(string Label, string Value)

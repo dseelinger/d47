@@ -184,13 +184,30 @@ public sealed class ShipsMode(
             },
             hull => done(intend(hull)));
 
-    /// <summary>The hull picker's columns: the hull, its landing pad size, and its price.</summary>
+    /// <summary>The hull picker's columns: the hull, its pad size, its base figures and its price.</summary>
     internal static IReadOnlyList<EntryColumn> HullColumns { get; } =
     [
         new("Ship", hull => hull),
         new("Size", hull => PadWord(EliteSpecifications.Ship(hull)?.Pad), hull => PadRank(EliteSpecifications.Ship(hull)?.Pad)),
+        Figures("Speed", hull => hull.Speed, " m/s"),
+        Figures("Boost", hull => hull.Boost, " m/s"),
+        Figures("Armour", hull => hull.Armour, string.Empty),
+        Figures("Shields", hull => hull.Shields, string.Empty),
+        Figures("Seats", hull => hull.Crew is > 0 ? hull.Crew : null, string.Empty),
         new("Price", hull => BgsWorkPage.Credits(EliteSpecifications.Ship(hull)?.Cost), hull => EliteSpecifications.Ship(hull)?.Cost, Right: true),
     ];
+
+    private static EntryColumn Figures(string label, Func<ShipSpecification, int?> read, string unit)
+    {
+        long? Read(string hull) => EliteSpecifications.Ship(hull) is { } spec ? read(spec) : null;
+
+        return new(
+            label,
+            hull => Read(hull) is { } figure ? figure.ToString(CultureInfo.InvariantCulture) + unit : "—",
+            hull => Read(hull),
+            Right: true,
+            Descending: true);
+    }
 
     private static string PadWord(string? pad) => PadRank(pad) switch
     {

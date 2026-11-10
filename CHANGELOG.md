@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: the ship list you pick a hull from now shows each hull's speed, boost, armour, shields and crew seats beside its size and price, so hulls can be compared before one is chosen. A first press on any of the new columns sorts largest first, and typing in the box narrows on them too.
+
 Added: A targeted pilot now knows who flies on your side: a fighter you have out and who flies it, and how many wingmates are on your roster. Wingmates are counted, never named.
 
 Added: D47 now keeps track of the fighter you have launched, and whether you or your crew member is flying it, until it docks, is destroyed, or you jump, dock, enter supercruise, die or load a game. Nothing speaks about it yet.
