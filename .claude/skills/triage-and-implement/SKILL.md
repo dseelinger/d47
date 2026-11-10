@@ -60,6 +60,7 @@ Then start the session inside it with `start_session`, `initiation: "user_asked"
 - `model`: the grid's `opus`, `sonnet` or `haiku` as `claude-opus-5-5`, `claude-sonnet-5-5` or
   `claude-haiku-5-5`. `effort`: the grid's token as it is.
 - `name`: `issue-<N>`. `title`: `Lane <letter>: #<N> <grid title>`.
+- `wake_when_done: true`.
 - `prompt`: the block below, with the number, lane letter and main checkout path filled in.
 - `background`: that this is lane `<letter>` of a `/triage lanes` run started by
   `/triage-and-implement`, that other lanes are merging into `main` at the same time, and that
@@ -77,43 +78,57 @@ This issue is in lane <letter> of a lanes run that works without the maintainer.
 
 Lanes run at the same time, so start every lane's first issue before doing anything else.
 
-## 4. Watch for merges
+## 4. Wait for the sessions, with nothing running in the background
 
-The app continues this session only when every session it started has ended its turn, which would
-hold every lane back until the slowest one finishes. So also run a watcher in the background with
-the numbers of the issues now running. It exits when one of them has merged, which continues this
-session:
+End the turn once every lane's first issue has started. The app continues this session with a
+side-sessions event when every session it started has ended its turn.
 
-```bash
-cd "$(git worktree list | head -1 | cut -d' ' -f1)"
-while :; do for n in <running numbers>; do
-  git log main --format=%B | grep -qx "Fixes #$n" && { echo "merged $n"; exit 0; }
-done; sleep 30; done
-```
-
-Keep exactly one watcher running. Before starting a new one, stop the old one.
+The app refuses `start_session` on a turn that a background task, a scheduled wakeup or another
+session's message started. The one exception is a side-sessions event that directly follows the
+maintainer's own turn, or another side-sessions event. So while lanes run, start no background
+command, `Monitor`, `ScheduleWakeup` or watcher loop. Its notification takes the next turn, that turn
+cannot start a session, and the lane stalls until the maintainer types. The cost is that a lane's
+next issue waits until the slowest running session has ended its turn.
 
 ## 5. When this session is continued
 
-Whether by the watcher or by the app, check each running issue against `main` and against its
-session's state and latest note from `list_sessions` with `{"linked": true}`:
+Check each running issue against `main` and against its session's state and latest note from
+`list_sessions` with `{"linked": true}`:
 
 - **Merged** (a `Fixes #N` line on `main`): start the lane's next issue as step 3 says. A lane with
   no issue left is finished.
+- **Merged, and `start_session` is refused anyway**: never ask the maintainer whether to start it.
+  Hand the lane's remaining issues to `tools/deck/run-queue.ps1` in a console of its own, and say so
+  in one line. It works the rest of the lane headless, in the same worktrees, skipping issues that
+  have already landed, and pushes nothing. Run it through the PowerShell tool. The `env:` line keeps
+  the queue's sessions from inheriting this session's identity, as `run-lanes.ps1` does:
+
+  ```powershell
+  $M = (git worktree list | Select-Object -First 1).Split(' ')[0]
+  Get-ChildItem env: | Where-Object { $_.Name -like 'CLAUDE*' -or $_.Name -like 'MCP_*' -or $_.Name -eq 'ANTHROPIC_BASE_URL' } | ForEach-Object { Remove-Item "env:$($_.Name)" }
+  Start-Process powershell -WorkingDirectory $M -ArgumentList '-NoExit','-NoProfile','-ExecutionPolicy','Bypass','-File','tools\deck\run-queue.ps1','-Lane','<letter>','-From','<N>'
+  ```
+
+  That lane is then the queue's. Start nothing more in it from here, and read its results from
+  `needs-you.md` in the folder `%LOCALAPPDATA%\Temp\d47-queue\` that the queue's console names.
 - **Not merged, and its session is waiting for an answer**: the session has already spoken its
   question. Leave it; do not speak about it again.
 - **Not merged, and its session has ended its turn with a failure banner**: the lane is paused, as
   `/issue-worker` defines it. Start nothing more in that lane and keep the others running. Speak one
   sentence through `/claude-voice` naming the lane, the issue and what stopped it.
 
-Then start a new watcher for the issues still running.
+Then end the turn again, as step 4 says.
+
+Never ask whether to start a lane's next issue, in text, in the wrap-up or through the voice. The
+maintainer invoking this skill is the instruction to start every issue in every lane.
 
 When every lane is finished or paused, speak once through `/claude-voice` saying so, and write the
-report: one row per lane with the issues merged, the issue it paused on and why, and the pushed
-commits by hash and subject.
+report: one row per lane with the issues merged, the issue it paused on and why, and the commits by
+hash and subject, each marked pushed or not pushed. A lane the queue finished has its commits on
+`main` unpushed.
 
 ## What this does not do
 
-It never edits files, merges, pushes or resolves a conflict itself; the lane sessions do that
-through `/issue-worker`. The worktrees it creates are the only thing it adds to the repository. It does not resume a paused lane: the maintainer does that with
-`/issue-worker <N>`.
+It never edits files, merges, pushes or resolves a conflict itself; the lane sessions and the queue
+do that through `/issue-worker`. The worktrees it creates are the only thing it adds to the
+repository. It does not resume a paused lane: the maintainer does that with `/issue-worker <N>`.
