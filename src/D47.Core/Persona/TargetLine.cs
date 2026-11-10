@@ -20,6 +20,7 @@ namespace D47.Core.Persona;
 /// <param name="station">The station the Commander is docked at, or null.</param>
 /// <param name="now">The wall clock, which dates the last scan; null leaves the age out.</param>
 /// <param name="fightOn">Whether a fight is on around the Commander; null is never.</param>
+/// <param name="side">Who flies with the Commander, or null for no one known.</param>
 public sealed class TargetLine(
     Func<TargetedShip?> target,
     Func<string?>? model = null,
@@ -31,7 +32,8 @@ public sealed class TargetLine(
     Func<string?>? system = null,
     Func<string?>? station = null,
     Func<DateTimeOffset>? now = null,
-    Func<bool>? fightOn = null) : ILine
+    Func<bool>? fightOn = null,
+    Func<CommandersSide>? side = null) : ILine
 {
     private const string KeyPrefix = "target.reply";
 
@@ -81,7 +83,7 @@ public sealed class TargetLine(
             new Speaker(
                 VoiceRole.Comms,
                 name,
-                Brief(name, ship, personality, SpeakerAccent.Sentence(accentHeardAs?.Invoke(heardAs)), now?.Invoke(), fighting),
+                Brief(name, ship, personality, SpeakerAccent.Sentence(accentHeardAs?.Invoke(heardAs)), now?.Invoke(), fighting, side?.Invoke()),
                 Conversation(name),
                 OffersTools: false,
                 Signal: 1,
@@ -150,7 +152,7 @@ public sealed class TargetLine(
         return written;
     }
 
-    private static string Brief(string name, TargetedShip ship, string? personality, string? accent, DateTimeOffset? now, bool fighting)
+    private static string Brief(string name, TargetedShip ship, string? personality, string? accent, DateTimeOffset? now, bool fighting, CommandersSide? side)
     {
         var facts = new List<string>();
 
@@ -182,6 +184,11 @@ public sealed class TargetLine(
         if (LastScan(ship, now) is { } scan)
         {
             facts.Add(scan);
+        }
+
+        if (side?.Describe() is { } alongside)
+        {
+            facts.Add(alongside);
         }
 
         return $"""
@@ -272,5 +279,33 @@ public sealed class TargetLine(
                       && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, KeyPrefix) is not null;
 
         return sayable ? said : NpcsHeardHere.SignOff(name);
+    }
+}
+
+/// <summary>The fighter the Commander has out, the crew member in the fighter bay and how many wingmates are on the roster.</summary>
+public sealed record CommandersSide(LaunchedFighter? Fighter, string? CrewName, int Wingmates)
+{
+    /// <summary>What the targeted pilot can tell of the Commander's side; wingmates are counted, never named.</summary>
+    public string? Describe()
+    {
+        var crew = CrewName is { Length: > 0 } name ? $"their crew member {name}" : "their crew";
+
+        var lines = new List<string>();
+
+        if (Fighter is { CommanderFlies: true })
+        {
+            lines.Add($"The Commander is flying a ship-launched fighter. Their own ship is nearby, flown by {crew}.");
+        }
+        else if (Fighter is not null)
+        {
+            lines.Add($"The Commander has launched a fighter, flown by {crew}.");
+        }
+
+        if (Wingmates > 0)
+        {
+            lines.Add($"The Commander flies in a wing with up to {Wingmates} other {(Wingmates == 1 ? "pilot" : "pilots")}; you cannot tell whether any of them are here.");
+        }
+
+        return lines.Count == 0 ? null : string.Join(' ', lines);
     }
 }

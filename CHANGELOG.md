@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: A targeted pilot now knows who flies on your side: a fighter you have out and who flies it, and how many wingmates are on your roster. Wingmates are counted, never named.
+
 Added: D47 now keeps track of the fighter you have launched, and whether you or your crew member is flying it, until it docks, is destroyed, or you jump, dock, enter supercruise, die or load a game. Nothing speaks about it yet.
 
 Changed: while a fight is on around you (Elite's danger flag, or a kill or an attack within the last minute), the pilot of a ship you have targeted and hailed may threaten you and trade insults, instead of signing off. It still does not scan, interdict, fine or put a bounty on you, and outside a fight a threat to shoot is still dropped.

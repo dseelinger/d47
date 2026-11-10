@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -3049,7 +3049,10 @@ public sealed class AppHost : IDisposable
             () => gameState.Active?.Location.StarSystem,
             DockedStation,
             () => SystemWallClock.Instance.UtcNow,
-            () => stores.Fight.On(SystemWallClock.Instance.UtcNow, stores.Status.Current)));
+            () => stores.Fight.On(SystemWallClock.Instance.UtcNow, stores.Status.Current),
+            () => gameState.Active is { } commander
+                ? new CommandersSide(commander.Fighter, commander.Crew.Active?.Name, commander.Wing.Members.Count)
+                : new CommandersSide(null, null, 0)));
 
         // The pilot of the shuttle the Commander rides.
         turns.Lines.Add(new ShuttleLine(
