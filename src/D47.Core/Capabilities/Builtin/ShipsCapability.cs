@@ -133,6 +133,35 @@ public static class ShipsCapability
 
             new ToolDefinition
             {
+                Name = "standard_a_core_internals",
+                Exercise =
+                    "Aboard a ship, say \"standard A rate this ship\". Its plan under Asset Mgmt › Ships now has the power "
+                    + "plant, thrusters, frame shift drive and power distributor at A and life support and sensors at D, each "
+                    + "at the slot's size, and the reply says how many were planned and how many were already there. An SCO "
+                    + "drive stays an SCO drive. Armour, fuel tank, hardpoints, utility and optional internals are unchanged. "
+                    + "The model cannot do this: it is refused if it asks.",
+                Description =
+                    "Plan a ship's core internals at Standard-A: power plant, thrusters, frame shift drive and power "
+                    + "distributor at A, life support and sensors at D, each at the slot's size and in the family "
+                    + "already planned or fitted. Written at once; armour, the fuel tank and every other slot are left "
+                    + "alone.",
+                Protected = true,
+                Parameters =
+                [
+                    ToolParameter.Text(
+                        "ship",
+                        "Which ship, by name or hull. Omit for the one the Commander is flying."),
+                ],
+                Commands =
+                [
+                    new ToolCommandPhrase("standard A rate this ship"),
+                    new ToolCommandPhrase("standard A rate my core internals"),
+                ],
+                Handler = (arguments, _) => Task.FromResult(StandardA(ships, arguments)),
+            },
+
+            new ToolDefinition
+            {
                 Name = "talk_about_build",
                 Exercise =
                     "Open a ship's page under Ships and ask D47 to make the build jump further. The reply critiques "
@@ -308,6 +337,21 @@ public static class ShipsCapability
         }
 
         return ToolResult.Ok(ships.Promote(build.Id));
+    }
+
+    private static ToolResult StandardA(ShipPlanService? ships, ToolArguments arguments)
+    {
+        if (ships is null)
+        {
+            return ToolResult.Error("I am not tracking any ships.");
+        }
+
+        if (Whichever(ships, arguments)?.Build is not { } build)
+        {
+            return ToolResult.Error("I could not tell which ship you mean.");
+        }
+
+        return ToolResult.Ok(ships.StandardA(build.Id));
     }
 
     private static ToolResult Drop(ShipPlanService? ships, ToolArguments arguments)

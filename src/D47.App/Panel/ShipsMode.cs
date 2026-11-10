@@ -1050,6 +1050,11 @@ public sealed class ShipsMode(
     public string Drop(string item) =>
         Resolve(item) is { } build ? ships.Delete(build.Id) : "That build is not there any more.";
 
+    public string? StandardLabel(string item) => Resolve(item) is not null ? "Standard-A rating" : null;
+
+    public string Standard(string item) =>
+        Resolve(item) is { } build ? ships.StandardA(build.Id) : "That build is not there any more.";
+
     public string? ImportLabel(string item) =>
         clipboardText is not null && Resolve(item) is not null ? "Import from clipboard" : null;
 

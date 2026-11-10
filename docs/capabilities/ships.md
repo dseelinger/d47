@@ -189,8 +189,9 @@ Your fleet, the hulls you intend to buy, and one build per ship.
 > "plan grade 5 dirty drives on the thrusters"
 > "plan an overcharged multi-cannon on the third hardpoint of my Corsair"
 > "put that on my checklist"
+> "standard A rate this ship"
 
-The first and the last need no AI configured at all.
+The first and the last two need no AI configured at all.
 
 ### The plan owns what. The checklist owns when.
 
@@ -251,6 +252,24 @@ The text is a one-element SLEF array whose `data` has the shape of the journal's
 
 ```csharp
 public static string Write(ShipLoadout loadout, string appVersion)
+```
+
+### Standard-A rating
+
+A ship's page has a **Standard-A rating** press. It plans the ship's power plant, thrusters, frame
+shift drive and power distributor at A and its life support and sensors at D, each at the slot's own
+size, and writes the plan at once. Saying "standard A rate this ship" does the same for the ship you
+are flying. Armour, the fuel tank, hardpoints, utility mounts and optional internals are left alone.
+
+Each slot keeps its family: the module its plan names, else the one fitted. An SCO drive becomes an
+A-rated SCO drive, and a Guardian Hybrid Power Plant stays one. Where nothing is planned or fitted,
+or the family has no module at the slot's size and rating, the plain module is planned instead.
+Blueprints, grades, experimental effects and priorities already planned on a slot are kept. A slot
+already fitted with its target is not written, and the line under the heading counts it as already
+there.
+
+```csharp
+public string StandardA(string buildId)
 ```
 
 ### One build per ship
@@ -479,6 +498,16 @@ lines are written at once.
 line, and an experimental line when it names an experimental effect. Each carries its slot in its intent,
 which is what lets a later revision find them again. Promotion adds no engineer unlock or rank
 lines.
+
+#### `standard_a_core_internals`
+
+Plan a ship's core internals at Standard-A: power plant, thrusters, frame shift drive and power
+distributor at A, life support and sensors at D, each at the slot's size and in the family already
+planned or fitted. Written at once; armour, the fuel tank and every other slot are left alone.
+
+```json
+{"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one the Commander is flying."}},"required":[],"additionalProperties":false}
+```
 
 #### `drop_ship_plan`
 

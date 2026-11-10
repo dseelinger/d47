@@ -370,6 +370,100 @@ public sealed class ShipPlanService(
         return said;
     }
 
+    /// <summary>
+    /// The core internal slots a Standard-A rating plans, with the rating and the plain module for each.
+    /// Armour and the fuel tank are not among them.
+    /// </summary>
+    public static IReadOnlyList<(string Slot, string Rating, string Plain)> StandardRatings { get; } =
+    [
+        ("PowerPlant", "A", "Power Plant"),
+        ("MainEngines", "A", "Thrusters"),
+        ("FrameShiftDrive", "A", "Frame Shift Drive"),
+        ("LifeSupport", "D", "Life Support"),
+        ("PowerDistributor", "A", "Power Distributor"),
+        ("Radar", "D", "Sensors"),
+    ];
+
+    /// <summary>
+    /// Plans each of <see cref="StandardRatings"/> at its rating and the slot's own size, in the family the slot's
+    /// plan names, else the one fitted, else the plain module where that family has no such module. Keeps each slot
+    /// plan's engineering and priority, and writes nothing to a slot that already holds or plans its target.
+    /// </summary>
+    public string StandardA(string buildId)
+    {
+        if (store.Find(buildId) is not { } build)
+        {
+            return "There is no such build.";
+        }
+
+        if (EliteSpecifications.Slots(build.Hull).Count == 0)
+        {
+            return $"I do not know the slots of a {build.HullName}, so nothing was planned.";
+        }
+
+        var fitted = build.ShipId is { } shipId ? FittedModules(shipId) : [];
+        var planned = 0;
+        var already = 0;
+
+        foreach (var (slotName, rating, plain) in StandardRatings)
+        {
+            if (EliteSpecifications.Slot(build.Hull, slotName) is not { } slot)
+            {
+                continue;
+            }
+
+            var existing = build.For(slotName);
+            var module = fitted.FirstOrDefault(candidate =>
+                string.Equals(candidate.Slot, slotName, StringComparison.OrdinalIgnoreCase));
+
+            var family = (existing?.Variant is { Length: > 0 } variant ? EliteSpecifications.Module(variant)?.Name : null)
+                         ?? (existing?.Module is { Length: > 0 } named ? named : null)
+                         ?? EliteSpecifications.Module(module?.Item)?.Name
+                         ?? plain;
+
+            var offers = EliteSpecifications.ModulesFor(slot);
+
+            ModuleSpecification? Offered(string name) => offers.FirstOrDefault(offer =>
+                string.Equals(offer.Name, name, StringComparison.OrdinalIgnoreCase)
+                && offer.Class == slot.Size
+                && string.Equals(offer.Rating, rating, StringComparison.OrdinalIgnoreCase));
+
+            if ((Offered(family) ?? Offered(plain)) is not { } target)
+            {
+                continue;
+            }
+
+            var plansTarget = string.Equals(existing?.Variant, target.Symbol, StringComparison.OrdinalIgnoreCase);
+            var plansNoModule = existing?.Variant is not { Length: > 0 } && existing?.Module is not { Length: > 0 };
+            var fitsTarget = string.Equals(module?.Item, target.Symbol, StringComparison.OrdinalIgnoreCase);
+
+            if (plansTarget || (plansNoModule && fitsTarget))
+            {
+                already++;
+                continue;
+            }
+
+            build = build.With((existing ?? new SlotPlan(slotName)) with { Module = target.Name, Variant = target.Symbol });
+            planned++;
+        }
+
+        if (planned > 0)
+        {
+            Replace(build);
+        }
+
+        if (planned == 0)
+        {
+            return "Every core internal is already at Standard-A.";
+        }
+
+        var said = $"Planned {Count(planned, "core internal")}.";
+
+        return already == 0
+            ? said
+            : $"{said[..^1]}; {already.ToString(CultureInfo.InvariantCulture)} {(already == 1 ? "was" : "were")} already there.";
+    }
+
     private static string Count(int count, string noun) =>
         $"{count.ToString(CultureInfo.InvariantCulture)} {noun}{(count == 1 ? string.Empty : "s")}";
 

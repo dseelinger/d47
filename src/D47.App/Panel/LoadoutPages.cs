@@ -1718,6 +1718,11 @@ public sealed class ItemPage : LoadoutPage
             Children = { promote },
         };
 
+        if (mode.StandardLabel(item) is { Length: > 0 } standardLabel)
+        {
+            actions.Children.Add(LoadoutPages.Press(standardLabel, PlanStandard));
+        }
+
         if (mode.ImportLabel(item) is { Length: > 0 } importLabel)
         {
             actions.Children.Add(LoadoutPages.Press(importLabel, ImportFromClipboard));
@@ -1817,6 +1822,14 @@ public sealed class ItemPage : LoadoutPage
     }
 
     private async void ExportToClipboard() => Said(await Mode.Export(_item));
+
+    /// <summary>Plans the core internals and reports on the summary line, after the refresh the plan's change posts.</summary>
+    private void PlanStandard()
+    {
+        var said = Mode.Standard(_item);
+
+        Dispatcher.UIThread.Post(() => Said(said));
+    }
 
     private void Imported(LoadoutImportOffer offer)
     {

@@ -376,6 +376,12 @@ public interface ILoadoutMode
     /// <summary>Drops it, and says what happened.</summary>
     string Drop(string item);
 
+    /// <summary>The label for planning the item's core internals at Standard-A, or null where this item has none.</summary>
+    string? StandardLabel(string item) => null;
+
+    /// <summary>Plans the item's core internals at Standard-A, and says what happened.</summary>
+    string Standard(string item) => string.Empty;
+
     /// <summary>The label for importing a plan from the clipboard, or null where this item has none.</summary>
     string? ImportLabel(string item) => null;
 
