@@ -427,6 +427,28 @@ aloud only on request:
 
 D47 reads the latest three passages, newest first, and counts the older ones.
 
+The Nemesis arc carries a **secret**, revealed over its acts. When the Nemesis is first named, or once a faction report
+is computed for a Nemesis named earlier, the turn model writes the secret once in the background: either a traitor
+inside your faction passing its plans to the rival, or someone other than the rival's leader directing its plans, picked
+from the rival and your squadron so a squadron shares the kind. The model invents the culprit, the whole truth and three
+reveals, the last naming the culprit. D47 checks the answer before keeping it and refuses it when a field is missing or
+empty, there are not exactly three reveals, a text runs over 300 characters, any text has a digit, a reveal before the
+last names the culprit or the last does not, or any text names a system in the faction report, its fronts or the
+chronicle. A refused or failed write is tried again at the next launch.
+
+The secret is kept with the Nemesis in `data/campaigns.json` and never shown. Time passing reveals nothing: a reveal is
+due only when a front resolves into the chronicle after the secret was kept, and only these resolutions count:
+
+```csharp
+return (entry.Kind == CampaignFronts.Describe(FrontKind.Conflict) && entry.Outcome == "Won")
+    || (entry.Kind == CampaignFronts.Describe(FrontKind.Coup) && entry.Outcome == "Resolved");
+```
+
+That is, a conflict your faction won, or a coup threat that has passed. Each such entry gives the next reveal, one at a
+look, and the entry it was timed to is kept with it. The Liaison speaks the reveal in its own voice, naming the real
+victory first; the last reveal also tells the whole truth. After the third, no reveals remain. Naming another campaign
+faction clears it, and the Campaign Nemesis row turns the reveals off with the rest of the arc.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

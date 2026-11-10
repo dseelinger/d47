@@ -105,6 +105,9 @@ public sealed record Campaign
     /// <summary>The arc under way, or null.</summary>
     public CampaignArc? Arc { get; init; }
 
+    /// <summary>The Nemesis arc's secret and the reveals given, or null before the model has written one.</summary>
+    public ArcSecret? Secret { get; init; }
+
     /// <summary>The Informant and the leaks given, or null before the first leak.</summary>
     public CampaignInformant? Informant { get; init; }
 
@@ -128,5 +131,5 @@ public sealed record Campaign
     /// <summary>The intent of a system with none set: Hold where the faction controls it, else LeaveAlone.</summary>
     public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
-    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Informant is null && Ideology is null && Council is null && Crises.Count == 0;
+    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Secret is null && Informant is null && Ideology is null && Council is null && Crises.Count == 0;
 }

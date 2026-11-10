@@ -3430,7 +3430,12 @@ public sealed class AppHost : IDisposable
         host.Goals = (stores.GoalBook, stores.BackfillGoals);
         host.SquadronFactions = stores.SquadronFactions;
         host.Campaigns = stores.Campaigns;
-        stores.Campaigns.ChronicleGrew += _ => host.WriteLegends();
+        stores.Campaigns.ChronicleGrew += _ =>
+        {
+            host.WriteLegends();
+            host.WriteArcSecret();
+        };
+        stores.Campaigns.ArcOpened += _ => host.WriteArcSecret();
         host.CampaignFocus = stores.CampaignFocus;
         host.Activities = stores.Activities;
         host.Adventures = (stores.AdventureBook, crew.AdventureGenerator);
@@ -3515,6 +3520,7 @@ public sealed class AppHost : IDisposable
             }
 
             host.WriteLegends();
+            host.WriteArcSecret();
         }
 
         WriteLegendsOnce();
@@ -4007,11 +4013,20 @@ public sealed class AppHost : IDisposable
             stores.CampaignSystems,
             foundations.LoggerFactory.CreateLogger<D47.Core.Campaigns.CampaignFrontsWatch>());
 
+        D47.Core.Campaigns.CampaignFrontsSnapshot? secretSeen = null;
+
         tick.Add(
             "campaign-fronts",
             context =>
             {
                 campaignFronts.Poll(context.Now);
+
+                // A Nemesis named before its secret could be written gets one once a report is computed.
+                if (!ReferenceEquals(campaignFronts.Snapshot, secretSeen))
+                {
+                    secretSeen = campaignFronts.Snapshot;
+                    host.WriteArcSecret();
+                }
 
                 // Reads the fronts that poll computed.
                 stores.CampaignFocus.Poll();
@@ -5813,6 +5828,60 @@ public sealed class AppHost : IDisposable
             finally
             {
                 Interlocked.Exchange(ref _writingLegends, 0);
+            }
+        });
+    }
+
+    private int _writingSecret;
+
+    private string? _secretAskedFor;
+
+    /// <summary>
+    /// Has the model write the Nemesis arc's secret when the arc has none, on the pool, once per arc per launch. Waits for a
+    /// computed faction report, whose systems the secret may not name.
+    /// </summary>
+    public void WriteArcSecret()
+    {
+        if (Campaigns is not { } campaigns
+            || GameState.Active is not { } state
+            || state.Identity.FrontierId is not { Length: > 0 } fid
+            || campaigns.For(fid) is not { Arc: { } arc, Secret: null } campaign
+            || CampaignFronts?.Snapshot is not { Report: { } report } held
+            || !string.Equals(held.FrontierId, fid, StringComparison.Ordinal)
+            || !LlmAvailability.CanAttemptModelTurn
+            || Turns.Provider is not { } provider
+            || campaign.FactionOr(SquadronFactionResolver.Resolve(state, SquadronFactions)) is not { } faction)
+        {
+            return;
+        }
+
+        var key = $"{fid}|{arc.Rival}|{arc.Since:O}";
+
+        if (string.Equals(Volatile.Read(ref _secretAskedFor), key, StringComparison.Ordinal)
+            || Interlocked.Exchange(ref _writingSecret, 1) == 1)
+        {
+            return;
+        }
+
+        Volatile.Write(ref _secretAskedFor, key);
+
+        var ask = D47.Core.Campaigns.CampaignSecrets.Asker(provider, Turns.Model, Spend, PriceTable.Default, _logger);
+        var seed = D47.Core.Campaigns.CampaignArcs.SeedKey(state.Squadron.Key, faction);
+        string[] places = [.. report.Systems.Select(system => system.Name), .. held.Fronts.Select(front => front.System)];
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await D47.Core.Campaigns.CampaignSecrets.RunAsync(campaigns, fid, faction, seed, places, ask, _logger, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogWarning(ex, "Could not write the Nemesis arc's secret");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _writingSecret, 0);
             }
         });
     }

@@ -30,6 +30,9 @@ public class TheFloorReachesTheBackgroundCallsAndOnlyThemTests
         // The Chronicler's passages are prose fiction, which the background model never writes.
         "var ask = D47.Core.Campaigns.CampaignLegend.Asker(provider, Turns.Model, Spend, PriceTable.Default, _logger);",
 
+        // The Nemesis arc's secret is prose fiction, which the background model never writes.
+        "var ask = D47.Core.Campaigns.CampaignSecrets.Asker(provider, Turns.Model, Spend, PriceTable.Default, _logger);",
+
         // Flagged, not fixed: correct today because web search is endpoint-gated in all three providers, and
         // the contract says it is model-gated in principle.
         "|| provider.CapabilitiesFor(Turns.Model ?? provider.DefaultModel).SupportsWebSearch;",

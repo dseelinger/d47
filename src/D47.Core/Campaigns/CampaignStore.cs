@@ -59,6 +59,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                         : null,
                     Chronicle = [.. (record.Chronicle ?? []).Select(Entry).OfType<ChronicleEntry>()],
                     Arc = Arc(record.Arc),
+                    Secret = Secret(record.Secret),
                     Informant = Informant(record.Informant),
                     Ideology = Ideology(record.Ideology),
                     Council = Council(record.Council),
@@ -106,6 +107,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             Intents = clearIntents ? campaign.Intents.Clear() : campaign.Intents,
             Chosen = null,
             Arc = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Arc : null,
+            Secret = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Secret : null,
             Informant = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Informant : null,
             Ideology = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Ideology : null,
             Council = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Council : null,
@@ -237,12 +239,94 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         && left.Outcome == right.Outcome
         && left.Ticks.SequenceEqual(right.Ticks);
 
-    /// <summary>Sets the arc under way, or clears it with null. False when the write failed.</summary>
+    /// <summary>Sets the arc under way, or clears it with null, clearing a secret that belongs to another rival. False when the write failed.</summary>
     public bool SetArc(string frontierId, CampaignArc? arc)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
 
-        return Change(frontierId, campaign => campaign with { Arc = arc });
+        var opened = false;
+
+        var kept = Change(
+            frontierId,
+            campaign =>
+            {
+                opened = arc is not null && campaign.Arc is null;
+
+                return campaign with
+                {
+                    Arc = arc,
+                    Secret = arc is not null && campaign.Secret is { } secret && string.Equals(secret.Rival, arc.Rival, StringComparison.OrdinalIgnoreCase)
+                        ? secret
+                        : null,
+                };
+            });
+
+        if (kept && opened)
+        {
+            ArcOpened?.Invoke(frontierId);
+        }
+
+        return kept;
+    }
+
+    /// <summary>Raised, with the Commander's Frontier id, after an arc is set where there was none. Handlers must not block.</summary>
+    public event Action<string>? ArcOpened;
+
+    /// <summary>
+    /// Keeps <paramref name="secret"/> for the arc, only while the arc under way has <paramref name="asked"/>'s rival and
+    /// start and no secret; its From is the chronicle's count now. False otherwise, or when the write failed.
+    /// </summary>
+    public bool SetSecret(string frontierId, CampaignArc asked, ArcSecret secret)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+        ArgumentNullException.ThrowIfNull(asked);
+        ArgumentNullException.ThrowIfNull(secret);
+
+        var set = false;
+
+        return Change(
+            frontierId,
+            campaign =>
+            {
+                if (campaign.Secret is not null
+                    || campaign.Arc is not { } arc
+                    || !string.Equals(arc.Rival, asked.Rival, StringComparison.OrdinalIgnoreCase)
+                    || arc.Since != asked.Since
+                    || !string.Equals(secret.Rival, arc.Rival, StringComparison.OrdinalIgnoreCase))
+                {
+                    return campaign;
+                }
+
+                set = true;
+
+                return campaign with { Secret = secret with { From = campaign.Chronicle.Count, Revealed = [] } };
+            })
+            && set;
+    }
+
+    /// <summary>Replaces the secret with <paramref name="next"/>, only while the secret held is still <paramref name="held"/>. False otherwise, or when the write failed.</summary>
+    public bool SetRevealed(string frontierId, ArcSecret held, ArcSecret next)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+        ArgumentNullException.ThrowIfNull(held);
+        ArgumentNullException.ThrowIfNull(next);
+
+        var set = false;
+
+        return Change(
+            frontierId,
+            campaign =>
+            {
+                if (!ReferenceEquals(campaign.Secret, held))
+                {
+                    return campaign;
+                }
+
+                set = true;
+
+                return campaign with { Secret = next };
+            })
+            && set;
     }
 
     /// <summary>Sets the Informant and the leaks given, or clears it with null. False when the write failed.</summary>
@@ -340,6 +424,18 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                             Arc = pair.Value.Arc is { } arc
                                 ? new ArcRecord { Kind = arc.Kind, Rival = arc.Rival, Leader = arc.Leader, Since = arc.Since, Answered = arc.Answered }
                                 : null,
+                            Secret = pair.Value.Secret is { } secret
+                                ? new SecretRecord
+                                {
+                                    Rival = secret.Rival,
+                                    Kind = secret.Kind,
+                                    Culprit = secret.Culprit,
+                                    Truth = secret.Truth,
+                                    Reveals = [.. secret.Reveals],
+                                    From = secret.From,
+                                    Revealed = [.. secret.Revealed.Select(point => new RevealRecord { Entry = point.Entry, System = point.System, At = point.At })],
+                                }
+                                : null,
                             Informant = pair.Value.Informant is { } informant
                                 ? new InformantRecord
                                 {
@@ -407,6 +503,24 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             ? new CampaignArc(record.Kind, rival, leader, record.Since, Math.Max(0, record.Answered))
             : null;
 
+    private static ArcSecret? Secret(SecretRecord? record) =>
+        record is { Rival: { Length: > 0 } rival, Culprit: { Length: > 0 } culprit, Truth: { Length: > 0 } truth, Reveals: { } reveals }
+            && Enum.IsDefined(record.Kind)
+            && reveals.Count == CampaignSecrets.RevealCount
+            && reveals.All(reveal => !string.IsNullOrWhiteSpace(reveal))
+            ? new ArcSecret(
+                rival,
+                record.Kind,
+                culprit,
+                truth,
+                [.. reveals],
+                Math.Max(0, record.From),
+                [.. (record.Revealed ?? [])
+                    .Where(point => point.Entry >= 0 && !string.IsNullOrWhiteSpace(point.System))
+                    .Select(point => new RevealPoint(point.Entry, point.System!, point.At))
+                    .Take(CampaignSecrets.RevealCount)])
+            : null;
+
     private static CampaignInformant? Informant(InformantRecord? record) =>
         record is { Name: { Length: > 0 } name }
             ? new CampaignInformant(
@@ -470,6 +584,8 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public IReadOnlyList<EntryRecord>? Chronicle { get; set; }
 
         public ArcRecord? Arc { get; set; }
+
+        public SecretRecord? Secret { get; set; }
 
         public InformantRecord? Informant { get; set; }
 
@@ -552,6 +668,32 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public double Influence { get; set; }
 
         public int Level { get; set; }
+
+        public DateTimeOffset At { get; set; }
+    }
+
+    private sealed class SecretRecord
+    {
+        public string? Rival { get; set; }
+
+        public SecretKind Kind { get; set; }
+
+        public string? Culprit { get; set; }
+
+        public string? Truth { get; set; }
+
+        public IReadOnlyList<string>? Reveals { get; set; }
+
+        public int From { get; set; }
+
+        public IReadOnlyList<RevealRecord>? Revealed { get; set; }
+    }
+
+    private sealed class RevealRecord
+    {
+        public int Entry { get; set; }
+
+        public string? System { get; set; }
 
         public DateTimeOffset At { get; set; }
     }

@@ -25,6 +25,7 @@ public enum ArcAct
     Exploit,
     Relief,
     Legend,
+    Reveal,
 }
 
 /// <summary>A rival faction ranked for the Nemesis: conflicts fought, systems shared, and the closest influence gap in those systems.</summary>
@@ -369,6 +370,9 @@ public static class CampaignArcs
         ArcAct.Election =>
             $"You are the Liaison of {line.Faction}, a minor faction. You speak to the Commander, an independent pilot working for it, "
             + $"for the idea of rule that {line.Faction}'s government stands for.",
+        ArcAct.Reveal =>
+            $"You are the Liaison of {line.Faction}, a minor faction. You speak to the Commander, an independent pilot working for it, "
+            + $"about what a victory has uncovered of a secret behind {line.Rival}, its rival.",
         ArcAct.Crisis or ArcAct.Relief =>
             $"You are the Liaison of {line.Faction}, a minor faction. You speak to the Commander, an independent pilot working for it, "
             + $"about a crisis in one of {line.Faction}'s systems.",
@@ -395,6 +399,7 @@ public static class CampaignArcs
         ArcAct.Exploit => "Gloat over the crisis and say how you mean to profit from it.",
         ArcAct.Relief => "Tell the Commander the crisis is over and what the relief effort achieved, in your own words.",
         ArcAct.Legend => "Write this entry of the faction's history.",
+        ArcAct.Reveal => "Tell the Commander what the victory brought to light, in your own words. Keep every name in it and add nothing it does not say.",
         ArcAct.Sided => "Say what you make of being passed over, in your own words, and that you will remember it.",
         ArcAct.Introduction => "Introduce yourself to the Commander as the rival they now face.",
         ArcAct.Leak => "Deliver the intercepted plan to the Commander, as a warning, in your own words.",
