@@ -33,12 +33,19 @@ public static class SettingsCapability
                         "Ask D47 \"what settings can you change\". The reply lists each setting the "
                         + "model may change as key, label and current value, with the allowed choices "
                         + "under those that have a closed set. Protected settings and secrets are not "
-                        + "listed.",
+                        + "listed. With a query, only the best matches are listed: say \"list settings for "
+                        + "panel size small\" and vr.mode is among them.",
                     AlwaysLoaded = true,
                     Description =
                         "List the settings that can be changed through a tool call, with their current values. "
-                        + "Settings that are protected or hold a secret are not listed and cannot be changed here.",
-                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(List(settings))),
+                        + "Settings that are protected or hold a secret are not listed and cannot be changed here. "
+                        + "Call it with the Commander's own words as the query before saying you cannot change something.",
+                    Parameters =
+                    [
+                        ToolParameter.Text("query", "The Commander's words for what to change; lists the best matches only."),
+                    ],
+                    Handler = (arguments, _) =>
+                        Task.FromResult(ToolResult.Ok(List(settings, arguments.TryGetString("query", out var query) ? query : null))),
                 },
                 new ToolDefinition
                 {
@@ -65,7 +72,7 @@ public static class SettingsCapability
                         + "setting or a secret is refused with \"It lives in the settings panel.\"",
                     AlwaysLoaded = true,
                     Description =
-                        "Change one setting. Takes effect immediately. Protected settings and secrets are refused: "
+                        "Change one setting; find its key with list_settings and the Commander's words first. Takes effect immediately. Protected settings and secrets are refused: "
                         + "those are changed from the settings panel by the Commander.",
                     Parameters =
                     [
@@ -90,11 +97,74 @@ public static class SettingsCapability
                           && row.Kind is not (SettingKind.Secret or SettingKind.Info)
                           && row.Applies(settings.Current));
 
-    private static string List(SettingsService settings)
+    private const int MostMatches = 8;
+
+    private static readonly char[] Separators = [' ', ',', '.', '-', '_', '"', '(', ')', ':', ';', '/', (char)9, (char)10, (char)13];
+
+    private static IReadOnlyList<SettingRow> Matching(IEnumerable<SettingRow> rows, string query, D47Settings current)
+    {
+        var words = query
+            .Split(Separators, StringSplitOptions.RemoveEmptyEntries)
+            .Where(word => word.Length >= 3)
+            .Select(word => word.ToLowerInvariant())
+            .Distinct()
+            .ToList();
+
+        bool Has(HashSet<string> tokens, string word) =>
+            tokens.Any(token => token.StartsWith(word, StringComparison.Ordinal));
+
+        var scored = rows.Select((row, index) =>
+        {
+            var phrases = Tokens(row.Commands.Select(c => c.Phrase));
+            var text = Tokens(
+            [
+                row.Key,
+                row.Label,
+                row.Help,
+                row.Group ?? "",
+                .. row.ChoicesFor(current),
+                .. row.Commands.Select(c => c.Phrase),
+            ]);
+
+            return (row, index,
+                score: words.Count(word => Has(text, word)),
+                phraseScore: words.Count(word => Has(phrases, word)));
+        });
+
+        return scored
+            .Where(x => x.score > 0)
+            .OrderByDescending(x => x.score)
+            .ThenByDescending(x => x.phraseScore)
+            .ThenBy(x => x.index)
+            .Take(MostMatches)
+            .Select(x => x.row)
+            .ToList();
+    }
+
+    private static HashSet<string> Tokens(IEnumerable<string> texts) =>
+        texts
+            .SelectMany(text => text.Split(
+                Separators,
+                StringSplitOptions.RemoveEmptyEntries))
+            .Select(token => token.ToLowerInvariant())
+            .ToHashSet();
+
+    private static string List(SettingsService settings, string? query = null)
     {
         var report = new StringBuilder();
+        IEnumerable<SettingRow> rows = Visible(settings);
 
-        foreach (var row in Visible(settings))
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            rows = Matching(rows, query, settings.Current);
+
+            if (!rows.Any())
+            {
+                return $"No setting I can change matches '{query.Trim()}'.";
+            }
+        }
+
+        foreach (var row in rows)
         {
             var fallback = row.DefaultDisplayFor(settings.Current);
             var value = row.Binding!.Read(settings.Current)

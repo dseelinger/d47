@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: the model said it had no tool for a setting it could change, such as the headset panel size. `list_settings` now takes a query, and the model is told to call it with the Commander's words before saying it cannot change something. It lists the best eight matching settings by key, label, help, group, choices and voice phrases, so "panel size small" finds Panel content.
+
 Fixed: a voice command missed when the transcript put a stray word in front of it, such as "So small panel" or "Again, small panel", and the turn went to the model. A leading so, again, okay, ok, and, um, uh or well is now ignored. When the transcript has a sentence break, the last sentence is also read as the command, so "Like this. Big panel" sets the big panel. A command in the middle of a longer sentence is still not heard as a command.
 
 Changed: the Campaign Liaison and Campaign Nemesis rows are replaced by War callouts, Election callouts and Other BGS callouts, in Settings › Other voices › Chatter and messages, group BGS callouts. Each switches the Liaison's and the Nemesis's lines about that topic, and the Informant, Ideology, council, Crisis and secret lines by the same topic. The conflicts briefing names only the conflicts whose topic is on. A line whose topic is off is left out before the arcs rank their steps, so it does not start the two-hour wait. Say "stop calling out wars", "stop calling out elections" or "stop calling out other BGS callouts". The old settings are ignored.

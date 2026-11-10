@@ -263,10 +263,12 @@ callers: a model that could rebind one could hand itself a caller it is not allo
 
 Lists the settings a tool call may change, with their current values. Protected rows, secrets
 and read-only disclosures are not listed: a row the model cannot change is a row it has no
-reason to know the name of.
+reason to know the name of. With a `query`, it lists only the rows that match, ranked by how many
+query words they match, at most eight. A row is searched by its key, label, help, group, choices
+and voice phrases.
 
 ```json
-{"type":"object","properties":{},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"query":{"type":"string","description":"The Commander\u0027s words for what to change; lists the best matches only."}},"required":[],"additionalProperties":false}
 ```
 
 ```text
