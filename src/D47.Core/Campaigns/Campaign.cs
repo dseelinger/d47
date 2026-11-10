@@ -120,6 +120,9 @@ public sealed record Campaign
     /// <summary>The crises open now, one per system and state.</summary>
     public IReadOnlyList<OpenCrisis> Crises { get; init; } = [];
 
+    /// <summary>The BGS tick the Liaison last briefed the conflicts for, or the time of the briefing when no tick was known; null before the first.</summary>
+    public DateTimeOffset? ConflictsBriefed { get; init; }
+
     /// <summary>The faction named, else <paramref name="squadronFaction"/>.</summary>
     public string? FactionOr(string? squadronFaction) =>
         Faction is { Length: > 0 } named ? named : squadronFaction is { Length: > 0 } ? squadronFaction : null;
@@ -131,5 +134,5 @@ public sealed record Campaign
     /// <summary>The intent of a system with none set: Hold where the faction controls it, else LeaveAlone.</summary>
     public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
-    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Secret is null && Informant is null && Ideology is null && Council is null && Crises.Count == 0;
+    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Secret is null && Informant is null && Ideology is null && Council is null && Crises.Count == 0 && ConflictsBriefed is null;
 }

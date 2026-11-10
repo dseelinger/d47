@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Campaigns;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Stories;
 
 namespace D47.Core.Callouts;
@@ -33,6 +34,9 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
 
     /// <summary>The time of the last BGS tick, or null.</summary>
     public Func<DateTimeOffset?> LastTick { get; set; } = () => null;
+
+    /// <summary>The least time between two conflicts briefings while the time of the last BGS tick is unknown.</summary>
+    public static readonly TimeSpan ConflictsGap = TimeSpan.FromHours(24);
 
     /// <summary>The Liaison's voice for a faction, or null for the comms role's own.</summary>
     public Func<string, PinnedVoice?> Voice { get; set; } = _ => null;
@@ -122,6 +126,8 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
             }
         }
 
+        WatchConflicts(campaign, held, state, now);
+
         if (chosen is null || front is null)
         {
             _workSeen = Newest(state.BgsWork);
@@ -194,6 +200,40 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
         }
     }
 
+    /// <summary>Queues the conflicts briefing once per BGS tick, or once in 24 hours while no tick is known.</summary>
+    private void WatchConflicts(Campaign campaign, CampaignFrontsSnapshot held, CommanderGameState state, DateTimeOffset now)
+    {
+        if (held.Report is not { } report || _pending.Any(pending => pending.Beat == LiaisonBeat.Conflicts))
+        {
+            return;
+        }
+
+        var tick = LastTick();
+        var briefed = campaign.ConflictsBriefed;
+        var due = tick is { } known
+            ? briefed is not { } at || at < known
+            : briefed is not { } last || now - last >= ConflictsGap;
+
+        if (!due)
+        {
+            return;
+        }
+
+        var conflicts = FactionConflictRows.Of(report, state.Standings);
+
+        if (conflicts.Count == 0)
+        {
+            Campaigns!.NoteConflictsBriefed(state.Identity.FrontierId!, tick ?? now);
+            return;
+        }
+
+        _pending.Add(new Pending(LiaisonBeat.Conflicts, now)
+        {
+            Line = CampaignLiaison.Conflicts(conflicts, held.Faction, report.Government),
+            Tick = tick ?? now,
+        });
+    }
+
     /// <summary>The pending beats that can be said now, in the order they arose; an outcome waits for the next front.</summary>
     private List<Announcement> Say(string id, Campaign campaign, CampaignFrontsSnapshot held, CommanderGameState state, DateTimeOffset now)
     {
@@ -240,6 +280,11 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
 
                 case LiaisonBeat.MorningReport:
                     line = front is null ? null : CampaignLiaison.MorningReport(front, faction, government);
+                    break;
+
+                case LiaisonBeat.Conflicts:
+                    line = pending.Line;
+                    Campaigns!.NoteConflictsBriefed(id, pending.Tick);
                     break;
 
                 default:

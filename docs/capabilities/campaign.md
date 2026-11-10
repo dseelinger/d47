@@ -275,6 +275,7 @@ fact the Liaison states; the language model only words them, and is told to add 
 | You hand in work that counts on the front | A short acknowledgement, at most once every 30 minutes. |
 | The faction wins its first day in a conflict, or a margin is back within its threshold | A short acknowledgement. |
 | The front resolves | The outcome, then the next front proposed. |
+| A BGS tick passes, and d47 has the faction's report | The conflicts briefing: every war, civil war and election the faction is in, active or pending, once per tick, as soon as d47 has the report. Each states its type, system, status and opponent (or that the opponent is not yet known), with days won where you have read the system and the faction's stake where it has one. Nothing is said without conflicts. |
 
 The dispatch keeps your work and the movement as two separate facts. It never says how much of the change
 your work caused, because the BGS does not report that. In a conflict influence is frozen, so the Liaison

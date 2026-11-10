@@ -4,6 +4,7 @@ using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Configuration;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Stories;
 
 namespace D47.Core.Campaigns;
@@ -18,6 +19,7 @@ public enum LiaisonBeat
     FirstDayWon,
     MarginRestored,
     Resolution,
+    Conflicts,
 }
 
 /// <summary>
@@ -32,6 +34,9 @@ public sealed record CampaignLiaisonLine(
     IReadOnlyList<string> Facts,
     bool Conflict)
 {
+    /// <summary>The systems a rewrite must name, or none.</summary>
+    public IReadOnlyList<string> Systems { get; init; } = [];
+
     /// <summary>The facts as one passage, which is also what is said when the model writes nothing.</summary>
     public string Text => string.Join(" ", Facts);
 }
@@ -238,6 +243,50 @@ public static partial class CampaignLiaison
         return new CampaignLiaisonLine(LiaisonBeat.Resolution, faction, PartFor(resolved), MannerFor(government), facts, Conflict: false);
     }
 
+    /// <summary>
+    /// The briefing of every conflict the faction is in: wars and civil wars, then elections, active before pending within
+    /// each. Each states its type, system, status and opponent, with days won when the Commander has read the system and
+    /// the faction's stake when it has one.
+    /// </summary>
+    public static CampaignLiaisonLine Conflicts(IReadOnlyList<FactionConflict> conflicts, string faction, string? government)
+    {
+        ArgumentNullException.ThrowIfNull(conflicts);
+
+        var ordered = conflicts
+            .OrderBy(conflict => IsElection(conflict.Type))
+            .ThenByDescending(conflict => conflict.Active)
+            .ToList();
+
+        return new CampaignLiaisonLine(
+            LiaisonBeat.Conflicts,
+            faction,
+            "liaison officer",
+            MannerFor(government),
+            [.. ordered.Select(conflict => ConflictFact(conflict, faction))],
+            Conflict: true)
+        {
+            Systems = [.. ordered.Select(conflict => conflict.System).Distinct(StringComparer.OrdinalIgnoreCase)],
+        };
+    }
+
+    private static string ConflictFact(FactionConflict conflict, string faction)
+    {
+        var type = conflict.Type.ToLowerInvariant();
+        var status = conflict.Active ? "active" : "pending";
+        var fact = conflict.Kind == OpponentKind.Named
+            ? $"In {conflict.System}: {status} {type} against {conflict.Opponent}."
+            : $"In {conflict.System}: {status} {type}; opponent not yet known.";
+
+        if (conflict.Visited)
+        {
+            fact += $" Days won stand at {conflict.OursWon} to {conflict.TheirsWon}.";
+        }
+
+        return conflict.OurStake.Length > 0 ? $"{fact} {faction}'s stake is {conflict.OurStake}." : fact;
+    }
+
+    private static bool IsElection(string type) => type.Contains("election", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>Whether work of <paramref name="kind"/> helps the faction on <paramref name="front"/>, by the rules its next action gives.</summary>
     public static bool Counts(Front front, BgsWorkKind kind, long amount)
     {
@@ -345,6 +394,7 @@ public static partial class CampaignLiaison
         LiaisonBeat.HandIn => "Acknowledge what the Commander has just handed in, briefly.",
         LiaisonBeat.FirstDayWon => "Acknowledge the first day won, briefly.",
         LiaisonBeat.MarginRestored => "Acknowledge that the margin is restored, briefly.",
+        LiaisonBeat.Conflicts => "Give the Commander the daily briefing on the faction's conflicts. Name every system.",
         _ => "The front is over. Give the outcome, then the next front proposed.",
     };
 

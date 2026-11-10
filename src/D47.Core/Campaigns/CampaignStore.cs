@@ -63,7 +63,8 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                     Informant = Informant(record.Informant),
                     Ideology = Ideology(record.Ideology),
                     Council = Council(record.Council),
-                    Crises = [.. (record.Crises ?? []).Where(crisis => !string.IsNullOrWhiteSpace(crisis.System) && !string.IsNullOrWhiteSpace(crisis.State)).Select(crisis => new OpenCrisis(crisis.System!, crisis.State!, string.IsNullOrWhiteSpace(crisis.Blamed) ? null : crisis.Blamed, crisis.Since, crisis.Exploited))],
+                    ConflictsBriefed = record.ConflictsBriefed,
+                    Crises =[.. (record.Crises ?? []).Where(crisis => !string.IsNullOrWhiteSpace(crisis.System) && !string.IsNullOrWhiteSpace(crisis.State)).Select(crisis => new OpenCrisis(crisis.System!, crisis.State!, string.IsNullOrWhiteSpace(crisis.Blamed) ? null : crisis.Blamed, crisis.Since, crisis.Exploited))],
                 };
             }
 
@@ -112,6 +113,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             Ideology = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Ideology : null,
             Council = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Council : null,
             Crises = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.Crises : [],
+            ConflictsBriefed = string.Equals(campaign.Faction, faction.Trim(), StringComparison.OrdinalIgnoreCase) ? campaign.ConflictsBriefed : null,
         });
     }
 
@@ -154,6 +156,14 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
             campaign => campaign.Chosen is { } chosen && Is(chosen, kind, system) && chosen.Reported != tick
                 ? campaign with { Chosen = chosen with { Reported = tick } }
                 : campaign);
+    }
+
+    /// <summary>Notes that the conflicts were briefed for the BGS tick <paramref name="stamp"/>, or at that time when no tick was known.</summary>
+    public bool NoteConflictsBriefed(string frontierId, DateTimeOffset stamp)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return Change(frontierId, campaign => campaign.ConflictsBriefed == stamp ? campaign : campaign with { ConflictsBriefed = stamp });
     }
 
     /// <summary>
@@ -469,6 +479,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                                     Sidings = [.. council.Sidings.Select(siding => new SidingRecord { System = siding.System, Sided = siding.Sided, At = siding.At })],
                                 }
                                 : null,
+                            ConflictsBriefed = pair.Value.ConflictsBriefed,
                             Crises = [.. pair.Value.Crises.Select(crisis => new CrisisRecord { System = crisis.System, State = crisis.State, Blamed = crisis.Blamed, Since = crisis.Since, Exploited = crisis.Exploited })],
                         }),
                 ],
@@ -594,6 +605,8 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public CouncilRecord? Council { get; set; }
 
         public IReadOnlyList<CrisisRecord>? Crises { get; set; }
+
+        public DateTimeOffset? ConflictsBriefed { get; set; }
     }
 
     private sealed class CrisisRecord

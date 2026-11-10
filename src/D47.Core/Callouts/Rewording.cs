@@ -90,6 +90,13 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             said = null;
         }
 
+        if (said is not null
+            && announcement.Liaison is { Systems.Count: > 0 } briefing
+            && briefing.Systems.Any(system => !said.Contains(system, StringComparison.OrdinalIgnoreCase)))
+        {
+            said = null;
+        }
+
         string? figure = null;
 
         if (said is not null
