@@ -87,14 +87,14 @@ public static class ExobiologyCapability
                 [
                     ToolParameter.Text(
                         "body",
-                        "The body name, or its short form such as \"7 b\". Leave out for the most "
-                            + "recently scanned body that has biology on it."),
+                        "The body name, or its short form such as \"7 b\". Leave out for the targeted "
+                            + "body, or else the most recently scanned body that has biology on it."),
                 ],
                 Commands =
                 [
                     new ToolCommandPhrase("what biology is on this body"),
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Body(commander(), arguments))),
+                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Body(commander(), status?.Invoke().Destination, arguments))),
             },
             new ToolDefinition
             {
@@ -113,10 +113,10 @@ public static class ExobiologyCapability
                     ToolParameter.Text(
                         "body",
                         "The body name, or its short form such as \"7 b\". Leave out for the body the "
-                            + "Commander is at, or else the most recently scanned body that has biology on it."),
+                            + "Commander is at, else the targeted body, or else the most recently scanned body that has biology on it."),
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    EarlierAsync(commander(), settings, community, earlier, arguments, cancellationToken),
+                    EarlierAsync(commander(), status?.Invoke().Destination, settings, community, earlier, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -205,7 +205,7 @@ public static class ExobiologyCapability
 
     // --------------------------------------------------------------- the body
 
-    private static string Body(CommanderGameState? state, ToolArguments arguments)
+    private static string Body(CommanderGameState? state, StatusDestination? destination, ToolArguments arguments)
     {
         if (state is null)
         {
@@ -216,7 +216,9 @@ public static class ExobiologyCapability
 
         var scans = state.Bodies;
 
-        var body = wanted is not null ? scans.Named(wanted) : scans.MostRecentWithBiology ?? scans.All.FirstOrDefault();
+        var body = wanted is not null
+            ? scans.Named(wanted)
+            : NavTarget.TargetedSignals(destination, scans) ?? scans.MostRecentWithBiology ?? scans.All.FirstOrDefault();
 
         if (body is null)
         {
@@ -324,6 +326,7 @@ public static class ExobiologyCapability
 
     private static async Task<ToolResult> EarlierAsync(
         CommanderGameState? state,
+        StatusDestination? destination,
         Configuration.SettingsService settings,
         ICommunityBiology? community,
         EarlierFinds? store,
@@ -351,7 +354,9 @@ public static class ExobiologyCapability
 
         var name = wanted is not null
             ? state.Bodies.Named(wanted)?.BodyName ?? wanted
-            : state.Location.Body ?? state.Bodies.MostRecentWithBiology?.BodyName;
+            : state.Location.Body
+              ?? NavTarget.TargetedName(destination, state.Scans, state.Bodies)
+              ?? state.Bodies.MostRecentWithBiology?.BodyName;
 
         if (name is null)
         {

@@ -353,7 +353,7 @@ What your own surface scan found. For a mapped body it also lists the species of
 body's conditions admit, with each one's value: a prediction from the conditions, and the sample decides.
 
 ```json
-{"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the targeted body, or else the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
 ```
 
 #### `get_earlier_finds`
@@ -362,7 +362,7 @@ What other Commanders have logged on a body, from other Commanders' logged finds
 of it, most first, from Canonn.
 
 ```json
-{"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the body the Commander is at, or else the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the body the Commander is at, else the targeted body, or else the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
 ```
 
 #### `get_sampling_progress`

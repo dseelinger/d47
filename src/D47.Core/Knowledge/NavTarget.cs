@@ -92,6 +92,19 @@ public abstract record NavTarget
         return new Unknown(name);
     }
 
+    /// <summary>The signals record of the body <paramref name="selected"/> names, or null where it is not a body in the Commander's signals.</summary>
+    public static BodyBiology? TargetedSignals(StatusDestination? selected, BodySignals signals) =>
+        selected is { Body: > 0 and <= int.MaxValue } destination
+            ? signals.All.FirstOrDefault(body => body.SystemAddress == destination.System && body.BodyId == (int)destination.Body)
+            : null;
+
+    /// <summary>The name of the body <paramref name="selected"/> names in the Commander's scans or signals, or null.</summary>
+    public static string? TargetedName(StatusDestination? selected, BodyScans scans, BodySignals signals) =>
+        selected is { Body: > 0 and <= int.MaxValue } destination
+            ? scans.For(destination.System, (int)destination.Body)?.BodyName
+              ?? TargetedSignals(selected, signals)?.BodyName
+            : null;
+
     /// <summary>A destination name fit to say, or null where Elite wrote a <c>$</c> placeholder or nothing.</summary>
     public static string? Sayable(string? name) =>
         string.IsNullOrWhiteSpace(name) || name.TrimStart().StartsWith('$') ? null : name.Trim();

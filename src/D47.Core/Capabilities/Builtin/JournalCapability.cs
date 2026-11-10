@@ -486,12 +486,12 @@ public static class JournalCapability
                     [
                         ToolParameter.Text(
                             "body",
-                            "The body name, or its short form such as \"7 b\". Leave out for the most recently seen "
-                            + "body that has geological signals."),
+                            "The body name, or its short form such as \"7 b\". Leave out for the targeted body, "
+                            + "else the most recently seen body with geological signals."),
                     ],
                     Commands = Asking(BodyGeologyQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
-                        DescribeBodyGeology(gameState, state(), arguments))),
+                        DescribeBodyGeology(gameState, state(), liveStatus?.Invoke().Destination, arguments))),
                 },
                 new ToolDefinition
                 {
@@ -2186,7 +2186,11 @@ public static class JournalCapability
         return text + unfinished;
     }
 
-    private static string DescribeBodyGeology(GameStateStore gameState, HistoryState history, ToolArguments arguments)
+    private static string DescribeBodyGeology(
+        GameStateStore gameState,
+        HistoryState history,
+        StatusDestination? destination,
+        ToolArguments arguments)
     {
         if (history is HistoryState.Pending or HistoryState.Running)
         {
@@ -2199,7 +2203,8 @@ public static class JournalCapability
         }
 
         var wanted = arguments.Text("body")?.Trim();
-        var body = wanted is not null ? active.Bodies.Named(wanted) : active.Bodies.MostRecentWithGeology;
+        var body = wanted is not null ? active.Bodies.Named(wanted)
+            : NavTarget.TargetedSignals(destination, active.Bodies) ?? active.Bodies.MostRecentWithGeology;
 
         if (body is null)
         {
