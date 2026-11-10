@@ -12,7 +12,7 @@ public sealed class ElevenLabsScribeTranscriber : HostedSpeechTranscriber
 
     public const string Endpoint = "https://api.elevenlabs.io/v1/speech-to-text";
 
-    public const string ScribeModel = "scribe_v2";
+    public const string ScribeModel = "scribe_v3";
 
     /// <summary>At 100 keyterms Scribe bills every request as at least 20 seconds of audio.</summary>
     internal const int MostKeyterms = 99;

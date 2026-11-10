@@ -10,6 +10,8 @@
 
 Changed: station searches now show only Stronghold Carriers you can dock at, those of the Power you are pledged to. Ticking Stronghold carrier, or naming a Power, no longer lists another Power's carriers. Unpledged, a Stronghold carrier search sends nothing and says that carriers dock only pledged Commanders; pledged, it asks only for your Power's carriers. Outfitting routes and mission station searches leave out the carriers you cannot dock at as well.
 
+Changed: ElevenLabs Scribe hearing now uses Scribe v3, the current model for recorded audio, at the same price.
+
 Added: the ship list you pick a hull from now shows each hull's base jump range beside its size: how far the ship jumps as the shipyard sells it, with one jump's fuel and an empty hold. It is the same figure as the first needle of the jump gauge on a ship's page. A first press on Jump sorts the longest jump first. Speed and boost lose their "m/s" so every column fits at the default window size.
 
 Added: the ship list you pick a hull from now shows each hull's speed, boost, armour, shields and crew seats beside its size and price, so hulls can be compared before one is chosen. A first press on any of the new columns sorts largest first, and typing in the box narrows on them too.

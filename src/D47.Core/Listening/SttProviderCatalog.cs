@@ -107,7 +107,7 @@ public static class SttProviderCatalog
         Name = "ElevenLabs",
         Label = "ElevenLabs Scribe",
         Summary = "Uses the same key as an ElevenLabs voice.",
-        Model = "scribe_v2",
+        Model = "scribe_v3",
 
         // The same secret the ElevenLabs voice reads.
         KeySecretName = TtsProviderCatalog.ElevenLabsKeySecretName,

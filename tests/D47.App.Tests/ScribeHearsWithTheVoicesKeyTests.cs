@@ -76,7 +76,7 @@ public class ScribeHearsWithTheVoicesKeyTests
         Assert.Equal("RIFF", Encoding.ASCII.GetString(file.Value, 0, 4));
         Assert.Equal(44 + (Speech.Samples.Length * 2), file.Value.Length);
 
-        Assert.Equal("scribe_v2", endpoint.Value("model_id"));
+        Assert.Equal("scribe_v3", endpoint.Value("model_id"));
         Assert.Equal("en", endpoint.Value("language_code"));
         Assert.Equal("false", endpoint.Value("tag_audio_events"));
         Assert.Empty(endpoint.Values("keyterms"));
@@ -131,8 +131,8 @@ public class ScribeHearsWithTheVoicesKeyTests
         var result = await transcriber.TranscribeAsync(Speech, [], TestContext.Current.CancellationToken);
 
         Assert.Equal("dock at Jameson Memorial", result.Text);
-        Assert.Equal("scribe_v2", result.Model);
-        Assert.Equal("scribe_v2", SttProviderCatalog.ElevenLabs.Model);
+        Assert.Equal("scribe_v3", result.Model);
+        Assert.Equal("scribe_v3", SttProviderCatalog.ElevenLabs.Model);
     }
 
     [Theory]
