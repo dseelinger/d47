@@ -168,10 +168,8 @@ public sealed class KeywordRouter(
             return null;
         }
 
-        var utterance = Utterance(input);
-
         // As said first: `PersonaCapability` declares "switch to Directive 47", which opens with an opener.
-        return Readings(utterance).Select(Matching).FirstOrDefault(match => match is not null);
+        return ReadingsOf(input).Select(Matching).FirstOrDefault(match => match is not null);
 
         SettingCommandMatch? Matching(string said)
         {
@@ -227,10 +225,8 @@ public sealed class KeywordRouter(
             return null;
         }
 
-        var utterance = Utterance(input);
-
         // As said first, then stripped; within a reading, the Commander's own phrases first.
-        return Readings(utterance).Select(Matching).FirstOrDefault(match => match is not null);
+        return ReadingsOf(input).Select(Matching).FirstOrDefault(match => match is not null);
 
         ToolCommandMatch? Matching(string said)
         {
@@ -265,17 +261,44 @@ public sealed class KeywordRouter(
         }
     }
 
-    /// <summary>The ways an utterance is read, in order: as said, opener removed, tail removed, both removed.</summary>
+    /// <summary>
+    /// The ways an utterance is read, in order: as said, opener removed, tail removed, both removed, then
+    /// the same four after one leading filler word is removed.
+    /// </summary>
     internal static IReadOnlyList<string> Readings(string said) =>
     [
-        .. new[]
-        {
-            said,
-            SpokenOpeners.Strip(said),
-            SpokenTails.Strip(said),
-            SpokenTails.Strip(SpokenOpeners.Strip(said)),
-        }.Distinct(StringComparer.OrdinalIgnoreCase),
+        .. new[] { said, SpokenFillers.Strip(said) }
+            .SelectMany(start => new[]
+            {
+                start,
+                SpokenOpeners.Strip(start),
+                SpokenTails.Strip(start),
+                SpokenTails.Strip(SpokenOpeners.Strip(start)),
+            })
+            .Distinct(StringComparer.OrdinalIgnoreCase),
     ];
+
+    /// <summary>
+    /// The readings of a raw transcript: the whole utterance, then its last sentence when the transcript
+    /// has a sentence break before it.
+    /// </summary>
+    internal static IReadOnlyList<string> ReadingsOf(string input)
+    {
+        var whole = Utterance(input);
+        var last = Utterance(LastSentence(input));
+
+        return last.Length == 0 || string.Equals(last, whole, StringComparison.OrdinalIgnoreCase)
+            ? Readings(whole)
+            : [.. Readings(whole).Concat(Readings(last)).Distinct(StringComparer.OrdinalIgnoreCase)];
+    }
+
+    private static string LastSentence(string input)
+    {
+        var trimmed = input.TrimEnd(' ', '\t', '\r', '\n', '.', '!', '?');
+        var cut = trimmed.LastIndexOfAny(['.', '!', '?']);
+
+        return cut < 0 ? trimmed : trimmed[(cut + 1)..];
+    }
 
     /// <summary>
     /// One utterance, reduced to what was said: no surrounding punctuation, no doubled spaces, and
