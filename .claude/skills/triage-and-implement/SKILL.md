@@ -1,6 +1,6 @@
 ---
 name: triage-and-implement
-description: Run /triage lanes, then work every lane without the maintainer — each issue its own session started from here on the model and effort the grid gives it, running /issue-worker in its lane's worktree, the next issue in a lane started once the one before it has merged into main. Sessions skip /test-drive and push without waiting for a manual test, and speak only when something stops them. Use when the user invokes /triage-and-implement, /triage-and-implement <N> for N lanes, or says "triage and implement", "triage and run the lanes", "work the lanes without me".
+description: Run /triage lanes, then work every lane without the maintainer — each issue its own session started from here on the model and effort the grid gives it, running /issue-worker in its lane's worktree, the next issue in a lane started once the one before it has merged into main. Sessions do no manual testing, end on a recap with no question, and speak only when something stops them. Use when the user invokes /triage-and-implement, /triage-and-implement <N> for N lanes, or says "triage and implement", "triage and run the lanes", "work the lanes without me".
 ---
 
 # Triage and implement
@@ -69,7 +69,8 @@ Then start the session inside it with `start_session`, `initiation: "user_asked"
 
 This issue is in lane <letter> of a lanes run that works without the maintainer.
 - This session started inside its lane's worktree, <main checkout>/.claude/worktrees/lane-<letter>, on branch issue/<N>. Work there and merge into main as /issue-worker's Lanes section says. Never edit the main checkout.
-- Skip /test-drive. Do not wait for a manual test. Once the change is committed, merged into main and pushed, finish the turn. Still write the test steps in the report, so they can be run later.
+- There is no manual testing in this run, and these lines override /issue-worker's **Saying how to test it** and **Finishing**. Do not run /test-drive, do not write manual test steps, and do not ask for screenshots, /desktop or a device. Headless captures for your own checking are fine; do not send them.
+- Once the change is committed, merged into main and pushed, finish the turn. The wrap-up is a recap only: no question, no buttons, not blocked. The report's last line names the lane's next issue; this session does not start it.
 - Speak through /claude-voice only when something stops you from finishing: a question only the maintainer can answer, a rebase conflict, a build or test failure you cannot fix, a denied permission. Say the issue number and what you need.
 - Do not speak the done sentence when the issue lands.
 ```
