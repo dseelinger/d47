@@ -787,6 +787,47 @@ When the system is in Elite's list of visited systems for the Commander playing 
 ends with one more sentence: how many times they have been, and the day of the last visit. A
 system the list does not include adds nothing.
 
+#### `get_target`
+
+What the Commander has selected in the navigation panel, from Status.json's `Destination`.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+Asking "what have I targeted", "tell me about my target" or "what is my target" is answered
+without a language model. The tool is always loaded, so a follow-up such as "what's the gravity on
+it" reaches it too, and the model answers from its reply.
+
+`Destination` holds a system address, a body id and a name. d47 reads the target in this order:
+
+- **Body 0** is the system itself. The answer is the `describe_system` answer for that system,
+  without opening its page.
+- **A body id** that matches one of the Commander's own `Scan` events, or a body in Spansh's record
+  of the system, is a star or planet. The answer gives its type, whether it is landable, gravity in
+  g, atmosphere, surface temperature and pressure, volcanism, terraforming state, radius, distance
+  from arrival, rings, signal counts, genera, the stations and settlements on it, and its surface
+  materials, most first.
+- **A name** that matches a station in Spansh's record of the system is a station, carrier or
+  settlement. A fleet carrier, which Spansh names by its callsign, also matches a name that ends
+  with the callsign. The answer gives its type, the body it is on, its distance from arrival, controlling
+  faction, government, economy, largest pad and services.
+- **Anything else** is said by name with no record of it. Nothing selected, or a name Elite wrote
+  as a `$` placeholder, is answered as nothing targeted; a `$` name is never spoken.
+
+For a body, each field comes from the Commander's own scans where they hold it, and from the galaxy
+record otherwise. The answer gives the scanned fields after "From your own scans:" and the rest after
+"From the galaxy record:". The two sources use different units: the journal writes gravity in m/s²,
+pressure in pascals and radius in metres, and Spansh writes g, atmospheres and kilometres. d47
+converts the journal's values:
+
+```csharp
+public static string GravityFromScan(double metresPerSecondSquared) => Gravity(metresPerSecondSquared / StandardGravity);
+```
+
+The distance from arrival and the stations on a body come from the galaxy record only. A scanned
+body is still described when galaxy lookups are off or Spansh cannot be reached.
+
 #### `system_visits`
 
 Whether the Commander has been to a system, how many times, and the day of the last visit.

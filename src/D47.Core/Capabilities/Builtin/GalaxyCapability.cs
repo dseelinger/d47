@@ -122,7 +122,10 @@ public static class GalaxyCapability
         SquadronFactions? squadronFactions = null,
 
         // The published rare index, or null where none is composed.
-        IRareIndexSource? rareIndex = null) => new()
+        IRareIndexSource? rareIndex = null,
+
+        // The live Status.json, whose Destination is the navigation panel's selection.
+        Func<Journal.GameStatus>? gameStatus = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -403,6 +406,26 @@ public static class GalaxyCapability
                         now,
                         arguments,
                         cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = TargetTool,
+                Exercise =
+                    "Target a planet you have scanned in the navigation panel and say \"tell me about my target\". "
+                    + "The reply names it and gives its gravity in g, whether it is landable, its atmosphere and its "
+                    + "signals, and says which parts come from your own scans and which from the galaxy record.",
+                AlwaysLoaded = true,
+                Description =
+                    "Everything known about what the Commander has selected in the navigation panel: a body's type, "
+                    + "landing, gravity, atmosphere, temperature, pressure, volcanism, terraforming, radius, distance, "
+                    + "rings, signals, genera, stations and materials; a station's type, body, faction, government, "
+                    + "economy, pads and services; or a system's description. Says which parts come from the "
+                    + "Commander's own scans and which from the galaxy record. Answer follow-up questions about the "
+                    + "target from this.",
+                Parameters = [],
+                Commands = [.. TargetQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
+                Handler = (_, cancellationToken) =>
+                    TargetAsync(systems, gameStatus, gameState, Visits(visits, gameState), cancellationToken),
             },
             new ToolDefinition
             {
@@ -712,6 +735,49 @@ public static class GalaxyCapability
         ],
         Display = new CapabilityDisplay { PanelTitle = "Galaxy search", Order = 47 },
     };
+
+    public const string TargetTool = "get_target";
+
+    private static readonly string[] TargetQuestions = ["what have i targeted", "tell me about my target", "what is my target"];
+
+    private static async Task<ToolResult> TargetAsync(
+        IStarSystemService? systems,
+        Func<Journal.GameStatus>? gameStatus,
+        Func<Journal.CommanderGameState?>? gameState,
+        Func<long, Journal.VisitLookup> visits,
+        CancellationToken cancellationToken)
+    {
+        if (gameStatus?.Invoke().Destination is not { } destination)
+        {
+            return ToolResult.Ok(TargetAnswer.NothingTargeted);
+        }
+
+        StarSystemProfile? record = null;
+        var unavailable = systems is null ? Unavailable : null;
+
+        if (systems is not null)
+        {
+            try
+            {
+                record = await systems.ProfileAsync(destination.System, cancellationToken).ConfigureAwait(false);
+            }
+            catch (GalaxyUnavailableException ex)
+            {
+                unavailable = ex.Message;
+            }
+        }
+
+        var state = gameState?.Invoke();
+        var target = NavTarget.Resolve(
+            destination,
+            state?.Scans ?? Journal.BodyScans.Empty,
+            state?.Bodies ?? Journal.BodySignals.Empty,
+            record);
+
+        return target is NavTarget.StarSystem system
+            ? ToolResult.Ok(await SystemAnswerAsync(system.Record, visits, cancellationToken).ConfigureAwait(false))
+            : ToolResult.Ok(TargetAnswer.Describe(target, unavailable));
+    }
 
     public const string SetSquadronFactionTool = "set_squadron_faction";
 
@@ -2201,10 +2267,7 @@ public static class GalaxyCapability
                 heard?.Confirm(profile.Name);
             }
 
-            var lookup = await Task.Run(() => visits(address), cancellationToken).ConfigureAwait(false);
-            var said = lookup.State == Journal.VisitState.Visited
-                ? $"{DescribeProfile(profile)} The Commander has been here {VisitSentence(lookup.Visits)}"
-                : DescribeProfile(profile);
+            var said = await SystemAnswerAsync(profile, visits, cancellationToken).ConfigureAwait(false);
 
             if (named is not null)
             {
@@ -2223,6 +2286,19 @@ public static class GalaxyCapability
         {
             return ToolResult.Error(ex.Message);
         }
+    }
+
+    /// <summary>The <c>describe_system</c> answer: the summary, then the visit sentence for a visited system.</summary>
+    private static async Task<string> SystemAnswerAsync(
+        StarSystemProfile profile,
+        Func<long, Journal.VisitLookup> visits,
+        CancellationToken cancellationToken)
+    {
+        var lookup = await Task.Run(() => visits(profile.SystemAddress), cancellationToken).ConfigureAwait(false);
+
+        return lookup.State == Journal.VisitState.Visited
+            ? $"{DescribeProfile(profile)} The Commander has been here {VisitSentence(lookup.Visits)}"
+            : DescribeProfile(profile);
     }
 
     /// <summary>The spoken summary of one system; the page holds the rest.</summary>

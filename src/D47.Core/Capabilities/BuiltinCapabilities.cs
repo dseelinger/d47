@@ -406,7 +406,8 @@ public static class BuiltinCapabilities
             signalSightings,
             () => gameState.Active?.Location.StarPos,
             squadronFactions,
-            rareIndex),
+            rareIndex,
+            gameStatus),
         RouteCapability.Create(
             routes,
             trade,

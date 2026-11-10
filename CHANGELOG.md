@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: ask about what you have targeted in the navigation panel. Say "tell me about my target", "what have I targeted" or "what is my target". For a planet or star, the answer gives its type, whether it is landable, its gravity in g, atmosphere, temperature, pressure, volcanism, terraforming, radius, distance from arrival, rings, signals, genera, the stations on it and its materials. Your own scans are used first and Spansh's galaxy record fills in the rest, and the answer says which came from where. For a station it gives the type, the body it is on, the controlling faction, government, economy, largest pad and services; for a system it gives the same answer as describing the system. Follow-up questions such as "what's the gravity on it" are answered from the same reply.
+
 Changed: a story's characters get their voices on the ship's provider the first time you open the story's page, before you begin it. Each character the story did not give a voice of its own is matched to one by the language model, as the cores are, and the Cast section shows and plays that voice in place of the crew voice. A character written in a man's and a woman's version is matched once you set Your Commander is.
 
 Added: spoken scrolling takes a side. On a page with two scrollbars side by side, such as the Journal reading, Settings and Characters, any scroll phrase can end in "left" or "right" ("page down right", "newest left"). The plain phrase moves the page's main scroller. "Newest" on a scroller with no newest line now goes to its bottom instead of saying there is nothing to scroll.

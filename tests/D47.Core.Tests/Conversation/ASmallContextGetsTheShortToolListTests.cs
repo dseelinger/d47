@@ -36,10 +36,11 @@ public class ASmallContextGetsTheShortToolListTests
         "get_setting",
         "set_setting",
         "system_visits",
+        "get_target",
     ];
 
     [Fact]
-    public void TheCompactListIsTheEighteenAlwaysLoadedTools()
+    public void TheCompactListIsTheNineteenAlwaysLoadedTools()
     {
         var install = new MemoryInstall();
         var registry = TestSurface.For(install).Registry;
