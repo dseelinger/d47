@@ -135,8 +135,10 @@ public sealed class VrHost : IDisposable
     public void CommanderPicked() => _panel.CommanderPicked();
 
     /// <summary>How far down the headset panel is, so a spoken scroll can move it (#34).</summary>
-    public D47.Core.Interface.PanelScrollOutcome Scroll(D47.Core.Interface.PanelScrollStep step) =>
-        _panel.Scroll(step);
+    public D47.Core.Interface.PanelScrollOutcome Scroll(
+        D47.Core.Interface.PanelScrollStep step,
+        D47.Core.Interface.PanelScrollSide side) =>
+        _panel.Scroll(step, side);
 
     /// <summary>Opens the headset's System page on one system. Call on the UI thread.</summary>
     public void RefreshSessionSpend() => _panel.RefreshSessionSpend();

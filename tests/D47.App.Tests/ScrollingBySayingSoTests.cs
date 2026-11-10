@@ -233,7 +233,7 @@ public class ScrollingBySayingSoTests
 
         var before = Pixels(headset);
 
-        Assert.Equal(PanelScrollOutcome.Moved, headset.Scroll(PanelScrollStep.PageUp));
+        Assert.Equal(PanelScrollOutcome.Moved, headset.Scroll(PanelScrollStep.PageUp, PanelScrollSide.Either));
 
         var after = Pixels(headset);
 
@@ -258,7 +258,7 @@ public class ScrollingBySayingSoTests
 
         // Hidden, it declines: a phrase must not be swallowed by a surface nobody can see, or the Commander
         // gets silence from the one that was showing too.
-        Assert.Equal(PanelScrollOutcome.NothingToScroll, strip.Scroll(PanelScrollStep.PageUp));
+        Assert.Equal(PanelScrollOutcome.NothingToScroll, strip.Scroll(PanelScrollStep.PageUp, PanelScrollSide.Either));
 
         strip.Show();
         Dispatcher.UIThread.RunJobs();
@@ -266,7 +266,7 @@ public class ScrollingBySayingSoTests
         model.Append("And the newest line, with somewhere to put it.");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelScrollOutcome.Moved, strip.Scroll(PanelScrollStep.PageUp));
+        Assert.Equal(PanelScrollOutcome.Moved, strip.Scroll(PanelScrollStep.PageUp, PanelScrollSide.Either));
 
         strip.Close();
     }

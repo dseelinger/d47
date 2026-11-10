@@ -359,9 +359,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     private static readonly TimeSpan LandingMarkCleared = TimeSpan.FromSeconds(2.5);
 
     /// <summary>Moves the page this surface is showing, for a spoken scroll (#34).</summary>
-    public D47.Core.Interface.PanelScrollOutcome Scroll(D47.Core.Interface.PanelScrollStep step)
+    public D47.Core.Interface.PanelScrollOutcome Scroll(
+        D47.Core.Interface.PanelScrollStep step,
+        D47.Core.Interface.PanelScrollSide side)
     {
-        var outcome = _view.Scroll(step);
+        var outcome = _view.Scroll(step, side);
 
         // Dirty only for a move, which is the same bargain as before and is now said precisely: "already at
         // the bottom" changes no pixel, and re-rendering for it would hand SteamVR an identical image (#263).

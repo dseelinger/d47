@@ -207,7 +207,7 @@ public class PanelPhrasesTests
         nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
         nav.Register(PanelTab.Navigation, new NavCrumb("engineers", "Engineers"));
 
-        foreach (var phrase in PanelScroll.Phrases.Keys)
+        foreach (var phrase in PanelScroll.Phrases.Keys.Concat(PanelScroll.SidedPhrases.Keys))
         {
             Assert.Null(PanelPhrases.Apply(phrase, nav));
         }

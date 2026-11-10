@@ -22,7 +22,7 @@ public sealed class PanelRouting(
     private volatile (PanelPrompts Prompts, Action<Action> Post, bool Headset)[] _promptSurfaces = [];
     private volatile PanelNavigator[] _navigators = [];
     private volatile (PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem)[] _surfaces = [];
-    private volatile Func<PanelScrollStep, PanelScrollOutcome>[] _scrollers = [];
+    private volatile Func<PanelScrollStep, PanelScrollSide, PanelScrollOutcome>[] _scrollers = [];
     private volatile (PanelNavigator Nav, Action<Action> Post, Action<PanelFindResult>? OpenFound)[] _finders = [];
     private volatile PanelFind? _find;
     private volatile PanelSnapshot _panel = new([], null);
@@ -85,7 +85,7 @@ public sealed class PanelRouting(
     public void RouteFind(PanelFind find) => _find = find;
 
     /// <summary>Adds a surface to the ones a spoken scroll moves (#34).</summary>
-    public void RouteScrolling(Func<PanelScrollStep, PanelScrollOutcome> scroll)
+    public void RouteScrolling(Func<PanelScrollStep, PanelScrollSide, PanelScrollOutcome> scroll)
     {
         lock (_registration)
         {
@@ -178,12 +178,12 @@ public sealed class PanelRouting(
     /// <summary>Moves the page on every surface and says so, or null when the phrase was not a scroll (#34).</summary>
     public string? Scroll(string spoken)
     {
-        if (PanelScroll.Match(spoken) is not { } step)
+        if (PanelScroll.Match(spoken) is not { } heard)
         {
             return null;
         }
 
-        return PanelScroll.Answer(step, _scrollers.Select(scroll => scroll(step)));
+        return PanelScroll.Answer(heard.Step, _scrollers.Select(scroll => scroll(heard.Step, heard.Side)));
     }
 
     /// <summary>Moves every surface the phrase named somewhere and says what happened, or null when it named nowhere.</summary>

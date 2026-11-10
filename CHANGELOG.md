@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: spoken scrolling takes a side. On a page with two scrollbars side by side, such as the Journal reading, Settings and Characters, any scroll phrase can end in "left" or "right" ("page down right", "newest left"). The plain phrase moves the page's main scroller. "Newest" on a scroller with no newest line now goes to its bottom instead of saying there is nothing to scroll.
+
 Fixed: the model said it had no tool for a setting it could change, such as the headset panel size. `list_settings` now takes a query, and the model is told to call it with the Commander's words before saying it cannot change something. It lists the best eight matching settings by key, label, help, group, choices and voice phrases, so "panel size small" finds Panel content.
 
 Fixed: a voice command missed when the transcript put a stray word in front of it, such as "So small panel" or "Again, small panel", and the turn went to the model. A leading so, again, okay, ok, and, um, uh or well is now ignored. When the transcript has a sentence break, the last sentence is also read as the command, so "Like this. Big panel" sets the big panel. A command in the middle of a longer sentence is still not heard as a command.

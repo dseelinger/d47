@@ -177,11 +177,11 @@ public sealed class OverlayPanel : Window
     public void CommanderPicked() => _view.CommanderPicked();
 
     /// <summary>Moves the page the strip is showing, for a spoken scroll (#34).</summary>
-    public PanelScrollOutcome Scroll(PanelScrollStep step) =>
+    public PanelScrollOutcome Scroll(PanelScrollStep step, PanelScrollSide side) =>
         // A strip nobody can see has nothing to scroll, which is a different answer from being at the end of
         // something (#263) — and the one that lets a hidden surface stay silent while the window it is beside
         // answers for the phrase.
-        IsVisible ? _view.Scroll(step) : PanelScrollOutcome.NothingToScroll;
+        IsVisible ? _view.Scroll(step, side) : PanelScrollOutcome.NothingToScroll;
 
     /// <summary>Whether the strip should be on screen at all.</summary>
     public static bool ShouldShow(bool enabled, bool eliteForeground, bool placing) =>

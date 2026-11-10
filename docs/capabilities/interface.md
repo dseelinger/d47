@@ -641,16 +641,22 @@ scroll up       up a bit          scroll up a bit
 newest          latest            jump to the newest      scroll to the bottom
 ```
 
+Any phrase can end in "left" or "right": "page down left", "newest right", "scroll up right".
+
 The last row goes to the newest line and starts following again, as pressing **↓ Newest** does. The
 headset's mini panel and the flat overlay have no such button, so this is the way back there. On
-the journal readings, where the newest line is at the top, it goes to the top.
+the journal readings, where the newest line is at the top, it goes to the top. On a scroller with
+no newest line, "newest" goes to the bottom, as "scroll to the bottom" says.
 
 A page is a screenful less one line, so the line you were reading when you said it is still there
 when the page settles. A scroll is three lines, which is what one notch of a wheel does nearly
 everywhere.
 
 **It moves whichever page is showing**, not the transcript specifically — the other tabs
-scroll the same way. If a chooser is open, it moves the chooser.
+scroll the same way. If a chooser is open, it moves the chooser. A page can show two scrollers side
+by side, such as the Journal reading, Settings and Characters. The plain phrase moves the main one
+(the Journal list, or the widest scroller elsewhere), and "left" or "right" moves the leftmost or
+rightmost scroller that has something to scroll; with only one, either word moves it.
 
 **Why this exists, on each surface:**
 

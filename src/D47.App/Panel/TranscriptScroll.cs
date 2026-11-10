@@ -65,6 +65,9 @@ internal sealed class TranscriptScroll
     private ScrollViewer Scroller =>
         Page == TranscriptPage.Journal ? _journalScroller : _transcriptScroller;
 
+    /// <summary>The scroller a plain spoken scroll moves on the transcript pane.</summary>
+    internal ScrollViewer Followed => Scroller;
+
     private Control FoldPad =>
         Page == TranscriptPage.Journal ? _journalList : _transcriptContent;
 

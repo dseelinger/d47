@@ -17,6 +17,17 @@ public enum PanelScrollStep
     Newest,
 }
 
+/// <summary>Which of two side-by-side scrollers a spoken scroll moves.</summary>
+public enum PanelScrollSide
+{
+    /// <summary>The page's main scroller.</summary>
+    Either,
+
+    Left,
+
+    Right,
+}
+
 /// <summary>What happened when a surface was asked to scroll (#263).</summary>
 public enum PanelScrollOutcome
 {
@@ -62,15 +73,35 @@ public static class PanelScroll
     /// <summary>How many lines a nudge moves, where a page moves a screenful.</summary>
     public const int Lines = 3;
 
+    /// <summary>Every phrase with each side word after it, and what it does.</summary>
+    public static IReadOnlyDictionary<string, (PanelScrollStep Step, PanelScrollSide Side)> SidedPhrases { get; } =
+        Phrases
+            .SelectMany(phrase => new[] { (Word: "left", Side: PanelScrollSide.Left), (Word: "right", Side: PanelScrollSide.Right) }
+                .Select(side => (Phrase: $"{phrase.Key} {side.Word}", phrase.Value, side.Side)))
+            .ToDictionary(
+                entry => entry.Phrase,
+                entry => (entry.Value, entry.Side),
+                StringComparer.OrdinalIgnoreCase);
+
     /// <summary>
-    /// Which step this utterance asks for, or null when it asks for none — which is the common case and
+    /// Which step and side this utterance asks for, or null when it asks for none — which is the common case and
     /// falls through to whatever else wanted the sentence.
     /// </summary>
-    public static PanelScrollStep? Match(string spoken)
+    public static (PanelScrollStep Step, PanelScrollSide Side)? Match(string spoken)
     {
         var said = Normalise(spoken);
 
-        return said.Length > 0 && Phrases.TryGetValue(said, out var step) ? step : null;
+        if (said.Length == 0)
+        {
+            return null;
+        }
+
+        if (Phrases.TryGetValue(said, out var step))
+        {
+            return (step, PanelScrollSide.Either);
+        }
+
+        return SidedPhrases.TryGetValue(said, out var sided) ? sided : null;
     }
 
     /// <summary>What to say back, given what every surface did with the step (#263).</summary>

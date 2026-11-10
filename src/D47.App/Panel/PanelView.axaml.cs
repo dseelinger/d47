@@ -1182,18 +1182,18 @@ public partial class PanelView : UserControl, IPanelTabHost
     }
 
     /// <summary>Moves the page this surface is showing, by however much was asked for (#34).</summary>
-    public PanelScrollOutcome Scroll(PanelScrollStep step)
+    public PanelScrollOutcome Scroll(PanelScrollStep step, PanelScrollSide side = PanelScrollSide.Either)
     {
-        if (ActiveScroller() is not { } scroller)
+        if (ChooseScroller(side) is not { } scroller)
         {
             return PanelScrollOutcome.NothingToScroll;
         }
 
-        if (step == PanelScrollStep.Newest)
+        var followed = ReferenceEquals(scroller, _scroll.Followed) && TranscriptPane.IsVisible;
+
+        if (step == PanelScrollStep.Newest && followed)
         {
-            return ReferenceEquals(scroller, TranscriptScroller)
-                ? _scroll.ScrollToNewest()
-                : PanelScrollOutcome.NothingToScroll;
+            return _scroll.ScrollToNewest();
         }
 
         var viewport = scroller.Viewport.Height;
@@ -1206,17 +1206,19 @@ public partial class PanelView : UserControl, IPanelTabHost
         // A page is a screenful less one line, so the line a Commander was reading when they said it is still
         // there when the page settles.
         var line = Transcript.FontSize * 1.4;
+        var end = Math.Max(0, scroller.Extent.Height - viewport);
+        var was = scroller.Offset.Y;
 
-        var by = step switch
+        var wanted = step switch
         {
-            PanelScrollStep.PageDown => Math.Max(line, viewport - line),
-            PanelScrollStep.PageUp => -Math.Max(line, viewport - line),
-            PanelScrollStep.LineDown => line * PanelScroll.Lines,
-            _ => -line * PanelScroll.Lines,
+            PanelScrollStep.Newest => end,
+            PanelScrollStep.PageDown => was + Math.Max(line, viewport - line),
+            PanelScrollStep.PageUp => was - Math.Max(line, viewport - line),
+            PanelScrollStep.LineDown => was + (line * PanelScroll.Lines),
+            _ => was - (line * PanelScroll.Lines),
         };
 
-        var was = scroller.Offset.Y;
-        var wanted = Math.Clamp(was + by, 0, Math.Max(0, scroller.Extent.Height - viewport));
+        wanted = Math.Clamp(wanted, 0, end);
 
         if (Math.Abs(wanted - was) < 0.5)
         {
@@ -1236,8 +1238,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         return PanelScrollOutcome.Moved;
     }
 
-    /// <summary>The scroller for whatever region is showing, or null where the region has none.</summary>
-    private ScrollViewer? ActiveScroller()
+    /// <summary>The scroller a spoken scroll moves for the region showing, or null where it has none.</summary>
+    private ScrollViewer? ChooseScroller(PanelScrollSide side)
     {
         var pane = ModalPane.IsVisible ? ModalPane
             : TranscriptPane.IsVisible ? TranscriptPane
@@ -1250,9 +1252,53 @@ public partial class PanelView : UserControl, IPanelTabHost
             return null;
         }
 
-        return ReferenceEquals(pane, TranscriptPane)
-            ? TranscriptScroller
-            : pane.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+        var drawn = pane.GetVisualDescendants().OfType<ScrollViewer>()
+            .Where(scroller => IsDrawnWithin(scroller, this))
+            .ToList();
+
+        var overflowing = drawn
+            .Where(scroller => scroller.Viewport.Height > 0 && scroller.Extent.Height > scroller.Viewport.Height)
+            .ToList();
+
+        if (side != PanelScrollSide.Either)
+        {
+            var across = overflowing
+                .Select(scroller => (Scroller: scroller, X: scroller.TranslatePoint(new Point(scroller.Bounds.Width / 2, 0), this)?.X ?? 0))
+                .ToList();
+
+            if (across.Count == 0)
+            {
+                return null;
+            }
+
+            return (side == PanelScrollSide.Left ? across.MinBy(c => c.X) : across.MaxBy(c => c.X)).Scroller;
+        }
+
+        if (ReferenceEquals(pane, TranscriptPane))
+        {
+            return _scroll.Followed;
+        }
+
+        return (overflowing.Count > 0 ? overflowing : drawn).MaxBy(scroller => scroller.Bounds.Width);
+    }
+
+    // Visible itself and in every ancestor up to the view.
+    private static bool IsDrawnWithin(Visual visual, Visual view)
+    {
+        for (Visual? at = visual; at is not null; at = at.GetVisualParent())
+        {
+            if (!at.IsVisible)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(at, view))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void EnableSearch()

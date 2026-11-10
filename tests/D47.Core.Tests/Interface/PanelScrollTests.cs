@@ -12,7 +12,7 @@ public class PanelScrollTests
     [InlineData("scroll down", PanelScrollStep.LineDown)]
     [InlineData("scroll up", PanelScrollStep.LineUp)]
     public void TheFourThatWereAskedFor(string spoken, PanelScrollStep step) =>
-        Assert.Equal(step, PanelScroll.Match(spoken));
+        Assert.Equal((step, PanelScrollSide.Either), PanelScroll.Match(spoken));
 
     [Theory]
     [InlineData("newest")]
@@ -20,7 +20,7 @@ public class PanelScrollTests
     [InlineData("jump to the newest")]
     [InlineData("scroll to the bottom")]
     public void SayingNewestGoesToTheNewestLine(string spoken) =>
-        Assert.Equal(PanelScrollStep.Newest, PanelScroll.Match(spoken));
+        Assert.Equal((PanelScrollStep.Newest, PanelScrollSide.Either), PanelScroll.Match(spoken));
 
     /// <summary>Punctuation and spacing are the transcriber's, not the Commander's.</summary>
     [Theory]
@@ -28,7 +28,7 @@ public class PanelScrollTests
     [InlineData("page down.")]
     [InlineData("  page   down  ")]
     public void SaidHoweverItArrives(string spoken) =>
-        Assert.Equal(PanelScrollStep.PageDown, PanelScroll.Match(spoken));
+        Assert.Equal((PanelScrollStep.PageDown, PanelScrollSide.Either), PanelScroll.Match(spoken));
 
     /// <summary>
     /// Whole-utterance, which is the rule that keeps this path safe. "Page down" is an instruction and
@@ -76,6 +76,31 @@ public class PanelScrollTests
         Assert.Null(PanelScroll.Match("where am i"));
     }
 
+    [Theory]
+    [InlineData("page down left", PanelScrollStep.PageDown, PanelScrollSide.Left)]
+    [InlineData("Newest Right.", PanelScrollStep.Newest, PanelScrollSide.Right)]
+    [InlineData("scroll up right", PanelScrollStep.LineUp, PanelScrollSide.Right)]
+    public void AnyPhraseCanEndInLeftOrRight(string spoken, PanelScrollStep step, PanelScrollSide side) =>
+        Assert.Equal((step, side), PanelScroll.Match(spoken));
+
+    [Fact]
+    public void ASideAloneIsNotAScroll()
+    {
+        Assert.Null(PanelScroll.Match("left"));
+        Assert.Null(PanelScroll.Match("right."));
+    }
+
+    [Fact]
+    public void EverySidedPhraseMatchesItself()
+    {
+        Assert.Equal(PanelScroll.Phrases.Count * 2, PanelScroll.SidedPhrases.Count);
+
+        foreach (var (phrase, sided) in PanelScroll.SidedPhrases)
+        {
+            Assert.Equal(sided, PanelScroll.Match(phrase));
+        }
+    }
+
     /// <summary>Every declared phrase resolves, so a table entry is never a phrase said into silence.</summary>
     [Fact]
     public void EveryDeclaredPhraseMatchesItself()
@@ -84,7 +109,7 @@ public class PanelScrollTests
 
         foreach (var (phrase, step) in PanelScroll.Phrases)
         {
-            Assert.Equal(step, PanelScroll.Match(phrase));
+            Assert.Equal((step, PanelScrollSide.Either), PanelScroll.Match(phrase));
         }
     }
     /// <summary>A matched phrase is always answered, and the answer says which of the three things
