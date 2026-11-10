@@ -629,7 +629,7 @@ faction is not said); a mission failed for the faction; a mission accepted again
 murder in the faction's jurisdiction; and a sale to a fleet carrier where the faction is present, which does not count
 toward the BGS. Turn this one off with the Campaign warnings row.
 
-#### Campaign Liaison {#campaign-liaison}
+#### BGS callouts: the Liaison {#bgs-callouts}
 
 The campaign faction's Liaison, on comms, about the front you work: a briefing when you choose it, a request to fly
 in for the morning report or the dispatch after each BGS tick, an acknowledgement when you hand in work that counts
@@ -644,10 +644,12 @@ D47 decides every fact and the model words them; with no model, or when the mode
 are said as written. The dispatch never says how much of a change your work caused, and in a conflict it gives days
 won, never influence. The Liaison speaks under a stock core, since it is not your core, and waits while you are in a
 fight, in supercruise or a jump, or in an Operation. What is already true when d47 starts is not said, except
-what the last tick owes: the request to fly in, or the dispatch. Turn this one off with the Campaign Liaison row; the
-[Liaison voice](speech.md#liaison-voice) row picks its voice. See [The Liaison](campaign.md#the-liaison).
+what the last tick owes: the request to fly in, or the dispatch. Three rows switch it by topic: War callouts, Election callouts and
+Other BGS callouts. A line about a war or civil war front is a war line, one about an election front is an election line,
+and the rest are other; the conflicts briefing names only the conflicts whose topic is on, and is not said when none is.
+The [Liaison voice](speech.md#liaison-voice) row picks its voice. See [The Liaison](campaign.md#the-liaison).
 
-#### Campaign Nemesis {#campaign-arcs}
+#### BGS callouts: the Nemesis {#bgs-nemesis}
 
 The leader of the rival faction D47 picks as your campaign faction's Nemesis, on an open broadcast: an introduction when
 it first leads a front against the faction, a broadcast when it wins a day in a conflict or moves ahead of the faction,
@@ -658,8 +660,9 @@ Lave Purple Gang has won a day in the war in Lave. Days won stand at 2 for Lave 
 ```
 
 D47 decides every fact and the model writes the leader's words, free to invent a motive or a grudge but no number,
-state, outcome or place. A lead or a day won that the Nemesis already held when d47 started is not broadcast. Turn this one off with the Campaign Nemesis
-row. It also turns off the Informant's leaks, the Ideology arc, the council, the Crisis arc and the reveals of the Nemesis's secret. See [Arcs](campaign.md#arcs).
+state, outcome or place. A lead or a day won that the Nemesis already held when d47 started is not broadcast. The same three rows switch it, and the Informant's leaks, the Ideology arc, the council, the Crisis arc and the reveals
+of the Nemesis's secret, by the topic of each line. A line whose topic is off is left out before the lines are ranked, its
+state is not saved and it does not start the two-hour wait. See [Arcs](campaign.md#arcs).
 
 #### Background watches {#watches}
 

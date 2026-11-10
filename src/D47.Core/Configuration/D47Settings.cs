@@ -640,11 +640,14 @@ public sealed record CalloutSettings
     /// <summary>Work that helps a rival of the campaign faction or hurts the faction.</summary>
     public bool CampaignWarnings { get; init; } = true;
 
-    /// <summary>The campaign faction's Liaison: briefings, dispatches after a tick, acknowledgements and outcomes.</summary>
-    public bool CampaignLiaison { get; init; } = true;
+    /// <summary>The Liaison's and the Nemesis's lines about a war or civil war.</summary>
+    public bool BgsWars { get; init; } = true;
 
-    /// <summary>The campaign's arc: the Nemesis's introduction, broadcasts, concessions and vows of revenge.</summary>
-    public bool CampaignArcs { get; init; } = true;
+    /// <summary>The Liaison's and the Nemesis's lines about an election.</summary>
+    public bool BgsElections { get; init; } = true;
+
+    /// <summary>The Liaison's and the Nemesis's lines about anything else.</summary>
+    public bool BgsOther { get; init; } = true;
 
     /// <summary>A friend coming online, said once for a burst of arrivals.</summary>
     public bool FriendsOnline { get; init; } = true;

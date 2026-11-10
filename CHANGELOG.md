@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: the Campaign Liaison and Campaign Nemesis rows are replaced by War callouts, Election callouts and Other BGS callouts, in Settings › Other voices › Chatter and messages, group BGS callouts. Each switches the Liaison's and the Nemesis's lines about that topic, and the Informant, Ideology, council, Crisis and secret lines by the same topic. The conflicts briefing names only the conflicts whose topic is on. A line whose topic is off is left out before the arcs rank their steps, so it does not start the two-hour wait. Say "stop calling out wars", "stop calling out elections" or "stop calling out other BGS callouts". The old settings are ignored.
+
 Fixed: the Informant leaked an Expansion from every rival with one pending in any system your campaign faction is in, down to rivals at a few percent. It now leaks an Expansion only where that rival leads a front against your faction.
 
 Fixed: the campaign arcs could speak several lines in a row, such as a Nemesis introduction, a propaganda broadcast and the council's argument. The arcs now speak at most once every two hours, one arc's lines at a time: lines about a war or civil war first, then about an election, then the rest. Lines that wait are kept and spoken later. The arcs may speak right after d47 starts. The Liaison's briefings, dispatches and acknowledgements do not wait for them.

@@ -1086,7 +1086,7 @@ public static class SpeechCapability
                 Key = LiaisonVoiceKey,
                 Exercise =
                     "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
-                    + "Settings › Other voices › Chatter and messages, group Campaign Liaison, and pick a Liaison voice, using "
+                    + "Settings › Other voices › Chatter and messages, group BGS callouts, and pick a Liaison voice, using "
                     + "the audition button to hear it. Choose a campaign front: the Liaison's briefing is in that voice. Clear "
                     + "the row and the Liaison takes the voice picked by your campaign faction's name. The row is absent while "
                     + "the Voice provider is None.",

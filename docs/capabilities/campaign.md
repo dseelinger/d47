@@ -285,8 +285,8 @@ The Liaison's part follows the front: a field officer in a war, a campaign manag
 coordinator in a bad state, and a liaison officer otherwise. Its manner follows the faction's government. It
 speaks whatever core is aboard, a stock core included, and waits while you are in a fight, in supercruise or
 a jump, or in an Operation. Its voice is picked by the faction's name, so it is the same in every session; the
-Liaison voice row chooses another. The Campaign Liaison row turns it off; see
-[Campaign Liaison](callouts.md#campaign-liaison).
+Liaison voice row chooses another. The War callouts, Election callouts and Other BGS callouts rows turn off its lines about wars, elections and the rest; see
+[BGS callouts](callouts.md#bgs-callouts).
 
 ```csharp
 public sealed record CampaignLiaisonLine(
@@ -340,8 +340,8 @@ The leader speaks on the NPC voices' provider in a voice picked by the rival's n
 0.9; when that is the Liaison's voice and the provider has another, the next one is used. Like the Liaison, the Nemesis
 waits while you are in a fight, in supercruise or a jump, or in an Operation. The first fronts computed after d47 starts
 are what later broadcasts are measured against, so a lead or a day the Nemesis already held is not broadcast; an
-introduction that is due is said. The Campaign Nemesis row turns it off;
-see [Campaign Nemesis](callouts.md#campaign-arcs).
+introduction that is due is said. The War callouts, Election callouts and Other BGS callouts rows turn off its lines by topic;
+see [BGS callouts](callouts.md#bgs-nemesis).
 
 ```csharp
 public sealed record CampaignArcLine(ArcAct Act, string Faction, string Rival, string Leader, string System, IReadOnlyList<string> Facts)
@@ -375,8 +375,8 @@ its return is a new leak. The Informant and its leaks are kept in `data/campaign
 faction.
 
 The Informant speaks in a pool voice picked by its name, stepped past the Liaison's and the Nemesis's, through a weak
-link of strength 0.55 that thins the voice and drops it out. It waits as the Nemesis does, and the Campaign Nemesis row
-turns it off.
+link of strength 0.55 that thins the voice and drops it out. It waits as the Nemesis does, and the three BGS callout rows
+switch its lines by topic: a leak about a war is a war line, one about an election an election line, the rest other.
 
 The third arc is **Ideology**. It opens when your faction's government differs from that of a rival leading a front
 against it; both governments come from the faction report. The rival's leader, the same one the Nemesis would have,
@@ -407,7 +407,7 @@ public enum CouncilSide
 ```
 
 Both arcs are kept in `data/campaigns.json` until you name another campaign faction, wait as the Nemesis does, and the
-Campaign Nemesis row turns them off.
+three BGS callout rows switch their lines by topic.
 
 The fifth arc is **Crisis and blame**. It opens when a bad state (Lockdown, Civil unrest, Famine, Blight, Drought, Outbreak,
 Infrastructure failure, Pirate attack, Terrorist attack or Bust) becomes active in a system your faction controls and the
@@ -453,7 +453,7 @@ return (entry.Kind == CampaignFronts.Describe(FrontKind.Conflict) && entry.Outco
 That is, a conflict your faction won, or a coup threat that has passed. Each such entry gives the next reveal, one at a
 look, and the entry it was timed to is kept with it. The Liaison speaks the reveal in its own voice, naming the real
 victory first; the last reveal also tells the whole truth. After the third, no reveals remain. Naming another campaign
-faction clears it, and the Campaign Nemesis row turns the reveals off with the rest of the arc.
+faction clears it, and the three BGS callout rows switch the reveals by topic with the rest of the arc.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>

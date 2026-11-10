@@ -55,7 +55,10 @@ public sealed class TheLiaisonBriefsEveryWarAndElectionTests
         Campaigns = store ?? _store,
         Fronts = () => _snapshot,
         LastTick = () => _tick,
+        TopicOn = topic => topic != BgsTopic.War || _wars,
     };
+
+    private bool _wars = true;
 
     private List<Announcement> Examine(CampaignLiaisonCallout liaison, bool priming = false, StatusFlags flags = StatusFlags.Docked) =>
         [.. liaison.Examine(new CalloutContext(_clock, priming, _state, new GameStatus { Flags = flags }, NavRoute.None, []))];
@@ -84,6 +87,31 @@ public sealed class TheLiaisonBriefsEveryWarAndElectionTests
         Assert.Contains("active war against Lave Purple Gang", said.Text, StringComparison.Ordinal);
         Assert.Contains("pending civil war", said.Text, StringComparison.Ordinal);
         Assert.Contains("pending election", said.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WithWarCalloutsOffTheBriefingNamesTheElectionAndNotTheWar()
+    {
+        Hold(
+            Place("Diso", 0.4, active: ["War"], others: [Rival("War")]),
+            Place("Leesti", 0.4, pending: ["Election"], others: [Rival("Election", active: false)]));
+        _wars = false;
+
+        var said = Assert.Single(Examine(Started()));
+
+        Assert.Contains("Leesti", said.Text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Diso", said.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WithWarAndElectionCalloutsOffTheBriefingIsNotSaid()
+    {
+        AllThree();
+        var liaison = Liaison();
+        liaison.TopicOn = topic => topic == BgsTopic.Other;
+        Examine(liaison, priming: true);
+
+        Assert.Empty(Examine(liaison));
     }
 
     [Fact]

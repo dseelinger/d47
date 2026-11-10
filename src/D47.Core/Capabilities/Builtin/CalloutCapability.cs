@@ -72,8 +72,9 @@ public static class CalloutCapability
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
     public const string BgsTickKey = "callouts.bgsTick";
     public const string CampaignWarningsKey = "callouts.campaignWarnings";
-    public const string CampaignLiaisonKey = "callouts.campaignLiaison";
-    public const string CampaignArcsKey = "callouts.campaignArcs";
+    public const string BgsWarsKey = "callouts.bgsWars";
+    public const string BgsElectionsKey = "callouts.bgsElections";
+    public const string BgsOtherKey = "callouts.bgsOther";
     public const string FriendsOnlineKey = "callouts.friendsOnline";
 
     public const string WingKey = "callouts.wing";
@@ -989,37 +990,46 @@ public static class CalloutCapability
                 (s, v) => s with { Callouts = s.Callouts with { CampaignWarnings = v } }),
 
             Toggle(
-                CampaignLiaisonKey,
+                BgsWarsKey,
                 "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
-                + "open Settings › Other voices › Chatter and messages, group Campaign Liaison, and find Campaign Liaison "
-                + "(on by default). With a campaign front chosen, the Liaison briefs it, and after the next BGS tick asks "
-                + "you to fly in to its system or gives the dispatch. Say \"stop calling out the campaign Liaison\": the "
-                + "row shows off and the Liaison says nothing. Say \"start calling out the campaign Liaison\" and the row "
-                + "shows on. The row is absent while Speak without being asked is off.",
-                "Campaign Liaison",
-                "Your campaign faction's Liaison: a briefing when you choose a front, a dispatch after each BGS tick, "
-                + "acknowledgements and the outcome.",
-                "campaign-liaison",
-                "the campaign Liaison",
-                s => s.Callouts.CampaignLiaison,
-                (s, v) => s with { Callouts = s.Callouts with { CampaignLiaison = v } }),
+                + "open Settings › Other voices › Chatter and messages, group BGS callouts, and find War callouts "
+                + "(on by default). With a campaign set, the Liaison and the Nemesis speak about wars and civil wars: briefings, dispatches, the conflicts briefing and broadcasts. Say \"stop calling out wars\": the row shows off and those lines "
+                + "are no longer said. Say \"start calling out wars\" and the row shows on. The row is absent "
+                + "while Speak without being asked is off.",
+                "War callouts",
+                "The Liaison's and the Nemesis's lines about wars and civil wars.",
+                "bgs-callouts",
+                "wars",
+                s => s.Callouts.BgsWars,
+                (s, v) => s with { Callouts = s.Callouts with { BgsWars = v } }),
 
             Toggle(
-                CampaignArcsKey,
+                BgsElectionsKey,
                 "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
-                + "open Settings › Other voices › Chatter and messages, group Campaign Nemesis, and find Campaign Nemesis "
-                + "(on by default). Once the rival faction D47 picks as the Nemesis leads a front against your campaign "
-                + "faction, its leader introduces themselves over comms, and broadcasts when it wins a day or takes the "
-                + "lead. Say \"stop calling out the campaign Nemesis\": the row shows off and the Nemesis says nothing. Say "
-                + "\"start calling out the campaign Nemesis\" and the row shows on. The row is absent while Speak without "
-                + "being asked is off.",
-                "Campaign Nemesis",
-                "The rival faction's leader: an introduction, broadcasts when it gains, and a concession or a vow of revenge "
-                + "when it loses.",
-                "campaign-arcs",
-                "the campaign Nemesis",
-                s => s.Callouts.CampaignArcs,
-                (s, v) => s with { Callouts = s.Callouts with { CampaignArcs = v } }),
+                + "open Settings › Other voices › Chatter and messages, group BGS callouts, and find Election callouts "
+                + "(on by default). With a campaign set, the Liaison and the Nemesis speak about elections: briefings, dispatches, the conflicts briefing and broadcasts. Say \"stop calling out elections\": the row shows off and those lines "
+                + "are no longer said. Say \"start calling out elections\" and the row shows on. The row is absent "
+                + "while Speak without being asked is off.",
+                "Election callouts",
+                "The Liaison's and the Nemesis's lines about elections.",
+                "bgs-callouts",
+                "elections",
+                s => s.Callouts.BgsElections,
+                (s, v) => s with { Callouts = s.Callouts with { BgsElections = v } }),
+
+            Toggle(
+                BgsOtherKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Other voices › Chatter and messages, group BGS callouts, and find Other BGS callouts "
+                + "(on by default). With a campaign set, the Liaison and the Nemesis speak about the other fronts, and the Informant, the Ideology arc, the council, the Crisis arc and the secret's reveals speak when their line is not about a war or an election. Say \"stop calling out other BGS callouts\": the row shows off and those lines "
+                + "are no longer said. Say \"start calling out other BGS callouts\" and the row shows on. The row is absent "
+                + "while Speak without being asked is off.",
+                "Other BGS callouts",
+                "The Liaison's and the Nemesis's lines about everything but wars and elections.",
+                "bgs-callouts",
+                "other BGS callouts",
+                s => s.Callouts.BgsOther,
+                (s, v) => s with { Callouts = s.Callouts with { BgsOther = v } }),
 
             Toggle(
                 GalNetKey,

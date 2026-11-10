@@ -38,6 +38,9 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
     /// <summary>The least time between two conflicts briefings while the time of the last BGS tick is unknown.</summary>
     public static readonly TimeSpan ConflictsGap = TimeSpan.FromHours(24);
 
+    /// <summary>Whether lines of a topic may be spoken.</summary>
+    public Func<BgsTopic, bool> TopicOn { get; set; } = _ => true;
+
     /// <summary>The Liaison's voice for a faction, or null for the comms role's own.</summary>
     public Func<string, PinnedVoice?> Voice { get; set; } = _ => null;
 
@@ -227,6 +230,13 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
             return;
         }
 
+        conflicts = [.. conflicts.Where(conflict => TopicOn(BgsTopics.OfConflict(conflict.Type)))];
+
+        if (conflicts.Count == 0)
+        {
+            return;
+        }
+
         _pending.Add(new Pending(LiaisonBeat.Conflicts, now)
         {
             Line = CampaignLiaison.Conflicts(conflicts, held.Faction, report.Government),
@@ -294,7 +304,9 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
 
             _pending.Remove(pending);
 
-            if (line is not null)
+            var topic = BgsTopics.Of(pending.Beat == LiaisonBeat.Resolution ? pending.Front ?? front : front);
+
+            if (line is not null && (pending.Beat == LiaisonBeat.Conflicts || TopicOn(topic)))
             {
                 said.Add(Spoken(line));
             }

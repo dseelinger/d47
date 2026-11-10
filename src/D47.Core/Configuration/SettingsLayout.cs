@@ -405,16 +405,14 @@ public static class SettingsLayout
                                 E("callouts.scenes"),
                             ]),
                         G(
-                            "Campaign Liaison",
-                            $"Your campaign faction's Liaison, who briefs and reports on the front you work. {OtherVoicesSwitchHelp}",
+                            "BGS callouts",
+                            $"What the campaign faction's Liaison and the rival faction's leader speak about, by topic. {OtherVoicesSwitchHelp}",
                             [
-                                E("callouts.campaignLiaison"),
+                                E("callouts.bgsWars"),
+                                E("callouts.bgsElections"),
+                                E("callouts.bgsOther"),
                                 E("speech.liaisonVoice", under: true),
                             ]),
-                        G(
-                            "Campaign Nemesis",
-                            $"The rival faction's leader, who broadcasts about the fronts it leads against you. {OtherVoicesSwitchHelp}",
-                            [E("callouts.campaignArcs")]),
                         G(
                             "Messages read aloud",
                             "Which comms tabs D47 reads out, once incoming messages are on.",

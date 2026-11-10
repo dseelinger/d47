@@ -880,7 +880,7 @@ list that is not the ship's, so a narration is never mistaken for your core talk
 
 #### Liaison voice {#liaison-voice}
 
-Who speaks for your campaign faction, for the [campaign Liaison](callouts.md#campaign-liaison). It is
+Who speaks for your campaign faction, for the [campaign Liaison](callouts.md#bgs-callouts). It is
 picked from the NPC voices, because the Liaison is heard over comms. Left empty, or set to a voice that
 provider no longer offers, the Liaison takes a voice picked by the campaign faction's name, so it sounds
 the same in every session.

@@ -258,9 +258,9 @@ public static class ShippedCallouts
 
             .Add(new CampaignWarningCallout())
 
-            .Add(new CampaignLiaisonCallout(sources.Fight))
+            .Add(new CampaignLiaisonCallout(sources.Fight) { TopicOn = topic => TopicOn(settings.Current.Callouts, topic) })
 
-            .Add(new CampaignArcCallout(sources.Fight))
+            .Add(new CampaignArcCallout(sources.Fight) { TopicOn = topic => TopicOn(settings.Current.Callouts, topic) })
 
             .Add(new FriendsCallout(sources.Friends))
 
@@ -492,6 +492,13 @@ public static class ShippedCallouts
         _ => false,
     };
 
+    public static bool TopicOn(CalloutSettings callouts, BgsTopic topic) => topic switch
+    {
+        BgsTopic.War => callouts.BgsWars,
+        BgsTopic.Election => callouts.BgsElections,
+        _ => callouts.BgsOther,
+    };
+
     public static void Apply(CalloutEngine engine, SettingsService settings, DateTimeOffset now)
     {
         var callouts = settings.Current.Callouts;
@@ -516,8 +523,9 @@ public static class ShippedCallouts
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
         engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
         engine.SetEnabled("campaign-warnings", callouts.CampaignWarnings, now);
-        engine.SetEnabled("campaign-liaison", callouts.CampaignLiaison, now);
-        engine.SetEnabled("campaign-arcs", callouts.CampaignArcs, now);
+        var anyTopic = callouts.BgsWars || callouts.BgsElections || callouts.BgsOther;
+        engine.SetEnabled("campaign-liaison", anyTopic, now);
+        engine.SetEnabled("campaign-arcs", anyTopic, now);
         engine.SetEnabled("friends", callouts.FriendsOnline, now);
         engine.SetEnabled("wing", callouts.Wing, now);
         engine.SetEnabled("galnet", callouts.GalNet, now);

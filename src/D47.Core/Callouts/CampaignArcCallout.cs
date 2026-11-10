@@ -38,14 +38,11 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
     /// <summary>A councillor's or defector's voice for a name, the campaign faction and the names voiced before it, or null for the comms role's own.</summary>
     public Func<string, string, IReadOnlyList<string>, PinnedVoice?> PoliticsVoice { get; set; } = (_, _, _) => null;
 
+    /// <summary>Whether lines of a topic may be spoken.</summary>
+    public Func<BgsTopic, bool> TopicOn { get; set; } = _ => true;
+
     /// <summary>After an arc line is spoken, how long before the next one may be.</summary>
     public static readonly TimeSpan Gap = TimeSpan.FromMinutes(120);
-
-    private static readonly string War = FactionStates.Display("War");
-
-    private static readonly string CivilWar = FactionStates.Display("CivilWar");
-
-    private static readonly string Election = FactionStates.Display("Election");
 
     private string? _commander;
     private DateTimeOffset? _chosenSince;
@@ -128,7 +125,7 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
             campaign.Chronicle,
             context.Now);
 
-        ArcEngineStep[] steps =
+        ArcEngineStep[] offered =
         [
             new(nemesis.Lines, () => nemesis.Arc == campaign.Arc || Campaigns.SetArc(id, nemesis.Arc), Spoken),
             new(leaks.Lines, () => leaks.Informant == campaign.Informant || Campaigns.SetInformant(id, leaks.Informant), Whispered),
@@ -142,16 +139,18 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
                 line => Said(line, LiaisonVoice(held.Faction))),
         ];
 
+        var steps = offered.Select(step => step with { Lines = [.. step.Lines.Where(line => TopicOn(BgsTopics.Of(line, held.Fronts)))], Offered = step.Lines.Count }).ToArray();
+
         var winner = Winner(steps, held.Fronts);
 
-        foreach (var quiet in steps.Where(step => step.Lines.Count == 0))
+        foreach (var quiet in steps.Where(step => step.Offered == 0))
         {
             quiet.Save();
         }
 
         var won = winner is not null && winner.Save();
 
-        bool Settled(ArcEngineStep step) => step.Lines.Count == 0 || (won && ReferenceEquals(step, winner));
+        bool Settled(ArcEngineStep step) => step.Offered == 0 || (won && ReferenceEquals(step, winner));
 
         if (Settled(steps[0]))
         {
@@ -169,7 +168,7 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
         }
 
         _chronicled = campaign.Chronicle.Count;
-        _owed = winner is not null;
+        _owed = winner is not null || steps.Any(step => step.Offered > 0 && step.Lines.Count == 0);
 
         if (winner is null)
         {
@@ -182,25 +181,7 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
     }
 
     /// <summary>0 for a line about a war or civil war, 1 for one about an election, 2 for any other.</summary>
-    private static int Rank(CampaignArcLine line, IReadOnlyList<Front> fronts)
-    {
-        ArgumentNullException.ThrowIfNull(line);
-        ArgumentNullException.ThrowIfNull(fronts);
-
-        var types = fronts
-            .Where(front => front.Kind == FrontKind.Conflict && string.Equals(front.System, line.System, StringComparison.OrdinalIgnoreCase))
-            .Select(front => front.Conflict?.Type)
-            .OfType<string>()
-            .Select(FactionStates.Display)
-            .ToList();
-
-        if (types.Any(type => type == War || type == CivilWar))
-        {
-            return 0;
-        }
-
-        return line.Act == ArcAct.Election || types.Contains(Election) ? 1 : 2;
-    }
+    private static int Rank(CampaignArcLine line, IReadOnlyList<Front> fronts) => (int)BgsTopics.Of(line, fronts);
 
     /// <summary>The step whose lines are spoken: of the steps with lines, the first in engine order with the best-ranked line.</summary>
     private static ArcEngineStep? Winner(IReadOnlyList<ArcEngineStep> steps, IReadOnlyList<Front> fronts) =>
@@ -264,7 +245,11 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
         };
 
     /// <summary>One engine's lines, how to save its new state, and how each line is said.</summary>
-    private sealed record ArcEngineStep(IReadOnlyList<CampaignArcLine> Lines, Func<bool> Save, Func<CampaignArcLine, Announcement> Announce);
+    private sealed record ArcEngineStep(IReadOnlyList<CampaignArcLine> Lines, Func<bool> Save, Func<CampaignArcLine, Announcement> Announce)
+    {
+        /// <summary>How many lines the engine produced before topics left some out.</summary>
+        public int Offered { get; init; }
+    }
 
     /// <summary>Whether acts wait: in a fight, in supercruise or a jump, or in an Operation.</summary>
     private bool Held(CalloutContext context) =>
