@@ -25,7 +25,7 @@ public sealed record CampaignFrontsSnapshot(
 /// <summary>
 /// Keeps <see cref="Snapshot"/> current: fetches the campaign faction's report once its faction is known, again after
 /// each new BGS tick, again when the faction or Commander changes, and again <see cref="RetryAfter"/> after a failure.
-/// Recomputes the fronts when the Commander's readings or campaign change. The fetch runs on the pool; everything else
+/// Recomputes the fronts when the Commander's standings or the campaign's intents change. The fetch runs on the pool; everything else
 /// on the tick thread.
 /// </summary>
 public sealed class CampaignFrontsWatch
@@ -48,7 +48,7 @@ public sealed class CampaignFrontsWatch
     private DateTimeOffset? _tickFetched;
     private DateTimeOffset? _failedAt;
     private SystemStandings? _standingsUsed;
-    private Campaign? _campaignUsed;
+    private System.Collections.Immutable.ImmutableDictionary<string, SystemIntent>? _intentsUsed;
 
     /// <param name="fetch">Fetches a faction's report by name; the flag asks for a fresh report rather than a held one.</param>
     public CampaignFrontsWatch(
@@ -98,7 +98,7 @@ public sealed class CampaignFrontsWatch
         {
             snapshot = new CampaignFrontsSnapshot(frontierId, faction, null, null, [], null, null, null);
             _standingsUsed = null;
-            _campaignUsed = null;
+            _intentsUsed = null;
             _tickFetched = null;
             _failedAt = null;
         }
@@ -128,10 +128,10 @@ public sealed class CampaignFrontsWatch
         }
 
         if (snapshot.Report is { } held
-            && (!ReferenceEquals(_standingsUsed, state!.Standings) || !ReferenceEquals(_campaignUsed, campaign)))
+            && (!ReferenceEquals(_standingsUsed, state!.Standings) || !ReferenceEquals(_intentsUsed, campaign.Intents)))
         {
             _standingsUsed = state.Standings;
-            _campaignUsed = campaign;
+            _intentsUsed = campaign.Intents;
             snapshot = snapshot with { Fronts = CampaignFronts.Of(held, state.Standings, campaign, now), ComputedAt = now };
         }
 

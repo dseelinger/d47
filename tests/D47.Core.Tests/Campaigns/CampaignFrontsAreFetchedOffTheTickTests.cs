@@ -231,6 +231,26 @@ public sealed class CampaignFrontsAreFetchedOffTheTickTests
     }
 
     [Fact]
+    public void SavingAnInformantOrAnArcKeepsTheFrontsTheSameList()
+    {
+        var watch = Watch();
+
+        watch.Poll(Now);
+        RunDispatched();
+        watch.Poll(Now.AddSeconds(1));
+
+        var held = watch.Snapshot!.Fronts;
+
+        _store.SetInformant("F1", new CampaignInformant("Vex", Now, []));
+        watch.Poll(Now.AddSeconds(2));
+        _store.SetArc("F1", new CampaignArc(ArcKind.Nemesis, "Lave Purple Gang", "Leader", Now, 0));
+        watch.Poll(Now.AddSeconds(3));
+
+        Assert.Same(held, watch.Snapshot!.Fronts);
+        Assert.Equal(Now.AddSeconds(1), watch.Snapshot.ComputedAt);
+    }
+
+    [Fact]
     public void TheToolNamesTheTopThreeWithReasonsAndCountsTheRest()
     {
         _reports[Us] = Report(

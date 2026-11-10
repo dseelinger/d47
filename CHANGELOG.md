@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: on a switch to a Commander with a large campaign faction, d47 could speak about a hundred Informant leaks in two minutes. The campaign's fronts are now recomputed only when the Commander's standings or the campaign's intents change, not when an arc, the Informant or the council saves its state.
+
 Your campaign's Nemesis now carries a secret: a traitor inside your faction, or someone other than the rival's leader directing its plans. The model writes it once when the Nemesis is named, and d47 keeps it only when it has three reveals, names the culprit in the last and nowhere earlier, and gives no number or system. Nothing is revealed with time: each conflict your faction wins, or coup threat that passes, has the Liaison tell you the next piece, naming the real victory, and the third names the culprit. The Campaign Nemesis row turns the reveals off.
 
 Your campaign now has two more arcs. Crisis and blame opens when a bad state such as Famine or Lockdown becomes active in a system your faction controls: the Liaison announces it and blames the rival with the most influence there, that rival's leader speaks once when it gains influence there during the crisis, and the Liaison says when it is over. Legend gives your faction a Chronicler, invented once and the same for a squadron, who writes each chronicle entry once as faction history with you in it. The passage is kept, shows under its entry on the Campaign page, and is read aloud only when you say "read the chronicle". d47 decides every fact; the model writes the words and may invent motives, never a number, state, outcome or place. The Campaign Nemesis row turns the Crisis arc off.
