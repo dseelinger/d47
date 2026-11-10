@@ -144,24 +144,24 @@ public class AStrongholdCarrierIsAStationTypeTests
     }
 
     [Fact]
-    public async Task ACarrierSearchKeepsAnotherPowersCarrier()
+    public async Task ACarrierSearchPledgedToAnotherPowerIsRefusedAndNothingIsSent()
     {
-        var result = await Run(Carriers());
+        var result = await Run(Carriers("Zemina Torval"));
 
-        Assert.Contains(result.Stations, station => station.Name == "Stronghold Carrier");
-        Assert.Equal(0, result.LeftOut);
+        Assert.Empty(result.Stations);
+        Assert.Equal("You can dock only at Jerome Archer's Stronghold Carriers.", result.Refusal);
     }
 
     [Fact]
-    public async Task ASearchNamingTheCarriersPowerKeepsItWithoutAType()
+    public async Task ASearchNamingTheCarriersPowerDropsItWithoutAType()
     {
         var result = await Run(new StationSearch
         {
             Filters = new Dictionary<string, string> { ["power"] = "Zemina Torval" },
         });
 
-        Assert.Contains(result.Stations, station => station.Name == "Stronghold Carrier");
-        Assert.Equal(0, result.LeftOut);
+        Assert.DoesNotContain(result.Stations, station => station.Name == "Stronghold Carrier");
+        Assert.Equal(1, result.LeftOut);
     }
 
     [Fact]

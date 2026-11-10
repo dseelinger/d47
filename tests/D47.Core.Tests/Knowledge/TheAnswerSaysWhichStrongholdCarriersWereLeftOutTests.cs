@@ -14,13 +14,13 @@ public class TheAnswerSaysWhichStrongholdCarriersWereLeftOutTests
             Task.FromResult(result);
     }
 
-    private static async Task<string> SaidAsync(int leftOut)
+    private static async Task<string> SaidAsync(int leftOut, bool pledged = true)
     {
         var surface = TestSurface.For(new MemoryInstall());
 
 
         var station = new StationSummary { Name = "Hutton Orbital", SystemName = "Alpha Centauri" };
-        var galaxy = new Answering(new StationSearchResult("Sol", 1, [station]) { LeftOut = leftOut });
+        var galaxy = new Answering(new StationSearchResult("Sol", 1, [station]) { LeftOut = leftOut, Pledged = pledged });
 
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(galaxy, () => "Sol", surface.Settings)]);
 
@@ -42,6 +42,15 @@ public class TheAnswerSaysWhichStrongholdCarriersWereLeftOutTests
     public async Task OneCarrierIsSaidInTheSingular()
     {
         Assert.Contains("Left out 1 Stronghold Carrier of other Powers.", await SaidAsync(1), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnUnpledgedCommanderIsToldCarriersDockOnlyPledgedCommanders()
+    {
+        Assert.Contains(
+            "Left out 2 Stronghold Carriers, which dock only pledged Commanders.",
+            await SaidAsync(2, pledged: false),
+            StringComparison.Ordinal);
     }
 
     [Fact]

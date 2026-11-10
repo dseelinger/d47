@@ -170,8 +170,14 @@ public sealed record StationSearchResult(
     int Total,
     IReadOnlyList<StationSummary> Stations)
 {
-    /// <summary>Stronghold Carriers of other Powers dropped from the answer.</summary>
+    /// <summary>Stronghold Carriers the Commander cannot dock at, dropped from the answer.</summary>
     public int LeftOut { get; init; }
+
+    /// <summary>Whether the Commander was pledged to a Power when the answer was made.</summary>
+    public bool Pledged { get; init; }
+
+    /// <summary>Why nothing was searched, when the search could not be answered.</summary>
+    public string? Refusal { get; init; }
 
     /// <summary>Whether the service has rows past the ones this answer used.</summary>
     public bool More { get; init; }

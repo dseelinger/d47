@@ -556,6 +556,8 @@ internal static class SpanshResponse
                             SystemName = system.Name,
                             SystemAddress = system.SystemAddress,
                             Distance = system.Distance,
+                            ControllingPower = system.ControllingPower,
+                            PowerState = system.PowerState,
                             Services = ReadServiceNames(station),
                         })]));
             }

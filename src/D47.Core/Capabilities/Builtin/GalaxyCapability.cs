@@ -191,7 +191,8 @@ public static class GalaxyCapability
                         "station_type",
                         "One or more, comma-separated: "
                             + $"{string.Join(", ", StationQuery.StationTypeNames)}. "
-                            + "Stronghold carrier is searched on its own, with no other type."),
+                            + "Stronghold carrier is searched on its own, with no other type, and finds "
+                            + "only the pledged Power's carriers."),
                     MinPadParameter,
                     MaxStationDistanceParameter,
                     ToolParameter.Text(
@@ -3825,12 +3826,18 @@ public static class GalaxyCapability
     /// <summary>One sentence naming the Stronghold Carriers left out of another Power's side; empty when none were.</summary>
     private static string LeftOutSaid(StationSearchResult result) =>
         result.LeftOut > 0
-            ? $" Left out {result.LeftOut} Stronghold Carrier{(result.LeftOut == 1 ? "" : "s")} of other Powers."
+            ? $" Left out {result.LeftOut} Stronghold Carrier{(result.LeftOut == 1 ? "" : "s")}"
+              + (result.Pledged ? " of other Powers." : ", which dock only pledged Commanders.")
             : string.Empty;
 
     /// <summary>Station results as prose, with the age of the data said out loud.</summary>
     internal static string Describe(StationSearchResult result, StationQuery query)
     {
+        if (result.Refusal is not null)
+        {
+            return result.Refusal;
+        }
+
         var wanted = Describe(query);
 
         if (result.Stations.Count == 0)
@@ -3882,6 +3889,11 @@ public static class GalaxyCapability
     /// <summary>A station search's answer: each station's place, type, largest pad and the asked-for services it has.</summary>
     internal static string DescribeStations(StationSearchResult result, StationQuery query)
     {
+        if (result.Refusal is not null)
+        {
+            return result.Refusal;
+        }
+
         if (result.Stations.Count == 0)
         {
             return query.Page > 1
