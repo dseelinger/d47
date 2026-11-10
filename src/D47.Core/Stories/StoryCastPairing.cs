@@ -78,12 +78,16 @@ public static class StoryCastPairing
         return VoiceGender.Unspecified;
     }
 
-    /// <summary>The members of <paramref name="secret"/> the story did not pin, as a Commander of <paramref name="gender"/> meets them.</summary>
+    /// <summary>
+    /// The members of <paramref name="secret"/> the story did not pin, as a Commander of <paramref name="gender"/> meets them;
+    /// a member with versions is left out while the gender is unset.
+    /// </summary>
     public static IReadOnlyList<(StorySpeaker Member, StorySpeakerShown Shown)> Unpinned(StorySecret secret, string? gender)
     {
         ArgumentNullException.ThrowIfNull(secret);
 
         return [.. secret.Cast
+            .Where(member => member.Versions is null || CommanderGender.IsSet(gender))
             .Select(member => (Member: member, Shown: member.Shown(secret.Id, gender)))
             .Where(pair => !pair.Shown.Pinned)];
     }

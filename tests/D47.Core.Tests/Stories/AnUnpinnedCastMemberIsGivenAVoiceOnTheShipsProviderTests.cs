@@ -108,6 +108,15 @@ public sealed class AnUnpinnedCastMemberIsGivenAVoiceOnTheShipsProviderTests
     }
 
     [Fact]
+    public async Task AMemberInTwoVersionsIsNotPairedWhileTheCommandersGenderIsUnset()
+    {
+        var paired = await Choose(Versioned);
+
+        Assert.DoesNotContain(paired.Keys, key => key.StartsWith($"{Id}.cray", StringComparison.Ordinal));
+        Assert.DoesNotContain(StoryCastPairing.Unpinned(Versioned, null), pair => pair.Member.Id == "cray");
+    }
+
+    [Fact]
     public async Task WithoutAModelEachMemberGetsAVoiceOfTheGenderTheStoryWroteItFor()
     {
         var paired = await Choose(ThreeMembers);

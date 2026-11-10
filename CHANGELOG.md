@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: a story's characters get their voices on the ship's provider the first time you open the story's page, before you begin it. Each character the story did not give a voice of its own is matched to one by the language model, as the cores are, and the Cast section shows and plays that voice in place of the crew voice. A character written in a man's and a woman's version is matched once you set Your Commander is.
+
 Added: spoken scrolling takes a side. On a page with two scrollbars side by side, such as the Journal reading, Settings and Characters, any scroll phrase can end in "left" or "right" ("page down right", "newest left"). The plain phrase moves the page's main scroller. "Newest" on a scroller with no newest line now goes to its bottom instead of saying there is nothing to scroll.
 
 Fixed: the model said it had no tool for a setting it could change, such as the headset panel size. `list_settings` now takes a query, and the model is told to call it with the Commander's words before saying it cannot change something. It lists the best eight matching settings by key, label, help, group, choices and voice phrases, so "panel size small" finds Panel content.

@@ -1218,6 +1218,7 @@ public sealed class StoriesView : UserControl, IPageSummary
     private void ShowCast(StackPanel holder, string storyId, string? commander)
     {
         holder.Children.Clear();
+        PairCast(holder, storyId, commander);
 
         var members = _director.PrimaryCast(storyId);
 
@@ -1276,6 +1277,34 @@ public sealed class StoriesView : UserControl, IPageSummary
 
             holder.Children.Add(row);
         }
+    }
+
+    /// <summary>
+    /// Pairs the story's unpinned cast on the ship's provider off the UI thread, and draws the Cast section again when a
+    /// pairing was written while the story's page is still the one shown.
+    /// </summary>
+    private void PairCast(StackPanel holder, string storyId, string? commander)
+    {
+        if (_surface.CastVoices?.PairStory is not { } pair)
+        {
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            if (!await pair(storyId, CancellationToken.None).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (_nav.TrailOf(PanelTab.Stories) is [.., var open] && open.Key == ReadPrefix + storyId)
+                {
+                    ShowCast(holder, storyId, commander);
+                }
+            });
+        });
     }
 
     private bool GenderReady(StoryCard card) =>

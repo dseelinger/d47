@@ -59,62 +59,82 @@ public sealed class VoicePairer
     /// <summary>The current story's hidden layer and title, or null when no story is current.</summary>
     internal Func<(StorySecret Secret, string Title)?> CurrentStory { get; set; } = () => null;
 
+    /// <summary>The hidden layer and title of the story with the id given, or null when its hidden layer is not on disk.</summary>
+    internal Func<string, (StorySecret Secret, string Title)?> StoryById { get; set; } = _ => null;
+
     /// <summary>
     /// A voice from the ship provider's list for each member of the current story that the story did not pin and that has
     /// none on that provider. Does nothing until the list has arrived.
     /// </summary>
-    public async Task PairStoryCastAsync(CancellationToken cancellationToken = default)
+    public Task PairStoryCastAsync(CancellationToken cancellationToken = default) =>
+        PairCastAsync(CurrentStory, cancellationToken);
+
+    /// <summary>
+    /// As <see cref="PairStoryCastAsync(CancellationToken)"/>, for the story with the id given, current or not; true when
+    /// a pairing was written.
+    /// </summary>
+    public Task<bool> PairStoryCastAsync(string storyId, CancellationToken cancellationToken = default) =>
+        PairCastAsync(() => StoryById(storyId), cancellationToken);
+
+    private async Task<bool> PairCastAsync(Func<(StorySecret Secret, string Title)?> story, CancellationToken cancellationToken)
     {
         await _pairing.WaitAsync(cancellationToken).ConfigureAwait(false);
 
         try
         {
-            if (CurrentStory() is not { } story)
-            {
-                return;
-            }
-
-            var provider = VoiceGroups.ProviderFor(_settings.Current.Speech, VoiceGroup.Aboard);
-            var list = _speech.VoicesFor(VoiceGroup.Aboard);
-
-            if (list.Count == 0)
-            {
-                return;
-            }
-
-            var pairings = await StoryCastPairing.ChooseAsync(
-                story.Secret,
-                story.Title,
-                _settings.Current.CommanderGender,
-                provider,
-                _settings.Current,
-                _speech.ShipAndNarratorVoices(provider),
-                list.Voices,
-                _speech.ChatterboxCatalogue(),
-                Turns.Provider,
-                Turns.BackgroundModel,
-                _spend,
-                PriceTable.Default,
-                _logger,
-                cancellationToken: cancellationToken).ConfigureAwait(false);
-
-            if (pairings.Count == 0)
-            {
-                return;
-            }
-
-            _settings.Replace("storyVoicePairings", current => StoryCastPairing.WithPairings(current, provider, pairings));
-            _logger.LogInformation("Paired {Count} of {Title}'s cast on {Provider}", pairings.Count, story.Title, provider);
+            return await PairCastLockedAsync(story(), cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             // Until a pairing exists, the member speaks in the crew voice.
             _logger.LogWarning(ex, "Could not pair the story's cast");
+            return false;
         }
         finally
         {
             _pairing.Release();
         }
+    }
+
+    private async Task<bool> PairCastLockedAsync((StorySecret Secret, string Title)? found, CancellationToken cancellationToken)
+    {
+        if (found is not { } story)
+        {
+            return false;
+        }
+
+        var provider = VoiceGroups.ProviderFor(_settings.Current.Speech, VoiceGroup.Aboard);
+        var list = _speech.VoicesFor(VoiceGroup.Aboard);
+
+        if (list.Count == 0)
+        {
+            return false;
+        }
+
+        var pairings = await StoryCastPairing.ChooseAsync(
+            story.Secret,
+            story.Title,
+            _settings.Current.CommanderGender,
+            provider,
+            _settings.Current,
+            _speech.ShipAndNarratorVoices(provider),
+            list.Voices,
+            _speech.ChatterboxCatalogue(),
+            Turns.Provider,
+            Turns.BackgroundModel,
+            _spend,
+            PriceTable.Default,
+            _logger,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        if (pairings.Count == 0)
+        {
+            return false;
+        }
+
+        _settings.Replace("storyVoicePairings", current => StoryCastPairing.WithPairings(current, provider, pairings));
+        _logger.LogInformation("Paired {Count} of {Title}'s cast on {Provider}", pairings.Count, story.Title, provider);
+        return true;
     }
 
     private TurnLoop Turns => _turns;

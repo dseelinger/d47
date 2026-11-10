@@ -3253,6 +3253,9 @@ public sealed class AppHost : IDisposable
             services.Speech, settings, personas, turns, spend, loggerFactory.CreateLogger<VoicePairer>())
         {
             CurrentStory = () => storyDirector.CurrentCast(gameState.Active?.Identity.FrontierId),
+            StoryById = id => storyDirector.Catalog.Secret(id) is { } secret
+                ? (secret, storyDirector.Catalog.Find(id)?.Title ?? id)
+                : null,
         };
 
         storyDirector.Began += () => _ = Task.Run(() => pairing.PairStoryCastAsync());
@@ -5505,7 +5508,8 @@ public sealed class AppHost : IDisposable
         () => Settings.Current,
         Settings.HoldsSecret,
         (providerId, voiceId, token) => Auditions?.AuditionCastPreviewAsync(providerId, voiceId, token)
-            ?? Task.CompletedTask);
+            ?? Task.CompletedTask,
+        Pairing.PairStoryCastAsync);
 
     /// <summary>The story store, for the cast the running story has introduced.</summary>
     public D47.Core.Stories.StoryStore? StoryStore { get; set; }

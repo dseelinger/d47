@@ -7,7 +7,10 @@ using D47.Core.Stories;
 
 namespace D47.App.Panel;
 
-/// <summary>What the panel may read and do about a story character's voice. Panel controls only; no tool reaches it.</summary>
+/// <summary>
+/// What the panel may read and do about a story character's voice. Panel controls only; no tool reaches it.
+/// <see cref="PairStory"/> pairs a story's unpinned cast on the ship's provider by story id, true when a pairing was written.
+/// </summary>
 public sealed record CastVoiceSurface(
     Func<string, StoryCastMember?> Member,
     Action<string, string?, string?, string?> Choose,
@@ -16,7 +19,8 @@ public sealed record CastVoiceSurface(
     Func<string, string?> Failure,
     Func<D47Settings>? Settings = null,
     Func<string, bool>? KeyStored = null,
-    Func<string, string, CancellationToken, Task>? Preview = null);
+    Func<string, string, CancellationToken, Task>? Preview = null,
+    Func<string, CancellationToken, Task<bool>>? PairStory = null);
 
 /// <summary>Change voice: a provider, then one of the voices it lists, for one story character.</summary>
 public static class CastVoiceChooser

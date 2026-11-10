@@ -119,6 +119,29 @@ public class AListArrivingPairsTheShipsProviderTests : IDisposable
     }
 
     [Fact]
+    public async Task AStoryThatIsNotCurrentIsPairedByIdOnceAndNotAgain()
+    {
+        var secret = new StorySecret
+        {
+            Id = "a-browsed-story",
+            Secret = "Hidden.",
+            End = "An end.",
+            Cast = [new StorySpeaker { Id = "hand", Name = "Ren", Who = "A dock hand.", Provider = StorySpeaker.Kokoro, Voice = "bm_george" }],
+        };
+
+        _startPairing();
+        Pairer.StoryById = id => id == secret.Id ? (secret, "A Browsed Story") : null;
+
+        _speech.Apply();
+        await WaitForAsync(() => _speech.VoicesFor(VoiceGroup.Aboard).Count > 0);
+
+        Assert.True(await Pairer.PairStoryCastAsync(secret.Id, TestContext.Current.CancellationToken));
+        Assert.True(StoryCastPairing.On(_settings.Current, TtsProviderCatalog.KokoroId)?.ContainsKey("a-browsed-story.hand"));
+        Assert.False(await Pairer.PairStoryCastAsync(secret.Id, TestContext.Current.CancellationToken));
+        Assert.False(await Pairer.PairStoryCastAsync("no-such-story", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public void AChatterboxVoicesGenderIsReadFromTheShippedCatalogue()
     {
         SeededKokoro.CopyShippedChatterboxClips(_files);
