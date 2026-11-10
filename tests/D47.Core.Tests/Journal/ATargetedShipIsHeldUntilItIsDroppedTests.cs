@@ -51,10 +51,10 @@ public class ATargetedShipIsHeldUntilItIsDroppedTests
     }
 
     [Fact]
-    public void AStageThreeTargetAddsFactionAndLegalStatus()
+    public void AStageThreeTargetAddsFactionLegalStatusAndBounty()
     {
         Assert.Equal(
-            new TargetedShip("adder", "Doug Quiad", "Master", "The Prime Spade", "Wanted"),
+            new TargetedShip("adder", "Doug Quiad", "Master", "The Prime Spade", "Wanted", Bounty: 92454),
             Fold(Stage0, Stage1, Stage2, Stage3).Target);
     }
 

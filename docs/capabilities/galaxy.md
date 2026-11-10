@@ -789,7 +789,8 @@ system the list does not include adds nothing.
 
 #### `get_target`
 
-What the Commander has selected in the navigation panel, from Status.json's `Destination`.
+What the Commander has targeted: a locked ship, and the selection in the navigation panel from
+Status.json's `Destination`.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
@@ -798,6 +799,14 @@ What the Commander has selected in the navigation panel, from Status.json's `Des
 Asking "what have I targeted", "tell me about my target" or "what is my target" is answered
 without a language model. The tool is always loaded, so a follow-up such as "what's the gravity on
 it" reaches it too, and the model answers from its reply.
+
+A locked ship comes first. It is the last `ShipTargeted` event with `TargetLocked` true, and gives the
+hull, the pilot's name, rank, faction, legal status and bounty, as far as the scan has read them: the
+name and rank at scan stage 1, the faction, legal status and sometimes the bounty at stage 3. A
+Commander's ship is said to be a Commander's, with its hull and legal status and no name. Shield and
+hull health are left out because the game writes them only when a scan stage completes. Once the
+target is dropped, the answer no longer mentions a ship. With a ship and a navigation selection, the
+answer describes the ship, then the selection.
 
 `Destination` holds a system address, a body id and a name. d47 reads the target in this order:
 

@@ -28,6 +28,57 @@ public static class TargetAnswer
         _ => NothingTargeted,
     };
 
+    /// <summary>The locked ship's hull, pilot, rank, faction, legal status and bounty. A Commander's name is never spoken.</summary>
+    public static string DescribeShip(TargetedShip ship)
+    {
+        var hull = ship.Ship is { Length: > 0 } named ? named : "unknown hull";
+
+        if (ship.IsCommander)
+        {
+            return Joined(
+                $"Your locked ship is flown by a Commander. Hull {hull}.",
+                ship.LegalStatus is { Length: > 0 } clean ? $"Legal status {clean}." : null);
+        }
+
+        var details = new List<string> { $"hull {hull}" };
+
+        if (ship.IsNameable)
+        {
+            details.Add($"pilot {ship.PilotName}");
+        }
+
+        if (ship.Rank is { Length: > 0 } rank)
+        {
+            details.Add($"rank {rank}");
+        }
+
+        if (ship.Faction is { Length: > 0 } faction)
+        {
+            details.Add($"faction {faction}");
+        }
+
+        if (ship.LegalStatus is { Length: > 0 } status)
+        {
+            details.Add($"legal status {status}");
+        }
+
+        if (ship.Bounty is > 0 and var bounty)
+        {
+            details.Add($"bounty {bounty.ToString("N0", CultureInfo.InvariantCulture)} credits");
+        }
+
+        return $"Your locked ship: {string.Join("; ", details)}.";
+    }
+
+    /// <summary>The ship sentence first, then the navigation answer when one is selected.</summary>
+    public static string WithShip(TargetedShip? ship, string? navigation) => (ship, navigation) switch
+    {
+        (null, null) => NothingTargeted,
+        (null, _) => navigation!,
+        (_, null) => DescribeShip(ship),
+        _ => Joined(DescribeShip(ship), navigation),
+    };
+
     /// <summary>The journal's m/s² as g, "0.56 g".</summary>
     public static string GravityFromScan(double metresPerSecondSquared) => Gravity(metresPerSecondSquared / StandardGravity);
 

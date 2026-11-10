@@ -2,6 +2,7 @@ namespace D47.Core.Journal;
 
 /// <summary>The ship the Commander has targeted. A Commander's name is never held.</summary>
 /// <param name="Ship">The hull, as the journal names it.</param>
+/// <param name="Bounty">The bounty in credits, written at scan stage 3 on some wanted ships; null otherwise.</param>
 /// <param name="PilotName">The NPC pilot's localised name; null before scan stage 1 and always null for a Commander.</param>
 public sealed record TargetedShip(
     string? Ship,
@@ -9,7 +10,8 @@ public sealed record TargetedShip(
     string? Rank = null,
     string? Faction = null,
     string? LegalStatus = null,
-    bool IsCommander = false)
+    bool IsCommander = false,
+    long? Bounty = null)
 {
     /// <summary>Whether a pilot name is known and may be spoken.</summary>
     public bool IsNameable => PilotName is { Length: > 0 };
@@ -31,6 +33,7 @@ public sealed record TargetedShip(
             journalEvent.String("PilotRank"),
             journalEvent.String("Faction"),
             journalEvent.String("LegalStatus"),
-            isCommander);
+            isCommander,
+            journalEvent.Long("Bounty"));
     }
 }

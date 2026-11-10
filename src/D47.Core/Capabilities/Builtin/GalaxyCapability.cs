@@ -416,7 +416,9 @@ public static class GalaxyCapability
                     + "signals, and says which parts come from your own scans and which from the galaxy record.",
                 AlwaysLoaded = true,
                 Description =
-                    "Everything known about what the Commander has selected in the navigation panel: a body's type, "
+                    "Everything known about what the Commander has targeted. A locked ship: its hull, pilot, rank, "
+                    + "faction, legal status and bounty, and for a Commander's ship only that it is one. A selection in the "
+                    + "navigation panel: a body's type, "
                     + "landing, gravity, atmosphere, temperature, pressure, volcanism, terraforming, radius, distance, "
                     + "rings, signals, genera, stations and materials; a station's type, body, faction, government, "
                     + "economy, pads and services; or a system's description. Says which parts come from the "
@@ -747,9 +749,11 @@ public static class GalaxyCapability
         Func<long, Journal.VisitLookup> visits,
         CancellationToken cancellationToken)
     {
+        var ship = gameState?.Invoke()?.Target;
+
         if (gameStatus?.Invoke().Destination is not { } destination)
         {
-            return ToolResult.Ok(TargetAnswer.NothingTargeted);
+            return ToolResult.Ok(TargetAnswer.WithShip(ship, null));
         }
 
         StarSystemProfile? record = null;
@@ -774,9 +778,13 @@ public static class GalaxyCapability
             state?.Bodies ?? Journal.BodySignals.Empty,
             record);
 
-        return target is NavTarget.StarSystem system
-            ? ToolResult.Ok(await SystemAnswerAsync(system.Record, visits, cancellationToken).ConfigureAwait(false))
-            : ToolResult.Ok(TargetAnswer.Describe(target, unavailable));
+        var navigation = target is NavTarget.StarSystem system
+            ? await SystemAnswerAsync(system.Record, visits, cancellationToken).ConfigureAwait(false)
+            : TargetAnswer.Describe(target, unavailable);
+
+        return ToolResult.Ok(TargetAnswer.WithShip(
+            ship,
+            navigation == TargetAnswer.NothingTargeted ? null : navigation));
     }
 
     public const string SetSquadronFactionTool = "set_squadron_faction";
