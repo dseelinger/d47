@@ -113,7 +113,7 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
         var nemesis = CampaignArcs.Step(campaign.Arc, _before, view);
         var leaks = CampaignLeaks.Step(
             campaign.Informant,
-            new LeakView(held.Faction, view.SeedKey, held.Report, _previous, state.Standings, context.Now));
+            new LeakView(held.Faction, view.SeedKey, held.Report, _previous, state.Standings, context.Now, held.Fronts));
         var ideology = CampaignIdeology.Step(campaign.Ideology, view);
         var council = CampaignInternalPolitics.Step(
             campaign.Council,

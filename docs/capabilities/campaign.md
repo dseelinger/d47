@@ -355,7 +355,7 @@ reports. Three threats open a leak, in this rank:
 | Threat | When |
 |---|---|
 | Coup | A rival is rising and between 50% and 60% in a system your faction controls. |
-| Expansion | A rival has an Expansion pending in a system your faction is in. |
+| Expansion | A rival has an Expansion pending in a system where it leads a front against your faction. |
 | Spread | A rival is rising in three or more of your faction's systems. The leak names the one where it is strongest. |
 
 ```csharp

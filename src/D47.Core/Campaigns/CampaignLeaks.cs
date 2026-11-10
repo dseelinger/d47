@@ -31,14 +31,15 @@ public sealed record Leak(LeakKind Kind, string System, string Rival, double Inf
 /// <summary>The campaign's Informant: invented once, with the leaks already given.</summary>
 public sealed record CampaignInformant(string Name, DateTimeOffset Since, IReadOnlyList<Leak> Leaks);
 
-/// <summary>What the leak engine reads: the faction's current and previous reports and the Commander's readings.</summary>
+/// <summary>What the leak engine reads: the faction's current and previous reports, the Commander's readings and the fronts.</summary>
 public sealed record LeakView(
     string Faction,
     string SeedKey,
     FactionReport? Report,
     FactionReport? Previous,
     SystemStandings Standings,
-    DateTimeOffset Now);
+    DateTimeOffset Now,
+    IReadOnlyList<Front> Fronts);
 
 /// <summary>The Informant after a step, and the leaks due.</summary>
 public sealed record LeakStep(CampaignInformant? Informant, IReadOnlyList<CampaignArcLine> Lines);
@@ -116,7 +117,9 @@ public static class CampaignLeaks
                     }
                 }
 
-                if (other.PendingStates.Any(state => string.Equals(FactionStates.Display(state), expansion, StringComparison.Ordinal)))
+                if (other.PendingStates.Any(state => string.Equals(FactionStates.Display(state), expansion, StringComparison.Ordinal))
+                    && view.Fronts.Any(front => string.Equals(front.System, system.Name, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(front.Opponent, other.Name, StringComparison.Ordinal)))
                 {
                     threats.Add(new LeakThreat(LeakKind.Expansion, system.Name, other.Name, influence, gain ?? 0, [system.Name]));
                 }

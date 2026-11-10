@@ -22,8 +22,11 @@ public sealed class TheInformantLeaksOnlyOnComputedThreatsTests
     private static FactionReport At(string system, double rival, bool controls = true, string pending = "") =>
         Report(Place(system, 0.40, controls, others: [Neighbour(rival, pending)]));
 
-    private static LeakView View(FactionReport? report, FactionReport? previous = null, SystemStandings? standings = null, DateTimeOffset? now = null) =>
-        new(Us, Squadron, report, previous, standings ?? SystemStandings.Empty, now ?? Now);
+    private static LeakView View(FactionReport? report, FactionReport? previous = null, SystemStandings? standings = null, DateTimeOffset? now = null, IReadOnlyList<Front>? fronts = null) =>
+        new(Us, Squadron, report, previous, standings ?? SystemStandings.Empty, now ?? Now, fronts ?? []);
+
+    private static Front RivalFront(string system, FrontKind kind = FrontKind.ThinMargin) =>
+        new(kind, system, "reason", SystemIntent.Hold, true, Rival, "", 0.05, Now, false);
 
     [Fact]
     public void ARivalRisingTowardTheCoupLineInAControlledSystemIsLeakedWithThatSystem()
@@ -84,12 +87,27 @@ public sealed class TheInformantLeaksOnlyOnComputedThreatsTests
     [Fact]
     public void ARivalExpansionPendingIsLeakedWithItsSystem()
     {
-        var step = CampaignLeaks.Step(null, View(At("Leesti", 0.72, pending: "Expansion")));
+        var step = CampaignLeaks.Step(null, View(At("Leesti", 0.72, pending: "Expansion"), fronts: [RivalFront("Leesti")]));
 
         var line = Assert.Single(step.Lines);
         Assert.Equal("Leesti", line.System);
         Assert.Contains("Expansion pending in Leesti", line.Text);
         Assert.Contains("72%", line.Text);
+    }
+
+    [Fact]
+    public void AnExpansionPendingWhereNoFrontNamesTheRivalIsNotAThreat()
+    {
+        Assert.Empty(CampaignLeaks.Threats(View(At("Leesti", 0.07, pending: "Expansion"))));
+        Assert.Empty(CampaignLeaks.Threats(View(At("Leesti", 0.07, pending: "Expansion"), fronts: [RivalFront("Lave")])));
+    }
+
+    [Fact]
+    public void AnExpansionPendingWhereAThinMarginFrontNamesTheRivalIsOneThreat()
+    {
+        var threat = Assert.Single(CampaignLeaks.Threats(View(At("Leesti", 0.07, pending: "Expansion"), fronts: [RivalFront("Leesti")])));
+
+        Assert.Equal(LeakKind.Expansion, threat.Kind);
     }
 
     [Fact]

@@ -46,8 +46,17 @@ public sealed class TheArcsSpeakOneLineEveryTwoHoursWarsFirstTests
             Conflict = new FactionConflict(system, type, true, OpponentKind.Named, Rival, [], true, ours, theirs, "", ""),
         };
 
-    private void Hold(IReadOnlyList<Front> fronts, params FactionSystem[] systems) =>
-        _snapshot = new CampaignFrontsSnapshot(_state.Identity.FrontierId!, Us, Report(systems), _clock, fronts, _clock, null, null);
+    private void Hold(IReadOnlyList<Front> fronts, params FactionSystem[] systems)
+    {
+        Front[] expanding =
+        [
+            .. systems.SelectMany(system => system.Others
+                .Where(other => other.PendingStates.Contains("Expansion"))
+                .Select(other => new Front(FrontKind.ThinMargin, system.Name, "Thin margin.", SystemIntent.Hold, true, other.Name, "", 0.05, Now, false))),
+        ];
+
+        _snapshot = new CampaignFrontsSnapshot(_state.Identity.FrontierId!, Us, Report(systems), _clock, [.. fronts, .. expanding], _clock, null, null);
+    }
 
     private CampaignArcCallout Arcs() => new(new NearbyFight())
     {
@@ -93,6 +102,7 @@ public sealed class TheArcsSpeakOneLineEveryTwoHoursWarsFirstTests
     [Fact]
     public void AHundredExpansionsGiveOneLeakAndTheNextWaitsTwoHours()
     {
+        _store.SetArc("F1", new CampaignArc(ArcKind.Nemesis, Rival, "Prefect Mbeki", Now, 0));
         Hold([], Expansions(100));
         var arcs = Started();
 
