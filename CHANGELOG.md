@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: the campaign arcs could speak several lines in a row, such as a Nemesis introduction, a propaganda broadcast and the council's argument. The arcs now speak at most once every two hours, one arc's lines at a time: lines about a war or civil war first, then about an election, then the rest. Lines that wait are kept and spoken later. The arcs may speak right after d47 starts. The Liaison's briefings, dispatches and acknowledgements do not wait for them.
+
 The Liaison now briefs every war, civil war and election your campaign faction is in, active or pending, once per BGS tick, as soon as d47 has the faction's report. Each conflict gives its type, system, status and opponent, or that the opponent is not yet known, with days won where your journal has read the system and the faction's stake where it has one. Nothing is said when there are no conflicts, and a restart does not repeat a briefing. The Campaign Liaison row turns it off.
 
 Fixed: on a switch to a Commander with a large campaign faction, d47 could speak about a hundred Informant leaks in two minutes. The campaign's fronts are now recomputed only when the Commander's standings or the campaign's intents change, not when an arc, the Informant or the council saves its state.

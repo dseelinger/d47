@@ -28,6 +28,8 @@ public sealed class TheCouncilAndTheIdeologySpeakOverCommsTests
 
     private CampaignFrontsSnapshot? _snapshot;
 
+    private DateTimeOffset _clock = Now;
+
     public TheCouncilAndTheIdeologySpeakOverCommsTests()
     {
         _store = new CampaignStore("campaigns.json", _files, NullLogger<CampaignStore>.Instance);
@@ -56,7 +58,21 @@ public sealed class TheCouncilAndTheIdeologySpeakOverCommsTests
     };
 
     private List<Announcement> Examine(CampaignArcCallout arcs, bool priming = false, StatusFlags flags = StatusFlags.Docked) =>
-        [.. arcs.Examine(new CalloutContext(Now, priming, _state, new GameStatus { Flags = flags }, NavRoute.None, []))];
+        [.. arcs.Examine(new CalloutContext(_clock, priming, _state, new GameStatus { Flags = flags }, NavRoute.None, []))];
+
+    /// <summary>Every line the arcs speak, a pass every <see cref="CampaignArcCallout.Gap"/>, until a pass says nothing.</summary>
+    private List<Announcement> Drain(CampaignArcCallout arcs)
+    {
+        var said = new List<Announcement>();
+
+        for (var pass = 0; pass < 10 && Examine(arcs) is { Count: > 0 } lines; pass++)
+        {
+            said.AddRange(lines);
+            _clock += CampaignArcCallout.Gap;
+        }
+
+        return said;
+    }
 
     [Fact]
     public void TheArgumentIsSpokenOnceByEachCouncillorAndKept()
@@ -66,7 +82,7 @@ public sealed class TheCouncilAndTheIdeologySpeakOverCommsTests
         Examine(arcs, priming: true);
         Hold(Of(FrontKind.Coup, "Lave"), Of(FrontKind.Retreat, "Leesti"));
 
-        var said = Examine(arcs).Where(announcement => announcement.Key.EndsWith("argument", StringComparison.Ordinal)).ToList();
+        var said = Drain(arcs).Where(announcement => announcement.Key.EndsWith("argument", StringComparison.Ordinal)).ToList();
 
         var council = _store.For("F1").Council;
         Assert.NotNull(council);
@@ -76,7 +92,7 @@ public sealed class TheCouncilAndTheIdeologySpeakOverCommsTests
         Assert.Equal(VoiceRole.Comms, said[0].Voice);
 
         Hold(Of(FrontKind.Coup, "Lave"), Of(FrontKind.Retreat, "Leesti"));
-        Assert.DoesNotContain(Examine(arcs), announcement => announcement.Key.EndsWith("argument", StringComparison.Ordinal));
+        Assert.DoesNotContain(Drain(arcs), announcement => announcement.Key.EndsWith("argument", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -87,7 +103,7 @@ public sealed class TheCouncilAndTheIdeologySpeakOverCommsTests
         Examine(arcs, priming: true);
         Hold(Of(FrontKind.Coup, "Lave"));
 
-        var propaganda = Assert.Single(Examine(arcs), announcement => announcement.Key.EndsWith("propaganda", StringComparison.Ordinal));
+        var propaganda = Assert.Single(Drain(arcs), announcement => announcement.Key.EndsWith("propaganda", StringComparison.Ordinal));
 
         Assert.NotNull(_store.For("F1").Ideology);
         Assert.Equal(Rival, propaganda.Arc!.Rival);
@@ -113,11 +129,11 @@ public sealed class TheCouncilAndTheIdeologySpeakOverCommsTests
         Hold(Of(FrontKind.Retreat, "Leesti"));
         Examine(arcs, priming: true);
         Hold(Of(FrontKind.Coup, "Lave"), Of(FrontKind.Retreat, "Leesti"));
-        Examine(arcs);
+        Drain(arcs);
 
         _store.Choose("F1", FrontKind.Coup, "Lave", Now.AddHours(1));
 
-        var sided = Assert.Single(Examine(arcs), announcement => announcement.Key.EndsWith("sided", StringComparison.Ordinal));
+        var sided = Assert.Single(Drain(arcs), announcement => announcement.Key.EndsWith("sided", StringComparison.Ordinal));
         Assert.Equal(_store.For("F1").Council!.Dove, sided.Speaker);
         Assert.Single(_store.For("F1").Council!.Sidings);
     }

@@ -304,6 +304,11 @@ An arc is fiction around the campaign's facts. D47 picks the arc, who is in it a
 model writes the act. The model may invent people, motives, documents, history and grudges, and never a game fact: every
 number, state, outcome and place comes from D47. Every act follows a change in the fronts or the chronicle.
 
+The arcs speak at most once every two hours, one arc's lines at a time, such as the council's two arguments. Lines
+about a war or civil war come first, then lines about an election, then the rest. The arcs may speak right after D47
+starts. Lines that wait are kept and spoken later. The Liaison's briefings, dispatches and acknowledgements do not wait
+for the arcs.
+
 The first arc is the **Nemesis**, a rival faction with an invented leader. D47 ranks the rivals: the one that has fought
 the campaign faction most, counting the chronicle and current conflicts, first; then the one in the most of the faction's
 systems; then the one closest to it in influence in a shared system:

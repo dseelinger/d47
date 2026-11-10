@@ -11,6 +11,8 @@ namespace D47.Core.Callouts;
 /// it wins a day or takes the lead, and its concession or vow of revenge when it loses. Acts wait while the Commander is in
 /// a fight, in supercruise or a jump, or in an Operation. The first fronts computed from a report are the baseline for
 /// broadcasts, not news. It also speaks the Informant's leaks, the Ideology arc's lines, the council's Hawk and Dove, the Crisis arc, and the reveals of the Nemesis arc's secret.
+/// One engine's lines are spoken a pass, at most once every <see cref="Gap"/>, wars first, then elections; an engine
+/// whose lines are not spoken keeps its state and offers them again.
 /// </summary>
 public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
 {
@@ -36,12 +38,23 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
     /// <summary>A councillor's or defector's voice for a name, the campaign faction and the names voiced before it, or null for the comms role's own.</summary>
     public Func<string, string, IReadOnlyList<string>, PinnedVoice?> PoliticsVoice { get; set; } = (_, _, _) => null;
 
+    /// <summary>After an arc line is spoken, how long before the next one may be.</summary>
+    public static readonly TimeSpan Gap = TimeSpan.FromMinutes(120);
+
+    private static readonly string War = FactionStates.Display("War");
+
+    private static readonly string CivilWar = FactionStates.Display("CivilWar");
+
+    private static readonly string Election = FactionStates.Display("Election");
+
     private string? _commander;
     private DateTimeOffset? _chosenSince;
-    private FactionReport? _report;
     private FactionReport? _previous;
     private IReadOnlyList<Front>? _before;
     private int _chronicled;
+    private string? _waitFor;
+    private DateTimeOffset? _waitFrom;
+    private bool _owed;
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
@@ -55,28 +68,34 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
         {
             _commander = null;
             _before = null;
-            _report = null;
             _previous = null;
             return [];
         }
-
-        Track(held.Report);
 
         var campaign = Campaigns.For(id);
 
         if (context.IsPriming || !string.Equals(_commander, id, StringComparison.Ordinal) || held.Report is null)
         {
+            if (!string.Equals(_waitFor, id, StringComparison.Ordinal))
+            {
+                _waitFor = id;
+                _waitFrom = null;
+            }
+
             _commander = id;
             _before = held.Report is null ? null : held.Fronts;
+            _previous = held.Report;
             _chronicled = -1;
             _chosenSince = campaign.Chosen?.Since;
+            _owed = false;
             return [];
         }
 
         var chosenSince = campaign.Chosen?.Since;
 
         if (Held(context)
-            || (ReferenceEquals(held.Fronts, _before) && campaign.Chronicle.Count == _chronicled && chosenSince == _chosenSince))
+            || (_waitFrom is { } waiting && context.Now - waiting < Gap)
+            || (!_owed && ReferenceEquals(held.Fronts, _before) && campaign.Chronicle.Count == _chronicled && chosenSince == _chosenSince))
         {
             return [];
         }
@@ -89,75 +108,109 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
             campaign.Chronicle,
             context.Now);
 
-        var step = CampaignArcs.Step(campaign.Arc, _before, view);
-
         var chosen = chosenSince != _chosenSince ? campaign.Chosen : null;
 
-        _before = held.Fronts;
-        _chronicled = campaign.Chronicle.Count;
-        _chosenSince = chosenSince;
+        var nemesis = CampaignArcs.Step(campaign.Arc, _before, view);
+        var leaks = CampaignLeaks.Step(
+            campaign.Informant,
+            new LeakView(held.Faction, view.SeedKey, held.Report, _previous, state.Standings, context.Now));
+        var ideology = CampaignIdeology.Step(campaign.Ideology, view);
+        var council = CampaignInternalPolitics.Step(
+            campaign.Council,
+            new CouncilView(held.Faction, view.SeedKey, held.Fronts, chosen, context.Now));
+        var crises = CampaignCrisis.Step(
+            campaign.Crises,
+            new CrisisView(held.Faction, view.SeedKey, held.Report, _previous, context.Now));
+        var secret = CampaignSecrets.Step(
+            campaign.Secret,
+            nemesis.Lines.Count == 0 ? nemesis.Arc : campaign.Arc,
+            held.Faction,
+            campaign.Chronicle,
+            context.Now);
 
-        if (step.Arc != campaign.Arc && !Campaigns.SetArc(id, step.Arc))
+        ArcEngineStep[] steps =
+        [
+            new(nemesis.Lines, () => nemesis.Arc == campaign.Arc || Campaigns.SetArc(id, nemesis.Arc), Spoken),
+            new(leaks.Lines, () => leaks.Informant == campaign.Informant || Campaigns.SetInformant(id, leaks.Informant), Whispered),
+            new(ideology.Lines, () => ideology.Arc == campaign.Ideology || Campaigns.SetIdeology(id, ideology.Arc), line => Ideological(line, held.Faction)),
+            new(council.Lines, () => council.Council == campaign.Council || Campaigns.SetCouncil(id, council.Council), line => Councillor(line, council.Council)),
+            new(crises.Lines, () => crises.Crises.SequenceEqual(campaign.Crises) || Campaigns.SetCrises(id, crises.Crises), line => Crisis(line, held.Faction)),
+            new(
+                secret.Lines,
+                () => campaign.Secret is not { } kept || secret.Secret is not { } revealed || ReferenceEquals(kept, revealed)
+                    || Campaigns.SetRevealed(id, kept, revealed),
+                line => Said(line, LiaisonVoice(held.Faction))),
+        ];
+
+        var winner = Winner(steps, held.Fronts);
+
+        foreach (var quiet in steps.Where(step => step.Lines.Count == 0))
+        {
+            quiet.Save();
+        }
+
+        var won = winner is not null && winner.Save();
+
+        bool Settled(ArcEngineStep step) => step.Lines.Count == 0 || (won && ReferenceEquals(step, winner));
+
+        if (Settled(steps[0]))
+        {
+            _before = held.Fronts;
+        }
+
+        if (Settled(steps[3]))
+        {
+            _chosenSince = chosenSince;
+        }
+
+        if (Settled(steps[1]) && Settled(steps[4]))
+        {
+            _previous = held.Report;
+        }
+
+        _chronicled = campaign.Chronicle.Count;
+        _owed = winner is not null;
+
+        if (winner is null)
         {
             return [];
         }
 
-        var leaks = CampaignLeaks.Step(
-            campaign.Informant,
-            new LeakView(held.Faction, view.SeedKey, held.Report, _previous, state.Standings, context.Now));
+        _waitFrom = context.Now;
 
-        var spoken = new List<Announcement>(step.Lines.Select(Spoken));
-
-        if (leaks.Informant != campaign.Informant && !Campaigns.SetInformant(id, leaks.Informant))
-        {
-            return spoken;
-        }
-
-        spoken.AddRange(leaks.Lines.Select(Whispered));
-
-        var ideology = CampaignIdeology.Step(campaign.Ideology, view);
-
-        if (ideology.Arc != campaign.Ideology && !Campaigns.SetIdeology(id, ideology.Arc))
-        {
-            return spoken;
-        }
-
-        spoken.AddRange(ideology.Lines.Select(line => Ideological(line, held.Faction)));
-
-        var council = CampaignInternalPolitics.Step(
-            campaign.Council,
-            new CouncilView(held.Faction, view.SeedKey, held.Fronts, chosen, context.Now));
-
-        if (council.Council != campaign.Council && !Campaigns.SetCouncil(id, council.Council))
-        {
-            return spoken;
-        }
-
-        spoken.AddRange(council.Lines.Select(line => Councillor(line, council.Council)));
-
-        var crises = CampaignCrisis.Step(
-            campaign.Crises,
-            new CrisisView(held.Faction, view.SeedKey, held.Report, _previous, context.Now));
-
-        if (!crises.Crises.SequenceEqual(campaign.Crises) && !Campaigns.SetCrises(id, crises.Crises))
-        {
-            return spoken;
-        }
-
-        spoken.AddRange(crises.Lines.Select(line => Crisis(line, held.Faction)));
-
-        var secret = CampaignSecrets.Step(campaign.Secret, step.Arc, held.Faction, campaign.Chronicle, context.Now);
-
-        if (campaign.Secret is { } kept && secret.Secret is { } revealed && !ReferenceEquals(kept, revealed)
-            && !Campaigns.SetRevealed(id, kept, revealed))
-        {
-            return spoken;
-        }
-
-        spoken.AddRange(secret.Lines.Select(line => Said(line, LiaisonVoice(held.Faction))));
-
-        return spoken;
+        return won ? [.. winner.Lines.Select(winner.Announce)] : [];
     }
+
+    /// <summary>0 for a line about a war or civil war, 1 for one about an election, 2 for any other.</summary>
+    private static int Rank(CampaignArcLine line, IReadOnlyList<Front> fronts)
+    {
+        ArgumentNullException.ThrowIfNull(line);
+        ArgumentNullException.ThrowIfNull(fronts);
+
+        var types = fronts
+            .Where(front => front.Kind == FrontKind.Conflict && string.Equals(front.System, line.System, StringComparison.OrdinalIgnoreCase))
+            .Select(front => front.Conflict?.Type)
+            .OfType<string>()
+            .Select(FactionStates.Display)
+            .ToList();
+
+        if (types.Any(type => type == War || type == CivilWar))
+        {
+            return 0;
+        }
+
+        return line.Act == ArcAct.Election || types.Contains(Election) ? 1 : 2;
+    }
+
+    /// <summary>The step whose lines are spoken: of the steps with lines, the first in engine order with the best-ranked line.</summary>
+    private static ArcEngineStep? Winner(IReadOnlyList<ArcEngineStep> steps, IReadOnlyList<Front> fronts) =>
+        steps
+            .Where(step => step.Lines.Count > 0)
+            .Select((step, order) => (Step: step, Rank: step.Lines.Min(line => Rank(line, fronts)), Order: order))
+            .OrderBy(ranked => ranked.Rank)
+            .ThenBy(ranked => ranked.Order)
+            .Select(ranked => ranked.Step)
+            .FirstOrDefault();
 
     private Announcement Crisis(CampaignArcLine line, string faction) =>
         line.Act == ArcAct.Exploit ? Said(line, Voice(line.Rival, line.Faction)) : Said(line, LiaisonVoice(faction));
@@ -190,15 +243,6 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
             Arc = line,
         };
 
-    private void Track(FactionReport? report)
-    {
-        if (report is not null && !ReferenceEquals(report, _report))
-        {
-            _previous = _report;
-            _report = report;
-        }
-    }
-
     private Announcement Whispered(CampaignArcLine line) =>
         new(KeyPrefix + line.Act.ToString().ToLowerInvariant(), line.Text)
         {
@@ -218,6 +262,9 @@ public sealed class CampaignArcCallout(NearbyFight fight) : ICallout
             Pinned = Voice(line.Rival, line.Faction),
             Arc = line,
         };
+
+    /// <summary>One engine's lines, how to save its new state, and how each line is said.</summary>
+    private sealed record ArcEngineStep(IReadOnlyList<CampaignArcLine> Lines, Func<bool> Save, Func<CampaignArcLine, Announcement> Announce);
 
     /// <summary>Whether acts wait: in a fight, in supercruise or a jump, or in an Operation.</summary>
     private bool Held(CalloutContext context) =>

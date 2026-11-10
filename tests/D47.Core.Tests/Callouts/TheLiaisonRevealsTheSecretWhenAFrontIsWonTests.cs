@@ -28,6 +28,8 @@ public sealed class TheLiaisonRevealsTheSecretWhenAFrontIsWonTests
 
     private readonly CampaignFrontsSnapshot _snapshot;
 
+    private DateTimeOffset _clock = Now;
+
     public TheLiaisonRevealsTheSecretWhenAFrontIsWonTests()
     {
         _store = new CampaignStore("campaigns.json", _files, NullLogger<CampaignStore>.Instance);
@@ -59,19 +61,33 @@ public sealed class TheLiaisonRevealsTheSecretWhenAFrontIsWonTests
     };
 
     private List<Announcement> Examine(CampaignArcCallout arcs, bool priming = false) =>
-        [.. arcs.Examine(new CalloutContext(Now, priming, _state, new GameStatus { Flags = StatusFlags.Docked }, NavRoute.None, []))];
+        [.. arcs.Examine(new CalloutContext(_clock, priming, _state, new GameStatus { Flags = StatusFlags.Docked }, NavRoute.None, []))];
+
+    /// <summary>Every line the arcs speak, a pass every <see cref="CampaignArcCallout.Gap"/>, until a pass says nothing.</summary>
+    private List<Announcement> Drain(CampaignArcCallout arcs)
+    {
+        var said = new List<Announcement>();
+
+        for (var pass = 0; pass < 10 && Examine(arcs) is { Count: > 0 } lines; pass++)
+        {
+            said.AddRange(lines);
+            _clock += CampaignArcCallout.Gap;
+        }
+
+        return said;
+    }
 
     [Fact]
     public void AWonConflictHasTheLiaisonSpeakTheFirstPieceAndItIsKept()
     {
         var arcs = Arcs();
         Examine(arcs, priming: true);
-        Examine(arcs);
+        Drain(arcs);
 
         _store.Choose("F1", FrontKind.Conflict, "Lave", Now.AddDays(-2));
         _store.Resolve("F1", FrontKind.Conflict, "Lave", new ChronicleEntry("Conflict", "Lave", Rival, "Won", [Now.AddDays(-1)], []));
 
-        var reveal = Assert.Single(Examine(arcs), announcement => announcement.Key == CampaignArcCallout.KeyPrefix + "reveal");
+        var reveal = Assert.Single(Drain(arcs), announcement => announcement.Key == CampaignArcCallout.KeyPrefix + "reveal");
 
         Assert.Equal(CampaignLiaison.Speaker, reveal.Speaker);
         Assert.Equal("liaison-" + Us, reveal.Pinned!.VoiceId);
@@ -88,7 +104,7 @@ public sealed class TheLiaisonRevealsTheSecretWhenAFrontIsWonTests
         _store.Choose("F1", FrontKind.Conflict, "Lave", Now.AddDays(-2));
         _store.Resolve("F1", FrontKind.Conflict, "Lave", new ChronicleEntry("Conflict", "Lave", Rival, "Lost", [Now.AddDays(-1)], []));
 
-        Assert.DoesNotContain(Examine(arcs), announcement => announcement.Key == CampaignArcCallout.KeyPrefix + "reveal");
+        Assert.DoesNotContain(Drain(arcs), announcement => announcement.Key == CampaignArcCallout.KeyPrefix + "reveal");
         Assert.Empty(_store.For("F1").Secret!.Revealed);
     }
 }
