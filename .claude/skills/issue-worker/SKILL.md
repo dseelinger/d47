@@ -1,7 +1,7 @@
 ---
 name: issue-worker
 description: >-
-  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. After a plain /triage it works in main, one issue at a time; an issue in a lane from /triage lanes is worked in its own worktree and fast-forwarded into main when it lands. Pushes main once the commit and any review are done, taking every other unpushed commit on main with it, and says in a large bold banner when the change, the commit or the push did not happen. Also takes a story issue, which changes published stock stories in the stories-1 release and nothing in the tree. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
+  Take one GitHub issue and land it — read it, fix it, keep the build clean, add the changelog entry when the change is user-visible, and commit in the repository's form. After a plain /triage it works in main, one issue at a time; an issue in a lane from /triage lanes is worked in its lane's worktree on its own branch and fast-forwarded into main when it lands. Pushes main once the commit and any review are done, taking every other unpushed commit on main with it, and says in a large bold banner when the change, the commit or the push did not happen. Also takes a story issue, which changes published stock stories in the stories-1 release and nothing in the tree. The session that does the work, as opposed to the ones that decide it. Use when the user invokes /issue-worker, or says "you are the issue worker", "fix issue N", "take #N", "implement this issue".
 ---
 
 # Issue worker
@@ -39,13 +39,18 @@ to the main checkout's `.claude/triage-state.json`; when that object is missing,
 work in the main checkout whatever `git worktree list` shows. A worktree left under
 `.claude/worktrees/` by an earlier lanes run is not a lane running now.
 
+A lane's worktree is its folder, `.claude/worktrees/lane-<X>`, kept from one issue to the next and
+switched to each issue's branch `issue/<N>` by `tools/deck/lane_folder.py`. The desktop app asks to
+trust a folder once, so a lane folder is trusted once, not once per issue.
+
 When the triage state has a `lanes` object, two cases put the work in a worktree, both covered by
 **Lanes** below:
 
 - the issue's entry has a `lane`;
-- `git worktree list` shows a worktree under `.claude/worktrees/`. Lanes are running and merging
-  into `main`, so an issue outside them goes through a worktree too, or its uncommitted edits sit
-  in the tree the lanes fast-forward.
+- `git worktree list` shows a worktree under `.claude/worktrees/` on an `issue/*` branch. Lanes
+  are running and merging into `main`, so an issue outside them goes through a worktree too, or its
+  uncommitted edits sit in the tree the lanes fast-forward. A lane folder that is detached is idle
+  and does not count.
 
 **Settle this before reading the issue, and do not skip it for a small change.** While lanes run,
 a one-line rename edited in the main checkout blocks every lane's merge just as a large change
@@ -58,9 +63,10 @@ python -c "import json,os,sys; p=sys.argv[1]; s=json.load(open(p)) if os.path.is
 
 The file is pretty-printed, so a line-based `grep` for the entry finds nothing; read it as JSON.
 
-- The top level is already `.claude/worktrees/<N>`: the Issue key created the worktree and started
-  this session in it. Work there, and land it through **Merging into main** whether or not the
-  issue has a lane.
+- The top level is already a worktree for this issue — `.claude/worktrees/lane-<X>` on branch
+  `issue/<N>`, or `.claude/worktrees/<N>`: the Issue key or `/triage-and-implement` readied it and
+  started this session in it. Work there, and land it through **Merging into main** whether or not
+  the issue has a lane.
 - `lanes no`: work in the main checkout.
 - `lanes yes`, either case above holds, and the top level is the main checkout: create the worktree
   as **The worktree** says and enter it before the next tool call.
@@ -354,9 +360,17 @@ The main checkout is the first entry of `git worktree list`. Before touching any
 
 ### The worktree
 
-The Issue key creates it before the session starts, and starts the session inside it. When this
-session started in the main checkout instead, create it from local `main`, then move the session
-into it:
+The Issue key readies it before the session starts, and starts the session inside it. When this
+session started in the main checkout instead, ready it from local `main`, then move the session
+into it. For an issue with a lane, that is the lane's folder:
+
+```bash
+python <main checkout>/tools/deck/lane_folder.py prepare <X> <N>
+```
+
+It prints the folder, now on `issue/<N>`. It refuses when the folder holds another issue's
+unfinished work, and says which; stop and report that rather than clearing it. For an issue with
+no lane while lanes run, the worktree is the issue's own:
 
 ```bash
 git -C <main checkout> worktree add .claude/worktrees/<N> -b issue/<N> main
@@ -366,13 +380,24 @@ Then call `EnterWorktree` with that path. Do not create it with `EnterWorktree`'
 branches from `origin/main` and misses every commit not yet pushed, including the ones other lanes
 just merged.
 
+Resuming an issue whose lane was parked by `tools/deck/run-queue.ps1`: once the folder is on
+`issue/<N>`, look for a stash named `lane <X> #<N> unfinished` in `git stash list` and apply it in
+the lane folder with `git -C <lane folder> stash pop stash@{<k>}`.
+
 Do the work as the rest of this skill says — build, filtered tests, gate tests, changelog, commit,
 and a review where **Reviews** calls for one — all inside the worktree. The first build in a fresh
 worktree restores and builds everything, so it takes longer than usual. Captures are taken in the
 worktree, as **Capture it yourself** says.
 
-Once it is merged, as below, call `ExitWorktree` with `keep` (it does not remove a worktree entered
-by path), then remove the worktree and its branch:
+Once it is merged, as below, call `ExitWorktree` with `keep` if this session entered it (it does
+not remove a worktree entered by path). Then, for a lane folder, detach it at `main` and delete the
+branch, leaving the folder for the lane's next issue:
+
+```bash
+python <main checkout>/tools/deck/lane_folder.py done <X>
+```
+
+For an issue's own worktree, remove it and its branch:
 
 ```bash
 git -C <main checkout> worktree remove .claude/worktrees/<N>
@@ -664,8 +689,8 @@ Use the first stage that did not happen:
 - **NOT PUSHED** — the commit is on local `main` but `origin/main` does not have it.
 
 The line under the banner says, in one sentence, what stopped it and where the work is now:
-uncommitted in the main checkout, committed locally as `<hash>`, or in `.claude/worktrees/<N>` on
-`issue/<N>`. Then the rest of the report as the section that stopped it asks.
+uncommitted in the main checkout, committed locally as `<hash>`, or in `.claude/worktrees/lane-<X>`
+(or `.claude/worktrees/<N>`) on `issue/<N>`. Then the rest of the report as the section that stopped it asks.
 
 The spoken sentence says the issue did not land and at which stage, and the wrap-up recap's first
 sentence says the same, so the failure reads from the sidebar and by ear as well as on the page.

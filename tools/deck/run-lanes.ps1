@@ -1,6 +1,6 @@
 # Starts every lane of the last triage at the same time, each in its own console running
 # run-queue.ps1 -Lane <letter>. Each lane works its issues in order, one headless session per issue
-# in the issue's own worktree, merges into main under the merge lock, and goes on to its next issue
+# in the lane's folder on the issue's own branch, merges into main under the merge lock, and goes on to its next issue
 # whether or not the last one landed.
 #
 #   powershell -NoProfile -ExecutionPolicy Bypass -File tools\deck\run-lanes.ps1

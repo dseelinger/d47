@@ -27,9 +27,14 @@ Before the build, remove what `/issue-worker` leaves behind after a merge. Do it
 
 ```bash
 git worktree prune
+python tools/deck/lane_folder.py tidy
 git branch --list 'issue/*'
 ls -A .claude/worktrees
 ```
+
+`tidy` detaches each lane folder, `.claude/worktrees/lane-<X>`, whose `issue/*` branch has merged,
+and deletes that branch. The lane folders themselves stay: each is trusted once in the desktop app
+and reused by the next lanes run.
 
 - **Folders.** A folder under `.claude/worktrees/` that `git worktree list` does not show is a
   leftover. Usually it holds copies of tracked files that a lock kept from being removed. Compare

@@ -10,10 +10,11 @@ unreadable, unknown or outside the accepted tokens falls back to the defaults an
 values go on a command line, so nothing else is allowed through. The advisor is "opus" or "none". A lane with no issue left to start
 prints nothing on stdout and exits 1.
 
-The directory is the main checkout, or, when the triage state has lanes, the issue's worktree when
-the issue has a lane or a lane worktree already exists. The worktree is created here, from local main on branch issue/<N>, so a
-lane session starts inside it and never in the main checkout. When it cannot be created, nothing
-is printed on stdout and the exit code is 1.
+The directory is the main checkout, or, when the triage state has lanes, a worktree: the lane's
+folder .claude/worktrees/lane-<X> for an issue with a lane, switched to branch issue/<N> by
+lane_folder.py, or .claude/worktrees/<N> for an issue with no lane while a lane is working. A lane
+session starts inside it and never in the main checkout. When it cannot be made ready, nothing is
+printed on stdout and the exit code is 1.
 
     python tools/deck/issue_settings.py 105
     python tools/deck/issue_settings.py b
@@ -26,6 +27,8 @@ import re
 import shutil
 import subprocess
 import sys
+
+import lane_folder
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 STATE = os.path.join(REPO, '.claude', 'triage-state.json')
@@ -99,11 +102,15 @@ def git(*args):
 
 
 def lanes_running():
-    """True when git lists a worktree under .claude/worktrees."""
-    listed = git('worktree', 'list', '--porcelain').stdout
+    """True when a worktree under .claude/worktrees is on an issue/* branch."""
     marker = os.path.normcase(os.path.join(REPO, '.claude', 'worktrees'))
-    return any(os.path.normcase(os.path.normpath(line[len('worktree '):])).startswith(marker)
-               for line in listed.splitlines() if line.startswith('worktree '))
+    inside = False
+    for line in git('worktree', 'list', '--porcelain').stdout.splitlines():
+        if line.startswith('worktree '):
+            inside = os.path.normcase(os.path.normpath(line[len('worktree '):])).startswith(marker)
+        elif inside and line.startswith('branch refs/heads/issue/'):
+            return True
+    return False
 
 
 def worktree(number):
@@ -174,10 +181,10 @@ def main():
         model, effort, advisor, note = resolve(state, number)
 
     entry = ((state or {}).get('issues') or {}).get(str(number))
-    laned = isinstance(entry, dict) and bool(entry.get('lane'))
+    letter = entry.get('lane') if isinstance(entry, dict) else None
     directory = REPO
-    if (state or {}).get('lanes') and (laned or lanes_running()):
-        directory, why = worktree(number)
+    if (state or {}).get('lanes') and (letter or lanes_running()):
+        directory, why = lane_folder.prepare(letter, number) if letter else worktree(number)
         if directory is None:
             sys.stderr.write(why + '\n')
             sys.exit(1)

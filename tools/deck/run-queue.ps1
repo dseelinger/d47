@@ -16,11 +16,12 @@
 # there instead.
 #
 # Without -Lane, sessions work in the main checkout, and tracked changes a missed issue left are
-# stashed under its number. With -Lane, the queue is that lane's issues, each session works in
-# .claude\worktrees\<N> on branch issue/<N> and fast-forwards main under the merge lock. A missed
-# issue keeps its worktree and branch for the maintainer to resume, and the lane goes on to its
-# next issue. The lane stops if the main checkout gains tracked changes, since every lane's merge
-# needs it clean.
+# stashed under its number. With -Lane, the queue is that lane's issues, each session works in the
+# lane's folder .claude\worktrees\lane-<X> on branch issue/<N> (tools\deck\lane_folder.py switches
+# it) and fast-forwards main under the merge lock. A missed issue keeps its branch for the
+# maintainer to resume, its unfinished edits are stashed as "lane <X> #<N> unfinished", and the lane
+# goes on to its next issue. The lane stops if the main checkout gains tracked changes, since every
+# lane's merge needs it clean.
 #
 # When a session ends without landing and a one-line probe on the same model also fails, the
 # session stopped at the usage limit. The queue then probes every -ProbeMinutes until the limit
@@ -96,7 +97,7 @@ function Report([string]$line) {
     Append $summary $line
 }
 function Record-Miss([string]$n, [string]$title, [string]$why, [string]$detail) {
-    $where = if ($Lane) { " Worktree .claude\worktrees\$n, branch issue/$n." } else { '' }
+    $where = if ($Lane) { " Branch issue/$n; any unfinished edits are stashed as 'lane $Lane #$n unfinished'." } else { '' }
     $text = "## #$n $title`n`n$name. $why$where`n"
     if ($detail) { $text += "`n" + (($detail.Trim() -split "`r?`n" | ForEach-Object { "> $_" }) -join "`n") + "`n" }
     Append $needsYou $text
@@ -139,20 +140,23 @@ function Wait-ForCapacity([string]$model) {
     return $false
 }
 
-# The issue's worktree, created from local main as issue_settings.py does, or $null.
-function Get-Worktree([string]$n) {
-    $path = Join-Path $repo ".claude\worktrees\$n"
-    if (Test-Path $path) { return $path }
+$laneFolder = Join-Path $PSScriptRoot 'lane_folder.py'
+
+# Runs lane_folder.py. Returns its stdout, or $null with its stderr in $script:laneWhy.
+function Invoke-LaneFolder([string[]]$laneArgs) {
     $ErrorActionPreference = 'Continue'
-    git -C $repo rev-parse --verify --quiet "refs/heads/issue/$n" | Out-Null
-    if ($LASTEXITCODE -eq 0) { git -C $repo worktree add $path "issue/$n" 2>&1 | Out-Null }
-    else { git -C $repo worktree add $path -b "issue/$n" main 2>&1 | Out-Null }
-    $made = $LASTEXITCODE -eq 0
+    $out = & python $laneFolder @laneArgs 2>&1
+    $ok = $LASTEXITCODE -eq 0
     $ErrorActionPreference = 'Stop'
-    if (-not $made) { return $null }
-    $local = Join-Path $repo '.claude\settings.local.json'
-    if (Test-Path $local) { Copy-Item $local (Join-Path $path '.claude\settings.local.json') }
-    return $path
+    $text = (@($out) | ForEach-Object { "$_" }) -join "`n"
+    if ($ok) { return $text.Trim() }
+    $script:laneWhy = $text.Trim()
+    return $null
+}
+
+# The lane's folder on branch issue/<n>, or $null.
+function Get-Worktree([string]$n) {
+    return Invoke-LaneFolder @('prepare', $Lane, $n)
 }
 
 # Removes the merge lock when its owner line names this issue: the session ended holding it.
@@ -193,7 +197,7 @@ when this session exits. These instructions override the issue-worker skill wher
 - Do not push.
 '@
 
-# {N}, {LANE}, {MAIN}, {MAINFWD} and {MISSED} are filled in per issue. It holds no double quotes:
+# {N}, {LANE}, {DIR}, {MAIN}, {MAINFWD} and {MISSED} are filled in per issue. It holds no double quotes:
 # Windows PowerShell does not escape them in a native command's arguments.
 $unattendedLane = @'
 This is an unattended run of lane {LANE}. Three lanes run at the same time, each one headless
@@ -209,7 +213,7 @@ session exits. These instructions override the issue-worker skill where they con
 - If the issue cannot be finished without the maintainer (a reproduction, a device, the game,
   the headset, or a choice the issue text does not settle), do not commit. Needing manual testing
   afterwards is not a reason to stop.
-- This session started inside its worktree, {MAIN}\.claude\worktrees\{N}, on branch issue/{N}.
+- This session started inside its lane's worktree, {DIR}, on branch issue/{N}.
   Work there. Do not call EnterWorktree or ExitWorktree. The main checkout is {MAIN}.
 - The runner has already checked lane order. Issues in this lane that did not land in this run:
   {MISSED}. The maintainer has said to go ahead anyway, so the check at the top of the skill's
@@ -233,7 +237,8 @@ session exits. These instructions override the issue-worker skill where they con
   After 90 minutes of WAITING, give up: say so and exit. On STALE, do not remove the lock; report
   the owner line and exit.
 - Of the four merge steps, run 1, 2 and 3. Do not run step 4: nothing is pushed. After step 3,
-  release the lock. The runner removes the worktree and branch after this session exits.
+  release the lock. The runner detaches the lane's folder and deletes the branch after this
+  session exits.
 - A conflict in the rebase in a file other than CHANGELOG.md: abort the rebase, release the lock,
   name the files and the commits in your final message and exit.
 - Ignore manual testing entirely. Do not run /test-drive, do not write manual test steps, and do
@@ -281,7 +286,7 @@ try {
                   '--output-format', 'json')
         if ($Lane) {
             $missedText = if ($missed.Count) { ($missed | ForEach-Object { "#$_" }) -join ', ' } else { 'none' }
-            $prompt = $unattendedLane.Replace('{N}', $n).Replace('{LANE}', $Lane).Replace('{MAINFWD}', $repo.Replace('\', '/')).Replace('{MAIN}', $repo).Replace('{MISSED}', $missedText)
+            $prompt = $unattendedLane.Replace('{N}', $n).Replace('{LANE}', $Lane).Replace('{MAINFWD}', $repo.Replace('\', '/')).Replace('{MAIN}', $repo).Replace('{MISSED}', $missedText).Replace('{DIR}', (Join-Path $repo ".claude\worktrees\lane-$Lane"))
         } else {
             $prompt = $unattended
         }
@@ -298,12 +303,12 @@ try {
             $dir = Get-Worktree $n
             if (-not $dir) {
                 $missed += $n
-                Report "  #${n}: could not create its worktree; moving on."
-                Record-Miss $n $title 'Not started: its worktree could not be created.' ''
+                Report "  #${n}: could not ready the lane's folder; moving on. $script:laneWhy"
+                Record-Miss $n $title "Not started: the lane's folder could not be readied. $script:laneWhy" ''
                 continue
             }
         } elseif ($Lane) {
-            $dir = Join-Path $repo ".claude\worktrees\$n"
+            $dir = Join-Path $repo ".claude\worktrees\lane-$Lane"
         }
 
         if ($DryRun) {
@@ -350,10 +355,9 @@ try {
         if ($Lane) {
             Clear-OwnLock $n
             if ($fixed) {
-                $ErrorActionPreference = 'Continue'
-                git -C $repo worktree remove (Join-Path $repo ".claude\worktrees\$n") 2>&1 | Out-Null
-                git -C $repo branch -d "issue/$n" 2>&1 | Out-Null
-                $ErrorActionPreference = 'Stop'
+                if ($null -eq (Invoke-LaneFolder @('done', $Lane))) { Report "  #${n}: $script:laneWhy" }
+            } elseif ($null -eq (Invoke-LaneFolder @('park', $Lane, $n))) {
+                Report "  #${n}: could not park the lane's folder: $script:laneWhy"
             }
             if (Get-MainDirt) {
                 Start-Sleep -Seconds 30

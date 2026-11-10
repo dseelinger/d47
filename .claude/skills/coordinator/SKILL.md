@@ -37,8 +37,8 @@ Triage is a report. You are the session that stays open after it.
 - **"Is this batch worth cutting?"** A group is ready when its issues are closed, the tree is clean
   on `main`, and `HEAD` matches `origin/main` — `tools/release.ps1` refuses otherwise, and the
   full suite runs as the gate, `D47.App.Tests` in `release.ps1` and the rest again on the runner. Say which of those is not yet true. When lanes have
-  run, also check `git worktree list`: a worktree left under `.claude/worktrees/` is an issue that
-  did not merge, or a lane still working.
+  run, also check `git worktree list`: a worktree under `.claude/worktrees/` on an `issue/*` branch is an
+  issue that did not merge, or a lane still working. A detached lane folder is idle.
 - **"Should these run in lanes?"** Run `/triage lanes` and reason from its lanes the same way:
   recommend which lanes to start, not a lane order of your own.
 - **"This turned out bigger than it looked."** Recommend splitting it, or moving it to `needs-architect` for

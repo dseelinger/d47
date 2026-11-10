@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits every eligible issue into lanes that run in parallel — each issue its own session, in its own worktree. With "overnight", leaves out every issue that needs the maintainer at the keyboard, so the grid is the unattended queue tools/deck/run-queue.ps1 works through; "lanes overnight" does both, for tools/deck/run-lanes.ps1. Reports only; files, labels and starts nothing. Use when the user invokes /triage, /triage lanes, /triage overnight or /triage lanes overnight, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes", "triage for the overnight queue".
+description: Read the open GitHub issues that are ready to be implemented and report a build order — what to do next, which issues ship together as one release, the model and effort each is worth, and the few that are worth a code review. With "lanes", also splits every eligible issue into lanes that run in parallel — each issue its own session, on its own branch in its lane's worktree. With "overnight", leaves out every issue that needs the maintainer at the keyboard, so the grid is the unattended queue tools/deck/run-queue.ps1 works through; "lanes overnight" does both, for tools/deck/run-lanes.ps1. Reports only; files, labels and starts nothing. Use when the user invokes /triage, /triage lanes, /triage overnight or /triage lanes overnight, or says "what should I work on", "triage the issues", "what's next", "plan the next release", "split the issues into lanes", "triage for the overnight queue".
 ---
 
 # Triage
@@ -219,9 +219,9 @@ followed by `overnight` (see **Overnight**). A plain `/triage` or `/triage overn
 lanes and writes none.
 
 A lane is a list of issues worked in order, one session per issue on that issue's own model and
-effort, each in its own worktree and merged into `main` when it lands (`/issue-worker` defines
-how). The next issue in a lane starts once the one before it has merged. Lanes run at the same time
-as each other.
+effort, on its own branch in the lane's worktree, and merged into `main` when it lands
+(`/issue-worker` defines how). The next issue in a lane starts once the one before it has merged.
+Lanes run at the same time as each other.
 
 **Every eligible issue goes into a lane**, except under `overnight`, where only the issues the
 unattended queue keeps go into lanes. The only other issues left out are those the lanes cannot
@@ -289,7 +289,9 @@ Issue key given that lane's letter also starts the paused issue, since it is the
 with no `Fixes #N` commit.
 
 A later triage run keeps a paused issue first in its lane. Find paused issues with
-`git worktree list`: a worktree under `.claude/worktrees/<N>` whose issue is still open.
+`git worktree list`: a worktree under `.claude/worktrees/` on branch `issue/<N>` whose issue is
+still open. A lane's folder, `.claude/worktrees/lane-<X>`, stays between issues; detached, it is
+idle.
 
 ### Overnight
 
