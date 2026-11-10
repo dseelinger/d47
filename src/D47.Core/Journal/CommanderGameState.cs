@@ -157,6 +157,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>The ship currently targeted, or null when none is.</summary>
     public TargetedShip? Target { get; private set; }
 
+    /// <summary>The fighter that is out, or null when none is.</summary>
+    public LaunchedFighter? Fighter { get; private set; }
+
     /// <summary>When the Commander entered the Operation they are in, or null when they are in the main game.</summary>
     public DateTimeOffset? InOperationSince { get; private set; }
 
@@ -244,6 +247,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Colonisation), "construction sites", state => state.Colonisation),
         new(nameof(Crew), "your crew", state => state.Crew),
         new(nameof(Target), "your target", state => state.Target),
+        new(nameof(Fighter), "your fighter", state => state.Fighter),
         new(nameof(InOperationSince), "whether you are in an Operation", state => state.InOperationSince),
     ];
 
@@ -382,6 +386,8 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             "LoadGame" or "Shutdown" => null,
             _ => InOperationSince,
         };
+
+        Fighter = LaunchedFighter.Apply(Fighter, journalEvent);
 
         Target = journalEvent.Kind switch
         {

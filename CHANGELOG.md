@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: D47 now keeps track of the fighter you have launched, and whether you or your crew member is flying it, until it docks, is destroyed, or you jump, dock, enter supercruise, die or load a game. Nothing speaks about it yet.
+
 Changed: while a fight is on around you (Elite's danger flag, or a kill or an attack within the last minute), the pilot of a ship you have targeted and hailed may threaten you and trade insults, instead of signing off. It still does not scan, interdict, fine or put a bounty on you, and outside a fight a threat to shoot is still dropped.
 
 Added: the pilot of a ship you have targeted and hailed on the TARGET channel knows its own combat rank, faction and bounty, and what your last scan read of it: shields and hull, the subsystem you had targeted and its health, and how long ago that was. It is told that shields recharge and that its hull is no better than the figure. Asking D47 what you have targeted still gives no health figures.
