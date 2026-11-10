@@ -19,6 +19,7 @@ namespace D47.Core.Persona;
 /// <param name="system">The Commander's current star system, or null.</param>
 /// <param name="station">The station the Commander is docked at, or null.</param>
 /// <param name="now">The wall clock, which dates the last scan; null leaves the age out.</param>
+/// <param name="fightOn">Whether a fight is on around the Commander; null is never.</param>
 public sealed class TargetLine(
     Func<TargetedShip?> target,
     Func<string?>? model = null,
@@ -29,7 +30,8 @@ public sealed class TargetLine(
     Func<Announcement, string?>? accentHeardAs = null,
     Func<string?>? system = null,
     Func<string?>? station = null,
-    Func<DateTimeOffset>? now = null) : ILine
+    Func<DateTimeOffset>? now = null,
+    Func<bool>? fightOn = null) : ILine
 {
     private const string KeyPrefix = "target.reply";
 
@@ -73,16 +75,18 @@ public sealed class TargetLine(
 
         var heardAs = HeardAs(name);
 
+        var fighting = fightOn?.Invoke() ?? false;
+
         return new LineDecision.Taken(
             new Speaker(
                 VoiceRole.Comms,
                 name,
-                Brief(name, ship, personality, SpeakerAccent.Sentence(accentHeardAs?.Invoke(heardAs)), now?.Invoke()),
+                Brief(name, ship, personality, SpeakerAccent.Sentence(accentHeardAs?.Invoke(heardAs)), now?.Invoke(), fighting),
                 Conversation(name),
                 OffersTools: false,
                 Signal: 1,
                 Model: model?.Invoke(),
-                Screen: reply => Screened(reply, name),
+                Screen: reply => Screened(reply, name, fighting),
                 LiveState: () => OffShipKnowledge.Describe(system?.Invoke(), station?.Invoke()),
                 HeardAs: heardAs),
             question);
@@ -146,7 +150,7 @@ public sealed class TargetLine(
         return written;
     }
 
-    private static string Brief(string name, TargetedShip ship, string? personality, string? accent, DateTimeOffset? now)
+    private static string Brief(string name, TargetedShip ship, string? personality, string? accent, DateTimeOffset? now, bool fighting)
     {
         var facts = new List<string>();
 
@@ -185,10 +189,20 @@ public sealed class TargetLine(
                 You are a human being, not an artificial intelligence, and you never claim to be one.{(personality is null ? string.Empty : $"\nYour personality: {personality}")}
                 Answer in one or two short spoken lines, as yourself: no narration, no stage directions,
                 no quotation marks. Never name or imitate a real person or another player.
-                You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
-                them docking, give them or take their cargo, or send them a wing or friend invite.{(accent is null ? string.Empty : " " + accent)}
+                {(fighting ? FightRules : PeaceRules)}{(accent is null ? string.Empty : " " + accent)}
                 """;
     }
+
+    private const string PeaceRules = """
+        You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
+        them docking, give them or take their cargo, or send them a wing or friend invite.
+        """;
+
+    private const string FightRules = """
+        There is a fight going on around you. You may threaten the Commander and trade insults over it.
+        You do not scan, interdict, fine or put a bounty on the Commander, grant or deny
+        them docking, give them or take their cargo, or send them a wing or friend invite.
+        """;
 
     private static string? LastScan(TargetedShip ship, DateTimeOffset? now)
     {
@@ -249,12 +263,12 @@ public sealed class TargetLine(
         return minutes == 1 ? "1 minute" : $"{minutes} minutes";
     }
 
-    private string Screened(string reply, string name)
+    private string Screened(string reply, string name, bool fighting)
     {
         var said = reply.Trim();
 
         var sayable = FlavourBriefs.MayBeSpoken(said)
-                      && !NpcChatter.Escalates(said)
+                      && !(fighting ? NpcChatter.EscalatesBeyondAFight(said) : NpcChatter.Escalates(said))
                       && ContradictedClaims.Sayable(said, facts?.Invoke() ?? ShipFacts.Unknown, logger, KeyPrefix) is not null;
 
         return sayable ? said : NpcsHeardHere.SignOff(name);

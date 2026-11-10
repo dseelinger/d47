@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: while a fight is on around you (Elite's danger flag, or a kill or an attack within the last minute), the pilot of a ship you have targeted and hailed may threaten you and trade insults, instead of signing off. It still does not scan, interdict, fine or put a bounty on you, and outside a fight a threat to shoot is still dropped.
+
 Added: the pilot of a ship you have targeted and hailed on the TARGET channel knows its own combat rank, faction and bounty, and what your last scan read of it: shields and hull, the subsystem you had targeted and its health, and how long ago that was. It is told that shields recharge and that its hull is no better than the figure. Asking D47 what you have targeted still gives no health figures.
 
 Added: a Standard-A rating press on a ship's page under Asset Mgmt › Ships, and the phrase "standard A rate this ship" for the ship you are flying. It plans the power plant, thrusters, frame shift drive and power distributor at A and the life support and sensors at D, each at the slot's size, at once and without a proposal. An SCO drive stays an SCO drive and a Guardian Hybrid module stays one. Planned engineering is kept, slots already fitted with the target are counted as already there, and armour, the fuel tank, hardpoints, utility mounts and optional internals are not touched.

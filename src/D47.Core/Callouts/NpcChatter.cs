@@ -1466,7 +1466,18 @@ public static partial class NpcChatter
     /// taken, a wing or friend invite. "You" is read as the Commander.
     /// </summary>
     public static bool Escalates(string text) =>
-        !string.IsNullOrEmpty(text) && Escalation().IsMatch(text.Replace('’', '\''));
+        !string.IsNullOrEmpty(text) && Matches(text, includeWeapons: true);
+
+    /// <summary><see cref="Escalates"/> without the weapons and attack phrases, which describe a fight already on.</summary>
+    public static bool EscalatesBeyondAFight(string text) =>
+        !string.IsNullOrEmpty(text) && Matches(text, includeWeapons: false);
+
+    private static bool Matches(string text, bool includeWeapons)
+    {
+        var plain = text.Replace('’', '\'');
+
+        return Escalation().IsMatch(plain) || (includeWeapons && UnderAttack().IsMatch(plain));
+    }
 
     /// <summary>
     /// <see cref="Escalates"/> for a line of an exchange of <paramref name="kind"/>. In a controller
@@ -1487,6 +1498,15 @@ public static partial class NpcChatter
         @"(?:docking|landing)\s+(?:request\s+|permission\s+|clearance\s+|access\s+)?(?:is\s+|has\s+been\s+)?(?:denied|granted|refused|approved|rejected)";
 
     [GeneratedRegex(
+        @"\b(?:open(?:s|ed|ing)?\s+fire|fir(?:e|es|ed|ing)|shoot(?:s|ing)?|shot)\s+(?:at|on|upon)\s+" + Them
+        + @"|\b(?:shoot|shooting|attack|attacks|attacking|attacked|blast|blasting|kill|killing|destroy|destroying|target|targets|targeting|targetting)\s+" + Them
+        + @"|\b(?:weapons|guns|lasers|missiles|torpedoes)\s+(?:are\s+)?(?:locked\s+|trained\s+|hot\s+)?(?:on|onto|at)\s+" + Them
+        + @"|\block(?:s|ed|ing)?\s+(?:on|onto|on\s+to)\s+" + Them
+        + "|" + Subject + @"(?:under\s+(?:attack|fire)|attacked|targeted|shot\s+at|fired\s+(?:on|upon))",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex UnderAttack();
+
+    [GeneratedRegex(
         // Interdicted
         @"\binterdict(?:s|ed|ing|ion)?\s+(?:on\s+)?" + Them
         + "|" + Subject + @"interdicted\b"
@@ -1494,12 +1514,6 @@ public static partial class NpcChatter
         // Scanned
         + @"|\bscan(?:s|ned|ning)?\s+(?:on\s+)?" + Them
         + "|" + Subject + @"scanned\b"
-        // UnderAttack
-        + @"|\b(?:open(?:s|ed|ing)?\s+fire|fir(?:e|es|ed|ing)|shoot(?:s|ing)?|shot)\s+(?:at|on|upon)\s+" + Them
-        + @"|\b(?:shoot|shooting|attack|attacks|attacking|attacked|blast|blasting|kill|killing|destroy|destroying|target|targets|targeting|targetting)\s+" + Them
-        + @"|\b(?:weapons|guns|lasers|missiles|torpedoes)\s+(?:are\s+)?(?:locked\s+|trained\s+|hot\s+)?(?:on|onto|at)\s+" + Them
-        + @"|\block(?:s|ed|ing)?\s+(?:on|onto|on\s+to)\s+" + Them
-        + "|" + Subject + @"(?:under\s+(?:attack|fire)|attacked|targeted|shot\s+at|fired\s+(?:on|upon))"
         // CommitCrime, Bounty
         + @"|\bfin(?:ing|ed)\s+" + Them
         + @"|\bfine\s+" + Them + @"\s+(?:for|\d)"
