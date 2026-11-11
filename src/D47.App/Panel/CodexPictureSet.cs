@@ -25,6 +25,10 @@ public sealed class CodexPictureSet(
     public IReadOnlyList<CodexCapture> Captures(CodexPictureKey key) =>
         captures is null ? [] : CodexCaptures.List(files, captures, key);
 
+    /// <summary>The gamma a picture cut from the capture at <paramref name="path"/> is lifted with, from its note; null when it is not lifted.</summary>
+    public double? CaptureGamma(string path) =>
+        PictureLift.For(PictureNote.Parse(files.ReadText(Path.ChangeExtension(path, ".json")))?.Source);
+
     /// <summary>The bytes of a capture; null when it has been pruned.</summary>
     public byte[]? CaptureBytes(string path) => files.ReadBytes(path);
 }

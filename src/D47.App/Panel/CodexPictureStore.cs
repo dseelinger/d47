@@ -144,16 +144,20 @@ public sealed class CodexPictureStore
     public CropSquare? LocalCrop(CodexPictureKey key) =>
         Own() is { } own ? CropSquare.Parse(_files.ReadText(Path.Combine(own, key.CropFileName))) : null;
 
+    /// <summary>The gamma the active Commander's picture was lifted with; null when none is recorded.</summary>
+    public double? LocalGamma(CodexPictureKey key) =>
+        Own() is { } own ? PictureLift.Parse(_files.ReadText(Path.Combine(own, key.CropFileName))) : null;
+
     /// <summary>Whether the active Commander has a picture of their own for <paramref name="key"/>.</summary>
     public bool HasLocal(CodexPictureKey key) => Own() is { } own && _files.Stat(Path.Combine(own, key.FileName)) is not null;
 
-    /// <summary>Keeps the picture, its source and its square; the picture is written last, so it appears only when the rest is kept.</summary>
-    public void SaveLocal(CodexPictureKey key, byte[] picture, byte[] source, CropSquare crop)
+    /// <summary>Keeps the picture, its source, its square and the gamma it was lifted with; the picture is written last, so it appears only when the rest is kept.</summary>
+    public void SaveLocal(CodexPictureKey key, byte[] picture, byte[] source, CropSquare crop, double? gamma = null)
     {
         var folder = Own() ?? throw new InvalidOperationException("No Commander is active.");
 
         _files.WriteBytes(Path.Combine(folder, key.SourceFileName), source);
-        _files.WriteText(Path.Combine(folder, key.CropFileName), crop.Write());
+        _files.WriteText(Path.Combine(folder, key.CropFileName), PictureLift.Write(crop, gamma));
         _files.WriteBytes(Path.Combine(folder, key.FileName), picture);
     }
 

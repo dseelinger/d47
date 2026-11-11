@@ -188,6 +188,8 @@ public static class CodexModel
 
     public const string CaptureGoneText = "The capture could not be read.";
 
+    public const string BrighteningText = "Brightening the capture.";
+
     public const string SmallestSquareText = "Smallest square";
 
     /// <summary>The crop readout: the square's side, its position and the size it is saved at.</summary>

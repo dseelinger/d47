@@ -521,11 +521,11 @@ To make your own, say "take a picture" in game, then open the entry's page in th
 region and the entry) and press **Choose a picture**. The captures are listed newest first,
 those taken with this entry ahead of the rest. Press one to crop it: drag inside the square to move it and
 drag a corner to resize it. The square stays inside the capture and is never smaller than 384 pixels of it.
-**Save** keeps a 768 by 768 picture, the capture it was cut from and the square, in `data\codex-pictures\local\<Frontier ID>`;
-**Cancel** keeps nothing.
+**Save** keeps a 768 by 768 picture, the capture it was cut from, the square and the brightness used, in `data\codex-pictures\local\<Frontier ID>`;
+**Cancel** keeps nothing. A capture from the headset is brightened, because the headset adds brightness after the point where D47 takes the picture.
 
 With a picture of your own for the region, the entry's page also offers **Re-crop**, which opens the kept
-capture with the saved square, and **Replace**. **Use the stock picture**, or **Remove my picture** when there
+capture with the saved square and brightness, and **Replace**. **Use the stock picture**, or **Remove my picture** when there
 is no stock one, deletes your picture and its capture. These are in the main window only; the big panel shows
 the picture and none of them. An entry in a region D47 cannot name has none of them.
 

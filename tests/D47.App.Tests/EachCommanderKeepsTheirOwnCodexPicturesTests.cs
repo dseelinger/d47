@@ -128,7 +128,7 @@ public sealed class EachCommanderKeepsTheirOwnCodexPicturesTests
         var local = Path.Combine(Folder, "local");
         install.Files.WriteBytes(Path.Combine(local, Key.FileName), Bytes("old"));
         install.Files.WriteBytes(Path.Combine(local, Key.SourceFileName), Bytes("old source"));
-        install.Files.WriteText(Path.Combine(local, Key.CropFileName), new CropSquare(10, 20, 500).Write());
+        install.Files.WriteText(Path.Combine(local, Key.CropFileName), PictureLift.Write(new CropSquare(10, 20, 500), null));
 
         install.Active = "F1";
 

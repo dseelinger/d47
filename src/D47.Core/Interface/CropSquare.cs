@@ -69,8 +69,6 @@ public readonly record struct CropSquare(int X, int Y, int Side)
         return new CropSquare(Math.Clamp(X, 0, width - side), Math.Clamp(Y, 0, height - side), side);
     }
 
-    public string Write() => JsonSerializer.Serialize(this, Options);
-
     /// <summary>Reads a square <see cref="Write"/> produced; null for text that is not one.</summary>
     public static CropSquare? Parse(string? json)
     {

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Commander › Ledgers › Codex › a picture cut from a headset capture is brightened with gamma 0.5, because the headset adds brightness after the point where D47 takes the capture. The Crop page shows the brightened picture, **Save** keeps the brightness beside the square, and **Re-crop** uses it. A capture from Elite's window and a picture saved before this change are not brightened.
+
 Changed: Fleet › a ship's **Plot a route to buy them** now leaves a one-line summary under the block, as "2 stops. First: Catalina Cantina, HIP 106601, 34 ly. 3 not found.", with an **Open the route** button that opens the plan on Navigation › Plan. A failed plot still shows its message in red.
 
 Changed: Fleet › a ship's Hold tile reads fitted ► planned, as 12 ► ~28 t, when the plan adds or removes cargo racks, and its sentence says "12 tonnes of hold, 28 with the plan."

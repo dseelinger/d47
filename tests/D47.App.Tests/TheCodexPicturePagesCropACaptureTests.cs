@@ -309,6 +309,94 @@ public class TheCodexPicturePagesCropACaptureTests
     }
 
     [AvaloniaFact]
+    public async Task AHeadsetCaptureIsBrightenedOnThePageAndWhenSavedAndTheLiftIsKept()
+    {
+        var surface = new Surface();
+        surface.Capture("capture-20261018-210900", "2026-10-18T21:09:00Z", 2000, 1000, (101, 18));
+        var note = Path.Combine(Captures, "capture-20261018-210900.json");
+        surface.Files.WriteText(note, surface.Files.ReadText(note)!.Replace("\"source\": \"Elite\"", $"\"source\": \"{ScreenPictures.FromHeadset}\""));
+        surface.Work.Capture = Path.Combine(Captures, "capture-20261018-210900.jpg");
+
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: false));
+        await Lifted(crop);
+
+        Assert.True(Blue(Shown(crop.Surface!)) > 140);
+
+        await crop.SaveAsync();
+        Dispatcher.UIThread.RunJobs();
+
+        var crops = surface.Files.ReadText(Path.Combine(Local, Key.CropFileName));
+        Assert.Equal(0.5, PictureLift.Parse(crops));
+        Assert.Equal(0.5, surface.Store.LocalGamma(Key));
+
+        using (var stream = new MemoryStream(surface.Files.ReadBytes(Path.Combine(Local, Key.FileName))!))
+        using (var saved = new Bitmap(stream))
+        {
+            Assert.True(Blue(saved) > 140);
+        }
+
+        using (var stream = new MemoryStream(surface.Files.ReadBytes(Path.Combine(Local, Key.SourceFileName))!))
+        using (var kept = new Bitmap(stream))
+        {
+            Assert.True(Blue(kept) < 110);
+        }
+
+        window.Close();
+
+        surface.Files.Delete(Path.Combine(Captures, "capture-20261018-210900.jpg"));
+        surface.Nav.Drill(CodexPage.CropCrumb(Key, kept: true));
+        var (again, recrop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: true));
+        await Lifted(recrop);
+
+        Assert.True(Blue(Shown(recrop.Surface!)) > 140);
+
+        again.Close();
+    }
+
+    [AvaloniaFact]
+    public void AWindowCaptureAndAnOldCropFileAreNotBrightened()
+    {
+        var surface = new Surface();
+        surface.Capture("capture-20261018-210900", "2026-10-18T21:09:00Z", 2000, 1000, (101, 18));
+        surface.Work.Capture = Path.Combine(Captures, "capture-20261018-210900.jpg");
+
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: false));
+
+        Assert.True(Blue(Shown(crop.Surface!)) < 110);
+        window.Close();
+
+        surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
+        Assert.Null(surface.Store.LocalGamma(Key));
+    }
+
+    private static async Task Lifted(CodexCropPage page)
+    {
+        for (var i = 0; i < 250 && page.Surface is null; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(20);
+        }
+
+        Assert.NotNull(page.Surface);
+    }
+
+    private static Bitmap Shown(CropSurface surface) =>
+        (Bitmap)surface.GetVisualDescendants().OfType<Image>().First(image => image.Name == "CropPicture").Source!;
+
+    private static int Blue(Bitmap picture)
+    {
+        using var stream = new MemoryStream();
+        picture.Save(stream, new PngBitmapEncoderOptions());
+        stream.Position = 0;
+        using var copy = WriteableBitmap.Decode(stream);
+        using var locked = copy.Lock();
+        var row = new byte[4];
+        System.Runtime.InteropServices.Marshal.Copy(locked.Address + (locked.Size.Height / 2 * locked.RowBytes) + (locked.Size.Width / 2 * 4), row, 0, 4);
+
+        return row[0];
+    }
+
+    [AvaloniaFact]
     public async Task SavingWritesTheThreeFilesAndTheEntryPageThenShowsYourPicture()
     {
         var surface = new Surface();

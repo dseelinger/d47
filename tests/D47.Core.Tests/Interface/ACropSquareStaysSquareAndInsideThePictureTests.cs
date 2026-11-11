@@ -85,7 +85,7 @@ public class ACropSquareStaysSquareAndInsideThePictureTests
     {
         var square = new CropSquare(12, 34, 456);
 
-        Assert.Equal(square, CropSquare.Parse(square.Write()));
+        Assert.Equal(square, CropSquare.Parse(PictureLift.Write(square, null)));
         Assert.Null(CropSquare.Parse("not json"));
         Assert.Null(CropSquare.Parse("{}"));
     }

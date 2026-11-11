@@ -21,6 +21,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
     private TextBlock _floor = new();
     private TextBlock _status = new();
     private byte[]? _source;
+    private double? _gamma;
 
     /// <summary>Cuts from the kept source with its saved square when <paramref name="kept"/>, else from the capture in <paramref name="work"/>.</summary>
     public CodexCropPage(CodexPictureKey key, CodexPictureSet pictures, PanelNavigator nav, CodexPictureWork work, bool kept)
@@ -49,6 +50,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         Content = null;
         Surface = null;
         _source = null;
+        _gamma = null;
     }
 
     public string Summary => CodexPage.SummaryText;
@@ -70,6 +72,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         var square = Surface.Square;
         var key = _key;
         var source = _source;
+        var gamma = _gamma;
         var store = _pictures.Store;
 
         _save.IsEnabled = false;
@@ -79,12 +82,12 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         {
             var saved = await Task.Run(() =>
             {
-                if (CodexPictureCutter.Cut(source, square) is not { } picture)
+                if (CodexPictureCutter.Cut(source, square, gamma) is not { } picture)
                 {
                     return false;
                 }
 
-                store.SaveLocal(key, picture, source, square);
+                store.SaveLocal(key, picture, source, square, gamma);
 
                 return true;
             });
@@ -113,9 +116,37 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         Leave();
     }
 
-    private void Load()
+    private async void Load()
     {
         _source = _kept ? _pictures.Store.LocalSource(_key) : _work.Capture is { } path ? _pictures.CaptureBytes(path) : null;
+        _gamma = _kept ? _pictures.Store.LocalGamma(_key) : _work.Capture is { } captured ? _pictures.CaptureGamma(captured) : null;
+
+        var source = _source;
+        var gamma = _gamma;
+        Bitmap? picture;
+
+        if (source is not null && gamma is { } lift)
+        {
+            Content = CreditsKit.Message(CodexModel.BrighteningText);
+            picture = await Task.Run(() => CodexPictureCutter.DecodeLifted(source, lift));
+
+            if (!ReferenceEquals(source, _source))
+            {
+                picture?.Dispose();
+
+                return;
+            }
+        }
+        else
+        {
+            picture = Decode(source);
+        }
+
+        Build(picture);
+    }
+
+    private void Build(Bitmap? picture)
+    {
         _save = new Button { Name = "CodexCropSave", Content = "Save" };
         _save.Click += async (_, _) => await SaveAsync();
         _readout = CreditsKit.Mono(string.Empty, TypeScale.Small, ThemeManager.GreyKey, right: false);
@@ -126,7 +157,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         var cancel = new Button { Name = "CodexCropCancel", Content = "Cancel" };
         cancel.Click += (_, _) => Leave();
 
-        if (Decode(_source) is { } picture)
+        if (picture is not null)
         {
             var saved = _kept ? _pictures.Store.LocalCrop(_key) : null;
             Surface = new CropSurface(picture, saved ?? CropSquare.Start(picture.PixelSize.Width, picture.PixelSize.Height));
