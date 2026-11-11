@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Fleet › a ship's slot rows mark a slot with work left by a ► between the fitted module and the plan, in a column of its own. The Draw column shows the figure without "MW" (the header names the unit) and no longer clips it.
+
 Changed: Navigation › On this body names the species other Commanders reported for a genus you have not sampled, with its value, tagged REPORTED, and lists the genera Spansh reports on a body you have not mapped.
 
 Changed: "what biology is on this body" names the species other Commanders reported on the body, with their values and a count when above one, ahead of a prediction from its conditions. A genus nobody reported keeps its predicted species, and the note that the species are a prediction is said only when one is. A body you FSS-scanned but did not map names the genera and species reported for it, and a body only others reported is answered from that report with its total.

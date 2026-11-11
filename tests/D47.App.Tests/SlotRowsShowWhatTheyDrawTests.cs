@@ -16,7 +16,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The megawatts a slot row carries beside what is fitted and what is planned (#252).</summary>
+/// <summary>The megawatts a slot row carries (the header names the unit) beside what is fitted and what is planned (#252).</summary>
 public class SlotRowsShowWhatTheyDrawTests
 {
     private sealed record Surface(Window Window, PanelView Panel, ShipPlanService Ships);
@@ -87,7 +87,7 @@ public class SlotRowsShowWhatTheyDrawTests
 
         return row.GetVisualDescendants().OfType<TextBlock>()
             .Select(block => block.Text)
-            .LastOrDefault(text => text is { Length: > 0 } && text.EndsWith("MW", StringComparison.Ordinal));
+            .LastOrDefault(text => text is { Length: > 0 } && (char.IsDigit(text[^1])) && text.Any(char.IsDigit) && text.Contains('.'));
     }
 
     [AvaloniaFact]
@@ -97,7 +97,7 @@ public class SlotRowsShowWhatTheyDrawTests
 
         OpenTheShip(surface);
 
-        Assert.Equal("0.45 MW", DrawOn(surface.Panel, "Frame Shift Drive"));
+        Assert.Equal("0.45", DrawOn(surface.Panel, "Frame Shift Drive"));
 
         surface.Window.Close();
     }
@@ -129,8 +129,41 @@ public class SlotRowsShowWhatTheyDrawTests
         var reading = DrawOn(surface.Panel, "Frame Shift Drive");
 
         Assert.NotNull(reading);
-        Assert.StartsWith("~ ", reading, StringComparison.Ordinal);
-        Assert.NotEqual("~ 0.45 MW", reading);
+        Assert.StartsWith("~", reading, StringComparison.Ordinal);
+        Assert.NotEqual("~0.45", reading);
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ARowWithNoPlanHasNoArrow()
+    {
+        var surface = Open();
+
+        OpenTheShip(surface);
+
+        var texts = Row(surface.Panel, "Armour").GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text);
+
+        Assert.DoesNotContain("►", texts);
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AnUnmetPlanPutsTheArrowBetweenFittedAndPlanned()
+    {
+        var surface = Open();
+
+        OpenTheShip(surface);
+
+        var build = surface.Ships.Fleet().First(entry => entry.Build is not null).Build!;
+
+        surface.Ships.Plan(build.Id, new SlotPlan("FrameShiftDrive", "Increased FSD Range", 5));
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = Row(surface.Panel, "Frame Shift Drive").GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text).ToList();
+
+        Assert.Contains("►", texts);
 
         surface.Window.Close();
     }

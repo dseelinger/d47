@@ -959,11 +959,11 @@ public static class LoadoutPages
     /// <summary>The slot table's columns; the table id is shared by every ship.</summary>
     internal static IReadOnlyList<TableColumn> SlotColumns { get; } =
     [
-        new("Mark", ColumnFit.Fixed) { Fixed = 22 },
         new("Slot"),
         new("Current", ColumnFit.Fill),
+        new("Mark", ColumnFit.Fixed) { Fixed = 22 },
         new("Plan", ColumnFit.Fill),
-        new("Draw", ColumnFit.Fixed) { Fixed = 54 },
+        new("Draw", ColumnFit.Fixed) { Fixed = 60 },
     ];
 
     internal const string SlotTable = "Fleet.Slots";
@@ -977,9 +977,9 @@ public static class LoadoutPages
     /// </summary>
     internal static Control SlotHeader(TableLayout table)
     {
-        var cells = new List<Control> { new Border() };
+        var cells = new List<Control>();
 
-        foreach (var word in new[] { "SLOT", "CURRENT", "PLAN", "MW" })
+        foreach (var word in new[] { "SLOT", "CURRENT", string.Empty, "PLAN", "MW" })
         {
             var said = new TextBlock
             {
@@ -1011,13 +1011,12 @@ public static class LoadoutPages
     {
         var parts = row.Parts!;
 
-        // The dot: there is work left in this slot.
+        // The arrow: there is work left in this slot, between what is fitted and what is planned.
         var mark = ListRow.SecondaryInk(new TextBlock
         {
-            Text = "●",
+            Text = row.Marked ? "►" : string.Empty,
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
-            Opacity = row.Marked ? 1 : 0,
         });
 
 
@@ -1041,7 +1040,7 @@ public static class LoadoutPages
 
         var draw = DrawCell(parts.Draw);
 
-        var line = table.Row([mark, slot, current, plan, draw]);
+        var line = table.Row([slot, current, mark, plan, draw]);
 
         line.VerticalAlignment = VerticalAlignment.Center;
 
@@ -1105,10 +1104,17 @@ public static class LoadoutPages
     /// </summary>
     private static Control DrawCell(LoadoutDraw? draw) => ListRow.Aside(new TextBlock
     {
-        Text = draw is null ? string.Empty : draw.Modelled ? $"~ {draw.Reading}" : draw.Reading,
+        Text = draw is null ? string.Empty : draw.Modelled ? $"~{Figure(draw.Reading)}" : Figure(draw.Reading),
         VerticalAlignment = VerticalAlignment.Center,
         HorizontalAlignment = HorizontalAlignment.Right,
     });
+
+    private static string Figure(string reading)
+    {
+        var text = reading.StartsWith("~", StringComparison.Ordinal) ? reading[1..].TrimStart() : reading;
+
+        return text.EndsWith(" MW", StringComparison.Ordinal) ? text[..^3] : text;
+    }
 
     /// <summary>
     /// One side of a slot row, drawn: the module, then what was rolled on it, then as much of what the
