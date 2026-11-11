@@ -33,7 +33,7 @@ public sealed class BodyCodex(
 
     private readonly Dictionary<string, Bitmap?> _families = new(StringComparer.OrdinalIgnoreCase);
 
-    private readonly Dictionary<(string Species, long? EntryId, int? RegionId), Bitmap> _species = [];
+    private readonly Dictionary<(string Species, long? EntryId, int? RegionId), (Bitmap Bitmap, bool IsBodysOwnVariant)> _species = [];
 
     /// <summary>The Astronomical Bodies entry named the same as the body's sub-type, or null.</summary>
     public CodexEntry? EntryOf(BodyProfile body) =>
@@ -77,8 +77,8 @@ public sealed class BodyCodex(
             : Still(image, framed: true);
     }
 
-    /// <summary>The picture <see cref="SpeciesPicture.Choose(string, long?, int?, IReadOnlySet{CodexPictureKey}, IReadOnlyList{CodexPictureRow}, CodexTable)"/> picks for a species, or null.</summary>
-    public Bitmap? SpeciesBitmap(string species, long? entryId, int? regionId)
+    /// <summary>The species' picture and whether it is the picture of the body's own variant, or null when no variant has one.</summary>
+    public (Bitmap Bitmap, bool IsBodysOwnVariant)? SpeciesPictureOf(string species, long? entryId, int? regionId)
     {
         if (pictures is null)
         {
@@ -92,20 +92,37 @@ public sealed class BodyCodex(
             return held;
         }
 
-        var choice = SpeciesPicture.Choose(species, entryId, regionId, pictures.Store.LocalKeys(), pictures.Store.StockRows(), table)?.Picture;
-        var bitmap = choice switch
+        var choice = SpeciesPicture.Choose(species, entryId, regionId, pictures.Store.LocalKeys(), pictures.Store.StockRows(), table);
+        var bitmap = choice?.Picture switch
         {
             null => null,
-            { Source: CodexPictureSource.Local } => Decode(pictures.Store.Local(choice.Key)),
-            _ => Decode(pictures.Store.Stock(choice.Row!)),
+            { Source: CodexPictureSource.Local } picture => Decode(pictures.Store.Local(picture.Key)),
+            { } picture => Decode(pictures.Store.Stock(picture.Row!)),
         };
 
-        if (bitmap is not null)
+        if (bitmap is null)
         {
-            _species[key] = bitmap;
+            return null;
         }
 
-        return bitmap;
+        return _species[key] = (bitmap, choice!.IsBodysOwnVariant);
+    }
+
+    /// <summary>What CODEX › opens for a genus: the first of <paramref name="species"/> with a Codex entry, else the genus; null where this surface has no Codex.</summary>
+    public Action? OpenerFor(string genus, IReadOnlyList<SpeciesLine> species)
+    {
+        var entry = species
+            .Select(line => line.EntryId)
+            .OfType<long>()
+            .Select(id => table.All.FirstOrDefault(row => row.EntryId == id))
+            .FirstOrDefault(row => row is not null);
+
+        return (entry, openEntry, openGenus) switch
+        {
+            ({ } found, { } toEntry, _) => () => toEntry(found),
+            (_, _, { } toGenus) => () => toGenus(genus),
+            _ => null,
+        };
     }
 
     /// <summary>
@@ -120,14 +137,7 @@ public sealed class BodyCodex(
             .Select(id => table.All.FirstOrDefault(row => row.EntryId == id))
             .FirstOrDefault(row => row is not null);
 
-        Action? open = (entry, openEntry, openGenus) switch
-        {
-            ({ } found, { } toEntry, _) => () => toEntry(found),
-            (_, _, { } toGenus) => () => toGenus(genus),
-            _ => null,
-        };
-
-        if (open is null)
+        if (OpenerFor(genus, species) is not { } open)
         {
             return null;
         }

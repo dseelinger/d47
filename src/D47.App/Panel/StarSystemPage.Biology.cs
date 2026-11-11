@@ -5,7 +5,9 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
+using D47.App.Windowing;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -35,6 +37,9 @@ public sealed partial class StarSystemPage
 
     /// <summary>Marks a genus row on the Biology section.</summary>
     public const string GenusRowClass = "genus-row";
+
+    /// <summary>Names a genus row's picture button.</summary>
+    public const string SpeciesPictureButtonName = "SpeciesPictureButton";
 
     /// <summary>The most species a genus row names before "and N more".</summary>
     public const int MostSpeciesNamed = 3;
@@ -235,7 +240,7 @@ public sealed partial class StarSystemPage
 
         foreach (var genus in line.Genera)
         {
-            group.Children.Add(GenusRow(genus, region));
+            group.Children.Add(GenusRow(genus, region, line.BodyName));
         }
 
         return group;
@@ -349,16 +354,50 @@ public sealed partial class StarSystemPage
         return $"{count} lost when you logged a different species.";
     }
 
-    private Border GenusRow(GenusLine genus, int? region)
+    private void EnlargeSpecies(GenusLine genus, string bodyName, SpeciesLine species, (Avalonia.Media.Imaging.Bitmap Bitmap, bool IsBodysOwnVariant) picture)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+        {
+            return;
+        }
+
+        var dialog = new SpeciesPictureDialog(
+            genus.Genus.ToUpperInvariant(), bodyName, species.Species, picture.Bitmap, picture.IsBodysOwnVariant, Codex.Link(genus.Genus, genus.Species));
+
+        _ = dialog.Over(owner);
+    }
+
+    private Border GenusRow(GenusLine genus, int? region, string bodyName)
     {
         var first = genus.Species.Count > 0 ? genus.Species[0] : null;
 
         var square = new Border { Width = SpeciesSide, Height = SpeciesSide, ClipToBounds = true, VerticalAlignment = VerticalAlignment.Center };
         ThemeInk.Bind(square, Border.BackgroundProperty, ThemeManager.SlabKey);
 
-        if (first is not null && Codex.SpeciesBitmap(first.Species, first.EntryId, region) is { } bitmap)
+        var picture = first is null ? null : Codex.SpeciesPictureOf(first.Species, first.EntryId, region);
+
+        if (picture is { } chosen)
         {
-            square.Child = new Image { Source = bitmap, Width = SpeciesSide, Height = SpeciesSide, Stretch = Stretch.UniformToFill };
+            square.Child = new Image { Source = chosen.Bitmap, Width = SpeciesSide, Height = SpeciesSide, Stretch = Stretch.UniformToFill };
+        }
+
+        Control pictureCell = square;
+
+        if (picture is { } shown && first is not null)
+        {
+            var press = new Button
+            {
+                Name = SpeciesPictureButtonName,
+                Content = square,
+                Padding = default,
+                Width = SpeciesSide,
+                Height = SpeciesSide,
+                Background = Brushes.Transparent,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Avalonia.Automation.AutomationProperties.SetName(press, $"Enlarge, {first.Species}");
+            press.Click += (_, _) => EnlargeSpecies(genus, bodyName, first, shown);
+            pictureCell = press;
         }
 
         var name = Ellipsed(genus.Genus, TypeScale.ControlLarge, FontWeight.Bold, ThemeManager.WhiteKey);
@@ -398,7 +437,7 @@ public sealed partial class StarSystemPage
             ColumnDefinitions = new ColumnDefinitions($"{SpeciesSide.ToString(CultureInfo.InvariantCulture)},150,*,Auto,Auto"),
             ColumnSpacing = 16,
         };
-        Cell(grid, 0, square);
+        Cell(grid, 0, pictureCell);
         Cell(grid, 1, name);
         Cell(grid, 2, described);
         Cell(grid, 3, progress);

@@ -14,6 +14,8 @@ Changed: D47 now keeps the biology Commanders have surveyed in each system, and 
 
 Changed: D47 now remembers the colour variant of each organic sample, and keeps a set lost to a specimen of another species on the body it was taken on until you log that genus there again. Both survive a restart; older saved files load with no variant and no lost sets.
 
+Added: pressing a genus row's picture on Search › System › Biology shows it whole in a dialog titled with the species, with CODEX › and CLOSE. When the picture is another colour variant's, the dialog says "A likely colour. Not yet sampled here." A row with no picture does not press.
+
 Changed: Navigation › Bookmarks draws each bookmark with its kind, place, system, date and note, and SET COURSE, EDIT and DELETE tiles. ADD and EDIT open pages with a Location field that lists matching systems, bodies and stations as you type (with Spansh on), a USE MY TARGET button, a name and a one-line note. SET COURSE plots to the bookmark's system. The Rename prompt is gone from the page; renaming by voice is unchanged.
 
 Added: the Exobiology card on Navigation › Plan has a "Most credits per scan" checkbox, off by default. Checked, it asks for `credits_per_scan`, so the stops are the systems that pay the most for each species scanned.
