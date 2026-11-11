@@ -22,6 +22,7 @@ internal sealed class HullPicture : Grid
     private static HullPictureSize _size = HullPictureSize.Beside;
 
     private readonly string? _hull;
+    private readonly bool _stacked;
 
     private readonly Control? _beside;
     private readonly Image _fitted = new()
@@ -47,10 +48,11 @@ internal sealed class HullPicture : Grid
     private HullMesh? _mesh;
     private HullPose? _pose;
 
-    internal HullPicture(string? hull, Control? beside)
+    internal HullPicture(string? hull, Control? beside, bool stacked = false)
     {
         _hull = hull;
         _beside = beside;
+        _stacked = stacked;
 
         _frame = new Border
         {
@@ -109,6 +111,23 @@ internal sealed class HullPicture : Grid
 
         return new HullPicture(hull, beside);
     }
+
+    /// <summary>The picture over <paramref name="beside"/> whatever the size choice says, for a side column.</summary>
+    internal static HullPicture Side(string? hull, Control beside)
+    {
+        ShipArtStore.Want(hull);
+
+        return new HullPicture(hull, beside, stacked: true);
+    }
+
+    /// <summary>The size choice.</summary>
+    internal static HullPictureSize Size => _size;
+
+    /// <summary>Raised when a picture's size marks change the size choice.</summary>
+    internal static event Action? SizeChosen;
+
+    /// <summary>Whether a hull has a still or a mesh to draw.</summary>
+    internal static bool Drawable(string? hull) => ShipArt.Close4K(hull) is not null || ShipArt.Mesh(hull) is not null;
 
     private void Landed(string symbol) => Dispatcher.UIThread.Post(() =>
     {
@@ -174,7 +193,7 @@ internal sealed class HullPicture : Grid
             picture = _column;
         }
 
-        if (_size == HullPictureSize.Beside && _beside is not null)
+        if (_size == HullPictureSize.Beside && _beside is not null && !_stacked)
         {
             ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
             ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
@@ -235,6 +254,7 @@ internal sealed class HullPicture : Grid
         _size = size;
 
         Lay();
+        SizeChosen?.Invoke();
     }
 
     /// <summary>The marks strip, the turnable hull and the hint line under it.</summary>

@@ -259,13 +259,15 @@ public sealed class ShipsMode(
     /// <summary>What this ship is, where it is, and what it can do (remediation.md 13, item 2).</summary>
     public string? HullOf(string item) => Resolve(item)?.Hull;
 
-    public IReadOnlyList<LoadoutLine> Details(string item)
-    {
-        if (Resolve(item) is not { } build)
-        {
-            return [];
-        }
+    public IReadOnlyList<LoadoutLine> Details(string item) =>
+        Resolve(item) is { } build ? [.. Location(build), .. Hull(build), .. Flying(build)] : [];
 
+    public (IReadOnlyList<LoadoutLine> Build, IReadOnlyList<LoadoutLine> Ship) DetailsApart(string item) =>
+        Resolve(item) is { } build ? ([.. Location(build), .. Flying(build)], Hull(build)) : ([], []);
+
+    /// <summary>Where the ship is: the lines before the hull's own figures.</summary>
+    private List<LoadoutLine> Location(ShipBuild build)
+    {
         var entry = ships.Fleet().FirstOrDefault(candidate => candidate.Build?.Id == build.Id);
         var lines = new List<LoadoutLine>();
 
@@ -293,9 +295,6 @@ public sealed class ShipsMode(
         {
             lines.Add(new LoadoutLine(entry.Sold ? "Sold." : "Not bought yet.", LoadoutTone.Body));
         }
-
-        lines.AddRange(Hull(build));
-        lines.AddRange(Flying(build));
 
         return lines;
     }

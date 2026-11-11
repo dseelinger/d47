@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: A ship's page keeps its talk, figures, To buy, Plan and slot table in one column at most 900px wide. On a pane at least 1000px wide with the picture set to BESIDE, the picture and the hull's figures sit in a 400px column to the right; otherwise the picture is beside or above the figures inside the 900px column. The headset and mini panels are unchanged.
+
 Changed: Fleet › a ship's slot rows mark a slot with work left by a ► between the fitted module and the plan, in a column of its own. The Draw column shows the figure without "MW" (the header names the unit) and no longer clips it.
 
 Changed: On a story run's page, **Play** on a line plays it through the run player, so it can be paused and stopped and silences other speech; the per-line **Play all** is now **Play from here**.

@@ -310,7 +310,7 @@ neither plan is moved.
 
 ### What is left to buy
 
-A ship's page has a **To buy** block between the hull's figures and **Plan** while its plan still needs
+A ship's page has a **To buy** block between the ship's figures and **Plan** while its plan still needs
 something bought: the hull, if you do not own it yet, and each planned module that is neither fitted in
 its slot nor in module storage. It names three items and counts the rest. **Plot a route to buy them**
 plots a route from your system and opens it on Navigation › Plan. Opening module storage takes what you have stored off the
@@ -343,9 +343,11 @@ turntable, and nothing is fetched — even for a hull whose files are already in
 files themselves stay on disk; the setting only stops them being shown. Offline behaves the same
 way without the setting: nothing new arrives, and the log says why.
 
-**Three sizes, above the picture.** Half the pane with the ship's own figures beside it, which is
-where it opens; the width of the pane, with the figures under it; and the whole window. The size
-you last chose is the size the next ship opens at.
+**Three sizes, above the picture.** Beside is where it opens: on a pane at least 1000 pixels wide, a
+column 400 pixels wide sits to the right of the build, with the picture and, under it, the hull's
+figures; on a narrower pane the picture takes half the width with the figures beside it. Wide is the
+width of the build column, with the figures under the picture. The third is the whole window. The build is
+at most 900 pixels wide in every size. The size you last chose is the size the next ship opens at.
 
 **The whole window is a picture you can get into.** The wheel zooms where you are pointing,
 dragging moves it, a double click fits it again, and Escape puts it back. It stops at one image

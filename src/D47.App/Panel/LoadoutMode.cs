@@ -312,6 +312,9 @@ public interface ILoadoutMode
     /// <summary>What the item is, under the summary line (remediation.md 13, item 2).</summary>
     IReadOnlyList<LoadoutLine> Details(string item);
 
+    /// <summary><see cref="Details"/> with the hull's own figures apart, for a side column; the default has none.</summary>
+    (IReadOnlyList<LoadoutLine> Build, IReadOnlyList<LoadoutLine> Ship) DetailsApart(string item) => (Details(item), []);
+
     /// <summary>
     /// The gauges at the head of this item's slot list, or empty for a mode with none (Phase 38).
     /// </summary>

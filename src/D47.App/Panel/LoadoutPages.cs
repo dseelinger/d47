@@ -672,7 +672,7 @@ public static class LoadoutPages
     /// Lines in order, with each run of lines that carry figures laid as one grid of stat tiles and the
     /// rest drawn as <see cref="Stepped"/> does.
     /// </summary>
-    internal static IEnumerable<Control> Figures(IEnumerable<LoadoutLine> lines, Func<string, Task<bool>>? copy)
+    internal static IEnumerable<Control> Figures(IEnumerable<LoadoutLine> lines, Func<string, Task<bool>>? copy, int maxColumns = 3)
     {
         var tiles = new List<Control>();
 
@@ -686,7 +686,7 @@ public static class LoadoutPages
 
             if (tiles.Count > 0)
             {
-                yield return StatTile.Grid([.. tiles], maxColumns: 3);
+                yield return StatTile.Grid([.. tiles], maxColumns: maxColumns);
                 tiles = [];
             }
 
@@ -695,7 +695,7 @@ public static class LoadoutPages
 
         if (tiles.Count > 0)
         {
-            yield return StatTile.Grid([.. tiles], maxColumns: 3);
+            yield return StatTile.Grid([.. tiles], maxColumns: maxColumns);
         }
     }
 
@@ -1679,6 +1679,24 @@ public sealed class ItemPage : LoadoutPage
 
     private BuildTalkSection? _talk;
 
+    /// <summary>The widest the desktop build column is.</summary>
+    internal const double BuildWidth = 900;
+
+    /// <summary>The side column beside the build column, and the gap between them.</summary>
+    internal const double SideWidth = 400;
+
+    internal const double SideGap = 32;
+
+    /// <summary>The narrowest scroller that gets a side column.</summary>
+    internal const double SideNeeds = 1000;
+
+    private readonly Grid _page = new();
+    private readonly StackPanel _build;
+    private readonly ScrollViewer _scroller;
+    private Control? _side;
+    private double _scrollWidth;
+    private bool _twoColumns;
+
     /// <summary>What the page is about: the screen title.</summary>
     private readonly TextBlock _title = TitleText.Style(
         new TextBlock { TextWrapping = TextWrapping.Wrap },
@@ -1758,7 +1776,21 @@ public sealed class ItemPage : LoadoutPage
         root.Children.Add(_summary);
         root.Children.Add(actions);
         root.Children.Add(say);
-        root.Children.Add(LoadoutPages.Scrolling(new StackPanel { Children = { _talkSlot, _list } }));
+
+        _build = new StackPanel { Children = { _talkSlot, _list } };
+        _scroller = LoadoutPages.Scrolling(_page);
+        root.Children.Add(_scroller);
+
+        // Decided from the scroller's width rather than the content's, so the layout does not feed itself.
+        _scroller.SizeChanged += (_, size) =>
+        {
+            _scrollWidth = size.NewSize.Width;
+
+            if (_twoColumns != SideFits())
+            {
+                Dispatcher.UIThread.Post(Refresh);
+            }
+        };
 
         // The page, with a layer above it for the thing being carried.
         _overlay = new Canvas { IsHitTestVisible = false };
@@ -1766,6 +1798,75 @@ public sealed class ItemPage : LoadoutPage
         Content = new Avalonia.Controls.Panel { Children = { root, _overlay } };
 
         Refresh();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        HullPicture.SizeChosen += OnSizeChosen;
+        ShipArtStore.Arrived += ArtArrived;
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnDetachedFromVisualTree(e);
+
+        HullPicture.SizeChosen -= OnSizeChosen;
+        ShipArtStore.Arrived -= ArtArrived;
+    }
+
+    private void OnSizeChosen() => Dispatcher.UIThread.Post(() =>
+    {
+        if (_twoColumns != SideFits())
+        {
+            Refresh();
+        }
+    });
+
+    private void ArtArrived(string symbol) => Dispatcher.UIThread.Post(() =>
+    {
+        if (string.Equals(symbol, ShipArt.Symbol(Mode.HullOf(_item)), StringComparison.Ordinal)
+            && _twoColumns != SideFits())
+        {
+            Refresh();
+        }
+    });
+
+    /// <summary>The headset panel and the mini panel keep their layout.</summary>
+    private bool Capped => !Mini && this.FindAncestorOfType<PanelView>()?.Classes.Contains("headset") != true;
+
+    /// <summary>Whether this page has a picture to draw in a side column, on a scroller wide enough for one.</summary>
+    private bool SideFits() =>
+        Capped
+        && _scrollWidth >= SideNeeds
+        && HullPicture.Size == HullPictureSize.Beside
+        && Mode.Pictures
+        && Mode.HullOf(_item) is { Length: > 0 } hull
+        && HullPicture.Drawable(hull);
+
+    /// <summary>The build column, capped at <see cref="BuildWidth"/>, with the side column to its right when there is one.</summary>
+    private void Arrange()
+    {
+        _page.Children.Clear();
+        _page.ColumnDefinitions.Clear();
+
+        _page.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star)
+        {
+            MaxWidth = Capped ? BuildWidth : double.PositiveInfinity,
+        });
+
+        _page.Children.Add(_build);
+
+        if (_side is { } side)
+        {
+            _page.ColumnDefinitions.Add(new ColumnDefinition(SideGap, GridUnitType.Pixel));
+            _page.ColumnDefinitions.Add(new ColumnDefinition(SideWidth, GridUnitType.Pixel));
+
+            side.VerticalAlignment = VerticalAlignment.Top;
+            Grid.SetColumn(side, 2);
+            _page.Children.Add(side);
+        }
     }
 
     /// <summary>
@@ -1858,6 +1959,15 @@ public sealed class ItemPage : LoadoutPage
 
     protected override void Refresh()
     {
+        _side = null;
+        _twoColumns = false;
+
+        Draw();
+        Arrange();
+    }
+
+    private void Draw()
+    {
         _list.Children.Clear();
 
         var title = Mode.Title(_item);
@@ -1910,9 +2020,26 @@ public sealed class ItemPage : LoadoutPage
         // What the ship is, before what is in it (remediation.md 13, item 2).
         var facts = new StackPanel { Spacing = 6 };
 
+        _twoColumns = roomy && SideFits();
+
+        IReadOnlyList<LoadoutLine> build = [];
+        IReadOnlyList<LoadoutLine> ship = [];
+
+        if (roomy)
+        {
+            if (_twoColumns)
+            {
+                (build, ship) = Mode.DetailsApart(_item);
+            }
+            else
+            {
+                build = Mode.Details(_item);
+            }
+        }
+
         // Stepped rather than Line, for the copy glyph a whereabouts line carries: the system a ship is parked in
         // goes on the clipboard from here, to be pasted into the Galaxy Map.
-        facts.Children.AddRange(LoadoutPages.Figures(roomy ? Mode.Details(_item) : [], _copy));
+        facts.Children.AddRange(LoadoutPages.Figures(build, _copy));
 
         // Power and jump range, at the head of the slot list and under the hull's own figures (Phase 38).
         if (roomy && Mode.Power(_item) is { } power)
@@ -1925,9 +2052,19 @@ public sealed class ItemPage : LoadoutPage
             facts.Children.Add(LoadoutPages.Gauge(gauge));
         }
 
-        _list.Children.Add(roomy && Mode.Pictures && Mode.HullOf(_item) is { Length: > 0 } hull
-            ? HullPicture.For(hull, facts)
-            : facts);
+        if (_twoColumns && Mode.HullOf(_item) is { } sideHull)
+        {
+            var figures = new StackPanel { Spacing = 6 };
+            figures.Children.AddRange(LoadoutPages.Figures(ship, _copy, maxColumns: 2));
+            _side = HullPicture.Side(sideHull, figures);
+            _list.Children.Add(facts);
+        }
+        else
+        {
+            _list.Children.Add(roomy && Mode.Pictures && Mode.HullOf(_item) is { Length: > 0 } hull
+                ? HullPicture.For(hull, facts)
+                : facts);
+        }
 
         if (roomy && Mode.ToBuy(_item) is { } toBuy)
         {
