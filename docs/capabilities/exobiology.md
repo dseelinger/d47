@@ -155,6 +155,7 @@ are at.
 > "what did the scan find here"
 > "how much exobiology data am I carrying"
 > "reset unsold exobiology"
+> "what's left to sample"
 
 Two halves, from two different sources, answering two different questions. Keeping them apart is the
 whole design — because one of them can quote a figure for a species and the other can only give a range.
@@ -363,6 +364,18 @@ of it, most first, from Canonn.
 
 ```json
 {"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the body the Commander is at, else the targeted body, or else the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
+```
+
+#### `get_biology_left_in_system`
+
+What is left to sample in the system you are in: up to three genera that surface scans named and no
+completed set covers, open sets first with their count such as "Bacterium Tela, 2 of 3", then a count of
+the rest. Bodies with biological signals and no surface scan are said as not mapped. With no scan of the
+system on record it says so rather than saying nothing is left. "What's left to sample" and "what is
+left to sample" reach it without the model.
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
 ```
 
 #### `get_sampling_progress`

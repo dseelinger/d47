@@ -15,6 +15,8 @@ public static class ExobiologyCapability
 
     public const string EarlierFindsTool = "get_earlier_finds";
 
+    public const string LeftInSystemTool = "get_biology_left_in_system";
+
     /// <param name="routes">
     /// Null where nothing composed one — under the designer, and in a test that is not about it.
     /// </param>
@@ -50,6 +52,7 @@ public static class ExobiologyCapability
             "how much exobiology data am I carrying",
             "reset unsold exobiology",
             "what has been found on this body",
+            "what's left to sample",
         ],
         // Each names its tool (#161). "exobiology route" asks for a route and used to be answered with what
         // the scanner found on the body underneath, which is the tool declared first rather than the one the
@@ -67,6 +70,8 @@ public static class ExobiologyCapability
             new("what has been found on this body", EarlierFindsTool),
             new("what has been found here", EarlierFindsTool),
             new("earlier finds on this body", EarlierFindsTool),
+            new("what's left to sample", LeftInSystemTool),
+            new("what is left to sample", LeftInSystemTool),
         ],
         Tools =
         [
@@ -117,6 +122,21 @@ public static class ExobiologyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     EarlierAsync(commander(), status?.Invoke().Destination, settings, community, earlier, arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = LeftInSystemTool,
+                Exercise =
+                    "In a system where you have scanned bodies with biology, say \"what's left to sample\". The "
+                    + "reply names up to three genera still to sample, open sets first with their count such as "
+                    + "\"2 of 3\", then a count of the rest, and says which bodies are not mapped. With no scan of "
+                    + "the system on record it says so.",
+                Description =
+                    "What is left to sample across the system the Commander is in: the genera that surface scans "
+                    + "named and no completed set covers, with open sets first and their count. Bodies with "
+                    + "biological signals and no surface scan are said as not mapped.",
+                Parameters = [],
+                Handler = (_, _) => Task.FromResult(ToolResult.Ok(LeftInSystem(commander()))),
             },
             new ToolDefinition
             {
@@ -401,6 +421,109 @@ public static class ExobiologyCapability
         return ToolResult.Ok(
             $"Commanders have logged {total} earlier find{(total == 1 ? "" : "s")} on {shortName}: "
             + string.Join(", ", variants.Select(group => $"{group.Key} {group.Count()}")) + ".");
+    }
+
+    // ------------------------------------------------------ left in the system
+
+    private const int MostGeneraNamed = 3;
+
+    private static string LeftInSystem(CommanderGameState? state)
+    {
+        if (state is null)
+        {
+            return "No Elite Dangerous journal has been detected yet.";
+        }
+
+        if (state.Location.SystemAddress is not { } address)
+        {
+            return "I do not know which system you are in, so I cannot say what is left to sample.";
+        }
+
+        var system = state.Location.StarSystem;
+        var here = state.Bodies.All.Where(body => body.SystemAddress == address).ToList();
+
+        if (here.Count == 0)
+        {
+            return "I have no scan of this system on record, so I cannot say what is left to sample.";
+        }
+
+        var left = new List<(string Body, string Text, int Taken)>();
+        var unmapped = new List<(string Body, int Signals)>();
+
+        foreach (var body in here)
+        {
+            var name = BiologyCallout.Short(body.BodyName, system);
+
+            if (body.Source != BodySignalSource.SurfaceScan)
+            {
+                if (body.BiologicalCount > 0)
+                {
+                    unmapped.Add((name, body.BiologicalCount));
+                }
+
+                continue;
+            }
+
+            var sampled = body.BodyId is { } bodyId ? state.Sampling.On(address, bodyId) : null;
+
+            foreach (var genus in body.Genera)
+            {
+                var progress = sampled?.Genera.GetValueOrDefault(genus);
+
+                if (progress is { Complete: true })
+                {
+                    continue;
+                }
+
+                var taken = progress?.Taken ?? 0;
+
+                left.Add(taken > 0
+                    ? (name, $"{progress!.Species ?? genus}, {taken} of {GenusProgress.Required}", taken)
+                    : (name, genus, 0));
+            }
+        }
+
+        var ordered = left.OrderByDescending(entry => entry.Taken > 0).ToList();
+        var report = new StringBuilder();
+
+        if (ordered.Count == 0)
+        {
+            report.Append(unmapped.Count == 0 && !here.Any(body => body.HasBiology)
+                ? "No biology on record in this system."
+                : "Everything mapped in this system is sampled.");
+        }
+        else
+        {
+            var named = ordered.Take(MostGeneraNamed).ToList();
+            var rest = ordered.Skip(MostGeneraNamed).ToList();
+
+            report.Append("Left to sample: ");
+            report.Append(string.Join("; ", named.Select(entry => $"{entry.Text} on {entry.Body}")));
+
+            if (rest.Count > 0)
+            {
+                var bodies = rest.Select(entry => entry.Body).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+
+                report.Append($", and {rest.Count} more on {bodies} bod{(bodies == 1 ? "y" : "ies")}");
+            }
+
+            report.Append('.');
+        }
+
+        if (unmapped.Count > 0)
+        {
+            var shown = unmapped.Take(MostGeneraNamed)
+                .Select(entry => $"{entry.Body} with {entry.Signals} biological signal{(entry.Signals == 1 ? "" : "s")}")
+                .ToList();
+
+            report.Append(
+                $" {unmapped.Count} bod{(unmapped.Count == 1 ? "y is" : "ies are")} not mapped: "
+                + string.Join(", ", shown)
+                + (unmapped.Count > MostGeneraNamed ? $", and {unmapped.Count - MostGeneraNamed} more" : string.Empty)
+                + ".");
+        }
+
+        return report.ToString();
     }
 
     // ----------------------------------------------------------- the sampling
