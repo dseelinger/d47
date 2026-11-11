@@ -81,7 +81,7 @@ public class ANpcThatRepeatsItselfQuipsThenGoesQuietTests
     }
 
     [Fact]
-    public void ASecondLineReachingThreeAfterTheQuipIsMutedWithoutAQuip()
+    public void EveryLineFromASpeakerAfterTheQuipGivesNothing()
     {
         var reader = Reader();
 
@@ -90,11 +90,53 @@ public class ANpcThatRepeatsItselfQuipsThenGoesQuietTests
             reader.Read(Said(Liner, Line, Start.AddSeconds(i)));
         }
 
-        const string other = "$CruiseLiner_SCPatrol02;";
+        for (var n = 2; n <= 10; n++)
+        {
+            Assert.Null(reader.Read(Said(Liner, $"$CruiseLiner_SCPatrol{n:00};", Start.AddSeconds(10 + n))));
+        }
+    }
 
-        Assert.True(IsCanned(reader.Read(Said(Liner, other, Start.AddSeconds(10)))));
-        Assert.True(IsCanned(reader.Read(Said(Liner, other, Start.AddSeconds(11)))));
-        Assert.Null(reader.Read(Said(Liner, other, Start.AddSeconds(12))));
+    [Fact]
+    public void ATenLinePatrolSpeaksEightLinesThenQuipsThenGoesQuiet()
+    {
+        var reader = Reader();
+        const string patrol = "$ShipName_Military_Independent;";
+
+        for (var i = 0; i < 8; i++)
+        {
+            Assert.True(IsCanned(reader.Read(Said(patrol, $"$Military_Passthrough{i + 1:00};", Start.AddSeconds(i)))));
+        }
+
+        reader.Read(Said(patrol, "$Military_Passthrough01;", Start.AddSeconds(20)));
+        var quip = reader.Read(Said(patrol, "$Military_Passthrough01;", Start.AddSeconds(21)));
+        Assert.True(IsQuip(quip));
+        Assert.Null(reader.Read(Said(patrol, "$Military_Passthrough09;", Start.AddSeconds(22))));
+        Assert.Null(reader.Read(Said(patrol, "$Military_Passthrough10;", Start.AddSeconds(23))));
+    }
+
+    [Fact]
+    public void ASecondSpeakerIsUnaffectedByTheFirstSpeakersQuip()
+    {
+        var reader = Reader();
+
+        for (var i = 0; i < 3; i++)
+        {
+            reader.Read(Said(Liner, Line, Start.AddSeconds(i)));
+        }
+
+        Assert.True(IsCanned(reader.Read(Said("$ShipName_CruiseLiner2;", "$CruiseLiner_SCPatrol05;", Start.AddSeconds(5)))));
+    }
+
+    [Fact]
+    public void ALineSaidDuringTheStartupReplayIsCountedButNeverAnnounced()
+    {
+        var reader = Reader();
+        var primed = new CalloutContext(
+            Start, IsPriming: true, null, GameStatus.Unknown, new NavRoute(),
+            [Said(Liner, Line, Start), Said(Liner, Line, Start.AddSeconds(1)), Said(Liner, Line, Start.AddSeconds(2))]);
+
+        Assert.Empty(reader.Examine(primed));
+        Assert.Null(reader.Read(Said(Liner, "$CruiseLiner_SCPatrol07;", Start.AddSeconds(10))));
     }
 
     [Fact]
@@ -203,6 +245,9 @@ public class ANpcThatRepeatsItselfQuipsThenGoesQuietTests
         Assert.NotNull(brief);
         Assert.Equal(CannedSpeakers.For("Pirate"), brief.Speaker);
         Assert.Contains(quip!.RepeatedLine!, brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("lightly humorous", brief.Instruction, StringComparison.Ordinal);
+        Assert.DoesNotContain("dry", brief.Instruction, StringComparison.Ordinal);
+        Assert.True(new RewordChance().ShouldReword(quip, 0));
         Assert.Null(FlavourBriefs.For(quip, personalityEnabled: false));
     }
 }

@@ -10,7 +10,7 @@ internal enum RepeatVerdict
 
 /// <summary>
 /// Counts each speaker's canned lines on journal time. A line is spoken twice, the third time the speaker
-/// quips (once per speaker), and from then on the line is muted. A speaker's counts are cleared after
+/// quips (once per speaker), and from then on every line from that speaker is muted. A speaker's counts are cleared after
 /// <see cref="Quiet"/> without a canned line, and on <see cref="Clear"/>.
 /// </summary>
 internal sealed class RepeatedLines
@@ -35,6 +35,11 @@ internal sealed class RepeatedLines
             held ??= _speakers[speaker] = new Speaker();
             held.Last = at;
 
+            if (held.Quipped)
+            {
+                return RepeatVerdict.Mute;
+            }
+
             var times = held.Counts.GetValueOrDefault(line) + 1;
             held.Counts[line] = times;
 
@@ -43,7 +48,7 @@ internal sealed class RepeatedLines
                 return RepeatVerdict.Speak;
             }
 
-            if (times == SpokenTimes + 1 && !held.Quipped)
+            if (times == SpokenTimes + 1)
             {
                 held.Quipped = true;
                 return RepeatVerdict.Quip;

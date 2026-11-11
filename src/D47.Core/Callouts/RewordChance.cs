@@ -10,7 +10,7 @@ public sealed class RewordChance(Random? choice = null)
 
     /// <summary>
     /// True if this announcement should be reworded. An ambient remark, a narration, a promotion, a domain remark, a recap, a line
-    /// carrying a story aside and a canned line from the Commander's own carrier always are; every other line is decided
+    /// carrying a story aside and a canned line from the Commander's own carrier and a speaker's remark on repeating itself always are; every other line is decided
     /// independently against <paramref name="rewordPercent"/> (0-100, clamped).
     /// </summary>
     public bool ShouldReword(Announcement announcement, int rewordPercent)
@@ -26,6 +26,7 @@ public sealed class RewordChance(Random? choice = null)
             || announcement.StoryAside is not null
             || announcement.Liaison is not null
             || announcement.Arc is not null
+            || announcement.Key.StartsWith(IncomingMessages.QuipKeyPrefix, StringComparison.Ordinal)
             || string.Equals(announcement.Key, IncomingMessages.CarrierCannedKey, StringComparison.Ordinal)
             || _choice.Next(100) < Math.Clamp(rewordPercent, 0, 100);
     }

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: an NPC that remarks on repeating itself now stays silent, whatever it says next, until it has sent no canned line for five minutes or you jump. The remark is lightly humorous and always reworded by your language model when personality is on, and a restart of d47 no longer resets what an NPC has already said.
+
 Changed: saying "route" opens Navigation › Plan › Progress on every surface, the headset's mini panel included. The Engineers Route page answers to "engineers route" or "engineer route".
 
 Fixed: the headset's mini panel and the flat overlay keep the transcript at its newest line until you ask otherwise. Following is no longer worked out from where the page happens to be scrolled; only a spoken scroll or a scrollbar drag stops it, and "newest", the new "tail", or a scroll that reaches the newest end starts it again.

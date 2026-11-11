@@ -167,8 +167,8 @@ public static class FlavourBriefs
                 Speaker = CannedSpeakers.For(announcement.Key[IncomingMessages.QuipKeyPrefix.Length..]),
                 Instruction =
                     "You have just said the same line to the pilot several times now: "
-                    + $"\"{announcement.RepeatedLine}\" Say one short, dry sentence, in character, admitting that you "
-                    + "keep repeating yourself and are done with it. Do not say the line again. Mention no game, "
+                    + $"\"{announcement.RepeatedLine}\" Say one short, lightly humorous sentence, in character, admitting that you "
+                    + "keep repeating yourself and saying that you will stop. Do not say the line again. Mention no game, "
                     + "script, developer or AI. Do not ask a question and do not address anyone by name.",
                 NeedsPersona = false,
                 NeedsGameState = false,

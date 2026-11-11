@@ -73,11 +73,11 @@ public sealed partial class IncomingMessages : ICallout
 
     private static readonly string[] QuipLines =
     [
-        "That is the third time I have said that. I think you have the picture.",
-        "You know, I keep repeating myself. I will leave it there.",
-        "I have said that three times now. Nothing has changed, so I will stop.",
-        "Same line again. I can hear myself, so I will give it a rest.",
-        "At this point you could say it with me. I will stay quiet now.",
+        "I'm sure you're as tired of hearing that as I am of saying it, so I'll stop.",
+        "That's the third time I've said that. I'd say you have the picture, so I'll hush.",
+        "I keep repeating myself. Somebody should really stop me, so I'll do it myself.",
+        "Same line again. I'm beginning to bore even me, so I'll give it a rest.",
+        "At this point you could say it with me. I'll leave the rest to you.",
     ];
 
     /// <summary>
@@ -110,9 +110,26 @@ public sealed partial class IncomingMessages : ICallout
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
-        // Never from the backlog.
-        if (context.IsPriming || !Enabled())
+        if (!Enabled() || (context.IsPriming && context.AnotherFlying))
         {
+            yield break;
+        }
+
+        // The startup replay of the current journal is counted and never announced.
+        if (context.IsPriming)
+        {
+            foreach (var replayed in context.Events)
+            {
+                if (replayed.Kind is "FSDJump" or "CarrierJump")
+                {
+                    repeats.Clear();
+                }
+                else if (replayed.Kind is "ReceiveText")
+                {
+                    _ = ReadCore(replayed);
+                }
+            }
+
             yield break;
         }
 
