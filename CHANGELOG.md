@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: "what biology is on this body" names the species other Commanders reported on the body, with their values and a count when above one, ahead of a prediction from its conditions. A genus nobody reported keeps its predicted species, and the note that the species are a prediction is said only when one is. A body you FSS-scanned but did not map names the genera and species reported for it, and a body only others reported is answered from that report with its total.
+
 Fixed: a ship sold while D47 was closed no longer shows as both owned and not bought. Its page reads "sold" and offers Delete this ship, which also removes what its plan put on the checklist; Copy as SLEF is not offered. Nothing changes until D47 has read your fleet.
 
 Added: Search › System has a fifth section, Biology. For the system shown, it lists each body with biological signals, its distance and how many genera are done, and under each body every genus with a picture, the species (sampled, reported by Spansh, or possible for the body's conditions), the sampling state and a CODEX › tile. Bodies with work left, or the body you are on, start open; a body you open or close stays that way for the session. A body not yet mapped says to map it, and a system with no scan on record says how to get one. The section also lists bodies Spansh reports biology on that you have not scanned, with each body's type and value and each species' count and value, and a system with no scan on record still shows what Spansh reports. The section updates as you take samples.

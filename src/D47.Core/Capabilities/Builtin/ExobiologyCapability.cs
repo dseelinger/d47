@@ -83,13 +83,15 @@ public static class ExobiologyCapability
                 Exercise =
                     "In a system where you have scanned a body with a detailed surface scan, ask D47 what biology "
                     + "is on it. The reply gives the number of biological signals and the genera. A mapped body also "
-                    + "lists the species its conditions allow, with their values.",
+                    + "lists the species of each genus, with their values: those other Commanders reported on the body "
+                    + "first, else the ones its conditions allow.",
                 Description =
                     "What the Commander's own detailed surface scan found on a body: how many "
                     + "biological signals, which genera, and what else is down there. This is the "
                     + "game's own answer and outranks any prediction. For a mapped body it also lists "
-                    + "the species of each genus that the body's conditions admit, with each one's "
-                    + "value; that is a prediction from the conditions and the sample decides.",
+                    + "the species of each genus with each one's value: the species other Commanders reported "
+                    + "on the body come first, and only a genus with none reported keeps a prediction from the "
+                    + "body's conditions, which the sample decides.",
                 Parameters =
                 [
                     ToolParameter.Text(
@@ -101,7 +103,8 @@ public static class ExobiologyCapability
                 [
                     new ToolCommandPhrase("what biology is on this body"),
                 ],
-                Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(Body(commander(), status?.Invoke().Destination, arguments))),
+                Handler = async (arguments, cancellationToken) => ToolResult.Ok(
+                    await BodyAsync(commander(), status?.Invoke().Destination, galaxy, surveyed, earlier, arguments, cancellationToken).ConfigureAwait(false)),
             },
             new ToolDefinition
             {
@@ -234,7 +237,14 @@ public static class ExobiologyCapability
 
     // --------------------------------------------------------------- the body
 
-    private static string Body(CommanderGameState? state, StatusDestination? destination, ToolArguments arguments)
+    private static async Task<string> BodyAsync(
+        CommanderGameState? state,
+        StatusDestination? destination,
+        IGalaxyService? galaxy,
+        SurveyedBiology? held,
+        EarlierFinds? earlier,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
     {
         if (state is null)
         {
@@ -249,8 +259,28 @@ public static class ExobiologyCapability
             ? scans.Named(wanted)
             : NavTarget.TargetedSignals(destination, scans) ?? scans.MostRecentWithBiology ?? scans.All.FirstOrDefault();
 
+        var address = body is null ? state.Location.SystemAddress : body.SystemAddress;
+        var region = state.Location.StarPos is { } starPos ? GalacticRegions.Find(starPos) : null;
+        SystemBiology? surveyed = null;
+        IReadOnlyList<EarlierFind>? finds = null;
+
+        if (address is { } systemAddress)
+        {
+            surveyed = await SurveyAsync(state, systemAddress, galaxy, held, cancellationToken).ConfigureAwait(false);
+            finds = earlier is not null && earlier.TryGet(systemAddress, out var heldFinds) ? heldFinds : null;
+        }
+
+        var answer = address is { } known && (surveyed is not null || finds is not null)
+            ? BiologyInSystem.For(state, known, region, surveyed, finds)
+            : null;
+
         if (body is null)
         {
+            if (wanted is not null && ReportedOnly(answer, surveyed, wanted) is { } reportedOnly)
+            {
+                return ReportedBodyText(reportedOnly);
+            }
+
             if (!scans.IsKnown)
             {
                 return
@@ -264,34 +294,38 @@ public static class ExobiologyCapability
                 : "None of the bodies I have scanned had anything on them.";
         }
 
+        var line = body.BodyId is { } id ? answer?.Bodies.FirstOrDefault(entry => entry.BodyId == id) : null;
         var report = new StringBuilder();
 
         var seenHow = body.Source == BodySignalSource.SurfaceScan ? "surface-scanned" : "FSS-scanned, not mapped,";
 
         report.AppendLine($"{body.BodyName}, {seenHow} {Stamp(body.SeenAt)}.");
 
-        var scan = body.SystemAddress is { } systemAddress && body.BodyId is { } bodyId
-            ? state.Scans.For(systemAddress, bodyId)
+        var scan = body.SystemAddress is { } scanAddress && body.BodyId is { } bodyId
+            ? state.Scans.For(scanAddress, bodyId)
             : null;
 
         var namedGenera = body.Source == BodySignalSource.SurfaceScan ? body.Genera : [];
-        var region = state.Location.StarPos is { } starPos ? GalacticRegions.Find(starPos) : null;
 
         var estimate = scan is not null && body.BiologicalCount > 0
             ? BiologyPotential.For(scan, body.BiologicalCount, namedGenera, region)
             : null;
+
+        var reportedFss = body.Source == BodySignalSource.Fss && line is { GeneraReported: true, Genera.Count: > 0 };
 
         if (body.Source == BodySignalSource.Fss && body.BiologicalCount > 0)
         {
             // The FSS says how many; it never says which genus. The scan conditions can narrow a guess.
             report.AppendLine(
                 $"  The FSS reported {body.BiologicalCount} biological signal"
-                + $"{(body.BiologicalCount == 1 ? "" : "s")}. It has not been mapped, so I do not know "
-                + "the genus"
-                + (estimate is { Genera.Count: > 0 }
-                    ? $", but the conditions say it could hold up to {Number(estimate.BestCase)} credits: "
-                      + $"{string.Join(", ", estimate.Genera)}."
-                    : "."));
+                + $"{(body.BiologicalCount == 1 ? "" : "s")}. It has not been mapped, so "
+                + (reportedFss
+                    ? "I do not know the genus myself, but other Commanders report these:"
+                    : "I do not know the genus"
+                        + (estimate is { Genera.Count: > 0 }
+                            ? $", but the conditions say it could hold up to {Number(estimate.BestCase)} credits: "
+                              + $"{string.Join(", ", estimate.Genera)}."
+                            : ".")));
         }
         else if (!body.HasBiology)
         {
@@ -316,36 +350,159 @@ public static class ExobiologyCapability
                 + string.Join(", ", others.Select(signal => $"{signal.Count} {signal.Type}")) + ".");
         }
 
-        if (body.Genera.Count > 0)
+        if (body.Genera.Count > 0 || reportedFss)
         {
             // Said once, on the answer that would otherwise invite the question.
             report.AppendLine();
 
-            if (estimate is { Named.Count: > 0 })
+            var genera = (estimate?.Named.Select(entry => entry.Genus) ?? [])
+                .Concat(reportedFss ? line!.Genera.Select(entry => entry.Genus) : body.Genera)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            long low = 0;
+            long high = 0;
+            var counted = false;
+            var predicted = false;
+            var said = false;
+
+            foreach (var name in genera)
             {
-                foreach (var genus in estimate.Named)
+                var genus = line?.Genera.FirstOrDefault(entry => string.Equals(entry.Genus, name, StringComparison.OrdinalIgnoreCase));
+                var species = genus?.Species.Where(entry => entry.Source != SpeciesSource.Possible).ToList() ?? [];
+                var candidates = estimate?.Named.FirstOrDefault(entry => string.Equals(entry.Genus, name, StringComparison.OrdinalIgnoreCase));
+
+                if (species.Count > 0)
+                {
+                    report.AppendLine(GenusText(name, species));
+                    said = true;
+
+                    var values = species.Where(entry => entry.Value is not null).Select(entry => entry.Value!.Value).ToList();
+
+                    if (values.Count > 0)
+                    {
+                        low += values.Min();
+                        high += values.Max();
+                        counted = true;
+                    }
+                }
+                else if (candidates is not null)
                 {
                     report.AppendLine(
-                        genus.Candidates.Count == 0
-                            ? $"  {genus.Genus}: the conditions admit none of the species I have for it."
-                            : $"  {genus.Genus}: "
+                        candidates.Candidates.Count == 0
+                            ? $"  {candidates.Genus}: the conditions admit none of the species I have for it."
+                            : $"  {candidates.Genus}: "
                               + string.Join(
                                   "; ",
-                                  genus.Candidates.Select(entry => $"{entry.Species} {Number(entry.Value)}"))
+                                  candidates.Candidates.Select(entry => $"{entry.Species} {Number(entry.Value)}"))
                               + ".");
+                    said = true;
+                    predicted = true;
+                    low += candidates.Low;
+                    high += candidates.High;
+                    counted = true;
                 }
+                else
+                {
+                    predicted = true;
+                }
+            }
 
+            if (said)
+            {
                 report.AppendLine();
             }
 
-            var range = estimate is { Low: { } low, High: { } high }
-                ? $"That could be worth {Number(low)} to {Number(high)} credits. "
+            var range = counted
+                ? $"That could be worth {Number(low)} to {Number(high)} credits."
                 : string.Empty;
 
-            report.AppendLine(
-                range
-                + "Elite names the genus and not the species. The candidates are a prediction from the "
-                + "body's conditions, and the sample decides.");
+            if (predicted)
+            {
+                report.AppendLine(
+                    (range.Length > 0 ? range + " " : string.Empty)
+                    + "Elite names the genus and not the species. The candidates are a prediction from the "
+                    + "body's conditions, and the sample decides.");
+            }
+            else if (range.Length > 0)
+            {
+                report.AppendLine(range);
+            }
+        }
+
+        return report.ToString().TrimEnd();
+    }
+
+    private static async Task<SystemBiology?> SurveyAsync(
+        CommanderGameState state,
+        long systemAddress,
+        IGalaxyService? galaxy,
+        SurveyedBiology? held,
+        CancellationToken cancellationToken)
+    {
+        if (held is null)
+        {
+            return null;
+        }
+
+        if (state.Location.SystemAddress == systemAddress && galaxy is not null)
+        {
+            return await held.GetAsync(systemAddress, galaxy.SystemBiologyAsync, cancellationToken).ConfigureAwait(false);
+        }
+
+        return held.TryGet(systemAddress, out var biology) ? biology : null;
+    }
+
+    private static string GenusText(string genus, IReadOnlyList<SpeciesLine> species)
+    {
+        var text = string.Join(
+            "; ",
+            species.Select(entry => entry.Species
+                + (entry.Value is { } value ? " " + Number(value) : string.Empty)
+                + (entry.Count is > 1 ? $" ×{entry.Count}" : string.Empty)));
+
+        return species.Any(entry => entry.Source == SpeciesSource.Sampled)
+            ? $"  {genus}: {text}."
+            : $"  {genus}: {text}, reported by other Commanders.";
+    }
+
+    private static BodyLine? ReportedOnly(SystemBiologyAnswer? answer, SystemBiology? surveyed, string wanted)
+    {
+        var matches = surveyed?.Bodies
+            .Where(row => row.Species.Count > 0
+                && (string.Equals(row.Name, wanted, StringComparison.OrdinalIgnoreCase)
+                    || row.Name.EndsWith(" " + wanted, StringComparison.OrdinalIgnoreCase)))
+            .ToList() ?? [];
+
+        var exact = matches.Where(row => string.Equals(row.Name, wanted, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (exact.Count == 1)
+        {
+            matches = exact;
+        }
+
+        return matches is [var only] ? answer?.Bodies.FirstOrDefault(entry => entry.BodyId == only.BodyId) : null;
+    }
+
+    private static string ReportedBodyText(BodyLine line)
+    {
+        var report = new StringBuilder();
+
+        report.AppendLine($"{line.BodyName}, reported by other Commanders, not scanned by you.");
+
+        foreach (var genus in line.Genera)
+        {
+            var species = genus.Species.Where(entry => entry.Source != SpeciesSource.Possible).ToList();
+
+            if (species.Count > 0)
+            {
+                report.AppendLine(GenusText(genus.Genus, species));
+            }
+        }
+
+        if (line.ReportedValue is > 0)
+        {
+            report.AppendLine($"That is worth {Number(line.ReportedValue.Value)} credits together.");
         }
 
         return report.ToString().TrimEnd();

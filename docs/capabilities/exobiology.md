@@ -350,8 +350,10 @@ Dropping bodyless stops is what keeps "three systems worth landing on" from read
 
 #### `get_body_biology`
 
-What your own surface scan found. For a mapped body it also lists the species of each genus the
-body's conditions admit, with each one's value: a prediction from the conditions, and the sample decides.
+What your own surface scan found. For a mapped body it also lists the species of each genus with
+each one's value: the species other Commanders reported on the body come first, then a genus none
+reported keeps the species its conditions admit, a prediction the sample decides. A body only other
+Commanders reported is answered from that report.
 
 ```json
 {"type":"object","properties":{"body":{"type":"string","description":"The body name, or its short form such as \u00227 b\u0022. Leave out for the targeted body, or else the most recently scanned body that has biology on it."}},"required":[],"additionalProperties":false}
