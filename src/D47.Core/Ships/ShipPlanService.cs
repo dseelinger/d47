@@ -22,7 +22,8 @@ public sealed record FleetEntry(
     StoredShip? Stored,
     bool IsActive,
     bool LastFlown = false,
-    int? Outstanding = null)
+    int? Outstanding = null,
+    bool Sold = false)
 {
     /// <summary>
     /// Owned is derived and intended is authored, which is the same rule the checklist already draws
@@ -53,7 +54,7 @@ public sealed record FleetEntry(
 
         if (Stored is null)
         {
-            return "not bought yet";
+            return Sold ? "sold" : "not bought yet";
         }
 
         if (Stored.InTransit)
@@ -173,11 +174,18 @@ public sealed class ShipPlanService(
         }
 
         // Everything else the Commander has planned.
+        var fleetKnown = live?.Fleet.IsKnown == true;
+
         foreach (var build in builds)
         {
             if (!claimed.Contains(build.Id))
             {
-                entries.Add(new FleetEntry(build, Stored: null, IsActive: false, Outstanding: OutstandingFor(build)));
+                entries.Add(new FleetEntry(
+                    build,
+                    Stored: null,
+                    IsActive: false,
+                    Outstanding: OutstandingFor(build),
+                    Sold: fleetKnown && build.ShipId is not null));
             }
         }
 
@@ -514,7 +522,16 @@ public sealed class ShipPlanService(
             return "There is no such build.";
         }
 
+        var sold = Entry(buildId)?.Sold == true;
+
         store.Save([.. store.Builds.Where(other => other.Id != buildId)]);
+
+        if (sold && build.ShipId is { } soldId)
+        {
+            checklists.ForgetShip(soldId, _ => true);
+
+            return $"Deleted the sold {build.Describe()}, and what its plan put on your checklist.";
+        }
 
         var scope = build.Scope;
 

@@ -291,7 +291,7 @@ public sealed class ShipsMode(
         }
         else if (entry is not null)
         {
-            lines.Add(new LoadoutLine("Not bought yet.", LoadoutTone.Body));
+            lines.Add(new LoadoutLine(entry.Sold ? "Sold." : "Not bought yet.", LoadoutTone.Body));
         }
 
         lines.AddRange(Hull(build));
@@ -1063,14 +1063,17 @@ public sealed class ShipsMode(
     public string Promote(string item) =>
         Resolve(item) is { } build ? ships.Promote(build.Id) : "That build is not there any more.";
 
-    /// <summary>"Drop this ship" for an intended hull, "Clear this plan" for an owned build with planned slots.</summary>
+    /// <summary>"Delete this ship" for a sold one, "Drop this ship" for an intended hull, "Clear this plan" for an owned build with planned slots.</summary>
     public string? DropLabel(string item) =>
         Resolve(item) switch
         {
+            { } sold when IsSold(sold) => "Delete this ship",
             { IsOwned: false } => "Drop this ship",
             { } build when build.Slots.Any(slot => !slot.IsEmpty) => "Clear this plan",
             _ => null,
         };
+
+    private bool IsSold(ShipBuild build) => ships.Entry(build.Id)?.Sold == true;
 
     public string Drop(string item) =>
         Resolve(item) is { } build ? ships.Delete(build.Id) : "That build is not there any more.";
@@ -1140,7 +1143,7 @@ public sealed class ShipsMode(
             : offer.Refusal ?? "That build is not there any more.";
 
     public string? ExportLabel(string item) =>
-        setClipboardText is not null && Resolve(item) is { IsOwned: true } ? "Copy as SLEF" : null;
+        setClipboardText is not null && Resolve(item) is { IsOwned: true } build && !IsSold(build) ? "Copy as SLEF" : null;
 
     public async Task<string> Export(string item)
     {
