@@ -215,6 +215,10 @@ public static class ExobiologyCapability
                         "max_distance_to_arrival",
                         "How far in-system a body may sit, in light seconds. Defaults to 10,000."),
                     ToolParameter.Flag("loop", "Whether the circuit returns to the start. Defaults to true."),
+                    ToolParameter.Flag(
+                        "credits_per_scan",
+                        "Choose the systems that pay the most for each species scanned, instead of the most in "
+                            + "total. The route is not re-optimised for distance. Defaults to false."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
@@ -735,7 +739,18 @@ public static class ExobiologyCapability
             return ToolResult.Ok(failure);
         }
 
-        var route = await routes.PlotExobiologyAsync(query, cancellationToken).ConfigureAwait(false);
+        var perScan = arguments.Boolean("credits_per_scan") == true;
+
+        var route = await routes
+            .PlotExobiologyAsync(
+                perScan ? query with { MaxResults = Math.Min(50, query.MaxResults * 3) } : query,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (perScan)
+        {
+            route = route?.KeepBestPerScan(query.MaxResults);
+        }
 
         if (route is null || route.Stops.Count == 0)
         {
@@ -749,6 +764,11 @@ public static class ExobiologyCapability
 
         var report = new StringBuilder();
 
+        if (perScan)
+        {
+            report.AppendLine("Stops chosen by credits per scan, not by total value.");
+        }
+
         report.AppendLine(
             $"{route.Stops.Count} system{(route.Stops.Count == 1 ? "" : "s")} from {query.From}, "
             + $"{route.TotalJumps} jumps, {Number(route.TotalValue)} credits of biology in all:");
@@ -759,7 +779,8 @@ public static class ExobiologyCapability
             report.AppendLine(
                 $"{stop.System} — {stop.Jumps} jump{(stop.Jumps == 1 ? "" : "s")}, "
                 + $"{stop.Bodies.Count} bod{(stop.Bodies.Count == 1 ? "y" : "ies")}, "
-                + $"{Number(stop.Value)} cr.");
+                + $"{Number(stop.Value)} cr"
+                + (perScan ? $", {Number(stop.PerScan)} cr a scan." : "."));
 
             foreach (var body in stop.Bodies)
             {

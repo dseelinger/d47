@@ -91,6 +91,10 @@ behind it.
 
 It starts from where you are. Systems with Thargoid presence are avoided. A body's worth is the total of all its species, including those under the minimum. A value outside its range is moved to the nearest end of it. Plotting needs Look things up in the galaxy on; with it off, D47 says route planning is switched off.
 
+### Credits per scan
+
+`credits_per_scan` chooses the systems that pay the most for each species scanned, instead of the most in total. A system's score is the value of its listed species divided by how many there are; species under the minimum are not counted. D47 asks for up to three times as many stops as you wanted (at most 50), keeps the best-scoring ones in the order the service returned them, and adds the jumps to any dropped stop to the next kept stop. The route is not re-optimised, so it is longer than the service's own route for the same number of stops. Each stop then shows "N cr a scan".
+
 ### What the plan shows
 
 Each stop shows its system, the jumps to reach it and how many bodies are worth landing on. Under

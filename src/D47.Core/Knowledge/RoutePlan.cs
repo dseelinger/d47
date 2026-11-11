@@ -94,6 +94,16 @@ public sealed record ExobiologyStop(string System, int Jumps, IReadOnlyList<Exob
     public StarPosition? Position { get; init; }
 
     public long Value => Bodies.Sum(body => body.LandmarkValue);
+
+    /// <summary>Credits a scan across the listed species; 0 when none are listed.</summary>
+    public long PerScan
+    {
+        get
+        {
+            var species = Bodies.SelectMany(body => body.Species).ToList();
+            return species.Count == 0 ? 0 : (long)Math.Round(species.Sum(item => item.Value) / (double)species.Count);
+        }
+    }
 }
 
 public sealed record ExobiologyRoute(IReadOnlyList<ExobiologyStop> Stops)
@@ -110,6 +120,43 @@ public sealed record ExobiologyRoute(IReadOnlyList<ExobiologyStop> Stops)
     public int UnlistedJumps { get; init; }
 
     public int TotalJumps => Stops.Sum(stop => stop.Jumps) + UnlistedJumps;
+
+    /// <summary>The <paramref name="count"/> stops with the highest <see cref="ExobiologyStop.PerScan"/>, in the original order.</summary>
+    public ExobiologyRoute KeepBestPerScan(int count)
+    {
+        if (Stops.Count <= count)
+        {
+            return this;
+        }
+
+        var kept = Stops
+            .Select((stop, index) => (stop, index))
+            .OrderByDescending(item => item.stop.PerScan)
+            .ThenBy(item => item.index)
+            .Take(count)
+            .Select(item => item.index)
+            .ToHashSet();
+
+        var stops = new List<ExobiologyStop>();
+        var carried = 0;
+
+        for (var index = 0; index < Stops.Count; index++)
+        {
+            var stop = Stops[index];
+
+            if (kept.Contains(index))
+            {
+                stops.Add(stop with { Jumps = stop.Jumps + carried });
+                carried = 0;
+            }
+            else
+            {
+                carried += stop.Jumps;
+            }
+        }
+
+        return this with { Stops = stops, UnlistedJumps = UnlistedJumps + carried };
+    }
 }
 
 /// <summary>A validated exobiology plot.</summary>

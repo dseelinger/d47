@@ -10,6 +10,8 @@
 
 Changed: a bookmark can now point at a body or station as well as a system. "Bookmark this" with a body or station in your current system targeted keeps its name, and "list my bookmarks" says it, as "Name, Place, in System". D47 tells a body from a station from the system's Spansh profile and leaves the kind unknown when that is not available. "Set course for" still plots to the system. Older bookmarks load unchanged.
 
+Added: `plot_exobiology_route` takes `credits_per_scan`. It asks for up to three times as many stops, keeps the ones that pay the most for each species scanned, and lists each as "N cr a scan". The route is not re-optimised, so it is longer than the service's own.
+
 Changed: an NPC that remarks on repeating itself now stays silent, whatever it says next, until it has sent no canned line for five minutes or you jump. The remark is lightly humorous and always reworded by your language model when personality is on, and a restart of d47 no longer resets what an NPC has already said.
 
 Added: ask "what's left to sample" or "what is left to sample" and D47 names up to three genera still to sample in the system, open sets first with their count such as "Bacterium Tela, 2 of 3", then a count of the rest. Bodies with biological signals and no surface scan are said as not mapped, and a system with no scan on record says so rather than claiming nothing is left.
