@@ -130,6 +130,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>What each body's own scan said, and when it was first footfalled (#202).</summary>
     public BodyScans Scans { get; private set; } = BodyScans.Empty;
 
+    /// <summary>Every body with biological signals, from every journal on disk.</summary>
+    public BiologyBodies Biology { get; internal set; } = BiologyBodies.None;
+
     /// <summary>The faction each of their squadrons was seen backing.</summary>
     public SquadronFactionSightings SquadronFactions { get; internal set; } = SquadronFactionSightings.Empty;
 
@@ -241,6 +244,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Shuttle), "your shuttle ride", state => state.Shuttle),
         new(nameof(Bodies), "body signals", state => state.Bodies),
         new(nameof(Scans), "body scans", state => state.Scans),
+        new(nameof(Biology), "your biology bodies", state => state.Biology),
         new(nameof(TechBroker), "your tech broker unlocks", state => state.TechBroker),
         new(nameof(Sampling), "your organic samples", state => state.Sampling),
         new(nameof(Session), "this session's totals", state => state.Session),
@@ -264,6 +268,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
         // Arriving at a body or leaving the SRV changes what the record tracks, not its sites.
         (SurfaceMiningSites a, SurfaceMiningSites b) when a.SameSites(b) && a.IsWhole == b.IsWhole => null,
+
+        // A jump or a scan changes the conditions held for the current system, not the bodies.
+        (BiologyBodies a, BiologyBodies b) when a.SameBodies(b) && a.IsWhole == b.IsWhole => null,
 
         // Every event moves the ledger's last time, so only its entries count.
         (CreditLedger a, CreditLedger b) when ReferenceEquals(a.Entries, b.Entries) && a.IsWhole == b.IsWhole => null,
@@ -300,6 +307,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             BgsWork = BgsWork.None;
             Combat = CombatRecord.None with { IsWhole = Combat.IsWhole };
             SurfaceMining = SurfaceMiningSites.None with { IsWhole = SurfaceMining.IsWhole };
+            Biology = BiologyBodies.None with { IsWhole = Biology.IsWhole };
             CreditLedger = CreditLedger.None with { IsWhole = CreditLedger.IsWhole };
             CodexLedger = CodexLedger.None with { IsWhole = CodexLedger.IsWhole, SessionStart = CodexLedger.SessionStart };
             Contributions = EngineerContributions.Empty;
@@ -367,6 +375,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         _shuttleTrip = _shuttleTrip.Apply(journalEvent);
         Bodies = Bodies.Apply(journalEvent);
         Scans = Scans.Apply(journalEvent);
+        Biology = Biology.Apply(journalEvent);
         TechBroker = TechBroker.Apply(journalEvent);
         Sampling = Sampling.Apply(journalEvent, at);
         Session = Session.Apply(journalEvent);

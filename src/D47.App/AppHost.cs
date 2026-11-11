@@ -1276,6 +1276,10 @@ public sealed class AppHost : IDisposable
                 ? history.SurfaceMining?.GetValueOrDefault(fid) ?? SurfaceMiningSites.None
                 : null,
 
+            RestoreBiology = fid => history.State is HistoryState.Done
+                ? history.Biology?.GetValueOrDefault(fid) ?? BiologyBodies.None
+                : null,
+
             RestoreCreditLedger = fid => history.State is HistoryState.Done
                 ? history.CreditLedgers?.GetValueOrDefault(fid) ?? CreditLedger.None
                 : null,

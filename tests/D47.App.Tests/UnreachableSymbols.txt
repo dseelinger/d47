@@ -119,6 +119,9 @@ D47.Core.Hulls.HullMesh.Parts
 D47.Core.Input.ButtonSharing.Certain
 D47.Core.Interface.Spelling.Characters
 D47.Core.Interface.ZoomLadder.Maximum
+D47.Core.Journal.BiologyBodies.All
+D47.Core.Journal.BiologyBodies.For(long, int)
+D47.Core.Journal.BiologyBodies.InSystem(long)
 D47.Core.Journal.ColonisationBackfill.FromHistory(D47.Core.Storage.IFileSystem, string, Microsoft.Extensions.Logging.ILogger, System.Threading.CancellationToken)
 D47.Core.Journal.CommodityLedger.Changed
 D47.Core.Journal.TechBrokerUnlocks.NotKnownToBeUnlocked(string)

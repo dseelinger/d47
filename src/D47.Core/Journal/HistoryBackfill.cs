@@ -144,6 +144,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's surface mining sites.</summary>
     public IReadOnlyDictionary<string, SurfaceMiningSites>? SurfaceMining { get; private set; }
 
+    /// <summary>Each Commander's bodies with biological signals.</summary>
+    public IReadOnlyDictionary<string, BiologyBodies>? Biology { get; private set; }
+
     /// <summary>Each Commander's merits for their Power over the last week.</summary>
     public IReadOnlyDictionary<string, PowerplayCycleMerits>? CycleMerits { get; private set; }
 
@@ -299,6 +302,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(SurfaceMiningBackfill)),
+                    cancellation));
+
+            Biology = Timed(
+                "biology backfill",
+                () => BiologyBodiesBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(BiologyBodiesBackfill)),
                     cancellation));
 
             CycleMerits = Timed(

@@ -769,6 +769,35 @@ public class TheRestoreTableDrivesAdmitAndRestoreLateTests
     }
 
     [Fact]
+    public void AnEmptyBiologyRecordIsStillMergedWhenACommanderIsMet()
+    {
+        var store = new GameStateStore { RestoreBiology = _ => BiologyBodies.None };
+
+        Assert.True(Met(store).Biology.IsWhole);
+    }
+
+    [Fact]
+    public void ABiologyRecordFromNoHookIsLeftAlone()
+    {
+        var store = new GameStateStore { RestoreBiology = _ => null };
+
+        Assert.Same(BiologyBodies.None, Met(store).Biology);
+    }
+
+    [Fact]
+    public void AnEmptyBiologyRecordIsStillMergedOnRestoreLate()
+    {
+        BiologyBodies? restored = null;
+        var store = new GameStateStore { RestoreBiology = _ => restored };
+        var state = Met(store);
+        restored = BiologyBodies.None;
+
+        store.RestoreLate();
+
+        Assert.True(state.Biology.IsWhole);
+    }
+
+    [Fact]
     public void AnEmptyCreditLedgerIsStillMergedWhenACommanderIsMet()
     {
         var store = new GameStateStore { RestoreCreditLedger = _ => CreditLedger.None };

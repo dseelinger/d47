@@ -165,6 +165,9 @@ public sealed class GameStateStore
     /// <summary>The surface mining sites of this Commander, on the same terms as <see cref="RestoreCombat"/>.</summary>
     public Func<string, SurfaceMiningSites?>? RestoreSurfaceMining { get; init; }
 
+    /// <summary>The biology bodies of this Commander, on the same terms as <see cref="RestoreCombat"/>.</summary>
+    public Func<string, BiologyBodies?>? RestoreBiology { get; init; }
+
     /// <summary>The credit transactions of this Commander, on the same terms as <see cref="RestoreCombat"/>.</summary>
     public Func<string, CreditLedger?>? RestoreCreditLedger { get; init; }
 
@@ -406,6 +409,7 @@ public sealed class GameStateStore
         Part<SystemStandings>(s => s.RestoreStandings, v => v.IsKnown, (c, v) => c.Standings = v, (c, v) => c.Standings = v.With(c.Standings)),
         Merged<CombatRecord>(s => s.RestoreCombat, (c, v) => c.Combat = v.With(c.Combat)),
         Merged<SurfaceMiningSites>(s => s.RestoreSurfaceMining, (c, v) => c.SurfaceMining = v.With(c.SurfaceMining)),
+        Merged<BiologyBodies>(s => s.RestoreBiology, (c, v) => c.Biology = v.With(c.Biology)),
         Merged<CreditLedger>(s => s.RestoreCreditLedger, (c, v) => c.CreditLedger = v.With(c.CreditLedger)),
         Merged<CodexLedger>(s => s.RestoreCodexLedger, (c, v) => c.CodexLedger = v.With(c.CodexLedger)),
         Part<UnlockEvidence>(s => s.RestoreEvidence, v => v.IsKnown,
