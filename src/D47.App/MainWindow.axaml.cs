@@ -476,6 +476,11 @@ public partial class MainWindow : Window
                 {
                     ColumnWidths = ((IPanelTabHost)Panel).ColumnWidths,
                     SurfaceMining = (address, bodyId) => host.GameState.Active?.SurfaceMining.At(address, bodyId),
+                    Biology = (address, region, surveyed) => host.GameState.Active is { } state
+                        ? D47.Core.Journal.BiologyInSystem.For(state, address, region, surveyed, null)
+                        : null,
+                    Surveyed = host.SurveyedBiology,
+                    AskSurveyed = host.Galaxy is { } surveys ? surveys.SystemBiologyAsync : null,
                     Remember = (name, address) =>
                     {
                         if (host.SearchHistory is { } history)

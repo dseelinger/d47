@@ -117,18 +117,15 @@ D47.Core.Debrief.StandingDirectionsStore.Changed
 D47.Core.Diagnostics.Donation.CorpusCensus.Count
 D47.Core.Hulls.HullMesh.Parts
 D47.Core.Input.ButtonSharing.Certain
-D47.Core.Interface.SpeciesPicture
-D47.Core.Interface.SpeciesPictureChoice
+D47.Core.Interface.SpeciesPicture.Choose(string, long?, int?, System.Collections.Generic.IReadOnlySet<D47.Core.Interface.CodexPictureKey>, System.Collections.Generic.IReadOnlyList<D47.Core.Interface.CodexPictureRow>)
 D47.Core.Interface.Spelling.Characters
 D47.Core.Interface.ZoomLadder.Maximum
 D47.Core.Journal.BiologyBodies.All
 D47.Core.Journal.BiologyBodies.For(long, int)
-D47.Core.Journal.BodyLine.Done
 D47.Core.Journal.ColonisationBackfill.FromHistory(D47.Core.Storage.IFileSystem, string, Microsoft.Extensions.Logging.ILogger, System.Threading.CancellationToken)
 D47.Core.Journal.CommodityLedger.Changed
 D47.Core.Journal.TechBrokerUnlocks.NotKnownToBeUnlocked(string)
 D47.Core.Knowledge.CodexVariants.Of(string)
-D47.Core.Knowledge.CodexVariants.Of(string, D47.Core.Knowledge.CodexTable)
 D47.Core.Knowledge.CommodityBoard.Posted
 D47.Core.Knowledge.OutfitterStation.ReportedAt
 D47.Core.Knowledge.RareIndex.Built

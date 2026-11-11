@@ -33,6 +33,21 @@ public sealed record StarSystemSurface(
 
     /// <summary>Where dragged table column widths are kept; null draws the tables without drag handles.</summary>
     public ColumnWidthMemory? ColumnWidths { get; init; }
+
+    /// <summary>
+    /// The biology on each body of a system, read with the system address, a <see cref="GalacticRegions.Find"/> name and
+    /// Spansh's surveyed record; null shows every system's biology as not known.
+    /// </summary>
+    public Func<long, string?, SystemBiology?, SystemBiologyAnswer?>? Biology { get; init; }
+
+    /// <summary>Spansh's surveyed biology already held, by system.</summary>
+    public SurveyedBiology? Surveyed { get; init; }
+
+    /// <summary>Asks Spansh for a system's surveyed biology; the answer is written to <see cref="Surveyed"/>.</summary>
+    public Func<long, CancellationToken, Task<SystemBiology>>? AskSurveyed { get; init; }
+
+    /// <summary>The Biology section's body heads the Commander has opened or closed, for the app session.</summary>
+    public BiologyHeads Heads { get; init; } = new();
 }
 
 /// <summary>
@@ -158,6 +173,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         Stations,
         Bodies,
         Powerplay,
+        Biology,
     }
 
     private sealed record Shown(long Address, string Name);
@@ -204,6 +220,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     {
         var tileChanged = _history.Refresh();
         Check();
+        CheckBiology();
 
         var redrawn = _redrawn;
         _redrawn = false;
@@ -497,6 +514,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
         _body.Children.Clear();
         _stationTable = null;
         _neighbourList = null;
+        _biologyHolder = null;
 
         _body.Children.Add(FieldRow());
 
@@ -544,6 +562,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
                     Section.Stations => Stations(profile),
                     Section.Bodies => Bodies(profile),
                     Section.Powerplay => Powerplay(profile),
+                    Section.Biology => Biology(profile),
                     _ => Overview(profile),
                 });
                 break;

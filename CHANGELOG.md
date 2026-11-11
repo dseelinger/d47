@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Search › System has a fifth section, Biology. For the system shown, it lists each body with biological signals, its distance and how many genera are done, and under each body every genus with a picture, the species (sampled, reported by Spansh, or possible for the body's conditions), the sampling state and a CODEX › tile. Bodies with work left, or the body you are on, start open; a body you open or close stays that way for the session. A body not yet mapped says to map it, and a system with no scan on record says how to get one. The section updates as you take samples.
+
 Changed: D47 now keeps the biology Commanders have surveyed in each system, and asks for it when Elite starts a session in a system as well as on arrival by jump. Starting Elite in a system says nothing aloud.
 
 Changed: D47 now remembers the colour variant of each organic sample, and keeps a set lost to a specimen of another species on the body it was taken on until you log that genus there again. Both survive a restart; older saved files load with no variant and no lost sets.

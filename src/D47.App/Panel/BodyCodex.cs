@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using D47.App.Theming;
 using D47.Core.Interface;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
@@ -25,10 +26,14 @@ public sealed class BodyCodex(
 
     public const string PlaceholderName = "CodexPlaceholder";
 
+    public const string LinkName = "CodexLink";
+
     /// <summary>Opens nothing and draws no picture.</summary>
     public static readonly BodyCodex None = new(CodexTable.Parse(string.Empty));
 
     private readonly Dictionary<string, Bitmap?> _families = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly Dictionary<(string Species, long? EntryId, int? RegionId), Bitmap> _species = [];
 
     /// <summary>The Astronomical Bodies entry named the same as the body's sub-type, or null.</summary>
     public CodexEntry? EntryOf(BodyProfile body) =>
@@ -70,6 +75,78 @@ public sealed class BodyCodex(
         return openGenus is { } open
             ? Pressable(image, framed: true, $"Codex, {genus}", () => open(genus))
             : Still(image, framed: true);
+    }
+
+    /// <summary>The picture <see cref="SpeciesPicture.Choose(string, long?, int?, IReadOnlySet{CodexPictureKey}, IReadOnlyList{CodexPictureRow}, CodexTable)"/> picks for a species, or null.</summary>
+    public Bitmap? SpeciesBitmap(string species, long? entryId, int? regionId)
+    {
+        if (pictures is null)
+        {
+            return null;
+        }
+
+        var key = (species, entryId, regionId);
+
+        if (_species.TryGetValue(key, out var held))
+        {
+            return held;
+        }
+
+        var choice = SpeciesPicture.Choose(species, entryId, regionId, pictures.Store.LocalKeys(), pictures.Store.StockRows(), table)?.Picture;
+        var bitmap = choice switch
+        {
+            null => null,
+            { Source: CodexPictureSource.Local } => Decode(pictures.Store.Local(choice.Key)),
+            _ => Decode(pictures.Store.Stock(choice.Row!)),
+        };
+
+        if (bitmap is not null)
+        {
+            _species[key] = bitmap;
+        }
+
+        return bitmap;
+    }
+
+    /// <summary>
+    /// A 44 px CODEX › tile opening the first of <paramref name="species"/> with a Codex entry, else the genus; null where
+    /// this surface has no Codex.
+    /// </summary>
+    public Button? Link(string genus, IReadOnlyList<SpeciesLine> species)
+    {
+        var entry = species
+            .Select(line => line.EntryId)
+            .OfType<long>()
+            .Select(id => table.All.FirstOrDefault(row => row.EntryId == id))
+            .FirstOrDefault(row => row is not null);
+
+        Action? open = (entry, openEntry, openGenus) switch
+        {
+            ({ } found, { } toEntry, _) => () => toEntry(found),
+            (_, _, { } toGenus) => () => toGenus(genus),
+            _ => null,
+        };
+
+        if (open is null)
+        {
+            return null;
+        }
+
+        var link = new Button
+        {
+            Name = LinkName,
+            Content = Typeset.Chrome(
+                "CODEX ›", TypeScale.Control, ThemeManager.AKey,
+                weight: FontWeight.SemiBold, tracking: TypeScale.Control * Fonts.ChromeTracking, vertical: VerticalAlignment.Center),
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(14, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+        Avalonia.Automation.AutomationProperties.SetName(link, $"Codex, {(entry is not null && openEntry is not null ? entry.Name : genus)}");
+        link.Click += (_, _) => open();
+
+        return link;
     }
 
     private Bitmap? EntryPicture(long entryId)

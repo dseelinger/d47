@@ -182,7 +182,7 @@ public sealed partial class StarSystemPage
         Draw();
     }
 
-    /// <summary>The section switch, laid on four equal columns so it keeps its widths as sections are added.</summary>
+    /// <summary>The section switch, laid on five equal columns.</summary>
     private Grid Sections(StarSystemProfile profile)
     {
         var sections = new Segment
@@ -193,14 +193,15 @@ public sealed partial class StarSystemPage
                 $"Stations {profile.Stations.Count.ToString(CultureInfo.InvariantCulture)}",
                 $"Bodies {profile.Bodies.Count.ToString(CultureInfo.InvariantCulture)}",
                 "Powerplay",
+                BiologySegment(profile),
             ],
             SelectedIndex = (int)_section,
         };
         Avalonia.Automation.AutomationProperties.SetName(sections, "Sections");
         sections.SelectionChanged += (_, _) => ShowSection((Section)sections.SelectedIndex);
 
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*") };
-        Grid.SetColumnSpan(sections, 4);
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*,*") };
+        Grid.SetColumnSpan(sections, 5);
         grid.Children.Add(sections);
 
         return grid;
