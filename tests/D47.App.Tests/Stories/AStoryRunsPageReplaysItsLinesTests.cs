@@ -37,7 +37,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         Chapters = ["ch1", "ch2", "ch3", "ch4"],
     };
 
-    private sealed record Rig(Window Window, PanelView Panel, List<StoryRunLine> Played, MessageStore Messages, StoryRunPlayer Player, SteppedSink Sink);
+    private sealed record Rig(Window Window, PanelView Panel, MessageStore Messages, StoryRunPlayer Player, SteppedSink Sink);
 
     private static Adventure Chapter(string key, string name, params string[] beats) => new()
     {
@@ -102,7 +102,6 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
             }
         }
 
-        var played = new List<StoryRunLine>();
         var sink = new SteppedSink();
         var player = new StoryRunPlayer(
             new AudioArbiter(sink, NullLogger<AudioArbiter>.Instance).Start(),
@@ -112,15 +111,6 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         var surface = new AdventureSurface(
             book, generator, () => null, () => Commander, () => Now, _ => { }, () => true, () => null, () => { },
             Messages: messages, Stories: director,
-            PlayRunLine: (_, line) =>
-            {
-                lock (played)
-                {
-                    played.Add(line);
-                }
-
-                return Task.FromResult<string?>(null);
-            },
             RunPlayer: player);
 
         var panel = new PanelView { DataContext = new PanelViewModel(), Mode = PanelMode.Full };
@@ -145,7 +135,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         }
 
         Dispatcher.UIThread.RunJobs();
-        return new Rig(window, panel, played, messages, player, sink);
+        return new Rig(window, panel, messages, player, sink);
     }
 
     private static void Press(Button button)
@@ -268,18 +258,22 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         Assert.Equal(
             page.GetVisualDescendants().OfType<Button>().Count(button => button.Name == "PlayAllLine" && button.IsEffectivelyVisible),
             plays.Count);
+        Assert.All(
+            page.GetVisualDescendants().OfType<Button>().Where(button => button.Name == "PlayAllLine" && button.IsEffectivelyVisible),
+            button => Assert.Equal(StoryRunPage.PlayFromHereLabel, button.Content));
+        Assert.Equal(StoryRunPage.PlayAllLabel, Named(page, "PlayAllFromJump").Content);
 
         Press(plays[0]);
 
-        for (var attempt = 0; attempt < 200 && rig.Played.Count == 0; attempt++)
-        {
-            Thread.Sleep(5);
-            Dispatcher.UIThread.RunJobs();
-        }
+        var now = rig.Player.Now!;
+        Assert.Single(now.Lines);
+        Assert.Equal("ch1 The lights go out 0", now.Line.Body);
+        Assert.Equal(["ch1 The lights go out 0"], rig.Sink.Names);
 
-        var played = Assert.Single(rig.Played);
-        Assert.Equal("ch1 The lights go out 0", played.Body);
-        Assert.NotNull(played.Clip);
+        rig.Sink.FinishCurrent();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(rig.Player.Now);
 
         rig.Window.Close();
     }

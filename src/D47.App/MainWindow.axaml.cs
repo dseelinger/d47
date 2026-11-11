@@ -347,7 +347,6 @@ public partial class MainWindow : Window
                         CancellationToken.None,
                         ToolCaller.Commander),
                     () => host.ShipPicture,
-                    host.PlayRunLine,
                     host.RunPlayer,
                     host.RunVoicing);
 

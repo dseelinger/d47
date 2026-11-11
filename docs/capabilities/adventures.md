@@ -453,19 +453,19 @@ length, chapters so far, clues given, and the days it was picked and last spoke.
 record holds, in order, in one section per chapter with the chapter's name and the day of its first line. A clue,
 reaction, ending or other story line said between chapters is listed under the chapter before it. Each line shows
 the speaker's picture and name, its kind (Objective, Clue, Reaction, Ending or Story line), the time and the
-text, and **Play**. Play plays a kept clip as a message's Play does, a clip in your own voice included. **Jump to** has two lists that open in the page: **Chapter**, then **Objective** within that chapter.
+text, **Play** and **Play from here**. Play plays that one line through the same player as Play all and then stops; a kept clip is played as a message's Play does, a clip in your own voice included. **Jump to** has two lists that open in the page: **Chapter**, then **Objective** within that chapter.
 Choosing one scrolls the page to it. A run from before the record was kept says **No lines kept** and shows each
 chapter's text as it was told instead.
 
-**Play all**, on every line and at the end of the Jump to row, plays the run's lines in order from that line, or from
+**Play from here**, on every line, plays the run's lines in order from that line. **Play all**, at the end of the Jump to row, plays them from
 the chosen chapter or objective. The line playing is marked **▶ Playing** on a cyan
 ground, and a bar under Jump to shows the speaker's picture, **Playing 23 of 142** with the speaker's name, the line,
-and **Pause**, **Skip** and **Stop**. While it plays, other speech is silenced: an answer, a callout or radio chatter
+and **Pause**, **Skip** and **Stop**. While it plays, as while a single line's Play does, other speech is silenced: an answer, a callout or radio chatter
 from anywhere else is dropped, not saved for later. Music, ambience and cues play as usual. A danger alert pauses
 playback and is spoken; so does pressing push-to-talk, whose turn runs and whose reply is spoken, and the bar says
 **Paused for push-to-talk. Press PLAY to carry on.** Playback stays paused until you press **Play**, which plays the
 paused line again from its start. It keeps playing when you leave the page. The shut-up control, or **Play** on a
-single line or message, stops it.
+message, stops it. **Play** on a single line replaces it with that line.
 
 A line whose clip was not kept says **No clip kept. Played, it is spoken again in the speaker's current voice.** That
 covers a line posted with speech off, one whose synthesis failed, one in a voice you deleted, and a clip file that is

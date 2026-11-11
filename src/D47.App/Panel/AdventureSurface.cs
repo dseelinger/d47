@@ -35,7 +35,6 @@ public sealed record AdventureSurface(
     Func<string, D47.Core.Ships.ShipBuild?>? Intend = null,
     Func<int, Task<ToolResult>>? Choose = null,
     Func<string?>? ShipPicture = null,
-    Func<D47.Core.Stories.Story, D47.Core.Stories.StoryRunLine, Task<string?>>? PlayRunLine = null,
     D47.App.Voice.StoryRunPlayer? RunPlayer = null,
     D47.App.Voice.StoryRunVoicing? RunVoicing = null)
 {

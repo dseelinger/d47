@@ -5386,42 +5386,6 @@ public sealed class AppHost : IDisposable
         return null;
     }
 
-    /// <summary>
-    /// Plays the clip a story run's record kept for <paramref name="line"/>, as <see cref="PlayMessage"/> plays a message's, or
-    /// one made now in the speaker's current voice when it kept none. Returns why it cannot, or null once it is queued.
-    /// Reads the file, so call it off the UI thread.
-    /// </summary>
-    public async Task<string?> PlayRunLine(D47.Core.Stories.Story run, D47.Core.Stories.StoryRunLine line)
-    {
-        ArgumentNullException.ThrowIfNull(run);
-        ArgumentNullException.ThrowIfNull(line);
-
-        if (RunLineClip(run, line) is not { } clip)
-        {
-            var spoken = await RunVoicing.SpeakAsync(run, line).ConfigureAwait(false);
-
-            if (spoken.Clip is null)
-            {
-                return StoryRunVoicing.Why(spoken.Hold) + (spoken.Detail is { Length: > 0 } detail ? $" {detail}" : string.Empty);
-            }
-
-            clip = spoken.Clip;
-        }
-
-        RunPlayer.Stop();
-        Audio.DropGroup(MessagePlaybackGroup);
-        Audio.Enqueue(new AudioRequest
-        {
-            Channel = AudioChannel.Speech,
-            Clip = SpeechLeveller.Apply(clip),
-            Group = MessagePlaybackGroup,
-            Caption = line.Body,
-            Picture = StoryRunPlayer.PictureOf(line),
-        });
-
-        return null;
-    }
-
     /// <summary>Whether <paramref name="voiceId"/> is the Commander's own or custom voice and has been deleted.</summary>
     private bool ForgottenVoice(string voiceId) =>
         string.Equals(voiceId, D47.Core.Audio.OwnVoice.VoiceId, StringComparison.OrdinalIgnoreCase)

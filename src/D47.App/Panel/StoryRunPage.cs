@@ -29,6 +29,7 @@ public sealed class StoryRunPage : UserControl, IPageSummary
     public const string GoneText = "That story run is no longer on file.";
     public const string BeforeChapters = "Before the first chapter";
     public const string PlayAllLabel = "Play all";
+    public const string PlayFromHereLabel = "Play from here";
     public const string PlayingMark = "▶ Playing";
     public const string SilencedText = "Other speech is silenced while this plays.";
     public const string PushToTalkText = "Paused for push-to-talk. Press PLAY to carry on.";
@@ -737,7 +738,7 @@ public sealed class StoryRunPage : UserControl, IPageSummary
 
         var words = new StackPanel { Children = { head, text } };
 
-        if (line.Clip is null && (_surface.PlayRunLine is not null || _surface.RunPlayer is not null))
+        if (line.Clip is null && _surface.RunPlayer is not null)
         {
             var note = Typeset.Prose(NoClipNote, TypeScale.Meta, ThemeManager.GreyKey);
             note.Name = "NoClipNote";
@@ -776,28 +777,17 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         }
         else
         {
-            if (_surface.PlayRunLine is { } play && _run is { } run)
+            if (_surface.RunPlayer is { } idle && _run is { } run)
             {
                 var button = new Button { Name = "PlayLine", Content = "Play", MinHeight = TypeScale.MinimumTarget };
-                button.Click += async (_, _) =>
+                button.Click += (_, _) =>
                 {
-                    var refusal = await Task.Run(() => play(run, line));
-
-                    if (refusal is null)
-                    {
-                        _status.Clear();
-                    }
-                    else
-                    {
-                        _status.Fail(refusal);
-                    }
+                    _status.Clear();
+                    idle.Play(run, [line], 0);
                 };
                 actions.Children.Add(button);
-            }
 
-            if (_surface.RunPlayer is not null)
-            {
-                var all = new Button { Name = "PlayAllLine", Content = PlayAllLabel, MinHeight = TypeScale.MinimumTarget };
+                var all = new Button { Name = "PlayAllLine", Content = PlayFromHereLabel, MinHeight = TypeScale.MinimumTarget };
                 all.Click += (_, _) => PlayAllFrom(entry);
                 actions.Children.Add(all);
             }
