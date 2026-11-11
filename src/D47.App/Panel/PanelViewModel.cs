@@ -401,6 +401,12 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _audioPlayer, value);
     }
 
+    /// <summary>The player of the story run being played; set by the host.</summary>
+    public D47.App.Voice.StoryRunPlayer? StoryPlayer { get; set; }
+
+    /// <summary>Reads the playing line's position and length for the mini read-out; set by the host.</summary>
+    public Func<D47.Core.Audio.TrackProgress?>? StoryPlaybackProgress { get; set; }
+
     /// <summary>Reads the live track's position and length for the mini read-outs; set by the host.</summary>
     public Func<D47.Core.Audio.TrackProgress?>? AudioProgress { get; set; }
 

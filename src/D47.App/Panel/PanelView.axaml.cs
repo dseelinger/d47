@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Presenters;
@@ -10,6 +10,8 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Theming;
+using D47.App.Voice;
 using D47.Core.Help;
 using D47.Core.Interface;
 using D47.Core.Knowledge;
@@ -137,6 +139,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         _modules = new ModulesFurnishing(this);
         _navigation.PlanRootMiniChanged += () => Dispatcher.UIThread.Post(ApplyChrome);
         InitializeComponent();
+        StoryReadout.Moved += PlaceStoryProgress;
+        MiniRail.SizeChanged += (_, _) => PlaceStoryProgress();
         _selecting = new TranscriptSelection(
             Bubbles,
             () => [.. _bubbles.Select(bubble => bubble.Block)],
@@ -341,6 +345,7 @@ public partial class PanelView : UserControl, IPanelTabHost
                 ApplyMicrophone();
                 ApplyAskHint();
                 ApplyAudioReadout();
+                ApplyStoryReadout();
             }
 
             // The model handed over is rarely empty — the window binds one that has already been written to —
@@ -474,6 +479,10 @@ public partial class PanelView : UserControl, IPanelTabHost
                 }
 
                 Dispatcher.UIThread.Post(ApplySpeaker);
+                return;
+
+            case nameof(PanelViewModel.StoryPlayback):
+                Dispatcher.UIThread.Post(ApplyStoryReadout);
                 return;
 
             case nameof(PanelViewModel.AudioPlayer):
@@ -743,8 +752,38 @@ public partial class PanelView : UserControl, IPanelTabHost
     private const int SpeakerAvatarWidth = (int)(HeaderAvatarExtent * 2);
 
     /// <summary>Shows the speaker's picture in the avatar, or the core when there is none or it has no file.</summary>
-    private void ApplySpeaker() =>
-        Avatar.Speaker = _bound?.SpeakingPicture is { } picture ? _portraits?.For(picture, SpeakerAvatarWidth) : null;
+    private void ApplySpeaker()
+    {
+        var picture = StoryReadoutShowing && _bound?.StoryPlayer?.Now is { } playback
+            ? StoryRunPlayer.PictureOf(playback.Line)
+            : _bound?.SpeakingPicture;
+
+        Avatar.Speaker = picture is { } shown ? _portraits?.For(shown, SpeakerAvatarWidth) : null;
+    }
+
+    /// <summary>Whether mini is showing the story playback read-out.</summary>
+    private bool StoryReadoutShowing => Mode == PanelMode.Mini && _bound?.StoryPlayback == true && _bound.StoryPlayer is not null;
+
+    /// <summary>Shows the story playback read-out and its progress line on a mini surface while a run plays.</summary>
+    private void ApplyStoryReadout()
+    {
+        var show = StoryReadoutShowing;
+
+        StoryReadout.IsVisible = show;
+        StoryReadoutProgress.IsVisible = show;
+        StoryReadout.Watch(show ? _bound!.StoryPlayer : null, show ? _bound!.StoryPlaybackProgress : null);
+        MiniPane.IsVisible = MiniPane.IsVisible && !show;
+        TranscriptPane.IsVisible = TranscriptPane.IsVisible && !show;
+        PagePane.IsVisible = PagePane.IsVisible && !show;
+        PlaceStoryProgress();
+        ApplySpeaker();
+    }
+
+    private void PlaceStoryProgress()
+    {
+        ThemeInk.Bind(StoryReadoutProgress, Border.BackgroundProperty, StoryReadout.Paused ? ThemeManager.AKey : ThemeManager.CyanKey);
+        StoryReadoutProgress.Width = MiniRail.Bounds.Width * StoryReadout.Share;
+    }
 
     private SpeakerPortraits? _portraits;
 
@@ -2433,6 +2472,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         MiniPane.IsVisible = miniStory && !modal;
         TranscriptPane.IsVisible = transcript && !modal && !miniStory;
         PagePane.IsVisible = !transcript && !modal && !miniStory;
+
+        ApplyStoryReadout();
 
         // No tab has a frame of its own: the edge is the window's. The page's own bar keeps its inset.
         PageBar.Margin = transcript ? new Thickness(0, 8, 0, 0) : new Thickness(14, 12, 14, 0);

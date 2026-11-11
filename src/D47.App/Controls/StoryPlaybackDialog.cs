@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -321,6 +321,27 @@ public sealed class StoryPlaybackDialog : ModalDialog
         return border;
     }
 
+    /// <summary>The head's words: Playing 3 of 6 · Speaker, Paused · …, and the held and speaking-again forms, in capitals.</summary>
+    internal static string LabelOf(StoryRunPlayback playback)
+    {
+        var speaker = MessagesView.Sender(playback.Line.From);
+        var one = playback.Lines.Count == 1;
+        var place = one
+            ? speaker
+            : $"{(playback.Index + 1).ToString(CultureInfo.InvariantCulture)} of {playback.Lines.Count.ToString(CultureInfo.InvariantCulture)} · {speaker}";
+
+        return (playback.IsPaused ? $"Paused · {place}" : playback.State switch
+        {
+            StoryRunLineState.SpeakingAgain => $"{StoryRunPage.SpeakingAgainLabel} · {place}",
+            StoryRunLineState.Held => $"{StoryRunPage.ShownForReadingLabel} · {place}",
+            _ => one ? $"Playing · {place}" : $"Playing {place}",
+        }).ToUpperInvariant();
+    }
+
+    /// <summary>The head's ink: A while paused, white for a held line, cyan otherwise.</summary>
+    internal static string LabelInk(StoryRunPlayback playback) =>
+        playback.IsPaused ? ThemeManager.AKey : playback.State == StoryRunLineState.Held ? ThemeManager.WhiteKey : ThemeManager.CyanKey;
+
     private void OnPlayerChanged() => Dispatcher.UIThread.Post(Refresh);
 
     /// <summary>Draws the playback's line, label and controls; closes the box when nothing is playing.</summary>
@@ -337,21 +358,9 @@ public sealed class StoryPlaybackDialog : ModalDialog
         var line = playback.Line;
         var speaker = MessagesView.Sender(line.From);
         var one = playback.Lines.Count == 1;
-        var place = one
-            ? speaker
-            : $"{(playback.Index + 1).ToString(CultureInfo.InvariantCulture)} of {playback.Lines.Count.ToString(CultureInfo.InvariantCulture)} · {speaker}";
 
-        _label.Text = (state switch
-        {
-            null => $"Paused · {place}",
-            StoryRunLineState.SpeakingAgain => $"{StoryRunPage.SpeakingAgainLabel} · {place}",
-            StoryRunLineState.Held => $"{StoryRunPage.ShownForReadingLabel} · {place}",
-            _ => one ? $"Playing · {place}" : $"Playing {place}",
-        }).ToUpperInvariant();
-        ThemeInk.Bind(
-            _label,
-            TextBlock.ForegroundProperty,
-            playback.IsPaused ? ThemeManager.AKey : state == StoryRunLineState.Held ? ThemeManager.WhiteKey : ThemeManager.CyanKey);
+        _label.Text = LabelOf(playback);
+        ThemeInk.Bind(_label, TextBlock.ForegroundProperty, LabelInk(playback));
 
         _chapterText.Text = _chapter(playback)?.ToUpperInvariant() ?? string.Empty;
         _stamp.Text = line.Sent.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);

@@ -912,6 +912,12 @@
               IsVisible="False"
               ClipToBounds="True" />
 
+      <!-- The story playback's read-out in the mini text area; it replaces the pane under it and has no buttons. -->
+      <controls:StoryPlaybackReadout x:Name="StoryReadout"
+                                     IsVisible="False"
+                                     Margin="-8,-2,-12,-10"
+                                     ClipToBounds="True" />
+
       <!--
         A chooser, or a value being said or typed. It takes the whole content region because that
         is what makes it a level of the stack rather than a popup - and because popups cannot
@@ -958,6 +964,14 @@
                            State="{Binding Comms}" />
   </Panel>
   </DockPanel>
+
+  <!-- The story playback's progress along the bottom of mini's avatar slot. -->
+  <Border x:Name="StoryReadoutProgress"
+          IsVisible="False"
+          Height="3"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Bottom" />
+
 
   <!--
     Scanlines, over the whole window and on top of everything else — only on a theme that glows, since the

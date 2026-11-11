@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -181,6 +181,8 @@ public sealed class AppHost : IDisposable
             _logger);
         RunPlayer = new StoryRunPlayer(audio, RunLineClip, speakAgain: RunVoicing.SpeakAsync);
         RunPlayer.Changed += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.StoryPlayback = RunPlayer.Now is not null);
+        Panel.StoryPlayer = RunPlayer;
+        Panel.StoryPlaybackProgress = () => audio.SpeechProgress(StoryRunPlayer.Group);
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
         var savedFolder = viewState.Load().LastMusicFolder;
         Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile, lastFolder: savedFolder);

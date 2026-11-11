@@ -1,4 +1,4 @@
----
+﻿---
 title: Stories
 group: Knowledge
 nav_order: 115
@@ -468,6 +468,12 @@ playback and is spoken; so does pressing push-to-talk, whose turn runs and whose
 **Paused for push-to-talk. Press PLAY to carry on.** Playback stays paused until you press **Play**, which plays the
 paused line again from its start. It keeps playing when you leave the page. The shut-up control, or **Play** on a
 message, stops it. **Play** on a single line replaces it with that line.
+
+The mini panels, on the desktop and in the headset, have no buttons, so while a playback runs they show a read-out in place
+of their text. The avatar slot shows the playing line's picture whole, with a 3px progress line along its bottom edge, cyan
+or amber while paused. Beside it are the head, **Playing 3 of 6 · Ysolt Garrow** or **Paused · …** with the time played
+(a held line shows its countdown), the line, which scrolls by itself to reach its end as the clip does, and the hint
+Say: “play”, “pause”, “next” or “stop”. When the playback ends the panel shows what it showed before.
 
 A line whose clip was not kept says **No clip kept. Played, it is spoken again in the speaker's current voice.** That
 covers a line posted with speech off, one whose synthesis failed, one in a voice you deleted, and a clip file that is
