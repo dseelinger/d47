@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Fleet › a ship's Hold tile reads fitted ► planned, as 12 ► ~28 t, when the plan adds or removes cargo racks, and its sentence says "12 tonnes of hold, 28 with the plan."
+
 Changed: A ship's page keeps its talk, figures, To buy, Plan and slot table in one column at most 900px wide. On a pane at least 1000px wide with the picture set to BESIDE, the picture and the hull's figures sit in a 400px column to the right; otherwise the picture is beside or above the figures inside the 900px column. The headset and mini panels are unchanged.
 
 Added: Stories › while a story playback is open, say "play" or "resume", "pause", and "next", "next line" or "skip" to drive it; "stop" ends it and closes the box. With no playback open, "pause" and "play" still act on the music.

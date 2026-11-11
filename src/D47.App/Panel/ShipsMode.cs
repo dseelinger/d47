@@ -467,10 +467,23 @@ public sealed class ShipsMode(
 
         if (loadout.CargoCapacity is { } cargo)
         {
-            lines.Add(Stat(
-                $"{cargo.ToString(CultureInfo.InvariantCulture)} tonnes of hold.",
-                "Hold",
-                $"{cargo.ToString(CultureInfo.InvariantCulture)} t"));
+            var fitted = cargo.ToString(CultureInfo.InvariantCulture);
+            var combat = ShipGauges.Read(build, loadout, LiveDraw(build)).Combat;
+
+            if (combat is { Kind: FigureKind.Modelled } planned
+                && Math.Round(planned.Cargo) != cargo)
+            {
+                var plannedHold = Math.Round(planned.Cargo).ToString("0", CultureInfo.InvariantCulture);
+
+                lines.Add(Stat(
+                    $"{fitted} tonnes of hold, {plannedHold} with the plan.",
+                    "Hold",
+                    $"{fitted} ► ~{plannedHold} t"));
+            }
+            else
+            {
+                lines.Add(Stat($"{fitted} tonnes of hold.", "Hold", $"{fitted} t"));
+            }
         }
 
         if (loadout.FuelCapacity is { } tank)
