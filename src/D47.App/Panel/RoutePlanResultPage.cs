@@ -79,11 +79,20 @@ public sealed class RoutePlanResultPage : UserControl
         OutfittingPlotter? outfittingPlotter = null)
     {
         _plotter = outfittingPlotter;
+        var actions = RoutingKit.Actions(_search, _stop);
+        actions.Margin = default;
+        actions.VerticalAlignment = VerticalAlignment.Bottom;
+        DockPanel.SetDock(actions, Dock.Right);
+
         _searchBar = new StackPanel
         {
             Spacing = 8,
             Margin = new Thickness(0, 0, 0, 10),
-            Children = { _age.Field("Max report age"), RoutingKit.Actions(_search, _stop), _searchStatus },
+            Children =
+            {
+                new DockPanel { LastChildFill = false, Children = { actions, _age.Field("Max report age") } },
+                _searchStatus,
+            },
         };
         _offDuty = offDuty;
         _copy = copy;
@@ -194,6 +203,11 @@ public sealed class RoutePlanResultPage : UserControl
             var note = RoutingKit.Prose(offDuty);
             note.Margin = new Thickness(0, 0, 0, 10);
             _stack.Children.Add(note);
+        }
+
+        if (plan.Outfitting is { } figured)
+        {
+            _stack.Children.Add(Figures(figured, plan));
         }
 
         if (plan.Outfitting is { } searched && _plotter is not null)
@@ -493,6 +507,20 @@ public sealed class RoutePlanResultPage : UserControl
         return RoutingKit.Row(lines, stop.System, _copy);
     }
 
+    private static readonly TimeSpan OldReport = TimeSpan.FromDays(30);
+
+    private const double ItemColumn = 260;
+
+    private const string OtherGroup = "Other";
+
+    private static readonly (string Name, Func<OutfittingItem, bool> Holds)[] ItemGroups =
+    [
+        ("Core internal", item => item is { IsShip: false, SlotKind: ShipSlotKind.Core }),
+        ("Optional internal", item => item is { IsShip: false, SlotKind: ShipSlotKind.Optional }),
+        ("Hardpoints and utility", item => item is { IsShip: false, SlotKind: ShipSlotKind.Hardpoint or ShipSlotKind.Utility }),
+        ("Ships", item => item.IsShip),
+    ];
+
     private IEnumerable<Control> OutfittingRows(OutfittingRoute route, StoredRoutePlan plan, string? here)
     {
         var flags = OutfittingBought.Flags(route, plan.Bought);
@@ -501,32 +529,199 @@ public sealed class RoutePlanResultPage : UserControl
         {
             var state = State(index, plan.Reached);
 
-            return Stop(stop, state with { Reached = state.Reached || (flags[index].Length > 0 && flags[index].All(bought => bought)) }, here, flags[index]);
+            return Stop(
+                stop,
+                index,
+                state with { Reached = state.Reached || (flags[index].Length > 0 && flags[index].All(bought => bought)) },
+                here,
+                flags[index]);
         });
     }
 
-    private Control Stop(OutfittingStop stop, RowState state, string? here, bool[] bought)
+    private static Control Figures(OutfittingRoute route, StoredRoutePlan plan)
     {
-        var lines = new List<Control> { Line($"{stop.Station} in {stop.System}", stop.System, state, here) };
+        var flags = OutfittingBought.Flags(route, plan.Bought);
+        var bought = flags.Sum(stop => stop.Count(flag => flag));
+        var total = flags.Sum(stop => stop.Length);
 
-        if (stop.Distance is { } distance)
+        static TextBlock Figure(string text, string key) => Typeset.Mono(text, StatTile.ValueSize, key, FontWeight.Medium);
+
+        return new Border
         {
-            lines.Add(RoutingKit.Values($"{distance:N1} ly", state.Reached));
-        }
+            Margin = new Thickness(0, 0, 0, 10),
+            Child = StatTile.Grid(
+            [
+                StatTile.Tile("Stops", Figure(route.Stops.Count.ToString("N0"), ThemeManager.WhiteKey)),
+                StatTile.Tile("Items", Figure(route.Wanted.ToString("N0"), ThemeManager.WhiteKey)),
+                StatTile.Tile("Route", Figure($"{route.TotalDistance:N1} ly", ThemeManager.WhiteKey)),
+                StatTile.Tile("Bought", Figure($"{bought} of {total}", bought > 0 ? ThemeManager.BlueKey : ThemeManager.GreyKey)),
+            ]),
+        };
+    }
+
+    private Control Stop(OutfittingStop stop, int index, RowState state, string? here, bool[] bought)
+    {
+        var old = stop.StockLastSeen is { } stocked && DateTimeOffset.UtcNow - stocked > OldReport;
+        var section = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 0, 18) };
+
+        section.Children.Add(StopHeading(stop, index, state, here));
+
+        var rows = Enumerable.Range(0, ItemGroups.Length + 1).Select(_ => new List<Control>()).ToArray();
 
         for (var i = 0; i < stop.Items.Count; i++)
         {
-            lines.Add(bought[i]
-                ? RoutingKit.Values($"bought {stop.Items[i]}", behind: true)
-                : RoutingKit.Values($"buy {stop.Items[i]}", state.Reached));
+            var parsed = OutfittingItem.TryParse(stop.Items[i], out var item, out _);
+            var group = parsed ? Array.FindIndex(ItemGroups, candidate => candidate.Holds(item)) : -1;
+
+            rows[group < 0 ? ItemGroups.Length : group].Add(ItemRow(parsed ? item : null, stop.Items[i], bought[i], old));
         }
 
-        lines.Add(Caveat(
-            stop.StockLastSeen is { } seen
-                ? $"outfitting reported {seen.ToLocalTime():d MMM yyyy}"
-                : "report date unknown"));
+        for (var g = 0; g < rows.Length; g++)
+        {
+            if (rows[g].Count == 0)
+            {
+                continue;
+            }
 
-        return RoutingKit.Row(lines, stop.System, _copy);
+            section.Children.Add(GroupHead(g < ItemGroups.Length ? ItemGroups[g].Name : OtherGroup, rows[g].Count));
+            section.Children.Add(Reflow.Grid(rows[g], ItemColumn, 2, 2, 6));
+        }
+
+        section.Children.Add(Report(stop, old));
+
+        return section;
+    }
+
+    private Control StopHeading(OutfittingStop stop, int index, RowState state, string? here)
+    {
+        var title = new WrapPanel { ItemSpacing = 8, LineSpacing = 2 };
+
+        if (state.Reached)
+        {
+            var tick = RoutingKit.Ink("✓", TypeScale.Body, ThemeManager.BlueKey);
+            tick.VerticalAlignment = VerticalAlignment.Center;
+            title.Children.Add(tick);
+        }
+
+        title.Children.Add(Typeset.Mono(
+            (index + 1).ToString("00"), TypeScale.Body, ThemeManager.GreyKey, vertical: VerticalAlignment.Center));
+        title.Children.Add(Typeset.Chrome(
+            stop.Station, TypeScale.Subheading, ThemeManager.WhiteKey, FontWeight.SemiBold, wrap: true, vertical: VerticalAlignment.Center));
+
+        if (state.Next)
+        {
+            title.Children.Add(RoutingKit.Tag("next", ThemeManager.AKey));
+        }
+
+        var place = new WrapPanel { ItemSpacing = 6, LineSpacing = 2 };
+
+        place.Children.Add(RoutingKit.Ink(stop.System, TypeScale.Secondary, RoutingKit.SystemKey(stop.System, here, state.Reached)));
+
+        var facts = new List<string>();
+
+        if (stop.Distance is { } distance)
+        {
+            facts.Add($"{distance:N1} ly");
+        }
+
+        facts.Add(stop.Items.Count == 1 ? "1 item" : $"{stop.Items.Count} items");
+
+        place.Children.Add(Typeset.Mono("· " + Joined(facts), TypeScale.Secondary, ThemeManager.GreyKey, vertical: VerticalAlignment.Center));
+
+        var layout = new DockPanel();
+
+        if (_copy is not null)
+        {
+            var glyph = CopyGlyph.For(stop.System, _copy);
+            glyph.VerticalAlignment = VerticalAlignment.Center;
+            glyph.Margin = new Thickness(10, 0, 0, 0);
+            DockPanel.SetDock(glyph, Dock.Right);
+            layout.Children.Add(glyph);
+        }
+
+        layout.Children.Add(new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { title, place } });
+
+        var rule = new Border { Height = 1 };
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
+
+        return new StackPanel { Spacing = 6, Children = { layout, rule } };
+    }
+
+    private static Control GroupHead(string name, int count)
+    {
+        var head = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Margin = new Thickness(0, 10, 0, 4) };
+
+        head.Children.Add(Typeset.Chrome(
+            name.ToUpperInvariant(), TypeScale.Meta, ThemeManager.GreyKey, FontWeight.SemiBold,
+            TypeScale.Meta * Fonts.ChromeTracking, vertical: VerticalAlignment.Center));
+        head.Children.Add(Typeset.Mono($"· {count}", TypeScale.Meta, ThemeManager.Grey2Key, vertical: VerticalAlignment.Center));
+
+        return head;
+    }
+
+    private static Control ItemRow(OutfittingItem? item, string text, bool bought, bool old)
+    {
+        var grid = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(44, GridUnitType.Pixel), new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+        };
+
+        var spec = item is null ? string.Empty : $"{item.Class?.ToString(System.Globalization.CultureInfo.InvariantCulture)}{item.Rating}";
+
+        var specText = Typeset.Mono(spec, TypeScale.Body, bought ? ThemeManager.GreyKey : ThemeManager.AKey, vertical: VerticalAlignment.Center);
+        var nameText = Typeset.Text(
+            item?.Name ?? text, TypeScale.Body, bought || old ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
+            wrap: true, vertical: VerticalAlignment.Center);
+
+        Grid.SetColumn(nameText, 1);
+        grid.Children.Add(specText);
+        grid.Children.Add(nameText);
+
+        if (bought)
+        {
+            var word = Typeset.Chrome(
+                "✓ BOUGHT", TypeScale.Meta, ThemeManager.BlueKey, FontWeight.SemiBold,
+                TypeScale.Meta * Fonts.ChromeTracking, vertical: VerticalAlignment.Center);
+            word.Margin = new Thickness(8, 0, 0, 0);
+            Grid.SetColumn(word, 2);
+            grid.Children.Add(word);
+        }
+
+        var row = new Border { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(12, 0), Child = grid };
+        ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        return row;
+    }
+
+    private static Control Report(OutfittingStop stop, bool old)
+    {
+        if (stop.StockLastSeen is not { } seen)
+        {
+            return ReportLine("report date unknown", ThemeManager.GreyKey);
+        }
+
+        var line = ReportLine($"outfitting reported {seen.ToLocalTime():d MMM yyyy}", old ? ThemeManager.WarnKey : ThemeManager.GreyKey);
+
+        if (!old)
+        {
+            return line;
+        }
+
+        line.Margin = default;
+
+        var flag = Typeset.Chrome(
+            "OLD REPORT", TypeScale.MetaSmall, ThemeManager.WarnKey, FontWeight.SemiBold, TypeScale.MetaSmall * Fonts.ChromeTracking);
+
+        return new StackPanel { Spacing = 2, Margin = new Thickness(0, 8, 0, 0), Children = { line, flag } };
+    }
+
+    private static TextBlock ReportLine(string text, string key)
+    {
+        var line = RoutingKit.Ink(text, TypeScale.Small, key);
+        line.TextWrapping = TextWrapping.Wrap;
+        line.Margin = new Thickness(0, 8, 0, 0);
+
+        return line;
     }
 
     private Control Stop(TradeStop stop, RowState state, string? here)

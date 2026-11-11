@@ -16,6 +16,8 @@ Changed: A ship's page keeps its talk, figures, To buy, Plan and slot table in o
 
 Added: Stories › while a story playback is open, say "play" or "resume", "pause", and "next", "next line" or "skip" to drive it; "stop" ends it and closes the box. With no playback open, "pause" and "play" still act on the music.
 
+Changed: Navigation › Plan › an outfitting plan opens with four figures (Stops, Items, Route, Bought), then each stop under a numbered heading with its items in slot groups (Core internal, Optional internal, Hardpoints and utility, Ships, Other). A bought item shows ✓ BOUGHT. A stop whose report is over 30 days old is marked OLD REPORT.
+
 Changed: Fleet › a ship's slot rows mark a slot with work left by a ► between the fitted module and the plan, in a column of its own. The Draw column shows the figure without "MW" (the header names the unit) and no longer clips it.
 
 Changed: On a story run's page, **Play** on a line plays it through the run player, so it can be paused and stopped and silences other speech; the per-line **Play all** is now **Play from here**.

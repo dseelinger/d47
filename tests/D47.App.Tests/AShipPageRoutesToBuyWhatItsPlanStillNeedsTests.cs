@@ -263,9 +263,12 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         var texts = page.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty).ToList();
 
         Assert.Contains(texts, text => text.StartsWith("1 stop for 2 of 3 items, 12 ly", StringComparison.Ordinal));
-        Assert.Contains("Ackerman Market in Eravate", texts);
-        Assert.Contains("buy 6A Fuel Scoop", texts);
-        Assert.Contains("buy 5A Thrusters", texts);
+        Assert.Contains("Ackerman Market", texts);
+        Assert.Contains("Eravate", texts);
+        Assert.Contains("6A", texts);
+        Assert.Contains("Fuel Scoop", texts);
+        Assert.Contains("5A", texts);
+        Assert.Contains("Thrusters", texts);
         Assert.Contains("1H Guardian FSD Booster", texts);
         Assert.Contains(texts, text => text.StartsWith("Stored modules were not counted", StringComparison.Ordinal));
         Assert.Contains(texts, text => text == "No station within 50 ly of LHS 3447 sells these.");
