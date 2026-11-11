@@ -128,7 +128,9 @@ D47.Core.Journal.CommodityLedger.Changed
 D47.Core.Journal.TechBrokerUnlocks.NotKnownToBeUnlocked(string)
 D47.Core.Knowledge.CodexVariants.Of(string)
 D47.Core.Knowledge.CommodityBoard.Posted
+D47.Core.Knowledge.EliteSpecifications.SlotKindOfType(string)
 D47.Core.Knowledge.OutfitterStation.ReportedAt
+D47.Core.Knowledge.OutfittingItem.SlotKind
 D47.Core.Knowledge.RareIndex.Built
 D47.Core.Knowledge.RareIndex.FarPricesAt
 D47.Core.Listening.ListenGate.Capturing

@@ -361,6 +361,44 @@ public static class EliteSpecifications
             ? kind
             : null;
 
+    /// <summary>The kind of slot a module type goes in, or null for a type no slot row lists; a type listed as both core and optional is Optional.</summary>
+    internal static ShipSlotKind? SlotKindOfType(string? type) =>
+        !string.IsNullOrWhiteSpace(type) && TypeKinds.Value.TryGetValue(type.Trim(), out var kind) ? kind : null;
+
+    private static readonly Lazy<IReadOnlyDictionary<string, ShipSlotKind>> TypeKinds =
+        new(
+            () =>
+            {
+                var map = new Dictionary<string, ShipSlotKind>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var (row, types) in Loaded.Value.SlotKinds)
+                {
+                    if (KindOf(row) == ShipSlotKind.Core)
+                    {
+                        foreach (var type in types)
+                        {
+                            map[type] = ShipSlotKind.Core;
+                        }
+                    }
+                }
+
+                foreach (var (row, kind) in new[]
+                {
+                    ("hardpoint", ShipSlotKind.Hardpoint),
+                    ("utility", ShipSlotKind.Utility),
+                    ("optional", ShipSlotKind.Optional),
+                })
+                {
+                    foreach (var type in Loaded.Value.SlotKinds.GetValueOrDefault(row) ?? [])
+                    {
+                        map[type] = kind;
+                    }
+                }
+
+                return map;
+            },
+            LazyThreadSafetyMode.ExecutionAndPublication);
+
     private static readonly Lazy<IReadOnlyDictionary<string, ShipSlotKind>> Kinds =
         new(
             () => Loaded.Value.Slots.Values

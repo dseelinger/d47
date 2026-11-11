@@ -29,6 +29,37 @@ public sealed record OutfittingItem
     /// <summary>Module rating, A to I.</summary>
     public string? Rating { get; init; }
 
+    /// <summary>The kind of slot the module goes in; null for a ship, a type no slot row lists, or specifications that disagree.</summary>
+    public ShipSlotKind? SlotKind
+    {
+        get
+        {
+            if (IsShip)
+            {
+                return null;
+            }
+
+            ShipSlotKind? found = null;
+
+            foreach (var spec in EliteSpecifications.Modules)
+            {
+                if (!Matches(spec) || EliteSpecifications.SlotKindOfType(spec.Type) is not { } kind)
+                {
+                    continue;
+                }
+
+                if (found is { } seen && seen != kind)
+                {
+                    return null;
+                }
+
+                found = kind;
+            }
+
+            return found;
+        }
+    }
+
     /// <summary>"5A Frame Shift Drive (SCO)", "Fuel Scoop" or "Python Mk II".</summary>
     public string Display =>
         IsShip || (Class is null && Rating is null)
