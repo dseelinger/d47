@@ -145,6 +145,12 @@ Through conversation:
 
 The system it points at does not change.
 
+### On the panel
+
+The Bookmarks page lists each bookmark with its kind, place, system, date and note, and SET COURSE, EDIT and DELETE tiles. SET COURSE plots to the bookmark's system.
+
+ADD opens a page. Type in **Location** and, with Spansh on, matching systems, bodies and stations are listed with their kind; pick one. For a body or station the system is shown under the field. USE MY TARGET fills the location from what you have targeted in Elite. **Name** left empty takes the place's own name, and **Note** is one line of up to 200 characters. EDIT opens the same page filled in, with SAVE.
+
 ### Deleting one
 
 > "delete bookmark Current CG"

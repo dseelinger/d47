@@ -35,6 +35,7 @@ public class EverySystemNameThePanelDrawsHasACopyGlyphTests
     {
         ["CodexChoosePage.cs:Row"] = "A picker row inside a button; a nested glyph would be a button in a button.",
         ["LoreDialog.cs:AddAsync"] = "A status sentence in the dialog, prose rather than a system label.",
+        ["BookmarkFormPage.cs:Refresh"] = "A status line under the Location input naming the system a pick resolved to.",
     };
 
     private static string RepositoryRoot()

@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -16,7 +16,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The Bookmarks page on the Routing tab: listing, renaming and deleting a bookmark (#490).</summary>
+/// <summary>The Bookmarks page on the Routing tab: listing and deleting a bookmark (#490).</summary>
 public class TheBookmarksPageTests
 {
     private static readonly DateTimeOffset At = new(2026, 9, 25, 12, 0, 0, TimeSpan.Zero);
@@ -135,83 +135,6 @@ public class TheBookmarksPageTests
         surface.Window.Close();
     }
 
-    private static GameStatus Targeting(string system) =>
-        new() { Destination = new StatusDestination(1, 0, system) };
-
-    private static void Type(Surface surface, string text)
-    {
-        var box = surface.Panel.GetVisualDescendants().OfType<TextBox>().Last();
-
-        box.Text = text;
-        Dispatcher.UIThread.RunJobs();
-
-        Click(Named(surface.Panel, "Done"));
-        Dispatcher.UIThread.RunJobs();
-    }
-
-    /// <summary>Add with no name bookmarks the target under Elite's name, as "bookmark this" does (#540).</summary>
-    [AvaloniaFact]
-    public void AddWithNoNameBookmarksTheTargetUnderElitesName()
-    {
-        var surface = Open(target: Targeting("LTT 7786"));
-
-        Click(Named(surface.Panel, "Add"));
-        Type(surface, string.Empty);
-
-        Assert.Equal("LTT 7786", surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "LTT 7786", StringComparison.OrdinalIgnoreCase))?.System);
-        Assert.Contains(Drawn(surface.Panel), text => text.Contains("LTT 7786", StringComparison.Ordinal));
-
-        surface.Window.Close();
-    }
-
-    /// <summary>Add with a name gives the bookmark that name (#540).</summary>
-    [AvaloniaFact]
-    public void AddWithANameTakesThatName()
-    {
-        var surface = Open(target: Targeting("LTT 7786"));
-
-        Click(Named(surface.Panel, "Add"));
-        Type(surface, "Mining Spot");
-
-        Assert.Equal("LTT 7786", surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Mining Spot", StringComparison.OrdinalIgnoreCase))?.System);
-
-        surface.Window.Close();
-    }
-
-    /// <summary>A name that breaks the rules is refused in the prompt and nothing is made (#540).</summary>
-    [AvaloniaFact]
-    public void AddWithABadNameIsRefusedInThePrompt()
-    {
-        var surface = Open(target: Targeting("LTT 7786"));
-
-        Click(Named(surface.Panel, "Add"));
-        Type(surface, "Current CG");
-
-        Assert.Null(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "LTT 7786", StringComparison.OrdinalIgnoreCase)));
-        Assert.Contains(Drawn(surface.Panel), text => text.Contains("Current CG", StringComparison.Ordinal));
-        Assert.Single(surface.Store.For("F1"));
-
-        surface.Window.Close();
-    }
-
-    /// <summary>With nothing targeted, Add shows the tool's refusal and creates nothing (#540).</summary>
-    [AvaloniaFact]
-    public void AddWithNothingTargetedSaysSoAndMakesNothing()
-    {
-        var surface = Open();
-
-        Click(Named(surface.Panel, "Add"));
-        Type(surface, string.Empty);
-
-        Assert.Contains(
-            Drawn(surface.Panel),
-            text => text.Contains("Nothing is targeted. Select a system or a station first.", StringComparison.Ordinal));
-
-        Assert.Single(surface.Store.For("F1"));
-
-        surface.Window.Close();
-    }
-
     /// <summary>The empty state names the button as well as the phrase (#540).</summary>
     [AvaloniaFact]
     public void TheEmptyStateNamesTheAddButton()
@@ -219,7 +142,7 @@ public class TheBookmarksPageTests
         var surface = Open(seed: false);
 
         Assert.Contains(Drawn(surface.Panel), text => text.Contains("press Add", StringComparison.Ordinal));
-        Assert.NotNull(Named(surface.Panel, "Add"));
+        Assert.NotNull(Named(surface.Panel, "ADD"));
 
         surface.Window.Close();
     }
@@ -301,66 +224,13 @@ public class TheBookmarksPageTests
         surface.Window.Close();
     }
 
-    /// <summary>A rename to a taken phrase is refused, naming the phrase, and the bookmark keeps its name.</summary>
-    [AvaloniaFact]
-    public void ARenameToATakenPhraseIsRefusedAndTheNameSticks()
-    {
-        var surface = Open(taken: ["set course for taken name"]);
-
-        Click(Named(surface.Panel, "Rename"));
-
-        var box = surface.Panel.GetVisualDescendants()
-            .OfType<TextBox>()
-            .First(candidate => candidate.Text == "Current CG");
-
-        box.Text = "Taken Name";
-        Dispatcher.UIThread.RunJobs();
-
-        Click(Named(surface.Panel, "Done"));
-        Dispatcher.UIThread.RunJobs();
-
-        var state = surface.Panel.GetVisualDescendants()
-            .OfType<TextBlock>()
-            .FirstOrDefault(block => (block.Text ?? string.Empty).Contains(
-                "taken name", StringComparison.OrdinalIgnoreCase));
-
-        Assert.True(state is not null, $"drawn: {string.Join(" | ", Drawn(surface.Panel))}");
-        Assert.NotNull(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
-
-        surface.Window.Close();
-    }
-
-    /// <summary>A rename succeeds and the store carries the new name.</summary>
-    [AvaloniaFact]
-    public void ARenameSucceeds()
-    {
-        var surface = Open();
-
-        Click(Named(surface.Panel, "Rename"));
-
-        var box = surface.Panel.GetVisualDescendants()
-            .OfType<TextBox>()
-            .First(candidate => candidate.Text == "Current CG");
-
-        box.Text = "New Name";
-        Dispatcher.UIThread.RunJobs();
-
-        Click(Named(surface.Panel, "Done"));
-
-        Assert.Null(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
-        Assert.NotNull(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "New Name", StringComparison.OrdinalIgnoreCase)));
-        Assert.Contains(Drawn(surface.Panel), text => text.Contains("NEW NAME", StringComparison.Ordinal));
-
-        surface.Window.Close();
-    }
-
     /// <summary>Delete removes the row and the bookmark from the store.</summary>
     [AvaloniaFact]
     public void DeleteRemovesTheRow()
     {
         var surface = Open();
 
-        Click(Named(surface.Panel, "Delete"));
+        Click(Named(surface.Panel, "DELETE"));
 
         Assert.Null(surface.Store.For("F1").FirstOrDefault(bookmark => string.Equals(bookmark.Name, "Current CG", StringComparison.OrdinalIgnoreCase)));
         Assert.Contains(Drawn(surface.Panel), text => text.Contains("Say 'bookmark this'", StringComparison.Ordinal));

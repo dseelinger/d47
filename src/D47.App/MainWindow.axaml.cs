@@ -455,6 +455,7 @@ public partial class MainWindow : Window
                 OffDuty: OffDutyNote.For(host.GameState))
             {
                 PrefixNames = host.StarSystems is { } names ? names.PrefixNamesAsync : null,
+                StarSystems = host.StarSystems,
 
                 // The Galaxy map's travels (#1406).
                 Travel = () => host.TravelLog,

@@ -62,6 +62,12 @@ public sealed record RoutingSurface(
     /// <summary>The system names that start with the given letters, for the name fields; null for no suggestions.</summary>
     public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
 
+    /// <summary>Spansh, for the Bookmarks location lookup and the Elite target's kind; null for no lookups.</summary>
+    public IStarSystemService? StarSystems { get; init; }
+
+    /// <summary>The reply from the last bookmark added, saved or plotted from the panel.</summary>
+    public BookmarkReply Reply { get; } = new();
+
     /// <summary>How long typing has to stop before names are suggested.</summary>
     public TimeSpan SuggestionPause { get; init; } = NameSuggestions.DefaultPause;
 
@@ -187,7 +193,9 @@ public static class RoutingPages
             MarketRoot => Market(surface, columnWidths),
             BestCargoRoot => BestCargo(surface, nav, columnWidths),
             TradeRoot => Trade(surface, nav),
-            BookmarksRoot => Bookmarks(surface, prompts),
+            BookmarksRoot => Bookmarks(surface, nav),
+            BookmarksPage.AddKey => BookmarkForm(surface, nav, null),
+            var key when BookmarksPage.EditOf(key) is { } name => BookmarkForm(surface, nav, name),
             _ => Missing("There is no such page on this tab."),
         };
     }
@@ -244,10 +252,28 @@ public static class RoutingPages
                 settings)
             : Missing("The Trade route page is not available on this surface.");
 
-    private static Control Bookmarks(RoutingSurface surface, PanelPrompts prompts) =>
-        surface is { Bookmarks: { } store, Commander: { } commander }
-            ? new BookmarksPage(store, commander, surface.BookmarkPhrasesTaken ?? (() => []), prompts, Copy(surface), surface.Registry)
+    private static Control Bookmarks(RoutingSurface surface, PanelNavigator nav) =>
+        surface is { Bookmarks: not null, Commander: not null }
+            ? new BookmarksPage(surface, nav)
             : Missing("Bookmarks are not available on this surface.");
+
+    private static Control BookmarkForm(RoutingSurface surface, PanelNavigator nav, string? editName)
+    {
+        if (surface is not { Bookmarks: { } store, Commander: { } commander })
+        {
+            return Missing("Bookmarks are not available on this surface.");
+        }
+
+        if (editName is null)
+        {
+            return new BookmarkFormPage(surface, nav, null);
+        }
+
+        var existing = store.For(commander()?.Identity.FrontierId ?? string.Empty)
+            .FirstOrDefault(bookmark => string.Equals(bookmark.Name, editName, StringComparison.OrdinalIgnoreCase));
+
+        return existing is null ? Missing("That bookmark is gone.") : new BookmarkFormPage(surface, nav, existing);
+    }
 
     private static Control Result(NavCrumb crumb, RoutingSurface surface, Action<RoutePlanKind>? showOnGalaxyMap)
     {
