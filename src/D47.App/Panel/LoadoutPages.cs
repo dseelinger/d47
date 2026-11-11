@@ -2139,6 +2139,7 @@ public sealed class ItemPage : LoadoutPage
     private CancellationTokenSource? _plotting;
     private string? _plotSaid;
     private bool _plotFailed;
+    private NavCrumb? _plotOpen;
 
     /// <summary>The To buy block: the items, and a button that plots a route to buy them (#1827).</summary>
     private StackPanel ToBuyBlock(LoadoutToBuy toBuy)
@@ -2196,13 +2197,28 @@ public sealed class ItemPage : LoadoutPage
         {
             var line = LoadoutPages.Muted(said);
             line.TextWrapping = TextWrapping.Wrap;
+            line.VerticalAlignment = VerticalAlignment.Center;
 
             if (_plotFailed)
             {
                 ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.RedKey);
             }
 
-            block.Children.Add(line);
+            if (_plotOpen is { } open)
+            {
+                var openRoute = new Button { Name = "OpenToBuyRoute", Content = "Open the route", MinHeight = TypeScale.MinimumTarget };
+                openRoute.Click += (_, _) => OpenPlan(open);
+
+                var saidRow = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)], ColumnSpacing = Gaps.Tile };
+                Grid.SetColumn(openRoute, 1);
+                saidRow.Children.Add(line);
+                saidRow.Children.Add(openRoute);
+                block.Children.Add(saidRow);
+            }
+            else
+            {
+                block.Children.Add(line);
+            }
         }
 
         return block;
@@ -2219,6 +2235,7 @@ public sealed class ItemPage : LoadoutPage
         _plotting = new CancellationTokenSource(TimeSpan.FromSeconds(100));
         _plotSaid = null;
         _plotFailed = false;
+        _plotOpen = null;
         Refresh();
 
         LoadoutToBuyOutcome? outcome = null;
@@ -2228,6 +2245,7 @@ public sealed class ItemPage : LoadoutPage
             outcome = await toBuy.Plot(_plotting.Token).ConfigureAwait(true);
             _plotSaid = outcome.Said;
             _plotFailed = outcome.IsError;
+            _plotOpen = outcome.Open;
         }
         catch (OperationCanceledException)
         {
@@ -2243,13 +2261,18 @@ public sealed class ItemPage : LoadoutPage
 
         if (outcome?.Open is { } crumb)
         {
-            _nav.Select(PanelTab.Navigation);
-            _nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot);
+            OpenPlan(crumb);
+        }
+    }
 
-            if (_nav.TrailOf(PanelTab.Navigation) is not [.., { } last] || last.Key != crumb.Key)
-            {
-                _nav.Drill(PanelTab.Navigation, crumb);
-            }
+    private void OpenPlan(NavCrumb crumb)
+    {
+        _nav.Select(PanelTab.Navigation);
+        _nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot);
+
+        if (_nav.TrailOf(PanelTab.Navigation) is not [.., { } last] || last.Key != crumb.Key)
+        {
+            _nav.Drill(PanelTab.Navigation, crumb);
         }
     }
 

@@ -1,4 +1,4 @@
-using Avalonia.Headless;
+﻿using Avalonia.Headless;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -52,18 +52,18 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     private sealed record Bench(
         ItemPage Page, PanelNavigator Nav, Outfitters Galaxy, RoutePlanBook Plans, string BuildId, ShipsMode Mode, OutfittingPlotter Plotter);
 
-    private static Bench Set(bool twoScoops = false)
+    private static Bench Set(bool twoScoops = false, bool located = true)
     {
         var folder = TempFolders.Create("d47-ship-to-buy");
         var settings = TestSurface.Settings();
 
         var game = new GameStateStore();
 
-        foreach (var json in (string[])
+        foreach (var json in ((string[])
                  [
                      """{"timestamp":"2026-10-28T10:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
                      """{"timestamp":"2026-10-28T10:00:01Z","event":"FSDJump","StarSystem":"LHS 3447","StarPos":[0,0,0]}""",
-                 ])
+                 ]).Take(located ? 2 : 1))
         {
             Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
             game.Apply(parsed!);
@@ -151,6 +151,71 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         Assert.False(bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.StorageChecked);
         Assert.Equal([72], bench.Galaxy.Ages);
         Assert.Equal(72, bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.MaxReportAgeHours);
+    }
+
+    [AvaloniaFact]
+    public async Task APlotThatStoredARouteShowsAShortLineAndATileThatOpensIt()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set();
+        var window = Show(bench.Page);
+
+        Plot(bench.Page).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        for (var wait = 0; wait < 200 && bench.Nav.Tab != PanelTab.Navigation; wait++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        bench.Nav.Select(PanelTab.Assets);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("1 stop. First: Ackerman Market, Eravate, 12 ly. 1 not found.", Texts(bench.Page));
+
+        using (var frame = window.CaptureRenderedFrame()!)
+        {
+            frame.SaveCapture("ship-to-buy-short-line.png");
+        }
+
+        Click(bench.Page.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "OpenToBuyRoute"));
+
+        Assert.Equal(PanelTab.Navigation, bench.Nav.Tab);
+        Assert.Equal(
+            [RoutingPages.PlanRoot, RoutingPages.ResultPrefix + RoutePlanKind.Outfitting],
+            bench.Nav.TrailOf(PanelTab.Navigation).Select(crumb => crumb.Key));
+    }
+
+    [Fact]
+    public void TheShortLineLeavesOutAnUnknownDistanceAndSaysHowManyWereNotFound()
+    {
+        var route = new OutfittingRoute(
+            [new OutfittingStop("HIP 106601", "Catalina Cantina", null, ["a"]), new OutfittingStop("X", "Y", 3.2, ["b"])],
+            ["c", "d", "e"]);
+
+        Assert.Equal("2 stops. First: Catalina Cantina, HIP 106601. 3 not found.", OutfittingPlotter.ShortLine(route));
+    }
+
+    [AvaloniaFact]
+    public async Task AFailedPlotShowsTheToolsTextAndNoOpenTile()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(located: false);
+        Show(bench.Page);
+
+        Plot(bench.Page).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        for (var wait = 0; wait < 200 && bench.Page.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == "Working it out…") || bench.Plans.Last(RoutePlanKind.Outfitting) is null && wait < 20; wait++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Empty(bench.Galaxy.Asked);
+        Assert.DoesNotContain("Working it out…", Texts(bench.Page));
+        Assert.Contains(Texts(bench.Page), text => text.Length > 0 && !text.StartsWith("1 stop", StringComparison.Ordinal) && text.Contains("system", StringComparison.OrdinalIgnoreCase));
+        Assert.NotEqual(PanelTab.Navigation, bench.Nav.Tab);
+        Assert.DoesNotContain(bench.Page.GetVisualDescendants().OfType<Button>(), button => button.Name == "OpenToBuyRoute");
     }
 
     [AvaloniaFact]

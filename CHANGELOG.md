@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Fleet › a ship's **Plot a route to buy them** now leaves a one-line summary under the block, as "2 stops. First: Catalina Cantina, HIP 106601, 34 ly. 3 not found.", with an **Open the route** button that opens the plan on Navigation › Plan. A failed plot still shows its message in red.
+
 Changed: Fleet › a ship's Hold tile reads fitted ► planned, as 12 ► ~28 t, when the plan adds or removes cargo racks, and its sentence says "12 tonnes of hold, 28 with the plan."
 
 Changed: A ship's page keeps its talk, figures, To buy, Plan and slot table in one column at most 900px wide. On a pane at least 1000px wide with the picture set to BESIDE, the picture and the hull's figures sit in a 400px column to the right; otherwise the picture is beside or above the figures inside the 900px column. The headset and mini panels are unchanged.

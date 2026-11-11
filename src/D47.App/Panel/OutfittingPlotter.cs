@@ -61,13 +61,12 @@ public sealed record OutfittingPlotter(
                     .ConfigureAwait(true);
 
                 var after = Plans.Last(RoutePlanKind.Outfitting);
+                var stored = after is not null && !ReferenceEquals(before, after) ? after : null;
 
                 return new LoadoutToBuyOutcome(
-                    result.Content,
+                    stored?.Outfitting is { } route ? ShortLine(route) : result.Content,
                     result.IsError,
-                    after is not null && !ReferenceEquals(before, after)
-                        ? RoutingPages.ResultCrumb(RoutePlanKind.Outfitting, after.Headline)
-                        : null);
+                    stored is not null ? RoutingPages.ResultCrumb(RoutePlanKind.Outfitting, stored.Headline) : null);
             });
     }
 
@@ -105,6 +104,30 @@ public sealed record OutfittingPlotter(
         }
 
         return Registry.InvokeAsync("plot_outfitting_route", new ToolArguments(arguments), cancellationToken);
+    }
+
+    /// <summary>"2 stops. First: Station, System, 34 ly. 3 not found."</summary>
+    public static string ShortLine(OutfittingRoute route)
+    {
+        var stops = route.Stops.Count;
+        var line = stops == 1 ? "1 stop." : $"{stops} stops.";
+
+        if (route.Stops.Count > 0)
+        {
+            var first = route.Stops[0];
+            var distance = first.Distance is { } ly
+                ? $", {Math.Round(ly, MidpointRounding.AwayFromZero).ToString("0", System.Globalization.CultureInfo.InvariantCulture)} ly"
+                : string.Empty;
+
+            line += $" First: {first.Station}, {first.System}{distance}.";
+        }
+
+        if (route.NotFound.Count > 0)
+        {
+            line += $" {route.NotFound.Count} not found.";
+        }
+
+        return line;
     }
 
     /// <summary>"6 items to buy: A, 2 × B, C and 2 more."</summary>
@@ -146,5 +169,5 @@ public sealed record LoadoutToBuy(
     bool StorageChecked,
     Func<CancellationToken, Task<LoadoutToBuyOutcome>> Plot);
 
-/// <summary>What a plot said, and the result page to open when it stored a new plan.</summary>
+/// <summary>What a plot said (a short line when it stored a new plan), and the result page to open then.</summary>
 public sealed record LoadoutToBuyOutcome(string Said, bool IsError, D47.Core.Interface.NavCrumb? Open);
