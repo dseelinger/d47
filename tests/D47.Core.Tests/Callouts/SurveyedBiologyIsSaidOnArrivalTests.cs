@@ -235,7 +235,77 @@ public class SurveyedBiologyIsSaidOnArrivalTests
         var on = EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, settings, llmKeyPresent: false);
         var off = EgressDisclosure.Entry(EgressDisclosure.GalaxySearch, quiet, llmKeyPresent: false);
 
-        Assert.Contains("Arriving in a system sends that system's address to spansh.co.uk", on.What);
-        Assert.DoesNotContain("Arriving in a system", off.What);
+        Assert.Contains("Arriving in a system, or starting Elite in one, sends that system's address to spansh.co.uk", on.What);
+        Assert.DoesNotContain("starting Elite in one", off.What);
+    }
+
+    private static string Located(long address, string system) => $$"""
+        {"timestamp":"2026-08-16T10:00:00Z","event":"Location","StarSystem":"{{system}}","SystemAddress":{{address}}}
+        """;
+
+    [Fact]
+    public async Task AJumpStoresTheAnswerAndSaysItAsBefore()
+    {
+        var (callout, _, dispatched) = Build();
+        var jump = Jump(Here, System);
+        var state = Commander(jump);
+
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false, jump)));
+        await RunDispatched(dispatched);
+
+        Assert.True(callout.Store.TryGet(Here, out var stored));
+        Assert.Equal(3, stored.Bodies.Count);
+        Assert.Single(callout.Examine(JournalScript.Context(state, false)));
+    }
+
+    [Fact]
+    public async Task AnEmptyAnswerIsStoredToo()
+    {
+        var (callout, _, dispatched) = Build();
+        var jump = Jump(Elsewhere, "Elsewhere");
+
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(jump), false, jump)));
+        await RunDispatched(dispatched);
+
+        Assert.True(callout.Store.TryGet(Elsewhere, out var stored));
+        Assert.Empty(stored.Bodies);
+    }
+
+    [Fact]
+    public async Task ALiveLocationStoresTheAnswerAndSaysNothing()
+    {
+        var (callout, galaxy, dispatched) = Build();
+        var located = Located(Here, System);
+        var state = Commander(located);
+
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false, located)));
+        await RunDispatched(dispatched);
+
+        Assert.Equal(Here, Assert.Single(galaxy.Asked));
+        Assert.True(callout.Store.TryGet(Here, out _));
+        Assert.Empty(callout.Examine(JournalScript.Context(state, false)));
+    }
+
+    [Fact]
+    public void APrimingLocationAsksNothing()
+    {
+        var (callout, _, dispatched) = Build();
+        var located = Located(Here, System);
+
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(located), true, located)));
+
+        Assert.Empty(dispatched);
+    }
+
+    [Fact]
+    public void ASystemAlreadyHeldIsNotAskedAgainOnLocation()
+    {
+        var (callout, _, dispatched) = Build();
+        callout.Store.Set(new SystemBiology(Here, []));
+        var located = Located(Here, System);
+
+        Assert.Empty(callout.Examine(JournalScript.Context(Commander(located), false, located)));
+
+        Assert.Empty(dispatched);
     }
 }

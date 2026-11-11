@@ -14,6 +14,9 @@ public sealed class SurveyedBiologyCallout(ILogger<SurveyedBiologyCallout> logge
 
     public string Id => "surveyed-biology";
 
+    /// <summary>The surveyed biology asked for in each system this session.</summary>
+    public SurveyedBiology Store { get; set; } = new();
+
     /// <summary>The service to ask, or null when there is none.</summary>
     public Func<IGalaxyService?> Galaxy { get; set; } = () => null;
 
@@ -35,7 +38,7 @@ public sealed class SurveyedBiologyCallout(ILogger<SurveyedBiologyCallout> logge
 
         while (_arrived.TryDequeue(out var arrival))
         {
-            if (arrival.SystemAddress == here && Announce(arrival) is { } announcement)
+            if (arrival.Say && arrival.SystemAddress == here && Announce(arrival) is { } announcement)
             {
                 yield return announcement;
             }
@@ -48,26 +51,38 @@ public sealed class SurveyedBiologyCallout(ILogger<SurveyedBiologyCallout> logge
 
         foreach (var journalEvent in context.Events)
         {
-            if (journalEvent.Kind is not ("FSDJump" or "CarrierJump")
+            if (journalEvent.Kind is not ("FSDJump" or "CarrierJump" or "Location")
                 || journalEvent.Long("SystemAddress") is not { } systemAddress
                 || Galaxy() is not { } galaxy)
             {
                 continue;
             }
 
+            var say = journalEvent.Kind != "Location";
+
+            if (!say && Store.TryGet(systemAddress, out _))
+            {
+                continue;
+            }
+
             var system = journalEvent.String("StarSystem");
 
-            Dispatch(() => LookUp(galaxy, systemAddress, system));
+            Dispatch(() => LookUp(galaxy, systemAddress, system, say));
         }
     }
 
-    private async Task LookUp(IGalaxyService galaxy, long systemAddress, string? system)
+    private async Task LookUp(IGalaxyService galaxy, long systemAddress, string? system, bool say)
     {
         try
         {
             var biology = await galaxy.SystemBiologyAsync(systemAddress, CancellationToken.None).ConfigureAwait(false);
 
-            _arrived.Enqueue(new Arrival(systemAddress, system, biology));
+            Store.Set(biology);
+
+            if (say)
+            {
+                _arrived.Enqueue(new Arrival(systemAddress, system, biology, say));
+            }
         }
         catch (Exception ex)
         {
@@ -104,5 +119,5 @@ public sealed class SurveyedBiologyCallout(ILogger<SurveyedBiologyCallout> logge
             $"Commanders have surveyed biology here: {string.Join(", ", named)}.");
     }
 
-    private readonly record struct Arrival(long SystemAddress, string? System, SystemBiology Biology);
+    private readonly record struct Arrival(long SystemAddress, string? System, SystemBiology Biology, bool Say);
 }

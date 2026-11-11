@@ -281,8 +281,8 @@ public static class EgressDisclosure
             + "buy or sell one named commodity goes to the second host instead, and sends the same "
             + "three things: the commodity, the system to search out from, and how far to look. "
             + (settings.Callouts is { Enabled: true, SurveyedBiology: true }
-                ? "Arriving in a system sends that system's address to spansh.co.uk, to ask what biology "
-                + "has been surveyed there; switching off the surveyed biology callout stops it. "
+                ? "Arriving in a system, or starting Elite in one, sends that system's address to spansh.co.uk, "
+                + "to ask what biology has been surveyed there; switching off the surveyed biology callout stops it. "
                 : string.Empty)
             + (settings.Callouts is { Enabled: true, TradingMode: true }
                 ? "With Trading Mode on, plotting a route while docked sends the destination system's "

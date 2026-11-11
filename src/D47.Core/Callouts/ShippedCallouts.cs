@@ -94,6 +94,9 @@ public static class ShippedCallouts
         /// <summary>The earlier finds already fetched, shared with the earlier finds tool.</summary>
         public EarlierFinds EarlierFinds { get; init; } = new();
 
+        /// <summary>The surveyed biology already fetched.</summary>
+        public SurveyedBiology SurveyedBiology { get; init; } = new();
+
         public required Func<bool> StoryRunning { get; init; }
 
         public required StoryMissionAsides StoryAsides { get; init; }
@@ -432,6 +435,7 @@ public static class ShippedCallouts
 
                 case SurveyedBiologyCallout surveyed:
                     surveyed.Galaxy = () => galaxy;
+                    surveyed.Store = services.SurveyedBiology;
                     break;
 
                 case EarlierFindsCallout earlier:

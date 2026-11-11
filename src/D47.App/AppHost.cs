@@ -2181,6 +2181,7 @@ public sealed class AppHost : IDisposable
             CommunityBiology = new D47.Knowledge.CanonnBiologyService(
                 loggerFactory.CreateLogger<D47.Knowledge.CanonnBiologyService>()),
             EarlierFinds = new D47.Core.Knowledge.EarlierFinds(),
+            SurveyedBiology = new D47.Core.Knowledge.SurveyedBiology(),
             AdventureDesk = adventureDesk,
             Audio = audio,
             AudioSink = audioSink,
@@ -3241,6 +3242,7 @@ public sealed class AppHost : IDisposable
             Trade = services.TradePlanner,
             CommunityBiology = () => services.CommunityBiology,
             EarlierFinds = services.EarlierFinds,
+            SurveyedBiology = services.SurveyedBiology,
             StoryRunning = () => storyDirector.IsRunning(gameState.Active?.Identity.FrontierId),
             StoryAsides = storyDirector.MissionAsides,
             StockCoreAboard = () => personas.Current.Stock,
@@ -4430,6 +4432,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Knowledge.ICommunityBiology CommunityBiology { get; init; }
 
         public required D47.Core.Knowledge.EarlierFinds EarlierFinds { get; init; }
+
+        public required D47.Core.Knowledge.SurveyedBiology SurveyedBiology { get; init; }
 
         public required D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk AdventureDesk { get; init; }
 

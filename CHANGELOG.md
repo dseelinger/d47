@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: D47 now keeps the biology Commanders have surveyed in each system, and asks for it when Elite starts a session in a system as well as on arrival by jump. Starting Elite in a system says nothing aloud.
+
 Changed: D47 now remembers the colour variant of each organic sample, and keeps a set lost to a specimen of another species on the body it was taken on until you log that genus there again. Both survive a restart; older saved files load with no variant and no lost sets.
 
 Changed: Navigation › Bookmarks draws each bookmark with its kind, place, system, date and note, and SET COURSE, EDIT and DELETE tiles. ADD and EDIT open pages with a Location field that lists matching systems, bodies and stations as you type (with Spansh on), a USE MY TARGET button, a name and a one-line note. SET COURSE plots to the bookmark's system. The Rename prompt is gone from the page; renaming by voice is unchanged.
