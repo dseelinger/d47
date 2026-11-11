@@ -15,10 +15,17 @@ public class PanelScrollTests
         Assert.Equal((step, PanelScrollSide.Either), PanelScroll.Match(spoken));
 
     [Theory]
+    [InlineData("tail left", PanelScrollSide.Left)]
+    [InlineData("tail right", PanelScrollSide.Right)]
+    public void TailTakesASide(string spoken, PanelScrollSide side) =>
+        Assert.Equal((PanelScrollStep.Newest, side), PanelScroll.Match(spoken));
+
+    [Theory]
     [InlineData("newest")]
     [InlineData("Latest.")]
     [InlineData("jump to the newest")]
     [InlineData("scroll to the bottom")]
+    [InlineData("tail")]
     public void SayingNewestGoesToTheNewestLine(string spoken) =>
         Assert.Equal((PanelScrollStep.Newest, PanelScrollSide.Either), PanelScroll.Match(spoken));
 

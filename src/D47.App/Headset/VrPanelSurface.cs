@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -762,6 +762,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         var (width, height) = Size;
 
         OffscreenSurface.Aim(_scrolling, _offscreen.View, new Point(u * width, v * height));
+        _view.ScrollbarDragged();
         _dirty = true;
     }
 

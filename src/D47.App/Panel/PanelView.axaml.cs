@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Presenters;
@@ -1236,6 +1236,15 @@ public partial class PanelView : UserControl, IPanelTabHost
         }
 
         return PanelScrollOutcome.Moved;
+    }
+
+    /// <summary>A scrollbar was dragged by hand: following is whether the transcript landed at the newest line.</summary>
+    internal void ScrollbarDragged()
+    {
+        if (Tab == PanelTab.Transcript && TranscriptPane.IsVisible && !ModalPane.IsVisible)
+        {
+            _scroll.Moved();
+        }
     }
 
     /// <summary>The scroller a spoken scroll moves for the region showing, or null where it has none.</summary>

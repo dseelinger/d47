@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: the headset's mini panel and the flat overlay keep the transcript at its newest line until you ask otherwise. Following is no longer worked out from where the page happens to be scrolled; only a spoken scroll or a scrollbar drag stops it, and "newest", the new "tail", or a scroll that reaches the newest end starts it again.
+
 Changed: market answers now include only the Stronghold Carriers you can dock at, those of the Power you are pledged to. Commodity searches, trade routes, best cargo for a route and construction sourcing all leave out other Powers' carriers, and every carrier when you are not pledged. Your own Power's carriers count as stations rather than fleet carriers, so they appear without asking for carriers. A commodity answer says how many carriers it left out.
 
 Changed: station searches now show only Stronghold Carriers you can dock at, those of the Power you are pledged to. Ticking Stronghold carrier, or naming a Power, no longer lists another Power's carriers. Unpledged, a Stronghold carrier search sends nothing and says that carriers dock only pledged Commanders; pledged, it asks only for your Power's carriers. Outfitting routes and mission station searches leave out the carriers you cannot dock at as well.

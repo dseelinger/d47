@@ -639,14 +639,15 @@ page up         page back         previous page
 scroll down     down a bit        scroll down a bit
 scroll up       up a bit          scroll up a bit
 newest          latest            jump to the newest      scroll to the bottom
+tail
 ```
 
 Any phrase can end in "left" or "right": "page down left", "newest right", "scroll up right".
 
-The last row goes to the newest line and starts following again, as pressing **↓ Newest** does. The
+The last two rows go to the newest line and starts following again, as pressing **↓ Newest** does. The
 headset's mini panel and the flat overlay have no such button, so this is the way back there. On
 the journal readings, where the newest line is at the top, it goes to the top. On a scroller with
-no newest line, "newest" goes to the bottom, as "scroll to the bottom" says.
+no newest line, "newest" or "tail" goes to the bottom, as "scroll to the bottom" says.
 
 A page is a screenful less one line, so the line you were reading when you said it is still there
 when the page settles. A scroll is three lines, which is what one notch of a wheel does nearly
@@ -687,7 +688,11 @@ several lines a second.
 Scrolling away from the end stops it following. A **↓ Newest** button appears over the bottom
 right of the page while you are behind; pressing it goes to the newest line *and* starts
 following again, and so does scrolling back to the bottom yourself. There is no mode to
-remember: the lock is inferred from where you are looking.
+remember in the window: the lock is inferred from where you are looking.
+
+On the headset's mini panel and the flat overlay it is not inferred. Only a spoken scroll or a
+scrollbar drag stops following there, and only "newest", "tail" or a scroll that reaches the newest
+end restores it. A resize, a mode switch or a reflow leaves it as it was.
 
 Following belongs to the page, so arriving at a different tab opens it at its newest line rather
 than carrying "I have scrolled up" across with you.

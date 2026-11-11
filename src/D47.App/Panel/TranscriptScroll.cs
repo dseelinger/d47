@@ -390,7 +390,11 @@ internal sealed class TranscriptScroll
 
         // Only a move on its own is the Commander's: an offset change arriving with a new extent or
         // viewport is layout settling.
-        if (e.OffsetDelta.Y != 0 && e.ExtentDelta.Y == 0 && e.ViewportDelta.Y == 0)
+        if (_outputOnly())
+        {
+            // A mini surface changes following only through Moved, ScrollToNewest and Rejoin.
+        }
+        else if (e.OffsetDelta.Y != 0 && e.ExtentDelta.Y == 0 && e.ViewportDelta.Y == 0)
         {
             _following = AtTheNewest();
         }

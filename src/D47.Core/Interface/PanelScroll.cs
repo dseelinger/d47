@@ -66,6 +66,7 @@ public static class PanelScroll
 
             ["newest"] = PanelScrollStep.Newest,
             ["latest"] = PanelScrollStep.Newest,
+            ["tail"] = PanelScrollStep.Newest,
             ["jump to the newest"] = PanelScrollStep.Newest,
             ["scroll to the bottom"] = PanelScrollStep.Newest,
         };
