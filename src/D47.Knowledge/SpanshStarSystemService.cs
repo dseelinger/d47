@@ -33,6 +33,7 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
     private readonly ConcurrentDictionary<string, IReadOnlyList<string>> _factionWords = new(StringComparer.Ordinal);
 
     private readonly ConcurrentDictionary<string, IReadOnlyList<StationNameMatch>> _stationNames = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, IReadOnlyList<BodyNameMatch>> _bodyNames = new(StringComparer.Ordinal);
 
     public SpanshStarSystemService(ILogger<SpanshStarSystemService> logger, HttpClient? http = null)
     {
@@ -207,6 +208,50 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
         }
 
         return _stationNames.GetOrAdd(key, matches);
+    }
+
+    /// <summary>Answers come from <c>bodies/field_values/name</c> and are kept for the session, keyed by the lowercased text.</summary>
+    public async Task<IReadOnlyList<BodyNameMatch>> BodyNamesAsync(
+        string typed,
+        CancellationToken cancellationToken)
+    {
+        var text = typed.Trim();
+
+        if (text.Length == 0)
+        {
+            return [];
+        }
+
+        var key = text.ToLowerInvariant();
+
+        if (_bodyNames.TryGetValue(key, out var known))
+        {
+            return known;
+        }
+
+        using var document = await SpanshGalaxyService.SendAsync(
+            _logger,
+            token => _http.GetAsync($"api/bodies/field_values/name?q={Uri.EscapeDataString(text)}", token),
+            "the body name suggestions",
+            cancellationToken,
+            budget: SearchBudget).ConfigureAwait(false);
+
+        var matches = new List<BodyNameMatch>();
+
+        foreach (var entry in document!.RootElement.Items("min_max"))
+        {
+            if (entry.String("name") is { } name
+                && entry.Long("id64") is { } bodyAddress
+                && entry.Long("system_id64") is { } systemAddress
+                && entry.Double("system_x") is { } x
+                && entry.Double("system_y") is { } y
+                && entry.Double("system_z") is { } z)
+            {
+                matches.Add(new BodyNameMatch(name, bodyAddress, systemAddress, new StarPosition(x, y, z)));
+            }
+        }
+
+        return _bodyNames.GetOrAdd(key, matches);
     }
 
     private static IReadOnlyList<string> ReadFactionNames(JsonElement root) =>

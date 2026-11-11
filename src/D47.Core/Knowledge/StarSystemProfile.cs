@@ -22,6 +22,10 @@ public interface IStarSystemService
     Task<IReadOnlyList<StationNameMatch>> StationNamesAsync(string typed, CancellationToken cancellationToken) =>
         Task.FromResult<IReadOnlyList<StationNameMatch>>([]);
 
+    /// <summary>Bodies whose names match what was typed, in the service's order, for suggesting names while the Commander types.</summary>
+    Task<IReadOnlyList<BodyNameMatch>> BodyNamesAsync(string typed, CancellationToken cancellationToken) =>
+        Task.FromResult<IReadOnlyList<BodyNameMatch>>([]);
+
     /// <summary>Powerplay systems near a system, nearest first, the system itself left out.</summary>
     Task<PowerplayNeighbourhood> PowerplayNearAsync(string system, double lightYears, CancellationToken cancellationToken);
 }
@@ -31,6 +35,9 @@ public sealed record SystemNameMatch(string Name, long SystemAddress, StarPositi
 
 /// <summary>A station whose name matched what was typed, with the position of its system.</summary>
 public sealed record StationNameMatch(string Name, long MarketId, long SystemAddress, StarPosition Position);
+
+/// <summary>A body whose name matched what was typed, with the position of its system.</summary>
+public sealed record BodyNameMatch(string Name, long BodyAddress, long SystemAddress, StarPosition Position);
 
 /// <summary>One system as last reported: its politics, factions, Powerplay, stations and bodies.</summary>
 public sealed record StarSystemProfile
