@@ -28,7 +28,7 @@ It is a default, not a fixture: `/claude-voice off` stops it and the work carrie
 
 Your input is usually an issue labelled `needs-architect` — the label reads "Needs a pass through
 /architect before it can be built; never picked up by a workflow". It spawns build issues once
-settled. That is the contract. An issue that also carries `design` needs Claude Design as well: settle
+settled. That is the contract. An issue that also carries `needs-design` needs Claude Design as well: settle
 the behaviour, and leave the look to the handoff.
 
 Your output is a **settled decision** and the **build issues it should spawn** — each one small
@@ -147,7 +147,7 @@ Add two things to each body that `/new-issue` does not know about:
   the Output section says belongs in the issue.
 
 Then comment on the needs-architect issue with the numbers you filed, and close it as completed. If it also
-carries `design`, remove `needs-architect` instead and leave it open for the Claude Design handoff.
+carries `needs-design`, remove `needs-architect` instead and leave it open for the Claude Design handoff.
 Show the comment and the close or label change together; one acknowledgement covers both.
 
 Report the numbers in your answer, so they can be read without going to look for them.

@@ -3,7 +3,7 @@ name: eligibility
 description: >-
   Five open issues. 905 is the maintainer's, 904 is someone else's with
   Vetted, 903 is someone else's without it, and 901 and 902 carry
-  needs-architect and design with tabled. The report ranks 904 and 905, names
+  needs-architect and needs-design with tabled. The report ranks 904 and 905, names
   none of the other three, and does not stop to ask, since the architect and
   design issues are tabled. Pins "The eligible set" and "Design and architect
   work comes first" in triage/SKILL.md.

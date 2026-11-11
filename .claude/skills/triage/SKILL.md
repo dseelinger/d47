@@ -28,8 +28,8 @@ gh issue list --state open --limit 300 --json number,title,labels,author,created
 
 Keep an issue only if **all** of these hold:
 
-- It does not carry `needs-architect` or `design`. Both label descriptions say so outright —
-  `needs-architect` needs a pass through `/architect`, and `design` needs Claude Design before it can
+- It does not carry `needs-architect` or `needs-design`. Both label descriptions say so outright —
+  `needs-architect` needs a pass through `/architect`, and `needs-design` needs Claude Design before it can
   be built. Neither is implementable as written.
 - Either `dseelinger` opened it, or it carries `Vetted`. Anything else is unvetted.
 
@@ -39,7 +39,7 @@ the filter.
 
 ## Design and architect work comes first
 
-From the same list, take the open issues that carry `design` or `needs-architect` and not `tabled`.
+From the same list, take the open issues that carry `needs-design` or `needs-architect` and not `tabled`.
 If there are any, complain before going further: one line saying that open issues still need
 Claude Design or `/architect`, with the count for each label and every number as a link. Then ask
 with `AskUserQuestion` whether to continue the triage, the first option continuing. On no, stop

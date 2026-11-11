@@ -55,7 +55,7 @@ recommendation.
 
 ## Eligibility
 
-Eligible issues are the open ones that are **not** `needs-architect`, **not** `design`, and
+Eligible issues are the open ones that are **not** `needs-architect`, **not** `needs-design`, and
 that the maintainer either opened or labelled `Vetted`. `/triage` applies this; know it so you can
 answer "why isn't #N on the list" without re-running anything.
 

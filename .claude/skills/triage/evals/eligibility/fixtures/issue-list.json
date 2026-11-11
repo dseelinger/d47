@@ -53,7 +53,7 @@
     "labels": [
       {
         "id": "LA_design",
-        "name": "design",
+        "name": "needs-design",
         "description": "",
         "color": "ededed"
       },

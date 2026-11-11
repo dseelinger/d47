@@ -2,7 +2,7 @@ schema_version: "1.0"
 name: look-change-gets-design
 description: >-
   A dictated change to how a page is laid out. The skill shows the issue with
-  the label `design`, since Claude Design draws a look change before it is
+  the label `needs-design`, since Claude Design draws a look change before it is
   built. Pins the label list in "The body" of new-issue/SKILL.md.
 context:
   scaffold_script: fixture.sh
@@ -22,5 +22,5 @@ graders:
   - type: regex
     name: label-is-design
     target: last_message
-    pattern: 'label\W{0,8}design\b'
+    pattern: 'label\W{0,8}needs-design\b'
     flags: i
