@@ -847,6 +847,15 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    /// <summary>How far the playing speech request of <paramref name="group"/> has played and how long it is; null when none of that group is playing.</summary>
+    public TrackProgress? SpeechProgress(string group)
+    {
+        lock (_gate)
+        {
+            return _current is { } playing && playing.Request.Group == group ? sink.Progress(playing.Id) : null;
+        }
+    }
+
     /// <summary>
     /// Moves the live track to <paramref name="to"/>, leaving it paused, held or fading as it was. False with no live
     /// track, during the gap before it, and while its length is not known.
