@@ -22,8 +22,8 @@ public sealed record GenusCandidates(string Genus, long Low, long High, IReadOnl
 /// <summary>The value range a body's biology could fall in, one species per genus.</summary>
 public static class BiologyPotential
 {
-    private const double StandardGravity = 9.80665;
-    private const double StandardAtmosphere = 101325;
+    internal const double StandardGravity = 9.80665;
+    internal const double StandardAtmosphere = 101325;
 
     /// <summary>
     /// The estimate for <paramref name="scan"/> holding <paramref name="biologicalCount"/> biological signals, or

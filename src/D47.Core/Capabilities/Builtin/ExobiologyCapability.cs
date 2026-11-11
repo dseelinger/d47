@@ -444,21 +444,24 @@ public static class ExobiologyCapability
         }
 
         var system = state.Location.StarSystem;
-        var here = state.Bodies.All.Where(body => body.SystemAddress == address).ToList();
+        var region = state.Location.StarPos is { } starPos ? GalacticRegions.Find(starPos) : null;
+        var answer = BiologyInSystem.For(state, address, region, null, null);
 
-        if (here.Count == 0)
+        if (!answer.IsKnown)
         {
-            return "I have no scan of this system on record, so I cannot say what is left to sample.";
+            return state.Bodies.All.Any(body => body.SystemAddress == address)
+                ? "No biology on record in this system."
+                : "I have no scan of this system on record, so I cannot say what is left to sample.";
         }
 
         var left = new List<(string Body, string Text, int Taken)>();
         var unmapped = new List<(string Body, int Signals)>();
 
-        foreach (var body in here)
+        foreach (var body in answer.Bodies)
         {
             var name = BiologyCallout.Short(body.BodyName, system);
 
-            if (body.Source != BodySignalSource.SurfaceScan)
+            if (!body.Mapped)
             {
                 if (body.BiologicalCount > 0)
                 {
@@ -468,22 +471,18 @@ public static class ExobiologyCapability
                 continue;
             }
 
-            var sampled = body.BodyId is { } bodyId ? state.Sampling.On(address, bodyId) : null;
-
             foreach (var genus in body.Genera)
             {
-                var progress = sampled?.Genera.GetValueOrDefault(genus);
-
-                if (progress is { Complete: true })
+                switch (genus.State)
                 {
-                    continue;
+                    case GenusState.Sampling:
+                        var species = genus.Species is [{ Source: SpeciesSource.Sampled } sampled] ? sampled.Species : genus.Genus;
+                        left.Add((name, $"{species}, {genus.Taken} of {GenusProgress.Required}", genus.Taken));
+                        break;
+                    case GenusState.NotStarted or GenusState.Abandoned:
+                        left.Add((name, genus.Genus, 0));
+                        break;
                 }
-
-                var taken = progress?.Taken ?? 0;
-
-                left.Add(taken > 0
-                    ? (name, $"{progress!.Species ?? genus}, {taken} of {GenusProgress.Required}", taken)
-                    : (name, genus, 0));
             }
         }
 
@@ -492,9 +491,7 @@ public static class ExobiologyCapability
 
         if (ordered.Count == 0)
         {
-            report.Append(unmapped.Count == 0 && !here.Any(body => body.HasBiology)
-                ? "No biology on record in this system."
-                : "Everything mapped in this system is sampled.");
+            report.Append("Everything mapped in this system is sampled.");
         }
         else
         {
