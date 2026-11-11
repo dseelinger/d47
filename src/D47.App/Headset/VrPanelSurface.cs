@@ -52,6 +52,8 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
     private readonly Func<Controls.AudioPlayerDialog>? _audioPlayer;
     private Controls.AudioPlayerDialog? _player;
+    private readonly Func<Controls.StoryPlaybackDialog>? _storyPlaybackBox;
+    private Controls.StoryPlaybackDialog? _playbackBox;
 
     private readonly ScaleTransform _scale = new();
     private readonly OffscreenSurface _offscreen;
@@ -145,8 +147,12 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.App.Settings.ModulesSource? modules = null,
 
         // Builds this surface's own copy of the audio player, which opens while the model says it is open.
-        Func<Controls.AudioPlayerDialog>? audioPlayer = null)
+        Func<Controls.AudioPlayerDialog>? audioPlayer = null,
+
+        // Builds this surface's own copy of the story playback box, which opens while the model says a story plays.
+        Func<Controls.StoryPlaybackDialog>? storyPlayback = null)
     {
+        _storyPlaybackBox = storyPlayback;
         _dumpTo = dumpTo;
         _audioPlayer = audioPlayer;
 
@@ -712,6 +718,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         _view.Mode = Mode;
         _dirty = true;
         SyncAudioPlayer();
+        SyncStoryPlayback();
     }
 
     /// <summary>Forces the next serve to redraw — after a reconnect, or a mode change.</summary>
@@ -811,6 +818,38 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         {
             Avalonia.Threading.Dispatcher.UIThread.Post(SyncAudioPlayer);
         }
+        else if (e.PropertyName == nameof(PanelViewModel.StoryPlayback))
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(SyncStoryPlayback);
+        }
+    }
+
+    /// <summary>Shows the story playback box while the big panel is up and the model says a story plays.</summary>
+    internal void SyncStoryPlayback()
+    {
+        var wanted = _model.StoryPlayback && Mode == PanelMode.Full && _storyPlaybackBox is not null;
+
+        if (!wanted)
+        {
+            _playbackBox?.Dismiss();
+            return;
+        }
+
+        if (_playbackBox is not null)
+        {
+            return;
+        }
+
+        var dialog = _storyPlaybackBox!();
+
+        _playbackBox = dialog;
+        dialog.Closed += (_, _) =>
+        {
+            _playbackBox = null;
+            _dirty = true;
+        };
+        _ = _modals.Show(dialog);
+        _dirty = true;
     }
 
     /// <summary>

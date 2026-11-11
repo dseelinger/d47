@@ -180,6 +180,7 @@ public sealed class AppHost : IDisposable
             (speech, text, progress) => voice.RenderAsync(text, speech.Role, speech.Voice, speech.Pinned, progress),
             _logger);
         RunPlayer = new StoryRunPlayer(audio, RunLineClip, speakAgain: RunVoicing.SpeakAsync);
+        RunPlayer.Changed += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.StoryPlayback = RunPlayer.Now is not null);
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
         var savedFolder = viewState.Load().LastMusicFolder;
         Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile, lastFolder: savedFolder);
@@ -466,6 +467,30 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Recycles the playing own track, or queues the playing library track with a token, and skips it.</summary>
     internal string ThumbsDownMusic() => Music.ThumbsDown(MusicMaintainer);
+
+    private Panel.SpeakerPortraits? _playbackPortraits;
+
+    /// <summary>Builds a copy of the story playback box for a window or the headset.</summary>
+    internal Controls.StoryPlaybackDialog NewStoryPlayback(bool headset) => new(
+        RunPlayer,
+        () => Audio.SpeechProgress(StoryRunPlayer.Group),
+        PlaybackChapter,
+        _playbackPortraits ??= new Panel.SpeakerPortraits(SpeakerPictures, Loggers.CreateLogger<Panel.SpeakerPortraits>()),
+        headset ? Controls.StoryPlaybackDialog.PollEveryInHeadset : null);
+
+    /// <summary>The chapter name the playback box shows over <paramref name="playback"/>'s line, or null.</summary>
+    private string? PlaybackChapter(StoryRunPlayback playback)
+    {
+        var commander = GameState.Active?.Identity.FrontierId;
+        var sections = D47.Core.Stories.StoryRunLog.Of(
+            playback.Run,
+            playback.Lines,
+            key => Stories?.Archive.Find(commander, playback.Run, key)?.Adventure ?? Adventures?.Book.Store.Find(commander, key));
+
+        return sections
+            .FirstOrDefault(section => section.Entries.Any(entry => ReferenceEquals(entry.Line, playback.Line)))
+            is { } found ? D47.App.Panel.StoryRunPage.ChapterName(found) : null;
+    }
 
     /// <summary>Opens, closes or toggles the audio player on every surface, and says which.</summary>
     internal string ControlAudioPlayer(AudioPlayerAction action)

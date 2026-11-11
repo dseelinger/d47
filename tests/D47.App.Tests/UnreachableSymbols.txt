@@ -99,7 +99,6 @@ D47.Core.Adventures.AdventureStore.Path
 D47.Core.Adventures.AdventureWalkResult.Failed
 D47.Core.Adventures.Resolution.Succeeded
 D47.Core.Audio.AudioArbiter.Listening
-D47.Core.Audio.AudioArbiter.SpeechProgress(string)
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
 D47.Core.Callouts.NarratorCallout.StockCoreAboard

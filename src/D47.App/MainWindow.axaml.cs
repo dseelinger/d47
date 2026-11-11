@@ -108,6 +108,32 @@ public partial class MainWindow : Window
         _ = dialog.Over(this);
     }
 
+    /// <summary>Opens or closes this window's copy of the playback box to match <see cref="PanelViewModel.StoryPlayback"/>.</summary>
+    private void ShowStoryPlayback()
+    {
+        if (_host is not { } host)
+        {
+            return;
+        }
+
+        if (!_model.StoryPlayback)
+        {
+            _storyPlayback?.Dismiss();
+            return;
+        }
+
+        if (_storyPlayback is not null)
+        {
+            return;
+        }
+
+        var dialog = host.NewStoryPlayback(headset: false);
+
+        _storyPlayback = dialog;
+        dialog.Closed += (_, _) => _storyPlayback = null;
+        _ = dialog.Over(this);
+    }
+
     /// <summary>Thumbs down the playing track and says what happened; UI thread.</summary>
     private void ThumbsDownMusic()
     {
@@ -128,6 +154,7 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _thumbsDownMusic;
     private readonly GlobalHotkey _audioPlayerKey;
     private AudioPlayerDialog? _audioPlayer;
+    private StoryPlaybackDialog? _storyPlayback;
 
     private readonly PanelViewModel _model;
 
@@ -719,6 +746,10 @@ public partial class MainWindow : Window
             if (e.PropertyName == nameof(PanelViewModel.AudioPlayerOpen))
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(ShowAudioPlayer);
+            }
+            else if (e.PropertyName == nameof(PanelViewModel.StoryPlayback))
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(ShowStoryPlayback);
             }
         };
 

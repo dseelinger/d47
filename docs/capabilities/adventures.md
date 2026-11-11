@@ -459,10 +459,12 @@ chapter's text as it was told instead.
 
 **Play from here**, on every line, plays the run's lines in order from that line. **Play all**, at the end of the Jump to row, plays them from
 the chosen chapter or objective. The line playing is marked **▶ Playing** on a cyan
-ground, and a bar under Jump to shows the speaker's picture, **Playing 23 of 142** with the speaker's name, the line,
-and **Pause**, **Skip** and **Stop**. While it plays, as while a single line's Play does, other speech is silenced: an answer, a callout or radio chatter
+ground, and a playback box opens over the window, and over the headset's big panel, half the width of the window. Its head says
+**Playing 23 of 142 · Ysolt Garrow** with the chapter's name and the line's time, then the speaker's picture whole on black, a
+progress line, the speaker's name with the time played, the line, and **Pause**, **Next** and **Stop**. A single line's Play
+leaves out the count and **Next**. **Stop**, Escape and closing the box end the playback. While it plays, as while a single line's Play does, other speech is silenced: an answer, a callout or radio chatter
 from anywhere else is dropped, not saved for later. Music, ambience and cues play as usual. A danger alert pauses
-playback and is spoken; so does pressing push-to-talk, whose turn runs and whose reply is spoken, and the bar says
+playback and is spoken; so does pressing push-to-talk, whose turn runs and whose reply is spoken, and the box says
 **Paused for push-to-talk. Press PLAY to carry on.** Playback stays paused until you press **Play**, which plays the
 paused line again from its start. It keeps playing when you leave the page. The shut-up control, or **Play** on a
 message, stops it. **Play** on a single line replaces it with that line.
@@ -472,14 +474,14 @@ covers a line posted with speech off, one whose synthesis failed, one in a voice
 missing or cannot be read. Play or Play all speaks it in the voice its speaker has now: a cast member in the voice chosen
 for them or else the story's own, the Narrator's and a core's from the current voices. Each one is billed as speaking any line
 is, by the provider that voice belongs to. The new clip is kept in the run's record, so the line is synthesised once. During
-Play all the next such line is made while the line before it plays, and while a line is made the bar reads
+Play all the next such line is made while the line before it plays, and while a line is made the box reads
 **Speaking again · 24 of 142** with the speaker and a gauge. A line in a voice you asked to forget, your own
 recording or a deleted custom voice, is never spoken again in it.
 
 A line that cannot be spoken, because no voice provider is set up, the provider fails, or its voice was forgotten,
-is shown for reading instead: half a second a word, at least four seconds, and then Play all moves on. The bar
+is shown for reading instead: half a second a word, at least four seconds, and then Play all moves on. The box
 reads **Shown for reading · 25 of 142** with a countdown, and a **No voice for this line** notice says why, with the
-provider's error. Pause and Skip work as for a spoken line; Play after a pause shows the line again from the start of its time.
+provider's error. Pause and Next work as for a spoken line; Play after a pause shows the line again from the start of its time.
 
 **Delete** is on every Finished and Stopped row and on the page of every run but the active one. It asks first:
 **Delete this run of** the story's title, with the run's line count and **Clips on disk**. **Delete run** removes the run

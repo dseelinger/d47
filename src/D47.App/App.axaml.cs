@@ -141,7 +141,8 @@ public partial class App(AppHost? host) : Application
                     host.Settings,
                     action => host.Music.Control(action),
                     () => host.Announcer.SayAside(host.ThumbsDownMusic()),
-                    host.Music.Progress));
+                    host.Music.Progress),
+                storyPlayback: () => host.NewStoryPlayback(headset: true));
 
             host.Speech.Spend.Recorded += host.Vr.RefreshSessionSpend;
 

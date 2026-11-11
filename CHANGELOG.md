@@ -22,6 +22,8 @@ Added: Stories › while a story playback is open, say "play" or "resume", "paus
 
 Changed: Navigation › Plan › an outfitting plan opens with four figures (Stops, Items, Route, Bought), then each stop under a numbered heading with its items in slot groups (Core internal, Optional internal, Hardpoints and utility, Ships, Other). A bought item shows ✓ BOUGHT. A stop whose report is over 30 days old is marked OLD REPORT.
 
+Changed: Playing a story run's lines opens a playback box over the window and over the headset's big panel, in place of the bar on the run's page. It shows the line's picture whole, the chapter, a progress line and the time, with **Pause** or **Play**, **Next** and **Stop**. Stop, Escape and closing it end the playback.
+
 Changed: Fleet › a ship's slot rows mark a slot with work left by a ► between the fitted module and the plan, in a column of its own. The Draw column shows the figure without "MW" (the header names the unit) and no longer clips it.
 
 Changed: On a story run's page, **Play** on a line plays it through the run player, so it can be paused and stopped and silences other speech; the per-line **Play all** is now **Play from here**.

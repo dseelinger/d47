@@ -9,6 +9,7 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Voice;
+using D47.App.Windowing;
 using D47.Core.Adventures;
 using D47.Core.Audio;
 using D47.Core.Interface;
@@ -134,6 +135,17 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
             panel.Nav.SelectRoot(StoryBenchPage.RootKey);
         }
 
+        StoryPlaybackDialog? box = null;
+        player.Changed += () => Dispatcher.UIThread.Post(() =>
+        {
+            if (player.Now is not null && box is null)
+            {
+                box = new StoryPlaybackDialog(player, () => null, _ => null, null);
+                box.Closed += (_, _) => box = null;
+                _ = box.Over(window);
+            }
+        });
+
         Dispatcher.UIThread.RunJobs();
         return new Rig(window, panel, messages, player, sink);
     }
@@ -146,7 +158,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
 
     private static StoryRunPage Opened(Rig rig)
     {
-        if (rig.Window.Content is StoryRunPage own)
+        if (rig.Window.GetVisualDescendants().OfType<StoryRunPage>().FirstOrDefault() is { } own)
         {
             return own;
         }
@@ -301,14 +313,14 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
     [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
-    public void PlayAllMarksThePlayingLineAndShowsTheBar(bool headset)
+    public void PlayAllMarksThePlayingLineAndShowsThePlaybackBox(bool headset)
     {
         var rig = Open(headset: headset);
         var page = Opened(rig);
 
         Press(Named(page, "PlayAllLine"));
 
-        var drawn = Drawn(page);
+        var drawn = Drawn(rig.Window);
         Assert.Contains("PLAYING " + Place(page, 1), drawn);
         Assert.Contains(StoryRunPage.SilencedText, drawn);
         Assert.Contains(StoryRunPage.PlayingMark.ToUpperInvariant(), drawn);
@@ -319,7 +331,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         rig.Sink.FinishCurrent();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Contains("PLAYING " + Place(page, 9), Drawn(page));
+        Assert.Contains("PLAYING " + Place(page, 9), Drawn(rig.Window));
         Assert.Equal(["ch1 The lights go out 0", "ch1 The second ring 0"], rig.Sink.Names);
 
         rig.Window.Close();
@@ -346,7 +358,7 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         // The second line keeps no clip.
         Press(page.GetVisualDescendants().OfType<Button>().Where(button => button.Name == "PlayAllLine" && button.IsEffectivelyVisible).ElementAt(1));
 
-        var drawn = Drawn(page);
+        var drawn = Drawn(rig.Window);
         Assert.Contains($"{StoryRunPage.SpeakingAgainLabel} · {Place(page, 2)}".ToUpperInvariant(), drawn);
         Assert.Contains(StoryRunPage.SpeakingAgainText(MessagesView.Sender(MessageStore.Narrator)), drawn);
         Assert.Contains(StoryRunPage.GeneratingText, drawn);
@@ -358,13 +370,13 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         asked["ch1 The lights go out 1"].SetResult(SpokenAgain.Held(StoryLineHold.Failed, "HTTP 503 · ELEVENLABS"));
         var held = $"{StoryRunPage.ShownForReadingLabel} · {Place(page, 2)}".ToUpperInvariant();
 
-        for (var attempt = 0; attempt < 200 && !Drawn(page).Contains(held); attempt++)
+        for (var attempt = 0; attempt < 200 && !Drawn(rig.Window).Contains(held); attempt++)
         {
             Thread.Sleep(5);
             Dispatcher.UIThread.RunJobs();
         }
 
-        drawn = Drawn(page);
+        drawn = Drawn(rig.Window);
         Assert.Contains($"{StoryRunPage.ShownForReadingLabel} · {Place(page, 2)}".ToUpperInvariant(), drawn);
         Assert.Contains(StoryRunPage.HeldText, drawn);
         Assert.Contains("0:04", drawn);
@@ -390,14 +402,14 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         rig.Player.Pause(StoryRunPause.PushToTalk);
         Dispatcher.UIThread.RunJobs();
 
-        var drawn = Drawn(page);
+        var drawn = Drawn(rig.Window);
         Assert.Contains("PAUSED · " + Place(page, 1), drawn);
         Assert.Contains(StoryRunPage.PushToTalkText, drawn);
-        Assert.Equal("Play", Named(page, "PlaybackPause").Content);
+        Assert.Equal("Play", Named(rig.Window, StoryPlaybackDialog.PlayName).Content);
 
-        Press(Named(page, "PlaybackPause"));
+        Press(Named(rig.Window, StoryPlaybackDialog.PlayName));
 
-        Assert.Contains(StoryRunPage.SilencedText, Drawn(page));
+        Assert.Contains(StoryRunPage.SilencedText, Drawn(rig.Window));
         Assert.Equal(["ch1 The lights go out 0", "ch1 The lights go out 0"], rig.Sink.Names);
 
         rig.Window.Close();
@@ -410,10 +422,11 @@ public sealed class AStoryRunsPageReplaysItsLinesTests
         var page = Opened(rig);
         Press(Named(page, "PlayAllLine"));
 
-        Press(Named(page, "PlaybackStop"));
+        Press(Named(rig.Window, StoryPlaybackDialog.StopName));
 
         Assert.Null(rig.Player.Now);
-        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Border>(), border => border.Name is "PlayingLine" or StoryRunPage.BarName && border.IsEffectivelyVisible);
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<Border>(), border => border.Name == "PlayingLine" && border.IsEffectivelyVisible);
+        Assert.Empty(rig.Window.Modals());
 
         rig.Window.Close();
     }

@@ -385,6 +385,15 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _audioPlayerOpen, value);
     }
 
+    private bool _storyPlayback;
+
+    /// <summary>Whether a story run is being played; the window and the headset each open the playback box while this is set.</summary>
+    public bool StoryPlayback
+    {
+        get => _storyPlayback;
+        set => Set(ref _storyPlayback, value);
+    }
+
     /// <summary>What the audio player says about the music, kept current while the music changes.</summary>
     public D47.Core.Audio.AudioPlayerReadout AudioPlayer
     {

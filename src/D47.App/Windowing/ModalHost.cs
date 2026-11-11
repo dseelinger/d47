@@ -65,13 +65,18 @@ public sealed class ModalHost : Grid
     {
         ArgumentNullException.ThrowIfNull(dialog);
 
-        dialog.MaxWidth = Modal.Width;
+        var share = dialog.WidthShare;
 
-        var frame = new Border
+        if (share is null)
+        {
+            dialog.MaxWidth = Modal.Width;
+        }
+
+        var frame = new Frame(share)
         {
             Name = FrameName,
             BorderThickness = new Thickness(1),
-            MaxWidth = Modal.Width + 2,
+            MaxWidth = share is null ? Modal.Width + 2 : double.PositiveInfinity,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             Child = dialog,
@@ -124,6 +129,22 @@ public sealed class ModalHost : Grid
         TopLevel.GetTopLevel(this)?.RemoveHandler(GotFocusEvent, OnFocusMoved);
 
         base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <summary>The frame; with a share it is that share of the host's width, the scrim's padding counted in.</summary>
+    private sealed class Frame(double? share) : Border
+    {
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            if (share is not { } of || double.IsInfinity(availableSize.Width))
+            {
+                return base.MeasureOverride(availableSize);
+            }
+
+            var width = (availableSize.Width + 2 * Modal.ScrimPadding) * of;
+
+            return new Size(width, base.MeasureOverride(new Size(width, availableSize.Height)).Height);
+        }
     }
 
     private void Remove(ModalDialog dialog)

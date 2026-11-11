@@ -200,7 +200,8 @@ public sealed class VrHost : IDisposable
         Panel.CarrierHullMemory? carrierHulls = null,
         Panel.NextBarMemory? nextBar = null,
         D47.App.Settings.ModulesSource? modules = null,
-        Func<D47.App.Controls.AudioPlayerDialog>? audioPlayer = null)
+        Func<D47.App.Controls.AudioPlayerDialog>? audioPlayer = null,
+        Func<D47.App.Controls.StoryPlaybackDialog>? storyPlayback = null)
     {
         VrHost? self = null;
 
@@ -229,6 +230,7 @@ public sealed class VrHost : IDisposable
             nextBar: nextBar,
             modules: modules,
             audioPlayer: audioPlayer,
+            storyPlayback: storyPlayback,
             portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(files, paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
 
             // A ray's own way into and out of resize mode (#190) — the header glyph and the bar the

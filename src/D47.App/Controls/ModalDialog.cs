@@ -15,4 +15,7 @@ public abstract class ModalDialog : HostedDialog
 
     /// <summary>Whether <see cref="Windowing.ModalHost"/> draws this dialog <see cref="Modal.TopOffset"/> below the top, not centred.</summary>
     public virtual bool AnchoredToTop => false;
+
+    /// <summary>The share of the host's width the frame takes; null keeps the <see cref="Modal.Width"/> cap.</summary>
+    public virtual double? WidthShare => null;
 }
