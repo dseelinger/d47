@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut a patch or minor release — first install the new version over the local install, backed up, then run tools/release.ps1 and relay its progress line by line as the script prints it — the version, the suite, the avatar clips, the dispatch and every workflow step — and when the build or a test fails, locally or on the runner, restore the backup, fix it, push the fix and run the release again. Use when the user invokes /release, /release patch or /release minor, or says "run the release", "release a patch and fix what breaks".
+description: Cut a patch or minor release — first install the new version over the local install, backed up, then run tools/release.ps1 and relay its progress line by line as the script prints it — the version, the suite, the avatar clips, the dispatch and every workflow step — and when the build or a test fails, locally or on the runner, restore the backup, fix it, push the fix and run the release again. Says aloud and in a heading when the maintainer may launch the installed build and when they must close it for a fix. Use when the user invokes /release, /release patch or /release minor, or says "run the release", "release a patch and fix what breaks".
 ---
 
 # Release
@@ -24,6 +24,45 @@ The invocation is the confirmation. Do not ask again before running the script.
 
 Run `/claude-voice Release`. The release takes about twenty minutes and the maintainer will be
 doing something else. `/claude-voice off` stops it and the release carries on.
+
+## Launch and close notices
+
+The maintainer waits to hear when they may use the installed d47 and when they must stop using it.
+Two notices tell them, each as a `##` heading in the transcript and a spoken sentence:
+
+| Notice | Heading | Spoken |
+|---|---|---|
+| Launch | `## You may launch d47 v<version>` | `Release. You may launch d47 version <version in words>.` |
+| Close | `## Close d47 now: v<version> needs a fix` | `Release. Close d47 now, version <version in words> needs a fix.` |
+
+When the deploy restarted d47 itself, the launch heading reads `## d47 v<version> is running: you may
+use it`, and the sentence says the same.
+
+Print the heading outside any fenced block, then speak the sentence at once, mid-turn, with the
+voice skill's command:
+
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File "$HOME/.claude/skills/claude-voice/say.ps1" -Text "Release. You may launch d47 version zero point one one two point three."
+```
+
+These two sentences are spoken in addition to the voice skill's two moments, and do not count
+against its one sentence per turn. Echo each one in a quoted block as that skill says. After
+`/claude-voice off`, print the heading and skip the speech. `say.ps1` handles the global mute by
+itself.
+
+**Launch** goes out once the local suite has passed (the line after the last `Passed!`, when the
+script moves on to the avatar clips), for the version deployed. Not straight after the deploy:
+a running d47 competes with `D47.App.Tests`, and a suite failure would close it again minutes later.
+It goes out again after every redeploy that follows a fix. Never after a failed selftest.
+
+**Close** goes out as soon as you decide that a failure needs a change to the code and a new deploy,
+before you start the fix: a local suite failure, a runner Build or Test failure, a runner failure
+before "Publish the release" whose cause is in the repository, or the maintainer reporting the
+deployed build broken. Send it only when a launch notice went out for this deploy or the deploy
+restarted d47 itself; otherwise nothing is running from it. Add one plain line under the heading:
+the restore, just before the fix commit, closes d47 if it is still open and starts the previous
+version again if it was running. A restore that no redeploy follows (a Defender detection, a version
+mismatch) gets no close notice.
 
 ## Before the script
 
@@ -65,7 +104,7 @@ build writes the installed `data\` from wherever it runs. Report the refusal and
 that copy.
 
 Relay what it prints. Remember three things from it: the version deployed, the version backed up,
-and whether it closed a running d47.
+and whether it closed a running d47 (and so started it again: `started …d47.exe again`).
 
 - **The publish failed.** Nothing was installed or backed up. It is a build failure: fix it as in
   "The local suite failed", commit, push, and deploy again.
@@ -99,8 +138,8 @@ Restore when:
   of this skill's deploy step installs the new HEAD. A runner re-run with no code change
   (`gh run rerun`) keeps the deploy.
 - **The selftest failed** (above).
-- **The maintainer says the deployed build is broken** while the release is running. If the run
-  has been dispatched, cancelling it is the maintainer's decision.
+- **The maintainer says the deployed build is broken** while the release is running. Send the close
+  notice. If the run has been dispatched, cancelling it is the maintainer's decision.
 - **`release.ps1` names a different version** than the one deployed.
 
 When the release stops for a reason that is not a defect in the build (a refusal from the script's
@@ -122,11 +161,12 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools/release.ps1 -Patch 2>&1 | ga
 in-place status line and dotnet's build chatter and keeps everything else, failures included.
 
 Relay every event as it arrives: the lines verbatim in a fenced block, so the step names and
-times stay aligned, with nothing added except a one-line note when a step failed. The stages, in
-order:
+times stay aligned, with nothing added except a one-line note when a step failed and the launch or
+close notice where it falls. The stages, in order:
 
 1. `v1.33.3 -> v1.33.4` — the version this run will produce.
 2. `Running the suite...`, then one `Passed!` or `Failed!` line per test project (about two minutes).
+   The launch notice goes out when the suite has passed.
 3. `Publishing avatar clips...` and what it uploaded or skipped.
 4. `Dispatched v…`, the run URL, then each workflow step with its time as it finishes.
 5. `success in …` or `failure after …`.
@@ -163,7 +203,8 @@ Re-run the failing project, not the solution, while fixing:
 dotnet test tests/<Project> -c Release --filter FullyQualifiedName~<Name>
 ```
 
-Restore the local install before you commit the fix. Then commit, push `main`, deploy again, and
+Send the close notice before starting the fix. Restore the local install before you commit the
+fix. Then commit, push `main`, deploy again, and
 run the script again under Monitor. It recomputes the same version from the newest tag and runs the
 whole suite again, which is the check that counts.
 
@@ -180,10 +221,10 @@ gh run view <id> --log-failed
 ```
 
 - **Build or Test.** The tag does not exist yet. Confirm with
-  `git ls-remote --tags origin v<version>` (empty output). Restore, fix it as above, push, deploy
+  `git ls-remote --tags origin v<version>` (empty output). Send the close notice, restore, fix it as above, push, deploy
   again and run the script again: it dispatches the same version.
 - **Publish, the installer, packing or checksums** — before "Publish the release". Still no tag.
-  When the cause is in the repository, restore and fix it the same way. When it is the runner (a
+  When the cause is in the repository, send the close notice, restore and fix it the same way. When it is the runner (a
   download or network failure, `choco` failing to install), keep the deploy, re-run the job once with
   `gh run rerun <id> --failed` and re-arm the watcher on the same id.
 - **"Publish the release" or the docs job.** The tag may already exist, and the workflow refuses a
