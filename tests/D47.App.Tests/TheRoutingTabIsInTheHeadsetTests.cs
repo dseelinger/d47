@@ -238,7 +238,10 @@ public class TheRoutingTabIsInTheHeadsetTests
 
         Assert.NotNull(plot);
         // The form runs past the quad's page area, so the page is scrolled to the button first.
-        plot!.GetVisualAncestors().OfType<ScrollViewer>().First().ScrollToEnd();
+        var scroll = plot!.GetVisualAncestors().OfType<ScrollViewer>().First();
+        var top = plot.TranslatePoint(default, (Visual)scroll.Content!)!.Value.Y;
+
+        scroll.Offset = new Vector(0, Math.Max(0, top - 100));
         panel.Invalidate();
         panel.Draw(pixels.Address, pixels.RowBytes);
         Dispatcher.UIThread.RunJobs();

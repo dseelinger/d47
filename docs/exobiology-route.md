@@ -39,7 +39,7 @@ nav_order: 206
 </section>
 <section>
 <h2><span class="num">3</span> Stops, radius and a floor, as on Road to Riches.</h2>
-<svg viewBox="0 0 880 330" role="img" aria-label="Stops, radius, the least a species must be worth, jump range and the farthest a body may sit from arrival, with their defaults">
+<svg viewBox="0 0 880 360" role="img" aria-label="Stops, radius, the least a species must be worth, jump range and the farthest a body may sit from arrival, with their defaults, and the two checkboxes">
  <rect x="20" y="30" width="270" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">STOPS</text>
  <text x="155" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">how many systems</text>
@@ -61,6 +61,9 @@ nav_order: 206
  <text x="655" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">how far in-system a body may sit</text>
  <text x="655" y="266" text-anchor="middle" font-size="15" fill="var(--text)">10,000 ls out of the box</text>
  <text x="440" y="318" text-anchor="middle" font-size="15" fill="var(--text-muted)">Coming back to the start is on out of the box, and can be turned off.</text>
+ <rect x="300" y="332" width="16" height="16" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
+ <text x="326" y="345" font-size="15" fill="var(--text)">Most credits per scan</text>
+ <text x="560" y="345" font-size="15" fill="var(--text-muted)">off out of the box</text>
 </svg>
 </section>
 <div class="next">
@@ -88,6 +91,7 @@ behind it.
 | **Jump range (ly)** | How far one jump goes | This ship's | 10.01 to 500 |
 | **Farthest from arrival (ls)** | How far in-system a body may sit | 10,000 | 100 to 1,000,000 |
 | **Come back to the start** | Whether the circuit ends where it started | On | |
+| **Most credits per scan** | Choose the systems that pay the most for each species scanned, not the most in total | Off | |
 
 It starts from where you are. Systems with Thargoid presence are avoided. A body's worth is the total of all its species, including those under the minimum. A value outside its range is moved to the nearest end of it. Plotting needs Look things up in the galaxy on; with it off, D47 says route planning is switched off.
 

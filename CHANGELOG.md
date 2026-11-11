@@ -12,6 +12,8 @@ Changed: D47 now remembers the colour variant of each organic sample, and keeps 
 
 Changed: Navigation › Bookmarks draws each bookmark with its kind, place, system, date and note, and SET COURSE, EDIT and DELETE tiles. ADD and EDIT open pages with a Location field that lists matching systems, bodies and stations as you type (with Spansh on), a USE MY TARGET button, a name and a one-line note. SET COURSE plots to the bookmark's system. The Rename prompt is gone from the page; renaming by voice is unchanged.
 
+Added: the Exobiology card on Navigation › Plan has a "Most credits per scan" checkbox, off by default. Checked, it asks for `credits_per_scan`, so the stops are the systems that pay the most for each species scanned.
+
 Changed: a bookmark can now point at a body or station as well as a system. "Bookmark this" with a body or station in your current system targeted keeps its name, and "list my bookmarks" says it, as "Name, Place, in System". D47 tells a body from a station from the system's Spansh profile and leaves the kind unknown when that is not available. "Set course for" still plots to the system. Older bookmarks load unchanged.
 
 Added: `plot_exobiology_route` takes `credits_per_scan`. It asks for up to three times as many stops, keeps the ones that pay the most for each species scanned, and lists each as "N cr a scan". The route is not re-optimised, so it is longer than the service's own.
