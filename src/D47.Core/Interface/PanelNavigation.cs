@@ -81,6 +81,9 @@ public sealed record NavCrumb(string Key, string Word, bool Modal = false)
     /// </summary>
     public IReadOnlyList<string> Spoken { get; init; } = [];
 
+    /// <summary>Whether voice matches only <see cref="Spoken"/>, not the drawn word.</summary>
+    public bool SpokenOnly { get; init; }
+
     /// <summary>Whether this level takes the whole strip rather than sharing it with the levels above (#469).</summary>
     public bool Whole { get; init; }
 

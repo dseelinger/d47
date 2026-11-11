@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using D47.App.Controls;
 using D47.Core.Capabilities;
 using D47.Core.Configuration;
@@ -156,6 +156,7 @@ public static class RoutingPages
     /// <summary>The crumb for the route being flown.</summary>
     public static NavCrumb ProgressCrumb { get; } = new(ProgressKey, "Progress")
     {
+        Spoken = ["route"],
         Level = BesideLevel,
         Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
     };

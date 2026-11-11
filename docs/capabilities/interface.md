@@ -497,7 +497,8 @@ phrase, and on the keyboard Escape or Alt+Left. Say the name of the tab you are 
 pressing it does. A tab answers to its bare name, to "show", "open", "go to", "switch to" or
 "select" in front of it, and to "tab" or "page" after it — and to nothing looser, because a phrase that
 merely mentions a tab is not a request for it. The Stories tab also answers to "story", so
-"story tab", "story page" and "show the story" open it.
+"story tab", "story page" and "show the story" open it. "Route" opens Navigation › Plan › Progress,
+and "engineers route" opens the Engineers Route page.
 
 **Voice jumps levels.** Asking for something three levels down takes you there with the whole
 trail behind it, rather than dropping you somewhere with nothing above.

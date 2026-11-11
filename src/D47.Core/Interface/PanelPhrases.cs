@@ -135,7 +135,7 @@ public static class PanelPhrases
     /// it, optionally followed by "tab", and nothing else.
     /// </summary>
     private static bool Named(string input, NavCrumb crumb) =>
-        Named(input, crumb.Word) || crumb.Spoken.Any(alias => Named(input, alias));
+        (!crumb.SpokenOnly && Named(input, crumb.Word)) || crumb.Spoken.Any(alias => Named(input, alias));
 
     private static bool NamesTab(string input, PanelTab tab) =>
         Named(input, tab.ToString())

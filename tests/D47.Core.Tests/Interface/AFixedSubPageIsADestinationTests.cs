@@ -1,4 +1,4 @@
-using D47.Core.Interface;
+﻿using D47.Core.Interface;
 using Xunit;
 
 namespace D47.Core.Tests.Interface;
@@ -20,7 +20,12 @@ public class AFixedSubPageIsADestinationTests
 
         Assert.True(nav.Declare("adventures", ShortStory, canAsk ?? (() => true)));
         Assert.True(nav.Declare("adventures", Catalogue));
-        Assert.True(nav.Declare("routing.plan", new NavCrumb("routing.progress", "Progress")));
+        Assert.True(nav.Declare("routing.plan", new NavCrumb("routing.progress", "Progress") { Spoken = ["route"] }));
+
+        nav.Register(PanelTab.Assets, new NavCrumb("engineers", "Engineers"));
+        Assert.True(nav.Declare(
+            "engineers",
+            new NavCrumb("engineers.route", "Route") { Spoken = ["engineers route", "engineer route"], SpokenOnly = true }));
 
         return nav;
     }
@@ -108,7 +113,7 @@ public class AFixedSubPageIsADestinationTests
         var nav = Furnished();
 
         Assert.Equal(
-            ["conversation", "adventures", "adventure.ask", "stories", "routing.plan", "routing.progress"],
+            ["conversation", "adventures", "adventure.ask", "stories", "engineers", "engineers.route", "routing.plan", "routing.progress"],
             nav.Destinations.Select(page => page.Key));
 
         var catalogue = nav.Destinations.Single(page => page.Key == "stories");
@@ -149,5 +154,32 @@ public class AFixedSubPageIsADestinationTests
 
         Assert.Null(PanelPhrases.Apply("plot a route to the progress beacon", nav));
         Assert.Equal(PanelTab.Transcript, nav.Tab);
+    }
+
+    [Theory]
+    [InlineData("route")]
+    [InlineData("show route")]
+    [InlineData("open the route")]
+    [InlineData("route page")]
+    public void SayingRouteOpensPlanProgress(string phrase)
+    {
+        var nav = Furnished();
+
+        Assert.NotNull(PanelPhrases.Apply(phrase, nav));
+        Assert.Equal(PanelTab.Navigation, nav.Tab);
+        Assert.Equal(["routing.plan", "routing.progress"], nav.Trail.Select(crumb => crumb.Key));
+        Assert.Equal("routing.progress", nav.DestinationKey);
+    }
+
+    [Theory]
+    [InlineData("engineers route")]
+    [InlineData("engineer route")]
+    public void SayingEngineersRouteOpensTheEngineersRoutePage(string phrase)
+    {
+        var nav = Furnished();
+
+        Assert.NotNull(PanelPhrases.Apply(phrase, nav));
+        Assert.Equal(PanelTab.Assets, nav.Tab);
+        Assert.Equal("engineers.route", nav.DestinationKey);
     }
 }

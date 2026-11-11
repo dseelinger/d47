@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -27,7 +27,12 @@ public static class EngineersPages
 
     /// <summary>The crumb the directory's Route tile pushes.</summary>
     public static NavCrumb RouteCrumb { get; } =
-        new(RouteKey, "Route") { Help = D47.Core.Capabilities.Builtin.EngineerCapability.Id };
+        new(RouteKey, "Route")
+        {
+            Help = D47.Core.Capabilities.Builtin.EngineerCapability.Id,
+            Spoken = ["engineers route", "engineer route"],
+            SpokenOnly = true,
+        };
 
     /// <summary>Whether a crumb is one of these pages rather than another root's.</summary>
     public static bool Owns(NavCrumb crumb) => crumb.Key.StartsWith("engineers.", StringComparison.Ordinal);
