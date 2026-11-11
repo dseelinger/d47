@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Commander › Ledgers › Codex › the Crop page has a **Brightness** row from -4 (Darker) to +8 (Brighter). A headset capture opens at +4 and one from Elite's window at 0; each press redraws the picture, ↺ returns to the opening step, **Save** keeps the step with the square and **Re-crop** opens at it.
+
 Changed: Commander › Ledgers › Codex › a picture cut from a headset capture is brightened with gamma 0.5, because the headset adds brightness after the point where D47 takes the capture. The Crop page shows the brightened picture, **Save** keeps the brightness beside the square, and **Re-crop** uses it. A capture from Elite's window and a picture saved before this change are not brightened.
 
 Changed: Fleet › a ship's **Plot a route to buy them** now leaves a one-line summary under the block, as "2 stops. First: Catalina Cantina, HIP 106601, 34 ly. 3 not found.", with an **Open the route** button that opens the plan on Navigation › Plan. A failed plot still shows its message in red.

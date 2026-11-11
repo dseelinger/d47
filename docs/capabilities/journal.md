@@ -524,6 +524,8 @@ drag a corner to resize it. The square stays inside the capture and is never sma
 **Save** keeps a 768 by 768 picture, the capture it was cut from, the square and the brightness used, in `data\codex-pictures\local\<Frontier ID>`;
 **Cancel** keeps nothing. A capture from the headset is brightened, because the headset adds brightness after the point where D47 takes the picture.
 
+The **Brightness** row under the picture changes that. It is a whole step from -4 (Darker) to +8 (Brighter), set with the arrows or by pressing the track; the picture redraws at each press. A capture from the headset opens at +4 and one from Elite's window at 0. The ↺ beside the row shows when the step differs from the one the page opened with, and returns to it. **Save** keeps the brightness with the square, and **Re-crop** opens at the saved brightness.
+
 With a picture of your own for the region, the entry's page also offers **Re-crop**, which opens the kept
 capture with the saved square and brightness, and **Replace**. **Use the stock picture**, or **Remove my picture** when there
 is no stock one, deletes your picture and its capture. These are in the main window only; the big panel shows

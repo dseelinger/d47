@@ -1,6 +1,8 @@
 using System.Globalization;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -8,6 +10,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
 using D47.Core.Interface;
@@ -367,6 +370,81 @@ public class TheCodexPicturePagesCropACaptureTests
 
         surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
         Assert.Null(surface.Store.LocalGamma(Key));
+    }
+
+    [AvaloniaFact]
+    public async Task TheBrightnessRowOpensAtTheCapturesStepRedrawsOnEachPressAndSavesThatGamma()
+    {
+        var surface = new Surface();
+        surface.Capture("capture-20261018-210900", "2026-10-18T21:09:00Z", 2000, 1000, (101, 18));
+        var note = Path.Combine(Captures, "capture-20261018-210900.json");
+        surface.Files.WriteText(note, surface.Files.ReadText(note)!.Replace("\"source\": \"Elite\"", $"\"source\": \"{ScreenPictures.FromHeadset}\""));
+        surface.Work.Capture = Path.Combine(Captures, "capture-20261018-210900.jpg");
+
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: false));
+        await Lifted(crop);
+
+        var amount = crop.GetVisualDescendants().OfType<Amount>().Single(a => a.Name == "CodexCropBrightness");
+        var reset = Named(crop, "CodexCropBrightnessReset")!;
+        var lifted = Blue(Shown(crop.Surface!));
+
+        Assert.Equal(4m, amount.Value);
+        Assert.False(reset.IsVisible);
+
+        var down = amount.GetVisualDescendants().OfType<RepeatButton>().First(b => AutomationProperties.GetName(b) == "Decrease");
+        Press(down);
+        Press(down);
+        Press(down);
+        Press(down);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(0m, amount.Value);
+        Assert.True(reset.IsVisible);
+        Assert.True(Blue(Shown(crop.Surface!)) < lifted);
+
+        Press(reset);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(4m, amount.Value);
+        Assert.False(reset.IsVisible);
+
+        var up = amount.GetVisualDescendants().OfType<RepeatButton>().First(b => AutomationProperties.GetName(b) == "Increase");
+        Press(up);
+        Press(up);
+        Press(up);
+        Press(up);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(8m, amount.Value);
+
+        await crop.SaveAsync();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(0.25, surface.Store.LocalGamma(Key));
+        window.Close();
+
+        surface.Nav.Drill(CodexPage.CropCrumb(Key, kept: true));
+        var (again, recrop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: true));
+        await Lifted(recrop);
+        var reopened = recrop.GetVisualDescendants().OfType<Amount>().Single(a => a.Name == "CodexCropBrightness");
+
+        Assert.Equal(8m, reopened.Value);
+        Assert.False(Named(recrop, "CodexCropBrightnessReset")!.IsVisible);
+        again.Close();
+    }
+
+    [AvaloniaFact]
+    public void AWindowCaptureOpensAtStepZeroAndSavesNoLift()
+    {
+        var surface = new Surface();
+        surface.Capture("capture-20261018-210900", "2026-10-18T21:09:00Z", 2000, 1000, (101, 18));
+        surface.Work.Capture = Path.Combine(Captures, "capture-20261018-210900.jpg");
+
+        var (window, crop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: false));
+        var amount = crop.GetVisualDescendants().OfType<Amount>().Single(a => a.Name == "CodexCropBrightness");
+
+        Assert.Equal(0m, amount.Value);
+        Assert.Equal("0", Amount.Display(0, "+0;-0;0", null));
+        Assert.Equal("+4", Amount.Display(4, "+0;-0;0", null));
+        window.Close();
     }
 
     private static async Task Lifted(CodexCropPage page)

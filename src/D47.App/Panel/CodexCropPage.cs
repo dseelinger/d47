@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
-using Avalonia.Media.Imaging;
+using System.Globalization;
+using Avalonia.Automation;
 using D47.App.Controls;
+using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core.Interface;
 
@@ -21,7 +23,12 @@ public sealed class CodexCropPage : UserControl, IPageSummary
     private TextBlock _floor = new();
     private TextBlock _status = new();
     private byte[]? _source;
-    private double? _gamma;
+    private CodexCropPreview? _preview;
+    private int _openStep;
+    private int _step;
+    private Amount _amount = new();
+    private ScaleTrack _scale = new("", "", 0, 1);
+    private Button _reset = new();
 
     /// <summary>Cuts from the kept source with its saved square when <paramref name="kept"/>, else from the capture in <paramref name="work"/>.</summary>
     public CodexCropPage(CodexPictureKey key, CodexPictureSet pictures, PanelNavigator nav, CodexPictureWork work, bool kept)
@@ -50,7 +57,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         Content = null;
         Surface = null;
         _source = null;
-        _gamma = null;
+        _preview = null;
     }
 
     public string Summary => CodexPage.SummaryText;
@@ -72,7 +79,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         var square = Surface.Square;
         var key = _key;
         var source = _source;
-        var gamma = _gamma;
+        var gamma = Gamma;
         var store = _pictures.Store;
 
         _save.IsEnabled = false;
@@ -116,36 +123,37 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         Leave();
     }
 
+    private double? Gamma => _step == 0 ? null : PictureLift.GammaOf(_step);
+
     private async void Load()
     {
         _source = _kept ? _pictures.Store.LocalSource(_key) : _work.Capture is { } path ? _pictures.CaptureBytes(path) : null;
-        _gamma = _kept ? _pictures.Store.LocalGamma(_key) : _work.Capture is { } captured ? _pictures.CaptureGamma(captured) : null;
+        var gamma = _kept ? _pictures.Store.LocalGamma(_key) : _work.Capture is { } captured ? _pictures.CaptureGamma(captured) : null;
+        _openStep = PictureLift.StepOf(gamma);
+        _step = _openStep;
 
         var source = _source;
-        var gamma = _gamma;
-        Bitmap? picture;
+        CodexCropPreview? preview = null;
 
-        if (source is not null && gamma is { } lift)
+        if (source is not null && _openStep != 0)
         {
             Content = CreditsKit.Message(CodexModel.BrighteningText);
-            picture = await Task.Run(() => CodexPictureCutter.DecodeLifted(source, lift));
+            preview = await Task.Run(() => CodexCropPreview.Create(source));
 
             if (!ReferenceEquals(source, _source))
             {
-                picture?.Dispose();
-
                 return;
             }
         }
-        else
+        else if (source is not null)
         {
-            picture = Decode(source);
+            preview = CodexCropPreview.Create(source);
         }
 
-        Build(picture);
+        Build(preview);
     }
 
-    private void Build(Bitmap? picture)
+    private void Build(CodexCropPreview? preview)
     {
         _save = new Button { Name = "CodexCropSave", Content = "Save" };
         _save.Click += async (_, _) => await SaveAsync();
@@ -157,10 +165,11 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         var cancel = new Button { Name = "CodexCropCancel", Content = "Cancel" };
         cancel.Click += (_, _) => Leave();
 
-        if (picture is not null)
+        if (preview is not null)
         {
+            _preview = preview;
             var saved = _kept ? _pictures.Store.LocalCrop(_key) : null;
-            Surface = new CropSurface(picture, saved ?? CropSquare.Start(picture.PixelSize.Width, picture.PixelSize.Height));
+            Surface = new CropSurface(preview.At(Gamma), preview.Width, preview.Height, saved ?? CropSquare.Start(preview.Width, preview.Height));
             Surface.SquareChanged += _ => Readout();
 
             body.Children.Add(new ScrollViewer
@@ -175,6 +184,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
                 Spacing = 16,
                 Children = { _readout, _floor },
             });
+            body.Children.Add(BrightnessRow());
             Readout();
             _save.IsEnabled = true;
         }
@@ -212,22 +222,60 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         }
     }
 
-    private static Bitmap? Decode(byte[]? bytes)
+    private Control BrightnessRow()
     {
-        if (bytes is null)
-        {
-            return null;
-        }
+        var label = CreditsKit.Mono("BRIGHTNESS", TypeScale.Small, ThemeManager.GreyKey, right: false);
+        label.VerticalAlignment = VerticalAlignment.Center;
+        label.Margin = new Thickness(0, 0, 12, 0);
 
-        try
+        _amount = new Amount
         {
-            using var stream = new MemoryStream(bytes);
+            Name = "CodexCropBrightness",
+            Step = 1,
+            Format = StepFormat,
+            Minimum = PictureLift.DarkestStep,
+            Maximum = PictureLift.BrightestStep,
+            DisablesAtEnds = true,
+        };
+        _scale = new ScaleTrack("Darker", "Brighter", PictureLift.DarkestStep, PictureLift.BrightestStep) { Margin = new Thickness(12, 0, 0, 0) };
+        AutomationProperties.SetName(_scale, "Brightness level");
+        _reset = SettingsView.ResetGlyph("CodexCropBrightnessReset", $"Back to {OpenStepText}");
+        _reset.Click += (_, _) => SetStep(_openStep);
+        _amount.ValueCommitted += (_, _) => SetStep(_amount.Value is { } shown ? (int)shown : _step);
+        _scale.ValueChanged += (_, _) => SetStep(_scale.Value);
 
-            return new Bitmap(stream);
-        }
-        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or IOException or NotSupportedException)
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*,Auto") };
+        Grid.SetColumn(_amount, 1);
+        Grid.SetColumn(_scale, 2);
+        Grid.SetColumn(_reset, 3);
+        row.Children.Add(label);
+        row.Children.Add(_amount);
+        row.Children.Add(_scale);
+        row.Children.Add(_reset);
+        ShowStep();
+
+        return row;
+    }
+
+    private const string StepFormat = "+0;-0;0";
+
+    private string OpenStepText => _openStep.ToString(StepFormat, CultureInfo.InvariantCulture);
+
+    private void SetStep(int step)
+    {
+        _step = Math.Clamp(step, PictureLift.DarkestStep, PictureLift.BrightestStep);
+        ShowStep();
+
+        if (_preview is { } preview)
         {
-            return null;
+            Surface?.ShowPicture(preview.At(Gamma));
         }
+    }
+
+    private void ShowStep()
+    {
+        _amount.Value = _step;
+        _scale.Show(_step);
+        _reset.IsVisible = _step != _openStep;
     }
 }

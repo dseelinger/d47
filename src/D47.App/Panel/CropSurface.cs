@@ -28,13 +28,15 @@ internal sealed class CropSurface : Canvas
     private readonly Border _frame = new() { BorderThickness = new Thickness(1), Background = Brushes.Transparent };
     private readonly Border[] _handles = new Border[4];
     private readonly Border[] _dim = new Border[4];
+    private readonly Image _image;
     private CropSquare _square;
     private Drag? _drag;
 
-    public CropSurface(Bitmap picture, CropSquare square)
+    /// <summary>A surface for a picture of <paramref name="width"/> by <paramref name="height"/> pixels, shown by <paramref name="picture"/> at any size.</summary>
+    public CropSurface(Bitmap picture, int width, int height, CropSquare square)
     {
-        _width = picture.PixelSize.Width;
-        _height = picture.PixelSize.Height;
+        _width = width;
+        _height = height;
         _scale = Math.Min(LongestPicture / _width, TallestPicture / _height);
         _square = square.Fit(_width, _height);
 
@@ -43,7 +45,7 @@ internal sealed class CropSurface : Canvas
         Background = Brushes.Transparent;
         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
 
-        var image = new Image
+        _image = new Image
         {
             Name = "CropPicture",
             Source = picture,
@@ -51,9 +53,9 @@ internal sealed class CropSurface : Canvas
             Width = _width * _scale,
             Height = _height * _scale,
         };
-        SetLeft(image, Inset);
-        SetTop(image, Inset);
-        Children.Add(image);
+        SetLeft(_image, Inset);
+        SetTop(_image, Inset);
+        Children.Add(_image);
 
         for (var i = 0; i < _dim.Length; i++)
         {
@@ -76,6 +78,22 @@ internal sealed class CropSurface : Canvas
         }
 
         Place();
+    }
+
+    /// <summary>The size the picture is shown at, in pixels.</summary>
+    public static PixelSize ShownSize(int width, int height)
+    {
+        var scale = Math.Min(LongestPicture / width, TallestPicture / height);
+
+        return new PixelSize(Math.Max(1, (int)Math.Round(width * scale)), Math.Max(1, (int)Math.Round(height * scale)));
+    }
+
+    /// <summary>Replaces the picture shown; the square is unchanged.</summary>
+    public void ShowPicture(Bitmap picture)
+    {
+        var old = _image.Source as IDisposable;
+        _image.Source = picture;
+        old?.Dispose();
     }
 
     public int PictureWidth => _width;
