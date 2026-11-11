@@ -150,10 +150,11 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
         Func<JournalLocation?>? here = null,
         SurveyedBiology? surveyed = null,
         IGalaxyService? galaxy = null,
-        BiologyHeads? heads = null) =>
+        BiologyHeads? heads = null,
+        IReadOnlyList<EarlierFind>? earlier = null) =>
         new(new Systems(), here ?? (() => new JournalLocation("Vask Reach", null, false, null) { SystemAddress = Here }))
         {
-            Biology = (address, region, held) => BiologyInSystem.For(store.Active!, address, region, held, null),
+            Biology = (address, region, held) => BiologyInSystem.For(store.Active!, address, region, held, earlier),
             Surveyed = surveyed ?? new SurveyedBiology(),
             AskSurveyed = galaxy is null ? null : galaxy.SystemBiologyAsync,
             Heads = heads ?? new BiologyHeads(),
@@ -206,6 +207,9 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
 
     private static TextBlock Text(Control within, string text) =>
         within.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == text);
+
+    private static string Valued(string species) =>
+        $"{species} — {ExobiologyCatalogue.All.First(entry => entry.Species == species).Value.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)} cr";
 
     private static Border Row(Control within, string genus) =>
         within.GetVisualDescendants().OfType<Border>()
@@ -279,8 +283,8 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
         Assert.Equal(Ink(page, ThemeManager.GreyKey), Text(Row(page, "Stratum"), "Not started").Foreground);
         Assert.Equal(Ink(page, ThemeManager.WarnKey), Text(Row(page, "Fungoida"), "Abandoned · 1 / 3").Foreground);
 
-        Assert.Equal(Ink(page, ThemeManager.WhiteKey), Text(Row(page, "Bacterium"), "Bacterium Tela").Foreground);
-        Assert.Equal(Ink(page, ThemeManager.CyanKey), Text(Row(page, "Tussock"), "Tussock Pennata").Foreground);
+        Assert.Equal(Ink(page, ThemeManager.WhiteKey), Text(Row(page, "Bacterium"), Valued("Bacterium Tela")).Foreground);
+        Assert.Equal(Ink(page, ThemeManager.CyanKey), Text(Row(page, "Tussock"), Valued("Tussock Pennata")).Foreground);
 
         Assert.Contains("One sample lost when you logged a different species.", Texts(Row(page, "Fungoida")));
         Assert.DoesNotContain("One sample lost when you logged a different species.", Texts(Row(page, "Tussock")));
@@ -312,7 +316,7 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
         ShowBiology(page);
 
         var reported = Row(page, "Stratum");
-        Assert.Equal(Ink(page, ThemeManager.GreyKey), Text(reported, "Stratum Tectonicas").Foreground);
+        Assert.Equal(Ink(page, ThemeManager.GreyKey), Text(reported, "Stratum Tectonicas — 19,010,800 cr").Foreground);
         Assert.Contains("REPORTED", Texts(reported));
 
         var possible = Row(page, "Bacterium");
@@ -505,7 +509,142 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
         Assert.Equal(1, galaxy.Asked);
         Assert.True(surveyed.TryGet(Here, out var held));
         Assert.Same(answer, held);
-        Assert.Contains("Stratum Tectonicas", Texts(Row(page, "Stratum")));
+        Assert.Contains("Stratum Tectonicas — 19,010,800 cr", Texts(Row(page, "Stratum")));
+
+        window.Close();
+    }
+
+    private static SurveyedBiology Held(params SurveyedBody[] bodies)
+    {
+        var held = new SurveyedBiology();
+        held.Set(new SystemBiology(Here, bodies));
+
+        return held;
+    }
+
+    private static SurveyedBody Reports(int bodyId, long landmark, params ExobiologySpecies[] species) =>
+        new(BodyName(Here, bodyId), bodyId, landmark, species);
+
+    [AvaloniaFact]
+    public void BodiesOnlySpanshReportsAreListedAndCounted()
+    {
+        var store = Store();
+        Mapped(store, 3, "Bacterium");
+
+        var held = Held(
+            Reports(4, 100, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 7, 16_202_800)),
+            Reports(5, 200, new ExobiologySpecies("Fungoida", "Fungoida Setisis", 1, 1_000_000)));
+
+        var (page, window) = Shown(Surface(store, surveyed: held));
+
+        Assert.Equal("Biology 3", Sections(page).ItemsSource!.Cast<string>().Last());
+
+        ShowBiology(page);
+
+        Assert.Equal(3, page.GetVisualDescendants().OfType<Button>().Count(button => button.Classes.Contains(StarSystemPage.BiologyHeadClass)));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AReportedSpeciesShowsItsCountAndValueAndACountOfOneHasNoMultiplier()
+    {
+        var store = Store();
+        var held = Held(
+            Reports(4, 100, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 7, 16_202_800)),
+            Reports(5, 200, new ExobiologySpecies("Fungoida", "Fungoida Setisis", 1, 1_000_000)));
+
+        var (page, window) = Shown(Surface(store, surveyed: held));
+        ShowBiology(page);
+
+        Assert.Contains("Stratum Cucumisis ×7 — 16,202,800 cr", Texts(Row(page, "Stratum")));
+        Assert.Contains("Fungoida Setisis — 1,000,000 cr", Texts(Row(page, "Fungoida")));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ABodyHeadShowsTheSubTypeAndTheReportedValue()
+    {
+        var store = Store();
+        var held = Held(Reports(4, 57_257_100, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 7, 16_202_800)));
+
+        var (page, window) = Shown(Surface(store, surveyed: held));
+        ShowBiology(page);
+
+        var texts = Texts(Head(page, BodyName(Here, 4)));
+
+        Assert.Contains("57,257,100 cr", texts);
+        Assert.Contains("1,204 Ls", texts);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ABodyWhoseGeneraAreReportedHasTheGenusSummaryAndNoNotMappedSlab()
+    {
+        var store = Store();
+        var held = Held(Reports(4, 100, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 7, 16_202_800)));
+
+        var (page, window) = Shown(Surface(store, surveyed: held));
+        ShowBiology(page);
+
+        Assert.Contains("1 GENUS · 0 DONE", Texts(Head(page, BodyName(Here, 4))));
+        Assert.DoesNotContain(StarSystemPage.NotMapped, Texts(page));
+        Assert.True(IsOpen(page, BodyName(Here, 4)));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASystemWithNoCommanderRecordAsksSpanshOnceAndShowsWhatItReports()
+    {
+        var answer = new SystemBiology(
+            Here,
+            [Reports(4, 100, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 7, 16_202_800))]);
+        var galaxy = new Galaxy(answer);
+        var surveyed = new SurveyedBiology();
+
+        var (page, window) = Shown(Surface(Store(), surveyed: surveyed, galaxy: galaxy));
+        ShowBiology(page);
+
+        Until(() => Texts(page).Contains("Stratum Cucumisis ×7 — 16,202,800 cr"));
+
+        Assert.DoesNotContain(StarSystemPage.NothingKnown, Texts(page));
+        Assert.Equal(1, galaxy.Asked);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void OpeningASystemOnOverviewAsksForItsBiology()
+    {
+        var galaxy = new Galaxy(new SystemBiology(Elsewhere, []));
+
+        var (page, window) = Shown(Surface(Store(), galaxy: galaxy), open: Elsewhere);
+
+        Until(() => galaxy.Asked == 1);
+
+        Assert.Equal(1, galaxy.Asked);
+        Assert.NotNull(page);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASpeciesOnlyCanonnHoldsShowsReportedWithNoFigures()
+    {
+        var store = Store();
+        Mapped(store, 3, "Bacterium");
+
+        var earlier = new[] { new EarlierFind(BodyName(Here, 3), 2_320_103, "Bacterium Aurasus - Yellow", 0, 0) };
+
+        var (page, window) = Shown(Surface(store, earlier: earlier));
+        ShowBiology(page);
+
+        var row = Row(page, "Bacterium");
+        Assert.Contains("Bacterium Aurasus", Texts(row));
+        Assert.Contains("REPORTED", Texts(row));
 
         window.Close();
     }

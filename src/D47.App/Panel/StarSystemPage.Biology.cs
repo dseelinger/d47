@@ -59,7 +59,12 @@ public sealed partial class StarSystemPage
             : "Biology";
 
     /// <summary>The segment's label, recorded so a redraw of the section alone can tell when the count has changed.</summary>
-    private string BiologySegment(StarSystemProfile profile) => _biologyLabelDrawn = BiologyLabel(BiologyAnswer(profile));
+    private string BiologySegment(StarSystemProfile profile)
+    {
+        AskSurveyed(profile.SystemAddress);
+
+        return _biologyLabelDrawn = BiologyLabel(BiologyAnswer(profile));
+    }
 
     private SystemBiologyAnswer? BiologyAnswer(StarSystemProfile profile)
     {
@@ -121,14 +126,14 @@ public sealed partial class StarSystemPage
 
         var groups = new StackPanel { Spacing = 18 };
 
+        AskSurveyed(profile.SystemAddress);
+
         if (answer is not { IsKnown: true })
         {
             groups.Children.Add(Sentence(NothingKnown, ThemeManager.WhiteKey));
 
             return groups;
         }
-
-        AskSurveyed(profile.SystemAddress);
 
         var here = HereBody(profile.SystemAddress);
         var region = profile.Position is { } at && GalacticRegions.Find(at) is { } name ? GalacticRegions.IdOf(name) : null;
@@ -158,7 +163,7 @@ public sealed partial class StarSystemPage
 
         foreach (var body in answer.Bodies)
         {
-            text.Append(body.BodyId).Append(':').Append(body.Mapped).Append(':').Append(body.BiologicalCount).Append('[');
+            text.Append(body.BodyId).Append(':').Append(body.Mapped).Append(':').Append(body.GeneraReported).Append(':').Append(body.ReportedValue).Append(':').Append(body.BiologicalCount).Append('[');
 
             foreach (var genus in body.Genera)
             {
@@ -166,7 +171,7 @@ public sealed partial class StarSystemPage
 
                 foreach (var species in genus.Species)
                 {
-                    text.Append(species.Species).Append(':').Append(species.Source).Append(':').Append(species.EntryId).Append(',');
+                    text.Append(species.Species).Append(':').Append(species.Source).Append(':').Append(species.EntryId).Append(':').Append(species.Count).Append(':').Append(species.Value).Append(',');
                 }
 
                 text.Append(')');
@@ -205,9 +210,18 @@ public sealed partial class StarSystemPage
 
         Dispatcher.UIThread.Post(() =>
         {
-            if (_section == Section.Biology && _profile is { } profile && profile.SystemAddress == address)
+            if (_profile is not { } profile || profile.SystemAddress != address)
+            {
+                return;
+            }
+
+            if (_section == Section.Biology)
             {
                 ShowBiology(profile, BiologyAnswer(profile));
+            }
+            else if (BiologyLabel(BiologyAnswer(profile)) != _biologyLabelDrawn)
+            {
+                Draw();
             }
         });
     }
@@ -216,7 +230,7 @@ public sealed partial class StarSystemPage
     {
         var address = profile.SystemAddress;
         var open = _surface.Heads.Open(address, line.BodyId)
-            ?? (here || !line.Mapped || line.Genera.Any(genus => genus.State != GenusState.Done));
+            ?? (here || (!line.Mapped && !line.GeneraReported) || line.Genera.Any(genus => genus.State != GenusState.Done));
 
         var group = new StackPanel { Spacing = Gaps.Tile };
         group.Children.Add(BodyHead(profile, line, here, open));
@@ -226,7 +240,7 @@ public sealed partial class StarSystemPage
             return group;
         }
 
-        if (!line.Mapped)
+        if (!line.Mapped && !line.GeneraReported)
         {
             var slab = new Border
             {
@@ -267,6 +281,16 @@ public sealed partial class StarSystemPage
         figure.VerticalAlignment = VerticalAlignment.Center;
         start.Children.Add(figure);
 
+        foreach (var text in new[] { profile.Bodies.FirstOrDefault(body => body.BodyId == line.BodyId)?.SubType, line.ReportedValue is { } worth ? $"{worth:N0} cr" : null })
+        {
+            if (!string.IsNullOrEmpty(text))
+            {
+                var extra = Mono(text, ThemeManager.AKey);
+                extra.VerticalAlignment = VerticalAlignment.Center;
+                start.Children.Add(extra);
+            }
+        }
+
         var (summary, ink) = HeadSummary(line);
         var end = Caption(summary, ink);
         end.VerticalAlignment = VerticalAlignment.Center;
@@ -300,7 +324,7 @@ public sealed partial class StarSystemPage
     /// <summary>The head's right end: "4 genera · 1 done", "2 genera · ✓ all done" or "3 biological signals · not mapped", with its ink.</summary>
     public static (string Text, string Key) HeadSummary(BodyLine line)
     {
-        if (!line.Mapped)
+        if (!line.Mapped && !line.GeneraReported)
         {
             return ($"{Counted(line.BiologicalCount, "biological", "signal")} · not mapped", ThemeManager.GreyKey);
         }
@@ -335,10 +359,19 @@ public sealed partial class StarSystemPage
             return Dash;
         }
 
-        var named = string.Join(" · ", species.Take(MostSpeciesNamed).Select(line => line.Species));
+        var named = string.Join(" · ", species.Take(MostSpeciesNamed).Select(SpeciesFigures));
         var more = species.Count - MostSpeciesNamed;
 
         return more > 0 ? $"{named} and {more.ToString(CultureInfo.InvariantCulture)} more" : named;
+    }
+
+    /// <summary>"Stratum Cucumisis ×7 — 16,202,800 cr": the count only above one, the value only when known.</summary>
+    private static string SpeciesFigures(SpeciesLine line)
+    {
+        var count = line.Count > 1 ? $" ×{line.Count}" : string.Empty;
+        var value = line.Value is { } worth ? $" — {worth.ToString("N0", CultureInfo.CurrentCulture)} cr" : string.Empty;
+
+        return line.Species + count + value;
     }
 
     /// <summary>"One sample lost when you logged a different species."</summary>

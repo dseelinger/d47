@@ -307,7 +307,7 @@ public class TheBiologyInASystemIsOneAnswerTests
         var answer = Ask(store, Region, Surveyed, earlier);
 
         var bacterium = Assert.Single(Genus(answer, 3, "Bacterium").Species);
-        Assert.Equal(new SpeciesLine("Bacterium Aurasus", SpeciesSource.Reported, 2_320_103), bacterium);
+        Assert.Equal(new SpeciesLine("Bacterium Aurasus", SpeciesSource.Reported, 2_320_103, 1, 1_000_000), bacterium);
 
         var stratum = Assert.Single(Genus(answer, 3, "Stratum").Species);
         Assert.Equal(new SpeciesLine("Stratum Tectonicas", SpeciesSource.Reported, 2_420_000), stratum);
@@ -322,7 +322,7 @@ public class TheBiologyInASystemIsOneAnswerTests
 
         var species = Assert.Single(Genus(Ask(store, Region, Surveyed), 3, "Bacterium").Species);
 
-        Assert.Equal(new SpeciesLine("Bacterium Aurasus", SpeciesSource.Reported, null), species);
+        Assert.Equal(new SpeciesLine("Bacterium Aurasus", SpeciesSource.Reported, null, 1, 1_000_000), species);
     }
 
     [Fact]
@@ -365,5 +365,115 @@ public class TheBiologyInASystemIsOneAnswerTests
         Mapped(store, 3, "Bacterium");
 
         Assert.Empty(Genus(Ask(store), 3, "Bacterium").Species);
+    }
+
+    private static SystemBiology Spansh(params SurveyedBody[] bodies) => new(Here, bodies);
+
+    private static SurveyedBody Row(int bodyId, long landmark, params ExobiologySpecies[] species) =>
+        new(BodyName(bodyId), bodyId, landmark, species);
+
+    [Fact]
+    public void ABodyOnlySpanshReportsIsInTheAnswerWithItsReportedSpecies()
+    {
+        var store = Store();
+        Mapped(store, 3, "Bacterium");
+
+        var answer = Ask(store, Region, Spansh(Row(7, 57_257_100, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 7, 16_202_800))));
+
+        var body = Assert.Single(answer.Bodies, line => line.BodyId == 7);
+        Assert.False(body.Mapped);
+        Assert.True(body.GeneraReported);
+        Assert.Equal(57_257_100, body.ReportedValue);
+        Assert.Equal(1, body.BiologicalCount);
+
+        var genus = Genus(answer, 7, "Stratum");
+        Assert.Equal(GenusState.NotStarted, genus.State);
+        Assert.Equal(new SpeciesLine("Stratum Cucumisis", SpeciesSource.Reported, null, 7, 16_202_800), Assert.Single(genus.Species));
+    }
+
+    [Fact]
+    public void ASpanshOnlyBodyTheCommanderSampledShowsTheSamplingWithSpanshsFigures()
+    {
+        var store = Store();
+        Mapped(store, 3, "Bacterium");
+        Taken(store, 7, "Stratum Cucumisis", 1);
+
+        var answer = Ask(store, Region, Spansh(Row(7, 57_257_100, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 7, 16_202_800))));
+
+        var genus = Genus(answer, 7, "Stratum");
+        Assert.Equal(GenusState.Sampling, genus.State);
+
+        var species = Assert.Single(genus.Species);
+        Assert.Equal(SpeciesSource.Sampled, species.Source);
+        Assert.Equal(7, species.Count);
+        Assert.Equal(16_202_800, species.Value);
+    }
+
+    [Fact]
+    public void ASampledSpeciesSpanshDoesNotReportHasTheCatalogueValueAndNoCount()
+    {
+        var store = Store();
+        Scan(store, 3);
+        Mapped(store, 3, "Bacterium");
+        Taken(store, 3, "Bacterium Tela", 1);
+
+        var species = Assert.Single(Genus(Ask(store, Region, Surveyed), 3, "Bacterium").Species);
+
+        Assert.Equal("Bacterium Tela", species.Species);
+        Assert.Null(species.Count);
+        Assert.Equal(ExobiologyCatalogue.All.First(entry => entry.Species == "Bacterium Tela").Value, species.Value);
+    }
+
+    [Fact]
+    public void ABodyWithSignalsButNoSurfaceMapGetsSpanshsGenera()
+    {
+        var store = Store();
+        Fss(store, 7, 2);
+
+        var body = Assert.Single(Ask(store, Region, Spansh(Row(7, 900, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 2, 450)))).Bodies);
+
+        Assert.False(body.Mapped);
+        Assert.True(body.GeneraReported);
+        Assert.Equal(2, body.BiologicalCount);
+        Assert.Equal(["Stratum"], body.Genera.Select(genus => genus.Genus));
+    }
+
+    [Fact]
+    public void AMappedBodyKeepsItsOwnGeneraAndStillGetsTheReportedValue()
+    {
+        var store = Store();
+        Mapped(store, 3, "Bacterium");
+
+        var body = Assert.Single(Ask(store, Region, Spansh(Row(3, 900, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 2, 450)))).Bodies);
+
+        Assert.True(body.Mapped);
+        Assert.False(body.GeneraReported);
+        Assert.Equal(900, body.ReportedValue);
+        Assert.Equal(["Bacterium"], body.Genera.Select(genus => genus.Genus));
+    }
+
+    [Fact]
+    public void TheBodiesComeBackInBodyIdOrderWhenTheTwoSourcesInterleave()
+    {
+        var store = Store();
+        Mapped(store, 3, "Bacterium");
+        Mapped(store, 9, "Bacterium");
+
+        var answer = Ask(store, Region, Spansh(Row(7, 1, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 1, 1)), Row(2, 1, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 1, 1))));
+
+        Assert.Equal([2, 3, 7, 9], answer.Bodies.Select(body => body.BodyId));
+    }
+
+    [Fact]
+    public void WithNoSpanshAnswerNoFiguresAreAdded()
+    {
+        var store = Store();
+        Mapped(store, 3, "Bacterium");
+
+        var body = Assert.Single(Ask(store, Region).Bodies);
+
+        Assert.Null(body.ReportedValue);
+        Assert.False(body.GeneraReported);
+        Assert.All(body.Genera.SelectMany(genus => genus.Species), species => Assert.Null(species.Count));
     }
 }
