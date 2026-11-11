@@ -304,6 +304,37 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     // ---- runs --------------------------------------------------------------------------------
 
     private const string ColumnSpec = "*,96,84,84,108,150,Auto";
+    private const string CompactColumnSpec = "*,96,84,150,Auto";
+    private const double StoryColumnMin = 160;
+    private const double FullListWidth = 1130;
+
+    private bool _compact;
+
+    private string Spec => _compact ? CompactColumnSpec : ColumnSpec;
+
+    private int EndColumn => _compact ? 4 : 6;
+
+    private T[] Visible<T>(T[] full) => _compact ? [full[0], full[1], full[3], full[5]] : full;
+
+    private ColumnDefinitions Columns()
+    {
+        var columns = new ColumnDefinitions(Spec);
+        columns[0].Width = new GridLength(1, GridUnitType.Star);
+        columns[0].MinWidth = StoryColumnMin;
+        return columns;
+    }
+
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        var compact = e.NewSize.Width > 0 && e.NewSize.Width < FullListWidth;
+
+        if (compact != _compact)
+        {
+            _compact = compact;
+            Rebuild();
+        }
+    }
 
     internal static string Day(DateTimeOffset at) => at.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
@@ -385,10 +416,10 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         return holder;
     }
 
-    private static Grid ColumnHeads()
+    private Grid ColumnHeads()
     {
-        string[] heads = ["Story", "Length", "Chapters", "Clues", "Picked", "Last line"];
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(ColumnSpec), ColumnSpacing = 16, Margin = new Thickness(14, 0, 0, 0) };
+        var heads = Visible(["Story", "Length", "Chapters", "Clues", "Picked", "Last line"]);
+        var grid = new Grid { ColumnDefinitions = Columns(), ColumnSpacing = 16, Margin = new Thickness(14, 0, 0, 0) };
 
         for (var index = 0; index < heads.Length; index++)
         {
@@ -406,7 +437,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         var state = AdventuresPage.Text(StateLine(run), TypeScale.Meta, active ? ThemeManager.CyanKey : ThemeManager.GreyKey);
         var title = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { name, state } };
 
-        var cells = new Control[]
+        var cells = Visible(new Control[]
         {
             title,
             Mono(run.Pacing.Name, ListRow.AsideSize, ThemeManager.AKey),
@@ -414,7 +445,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             Mono($"{run.CluesGiven.ToString(CultureInfo.InvariantCulture)} / {run.Pacing.ClueDays.Count.ToString(CultureInfo.InvariantCulture)}", ListRow.AsideSize, ThemeManager.AKey),
             Mono(Day(run.PickedAt), ListRow.AsideSize, ThemeManager.AKey),
             Mono(LastLine(commander, run), ListRow.AsideSize, ThemeManager.AKey),
-        };
+        });
 
         var end = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 };
         var open = Tile("OpenRun", OpenLabel, BeatButtonWidth, true);
@@ -462,12 +493,17 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         var switchTo = Tile("SwitchToNoStory", SwitchLabel, BeatButtonWidth, !busy);
         switchTo.Click += (_, _) => AskSwitch(commander, null);
 
-        return Line([title], switchTo, false);
+        return Line([title], switchTo, false, span: true);
     }
 
-    private static Border Line(Control[] cells, Control end, bool active)
+    private Border Line(Control[] cells, Control end, bool active, bool span = false)
     {
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions(ColumnSpec), ColumnSpacing = 16, MinHeight = 60 };
+        var grid = new Grid { ColumnDefinitions = Columns(), ColumnSpacing = 16, MinHeight = 60 };
+
+        if (span)
+        {
+            Grid.SetColumnSpan(cells[0], EndColumn);
+        }
 
         for (var index = 0; index < cells.Length; index++)
         {
@@ -476,7 +512,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             grid.Children.Add(cells[index]);
         }
 
-        Grid.SetColumn(end, 6);
+        Grid.SetColumn(end, EndColumn);
         end.HorizontalAlignment = HorizontalAlignment.Right;
         end.VerticalAlignment = VerticalAlignment.Center;
         grid.Children.Add(end);
