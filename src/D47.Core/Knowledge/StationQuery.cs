@@ -98,15 +98,11 @@ public sealed record StationSummary
     public string? PowerState { get; init; }
 
     /// <summary>A Stronghold Carrier in a Stronghold system.</summary>
-    public bool IsStrongholdCarrier =>
-        string.Equals(Name, "Stronghold Carrier", StringComparison.OrdinalIgnoreCase)
-        && string.Equals(PowerState, "Stronghold", StringComparison.OrdinalIgnoreCase);
+    public bool IsStrongholdCarrier => StrongholdCarrier.IsNamedOne(Name, PowerState);
 
     /// <summary>A Stronghold Carrier in a Stronghold system controlled by any Power but <paramref name="pledgedPower"/>.</summary>
     public bool IsOtherPowersStrongholdCarrier(string? pledgedPower) =>
-        IsStrongholdCarrier
-        && !(pledgedPower is { Length: > 0 }
-             && string.Equals(ControllingPower, pledgedPower, StringComparison.OrdinalIgnoreCase));
+        StrongholdCarrier.IsOtherPowers(IsStrongholdCarrier, ControllingPower, pledgedPower);
 
     /// <summary>A finished station that does not move: not a carrier, a megaship or a construction site.</summary>
     public bool IsFixed =>

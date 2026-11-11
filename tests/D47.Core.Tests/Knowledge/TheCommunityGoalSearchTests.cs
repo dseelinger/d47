@@ -120,15 +120,11 @@ public class TheCommunityGoalSearchTests
     }
 
     [Fact]
-    public void AStrongholdCarrierFallsUnderTheCarrierSwitch()
+    public void AStrongholdCarrierIsNotUnderTheCarrierSwitch()
     {
         var markets = new[] { Market("Stronghold", type: "Stronghold Carrier"), Market("Station") };
 
-        Assert.Equal(["Station"], Stations(CommodityMarketSearch.Rank(Saved(), markets, Origin())));
-
-        Assert.Contains(
-            "Stronghold",
-            Stations(CommodityMarketSearch.Rank(Saved() with { IncludeCarriers = true }, markets, Origin())));
+        Assert.Contains("Stronghold", Stations(CommodityMarketSearch.Rank(Saved(), markets, Origin())));
     }
 
     [Fact]

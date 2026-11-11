@@ -133,6 +133,8 @@ internal static class SpanshResponse
                 DistanceToArrival = Number(result, "distance_to_arrival"),
                 HasLargePad = Boolean(result, "has_large_pad"),
                 Type = String(result, "type"),
+                ControllingPower = String(result, "system_controlling_power"),
+                PowerState = String(result, "system_power_state"),
                 UpdatedAt = Timestamp(result, "market_updated_at"),
                 Source = PriceSource.Reported,
                 Quotes = quotes,
@@ -141,6 +143,12 @@ internal static class SpanshResponse
 
         return markets;
     }
+
+    /// <summary>The system of every station in a station search's results.</summary>
+    public static IReadOnlyList<string> ReadStationSystems(JsonDocument document) =>
+        [.. document.RootElement.Items("results")
+            .Select(result => String(result, "system_name"))
+            .OfType<string>()];
 
     /// <summary>A plotted neutron or long-range route.</summary>
     public static PlottedRoute? ReadRoute(JsonElement result)

@@ -660,6 +660,48 @@ internal static class SpanshRequest
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
+    /// <summary>How many Stronghold Carriers one Power's list asks for; on 2026-11-10 the most any Power had was 91.</summary>
+    public const int StrongholdCarrierListSize = 500;
+
+    /// <summary>Every Stronghold Carrier in a system <paramref name="power"/> holds as a Stronghold, wherever it is.</summary>
+    public static string StrongholdCarriers(string power)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartObject("filters");
+
+            writer.WriteStartObject("name");
+            writer.WriteStartArray("value");
+            writer.WriteStringValue(StrongholdCarrier.Name);
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+
+            writer.WriteStartObject("system_power_state");
+            writer.WriteStartArray("value");
+            writer.WriteStringValue(StrongholdCarrier.PowerState);
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+
+            writer.WriteStartObject("system_controlling_power");
+            writer.WriteStartArray("value");
+            writer.WriteStringValue(power);
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+
+            writer.WriteEndObject();
+
+            writer.WriteNumber("size", StrongholdCarrierListSize);
+            writer.WriteNumber("page", 0);
+
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
     /// <summary>
     /// Every station type the live index reports, confirmed against
     /// <c>/api/stations/field_values/type</c> on 2026-09-06.

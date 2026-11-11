@@ -2138,7 +2138,8 @@ public sealed class AppHost : IDisposable
         var tradePlanner = new D47.Knowledge.SpanshTradePlanService(
             loggerFactory.CreateLogger<D47.Knowledge.SpanshTradePlanService>(),
             commodities,
-            stores.MarketBook);
+            stores.MarketBook,
+            pledge: () => gameState.Active?.Pledge);
 
         var buildingRegistry = StartupTimer.Step("capability registry");
 

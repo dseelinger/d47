@@ -65,8 +65,23 @@ public sealed record MarketSnapshot
     public IReadOnlyDictionary<string, MarketQuote> Quotes { get; init; } =
         new Dictionary<string, MarketQuote>(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>A fleet carrier, which sets its own prices and then moves.</summary>
-    public bool IsCarrier => IsCarrierType(Type);
+    /// <summary>The Power controlling the station's system, in the service's spelling.</summary>
+    public string? ControllingPower { get; init; }
+
+    /// <summary>The system's Powerplay state, in the service's spelling.</summary>
+    public string? PowerState { get; init; }
+
+    /// <summary>A Stronghold Carrier: one named so in a Stronghold system, or one Ardent types so.</summary>
+    public bool IsStrongholdCarrier =>
+        StrongholdCarrier.IsNamedOne(Station, PowerState)
+        || string.Equals(Type, StrongholdCarrier.Name, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>A Stronghold Carrier in a system controlled by any Power but <paramref name="pledgedPower"/>.</summary>
+    public bool IsOtherPowersStrongholdCarrier(string? pledgedPower) =>
+        StrongholdCarrier.IsOtherPowers(IsStrongholdCarrier, ControllingPower, pledgedPower);
+
+    /// <summary>A fleet carrier, which sets its own prices and then moves. A Stronghold Carrier is not one.</summary>
+    public bool IsCarrier => !IsStrongholdCarrier && IsCarrierType(Type);
 
     /// <summary>A pad on a planet's surface (#296).</summary>
     public bool IsSurface => IsSurfaceType(Type);

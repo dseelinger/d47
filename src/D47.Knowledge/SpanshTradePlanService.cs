@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging;
 
@@ -31,6 +32,8 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
 
     private readonly Func<DateTimeOffset> _now;
 
+    private readonly Func<PowerplayPledge?> _pledge;
+
     private readonly bool _ownsClient;
 
     private readonly Lock _gate = new();
@@ -46,17 +49,20 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     /// <param name="book">
     /// The markets the Commander has stood in themselves, or null where none is composed.
     /// </param>
+    /// <param name="pledge">The Commander's Powerplay pledge, which decides the Stronghold Carriers an answer keeps.</param>
     public SpanshTradePlanService(
         ILogger<SpanshTradePlanService> logger,
         ArdentCommodityService commodities,
         MarketBook? book = null,
         HttpClient? http = null,
-        Func<DateTimeOffset>? now = null)
+        Func<DateTimeOffset>? now = null,
+        Func<PowerplayPledge?>? pledge = null)
     {
         _logger = logger;
         _commodities = commodities;
         _book = book;
         _now = now ?? (() => DateTimeOffset.UtcNow);
+        _pledge = pledge ?? (() => null);
         _ownsClient = http is null;
 
         _http = KnowledgeHttp.Client(http, Host, TimeSpan.FromSeconds(45));
@@ -67,6 +73,11 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
 
     /// <summary>One page's wait.</summary>
     private static readonly TimeSpan PageBudget = TimeSpan.FromSeconds(20);
+
+    /// <summary>How long the pledged Power's Stronghold Carrier list stays good for.</summary>
+    private static readonly TimeSpan CarrierListLife = TimeSpan.FromHours(1);
+
+    private (string Power, DateTimeOffset At, IReadOnlySet<string> Systems)? _carrierList;
 
     public async Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken)
     {
@@ -84,13 +95,16 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         CancellationToken cancellationToken)
     {
         var wants = search.Query.Wants;
+        var power = PledgedPower();
 
         var replies = await Task.WhenAll(wants.Select(want => _commodities.FindAsync(
                 search with { Query = search.Query with { Commodity = want.Commodity, Tonnes = want.Tonnes, More = null } },
                 cancellationToken)))
             .ConfigureAwait(false);
 
-        var fetched = replies.Length == 1 ? replies[0].Markets : Join(replies);
+        var (fetched, leftOut) = await DockableAsync(
+                replies.Length == 1 ? replies[0].Markets : Join(replies), power, cancellationToken)
+            .ConfigureAwait(false);
         var reference = replies.Select(reply => reply.Reference).FirstOrDefault(at => at is not null);
 
         var origin = fetched.FirstOrDefault(market =>
@@ -132,9 +146,105 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             // The shortest reach of any reply; null where every one reached the whole radius or cannot say.
             Horizon = replies.Min(reply => Covered(reply, search.Query.MaxDistance)),
             Complete = complete,
+            LeftOut = leftOut,
+            Pledged = power is not null,
             Stocked = [.. wants.Select(want =>
                 (want.Commodity, CommodityMarketSearch.Stocking(search.Query, want, usable, origin)))],
         };
+    }
+
+    /// <summary>The Power the Commander is pledged to, or null when none.</summary>
+    private string? PledgedPower() => _pledge()?.Power is { Length: > 0 } power ? power : null;
+
+    /// <summary>
+    /// The markets without the Stronghold Carriers the Commander cannot dock at, and how many were dropped.
+    /// Ardent's rows carry no Power, so a pledged Commander's are matched against the pledged Power's
+    /// carrier list. When that list cannot be fetched every Stronghold Carrier is dropped and none is
+    /// counted, since whose they are is unknown.
+    /// </summary>
+    private async Task<(List<MarketSnapshot> Kept, int LeftOut)> DockableAsync(
+        IReadOnlyList<MarketSnapshot> markets,
+        string? power,
+        CancellationToken cancellationToken)
+    {
+        if (!markets.Any(market => market.IsStrongholdCarrier))
+        {
+            return ([.. markets], 0);
+        }
+
+        var held = power is null
+            ? null
+            : await PledgedCarrierSystemsAsync(power, cancellationToken).ConfigureAwait(false);
+
+        var kept = new List<MarketSnapshot>(markets.Count);
+        var leftOut = 0;
+
+        foreach (var market in markets)
+        {
+            var placed = market.IsStrongholdCarrier
+                         && market.ControllingPower is null
+                         && held?.Contains(market.System) == true
+                ? market with { ControllingPower = power, PowerState = StrongholdCarrier.PowerState }
+                : market;
+
+            if (!placed.IsOtherPowersStrongholdCarrier(power))
+            {
+                kept.Add(placed);
+            }
+            else if (power is null || held is not null)
+            {
+                leftOut++;
+            }
+        }
+
+        return (kept, leftOut);
+    }
+
+    /// <summary>The systems holding <paramref name="power"/>'s Stronghold Carriers, or null when the list cannot be fetched.</summary>
+    private async Task<IReadOnlySet<string>?> PledgedCarrierSystemsAsync(
+        string power,
+        CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            if (_carrierList is { } list
+                && string.Equals(list.Power, power, StringComparison.OrdinalIgnoreCase)
+                && _now() - list.At < CarrierListLife)
+            {
+                return list.Systems;
+            }
+        }
+
+        HashSet<string> systems;
+
+        try
+        {
+            using var content = new StringContent(
+                SpanshRequest.StrongholdCarriers(power), Encoding.UTF8, "application/json");
+
+            using var document = await SendAsync(
+                token => _http.PostAsync("api/stations/search", content, token),
+                cancellationToken).ConfigureAwait(false);
+
+            if (document is null)
+            {
+                return null;
+            }
+
+            systems = new HashSet<string>(
+                SpanshResponse.ReadStationSystems(document), StringComparer.OrdinalIgnoreCase);
+        }
+        catch (GalaxyUnavailableException)
+        {
+            return null;
+        }
+
+        lock (_gate)
+        {
+            _carrierList = (power, _now(), systems);
+        }
+
+        return systems;
     }
 
     /// <summary>
@@ -589,7 +699,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
                 _logger.LogDebug(
                     "Re-using {Count} cached markets near {System}", cached.Sweep.Markets.Count, system);
 
-                return cached.Sweep;
+                return Dockable(cached.Sweep);
             }
         }
 
@@ -646,7 +756,21 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             }
         }
 
-        return sweep;
+        return Dockable(sweep);
+    }
+
+    /// <summary>
+    /// The sweep without the Stronghold Carriers the Commander cannot dock at, applied on the way out so
+    /// the cached sweep does not depend on the pledge.
+    /// </summary>
+    private Sweep Dockable(Sweep sweep)
+    {
+        var power = PledgedPower();
+
+        return sweep with
+        {
+            Markets = [.. sweep.Markets.Where(market => !market.IsOtherPowersStrongholdCarrier(power))],
+        };
     }
 
     /// <summary>

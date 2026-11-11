@@ -652,6 +652,12 @@ public sealed record CommodityAnswer(
     /// </summary>
     public bool Complete { get; init; } = true;
 
+    /// <summary>Stronghold Carriers the Commander cannot dock at, dropped from the answer.</summary>
+    public int LeftOut { get; init; }
+
+    /// <summary>Whether the Commander was pledged to a Power when the answer was made.</summary>
+    public bool Pledged { get; init; }
+
     /// <summary>
     /// For each commodity asked for, in order, how many stations could answer for it alone — so an empty
     /// answer to several can say which one is missing.

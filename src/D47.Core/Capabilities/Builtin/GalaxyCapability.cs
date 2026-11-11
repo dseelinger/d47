@@ -1308,7 +1308,7 @@ public static class GalaxyCapability
 
             var said = FactionNotes(corrected, result.Stations.Count == 0 ? unknown : [], known)
                        + DescribeStations(result, query)
-                       + LeftOutSaid(result)
+                       + LeftOutSaid(result.LeftOut, result.Pledged)
                        + LimitRefused(askedLimit)
                        + ReportAgeSaid(reportAge);
 
@@ -1387,7 +1387,7 @@ public static class GalaxyCapability
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
 
-            var said = Describe(result, query) + LeftOutSaid(result) + LimitRefused(askedLimit)
+            var said = Describe(result, query) + LeftOutSaid(result.LeftOut, result.Pledged) + LimitRefused(askedLimit)
                        + ReportAgeSaid(reportAge);
 
             var posting = new GalaxySearchPosting(
@@ -2545,7 +2545,7 @@ public static class GalaxyCapability
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
 
             return ToolResult.Ok(
-                Describe(result, query) + LeftOutSaid(result) + LimitRefused(askedLimit) + ReportAgeSaid(reportAge));
+                Describe(result, query) + LeftOutSaid(result.LeftOut, result.Pledged) + LimitRefused(askedLimit) + ReportAgeSaid(reportAge));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -2699,7 +2699,8 @@ public static class GalaxyCapability
                 board.Announce();
             }
 
-            var said = DescribeCommodity(query, answer, near, maxPriceAge, askedAge, askedLimit);
+            var said = DescribeCommodity(query, answer, near, maxPriceAge, askedAge, askedLimit)
+                       + LeftOutSaid(answer.LeftOut, answer.Pledged);
 
             if (carriersOnly)
             {
@@ -3823,11 +3824,11 @@ public static class GalaxyCapability
     private static string LastPage(int page, bool more) =>
         page > 1 && !more ? " That is the last of them." : string.Empty;
 
-    /// <summary>One sentence naming the Stronghold Carriers left out of another Power's side; empty when none were.</summary>
-    private static string LeftOutSaid(StationSearchResult result) =>
-        result.LeftOut > 0
-            ? $" Left out {result.LeftOut} Stronghold Carrier{(result.LeftOut == 1 ? "" : "s")}"
-              + (result.Pledged ? " of other Powers." : ", which dock only pledged Commanders.")
+    /// <summary>One sentence naming the Stronghold Carriers the Commander cannot dock at that were left out; empty when none were.</summary>
+    internal static string LeftOutSaid(int leftOut, bool pledged) =>
+        leftOut > 0
+            ? $" Left out {leftOut} Stronghold Carrier{(leftOut == 1 ? "" : "s")}"
+              + (pledged ? " of other Powers." : ", which dock only pledged Commanders.")
             : string.Empty;
 
     /// <summary>Station results as prose, with the age of the data said out loud.</summary>
