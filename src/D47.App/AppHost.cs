@@ -2293,7 +2293,11 @@ public sealed class AppHost : IDisposable
                 foundations.Version,
                 new SpeechCapability.SpeechSurface
                 {
-                    Silence = services.Audio.Silence,
+                    Silence = () =>
+                    {
+                        late.Host?.RunPlayer.Stop();
+                        services.Audio.Silence();
+                    },
 
                     // The local voice, and what fetching it would cost (Phase 59).
                     LocalVoiceState = speech.LocalVoiceState,
@@ -3485,6 +3489,29 @@ public sealed class AppHost : IDisposable
         services.EndingAnswer.Answer = host.Narration.AnswerEnding;
         services.StoryRecapper.Write = cancellationToken => host.Narration.WriteRecapAsync(null, cancellationToken);
         host.AdventureDesk = services.AdventureDesk;
+        services.AdventureDesk.PlaybackOpen = () => host.RunPlayer.Now is not null;
+        services.AdventureDesk.Playback = action =>
+        {
+            if (host.RunPlayer.Now is null)
+            {
+                return "No story is playing.";
+            }
+
+            switch (action)
+            {
+                case "play":
+                    host.RunPlayer.Resume();
+                    break;
+                case "pause":
+                    host.RunPlayer.Pause(StoryRunPause.Commander);
+                    break;
+                default:
+                    host.RunPlayer.Skip();
+                    break;
+            }
+
+            return null;
+        };
         host.LearnedPhrases = stores.LearnedPhrases;
         host.Messages = messageStore;
 

@@ -1245,7 +1245,7 @@ Switching the voice provider to `none` leaves the rest of the app fully usable i
 
 #### `stop_speaking`
 
-Takes no arguments.
+Takes no arguments. It also ends a story playback and closes its box.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

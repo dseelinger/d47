@@ -158,21 +158,27 @@ public sealed class StoryRunPlayer
         Load(generation);
     }
 
-    /// <summary>Pauses at the line playing; <see cref="Resume"/> plays it again from its start.</summary>
+    /// <summary>Pauses at the line playing; <see cref="Resume"/> plays it again from its start. A Commander pause replaces any other reason.</summary>
     public void Pause(StoryRunPause reason)
     {
         lock (_gate)
         {
-            if (_now is not { IsPaused: false } now || reason == StoryRunPause.None)
+            if (_now is { IsPaused: true } held && reason == StoryRunPause.Commander && held.Pause != StoryRunPause.Commander)
+            {
+                _now = held with { Pause = reason };
+            }
+            else if (_now is not { IsPaused: false } now || reason == StoryRunPause.None)
             {
                 return;
             }
-
-            // _queued stays: a line that finished just before this pause still moves the player past it.
-            _now = now with { Pause = reason };
-            _generation++;
-            CancelHold();
-            _audio.PausePlayback();
+            else
+            {
+                // _queued stays: a line that finished just before this pause still moves the player past it.
+                _now = now with { Pause = reason };
+                _generation++;
+                CancelHold();
+                _audio.PausePlayback();
+            }
         }
 
         Changed?.Invoke();

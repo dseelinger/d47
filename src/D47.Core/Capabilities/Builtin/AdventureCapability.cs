@@ -18,6 +18,7 @@ public static class AdventureCapability
     public const string SwitchStoryTool = "switch_story";
 
     public const string PlayStoryTool = "play_story";
+    public const string StoryPlaybackTool = "story_playback";
 
     public const string SwitchStoryPhrase = "switch to the story ";
 
@@ -146,6 +147,12 @@ public static class AdventureCapability
 
         /// <summary>Opens the newest recorded run with this title and plays it from the first line, returning a refusal or null.</summary>
         public Func<string, string?> PlayRun { get; set; } = _ => "The Stories page is not available.";
+
+        /// <summary>Whether a story playback is open, playing or paused.</summary>
+        public Func<bool> PlaybackOpen { get; set; } = () => false;
+
+        /// <summary>Plays, pauses or skips the open playback (<c>play</c>, <c>pause</c>, <c>next</c>), returning a refusal or null.</summary>
+        public Func<string, string?> Playback { get; set; } = _ => "No story is playing.";
 
         /// <summary>Opens the entry that takes the Commander's words for a different objective.</summary>
         public Func<string?> ChangeObjective { get; set; } = () => NoStory;
@@ -543,6 +550,15 @@ public static class AdventureCapability
                         + "on the Stories tab and Play all starts from the first line. The model cannot do this: it is "
                         + "refused if it asks.",
                 },
+            Playback(desk)
+                with
+                {
+                    Exercise =
+                        "While a story playback is open, say \"pause\", \"play\" or \"resume\", and \"next\", \"next line\" or \"skip\". "
+                        + "The replies are \"Paused.\", \"Playing.\" and \"Next line.\" Next on the last line ends the playback. "
+                        + "The words are live only while a playback is open; outside it \"pause\" and \"play\" act on the music. "
+                        + "The model cannot do this: it is refused if it asks.",
+                },
             Draft(ChangeDraftTool, "Open the entry for a remark that changes the Commander's draft short story.", ["change the short story", "change the adventure"], "What should change?", desk, d => d.Change)
                 with
                 {
@@ -786,6 +802,51 @@ public static class AdventureCapability
                     ? ToolResult.Error(refusal)
                     : ToolResult.Ok(name == SwitchStoryTool ? $"{title} is your story again. Resume it to write its chapter." : $"Playing back {title}."),
     };
+
+    private static ToolDefinition Playback(AdventureDesk? desk)
+    {
+        desk ??= new AdventureDesk();
+
+        static ToolCommandPhrase Say(string phrase, string action, AdventureDesk desk) =>
+            new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action }) { When = () => desk.PlaybackOpen() };
+
+        return new ToolDefinition
+        {
+            Name = StoryPlaybackTool,
+            Description =
+                "Play, pause or skip to the next line of the story playback that is open, as the playback box's tiles do. The Commander's choice alone.",
+            Parameters =
+            [
+                ToolParameter.OneOf("action", "What to do to the playback.", ["play", "pause", "next"], required: true),
+            ],
+            Commands =
+            [
+                Say("play", "play", desk),
+                Say("resume", "play", desk),
+                Say("pause", "pause", desk),
+                Say("next", "next", desk),
+                Say("next line", "next", desk),
+                Say("skip", "next", desk),
+            ],
+
+            // The playback is the Commander's; the model is refused.
+            Protected = true,
+            RefusalExample = "pause",
+            Handler = (arguments, _) =>
+            {
+                var said = arguments.TryGetString("action", out var action) ? action.ToLowerInvariant() : "";
+
+                if (said is not ("play" or "pause" or "next"))
+                {
+                    return Task.FromResult(ToolResult.Error("The action is play, pause or next."));
+                }
+
+                return Task.FromResult(desk.Playback(said) is { } refusal
+                    ? ToolResult.Error(refusal)
+                    : ToolResult.Ok(said switch { "play" => "Playing.", "pause" => "Paused.", _ => "Next line." }));
+            },
+        };
+    }
 
     private static ToolDefinition Draft(
         string name, string description, string[] phrases, string done, AdventureDesk? desk, Func<AdventureDesk, Func<string?>> act) =>

@@ -175,6 +175,28 @@ public sealed class PlayAllPlaysAStoryRunInOrderTests
     }
 
     [Fact]
+    public void ACommanderPauseOnAPlaybackPausedForPushToTalkReplacesTheReason()
+    {
+        var rig = Build();
+        rig.Player.Play(Run, Lines, 0);
+        rig.Settle();
+        rig.Player.Pause(StoryRunPause.PushToTalk);
+
+        var changed = 0;
+        rig.Player.Changed += () => changed++;
+        rig.Player.Pause(StoryRunPause.Commander);
+
+        Assert.Equal(StoryRunPause.Commander, rig.Player.Now!.Pause);
+        Assert.Equal(1, changed);
+
+        rig.Player.Pause(StoryRunPause.Commander);
+        rig.Player.Pause(StoryRunPause.PushToTalk);
+
+        Assert.Equal(StoryRunPause.Commander, rig.Player.Now!.Pause);
+        Assert.Equal(1, changed);
+    }
+
+    [Fact]
     public void APauseJustAfterALineFinishedResumesAtTheNextLine()
     {
         var rig = Build();

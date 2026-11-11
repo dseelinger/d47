@@ -1394,6 +1394,21 @@ Open a story run's page and play its kept lines from the first, as Play all does
 {"type":"object","properties":{"title":{"type":"string","description":"The story\u0027s title."}},"required":["title"],"additionalProperties":false}
 ```
 
+#### `story_playback`
+
+Play, pause or skip to the next line of the story playback that is open, as the playback box's tiles do. The Commander's choice alone.
+
+```json
+{"type":"object","properties":{"action":{"type":"string","description":"What to do to the playback.","enum":["play","pause","next"]}},"required":["action"],"additionalProperties":false}
+```
+
+While a story playback is open, playing or paused, four words drive it: "play" or "resume" carries on, "pause" holds it, and
+"next", "next line" or "skip" moves to the next line. The words are live only while the playback is open; outside it, "pause"
+and "play" act on the music and "next" matches nothing. "Pause" is the Commander's own pause even when the playback is
+already paused for push-to-talk. "Next" plays the next line, stays paused at it when you paused the playback, and on the last
+line ends the playback. The replies are "Playing.", "Paused." and "Next line.". "Stop", "quiet", "enough", "shut up" and
+"be quiet" end the playback and close the box. The model is refused.
+
 #### `pause_story`
 
 Pause the Commander's running story: no objectives, nudges, clues or story chatter until it is resumed.
