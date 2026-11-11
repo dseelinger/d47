@@ -62,6 +62,12 @@ public sealed record RoutingSurface(
     /// <summary>The system names that start with the given letters, for the name fields; null for no suggestions.</summary>
     public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
 
+    /// <summary>Spansh's surveyed biology already held, by system, for On this body.</summary>
+    public D47.Core.Knowledge.SurveyedBiology? Surveyed { get; init; }
+
+    /// <summary>Asks Spansh for a system's surveyed biology; the answer is written to <see cref="Surveyed"/>.</summary>
+    public Func<long, CancellationToken, Task<D47.Core.Knowledge.SystemBiology>>? AskSurveyed { get; init; }
+
     /// <summary>Spansh, for the Bookmarks location lookup and the Elite target's kind; null for no lookups.</summary>
     public IStarSystemService? StarSystems { get; init; }
 

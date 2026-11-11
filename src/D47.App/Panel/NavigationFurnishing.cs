@@ -185,7 +185,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
             {
                 if (crumb.Key == BodyPage.RootKey && surface.Commander is { } commander)
                 {
-                    return _bodyPage = new BodyPage(commander, surface.Status, surface.WorthIfMapped, surface.OffDuty, surface.SurfaceMarks, surface.EarlierFinds);
+                    return _bodyPage = new BodyPage(commander, surface.Status, surface.WorthIfMapped, surface.OffDuty, surface.SurfaceMarks, surface.EarlierFinds, surface.Surveyed, surface.AskSurveyed);
                 }
 
                 if (crumb.Key == UnsoldPage.RootKey && surface.Commander is { } carrying)

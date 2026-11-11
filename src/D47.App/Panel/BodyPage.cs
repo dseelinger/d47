@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities.Builtin;
@@ -41,6 +42,10 @@ public sealed class BodyPage : UserControl
     private readonly StackPanel _body = new();
     private readonly SurfaceMarks? _marks;
     private readonly Func<EarlierFinds?>? _earlier;
+    private readonly SurveyedBiology? _surveyed;
+    private readonly Func<long, CancellationToken, Task<SystemBiology>>? _askSurveyed;
+    private readonly HashSet<long> _surveyAsked = [];
+    private BodyLine? _line;
     private readonly Border _distance = new();
     private readonly StackPanel _bearings = new() { Spacing = 2 };
 
@@ -48,9 +53,11 @@ public sealed class BodyPage : UserControl
     private Distance? _distanceSeen;
     private IReadOnlyList<BearingRow> _bearingsSeen = [];
 
-    public BodyPage(Func<CommanderGameState?> state, Func<GameStatus>? status, Func<long, int, long?>? worthIfMapped, Func<string, string?>? offDuty = null, SurfaceMarks? marks = null, Func<EarlierFinds?>? earlier = null)
+    public BodyPage(Func<CommanderGameState?> state, Func<GameStatus>? status, Func<long, int, long?>? worthIfMapped, Func<string, string?>? offDuty = null, SurfaceMarks? marks = null, Func<EarlierFinds?>? earlier = null, SurveyedBiology? surveyed = null, Func<long, CancellationToken, Task<SystemBiology>>? askSurveyed = null)
     {
         _earlier = earlier;
+        _surveyed = surveyed;
+        _askSurveyed = askSurveyed;
         _offDuty = offDuty;
         _marks = marks;
         _state = state;
@@ -104,7 +111,8 @@ public sealed class BodyPage : UserControl
         BodyBiology? Signals,
         BodyScan? Scan,
         BodySampling? Sampling,
-        long? Worth);
+        long? Worth,
+        string Reported);
 
     private readonly record struct Target(long System, int Body, string? Name);
 
@@ -117,8 +125,13 @@ public sealed class BodyPage : UserControl
 
         if (state is null || Find(state) is not { } target)
         {
-            return new Snapshot(null, null, null, null, null);
+            _line = null;
+
+            return new Snapshot(null, null, null, null, null, string.Empty);
         }
+
+        AskSurveyed(state, target.System);
+        _line = BiologyLine(state, target);
 
         var signals = state.Bodies.All.FirstOrDefault(body => body.SystemAddress == target.System && body.BodyId == target.Body);
 
@@ -127,7 +140,57 @@ public sealed class BodyPage : UserControl
             signals,
             state.Scans.For(target.System, target.Body),
             state.Sampling.On(target.System, target.Body),
-            signals is { Source: BodySignalSource.SurfaceScan } ? null : _worthIfMapped?.Invoke(target.System, target.Body));
+            signals is { Source: BodySignalSource.SurfaceScan } ? null : _worthIfMapped?.Invoke(target.System, target.Body),
+            _line is { } line ? Signature(line) : string.Empty);
+    }
+
+    /// <summary>The body's genera as the System page's Biology section draws them, from the Commander's records, Spansh's survey if held and Canonn's finds.</summary>
+    private BodyLine? BiologyLine(CommanderGameState state, Target target)
+    {
+        var here = state.Location;
+        var region = here.SystemAddress == target.System && here.StarPos is { } position ? GalacticRegions.Find(position) : null;
+        SystemBiology? surveyed = _surveyed is { } held && held.TryGet(target.System, out var biology) ? biology : null;
+        var finds = _earlier?.Invoke() is { } store && store.TryGet(target.System, out var earlier) ? earlier : null;
+
+        return BiologyInSystem.For(state, target.System, region, surveyed, finds).Bodies.FirstOrDefault(body => body.BodyId == target.Body);
+    }
+
+    /// <summary>What the genus rows draw from the line; a <see cref="BodyLine"/> holds lists, which compare by reference.</summary>
+    private static string Signature(BodyLine line) =>
+        string.Join('|', line.Genera.Select(genus => $"{genus.Genus}:{genus.State}:{StarSystemPage.SpeciesText(ReportedOf(genus))}"));
+
+    private static List<SpeciesLine> ReportedOf(GenusLine genus) =>
+        [.. genus.Species.Where(species => species.Source == SpeciesSource.Reported)];
+
+    /// <summary>Asks Spansh once for the Commander's current system when the holder lacks it; an earlier system's survey is used only if held.</summary>
+    private void AskSurveyed(CommanderGameState state, long system)
+    {
+        if (_askSurveyed is not { } ask
+            || _surveyed is not { } held
+            || state.Location.SystemAddress != system
+            || held.TryGet(system, out _)
+            || !_surveyAsked.Add(system))
+        {
+            return;
+        }
+
+        _ = Survey(ask, held, system);
+    }
+
+    private async Task Survey(Func<long, CancellationToken, Task<SystemBiology>> ask, SurveyedBiology held, long system)
+    {
+        if (await held.GetAsync(system, ask, CancellationToken.None).ConfigureAwait(false) is null)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (Take() != _seen)
+            {
+                Draw();
+            }
+        });
     }
 
     /// <summary>The body the Commander is at, else the one last sampled, else the last one mapped with biology.</summary>
@@ -362,7 +425,7 @@ public sealed class BodyPage : UserControl
         DrawBearings(snapshot);
 
         _body.Children.Add(TitleText.Group("On this body", "Each genus, and what you've finished."));
-        _body.Children.Add(Genera(snapshot));
+        _body.Children.Add(Genera(snapshot, _line));
     }
 
     private void DrawDistance(Snapshot snapshot)
@@ -663,7 +726,7 @@ public sealed class BodyPage : UserControl
         return grid;
     }
 
-    private static Control Genera(Snapshot snapshot)
+    private static Control Genera(Snapshot snapshot, BodyLine? line)
     {
         var sampling = snapshot.Sampling;
         var rows = new StackPanel { Spacing = 2 };
@@ -678,15 +741,21 @@ public sealed class BodyPage : UserControl
             rows.Children.Add(GenusRow(genus.Genus, genus.Species, ThemeManager.CyanKey, $"Sampling · {genus.Taken} / {GenusProgress.Required}", ThemeManager.CyanKey, genus.Species));
         }
 
-        foreach (var genus in Names(snapshot).Where(name => sampling?.Genera.ContainsKey(name) != true))
+        var reported = (line?.Genera ?? []).ToDictionary(genus => genus.Genus, ReportedOf, StringComparer.OrdinalIgnoreCase);
+
+        var notStarted = reported.Keys
+            .Concat(Names(snapshot).Where(name => !reported.ContainsKey(name)))
+            .Where(name => sampling?.Genera.ContainsKey(name) != true);
+
+        foreach (var genus in notStarted)
         {
-            rows.Children.Add(GenusRow(genus, null, ThemeManager.GreyKey, "Not started", ThemeManager.GreyKey, null));
+            rows.Children.Add(GenusRow(genus, null, ThemeManager.GreyKey, "Not started", ThemeManager.GreyKey, null, reported.GetValueOrDefault(genus)));
         }
 
         return rows.Children.Count > 0 ? rows : CreditsKit.Note("No genus is known on this body yet. Map it with the surface scanner, or take a sample.", 18, full: true);
     }
 
-    private static Control GenusRow(string genus, string? species, string speciesKey, string state, string stateKey, string? priced)
+    private static Control GenusRow(string genus, string? species, string speciesKey, string state, string stateKey, string? priced, IReadOnlyList<SpeciesLine>? reported = null)
     {
         var name = StatTile.Caption(genus, ThemeManager.WhiteKey);
         name.FontWeight = FontWeight.Bold;
@@ -702,7 +771,18 @@ public sealed class BodyPage : UserControl
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
         ThemeInk.Bind(kind, TextBlock.ForegroundProperty, speciesKey);
-        Grid.SetColumn(kind, 1);
+
+        Control kindCell = kind;
+
+        if (species is null && reported is { Count: > 0 })
+        {
+            kind.Text = StarSystemPage.SpeciesText(reported);
+            kind.TextWrapping = TextWrapping.Wrap;
+            kind.TextTrimming = TextTrimming.None;
+            kindCell = new WrapPanel { ItemSpacing = 10, VerticalAlignment = VerticalAlignment.Center, Children = { kind, StarSystemPage.SourceTag(SpeciesSource.Reported) } };
+        }
+
+        Grid.SetColumn(kindCell, 1);
 
         var progress = StatTile.Caption(state, stateKey);
         progress.FontWeight = FontWeight.SemiBold;
@@ -712,7 +792,7 @@ public sealed class BodyPage : UserControl
         var row = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("150,*,150,150"),
-            Children = { name, kind, progress },
+            Children = { name, kindCell, progress },
         };
 
         if (priced is not null && Value(priced) is { } value)
@@ -730,7 +810,7 @@ public sealed class BodyPage : UserControl
             row.Children.Add(figure);
         }
 
-        var slab = new Border { Height = TypeScale.MinimumTarget, Padding = new Thickness(14, 0), Child = row };
+        var slab = new Border { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(14, 0), Child = row };
         ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;

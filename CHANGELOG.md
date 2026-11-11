@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Navigation › On this body names the species other Commanders reported for a genus you have not sampled, with its value, tagged REPORTED, and lists the genera Spansh reports on a body you have not mapped.
+
 Changed: "what biology is on this body" names the species other Commanders reported on the body, with their values and a count when above one, ahead of a prediction from its conditions. A genus nobody reported keeps its predicted species, and the note that the species are a prediction is said only when one is. A body you FSS-scanned but did not map names the genera and species reported for it, and a body only others reported is answered from that report with its total.
 
 Fixed: a ship sold while D47 was closed no longer shows as both owned and not bought. Its page reads "sold" and offers Delete this ship, which also removes what its plan put on the checklist; Copy as SLEF is not offered. Nothing changes until D47 has read your fleet.

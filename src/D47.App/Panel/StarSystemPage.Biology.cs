@@ -396,6 +396,16 @@ public sealed partial class StarSystemPage
         _ = dialog.Over(owner);
     }
 
+    /// <summary>The REPORTED or POSSIBLE tag beside a genus row's species.</summary>
+    internal static TextBlock SourceTag(SpeciesSource source)
+    {
+        var tag = RoutingKit.Tag(source == SpeciesSource.Reported ? "Reported" : "Possible", ThemeManager.GreyKey);
+        tag.FontSize = TypeScale.MetaSmall;
+        tag.LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking;
+
+        return tag;
+    }
+
     private Border GenusRow(GenusLine genus, int? region, string bodyName)
     {
         var first = genus.Species.Count > 0 ? genus.Species[0] : null;
@@ -445,10 +455,7 @@ public sealed partial class StarSystemPage
 
         if (first?.Source is SpeciesSource.Reported or SpeciesSource.Possible)
         {
-            var tag = RoutingKit.Tag(first.Source == SpeciesSource.Reported ? "Reported" : "Possible", ThemeManager.GreyKey);
-            tag.FontSize = TypeScale.MetaSmall;
-            tag.LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking;
-            species.Children.Add(tag);
+            species.Children.Add(SourceTag(first.Source));
         }
 
         var described = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { species } };

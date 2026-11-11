@@ -462,6 +462,10 @@ public partial class MainWindow : Window
 
                 // And its unvisited stars and the items it places from galaxy search (#1409).
                 Galaxy = () => host.Galaxy,
+
+                // On this body names the species Spansh reports for a genus not yet sampled.
+                Surveyed = host.SurveyedBiology,
+                AskSurveyed = host.Galaxy is { } bodySurveys ? bodySurveys.SystemBiologyAsync : null,
                 MapLookups = new GalaxyMapLookups(host.Loggers.CreateLogger<GalaxyMapLookups>()),
             };
 
