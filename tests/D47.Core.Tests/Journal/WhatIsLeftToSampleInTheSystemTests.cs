@@ -2,6 +2,8 @@ using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
+using D47.Core.Tests.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -174,5 +176,115 @@ public class WhatIsLeftToSampleInTheSystemTests
         {
             Assert.Equal("get_biology_left_in_system", router.Match(phrase)?.ToolName);
         }
+    }
+
+    private sealed class FakeSpansh(Func<SystemBiology> answer) : StubGalaxyService
+    {
+        public int Asked { get; private set; }
+
+        public override Task<SystemBiology> SystemBiologyAsync(long systemAddress, CancellationToken cancellationToken)
+        {
+            Asked++;
+
+            return Task.FromResult(answer());
+        }
+    }
+
+    private static SurveyedBody Body(string letter, int bodyId, params ExobiologySpecies[] species) =>
+        new("Test " + letter, bodyId, 0, species);
+
+    private static SystemBiology Report(params SurveyedBody[] bodies) => new(System, bodies);
+
+    private static async Task<string> AskWith(GameStateStore store, IGalaxyService galaxy, SurveyedBiology? held = null)
+    {
+        var registry = CapabilityRegistry.Build(
+        [
+            ExobiologyCapability.Create(
+                null, () => store.Active, TestSurface.For(new MemoryInstall()).Settings,
+                galaxy: galaxy, surveyed: held ?? new SurveyedBiology()),
+        ]);
+
+        var result = await registry.InvokeAsync(
+            "get_biology_left_in_system", ToolArguments.FromJson("{}"), TestContext.Current.CancellationToken);
+
+        return result.Content;
+    }
+
+    [Fact]
+    public async Task ABodyOnlySpanshReportsIsLeftToSampleBySpeciesWithItsValue()
+    {
+        var store = InSystem();
+        Mapped(store, 3, "a", "Bacterium");
+        var spansh = new FakeSpansh(() => Report(Body("e", 7, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 7, 16_202_800))));
+
+        var answer = await AskWith(store, spansh);
+
+        Assert.Contains("Stratum Cucumisis on e, 16.2 million", answer);
+        Assert.Contains("Bacterium on a", answer);
+    }
+
+    [Fact]
+    public async Task AnOpenSetComesFirstThenTheHigherReportedValue()
+    {
+        var store = InSystem();
+        Mapped(store, 3, "a", "Bacterium");
+        Sample(store, 3, "Log", "Bacterium", "Tela");
+        var spansh = new FakeSpansh(() => Report(
+            Body("e", 7, new ExobiologySpecies("Aleoida", "Aleoida Arcus", 1, 7_000_000)),
+            Body("f", 8, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 1, 16_000_000))));
+
+        var answer = await AskWith(store, spansh);
+
+        var set = answer.IndexOf("Bacterium Tela, 1 of 3 on a", StringComparison.Ordinal);
+        var high = answer.IndexOf("Stratum Cucumisis on f", StringComparison.Ordinal);
+        var low = answer.IndexOf("Aleoida Arcus on e", StringComparison.Ordinal);
+
+        Assert.True(set >= 0 && set < high && high < low, answer);
+    }
+
+    [Fact]
+    public async Task ABodyWithSignalsSpanshReportsIsNotSaidAsNotMapped()
+    {
+        var store = InSystem();
+        Fss(store, 7, "e", 1);
+        var spansh = new FakeSpansh(() => Report(Body("e", 7, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 1, 16_000_000))));
+
+        var answer = await AskWith(store, spansh);
+
+        Assert.DoesNotContain("not mapped", answer);
+        Assert.Contains("Stratum Cucumisis on e", answer);
+    }
+
+    [Fact]
+    public async Task ASystemWithNoCommanderRecordAnswersFromTheSpanshReport()
+    {
+        var spansh = new FakeSpansh(() => Report(Body("e", 7, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 1, 16_000_000))));
+
+        var answer = await AskWith(InSystem(), spansh);
+
+        Assert.StartsWith("Left to sample: Stratum Cucumisis on e", answer);
+    }
+
+    [Fact]
+    public async Task AHeldReportIsNotAskedForAgain()
+    {
+        var held = new SurveyedBiology();
+        held.Set(Report(Body("e", 7, new ExobiologySpecies("Stratum", "Stratum Cucumisis", 1, 16_000_000))));
+        var spansh = new FakeSpansh(() => throw new InvalidOperationException());
+
+        var answer = await AskWith(InSystem(), spansh, held);
+
+        Assert.Equal(0, spansh.Asked);
+        Assert.Contains("Stratum Cucumisis on e", answer);
+    }
+
+    [Fact]
+    public async Task AFailedAskAnswersFromTheCommandersRecordsAlone()
+    {
+        var store = InSystem();
+        Mapped(store, 3, "a", "Bacterium");
+        var spansh = new FakeSpansh(() => throw new HttpRequestException());
+
+        Assert.Equal("Left to sample: Bacterium on a.", await AskWith(store, spansh));
     }
 }

@@ -235,6 +235,7 @@ public static class BuiltinCapabilities
         // Canonn's earlier biology finds, and the answers already fetched.
         D47.Core.Knowledge.ICommunityBiology? communityBiology = null,
         D47.Core.Knowledge.EarlierFinds? earlierFinds = null,
+        D47.Core.Knowledge.SurveyedBiology? surveyedBiology = null,
 
         // The bodies mapped and not yet sold (#527).
         CartographyLedger? cartography = null,
@@ -448,7 +449,7 @@ public static class BuiltinCapabilities
             lore,
             () => LoreCapability.PlaceOf(gameState.Active),
             now ?? (() => DateTimeOffset.MinValue)),
-        ExobiologyCapability.Create(routes, () => gameState.Active, settings, gameStatus, plans, now, exobiology, communityBiology, earlierFinds),
+        ExobiologyCapability.Create(routes, () => gameState.Active, settings, gameStatus, plans, now, exobiology, communityBiology, earlierFinds, galaxy, surveyedBiology),
         CommunityGoalCapability.Create(
             () => gameState.Active,
             now ?? (() => DateTimeOffset.MinValue),

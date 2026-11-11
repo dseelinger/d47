@@ -28,7 +28,7 @@ Added: `plot_exobiology_route` takes `credits_per_scan`. It asks for up to three
 
 Changed: an NPC that remarks on repeating itself now stays silent, whatever it says next, until it has sent no canned line for five minutes or you jump. The remark is lightly humorous and always reworded by your language model when personality is on, and a restart of d47 no longer resets what an NPC has already said.
 
-Added: ask "what's left to sample" or "what is left to sample" and D47 names up to three genera still to sample in the system, open sets first with their count such as "Bacterium Tela, 2 of 3", then a count of the rest. Bodies with biological signals and no surface scan are said as not mapped, and a system with no scan on record says so rather than claiming nothing is left. It includes bodies scanned in earlier Elite sessions.
+Added: ask "what's left to sample" or "what is left to sample" and D47 names up to three genera still to sample in the system, open sets first with their count such as "Bacterium Tela, 2 of 3", then a count of the rest. Bodies with biological signals and no surface scan are said as not mapped, and a system with no scan on record says so rather than claiming nothing is left. It includes bodies scanned in earlier Elite sessions. It also includes the biology Spansh reports on bodies you have not mapped, naming a genus by its species where Spansh lists one, and puts the genera with a reported value first, highest first, each with its value.
 
 Changed: saying "route" opens Navigation › Plan › Progress on every surface, the headset's mini panel included. The Engineers Route page answers to "engineers route" or "engineer route".
 

@@ -368,11 +368,12 @@ of it, most first, from Canonn.
 
 #### `get_biology_left_in_system`
 
-What is left to sample in the system you are in: up to three genera that surface scans named and no
-completed set covers, open sets first with their count such as "Bacterium Tela, 2 of 3", then a count of
-the rest. Bodies with biological signals and no surface scan are said as not mapped. With no scan of the
-system on record it says so rather than saying nothing is left. "What's left to sample" and "what is
-left to sample" reach it without the model.
+What is left to sample in the system you are in: up to three genera that surface scans or Spansh's report
+named and no completed set covers, open sets first with their count such as "Bacterium Tela, 2 of 3", then
+genera Spansh reports a value for, highest first, each with its value such as "Stratum Cucumisis on 7 e,
+16.2 million", then a count of the rest. Bodies with biological signals, no surface scan and no report are
+said as not mapped. With no scan of the system on record and no report from Spansh it says so rather than
+saying nothing is left. "What's left to sample" and "what is left to sample" reach it without the model.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

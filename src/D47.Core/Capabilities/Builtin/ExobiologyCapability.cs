@@ -35,7 +35,9 @@ public static class ExobiologyCapability
         Func<DateTimeOffset>? now = null,
         ExobiologyLedger? ledger = null,
         ICommunityBiology? community = null,
-        EarlierFinds? earlier = null) => new()
+        EarlierFinds? earlier = null,
+        IGalaxyService? galaxy = null,
+        SurveyedBiology? surveyed = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -127,16 +129,19 @@ public static class ExobiologyCapability
             {
                 Name = LeftInSystemTool,
                 Exercise =
-                    "In a system where you have scanned bodies with biology, say \"what's left to sample\". The "
-                    + "reply names up to three genera still to sample, open sets first with their count such as "
-                    + "\"2 of 3\", then a count of the rest, and says which bodies are not mapped. With no scan of "
-                    + "the system on record it says so.",
+                    "In a system with biology, say \"what's left to sample\". The reply names up to three genera "
+                    + "still to sample, open sets first with their count such as \"2 of 3\", then genera "
+                    + "the galaxy survey reports a value for, highest first, each with its value, then a count of the rest, "
+                    + "and says which bodies are not mapped. With no scan of the system on record and no "
+                    + "survey report it says so.",
                 Description =
                     "What is left to sample across the system the Commander is in: the genera that surface scans "
-                    + "named and no completed set covers, with open sets first and their count. Bodies with "
-                    + "biological signals and no surface scan are said as not mapped.",
+                    + "or the galaxy survey named and no completed set covers, with open sets first and their count, "
+                    + "then genera ordered by the value the survey reports. Bodies with biological signals, no surface "
+                    + "scan and no survey report are said as not mapped.",
                 Parameters = [],
-                Handler = (_, _) => Task.FromResult(ToolResult.Ok(LeftInSystem(commander()))),
+                Handler = async (_, cancellationToken) =>
+                    ToolResult.Ok(await LeftInSystemAsync(commander(), galaxy, surveyed, earlier, cancellationToken).ConfigureAwait(false)),
             },
             new ToolDefinition
             {
@@ -431,7 +436,12 @@ public static class ExobiologyCapability
 
     private const int MostGeneraNamed = 3;
 
-    private static string LeftInSystem(CommanderGameState? state)
+    private static async Task<string> LeftInSystemAsync(
+        CommanderGameState? state,
+        IGalaxyService? galaxy,
+        SurveyedBiology? held,
+        EarlierFinds? earlier,
+        CancellationToken cancellationToken)
     {
         if (state is null)
         {
@@ -445,7 +455,11 @@ public static class ExobiologyCapability
 
         var system = state.Location.StarSystem;
         var region = state.Location.StarPos is { } starPos ? GalacticRegions.Find(starPos) : null;
-        var answer = BiologyInSystem.For(state, address, region, null, null);
+        var surveyed = galaxy is not null && held is not null
+            ? await held.GetAsync(address, galaxy.SystemBiologyAsync, cancellationToken).ConfigureAwait(false)
+            : null;
+        var finds = earlier is not null && earlier.TryGet(address, out var held2) ? held2 : null;
+        var answer = BiologyInSystem.For(state, address, region, surveyed, finds);
 
         if (!answer.IsKnown)
         {
@@ -454,14 +468,14 @@ public static class ExobiologyCapability
                 : "I have no scan of this system on record, so I cannot say what is left to sample.";
         }
 
-        var left = new List<(string Body, string Text, int Taken)>();
+        var left = new List<(string Body, string Text, int Taken, long? Value)>();
         var unmapped = new List<(string Body, int Signals)>();
 
         foreach (var body in answer.Bodies)
         {
             var name = BiologyCallout.Short(body.BodyName, system);
 
-            if (!body.Mapped)
+            if (!body.Mapped && !body.GeneraReported)
             {
                 if (body.BiologicalCount > 0)
                 {
@@ -477,16 +491,19 @@ public static class ExobiologyCapability
                 {
                     case GenusState.Sampling:
                         var species = genus.Species is [{ Source: SpeciesSource.Sampled } sampled] ? sampled.Species : genus.Genus;
-                        left.Add((name, $"{species}, {genus.Taken} of {GenusProgress.Required}", genus.Taken));
+                        left.Add((name, $"{species}, {genus.Taken} of {GenusProgress.Required}", genus.Taken, null));
                         break;
                     case GenusState.NotStarted or GenusState.Abandoned:
-                        left.Add((name, genus.Genus, 0));
+                        left.Add(NotStarted(name, genus));
                         break;
                 }
             }
         }
 
-        var ordered = left.OrderByDescending(entry => entry.Taken > 0).ToList();
+        var ordered = left
+            .OrderByDescending(entry => entry.Taken > 0)
+            .ThenByDescending(entry => entry.Value ?? -1)
+            .ToList();
         var report = new StringBuilder();
 
         if (ordered.Count == 0)
@@ -499,7 +516,10 @@ public static class ExobiologyCapability
             var rest = ordered.Skip(MostGeneraNamed).ToList();
 
             report.Append("Left to sample: ");
-            report.Append(string.Join("; ", named.Select(entry => $"{entry.Text} on {entry.Body}")));
+            report.Append(string.Join(
+                "; ",
+                named.Select(entry => $"{entry.Text} on {entry.Body}"
+                    + (entry.Value is { } value ? ", " + BiologyCallout.Credits(value) : string.Empty))));
 
             if (rest.Count > 0)
             {
@@ -525,6 +545,15 @@ public static class ExobiologyCapability
         }
 
         return report.ToString();
+    }
+
+    private static (string Body, string Text, int Taken, long? Value) NotStarted(string body, GenusLine genus)
+    {
+        var reported = genus.Species.Where(line => line.Source == SpeciesSource.Reported).ToList();
+        var text = reported is [var only] ? only.Species : genus.Genus;
+        long? value = reported.Where(line => line.Value is not null).Select(line => line.Value).Max();
+
+        return (body, text, 0, value);
     }
 
     // ----------------------------------------------------------- the sampling

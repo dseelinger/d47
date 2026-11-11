@@ -2743,6 +2743,7 @@ public sealed class AppHost : IDisposable
                 exobiology: stores.Exobiology,
                 communityBiology: services.CommunityBiology,
                 earlierFinds: services.EarlierFinds,
+                surveyedBiology: services.SurveyedBiology,
                 cartography: stores.Cartography,
                 storySwitch: services.StorySwitch,
                 endingAnswer: services.EndingAnswer,

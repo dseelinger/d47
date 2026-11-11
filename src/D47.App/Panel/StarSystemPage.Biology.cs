@@ -199,11 +199,7 @@ public sealed partial class StarSystemPage
 
     private async Task Survey(Func<long, CancellationToken, Task<SystemBiology>> ask, SurveyedBiology held, long address)
     {
-        try
-        {
-            held.Set(await Task.Run(() => ask(address, CancellationToken.None)).ConfigureAwait(false));
-        }
-        catch (Exception)
+        if (await held.GetAsync(address, ask, CancellationToken.None).ConfigureAwait(false) is null)
         {
             return;
         }
