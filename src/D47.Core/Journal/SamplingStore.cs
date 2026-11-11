@@ -102,30 +102,61 @@ public sealed class SamplingStore(string path, IFileSystem files, ILogger<Sampli
         {
             foreach (var genus in body.Genera ?? [])
             {
-                sampling = sampling.Restore(
-                    body.SystemAddress,
-                    body.BodyId,
-                    new GenusProgress(genus.Genus)
-                    {
-                        Species = genus.Species,
-                        Taken = genus.Taken,
-                        Complete = genus.Complete,
-                        SeenAt = genus.SeenAt,
+                sampling = sampling.Restore(body.SystemAddress, body.BodyId, ToProgress(genus));
+            }
 
-                        // The position is restored too, so a Commander who logs back in beside their last
-                        // specimen is told how far they have moved rather than being told nothing.
-                        LastAt = Fix(genus.Latitude, genus.Longitude, genus.Radius),
-
-                        // A save older than the per-specimen positions holds only the last one.
-                        Specimens = genus.Specimens is { } specimens
-                            ? [.. specimens.Select(point => Fix(point.Latitude, point.Longitude, point.Radius)).OfType<SurfaceFix>()]
-                            : Fix(genus.Latitude, genus.Longitude, genus.Radius) is { } last ? [last] : [],
-                    });
+            foreach (var genus in body.Lost ?? [])
+            {
+                sampling = sampling.RestoreLost(body.SystemAddress, body.BodyId, ToProgress(genus));
             }
         }
 
         return sampling;
     }
+
+    private static GenusProgress ToProgress(GenusRecord genus) =>
+        new(genus.Genus)
+        {
+            Species = genus.Species,
+            Variant = genus.Variant,
+            VariantSymbol = genus.VariantSymbol,
+            Taken = genus.Taken,
+            Complete = genus.Complete,
+            SeenAt = genus.SeenAt,
+
+            // The position is restored too, so a Commander who logs back in beside their last
+            // specimen is told how far they have moved rather than being told nothing.
+            LastAt = Fix(genus.Latitude, genus.Longitude, genus.Radius),
+
+            // A save older than the per-specimen positions holds only the last one.
+            Specimens = genus.Specimens is { } specimens
+                ? [.. specimens.Select(point => Fix(point.Latitude, point.Longitude, point.Radius)).OfType<SurfaceFix>()]
+                : Fix(genus.Latitude, genus.Longitude, genus.Radius) is { } last ? [last] : [],
+        };
+
+    private static GenusRecord ToRecord(GenusProgress genus) =>
+        new()
+        {
+            Genus = genus.Genus,
+            Species = genus.Species,
+            Variant = genus.Variant,
+            VariantSymbol = genus.VariantSymbol,
+            Taken = genus.Taken,
+            Complete = genus.Complete,
+            SeenAt = genus.SeenAt,
+            Latitude = genus.LastAt?.Latitude,
+            Longitude = genus.LastAt?.Longitude,
+            Radius = genus.LastAt?.RadiusMetres,
+            Specimens =
+            [
+                .. genus.Specimens.Select(point => new PointRecord
+                {
+                    Latitude = point.Latitude,
+                    Longitude = point.Longitude,
+                    Radius = point.RadiusMetres,
+                }),
+            ],
+        };
 
     private static SurfaceFix? Fix(double? latitude, double? longitude, double? radius) =>
         latitude is { } lat && longitude is { } lon && radius is { } r ? new SurfaceFix(lat, lon, r) : null;
@@ -139,29 +170,8 @@ public sealed class SamplingStore(string path, IFileSystem files, ILogger<Sampli
             {
                 SystemAddress = body.SystemAddress,
                 BodyId = body.BodyId,
-                Genera =
-                [
-                    .. body.Genera.Values.Select(genus => new GenusRecord
-                    {
-                        Genus = genus.Genus,
-                        Species = genus.Species,
-                        Taken = genus.Taken,
-                        Complete = genus.Complete,
-                        SeenAt = genus.SeenAt,
-                        Latitude = genus.LastAt?.Latitude,
-                        Longitude = genus.LastAt?.Longitude,
-                        Radius = genus.LastAt?.RadiusMetres,
-                        Specimens =
-                        [
-                            .. genus.Specimens.Select(point => new PointRecord
-                            {
-                                Latitude = point.Latitude,
-                                Longitude = point.Longitude,
-                                Radius = point.RadiusMetres,
-                            }),
-                        ],
-                    }),
-                ],
+                Genera = [.. body.Genera.Values.Select(ToRecord)],
+                Lost = [.. body.Lost.Values.Select(ToRecord)],
             }),
         ],
     };
@@ -185,6 +195,8 @@ public sealed class SamplingStore(string path, IFileSystem files, ILogger<Sampli
         public int BodyId { get; set; }
 
         public IReadOnlyList<GenusRecord>? Genera { get; set; }
+
+        public IReadOnlyList<GenusRecord>? Lost { get; set; }
     }
 
     private sealed class GenusRecord
@@ -192,6 +204,10 @@ public sealed class SamplingStore(string path, IFileSystem files, ILogger<Sampli
         public string Genus { get; set; } = string.Empty;
 
         public string? Species { get; set; }
+
+        public string? Variant { get; set; }
+
+        public string? VariantSymbol { get; set; }
 
         public int Taken { get; set; }
 

@@ -55,6 +55,12 @@ public sealed record GenusProgress(string Genus)
 {
     public string? Species { get; init; }
 
+    /// <summary>The colour variant's localised name, such as "Clypeus Lacrimam - Mauve".</summary>
+    public string? Variant { get; init; }
+
+    /// <summary>The colour variant's journal symbol, which keys its codex picture.</summary>
+    public string? VariantSymbol { get; init; }
+
     /// <summary>Specimens taken: 1, 2 or 3.</summary>
     public int Taken { get; init; }
 
@@ -92,6 +98,10 @@ public sealed record GenusProgress(string Genus)
 public sealed record BodySampling(long SystemAddress, int BodyId)
 {
     public IReadOnlyDictionary<string, GenusProgress> Genera { get; init; } =
+        new Dictionary<string, GenusProgress>(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Genus name to the set lost on this body, until the next <c>Log</c> of that genus here.</summary>
+    public IReadOnlyDictionary<string, GenusProgress> Lost { get; init; } =
         new Dictionary<string, GenusProgress>(StringComparer.OrdinalIgnoreCase);
 
     public IReadOnlyList<GenusProgress> InProgress =>
@@ -145,12 +155,32 @@ public sealed record OrganicSampling
         return this with { Bodies = bodies };
     }
 
+    /// <summary>Puts back a set lost on one body.</summary>
+    public OrganicSampling RestoreLost(long systemAddress, int bodyId, GenusProgress genus)
+    {
+        var key = (systemAddress, bodyId);
+        var body = Bodies.GetValueOrDefault(key) ?? new BodySampling(systemAddress, bodyId);
+
+        var lost = new Dictionary<string, GenusProgress>(body.Lost, StringComparer.OrdinalIgnoreCase)
+        {
+            [genus.Genus] = genus,
+        };
+
+        var bodies = new Dictionary<(long, int), BodySampling>(Bodies)
+        {
+            [key] = body with { Lost = lost },
+        };
+
+        return this with { Bodies = bodies };
+    }
+
     public BodySampling? On(long systemAddress, int bodyId) =>
         Bodies.GetValueOrDefault((systemAddress, bodyId));
 
     /// <summary>The body most recently sampled, which is almost always the one being asked about.</summary>
     public BodySampling? MostRecent =>
         Bodies.Values
+            .Where(body => body.Genera.Count > 0)
             .OrderByDescending(body => body.Genera.Values.Max(genus => genus.SeenAt))
             .FirstOrDefault();
 
@@ -217,6 +247,8 @@ public sealed record OrganicSampling
         var progress = new GenusProgress(genusName)
         {
             Species = journalEvent.Named("Species") ?? known?.Species,
+            Variant = journalEvent.Named("Variant") ?? known?.Variant,
+            VariantSymbol = journalEvent.String("Variant") ?? known?.VariantSymbol,
             Taken = taken,
             Complete = scanType == "Analyse" || taken >= GenusProgress.Required,
             LastAt = isSpecimen ? at ?? known?.LastAt : known?.LastAt,
@@ -233,9 +265,18 @@ public sealed record OrganicSampling
             [genusName] = progress,
         };
 
+        var lost = body.Lost;
+
+        if (scanType == "Log" && lost.ContainsKey(genusName))
+        {
+            var remaining = new Dictionary<string, GenusProgress>(lost, StringComparer.OrdinalIgnoreCase);
+            remaining.Remove(genusName);
+            lost = remaining;
+        }
+
         var bodies = new Dictionary<(long, int), BodySampling>(sampling.Bodies)
         {
-            [key] = body with { Genera = genera },
+            [key] = body with { Genera = genera, Lost = lost },
         };
 
         return sampling with { Bodies = bodies, Observed = observed };
@@ -263,20 +304,15 @@ public sealed record OrganicSampling
             lost.AddRange(open);
 
             var genera = new Dictionary<string, GenusProgress>(body.Genera, StringComparer.OrdinalIgnoreCase);
+            var onBody = new Dictionary<string, GenusProgress>(body.Lost, StringComparer.OrdinalIgnoreCase);
 
             foreach (var genus in open)
             {
                 genera.Remove(genus.Genus);
+                onBody[genus.Genus] = genus;
             }
 
-            if (genera.Count == 0)
-            {
-                bodies.Remove(key);
-            }
-            else
-            {
-                bodies[key] = body with { Genera = genera };
-            }
+            bodies[key] = body with { Genera = genera, Lost = onBody };
         }
 
         return lost.Count == 0
