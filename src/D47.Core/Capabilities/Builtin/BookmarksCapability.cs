@@ -1,5 +1,6 @@
-using D47.Core.Conversation;
+﻿using D47.Core.Conversation;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -19,11 +20,6 @@ public static class BookmarksCapability
     /// <summary>What a caller is told when no Commander is known — the tool's own answer and the panel page's (#490).</summary>
     public const string NoCommander = "Nobody is flying, so there is nothing to bookmark.";
 
-    private const string NothingTargeted = "Nothing is targeted. Select a system or a station first.";
-
-    private const string AnotherSystem =
-        "That is in another system, and Elite does not name the system. Target the system itself.";
-
     /// <summary>How to make the first bookmark — shared by <see cref="ListTool"/> and the panel page (#490).</summary>
     public const string HowToMakeOne = "Say 'bookmark this' with a system or station targeted.";
 
@@ -33,7 +29,8 @@ public static class BookmarksCapability
         Func<GameStatus>? status,
         Func<CommanderGameState?> commander,
         Func<PhraseBook> phraseBook,
-        Func<DateTimeOffset> now) => new()
+        Func<DateTimeOffset> now,
+        IStarSystemService? starSystems = null) => new()
     {
         Id = Id,
         Group = "Acting on the game",
@@ -65,8 +62,10 @@ public static class BookmarksCapability
                     new ToolCommandPhrase(
                         "bookmark the destination", new Dictionary<string, string>(StringComparer.Ordinal)),
                 ],
-                Handler = (arguments, _) =>
-                    Task.FromResult(Bookmark(store, frontierId(), status, commander(), phraseBook(), now(), arguments)),
+                Handler = (arguments, cancellationToken) =>
+                    BookmarkAsync(
+                        store, frontierId(), status, commander(), phraseBook(), now(), starSystems, arguments,
+                        cancellationToken),
             },
 
             new ToolDefinition
@@ -140,26 +139,31 @@ public static class BookmarksCapability
         }
     }
 
-    private static ToolResult Bookmark(
+    private static async Task<ToolResult> BookmarkAsync(
         BookmarkStore? store,
         string frontierId,
         Func<GameStatus>? status,
         CommanderGameState? commander,
         PhraseBook phraseBook,
         DateTimeOffset at,
-        ToolArguments arguments)
+        IStarSystemService? starSystems,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
     {
         if (store is null || frontierId.Length == 0)
         {
             return ToolResult.Error(NoCommander);
         }
 
-        var (elitesName, system, error) = ResolveDestination(status?.Invoke(), commander?.Location);
+        var destination = await BookmarkPlace.FromDestinationAsync(
+            status?.Invoke(), commander?.Location, starSystems, cancellationToken);
 
-        if (error is not null)
+        if (destination.Error is not null)
         {
-            return ToolResult.Error(error);
+            return ToolResult.Error(destination.Error);
         }
+
+        var system = destination.System!;
 
         var existingNames = store.For(frontierId).Select(bookmark => bookmark.Name).ToList();
         var taken = TakenPhrases(phraseBook);
@@ -179,42 +183,18 @@ public static class BookmarksCapability
         }
         else
         {
-            name = BookmarkNaming.FromDestination(elitesName, existingNames, taken);
+            name = BookmarkNaming.FromDestination(destination.ElitesName, existingNames, taken);
         }
 
-        if (!store.Add(frontierId, name, system!, at))
+        var bookmark = new Bookmark(
+            name, system, at, destination.Kind, destination.Place, destination.SystemAddress);
+
+        if (!store.Add(frontierId, bookmark))
         {
             return ToolResult.Error($"You already have a bookmark called \"{name}\".");
         }
 
         return ToolResult.Ok($"Bookmarked {name}, in {system}. Say 'set course for {name}' to go there.");
-    }
-
-    /// <summary>
-    /// The destination's own name, which naming reads from, and the system a bookmark points at: the current
-    /// system for a body or station in it.
-    /// </summary>
-    private static (string? ElitesName, string? System, string? Error) ResolveDestination(
-        GameStatus? status, JournalLocation? location)
-    {
-        if (status?.Destination is not { } destination)
-        {
-            return (null, null, NothingTargeted);
-        }
-
-        if (destination.Body == 0)
-        {
-            return string.IsNullOrWhiteSpace(destination.Name)
-                ? (null, null, NothingTargeted)
-                : (destination.Name, destination.Name, null);
-        }
-
-        if (location?.SystemAddress == destination.System && location?.StarSystem is { } current)
-        {
-            return (destination.Name, current, null);
-        }
-
-        return (null, null, AnotherSystem);
     }
 
     private static ToolResult List(BookmarkStore? store, string frontierId)
@@ -231,7 +211,9 @@ public static class BookmarksCapability
             return ToolResult.Ok(HowToMakeOne);
         }
 
-        var lines = bookmarks.Select(bookmark => $"{bookmark.Name}, in {bookmark.System}");
+        var lines = bookmarks.Select(bookmark => string.IsNullOrEmpty(bookmark.Place)
+            ? $"{bookmark.Name}, in {bookmark.System}"
+            : $"{bookmark.Name}, {bookmark.Place}, in {bookmark.System}");
 
         return ToolResult.Ok(string.Join(". ", lines) + ".");
     }

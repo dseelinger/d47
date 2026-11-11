@@ -73,8 +73,8 @@ nav_order: 138
 <div class="d47-eli5"><div class="d47-frame">
 <p class="intro">Name a system once, then say the name to set a course.</p>
 <section>
-<h2><span class="num">1</span> A bookmark is a name for a system.</h2>
-<p class="body">Target Jameson Memorial and say "bookmark this". D47 keeps the name and the system it is in, Shinrarta Dezhra, in data/bookmarks.json. The file is D47's own; Elite never reads it.</p>
+<h2><span class="num">1</span> A bookmark is a name for a system, body or station.</h2>
+<p class="body">Target Jameson Memorial and say "bookmark this". D47 keeps the name, the station and the system it is in, Shinrarta Dezhra, in data/bookmarks.json. The file is D47's own; Elite never reads it.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Saying the name plots a course.</h2>
@@ -90,11 +90,13 @@ nav_order: 138
 ## The details
 
 A bookmark is d47's own, not Elite's — it is not one of the game's own galaxy-map bookmarks, and
-it is not written anywhere Elite reads. It is a name you give a system, kept in
+it is not written anywhere Elite reads. It is a name you give a system, body or station, kept in
 `data/bookmarks.json`, so you can say the name later and get a course plotted to it.
 
-A bookmark points at a system, never at a body or a station inside one. Bookmarking a station
-targeted as your destination stores the system it is in.
+A bookmark points at a system, a body or a station, and plots to the system that holds it.
+Bookmarking a body or station targeted as your destination keeps its name and the system it is in.
+D47 tells a body from a station from the system's Spansh profile, and leaves the kind unknown when
+that is not available.
 
 ### Making one
 

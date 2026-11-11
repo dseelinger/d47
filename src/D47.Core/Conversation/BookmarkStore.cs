@@ -1,12 +1,30 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Conversation;
 
-/// <summary>A system a Commander named, so they can plot a course to it by saying the name (#488).</summary>
-public sealed record Bookmark(string Name, string System, DateTimeOffset MadeAt);
+/// <summary>What a bookmark points at.</summary>
+public enum BookmarkKind
+{
+    System,
+    Body,
+    Station,
+}
+
+/// <summary>
+/// A system, body or station a Commander named, so they can plot a course to its system by saying the name
+/// (#488). <see cref="System"/> is the system to plot to; <see cref="Kind"/> is null when not known.
+/// </summary>
+public sealed record Bookmark(
+    string Name,
+    string System,
+    DateTimeOffset MadeAt,
+    BookmarkKind? Kind = BookmarkKind.System,
+    string? Place = null,
+    long? SystemAddress = null,
+    string? Note = null);
 
 /// <summary>
 /// Per Commander Frontier id, the systems they have named. Kept between sessions at
@@ -63,7 +81,14 @@ public sealed class BookmarkStore(string path, IFileSystem files, ILogger<Bookma
                     if (bookmark is { Name.Length: > 0, System.Length: > 0 })
                     {
                         forCommander[bookmark.Name.Trim()] =
-                            new Bookmark(bookmark.Name, bookmark.System, bookmark.MadeAt);
+                            new Bookmark(
+                                bookmark.Name,
+                                bookmark.System,
+                                bookmark.MadeAt,
+                                bookmark.Kind ?? (string.IsNullOrEmpty(bookmark.Place) ? BookmarkKind.System : null),
+                                bookmark.Place,
+                                bookmark.SystemAddress,
+                                bookmark.Note);
                     }
                 }
 
@@ -98,18 +123,25 @@ public sealed class BookmarkStore(string path, IFileSystem files, ILogger<Bookma
     }
 
     /// <summary>Adds a bookmark. False, and no change, when this Commander already has that name.</summary>
-    public bool Add(string frontierId, string name, string system, DateTimeOffset at)
+    public bool Add(string frontierId, string name, string system, DateTimeOffset at) =>
+        Add(frontierId, new Bookmark(name, system, at));
+
+    /// <summary>Adds a bookmark. False, and no change, when this Commander already has its name.</summary>
+    public bool Add(string frontierId, Bookmark bookmark)
     {
+        var name = bookmark.Name.Trim();
+        var system = bookmark.System;
+
         lock (_writeGate)
         {
             var merged = CloneReplacing(frontierId, out var forCommander);
 
-            if (forCommander.ContainsKey(name.Trim()))
+            if (forCommander.ContainsKey(name))
             {
                 return false;
             }
 
-            forCommander[name.Trim()] = new Bookmark(name.Trim(), system, at);
+            forCommander[name] = bookmark with { Name = name };
 
             Write(merged);
         }
@@ -125,30 +157,49 @@ public sealed class BookmarkStore(string path, IFileSystem files, ILogger<Bookma
     /// </summary>
     public bool Rename(string frontierId, string name, string newName)
     {
+        Bookmark? existing;
+
+        lock (_gate)
+        {
+            existing = _byCommander.TryGetValue(frontierId, out var bookmarks)
+                && bookmarks.TryGetValue(name.Trim(), out var found)
+                ? found
+                : null;
+        }
+
+        return existing is not null && Update(frontierId, name, existing with { Name = newName.Trim() });
+    }
+
+    /// <summary>
+    /// Replaces one bookmark whole, including its name. False, and no change, when there is no such bookmark
+    /// or another bookmark already has the new name — a case-only change of its own name is allowed.
+    /// </summary>
+    public bool Update(string frontierId, string name, Bookmark replacement)
+    {
+        var trimmedNewName = replacement.Name.Trim();
+
         lock (_writeGate)
         {
             var merged = CloneReplacing(frontierId, out var forCommander);
 
-            if (!forCommander.TryGetValue(name.Trim(), out var bookmark))
+            if (!forCommander.TryGetValue(name.Trim(), out var existing))
             {
                 return false;
             }
 
-            var trimmedNewName = newName.Trim();
-
-            if (!string.Equals(bookmark.Name, trimmedNewName, StringComparison.OrdinalIgnoreCase)
+            if (!string.Equals(existing.Name, trimmedNewName, StringComparison.OrdinalIgnoreCase)
                 && forCommander.ContainsKey(trimmedNewName))
             {
                 return false;
             }
 
-            forCommander.Remove(bookmark.Name);
-            forCommander[trimmedNewName] = bookmark with { Name = trimmedNewName };
+            forCommander.Remove(existing.Name);
+            forCommander[trimmedNewName] = replacement with { Name = trimmedNewName };
 
             Write(merged);
         }
 
-        logger.LogInformation("Renamed the bookmark \"{Name}\" to \"{NewName}\"", name, newName);
+        logger.LogInformation("Updated the bookmark \"{Name}\"", name);
 
         return true;
     }
@@ -210,6 +261,10 @@ public sealed class BookmarkStore(string path, IFileSystem files, ILogger<Bookma
                             Name = bookmark.Name,
                             System = bookmark.System,
                             MadeAt = bookmark.MadeAt,
+                            Kind = bookmark.Kind,
+                            Place = bookmark.Place,
+                            SystemAddress = bookmark.SystemAddress,
+                            Note = bookmark.Note,
                         }),
                     ],
                 }),
@@ -248,5 +303,13 @@ public sealed class BookmarkStore(string path, IFileSystem files, ILogger<Bookma
         public string System { get; set; } = string.Empty;
 
         public DateTimeOffset MadeAt { get; set; }
+
+        public BookmarkKind? Kind { get; set; }
+
+        public string? Place { get; set; }
+
+        public long? SystemAddress { get; set; }
+
+        public string? Note { get; set; }
     }
 }

@@ -488,7 +488,8 @@ public static class BuiltinCapabilities
             gameStatus,
             () => gameState.Active,
             phraseBook ?? (() => PhraseBook.From(registry(), [])),
-            now ?? (() => DateTimeOffset.MinValue)),
+            now ?? (() => DateTimeOffset.MinValue),
+            starSystems),
         CommsCapability.Create(
             actions,
             () => settings.Current.Actions.Chat,
