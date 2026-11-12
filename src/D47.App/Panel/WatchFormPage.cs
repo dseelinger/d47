@@ -17,12 +17,35 @@ public sealed class WatchFormPage : UserControl
 {
     public const string WhereHelp = "A rare fills in its station and commodity. Any other station is looked up once, when you save.";
 
+    public const string KindAny = "Any";
+
+    public const string NextHelp = "D47 speaks when you arrive in a system with a station that has this. It plots nothing.";
+
+    public const string KindHelp = "Material Trader and Technology Broker only. A broker is Human or Guardian.";
+
+    public const string NextEgress =
+        "When it speaks, the watch turns itself off. While it is on, D47 sends each system you arrive in, and each system on a route you plot, to Spansh.";
+
+    public const string GalaxyOffLabel = "Galaxy search is off";
+
+    public const string GalaxyOffText =
+        "D47 asks Spansh what each system's stations have. This watch saves, and waits until Galaxy search is on.";
+
+    public const string NamePlaceholder = "Filled in from what the system has";
+
     public const string WhenHelp = "Market readings older than 8 hours don't count.";
 
     private readonly WatchesDesk _desk;
     private readonly PanelNavigator _nav;
     private readonly Watch? _existing;
     private readonly bool _stock;
+    private readonly bool _next;
+    private readonly InlinePicker _servicePicker = new() { Label = "The system has" };
+    private readonly Segment _kind = new() { ItemsSource = [KindAny] };
+    private readonly Segment _pad = new() { ItemsSource = ["Any", "Medium or large", "Large"] };
+    private readonly CheckBox _route = LabeledCheckBox.Caps("Also tell me when a plotted route passes through one");
+    private Control _kindRow = new Border();
+    private string? _service;
     private readonly StackPanel _body = new() { Spacing = 20 };
     private readonly Segment _source = new() { ItemsSource = ["A rare", "Any station"] };
     private readonly Segment _comparison = new() { ItemsSource = ["Above", "Below"] };
@@ -47,20 +70,34 @@ public sealed class WatchFormPage : UserControl
     private Notice? _failure;
     private bool _saving;
 
-    public WatchFormPage(WatchesDesk desk, PanelNavigator nav, Watch? existing, bool stock)
+    public WatchFormPage(WatchesDesk desk, PanelNavigator nav, Watch? existing, WatchKind kind)
     {
         _desk = desk;
         _nav = nav;
         _existing = existing;
+
+        var stock = kind == WatchKind.Stock;
         _stock = stock;
+        _next = kind == WatchKind.NextSystem;
 
         _enabled.IsChecked = existing?.Enabled ?? true;
         _name.Text = existing?.Name;
-        _name.PlaceholderText = stock ? "Filled in as the commodity at the station" : WatchSetup.DefaultCommunityGoalName;
+        _name.PlaceholderText = stock ? "Filled in as the commodity at the station" : _next ? NamePlaceholder : WatchSetup.DefaultCommunityGoalName;
 
-        _body.Children.Add(TitleText.Screen(existing?.Name ?? (stock ? "New stock watch" : "New Community Goal watch")));
+        _body.Children.Add(TitleText.Screen(existing?.Name ?? kind switch
+        {
+            WatchKind.Stock => "New stock watch",
+            WatchKind.NextSystem => "New next-system watch",
+            _ => "New Community Goal watch",
+        }));
 
-        if (stock)
+        if (_next)
+        {
+            _rareRow = _systemRow = _stationRow = _commodityRow = _rareCommodity = new Border();
+            _rareCommodityText = new TextBlock();
+            BuildNext();
+        }
+        else if (stock)
         {
             _rareCommodityText = WatchesPage.Text(string.Empty, Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
             _rareRow = Row("Rare", _rarePicker);
@@ -225,6 +262,88 @@ public sealed class WatchFormPage : UserControl
         ShowMode();
     }
 
+    private void BuildNext()
+    {
+        if (!_desk.GalaxySearchOn)
+        {
+            _body.Children.Add(new Notice(NoticeLevel.Warning) { Label = GalaxyOffLabel, Text = GalaxyOffText });
+        }
+
+        if (_existing is { } watch)
+        {
+            _service = watch.Service;
+            _enabled.IsChecked = watch.Enabled;
+            _route.IsChecked = watch.CheckRoute;
+            _pad.SelectedIndex = watch.MinPad switch { PadSize.Medium => 1, PadSize.Large => 2, _ => 0 };
+
+            _body.Children.Add(Group(
+                "Last fired",
+                "Ticking Enabled watches for the next one; where and when it spoke stay until it speaks again.",
+                Row("Fired for", WatchesPage.Text(WatchFired.Of(watch, TimeZoneInfo.Local), Fonts.MonoFamily, TypeScale.Body, ThemeManager.WhiteKey))));
+        }
+        else
+        {
+            _pad.SelectedIndex = 0;
+        }
+
+        _route.IsChecked ??= false;
+        AutomationProperties.SetName(_kind, "Kind");
+        AutomationProperties.SetName(_pad, "Landing pad");
+        _servicePicker.Mono = false;
+        _servicePicker.Picked += (_, service) =>
+        {
+            _service = service;
+            ShowService();
+            ShowKinds(null);
+        };
+
+        var kindNote = WatchesPage.Text(KindHelp, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
+        kindNote.TextWrapping = TextWrapping.Wrap;
+        _kindRow = Row("Kind", new StackPanel { Spacing = 6, Children = { _kind, kindNote } });
+
+        var egress = WatchesPage.Text(NextEgress, Fonts.ProseFamily, TypeScale.Body, ThemeManager.GreyKey);
+        egress.TextWrapping = TextWrapping.Wrap;
+
+        _body.Children.Add(Group(
+            "Next system with",
+            NextHelp,
+            Row("Name", _name),
+            Row("The system has", _servicePicker),
+            Message(WatchField.Service),
+            _kindRow,
+            Row("Landing pad", _pad),
+            _route,
+            _enabled));
+        _body.Children.Add(egress);
+        _body.Children.Add(Footer());
+
+        ShowService();
+        ShowKinds(_existing?.ServiceKind);
+    }
+
+    private void ShowService()
+    {
+        var entries = NextSystemWatch.Services
+            .Select(service => (InlinePickerEntry)new InlinePickerOption(service, service, ThemeManager.WhiteKey))
+            .ToList();
+
+        _servicePicker.Show(
+            entries,
+            _service ?? string.Empty,
+            _service ?? "Pick what the system has",
+            _service is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
+            null);
+    }
+
+    private void ShowKinds(string? chosen)
+    {
+        var kinds = NextSystemWatch.KindsOf(_service);
+
+        _kindRow.IsVisible = kinds.Count > 0;
+        _kind.ItemsSource = [KindAny, .. kinds];
+        _kind.SelectedIndex = chosen is null ? 0 : Math.Max(0, kinds.ToList().FindIndex(kind => string.Equals(kind, chosen, StringComparison.OrdinalIgnoreCase)) + 1);
+    }
+
     private void BuildGoal()
     {
         var note = WatchesPage.Text(
@@ -379,7 +498,16 @@ public sealed class WatchFormPage : UserControl
                         _comparison.SelectedIndex == 1 ? StockComparison.Below : StockComparison.Above,
                         _units.Text ?? string.Empty),
                     CancellationToken.None)
-                : _desk.Setup.SaveCommunityGoal(_existing, name, enabled);
+                : _next
+                    ? _desk.Setup.SaveNextSystem(
+                        _existing,
+                        name,
+                        _service,
+                        _kindRow.IsVisible && _kind.SelectedIndex > 0 ? _kind.ItemsSource[_kind.SelectedIndex] : null,
+                        _pad.SelectedIndex switch { 1 => PadSize.Medium, 2 => PadSize.Large, _ => null },
+                        _route.IsChecked == true,
+                        enabled)
+                    : _desk.Setup.SaveCommunityGoal(_existing, name, enabled);
 
             if (result.Saved)
             {

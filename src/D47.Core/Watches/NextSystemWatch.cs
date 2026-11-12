@@ -10,6 +10,21 @@ public static class NextSystemWatch
 
     public const string TechnologyBroker = "Technology Broker";
 
+    /// <summary>The services a next-system watch is offered for, in the order the form lists them.</summary>
+    public static IReadOnlyList<string> Services { get; } =
+    [
+        "Black Market",
+        "Interstellar Factors",
+        MaterialTrader,
+        "Outfitting",
+        "Refuel",
+        "Repair",
+        "Shipyard",
+        TechnologyBroker,
+        "Universal Cartographics",
+        "Vista Genomics",
+    ];
+
     /// <summary>The <see cref="StationQuery.ServiceNames"/> entry for <paramref name="service"/>, ignoring case; null when there is none.</summary>
     public static StationServiceName? ServiceFor(string? service) =>
         string.IsNullOrWhiteSpace(service)

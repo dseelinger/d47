@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
 using D47.App.Input;
@@ -4179,7 +4179,8 @@ public sealed class AppHost : IDisposable
                 watchStore,
                 services.Galaxy,
                 services.TradePlanner),
-            services.StarSystems is { } starSystems ? starSystems.PrefixNamesAsync : null);
+            services.StarSystems is { } starSystems ? starSystems.PrefixNamesAsync : null,
+            () => services.Galaxy);
 
         var serverStatus = host.ServerStatus = new ServerStatusWatch(
             serverStatusSource,

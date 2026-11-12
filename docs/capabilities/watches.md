@@ -15,8 +15,8 @@ nav_order: 165
 </section>
 <section>
 <h2><span class="num">2</span> Add one by voice or on the page.</h2>
-<p class="say">Say or type "tell me the next time we're in a system with a material trader". Or open Commander, then Watches, and press Add stock watch or Add Community Goal watch.</p>
-<p class="expect">D47 replies "Watching for a Material trader, Commander" with no model. Add a kind or pad as you speak: "a manufactured material trader with a large pad". A stock watch on the page needs a station, a commodity, Above or Below, and a number of units. A Community Goal watch needs only a name.</p>
+<p class="say">Say or type "tell me the next time we're in a system with a material trader". Or open Commander, then Watches, and press Add stock watch, Add Community Goal watch or Add next-system watch.</p>
+<p class="expect">D47 replies "Watching for a Material trader, Commander" with no model. Add a kind or pad as you speak: "a manufactured material trader with a large pad". A stock watch on the page needs a station, a commodity, Above or Below, and a number of units. A Community Goal watch needs only a name. A next-system watch needs what the system has, and optionally a kind, a pad and whether a plotted route counts.</p>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>

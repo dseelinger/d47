@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -76,22 +76,27 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         {
             if (crumb.Key == WatchesPage.NewStockKey)
             {
-                return new WatchFormPage(desk, host.Nav, null, stock: true);
+                return new WatchFormPage(desk, host.Nav, null, D47.Core.Watches.WatchKind.Stock);
+            }
+
+            if (crumb.Key == WatchesPage.NewNextKey)
+            {
+                return new WatchFormPage(desk, host.Nav, null, D47.Core.Watches.WatchKind.NextSystem);
             }
 
             if (crumb.Key == WatchesPage.NewGoalKey)
             {
-                return new WatchFormPage(desk, host.Nav, null, stock: false);
+                return new WatchFormPage(desk, host.Nav, null, D47.Core.Watches.WatchKind.NewCommunityGoal);
             }
 
             if (WatchesPage.EditOf(crumb.Key) is { } id)
             {
                 return desk.Store.Watches.FirstOrDefault(watch => watch.Id == id) is { } watch
-                    ? new WatchFormPage(desk, host.Nav, watch, watch.Kind == D47.Core.Watches.WatchKind.Stock)
+                    ? new WatchFormPage(desk, host.Nav, watch, watch.Kind)
                     : new TextBlock { Text = "That watch is gone." };
             }
 
-            return _watches = new WatchesPage(desk, host.Nav);
+            return _watches = new WatchesPage(desk, host.Nav, host.Headset);
         };
 
         host.Furnish(
@@ -104,7 +109,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     }
 
     private static bool IsWatches(string key) =>
-        key == WatchesPage.RootKey || key == WatchesPage.NewStockKey || key == WatchesPage.NewGoalKey || WatchesPage.EditOf(key) is not null;
+        key == WatchesPage.RootKey || key == WatchesPage.NewStockKey || key == WatchesPage.NewGoalKey || key == WatchesPage.NewNextKey || WatchesPage.EditOf(key) is not null;
 
     public void EnableMissions(
         Func<D47.Core.Journal.CommanderGameState?> state,

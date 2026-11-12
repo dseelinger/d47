@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Commander › Watches switches between Stock, Community Goal and Next system with, each showing how many watches it holds and how many are on, and ADD NEXT-SYSTEM WATCH opens a form for the third kind: what the system has, a kind for a Material Trader or Technology Broker, the smallest pad, and whether a plotted route counts. A next-system watch that has spoken shows the system and time, and ticking Enabled watches for the next one. With Galaxy search off the form says so and still saves. The headset big panel shows the same page.
+
 Added: Say or type "tell me the next time we're in a system with a material trader" to add a next-system watch, and "stop watching for a material trader" to delete one. It works for ten station services, such as a material trader, a technology broker or Interstellar Factors, with a kind before or after it ("a manufactured material trader") and "with a large pad". D47 answers with no model, says when you are already in a matching system, and keeps the watch for the next one. Only you can add or delete these by voice; the model is refused.
 
 Added: A next-system watch names a station service, such as a Manufactured material trader or Interstellar Factors, and optionally the smallest pad. When you arrive in a system with a fixed station that has it, D47 says the system, the station nearest the arrival point, its distance and its largest pad, then turns the watch off. "List my watches" names the condition and the system and time it fired in. The watch is checked only while watch callouts are on, with one Spansh station query per arrival for all next-system watches.

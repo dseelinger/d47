@@ -11,6 +11,7 @@ public enum WatchField
     Station,
     Commodity,
     Units,
+    Service,
 }
 
 /// <summary>The outcome of a save: <see cref="Message"/> is null when the watch was written.</summary>
@@ -57,6 +58,32 @@ public sealed class WatchSetup(WatchStore store, IGalaxyService galaxy, ITradePl
             WatchKind.NewCommunityGoal,
             enabled,
             FiredForTick: existing?.FiredForTick);
+
+        return Write(existing, watch);
+    }
+
+    /// <summary>Saves a next-system watch, keeping where and when <paramref name="existing"/> last fired. It sends nothing.</summary>
+    public WatchSaveResult SaveNextSystem(Watch? existing, string name, string? service, string? kind, PadSize? minPad, bool checkRoute, bool enabled)
+    {
+        if (NextSystemWatch.ServiceFor(service) is not { } known)
+        {
+            return WatchSaveResult.Refused(WatchField.Service, "pick what the system has.");
+        }
+
+        var chosenKind = NextSystemWatch.KindFor(known.Name, kind);
+        var typed = name.Trim();
+
+        var watch = new Watch(
+            existing?.Id ?? Guid.NewGuid(),
+            typed.Length > 0 ? typed : NextSystemWatch.ServiceName(known.Name, chosenKind),
+            WatchKind.NextSystem,
+            enabled,
+            Service: known.Name,
+            ServiceKind: chosenKind,
+            MinPad: minPad,
+            CheckRoute: checkRoute,
+            FiredSystem: existing?.FiredSystem,
+            FiredAt: existing?.FiredAt);
 
         return Write(existing, watch);
     }
