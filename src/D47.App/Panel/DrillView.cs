@@ -14,7 +14,7 @@ namespace D47.App.Panel;
 /// A tab's drill stack, drawn as however many panes will fit (Phase 25, "Drill in, and find your way
 /// back" and "The panel resizes and zooms").
 /// </summary>
-public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPageSummary
+public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPageSummary, IPageSection
 {
     /// <summary>The narrowest a pane may be before the strip shows one fewer.</summary>
     public const double MinimumPaneWidth = 380;
@@ -55,6 +55,8 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     public event EventHandler? Drawn;
 
     public event EventHandler? SummaryChanged;
+
+    public event EventHandler? OpenSectionChanged;
 
     private int _panes = 1;
 
@@ -213,6 +215,11 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
                 if (pane is IPageSummary summary)
                 {
                     summary.SummaryChanged += (_, _) => SummaryChanged?.Invoke(this, EventArgs.Empty);
+                }
+
+                if (pane is IPageSection section)
+                {
+                    section.OpenSectionChanged += (_, _) => OpenSectionChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
 
@@ -403,6 +410,12 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             .OfType<IPageSummary>()
             .LastOrDefault()
             ?.Summary ?? string.Empty;
+
+    /// <summary>The open section of the deepest level showing, or empty when that level has none.</summary>
+    public string OpenSection =>
+        _showing.Count > 0 && _built.TryGetValue(_showing[^1], out var pane) && pane is IPageSection section
+            ? section.OpenSection
+            : string.Empty;
 
     /// <summary>Forgets every level whose key matches.</summary>
     public void ForgetWhere(Func<string, bool> match)

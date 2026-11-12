@@ -1,15 +1,24 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
+using D47.Core.Campaigns;
+using D47.Core.Capabilities;
 using D47.Core.Interface;
+using D47.Core.Journal;
+using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The words of mini's trail and how they shorten (#2340).</summary>
+/// <summary>The words of mini's trail and how they shorten (#2340), and the open section as its last level (#2341).</summary>
 public class TheMiniPanelNamesWhereItIsTests
 {
     private static double OnePerChar(string text) => text.Length;
@@ -112,5 +121,82 @@ public class TheMiniPanelNamesWhereItIsTests
         surface.Render();
 
         Assert.False(row.IsVisible);
+    }
+
+    [Fact]
+    public void AnOpenSectionIsTheLastLevelAndAnEmptyOneAddsNothing()
+    {
+        var trail = new[] { new NavCrumb("faction", "Faction") };
+
+        Assert.Equal(["SEARCH", "FACTION", "CONFLICTS"], MiniTrail.Words("Search", trail, 3, "Conflicts"));
+        Assert.Equal(["SEARCH", "FACTION"], MiniTrail.Words("Search", trail, 3, ""));
+    }
+
+    [Fact]
+    public void TheOpenSectionStaysWhenTheLevelsBeforeItGiveWay()
+    {
+        var parts = MiniTrail.Fit(MiniTrail.Words("Tab", [new NavCrumb("a", "Root"), new NavCrumb("b", "Deep")], 2, "Sec"), 40, OnePerChar);
+
+        Assert.EndsWith("SEC", Text(parts));
+        Assert.Equal(MiniTrailInk.Current, parts[^1].Ink);
+    }
+
+    [AvaloniaFact]
+    public void MiniNamesTheOpenSectionAndFollowsASectionChange()
+    {
+        new Theming.ThemeManager(Application.Current!, NullLogger<Theming.ThemeManager>.Instance)
+            .Apply(ThemeCatalog.Elite);
+
+        var state = JournalScript.Commander("F2341", "Kade Orrin");
+        var checklists = TestSurface.Checklists(TestSurface.MemoryFolder("d47-mini-trail-section-tests"));
+        var view = new PanelView { DataContext = new PanelViewModel() };
+        view.EnableChecklist(checklists);
+        view.EnableMissions(() => state, () => DateTimeOffset.UtcNow);
+        view.EnableStanding(() => state);
+        view.EnableStatistics(() => state);
+        view.EnableCampaign(new CampaignSources(
+            () => state,
+            new CampaignStore("campaigns.json", new MemoryFileSystem(), NullLogger<CampaignStore>.Instance),
+            () => null,
+            () => "Kestrel Reach Compact",
+            () => null,
+            CapabilityRegistry.Build([])));
+        view.EnableCommanders(new CommanderRoster(() => null, () => 0, () => null, () => false, _ => { }));
+
+        var window = new Window
+        {
+            Content = view,
+            Width = 640,
+            Height = 280,
+            Background = (IBrush)Application.Current!.Resources[Theming.ThemeManager.BgKey]!,
+        };
+        window.Show();
+        view.Tab = PanelTab.Commander;
+        view.Nav.SelectRoot(PanelTab.Commander, CampaignPage.RootKey);
+        view.Mode = PanelMode.Mini;
+        Dispatcher.UIThread.RunJobs();
+
+        var row = view.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "MiniTrailRow");
+
+        string Trail() => string.Concat(row.Children.OfType<TextBlock>().Select(block => block.Text));
+
+        Assert.EndsWith(MiniTrail.Separator + "FRONTS", Trail());
+
+        Assert.EndsWith(MiniTrail.Separator + "FRONTS", Trail());
+
+        var segment = view.GetVisualDescendants().OfType<Segment>().First(found => found.Name == CampaignPage.SectionsName);
+        segment.PressOption(CampaignModel.SystemsSection);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.EndsWith(MiniTrail.Separator + "SYSTEMS", Trail());
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("mini-trail-section.png");
+
+        view.Mode = PanelMode.Full;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(row.IsVisible);
+        window.Close();
     }
 }

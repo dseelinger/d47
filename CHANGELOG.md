@@ -8,7 +8,7 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-Added: The mini panel, on the desktop and in the headset, shows where it is: a one-line trail at the top right of its text area, such as ASSET MGMT › FLEET › a ship, in every state it can be in. A long trail gives way from its second level to a `…`.
+Added: The mini panel, on the desktop and in the headset, shows where it is: a one-line trail at the top right of its text area, such as ASSET MGMT › FLEET › a ship, in every state it can be in. On a page with a section switch, such as a faction's Conflicts or a station's Market, the open section is the last level. A long trail gives way from its second level to a `…`.
 
 Changed: On the desktop, the Commander › Campaign tables (Fronts, Systems and Chronicle) fill the window width instead of stopping at 900 pixels; the notice, the faction frame and the proposed front keep their width. A long system name in the Fronts table wraps onto a second line instead of being shortened.
 

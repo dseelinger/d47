@@ -54,7 +54,7 @@ public sealed record StarSystemSurface(
 /// One star system's record from Spansh: the Commander's own while following them, or any system typed or
 /// opened.
 /// </summary>
-public sealed partial class StarSystemPage : UserControl, IPageSummary, IFilterablePage, IPageChrome
+public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSection, IFilterablePage, IPageChrome
 {
     public const string RootKey = "search.system";
 
@@ -179,6 +179,16 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     private sealed record Shown(long Address, string Name);
 
     public string Summary => SummaryText;
+
+    private readonly PageSectionWord _sectionWord = new();
+
+    public string OpenSection => _sectionWord.Word;
+
+    event EventHandler? IPageSection.OpenSectionChanged
+    {
+        add => _sectionWord.Changed += value;
+        remove => _sectionWord.Changed -= value;
+    }
 
     public Control? BarTool => _history.Button;
 
@@ -500,6 +510,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IFiltera
     private void Draw()
     {
         DrawBody();
+        _sectionWord.Set(this, _view == View.Ready && _profile is not null ? _section.ToString() : string.Empty);
 
         if (Filters != _filtering)
         {

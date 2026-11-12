@@ -24,9 +24,10 @@ public static class MiniTrail
     public const double SeparatorGap = 6;
 
     /// <summary>
-    /// The tab's word, the root's word when the tab has more than one root, then every deeper level. Upper case.
+    /// The tab's word, the root's word when the tab has more than one root, then every deeper level, then the
+    /// page's open section when it has one. Upper case.
     /// </summary>
-    public static IReadOnlyList<string> Words(string tabWord, IReadOnlyList<NavCrumb> trail, int rootCount)
+    public static IReadOnlyList<string> Words(string tabWord, IReadOnlyList<NavCrumb> trail, int rootCount, string openSection = "")
     {
         var words = new List<string> { tabWord.ToUpperInvariant() };
 
@@ -38,6 +39,11 @@ public static class MiniTrail
             }
 
             words.Add(trail[index].Word.ToUpperInvariant());
+        }
+
+        if (!string.IsNullOrWhiteSpace(openSection))
+        {
+            words.Add(openSection.Trim().ToUpperInvariant());
         }
 
         return words;

@@ -16,7 +16,7 @@ namespace D47.App.Panel;
 /// One station from a system's galaxy record, drilled from Search › System › Stations, from a body's page or from a
 /// Stations result, and rebuilt from its crumb key alone.
 /// </summary>
-public sealed class SystemStationPage : UserControl, IPageSummary
+public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
 {
     public const string KeyPrefix = "search.system.station:";
 
@@ -134,6 +134,16 @@ public sealed class SystemStationPage : UserControl, IPageSummary
     }
 
     public string Summary => SummaryText;
+
+    private readonly PageSectionWord _sectionWord = new();
+
+    public string OpenSection => _sectionWord.Word;
+
+    event EventHandler? IPageSection.OpenSectionChanged
+    {
+        add => _sectionWord.Changed += value;
+        remove => _sectionWord.Changed -= value;
+    }
 
     event EventHandler? IPageSummary.SummaryChanged
     {
@@ -254,6 +264,12 @@ public sealed class SystemStationPage : UserControl, IPageSummary
     }
 
     private void Draw()
+    {
+        DrawPage();
+        _sectionWord.Set(this, !_loading && _failure is null && Station is not null ? _section.ToString() : string.Empty);
+    }
+
+    private void DrawPage()
     {
         _redrawn = true;
         _page.Children.Clear();

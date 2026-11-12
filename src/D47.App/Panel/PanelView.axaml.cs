@@ -2520,7 +2520,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         }
 
         var tabWord = _tabs.TryGetValue(Tab, out var button) ? button.Content as string ?? Tab.ToString() : Tab.ToString();
-        var words = MiniTrail.Words(tabWord, Nav.Trail, Nav.Roots(Tab).Count);
+        var section = Tab != PanelTab.Transcript && !Nav.Modal && _pages.TryGetValue(Tab, out var drill) ? drill.OpenSection : string.Empty;
+        var words = MiniTrail.Words(tabWord, Nav.Trail, Nav.Roots(Tab).Count, section);
 
         var probe = MiniTrailText(string.Empty);
 
@@ -2683,6 +2684,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             // After the page is in the pane, because whether a query would do anything is a question for the
             // page and ApplyChrome above ran before there was one to ask.
             ShowSearch();
+            DrawMiniTrail();
             return;
         }
 
@@ -3103,6 +3105,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             // after this method returns and ShowSearch() has already asked whether the page filters.
             page.Drawn += (_, _) => ShowSearch();
             page.SummaryChanged += (_, _) => ShowTitleLine();
+            page.OpenSectionChanged += (_, _) => DrawMiniTrail();
 
             // A strip built after the host furnished this surface still gets handles - the tabs are built on
             // first sight rather than up front, so most of them arrive here (Phase 55).

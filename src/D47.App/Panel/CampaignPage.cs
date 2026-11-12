@@ -43,7 +43,7 @@ public sealed class CampaignNote
 /// Commander › Campaign: the campaign faction, the front being worked or proposed, and the Fronts, Systems and
 /// Chronicle sections. A step, a tile and the faction picker call the same protected tools as the phrases, as the Commander.
 /// </summary>
-public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
+public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFilterablePage
 {
     public const string RootKey = "campaign";
 
@@ -228,6 +228,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
             _section = _segment.SelectedIndex;
             _page = 0;
             FillSection();
+            ReportSection();
         };
 
         Margin = new Thickness(14);
@@ -236,9 +237,22 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
         Draw();
     }
 
+    private void ReportSection() =>
+        _sectionWord.Set(this, _section >= 0 && _section < CampaignModel.Sections.Count ? CampaignModel.Sections[_section] : string.Empty);
+
     public string Summary { get; private set; } = string.Empty;
 
     public event EventHandler? SummaryChanged;
+
+    private readonly PageSectionWord _sectionWord = new();
+
+    public string OpenSection => _sectionWord.Word;
+
+    public event EventHandler? OpenSectionChanged
+    {
+        add => _sectionWord.Changed += value;
+        remove => _sectionWord.Changed -= value;
+    }
 
     public bool Filters => _reportShown || _campaign.Chronicle.Count > 0;
 
@@ -396,6 +410,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
         if (_faction is null)
         {
             column.Children.Add(Grey(CampaignModel.NoFactionText));
+            _sectionWord.Set(this, string.Empty);
             _seenFronts = FrontsKeyNow();
             return;
         }
@@ -403,6 +418,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
         column.Children.Add(_frontSlot);
         page.Children.Add(_segment);
         page.Children.Add(_sectionSlot);
+        ReportSection();
 
         FillFront();
         FillCounts();

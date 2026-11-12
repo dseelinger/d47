@@ -32,7 +32,7 @@ public enum FactionView
 }
 
 /// <summary>Search › Faction: where one minor faction is present and the state it is in, from a Spansh report and the Commander's own readings.</summary>
-public sealed class FactionPage : UserControl, IPageSummary
+public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 {
     public const string RootKey = "search.faction";
 
@@ -214,6 +214,7 @@ public sealed class FactionPage : UserControl, IPageSummary
             _section = _sections.SelectedIndex;
             _page = 0;
             DrawContent();
+            ReportSection();
         };
 
         _count = Chrome(string.Empty, TypeScale.Meta, FontWeight.Medium, ThemeManager.GreyKey);
@@ -320,6 +321,16 @@ public sealed class FactionPage : UserControl, IPageSummary
     }
 
     public string Summary => SummaryText;
+
+    private readonly PageSectionWord _sectionWord = new();
+
+    public string OpenSection => _sectionWord.Word;
+
+    public event EventHandler? OpenSectionChanged
+    {
+        add => _sectionWord.Changed += value;
+        remove => _sectionWord.Changed -= value;
+    }
 
     public event EventHandler? SummaryChanged
     {
@@ -615,7 +626,16 @@ public sealed class FactionPage : UserControl, IPageSummary
     private TimeSpan FetchedAge() =>
         _report?.FetchedAt is { } at ? _now() - at : TimeSpan.Zero;
 
+    private void ReportSection() =>
+        _sectionWord.Set(this, ReferenceEquals(_switchSlot.Child, _sections) && _section >= 0 && _section < Sections.Count ? Sections[_section] : string.Empty);
+
     private void DrawSwitch()
+    {
+        DrawSwitchSlot();
+        ReportSection();
+    }
+
+    private void DrawSwitchSlot()
     {
         switch (_view)
         {

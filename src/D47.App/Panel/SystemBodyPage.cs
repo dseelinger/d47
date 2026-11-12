@@ -17,7 +17,7 @@ namespace D47.App.Panel;
 /// One star or planet from a system's galaxy record, drilled from Search › System › Bodies or from another body's
 /// page, and rebuilt from its crumb key alone.
 /// </summary>
-public sealed class SystemBodyPage : UserControl, IPageSummary
+public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
 {
     public const string KeyPrefix = "search.system.body:";
 
@@ -104,6 +104,16 @@ public sealed class SystemBodyPage : UserControl, IPageSummary
     }
 
     public string Summary => SummaryText;
+
+    private readonly PageSectionWord _sectionWord = new();
+
+    public string OpenSection => _sectionWord.Word;
+
+    event EventHandler? IPageSection.OpenSectionChanged
+    {
+        add => _sectionWord.Changed += value;
+        remove => _sectionWord.Changed -= value;
+    }
 
     event EventHandler? IPageSummary.SummaryChanged
     {
@@ -265,6 +275,23 @@ public sealed class SystemBodyPage : UserControl, IPageSummary
     }
 
     private void Draw()
+    {
+        DrawPage();
+
+        _sectionWord.Set(
+            this,
+            !_loading && _failure is null && Body is not null
+                ? _section switch
+                {
+                    Section.Composition => "Composition",
+                    Section.Orbit => "Orbit",
+                    Section.Orbiting => "Orbiting",
+                    _ => "Overview",
+                }
+                : string.Empty);
+    }
+
+    private void DrawPage()
     {
         _redrawn = true;
         _page.Children.Clear();
