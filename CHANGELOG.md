@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A long system name in a table, such as Commander › Campaign › Fronts, no longer runs into the next column; the name is shortened to fit and its copy glyph stays inside the column.
+
 Added: While a story run plays, the mini panel on the desktop and in the headset shows the playing line's picture in its avatar slot with a progress line under it, and beside it the label (**Playing 3 of 6 · Ysolt Garrow**, or **Paused · …**), the time, the line, scrolling as the clip plays, and the words to say. It has no buttons.
 
 Added: Commander › Ledgers › Codex › the Crop page has a **Brightness** row from -4 (Darker) to +8 (Brighter). A headset capture opens at +4 and one from Elite's window at 0; each press redraws the picture, ↺ returns to the opening step, **Save** keeps the step with the square and **Re-crop** opens at it.

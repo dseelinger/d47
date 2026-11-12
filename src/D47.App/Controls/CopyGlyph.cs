@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -67,12 +67,17 @@ public static class CopyGlyph
         }
 
         name.VerticalAlignment = VerticalAlignment.Center;
+        name.HorizontalAlignment = HorizontalAlignment.Left;
 
-        return new StackPanel
+        var glyph = For(target, copy);
+        Grid.SetColumn(glyph, 1);
+
+        return new Grid
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            Children = { name, For(target, copy) },
+            HorizontalAlignment = HorizontalAlignment.Left,
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            ColumnSpacing = 6,
+            Children = { name, glyph },
         };
     }
 
