@@ -466,6 +466,8 @@ public class TheCodexPicturePagesCropACaptureTests
         }
 
         Assert.NotNull(page.Surface);
+        Dispatcher.UIThread.RunJobs();
+        page.UpdateLayout();
     }
 
     private static Bitmap Shown(CropSurface surface) =>
