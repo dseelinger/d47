@@ -24,6 +24,8 @@ Changed: On the desktop, the Commander › Campaign tables (Fronts, Systems and 
 
 Fixed: A long system name in a table, such as Commander › Campaign › Fronts, no longer runs into the next column; the name is shortened to fit and its copy glyph stays inside the column.
 
+Fixed: The mini panel in the headset shows its trail, such as TRANSCRIPT › IN SHIP, at the top right of its text area; it was blank there before.
+
 Changed: The tables on Statistics › Activities, Commanders, Crew, Phrases and Stored modules fill the window instead of stopping at 900 to 1100px. The title, text and form above each table keep their width, and the other Statistics sections keep theirs.
 
 Added: While a story run plays, the mini panel on the desktop and in the headset shows the playing line's picture in its avatar slot with a progress line under it, and beside it the label (**Playing 3 of 6 · Ysolt Garrow**, or **Paused · …**), the time, the line, scrolling as the clip plays, and the words to say. It has no buttons.

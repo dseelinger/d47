@@ -111,16 +111,70 @@ public class TheMiniPanelNamesWhereItIsTests
         using var surface = new OffscreenSurface(view, new PixelSize(640, 280));
         surface.Render();
 
-        var row = view.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "MiniTrailRow");
+        var row = Row(view);
 
         Assert.True(row.IsVisible);
         Assert.False(row.IsHitTestVisible);
-        Assert.NotEmpty(row.Children);
+        Assert.NotEqual(0, InkedPixels(view, row, surface.Render()));
 
         view.Mode = PanelMode.Full;
         surface.Render();
 
         Assert.False(row.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetMiniPanelDrawsTheTrailAfterASwitchFromFull()
+    {
+        new Theming.ThemeManager(Application.Current!, NullLogger<Theming.ThemeManager>.Instance)
+            .Apply(ThemeCatalog.Elite);
+
+        var view = new PanelView { DataContext = new PanelViewModel() };
+        using var surface = new OffscreenSurface(view, new PixelSize(640, 280));
+        surface.Render();
+
+        view.Classes.Set("output-only", true);
+        view.Mode = PanelMode.Mini;
+
+        var row = Row(view);
+
+        for (var redraw = 0; redraw < 3; redraw++)
+        {
+            var frame = surface.Render(() => { });
+
+            Assert.True(row.Bounds.Width > 0);
+            Assert.NotEqual(0, InkedPixels(view, row, frame));
+        }
+
+        surface.Render().SaveCapture("mini-trail-headset.png");
+    }
+
+    private static Control Row(PanelView view) =>
+        view.GetLogicalDescendants().OfType<Control>().Single(control => control.Name == "MiniTrailRow");
+
+    /// <summary>How many pixels inside the trail's bounds differ from the panel's background.</summary>
+    private static int InkedPixels(PanelView view, Control row, Avalonia.Media.Imaging.RenderTargetBitmap frame)
+    {
+        var pixels = frame.Pixels();
+        var stride = frame.PixelSize.Width * 4;
+        var box = row.Bounds.TransformToAABB(row.GetVisualParent()!.TransformToVisual(view)!.Value);
+        var background = ((ISolidColorBrush)Application.Current!.Resources[Theming.ThemeManager.BgKey]!).Color;
+        var inked = 0;
+
+        for (var y = (int)box.Top; y < (int)box.Bottom; y++)
+        {
+            for (var x = (int)box.Left; x < (int)box.Right; x++)
+            {
+                var at = (y * stride) + (x * 4);
+
+                if (Math.Abs(pixels[at] - background.B) + Math.Abs(pixels[at + 1] - background.G) + Math.Abs(pixels[at + 2] - background.R) > 48)
+                {
+                    inked++;
+                }
+            }
+        }
+
+        return inked;
     }
 
     [Fact]
@@ -176,19 +230,19 @@ public class TheMiniPanelNamesWhereItIsTests
         view.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        var row = view.GetLogicalDescendants().OfType<StackPanel>().Single(panel => panel.Name == "MiniTrailRow");
+        var row = Row(view);
 
-        string Trail() => string.Concat(row.Children.OfType<TextBlock>().Select(block => block.Text));
+        string Trail() => Avalonia.Automation.AutomationProperties.GetName(row) ?? string.Empty;
 
-        Assert.EndsWith(MiniTrail.Separator + "FRONTS", Trail());
+        Assert.EndsWith($"{MiniTrail.Separator} FRONTS", Trail());
 
-        Assert.EndsWith(MiniTrail.Separator + "FRONTS", Trail());
+        Assert.EndsWith($"{MiniTrail.Separator} FRONTS", Trail());
 
         var segment = view.GetVisualDescendants().OfType<Segment>().First(found => found.Name == CampaignPage.SectionsName);
         segment.PressOption(CampaignModel.SystemsSection);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.EndsWith(MiniTrail.Separator + "SYSTEMS", Trail());
+        Assert.EndsWith($"{MiniTrail.Separator} SYSTEMS", Trail());
 
         using var frame = window.CaptureRenderedFrame()!;
         frame.SaveCapture("mini-trail-section.png");

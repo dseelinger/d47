@@ -141,8 +141,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         InitializeComponent();
         StoryReadout.Moved += PlaceStoryProgress;
         MiniRail.SizeChanged += (_, _) => PlaceStoryProgress();
-        CommsMini.SizeChanged += (_, _) => DrawMiniTrail();
-        SizeChanged += (_, _) => DrawMiniTrail();
+        MiniTrailRow.Beside = CommsMini;
+        CommsMini.SizeChanged += (_, _) => MiniTrailRow.InvalidateMeasure();
         _selecting = new TranscriptSelection(
             Bubbles,
             () => [.. _bubbles.Select(bubble => bubble.Block)],
@@ -2498,68 +2498,19 @@ public partial class PanelView : UserControl, IPanelTabHost
         DrawMiniTrail();
     }
 
-    private static readonly FontFamily MiniTrailFont = new(Theming.Fonts.ChromeFamily);
-
-    private static TextBlock MiniTrailText(string text) =>
-        new()
-        {
-            Text = text,
-            FontFamily = MiniTrailFont,
-            FontSize = Theming.TypeScale.MetaSmall,
-            FontWeight = FontWeight.Medium,
-            LetterSpacing = Theming.TypeScale.MetaSmall * 0.08,
-            TextWrapping = TextWrapping.NoWrap,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-        };
-
-    /// <summary>Redraws mini's one-line trail, shortened to the room beside the comms indicator.</summary>
+    /// <summary>Gives mini's trail its words; the trail fits them to its own room.</summary>
     private void DrawMiniTrail()
     {
-        MiniTrailRow.Children.Clear();
         MiniTrailRow.IsVisible = Mode == PanelMode.Mini;
 
-        if (Mode != PanelMode.Mini || CommsMini.Parent is not Control host)
+        if (Mode != PanelMode.Mini)
         {
             return;
         }
 
         var tabWord = _tabs.TryGetValue(Tab, out var button) ? button.Content as string ?? Tab.ToString() : Tab.ToString();
         var section = Tab != PanelTab.Transcript && !Nav.Modal && _pages.TryGetValue(Tab, out var drill) ? drill.OpenSection : string.Empty;
-        var words = MiniTrail.Words(tabWord, Nav.Trail, Nav.Roots(Tab).Count, section);
-
-        var probe = MiniTrailText(string.Empty);
-
-        double Width(string text)
-        {
-            probe.Text = text;
-            probe.Measure(Size.Infinity);
-            return probe.DesiredSize.Width;
-        }
-
-        var room = host.Bounds.Width > 0
-            ? host.Bounds.Width - CommsMini.Bounds.Right - 12 - MiniTrailRow.Margin.Right
-            : double.PositiveInfinity;
-
-        foreach (var part in MiniTrail.Fit(words, room, Width))
-        {
-            var block = MiniTrailText(part.Text);
-
-            if (part.Ink == MiniTrailInk.Separator && part.Text == MiniTrail.Separator)
-            {
-                block.Margin = new Thickness(MiniTrail.SeparatorGap, 0);
-            }
-
-            block.Bind(
-                TextBlock.ForegroundProperty,
-                this.GetResourceObservable(part.Ink switch
-                {
-                    MiniTrailInk.Earlier => Theming.ThemeManager.GreyKey,
-                    MiniTrailInk.Separator => Theming.ThemeManager.Grey2Key,
-                    _ => Theming.ThemeManager.WhiteKey,
-                }));
-
-            MiniTrailRow.Children.Add(block);
-        }
+        MiniTrailRow.Show(MiniTrail.Words(tabWord, Nav.Trail, Nav.Roots(Tab).Count, section));
     }
 
     /// <summary>
