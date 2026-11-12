@@ -314,6 +314,12 @@ public partial class MainWindow : Window
             Panel.EnableCombatStats(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCredits(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCodex(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow, host.CodexPictureSet);
+
+            if (host.Screenshots is { } screenshots)
+            {
+                Panel.EnableScreenshots(() => host.GameState.Active, screenshots);
+            }
+
             Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableCommanders(host.Commanders);
 

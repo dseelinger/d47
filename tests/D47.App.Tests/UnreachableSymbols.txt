@@ -38,7 +38,6 @@ D47.App.Panel.BodySearchPage.Type(string, string)
 D47.App.Panel.CatalogueFilters.RatingsShown
 D47.App.Panel.CharactersPage.DistanceSettled
 D47.App.Panel.CharactersPage.Selected
-D47.App.Panel.CodexPictureStore.CropFiles()
 D47.App.Panel.CodexPictureStore.PicturesCutFrom(string)
 D47.App.Panel.CodexPictureStore.ScreenshotRenamed(string, string)
 D47.App.Panel.CodexPublishResult.Landed

@@ -93,6 +93,18 @@ copied. D47 waits up to 120 seconds for Elite to finish writing the BMP, which t
 high-resolution screenshot, and skips one that does not arrive in that time or is moved away first.
 Screenshots are copied one at a time, at their own size.
 
+Commander › Ledgers › Screenshots, after Codex, shows these pictures on the desktop main window: a grid
+of tiles, each the whole picture with its system (cyan when it is the system you are in), body, local
+date and time, and a yellow CODEX PICTURE tag when a Codex entry's picture was cut from it. **Newest
+first** and **Oldest first** order the grid by date taken, a line gives the count and total size, and
+**Show in folder** opens the screenshots folder. The grid is listed again each time the page is shown;
+its thumbnails are cached in `data\screenshot-thumbnails` and made off the UI thread. With no
+screenshots the page says to press Elite's screenshot key or say "take a picture". Pressing a tile opens
+the viewer over the whole window: **Previous** and **Next** follow the grid's order and are disabled at
+the ends, a mono "n of N" shows the place, **Show in folder** opens Explorer with the file selected,
+**Close** puts it away, and under the picture are the place, date and time, pixel size and file size.
+Left and Right move and Escape closes.
+
 The row is under Settings › You and your records › Logs and goals, in the Screenshots group, beside **Saved to**, which shows the folder.
 
 Saying "take a picture" makes one: [Screen](screen.md) presses Elite's screenshot key, and the copy and

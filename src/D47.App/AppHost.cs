@@ -724,6 +724,8 @@ public sealed class AppHost : IDisposable
 
     public CodexPictureSet? CodexPictureSet { get; private set; }
 
+    public ScreenshotSet? Screenshots { get; private set; }
+
     /// <summary>Fetches stock stories' average ratings and sends the Commander's votes.</summary>
     public StoryRatingClient? StoryRatings { get; private set; }
 
@@ -3541,6 +3543,11 @@ public sealed class AppHost : IDisposable
                     host.Secrets.TryGet(D47.Core.Interface.CodexPublishToken.SecretName, out var stored) ? stored : null, Environment.GetEnvironmentVariable),
                 () => D47.Core.Interface.CodexPublishToken.Present(host.Secrets.Names.Contains(D47.Core.Interface.CodexPublishToken.SecretName), Environment.GetEnvironmentVariable),
                 loggerFactory.CreateLogger<CodexPicturePublisher>()));
+        host.Screenshots = new ScreenshotSet(
+            files,
+            D47.Core.Capabilities.Builtin.ScreenshotsCapability.TargetFolder(),
+            paths.ScreenshotThumbnails,
+            host.CodexPictures.ScreenshotsCutFrom);
         host.StoryRatings = stores.StoryRatings;
         host.StoryBench = stores.StoryBench;
         services.EndingAnswer.Answer = host.Narration.AnswerEnding;

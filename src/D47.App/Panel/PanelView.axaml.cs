@@ -709,6 +709,10 @@ public partial class PanelView : UserControl, IPanelTabHost
         _searchFurnishing.CodexPictures = pictures;
     }
 
+    /// <summary>Gives this surface Commander › Ledgers › Screenshots.</summary>
+    public void EnableScreenshots(Func<D47.Core.Journal.CommanderGameState?> state, ScreenshotSet screenshots) =>
+        _commander.EnableScreenshots(state, screenshots);
+
     /// <summary>Gives this surface Commander › Commanders, after Ledgers.</summary>
     public void EnableCommanders(CommanderRoster roster) => _commander.EnableCommanders(roster);
 

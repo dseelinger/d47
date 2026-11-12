@@ -46,6 +46,7 @@ public sealed class AppPaths
         Ships = Path.Combine(Data, "ships");
         Stories = Path.Combine(Data, "stories");
         CodexPictures = Path.Combine(Data, "codex-pictures");
+        ScreenshotThumbnails = Path.Combine(Data, "screenshot-thumbnails");
         Signals = Path.Combine(Data, "signals");
         Rares = Path.Combine(Data, "rares");
         GalNet = Path.Combine(Data, "galnet.json");
@@ -146,6 +147,9 @@ public sealed class AppPaths
 
     /// <summary>Codex pictures: <c>stock\</c> holds the fetched index and pictures, <c>local\</c> the Commander's own.</summary>
     public string CodexPictures { get; }
+
+    /// <summary>Small PNG copies of the screenshots the Screenshots ledger draws.</summary>
+    public string ScreenshotThumbnails { get; }
 
     /// <summary>The daily signal index, <c>signals.tsv.gz</c>, downloaded when a signal search asks for it.</summary>
     public string Signals { get; }

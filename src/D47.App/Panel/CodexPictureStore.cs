@@ -184,6 +184,22 @@ public sealed class CodexPictureStore
         return keys;
     }
 
+    /// <summary>The screenshot names, across every Commander, that some crop file names.</summary>
+    public IReadOnlySet<string> ScreenshotsCutFrom()
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (_, path) in CropFiles())
+        {
+            if (PictureLift.ParseScreenshot(_files.ReadText(path)) is { } name)
+            {
+                names.Add(name);
+            }
+        }
+
+        return names;
+    }
+
     /// <summary>Rewrites every crop file that names <paramref name="from"/> to name <paramref name="to"/>; returns how many changed.</summary>
     public int ScreenshotRenamed(string from, string to)
     {

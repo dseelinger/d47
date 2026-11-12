@@ -3,7 +3,7 @@ using D47.Core.Journal;
 
 namespace D47.Core.Capabilities.Builtin;
 
-/// <summary>Elite's screenshots copied as JPEG, on the settings surface and nowhere else.</summary>
+/// <summary>Elite's screenshots copied as JPEG, with their switch on the settings surface and the pictures on Commander › Ledgers › Screenshots.</summary>
 public static class ScreenshotsCapability
 {
     public const string Id = "screenshots";

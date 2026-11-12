@@ -100,6 +100,7 @@ internal sealed class PanelPathFixture : IDisposable
         panel.EnableCombatStats(state, () => HistoryState.Done, now);
         panel.EnableCredits(state, () => HistoryState.Done, now);
         panel.EnableCodex(state, () => HistoryState.Done, now);
+        panel.EnableScreenshots(state, new ScreenshotSet(new MemoryFileSystem(), "C:/Pictures/D47", "C:/d47/thumbnails"));
         panel.EnableRawJournal();
         panel.EnableStarSystem(new StarSystemSurface(
             new Systems(), () => new JournalLocation("Sol", null, false, null)));

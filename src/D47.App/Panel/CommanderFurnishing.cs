@@ -15,6 +15,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private Func<NavCrumb, Control>? _combatStatsBuild;
     private Func<NavCrumb, Control>? _creditsBuild;
     private Func<NavCrumb, Control>? _codexBuild;
+    private Func<NavCrumb, Control>? _screenshotsBuild;
     private Func<NavCrumb, Control>? _commandersBuild;
     private Func<NavCrumb, Control>? _campaignBuild;
     private CampaignPage? _campaign;
@@ -302,6 +303,13 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         DeclareLedger(CodexPage.PageKey, "Codex");
     }
 
+    public void EnableScreenshots(Func<D47.Core.Journal.CommanderGameState?> state, ScreenshotSet screenshots)
+    {
+        _screenshotsBuild = _ => new ScreenshotsPage(screenshots, () => state()?.Location.StarSystem);
+
+        DeclareLedger(ScreenshotsPage.PageKey, "Screenshots");
+    }
+
     private Control PicturePage(string crumb, CodexPictureKey picture, CodexPictureSet pictures, CodexPictureWork work) =>
         CodexPage.IsChoose(crumb)
             ? new CodexChoosePage(picture, pictures, host.Nav, work)
@@ -408,7 +416,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : Page(crumb);
 
     private static bool IsLedger(string key) =>
-        key is BgsWorkPage.PageKey or CombatStatsPage.PageKey or CreditsPage.PageKey or CodexPage.PageKey or SessionPage.RootKey;
+        key is BgsWorkPage.PageKey or CombatStatsPage.PageKey or CreditsPage.PageKey or CodexPage.PageKey or ScreenshotsPage.PageKey or SessionPage.RootKey;
 
     private Control Page(NavCrumb crumb) =>
         IsWatches(crumb.Key) && _watchesBuild is { } watches ? watches(crumb)
@@ -422,6 +430,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
         : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
+        : crumb.Key == ScreenshotsPage.PageKey && _screenshotsBuild is { } screenshots ? screenshots(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };

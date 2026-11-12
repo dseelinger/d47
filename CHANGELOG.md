@@ -12,6 +12,8 @@ Changed: Saying "take a picture" presses Elite's screenshot key, F10, instead of
 
 Added: The mini panel, on the desktop and in the headset, shows where it is: a one-line trail at the top right of its text area, such as ASSET MGMT › FLEET › a ship, in every state it can be in. On a page with a section switch, such as a faction's Conflicts or a station's Market, the open section is the last level. A long trail gives way from its second level to a `…`.
 
+Added: Commander › Ledgers › Screenshots, after Codex, shows the pictures you have taken in Elite as a grid, newest first or oldest first. Each tile shows the whole picture, its system, body and local date and time, and a CODEX PICTURE tag when a Codex picture was cut from it. Pressing a tile opens the picture over the window, with Previous, Next, Show in folder and Close, and Left, Right and Escape. The page makes its thumbnails in the background, so a very large screenshot does not freeze the window.
+
 Changed: A Codex picture you save records the name of the screenshot it was cut from instead of keeping a second copy of that screenshot. Re-crop opens that screenshot and is not offered once it is gone; the picture itself still shows. Pictures saved earlier keep working from their kept copy.
 
 Changed: On the desktop, the Commander › Campaign tables (Fronts, Systems and Chronicle) fill the window width instead of stopping at 900 pixels; the notice, the faction frame and the proposed front keep their width. A long system name in the Fronts table wraps onto a second line instead of being shortened.
