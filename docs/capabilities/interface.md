@@ -245,7 +245,7 @@ It applies to the settings window too, and the level survives a restart like the
 
 Where the panel's tabs are drawn: **Along the top**, the default, or **Down the left**. One
 setting covers the desktop window and the headset's big panel; the mini panel has no tabs either
-way.
+way, and names the tab it is on, and where in it, in a line at the top.
 
 Down the left, the tabs stack in a rail beside the page, and help, the avatar and the other
 controls from the tab row move to the right-hand end of the row above the page. The top strip
@@ -316,6 +316,9 @@ kept in step, because there is nothing to keep in step; it cannot show something
 **It appears only while Elite is in front.** A strip pinned over a browser is a strip you turn off
 within a day, so it comes up when the game has the foreground and goes away when anything else
 does — including Directive 47's own window, which is right there showing strictly more.
+
+The mini panel names the tab it is on, and where in it, in a line at the top right of its text area:
+tab, sub-tab and level, shortened with a `…` when it does not fit beside the comms indicator.
 
 **It carries the same tabs as the headset's mini panel**, and it follows the main window between them. Settings is the
 one it does not have, for two reasons that agree: you could not touch it, and it is the one page

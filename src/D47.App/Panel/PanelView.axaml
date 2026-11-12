@@ -962,6 +962,17 @@
                            VerticalAlignment="Top"
                            Margin="3,3,0,0"
                            State="{Binding Comms}" />
+
+  <!-- Mini's trail: tab, sub-tab and level, right-aligned on the comms row. Display only. -->
+  <StackPanel x:Name="MiniTrailRow"
+              Orientation="Horizontal"
+              IsVisible="False"
+              IsHitTestVisible="False"
+              Focusable="False"
+              Height="20"
+              HorizontalAlignment="Right"
+              VerticalAlignment="Top"
+              Margin="0,3,3,0" />
   </Panel>
   </DockPanel>
 
