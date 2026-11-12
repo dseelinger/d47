@@ -14,6 +14,12 @@ public sealed record ScreenshotItem(KeptScreenshot Shot, long Length, string Sys
     public string Stem => Path.GetFileNameWithoutExtension(Shot.Path);
 }
 
+/// <summary>How the screenshots ledger reaches the Codex pictures cut from a screenshot: the keys, a rename and a removal.</summary>
+public sealed record CodexLinks(
+    Func<string, IReadOnlyList<CodexPictureKey>> CutFrom,
+    Func<string, string, int> Renamed,
+    Action<CodexPictureKey> Removed);
+
 /// <summary>The Commander's screenshots: the JPEG copies in one folder, their cached thumbnails and the Explorer call.</summary>
 public sealed class ScreenshotSet
 {
@@ -26,23 +32,90 @@ public sealed class ScreenshotSet
     private readonly string _thumbnails;
     private readonly Func<IReadOnlySet<string>> _codexCut;
     private readonly Action<string?> _show;
+    private readonly Func<string, bool> _recycle;
+    private readonly string? _bmpFolder;
+    private readonly CodexLinks? _codex;
 
     /// <param name="folder"><c>ScreenshotsCapability.TargetFolder()</c>.</param>
     /// <param name="thumbnails"><c>AppPaths.ScreenshotThumbnails</c>.</param>
     /// <param name="codexCut">The screenshot names a Codex picture is cut from.</param>
     /// <param name="show">Opens Explorer on a file, or on the folder when null; defaults to Explorer.</param>
+    /// <param name="recycle">Sends a file to the Recycle Bin; false or a throw when it cannot.</param>
+    /// <param name="bmpFolder">Elite's pictures folder, where the BMP a note names is.</param>
+    /// <param name="codex">The Codex pictures cut from a screenshot; null when there are none to reach.</param>
     public ScreenshotSet(
         IFileSystem files,
         string folder,
         string thumbnails,
         Func<IReadOnlySet<string>>? codexCut = null,
-        Action<string?>? show = null)
+        Action<string?>? show = null,
+        Func<string, bool>? recycle = null,
+        string? bmpFolder = null,
+        CodexLinks? codex = null)
     {
         _files = files;
         _folder = folder;
         _thumbnails = thumbnails;
         _codexCut = codexCut ?? (() => new HashSet<string>());
         _show = show ?? ShowInExplorer;
+        _recycle = recycle ?? (_ => false);
+        _bmpFolder = bmpFolder;
+        _codex = codex;
+    }
+
+    /// <summary>Elite's BMP the picture was converted from, when it is still there; null otherwise. Reads the disk: call it off the UI thread.</summary>
+    public string? BmpOf(ScreenshotItem item) =>
+        _bmpFolder is { } folder ? ScreenshotEdits.BmpToDelete(_files, item.Shot.Note, folder) : null;
+
+    /// <summary>The names of the Codex entries whose picture was cut from <paramref name="item"/>. Reads the disk: call it off the UI thread.</summary>
+    public IReadOnlyList<string> CodexEntriesCut(ScreenshotItem item) =>
+        [.. CutFrom(item).Select(key => Named(item, key))];
+
+    /// <summary>Renames the picture and its note, and the screenshot name every Codex picture cut from it records. Call it off the UI thread.</summary>
+    public ScreenshotRename Rename(ScreenshotItem item, string? stem)
+    {
+        var result = ScreenshotEdits.Rename(_files, item.Shot.Path, stem);
+
+        if (result.Path is { } renamed && !string.Equals(renamed, item.Shot.Path, StringComparison.Ordinal))
+        {
+            _codex?.Renamed(Path.GetFileName(item.Shot.Path), Path.GetFileName(renamed));
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Recycles the picture, and Elite's BMP when asked, then deletes its note, its thumbnail and the Codex pictures cut
+    /// from it. Returns why it stopped, or null when it is done. Call it off the UI thread.
+    /// </summary>
+    public string? Delete(ScreenshotItem item, bool withBmp)
+    {
+        var thumbnail = ThumbnailName(item.Shot.Path, _files.Stat(item.Shot.Path));
+        var cut = CutFrom(item);
+        var reason = ScreenshotEdits.Delete(_files, item.Shot.Path, withBmp ? BmpOf(item) : null, _recycle);
+
+        if (reason is not null)
+        {
+            return reason;
+        }
+
+        if (thumbnail is not null)
+        {
+            try
+            {
+                _files.Delete(Path.Combine(_thumbnails, thumbnail));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+
+        foreach (var key in cut)
+        {
+            _codex?.Removed(key);
+        }
+
+        return null;
     }
 
     /// <summary>Every screenshot, newest first. Reads the folder: call it off the UI thread.</summary>
@@ -188,6 +261,14 @@ public sealed class ScreenshotSet
 
         return string.Create(CultureInfo.InvariantCulture, $"{hash}-{stat.Length}-{stat.Written.Ticks}.png");
     }
+
+    private IReadOnlyList<CodexPictureKey> CutFrom(ScreenshotItem item) =>
+        _codex?.CutFrom(Path.GetFileName(item.Shot.Path)) ?? [];
+
+    private static string Named(ScreenshotItem item, CodexPictureKey key) =>
+        item.Shot.Note?.CodexEntries.FirstOrDefault(entry => entry.EntryId == key.EntryId)?.Name is { Length: > 0 } name
+            ? name
+            : string.Create(CultureInfo.InvariantCulture, $"entry {key.EntryId}");
 
     private static (string System, string Body) Place(KeptScreenshot shot)
     {

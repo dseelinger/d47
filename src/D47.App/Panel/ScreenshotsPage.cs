@@ -225,7 +225,7 @@ public sealed class ScreenshotsPage : UserControl, IPageSummary
             HorizontalContentAlignment = HorizontalAlignment.Left,
         });
         AutomationProperties.SetName(button, $"{item.System} {item.Body} {When(item.Shot.At)}".Replace("  ", " ", StringComparison.Ordinal));
-        button.Click += (_, _) => ScreenshotViewer.Open(this, _set, ordered, index, _currentSystem);
+        button.Click += (_, _) => ScreenshotViewer.Open(this, _set, ordered, index, _currentSystem, Draw);
 
         return button;
     }

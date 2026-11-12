@@ -514,7 +514,7 @@ public sealed class AppHost : IDisposable
         return open ? "Audio player opened." : "Audio player closed.";
     }
 
-    private static bool RecycleFile(string path)
+    internal static bool RecycleFile(string path)
     {
         if (!File.Exists(path))
         {
@@ -3547,7 +3547,14 @@ public sealed class AppHost : IDisposable
             files,
             D47.Core.Capabilities.Builtin.ScreenshotsCapability.TargetFolder(),
             paths.ScreenshotThumbnails,
-            host.CodexPictures.ScreenshotsCutFrom);
+            host.CodexPictures.ScreenshotsCutFrom,
+            recycle: RecycleFile,
+            bmpFolder: D47.Core.Journal.EliteScreenshot.Folder(),
+            codex: new CodexLinks(
+                name => [.. host.CodexPictures.PicturesCutFrom(name)
+                    .Where(key => string.Equals(host.CodexPictures.LocalScreenshot(key), name, StringComparison.OrdinalIgnoreCase))],
+                host.CodexPictures.ScreenshotRenamed,
+                host.CodexPictures.RemoveLocal));
         host.StoryRatings = stores.StoryRatings;
         host.StoryBench = stores.StoryBench;
         services.EndingAnswer.Answer = host.Narration.AnswerEnding;

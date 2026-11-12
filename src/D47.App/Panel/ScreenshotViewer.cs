@@ -6,11 +6,14 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using D47.App.Controls;
 using D47.App.Theming;
+using D47.App.Windowing;
+using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>A screenshot at the window's size over the whole window, with Previous, Next, Show in folder and Close; Left, Right and Escape work too.</summary>
+/// <summary>A screenshot at the window's size over the whole window, with Previous, Next, Rename, Show in folder, Delete and Close; Left, Right and Escape work too.</summary>
 internal sealed class ScreenshotViewer : Grid
 {
     private const double SideMargin = 24;
@@ -19,7 +22,9 @@ internal sealed class ScreenshotViewer : Grid
 
     private readonly OverlayLayer _layer;
     private readonly ScreenshotSet _set;
-    private readonly IReadOnlyList<ScreenshotItem> _items;
+    private readonly List<ScreenshotItem> _items;
+    private readonly ModalHost _modals = new();
+    private readonly Action? _changed;
     private readonly Func<string?> _currentSystem;
     private readonly Image _image = new()
     {
@@ -37,11 +42,12 @@ internal sealed class ScreenshotViewer : Grid
     private int _index;
     private int _shown;
 
-    private ScreenshotViewer(OverlayLayer layer, ScreenshotSet set, IReadOnlyList<ScreenshotItem> items, int index, Func<string?> currentSystem)
+    private ScreenshotViewer(OverlayLayer layer, ScreenshotSet set, IReadOnlyList<ScreenshotItem> items, int index, Func<string?> currentSystem, Action? changed)
     {
         _layer = layer;
         _set = set;
-        _items = items;
+        _items = [.. items];
+        _changed = changed;
         _currentSystem = currentSystem;
         _index = index;
 
@@ -54,21 +60,27 @@ internal sealed class ScreenshotViewer : Grid
         _position.Name = "ScreenshotPosition";
         _position.Margin = new Thickness(14, 0, 0, 0);
 
+        var rename = Tool("Rename", "RenameScreenshot", Rename);
         var show = Tool("Show in folder", "ShowScreenshotInFolder", () => _set.Show(_items[_index].Shot.Path));
+        var delete = Tool("Delete", "DeleteScreenshot", Delete);
+        delete.Classes.Add(Settings.SettingsView.DestructiveClass);
         var close = Tool("Close", "CloseScreenshot", Dismiss);
         close.Margin = new Thickness(14, 0, 0, 0);
 
         var bar = new DockPanel { VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(14), LastChildFill = false };
         DockPanel.SetDock(close, Dock.Right);
+        DockPanel.SetDock(delete, Dock.Right);
         DockPanel.SetDock(show, Dock.Right);
+        DockPanel.SetDock(rename, Dock.Right);
 
-        foreach (var control in new Control[] { _previous, _next, _position, close, show })
+        foreach (var control in new Control[] { _previous, _next, _position, close, delete, show, rename })
         {
             bar.Children.Add(control);
         }
 
         Children.Add(bar);
         Children.Add(_caption);
+        Children.Add(_modals);
 
         Focusable = true;
 
@@ -83,14 +95,14 @@ internal sealed class ScreenshotViewer : Grid
         Show();
     }
 
-    internal static ScreenshotViewer? Open(Visual from, ScreenshotSet set, IReadOnlyList<ScreenshotItem> items, int index, Func<string?> currentSystem)
+    internal static ScreenshotViewer? Open(Visual from, ScreenshotSet set, IReadOnlyList<ScreenshotItem> items, int index, Func<string?> currentSystem, Action? changed = null)
     {
         if (OverlayLayer.GetOverlayLayer(from) is not { } layer || index < 0 || index >= items.Count)
         {
             return null;
         }
 
-        var viewer = new ScreenshotViewer(layer, set, items, index, currentSystem);
+        var viewer = new ScreenshotViewer(layer, set, items, index, currentSystem, changed);
         layer.Children.Add(viewer);
 
         return viewer;
@@ -108,6 +120,11 @@ internal sealed class ScreenshotViewer : Grid
 
     private void Keys(object? sender, KeyEventArgs e)
     {
+        if (_modals.Top is not null)
+        {
+            return;
+        }
+
         switch (e.Key)
         {
             case Key.Escape:
@@ -187,6 +204,80 @@ internal sealed class ScreenshotViewer : Grid
         {
             _caption.Children.Add(ScreenshotsPage.CodexTagBlock());
         }
+    }
+
+    private void Rename()
+    {
+        var item = _items[_index];
+        var dialog = new RenameScreenshotDialog(Path.GetFileName(item.Shot.Path), stem => Renamed(item, stem));
+
+        _ = Ask(dialog);
+    }
+
+    private async Task<ScreenshotRename> Renamed(ScreenshotItem item, string stem)
+    {
+        var result = await Task.Run(() => _set.Rename(item, stem));
+
+        if (result.Path is { } path && _items.IndexOf(item) is >= 0 and var at)
+        {
+            _items[at] = item with { Shot = item.Shot with { Path = path } };
+
+            if (at == _index)
+            {
+                Show();
+            }
+
+            _changed?.Invoke();
+        }
+
+        return result;
+    }
+
+    private async void Delete()
+    {
+        var item = _items[_index];
+        var (bmp, entries) = await Task.Run(() => (_set.BmpOf(item) is not null, _set.CodexEntriesCut(item)));
+
+        if (_items.IndexOf(item) < 0)
+        {
+            return;
+        }
+
+        var dialog = new DeleteScreenshotDialog(Path.GetFileName(item.Shot.Path), bmp, entries, withBmp => Deleted(item, withBmp));
+
+        _ = Ask(dialog);
+    }
+
+    private async Task<string?> Deleted(ScreenshotItem item, bool withBmp)
+    {
+        var reason = await Task.Run(() => _set.Delete(item, withBmp));
+
+        if (reason is not null)
+        {
+            return reason;
+        }
+
+        var at = _items.IndexOf(item);
+        _items.RemoveAt(at);
+        _changed?.Invoke();
+
+        if (at >= _items.Count)
+        {
+            Dismiss();
+        }
+        else
+        {
+            _index = at;
+            Show();
+        }
+
+        return null;
+    }
+
+    private async Task Ask(ModalDialog dialog)
+    {
+        await _modals.Show(dialog);
+        Focus();
     }
 
     private void Dismiss() => _layer.Children.Remove(this);

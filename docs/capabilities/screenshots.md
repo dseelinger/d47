@@ -32,7 +32,7 @@ nav_order: 161
 <p class="intro">D47 saves a small copy of each screenshot and leaves Elite's alone.</p>
 <section>
 <h2><span class="num">1</span> Each screenshot is copied as a JPEG.</h2>
-<p class="body">Each screenshot you take in Elite, including high-resolution ones, is copied as a JPEG. Elite's BMP is never touched.</p>
+<p class="body">Each screenshot you take in Elite, including high-resolution ones, is copied as a JPEG. Elite's BMP is left alone unless you tick the box when you delete a copy.</p>
 </section>
 <section>
 <h2><span class="num">2</span> The copy is named for the time and the place.</h2>
@@ -104,6 +104,18 @@ the viewer over the whole window: **Previous** and **Next** follow the grid's or
 the ends, a mono "n of N" shows the place, **Show in folder** opens Explorer with the file selected,
 **Close** puts it away, and under the picture are the place, date and time, pixel size and file size.
 Left and Right move and Escape closes.
+
+**Rename** in the viewer opens a dialog with the name in a field and a fixed `.jpg`. **Save** renames
+the JPEG and its note, and the date taken stays with the picture, so its place in the grid does not
+change. A name that is empty, holds a character Windows refuses, or is already taken shows an error under
+the field and renames nothing. A Codex picture cut from the screenshot keeps working and still offers
+Re-crop. **Delete** opens a dialog saying the JPEG goes to the Recycle Bin. When the note names an Elite
+BMP that is still in Elite's pictures folder, a box, off by default, adds **Also delete Elite's original
+BMP**; ticked, the BMP goes to the Recycle Bin too. When Codex pictures are cut from the screenshot the
+dialog names up to three of them and counts the rest, and deleting removes them, so each entry shows its
+stock picture or placeholder again. After a delete the viewer shows the next picture, or closes after the
+last. A file that cannot be renamed or moved to the Recycle Bin leaves everything as it was, and the
+dialog shows why.
 
 The row is under Settings › You and your records › Logs and goals, in the Screenshots group, beside **Saved to**, which shows the folder.
 
