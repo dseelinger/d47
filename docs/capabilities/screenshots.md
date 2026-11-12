@@ -117,6 +117,12 @@ stock picture or placeholder again. After a delete the viewer shows the next pic
 last. A file that cannot be renamed or moved to the Recycle Bin leaves everything as it was, and the
 dialog shows why.
 
+On the headset big panel the same ledger shows the same sort and tiles, 25 at a time, ending in a pager
+row that reads "1–25 of 30" with ◄ PREVIOUS and NEXT ►, which are disabled at the ends; changing the sort
+returns to the first page. Pressing a tile goes to a page showing the whole picture, fitted to the panel,
+with ◄ PREVIOUS, NEXT ►, the "n of N" readout and the place, date and size line; BACK and the breadcrumb
+leave it. The headset has no Show in folder, Rename or Delete.
+
 The row is under Settings › You and your records › Logs and goals, in the Screenshots group, beside **Saved to**, which shows the folder.
 
 Saying "take a picture" makes one: [Screen](screen.md) presses Elite's screenshot key, and the copy and

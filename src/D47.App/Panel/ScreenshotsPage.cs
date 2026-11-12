@@ -8,11 +8,21 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.Core.Interface;
 using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › Ledgers › Screenshots: the JPEG copies of Elite's screenshots as a grid of tiles that open a viewer.</summary>
+/// <summary>The grid order the Screenshots ledger last drew, which the headset's picture page steps through.</summary>
+public sealed class ScreenshotBrowse
+{
+    public IReadOnlyList<ScreenshotItem> Ordered { get; set; } = [];
+}
+
+/// <summary>
+/// Commander › Ledgers › Screenshots: the JPEG copies of Elite's screenshots as a grid of tiles that open a viewer.
+/// On the headset the grid is paged 25 at a time and a tile drills to <see cref="ScreenshotPicturePage"/>.
+/// </summary>
 public sealed class ScreenshotsPage : UserControl, IPageSummary
 {
     public const string PageKey = "screenshots";
@@ -23,23 +33,40 @@ public sealed class ScreenshotsPage : UserControl, IPageSummary
 
     public const string CodexTag = "CODEX PICTURE";
 
+    public const string ViewPrefix = "screenshot-view-";
+
+    public const string PreviousName = "ScreenshotsPrevious";
+
+    public const string NextName = "ScreenshotsNext";
+
     private const double TileWidth = 260;
 
     private const double TileImageHeight = 146;
 
     private readonly ScreenshotSet _set;
     private readonly Func<string?> _currentSystem;
+    private readonly bool _headset;
+    private readonly PanelNavigator? _nav;
+    private readonly ScreenshotBrowse _browse;
     private readonly Segment _sort = SortChoice();
     private readonly StackPanel _body = new() { Spacing = 12, Margin = new Thickness(0, 12, 0, 16) };
     private IReadOnlyList<ScreenshotItem> _items = [];
     private Task _thumbnails = Task.CompletedTask;
     private int _drawn;
+    private int _page;
 
-    public ScreenshotsPage(ScreenshotSet set, Func<string?> currentSystem)
+    public ScreenshotsPage(ScreenshotSet set, Func<string?> currentSystem, bool headset = false, PanelNavigator? nav = null, ScreenshotBrowse? browse = null)
     {
         _set = set;
         _currentSystem = currentSystem;
-        _sort.SelectionChanged += (_, _) => Fill();
+        _headset = headset;
+        _nav = nav;
+        _browse = browse ?? new ScreenshotBrowse();
+        _sort.SelectionChanged += (_, _) =>
+        {
+            _page = 0;
+            Fill();
+        };
 
         Content = _body;
     }
@@ -51,6 +78,13 @@ public sealed class ScreenshotsPage : UserControl, IPageSummary
         add { }
         remove { }
     }
+
+    /// <summary>The crumb of the headset page showing the whole screenshot named <paramref name="stem"/>.</summary>
+    public static NavCrumb ViewCrumb(string stem) => new(ViewPrefix + stem, "Screenshot") { Whole = true };
+
+    public static bool IsView(string key) => key.StartsWith(ViewPrefix, StringComparison.Ordinal);
+
+    public static string StemOf(string key) => key[ViewPrefix.Length..];
 
     /// <summary>"12 screenshots · 31.4 MB".</summary>
     public static string CountLine(int count, long bytes) =>
@@ -157,6 +191,8 @@ public sealed class ScreenshotsPage : UserControl, IPageSummary
     private void Fill()
     {
         var ordered = Ordered();
+        _browse.Ordered = ordered;
+        _page = FactionModel.ClampPage(_page, ordered.Count);
         var current = _currentSystem();
         var generation = _drawn;
         var slots = new List<(Image Slot, ScreenshotItem Item)>();
@@ -170,25 +206,37 @@ public sealed class ScreenshotsPage : UserControl, IPageSummary
             return;
         }
 
-        var open = new Button { Name = "ScreenshotsShowInFolder", Content = "Show in folder", MinHeight = TypeScale.MinimumTarget };
-        open.Click += (_, _) => _set.Show(null);
-
         (_sort.Parent as Avalonia.Controls.Panel)?.Children.Remove(_sort);
 
         var head = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*,Auto"), ColumnSpacing = 16 };
         CreditsKit.Place(head, 0, _sort);
         CreditsKit.Place(head, 1, Mono(CountLine(_items.Count, _items.Sum(item => item.Length))));
-        CreditsKit.Place(head, 3, open);
+
+        if (!_headset)
+        {
+            var open = new Button { Name = "ScreenshotsShowInFolder", Content = "Show in folder", MinHeight = TypeScale.MinimumTarget };
+            open.Click += (_, _) => _set.Show(null);
+            CreditsKit.Place(head, 3, open);
+        }
+
         _body.Children.Add(head);
 
         var grid = new WrapPanel { Name = "ScreenshotGrid", Orientation = Orientation.Horizontal };
 
-        for (var i = 0; i < ordered.Count; i++)
+        var first = _headset ? _page * FactionModel.PageSize : 0;
+        var last = _headset ? Math.Min(ordered.Count, first + FactionModel.PageSize) : ordered.Count;
+
+        for (var i = first; i < last; i++)
         {
             grid.Children.Add(Tile(ordered, i, current, slots));
         }
 
         _body.Children.Add(grid);
+
+        if (_headset && ordered.Count > FactionModel.PageSize)
+        {
+            _body.Children.Add(Pager(ordered.Count));
+        }
 
         _thumbnails = Task.Run(() => LoadThumbnails(slots, generation));
     }
@@ -225,9 +273,50 @@ public sealed class ScreenshotsPage : UserControl, IPageSummary
             HorizontalContentAlignment = HorizontalAlignment.Left,
         });
         AutomationProperties.SetName(button, $"{item.System} {item.Body} {When(item.Shot.At)}".Replace("  ", " ", StringComparison.Ordinal));
-        button.Click += (_, _) => ScreenshotViewer.Open(this, _set, ordered, index, _currentSystem, Draw);
+        button.Click += (_, _) =>
+        {
+            if (!_headset)
+            {
+                ScreenshotViewer.Open(this, _set, ordered, index, _currentSystem, Draw);
+            }
+            else
+            {
+                _nav?.Drill(ViewCrumb(item.Stem));
+            }
+        };
 
         return button;
+    }
+
+    private Grid Pager(int total)
+    {
+        var readout = Mono(FactionModel.PageReadout(_page, total));
+        var previous = new Button { Name = PreviousName, Content = "◄ PREVIOUS", Height = TypeScale.MinimumTarget, IsEnabled = _page > 0 };
+        var next = new Button
+        {
+            Name = NextName,
+            Content = "NEXT ►",
+            Height = TypeScale.MinimumTarget,
+            IsEnabled = FactionModel.ClampPage(_page + 1, total) > _page,
+        };
+        previous.Click += (_, _) =>
+        {
+            _page--;
+            Fill();
+        };
+        next.Click += (_, _) =>
+        {
+            _page++;
+            Fill();
+        };
+
+        var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Children = { previous, next } };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 8, 0, 0) };
+        Grid.SetColumn(tiles, 1);
+        grid.Children.Add(readout);
+        grid.Children.Add(tiles);
+
+        return grid;
     }
 
     private void LoadThumbnails(List<(Image Slot, ScreenshotItem Item)> slots, int generation)

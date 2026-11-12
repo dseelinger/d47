@@ -80,6 +80,8 @@ public sealed record MiniPanelServices
 
     public CodexPictureSet? CodexPictures { get; init; }
 
+    public ScreenshotSet? Screenshots { get; init; }
+
     /// <summary>Enables every page the services allow, in the order the headset lists them.</summary>
     public void Furnish(PanelView view)
     {
@@ -147,6 +149,12 @@ public sealed record MiniPanelServices
             view.EnableCombatStats(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCredits(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCodex(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow, CodexPictures);
+
+            if (Screenshots is not null)
+            {
+                view.EnableScreenshots(gameState, Screenshots);
+            }
+
             view.EnableSession(gameState);
         }
 

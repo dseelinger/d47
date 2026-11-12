@@ -305,7 +305,12 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
     public void EnableScreenshots(Func<D47.Core.Journal.CommanderGameState?> state, ScreenshotSet screenshots)
     {
-        _screenshotsBuild = _ => new ScreenshotsPage(screenshots, () => state()?.Location.StarSystem);
+        var headset = host.Headset;
+        var browse = new ScreenshotBrowse();
+
+        _screenshotsBuild = crumb => ScreenshotsPage.IsView(crumb.Key)
+            ? new ScreenshotPicturePage(screenshots, browse, ScreenshotsPage.StemOf(crumb.Key), () => state()?.Location.StarSystem)
+            : new ScreenshotsPage(screenshots, () => state()?.Location.StarSystem, headset, host.Nav, browse);
 
         DeclareLedger(ScreenshotsPage.PageKey, "Screenshots");
     }
@@ -430,7 +435,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
         : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
-        : crumb.Key == ScreenshotsPage.PageKey && _screenshotsBuild is { } screenshots ? screenshots(crumb)
+        : (crumb.Key == ScreenshotsPage.PageKey || ScreenshotsPage.IsView(crumb.Key)) && _screenshotsBuild is { } screenshots ? screenshots(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
         : new TextBlock { Text = "Nothing here." };
