@@ -52,6 +52,10 @@ public sealed class PageFooter : Border
     public static DockPanel Shell(Control body, string phrase, JournalClock clock, double? maxWidth = null) =>
         Shell(null, body, phrase, clock, maxWidth);
 
+    /// <summary>Holds <paramref name="content"/> to <paramref name="maxWidth"/> at the left, for the text and forms on a page whose table fills the window.</summary>
+    public static Control Capped(Control content, double maxWidth) =>
+        new Border { MaxWidth = maxWidth, HorizontalAlignment = HorizontalAlignment.Left, Child = content };
+
     /// <summary>As above, with <paramref name="sidebar"/> docked to the left of the scrolled body.</summary>
     public static DockPanel Shell(Control? sidebar, Control body, string phrase, JournalClock clock, double? maxWidth = null)
     {

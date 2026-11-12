@@ -25,6 +25,9 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
 
     public const string Hint = "Career totals from the game's own record. They change when the game next writes them.";
 
+    /// <summary>The width every section but Activities keeps; the Activities table fills the page.</summary>
+    public const double Cap = 900;
+
     private readonly Func<CommanderGameState?> _state;
     private readonly Action _clearSearch;
     private readonly ContentControl _sidebar = new();
@@ -54,7 +57,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
             _activities = new ActivitiesPage(activities, () => state()?.Identity.FrontierId, columnWidths: columnWidths, embedded: true);
         }
 
-        Content = PageFooter.Shell(_sidebar, _body, Phrase, clock, 900);
+        Content = PageFooter.Shell(_sidebar, _body, Phrase, clock);
         Draw();
     }
 
@@ -159,6 +162,21 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
             return;
         }
 
+        DrawFigures();
+
+        var figures = new StackPanel();
+
+        foreach (var child in _body.Children.ToList())
+        {
+            _body.Children.Remove(child);
+            figures.Children.Add(child);
+        }
+
+        _body.Children.Add(PageFooter.Capped(figures, Cap));
+    }
+
+    private void DrawFigures()
+    {
         if (!Statistics.IsKnown)
         {
             _body.Children.Add(TitleText.Block(

@@ -82,6 +82,9 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     }
 
     private readonly Func<CommanderGameState?> _state;
+    /// <summary>The width the title and messages keep; the tables fill the page.</summary>
+    public const double Cap = 1000;
+
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly SortHeader<Held> _head = new("StoredHead", ColumnHeadings, ByName);
@@ -103,7 +106,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
         _head.Changed += Draw;
 
-        Content = PageFooter.Shell(_body, Phrase, _clock, 1000);
+        Content = PageFooter.Shell(_body, Phrase, _clock);
         Draw();
     }
 
@@ -254,10 +257,10 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
         _table = new TableLayout(TableId, ColumnList, _columnWidths);
         _body.Children.Clear();
-        _body.Children.Add(TitleText.Block(
+        _body.Children.Add(PageFooter.Capped(TitleText.Block(
             TitleText.Build("Stored modules", TypeScale.Title, TitleRank.Screen),
             TitleText.Context("In storage, by where it's stored"),
-            TitleText.Figure("Modules", count.ToString(CultureInfo.InvariantCulture))));
+            TitleText.Figure("Modules", count.ToString(CultureInfo.InvariantCulture))), Cap));
 
         if (!Store.IsKnown)
         {
@@ -358,10 +361,10 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         return row;
     }
 
-    private static TextBlock Message(string text)
+    private static Control Message(string text)
     {
         var block = LoadoutPages.Muted(text);
         block.Margin = new Thickness(0, 18, 0, 0);
-        return block;
+        return PageFooter.Capped(block, Cap);
     }
 }

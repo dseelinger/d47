@@ -6,6 +6,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Activities;
 using D47.Core.Utilities;
@@ -32,6 +33,9 @@ public sealed class ActivitiesPage : UserControl
         new("Activity", ColumnFit.Fill),
     ];
 
+    /// <summary>The width the title row keeps; the table fills the page.</summary>
+    public const double Cap = 900;
+
     private readonly ActivityLedger _ledger;
 
     private readonly Func<string?> _commander;
@@ -42,7 +46,7 @@ public sealed class ActivitiesPage : UserControl
 
     private TableLayout _layout;
 
-    private readonly StackPanel _page = new() { Spacing = 2, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Stretch };
+    private readonly StackPanel _page = new() { Spacing = 2, HorizontalAlignment = HorizontalAlignment.Stretch };
 
     private static readonly IReadOnlyList<SortColumn<ActivityRow>> WideHeadings =
     [
@@ -146,7 +150,7 @@ public sealed class ActivitiesPage : UserControl
         var rule = new Border { Height = 1, Margin = new Thickness(0, 0, 0, 4) };
         ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
 
-        _page.Children.Add(header);
+        _page.Children.Add(PageFooter.Capped(header, Cap));
         _page.Children.Add(rule);
         _page.Children.Add(Head());
 

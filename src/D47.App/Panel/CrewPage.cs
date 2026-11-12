@@ -30,6 +30,9 @@ public sealed class CrewPage : UserControl
 
     public const string TableId = "Crew";
 
+    /// <summary>The width the title and message keep; the table fills the page.</summary>
+    public const double Cap = 1000;
+
     private static readonly TableColumn[] ColumnList =
     [
         new("Pilot", ColumnFit.Fill),
@@ -64,7 +67,7 @@ public sealed class CrewPage : UserControl
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
         _head.Changed += Draw;
 
-        Content = PageFooter.Shell(_body, Phrase, _clock, 1000);
+        Content = PageFooter.Shell(_body, Phrase, _clock);
         Draw();
     }
 
@@ -101,9 +104,9 @@ public sealed class CrewPage : UserControl
         _seen = Stamp();
 
         _body.Children.Clear();
-        _body.Children.Add(TitleText.Block(
+        _body.Children.Add(PageFooter.Capped(TitleText.Block(
             TitleText.Build("Crew", TypeScale.Title, TitleRank.Screen),
-            TitleText.Context("Hired pilots")));
+            TitleText.Context("Hired pilots")), Cap));
 
         DrawPilots();
     }
@@ -116,7 +119,7 @@ public sealed class CrewPage : UserControl
         {
             var message = LoadoutPages.Muted(Unseen);
             message.Margin = new Thickness(0, 18, 0, 0);
-            _body.Children.Add(message);
+            _body.Children.Add(PageFooter.Capped(message, Cap));
             return;
         }
 

@@ -43,6 +43,9 @@ public sealed class CommandersPage : UserControl
     /// <summary>The default order: last detected first.</summary>
     public static readonly SortOrder ByLastDetected = new(3, SortDirection.Descending);
 
+    /// <summary>The width the title, helper and tally keep; the table fills the page.</summary>
+    public const double Cap = 1100;
+
     private readonly SortHeader<CommanderSighting> _head = new("CommandersHead", Heads, ByLastDetected);
     private readonly CommanderRoster _roster;
     private readonly ColumnWidthMemory? _columnWidths;
@@ -64,11 +67,7 @@ public sealed class CommandersPage : UserControl
             Margin = new Thickness(14),
             Children =
             {
-                LoadoutPages.Scrolling(new Grid
-                {
-                    ColumnDefinitions = [new ColumnDefinition(GridLength.Star) { MaxWidth = 1100 }, new ColumnDefinition(GridLength.Auto)],
-                    Children = { _body },
-                }),
+                LoadoutPages.Scrolling(_body),
             },
         };
 
@@ -103,18 +102,18 @@ public sealed class CommandersPage : UserControl
         _seen = _roster.Stamp;
         _body.Children.Clear();
 
-        _body.Children.Add(TitleText.Screen("Commanders"));
+        _body.Children.Add(PageFooter.Capped(TitleText.Screen("Commanders"), Cap));
 
         var helper = Text(Helper, Fonts.ProseFamily, TypeScale.Body, ThemeManager.GreyKey);
         helper.TextWrapping = TextWrapping.Wrap;
         helper.Margin = new Thickness(0, 14, 0, 14);
-        _body.Children.Add(helper);
+        _body.Children.Add(PageFooter.Capped(helper, Cap));
 
         var commanders = _roster.Commanders;
 
         if (commanders.Count == 0)
         {
-            _body.Children.Add(Text(NoneYet, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
+            _body.Children.Add(PageFooter.Capped(Text(NoneYet, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey), Cap));
             return;
         }
 
@@ -132,7 +131,7 @@ public sealed class CommandersPage : UserControl
 
         var tally = Text(Tally(commanders.Count, _roster.FilesExamined), Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey);
         tally.Margin = new Thickness(0, 14, 0, 0);
-        _body.Children.Add(tally);
+        _body.Children.Add(PageFooter.Capped(tally, Cap));
     }
 
     private Grid Header()

@@ -28,6 +28,9 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
 
     public const string Word = "Phrases";
 
+    /// <summary>The width the title, lead and form keep; the tables fill the page.</summary>
+    public const double Cap = 1000;
+
     public const string Lead = "What D47 understands straight away, without asking the model.";
 
     public const string AddLead = "Type a wording or a pattern, then pick the phrase it stands for.";
@@ -182,7 +185,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             Children = { _say, _picker, add },
         };
 
-        var body = new StackPanel
+        var head = new StackPanel
         {
             Children =
             {
@@ -200,11 +203,12 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
                     },
                 },
                 Muted(Hint, new Thickness(0, 8, 0, 0), TypeScale.Small),
-                _lists,
             },
         };
 
-        Content = PageFooter.Shell(body, LearnedPhrasesCapability.TeachPhrase, _clock, 1000);
+        var body = new StackPanel { Children = { PageFooter.Capped(head, Cap), _lists } };
+
+        Content = PageFooter.Shell(body, LearnedPhrasesCapability.TeachPhrase, _clock);
 
         _store.Changed += Refresh;
 
