@@ -47,12 +47,12 @@ nav_order: 157
 <section>
 <h2><span class="num">3</span> Keep a picture.</h2>
 <p class="say">Say "take a picture".</p>
-<p class="expect">D47 saves a full-size picture to data\captures and answers "Picture taken." This works with the row off, and no model sees the picture.</p>
+<p class="expect">D47 presses Elite's screenshot key and answers "Picture taken." The copy goes in the D47 folder inside Elite's pictures folder. This needs Let D47 press keys in Elite on, works with this row off, and no model sees the picture.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="Phrases that save a picture">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">take a picture</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">"take a picture of this" and "save a picture" do the same.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">Codex entries logged just before it are noted beside the picture.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">Codex entries logged just before it are noted beside the copy.</text>
 </svg>
 </section>
 <section>
@@ -132,16 +132,18 @@ on screen and the game state it was given does not answer it.
 > "take a picture of this"
 > "save a picture"
 
-Saves a full-size picture of Elite's window, or of the headset's left eye cut to the part inside the
-lens mask, to `data\captures`. It is not scaled down, and no model sees it. It works with Let the
-model look at the screen off, and the model cannot call it: only the phrases above reach it.
+Presses Elite's regular screenshot key, F10, so Elite takes the screenshot, in VR as on the
+monitor. D47 keeps nothing itself: with Convert Elite's screenshots on, the screenshot is copied as a
+JPEG into the D47 folder inside Elite's pictures folder, as every screenshot is (see
+[Screenshots](screenshots.md)). No model sees it. It needs Let D47 press keys in Elite on, works with
+Let the model look at the screen off, and the model cannot call it: only the phrases above reach it.
 
-Each picture is a `capture-<date>-<time>.jpg` with a `.json` note of the same name: the time, where
-the picture came from, its size, the system and body, the codex region number, and the codex entries
-logged in the ten minutes before it. D47 answers "Picture taken." and, when the note lists entries,
-"Noted with" the names of up to three of them and "and N more" for the rest. The newest 100 pictures
-are kept; the oldest go as new ones arrive. A refused capture, such as Elite being minimised, saves
-nothing and says why.
+Each copy has a `.json` note of the same name: the time, its size, the system and body, the codex
+region number, the codex entries logged in the ten minutes before it, and the name of Elite's BMP.
+D47 answers "Picture taken." and, when entries were logged in those ten minutes, "Noted with" the
+names of up to three of them and "and N more" for the rest. With Convert Elite's screenshots off the
+key is still pressed, and the answer says the picture is Elite's BMP only. With Elite not the window
+in front, or pressing keys switched off, nothing is pressed and the answer says why.
 
 ### Off by default
 
@@ -194,10 +196,11 @@ written to disk.
 
 #### `take_picture`
 
-Takes a full-size picture through `IScreenCapture.TakeFull` on the thread pool and writes it and its
-`PictureNote` to `AppPaths.Captures`. Takes no arguments, and is protected: the model is refused it.
-It is not gated by the setting. When the capture refuses it writes nothing and answers
-`No picture was taken: ` and the refusal.
+Sends `ScreenCapability.ScreenshotKey`, an F10 tap, through `IGameInput` on the thread pool and
+writes nothing; `ScreenshotConverter` writes the JPEG and its `PictureNote` when the journal reports
+the screenshot. Takes no arguments, and is protected: the model is refused it. It is not gated by
+Let the model look at the screen, and is gated by Let D47 press keys in Elite. When the press is
+refused it answers `No picture was taken. ` and the reason.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

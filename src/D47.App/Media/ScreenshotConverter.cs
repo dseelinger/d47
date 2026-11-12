@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using D47.App.Diagnostics;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
@@ -8,8 +10,8 @@ using Windows.Graphics.Imaging;
 namespace D47.App.Media;
 
 /// <summary>
-/// Copies each Elite screenshot to a named JPEG in a <c>D47</c> folder inside Elite's pictures folder, one at a time on
-/// the pool. Elite's BMP is only read.
+/// Copies each Elite screenshot to a named JPEG, with a <see cref="PictureNote"/> beside it, in a <c>D47</c> folder inside
+/// Elite's pictures folder, one at a time on the pool. Elite's BMP is only read.
 /// </summary>
 public sealed class ScreenshotConverter(
     IFileSystem files,
@@ -23,7 +25,7 @@ public sealed class ScreenshotConverter(
 
     private static readonly TimeSpan Every = TimeSpan.FromSeconds(1);
 
-    private readonly ConcurrentQueue<(EliteScreenshot Shot, DateTimeOffset Taken)> _queue = new();
+    private readonly ConcurrentQueue<(EliteScreenshot Shot, PictureNote Note)> _queue = new();
 
     private int _running;
 
@@ -38,8 +40,11 @@ public sealed class ScreenshotConverter(
     /// <summary>The pool's current run, for a test to wait on; completed when nothing is queued.</summary>
     internal Task Running { get; private set; } = Task.CompletedTask;
 
-    /// <summary>On the tick: queues the tick's screenshots and starts the pool when it is idle. Reads no file.</summary>
-    public void Observe(IReadOnlyList<JournalEvent> events, bool priming, bool enabled, JournalLocation fallback)
+    /// <summary>
+    /// On the tick: queues the tick's screenshots, each with its note from <paramref name="state"/>, and starts the pool
+    /// when it is idle. Reads no file. <paramref name="state"/> is null while Elite runs a Commander other than the one shown.
+    /// </summary>
+    public void Observe(IReadOnlyList<JournalEvent> events, bool priming, bool enabled, JournalLocation fallback, CommanderGameState? state = null)
     {
         if (priming || !enabled)
         {
@@ -50,7 +55,7 @@ public sealed class ScreenshotConverter(
         {
             if (EliteScreenshot.TryParse(journalEvent, fallback) is { } shot)
             {
-                _queue.Enqueue((shot, journalEvent.Timestamp));
+                _queue.Enqueue((shot, ScreenCapability.ScreenshotNote(shot, journalEvent.Timestamp, state)));
             }
         }
 
@@ -68,7 +73,7 @@ public sealed class ScreenshotConverter(
             {
                 try
                 {
-                    await ConvertAsync(queued.Shot, queued.Taken);
+                    await ConvertAsync(queued.Shot, queued.Note);
                 }
                 catch (Exception ex)
                 {
@@ -81,7 +86,7 @@ public sealed class ScreenshotConverter(
         while (!_queue.IsEmpty && Interlocked.CompareExchange(ref _running, 1, 0) == 0);
     }
 
-    private async Task ConvertAsync(EliteScreenshot shot, DateTimeOffset taken)
+    private async Task ConvertAsync(EliteScreenshot shot, PictureNote note)
     {
         var source = shot.SourcePath(folder);
 
@@ -104,7 +109,7 @@ public sealed class ScreenshotConverter(
             jpeg = encode(stream);
         }
 
-        var local = taken.LocalDateTime;
+        var local = note.At.LocalDateTime;
         var copy = 1;
 
         while (files.Stat(Path.Combine(Target, shot.Name(local, copy))) is not null)
@@ -112,7 +117,10 @@ public sealed class ScreenshotConverter(
             copy++;
         }
 
-        files.WriteBytes(Path.Combine(Target, shot.Name(local, copy)), jpeg);
+        var written = Path.Combine(Target, shot.Name(local, copy));
+
+        files.WriteBytes(written, jpeg);
+        files.WriteText(Path.ChangeExtension(written, ".json"), note.Write());
     }
 
     /// <summary>Whether the BMP reached the length its header states within <see cref="Patience"/>.</summary>

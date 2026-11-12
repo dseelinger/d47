@@ -1,17 +1,15 @@
-using System.Globalization;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Input;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
-using D47.Core.Storage;
 
 namespace D47.Core.Capabilities.Builtin;
 
-/// <summary>What <c>take_picture</c> keeps a picture with: where, how, and the state its note is written from.</summary>
+/// <summary>What <c>take_picture</c> presses Elite's screenshot key with, and the state its answer is read from.</summary>
 public sealed record PictureKeeping(
-    IFileSystem Files,
-    string Folder,
+    Func<CancellationToken, Task<InjectionResult>> Press,
     Func<CommanderGameState?> GameState,
     Func<DateTimeOffset> Now);
 
@@ -40,16 +38,29 @@ public static class ScreenCapability
 
     public const string TakePictureToolName = "take_picture";
 
-    /// <summary>The most picture-and-note pairs kept in <see cref="AppPaths.Captures"/>.</summary>
-    public const int KeptPictures = 100;
+    /// <summary>The answer to <c>take_picture</c> while pressing keys in Elite is switched off. Nothing is pressed.</summary>
+    public const string KeysOff =
+        "Pressing keys in Elite is switched off, so no picture was taken. The Commander can turn on Let D47 "
+        + "press keys in Elite in settings, or take one with Elite's screenshot key.";
 
-    /// <summary>How far back a kept picture's note looks for codex entries.</summary>
+    /// <summary>Added to the answer while converting Elite's screenshots is off.</summary>
+    public const string BmpOnly = "It is Elite's BMP only, because converting Elite's screenshots is off.";
+
+    /// <summary>Elite's regular screenshot key, F10, tapped. Elite's bindings file has no entry for it.</summary>
+    public static readonly IReadOnlyList<InputStep> ScreenshotKey =
+    [
+        new InputStep(InputStepKind.KeyDown, EliteKeys.Resolve("Key_F10").Code),
+        InputStep.Wait(InputSequence.TapHold),
+        new InputStep(InputStepKind.KeyUp, EliteKeys.Resolve("Key_F10").Code),
+    ];
+
+    /// <summary>How far back a screenshot's note looks for codex entries.</summary>
     public static readonly TimeSpan CodexWindow = TimeSpan.FromMinutes(10);
 
     private const int NamedEntries = 3;
 
     /// <param name="capture">What takes the picture, or null where nothing composed one.</param>
-    /// <param name="keeping">Where and with what <c>take_picture</c> keeps a picture, or null where it cannot.</param>
+    /// <param name="keeping">What <c>take_picture</c> presses Elite's screenshot key with, or null where it cannot.</param>
     public static CapabilityDescriptor Create(
         SettingsService settings,
         IScreenCapture? capture,
@@ -83,12 +94,15 @@ public static class ScreenCapability
             {
                 Name = TakePictureToolName,
                 Exercise =
-                    "Say \"take a picture\". The full-size picture is saved to disk with a note of where it was "
-                    + "taken, and the reply says so. The model cannot do this: it is refused if it asks.",
+                    "With Let D47 press keys in Elite on and Elite the window in front, say \"take a picture\". "
+                    + "D47 presses Elite's screenshot key, F10, and answers \"Picture taken.\" With Convert Elite's "
+                    + "screenshots on, a JPEG and a note of where it was taken appear in the D47 folder inside "
+                    + "Elite's pictures folder. With another window in front nothing is pressed and the reply says "
+                    + "why. The model cannot do this: it is refused if it asks.",
                 Description =
-                    "Take a full-size picture of the Commander's screen, or of the headset's view in VR, and keep "
-                    + "it on disk with a note of where it was taken. The Commander's own act: not offered to the "
-                    + "model, and refused if it asks.",
+                    "Press Elite's screenshot key, so Elite takes a screenshot that D47 copies as a JPEG with a "
+                    + "note of where it was taken. The Commander's own act: not offered to the model, and refused "
+                    + "if it asks.",
                 Protected = true,
                 RefusalExample = "take a picture",
                 Commands =
@@ -97,79 +111,79 @@ public static class ScreenCapability
                     new ToolCommandPhrase("take a picture of this"),
                     new ToolCommandPhrase("save a picture"),
                 ],
-                Handler = (_, cancellationToken) => TakeAsync(capture, keeping, cancellationToken),
+                Handler = (_, cancellationToken) => TakeAsync(settings, keeping, cancellationToken),
             },
         ],
     };
 
-    private static async Task<ToolResult> TakeAsync(
-        IScreenCapture? capture,
-        PictureKeeping? keeping,
-        CancellationToken cancellationToken)
+    /// <summary>The note written beside the JPEG copy of <paramref name="shot"/>, from the state on the tick that reported it.</summary>
+    public static PictureNote ScreenshotNote(EliteScreenshot shot, DateTimeOffset taken, CommanderGameState? state)
     {
-        if (capture is null || keeping is null)
-        {
-            return ToolResult.Error("D47 has no way to take a picture of the screen here.");
-        }
+        ArgumentNullException.ThrowIfNull(shot);
 
-        var at = keeping.Now();
-
-        // Blocks for up to about half a second, so never on the calling thread.
-        var taken = await Task.Run(capture.TakeFull, cancellationToken).ConfigureAwait(false);
-
-        if (taken.Picture is not { } picture)
-        {
-            return ToolResult.Error($"No picture was taken: {taken.Refusal ?? "the screen could not be read"}.");
-        }
-
-        var state = keeping.GameState();
         var location = state?.Location;
-        var region = location?.StarPos is { } position && GalacticRegions.Find(position) is { } name
+        var here = location is not null && string.Equals(location.StarSystem, shot.System, StringComparison.OrdinalIgnoreCase)
+            ? location
+            : null;
+        var region = here?.StarPos is { } position && GalacticRegions.Find(position) is { } name
             ? GalacticRegions.IdOf(name)
             : null;
 
-        var entries = (state?.CodexLedger.Entries ?? [])
-            .Where(entry => entry.At >= at - CodexWindow)
-            .Select(entry => new PictureNoteEntry(entry.EntryId, entry.Name, entry.RegionId))
-            .ToList();
-
-        var note = new PictureNote(
-            at,
-            picture.Source,
-            picture.Width,
-            picture.Height,
-            location?.StarSystem,
-            location?.SystemAddress,
-            location?.Body,
+        return new PictureNote(
+            taken,
+            ScreenPictures.FromScreenshot,
+            shot.Width,
+            shot.Height,
+            shot.System,
+            here?.SystemAddress,
+            shot.Body,
             region,
-            entries);
-
-        var stem = "capture-" + at.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
-
-        try
-        {
-            keeping.Files.WriteBytes(Path.Combine(keeping.Folder, stem + ".jpg"), picture.Jpeg);
-            keeping.Files.WriteText(Path.Combine(keeping.Folder, stem + ".json"), note.Write());
-            Trim(keeping);
-        }
-        catch (IOException ex)
-        {
-            return ToolResult.Error($"The picture could not be saved: {ex.Message}");
-        }
-
-        return ToolResult.Ok(Answer(entries));
+            NotedEntries(state, taken),
+            shot.FileName);
     }
 
-    /// <summary>Deletes the oldest pictures, and their notes, until <see cref="KeptPictures"/> remain.</summary>
-    private static void Trim(PictureKeeping keeping)
+    private static async Task<ToolResult> TakeAsync(
+        SettingsService settings,
+        PictureKeeping? keeping,
+        CancellationToken cancellationToken)
     {
-        var pictures = keeping.Files.Enumerate(keeping.Folder, "capture-*.jpg");
-
-        foreach (var old in pictures.Take(Math.Max(0, pictures.Count - KeptPictures)))
+        if (keeping is null)
         {
-            keeping.Files.Delete(old);
-            keeping.Files.Delete(Path.ChangeExtension(old, ".json"));
+            return ToolResult.Error("D47 has no way to press Elite's screenshot key here.");
         }
+
+        if (!settings.Current.Actions.Keyboard)
+        {
+            return ToolResult.Error(KeysOff);
+        }
+
+        var at = keeping.Now();
+        var pressed = await Task.Run(() => keeping.Press(cancellationToken), cancellationToken).ConfigureAwait(false);
+
+        if (!pressed.Sent)
+        {
+            return ToolResult.Error($"No picture was taken. {pressed.Reason}");
+        }
+
+        if (!settings.Current.Screenshots.Convert)
+        {
+            return ToolResult.Ok($"Picture taken. {BmpOnly}");
+        }
+
+        return ToolResult.Ok(Answer(NotedEntries(keeping.GameState(), at)));
+    }
+
+    /// <summary>The codex entries logged in the <see cref="CodexWindow"/> up to <paramref name="at"/>.</summary>
+    private static List<PictureNoteEntry> NotedEntries(CommanderGameState? state, DateTimeOffset at)
+    {
+        var from = at - DateTimeOffset.MinValue > CodexWindow ? at - CodexWindow : DateTimeOffset.MinValue;
+
+        return
+        [
+            .. (state?.CodexLedger.Entries ?? [])
+                .Where(entry => entry.At >= from && entry.At <= at)
+                .Select(entry => new PictureNoteEntry(entry.EntryId, entry.Name, entry.RegionId)),
+        ];
     }
 
     private static string Answer(IReadOnlyList<PictureNoteEntry> entries)

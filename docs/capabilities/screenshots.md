@@ -36,7 +36,7 @@ nav_order: 161
 </section>
 <section>
 <h2><span class="num">2</span> The copy is named for the time and the place.</h2>
-<p class="body">The copy goes in a D47 folder inside Elite's own pictures folder. Its name is the local time, the system and the body.</p>
+<p class="body">The copy goes in a D47 folder inside Elite's own pictures folder. Its name is the local time, the system and the body, and a note beside it records where it was taken and the codex entries logged just before it.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Only you can switch the copies off.</h2>
@@ -83,12 +83,21 @@ public string Name(DateTime localTime, int copy)
 }
 ```
 
+Beside each copy is a `.json` note of the same name, a `PictureNote`: the time, the size, the system
+and body, the codex region number, the codex entries logged in the ten minutes before it, and the
+name of Elite's BMP. The note is made from the game state on the tick the journal reports the
+screenshot. The codex page's **Choose a picture** lists this folder, those noted with the entry first.
+
 A copy is made when the journal reports the screenshot, so one taken before D47 started is not
 copied. D47 waits up to 120 seconds for Elite to finish writing the BMP, which takes a while for a
 high-resolution screenshot, and skips one that does not arrive in that time or is moved away first.
 Screenshots are copied one at a time, at their own size.
 
 The row is under Settings › You and your records › Logs and goals, in the Screenshots group, beside **Saved to**, which shows the folder.
+
+Saying "take a picture" makes one: [Screen](screen.md) presses Elite's screenshot key, and the copy and
+its note are made here like any other. Pictures that "take a picture" kept in `data\captures` are
+moved into this folder, with their notes, the first time D47 starts with this row on.
 
 This capability has no tools. It is separate from the pictures of the window that
 [Screen](screen.md) shows the AI model, which are never written to disk.

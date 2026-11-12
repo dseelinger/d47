@@ -1802,7 +1802,36 @@ public sealed class AppHost : IDisposable
             journalTick.Events,
             context.IsFirst,
             foundations.Settings.Current.Screenshots.Convert,
-            gameState.IsOffDuty ? JournalLocation.Unknown : gameState.Active?.Location ?? JournalLocation.Unknown));
+            gameState.IsOffDuty ? JournalLocation.Unknown : gameState.Active?.Location ?? JournalLocation.Unknown,
+            gameState.IsOffDuty ? null : gameState.Active));
+
+        // The pictures "take a picture" kept in data\captures join the screenshots, once, while converting is on.
+        if (foundations.Settings.Current.Screenshots.Convert)
+        {
+            var screenshotsLogger = loggerFactory.CreateLogger<ScreenshotConverter>();
+
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    var moved = D47.Core.Interface.ScreenshotFolder.MoveCaptures(files, foundations.Paths.Captures, screenshots.Target);
+
+                    if (moved > 0)
+                    {
+                        screenshotsLogger.LogInformation("Moved {Count} pictures from the captures folder into {Folder}", moved, screenshots.Target);
+                    }
+
+                    if (files.Enumerate(foundations.Paths.Captures, "capture-*.jpg").Count is > 0 and var left)
+                    {
+                        screenshotsLogger.LogWarning("{Count} pictures in the captures folder could not be moved", left);
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    screenshotsLogger.LogWarning(ex, "The pictures in the captures folder could not be moved");
+                }
+            });
+        }
 
         // A story under way is caught up before the priming tick replays the current session (Phase 47): the
         // walk is bounded to the files since the earliest acceptance, so with nothing under way it reads
@@ -3504,7 +3533,7 @@ public sealed class AppHost : IDisposable
             () => settings.Current.Ui.CodexPictures,
             files,
             paths.ShippedCodexPlaceholders,
-            paths.Captures,
+            D47.Core.Capabilities.Builtin.ScreenshotsCapability.TargetFolder(),
             new CodexPicturePublisher(
                 host.CodexPictures,
                 () => D47.Core.Interface.CodexPublishToken.Resolve(

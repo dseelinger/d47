@@ -178,11 +178,11 @@ public static class CodexModel
 
     public const string CropWord = "Crop";
 
-    public const string NoCapturesText = "No captures yet. Say \"take a picture\" in game to take one.";
+    public const string NoCapturesText = "No screenshots yet. Say \"take a picture\" in game, or press Elite's screenshot key, to take one.";
 
     public const string TakenWithHead = "Taken with this entry";
 
-    public const string OtherCapturesHead = "Other captures";
+    public const string OtherCapturesHead = "Other screenshots";
 
     public const string UnknownSystemText = "Unknown system";
 

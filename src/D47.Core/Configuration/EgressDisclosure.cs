@@ -137,10 +137,10 @@ public static class EgressDisclosure
     /// <summary>The pictures the Commander chose for a story's cast.</summary>
     public const string ChosenPictures = "pictures";
 
-    /// <summary>The pictures the Commander takes in game and the codex pictures made from them, kept on this PC.</summary>
+    /// <summary>The codex pictures the Commander saves, kept on this PC.</summary>
     public const string CodexCaptures = "codexcaptures";
 
-    /// <summary>Elite's screenshots, copied as JPEG into a D47 folder on this PC.</summary>
+    /// <summary>Elite's screenshots, copied as JPEG with a note into a D47 folder on this PC.</summary>
     public const string Screenshots = "screenshots";
 
     /// <summary>The Commander's own recorded voice, kept on this PC and sent nowhere.</summary>
@@ -228,7 +228,7 @@ public static class EgressDisclosure
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         ChosenPictures => "Pictures you chose",
-        CodexCaptures => "Your captures and codex pictures",
+        CodexCaptures => "Your codex pictures",
         Screenshots => "Your screenshots",
         OwnVoice => "Your recorded voice",
         CustomVoices => "Your custom voices",
@@ -637,13 +637,14 @@ public static class EgressDisclosure
         CodexCaptures => EgressEntry.Silent(
             CodexCaptures,
             NameOf(CodexCaptures),
-            "Pictures you take by saying \"take a picture\" are kept in data\\captures, and the codex pictures you save are kept in data\\codex-pictures\\local, on this PC. They are never sent anywhere."),
+            "The codex pictures you save are kept in data\\codex-pictures\\local on this PC. They are never sent anywhere."),
 
         Screenshots => EgressEntry.Silent(
             Screenshots,
             NameOf(Screenshots),
             settings.Screenshots.Convert
-                ? $"Elite's screenshots are copied as JPEG into {Capabilities.Builtin.ScreenshotsCapability.TargetFolder()} on this PC. "
+                ? $"Elite's screenshots are copied as JPEG into {Capabilities.Builtin.ScreenshotsCapability.TargetFolder()} on this PC, "
+                    + "each with a note beside it of when and where it was taken. "
                     + "D47 sends them nowhere. If Windows syncs your Pictures folder, as OneDrive can, that sync uploads them."
                 : "Converting Elite's screenshots is off. D47 writes nothing to your Pictures folder."),
 

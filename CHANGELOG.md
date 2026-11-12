@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Saying "take a picture" presses Elite's screenshot key, F10, instead of saving a picture of its own, so the picture is Elite's screenshot, copied as a JPEG into the D47 folder inside Elite's pictures folder. It needs Let D47 press keys in Elite on and Elite the window in front, and with Convert Elite's screenshots off the reply says the picture is Elite's BMP only. Each JPEG copy now has a note beside it with the system, body and the codex entries logged in the ten minutes before it. Commander › Ledgers › Codex › **Choose a picture** lists every copied screenshot, including ones taken with Elite's key by hand, those noted with the entry first. The pictures in `data\captures` move into that folder, with their notes, the first time D47 starts with Convert Elite's screenshots on, and the 100-picture limit is gone.
+
 Added: The mini panel, on the desktop and in the headset, shows where it is: a one-line trail at the top right of its text area, such as ASSET MGMT › FLEET › a ship, in every state it can be in. On a page with a section switch, such as a faction's Conflicts or a station's Market, the open section is the last level. A long trail gives way from its second level to a `…`.
 
 Changed: On the desktop, the Commander › Campaign tables (Fronts, Systems and Chronicle) fill the window width instead of stopping at 900 pixels; the notice, the faction frame and the proposed front keep their width. A long system name in the Fronts table wraps onto a second line instead of being shortened.

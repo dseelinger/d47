@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using D47.App.Media;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -56,9 +57,9 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
 
     private static string Stamp => Taken.LocalDateTime.ToString("yyyy-MM-dd HH-mm-ss", CultureInfo.InvariantCulture);
 
-    private static async Task Run(ScreenshotConverter converter, IReadOnlyList<JournalEvent> events, bool priming = false, bool enabled = true, JournalLocation? fallback = null)
+    private static async Task Run(ScreenshotConverter converter, IReadOnlyList<JournalEvent> events, bool priming = false, bool enabled = true, JournalLocation? fallback = null, CommanderGameState? state = null)
     {
-        converter.Observe(events, priming, enabled, fallback ?? Nowhere);
+        converter.Observe(events, priming, enabled, fallback ?? Nowhere, state);
         await converter.Running;
     }
 
@@ -150,6 +151,37 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
         await Run(Converter(), [Event("Screenshot_0001.bmp", "")], fallback: new JournalLocation("Fallback", "Fallback 2", false, null));
 
         Assert.Equal([Path.Combine(Target, $"{Stamp} Fallback 2.jpg")], Written());
+    }
+
+    [Fact]
+    public async Task EachJpegHasANoteOfItsPlaceTheCodexEntriesBeforeItAndItsBmp()
+    {
+        var store = new GameStateStore();
+
+        foreach (var json in new[]
+        {
+            """{"timestamp":"2026-02-10T08:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
+            """{"timestamp":"2026-02-10T08:00:01Z","event":"LoadGame","Credits":1}""",
+            """{"timestamp":"2026-02-10T08:00:02Z","event":"Location","StarSystem":"Example System","SystemAddress":42,"StarPos":[0,0,0],"Body":"Example System A 1","BodyID":4}""",
+            """{"timestamp":"2026-02-10T08:30:00Z","event":"CodexEntry","EntryID":1,"Name":"$Codex_Ent_1;","Name_Localised":"Too early","Region":"$Codex_RegionName_18;","System":"Example System","SystemAddress":42,"BodyID":4}""",
+            """{"timestamp":"2026-02-10T09:00:00Z","event":"CodexEntry","EntryID":2,"Name":"$Codex_Ent_2;","Name_Localised":"Logged","Region":"$Codex_RegionName_18;","System":"Example System","SystemAddress":42,"BodyID":4}""",
+        })
+        {
+            Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
+            store.Apply(parsed!);
+        }
+
+        _files.WriteBytes(Path.Combine(Folder, "Screenshot_0001.bmp"), Bmp(5, 3));
+
+        await Run(Converter(), [Event("Screenshot_0001.bmp")], state: store.Active);
+
+        var note = PictureNote.Parse(_files.ReadText(Path.Combine(Target, $"{Stamp} Example System A 1.json")));
+
+        Assert.NotNull(note);
+        Assert.Equal((Taken, ScreenPictures.FromScreenshot, 5, 3), (note.At, note.Source, note.Width, note.Height));
+        Assert.Equal(("Example System", 42L, "A 1"), (note.System, note.SystemAddress, note.Body));
+        Assert.Equal("Screenshot_0001.bmp", note.Bmp);
+        Assert.Equal(2, Assert.Single(note.CodexEntries).EntryId);
     }
 
     [Fact]

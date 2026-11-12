@@ -306,7 +306,7 @@ public class TheCodexPicturePagesCropACaptureTests
         var (window, page) = PageHost.Open(() => new CodexChoosePage(Key, surface.Pictures, surface.Nav, surface.Work));
 
         Assert.Contains(page.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == CodexModel.NoCapturesText);
-        Assert.Equal("No captures yet. Say \"take a picture\" in game to take one.", CodexModel.NoCapturesText);
+        Assert.Equal("No screenshots yet. Say \"take a picture\" in game, or press Elite's screenshot key, to take one.", CodexModel.NoCapturesText);
 
         window.Close();
     }

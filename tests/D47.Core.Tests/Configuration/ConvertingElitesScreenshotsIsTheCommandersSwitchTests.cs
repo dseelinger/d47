@@ -54,6 +54,7 @@ public sealed class ConvertingElitesScreenshotsIsTheCommandersSwitchTests
         Assert.False(on.Active);
         Assert.Contains(Path.Combine(EliteScreenshot.Folder(), "D47"), on.What, StringComparison.Ordinal);
         Assert.Contains("D47 sends them nowhere.", on.What, StringComparison.Ordinal);
+        Assert.Contains("each with a note beside it of when and where it was taken", on.What, StringComparison.Ordinal);
         Assert.Equal("Converting Elite's screenshots is off. D47 writes nothing to your Pictures folder.", off.What);
     }
 }

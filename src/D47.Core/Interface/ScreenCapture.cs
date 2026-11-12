@@ -28,6 +28,9 @@ public static class ScreenPictures
 
     public const string FromWindow = "Elite's window";
 
+    /// <summary>The source of a JPEG converted from one of Elite's screenshots, which is never lifted.</summary>
+    public const string FromScreenshot = "Elite's screenshot";
+
     /// <summary>The longest edge a picture is sent at.</summary>
     public const int MaxLongEdge = 1568;
 

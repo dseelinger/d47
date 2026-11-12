@@ -560,8 +560,7 @@ public static class BuiltinCapabilities
             settings,
             screen,
             new PictureKeeping(
-                files ?? new Storage.DiskFileSystem(),
-                paths.Captures,
+                cancellationToken => actions.Input.SendAsync(ScreenCapability.ScreenshotKey, cancellationToken),
                 () => gameState.Active,
                 now ?? (() => DateTimeOffset.MinValue))),
 

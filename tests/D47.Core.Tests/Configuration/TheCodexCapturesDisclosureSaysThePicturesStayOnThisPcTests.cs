@@ -3,6 +3,10 @@ using Xunit;
 
 namespace D47.Core.Tests.Configuration;
 
+/// <summary>
+/// The codex pictures the Commander saves stay on this PC. The pictures "take a picture" makes are Elite's screenshots,
+/// disclosed under Your screenshots, so this entry names no captures folder.
+/// </summary>
 public class TheCodexCapturesDisclosureSaysThePicturesStayOnThisPcTests
 {
     [Fact]
@@ -11,10 +15,11 @@ public class TheCodexCapturesDisclosureSaysThePicturesStayOnThisPcTests
         var entry = EgressDisclosure.Entry(EgressDisclosure.CodexCaptures, new D47Settings(), llmKeyPresent: false);
 
         Assert.Contains(EgressDisclosure.CodexCaptures, EgressDisclosure.Ids);
-        Assert.Equal("Your captures and codex pictures", entry.Name);
+        Assert.Equal("Your codex pictures", entry.Name);
         Assert.False(entry.Active);
         Assert.Equal(
-            "Pictures you take by saying \"take a picture\" are kept in data\\captures, and the codex pictures you save are kept in data\\codex-pictures\\local, on this PC. They are never sent anywhere.",
+            "The codex pictures you save are kept in data\\codex-pictures\\local on this PC. They are never sent anywhere.",
             entry.What);
+        Assert.DoesNotContain("captures", entry.What, StringComparison.Ordinal);
     }
 }
