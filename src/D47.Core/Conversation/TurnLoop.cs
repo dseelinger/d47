@@ -1597,6 +1597,45 @@ public sealed class TurnLoop(
             yield break;
         }
 
+        if (capabilities.Find(Capabilities.Builtin.WatchesCapability.Id) is not null
+            && Watches.WatchPhrase.Read(input) is { } watching
+            && keywordRouter.MatchToolCommand(input)?.CapabilityId != Capabilities.Builtin.WatchesCapability.Id)
+        {
+            routing.Handled = true;
+            yield return new TurnEvent.Routed(TurnRoute.ActionCommand, Effort: null);
+
+            var watched = watching switch
+            {
+                Watches.WatchReading.Add => await capabilities
+                    .InvokeAsync(
+                        Capabilities.Builtin.WatchesCapability.AddTool,
+                        Capabilities.Builtin.WatchesCapability.ArgumentsFor(watching),
+                        cancellationToken)
+                    .ConfigureAwait(false),
+                Watches.WatchReading.Delete => await capabilities
+                    .InvokeAsync(
+                        Capabilities.Builtin.WatchesCapability.DeleteTool,
+                        Capabilities.Builtin.WatchesCapability.ArgumentsFor(watching),
+                        cancellationToken)
+                    .ConfigureAwait(false),
+                Watches.WatchReading.Declined declined => ToolResult.Ok(Watches.WatchVoice.Declined(declined.Said)),
+                _ => ToolResult.Error("That is not a watch I can set."),
+            };
+
+            logger.LogInformation("Watch grammar read \"{Said}\" as {Reading}", input, watching.GetType().Name);
+
+            Said(watched.Spoken, input);
+
+            yield return new TurnEvent.TextDelta(watched.Spoken);
+            yield return new TurnEvent.Completed(new TurnResult(
+                watched.IsError ? TurnOutcome.Failed : TurnOutcome.Answered,
+                TurnRoute.ActionCommand,
+                watched.Spoken,
+                Effort: null,
+                Cost: null));
+            yield break;
+        }
+
         // 0. A squadron's faction name, which no declared phrase can carry.
         if (capabilities.Find(Capabilities.Builtin.GalaxyCapability.Id) is not null
             && SquadronFactionPhrase.Read(input) is { } squadronFaction)

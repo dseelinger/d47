@@ -213,6 +213,7 @@ public partial class EveryHowToPhraseRoutesGateTests
         || LogsOrReadsTheCaptainsLog(phrase)
         || LooksUpByName(phrase)
         || ReadsAJournalReminder(phrase)
+        || D47.Core.Watches.WatchPhrase.Read(phrase) is not null
         || NamesTheCampaignFaction(phrase)
         || AnswersAFiredReminder(phrase);
 

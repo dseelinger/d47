@@ -7,16 +7,16 @@ nav_order: 165
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Ask what D47 is watching for you. Watches are set up on the Watches page, never by voice.</p>
+<p class="intro">Ask what D47 is watching for you. Say or type a next-system watch, or set up any watch on the Watches page.</p>
 <section>
 <h2><span class="num">1</span> Ask for the list.</h2>
 <p class="say">Say "list my watches" or "what am I watching".</p>
 <p class="expect">D47 names each watch with its condition and when it last fired, with no model, key or network.</p>
 </section>
 <section>
-<h2><span class="num">2</span> Add one on the page.</h2>
-<p class="say">Open Commander, then Watches, and press Add stock watch or Add Community Goal watch.</p>
-<p class="expect">A stock watch needs a station, a commodity, Above or Below, and a number of units. A Community Goal watch needs only a name.</p>
+<h2><span class="num">2</span> Add one by voice or on the page.</h2>
+<p class="say">Say or type "tell me the next time we're in a system with a material trader". Or open Commander, then Watches, and press Add stock watch or Add Community Goal watch.</p>
+<p class="expect">D47 replies "Watching for a Material trader, Commander" with no model. Add a kind or pad as you speak: "a manufactured material trader with a large pad". A stock watch on the page needs a station, a commodity, Above or Below, and a number of units. A Community Goal watch needs only a name.</p>
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
@@ -52,7 +52,14 @@ nav_order: 165
 ## The details
 
 The tool `list_watches` lists the watches in `data\watches.json`. It is open to the AI model as well as
-to you, because it changes nothing. A watch is added, changed or deleted on the Watches page only.
+to you, because it changes nothing. A stock or Community Goal watch is added, changed or deleted on the Watches page.
+A next-system watch is also added by saying or typing "tell me the next time we're in a system with" a service, and
+deleted with "stop watching for" a service. The services are Black Market, Interstellar Factors, Material Trader
+(also "materials trader" or "mats trader"), Outfitting, Refuel, Repair, Shipyard, Technology Broker (also "tech broker"),
+Universal Cartographics and Vista Genomics. A kind (Raw, Manufactured, Encoded, Human or Guardian) may come before or
+after the service, and "with a large pad" sets the pad. If you are already in a system with a match, D47 names the
+station and still keeps the watch for the next system. The two tools below are the Commander's own: they are refused
+if the model asks for them.
 
 ```text
 Soontill Relics at Cheranovsky City: Soontill Relics above 200 at Cheranovsky City, Ngurii. 3 Nov · tick 14:07.
@@ -69,10 +76,26 @@ watch can fire again in the same tick.
 
 #### `list_watches`
 
-List the Commander's background watches: each one's name, its condition, whether it is on, and the BGS tick it last fired for. Watches are set up on the Watches page only.
+List the Commander's background watches: each one's name, its condition, whether it is on, and the BGS tick it last fired for. Stock and Community Goal watches are set up on the Watches page.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `add_next_system_watch`
+
+Add a next-system watch for a station service. Reached only by saying "tell me the next time we're in a system with".
+
+```json
+{"type":"object","properties":{"kind":{"type":"string","description":"Raw, Manufactured or Encoded for a material trader; Human or Guardian for a technology broker; left out for any.","enum":["Raw","Manufactured","Encoded","Guardian","Human"]},"pad":{"type":"string","description":"The smallest pad the station must have; left out for any.","enum":["Medium","Large"]},"service":{"type":"string","description":"The station service to watch for.","enum":["Black Market","Interstellar Factors","Material Trader","Outfitting","Refuel","Repair","Shipyard","Technology Broker","Universal Cartographics","Vista Genomics"]}},"required":["service"],"additionalProperties":false}
+```
+
+#### `delete_next_system_watch`
+
+Delete a next-system watch by its service and kind. Reached only by saying "stop watching for".
+
+```json
+{"type":"object","properties":{"kind":{"type":"string","description":"Raw, Manufactured or Encoded for a material trader; Human or Guardian for a technology broker; left out for any.","enum":["Raw","Manufactured","Encoded","Guardian","Human"]},"service":{"type":"string","description":"The station service of the watch to delete.","enum":["Black Market","Interstellar Factors","Material Trader","Outfitting","Refuel","Repair","Shipyard","Technology Broker","Universal Cartographics","Vista Genomics"]}},"required":["service"],"additionalProperties":false}
 ```
 
 </details>

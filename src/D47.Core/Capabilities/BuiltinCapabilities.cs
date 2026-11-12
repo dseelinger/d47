@@ -359,6 +359,7 @@ public static class BuiltinCapabilities
 
         // The Commander's background watches, for the list_watches tool.
         Func<IReadOnlyList<Watches.Watch>>? watches = null,
+        Watches.WatchVoice? watchVoice = null,
 
         // Each Commander's campaign, and the systems the galaxy reports fetched this session placed each faction in.
         Campaigns.CampaignStore? campaigns = null,
@@ -587,7 +588,7 @@ public static class BuiltinCapabilities
 
         CharactersCapability.Create(),
 
-        WatchesCapability.Create(watches ?? (() => [])),
+        WatchesCapability.Create(watches ?? (() => []), voice: watchVoice),
 
         CampaignCapability.Create(campaigns, () => gameState.Active, squadronFactions, galaxy, campaignSystems, campaignFronts, campaignFocus),
 

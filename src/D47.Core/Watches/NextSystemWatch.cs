@@ -89,6 +89,14 @@ public static class NextSystemWatch
         ArgumentNullException.ThrowIfNull(watch);
         ArgumentNullException.ThrowIfNull(station);
 
+        return $"{system} has {Said(watch.Service ?? string.Empty, watch.ServiceKind)}, Commander. {Place(station)}. That watch is off now.";
+    }
+
+    /// <summary>"Wohler Terminal, 240 light seconds, large pad"; a distance or pad the station does not report is left out.</summary>
+    public static string Place(StationSummary station)
+    {
+        ArgumentNullException.ThrowIfNull(station);
+
         var parts = new List<string> { station.Name };
 
         if (station.DistanceToArrival is { } distance)
@@ -101,8 +109,7 @@ public static class NextSystemWatch
             parts.Add($"{pad.ToString().ToLowerInvariant()} pad");
         }
 
-        return $"{system} has {Said(watch.Service ?? string.Empty, watch.ServiceKind)}, Commander. "
-               + $"{string.Join(", ", parts)}. That watch is off now.";
+        return string.Join(", ", parts);
     }
 
     private static PadSize? LargestPad(StationSummary station) =>

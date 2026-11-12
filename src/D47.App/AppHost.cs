@@ -2856,7 +2856,13 @@ public sealed class AppHost : IDisposable
                     .ToList() ?? [],
                 liveRoute: () => loop.Feed.LiveRoute,
                 installedModules: () => late.Host?._modules?.Installed ?? [],
-                watches: () => late.Host?.WatchesDesk?.Store.Watches ?? []));
+                watches: () => late.Host?.WatchesDesk?.Store.Watches ?? [],
+                watchVoice: new D47.Core.Watches.WatchVoice(
+                    () => late.Host?.WatchesDesk?.Store,
+                    () => services.Galaxy,
+                    // Null while Elite is closed, as for the arrival check.
+                    () => gameState.IsGameRunning ? gameState.Active?.Location.StarSystem : null,
+                    loggerFactory.CreateLogger<D47.Core.Watches.WatchVoice>())));
 
         services.BuildingRegistry.Dispose();
 
