@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: On the desktop, the Commander › Campaign tables (Fronts, Systems and Chronicle) fill the window width instead of stopping at 900 pixels; the notice, the faction frame and the proposed front keep their width. A long system name in the Fronts table wraps onto a second line instead of being shortened.
+
 Fixed: A long system name in a table, such as Commander › Campaign › Fronts, no longer runs into the next column; the name is shortened to fit and its copy glyph stays inside the column.
 
 Changed: The tables on Statistics › Activities, Commanders, Crew, Phrases and Stored modules fill the window instead of stopping at 900 to 1100px. The title, text and form above each table keep their width, and the other Statistics sections keep theirs.

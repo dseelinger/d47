@@ -455,4 +455,23 @@ public class TheCampaignPageShowsTheChosenFrontFrontsAndChronicleTests
         Capture(third, "campaign-fronts-headset.png");
         third.Close();
     }
+
+    [AvaloniaFact]
+    public void TheFrontsTableFillsAWideWindowWhileTheFrameStaysAtNineHundred()
+    {
+        var fixture = new Fixture();
+        var (window, page) = Open(fixture);
+        window.Width = 1600;
+        Dispatcher.UIThread.RunJobs();
+
+        var take = In<Button>(page).First(button => button.Name?.StartsWith("CampaignTake.", StringComparison.Ordinal) == true);
+        var tableRight = take.TranslatePoint(new Point(take.Bounds.Width, 0), page)!.Value.X;
+        Assert.True(tableRight > 900, $"the fronts table ends at {tableRight}");
+
+        var change = Tile(page, CampaignPage.ChangeName);
+        var frameRight = change.TranslatePoint(new Point(change.Bounds.Width, 0), page)!.Value.X;
+        Assert.True(frameRight <= 900, $"the frame ends at {frameRight}");
+
+        window.Close();
+    }
 }

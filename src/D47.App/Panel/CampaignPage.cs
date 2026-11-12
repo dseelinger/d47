@@ -91,14 +91,16 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
         new("Intent", ColumnFit.Fixed) { Fixed = 300 },
     ];
 
+    private const double ProseWidth = 900;
+
     private static readonly TableColumn[] FrontColumns =
     [
         new("Rank", ColumnFit.Fixed) { Fixed = 48 },
-        new("Kind", ColumnFit.Fixed) { Fixed = 140 },
+        new("Kind", ColumnFit.Fixed) { Fixed = 110 },
         new("System", ColumnFit.Fill) { Min = 150 },
         new("Reason", ColumnFit.Fill) { Min = 190 },
         new("Data age", ColumnFit.Fixed) { Fixed = 140 },
-        new("Take", ColumnFit.Fixed) { Fixed = 90 },
+        new("Take", ColumnFit.Fixed) { Fixed = 80 },
     ];
 
     private static readonly TableColumn[] HeadsetFrontColumns =
@@ -372,8 +374,10 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
 
         _body.Children.Clear();
 
-        var column = new StackPanel { Spacing = 20, MaxWidth = _headset ? double.PositiveInfinity : 900, HorizontalAlignment = HorizontalAlignment.Left };
-        _body.Children.Add(column);
+        var column = new StackPanel { Spacing = 20, MaxWidth = _headset ? double.PositiveInfinity : ProseWidth, HorizontalAlignment = HorizontalAlignment.Left };
+        var page = new StackPanel { Spacing = 20 };
+        _body.Children.Add(page);
+        page.Children.Add(column);
 
         column.Children.Add(_noticeSlot);
         column.Children.Add(Frame(_faction, report is null ? null : _rows, report is null ? null : _snapshot, tick, _frontier));
@@ -397,8 +401,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
         }
 
         column.Children.Add(_frontSlot);
-        column.Children.Add(_segment);
-        column.Children.Add(_sectionSlot);
+        page.Children.Add(_segment);
+        page.Children.Add(_sectionSlot);
 
         FillFront();
         FillCounts();
@@ -475,7 +479,18 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
         return block;
     }
 
-    private static TextBlock Grey(string text) => Typeset.Prose(text, TypeScale.Body, ThemeManager.GreyKey, wrap: true);
+    private TextBlock Grey(string text) => CappedText(Typeset.Prose(text, TypeScale.Body, ThemeManager.GreyKey, wrap: true));
+
+    private TextBlock CappedText(TextBlock text)
+    {
+        if (!_headset)
+        {
+            text.MaxWidth = ProseWidth;
+            text.HorizontalAlignment = HorizontalAlignment.Left;
+        }
+
+        return text;
+    }
 
     private static DockPanel LegendLine()
     {
@@ -773,7 +788,15 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
     {
         var panel = new StackPanel { Spacing = 20 };
 
-        panel.Children.Add(LegendLine());
+        var legend = LegendLine();
+
+        if (!_headset)
+        {
+            legend.MaxWidth = ProseWidth;
+            legend.HorizontalAlignment = HorizontalAlignment.Left;
+        }
+
+        panel.Children.Add(legend);
         panel.Children.Add(Table(_now, _sources.State()?.Location.StarSystem, _frontier!));
 
         if (!_headset)
@@ -937,7 +960,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
 
         if (!_headset)
         {
-            panel.Children.Add(Typeset.Prose(CampaignModel.FrontsHint(fronts), TypeScale.Description, ThemeManager.GreyKey, wrap: true));
+            panel.Children.Add(CappedText(Typeset.Prose(CampaignModel.FrontsHint(fronts), TypeScale.Description, ThemeManager.GreyKey, wrap: true)));
         }
 
         return panel;
@@ -955,7 +978,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IFilterablePage
             TypeScale.ControlLarge,
             old ? ThemeManager.GreyKey : row.Chosen ? ThemeManager.CyanKey : ThemeManager.AKey,
             weight: FontWeight.Medium,
-            trimming: TextTrimming.CharacterEllipsis);
+            wrap: true);
 
         var age = new StackPanel { Spacing = 2, HorizontalAlignment = HorizontalAlignment.Right };
         age.Children.Add(Typeset.Prose(
