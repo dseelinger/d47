@@ -4,7 +4,7 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Watches;
 
-/// <summary>When a watch may speak, and whether a stock watch's condition holds.</summary>
+/// <summary>When a watch may speak, whether a stock watch's condition holds, and which station a next-system watch fires for.</summary>
 public static class WatchRule
 {
     /// <summary>True when a BGS tick is known and the watch has not already fired for it.</summary>
@@ -40,6 +40,39 @@ public static class WatchRule
             _ => false,
         };
     }
+
+    /// <summary>
+    /// The fixed station in <paramref name="system"/> with the watch's service, kind and pad, nearest the entry point;
+    /// null when none has them or the watch is not a next-system watch.
+    /// </summary>
+    public static StationSummary? Arrival(Watch watch, string system, IReadOnlyList<StationSummary> stations)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        ArgumentNullException.ThrowIfNull(stations);
+
+        if (watch.Kind != WatchKind.NextSystem || NextSystemWatch.ServiceFor(watch.Service) is not { } service)
+        {
+            return null;
+        }
+
+        var kind = NextSystemWatch.KindFor(service.Name, watch.ServiceKind);
+
+        return stations
+            .Where(station => string.Equals(station.SystemName, system.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Where(station => station.IsFixed)
+            .Where(station => station.Services.Any(offered => string.Equals(offered, service.Field, StringComparison.OrdinalIgnoreCase)))
+            .Where(station => kind is null || string.Equals(KindAt(station, service.Name), kind, StringComparison.OrdinalIgnoreCase))
+            .Where(station => watch.MinPad is not { } pad || station.Admits(pad))
+            .OrderBy(station => station.DistanceToArrival ?? double.MaxValue)
+            .FirstOrDefault();
+    }
+
+    private static string? KindAt(StationSummary station, string service) => service switch
+    {
+        NextSystemWatch.MaterialTrader => station.TraderType,
+        NextSystemWatch.TechnologyBroker => station.TechnologyBroker,
+        _ => null,
+    };
 
     private static DateTimeOffset? Parse(string? stored) =>
         DateTimeOffset.TryParse(

@@ -27,6 +27,8 @@ public class AStationSearchReadsServicesAndPadsTests
         Assert.Equal("EZ Aquarii", station.SystemName);
         Assert.Contains("Material Trader", station.Services);
         Assert.Contains("Technology Broker", station.Services);
+        Assert.Equal("Guardian", station.TechnologyBroker);
+        Assert.Equal("Encoded", station.TraderType);
         Assert.Contains("Restock", station.Services);
         Assert.Equal(5, station.LargePads);
         Assert.Equal(11, station.MediumPads);

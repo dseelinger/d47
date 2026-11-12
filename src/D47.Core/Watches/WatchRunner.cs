@@ -13,7 +13,9 @@ public sealed record WatchNotice(Guid WatchId, string Text);
 /// Checks stock watches against the market index, one market at a time and each watch at most once every
 /// <see cref="Interval"/>, only while a BGS tick is known and the line would be said.
 /// A New Community Goal watch speaks for GalNet launches.
-/// The quote runs on the pool. Tick thread only.
+/// A next-system watch speaks once on arrival in a system with a matching station, then turns itself off; one station
+/// query is sent per arrival, for every next-system watch.
+/// Quotes and station queries run on the pool. Tick thread only.
 /// </summary>
 public sealed class WatchRunner
 {
@@ -32,7 +34,16 @@ public sealed class WatchRunner
 
     private readonly List<GalNetArticle> _launches = [];
 
+    private readonly ConcurrentQueue<Arrival> _arrivals = new();
+
     private bool _fetching;
+
+    private string? _lastSystem;
+
+    /// <summary>An answered arrival whose firing could not be stored, tried again each poll while still in that system.</summary>
+    private Arrival? _held;
+
+    private bool _toldNoGalaxy;
 
     public WatchRunner(
         WatchStore store,
@@ -53,6 +64,12 @@ public sealed class WatchRunner
 
     /// <summary>Whether a ready line would be said; while false nothing is checked and no watch is marked fired.</summary>
     public Func<bool> Audible { get; set; } = () => true;
+
+    /// <summary>The system the Commander is in, or null when not known or Elite is not running.</summary>
+    public Func<string?> CurrentSystem { get; set; } = () => null;
+
+    /// <summary>The station search a next-system watch asks, or null when there is none.</summary>
+    public Func<IGalaxyService?> Galaxy { get; set; } = () => null;
 
     /// <summary>The lines made ready in the last <see cref="Poll"/>.</summary>
     public IReadOnlyList<WatchNotice> Ready { get; private set; } = [];
@@ -80,6 +97,8 @@ public sealed class WatchRunner
         {
             ready.Add(launch);
         }
+
+        ready.AddRange(ArrivalNotices(allowed, now));
 
         Ready = ready;
 
@@ -166,6 +185,103 @@ public sealed class WatchRunner
         return new WatchNotice(watch.Id, line);
     }
 
+    /// <summary>Says what answered arrivals match, then asks about the system just arrived in.</summary>
+    private List<WatchNotice> ArrivalNotices(bool allowed, DateTimeOffset now)
+    {
+        var notices = new List<WatchNotice>();
+        var here = CurrentSystem()?.Trim();
+
+        var answered = new List<Arrival>();
+
+        if (_held is { } held)
+        {
+            answered.Add(held);
+            _held = null;
+        }
+
+        while (_arrivals.TryDequeue(out var arrival))
+        {
+            answered.Add(arrival);
+        }
+
+        foreach (var arrival in answered)
+        {
+            if (!allowed || arrival.Stations is not { } stations || !string.Equals(arrival.System, here, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            foreach (var watch in _store.Watches.Where(watch => watch is { Enabled: true, Kind: WatchKind.NextSystem }))
+            {
+                if (WatchRule.Arrival(watch, arrival.System, stations) is not { } station)
+                {
+                    continue;
+                }
+
+                // Said only once the watch is stored as off, so a file that cannot be written does not drop the line.
+                if (_store.MarkArrived(watch.Id, arrival.System, now))
+                {
+                    notices.Add(new WatchNotice(watch.Id, NextSystemWatch.Line(arrival.System, watch, station)));
+                }
+                else
+                {
+                    _held = arrival;
+                }
+            }
+        }
+
+        if (string.IsNullOrEmpty(here) || string.Equals(here, _lastSystem, StringComparison.OrdinalIgnoreCase))
+        {
+            return notices;
+        }
+
+        _lastSystem = here;
+
+        if (!allowed || !_store.Watches.Any(watch => watch is { Enabled: true, Kind: WatchKind.NextSystem }))
+        {
+            return notices;
+        }
+
+        if (Galaxy() is not { } galaxy)
+        {
+            if (!_toldNoGalaxy)
+            {
+                _toldNoGalaxy = true;
+                _logger.LogInformation("Next-system watches are not checked: there is no station search");
+            }
+
+            return notices;
+        }
+
+        var system = here;
+        Dispatch(() => LookUp(galaxy, system));
+
+        return notices;
+    }
+
+    private async Task LookUp(IGalaxyService galaxy, string system)
+    {
+        IReadOnlyList<StationSummary>? stations = null;
+
+        try
+        {
+            var result = await galaxy.FindStationsAsync(StationQuery.InSystem(system), CancellationToken.None).ConfigureAwait(false);
+            stations = result.Stations;
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            _logger.LogInformation("Next-system watch check for {System} failed: {Reason}", system, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInformation("Next-system watch check for {System} failed: {Reason}", system, ex.GetType().Name);
+        }
+        finally
+        {
+            _arrivals.Enqueue(new Arrival(system, stations));
+        }
+    }
+
     private WatchNotice? Fires(Answer answer, DateTimeOffset tick, DateTimeOffset now)
     {
         var request = answer.Request;
@@ -215,4 +331,7 @@ public sealed class WatchRunner
     private sealed record Request(Guid WatchId, long MarketId, string Commodity);
 
     private sealed record Answer(Request Request, StationQuote? Quote);
+
+    /// <summary>A system's stations; null when the query failed.</summary>
+    private sealed record Arrival(string System, IReadOnlyList<StationSummary>? Stations);
 }

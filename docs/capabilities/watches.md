@@ -40,7 +40,11 @@ nav_order: 165
 </section>
 <section>
 <h2><span class="num">3</span> Once per BGS tick.</h2>
-<p class="body">When a watch holds, D47 says so once and not again until the next BGS tick. A stock watch reads the market index; a Community Goal watch reads GalNet.</p>
+<p class="body">When a stock or Community Goal watch holds, D47 says so once and not again until the next BGS tick. A stock watch reads the market index; a Community Goal watch reads GalNet.</p>
+</section>
+<section>
+<h2><span class="num">4</span> Next-system watches.</h2>
+<p class="body">This watch names a station service and a smallest pad. On arrival in a system, D47 asks Spansh once for its stations and checks every next-system watch against them. Carriers and megaships are left out. On a match, D47 names the nearest station and turns the watch off.</p>
 </section>
 </div></div>
 </details>
@@ -56,7 +60,8 @@ Soontill Relics at Cheranovsky City: Soontill Relics above 200 at Cheranovsky Ci
 
 The file holds at most 32 watches. Saving a stock watch for an any-station choice sends the system and
 station name to Spansh and the commodity name to Ardent once; a rare sends
-nothing on save. A change to the station, commodity, comparison or number clears the stored firing, so the
+nothing on save. While a next-system watch is on, each system you arrive in is sent to Spansh to list its
+stations. A change to the station, commodity, comparison or number clears the stored firing, so the
 watch can fire again in the same tick.
 
 <details markdown="1">

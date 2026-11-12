@@ -61,15 +61,21 @@ public static class WatchesCapability
                 text.Append(", off");
             }
 
-            text.Append(". ").Append(WatchFired.Text(watch.FiredForTick, zone)).Append('.');
+            text.Append(". ").Append(WatchFired.Of(watch, zone)).Append('.');
         }
 
         return text.ToString();
     }
 
-    /// <summary>"Above 200 at Cheranovsky City, Ngurii" or "A new Community Goal is announced".</summary>
-    public static string Condition(Watch watch) => watch.Kind == WatchKind.NewCommunityGoal
-        ? "a new Community Goal is announced"
-        : $"{watch.Commodity} {(watch.Comparison == StockComparison.Below ? "below" : "above")} {watch.Threshold} "
-            + $"at {watch.Station}, {watch.System}";
+    /// <summary>
+    /// "Soontill Relics above 200 at Cheranovsky City, Ngurii", "a new Community Goal is announced" or
+    /// "a station with a Manufactured material trader, any pad, in the next system".
+    /// </summary>
+    public static string Condition(Watch watch) => watch.Kind switch
+    {
+        WatchKind.NewCommunityGoal => "a new Community Goal is announced",
+        WatchKind.NextSystem => NextSystemWatch.Condition(watch),
+        _ => $"{watch.Commodity} {(watch.Comparison == StockComparison.Below ? "below" : "above")} {watch.Threshold} "
+            + $"at {watch.Station}, {watch.System}",
+    };
 }

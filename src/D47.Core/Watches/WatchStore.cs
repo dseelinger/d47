@@ -110,7 +110,7 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
 
     /// <summary>
     /// Replaces the watch with the same id; returns why it was refused, or null when it was written.
-    /// The stored firing is kept unless the kind, market, commodity, comparison or threshold changed.
+    /// The stored firing is kept unless the kind, market, commodity, comparison, threshold, service, service kind or pad changed.
     /// </summary>
     public string? Update(Watch watch)
     {
@@ -138,9 +138,14 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
                     || stored.MarketId != watch.MarketId
                     || !string.Equals(stored.Commodity, watch.Commodity, StringComparison.Ordinal)
                     || stored.Comparison != watch.Comparison
-                    || stored.Threshold != watch.Threshold;
+                    || stored.Threshold != watch.Threshold
+                    || !string.Equals(stored.Service, watch.Service, StringComparison.OrdinalIgnoreCase)
+                    || !string.Equals(stored.ServiceKind, watch.ServiceKind, StringComparison.OrdinalIgnoreCase)
+                    || stored.MinPad != watch.MinPad;
 
-                var updated = watch with { FiredForTick = retriggered ? null : stored.FiredForTick };
+                var updated = retriggered
+                    ? watch with { FiredForTick = null, FiredSystem = null, FiredAt = null }
+                    : watch with { FiredForTick = stored.FiredForTick, FiredSystem = stored.FiredSystem, FiredAt = stored.FiredAt };
                 next = [.. _watches.Select(existing => existing.Id == watch.Id ? updated : existing)];
             }
 
@@ -197,10 +202,43 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
         }
     }
 
+    /// <summary>
+    /// Turns a next-system watch off and records the system and time it fired in; false when no watch has that id or the
+    /// file could not be written.
+    /// </summary>
+    public bool MarkArrived(Guid id, string system, DateTimeOffset at)
+    {
+        lock (_write)
+        {
+            Poll();
+
+            IReadOnlyList<Watch> next;
+
+            lock (_gate)
+            {
+                if (_watches.All(existing => existing.Id != id))
+                {
+                    return false;
+                }
+
+                next = [.. _watches.Select(existing => existing.Id == id
+                    ? existing with { Enabled = false, FiredSystem = system, FiredAt = at }
+                    : existing)];
+            }
+
+            return Save(next);
+        }
+    }
+
     /// <summary>Why a watch cannot be held, or null when it can.</summary>
     public static string? Refusal(Watch watch)
     {
         ArgumentNullException.ThrowIfNull(watch);
+
+        if (watch.Kind == WatchKind.NextSystem)
+        {
+            return NextSystemRefusal(watch);
+        }
 
         if (watch.Kind != WatchKind.Stock)
         {
@@ -230,6 +268,27 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
         return threshold < 0 ? "the threshold is negative." : null;
     }
 
+    private static string? NextSystemRefusal(Watch watch)
+    {
+        if (NextSystemWatch.ServiceFor(watch.Service) is not { } service)
+        {
+            return string.IsNullOrWhiteSpace(watch.Service)
+                ? "it names no station service."
+                : $"'{watch.Service}' is not a station service D47 knows.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(watch.ServiceKind) && NextSystemWatch.KindFor(service.Name, watch.ServiceKind) is null)
+        {
+            var kinds = NextSystemWatch.KindsOf(service.Name);
+
+            return kinds.Count == 0
+                ? $"{service.Name} has no kinds to choose from."
+                : $"'{watch.ServiceKind}' is not a kind of {service.Name}. It is {string.Join(", ", kinds.SkipLast(1))} or {kinds[^1]}.";
+        }
+
+        return watch.MinPad == PadSize.Small ? "the pad is Medium or Large." : null;
+    }
+
     /// <summary>Writes the set; false when the file could not be written.</summary>
     private bool Save(IReadOnlyList<Watch> watches)
     {
@@ -248,6 +307,12 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
                 Comparison = watch.Comparison,
                 Threshold = watch.Threshold,
                 FiredForTick = watch.FiredForTick,
+                Service = watch.Service,
+                ServiceKind = watch.ServiceKind,
+                MinPad = watch.MinPad,
+                CheckRoute = watch.CheckRoute ? true : null,
+                FiredSystem = watch.FiredSystem,
+                FiredAt = watch.FiredAt,
             })],
         };
 
@@ -322,7 +387,13 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
                 line.Commodity?.Trim(),
                 line.Comparison,
                 line.Threshold,
-                line.FiredForTick);
+                line.FiredForTick,
+                NextSystemWatch.ServiceFor(line.Service)?.Name ?? line.Service?.Trim(),
+                NextSystemWatch.KindFor(line.Service, line.ServiceKind) ?? line.ServiceKind?.Trim(),
+                line.MinPad,
+                line.CheckRoute ?? false,
+                line.FiredSystem,
+                line.FiredAt);
 
             if (Refusal(watch) is { } reason)
             {
@@ -378,5 +449,17 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
         public int? Threshold { get; init; }
 
         public string? FiredForTick { get; init; }
+
+        public string? Service { get; init; }
+
+        public string? ServiceKind { get; init; }
+
+        public PadSize? MinPad { get; init; }
+
+        public bool? CheckRoute { get; init; }
+
+        public string? FiredSystem { get; init; }
+
+        public DateTimeOffset? FiredAt { get; init; }
     }
 }

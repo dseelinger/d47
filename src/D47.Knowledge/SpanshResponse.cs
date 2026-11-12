@@ -856,6 +856,7 @@ internal static class SpanshResponse
         // Null where the station has a trader the index cannot classify — one in fifty, and a real state
         // rather than a parse failure.
         TraderType = String(element, "material_trader"),
+        TechnologyBroker = String(element, "technology_broker"),
 
         // Which timestamp depends on what was asked for, and both are worth having: a shipyard seen last year
         // and an outfitting bay seen last week are different kinds of answer.

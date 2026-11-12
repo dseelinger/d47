@@ -76,6 +76,9 @@ public sealed record StationSummary
     /// <summary>Raw, Manufactured or Encoded where the station has a material trader.</summary>
     public string? TraderType { get; init; }
 
+    /// <summary>Guardian or Human where the station has a technology broker.</summary>
+    public string? TechnologyBroker { get; init; }
+
     /// <summary>When the service last saw this station's stock.</summary>
     public DateTimeOffset? StockLastSeen { get; init; }
 
@@ -746,6 +749,15 @@ public sealed record StationQuery
         StationName = station.Trim(),
         MaxDistance = 1,
         Size = 20,
+        FixedOnly = true,
+    };
+
+    /// <summary>Every fixed, finished station in and within a light year of <paramref name="system"/>, with no service filter.</summary>
+    public static StationQuery InSystem(string system) => new()
+    {
+        ReferenceSystem = system.Trim(),
+        MaxDistance = 1,
+        Size = GalaxyQuery.MaxSize,
         FixedOnly = true,
     };
 

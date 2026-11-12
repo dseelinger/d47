@@ -4104,7 +4104,7 @@ public sealed class AppHost : IDisposable
             foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchStore>());
         var bgsTick = host.BgsTick = new BgsTickWatch(
             bgsTickSource,
-            () => gameState.IsGameRunning || watchStore.Watches.Any(watch => watch.Enabled),
+            () => gameState.IsGameRunning || watchStore.Watches.Any(watch => watch is { Enabled: true, Kind: not D47.Core.Watches.WatchKind.NextSystem }),
             () => viewState.Load().BgsTickLast,
             last => viewState.Save(viewState.Load() with { BgsTickLast = last }),
             foundations.LoggerFactory.CreateLogger<BgsTickWatch>());
@@ -4159,6 +4159,10 @@ public sealed class AppHost : IDisposable
             foundations.LoggerFactory.CreateLogger<D47.Core.Watches.WatchRunner>())
         {
             Audible = () => settings.Current.Callouts is { Enabled: true, Watches: true },
+
+            // Null while Elite is closed, so the last system in an old journal is not taken for an arrival.
+            CurrentSystem = () => gameState.IsGameRunning ? gameState.Active?.Location.StarSystem : null,
+            Galaxy = () => services.Galaxy,
         };
 
         tick.Add("watches", context => watches.Poll(context.Now));
