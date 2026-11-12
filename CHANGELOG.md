@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: A next-system watch with "Also tell me when a plotted route passes through one" ticked also checks each route you plot. D47 asks Spansh about the systems ahead one at a time, nearest first and at most 40, and says the first with a match once per route, such as "Your route passes a Manufactured material trader, Commander: Kremainn, jump 6 of 14. Wohler Terminal, 240 light seconds, large pad." The watch stays on and still speaks on arrival. A new route starts the checks over and a cleared route stops them. A watch added by voice has the box ticked, and the reply says so.
+
 Added: Commander › Watches switches between Stock, Community Goal and Next system with, each showing how many watches it holds and how many are on, and ADD NEXT-SYSTEM WATCH opens a form for the third kind: what the system has, a kind for a Material Trader or Technology Broker, the smallest pad, and whether a plotted route counts. A next-system watch that has spoken shows the system and time, and ticking Enabled watches for the next one. With Galaxy search off the form says so and still saves. The headset big panel shows the same page.
 
 Added: Say or type "tell me the next time we're in a system with a material trader" to add a next-system watch, and "stop watching for a material trader" to delete one. It works for ten station services, such as a material trader, a technology broker or Interstellar Factors, with a kind before or after it ("a manufactured material trader") and "with a large pad". D47 answers with no model, says when you are already in a matching system, and keeps the watch for the next one. Only you can add or delete these by voice; the model is refused.

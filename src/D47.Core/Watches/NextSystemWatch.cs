@@ -107,6 +107,18 @@ public static class NextSystemWatch
         return $"{system} has {Said(watch.Service ?? string.Empty, watch.ServiceKind)}, Commander. {Place(station)}. That watch is off now.";
     }
 
+    /// <summary>
+    /// "Your route passes a Manufactured material trader, Commander: Kremainn, jump 6 of 14. Wohler Terminal, 240 light seconds, large pad."
+    /// </summary>
+    public static string RouteLine(string system, int jump, int jumps, Watch watch, StationSummary station)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        ArgumentNullException.ThrowIfNull(station);
+
+        return $"Your route passes {Said(watch.Service ?? string.Empty, watch.ServiceKind)}, Commander: {system}, "
+               + $"jump {jump.ToString(CultureInfo.InvariantCulture)} of {jumps.ToString(CultureInfo.InvariantCulture)}. {Place(station)}.";
+    }
+
     /// <summary>"Wohler Terminal, 240 light seconds, large pad"; a distance or pad the station does not report is left out.</summary>
     public static string Place(StationSummary station)
     {

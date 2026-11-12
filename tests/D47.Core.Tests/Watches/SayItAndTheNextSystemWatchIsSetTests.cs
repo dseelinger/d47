@@ -77,9 +77,11 @@ public class SayItAndTheNextSystemWatchIsSetTests
         Assert.Equal("Material Trader", watch.Service);
         Assert.Equal("Manufactured", watch.ServiceKind);
         Assert.True(watch.Enabled);
+        Assert.True(watch.CheckRoute);
         Assert.Equal("Manufactured material trader", watch.Name);
         Assert.Equal(
-            "Watching for a Manufactured material trader, Commander. I'll tell you when we arrive in a system with one.",
+            "Watching for a Manufactured material trader, Commander. I'll tell you when we arrive in a system with one, "
+            + "or when a route you plot passes through one.",
             said);
         Assert.Equal(0, rig.Model.CallCount);
     }

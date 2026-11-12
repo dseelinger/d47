@@ -4169,6 +4169,7 @@ public sealed class AppHost : IDisposable
             // Null while Elite is closed, so the last system in an old journal is not taken for an arrival.
             CurrentSystem = () => gameState.IsGameRunning ? gameState.Active?.Location.StarSystem : null,
             Galaxy = () => services.Galaxy,
+            Route = () => host.Route,
         };
 
         tick.Add("watches", context => watches.Poll(context.Now));

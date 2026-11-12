@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using D47.Core.Callouts;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging;
 
@@ -15,11 +16,16 @@ public sealed record WatchNotice(Guid WatchId, string Text);
 /// A New Community Goal watch speaks for GalNet launches.
 /// A next-system watch speaks once on arrival in a system with a matching station, then turns itself off; one station
 /// query is sent per arrival, for every next-system watch.
+/// A next-system watch with its route box ticked also speaks once per plotted route, for the first hop ahead with a match,
+/// and stays on. The hops ahead, at most <see cref="MostRouteHops"/>, are asked about one at a time, nearest first.
 /// Quotes and station queries run on the pool. Tick thread only.
 /// </summary>
 public sealed class WatchRunner
 {
     public static readonly TimeSpan Interval = TimeSpan.FromMinutes(30);
+
+    /// <summary>The most hops of one plotted route that are asked about.</summary>
+    public const int MostRouteHops = 40;
 
     private readonly WatchStore _store;
     private readonly ITradePlanService _trade;
@@ -44,6 +50,26 @@ public sealed class WatchRunner
     private Arrival? _held;
 
     private bool _toldNoGalaxy;
+
+    private readonly ConcurrentQueue<RouteAnswer> _routeAnswers = new();
+
+    private NavRoute? _routeSeen;
+
+    /// <summary>The hop names of the route being checked; an empty route does not replace it.</summary>
+    private IReadOnlyList<string> _routeHops = [];
+
+    private int _routeGeneration;
+
+    /// <summary>The hops ahead when the route was first seen, nearest first, at most <see cref="MostRouteHops"/>.</summary>
+    private List<string> _routeQueue = [];
+
+    /// <summary>Each hop of this route asked about, with its stations; null when the query failed.</summary>
+    private readonly Dictionary<string, IReadOnlyList<StationSummary>?> _routeChecked = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The watches already said for this route.</summary>
+    private readonly HashSet<Guid> _routeSaid = [];
+
+    private bool _routeFetching;
 
     public WatchRunner(
         WatchStore store,
@@ -70,6 +96,9 @@ public sealed class WatchRunner
 
     /// <summary>The station search a next-system watch asks, or null when there is none.</summary>
     public Func<IGalaxyService?> Galaxy { get; set; } = () => null;
+
+    /// <summary>The route Elite plotted.</summary>
+    public Func<NavRoute> Route { get; set; } = () => NavRoute.None;
 
     /// <summary>The lines made ready in the last <see cref="Poll"/>.</summary>
     public IReadOnlyList<WatchNotice> Ready { get; private set; } = [];
@@ -99,6 +128,7 @@ public sealed class WatchRunner
         }
 
         ready.AddRange(ArrivalNotices(allowed, now));
+        ready.AddRange(RouteNotices(allowed));
 
         Ready = ready;
 
@@ -259,6 +289,155 @@ public sealed class WatchRunner
         return notices;
     }
 
+    /// <summary>Says what the hops checked so far match, then asks about the nearest hop ahead some watch still waits on.</summary>
+    private List<WatchNotice> RouteNotices(bool allowed)
+    {
+        var notices = new List<WatchNotice>();
+
+        while (_routeAnswers.TryDequeue(out var answer))
+        {
+            _routeFetching = false;
+
+            if (answer.Generation == _routeGeneration)
+            {
+                _routeChecked[answer.System] = answer.Stations;
+            }
+        }
+
+        if (CurrentSystem()?.Trim() is not { Length: > 0 } here)
+        {
+            return notices;
+        }
+
+        var route = Route();
+        NoteRoute(route, here);
+
+        var ahead = route.Ahead(here).Select(hop => hop.StarSystem).ToList();
+
+        if (!allowed || ahead.Count == 0)
+        {
+            return notices;
+        }
+
+        string? waitingOn = null;
+
+        foreach (var watch in _store.Watches.Where(watch => watch is { Enabled: true, Kind: WatchKind.NextSystem, CheckRoute: true }))
+        {
+            if (_routeSaid.Contains(watch.Id) || FirstOnRoute(watch, ahead) is not { } step)
+            {
+                continue;
+            }
+
+            if (step.Station is { } station)
+            {
+                _routeSaid.Add(watch.Id);
+                notices.Add(new WatchNotice(watch.Id, NextSystemWatch.RouteLine(step.System, step.Jump, ahead.Count, watch, station)));
+            }
+            else
+            {
+                waitingOn = step.System;
+            }
+        }
+
+        if (waitingOn is null || _routeFetching)
+        {
+            return notices;
+        }
+
+        if (Galaxy() is not { } galaxy)
+        {
+            if (!_toldNoGalaxy)
+            {
+                _toldNoGalaxy = true;
+                _logger.LogInformation("Next-system watches are not checked: there is no station search");
+            }
+
+            return notices;
+        }
+
+        _routeFetching = true;
+        var generation = _routeGeneration;
+        Dispatch(() => LookUpHop(galaxy, waitingOn, generation));
+
+        return notices;
+    }
+
+    /// <summary>Starts the checks over when a route with different hops is plotted; an empty route stops them by leaving nothing ahead.</summary>
+    private void NoteRoute(NavRoute route, string here)
+    {
+        if (ReferenceEquals(route, _routeSeen) || !route.IsPlotted)
+        {
+            return;
+        }
+
+        _routeSeen = route;
+
+        var hops = route.Hops.Select(hop => hop.StarSystem).ToList();
+
+        if (hops.SequenceEqual(_routeHops, StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _routeHops = hops;
+        _routeGeneration++;
+        _routeQueue = [.. route.Ahead(here).Take(MostRouteHops).Select(hop => hop.StarSystem)];
+        _routeChecked.Clear();
+        _routeSaid.Clear();
+    }
+
+    /// <summary>
+    /// The nearest queued hop still ahead that matches the watch, or that has not been asked about yet; null when every
+    /// queued hop still ahead was asked about and none matches.
+    /// </summary>
+    private RouteStep? FirstOnRoute(Watch watch, List<string> ahead)
+    {
+        foreach (var system in _routeQueue)
+        {
+            var jump = ahead.FindIndex(hop => string.Equals(hop, system, StringComparison.OrdinalIgnoreCase));
+
+            if (jump < 0)
+            {
+                continue;
+            }
+
+            if (!_routeChecked.TryGetValue(system, out var stations))
+            {
+                return new RouteStep(system, jump + 1, null);
+            }
+
+            if (stations is not null && WatchRule.Arrival(watch, system, stations) is { } station)
+            {
+                return new RouteStep(system, jump + 1, station);
+            }
+        }
+
+        return null;
+    }
+
+    private async Task LookUpHop(IGalaxyService galaxy, string system, int generation)
+    {
+        IReadOnlyList<StationSummary>? stations = null;
+
+        try
+        {
+            var result = await galaxy.FindStationsAsync(StationQuery.InSystem(system), CancellationToken.None).ConfigureAwait(false);
+            stations = result.Stations;
+        }
+        catch (GalaxyUnavailableException ex)
+        {
+            _logger.LogInformation("Route watch check for {System} failed: {Reason}", system, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInformation("Route watch check for {System} failed: {Reason}", system, ex.GetType().Name);
+        }
+        finally
+        {
+            _routeAnswers.Enqueue(new RouteAnswer(generation, system, stations));
+        }
+    }
+
     private async Task LookUp(IGalaxyService galaxy, string system)
     {
         IReadOnlyList<StationSummary>? stations = null;
@@ -334,4 +513,10 @@ public sealed class WatchRunner
 
     /// <summary>A system's stations; null when the query failed.</summary>
     private sealed record Arrival(string System, IReadOnlyList<StationSummary>? Stations);
+
+    /// <summary>A route hop's stations, for the route it was asked for; null when the query failed.</summary>
+    private sealed record RouteAnswer(int Generation, string System, IReadOnlyList<StationSummary>? Stations);
+
+    /// <summary>A watch's first match on the route, <paramref name="Jump"/> counted from the Commander's system; null Station while that hop is not yet checked.</summary>
+    private sealed record RouteStep(string System, int Jump, StationSummary? Station);
 }

@@ -44,7 +44,7 @@ nav_order: 165
 </section>
 <section>
 <h2><span class="num">4</span> Next-system watches.</h2>
-<p class="body">This watch names a station service and a smallest pad. On arrival in a system, D47 asks Spansh once for its stations and checks every next-system watch against them. Carriers and megaships are left out. On a match, D47 names the nearest station and turns the watch off.</p>
+<p class="body">This watch names a station service and a smallest pad. On each arrival D47 asks Spansh for the system's stations, leaving out carriers and megaships, names the nearest match and turns the watch off. With the route box ticked, the systems ahead on a plotted route are checked too.</p>
 </section>
 </div></div>
 </details>
@@ -58,7 +58,10 @@ deleted with "stop watching for" a service. The services are Black Market, Inter
 (also "materials trader" or "mats trader"), Outfitting, Refuel, Repair, Shipyard, Technology Broker (also "tech broker"),
 Universal Cartographics and Vista Genomics. A kind (Raw, Manufactured, Encoded, Human or Guardian) may come before or
 after the service, and "with a large pad" sets the pad. If you are already in a system with a match, D47 names the
-station and still keeps the watch for the next system. The two tools below are the Commander's own: they are refused
+station and still keeps the watch for the next system. A watch added this way has its route box ticked: when you plot
+a route, D47 asks about the systems ahead one at a time, nearest first, and says the first with a match once, with its
+jump number, such as "Your route passes a Manufactured material trader, Commander: Kremainn, jump 6 of 14." The watch
+stays on, and a new route starts the checks over. The two tools below are the Commander's own: they are refused
 if the model asks for them.
 
 ```text
@@ -68,7 +71,8 @@ Soontill Relics at Cheranovsky City: Soontill Relics above 200 at Cheranovsky Ci
 The file holds at most 32 watches. Saving a stock watch for an any-station choice sends the system and
 station name to Spansh and the commodity name to Ardent once; a rare sends
 nothing on save. While a next-system watch is on, each system you arrive in is sent to Spansh to list its
-stations. A change to the station, commodity, comparison or number clears the stored firing, so the
+stations. While a next-system watch with its route box ticked is on, each system ahead on a route you plot, up to
+40, is sent to Spansh the same way. A change to the station, commodity, comparison or number clears the stored firing, so the
 watch can fire again in the same tick.
 
 <details markdown="1">

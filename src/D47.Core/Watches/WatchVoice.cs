@@ -42,7 +42,8 @@ public sealed class WatchVoice(
             WatchKind.NextSystem,
             Service: known.Name,
             ServiceKind: NextSystemWatch.KindFor(known.Name, kind),
-            MinPad: minPad);
+            MinPad: minPad,
+            CheckRoute: true);
 
         if (WatchStore.Refusal(watch) is { } refusal)
         {
@@ -73,7 +74,7 @@ public sealed class WatchVoice(
                 $"Watching for {said}, Commander. The watch is saved. D47 cannot tell what a system's stations have until Galaxy search is on.");
         }
 
-        var added = $"Watching for {said}, Commander. I'll tell you when we arrive in a system with one.";
+        var added = $"Watching for {said}, Commander. I'll tell you when we arrive in a system with one, or when a route you plot passes through one.";
 
         if (currentSystem()?.Trim() is not { Length: > 0 } here)
         {
