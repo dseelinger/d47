@@ -10,6 +10,7 @@ namespace D47.App.Tests;
 public sealed class EachCommanderKeepsTheirOwnCodexPicturesTests
 {
     private const string Folder = @"C:\d47\data\codex-pictures";
+    private const string Shots = @"C:\d47\data\captures";
 
     private static readonly CodexPictureKey Key = new(101, 18);
 
@@ -26,12 +27,13 @@ public sealed class EachCommanderKeepsTheirOwnCodexPicturesTests
         public CodexPictureStore Store { get; }
 
         public Install() =>
-            Store = new CodexPictureStore(Files, Folder, () => false, NullLogger.Instance, commander: () => Active, shared: () => Shared);
+            Store = new CodexPictureStore(Files, Folder, () => false, NullLogger.Instance, commander: () => Active, shared: () => Shared, screenshots: Shots);
 
         public void Save(string commander, string picture)
         {
             Active = commander;
-            Store.SaveLocal(Key, Bytes(picture), Bytes("source " + picture), new CropSquare(0, 0, 600));
+            Files.WriteBytes(Path.Combine(Shots, "shot-" + picture + ".jpg"), Bytes("source " + picture));
+            Store.SaveLocal(Key, Bytes(picture), "shot-" + picture + ".jpg", new CropSquare(0, 0, 600));
         }
     }
 
@@ -156,6 +158,6 @@ public sealed class EachCommanderKeepsTheirOwnCodexPicturesTests
         Assert.Empty(install.Store.LocalKeys());
         Assert.Null(install.Store.Local(Key));
         Assert.False(install.Store.HasLocal(Key));
-        Assert.Throws<InvalidOperationException>(() => install.Store.SaveLocal(Key, Bytes("x"), Bytes("y"), new CropSquare(0, 0, 600)));
+        Assert.Throws<InvalidOperationException>(() => install.Store.SaveLocal(Key, Bytes("x"), "y.jpg", new CropSquare(0, 0, 600)));
     }
 }

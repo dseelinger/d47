@@ -23,6 +23,7 @@ public sealed class CodexPictureStore
     private readonly Func<bool> _allowed;
     private readonly Func<string?> _commander;
     private readonly Func<bool> _shared;
+    private readonly string? _screenshots;
     private readonly ILogger _logger;
     private readonly HttpClient _http;
     private readonly Lock _gate = new();
@@ -35,6 +36,7 @@ public sealed class CodexPictureStore
     /// <param name="allowed">Read at each fetch and each read of a stock row, so turning the setting off stops both.</param>
     /// <param name="commander">The active Commander's Frontier ID; null when no journal has been read.</param>
     /// <param name="shared">Whether every Commander's own pictures are one pool.</param>
+    /// <param name="screenshots">The folder of copied screenshots a Commander's picture is cut from.</param>
     public CodexPictureStore(
         IFileSystem files,
         string folder,
@@ -42,8 +44,10 @@ public sealed class CodexPictureStore
         ILogger logger,
         HttpMessageHandler? handler = null,
         Func<string?>? commander = null,
-        Func<bool>? shared = null)
+        Func<bool>? shared = null,
+        string? screenshots = null)
     {
+        _screenshots = screenshots;
         _files = files;
         _folder = folder;
         _allowed = allowed;
@@ -134,11 +138,71 @@ public sealed class CodexPictureStore
     /// <summary>The bytes of the active Commander's own picture; null when there is none.</summary>
     public byte[]? Own(CodexPictureKey key) => Own() is { } own ? _files.ReadBytes(Path.Combine(own, key.FileName)) : null;
 
-    /// <summary>The capture the active Commander's picture was cut from; null when it is not kept.</summary>
-    public byte[]? LocalSource(CodexPictureKey key) => Own() is { } own ? _files.ReadBytes(Path.Combine(own, key.SourceFileName)) : null;
+    /// <summary>The bytes of the screenshot the active Commander's picture was cut from, else the kept copy of an older picture; null when neither is there.</summary>
+    public byte[]? LocalSource(CodexPictureKey key)
+    {
+        if (Own() is not { } own)
+        {
+            return null;
+        }
 
-    /// <summary>Whether the capture the active Commander's picture was cut from is kept.</summary>
-    public bool HasLocalSource(CodexPictureKey key) => Own() is { } own && _files.Stat(Path.Combine(own, key.SourceFileName)) is not null;
+        return LocalScreenshot(key) is { } name
+            ? ScreenshotPath(name) is { } path ? _files.ReadBytes(path) : null
+            : _files.ReadBytes(Path.Combine(own, key.SourceFileName));
+    }
+
+    /// <summary>Whether <see cref="LocalSource"/> has bytes to give.</summary>
+    public bool HasLocalSource(CodexPictureKey key)
+    {
+        if (Own() is not { } own)
+        {
+            return false;
+        }
+
+        return LocalScreenshot(key) is { } name
+            ? ScreenshotPath(name) is { } path && _files.Stat(path) is not null
+            : _files.Stat(Path.Combine(own, key.SourceFileName)) is not null;
+    }
+
+    /// <summary>The file name of the screenshot the active Commander's picture was cut from; null when none is recorded.</summary>
+    public string? LocalScreenshot(CodexPictureKey key) =>
+        Own() is { } own ? PictureLift.ParseScreenshot(_files.ReadText(Path.Combine(own, key.CropFileName))) : null;
+
+    /// <summary>The keys, across every Commander, whose crop file names <paramref name="screenshot"/>.</summary>
+    public IReadOnlyList<CodexPictureKey> PicturesCutFrom(string screenshot)
+    {
+        var keys = new List<CodexPictureKey>();
+
+        foreach (var (key, path) in CropFiles())
+        {
+            if (string.Equals(PictureLift.ParseScreenshot(_files.ReadText(path)), screenshot, StringComparison.OrdinalIgnoreCase))
+            {
+                keys.Add(key);
+            }
+        }
+
+        return keys;
+    }
+
+    /// <summary>Rewrites every crop file that names <paramref name="from"/> to name <paramref name="to"/>; returns how many changed.</summary>
+    public int ScreenshotRenamed(string from, string to)
+    {
+        var changed = 0;
+
+        foreach (var (_, path) in CropFiles())
+        {
+            var text = _files.ReadText(path);
+
+            if (string.Equals(PictureLift.ParseScreenshot(text), from, StringComparison.OrdinalIgnoreCase)
+                && PictureLift.WithScreenshot(text, to) is { } rewritten)
+            {
+                _files.WriteText(path, rewritten);
+                changed++;
+            }
+        }
+
+        return changed;
+    }
 
     /// <summary>The square the active Commander's picture was cut with; null when it is not kept.</summary>
     public CropSquare? LocalCrop(CodexPictureKey key) =>
@@ -151,13 +215,22 @@ public sealed class CodexPictureStore
     /// <summary>Whether the active Commander has a picture of their own for <paramref name="key"/>.</summary>
     public bool HasLocal(CodexPictureKey key) => Own() is { } own && _files.Stat(Path.Combine(own, key.FileName)) is not null;
 
-    /// <summary>Keeps the picture, its source, its square and the gamma it was lifted with; the picture is written last, so it appears only when the rest is kept.</summary>
-    public void SaveLocal(CodexPictureKey key, byte[] picture, byte[] source, CropSquare crop, double? gamma = null)
+    /// <summary>
+    /// Keeps the picture, its square, the gamma it was lifted with and the name of the screenshot it was cut from;
+    /// the picture is written last, so it appears only when the rest is kept. A null <paramref name="screenshot"/>
+    /// leaves an older picture's kept source copy in place.
+    /// </summary>
+    public void SaveLocal(CodexPictureKey key, byte[] picture, string? screenshot, CropSquare crop, double? gamma = null)
     {
         var folder = Own() ?? throw new InvalidOperationException("No Commander is active.");
 
-        _files.WriteBytes(Path.Combine(folder, key.SourceFileName), source);
-        _files.WriteText(Path.Combine(folder, key.CropFileName), PictureLift.Write(crop, gamma));
+        _files.WriteText(Path.Combine(folder, key.CropFileName), PictureLift.Write(crop, gamma, screenshot));
+
+        if (screenshot is not null)
+        {
+            _files.Delete(Path.Combine(folder, key.SourceFileName));
+        }
+
         _files.WriteBytes(Path.Combine(folder, key.FileName), picture);
     }
 
@@ -262,6 +335,22 @@ public sealed class CodexPictureStore
         }
 
         return own;
+    }
+
+    private string? ScreenshotPath(string name) =>
+        _screenshots is null || name != Path.GetFileName(name) ? null : Path.Combine(_screenshots, name);
+
+    private IEnumerable<(CodexPictureKey Key, string Path)> CropFiles()
+    {
+        foreach (var path in _files.Enumerate(Path.Combine(_folder, LocalFolder), "*.crop.json", recursive: true))
+        {
+            var picture = Path.GetFileName(path).Replace(".crop.json", ".jpg", StringComparison.Ordinal);
+
+            if (CodexPictureKey.TryParse(picture, out var key))
+            {
+                yield return (key, path);
+            }
+        }
     }
 
     private static string FolderName(string id) =>

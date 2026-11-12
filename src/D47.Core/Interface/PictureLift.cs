@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace D47.Core.Interface;
 
@@ -41,9 +42,47 @@ public static class PictureLift
         return table;
     }
 
-    /// <summary>The <c>crop.json</c> text for a square and the gamma it is cut with; no gamma writes the square alone.</summary>
-    public static string Write(CropSquare square, double? gamma) =>
-        JsonSerializer.Serialize(new Record(square.X, square.Y, square.Side, gamma), Options);
+    /// <summary>The <c>crop.json</c> text for a square, the gamma it is cut with and the name of the screenshot it is cut from; no gamma writes the square alone.</summary>
+    public static string Write(CropSquare square, double? gamma, string? screenshot = null) =>
+        JsonSerializer.Serialize(new Record(square.X, square.Y, square.Side, gamma, screenshot), Options);
+
+    /// <summary>The screenshot file name recorded in <c>crop.json</c> text; null when none is, or the text is not one.</summary>
+    public static string? ParseScreenshot(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<Record>(json, Options) is { Screenshot: { Length: > 0 } name } ? name : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary><c>crop.json</c> text with the screenshot name replaced; the square and gamma are kept. Null when the text is not one.</summary>
+    public static string? WithScreenshot(string? json, string screenshot)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<Record>(json, Options) is { Side: > 0 } record
+                ? JsonSerializer.Serialize(record with { Screenshot = screenshot }, Options)
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     /// <summary>The gamma recorded in <c>crop.json</c> text; null when none is, or the text is not one.</summary>
     public static double? Parse(string? json)
@@ -63,5 +102,6 @@ public static class PictureLift
         }
     }
 
-    private sealed record Record(int X, int Y, int Side, double? Gamma);
+    private sealed record Record(
+        int X, int Y, int Side, double? Gamma, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Screenshot = null);
 }

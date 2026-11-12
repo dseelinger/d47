@@ -219,7 +219,7 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
 
         public void OwnPicture()
         {
-            Store.SaveLocal(Key, Mine, Encoding.ASCII.GetBytes("source"), new CropSquare(0, 0, 600));
+            Store.SaveLocal(Key, Mine, "shot.jpg", new CropSquare(0, 0, 600));
         }
 
         public void StockOnDisk(CodexPictureRow row, byte[] bytes)
@@ -296,7 +296,7 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
         Assert.Equal([mine, other], CodexPictureIndex.Parse(surface.Files.ReadText(surface.Stock(CodexPictureIndex.IndexName))!).Rows);
         Assert.Contains(surface.Store.StockRows(), row => row == mine);
         Assert.Null(surface.Files.ReadBytes(surface.Local(Key.FileName)));
-        Assert.NotNull(surface.Files.ReadBytes(surface.Local(Key.SourceFileName)));
+        Assert.Null(surface.Files.ReadBytes(surface.Local(Key.SourceFileName)));
         Assert.NotNull(surface.Files.ReadText(surface.Local(Key.CropFileName)));
         Assert.Null(surface.Publisher.Doing);
     }

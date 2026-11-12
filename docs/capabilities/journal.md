@@ -521,13 +521,12 @@ To make your own, say "take a picture" in game, or take a screenshot with Elite'
 region and the entry) and press **Choose a picture**. The screenshots D47 has copied are listed newest first,
 those taken with this entry ahead of the rest. Press one to crop it: drag inside the square to move it and
 drag a corner to resize it. The square stays inside the capture and is never smaller than 384 pixels of it.
-**Save** keeps a 768 by 768 picture, the capture it was cut from, the square and the brightness used, in `data\codex-pictures\local\<Frontier ID>`;
+**Save** keeps a 768 by 768 picture, the square and the brightness used, and the name of the screenshot it was cut from, in `data\codex-pictures\local\<Frontier ID>`;
 **Cancel** keeps nothing. A picture whose note says it came from the headset's eye is brightened, because the headset adds brightness after the point where that picture was taken; Elite's own screenshots are not.
 
 The **Brightness** row under the picture changes that. It is a whole step from -4 (Darker) to +8 (Brighter), set with the arrows or by pressing the track; the picture redraws at each press. A picture from the headset's eye opens at +4 and any other at 0. The ↺ beside the row shows when the step differs from the one the page opened with, and returns to it. **Save** keeps the brightness with the square, and **Re-crop** opens at the saved brightness.
 
-With a picture of your own for the region, the entry's page also offers **Re-crop**, which opens the kept
-capture with the saved square and brightness, and **Replace**. **Use the stock picture**, or **Remove my picture** when there
+With a picture of your own for the region, the entry's page also offers **Re-crop**, which opens the screenshot it was cut from, with the saved square and brightness, and is offered only while that screenshot is still in the screenshots folder, and **Replace**. **Use the stock picture**, or **Remove my picture** when there
 is no stock one, deletes your picture and its capture. These are in the main window only; the big panel shows
 the picture and none of them. An entry in a region D47 cannot name has none of them.
 

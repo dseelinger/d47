@@ -68,7 +68,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         remove { }
     }
 
-    /// <summary>Writes the picture, its source and its square, then returns to the entry page.</summary>
+    /// <summary>Writes the picture, its square and the name of its screenshot, then returns to the entry page.</summary>
     internal async Task SaveAsync()
     {
         if (Surface is null || _source is null)
@@ -79,6 +79,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
         var square = Surface.Square;
         var key = _key;
         var source = _source;
+        var screenshot = _kept ? _pictures.Store.LocalScreenshot(key) : _work.Capture is { } chosen ? Path.GetFileName(chosen) : null;
         var gamma = Gamma;
         var store = _pictures.Store;
 
@@ -94,7 +95,7 @@ public sealed class CodexCropPage : UserControl, IPageSummary
                     return false;
                 }
 
-                store.SaveLocal(key, picture, source, square, gamma);
+                store.SaveLocal(key, picture, screenshot, square, gamma);
 
                 return true;
             });

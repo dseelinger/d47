@@ -55,7 +55,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
         public Surface()
         {
-            Store = new CodexPictureStore(Files, Folder, () => false, NullLogger.Instance, commander: () => "F1");
+            Store = new CodexPictureStore(Files, Folder, () => false, NullLogger.Instance, commander: () => "F1", screenshots: Captures);
             Pictures = new CodexPictureSet(Store, () => false, Files, @"C:\d47\placeholders", Captures);
             Nav.Register(PanelTab.Commander, new NavCrumb("ledgers", "Ledgers"));
             Nav.Select(PanelTab.Commander);
@@ -86,7 +86,8 @@ public class TheCodexPicturePagesCropACaptureTests
 
         public void OwnPictureWithSource(CodexPictureKey key, CropSquare square)
         {
-            Store.SaveLocal(key, Png(8), Jpeg(1000, 600), square);
+            Files.WriteBytes(Path.Combine(Captures, "kept.jpg"), Jpeg(1000, 600));
+            Store.SaveLocal(key, Png(8), "kept.jpg", square);
         }
 
         public void Stock(CodexPictureKey key)
@@ -179,7 +180,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.Stock(Key);
 
         var stockOn = new CodexPictureSet(
-            new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1"), () => true, surface.Files, @"C:\d47\placeholders", Captures);
+            new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1", screenshots: Captures), () => true, surface.Files, @"C:\d47\placeholders", Captures);
         var (window, page) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
 
         Assert.Equal(["CodexReplace", "CodexUseStock"], Actions(page));
@@ -193,6 +194,13 @@ public class TheCodexPicturePagesCropACaptureTests
         Assert.Equal(["CodexRecrop", "CodexReplace", "CodexUseStock"], Actions(withSource));
 
         kept.Close();
+
+        surface.Files.Delete(Path.Combine(Captures, "kept.jpg"));
+        var (gone, withoutSource) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
+
+        Assert.Equal(["CodexReplace", "CodexUseStock"], Actions(withoutSource));
+
+        gone.Close();
     }
 
     [AvaloniaFact]
@@ -202,7 +210,7 @@ public class TheCodexPicturePagesCropACaptureTests
         surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
         surface.Stock(Key);
         var stockOn = new CodexPictureSet(
-            new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1"), () => true, surface.Files, @"C:\d47\placeholders", Captures);
+            new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1", screenshots: Captures), () => true, surface.Files, @"C:\d47\placeholders", Captures);
 
         var (window, page) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
         Press(Named(page, "CodexUseStock")!);
@@ -338,7 +346,10 @@ public class TheCodexPicturePagesCropACaptureTests
             Assert.True(Blue(saved) > 140);
         }
 
-        using (var stream = new MemoryStream(surface.Files.ReadBytes(Path.Combine(Local, Key.SourceFileName))!))
+        Assert.False(surface.Kept(Key.SourceFileName));
+        Assert.Equal("capture-20261018-210900.jpg", surface.Store.LocalScreenshot(Key));
+
+        using (var stream = new MemoryStream(surface.Store.LocalSource(Key)!))
         using (var kept = new Bitmap(stream))
         {
             Assert.True(Blue(kept) < 110);
@@ -346,7 +357,6 @@ public class TheCodexPicturePagesCropACaptureTests
 
         window.Close();
 
-        surface.Files.Delete(Path.Combine(Captures, "capture-20261018-210900.jpg"));
         surface.Nav.Drill(CodexPage.CropCrumb(Key, kept: true));
         var (again, recrop) = PageHost.Open(() => new CodexCropPage(Key, surface.Pictures, surface.Nav, surface.Work, kept: true));
         await Lifted(recrop);
@@ -503,9 +513,10 @@ public class TheCodexPicturePagesCropACaptureTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(surface.Kept(Key.FileName));
-        Assert.True(surface.Kept(Key.SourceFileName));
+        Assert.False(surface.Kept(Key.SourceFileName));
         Assert.Equal(new CropSquare(600, 0, 1000), CropSquare.Parse(surface.Files.ReadText(Path.Combine(Local, Key.CropFileName))));
-        Assert.Equal(surface.Files.ReadBytes(Path.Combine(Captures, "capture-20261018-210900.jpg")), surface.Files.ReadBytes(Path.Combine(Local, Key.SourceFileName)));
+        Assert.Equal("capture-20261018-210900.jpg", surface.Store.LocalScreenshot(Key));
+        Assert.Equal(surface.Files.ReadBytes(Path.Combine(Captures, "capture-20261018-210900.jpg")), surface.Store.LocalSource(Key));
 
         var saved = surface.Files.ReadBytes(Path.Combine(Local, Key.FileName))!;
         Assert.Equal([0xFF, 0xD8], saved[..2]);

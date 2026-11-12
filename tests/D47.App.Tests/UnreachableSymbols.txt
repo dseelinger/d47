@@ -38,6 +38,9 @@ D47.App.Panel.BodySearchPage.Type(string, string)
 D47.App.Panel.CatalogueFilters.RatingsShown
 D47.App.Panel.CharactersPage.DistanceSettled
 D47.App.Panel.CharactersPage.Selected
+D47.App.Panel.CodexPictureStore.CropFiles()
+D47.App.Panel.CodexPictureStore.PicturesCutFrom(string)
+D47.App.Panel.CodexPictureStore.ScreenshotRenamed(string, string)
 D47.App.Panel.CodexPublishResult.Landed
 D47.App.Panel.CommanderSwitcher.Label
 D47.App.Panel.ComparePage.Minimum(int)
@@ -117,6 +120,7 @@ D47.Core.Debrief.StandingDirectionsStore.Changed
 D47.Core.Diagnostics.Donation.CorpusCensus.Count
 D47.Core.Hulls.HullMesh.Parts
 D47.Core.Input.ButtonSharing.Certain
+D47.Core.Interface.PictureLift.WithScreenshot(string, string)
 D47.Core.Interface.SpeciesPicture.Choose(string, long?, int?, System.Collections.Generic.IReadOnlySet<D47.Core.Interface.CodexPictureKey>, System.Collections.Generic.IReadOnlyList<D47.Core.Interface.CodexPictureRow>)
 D47.Core.Interface.Spelling.Characters
 D47.Core.Interface.ZoomLadder.Maximum
