@@ -623,7 +623,7 @@ public sealed class EngineerPage : EngineerPageBase
         }
 
         // Unlock Prerequisites, with what is already done marked (remediation.md 13, item 12).
-        if (entry.Criteria.Count > 0)
+        if (entry.Reach != EngineerReach.Unlocked && entry.Criteria.Count > 0)
         {
             _body.Children.Add(EngineersPages.PrerequisitesHeader(engineer, entry.Criteria, Source, Refresh, Mini));
             _body.Children.Add(EngineersPages.Criteria(entry.Criteria));
@@ -654,7 +654,7 @@ public sealed class EngineerPage : EngineerPageBase
                      ("The invitation asks for", engineer.Unlock),
                  })
         {
-            if (text is { Length: > 0 })
+            if (entry.Reach != EngineerReach.Unlocked && text is { Length: > 0 })
             {
                 _body.Children.Add(LoadoutPages.Section(caption, Mini));
                 _body.Children.Add(LoadoutPages.Muted(text));
@@ -815,14 +815,18 @@ public sealed class EngineerRoutePage : EngineerPageBase, IPageSummary
             row.Margin = new Thickness(0, 12, 0, 0);
             _body.Children.Add(row);
 
-            if (EngineersPages.AddPrerequisitesControl(candidate.Engineer, candidate.Criteria, Source, Refresh)
-                is { } button)
+            var unlocked = report.Directory.Any(
+                entry => entry.Engineer.Id == candidate.Engineer.Id && entry.Reach == EngineerReach.Unlocked);
+
+            if (!unlocked
+                && EngineersPages.AddPrerequisitesControl(candidate.Engineer, candidate.Criteria, Source, Refresh)
+                    is { } button)
             {
                 button.Margin = new Thickness(0, 2, 0, 0);
                 _body.Children.Add(button);
             }
 
-            if (candidate.Criteria.Count > 0)
+            if (!unlocked && candidate.Criteria.Count > 0)
             {
                 _body.Children.Add(EngineersPages.Criteria(candidate.Criteria));
             }

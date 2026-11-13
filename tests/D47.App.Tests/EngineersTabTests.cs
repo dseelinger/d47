@@ -38,10 +38,14 @@ public class EngineersTabTests
             """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Liz Ryder","EngineerID":300080,"Progress":"Unlocked","Rank":5}]}""");
     }
 
-    private static Surface Open(bool planned = true, D47.Core.Capabilities.Builtin.IClipboard? clipboard = null)
+    private static Surface Open(
+        bool planned = true,
+        D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
+        CommanderGameState? commander = null,
+        int grade = 3)
     {
         var root = TempFolders.Create("d47-engineers-tab-tests");
-        var state = State();
+        var state = commander ?? State();
 
         var (checklists, builds, _, ships, onFoot, unlocks) = PlanBench.Over(root, () => state);
 
@@ -50,7 +54,7 @@ public class EngineersTabTests
         {
             builds.Save([
                 new ShipBuild("F1", "ship-1", "python", 12, "Bad Idea",
-                    [new SlotPlan("FrameShiftDrive", "Increased FSD Range", 3)]),
+                    [new SlotPlan("FrameShiftDrive", "Increased FSD Range", grade)]),
             ]);
         }
 
@@ -220,6 +224,78 @@ public class EngineersTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Deciat"], clipboard.Written);
+
+        surface.Window.Close();
+    }
+
+    /// <summary>Felicity Farseer unlocked at grade 3, with a Frame Shift Drive plan that needs her at grade 5.</summary>
+    private static CommanderGameState FarseerUnlockedAtThree() =>
+        JournalScript.State(
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Location","StarSystem":"Sol","StarPos":[0.0,0.0,0.0],"Docked":true,"StationName":"Abraham Lincoln"}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Loadout","Ship":"python","ShipID":12,"ShipName":"Bad Idea","ShipIdent":"BI-01","MaxJumpRange":30.0,"Modules":[]}""",
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":3}]}""");
+
+    [AvaloniaFact]
+    public void AnUnlockedEngineerOnTheRouteDrawsNoCriteria()
+    {
+        var surface = Open(commander: FarseerUnlockedAtThree(), grade: 5);
+
+        Assert.True(surface.Panel.Nav.Drill(EngineersPages.RouteCrumb));
+        Dispatcher.UIThread.RunJobs();
+
+        var route = surface.Panel.GetVisualDescendants().OfType<EngineerRoutePage>().Single();
+        var row = route.GetVisualDescendants().OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
+                .Any(text => text.Text == "FELICITY FARSEER"));
+        var body = Assert.IsAssignableFrom<Avalonia.Controls.Panel>(row.Parent);
+        var after = body.Children.SkipWhile(child => !ReferenceEquals(child, row)).Skip(1)
+            .TakeWhile(child => child is not Button { Content: StackPanel })
+            .ToList();
+
+        Assert.NotEmpty(after);
+
+        var drawn = after.SelectMany(child => child.GetVisualDescendants().Prepend(child).OfType<TextBlock>())
+            .Select(block => block.Text ?? string.Empty).ToList();
+
+        Assert.DoesNotContain(drawn, line => line.Contains("MET", StringComparison.Ordinal)
+                                             || line.Contains("UNKNOWN", StringComparison.Ordinal));
+        Assert.DoesNotContain(after, child => child.GetVisualDescendants().Prepend(child).OfType<Button>().Any());
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AnUnlockedEngineersPageHasNoUnlockSections()
+    {
+        var surface = Open(commander: FarseerUnlockedAtThree(), grade: 5);
+        var farseer = EngineerDirectory.All.First(engineer => engineer.Name == "Felicity Farseer");
+
+        Assert.True(farseer.Meeting is { Length: > 0 } || farseer.Unlock is { Length: > 0 });
+
+        surface.Panel.Nav.Drill(EngineersPages.Crumb(farseer));
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(surface.Panel);
+
+        Assert.Contains(shown, line => line.Contains("Planned work", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(shown, line => line.Contains("Unlock Prerequisites", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(shown, line => line.Contains("Earning the invitation", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(shown, line => line.Contains("The invitation asks for", StringComparison.OrdinalIgnoreCase));
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ALockedEngineersPageStillHasItsUnlockSections()
+    {
+        var surface = Open();
+        var farseer = EngineerDirectory.All.First(engineer => engineer.Name == "Felicity Farseer");
+
+        surface.Panel.Nav.Drill(EngineersPages.Crumb(farseer));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains(Text(surface.Panel), line => line.Contains("Unlock Prerequisites", StringComparison.OrdinalIgnoreCase));
 
         surface.Window.Close();
     }
@@ -530,7 +606,16 @@ public class EngineersTabTests
 
         var shown = Text(surface.Panel);
 
-        Assert.Contains("UNLOCK PREREQUISITES", shown);
+        Assert.DoesNotContain("UNLOCK PREREQUISITES", shown);
+        Assert.Empty(Boxes(surface.Panel));
+
+        // Hera Tani is not unlocked, and her referral through Liz Ryder is met.
+        surface.Panel.Nav.Drill(
+            EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Hera Tani")));
+
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("UNLOCK PREREQUISITES", Text(surface.Panel));
         Assert.Contains(Boxes(surface.Panel), says => says == "✓ MET");
 
         // Marco Qwent, whose referral through Elvira Martuuk is not met and whose invitation is not readable.
