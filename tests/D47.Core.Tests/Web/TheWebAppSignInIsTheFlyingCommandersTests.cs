@@ -32,6 +32,9 @@ public class TheWebAppSignInIsTheFlyingCommandersTests
             Deleted.Add(token);
             return Task.FromResult(Deletes);
         }
+
+        public Task<WebAppPutResult> PutSnapshotAsync(string token, byte[] gzippedJson, CancellationToken cancellationToken) =>
+            Task.FromResult(WebAppPutResult.Done);
     }
 
     private sealed class Rig

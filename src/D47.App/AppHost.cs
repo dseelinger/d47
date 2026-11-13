@@ -2352,11 +2352,12 @@ public sealed class AppHost : IDisposable
         // at one surface rather than two that could disagree about what is reachable.
         ActionSurface actionSurface;
 
+        var webAppClient = new D47.App.Web.WebAppClient(OpenWithShell, loggerFactory.CreateLogger<D47.App.Web.WebAppClient>());
         var webApp = new D47.Core.Web.WebAppLink(
             () => settings.Current,
             foundations.Secrets,
             () => gameState.Active?.Identity,
-            new D47.App.Web.WebAppClient(OpenWithShell, loggerFactory.CreateLogger<D47.App.Web.WebAppClient>()),
+            webAppClient,
             canSend: !paths.IsTestDrive,
             loggerFactory.CreateLogger<D47.Core.Web.WebAppLink>());
 
@@ -3001,6 +3002,7 @@ public sealed class AppHost : IDisposable
             Router = router,
             Updates = updates,
             WebApp = webApp,
+            WebAppClient = webAppClient,
         };
     }
 
@@ -4223,6 +4225,39 @@ public sealed class AppHost : IDisposable
 
         tick.Add("watches", context => watches.Poll(context.Now));
 
+        // Elite's HUD matrix is a file, so it is read on the pool at start and when the theme changes, never in the subscriber.
+        var hud = new System.Runtime.CompilerServices.StrongBox<D47.Core.Interface.GuiColourMatrix?>();
+        void ReadHud() => _ = Task.Run(() => hud.Value = settings.Current.Ui.Theme == D47.Core.Interface.ThemeCatalog.ElitePaletteId
+            ? D47.Core.Interface.ElitePalette.Read(foundations.Files, D47.Core.Interface.ElitePalette.DefaultPath())
+            : null);
+        ReadHud();
+        settings.Changed += change =>
+        {
+            if (change.Key.Equals(InterfaceCapability.ThemeKey, StringComparison.OrdinalIgnoreCase))
+            {
+                ReadHud();
+            }
+        };
+
+        var snapshotStores = new D47.Core.Web.WebSnapshotStores
+        {
+            Checklists = stores.Checklists.List,
+            Goals = stores.GoalBook,
+            Watches = watchStore,
+            RoutePlans = stores.PlanBook,
+        };
+        var webSnapshots = host._webSnapshots = new D47.Core.Web.WebSnapshotUpload(
+            () => settings.Current,
+            () => gameState.Active,
+            (state, now) => D47.Core.Web.WebSnapshotBuilder.Build(state, snapshotStores, settings.Current.Ui.Theme, hud.Value, TimeZoneInfo.Local, now),
+            registry.WebApp,
+            registry.WebAppClient,
+            canSend: !foundations.Paths.IsTestDrive,
+            TimeProvider.System,
+            foundations.LoggerFactory.CreateLogger<D47.Core.Web.WebSnapshotUpload>());
+
+        tick.Add("web-snapshot", context => webSnapshots.Tick(context.Now));
+
         host.WatchesDesk = new D47.App.Panel.WatchesDesk(
             watchStore,
             new D47.Core.Watches.WatchSetup(
@@ -4759,6 +4794,8 @@ public sealed class AppHost : IDisposable
         public required UpdateChecker Updates { get; init; }
 
         public required D47.Core.Web.WebAppLink WebApp { get; init; }
+
+        public required D47.App.Web.WebAppClient WebAppClient { get; init; }
     }
 
     private sealed record CrewParts
@@ -5578,6 +5615,8 @@ public sealed class AppHost : IDisposable
 
     private TickDriver? _ticking;
 
+    private D47.Core.Web.WebSnapshotUpload? _webSnapshots;
+
     private ControllerSampler? _controllerSampler;
 
     /// <summary>Sets the voice of the character <paramref name="key"/> names, or with null returns it to the story's own.</summary>
@@ -6335,6 +6374,9 @@ public sealed class AppHost : IDisposable
         // closed file handle on the way out.
         _ticking?.Dispose();
         _controllerSampler?.Dispose();
+
+        // After the tick, so no document is built while the last one is sent.
+        _webSnapshots?.SendWaiting(TimeSpan.FromSeconds(3));
 
         // Ends every module's process.
         _modules?.Dispose();

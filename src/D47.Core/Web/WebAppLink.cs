@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using D47.Core.Configuration;
 using D47.Core.Journal;
 using Microsoft.Extensions.Logging;
@@ -7,8 +8,9 @@ namespace D47.Core.Web;
 /// <summary>
 /// Signs this install in to the web app for the Commander who is flying, and deletes every Commander's snapshot
 /// when <see cref="WebAppSettings.Enabled"/> is turned off or is found off at start. An upload token is a Commander
-/// secret, read at each use. Sign-in runs on a press and deletes run through <see cref="Dispatch"/>; nothing here
-/// runs on the tick thread. A build that cannot send makes no request and keeps every token.
+/// secret, read at each use. Sign-in runs on a press and deletes run through <see cref="Dispatch"/>; only
+/// <see cref="SignedIn"/>, which reads no file, is called on the tick thread. A build that cannot send makes no
+/// request and keeps every token.
 /// </summary>
 public sealed class WebAppLink
 {
@@ -62,6 +64,35 @@ public sealed class WebAppLink
         lock (_gate)
         {
             return _secrets.Names.Contains(CommanderSecret.Name(TokenSecretName, fid));
+        }
+    }
+
+    /// <summary>The upload token stored for this FID, read now; never kept by the caller.</summary>
+    public bool TryToken(string fid, [NotNullWhen(true)] out string? token)
+    {
+        lock (_gate)
+        {
+            return _secrets.TryGet(CommanderSecret.Name(TokenSecretName, fid), out token);
+        }
+    }
+
+    /// <summary>Removes this FID's token when it is still the one the web app refused, so the row says it is not signed in.</summary>
+    public void Refused(string fid, string token)
+    {
+        var name = CommanderSecret.Name(TokenSecretName, fid);
+        bool removed;
+
+        lock (_gate)
+        {
+            removed = _secrets.TryGet(name, out var stored)
+                && string.Equals(stored, token, StringComparison.Ordinal)
+                && _secrets.Remove(name);
+        }
+
+        if (removed)
+        {
+            _logger.LogInformation("The web app no longer knows this install's upload token, so it was removed; sign in again to upload");
+            Changed?.Invoke();
         }
     }
 

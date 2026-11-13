@@ -12,7 +12,7 @@ namespace D47.App.Web;
 
 /// <summary>
 /// The desktop side of the web app's link: a one-request listener on <c>127.0.0.1</c>, the browser opened at
-/// <c>/link</c>, the code exchanged at <c>/link/token</c>, and <c>DELETE /snapshot</c>. The listener's prefix is
+/// <c>/link</c>, the code exchanged at <c>/link/token</c>, <c>PUT /snapshot</c> and <c>DELETE /snapshot</c>. The listener's prefix is
 /// loopback only, which needs no elevation. Errors are logged by status code; a response body is never logged.
 /// </summary>
 public sealed class WebAppClient : IWebAppClient, IDisposable
@@ -110,6 +110,29 @@ public sealed class WebAppClient : IWebAppClient, IDisposable
         {
             _logger.LogInformation("The web app snapshot could not be deleted ({Error})", ex.GetType().Name);
             return false;
+        }
+    }
+
+    public async Task<WebAppPutResult> PutSnapshotAsync(string token, byte[] gzippedJson, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var content = new ByteArrayContent(gzippedJson);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            content.Headers.ContentEncoding.Add("gzip");
+
+            using var request = new HttpRequestMessage(HttpMethod.Put, _address + "/snapshot") { Content = content };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            return response.IsSuccessStatusCode
+                ? WebAppPutResult.Done
+                : new WebAppPutResult(false, (int)response.StatusCode, null);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
+        {
+            return new WebAppPutResult(false, null, ex.GetType().Name);
         }
     }
 
