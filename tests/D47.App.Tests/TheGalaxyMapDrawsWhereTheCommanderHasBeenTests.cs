@@ -11,6 +11,8 @@ using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
 using D47.Core.Capabilities;
+using D47.Core;
+using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -45,6 +47,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         public Spansh Galaxy { get; } = new();
 
         public GalaxyMapLookups Lookups { get; } = new();
+
+        public GalaxyMapLayersMemory? Layers { get; set; }
     }
 
     private static JournalEvent Event(string line)
@@ -176,6 +180,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             Now = () => Now,
             Galaxy = () => game.GalaxyOffered ? game.Galaxy : null,
             MapLookups = game.Lookups,
+            GalaxyLayers = game.Layers,
         });
 
         panel.Tab = PanelTab.Astrometrics;
@@ -1118,6 +1123,83 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
         page.Tick();
         Dispatcher.UIThread.RunJobs();
+    }
+
+    private static GalaxyMapLayersMemory SavedLayers() =>
+        new(new ViewStateStore(new AppPaths(@"C:\d47-galaxy-layers"), new MemoryFileSystem(), NullLogger<ViewStateStore>.Instance));
+
+    [AvaloniaFact]
+    public void WithNothingSavedAllEightLayersAreTickedAndTheRangeIsAll()
+    {
+        var game = Searching();
+        game.Layers = SavedLayers();
+        var (_, _, page) = InWindow(game);
+
+        foreach (var kind in StarCharts.All)
+        {
+            Assert.True(page.Switch(StarCharts.Info(kind).Title).IsChecked, StarCharts.Info(kind).Title);
+        }
+
+        Assert.Equal(2, page.Range().SelectedIndex);
+    }
+
+    [AvaloniaFact]
+    public void UntickedLayersAndTheTravelsRangeAreKeptByTheNextPageBuilt()
+    {
+        var game = Played();
+        game.Layers = SavedLayers();
+        var (_, _, first) = InWindow(game);
+
+        first.Switch("Engineers").IsChecked = false;
+        first.Switch("Bookmarks").IsChecked = false;
+        Option(first.Range(), "1 year").IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        var (_, _, second) = InWindow(game);
+
+        Assert.False(second.Switch("Engineers").IsChecked);
+        Assert.False(second.Switch("Bookmarks").IsChecked);
+        Assert.True(second.Switch("Travels").IsChecked);
+        Assert.True(second.Switch("Carrier").IsChecked);
+        Assert.Equal(1, second.Range().SelectedIndex);
+    }
+
+    [AvaloniaFact]
+    public void UnvisitedTickedWhileGalaxySearchIsOffDrawsOnceSearchIsOnAndIsSavedAsTicked()
+    {
+        var game = Searching();
+        game.GalaxyOffered = false;
+        game.Layers = SavedLayers();
+        var (_, _, page) = InWindow(game);
+
+        Assert.False(page.Switch("Unvisited").IsEnabled);
+        Assert.False(page.Switch("Unvisited").IsChecked);
+        Assert.DoesNotContain(StarChartKind.Unvisited, game.Layers.Read().Unticked);
+
+        game.GalaxyOffered = true;
+        var (_, _, opened) = InWindow(game);
+        Landed(opened, game);
+
+        Assert.True(opened.Switch("Unvisited").IsChecked);
+        Assert.True(opened.Map().Drawn.Unvisited);
+    }
+
+    [AvaloniaFact]
+    public void AnUntickedUnvisitedIsKept()
+    {
+        var game = Searching();
+        game.Layers = SavedLayers();
+        var (_, _, first) = InWindow(game);
+        Landed(first, game);
+
+        first.Switch("Unvisited").IsChecked = false;
+        Dispatcher.UIThread.RunJobs();
+
+        var (_, _, second) = InWindow(game);
+        Landed(second, game);
+
+        Assert.False(second.Switch("Unvisited").IsChecked);
+        Assert.False(second.Map().Drawn.Unvisited);
     }
 
     [AvaloniaFact]

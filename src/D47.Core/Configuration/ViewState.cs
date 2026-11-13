@@ -80,6 +80,12 @@ public sealed record ViewState
     /// <summary>Whether the Engineers tab has taken the on-foot engineers off its lists (#132).</summary>
     public bool EngineersOnFootHidden { get; init; }
 
+    /// <summary>The Galaxy map's chart kinds the Commander has unticked, by <c>StarChartKind</c> name.</summary>
+    public IReadOnlyList<string> GalaxyMapUnticked { get; init; } = [];
+
+    /// <summary>The Galaxy map's travels range: 0 for 30 days, 1 for 1 year, 2 for all.</summary>
+    public int GalaxyMapRange { get; init; } = 2;
+
     /// <summary>The model picked for each fleet carrier, by callsign: a symbol from <c>CarrierModels</c>.</summary>
     public IReadOnlyDictionary<string, string> CarrierHulls { get; init; } =
         new Dictionary<string, string>(StringComparer.Ordinal);

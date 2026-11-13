@@ -212,7 +212,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         () => surface.Galaxy?.Invoke(),
                         surface.MapLookups,
                         surface.Plans,
-                        _planOnMap);
+                        _planOnMap,
+                        surface.GalaxyLayers);
 
                     galaxyPage.PlanChosen += kind => _planOnMap = kind;
 

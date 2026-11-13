@@ -67,13 +67,15 @@ public sealed class GalaxyMapPage : UserControl
     private readonly Func<IGalaxyService?> _galaxy;
     private readonly GalaxyMapLookups _lookups;
     private readonly RoutePlanBook? _plans;
+    private readonly GalaxyMapLayers _layers;
+    private readonly GalaxyMapLayersMemory? _memory;
 
     private readonly GalaxyMapView _map = new();
     private readonly Segment _framing = new() { ItemsSource = ["Galaxy", "Here", "Route"] };
     private readonly Segment _range = new() { ItemsSource = ["30 days", "1 year", "All"], SelectedIndex = All };
-    private readonly CheckBox _travels = Switch("Travels");
-    private readonly CheckBox _routeShown = Switch("Route");
-    private readonly CheckBox _regions = Switch("Regions");
+    private readonly CheckBox _travels = Switch(StarChartKind.Travels);
+    private readonly CheckBox _routeShown = Switch(StarChartKind.Route);
+    private readonly CheckBox _regions = Switch(StarChartKind.Regions);
     private readonly CheckBox _engineers;
     private readonly CheckBox _bookmarkMarks;
     private readonly CheckBox _carrierMark;
@@ -142,7 +144,8 @@ public sealed class GalaxyMapPage : UserControl
         Func<IGalaxyService?>? galaxy = null,
         GalaxyMapLookups? lookups = null,
         RoutePlanBook? plans = null,
-        RoutePlanKind? plan = null)
+        RoutePlanKind? plan = null,
+        GalaxyMapLayersMemory? layers = null)
     {
         _travel = travel;
         _commander = commander;
@@ -157,12 +160,22 @@ public sealed class GalaxyMapPage : UserControl
         _lookups = lookups ?? new GalaxyMapLookups();
         _plans = plans;
         _planKind = plan;
+        _memory = layers;
+        _layers = layers?.Read() ?? new GalaxyMapLayers();
 
-        _engineers = Marked("Engineers", live => MarkDrawing(GalaxyMapMarkKind.Engineer, live));
-        _bookmarkMarks = Marked("Bookmarks", live => MarkDrawing(GalaxyMapMarkKind.Bookmark, live));
-        _carrierMark = Marked("Carrier", live => MarkDrawing(GalaxyMapMarkKind.Carrier, live));
-        _shipMarks = Marked("Ships", live => MarkDrawing(GalaxyMapMarkKind.Ships, live));
-        _unvisited = Marked("Unvisited", UnvisitedDrawing);
+        _engineers = Marked(StarChartKind.Engineers, live => MarkDrawing(GalaxyMapMarkKind.Engineer, live));
+        _bookmarkMarks = Marked(StarChartKind.Bookmarks, live => MarkDrawing(GalaxyMapMarkKind.Bookmark, live));
+        _carrierMark = Marked(StarChartKind.Carrier, live => MarkDrawing(GalaxyMapMarkKind.Carrier, live));
+        _shipMarks = Marked(StarChartKind.Ships, live => MarkDrawing(GalaxyMapMarkKind.Ships, live));
+        _unvisited = Marked(StarChartKind.Unvisited, UnvisitedDrawing);
+
+        _unvisitedWanted = _layers.Ticked(StarChartKind.Unvisited);
+        _range.SelectedIndex = _layers.Range;
+
+        foreach (var (kind, box) in Boxes())
+        {
+            box.IsChecked = _layers.Ticked(kind);
+        }
 
         BuildStrip();
 
@@ -178,15 +191,17 @@ public sealed class GalaxyMapPage : UserControl
         Content = _headset ? PanelLayout() : WindowLayout();
 
         _framing.SelectionChanged += (_, _) => Frame(_framing.SelectedIndex);
-        _range.SelectionChanged += (_, _) => Refresh();
-        _travels.IsCheckedChanged += (_, _) => Refresh();
-        _routeShown.IsCheckedChanged += (_, _) => Refresh();
-        _regions.IsCheckedChanged += (_, _) => Refresh();
-        _engineers.IsCheckedChanged += (_, _) => Refresh();
-        _bookmarkMarks.IsCheckedChanged += (_, _) => Refresh();
-        _carrierMark.IsCheckedChanged += (_, _) => Refresh();
-        _shipMarks.IsCheckedChanged += (_, _) => Refresh();
-        _unvisited.IsCheckedChanged += (_, _) => UnvisitedChanged();
+        _range.SelectionChanged += (_, _) =>
+        {
+            _layers.Range = _range.SelectedIndex;
+            _memory?.Write(_layers);
+            Refresh();
+        };
+
+        foreach (var (kind, box) in Boxes())
+        {
+            box.IsCheckedChanged += (_, _) => LayerChanged(kind, box);
+        }
         _zoomIn.Click += (_, _) => Step(view => view.ZoomIn());
         _zoomOut.Click += (_, _) => Step(view => view.ZoomOut());
         _turnLeft.Click += (_, _) => Step(view => view.Turned(-1));
@@ -445,15 +460,34 @@ public sealed class GalaxyMapPage : UserControl
         }
     }
 
-    private void UnvisitedChanged()
+    private IEnumerable<(StarChartKind Kind, CheckBox Box)> Boxes() =>
+    [
+        (StarChartKind.Travels, _travels),
+        (StarChartKind.Route, _routeShown),
+        (StarChartKind.Regions, _regions),
+        (StarChartKind.Engineers, _engineers),
+        (StarChartKind.Bookmarks, _bookmarkMarks),
+        (StarChartKind.Carrier, _carrierMark),
+        (StarChartKind.Ships, _shipMarks),
+        (StarChartKind.Unvisited, _unvisited),
+    ];
+
+    /// <summary>Saves a switch the Commander moved, then redraws.</summary>
+    private void LayerChanged(StarChartKind kind, CheckBox box)
     {
-        if (_settingUnvisited)
+        if (kind == StarChartKind.Unvisited)
         {
-            return;
+            if (_settingUnvisited)
+            {
+                return;
+            }
+
+            _unvisitedWanted = box.IsChecked == true;
+            _asking.Forget();
         }
 
-        _unvisitedWanted = _unvisited.IsChecked == true;
-        _asking.Forget();
+        _layers.Tick(kind, box.IsChecked == true);
+        _memory?.Write(_layers);
         Refresh();
     }
 
@@ -1419,9 +1453,9 @@ public sealed class GalaxyMapPage : UserControl
         return button;
     }
 
-    private static CheckBox Switch(string label)
+    private static CheckBox Switch(StarChartKind kind)
     {
-        var box = LabeledCheckBox.Caps(label);
+        var box = LabeledCheckBox.Caps(StarCharts.Info(kind).Title);
         box.IsChecked = true;
         box.HorizontalAlignment = HorizontalAlignment.Stretch;
 
@@ -1429,8 +1463,9 @@ public sealed class GalaxyMapPage : UserControl
     }
 
     /// <summary>A layer switch with its swatch on the right, drawn by <paramref name="swatch"/> from whether the switch is enabled.</summary>
-    private static CheckBox Marked(string label, Func<Func<bool>, Action<DrawingContext, Func<string, IBrush>>> swatch)
+    private static CheckBox Marked(StarChartKind kind, Func<Func<bool>, Action<DrawingContext, Func<string, IBrush>>> swatch)
     {
+        var label = StarCharts.Info(kind).Title;
         var box = LabeledCheckBox.Caps(string.Empty);
         box.IsChecked = true;
         box.HorizontalAlignment = HorizontalAlignment.Stretch;

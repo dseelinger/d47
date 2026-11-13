@@ -62,6 +62,9 @@ public sealed record RoutingSurface(
     /// <summary>The system names that start with the given letters, for the name fields; null for no suggestions.</summary>
     public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
 
+    /// <summary>Which Galaxy map layers and travels range were left on.</summary>
+    public GalaxyMapLayersMemory? GalaxyLayers { get; init; }
+
     /// <summary>Spansh's surveyed biology already held, by system, for On this body.</summary>
     public D47.Core.Knowledge.SurveyedBiology? Surveyed { get; init; }
 

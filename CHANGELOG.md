@@ -12,6 +12,8 @@ Fixed: A commodity search for a multi-word or renamed commodity, such as Perform
 
 Fixed: Saying "shut up", pressing Cancel, an urgent callout or the walkthrough's "stop" no longer stops the music. They end speech, alerts, chatter, cues and anything queued, and the music keeps playing at its normal level; closing d47 still stops it.
 
+Changed: The Galaxy map keeps its layer switches (Travels, Route, Regions, Engineers, Bookmarks, Carrier, Ships and Unvisited) and the travels range across a restart, in the window and on the big panel. Before, every opening ticked all eight and reset the range to All. Unvisited keeps your choice even while galaxy search is off.
+
 Fixed: The check for a push-to-talk key or headset zoom key that Elite already binds now finds keys Elite spells differently from d47, such as Scroll Lock, 0, =, -, comma, the arrow keys and the numpad. Before, only letters and F-keys matched, so the default Scroll Lock key never showed as taken.
 
 Changed: The Navigation tab is now called Astrometrics, on the tab bar, in what D47 says and in the pages that name it. Saying "navigation" or "astro metrics" still opens it, and a saved tab or layout that says Navigation or Routing still opens it.
