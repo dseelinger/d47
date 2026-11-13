@@ -1,4 +1,5 @@
 using System.Globalization;
+using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Ships;
 using D47.Core.Storage;
@@ -281,6 +282,8 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         private readonly Trail _materials = new();
         private readonly Trail _hull = new();
         private readonly Trail _ownInterdictions = new();
+        private int _pendingInterdiction = -1;
+        private string? _pendingInterdictor;
         private readonly Trail _srv = new();
         private readonly Trail _srvLost = new();
         private readonly Trail _onFoot = new();
@@ -342,6 +345,8 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
         public void Apply(JournalEvent journalEvent)
         {
+            EndInterdiction(journalEvent);
+
             switch (journalEvent.Kind)
             {
                 case "LoadGame":
@@ -573,11 +578,16 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
                     break;
 
                 case "Interdicted":
+                    var interdictor = KillCallout.Resolved(journalEvent.String("Interdictor_Localised"))
+                        ?? KillCallout.Resolved(journalEvent.String("Interdictor"));
+
                     Moment(
                         journalEvent,
                         LogFactKind.Mishap,
-                        $"Was interdicted by {journalEvent.String("Interdictor") ?? "somebody unnamed"}, and "
+                        $"Was interdicted by {interdictor ?? "somebody unnamed"}, and "
                         + (journalEvent.Bool("Submitted") ? "submitted." : "ran for it."));
+                    _pendingInterdiction = _moments.Count - 1;
+                    _pendingInterdictor = interdictor;
                     break;
 
                 case "Interdiction":
@@ -745,6 +755,44 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
                 }
             }
         }
+
+        /// <summary>Appends how the pending interdiction ended to its fact, once an event settles it.</summary>
+        private void EndInterdiction(JournalEvent journalEvent)
+        {
+            if (_pendingInterdiction < 0 || journalEvent.Kind is "Interdicted")
+            {
+                return;
+            }
+
+            string? ending = journalEvent.Kind switch
+            {
+                "Bounty" when Names(KillCallout.Resolved(journalEvent.String("PilotName_Localised"))) =>
+                    $"destroyed their {JournalNames.Hull(journalEvent.Raw, "Target") ?? "ship"}",
+                "PVPKill" when Names(KillCallout.Resolved(journalEvent.String("Victim"))) => "destroyed their ship",
+                "Died" => "died",
+                "SupercruiseEntry" or "FSDJump" or "Docked" => "got away",
+                _ => null,
+            };
+
+            if (ending is null)
+            {
+                return;
+            }
+
+            var fact = _moments[_pendingInterdiction];
+
+            _moments[_pendingInterdiction] = fact with
+            {
+                Statement = fact.Statement.TrimEnd('.') + ", then " + ending + ".",
+                Sources = [.. fact.Sources, new LogSource(journalEvent.Kind, journalEvent.Timestamp)],
+                SourceCount = 2,
+            };
+            _pendingInterdiction = -1;
+            _pendingInterdictor = null;
+        }
+
+        private bool Names(string? pilot) =>
+            pilot is not null && string.Equals(pilot, _pendingInterdictor, StringComparison.OrdinalIgnoreCase);
 
         private void Where(JournalEvent journalEvent)
         {

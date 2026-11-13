@@ -157,6 +157,105 @@ public class LogDigestBuilderTests
         Assert.Equal(JournalCorpus.Cmdr, digest.FrontierId);
     }
 
+    private const string Submitted = "\"Interdictor\":\"Dax Ferron\",\"IsPlayer\":false,\"Submitted\":true";
+
+    private string InterdictionStatement(params string[] after)
+    {
+        _corpus.Journal(
+            Evening,
+            [
+                JournalCorpus.LoadGame(Evening),
+                JournalCorpus.Event(Evening.AddMinutes(1), "Interdicted", Submitted),
+                .. after,
+            ]);
+
+        return Assert.Single(Digest().Facts, fact => fact.Statement.StartsWith("Was interdicted", StringComparison.Ordinal)).Statement;
+    }
+
+    [Fact]
+    public void AnInterdictionThatEndsInTheInterdictorsDeathSaysSo()
+    {
+        var statement = InterdictionStatement(
+            JournalCorpus.Event(
+                Evening.AddMinutes(2),
+                "Bounty",
+                "\"PilotName\":\"$npc_name_decorate:#name=Dax Ferron;\",\"PilotName_Localised\":\"Dax Ferron\","
+                + "\"Target\":\"viper_mkiv\",\"TotalReward\":5000,\"VictimFaction\":\"Pirates\""));
+
+        Assert.Equal("Was interdicted by Dax Ferron, and submitted, then destroyed their Viper Mk IV.", statement);
+    }
+
+    [Fact]
+    public void AnInterdictionThatEndsInTheCommandersDeathSaysSoWithoutSayingWhoFired()
+    {
+        var statement = InterdictionStatement(JournalCorpus.Event(Evening.AddMinutes(2), "Died", "\"KillerName\":\"Somebody Else\""));
+
+        Assert.Equal("Was interdicted by Dax Ferron, and submitted, then died.", statement);
+    }
+
+    [Theory]
+    [InlineData("SupercruiseEntry", "\"StarSystem\":\"Deciat\"")]
+    [InlineData("FSDJump", "\"StarSystem\":\"Deciat\",\"JumpDist\":8.0")]
+    [InlineData("Docked", "\"StationName\":\"Suri Park\",\"StarSystem\":\"Anlave\"")]
+    public void AnInterdictionFollowedByLeavingSaysTheCommanderGotAway(string kind, string fields)
+    {
+        var statement = InterdictionStatement(JournalCorpus.Event(Evening.AddMinutes(2), kind, fields));
+
+        Assert.Equal("Was interdicted by Dax Ferron, and submitted, then got away.", statement);
+    }
+
+    [Fact]
+    public void ABountyOnSomebodyElseDoesNotEndTheInterdiction()
+    {
+        var statement = InterdictionStatement(
+            JournalCorpus.Event(
+                Evening.AddMinutes(2),
+                "Bounty",
+                "\"PilotName_Localised\":\"Mara Quill\",\"Target\":\"viper_mkiv\",\"TotalReward\":5000"),
+            JournalCorpus.Event(Evening.AddMinutes(3), "Died", "\"KillerName\":\"Somebody Else\""));
+
+        Assert.Equal("Was interdicted by Dax Ferron, and submitted, then died.", statement);
+    }
+
+    [Fact]
+    public void AnInterdictionNothingSettlesKeepsItsOriginalWording()
+    {
+        Assert.Equal("Was interdicted by Dax Ferron, and submitted.", InterdictionStatement());
+    }
+
+    [Fact]
+    public void ARunThatEndsInAnEscapeSaysSo()
+    {
+        _corpus.Journal(
+            Evening,
+            JournalCorpus.LoadGame(Evening),
+            JournalCorpus.Event(Evening.AddMinutes(1), "Interdicted", "\"Interdictor\":\"Dax Ferron\",\"Submitted\":false"),
+            JournalCorpus.Event(Evening.AddMinutes(2), "SupercruiseEntry", "\"StarSystem\":\"Deciat\""));
+
+        var fact = Assert.Single(Digest().Facts, fact => fact.Statement.StartsWith("Was interdicted", StringComparison.Ordinal));
+
+        Assert.Equal("Was interdicted by Dax Ferron, and ran for it, then got away.", fact.Statement);
+        Assert.Equal(2, fact.SourceCount);
+        Assert.Equal(["Interdicted", "SupercruiseEntry"], fact.Sources.Select(source => source.Event));
+    }
+
+    [Fact]
+    public void ADecoratedInterdictorIsNamedByItsLocalisedName()
+    {
+        _corpus.Journal(
+            Evening,
+            JournalCorpus.LoadGame(Evening),
+            JournalCorpus.Event(
+                Evening.AddMinutes(1),
+                "Interdicted",
+                "\"Interdictor\":\"$ShipName_Military_Independent;\",\"Interdictor_Localised\":\"System Authority Vessel\","
+                + "\"Submitted\":true"));
+
+        var fact = Assert.Single(Digest().Facts, fact => fact.Statement.StartsWith("Was interdicted", StringComparison.Ordinal));
+
+        Assert.Equal("Was interdicted by System Authority Vessel, and submitted.", fact.Statement);
+    }
+
     private LogDigest Digest() => Build(new LogRange
     {
         Span = LogSpan.Session,
