@@ -22,7 +22,7 @@ public sealed class RouteMapView : Control
     private const double Inset = 20;
     private const double KeyGap = 10;
 
-    private static readonly RouteStar[] KeyOrder = [RouteStar.Neutron, RouteStar.WhiteDwarf, RouteStar.BlackHole, RouteStar.NoFuel, RouteStar.Restock];
+    private static readonly RouteStar[] KeyOrder = [RouteStar.Neutron, RouteStar.WhiteDwarf, RouteStar.BlackHole, RouteStar.NoFuel, RouteStar.Restock, RouteStar.Scoopable, RouteStar.Unknown, RouteStar.Plain];
 
     private readonly GalaxyMapView _map = new();
     private readonly Border _frame = new() { IsHitTestVisible = false, BorderThickness = new Thickness(1) };
@@ -133,6 +133,9 @@ public sealed class RouteMapView : Control
         RouteStar.WhiteDwarf => "WHITE DWARF",
         RouteStar.BlackHole => "BLACK HOLE",
         RouteStar.Restock => "OUT OF TRITIUM",
+        RouteStar.Scoopable => "SCOOPABLE",
+        RouteStar.Unknown => "CLASS UNKNOWN",
+        RouteStar.Plain => "STOP",
         _ => "NO FUEL",
     };
 

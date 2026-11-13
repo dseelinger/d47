@@ -13,6 +13,9 @@ public enum RouteStar
     WhiteDwarf,
     NoFuel,
     Restock,
+    Scoopable,
+    Unknown,
+    Plain,
 }
 
 /// <summary>The marks a route map and the galaxy map share; <c>ink</c> resolves a theme key to a brush.</summary>
@@ -26,6 +29,15 @@ internal static class RouteMarks
         : marks.HasFlag(RouteStopMarks.NotScoopable) ? RouteStar.NoFuel
         : marks.HasFlag(RouteStopMarks.Restock) ? RouteStar.Restock
         : null;
+
+    /// <summary>The node a stop draws when it has no <see cref="StarOf"/> mark.</summary>
+    public static RouteStar NodeOf(RouteStopMarks marks) =>
+        marks.HasFlag(RouteStopMarks.Scoopable) ? RouteStar.Scoopable
+        : marks.HasFlag(RouteStopMarks.Carrier) ? RouteStar.Plain
+        : RouteStar.Unknown;
+
+    /// <summary>A node is smaller than a hazard mark and is never de-duplicated.</summary>
+    public static bool IsNode(RouteStar kind) => kind is RouteStar.Scoopable or RouteStar.Unknown or RouteStar.Plain;
 
     public static void Star(DrawingContext context, Func<string, IBrush> ink, RouteStar kind, Point at, double scale)
     {
@@ -55,6 +67,21 @@ internal static class RouteMarks
                 context.DrawEllipse(bg, null, new Point(0, 0), 7, 7);
                 context.DrawEllipse(null, new Pen(ink(ThemeManager.BlueKey), 2), new Point(0, 0), 5, 5);
                 context.DrawEllipse(ink(ThemeManager.BlueKey), null, new Point(0, 0), 1.5, 1.5);
+                break;
+
+            case RouteStar.Scoopable:
+                context.DrawEllipse(bg, null, new Point(0, 0), 4.5, 4.5);
+                context.DrawEllipse(ink(ThemeManager.YellowKey), null, new Point(0, 0), 3, 3);
+                break;
+
+            case RouteStar.Unknown:
+                context.DrawEllipse(bg, null, new Point(0, 0), 4.5, 4.5);
+                context.DrawEllipse(null, new Pen(ink(ThemeManager.GreyKey), 1.5), new Point(0, 0), 3, 3);
+                break;
+
+            case RouteStar.Plain:
+                context.DrawRectangle(bg, null, new Rect(-4, -4, 8, 8));
+                context.DrawRectangle(white, null, new Rect(-2.5, -2.5, 5, 5));
                 break;
 
             default:

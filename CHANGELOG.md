@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Every stop on a route map now has a mark, on the Progress page, the Plan result page, the galaxy map and the mini panel. A scoopable star is a yellow dot, a star whose class D47 does not know is a grey ring, and a stop on a carrier route is a small white square. The neutron, white dwarf, black hole, no fuel and out of tritium marks are unchanged, and the key under the map lists each look it shows. Before, only those marks and the two ends were drawn, so a route of ordinary stars showed bends in the line.
+
 Added: The Market page has a Distance in LY box beside Max price age, opening on 50. Find it searches that far from your current system. Before, the radius was fixed at 50 light years and the page did not show it.
 
 Changed: The Galaxy map's legend names the engineers, bookmarks, your carrier and stored ships drawn in the view, each with its mark. Before, those marks had no legend entry. On the headset the legend now runs the width of the map and wraps to a second line when its entries do not fit, with the scale bar above it.

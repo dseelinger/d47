@@ -140,7 +140,7 @@ public class ARouteMapDrawsTheStartAndEndOfAPlanTests
         Assert.Equal(RouteStopMarks.WhiteDwarf | RouteStopMarks.NotScoopable, stops[1].Marks);
         Assert.Equal(RouteStopMarks.BlackHole | RouteStopMarks.NotScoopable, stops[2].Marks);
         Assert.Equal(RouteStopMarks.NotScoopable, stops[3].Marks);
-        Assert.Equal(RouteStopMarks.None, stops[4].Marks);
+        Assert.Equal(RouteStopMarks.Scoopable, stops[4].Marks);
         Assert.Equal(RouteStopMarks.None, stops[5].Marks);
         Assert.Equal(RouteStopMarks.None, stops[6].Marks);
         Assert.Equal(new StarPosition(1, 2, 3), stops[6].Position);
@@ -148,12 +148,12 @@ public class ARouteMapDrawsTheStartAndEndOfAPlanTests
     }
 
     [Fact]
-    public void ACarrierRouteMarksOnlyItsRestocks()
+    public void ACarrierRouteMarksEveryStopAsACarrierStopAndItsRestocks()
     {
         var stops = RouteMapStop.From(new CarrierRoute([CarrierStop("A", false), CarrierStop("B", true)]));
 
-        Assert.Equal(RouteStopMarks.None, stops[0].Marks);
-        Assert.Equal(RouteStopMarks.Restock, stops[1].Marks);
+        Assert.Equal(RouteStopMarks.Carrier, stops[0].Marks);
+        Assert.Equal(RouteStopMarks.Carrier | RouteStopMarks.Restock, stops[1].Marks);
         Assert.Equal(new StarPosition(1, 2, 3), stops[1].Position);
     }
 }

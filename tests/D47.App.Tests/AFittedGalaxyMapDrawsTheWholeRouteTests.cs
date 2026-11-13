@@ -89,7 +89,7 @@ public class AFittedGalaxyMapDrawsTheWholeRouteTests
         Assert.True(drawn.Start);
         Assert.True(drawn.Destination);
         Assert.False(drawn.StopsHidden);
-        Assert.Equal([RouteStar.Neutron, RouteStar.WhiteDwarf], drawn.Stars);
+        Assert.Equal([RouteStar.Unknown, RouteStar.Neutron, RouteStar.WhiteDwarf], drawn.Stars);
     }
 
     [AvaloniaFact]

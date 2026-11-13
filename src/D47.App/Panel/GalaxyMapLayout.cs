@@ -43,6 +43,7 @@ internal sealed class GalaxyMapLayout
     /// <summary>The index in <see cref="Route"/> of the stop the Commander is on, or -1.</summary>
     public int HereIndex { get; private set; } = -1;
 
+    /// <summary>A node or mark for each stop in view: nodes first, so marks draw over them.</summary>
     public IReadOnlyList<(RouteStar Kind, Point At)> Stars { get; private set; } = [];
 
     public Point? You { get; private set; }
@@ -109,9 +110,10 @@ internal sealed class GalaxyMapLayout
         {
             for (var index = 0; index < stops.Count; index++)
             {
-                if (RouteMarks.StarOf(stops[index].Marks) is not { } kind
-                    || !InView(Route[index], 8)
-                    || stars.Any(mark => mark.Kind == kind && Distance(mark.At, Route[index]) <= NearestSameMark))
+                var kind = RouteMarks.StarOf(stops[index].Marks) ?? RouteMarks.NodeOf(stops[index].Marks);
+
+                if (!InView(Route[index], 8)
+                    || (!RouteMarks.IsNode(kind) && stars.Any(mark => mark.Kind == kind && Distance(mark.At, Route[index]) <= NearestSameMark)))
                 {
                     continue;
                 }
@@ -120,6 +122,7 @@ internal sealed class GalaxyMapLayout
             }
         }
 
+        stars = [.. stars.Where(star => RouteMarks.IsNode(star.Kind)), .. stars.Where(star => !RouteMarks.IsNode(star.Kind))];
         Stars = stars;
         You = scene.Commander is { } commander ? Screen(commander) : null;
         Destination = stops.Count >= 2 ? stops[^1].System : null;

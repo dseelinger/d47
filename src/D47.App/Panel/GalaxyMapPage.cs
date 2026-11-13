@@ -55,7 +55,7 @@ public sealed class GalaxyMapPage : UserControl
     private static readonly double Closest = 100;
     private static readonly double Widest = 102_400;
 
-    private static readonly RouteStar[] KeyOrder = [RouteStar.Neutron, RouteStar.WhiteDwarf, RouteStar.BlackHole, RouteStar.NoFuel];
+    private static readonly RouteStar[] KeyOrder = [RouteStar.Neutron, RouteStar.WhiteDwarf, RouteStar.BlackHole, RouteStar.NoFuel, RouteStar.Scoopable, RouteStar.Unknown, RouteStar.Plain];
 
     private readonly Func<TravelLog?> _travel;
     private readonly Func<CommanderGameState?> _commander;
@@ -1342,6 +1342,9 @@ public sealed class GalaxyMapPage : UserControl
         RouteStar.Neutron => "Neutron",
         RouteStar.WhiteDwarf => "White dwarf",
         RouteStar.BlackHole => "Black hole",
+        RouteStar.Scoopable => "Scoopable",
+        RouteStar.Unknown => "Class unknown",
+        RouteStar.Plain => "Stop",
         _ => "No fuel",
     };
 

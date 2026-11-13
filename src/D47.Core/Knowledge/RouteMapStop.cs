@@ -11,6 +11,9 @@ public enum RouteStopMarks
     BlackHole = 4,
     NotScoopable = 8,
     Restock = 16,
+    Scoopable = 32,
+    /// <summary>A stop of a carrier route, which does not scoop.</summary>
+    Carrier = 64,
 }
 
 /// <summary>One stop of a route to draw; <see cref="Position"/> is null where the source has none.</summary>
@@ -57,7 +60,7 @@ public sealed record RouteMapStop(string System, StarPosition? Position, RouteSt
         [.. route.Waypoints.Select(waypoint => new RouteMapStop(
             waypoint.Name,
             waypoint.Position,
-            waypoint.MustRestock ? RouteStopMarks.Restock : RouteStopMarks.None))];
+            RouteStopMarks.Carrier | (waypoint.MustRestock ? RouteStopMarks.Restock : RouteStopMarks.None)))];
 
     public static IReadOnlyList<RouteMapStop> From(PlottedRoute route) =>
         Around(
@@ -150,9 +153,14 @@ public sealed record RouteMapStop(string System, StarPosition? Position, RouteSt
             marks |= RouteStopMarks.BlackHole;
         }
 
-        if (StarClasses.IsScoopable(starClass) == false)
+        switch (StarClasses.IsScoopable(starClass))
         {
-            marks |= RouteStopMarks.NotScoopable;
+            case false:
+                marks |= RouteStopMarks.NotScoopable;
+                break;
+            case true:
+                marks |= RouteStopMarks.Scoopable;
+                break;
         }
 
         return marks;
