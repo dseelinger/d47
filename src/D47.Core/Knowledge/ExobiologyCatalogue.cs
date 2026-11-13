@@ -140,13 +140,15 @@ public static class ExobiologyCatalogue
     /// <summary>
     /// Every species whose surveyed columns and ranges, each numeric band widened by <see cref="BandMargin"/>
     /// of its width on both sides, contain the body's conditions. With
-    /// <paramref name="region"/> given, also drops a species whose surveyed regions do not include it.
+    /// <paramref name="region"/> given, also drops a species whose surveyed regions do not include it, matching region names as
+    /// <see cref="GalacticRegions.IdOf"/> does; an unknown region name drops every species.
     /// </summary>
     public static IReadOnlyList<ExobiologyEntry> Possible(BodyConditions body, string? region = null)
     {
         var planetType = BodyConditionFold.NormalisePlanetType(body.PlanetClass);
         var atmosphere = BodyConditionFold.NormaliseAtmosphere(body.Atmosphere);
         var volcanism = BodyConditionFold.NormaliseVolcanism(body.Volcanism);
+        var regionId = region is null ? null : GalacticRegions.IdOf(region);
 
         return
         [
@@ -157,7 +159,7 @@ public static class ExobiologyCatalogue
                 && Within(body.Gravity, entry.GravityLow, entry.GravityHigh)
                 && Within(body.Temperature, entry.TemperatureLow, entry.TemperatureHigh)
                 && Within(body.Pressure, entry.PressureLow, entry.PressureHigh)
-                && (region is null || entry.Regions.Contains(region, StringComparer.Ordinal))),
+                && (region is null || (regionId is { } id && entry.Regions.Any(name => GalacticRegions.IdOf(name) == id)))),
         ];
     }
 
