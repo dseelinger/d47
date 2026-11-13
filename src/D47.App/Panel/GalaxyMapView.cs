@@ -29,6 +29,9 @@ public enum GalaxyMapMarkKind
     SystemResult,
     StationResult,
     BodyResult,
+    SignalResult,
+    OutfittingResult,
+    RaresResult,
 }
 
 /// <summary>One kind of marker in one system, with the names the strip lists; one mark is drawn however many names it holds.</summary>
@@ -123,6 +126,12 @@ public sealed class GalaxyMapView : Control
     private static readonly (double X, double Y)[] Box = [(-6, -4), (6, -4), (6, 4), (-6, 4)];
     private static readonly (double X, double Y)[] Slot = [(-3, -0.75), (3, -0.75), (3, 0.75), (-3, 0.75)];
     private static readonly (double X, double Y)[] Octagon = [(-2.2, -5.25), (2.2, -5.25), (5.25, -2.2), (5.25, 2.2), (2.2, 5.25), (-2.2, 5.25), (-5.25, 2.2), (-5.25, -2.2)];
+
+    private static readonly (double X, double Y)[] SignalSquare = [(-1.5, -1.5), (1.5, -1.5), (1.5, 1.5), (-1.5, 1.5)];
+    private static readonly (double X, double Y)[][] SignalAngles = [[(-3.5, -4), (-6.5, 0), (-3.5, 4)], [(3.5, -4), (6.5, 0), (3.5, 4)]];
+    private static readonly (double X, double Y)[] Notched = [(-4.75, -4.75), (1.75, -4.75), (4.75, -1.75), (4.75, 4.75), (-4.75, 4.75)];
+    private static readonly (double X, double Y)[] Gem = [(-3, -4.75), (3, -4.75), (5.5, -1.5), (0, 5.25), (-5.5, -1.5)];
+    private static readonly (double X, double Y)[][] GemLine = [[(-5.5, -1.5), (5.5, -1.5)]];
 
     private const double HollowPen = 1.5;
     private const double HollowHalo = 4.5;
@@ -840,6 +849,9 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.SystemResult => (-9.4, -9.5, 9.4, 6.75),
             GalaxyMapMarkKind.StationResult => (-8.25, -6.25, 8.25, 6.25),
             GalaxyMapMarkKind.BodyResult => (-7.5, -7.5, 7.5, 7.5),
+            GalaxyMapMarkKind.SignalResult => (-8.75, -6.25, 8.75, 6.25),
+            GalaxyMapMarkKind.OutfittingResult => (-7.0, -7.0, 7.0, 7.0),
+            GalaxyMapMarkKind.RaresResult => (-7.75, -7.0, 7.75, 7.5),
             _ => (-7.5, -8.5, mark.Count >= 2 ? CountGap + (6 * mark.Count.ToString("N0", CultureInfo.InvariantCulture).Length) + 1.5 : 7.5, 6.5),
         };
 
@@ -850,7 +862,18 @@ public sealed class GalaxyMapView : Control
     {
         if (Hollow(mark.Kind, mark.At, 1) is { } hollow)
         {
-            context.DrawGeometry(Brush(ThemeManager.BgKey), new Pen(Brush(ThemeManager.BgKey), HollowHalo), hollow.Outline);
+            var haloPen = new Pen(Brush(ThemeManager.BgKey), HollowHalo);
+
+            if (hollow.Outline is { } outline)
+            {
+                context.DrawGeometry(Brush(ThemeManager.BgKey), haloPen, outline);
+            }
+
+            if (hollow.Strokes is { } strokes)
+            {
+                context.DrawGeometry(null, haloPen, strokes);
+            }
+
             DrawHollow(context, Brush, hollow);
             return;
         }
@@ -906,23 +929,41 @@ public sealed class GalaxyMapView : Control
         context.DrawGeometry(ink(key ?? own), null, shape);
     }
 
-    /// <summary>The outline of an answer from the last search, and the slot filled inside a station's; null for a solid mark.</summary>
-    private static (StreamGeometry Outline, StreamGeometry? Filled, double Pen)? Hollow(GalaxyMapMarkKind kind, Point at, double scale)
+    /// <summary>The shapes of an answer from the last search: the closed outline, a filled part and open strokes inside or beside it.</summary>
+    private sealed record HollowShape(StreamGeometry? Outline, StreamGeometry? Filled, StreamGeometry? Strokes, double Pen, double StrokePen);
+
+    /// <summary>The shape of an answer from the last search; null for a solid mark.</summary>
+    private static HollowShape? Hollow(GalaxyMapMarkKind kind, Point at, double scale)
     {
         (double X, double Y)[] Scaled((double X, double Y)[] points) => [.. points.Select(point => (point.X * scale, point.Y * scale))];
 
+        StreamGeometry Lines((double X, double Y)[][] lines) => Open([.. lines.Select(Scaled)], at);
+
+        var pen = HollowPen * scale;
+
         return kind switch
         {
-            GalaxyMapMarkKind.SystemResult => (Polygon(Scaled(Triangle), at), null, HollowPen * scale),
-            GalaxyMapMarkKind.StationResult => (Polygon(Scaled(Box), at), Polygon(Scaled(Slot), at), HollowPen * scale),
-            GalaxyMapMarkKind.BodyResult => (Polygon(Scaled(Octagon), at), null, HollowPen * scale),
+            GalaxyMapMarkKind.SystemResult => new(Polygon(Scaled(Triangle), at), null, null, pen, pen),
+            GalaxyMapMarkKind.StationResult => new(Polygon(Scaled(Box), at), Polygon(Scaled(Slot), at), null, pen, pen),
+            GalaxyMapMarkKind.BodyResult => new(Polygon(Scaled(Octagon), at), null, null, pen, pen),
+            GalaxyMapMarkKind.SignalResult => new(null, Polygon(Scaled(SignalSquare), at), Lines(SignalAngles), pen, pen),
+            GalaxyMapMarkKind.OutfittingResult => new(Polygon(Scaled(Notched), at), null, null, pen, pen),
+            GalaxyMapMarkKind.RaresResult => new(Polygon(Scaled(Gem), at), null, Lines(GemLine), pen, scale),
             _ => null,
         };
     }
 
-    private static void DrawHollow(DrawingContext context, Func<string, IBrush> ink, (StreamGeometry Outline, StreamGeometry? Filled, double Pen) hollow)
+    private static void DrawHollow(DrawingContext context, Func<string, IBrush> ink, HollowShape hollow)
     {
-        context.DrawGeometry(null, new Pen(ink(ThemeManager.AKey), hollow.Pen), hollow.Outline);
+        if (hollow.Outline is { } outline)
+        {
+            context.DrawGeometry(null, new Pen(ink(ThemeManager.AKey), hollow.Pen), outline);
+        }
+
+        if (hollow.Strokes is { } strokes)
+        {
+            context.DrawGeometry(null, new Pen(ink(ThemeManager.AKey), hollow.StrokePen), strokes);
+        }
 
         if (hollow.Filled is { } filled)
         {
@@ -961,6 +1002,27 @@ public sealed class GalaxyMapView : Control
         }
 
         open.EndFigure(true);
+
+        return geometry;
+    }
+
+    private static StreamGeometry Open((double X, double Y)[][] lines, Point at)
+    {
+        var geometry = new StreamGeometry();
+
+        using var open = geometry.Open();
+
+        foreach (var line in lines)
+        {
+            open.BeginFigure(new Point(at.X + line[0].X, at.Y + line[0].Y), false);
+
+            foreach (var (x, y) in line.Skip(1))
+            {
+                open.LineTo(new Point(at.X + x, at.Y + y));
+            }
+
+            open.EndFigure(false);
+        }
 
         return geometry;
     }

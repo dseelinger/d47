@@ -91,6 +91,9 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _systemsSearch;
     private readonly CheckBox _stationsSearch;
     private readonly CheckBox _bodiesSearch;
+    private readonly CheckBox _signalsSearch;
+    private readonly CheckBox _outfittingSearch;
+    private readonly CheckBox _raresSearch;
     private readonly Button _layersTile = Press(string.Empty, SwitchRail);
     private readonly StackPanel _rail = new() { Spacing = 2 };
     private int _railPage;
@@ -193,6 +196,9 @@ public sealed class GalaxyMapPage : UserControl
         _systemsSearch = Marked(StarChartKind.SystemsSearch, live => MarkDrawing(GalaxyMapMarkKind.SystemResult, live));
         _stationsSearch = Marked(StarChartKind.StationsSearch, live => MarkDrawing(GalaxyMapMarkKind.StationResult, live));
         _bodiesSearch = Marked(StarChartKind.BodiesSearch, live => MarkDrawing(GalaxyMapMarkKind.BodyResult, live));
+        _signalsSearch = Marked(StarChartKind.SignalsSearch, live => MarkDrawing(GalaxyMapMarkKind.SignalResult, live));
+        _outfittingSearch = Marked(StarChartKind.OutfittingSearch, live => MarkDrawing(GalaxyMapMarkKind.OutfittingResult, live));
+        _raresSearch = Marked(StarChartKind.RaresSearch, live => MarkDrawing(GalaxyMapMarkKind.RaresResult, live));
 
         _unvisitedWanted = _layers.Ticked(StarChartKind.Unvisited);
         _range.SelectedIndex = _layers.Range;
@@ -489,6 +495,7 @@ public sealed class GalaxyMapPage : UserControl
         {
             var missing = _placement.Unplaced
                 .Select(item => item.System)
+                .Concat((_placement.Searches ?? []).SelectMany(search => search.ToLookUp ?? []))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Order(StringComparer.OrdinalIgnoreCase);
 
@@ -522,6 +529,9 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.SystemsSearch, _systemsSearch),
         (StarChartKind.StationsSearch, _stationsSearch),
         (StarChartKind.BodiesSearch, _bodiesSearch),
+        (StarChartKind.SignalsSearch, _signalsSearch),
+        (StarChartKind.OutfittingSearch, _outfittingSearch),
+        (StarChartKind.RaresSearch, _raresSearch),
     ];
 
     /// <summary>Whether <paramref name="kind"/> is on the map and its switch is ticked.</summary>
@@ -654,6 +664,9 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.SystemsSearch => GalaxyMapMarkKind.SystemResult,
         StarChartKind.StationsSearch => GalaxyMapMarkKind.StationResult,
         StarChartKind.BodiesSearch => GalaxyMapMarkKind.BodyResult,
+        StarChartKind.SignalsSearch => GalaxyMapMarkKind.SignalResult,
+        StarChartKind.OutfittingSearch => GalaxyMapMarkKind.OutfittingResult,
+        StarChartKind.RaresSearch => GalaxyMapMarkKind.RaresResult,
         _ => null,
     };
 
@@ -759,7 +772,7 @@ public sealed class GalaxyMapPage : UserControl
     /// A search layer as drawn from its kind's last answer: whether there is one, the rows it has, how many matched,
     /// whether the service has more, and the rows in systems with no position.
     /// </summary>
-    private sealed record SearchDrawn(StarChartKind Kind, bool Answered, int Rows, int Total, bool More, int Unplaced);
+    private sealed record SearchDrawn(StarChartKind Kind, bool Answered, int Rows, int Total, bool More, int Unplaced, IReadOnlyList<string>? ToLookUp = null);
 
     private sealed record Placement(IReadOnlyList<GalaxyMapMark> Marks, IReadOnlyList<UnplacedItem> Unplaced, IReadOnlyList<SearchDrawn>? Searches = null);
 
@@ -867,23 +880,24 @@ public sealed class GalaxyMapPage : UserControl
 
         var searches = StarCharts.All
             .Where(kind => StarCharts.SearchOf(kind) is not null && Shows(kind))
-            .Select(kind => PlaceSearch(kind, marks))
+            .Select(kind => PlaceSearch(kind, marks, PositionIn))
             .ToList();
 
         return new Placement(marks, unplaced, searches);
     }
 
     /// <summary>Adds a mark for each system in <paramref name="kind"/>'s last answer that the answer gives a position, and says what was drawn.</summary>
-    private SearchDrawn PlaceSearch(StarChartKind kind, List<GalaxyMapMark> marks)
+    private SearchDrawn PlaceSearch(StarChartKind kind, List<GalaxyMapMark> marks, Func<string, StarPosition?> positionIn)
     {
         if (_searches?.Last(StarCharts.SearchOf(kind)!.Value) is not { } posting)
         {
             return new SearchDrawn(kind, false, 0, 0, false, 0);
         }
 
-        var (rows, total) = SearchRows(posting.Result);
+        var (rows, total) = SearchRows(posting.Result, positionIn);
         var mark = PlacedAs(kind)!.Value;
         var unplaced = 0;
+        var toLookUp = new List<string>();
 
         foreach (var system in rows.GroupBy(row => row.System, StringComparer.OrdinalIgnoreCase))
         {
@@ -894,18 +908,24 @@ public sealed class GalaxyMapPage : UserControl
             else
             {
                 unplaced += system.Count();
+                toLookUp.Add(system.Key);
             }
         }
 
-        return new SearchDrawn(kind, true, rows.Count, total, posting.More, unplaced);
+        return new SearchDrawn(kind, true, rows.Count, total, posting.More, unplaced, kind == StarChartKind.SignalsSearch ? toLookUp : null);
     }
 
-    /// <summary>Each row of a search answer as its system, position and the name the strip lists, with the number of matches.</summary>
-    private static (List<(string System, StarPosition? At, string? Line)> Rows, int Total) SearchRows(object result) => result switch
+    /// <summary>
+    /// Each row of a search answer as its system, position and the name the strip lists, with the number of matches.
+    /// A signal has no position of its own and is placed by <paramref name="positionIn"/>.
+    /// </summary>
+    private static (List<(string System, StarPosition? At, string? Line)> Rows, int Total) SearchRows(object result, Func<string, StarPosition?> positionIn) => result switch
     {
         GalaxySearchResult systems => ([.. systems.Systems.Select(row => (row.Name, row.Position, (string?)null))], systems.Total),
         StationSearchResult stations => ([.. stations.Stations.Select(row => (row.SystemName, row.Position, (string?)row.Name))], stations.Total),
         BodySearchResult bodies => ([.. bodies.Bodies.Select(row => (row.SystemName, row.Position, (string?)row.Name))], bodies.Total),
+        SignalSearchResult signals => ([.. signals.Signals.Select(row => (row.System, positionIn(row.System), (string?)row.Signal))], signals.Total),
+        RareSearchResult rares => ([.. rares.Rows.Select(row => (row.Rare.System, (StarPosition?)row.Rare.Position, (string?)row.Rare.Name))], rares.Total),
         _ => ([], 0),
     };
 
@@ -1153,6 +1173,9 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.SystemResult => "System result",
         GalaxyMapMarkKind.StationResult => mark.Names.Count == 1 ? "Station result" : "Station results",
         GalaxyMapMarkKind.BodyResult => mark.Names.Count == 1 ? "Body result" : "Body results",
+        GalaxyMapMarkKind.SignalResult => mark.Names.Count == 1 ? "Signal result" : "Signal results",
+        GalaxyMapMarkKind.OutfittingResult => mark.Names.Count == 1 ? "Outfitting result" : "Outfitting results",
+        GalaxyMapMarkKind.RaresResult => mark.Names.Count == 1 ? "Rare result" : "Rares results",
         _ => mark.Names.Count == 1 ? "Stored ship" : "Stored ships",
     };
 
@@ -1392,7 +1415,7 @@ public sealed class GalaxyMapPage : UserControl
     {
         var info = StarCharts.Info(search.Kind);
         var page = _headset ? "The Search tab" : $"The Search tab's {info.Title.Split(' ')[0]} page";
-        var one = info.Mark!.ToLowerInvariant();
+        var one = search.Kind == StarChartKind.RaresSearch ? "rare result" : info.Mark!.ToLowerInvariant();
 
         if (!search.Answered)
         {
@@ -1557,6 +1580,9 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.SystemResult => "System result",
         GalaxyMapMarkKind.StationResult => "Station result",
         GalaxyMapMarkKind.BodyResult => "Body result",
+        GalaxyMapMarkKind.SignalResult => "Signal result",
+        GalaxyMapMarkKind.OutfittingResult => "Outfitting result",
+        GalaxyMapMarkKind.RaresResult => "Rares result",
         _ => "Stored ship",
     };
 
@@ -1935,7 +1961,8 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>A marker's shape at the centre of a 16 by 14 glyph; grey while <paramref name="live"/> is false.</summary>
     private static Action<DrawingContext, Func<string, IBrush>> MarkDrawing(GalaxyMapMarkKind kind, Func<bool> live) => (context, ink) =>
     {
-        if (kind is GalaxyMapMarkKind.SystemResult or GalaxyMapMarkKind.StationResult or GalaxyMapMarkKind.BodyResult)
+        if (kind is GalaxyMapMarkKind.SystemResult or GalaxyMapMarkKind.StationResult or GalaxyMapMarkKind.BodyResult
+            or GalaxyMapMarkKind.SignalResult or GalaxyMapMarkKind.OutfittingResult or GalaxyMapMarkKind.RaresResult)
         {
             GalaxyMapView.DrawInk(context, ink, kind, new Point(8, 7), 1, live() ? null : ThemeManager.Grey2Key);
             return;
@@ -1985,6 +2012,9 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.SystemsSearch => MarkDrawing(GalaxyMapMarkKind.SystemResult, () => true),
         StarChartKind.StationsSearch => MarkDrawing(GalaxyMapMarkKind.StationResult, () => true),
         StarChartKind.BodiesSearch => MarkDrawing(GalaxyMapMarkKind.BodyResult, () => true),
+        StarChartKind.SignalsSearch => MarkDrawing(GalaxyMapMarkKind.SignalResult, () => true),
+        StarChartKind.OutfittingSearch => MarkDrawing(GalaxyMapMarkKind.OutfittingResult, () => true),
+        StarChartKind.RaresSearch => MarkDrawing(GalaxyMapMarkKind.RaresResult, () => true),
         _ => UnvisitedDrawing(() => true),
     };
 

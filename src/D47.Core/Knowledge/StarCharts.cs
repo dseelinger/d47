@@ -20,6 +20,9 @@ public enum StarChartKind
     SystemsSearch,
     StationsSearch,
     BodiesSearch,
+    SignalsSearch,
+    OutfittingSearch,
+    RaresSearch,
 }
 
 /// <summary>How a chart is drawn on the map.</summary>
@@ -59,6 +62,9 @@ public static class StarCharts
         StarChartKind.SystemsSearch => GalaxySearchKind.Systems,
         StarChartKind.StationsSearch => GalaxySearchKind.Stations,
         StarChartKind.BodiesSearch => GalaxySearchKind.Bodies,
+        StarChartKind.SignalsSearch => GalaxySearchKind.Signals,
+        StarChartKind.OutfittingSearch => GalaxySearchKind.Outfitting,
+        StarChartKind.RaresSearch => GalaxySearchKind.Rares,
         _ => null,
     };
 
@@ -101,6 +107,9 @@ public static class StarCharts
         StarChartKind.SystemsSearch => new("Systems search", "System result", StarChartShape.Points, LastSearch),
         StarChartKind.StationsSearch => new("Stations search", "Station result", StarChartShape.Points, LastSearch),
         StarChartKind.BodiesSearch => new("Bodies search", "Body result", StarChartShape.Points, LastSearch),
+        StarChartKind.SignalsSearch => new("Signals search", "Signal result", StarChartShape.Points, LastSearch),
+        StarChartKind.OutfittingSearch => new("Outfitting search", "Outfitting result", StarChartShape.Points, LastSearch),
+        StarChartKind.RaresSearch => new("Rares search", "Rares result", StarChartShape.Points, LastSearch),
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
     };
 }

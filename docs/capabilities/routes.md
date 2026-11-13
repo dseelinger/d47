@@ -289,6 +289,11 @@ from journals already on this machine. Nothing is fetched.
   Where the answer has more matches than rows, the line says how many of how many the map has and
   that the Search tab's page has the rest. With no search of that kind made yet, the line says so.
   Selecting a system names the result kind and, for stations and bodies, the rows in that system.
+- The same group lists **Signals search**, **Outfitting search** and **Rares search**, drawn from the
+  last signals, outfitting and rares answers as a filled square between two open angles, a notched
+  box and a gem with a line across it. Outfitting and rares answers carry their own positions. A
+  signal is placed by the travel log and then by the position lookups the map already makes; one
+  that neither places is counted in the line under the map. The map makes no search for these layers.
 
 Region names are drawn at 6,400 ly across and wider. The route's stops, the destination's name and
 your system's name are drawn at 6,400 ly and closer.
