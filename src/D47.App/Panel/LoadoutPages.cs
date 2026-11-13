@@ -1837,6 +1837,11 @@ public sealed class ItemPage : LoadoutPage
     private readonly Button? _drop;
     private readonly StackPanel _list = new() { Spacing = IndexPage.ListGap };
 
+    /// <summary>To buy, the Plan section and the slot table; full width under the side column when there is one.</summary>
+    private readonly StackPanel _below = new() { Spacing = IndexPage.ListGap, Margin = new Thickness(0, IndexPage.ListGap, 0, 0) };
+
+    private IEnumerable<Control> Rows => _list.Children.Concat(_below.Children);
+
     /// <summary>Holds the talk section outside <see cref="_list"/>, so a redraw keeps its field and its focus.</summary>
     private readonly Border _talkSlot = new();
 
@@ -2013,10 +2018,17 @@ public sealed class ItemPage : LoadoutPage
     {
         _page.Children.Clear();
         _page.ColumnDefinitions.Clear();
+        _page.RowDefinitions.Clear();
 
         _page.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        _page.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        _page.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
 
         _page.Children.Add(_build);
+
+        Grid.SetRow(_below, 1);
+        Grid.SetColumn(_below, 0);
+        Grid.SetColumnSpan(_below, _side is null ? 1 : 3);
 
         if (_side is { } side)
         {
@@ -2027,6 +2039,9 @@ public sealed class ItemPage : LoadoutPage
             Grid.SetColumn(side, 2);
             _page.Children.Add(side);
         }
+
+        _below.IsVisible = _below.Children.Count > 0;
+        _page.Children.Add(_below);
     }
 
     /// <summary>
@@ -2129,6 +2144,7 @@ public sealed class ItemPage : LoadoutPage
     private void Draw()
     {
         _list.Children.Clear();
+        _below.Children.Clear();
 
         var title = Mode.Title(_item);
         var summary = Mode.Summary(_item);
@@ -2228,12 +2244,12 @@ public sealed class ItemPage : LoadoutPage
 
         if (roomy && Mode.ToBuy(_item) is { } toBuy)
         {
-            _list.Children.Add(ToBuyBlock(toBuy));
+            _below.Children.Add(ToBuyBlock(toBuy));
         }
 
         if (roomy && Mode.Plan(_item) is { } plan)
         {
-            _list.Children.Add(PlanSection.Build(plan));
+            _below.Children.Add(PlanSection.Build(plan));
         }
 
         // **Mini shows only the rows that disagree** (the Commander's ruling, 2026-08-25).
@@ -2243,7 +2259,7 @@ public sealed class ItemPage : LoadoutPage
 
         if (slots.Count == 0)
         {
-            _list.Children.Add(LoadoutPages.Muted("Nothing outstanding on this ship."));
+            _below.Children.Add(LoadoutPages.Muted("Nothing outstanding on this ship."));
             return;
         }
 
@@ -2253,7 +2269,7 @@ public sealed class ItemPage : LoadoutPage
 
         if (slots.Any(row => row.Parts is not null))
         {
-            _list.Children.Add(LoadoutPages.SlotHeader(table));
+            _below.Children.Add(LoadoutPages.SlotHeader(table));
         }
 
         // A heading wherever the group changes, so a ship's slots read as the four blocks of the outfitting
@@ -2265,7 +2281,7 @@ public sealed class ItemPage : LoadoutPage
             if (row.Group is { Length: > 0 } heading && heading != group)
             {
                 group = heading;
-                _list.Children.Add(ListRow.Head(heading));
+                _below.Children.Add(ListRow.Head(heading));
             }
 
             // Read off the trail rather than kept as a second piece of state (#110): the last crumb is what
@@ -2292,7 +2308,7 @@ public sealed class ItemPage : LoadoutPage
             Draggable(control, row);
             PlansOnDoubleClick(control, row, crumb);
 
-            _list.Children.Add(control);
+            _below.Children.Add(control);
         }
     }
 
@@ -2642,7 +2658,7 @@ public sealed class ItemPage : LoadoutPage
 
         Cursor = Cursor.Default;
 
-        foreach (var child in _list.Children)
+        foreach (var child in Rows)
         {
             child.Opacity = 1;
         }
@@ -2651,7 +2667,7 @@ public sealed class ItemPage : LoadoutPage
     /// <summary>Which row the pointer is over, by geometry rather than by hit-testing.</summary>
     private string? SlotUnder(Point at)
     {
-        foreach (var child in _list.Children)
+        foreach (var child in Rows)
         {
             if (child.Tag is not string slot || child.TranslatePoint(default, this) is not { } origin)
             {
@@ -2674,7 +2690,7 @@ public sealed class ItemPage : LoadoutPage
     /// </summary>
     private void Highlight(string from)
     {
-        foreach (var child in _list.Children)
+        foreach (var child in Rows)
         {
             child.Opacity = child.Tag is string slot && slot == _over && slot != from
                 ? Mode.CanCopy(_item, from, slot) ? 1 : 0.4

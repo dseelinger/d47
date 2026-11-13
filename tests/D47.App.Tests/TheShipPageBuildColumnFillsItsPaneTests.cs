@@ -76,11 +76,11 @@ public class TheShipPageBuildColumnFillsItsPaneTests
     }
 
     [AvaloniaFact]
-    public void AWideScrollerGetsABuildColumnOfItsWidthLessTheSideColumnAndTheSlotTableInsideTheBuild()
+    public void AWideScrollerGetsABuildColumnBesideTheSideColumnAndTheSlotTableFullWidthBelowBoth()
     {
         var (window, panel) = Page(3400);
 
-        Assert.True(Scroller(panel).Bounds.Width >= 1000, $"scroller {Scroller(panel).Bounds.Width} panel {panel.Bounds.Width} window {window.Bounds.Width} scrollers {string.Join(",", panel.GetVisualDescendants().OfType<ScrollViewer>().Select(s => s.Bounds.Width))}");
+        Assert.True(Scroller(panel).Bounds.Width >= 1000);
 
         var grid = Columns(panel);
 
@@ -93,10 +93,20 @@ public class TheShipPageBuildColumnFillsItsPaneTests
         Assert.Equal(buildWidth + 32, grid.Children[1].Bounds.X, 2.5);
 
         var build = grid.Children[0];
+        var below = grid.Children[2];
+        var tables = panel.GetVisualDescendants().OfType<TableGrid>().ToList();
 
+        Assert.NotEmpty(tables);
+        Assert.Equal(grid.Bounds.Width, below.Bounds.Width, 1.5);
+        Assert.True(below.Bounds.Y >= Math.Max(build.Bounds.Bottom, grid.Children[1].Bounds.Bottom) - 1.5);
         Assert.All(
-            panel.GetVisualDescendants().OfType<TableGrid>(),
-            table => Assert.True(build.IsVisualAncestorOf(table) && table.Bounds.Width > 900));
+            tables,
+            table =>
+            {
+                Assert.True(below.IsVisualAncestorOf(table) && !build.IsVisualAncestorOf(table));
+
+                Assert.True(table.Bounds.Width > grid.Bounds.Width - 40, $"{table.Bounds.Width} {grid.Bounds.Width}");
+            });
 
         window.Close();
     }
