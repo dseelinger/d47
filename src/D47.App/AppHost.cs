@@ -418,9 +418,6 @@ public sealed class AppHost : IDisposable
     /// <summary>Which core flies which ship (Phase 35).</summary>
     public ShipCoreService ShipCores { get; }
 
-    /// <summary>The watch that compares a boarded ship against its plan (Phase 38).</summary>
-    public ShipDriftWatch? Drift { get; set; }
-
     /// <summary>
     /// The session's opening line (Phase 31), held here so a Commander switch can make it due again
     /// (Phase 44, "Welcome back, Commander").
@@ -1902,9 +1899,6 @@ public sealed class AppHost : IDisposable
         // The fleet joined to the builds.
         var shipPlans = new ShipPlanService(stores.ShipBuilds, checklists, () => gameState.Active);
 
-        // And the one thing that watches the two for drifting apart (Phase 38).
-        var drift = new ShipDriftWatch(shipPlans, checklists);
-
         // Which core flies which ship (Phase 35).
         var shipCoreStore = new ShipCoreStore(foundations.Data("ship-cores.json"), files, foundations.Log<ShipCoreStore>());
 
@@ -2272,7 +2266,6 @@ public sealed class AppHost : IDisposable
             CueLogger = cueLogger,
             Cues = cues,
             CustomVoices = customVoices,
-            Drift = drift,
             DropsLogger = dropsLogger,
             Echo = echo,
             EliteWindow = eliteWindow,
@@ -3501,7 +3494,6 @@ public sealed class AppHost : IDisposable
         host.Unlocks = services.Unlocks;
 
         // The Commander switch (Phase 44).
-        host.Drift = services.Drift;
         host.Continuity = stores.Callouts.Callouts.OfType<ContinuityCallout>().Single();
         gameState.CommanderChanged += host.OnCommanderChanged;
 
@@ -4014,14 +4006,6 @@ public sealed class AppHost : IDisposable
             {
                 host.Panel.Append($"{adopted}{Environment.NewLine}");
                 _ = host.Voice.AnnounceAsync(adopted);
-            }
-
-            // Boarding a ship whose build carries engineering the checklist has not got is the moment to say
-            // so, once (Phase 38).
-            if (services.Drift.Observe(feed.Arrived) is { Length: > 0 } asked)
-            {
-                host.Panel.Append($"{asked}{Environment.NewLine}");
-                _ = host.Voice.AnnounceAsync(asked);
             }
         });
 
@@ -4668,8 +4652,6 @@ public sealed class AppHost : IDisposable
 
         public required CustomVoices CustomVoices { get; init; }
 
-        public required ShipDriftWatch Drift { get; init; }
-
         public required ILogger<FolderAudioSource> DropsLogger { get; init; }
 
         public required EchoCanceller Echo { get; init; }
@@ -5072,7 +5054,6 @@ public sealed class AppHost : IDisposable
             }
 
             ShipCores.Reset();
-            Drift?.Reset();
             BeginDirections();
 
             Noted?.Invoke($"Showing Commander {change.Current.Name}");
@@ -5092,7 +5073,6 @@ public sealed class AppHost : IDisposable
         // The ship they are in is adopted afresh on the next tick, silently, as the ship d47 found them in —
         // which re-resolves the core through the store now keyed per Commander.
         ShipCores.Reset();
-        Drift?.Reset();
 
         // Once per session rather than once per run: the greeting is the new ship AI's first words.
         Continuity?.Rearm();

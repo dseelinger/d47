@@ -256,8 +256,7 @@ would add, so accepting it afterwards does not put them back.
 **Delete this list** is beside it on a ship's list page, for an owned ship or a planned one. It asks
 first, naming the list and how many lines go, then removes every line in the list, your own
 included, and any plan still waiting for that ship. It is not on All lists or on a list that is not a
-ship's. It does not change the ship's plan on Asset Mgmt › Ships, and d47 does not offer the lines
-back on boarding until that plan changes.
+ship's. It does not change the ship's plan on Asset Mgmt › Ships.
 
 ### Changing a plan is a diff, not a rebuild
 

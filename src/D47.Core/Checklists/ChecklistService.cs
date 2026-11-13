@@ -60,9 +60,6 @@ public sealed class ChecklistService(
     /// </summary>
     public event Action<string, bool, string>? ProposalSettled;
 
-    /// <summary>Raised with the list's scope after the Commander deletes a line or a whole list.</summary>
-    public event Action<ChecklistScope>? LinesDeleted;
-
     /// <summary>The Commander typed a line into a surface's Add box, with the Commander it was filed under.</summary>
     public event Action<string, ChecklistItem>? Typed;
 
@@ -1480,7 +1477,6 @@ public sealed class ChecklistService(
 
     public ChecklistChange Delete(ChecklistItemId id)
     {
-        var deleted = Document.Find(id);
         var change = list.Apply(Fid, Name, document => document.Delete(id));
 
         // The selected line has gone, so the selection goes with it rather than pointing at an id nothing
@@ -1488,11 +1484,6 @@ public sealed class ChecklistService(
         if (change.Changed && Selected is { } held && held.Same(id))
         {
             Select(null);
-        }
-
-        if (change.Changed)
-        {
-            LinesDeleted?.Invoke(deleted!.Scope);
         }
 
         return change;
@@ -1525,8 +1516,6 @@ public sealed class ChecklistService(
         {
             Select(null);
         }
-
-        LinesDeleted?.Invoke(scope);
 
         return change;
     }
@@ -2039,10 +2028,9 @@ public sealed class ChecklistService(
         ChecklistSource source,
         IReadOnlyList<ChecklistItem> items,
         IReadOnlyCollection<string> replacing,
-        string? describing = null,
-        bool wholePlan = false)
+        string? describing = null)
     {
-        var wanted = Wanted(scope, source, items, replacing, wholePlan);
+        var wanted = Wanted(scope, source, items, replacing, wholePlan: false);
 
         if (wanted.Count == 0)
         {

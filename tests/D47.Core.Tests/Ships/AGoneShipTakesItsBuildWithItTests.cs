@@ -134,7 +134,15 @@ public class AGoneShipTakesItsBuildWithItTests
 
         ships.Plan(ships.ForShip(Gone)!.Id, new SlotPlan("PowerPlant", "Overcharged", 5));
 
-        Assert.NotNull(new ShipDriftWatch(ships, checklists).Observe([Loadout(Gone, "python")]));
+        checklists.ProposePlan(
+            ChecklistScope.Ship(Gone),
+            ChecklistSource.EngineeringPlan,
+            EngineeringPlan.Items(
+                ChecklistScope.Ship(Gone),
+                "python",
+                [new BuildRequest("PowerPlant", "Overcharged", 5)],
+                checklists.SlotFor),
+            ["PowerPlant"]);
         Assert.NotEmpty(checklists.Proposals.PendingFor("F1"));
 
         ships.DropGone([Sell(Gone)]);

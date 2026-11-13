@@ -1,5 +1,4 @@
 using D47.Core.Checklists;
-using D47.Core.Journal;
 using D47.Core.Ships;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -11,7 +10,7 @@ namespace D47.Core.Tests.Ships;
 public class AClearedSlotLeavesTheChecklistTests
 {
     private sealed record Bench(
-        ShipPlanService Ships, ChecklistService Checklists, ShipDriftWatch Drift, ShipBuild Build)
+        ShipPlanService Ships, ChecklistService Checklists, ShipBuild Build)
     {
         public ChecklistScope Scope => Build.Scope!;
 
@@ -46,19 +45,7 @@ public class AClearedSlotLeavesTheChecklistTests
         ships.Plan(build.Id, new SlotPlan("MainEngines", Blueprint: "Dirty Drive Tuning", Grade: 5));
         ships.Plan(build.Id, new SlotPlan("PowerPlant", Blueprint: "Armoured", Grade: 3));
 
-        return new Bench(ships, checklists, new ShipDriftWatch(ships, checklists), build);
-    }
-
-    private static JournalEvent Boarding(int ship)
-    {
-        Assert.True(JournalEvent.TryParse(
-            $$"""
-              {"timestamp":"2026-08-20T09:00:00Z","event":"Loadout","Ship":"python","ShipID":{{ship}},"MaxJumpRange":20.0,"UnladenMass":350.0,"Modules":[{"Slot":"MainEngines","Item":"int_engine_size5_class5","On":true,"Priority":0,"Health":1.0}]}
-              """,
-            NullLogger.Instance,
-            out var journalEvent));
-
-        return journalEvent!;
+        return new Bench(ships, checklists, build);
     }
 
     [Fact]
@@ -76,19 +63,5 @@ public class AClearedSlotLeavesTheChecklistTests
         Assert.False(bench.Mentions("Armoured"));
         Assert.True(bench.Mentions("Dirty Drive Tuning"));
         Assert.True(bench.Mentions("Buy a scoop"));
-    }
-
-    [Fact]
-    public void AcceptingTheBoardingQuestionAfterClearingASlotDropsItsLines()
-    {
-        var bench = Planned();
-        bench.Ships.Promote(bench.Build.Id);
-        bench.Ships.Clear(bench.Build.Id, "PowerPlant");
-
-        Assert.NotNull(bench.Drift.Observe([Boarding(12)]));
-        Assert.NotEmpty(bench.Checklists.Accept());
-
-        Assert.False(bench.Mentions("Armoured"));
-        Assert.True(bench.Mentions("Dirty Drive Tuning"));
     }
 }

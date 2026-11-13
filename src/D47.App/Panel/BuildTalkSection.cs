@@ -361,7 +361,7 @@ public sealed class BuildTalkSection : UserControl
 
         stack.Children.Add(tiles);
         stack.Children.Add(Prose(
-            "Accepted changes join the checklist and the gap like any plan edit.",
+            "Accepted changes go into the plan. They reach the checklist when you press Put this build on my checklist.",
             ThemeManager.GreyKey,
             TypeScale.Small));
 

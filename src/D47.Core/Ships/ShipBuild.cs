@@ -124,12 +124,6 @@ public sealed record ShipBuild(
     public string? CommanderName { get; init; }
 
     /// <summary>
-    /// The disagreement between this build and the checklist that the Commander has already said no to
-    /// (Phase 38).
-    /// </summary>
-    public string? Settled { get; init; }
-
-    /// <summary>
     /// Priority groups the Commander has moved slots to, 1 to 5, keyed by slot. Remembered and counted
     /// by the power gauge; not a <see cref="SlotPlan"/>, so it plans nothing and is never enforced.
     /// </summary>

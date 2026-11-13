@@ -285,47 +285,6 @@ public class GaugesAtTheHeadOfTheSlotListTests
         surface.Window.Close();
     }
 
-    [AvaloniaFact]
-    public void TheWaitingQuestionIsLeftOnTheTabAsABanner()
-    {
-        var surface = Open();
-
-        // Opening the ship is what gives it a build to plan against.
-        OpenTheShip(surface);
-
-        var build = surface.Ships.Fleet().First(entry => entry.Build is not null).Build!;
-
-        surface.Ships.Plan(build.Id, new SlotPlan("PowerPlant", "Armoured", 5));
-
-        // Boarding is what asks.
-        var drift = new ShipDriftWatch(surface.Ships, surface.Checklists);
-
-        Assert.True(JournalEvent.TryParse(
-            """{"timestamp":"2026-08-20T09:05:00Z","event":"Loadout","Ship":"cobramkv","ShipID":12,"MaxJumpRange":30.0,"UnladenMass":190.0,"Modules":[{"Slot":"PowerPlant","Item":"int_powerplant_size4_class5","On":true,"Priority":1,"Health":1.0}]}""",
-            NullLogger.Instance,
-            out var boarding));
-
-        Assert.NotNull(drift.Observe([boarding!]));
-
-        OpenTheShip(surface);
-
-        Assert.Contains(Said(surface.Panel), text => text.StartsWith("Set the", StringComparison.Ordinal));
-
-        // Two answers and no third: dismissing a question is saying no while pretending not to.
-        var no = surface.Panel.GetVisualDescendants().OfType<Button>()
-            .First(button => button.GetVisualDescendants().OfType<TextBlock>()
-                .Any(text => text.Text == "No, leave both alone"));
-
-        no.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.Empty(surface.Checklists.Proposals.Pending);
-        Assert.Empty(surface.Checklists.Document.Items);
-        Assert.DoesNotContain(Said(surface.Panel), text => text == "No, leave both alone");
-
-        surface.Window.Close();
-    }
-
     /// <summary>The gauges at the size the headset renders the panel, for a human to look at.</summary>
     [AvaloniaFact]
     [Trait("Category", "Integration")]

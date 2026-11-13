@@ -101,7 +101,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
                 Hull = build.Hull,
                 ShipId = build.ShipId,
                 Name = build.Name,
-                Settled = build.Settled,
                 Slots = [.. build.Slots.Take(MaxSlots).Select(plan => new SlotLine
                 {
                     Slot = plan.Slot,
@@ -259,7 +258,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
             builds.Add(new ShipBuild(fid, id, hull, line.ShipId, Blank(line.Name), slots)
             {
                 CommanderName = Blank(line.CommanderName),
-                Settled = Blank(line.Settled),
                 PriorityMoves = moves,
             });
         }
@@ -295,9 +293,6 @@ public sealed class ShipBuildStore(string path, IFileSystem files, ILogger<ShipB
         public int? ShipId { get; init; }
 
         public string? Name { get; init; }
-
-        /// <summary>The disagreement with the checklist the Commander has already said no to (Phase 38).</summary>
-        public string? Settled { get; init; }
 
         public IReadOnlyList<SlotLine> Slots { get; init; } = [];
 

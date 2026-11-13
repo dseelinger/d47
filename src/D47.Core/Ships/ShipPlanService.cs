@@ -963,18 +963,6 @@ public sealed class ShipPlanService(
         return $"That {build.HullName} is yours now, and the plan you had for one is pointed at it.";
     }
 
-    /// <summary>
-    /// Records that the Commander has said no to one particular disagreement between a build and the
-    /// checklist (Phase 38).
-    /// </summary>
-    public void Settle(string buildId, string fingerprint)
-    {
-        if (store.Find(buildId) is { } build)
-        {
-            Replace(build with { Settled = fingerprint });
-        }
-    }
-
     private void Replace(ShipBuild build) =>
         store.Save(PlanLists.Replacing(store.Builds, build, other => other.Id));
 

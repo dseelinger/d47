@@ -557,31 +557,6 @@ public sealed class ShipsMode(
     private static string Credits(long amount) =>
         $"{amount.ToString("N0", CultureInfo.InvariantCulture)} cr";
 
-    /// <summary>
-    /// The question left on the tab when one was asked out loud and not answered (Phase 38, "Ask before
-    /// the plan and the checklist drift apart").
-    /// </summary>
-    public LoadoutNotice? Notice()
-    {
-        var waiting = checklists.Proposals
-            .PendingFor(checklists.Document.CommanderFid)
-            .FirstOrDefault(proposal => proposal.Kind == ProposalKind.Plan
-                                        && proposal.Source == ChecklistSource.EngineeringPlan
-                                        && proposal.Scope.Group == ChecklistGroup.Ship);
-
-        if (waiting is null)
-        {
-            return null;
-        }
-
-        var id = waiting.Id;
-
-        return new LoadoutNotice(
-            $"{waiting.Summary.TrimEnd('.')}?",
-            () => checklists.Accept(id),
-            () => checklists.Decline(id));
-    }
-
     /// <summary>Jump range, live while the build is edited (Phase 38).</summary>
     public IReadOnlyList<LoadoutGauge> Gauges(string item)
     {
