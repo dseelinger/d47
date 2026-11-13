@@ -1,4 +1,7 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -157,5 +160,64 @@ public sealed class TheLeftmostPaneCanBeDraggedAwayTests
 
         Assert.Equal("Weapon 3", Words(strip));
         Assert.Empty(Grid(strip).Children.OfType<Avalonia.Controls.Panel>());
+    }
+
+    private static void Press(PanelView panel, string word)
+    {
+        var crumb = panel.GetVisualDescendants().OfType<Button>().First(button => Equals(button.Content, word));
+        var window = (Window)TopLevel.GetTopLevel(panel)!;
+        var at = crumb.TranslatePoint(new Point(crumb.Bounds.Width / 2, crumb.Bounds.Height / 2), window)!.Value;
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void PressingTheHiddenPanesCrumbShowsItAgainAndLeavesTheTrail()
+    {
+        var store = Store();
+        var memory = new PaneWidthMemory(store);
+        memory.Remember(3, [0.2, 0.3, 0.5]);
+        var panel = Furnished(memory, 1500);
+        var strip = Strip(panel);
+
+        strip.ReleaseLeftmostRule(0);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal("Corsair,Weapon 3", Words(strip));
+
+        var trail = panel.Nav.Trail.Select(crumb => crumb.Key).ToList();
+
+        Press(panel, "Ships");
+
+        Assert.Equal("Ships,Corsair,Weapon 3", Words(strip));
+        Assert.Equal(trail, panel.Nav.Trail.Select(crumb => crumb.Key).ToList());
+        Assert.False(memory.LeftmostHidden);
+        Assert.Equal(0.2, Grid(strip).ColumnDefinitions[0].Width.Value, 3);
+        Assert.Equal("Ships,Corsair,Weapon 3", Words(Strip(Furnished(new PaneWidthMemory(store), 1500))));
+    }
+
+    [AvaloniaFact]
+    public void AnotherCrumbStillNavigatesWhileAPaneIsHidden()
+    {
+        var panel = Furnished(new PaneWidthMemory(Store()), 1500);
+        var strip = Strip(panel);
+
+        strip.ReleaseLeftmostRule(0);
+        Dispatcher.UIThread.RunJobs();
+
+        Press(panel, "Corsair");
+
+        Assert.Equal(["fleet", "ship:12"], panel.Nav.Trail.Select(crumb => crumb.Key).ToArray());
+    }
+
+    [AvaloniaFact]
+    public void ACrumbWithNoPaneHiddenNavigatesAsBefore()
+    {
+        var panel = Furnished(new PaneWidthMemory(Store()), 1500);
+
+        Press(panel, "Ships");
+
+        Assert.Equal(["fleet"], panel.Nav.Trail.Select(crumb => crumb.Key).ToArray());
     }
 }

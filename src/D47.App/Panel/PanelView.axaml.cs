@@ -2896,6 +2896,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
             var at = index;
             var last = index == trail.Count - 1;
+            var key = trail[index].Key;
 
             var crumb = new Button
             {
@@ -2906,7 +2907,17 @@ public partial class PanelView : UserControl, IPanelTabHost
 
             if (!last)
             {
-                crumb.Click += (_, _) => Nav.JumpTo(at);
+                crumb.Click += (_, _) =>
+                {
+                    if (PagePane.Child is DrillView { HiddenKey: { } hidden } strip
+                        && hidden == key
+                        && strip.ShowHiddenPane())
+                    {
+                        return;
+                    }
+
+                    Nav.JumpTo(at);
+                };
             }
 
             CrumbRow.Children.Add(crumb);

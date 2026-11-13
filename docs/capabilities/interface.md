@@ -540,6 +540,10 @@ four arrangements that have to agree.
 Zoom is what moves you between them most of the time: it re-measures rather than magnifying, so
 zooming out gives the layout more logical room and a third pane appears.
 
+On the desktop window and the headset's big panel, dragging the leftmost rule to the strip's left
+edge hides that pane. The hidden level stays in the breadcrumb, and pressing its crumb shows the pane
+again without changing the trail.
+
 #### Choosing {#choosing}
 
 **A chooser takes the whole panel** until you dismiss it, which makes it a level of the stack

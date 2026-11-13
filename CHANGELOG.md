@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: While a drill strip's leftmost pane is hidden, pressing the breadcrumb for that level shows the pane again at its remembered width, and the trail does not change. This works on the desktop window and the VR big panel; the edge handle and the ray's edge rule still work.
+
 Fixed: A ship page's slot table measured how wide the Current and Plan columns needed to be in the wrong font, so a column could be sized too narrow to show every effect of a roll when the table had room for them. It now measures in the font the cells are drawn in, and counts the gear and the Powerplay coin.
 
 Changed: On the desktop window a ship, suit or weapon page's build column takes the width of its pane instead of stopping at 900 pixels, and the slot tables grow with it. With the hull picture at Beside the 400-pixel side column keeps its place and the build takes the rest. The Wide hull picture is at most 900 pixels wide. The headset and mini panels are unchanged.

@@ -75,6 +75,9 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     /// <summary>Whether the last draw left the leftmost pane out.</summary>
     private bool _hiding;
 
+    /// <summary>The crumb key of the pane the last draw left out, or null.</summary>
+    private string? _hiddenKey;
+
     /// <summary>The pointer's last x in the strip during a drag of the leftmost rule.</summary>
     private double _pointerX = double.NaN;
 
@@ -182,6 +185,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         {
             _depth = 0;
             _hiding = false;
+            _hiddenKey = null;
             Empty();
             _showing = [];
             Drawn?.Invoke(this, EventArgs.Empty);
@@ -221,6 +225,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
         _showing = keys;
         _hiding = hide;
+        _hiddenKey = hide ? visible[0].Key : null;
 
         Empty();
 
@@ -566,10 +571,35 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         Remember();
     }
 
+    /// <summary>The crumb key of the leftmost pane while it is hidden, or null.</summary>
+    internal string? HiddenKey => _hiding ? _hiddenKey : null;
+
     /// <summary>Shows the hidden pane again when the edge handle is released right of the threshold.</summary>
     internal void ReleaseEdgeHandle(double x)
     {
         if (_widths is null || !_hiding || x < CollapseThreshold)
+        {
+            return;
+        }
+
+        ShowHiddenPane(x);
+    }
+
+    /// <summary>Shows the hidden pane again at its remembered share.</summary>
+    internal bool ShowHiddenPane()
+    {
+        if (_widths is null || !_hiding)
+        {
+            return false;
+        }
+
+        ShowHiddenPane(null);
+        return true;
+    }
+
+    private void ShowHiddenPane(double? x)
+    {
+        if (_widths is null)
         {
             return;
         }
@@ -579,10 +609,10 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         var others = _widths.Remembered(count)?.Skip(1).ToList() ?? [.. Enumerable.Repeat(1.0, count - 1)];
         var othersSum = others.Sum();
 
-        if (total > 0)
+        if (x is { } at && total > 0)
         {
             var widest = Math.Max(MinimumPaneWidth, total - (MinimumPaneWidth * (count - 1)));
-            var share = Math.Clamp(x, MinimumPaneWidth, widest) / total;
+            var share = Math.Clamp(at, MinimumPaneWidth, widest) / total;
             var shares = new List<double> { share };
             shares.AddRange(others.Select(other => (1 - share) * other / othersSum));
             _widths.Remember(count, shares);
