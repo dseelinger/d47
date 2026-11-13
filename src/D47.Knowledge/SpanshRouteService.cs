@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging;
@@ -53,7 +54,29 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
             "the route plotter",
             cancellationToken).ConfigureAwait(false);
 
-        return result is null ? null : SpanshResponse.ReadRoute(result.Value);
+        if (result is null || SpanshResponse.ReadRoute(result.Value) is not { } route)
+        {
+            return null;
+        }
+
+        var classes = await StarClassesAsync(
+            Addresses(
+                route.Start?.SystemAddress,
+                route.Waypoints.Where(waypoint => !waypoint.IsNeutron).Select(waypoint => waypoint.SystemAddress)),
+            cancellationToken).ConfigureAwait(false);
+
+        return classes.Count == 0
+            ? route
+            : route with
+            {
+                Start = route.Start is { } start ? start with { StarClass = ClassOf(classes, start.SystemAddress) } : null,
+                Waypoints =
+                [
+                    .. route.Waypoints.Select(waypoint => waypoint.IsNeutron
+                        ? waypoint
+                        : waypoint with { StarClass = ClassOf(classes, waypoint.SystemAddress) }),
+                ],
+            };
     }
 
     public async Task<RichesRoute?> PlotRichesAsync(RichesQuery query, CancellationToken cancellationToken)
@@ -74,7 +97,26 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
             "the Road to Riches plotter",
             cancellationToken).ConfigureAwait(false);
 
-        return result is null ? null : SpanshResponse.ReadRiches(result.Value);
+        if (result is null || SpanshResponse.ReadRiches(result.Value) is not { } route)
+        {
+            return null;
+        }
+
+        var classes = await StarClassesAsync(
+            Addresses(
+                route.Start?.SystemAddress,
+                route.Stops.Select(stop => stop.SystemAddress),
+                route.End?.SystemAddress),
+            cancellationToken).ConfigureAwait(false);
+
+        return classes.Count == 0
+            ? route
+            : route with
+            {
+                Start = route.Start is { } start ? start with { StarClass = ClassOf(classes, start.SystemAddress) } : null,
+                End = route.End is { } end ? end with { StarClass = ClassOf(classes, end.SystemAddress) } : null,
+                Stops = [.. route.Stops.Select(stop => stop with { StarClass = ClassOf(classes, stop.SystemAddress) })],
+            };
     }
 
     /// <summary>The exobiology plotter (Phase 18, "Find the exobiology").</summary>
@@ -100,7 +142,26 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
             "the exobiology plotter",
             cancellationToken).ConfigureAwait(false);
 
-        return result is null ? null : SpanshResponse.ReadExobiology(result.Value);
+        if (result is null || SpanshResponse.ReadExobiology(result.Value) is not { } route)
+        {
+            return null;
+        }
+
+        var classes = await StarClassesAsync(
+            Addresses(
+                route.Start?.SystemAddress,
+                route.Stops.Select(stop => stop.SystemAddress),
+                route.End?.SystemAddress),
+            cancellationToken).ConfigureAwait(false);
+
+        return classes.Count == 0
+            ? route
+            : route with
+            {
+                Start = route.Start is { } start ? start with { StarClass = ClassOf(classes, start.SystemAddress) } : null,
+                End = route.End is { } end ? end with { StarClass = ClassOf(classes, end.SystemAddress) } : null,
+                Stops = [.. route.Stops.Select(stop => stop with { StarClass = ClassOf(classes, stop.SystemAddress) })],
+            };
     }
 
     public async Task<CarrierRoute?> PlotCarrierAsync(CarrierRouteQuery query, CancellationToken cancellationToken)
@@ -122,6 +183,50 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
             cancellationToken).ConfigureAwait(false);
 
         return result is null ? null : SpanshResponse.ReadCarrier(result.Value);
+    }
+
+    private const int MaxLookupRequests = 3;
+
+    private static List<long> Addresses(long? start, IEnumerable<long?> stops, long? end = null) =>
+        [.. new[] { start }.Concat(stops).Append(end).OfType<long>().Distinct()];
+
+    private static string? ClassOf(Dictionary<long, string> classes, long? address) =>
+        address is { } key && classes.TryGetValue(key, out var starClass) ? starClass : null;
+
+    /// <summary>
+    /// The main star class of each system, by id64, from at most <see cref="MaxLookupRequests"/> searches.
+    /// A refused or unreadable search leaves its systems out.
+    /// </summary>
+    private async Task<Dictionary<long, string>> StarClassesAsync(
+        List<long> addresses,
+        CancellationToken cancellationToken)
+    {
+        var classes = new Dictionary<long, string>();
+
+        foreach (var chunk in addresses.Chunk(GalaxyQuery.MaxSize).Take(MaxLookupRequests))
+        {
+            try
+            {
+                using var content = new StringContent(
+                    SpanshRequest.SystemsByAddress(chunk), Encoding.UTF8, "application/json");
+                using var document = await SpanshGalaxyService.SendAsync(
+                    _logger,
+                    token => _http.PostAsync("api/systems/search", content, token),
+                    "the galaxy search",
+                    cancellationToken).ConfigureAwait(false);
+
+                foreach (var (address, starClass) in SpanshResponse.ReadMainStarClasses(document!))
+                {
+                    classes[address] = starClass;
+                }
+            }
+            catch (GalaxyUnavailableException)
+            {
+                // SendAsync has logged the status; the plan keeps unknown classes.
+            }
+        }
+
+        return classes;
     }
 
     /// <summary>Submit, then poll until it stops being queued.</summary>

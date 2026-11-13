@@ -3,7 +3,14 @@ using D47.Core.Journal;
 namespace D47.Core.Knowledge;
 
 /// <summary>A system the plotter answered with that is not a stop: the origin, or the return of a loop.</summary>
-public sealed record RouteEndpoint(string System, StarPosition Position);
+public sealed record RouteEndpoint(string System, StarPosition Position)
+{
+    /// <summary>The system's id64, or null where the plotter's answer lacks it.</summary>
+    public long? SystemAddress { get; init; }
+
+    /// <summary>The main star's journal class where Spansh knows it; null otherwise.</summary>
+    public string? StarClass { get; init; }
+}
 
 /// <summary>One system on a plotted route.</summary>
 /// <param name="System">The system to set as the next destination.</param>
@@ -25,6 +32,12 @@ public sealed record RouteWaypoint(string System, int Jumps, double? DistanceLef
 
     /// <summary>The plotter's x, y, z, or null where the answer lacks them.</summary>
     public StarPosition? Position { get; init; }
+
+    /// <summary>The system's id64, or null where the plotter's answer lacks it.</summary>
+    public long? SystemAddress { get; init; }
+
+    /// <summary>The main star's journal class where Spansh knows it; null otherwise.</summary>
+    public string? StarClass { get; init; }
 }
 
 /// <summary>A plotted route between two systems.</summary>
@@ -53,6 +66,12 @@ public sealed record RichesBody(string Name, string? Subtype)
 public sealed record RichesStop(string System, int Jumps, IReadOnlyList<RichesBody> Bodies)
 {
     public StarPosition? Position { get; init; }
+
+    /// <summary>The system's id64, or null where the plotter's answer lacks it.</summary>
+    public long? SystemAddress { get; init; }
+
+    /// <summary>The main star's journal class where Spansh knows it; null otherwise.</summary>
+    public string? StarClass { get; init; }
 }
 
 public sealed record RichesRoute(IReadOnlyList<RichesStop> Stops)
@@ -92,6 +111,12 @@ public sealed record ExobiologyBody(string Name, string? Subtype)
 public sealed record ExobiologyStop(string System, int Jumps, IReadOnlyList<ExobiologyBody> Bodies)
 {
     public StarPosition? Position { get; init; }
+
+    /// <summary>The system's id64, or null where the plotter's answer lacks it.</summary>
+    public long? SystemAddress { get; init; }
+
+    /// <summary>The main star's journal class where Spansh knows it; null otherwise.</summary>
+    public string? StarClass { get; init; }
 
     public long Value => Bodies.Sum(body => body.LandmarkValue);
 

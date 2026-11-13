@@ -497,6 +497,34 @@ internal static class SpanshRequest
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
 
+    /// <summary>The systems with these id64 values, each with its bodies.</summary>
+    public static string SystemsByAddress(IReadOnlyCollection<long> addresses)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartObject("filters");
+            writer.WriteStartObject("id64");
+            writer.WriteStartArray("value");
+
+            foreach (var address in addresses)
+            {
+                writer.WriteNumberValue(address);
+            }
+
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteNumber("size", addresses.Count);
+            writer.WriteNumber("page", 0);
+            writer.WriteEndObject();
+        }
+
+        return Encoding.UTF8.GetString(buffer.WrittenSpan);
+    }
+
     /// <summary>The systems an Exploited, Fortified or Stronghold state covers within a distance, nearest first.</summary>
     public static string PowerplayNear(string referenceSystem, double lightYears)
     {

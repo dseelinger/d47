@@ -68,19 +68,19 @@ public sealed record RouteMapStop(string System, StarPosition? Position, RouteSt
             route.Waypoints.Select(waypoint => new RouteMapStop(
                 waypoint.System,
                 waypoint.Position,
-                waypoint.IsNeutron ? RouteStopMarks.Neutron : RouteStopMarks.None)),
+                NavMarks(waypoint.StarClass) | (waypoint.IsNeutron ? RouteStopMarks.Neutron : RouteStopMarks.None))),
             null);
 
     public static IReadOnlyList<RouteMapStop> From(RichesRoute route) =>
         Around(
             route.Start,
-            route.Stops.Select(stop => new RouteMapStop(stop.System, stop.Position, RouteStopMarks.None)),
+            route.Stops.Select(stop => new RouteMapStop(stop.System, stop.Position, NavMarks(stop.StarClass))),
             route.End);
 
     public static IReadOnlyList<RouteMapStop> From(ExobiologyRoute route) =>
         Around(
             route.Start,
-            route.Stops.Select(stop => new RouteMapStop(stop.System, stop.Position, RouteStopMarks.None)),
+            route.Stops.Select(stop => new RouteMapStop(stop.System, stop.Position, NavMarks(stop.StarClass))),
             route.End);
 
     /// <summary>The plan's stops to draw; null for a trade plan or a plan with no route recorded.</summary>
@@ -121,14 +121,14 @@ public sealed record RouteMapStop(string System, StarPosition? Position, RouteSt
 
         if (start is not null)
         {
-            all.Add(new RouteMapStop(start.System, start.Position, RouteStopMarks.None));
+            all.Add(new RouteMapStop(start.System, start.Position, NavMarks(start.StarClass)));
         }
 
         all.AddRange(stops);
 
         if (end is not null)
         {
-            all.Add(new RouteMapStop(end.System, end.Position, RouteStopMarks.None));
+            all.Add(new RouteMapStop(end.System, end.Position, NavMarks(end.StarClass)));
         }
 
         return all;

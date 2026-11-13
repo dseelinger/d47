@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Route maps for Neutron Plotter, Road to Riches and Exobiology plans drew every stop that is not a neutron star with the unknown look. When Spansh knows a stop's star, the map now marks it scoopable or no fuel. D47 asks Spansh once, after the plotter answers, and a plan saved earlier keeps the unknown look.
+
 Changed: GPT-6.1 Terra is now OpenAI's default model, in place of GPT-6.1 Sol, at half the price: $1 in and $5 out per million tokens. GPT-6.1 Sol stays on the model list. With OpenAI, story chapters and short stories that GPT-6 Luna does not write are now written by GPT-6.1 Terra. Claude Fable 5.2 is on the Anthropic model list, at $8 in and $40 out per million tokens.
 
 Added: The Galaxy map can draw the Guardian sites: the 354 systems with a Guardian ruin or structure on one of their bodies. Add Guardian sites on the Layers picker, under Guardian, or say "show the Guardian sites", "Guardian sites on the map" or "where are the Guardian ruins"; D47 says how many systems it knows and which is nearest you, with the distance, then adds the layer. Each system gets one mark at every zoom, named Guardian site in the legend, and selecting one says how many of its bodies hold ruins and how many a structure. The sites come from a table d47 carries, so it needs no AI and no network, and the Star charts tool takes `guardian_sites`.

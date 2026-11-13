@@ -198,6 +198,7 @@ internal static class SpanshResponse
             {
                 DistanceJumped = Number(jump, "distance_jumped"),
                 Position = Position(jump),
+                SystemAddress = Address(jump),
             });
         }
 
@@ -249,6 +250,7 @@ internal static class SpanshResponse
                     bodies)
                 {
                     Position = Position(stop),
+                    SystemAddress = Address(stop),
                 });
             }
         }
@@ -312,6 +314,7 @@ internal static class SpanshResponse
                     bodies)
                 {
                     Position = Position(stop),
+                    SystemAddress = Address(stop),
                 });
             }
         }
@@ -359,7 +362,59 @@ internal static class SpanshResponse
     private static RouteEndpoint? Endpoint(JsonElement element, string nameProperty) =>
         Position(element) is { } position
             ? new RouteEndpoint(String(element, nameProperty) ?? "an unnamed system", position)
+            {
+                SystemAddress = Address(element),
+            }
             : null;
+
+    /// <summary>An <c>id64</c> that spansh writes as a number or as a string.</summary>
+    private static long? Address(JsonElement element)
+    {
+        if (!element.TryGetProperty("id64", out var value))
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt64(out var number) => number,
+            JsonValueKind.String when long.TryParse(
+                value.GetString(),
+                System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var parsed) => parsed,
+            _ => null,
+        };
+    }
+
+    /// <summary>The journal class of each system's main star in a systems search, by id64.</summary>
+    public static Dictionary<long, string> ReadMainStarClasses(JsonDocument document)
+    {
+        var classes = new Dictionary<long, string>();
+
+        foreach (var system in document.RootElement.Items("results"))
+        {
+            if (Address(system) is not { } address)
+            {
+                continue;
+            }
+
+            foreach (var body in system.Items("bodies"))
+            {
+                if (Boolean(body, "is_main_star"))
+                {
+                    if (StarClasses.FromSubtype(String(body, "subtype")) is { } starClass)
+                    {
+                        classes[address] = starClass;
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        return classes;
+    }
 
     /// <summary>The jumps on the dropped entries other than the first.</summary>
     private static int UnlistedJumps(List<JsonElement> entries, List<JsonElement> kept) =>

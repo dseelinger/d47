@@ -526,4 +526,112 @@ public class SpanshRouteServiceTests
 
         Assert.Contains("Could not find finishing system", failure.Message, StringComparison.Ordinal);
     }
+
+    private const string RichesWithAddresses =
+        """
+        {"status":"ok","result":[
+          {"name":"Alpha","jumps":1,"id64":1001,"bodies":[{"name":"A 1","subtype":"Water world","estimated_mapping_value":100}]},
+          {"name":"Beta","jumps":2,"id64":"1002","bodies":[{"name":"B 1","subtype":"Water world","estimated_mapping_value":100}]},
+          {"name":"Gamma","jumps":2,"id64":1003,"bodies":[{"name":"C 1","subtype":"Water world","estimated_mapping_value":100}]}]}
+        """;
+
+    private static RichesQuery Riches()
+    {
+        Assert.True(RichesQuery.TryParse("Sol", 50, 500, 10, 500_000, 10_000, false, out var query, out _));
+        return query;
+    }
+
+    [Fact]
+    public async Task ARichesPlanTakesEachStopsMainStarClassFromOneSystemsSearch()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK, RichesWithAddresses),
+            (HttpStatusCode.OK,
+                """
+                {"count":3,"results":[
+                  {"id64":1001,"name":"Alpha","bodies":[
+                    {"name":"Alpha A 1","subtype":"Water world"},
+                    {"name":"Alpha","is_main_star":true,"subtype":"K (Yellow-Orange) Star"}]},
+                  {"id64":1002,"name":"Beta","bodies":[{"name":"Beta","is_main_star":true,"subtype":"M (Red giant) Star"}]},
+                  {"id64":1003,"name":"Gamma","bodies":[{"name":"Gamma","is_main_star":true,"subtype":"L (Brown dwarf) Star"}]}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        var riches = await service.PlotRichesAsync(Riches(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(["K", "M_RedGiant", "L"], riches!.Stops.Select(stop => stop.StarClass));
+        Assert.Equal([1001L, 1002L, 1003L], riches.Stops.Select(stop => stop.SystemAddress!.Value));
+        Assert.Equal("/api/systems/search", recorder.Paths[^1]);
+
+        var body = recorder.Requests[^1];
+        Assert.Contains("\"id64\":{\"value\":[1001,1002,1003]}", body, StringComparison.Ordinal);
+        Assert.Contains("\"size\":3", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASystemsSearchThatFailsStillReturnsThePlanWithUnknownClasses()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK, RichesWithAddresses),
+            (HttpStatusCode.InternalServerError, "{}"));
+
+        using var service = Service(recorder, out _);
+
+        var riches = await service.PlotRichesAsync(Riches(), TestContext.Current.CancellationToken);
+
+        Assert.Equal(3, riches!.Stops.Count);
+        Assert.All(riches.Stops, stop => Assert.Null(stop.StarClass));
+    }
+
+    [Fact]
+    public async Task ANeutronPlotLooksUpNoNeutronStar()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":{"source_system":"Sol","destination_system":"Colonia",
+                 "system_jumps":[{"system":"Sol","jumps":0,"id64":10477373803,"x":0,"y":0,"z":0},
+                                 {"system":"PSR J1752-2806","jumps":10,"neutron_star":true,"id64":555},
+                                 {"system":"Colonia","jumps":1,"id64":3238296097059}]}}
+                """),
+            (HttpStatusCode.OK,
+                """
+                {"results":[
+                  {"id64":10477373803,"bodies":[{"is_main_star":true,"subtype":"G (White-Yellow) Star"}]},
+                  {"id64":3238296097059,"bodies":[{"is_main_star":true,"subtype":"K (Yellow-Orange) Star"}]}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        var route = await service.PlotAsync(Route(), TestContext.Current.CancellationToken);
+
+        var body = recorder.Requests[^1];
+        Assert.Contains("[10477373803,3238296097059]", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("555", body, StringComparison.Ordinal);
+        Assert.Equal("G", route!.Start!.StarClass);
+        Assert.True(route.Waypoints[0].IsNeutron);
+        Assert.Null(route.Waypoints[0].StarClass);
+        Assert.Equal("K", route.Waypoints[1].StarClass);
+    }
+
+    [Fact]
+    public async Task APlanWithNoAddressesMakesNoLookup()
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK,
+                """
+                {"status":"ok","result":[{"name":"Alpha","jumps":1,"bodies":[{"name":"A 1","estimated_mapping_value":100}]}]}
+                """));
+
+        using var service = Service(recorder, out _);
+
+        await service.PlotRichesAsync(Riches(), TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain("/api/systems/search", recorder.Paths);
+    }
 }
