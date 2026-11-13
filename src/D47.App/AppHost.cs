@@ -385,6 +385,9 @@ public sealed class AppHost : IDisposable
 
     public D47.App.Usage.UsageReporter? UsageReporter { get; private set; }
 
+    /// <summary>The web app sign-in, and the snapshot deletes it starts.</summary>
+    public D47.Core.Web.WebAppLink? WebApp { get; private set; }
+
     /// <summary>
     /// Retains what crossed the audio boundary in both directions, when this process was asked to
     /// (#164).
@@ -2349,6 +2352,14 @@ public sealed class AppHost : IDisposable
         // at one surface rather than two that could disagree about what is reachable.
         ActionSurface actionSurface;
 
+        var webApp = new D47.Core.Web.WebAppLink(
+            () => settings.Current,
+            foundations.Secrets,
+            () => gameState.Active?.Identity,
+            new D47.App.Web.WebAppClient(OpenWithShell, loggerFactory.CreateLogger<D47.App.Web.WebAppClient>()),
+            canSend: !paths.IsTestDrive,
+            loggerFactory.CreateLogger<D47.Core.Web.WebAppLink>());
+
         var capabilities = CapabilityRegistry.Build(
             BuiltinCapabilities.All(
                 paths,
@@ -2845,6 +2856,7 @@ public sealed class AppHost : IDisposable
                 campaignFronts: () => late.Host?.CampaignFronts?.Snapshot,
                 campaignFocus: stores.CampaignFocus,
                 travelLog: stores.TravelLog,
+                webApp: webApp,
                 neutronOffer: stores.NeutronOffer,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
@@ -2988,6 +3000,7 @@ public sealed class AppHost : IDisposable
             OtherDynamicCommands = OtherDynamicCommands,
             Router = router,
             Updates = updates,
+            WebApp = webApp,
         };
     }
 
@@ -3761,6 +3774,9 @@ public sealed class AppHost : IDisposable
         usage.Follow(capabilities);
         settings.Changed += _ => usage.SettingsChanged();
         host.UsageReporter = usage;
+
+        settings.Changed += _ => registry.WebApp.SettingsChanged();
+        host.WebApp = registry.WebApp;
 
         var storyLogger = loggerFactory.CreateLogger<D47.Core.Adventures.AdventureBook>();
 
@@ -4741,6 +4757,8 @@ public sealed class AppHost : IDisposable
         public required KeywordRouter Router { get; init; }
 
         public required UpdateChecker Updates { get; init; }
+
+        public required D47.Core.Web.WebAppLink WebApp { get; init; }
     }
 
     private sealed record CrewParts

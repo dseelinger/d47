@@ -372,7 +372,10 @@ public static class BuiltinCapabilities
         Campaigns.CampaignFocus? campaignFocus = null,
 
         // Where the Commander has died and was the first to discover a body, for show_star_chart.
-        Journal.TravelLog? travelLog = null) =>
+        Journal.TravelLog? travelLog = null,
+
+        // The web app sign-in and its snapshot deletes, for the Privacy rows.
+        Web.WebAppLink? webApp = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -534,7 +537,7 @@ public static class BuiltinCapabilities
         // list keeps the shape it has — no parameter inserted in the middle, which is the one edit this file
         // records as silently rebinding everything after it.
         PrivacyCapability.Create(
-            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems, installedModules),
+            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems, installedModules, webApp),
         SettingsCapability.Create(settings),
         RemindersCapability.Create(
             journalReminders,

@@ -877,6 +877,7 @@ public partial class MainWindow : Window
         }
 
         _host.UsageReporter?.Start();
+        _host.WebApp?.Start();
 
         // Before the Start Menu offer, because it is the one that decides whether d47 can answer at all — and
         // a Commander who has just been asked about a shortcut has already formed a view about how much this

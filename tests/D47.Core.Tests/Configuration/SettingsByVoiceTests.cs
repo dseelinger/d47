@@ -32,6 +32,9 @@ public class SettingsByVoiceTests
         ["knowledge.colonisationProgress"] =
             "Turning it on sends the Commander's deliveries under their Commander name to Raven Colonial, "
             + "and a misheard phrase must not be able to start that. Set on the panel only.",
+        ["privacy.webApp"] =
+            "Turning it off deletes every Commander's snapshot from the web app, and a misheard phrase must "
+            + "not be able to do that. Signing in is a press on the panel, so the row is set there too.",
         ["llm.endpoint"] =
             "A URL. There is no closed set of them, and a misheard host is a silent misconfiguration.",
         ["persona.shipCoreShip"] =

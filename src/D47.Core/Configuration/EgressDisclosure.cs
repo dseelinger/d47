@@ -134,6 +134,9 @@ public static class EgressDisclosure
     /// <summary>Sending how often each tool was used, once a day, with no identifier.</summary>
     public const string UsageCounts = "usagecounts";
 
+    /// <summary>Signing this install in to the web app, and the snapshot it keeps there.</summary>
+    public const string WebApp = "webapp";
+
     /// <summary>The pictures the Commander chose for a story's cast.</summary>
     public const string ChosenPictures = "pictures";
 
@@ -181,6 +184,7 @@ public static class EgressDisclosure
         StockStories,
         StoryRatings,
         UsageCounts,
+        WebApp,
         SpeechModels,
         ChatterboxVoices,
         Diagnostics,
@@ -225,6 +229,7 @@ public static class EgressDisclosure
         StockStories => "Stock stories",
         StoryRatings => "Story ratings",
         UsageCounts => "Usage counts",
+        WebApp => "Web app",
         Diagnostics => "Diagnostics and logs",
         JournalFiles => "Journal files",
         ChosenPictures => "Pictures you chose",
@@ -555,6 +560,26 @@ public static class EgressDisclosure
                 NameOf(UsageCounts),
                 "Usage counts are off, so nothing is counted or sent.",
                 summary: "Usage counts are off, so nothing is counted or sent."),
+
+        WebApp => settings.WebApp.Enabled
+            ? new EgressEntry(
+                WebApp,
+                NameOf(WebApp),
+                WebAppSettings.Address,
+                "Pressing Sign in opens the web app in your browser, where you sign in with Frontier, and D47 sends the "
+                + "one-time code your browser hands back to link this install. After that, a snapshot of the Commander "
+                + "who signed in: Frontier ID and Commander name, credits, location, ranks and reputation, ships and their "
+                + "modules, your fleet carrier, engineers, ship materials, missions, checklists and goals, watches, route "
+                + "plans and the panel theme. The snapshot is stored as it was sent, so D47's server can read it. "
+                + "Turning Web app off deletes the snapshot and this install's upload token, and the web app keeps only "
+                + "the time it was turned off.",
+                Active: true,
+                Summary: "Your sign-in, then a snapshot of your Commander for the web app, deleted when you turn this off.")
+            : EgressEntry.Silent(
+                WebApp,
+                NameOf(WebApp),
+                "Web app is off, so nothing is sent to it.",
+                summary: "Web app is off, so nothing is sent to it."),
 
         UpdateCheck => settings.Updates.CheckOnStartup
             ? new EgressEntry(

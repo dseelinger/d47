@@ -279,6 +279,20 @@ nothing you said, no Frontier ID, no Commander name, no key, no position and not
 The counts not yet sent are in `data\usage-counts.json`. **Usage counts** in the Privacy and egress
 settings turns it off, and the counts not yet sent are then deleted.
 
+**Web app** {#web-app} — `d47-web.dseelinger.workers.dev`. Off by default. With **Web app** on in the
+Privacy and egress settings, **Sign in** on the **Web app sign-in** row {#web-app-sign-in} opens the web
+app in your browser, where you sign in with Frontier. The browser then hands D47 a one-time code on
+`127.0.0.1`, and D47 sends that code to the web app in exchange for an upload token, stored encrypted for
+this Windows account as the flying Commander's. The token is stored only when the Frontier account that
+signed in is that Commander's; otherwise nothing is stored and the row says so. After that, the web app
+receives a snapshot of that Commander: Frontier ID and Commander name, credits, location, ranks and
+reputation, ships and their modules, your fleet carrier, engineers, ship materials, missions, checklists
+and goals, watches, route plans and the panel theme. The snapshot is stored as it was sent, so D47's server
+can read it. Turning **Web app** off deletes every Commander's snapshot and upload token from the web app,
+which then keeps only the time it was turned off. A delete that fails keeps its token, the row says the
+snapshot is not deleted yet, and the next start of D47 tries again. The model cannot turn the row on or
+off, and cannot sign in.
+
 **Speech recognition** — silent while the [hearing provider](listening.md#provider) is **This
 computer**. With Groq, OpenAI, Deepgram or ElevenLabs selected, `api.groq.com`, `api.openai.com`,
 `api.deepgram.com` or `api.elevenlabs.io` receives the audio of
@@ -450,7 +464,7 @@ that cannot be undone.
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
 {#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-colonisationprogress} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-rareindex} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
-{#egress-hullart} {#egress-codexpictures} {#egress-codexpublish} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-usagecounts} {#egress-pictures} {#egress-codexcaptures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
+{#egress-hullart} {#egress-codexpictures} {#egress-codexpublish} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-usagecounts} {#egress-webapp} {#egress-pictures} {#egress-codexcaptures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47
 says, sitting next to the settings that change it.

@@ -166,6 +166,7 @@ public class ModelChoiceTests
                 HullArt = false, AvatarClips = false, CodexPictures = false, StoryDownloads = false, StoryRatings = false,
             },
             Usage = new UsageSettings { Counts = false },
+            WebApp = new WebAppSettings { Enabled = false },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);

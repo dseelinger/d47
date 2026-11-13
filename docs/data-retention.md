@@ -149,6 +149,8 @@ journal.
 | A copy downloaded to be read | one folder on the holder's own machine | **until the object it came from leaves the store** | the utility that fetched it deletes it at the next listing that does not name it |
 | Which requests were made | nowhere | **not kept** | `observability` is off in `wrangler.toml` |
 | Usage counts | the `d47-usage` database | **indefinitely** | nothing, deliberately: a count carries no identifier, so no row can be traced to an installation or deleted for one |
+| A Commander's web app snapshot | the `d47-web` database | **until Web app is turned off, or 90 days without an upload** | the delete D47 sends when the setting is turned off, and the Worker's scheduled handler |
+| When Web app was turned off: the Frontier customer id and the time | the `d47-web` database | **90 days, or until the Commander links again or deletes the account** | the Worker's scheduled handler, and the link and account delete routes |
 | Who donated | nowhere | **not kept** | there is no account, no email and no directory of identifiers — a donation carries a random per-installation token and nothing else |
 
 **Nothing donated has been committed to this repository, and a journal history never will be.** A

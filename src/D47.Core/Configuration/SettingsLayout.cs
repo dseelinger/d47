@@ -880,6 +880,8 @@ public static class SettingsLayout
                                 E("privacy.audioFlight"),
                                 E("privacy.donor"),
                                 E("privacy.usageCounts"),
+                                E("privacy.webApp"),
+                                E("privacy.webAppSignIn"),
                             ]),
                         G(
                             "What leaves this machine",

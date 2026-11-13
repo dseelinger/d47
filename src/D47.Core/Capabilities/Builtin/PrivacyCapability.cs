@@ -31,6 +31,10 @@ public static class PrivacyCapability
 
     public const string UsageCountsKey = "privacy.usageCounts";
 
+    public const string WebAppKey = "privacy.webApp";
+
+    public const string WebAppSignInKey = "privacy.webAppSignIn";
+
     /// <summary>Throwing away what d47 worked out about the Commander from their journals (Phase 32).</summary>
 
     /// <summary>
@@ -73,7 +77,8 @@ public static class PrivacyCapability
         IFileSystem? files = null,
         Func<IReadOnlyList<RunningStoryVoice>>? runningStory = null,
         Func<IReadOnlyList<string>>? remoteCharacterSystems = null,
-        Func<IReadOnlyList<Modules.InstalledModule>>? installedModules = null)
+        Func<IReadOnlyList<Modules.InstalledModule>>? installedModules = null,
+        Web.WebAppLink? webApp = null)
     {
         var canSearch = searchAvailable ?? (() => true);
         var readsImages = imagesAvailable ?? (() => true);
@@ -131,7 +136,7 @@ public static class PrivacyCapability
                 },
             ],
             Settings = BuildSettingRows(
-                KeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices, CodexPublishTokenPresent, remoteSystems),
+                KeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices, CodexPublishTokenPresent, remoteSystems, webApp),
         };
     }
 
@@ -146,7 +151,8 @@ public static class PrivacyCapability
         Func<bool> imagesAvailable,
         Func<IReadOnlyList<RunningStoryVoice>> runningStory,
         Func<bool> codexPublishTokenPresent,
-        Func<IReadOnlyList<string>> remoteCharacterSystems)
+        Func<IReadOnlyList<string>> remoteCharacterSystems,
+        Web.WebAppLink? webApp)
     {
         var rows = new List<SettingRow>
         {
@@ -207,6 +213,67 @@ public static class PrivacyCapability
             Binding = SettingBinding.Toggle(
                 s => s.Usage.Counts,
                 (s, on) => s with { Usage = s.Usage with { Counts = on } }),
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = WebAppKey,
+            Exercise =
+                "Open Settings › Privacy and this install › Privacy and egress, group What D47 keeps, and find Web app "
+                + "(off by default). The line under it reads \"Off. Nothing is sent to the web app.\" Turn it on: the line "
+                + "reads \"On, and not signed in. Press Sign in to link CMDR <name>.\" Press Sign in on Web app sign-in, "
+                + "sign in with Frontier in the browser, and the line reads \"On, and signed in as CMDR <name>.\" Turn "
+                + "it off: the snapshot is deleted from the web app and the line reads \"Off. Nothing is sent to the web "
+                + "app.\" The model cannot change the row.",
+            Label = "Web app",
+            Help =
+                "Links this install to your Frontier account on D47's web app, so a browser can show your Commander. "
+                + "Off, nothing is sent. Turning it off deletes the snapshot from the web app.",
+            Kind = SettingKind.Toggle,
+            DefaultDisplay = "off",
+            DocsAnchor = "web-app",
+            EgressId = EgressDisclosure.WebApp,
+
+            // Protected: turning it off deletes what the web app keeps, which is the Commander's to do.
+            Protected = true,
+            Note = webApp is null ? null : webApp.Note,
+            Watch = webApp is null
+                ? null
+                : refresh =>
+                {
+                    webApp.Changed += refresh;
+                    return () => webApp.Changed -= refresh;
+                },
+            Binding = SettingBinding.Toggle(
+                s => s.WebApp.Enabled,
+                (s, on) => s with { WebApp = s.WebApp with { Enabled = on } }),
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = WebAppSignInKey,
+            Exercise =
+                "Open Settings › Privacy and this install › Privacy and egress, group What D47 keeps, with Web app on "
+                + "and a game loaded. Press Sign in on Web app sign-in: the browser opens the web app, and after you "
+                + "sign in with Frontier it says D47 is linked. The Web app line then reads \"On, and signed in as CMDR "
+                + "<name>.\" Signing in with another Commander's Frontier account stores nothing, and the line says so.",
+            Label = "Web app sign-in",
+            Help =
+                "Opens the web app in your browser to sign in with Frontier, and links this install to the Commander "
+                + "who is flying. Sign in with that Commander's Frontier account.",
+            Kind = SettingKind.Info,
+            DocsAnchor = "web-app-sign-in",
+
+            // Info with a press, like the donation row: SettingsService.Apply refuses that shape, so the model cannot reach it.
+            PressLabel = webApp is null ? null : "Sign in",
+            PressAsync = webApp is null ? null : webApp.SignInAsync,
+            PressEnabled = webApp is null ? null : webApp.CanSignIn,
+            Binding = new SettingBinding
+            {
+                Read = _ => webApp is null
+                    ? "Signing in is not available here."
+                    : "Signs in for the Commander who is flying.",
+            },
         });
 
         // Emptying the memory store, here rather than in its own section (Phase 31, item 3: "which joins the

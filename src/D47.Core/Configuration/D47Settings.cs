@@ -101,6 +101,9 @@ public sealed record D47Settings
     /// <summary>Whether d47 counts tool use and sends the counts once a day.</summary>
     public UsageSettings Usage { get; init; } = new();
 
+    /// <summary>Whether this install is linked to the web app.</summary>
+    public WebAppSettings WebApp { get; init; } = new();
+
     /// <summary>
     /// What each Commander has set of the rows that are theirs rather than the installation's (Phase
     /// 44).
@@ -1440,6 +1443,19 @@ public static class UsageCountSettings
 public static class StoryRatingSettings
 {
     public const string Address = "https://d47-ratings.dseelinger.workers.dev";
+}
+
+/// <summary>Whether this install signs in to the web app and keeps a snapshot there.</summary>
+public sealed record WebAppSettings
+{
+    /// <summary>Where the web app is: sign-in, upload and delete.</summary>
+    public const string Address = "https://d47-web.dseelinger.workers.dev";
+
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    public bool Enabled { get; init; }
 }
 
 /// <summary>A provider and voice chosen for one story character, with the names the egress disclosure gives it.</summary>
