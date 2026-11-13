@@ -74,6 +74,11 @@
       <Setter Property="MinHeight" Value="44" />
     </Style>
 
+    <!-- A rule between panes that the headset's ray is near, and so would take hold of. -->
+    <Style Selector="panel|PanelView.headset Border.pane-rule:pointerover">
+      <Setter Property="Background" Value="{DynamicResource D47.A}" />
+    </Style>
+
   </UserControl.Styles>
 
   <UserControl.Resources>

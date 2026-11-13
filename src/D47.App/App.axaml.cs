@@ -137,6 +137,7 @@ public partial class App(AppHost? host) : Application
                 carrierHulls: new Panel.CarrierHullMemory(host.ViewState),
                 nextBar: host.NextBar,
                 modules: window?.ModulesSource,
+                paneWidths: new Panel.PaneWidthMemory(host.ViewState, headset: true),
                 audioPlayer: () => new Controls.AudioPlayerDialog(
                     host.Panel,
                     host.Settings,

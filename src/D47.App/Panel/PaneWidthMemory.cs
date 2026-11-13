@@ -3,9 +3,13 @@ using D47.Core.Configuration;
 namespace D47.App.Panel;
 
 /// <summary>Remembers where the Commander dragged the rule between two panes (Phase 55).</summary>
-public sealed class PaneWidthMemory(ViewStateStore store)
+/// <param name="headset">Whether this is the headset panel's memory, which is stored apart from the desktop window's.</param>
+public sealed class PaneWidthMemory(ViewStateStore store, bool headset = false)
 {
     private ViewState? _cached;
+
+    /// <summary>Whether this is the headset panel's memory, whose rules are dragged by the ray.</summary>
+    public bool Headset => headset;
 
     /// <summary>
     /// Each pane's share of the strip at this pane count, or null for equal panes — which is both the
@@ -14,13 +18,13 @@ public sealed class PaneWidthMemory(ViewStateStore store)
     public IReadOnlyList<double>? Remembered(int panes)
     {
         _cached ??= store.Load();
-        return _cached.SharesFor(panes);
+        return _cached.SharesFor(panes, headset);
     }
 
     /// <summary>Records a drag.</summary>
     public void Remember(int panes, IReadOnlyList<double> shares)
     {
-        var next = store.Load().With(panes, shares);
+        var next = store.Load().With(panes, shares, headset);
 
         store.Save(next);
         _cached = next;
@@ -32,14 +36,15 @@ public sealed class PaneWidthMemory(ViewStateStore store)
         get
         {
             _cached ??= store.Load();
-            return _cached.LeftmostPaneHidden;
+            return headset ? _cached.HeadsetLeftmostPaneHidden : _cached.LeftmostPaneHidden;
         }
     }
 
     /// <summary>Records that the leftmost pane was hidden or shown.</summary>
     public void RememberLeftmostHidden(bool hidden)
     {
-        var next = store.Load() with { LeftmostPaneHidden = hidden };
+        var current = store.Load();
+        var next = headset ? current with { HeadsetLeftmostPaneHidden = hidden } : current with { LeftmostPaneHidden = hidden };
 
         store.Save(next);
         _cached = next;

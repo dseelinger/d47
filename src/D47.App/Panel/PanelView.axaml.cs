@@ -412,7 +412,8 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     Func<string?>? IPanelTabHost.CommanderName => _commanderName;
 
-    PaneWidthMemory? IPanelTabHost.PaneWidths => _paneWidths;
+    // The Search form's splitter is dragged by the mouse only, so the headset's copy has none.
+    PaneWidthMemory? IPanelTabHost.PaneWidths => _paneWidths is { Headset: false } ? _paneWidths : null;
 
     ColumnWidthMemory? IPanelTabHost.ColumnWidths => _columnWidths;
 
@@ -1572,9 +1573,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     }
 
 
-    /// <summary>
-    /// Where the Commander dragged the rules between panes, on the one surface that has a mouse (Phase
-    /// 55).
+    /// <summary>Where the Commander dragged the rules between panes, by the mouse or by the headset's ray.</summary>
     private PaneWidthMemory? _paneWidths;
 
     private ColumnWidthMemory? _columnWidths;
@@ -1587,7 +1586,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Lets the Carrier page remember which model the Commander picked.</summary>
     public void EnableCarrierHulls(CarrierHullMemory memory) => _carrierHulls = memory;
 
-    /// <summary>Lets the mouse drag the rule between two panes, on every tab at once (Phase 55).</summary>
+    /// <summary>Lets the mouse, or the ray when the memory is the headset's, drag the rule between two panes on every tab.</summary>
     public void EnableDraggablePanes(PaneWidthMemory memory)
     {
         _paneWidths = memory;

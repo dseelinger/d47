@@ -53,7 +53,7 @@ public class TheVrScrollbarsTests
 
         var box = Box(bar, view);
 
-        Assert.Same(bar, surface.ScrollbarNear(box.Center));
+        Assert.Same(bar, surface.GripNear(box.Center, rules: false));
     }
 
     /// <summary>
@@ -68,8 +68,8 @@ public class TheVrScrollbarsTests
 
         var box = Box(bar, view);
 
-        Assert.Same(bar, surface.ScrollbarNear(new Point(box.Center.X - 20, box.Center.Y)));
-        Assert.Same(bar, surface.ScrollbarNear(new Point(box.Center.X + 20, box.Center.Y)));
+        Assert.Same(bar, surface.GripNear(new Point(box.Center.X - 20, box.Center.Y), rules: false));
+        Assert.Same(bar, surface.GripNear(new Point(box.Center.X + 20, box.Center.Y), rules: false));
     }
 
     /// <summary>But not from the other side of the panel, which is not aiming at it.</summary>
@@ -81,7 +81,7 @@ public class TheVrScrollbarsTests
 
         var box = Box(bar, view);
 
-        Assert.Null(surface.ScrollbarNear(new Point(box.Center.X - 300, box.Center.Y)));
+        Assert.Null(surface.GripNear(new Point(box.Center.X - 300, box.Center.Y), rules: false));
     }
 
     /// <summary>Where along the bar the ray is is where in the document it goes.</summary>

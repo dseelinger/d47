@@ -72,7 +72,7 @@ public class TheAimHighlightDoesNotBlinkAtTheEdgeTests
                 .GetField("_offscreen", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
                 .GetValue(panel)!;
 
-            Assert.NotNull(offscreen.ScrollbarNear(box.Center));
+            Assert.NotNull(offscreen.GripNear(box.Center, rules: false));
 
             var changes = 0;
             var was = true;
@@ -81,7 +81,7 @@ public class TheAimHighlightDoesNotBlinkAtTheEdgeTests
             // times.
             foreach (var step in Tremor(box.Right + OffscreenSurface.AimTolerance + 1, 4, 40))
             {
-                var now = offscreen.ScrollbarNear(new Point(step, box.Center.Y)) is not null;
+                var now = offscreen.GripNear(new Point(step, box.Center.Y), rules: false) is not null;
 
                 if (now != was)
                 {
@@ -120,11 +120,11 @@ public class TheAimHighlightDoesNotBlinkAtTheEdgeTests
                 box.Center.Y);
 
             offscreen.Illuminate(null);
-            Assert.Null(offscreen.ScrollbarNear(between));
+            Assert.Null(offscreen.GripNear(between, rules: false));
 
             // Lit from the bar itself, the same point now holds it.
-            offscreen.Illuminate(offscreen.ScrollbarNear(box.Center));
-            Assert.NotNull(offscreen.ScrollbarNear(between));
+            offscreen.Illuminate(offscreen.GripNear(box.Center, rules: false));
+            Assert.NotNull(offscreen.GripNear(between, rules: false));
         }
     }
 

@@ -238,27 +238,34 @@ public sealed record ViewState
     /// <summary>Whether the Commander dragged the leftmost pane of a drill strip out of sight.</summary>
     public bool LeftmostPaneHidden { get; init; }
 
+    /// <summary>The headset panel's pane shares, kept apart from the desktop window's <see cref="PaneShares"/>.</summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<double>> HeadsetPaneShares { get; init; } =
+        new Dictionary<int, IReadOnlyList<double>>();
+
+    /// <summary>Whether the leftmost pane of a drill strip is hidden on the headset panel.</summary>
+    public bool HeadsetLeftmostPaneHidden { get; init; }
+
     /// <summary>The width in pixels the Commander dragged the Search form to, or null for the default.</summary>
     public double? SearchFormWidth { get; init; }
 
     /// <summary>Records a drag, as each pane's share of the strip at that pane count.</summary>
-    public ViewState With(int panes, IReadOnlyList<double> shares)
+    public ViewState With(int panes, IReadOnlyList<double> shares, bool headset = false)
     {
-        var next = new Dictionary<int, IReadOnlyList<double>>(PaneShares)
+        var next = new Dictionary<int, IReadOnlyList<double>>(headset ? HeadsetPaneShares : PaneShares)
         {
             [panes] = shares,
         };
 
-        return this with { PaneShares = next };
+        return headset ? this with { HeadsetPaneShares = next } : this with { PaneShares = next };
     }
 
     /// <summary>
     /// The remembered shares for a pane count, or null for equal panes — which is both the untouched
     /// default and the correct answer when what was stored cannot be trusted.
     /// </summary>
-    public IReadOnlyList<double>? SharesFor(int panes)
+    public IReadOnlyList<double>? SharesFor(int panes, bool headset = false)
     {
-        if (!PaneShares.TryGetValue(panes, out var shares) || shares.Count != panes)
+        if (!(headset ? HeadsetPaneShares : PaneShares).TryGetValue(panes, out var shares) || shares.Count != panes)
         {
             return null;
         }

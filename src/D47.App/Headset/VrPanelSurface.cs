@@ -147,6 +147,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Panel.NextBarMemory? nextBar = null,
         D47.App.Settings.ModulesSource? modules = null,
 
+        // Where the ray left the rules between panes; a headset memory, stored apart from the window's.
+        Panel.PaneWidthMemory? paneWidths = null,
+
         // Builds this surface's own copy of the audio player, which opens while the model says it is open.
         Func<Controls.AudioPlayerDialog>? audioPlayer = null,
 
@@ -217,6 +220,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         }.Furnish(_view);
 
         _view.EnableSearch();
+
+        if (paneWidths is not null)
+        {
+            _view.EnableDraggablePanes(paneWidths);
+        }
 
         if (spend is not null)
         {
@@ -751,26 +759,34 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     }
 
     /// <summary>
-    /// Takes hold of the scrollbar a ray is aiming at, if there is one within reach, and says whether
-    /// it did.
+    /// Takes hold of the scrollbar or the rule between two panes a ray is aiming at, whichever is nearer
+    /// and within reach, and says whether it did.
     /// </summary>
     public bool GrabsScroll(float u, float v)
     {
         var (width, height) = Size;
         var at = new Point(u * width, v * height);
 
-        _scrolling = _offscreen.ScrollbarNear(at);
+        _scrolling = _offscreen.GripNear(at, RulesReachable);
 
         if (_scrolling is null)
         {
             return false;
         }
 
-        Scroll(u, v);
+        if (_scrolling is Avalonia.Controls.Primitives.ScrollBar)
+        {
+            Scroll(u, v);
+            return true;
+        }
+
+        // A rule stays where it is until the ray moves.
+        _heldAt = at;
+        _scrolling.FindAncestorOfType<DrillView>()?.TakeRule(_scrolling, _offscreen.View, at);
         return true;
     }
 
-    /// <summary>Moves the held bar to where the ray is now.</summary>
+    /// <summary>Moves the held bar or rule to where the ray is now.</summary>
     public void Scroll(float u, float v)
     {
         if (_scrolling is null)
@@ -780,13 +796,38 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         var (width, height) = Size;
 
-        OffscreenSurface.Aim(_scrolling, _offscreen.View, new Point(u * width, v * height));
-        _view.ScrollbarDragged();
+        _heldAt = new Point(u * width, v * height);
+
+        if (_scrolling is Avalonia.Controls.Primitives.ScrollBar bar)
+        {
+            OffscreenSurface.Aim(bar, _offscreen.View, _heldAt);
+            _view.ScrollbarDragged();
+        }
+        else
+        {
+            _scrolling.FindAncestorOfType<DrillView>()?.DragRule(_scrolling, _offscreen.View, _heldAt);
+        }
+
         _dirty = true;
     }
 
-    /// <summary>Lets go.</summary>
-    public void ReleaseScroll() => _scrolling = null;
+    /// <summary>
+    /// Lets go, and a rule is remembered where it was left. Without <paramref name="decide"/>, as when the
+    /// pointer is lost, a rule hides or shows no pane.
+    /// </summary>
+    public void ReleaseScroll(bool decide = true)
+    {
+        if (_scrolling is { } rule and not Avalonia.Controls.Primitives.ScrollBar)
+        {
+            rule.FindAncestorOfType<DrillView>()?.ReleaseRule(rule, _offscreen.View, _heldAt, decide);
+            _dirty = true;
+        }
+
+        _scrolling = null;
+    }
+
+    /// <summary>Whether the rules between panes can be taken, which they cannot while anything is drawn over the page.</summary>
+    private bool RulesReachable => Modal is null && !_offscreen.IsChoosing;
 
     /// <summary>Lights whatever the ray is resting on, so the Commander can see they have found it.</summary>
     public void Aim(float? u, float? v)
@@ -805,12 +846,16 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         }
 
         var (width, height) = Size;
-        var lit = _offscreen.ScrollbarNear(new Point(across * width, down * height));
+        var lit = _offscreen.GripNear(new Point(across * width, down * height), RulesReachable);
 
         _dirty |= _offscreen.Illuminate(lit);
     }
 
-    private Avalonia.Controls.Primitives.ScrollBar? _scrolling;
+    /// <summary>The scrollbar or pane rule the ray holds.</summary>
+    private Control? _scrolling;
+
+    /// <summary>Where the ray last was while holding, in surface pixels.</summary>
+    private Point _heldAt;
 
     public void Dispose()
     {

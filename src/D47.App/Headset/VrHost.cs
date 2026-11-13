@@ -204,6 +204,9 @@ public sealed class VrHost : IDisposable
         Panel.CarrierHullMemory? carrierHulls = null,
         Panel.NextBarMemory? nextBar = null,
         D47.App.Settings.ModulesSource? modules = null,
+
+        // Where the ray left the rules between panes, stored apart from the window's.
+        Panel.PaneWidthMemory? paneWidths = null,
         Func<D47.App.Controls.AudioPlayerDialog>? audioPlayer = null,
         Func<D47.App.Controls.StoryPlaybackDialog>? storyPlayback = null)
     {
@@ -234,6 +237,7 @@ public sealed class VrHost : IDisposable
             carrierHulls: carrierHulls,
             nextBar: nextBar,
             modules: modules,
+            paneWidths: paneWidths,
             audioPlayer: audioPlayer,
             storyPlayback: storyPlayback,
             portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(files, paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
@@ -907,7 +911,7 @@ public sealed class VrHost : IDisposable
         if (_scrolling)
         {
             _scrolling = false;
-            _panel.ReleaseScroll();
+            _panel.ReleaseScroll(decide: false);
         }
 
         _pressed = null;

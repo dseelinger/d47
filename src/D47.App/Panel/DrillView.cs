@@ -34,6 +34,12 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     /// <summary>A leftmost rule released nearer the strip's left edge than this hides the leftmost pane.</summary>
     private const double CollapseThreshold = MinimumPaneWidth / 2;
 
+    /// <summary>How wide a rule the headset's ray is near is drawn, in logical pixels.</summary>
+    private const double RayRuleWidth = 6;
+
+    /// <summary>The class a rule the headset's ray can take hold of carries, which lights it while the ray is near.</summary>
+    internal const string RayRuleClass = "pane-rule";
+
     private readonly PanelNavigator _nav;
     private readonly PanelTab _tab;
     private readonly Func<NavCrumb, Control> _build;
@@ -71,6 +77,18 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
     /// <summary>The pointer's last x in the strip during a drag of the leftmost rule.</summary>
     private double _pointerX = double.NaN;
+
+    /// <summary>
+    /// The rules the headset's ray can take hold of, each with the column it is the left edge of; column 0
+    /// is the strip's edge while the leftmost pane is hidden.
+    /// </summary>
+    private readonly Dictionary<Control, int> _rayRules = [];
+
+    /// <summary>Each column's width while the ray holds a rule, or null.</summary>
+    private List<double>? _dragWidths;
+
+    /// <summary>How far right of the ray the held rule sits.</summary>
+    private double _grabOffset;
 
     /// <summary>
     /// Where the Commander dragged the rules, or null on every surface that was not handed a mouse
@@ -138,6 +156,8 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
         _strip.Children.Clear();
         _strip.ColumnDefinitions.Clear();
+        _rayRules.Clear();
+        _dragWidths = null;
     }
 
     /// <summary>
@@ -263,13 +283,13 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             // underneath.
             if (_widths is not null && index > 0)
             {
-                _strip.Children.Add(Handle(index));
+                _strip.Children.Add(_widths.Headset ? RayRule(index) : Handle(index));
             }
         }
 
         if (hide)
         {
-            _strip.Children.Add(EdgeHandle());
+            _strip.Children.Add(_widths is { Headset: true } ? RayRule(0) : EdgeHandle());
         }
 
         if (wentBack)
@@ -408,6 +428,124 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         return handle;
     }
 
+    /// <summary>
+    /// A rule the headset's ray can take hold of, at the left of column <paramref name="index"/>, drawn only
+    /// while the ray is near it.
+    /// </summary>
+    private Border RayRule(int index)
+    {
+        var rule = new Border
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Width = RayRuleWidth,
+            Margin = new Thickness(index == 0 ? 0 : RuleOffset - (RayRuleWidth / 2), 0, 0, 0),
+            IsHitTestVisible = false,
+        };
+
+        rule.Classes.Add(RayRuleClass);
+        Grid.SetColumn(rule, index);
+        _rayRules[rule] = index;
+
+        return rule;
+    }
+
+    /// <summary>The rules the headset's ray can take hold of.</summary>
+    internal IReadOnlyCollection<Control> RayRules => _rayRules.Keys;
+
+    /// <summary>
+    /// Takes hold of a rule at a point given in <paramref name="from"/>'s space, keeping the distance between
+    /// the ray and the rule for the rest of the drag.
+    /// </summary>
+    internal void TakeRule(Control rule, Visual from, Point at)
+    {
+        _dragWidths = [.. _strip.ColumnDefinitions.Select(column => column.ActualWidth)];
+        _grabOffset = 0;
+
+        if (_rayRules.TryGetValue(rule, out var index) && index > 0 && index < _dragWidths.Count
+            && from.TranslatePoint(at, _strip) is { } local)
+        {
+            _grabOffset = _dragWidths.Take(index).Sum() + RuleOffset - local.X;
+        }
+    }
+
+    /// <summary>Moves a rule the ray holds to a point given in <paramref name="from"/>'s space.</summary>
+    internal void DragRule(Control rule, Visual from, Point at)
+    {
+        if (_rayRules.TryGetValue(rule, out var index) && index > 0 && from.TranslatePoint(at, _strip) is { } local)
+        {
+            PlaceRule(index, local.X + _grabOffset);
+        }
+    }
+
+    /// <summary>
+    /// Lets go of a rule the ray holds, at a point given in <paramref name="from"/>'s space. Without
+    /// <paramref name="decide"/>, the widths are kept and no pane is hidden or shown.
+    /// </summary>
+    internal void ReleaseRule(Control rule, Visual from, Point at, bool decide = true)
+    {
+        if (_rayRules.TryGetValue(rule, out var index) && from.TranslatePoint(at, _strip) is { } local)
+        {
+            // The ray's own x, not the rule's: the rule stops at the pane's minimum, and the hide is decided
+            // past it.
+            switch (index)
+            {
+                case 0 when decide:
+                    ReleaseEdgeHandle(local.X);
+                    break;
+                case 0:
+                    break;
+                case 1 when decide:
+                    ReleaseLeftmostRule(local.X);
+                    break;
+                default:
+                    Remember();
+                    break;
+            }
+        }
+
+        _dragWidths = null;
+    }
+
+    /// <summary>
+    /// Puts the rule at the left of column <paramref name="index"/> at <paramref name="x"/> in the strip,
+    /// keeping the panes either side of it at least <see cref="MinimumPaneWidth"/> wide.
+    /// </summary>
+    private void PlaceRule(int index, double x)
+    {
+        var columns = _strip.ColumnDefinitions;
+
+        if (_dragWidths is not { } widths || widths.Count != columns.Count || index < 1 || index >= columns.Count)
+        {
+            return;
+        }
+
+        var before = widths.Take(index - 1).Sum();
+        var pair = widths[index - 1] + widths[index];
+
+        if (pair < 2 * MinimumPaneWidth)
+        {
+            return;
+        }
+
+        // The rule is drawn RuleOffset in from the edge of the column it starts.
+        var left = Math.Clamp(x - RuleOffset - before, MinimumPaneWidth, pair - MinimumPaneWidth);
+
+        widths[index - 1] = left;
+        widths[index] = pair - left;
+
+        for (var column = 0; column < columns.Count; column++)
+        {
+            columns[column].Width = new GridLength(widths[column], GridUnitType.Star);
+        }
+    }
+
+    /// <summary>Each column's width: as the ray left it during a drag, otherwise as laid out.</summary>
+    private List<double> Widths() =>
+        _dragWidths is { } dragged && dragged.Count == _strip.ColumnDefinitions.Count
+            ? [.. dragged]
+            : [.. _strip.ColumnDefinitions.Select(column => column.ActualWidth)];
+
     /// <summary>Decides a drag of the leftmost rule from where the pointer was released.</summary>
     internal void ReleaseLeftmostRule(double x)
     {
@@ -464,7 +602,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             return;
         }
 
-        var widths = _strip.ColumnDefinitions.Select(column => column.ActualWidth).ToList();
+        var widths = Widths();
         var total = widths.Sum();
 
         // A strip that has not been arranged yet measures zero, and a zero share would be a pane that can
@@ -488,8 +626,8 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     }
 
     /// <summary>
-    /// Gives this strip's rules a handle the mouse can drag, and remembers where they are left (Phase
-    /// 55).
+    /// Gives this strip's rules a handle the mouse can drag, or the ray when the memory is the headset's,
+    /// and remembers where they are left.
     /// </summary>
     public void EnableDrag(PaneWidthMemory memory)
     {

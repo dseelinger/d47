@@ -654,11 +654,70 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
     /// </summary>
     public const double AimRelease = 42;
 
-    /// <summary>The vertical scrollbar a ray at this point is aiming at, or null.</summary>
-    public ScrollBar? ScrollbarNear(Point at)
+    /// <summary>
+    /// The vertical scrollbar or the rule between two panes a ray at this point is aiming at, whichever is
+    /// nearer, or null. Rules are left out when <paramref name="rules"/> is false.
+    /// </summary>
+    public Control? GripNear(Point at, bool rules = true)
+    {
+        Control? nearest = ScrollbarNear(at, out var closest);
+
+        if (!rules)
+        {
+            return nearest;
+        }
+
+        foreach (var strip in _surface.GetVisualDescendants().OfType<DrillView>())
+        {
+            // A press beside the strip, on a tab or the breadcrumb, is never a drag of its rules.
+            if (!Shown(strip) || Span(strip, 0, 0, strip.Bounds.Width, strip.Bounds.Height) is not { } box || !box.Contains(at))
+            {
+                continue;
+            }
+
+            foreach (var rule in strip.RayRules)
+            {
+                var middle = rule.Bounds.Width / 2;
+
+                // Measured to the line the rule is drawn on, not to its width.
+                if (Span(rule, middle, 0, middle, rule.Bounds.Height) is not { } line)
+                {
+                    continue;
+                }
+
+                var away = Distance(line, at);
+                var limit = ReferenceEquals(rule, _lit) ? AimRelease : AimTolerance;
+
+                if (away <= limit && away < closest)
+                {
+                    closest = away;
+                    nearest = rule;
+                }
+            }
+        }
+
+        return nearest;
+    }
+
+    /// <summary>
+    /// Whether a control and everything between it and this surface is visible; the hidden window the surface
+    /// is rendered from leaves <see cref="Visual.IsEffectivelyVisible"/> false.
+    /// </summary>
+    private bool Shown(Visual control) =>
+        control.GetSelfAndVisualAncestors().TakeWhile(visual => !ReferenceEquals(visual, _surface)).All(visual => visual.IsVisible);
+
+    /// <summary>A rectangle in a control's own space, as it lands on this surface.</summary>
+    private Rect? Span(Visual control, double left, double top, double right, double bottom) =>
+        control.TranslatePoint(new Point(left, top), _surface) is { } from
+        && control.TranslatePoint(new Point(right, bottom), _surface) is { } to
+            ? new Rect(from, to)
+            : null;
+
+    /// <summary>The vertical scrollbar a ray at this point is aiming at, and how far away it is, or null.</summary>
+    private ScrollBar? ScrollbarNear(Point at, out double closest)
     {
         ScrollBar? nearest = null;
-        var closest = double.MaxValue;
+        closest = double.MaxValue;
 
         foreach (var bar in _surface.GetVisualDescendants().OfType<ScrollBar>())
         {
