@@ -5,6 +5,7 @@ using D47.App.Panel;
 using D47.App.Recording;
 using D47.Audio;
 using D47.Core.Audio;
+using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Hotas;
@@ -59,6 +60,15 @@ public sealed class Listener : IDisposable
 
     /// <summary>The model currently being fetched, or null.</summary>
     private string? _fetching;
+
+    /// <summary>The key and button slots of push-to-talk and comms push-to-talk.</summary>
+    private static readonly string[] PushToTalkSlots =
+    [
+        ListeningCapability.PushToTalkKeyKey,
+        ListeningCapability.PushToTalkButtonKey,
+        ListeningCapability.CommsPushToTalkKeyKey,
+        ListeningCapability.CommsPushToTalkButtonKey,
+    ];
 
     internal Listener(
         SettingsService settings,
@@ -130,6 +140,9 @@ public sealed class Listener : IDisposable
 
     /// <summary>Whether an utterance was addressed to d47 at all, in wake-word mode.</summary>
     public WakeWordGate Wake { get; }
+
+    /// <summary>The controllers as last sampled, for telling which controller a bound button is on.</summary>
+    internal Func<IReadOnlyList<HotasReading>> Controllers { get; set; } = () => [];
 
     /// <summary>Cancel's stick button (#221).</summary>
     public BoundButton CancelButton { get; } = new() { CountsPresses = true };
@@ -614,36 +627,36 @@ public sealed class Listener : IDisposable
             return;
         }
 
-        WarnIfEliteBindsIt("Push-to-talk", boundKey ? listening.PushToTalkKey : null, _pushToTalkButton);
-        WarnIfEliteBindsIt("Comms push-to-talk", boundCommsKey ? listening.CommsPushToTalkKey : null, CommsButton);
+        if (Binds.IsKnown)
+        {
+            WarnIfEliteBindsIt(
+                _logger,
+                _settings.Current,
+                [.. PushToTalkSlots.Select(_settings.Find).OfType<SettingRow>()],
+                Binds,
+                Controllers());
+        }
     }
 
-    /// <summary>Logs a push-to-talk key or button that Elite also binds.</summary>
-    private void WarnIfEliteBindsIt(string control, string? key, BoundButton stick)
+    /// <summary>
+    /// Logs each conflict <see cref="BindingConflicts"/> finds among <paramref name="rows"/>. The symptom of a double-bound
+    /// key is that nothing happens, which reads as d47 being broken.
+    /// </summary>
+    internal static void WarnIfEliteBindsIt(
+        ILogger logger,
+        D47Settings settings,
+        IReadOnlyList<SettingRow> rows,
+        EliteBinds binds,
+        IReadOnlyList<HotasReading> readings)
     {
-        if (key is not null && Binds.Using(key) is { Count: > 0 } collisions)
+        foreach (var conflict in BindingConflicts.Find(settings, rows, switches: [], binds, readings))
         {
-            // Logged at startup as well as answered on request: the symptom of a double-bound key is that
-            // nothing happens, which reads as d47 being broken.
-            _logger.LogWarning(
-                "{Control} {Key} is also bound in Elite ({Preset}) to {Actions}; one of the two will not work",
-                control,
-                key,
-                Binds.PresetName,
-                string.Join(", ", collisions.Select(binding => binding.Action).Distinct()));
-        }
-
-        if (stick.Bound is { } button
-            && Binds.UsingJoystickButton(button.Button) is { Count: > 0 } sharing)
-        {
-            // Hedged, and the hedge is the accurate part.
-            _logger.LogWarning(
-                "{Control} {Button} may collide: Elite ({Preset}) binds a button of that number to "
-                + "{Actions}. D47 cannot tell whether that is the same controller.",
-                control,
-                button.Describe(),
-                Binds.PresetName,
-                string.Join(", ", sharing.Select(binding => binding.Action).Distinct()));
+            logger.LogWarning(
+                "{Control} {Gesture} is also bound in Elite ({Preset}) to {Actions}; one of the two will not work",
+                conflict.Control,
+                conflict.Gesture,
+                binds.PresetName,
+                string.Join(", ", conflict.EliteActions));
         }
     }
 

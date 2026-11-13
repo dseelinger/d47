@@ -30,7 +30,10 @@ public class ASwitchBoundInEliteTooTests
         Bindings = [new EliteBinding("LandingGearToggle", "Primary", "Keyboard", "Key_L"), .. extra],
     };
 
-    private static HotasReading Held(string id, params int[] held)
+    /// <summary>A reading of the throttle, 4098BD65, with these buttons held.</summary>
+    private static HotasReading Held(string id, params int[] held) => HeldOn(id, 0x4098, 0xBD65, held);
+
+    private static HotasReading HeldOn(string id, ushort vendor, ushort product, params int[] held)
     {
         var buttons = new bool[32];
 
@@ -39,7 +42,7 @@ public class ASwitchBoundInEliteTooTests
             buttons[button] = true;
         }
 
-        return new HotasReading { Id = id, Buttons = buttons };
+        return new HotasReading { Id = id, VendorId = vendor, ProductId = product, Buttons = buttons };
     }
 
     private static SwitchMapping GearSwitch(string id = Stick, string description = ThrottleDescription) => new()
@@ -55,10 +58,13 @@ public class ASwitchBoundInEliteTooTests
     };
 
     private static SwitchTick Tick(HotasReading reading, EliteBinds binds, StatusFlags flags = StatusFlags.None) =>
+        Tick([reading], binds, flags);
+
+    private static SwitchTick Tick(IReadOnlyList<HotasReading> readings, EliteBinds binds, StatusFlags flags = StatusFlags.None) =>
         new()
         {
             Now = Start,
-            Readings = [reading],
+            Readings = readings,
             Status = new GameStatus { Flags = flags | StatusFlags.InMainShip, ReadAt = Start },
             Binds = binds,
             Enabled = true,
@@ -84,15 +90,6 @@ public class ASwitchBoundInEliteTooTests
         Assert.Empty(binds.UsingJoystickButton(9, "4098BD65"));
     }
 
-    /// <summary>Elite's name for a device, derived from d47's own description of it.</summary>
-    [Theory]
-    [InlineData(ThrottleDescription, "4098BD65")]
-    [InlineData("VID 0x044f PID 0xb10a, 16 buttons, 1 hats, 4 axes", "044FB10A")]
-    [InlineData("something else entirely", null)]
-    [InlineData("", null)]
-    public void TheDeviceTokenIsDerivedFromTheDescription(string description, string? expected) =>
-        Assert.Equal(expected, EliteBinds.EliteDeviceToken(description));
-
     /// <summary>The collision itself, named, on the switch the Commander is looking at.</summary>
     [Fact]
     public void ASwitchOnAButtonEliteBindsSaysSo()
@@ -117,15 +114,44 @@ public class ASwitchBoundInEliteTooTests
     }
 
     /// <summary>
-    /// A device d47 cannot name to Elite is skipped rather than matched on the button alone: a warning
+    /// A device whose ids Windows did not report is skipped rather than matched on the button alone: a warning
     /// naming the wrong stick is worse than no warning.
     /// </summary>
     [Fact]
     public void ADeviceWhoseNameCannotBeWorkedOutIsNotGuessedAt()
     {
         var binds = Binds(new EliteBinding("LandingGearToggle", "Secondary", "4098BD65", "Joy_9"));
+        var reconciler = New();
+        var switches = new[] { GearSwitch(OtherStick, description: "HID-compliant game controller") };
 
-        Assert.Null(CollisionOn(binds, GearSwitch(OtherStick, description: "HID-compliant game controller")));
+        reconciler.Poll(Tick(HeldOn(OtherStick, 0, 0, 8), binds), switches);
+
+        Assert.Null(reconciler.States.Single().Collides);
+    }
+
+    /// <summary>
+    /// A throttle Windows shows as four devices: Elite's binding is on one of them, and nothing says which, so
+    /// the switch is not flagged.
+    /// </summary>
+    [Fact]
+    public void AButtonOnAControllerShownAsSeveralDevicesIsNotFlagged()
+    {
+        var binds = Binds(new EliteBinding("LandingGearToggle", "Secondary", "4098BD65", "Joy_9"));
+        var reconciler = New();
+        var switches = new[] { GearSwitch() };
+
+        reconciler.Poll(
+            Tick(
+                [
+                    Held("{wgi/nrid/throttle-block-0}"),
+                    Held(Stick, 8),
+                    Held("{wgi/nrid/throttle-block-2}"),
+                    Held("{wgi/nrid/throttle-block-3}"),
+                ],
+                binds),
+            switches);
+
+        Assert.Null(reconciler.States.Single().Collides);
     }
 
     /// <summary>The silent half, said out loud.</summary>

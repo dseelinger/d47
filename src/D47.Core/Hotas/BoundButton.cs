@@ -19,9 +19,6 @@ public sealed class BoundButton
     /// <summary>Raised on the tick that first sees it back up.</summary>
     public event Action? Released;
 
-    /// <summary>What is bound, or null.</summary>
-    public HotasButton? Bound => _bound;
-
     /// <summary>Whether <see cref="Pressed"/> follows the reader's press counts, so a press between two polls is not lost.</summary>
     public bool CountsPresses { get; init; }
 

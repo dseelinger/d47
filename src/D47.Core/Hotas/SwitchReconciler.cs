@@ -1265,28 +1265,15 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         _watching[mapping.Name] = watch with { Parts = parts };
     }
 
-    /// <summary>Whether Elite binds the same button, in which case every flip acts twice (#147).</summary>
+    /// <summary>Whether Elite certainly binds the same button, in which case every flip acts twice (#147).</summary>
     private static string? Collision(SwitchTick tick, SwitchMapping mapping, SwitchPosition position)
     {
-        // Only a position that actually does something.
-        if (!position.IsAssigned || position.Action is not { Length: > 0 } || position.Button is not { } button)
+        if (BindingConflicts.ForSwitchPosition(mapping, position, tick.Binds, tick.Readings) is not { } conflict)
         {
             return null;
         }
 
-        if (EliteBinds.EliteDeviceToken(mapping.Device) is not { } device)
-        {
-            return null;
-        }
-
-        var bound = tick.Binds.UsingJoystickButton(button, device);
-
-        if (bound.Count == 0)
-        {
-            return null;
-        }
-
-        var actions = string.Join(" and ", bound.Select(binding => binding.Action).Distinct());
+        var actions = string.Join(" and ", conflict.EliteActions);
 
         return $"Elite binds this button to {actions} as well, so both act on every flip. "
                + "Unbind it in Elite, or move this switch to a button Elite does not use.";

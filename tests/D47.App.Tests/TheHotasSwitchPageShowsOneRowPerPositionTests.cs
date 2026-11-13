@@ -92,7 +92,7 @@ public class TheHotasSwitchPageShowsOneRowPerPositionTests
         return new Shown(page, window, panel, reconciler, reader, mappings);
     }
 
-    /// <summary>One button held on each stick, in order.</summary>
+    /// <summary>One button held on each stick, in order. Only the launch bar's stick is 4098BD65, so Elite's binding is certainly on it.</summary>
     private static void PollWith(Shown shown, int ldg, int launch, int hook, int wing)
     {
         int[] held = [ldg, launch, hook, wing];
@@ -102,7 +102,7 @@ public class TheHotasSwitchPageShowsOneRowPerPositionTests
             var buttons = new bool[32];
             buttons[button] = true;
 
-            return new HotasReading { Id = Sticks[index], VendorId = 0x4098, ProductId = 0xBD65, Buttons = buttons };
+            return new HotasReading { Id = Sticks[index], VendorId = 0x4098, ProductId = (ushort)(index == 1 ? 0xBD65 : 0xBE00 + index), Buttons = buttons };
         })]);
 
         // Elite binds the launch bar's first position to two actions as well.

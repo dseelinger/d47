@@ -3442,6 +3442,7 @@ public sealed class AppHost : IDisposable
 
         using (StartupTimer.Step("listening settings"))
         {
+            host.Listener.Controllers = services.SampledControllers.Poll;
             host.Listener.ApplyListeningSettings();
         }
 

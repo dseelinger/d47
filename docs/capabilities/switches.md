@@ -536,6 +536,9 @@ Both come from one setup fault, and the switch says so directly:
 > Elite binds this button to LandingGearToggle as well, so both act on every flip. Unbind it in
 > Elite, or move this switch to a button Elite does not use.
 
+A button on a controller that Windows shows as several devices is not flagged: Elite's binding is on
+one of them, and nothing says which.
+
 Directive 47 will not fix it for you: **your bindings file is read-only to it, always.** Unbind the
 button in Elite, or move the switch.
 

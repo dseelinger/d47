@@ -113,26 +113,6 @@ public sealed record EliteBinds
     }
 
     /// <summary>
-    /// Elite's name for the device d47 describes as <c>VID 0x4098 PID 0xBD65, 32 buttons, …</c> — the
-    /// two ids run together, <c>4098BD65</c>.
-    /// </summary>
-    public static string? EliteDeviceToken(string? description)
-    {
-        if (description is not { Length: > 0 })
-        {
-            return null;
-        }
-
-        var match = System.Text.RegularExpressions.Regex.Match(
-            description,
-            @"VID 0x([0-9A-Fa-f]{4}) PID 0x([0-9A-Fa-f]{4})");
-
-        return match.Success
-            ? (match.Groups[1].Value + match.Groups[2].Value).ToUpperInvariant()
-            : null;
-    }
-
-    /// <summary>
     /// A gesture reduced to something comparable: modifier aliases folded together, order fixed, case
     /// ignored, and a key named by d47 or by Elite reduced to its virtual-key code ("Scroll" and "ScrollLock"
     /// match). "Ctrl+Alt+X" from the settings file and "LeftControl+LeftAlt+X" from the bindings file
