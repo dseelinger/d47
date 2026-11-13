@@ -31,6 +31,9 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     /// </summary>
     private const double RuleOffset = 14;
 
+    /// <summary>A leftmost rule released nearer the strip's left edge than this hides the leftmost pane.</summary>
+    private const double CollapseThreshold = MinimumPaneWidth / 2;
+
     private readonly PanelNavigator _nav;
     private readonly PanelTab _tab;
     private readonly Func<NavCrumb, Control> _build;
@@ -59,6 +62,15 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     public event EventHandler? OpenSectionChanged;
 
     private int _panes = 1;
+
+    /// <summary>Whether the Commander has hidden the leftmost pane.</summary>
+    private bool _hidden;
+
+    /// <summary>Whether the last draw left the leftmost pane out.</summary>
+    private bool _hiding;
+
+    /// <summary>The pointer's last x in the strip during a drag of the leftmost rule.</summary>
+    private double _pointerX = double.NaN;
 
     /// <summary>
     /// Where the Commander dragged the rules, or null on every surface that was not handed a mouse
@@ -149,6 +161,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         if (trail.Count == 0)
         {
             _depth = 0;
+            _hiding = false;
             Empty();
             _showing = [];
             Drawn?.Invoke(this, EventArgs.Empty);
@@ -166,13 +179,17 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
         var first = trail.Count - window;
         var visible = trail.Skip(first).ToList();
-        var keys = visible.Select(crumb => crumb.Key).ToList();
+
+        // The level the Commander is on is last, so it always draws; a hidden pane is dropped, not replaced.
+        var hide = _widths is not null && _hidden && visible.Count > 1;
+        var drawn = hide ? visible.Skip(1).ToList() : visible;
+        var keys = drawn.Select(crumb => crumb.Key).ToList();
 
         var opened = trail.Count > _depth;
         var wentBack = trail.Count < _depth;
         _depth = trail.Count;
 
-        if (_showing.SequenceEqual(keys))
+        if (_showing.SequenceEqual(keys) && hide == _hiding)
         {
             return;
         }
@@ -183,15 +200,16 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         }
 
         _showing = keys;
+        _hiding = hide;
 
         Empty();
 
         // Re-applied on every draw and not only on the first, which is the trap this phase names: Empty()
         // clears the column definitions on every navigation, so a width the Commander dragged would otherwise
         // be discarded the moment they open a ship.
-        var shares = _widths?.Remembered(visible.Count);
+        var shares = _widths?.Remembered(visible.Count)?.Skip(hide ? 1 : 0).ToList();
 
-        for (var index = 0; index < visible.Count; index++)
+        for (var index = 0; index < drawn.Count; index++)
         {
             var column = new ColumnDefinition(shares?[index] ?? 1, GridUnitType.Star);
 
@@ -205,7 +223,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
             _strip.ColumnDefinitions.Add(column);
 
-            var crumb = visible[index];
+            var crumb = drawn[index];
 
             if (!_built.TryGetValue(crumb.Key, out var pane))
             {
@@ -247,6 +265,11 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             {
                 _strip.Children.Add(Handle(index));
             }
+        }
+
+        if (hide)
+        {
+            _strip.Children.Add(EdgeHandle());
         }
 
         if (wentBack)
@@ -326,10 +349,111 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
         // On completion rather than on every delta: a drag is one decision, and writing the file on each
         // frame of it would be hundreds of writes for one choice.
-        handle.DragCompleted += (_, _) => Remember();
+        if (index == 1)
+        {
+            handle.DragStarted += (_, _) => _pointerX = double.NaN;
+            handle.AddHandler(
+                PointerMovedEvent,
+                (_, e) => _pointerX = e.GetPosition(_strip).X,
+                Avalonia.Interactivity.RoutingStrategies.Tunnel | Avalonia.Interactivity.RoutingStrategies.Bubble,
+                handledEventsToo: true);
+
+            handle.DragCompleted += (_, _) =>
+            {
+                var x = _pointerX;
+
+                // After the splitter's own event has finished: a hide redraws the strip it sits in.
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => ReleaseLeftmostRule(x));
+            };
+        }
+        else
+        {
+            handle.DragCompleted += (_, _) => Remember();
+        }
 
         Grid.SetColumn(handle, index);
         return handle;
+    }
+
+    /// <summary>The grab area at the strip's left edge while the leftmost pane is hidden.</summary>
+    private Control EdgeHandle()
+    {
+        var handle = new Avalonia.Controls.Panel
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Width = HandleWidth,
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.SizeWestEast),
+        };
+
+        handle.PointerPressed += (_, e) =>
+        {
+            e.Pointer.Capture(handle);
+            e.Handled = true;
+        };
+
+        handle.PointerReleased += (_, e) =>
+        {
+            if (!ReferenceEquals(e.Pointer.Captured, handle))
+            {
+                return;
+            }
+
+            e.Pointer.Capture(null);
+            ReleaseEdgeHandle(e.GetPosition(_strip).X);
+        };
+
+        Grid.SetColumn(handle, 0);
+        return handle;
+    }
+
+    /// <summary>Decides a drag of the leftmost rule from where the pointer was released.</summary>
+    internal void ReleaseLeftmostRule(double x)
+    {
+        if (_widths is null)
+        {
+            return;
+        }
+
+        if (x < CollapseThreshold && !_hiding)
+        {
+            _hidden = true;
+            _widths.RememberLeftmostHidden(true);
+            _showing = [];
+            Draw();
+            return;
+        }
+
+        Remember();
+    }
+
+    /// <summary>Shows the hidden pane again when the edge handle is released right of the threshold.</summary>
+    internal void ReleaseEdgeHandle(double x)
+    {
+        if (_widths is null || !_hiding || x < CollapseThreshold)
+        {
+            return;
+        }
+
+        var count = _strip.ColumnDefinitions.Count + 1;
+        var total = _strip.Bounds.Width;
+        var others = _widths.Remembered(count)?.Skip(1).ToList() ?? [.. Enumerable.Repeat(1.0, count - 1)];
+        var othersSum = others.Sum();
+
+        if (total > 0)
+        {
+            var widest = Math.Max(MinimumPaneWidth, total - (MinimumPaneWidth * (count - 1)));
+            var share = Math.Clamp(x, MinimumPaneWidth, widest) / total;
+            var shares = new List<double> { share };
+            shares.AddRange(others.Select(other => (1 - share) * other / othersSum));
+            _widths.Remember(count, shares);
+        }
+
+        _hidden = false;
+        _widths.RememberLeftmostHidden(false);
+        _showing = [];
+        Draw();
     }
 
     /// <summary>Writes down what a drag left, as each pane's share of the strip.</summary>
@@ -350,7 +474,17 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             return;
         }
 
-        _widths.Remember(widths.Count, widths.Select(width => width / total).ToList());
+        var shares = widths.Select(width => width / total).ToList();
+
+        // With the leftmost pane hidden, the columns share what the hidden pane's share leaves.
+        if (_hiding)
+        {
+            var count = shares.Count + 1;
+            var hiddenShare = _widths.Remembered(count)?[0] ?? 1.0 / count;
+            shares = [hiddenShare, .. shares.Select(share => share * (1 - hiddenShare))];
+        }
+
+        _widths.Remember(shares.Count, shares);
     }
 
     /// <summary>
@@ -360,6 +494,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     public void EnableDrag(PaneWidthMemory memory)
     {
         _widths = memory;
+        _hidden = memory.LeftmostHidden;
 
         // The short-circuit in Draw compares against what is already laid out, and the keys have not changed
         // - only whether they are draggable has.

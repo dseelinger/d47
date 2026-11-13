@@ -235,6 +235,9 @@ public sealed record ViewState
         return this with { HiddenCoverage = next };
     }
 
+    /// <summary>Whether the Commander dragged the leftmost pane of a drill strip out of sight.</summary>
+    public bool LeftmostPaneHidden { get; init; }
+
     /// <summary>The width in pixels the Commander dragged the Search form to, or null for the default.</summary>
     public double? SearchFormWidth { get; init; }
 

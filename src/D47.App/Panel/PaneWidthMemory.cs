@@ -26,6 +26,25 @@ public sealed class PaneWidthMemory(ViewStateStore store)
         _cached = next;
     }
 
+    /// <summary>Whether the leftmost pane of a drill strip is dragged out of sight.</summary>
+    public bool LeftmostHidden
+    {
+        get
+        {
+            _cached ??= store.Load();
+            return _cached.LeftmostPaneHidden;
+        }
+    }
+
+    /// <summary>Records that the leftmost pane was hidden or shown.</summary>
+    public void RememberLeftmostHidden(bool hidden)
+    {
+        var next = store.Load() with { LeftmostPaneHidden = hidden };
+
+        store.Save(next);
+        _cached = next;
+    }
+
     /// <summary>The Search form's remembered width in pixels, or null for the default.</summary>
     public double? SearchFormWidth
     {
