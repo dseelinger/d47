@@ -519,7 +519,8 @@ one carrying an `Engineers` array — a complete snapshot — and during play it
 single engineer whose standing just changed. Treating the second as a snapshot would wipe the other
 thirty-seven the first time somebody ranked up; treating the first as a delta would keep an
 engineer you no longer have. So the array replaces and the single merges, which is the same
-distinction the materials inventory draws.
+distinction the materials inventory draws. When a session has no startup snapshot, the last earlier
+one stands in for it.
 
 Standings are keyed by engineer id rather than by name. A name is a string two sources can spell
 differently; an id is not.

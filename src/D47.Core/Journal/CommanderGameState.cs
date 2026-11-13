@@ -60,7 +60,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     public MaterialsInventory Materials { get; private set; } = MaterialsInventory.Empty;
 
     /// <summary>How far along they are with each engineer.</summary>
-    public EngineerProgressState Engineers { get; private set; } = EngineerProgressState.Empty;
+    public EngineerProgressState Engineers { get; internal set; } = EngineerProgressState.Empty;
 
     /// <summary>Where they stand in every career ladder (Phase 34).</summary>
     public RankState Ranks { get; private set; } = RankState.Empty;

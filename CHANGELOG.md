@@ -10,6 +10,8 @@
 
 Fixed: A capital A inside a sentence, such as the module rating in "not on A Shield Booster" or "five A Thrusters", is said as the letter on every voice instead of as the article. A sentence's first word and a lowercase a are unchanged, and the caption and panel still show "A".
 
+Fixed: When Elite skipped the engineer roster at the start of a session, every engineer showed as not unlocked on the Engineers page and in a ship's plan. d47 now takes your standings from the last roster in your earlier journals. If none has been read at all, a plan row says engineer progress has not been read yet instead of claiming the engineer is not unlocked.
+
 Changed: On the desktop window, with the 400-pixel side column showing, a ship, suit or weapon page's To buy, plan and slot table run the full width of the pane under both columns, instead of sitting beside an empty strip once the picture has scrolled away.
 
 Added: While a drill strip's leftmost pane is hidden, pressing the breadcrumb for that level shows the pane again at its remembered width, and the trail does not change. This works on the desktop window and the VR big panel; the edge handle and the ray's edge rule still work.

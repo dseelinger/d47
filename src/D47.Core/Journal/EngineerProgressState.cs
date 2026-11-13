@@ -52,6 +52,27 @@ public sealed record EngineerProgressState
 
     public EngineerStanding? For(int id) => Standings.FirstOrDefault(standing => standing.Id == id);
 
+    /// <summary>These standings with <paramref name="live"/> laid over them by engineer id; the live read time stands when known.</summary>
+    public EngineerProgressState With(EngineerProgressState live)
+    {
+        ArgumentNullException.ThrowIfNull(live);
+
+        if (!live.IsKnown && live.Standings.Count == 0)
+        {
+            return this;
+        }
+
+        return new EngineerProgressState
+        {
+            TakenAt = live.TakenAt ?? TakenAt,
+            Standings =
+            [
+                .. Standings.Where(standing => live.For(standing.Id) is null),
+                .. live.Standings,
+            ],
+        };
+    }
+
     public EngineerProgressState Apply(JournalEvent journalEvent)
     {
         if (journalEvent.Kind != "EngineerProgress")

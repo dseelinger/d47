@@ -138,6 +138,9 @@ public sealed class GameStateStore
     /// </summary>
     public Func<string, UnlockEvidence?>? RestoreEvidence { get; init; }
 
+    /// <summary>This Commander's last engineer standings from older journals; live standings win by engineer id.</summary>
+    public Func<string, EngineerProgressState?>? RestoreEngineers { get; init; }
+
     /// <summary>The squadron faction sightings this Commander's journals hold, merged into what is known.</summary>
     public Func<string, SquadronFactionSightings?>? RestoreSquadronFactions { get; init; }
 
@@ -416,6 +419,7 @@ public sealed class GameStateStore
             (c, v) => (c.Reputation, c.Contributions, c.Tallies) = (v.Reputation, v.Contributions, v.Tallies),
             (c, v) => (c.Reputation, c.Contributions, c.Tallies) =
                 (v.Reputation.With(c.Reputation), v.Contributions.With(c.Contributions), v.Tallies.With(c.Tallies))),
+        Part<EngineerProgressState>(s => s.RestoreEngineers, v => v.IsKnown, (c, v) => c.Engineers = v, (c, v) => c.Engineers = v.With(c.Engineers)),
         // The other way round from the rest: the live unlocks take the restored ones.
         Part<TechBrokerUnlocks>(s => s.RestoreTechBroker, v => v.IsKnown, (c, v) => c.TechBroker = v, (c, v) => c.TechBroker = c.TechBroker.With(v)),
         Part<SquadronFactionSightings>(s => s.RestoreSquadronFactions, v => v.IsKnown, (c, v) => c.SquadronFactions = v, (c, v) => c.SquadronFactions = c.SquadronFactions.With(v)),

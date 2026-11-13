@@ -282,7 +282,7 @@ public static class EngineeringPlan
             // Nobody unlocked can reach it yet: counted at the worst case rather than left uncosted, and the
             // gate line says why.
             Add(needed, recipe.TotalFor(grade!.Value));
-            blocks.Add(new PlanBlock(item.Text, grade.Value, engineer, rank));
+            blocks.Add(new PlanBlock(item.Text, grade.Value, engineer, rank, state?.Engineers.IsKnown ?? false));
         }
 
         var ingredients = needed

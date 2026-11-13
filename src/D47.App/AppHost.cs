@@ -1299,6 +1299,7 @@ public sealed class AppHost : IDisposable
             // And faction reputation and engineer contributions, which Elite writes only where the faction is
             // present or the engineer is visited.
             RestoreEvidence = fid => history.Evidence?.GetValueOrDefault(fid),
+            RestoreEngineers = fid => history.Engineers?.GetValueOrDefault(fid),
             RestoreTechBroker = fid => history.TechBroker?.GetValueOrDefault(fid),
             RestoreSquadronFactions = fid => history.SquadronFactions?.GetValueOrDefault(fid),
 

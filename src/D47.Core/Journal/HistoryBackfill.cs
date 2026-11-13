@@ -126,6 +126,9 @@ public sealed class HistoryBackfill
 
     public IReadOnlyDictionary<string, UnlockEvidence>? Evidence { get; private set; }
 
+    /// <summary>Each Commander's last engineer standings.</summary>
+    public IReadOnlyDictionary<string, EngineerProgressState>? Engineers { get; private set; }
+
     /// <summary>Each Commander's tech broker unlocks.</summary>
     public IReadOnlyDictionary<string, TechBrokerUnlocks>? TechBroker { get; private set; }
 
@@ -256,6 +259,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Directory,
                     Loggers.CreateLogger(nameof(UnlockEvidenceBackfill)),
+                    cancellation));
+
+            Engineers = Timed(
+                "engineer progress backfill",
+                () => EngineerProgressBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(EngineerProgressBackfill)),
                     cancellation));
 
             SquadronFactions = Timed(

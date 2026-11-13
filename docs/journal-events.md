@@ -113,7 +113,7 @@ Elite writes EngineerCraft when an engineer applies a modification to one of you
 
 ## EngineerProgress
 
-Elite writes EngineerProgress at the start of a session and when your standing with an engineer changes. d47 reads it to know which engineers you have unlocked and how far you have taken each.
+Elite usually writes EngineerProgress at the start of a session, and writes it when your standing with an engineer changes. When a session has none at its start, d47 uses the last one from earlier journals. d47 reads it to know which engineers you have unlocked and how far you have taken each.
 
 ## FSDJump
 

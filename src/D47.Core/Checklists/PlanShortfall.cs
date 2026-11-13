@@ -86,14 +86,15 @@ public sealed record ShortfallTrip(ShortfallTripKind Kind, string Label, string 
 /// The unlocked candidate with the highest rank, or the first candidate when none is unlocked.
 /// </param>
 /// <param name="Rank">That engineer's rank; null when no candidate is unlocked.</param>
-public sealed record PlanBlock(string Item, int Grade, string? Engineer, int? Rank)
+/// <param name="ProgressRead">False when no engineer progress has been read, so none is known to be locked.</param>
+public sealed record PlanBlock(string Item, int Grade, string? Engineer, int? Rank, bool ProgressRead = true)
 {
     public bool Unlocked => Rank is not null;
 
-    /// <summary>"Felicity Farseer, rank 3", or "not unlocked".</summary>
+    /// <summary>"Felicity Farseer, rank 3", "not unlocked", or "engineer progress not read yet".</summary>
     public string Reach => Rank is { } rank && Engineer is { } engineer
         ? $"{engineer}, rank {rank.ToString(CultureInfo.InvariantCulture)}"
-        : "not unlocked";
+        : ProgressRead ? "not unlocked" : "engineer progress not read yet";
 
     public string Sentence =>
         $"{Item} — no engineer you have unlocked offers grade "
