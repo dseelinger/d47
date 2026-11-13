@@ -60,6 +60,11 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         StationQuery query,
         CancellationToken cancellationToken)
     {
+        if (query.Modules.Any(module => module.MountChecked))
+        {
+            return await FindByMountAsync(query, cancellationToken).ConfigureAwait(false);
+        }
+
         using var content = new StringContent(SpanshRequest.Stations(query, _now()), Encoding.UTF8, "application/json");
         using var document = await SendAsync(
             _logger,
@@ -70,6 +75,57 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         var result = SpanshResponse.ReadStations(document!);
 
         return result with { More = GalaxyQuery.HasMore(query.Page, query.Size, result.Stations.Count, result.Total) };
+    }
+
+    /// <summary>The most requests one answer makes when the stock rows are checked for a mount.</summary>
+    public const int MountReads = 3;
+
+    /// <summary>
+    /// A station search whose mount the service cannot filter on: reads its rows <see cref="GalaxyQuery.MaxSize"/>
+    /// at a time and keeps the stations whose stock lists every checked module, until the page is filled, the
+    /// service has no more, or <see cref="MountReads"/> requests are made.
+    /// </summary>
+    private async Task<StationSearchResult> FindByMountAsync(StationQuery query, CancellationToken cancellationToken)
+    {
+        var wanted = query.Page * query.Size;
+        var kept = new List<StationSummary>();
+        string? reference = null;
+        var unread = false;
+
+        for (var read = 1; read <= MountReads; read++)
+        {
+            var asked = query with { Page = read, Size = GalaxyQuery.MaxSize };
+
+            using var content = new StringContent(SpanshRequest.Stations(asked, _now()), Encoding.UTF8, "application/json");
+            using var document = await SendAsync(
+                _logger,
+                token => _http.PostAsync("api/stations/search", content, token),
+                "the station search",
+                cancellationToken).ConfigureAwait(false);
+
+            var page = SpanshResponse.ReadStations(document!);
+            var rows = SpanshResponse.ReadOutfitters(document!);
+
+            reference ??= page.Reference;
+            kept.AddRange(rows
+                .Where(row => query.Modules.All(module => !module.MountChecked || row.Stock.Lists(module)))
+                .Select(row => row.Station));
+
+            unread = GalaxyQuery.HasMore(read, GalaxyQuery.MaxSize, rows.Count, page.Total);
+
+            if (kept.Count >= wanted || !unread)
+            {
+                break;
+            }
+        }
+
+        var shown = kept.Skip(wanted - query.Size).Take(query.Size).ToList();
+
+        return new StationSearchResult(reference, kept.Count, shown)
+        {
+            More = kept.Count > wanted || (unread && kept.Count >= wanted),
+            Uncounted = true,
+        };
     }
 
     public async Task<IReadOnlyList<OutfitterStation>> FindOutfittersAsync(
@@ -117,7 +173,8 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
                 .Where(found => !MarketSnapshot.IsCarrierType(found.Station.Type ?? string.Empty))
                 .Select(found => new OutfitterStation(
                     found.Station,
-                    [.. wanted.Where(item => found.Asked.Contains(item) || found.Stock.Sells(item))]))
+                    [.. wanted.Where(item => (found.Asked.Contains(item) && !item.MountChecked) || found.Stock.Sells(item))]))
+                .Where(found => found.Sells.Count > 0)
                 .OrderBy(found => found.Station.Distance ?? double.MaxValue)
                 .ThenBy(found => found.Station.Name, StringComparer.OrdinalIgnoreCase),
         ];

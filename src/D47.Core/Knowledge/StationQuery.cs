@@ -152,6 +152,8 @@ public sealed record StationSearch
 
     public string? ModuleRating { get; init; }
 
+    public string? ModuleMount { get; init; }
+
     public string? Ship { get; init; }
 
     /// <summary>Vocabulary filters by name, validated against <see cref="GalaxySearchKind.Stations"/>.</summary>
@@ -180,13 +182,24 @@ public sealed record StationSearchResult(
 
     /// <summary>Whether the service has rows past the ones this answer used.</summary>
     public bool More { get; init; }
+
+    /// <summary>Whether <see cref="Total"/> counts only the stations kept, because rows were checked after the service counted them.</summary>
+    public bool Uncounted { get; init; }
 }
 
-/// <summary>A module to be sold at the station, by catalogue name, with an optional size and rating.</summary>
-public sealed record ModuleRequirement(string Name, string? Class = null, string? Rating = null)
+/// <summary>A module to be sold at the station, by catalogue name, with an optional size, rating and mount.</summary>
+public sealed record ModuleRequirement(string Name, string? Class = null, string? Rating = null, string? Mount = null)
 {
-    /// <summary>"a 5A Frame Shift Drive".</summary>
-    public string Said => $"a {Class}{Rating} {Name}".Replace("  ", " ", StringComparison.Ordinal);
+    /// <summary>"a 5A Frame Shift Drive" or "a 2F Multi-Cannon, gimballed".</summary>
+    public string Said =>
+        $"a {Class}{Rating} {Name}".Replace("  ", " ", StringComparison.Ordinal)
+        + (Mount is null ? string.Empty : $", {Mount}");
+
+    /// <summary>Whether a station's stock rows are checked for the mount, which the service cannot filter on.</summary>
+    public bool MountChecked => OutfittingItem.IsMountChecked(Name, Size, Rating, Mount);
+
+    private int? Size =>
+        int.TryParse(Class, NumberStyles.Integer, CultureInfo.InvariantCulture, out var size) ? size : null;
 }
 
 /// <summary>An outfitting search as asked, before <see cref="StationQuery"/> validates it.</summary>
@@ -388,11 +401,12 @@ public sealed record StationQuery
         double? maxDistance,
         int size,
         out StationQuery query,
-        out string failure)
+        out string failure,
+        string? moduleMount = null)
     {
         query = new StationQuery();
 
-        if (!TryMatchStock(module, moduleClass, moduleRating, ship, out var stock, out failure))
+        if (!TryMatchStock(module, moduleClass, moduleRating, moduleMount, ship, out var stock, out failure))
         {
             return false;
         }
@@ -451,7 +465,7 @@ public sealed record StationQuery
             else
             {
                 var required = new ModuleRequirement(
-                    item.Name, item.Class?.ToString(CultureInfo.InvariantCulture), item.Rating);
+                    item.Name, item.Class?.ToString(CultureInfo.InvariantCulture), item.Rating, item.Mount);
 
                 if (!modules.Contains(required))
                 {
@@ -497,7 +511,7 @@ public sealed record StationQuery
     {
         query = new StationQuery();
 
-        if (!TryMatchStock(search.Module, search.ModuleClass, search.ModuleRating, search.Ship, out var stock, out failure))
+        if (!TryMatchStock(search.Module, search.ModuleClass, search.ModuleRating, search.ModuleMount, search.Ship, out var stock, out failure))
         {
             return false;
         }
@@ -667,6 +681,7 @@ public sealed record StationQuery
         string? module,
         string? moduleClass,
         string? moduleRating,
+        string? moduleMount,
         string? ship,
         out StationQuery stock,
         out string failure)
@@ -679,6 +694,12 @@ public sealed record StationQuery
 
         if (!string.IsNullOrWhiteSpace(module))
         {
+            if (string.IsNullOrWhiteSpace(moduleMount) && OutfittingItem.TakeMount(module.Trim(), out var unmounted) is { } said)
+            {
+                module = unmounted;
+                moduleMount = said;
+            }
+
             matchedModule = OutfittingCatalogue.MatchModule(module);
 
             if (matchedModule is null)
@@ -719,14 +740,42 @@ public sealed record StationQuery
             return false;
         }
 
+        var size = string.IsNullOrWhiteSpace(moduleClass) ? null : moduleClass.Trim();
+        var rating = string.IsNullOrWhiteSpace(moduleRating) ? null : moduleRating.Trim().ToUpperInvariant();
+        string? mount = null;
+
+        if (!string.IsNullOrWhiteSpace(moduleMount))
+        {
+            mount = OutfittingItem.ReadMount(moduleMount);
+
+            if (mount is null)
+            {
+                failure = $"'{moduleMount}' is not a mount. It is fixed, gimballed or turreted.";
+                return false;
+            }
+
+            if (matchedModule is null)
+            {
+                failure = "A mount needs a module to go with it.";
+                return false;
+            }
+
+            if (!OutfittingItem.TryMount(
+                    matchedModule,
+                    size is null ? null : int.Parse(size, CultureInfo.InvariantCulture),
+                    rating,
+                    mount,
+                    out failure))
+            {
+                return false;
+            }
+        }
+
         stock = new StationQuery
         {
             Modules = matchedModule is null
                 ? []
-                : [new ModuleRequirement(
-                    matchedModule,
-                    string.IsNullOrWhiteSpace(moduleClass) ? null : moduleClass.Trim(),
-                    string.IsNullOrWhiteSpace(moduleRating) ? null : moduleRating.Trim().ToUpperInvariant())],
+                : [new ModuleRequirement(matchedModule, size, rating, mount)],
             Ship = matchedShip,
         };
 
@@ -789,7 +838,7 @@ public sealed record StationQuery
         MaxReportAgeHours = maxReportAgeHours,
         Modules = item.IsShip
             ? []
-            : [new ModuleRequirement(item.Name, item.Class?.ToString(CultureInfo.InvariantCulture), item.Rating)],
+            : [new ModuleRequirement(item.Name, item.Class?.ToString(CultureInfo.InvariantCulture), item.Rating, item.Mount)],
         Ship = item.IsShip ? item.Name : null,
         MinPad = minPad,
         Kinds = [.. Enum.GetValues<StationKind>().Where(kind => kind != StationKind.FleetCarrier)],

@@ -115,6 +115,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             .Select(name => (name, Vocabulary(name))),
         ("module_class", OutfittingCatalogue.Classes),
         ("module_rating", OutfittingCatalogue.Ratings),
+        ("module_mount", OutfittingItem.MountNames),
     ];
 
     /// <summary>Sets a text field by its tool argument name.</summary>
@@ -259,6 +260,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             Module = Get("module"),
             ModuleClass = Get("module_class"),
             ModuleRating = Get("module_rating"),
+            ModuleMount = Get("module_mount"),
             Ship = Get("ship"),
             OrderBy = Get("order_by"),
             Order = Get("order"),
@@ -289,6 +291,9 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     protected override int Total(GalaxySearchPosting posting) =>
         posting.Result is StationSearchResult result ? result.Total : 0;
+
+    protected override bool Counted(GalaxySearchPosting posting) =>
+        posting.Result is not StationSearchResult { Uncounted: true };
 
     protected override IReadOnlyList<object> Rows(GalaxySearchPosting posting) =>
         posting.Result is StationSearchResult result ? [.. result.Stations] : [];
@@ -370,6 +375,7 @@ public sealed class StationSearchPage : GalaxySearchPage
                 "*,*",
                 Labelled("Class", _pickers["module_class"].Picker),
                 Labelled("Rating", _pickers["module_rating"].Picker)),
+            Labelled("Mount", _pickers["module_mount"].Picker),
             Labelled("Ship", _ship)));
 
         form.Children.Add(Group(

@@ -596,6 +596,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>How many rows the service has for the search in all.</summary>
     protected virtual int Total(GalaxySearchPosting posting) => Count(posting);
 
+    /// <summary>Whether <see cref="Total"/> is the service's count of every row the search matches.</summary>
+    protected virtual bool Counted(GalaxySearchPosting posting) => true;
+
     /// <summary>How many the answer holds.</summary>
     protected abstract int Count(GalaxySearchPosting posting);
 
@@ -881,7 +884,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     {
         var count = Count(posting);
 
-        return posting.More ? $"{count} OF {GalaxyQuery.SayTotal(Total(posting))} {Noun}"
+        return posting.More && Counted(posting) ? $"{count} OF {GalaxyQuery.SayTotal(Total(posting))} {Noun}"
             : count == 1 ? $"1 {NounOne}"
             : $"{count} {Noun}";
     }

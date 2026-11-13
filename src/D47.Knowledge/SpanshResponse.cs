@@ -66,12 +66,21 @@ internal static class SpanshResponse
         new(
             [.. station.Items("modules")
                 .Select(module => String(module, "name") is { } name
-                    ? new StockedModule(name, ModuleClass(module), String(module, "rating"))
+                    ? new StockedModule(name, ModuleClass(module), String(module, "rating"), Mount(String(module, "weapon_mode")))
                     : null)
                 .OfType<StockedModule>()],
             [.. station.Items("ships")
                 .Select(ship => ship.ValueKind == JsonValueKind.String ? ship.GetString() : String(ship, "name"))
                 .OfType<string>()]);
+
+    /// <summary>A weapon's <c>weapon_mode</c> in <see cref="ModuleSpecification.Mount"/>'s spelling; null for none.</summary>
+    private static string? Mount(string? mode) => mode switch
+    {
+        "Fixed" => "fixed",
+        "Gimbal" => "gimballed",
+        "Turret" => "turreted",
+        _ => null,
+    };
 
     private static int? ModuleClass(JsonElement module) =>
         !module.TryGetProperty("class", out var size)

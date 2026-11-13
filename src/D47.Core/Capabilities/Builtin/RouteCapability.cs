@@ -215,8 +215,8 @@ public static class RouteCapability
                 [
                     ToolParameter.Text(
                         "items",
-                        "Comma-separated: modules by name with an optional size and rating, and ships, "
-                        + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python Mk II\".",
+                        "Comma-separated: modules by name with an optional size, rating and mount, and ships, "
+                        + "such as \"5A Frame Shift Drive (SCO), 2F Multi-Cannon gimballed, Python Mk II\".",
                         required: true),
                     ToolParameter.Text("near", "Search out from this system. Defaults to theirs."),
                     ToolParameter.Number("max_distance", "How far to look, in light years. Default 50."),

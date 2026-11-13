@@ -714,7 +714,8 @@ public sealed class ShipPlanService(
 
             var display = wantedClass is null ? name : $"{wantedClass} {name}";
 
-            if (OutfittingItem.TryParse(display, out var item, out _))
+            if ((specification?.Mount is { } mount && OutfittingItem.TryParse($"{display} {mount}", out var item, out _))
+                || OutfittingItem.TryParse(display, out item, out _))
             {
                 items.Add(new ShipPurchase(item, plan.Variant ?? specification?.Symbol, plan.Slot));
             }

@@ -212,6 +212,7 @@ public static class GalaxyCapability
                         "A module sold there, by name."),
                     ModuleClassParameter,
                     ModuleRatingParameter,
+                    ModuleMountParameter,
                     ToolParameter.Text(
                         "ship",
                         "A ship sold there, by name."),
@@ -239,8 +240,8 @@ public static class GalaxyCapability
                 [
                     ToolParameter.Text(
                         "items",
-                        "Comma-separated: modules by name with an optional size and rating, and at most one ship, "
-                            + "such as \"5A Frame Shift Drive (SCO), 6A Fuel Scoop, Python Mk II\".",
+                        "Comma-separated: modules by name with an optional size, rating and mount, and at most one "
+                            + "ship, such as \"5A Frame Shift Drive (SCO), 2F Multi-Cannon gimballed, Python Mk II\".",
                         required: true),
                     NearParameter,
                     MaxDistanceParameter,
@@ -490,6 +491,7 @@ public static class GalaxyCapability
                         "A ship to be sold there, by name — \"Krait Mk II\"."),
                     ModuleClassParameter,
                     ModuleRatingParameter,
+                    ModuleMountParameter,
                     NearParameter,
                     MaxDistanceParameter,
                     ToolParameter.Flag(
@@ -853,6 +855,8 @@ public static class GalaxyCapability
         ToolParameter.OneOf("module_class", "Module size, 0 to 8.", OutfittingCatalogue.Classes);
     private static readonly ToolParameter ModuleRatingParameter =
         ToolParameter.OneOf("module_rating", "Module rating, A to I.", OutfittingCatalogue.Ratings);
+    private static readonly ToolParameter ModuleMountParameter =
+        ToolParameter.OneOf("module_mount", "A weapon mount.", OutfittingItem.MountNames);
 
     private static readonly string[] BgsTickQuestions =
     [
@@ -1286,6 +1290,7 @@ public static class GalaxyCapability
             Module = Text(arguments, "module"),
             ModuleClass = Text(arguments, "module_class"),
             ModuleRating = Text(arguments, "module_rating"),
+            ModuleMount = Text(arguments, "module_mount"),
             Ship = Text(arguments, "ship"),
             Filters = requested,
         };
@@ -2503,6 +2508,7 @@ public static class GalaxyCapability
         arguments.TryGetString("ship", out var ship);
         arguments.TryGetString("module_class", out var moduleClass);
         arguments.TryGetString("module_rating", out var moduleRating);
+        arguments.TryGetString("module_mount", out var moduleMount);
 
         var near = arguments.Text("near") ?? currentSystem();
 
@@ -2533,7 +2539,8 @@ public static class GalaxyCapability
         if (!StationQuery.TryParse(
                 near, module, moduleClass, moduleRating, ship, largePad, maxDistance, limit,
                 out var query,
-                out var failure))
+                out var failure,
+                moduleMount))
         {
             return ToolResult.Error(failure);
         }
@@ -3562,7 +3569,7 @@ public static class GalaxyCapability
         var said = $"Nearest: {nearest.Name} ({nearest.SystemName})"
                    + (nearest.Distance is { } distance ? $", {distance:0.#} ly." : ".");
 
-        return result.Total <= FewSellers
+        return result.Total <= FewSellers && !result.Uncounted
             ? said + (result.Total == 1
                 ? " Only 1 station is reported to sell it."
                 : $" Only {result.Total} stations are reported to sell it.")
@@ -3814,6 +3821,21 @@ public static class GalaxyCapability
                + $"{(first + count - 1).ToString(CultureInfo.InvariantCulture)} of {GalaxyQuery.SayTotal(total)}";
     }
 
+    /// <summary>"Stations 1 to 5 of those listing a 2F Multi-Cannon, gimballed": the lead of an answer whose stations the service did not count.</summary>
+    private static string UncountedLead(StationQuery query, int count)
+    {
+        var first = ((query.Page - 1) * query.Size) + 1;
+        var span = count == 1
+            ? $"Station {first.ToString(CultureInfo.InvariantCulture)}"
+            : $"Stations {first.ToString(CultureInfo.InvariantCulture)} to {(first + count - 1).ToString(CultureInfo.InvariantCulture)}";
+
+        return $"{span} of those listing {Describe(query)}";
+    }
+
+    /// <summary>The answer to an uncounted search that kept no station; it says nothing of the stations it did not read.</summary>
+    private static string UncheckedNone(StationQuery query) =>
+        $"No station I checked lists {Describe(query)}{(query.Page > 1 ? " past the ones already shown" : string.Empty)}.";
+
     /// <summary>The answer to a later page that kept no rows.</summary>
     private static string NothingOnPage(int page, bool more) =>
         more
@@ -3843,12 +3865,16 @@ public static class GalaxyCapability
 
         if (result.Stations.Count == 0)
         {
-            return $"Nowhere within {query.MaxDistance:N0} light years is reported to sell {wanted}.";
+            return result.Uncounted
+                ? UncheckedNone(query)
+                : $"Nowhere within {query.MaxDistance:N0} light years is reported to sell {wanted}.";
         }
 
         var report = new StringBuilder();
 
-        report.AppendLine(result.Total == result.Stations.Count
+        report.AppendLine(result.Uncounted
+            ? $"{UncountedLead(query, result.Stations.Count)}, nearest first."
+            : result.Total == result.Stations.Count
             ? $"{GalaxyQuery.SayTotal(result.Total)} station{(result.Total == 1 ? "" : "s")} sell {wanted}."
             : $"{GalaxyQuery.SayTotal(result.Total)} stations sell {wanted}; here are the nearest {result.Stations.Count}.");
 
@@ -3897,7 +3923,9 @@ public static class GalaxyCapability
 
         if (result.Stations.Count == 0)
         {
-            return query.Page > 1
+            return result.Uncounted && !result.More
+                ? UncheckedNone(query)
+                : query.Page > 1
                 ? NothingOnPage(query.Page, result.More)
                 : $"No station within {query.MaxDistance:N0} light years matched that search.";
         }
@@ -3906,7 +3934,9 @@ public static class GalaxyCapability
         var askedState = query.Criteria.Any(criterion => criterion.Filter.Name == "station_state");
         var report = new StringBuilder();
 
-        report.Append(query.Page > 1
+        report.Append(result.Uncounted
+            ? UncountedLead(query, result.Stations.Count)
+            : query.Page > 1
             ? PageLead("Stations", query.Page, query.Size, result.Stations.Count, result.Total)
             : result.Total == result.Stations.Count
             ? $"{GalaxyQuery.SayTotal(result.Total)} station{(result.Total == 1 ? "" : "s")} matched"

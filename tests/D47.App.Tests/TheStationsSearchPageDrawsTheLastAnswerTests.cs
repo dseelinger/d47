@@ -278,9 +278,9 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
         page.TickType("Starport", true);
         page.ChooseServices(["Market"]);
 
-        foreach (var name in (string[])["allegiance", "government", "station_economy", "station_state", "state", "primary_economy", "power", "acquiring_power", "module_class", "module_rating"])
+        foreach (var name in (string[])["allegiance", "government", "station_economy", "station_state", "state", "primary_economy", "power", "acquiring_power", "module_class", "module_rating", "module_mount"])
         {
-            page.Pick(name, name is "module_class" ? "5" : name is "module_rating" ? "A" : GalaxyFilters.Find(name)!.Choices[0]);
+            page.Pick(name, name is "module_class" ? "5" : name is "module_rating" ? "A" : name is "module_mount" ? "gimballed" : GalaxyFilters.Find(name)!.Choices[0]);
         }
 
         foreach (var stepper in page.GetVisualDescendants().OfType<Stepper>())

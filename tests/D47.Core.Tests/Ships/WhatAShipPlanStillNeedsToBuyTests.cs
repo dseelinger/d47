@@ -165,6 +165,19 @@ public class WhatAShipPlanStillNeedsToBuyTests
     }
 
     [Fact]
+    public void APlannedWeaponIsListedWithItsMount()
+    {
+        var bench = new Bench();
+        var build = bench.Owned(
+            new SlotPlan("MediumHardpoint1", Module: "Multi-Cannon") { Variant = "hpt_multicannon_gimbal_medium" });
+
+        var purchase = Assert.Single(bench.Ships.ToBuy(build).Items);
+
+        Assert.Equal("2F Multi-Cannon gimballed", purchase.Item.Display);
+        Assert.True(purchase.Item.MountChecked);
+    }
+
+    [Fact]
     public void ABuildForAHullNotYetOwnedListsTheHull()
     {
         var bench = new Bench(fitted: false);

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A module search can ask for a weapon's mount, and finds only stations listing that mount. Say or type it as the first or last word, such as "2F Multi-Cannon gimballed" or "turreted multi-cannon", on Search › Outfitting, in an outfitting route, and with the new Mount choice on Search › Stations; a ship plan's outfitting route asks for the planned mount. Search › Outfitting offers a weapon once per mount where it comes in more than one at that size and rating. A mount the weapon does not come in is refused, naming the ones it does. Before, the mount was dropped, so the nearest medium gimballed Multi-Cannon could be a station listing only the turreted one. Spansh cannot filter on the mount, so these answers state no total of matching stations.
+
 Fixed: A commodity search for a multi-word or renamed commodity, such as Performance Enhancers, Atmospheric Processors or Agri-Medicines, now asks the market index for its symbol and finds the stations selling it. Before, the index was asked under a spaced spelling, answered nothing, and the search reported that the 25 remembered markets had stale prices.
 
 Fixed: Saying "shut up", pressing Cancel, an urgent callout or the walkthrough's "stop" no longer stops the music. They end speech, alerts, chatter, cues and anything queued, and the music keeps playing at its normal level; closing d47 still stops it.

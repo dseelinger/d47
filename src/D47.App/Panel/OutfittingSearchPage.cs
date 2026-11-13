@@ -218,6 +218,9 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     protected override int Total(GalaxySearchPosting posting) =>
         posting.Result is StationSearchResult result ? result.Total : 0;
 
+    protected override bool Counted(GalaxySearchPosting posting) =>
+        posting.Result is not StationSearchResult { Uncounted: true };
+
     protected override IReadOnlyList<object> Rows(GalaxySearchPosting posting) =>
         posting.Result is StationSearchResult result ? [.. result.Stations] : [];
 
