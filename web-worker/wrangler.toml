@@ -19,4 +19,4 @@ crons = ["17 3 * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "d47-web"
-database_id = "REPLACE_WITH_ID_FROM_WRANGLER_D1_CREATE"
+database_id = "cb36697e-b5d0-4697-bffe-7a271f510f71"
