@@ -371,7 +371,7 @@ public static class BuiltinCapabilities
         // The one front the Commander is working, and the one proposed.
         Campaigns.CampaignFocus? campaignFocus = null,
 
-        // Where the Commander has died, for show_star_chart.
+        // Where the Commander has died and was the first to discover a body, for show_star_chart.
         Journal.TravelLog? travelLog = null) =>
     [
         HelpCapability.Create(
@@ -595,7 +595,7 @@ public static class BuiltinCapabilities
 
         CampaignCapability.Create(campaigns, () => gameState.Active, squadronFactions, galaxy, campaignSystems, campaignFronts, campaignFocus),
 
-        AstrometricsCapability.Create(() => gameState.Active, fid => travelLog?.Deaths(fid) ?? []),
+        AstrometricsCapability.Create(() => gameState.Active, fid => travelLog?.Deaths(fid) ?? [], fid => travelLog?.FirstDiscoveries(fid) ?? []),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

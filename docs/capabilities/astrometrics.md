@@ -70,20 +70,22 @@ Adds a chart to the Galaxy map and says what it holds. Part of every run.
 > "show the farming sites"
 > "material farming sites on the map"
 > "show my missions on the map"
+> "show my first discoveries"
+> "first discoveries on the map"
 > "show where I died"
 > "my deaths on the map"
 
-The farming phrases add the Farming sites layer instead: a hexagon mark for each system with a material farming site. Select one and the strip lists each site there with its material, method and body. The mission phrase adds the Missions layer: a diamond mark for each system an active mission is bound for. Select one and the strip lists each mission there by name, with its station where it has one. The last two add the Deaths layer: a red crossed mark for each system you died in, placed by your travel log at the arrival before the death. Select one and the strip says Died here and, for more than one death, how many. None of these needs an AI configured.
+The farming phrases add the Farming sites layer instead: a hexagon mark for each system with a material farming site. Select one and the strip lists each site there with its material, method and body. The mission phrase adds the Missions layer: a diamond mark for each system an active mission is bound for. Select one and the strip lists each mission there by name, with its station where it has one. The first-discovery phrases add the First discovered layer: a blue four-pointed star for each system where you scanned a body nobody had discovered, placed by your travel log. Wider than 6,400 light years across, the system's visited square is drawn blue in place of the star. Select one and the strip says First discovery and how many bodies. The last two add the Deaths layer: a red crossed mark for each system you died in, placed by your travel log at the arrival before the death. Select one and the strip says Died here and, for more than one death, how many. None of these needs an AI configured.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
 #### `show_star_chart`
 
-Adds a chart layer to the Galaxy map and opens the map: the Guardian beacons, the material farming sites, the destinations of the Commander's active missions or the systems the Commander has died in. Answers with how many systems the chart marks and, when the Commander's position is known, the nearest one and its distance.
+Adds a chart layer to the Galaxy map and opens the map: the Guardian beacons, the material farming sites, the destinations of the Commander's active missions, the systems where the Commander was the first to discover a body or the systems the Commander has died in. Answers with how many systems the chart marks and, when the Commander's position is known, the nearest one and its distance.
 
 ```json
-{"type":"object","properties":{"chart":{"type":"string","description":"The chart to show.","enum":["guardian_beacons","farming_sites","mission_destinations","deaths"]}},"required":["chart"],"additionalProperties":false}
+{"type":"object","properties":{"chart":{"type":"string","description":"The chart to show.","enum":["guardian_beacons","farming_sites","mission_destinations","first_discovered","deaths"]}},"required":["chart"],"additionalProperties":false}
 ```
 
 </details>

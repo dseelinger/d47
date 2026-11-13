@@ -26,6 +26,7 @@ public enum GalaxyMapMarkKind
     GuardianBeacon,
     FarmingSite,
     Mission,
+    FirstDiscovery,
     Death,
     SystemResult,
     StationResult,
@@ -41,7 +42,10 @@ public sealed record GalaxyMapMark(GalaxyMapMarkKind Kind, string System, StarPo
 /// <summary>What the galaxy map draws; a null part is not drawn.</summary>
 /// <param name="Reached">The index in <paramref name="Route"/> of the stop the Commander is on, or -1.</param>
 /// <param name="Visited">The systems drawn as visited, by name; selectable while <paramref name="Travels"/> is drawn.</param>
-/// <param name="Marks">The markers to draw; engineers only while the view is <see cref="GalaxyMapView.DetailAcross"/> across or less.</param>
+/// <param name="Marks">
+/// The markers to draw; engineers and first discoveries only while the view is <see cref="GalaxyMapView.DetailAcross"/>
+/// across or less, a first discovery drawn wider as a Blue square in place of its visited square.
+/// </param>
 /// <param name="Unvisited">Systems the Commander has not visited, drawn and selectable while the view is <see cref="GalaxyMapView.DetailAcross"/> across or less.</param>
 public sealed record GalaxyMapScene(
     bool Regions,
@@ -73,6 +77,9 @@ public sealed record GalaxyMapDrawn(
     /// <summary>The mark kinds with a mark drawn inside the view, in <see cref="GalaxyMapMarkKind"/> order.</summary>
     public IReadOnlyList<GalaxyMapMarkKind> MarkKinds { get; init; } = [];
 
+    /// <summary>Whether a first discovery is drawn as a square inside the view.</summary>
+    public bool DiscoveredSquares { get; init; }
+
     public static GalaxyMapDrawn Nothing { get; } = new(false, false, false, false, false, false, false, []);
 }
 
@@ -95,7 +102,8 @@ public sealed class GalaxyMapView : Control
 
     private const double NameOffset = 16;
     private const double EdgeMargin = 4;
-    private const double Visited = 3;
+    /// <summary>The side of a visited system's square.</summary>
+    public const double VisitedSide = 3;
     private const double ScaleInset = 12;
     private const double DragStart = 4;
     private const double AngleBaseline = 20;
@@ -121,6 +129,8 @@ public sealed class GalaxyMapView : Control
     private static readonly (double X, double Y)[] Pylon = [(0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4)];
     private static readonly (double X, double Y)[] HexHalo = [(0, -7.2), (6.3, -3.6), (6.3, 3.6), (0, 7.2), (-6.3, 3.6), (-6.3, -3.6)];
     private static readonly (double X, double Y)[] FlagHalo = [(-6, -7.5), (-2, -7.5), (8.5, -2.5), (-1, 2.6), (-1, 7.5), (-6, 7.5)];
+    private static readonly (double X, double Y)[] SparkHalo = [(0, -8), (2.8, -2.8), (8, 0), (2.8, 2.8), (0, 8), (-2.8, 2.8), (-8, 0), (-2.8, -2.8)];
+    private static readonly (double X, double Y)[] Spark = [(0, -6), (1.6, -1.6), (6, 0), (1.6, 1.6), (0, 6), (-1.6, 1.6), (-6, 0), (-1.6, -1.6)];
     private static readonly (double X, double Y)[] CrossedHalo = [(-7.2, -4.3), (-4.3, -7.2), (0, -2.9), (4.3, -7.2), (7.2, -4.3), (2.9, 0), (7.2, 4.3), (4.3, 7.2), (0, 2.9), (-4.3, 7.2), (-7.2, 4.3), (-2.9, 0)];
     private static readonly (double X, double Y)[] Crossed = [(-5.5, -3.8), (-3.8, -5.5), (0, -1.7), (3.8, -5.5), (5.5, -3.8), (1.7, 0), (5.5, 3.8), (3.8, 5.5), (0, 1.7), (-3.8, 5.5), (-5.5, 3.8), (-1.7, 0)];
     private static readonly (double X, double Y)[] Flag = [(-4.5, -6), (-2.5, -6), (5.5, -2.5), (-2.5, 1), (-2.5, 6), (-4.5, 6)];
@@ -153,6 +163,7 @@ public sealed class GalaxyMapView : Control
     private (double Heading, double Tilt) _legsFor;
     private StreamGeometry? _visited;
     private StreamGeometry? _unvisited;
+    private StreamGeometry? _discovered;
     private GalaxyMapLayout _layout = GalaxyMapLayout.Empty;
     private Size _builtFor;
     private bool _stale = true;
@@ -292,7 +303,8 @@ public sealed class GalaxyMapView : Control
             _legsFor = Angles;
         }
 
-        _visited = _scene.Travels is { } picture ? Squares(picture.Systems) : null;
+        _visited = _scene.Travels is { } picture ? Squares(picture.Systems.Select(Screen)) : null;
+        _discovered = _layout.Discovered.Count > 0 ? Squares(_layout.Discovered.Select(star => star.At)) : null;
         _unvisited = _layout.Unvisited.Count > 0 ? Outlines(_layout.Unvisited.Select(star => star.At)) : null;
 
         Drawn = _layout.Drawn;
@@ -350,18 +362,16 @@ public sealed class GalaxyMapView : Control
         return geometry;
     }
 
-    private StreamGeometry Squares(IReadOnlyList<StarPosition> systems)
+    private StreamGeometry Squares(IEnumerable<Point> points)
     {
         var geometry = new StreamGeometry();
-        const double Half = Visited / 2;
+        const double Half = VisitedSide / 2;
 
         using var open = geometry.Open();
 
-        foreach (var system in systems)
+        foreach (var at in points)
         {
-            var at = Screen(system);
-
-            if (!InView(at, Visited))
+            if (!InView(at, VisitedSide))
             {
                 continue;
             }
@@ -454,6 +464,11 @@ public sealed class GalaxyMapView : Control
         if (_visited is { } visited)
         {
             context.DrawGeometry(Brush(ThemeManager.AKey), null, visited);
+        }
+
+        if (_discovered is { } discovered)
+        {
+            context.DrawGeometry(Brush(ThemeManager.BlueKey), null, discovered);
         }
 
         var taken = new List<Rect>();
@@ -849,6 +864,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.GuardianBeacon => (-4.6, -9.6, 4.6, 7.6),
             GalaxyMapMarkKind.FarmingSite => (-6.3, -7.2, 6.3, 7.2),
             GalaxyMapMarkKind.Mission => (-6.0, -7.5, 8.5, 7.5),
+            GalaxyMapMarkKind.FirstDiscovery => (-8.0, -8.0, 8.0, 8.0),
             GalaxyMapMarkKind.Death => (-7.2, -7.2, 7.2, 7.2),
             GalaxyMapMarkKind.SystemResult => (-9.4, -9.5, 9.4, 6.75),
             GalaxyMapMarkKind.StationResult => (-8.25, -6.25, 8.25, 6.25),
@@ -890,6 +906,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.GuardianBeacon => (PylonHalo, Pylon, ThemeManager.AKey),
             GalaxyMapMarkKind.FarmingSite => (HexHalo, Hex, ThemeManager.AKey),
             GalaxyMapMarkKind.Mission => (FlagHalo, Flag, ThemeManager.CyanKey),
+            GalaxyMapMarkKind.FirstDiscovery => (SparkHalo, Spark, ThemeManager.BlueKey),
             GalaxyMapMarkKind.Death => (CrossedHalo, Crossed, ThemeManager.RedKey),
             _ => (ChevronHalo, Chevron, ThemeManager.YellowKey),
         };
@@ -987,6 +1004,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.GuardianBeacon => (Pylon, ThemeManager.AKey),
             GalaxyMapMarkKind.FarmingSite => (Hex, ThemeManager.AKey),
             GalaxyMapMarkKind.Mission => (Flag, ThemeManager.CyanKey),
+            GalaxyMapMarkKind.FirstDiscovery => (Spark, ThemeManager.BlueKey),
             GalaxyMapMarkKind.Death => (Crossed, ThemeManager.RedKey),
             _ => (Chevron, ThemeManager.YellowKey),
         };

@@ -88,6 +88,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _beacons;
     private readonly CheckBox _farming;
     private readonly CheckBox _missions;
+    private readonly CheckBox _firstDiscovered;
     private readonly CheckBox _deaths;
     private readonly CheckBox _systemsSearch;
     private readonly CheckBox _stationsSearch;
@@ -194,6 +195,7 @@ public sealed class GalaxyMapPage : UserControl
         _beacons = Marked(StarChartKind.GuardianBeacons, live => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, live));
         _farming = Marked(StarChartKind.FarmingSites, live => MarkDrawing(GalaxyMapMarkKind.FarmingSite, live));
         _missions = Marked(StarChartKind.MissionDestinations, live => MarkDrawing(GalaxyMapMarkKind.Mission, live));
+        _firstDiscovered = Marked(StarChartKind.FirstDiscovered, live => MarkDrawing(GalaxyMapMarkKind.FirstDiscovery, live));
         _deaths = Marked(StarChartKind.Deaths, live => MarkDrawing(GalaxyMapMarkKind.Death, live));
         _systemsSearch = Marked(StarChartKind.SystemsSearch, live => MarkDrawing(GalaxyMapMarkKind.SystemResult, live));
         _stationsSearch = Marked(StarChartKind.StationsSearch, live => MarkDrawing(GalaxyMapMarkKind.StationResult, live));
@@ -415,7 +417,7 @@ public sealed class GalaxyMapPage : UserControl
         var fid = commander?.Identity.FrontierId ?? string.Empty;
         var folded = log?.HistoryFolded ?? true;
 
-        return (fid, folded ? log?.Count(fid) ?? 0 : -1, folded ? log?.DeathCount(fid) ?? 0 : -1, folded, _route(), _here(), commander?.Location.StarPos, offDuty, commander?.Carrier.StarSystem, commander?.Fleet, commander?.Missions, _galaxy() is not null, _lookups.Generation);
+        return (fid, folded ? log?.Count(fid) ?? 0 : -1, folded ? log?.DeathCount(fid) ?? 0 : -1, folded ? log?.FirstDiscoveryCount(fid) ?? 0 : -1, folded, _route(), _here(), commander?.Location.StarPos, offDuty, commander?.Carrier.StarSystem, commander?.Fleet, commander?.Missions, _galaxy() is not null, _lookups.Generation);
     }
 
     /// <summary>Rebuilds what the map draws and the lines under it, keeping the viewport.</summary>
@@ -528,6 +530,7 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.GuardianBeacons, _beacons),
         (StarChartKind.FarmingSites, _farming),
         (StarChartKind.MissionDestinations, _missions),
+        (StarChartKind.FirstDiscovered, _firstDiscovered),
         (StarChartKind.Deaths, _deaths),
         (StarChartKind.SystemsSearch, _systemsSearch),
         (StarChartKind.StationsSearch, _stationsSearch),
@@ -664,6 +667,7 @@ public sealed class GalaxyMapPage : UserControl
     private static GalaxyMapMarkKind? PlacedAs(StarChartKind kind) => kind switch
     {
         StarChartKind.MissionDestinations => GalaxyMapMarkKind.Mission,
+        StarChartKind.FirstDiscovered => GalaxyMapMarkKind.FirstDiscovery,
         StarChartKind.Deaths => GalaxyMapMarkKind.Death,
         StarChartKind.SystemsSearch => GalaxyMapMarkKind.SystemResult,
         StarChartKind.StationsSearch => GalaxyMapMarkKind.StationResult,
@@ -879,6 +883,14 @@ public sealed class GalaxyMapPage : UserControl
                 {
                     unplaced.Add(new UnplacedItem(GalaxyMapMarkKind.Mission, system.Key, 1));
                 }
+            }
+        }
+
+        if (Shows(StarChartKind.FirstDiscovered) && log is not null && fid.Length > 0)
+        {
+            foreach (var place in log.FirstDiscoveries(fid))
+            {
+                marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.FirstDiscovery, place.System, place.Position, [$"{place.Bodies} {(place.Bodies == 1 ? "body" : "bodies")}"]));
             }
         }
 
@@ -1182,6 +1194,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
         GalaxyMapMarkKind.FarmingSite => "Farming site",
         GalaxyMapMarkKind.Mission => "Mission",
+        GalaxyMapMarkKind.FirstDiscovery => "First discovery",
         GalaxyMapMarkKind.Death => "Died here",
         GalaxyMapMarkKind.SystemResult => "System result",
         GalaxyMapMarkKind.StationResult => mark.Names.Count == 1 ? "Station result" : "Station results",
@@ -1569,6 +1582,11 @@ public sealed class GalaxyMapPage : UserControl
             Entry(MarkWord(kind), (context, ink) => GalaxyMapView.DrawInk(context, ink, kind, new Point(11, 5), 0.8));
         }
 
+        if (drawn.DiscoveredSquares && !drawn.MarkKinds.Contains(GalaxyMapMarkKind.FirstDiscovery))
+        {
+            Entry(MarkWord(GalaxyMapMarkKind.FirstDiscovery), (context, ink) => context.DrawRectangle(ink(ThemeManager.BlueKey), null, new Rect(9.5, 3.5, GalaxyMapView.VisitedSide, GalaxyMapView.VisitedSide)));
+        }
+
         if (drawn.StopsHidden || drawn.EngineersHidden)
         {
             var words = drawn.StopsHidden ? (drawn.EngineersHidden ? StopsAndEngineersHidden : StopsHidden) : EngineersHidden;
@@ -1590,6 +1608,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
         GalaxyMapMarkKind.FarmingSite => "Farming site",
         GalaxyMapMarkKind.Mission => "Mission destination",
+        GalaxyMapMarkKind.FirstDiscovery => "First discovery",
         GalaxyMapMarkKind.Death => "Died here",
         GalaxyMapMarkKind.SystemResult => "System result",
         GalaxyMapMarkKind.StationResult => "Station result",
@@ -1990,6 +2009,7 @@ public sealed class GalaxyMapPage : UserControl
             GalaxyMapMarkKind.GuardianBeacon => (new (double X, double Y)[] { (0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4) }, ThemeManager.AKey),
             GalaxyMapMarkKind.FarmingSite => (new (double X, double Y)[] { (0, -5.5), (4.8, -2.75), (4.8, 2.75), (0, 5.5), (-4.8, 2.75), (-4.8, -2.75) }, ThemeManager.AKey),
             GalaxyMapMarkKind.Mission => (new (double X, double Y)[] { (-4.5, -6), (-2.5, -6), (5.5, -2.5), (-2.5, 1), (-2.5, 6), (-4.5, 6) }, ThemeManager.CyanKey),
+            GalaxyMapMarkKind.FirstDiscovery => (new (double X, double Y)[] { (0, -6), (1.6, -1.6), (6, 0), (1.6, 1.6), (0, 6), (-1.6, 1.6), (-6, 0), (-1.6, -1.6) }, ThemeManager.BlueKey),
             GalaxyMapMarkKind.Death => (new (double X, double Y)[] { (-5.5, -3.8), (-3.8, -5.5), (0, -1.7), (3.8, -5.5), (5.5, -3.8), (1.7, 0), (5.5, 3.8), (3.8, 5.5), (0, 1.7), (-3.8, 5.5), (-5.5, 3.8), (-1.7, 0) }, ThemeManager.RedKey),
             _ => (new (double X, double Y)[] { (0, -6), (5.5, 5), (0, 2), (-5.5, 5) }, ThemeManager.YellowKey),
         };
@@ -2024,6 +2044,7 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.GuardianBeacons => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, () => true),
         StarChartKind.FarmingSites => MarkDrawing(GalaxyMapMarkKind.FarmingSite, () => true),
         StarChartKind.MissionDestinations => MarkDrawing(GalaxyMapMarkKind.Mission, () => true),
+        StarChartKind.FirstDiscovered => MarkDrawing(GalaxyMapMarkKind.FirstDiscovery, () => true),
         StarChartKind.Deaths => MarkDrawing(GalaxyMapMarkKind.Death, () => true),
         StarChartKind.SystemsSearch => MarkDrawing(GalaxyMapMarkKind.SystemResult, () => true),
         StarChartKind.StationsSearch => MarkDrawing(GalaxyMapMarkKind.StationResult, () => true),

@@ -1,3 +1,4 @@
+using System.Globalization;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -22,10 +23,13 @@ public sealed record TravelStep(
 /// <summary>A system the Commander died in, with where it is and how many times the Commander died there.</summary>
 public sealed record DeathPlace(long SystemAddress, string System, StarPosition Position, int Count);
 
+/// <summary>A system where the Commander scanned bodies nobody had discovered, with where it is and how many bodies.</summary>
+public sealed record FirstDiscoveryPlace(long SystemAddress, string System, StarPosition Position, int Bodies);
+
 /// <summary>
-/// Every system each Commander has arrived in, oldest first, and when each Commander died. A death is in the system
-/// of the arrival at or before its time. Rebuilt from the journals on every start and extended by live events;
-/// holds no file.
+/// Every system each Commander has arrived in, oldest first, when each Commander died, and the bodies each was the
+/// first to discover. A death is in the system of the arrival at or before its time; a first discovery is in the
+/// system its scan names. Rebuilt from the journals on every start and extended by live events; holds no file.
 /// </summary>
 public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
 {
@@ -34,6 +38,8 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
     private readonly Dictionary<string, List<TravelStep>> _steps = new(StringComparer.Ordinal);
 
     private readonly Dictionary<string, SortedSet<DateTimeOffset>> _deaths = new(StringComparer.Ordinal);
+
+    private readonly Dictionary<string, Dictionary<(long System, string Body), DateTimeOffset>> _discoveries = new(StringComparer.Ordinal);
 
     private string _liveFid = string.Empty;
 
@@ -149,6 +155,53 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
         }
     }
 
+    /// <summary>
+    /// The systems where a Commander was the first to discover a body, with how many bodies each, ordered by name; a
+    /// system with no arrival is left out.
+    /// </summary>
+    public IReadOnlyList<FirstDiscoveryPlace> FirstDiscoveries(string fid)
+    {
+        ArgumentNullException.ThrowIfNull(fid);
+
+        lock (_gate)
+        {
+            if (!_discoveries.TryGetValue(fid, out var bodies) || !_steps.TryGetValue(fid, out var steps))
+            {
+                return [];
+            }
+
+            var arrived = new Dictionary<long, TravelStep>();
+
+            foreach (var step in steps)
+            {
+                arrived[step.SystemAddress] = step;
+            }
+
+            var places = new List<FirstDiscoveryPlace>();
+
+            foreach (var system in bodies.Keys.GroupBy(body => body.System))
+            {
+                if (arrived.TryGetValue(system.Key, out var step))
+                {
+                    places.Add(new FirstDiscoveryPlace(system.Key, step.System, step.Position, system.Count()));
+                }
+            }
+
+            return [.. places.OrderBy(place => place.System, StringComparer.OrdinalIgnoreCase)];
+        }
+    }
+
+    /// <summary>How many bodies a Commander was the first to discover, placed or not; zero for one with none.</summary>
+    public int FirstDiscoveryCount(string fid)
+    {
+        ArgumentNullException.ThrowIfNull(fid);
+
+        lock (_gate)
+        {
+            return _discoveries.TryGetValue(fid, out var bodies) ? bodies.Count : 0;
+        }
+    }
+
     /// <summary>The latest step at or before <paramref name="time"/>, or null when there is none.</summary>
     private static TravelStep? StepAt(List<TravelStep> steps, DateTimeOffset time)
     {
@@ -197,7 +250,7 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
 
     private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "Commander", "NewCommander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "Location", "FSDJump",
-        "CarrierJump", "Died");
+        "CarrierJump", "Died", "Scan");
 
     private void Fold(JournalEvent journalEvent, ref string fid)
     {
@@ -224,6 +277,31 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
                     }
 
                     _deaths.GetValueOrDefault(erased)?.RemoveWhere(time => time <= journalEvent.Timestamp);
+
+                    if (_discoveries.TryGetValue(erased, out var found))
+                    {
+                        foreach (var erasedBody in found.Where(pair => pair.Value <= journalEvent.Timestamp).Select(pair => pair.Key).ToList())
+                        {
+                            found.Remove(erasedBody);
+                        }
+                    }
+                }
+
+                return;
+
+            case "Scan":
+                if (fid.Length > 0
+                    && FirstDiscovery.Is(journalEvent.Raw)
+                    && journalEvent.Long("SystemAddress") is { } scanned
+                    && (journalEvent.Int("BodyID")?.ToString(CultureInfo.InvariantCulture) ?? journalEvent.String("BodyName")) is { } body)
+                {
+                    if (!_discoveries.TryGetValue(fid, out var bodies))
+                    {
+                        bodies = [];
+                        _discoveries[fid] = bodies;
+                    }
+
+                    bodies.TryAdd((scanned, body), journalEvent.Timestamp);
                 }
 
                 return;

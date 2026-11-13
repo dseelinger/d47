@@ -113,7 +113,7 @@ public static class ChapterNotables
                     : notables;
 
             case "Scan":
-                return IsFirstDiscovery(raw) ? Discovered(notables, journalEvent.Timestamp) : notables;
+                return FirstDiscovery.Is(raw) ? Discovered(notables, journalEvent.Timestamp) : notables;
         }
 
         if (Of(journalEvent) is not { } entry)
@@ -202,11 +202,6 @@ public static class ChapterNotables
 
         return [.. notables.Where(entry => !ReferenceEquals(entry, pending)), scare];
     }
-
-    private static bool IsFirstDiscovery(JsonElement raw) =>
-        raw.TryGetProperty("WasDiscovered", out var discovered)
-        && discovered.ValueKind == JsonValueKind.False
-        && raw.String("ScanType") is "AutoScan" or "Detailed";
 
     private static IReadOnlyList<Notable> Discovered(IReadOnlyList<Notable> notables, DateTimeOffset at)
     {

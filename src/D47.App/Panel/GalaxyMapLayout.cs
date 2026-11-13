@@ -52,9 +52,12 @@ internal sealed class GalaxyMapLayout
 
     public IReadOnlyList<Mark> Marks { get; private set; } = [];
 
+    /// <summary>The first discoveries in view while the map is not <see cref="Detailed"/>, each drawn as a square in place of its mark.</summary>
+    public IReadOnlyList<(GalaxyMapStar Star, Point At)> Discovered { get; private set; } = [];
+
     /// <summary>
     /// The systems a tap can select: unvisited ones drawn, visited ones while travels are drawn, route stops while their
-    /// marks are, and every mark drawn. Unvisited ones come first, so a tie goes to what is drawn over them.
+    /// marks are, first discoveries drawn as squares, and every mark drawn. Unvisited ones come first, so a tie goes to what is drawn over them.
     /// </summary>
     public IReadOnlyList<(GalaxyMapStar Star, Point At)> Targets { get; private set; } = [];
 
@@ -127,6 +130,12 @@ internal sealed class GalaxyMapLayout
         You = scene.Commander is { } commander ? Screen(commander) : null;
         Destination = stops.Count >= 2 ? stops[^1].System : null;
         Marks = MarksOf(scene);
+        Discovered = Detailed || scene.Marks is not { Count: > 0 } marks
+            ? []
+            : [.. marks
+                .Where(mark => mark.Kind == GalaxyMapMarkKind.FirstDiscovery)
+                .Select(mark => (new GalaxyMapStar(mark.System, mark.At), Screen(mark.At)))
+                .Where(star => InView(star.Item2, GalaxyMapView.VisitedSide))];
         Targets = TargetsOf(scene, stops);
 
         var wide = Viewport.LightYearsAcross >= GalaxyMapView.DetailAcross;
@@ -144,6 +153,7 @@ internal sealed class GalaxyMapLayout
             Unvisited: Unvisited.Count > 0)
         {
             MarkKinds = [.. Marks.Where(mark => InView(mark.At, 8)).Select(mark => mark.Kind).Distinct().Order()],
+            DiscoveredSquares = Discovered.Count > 0,
         };
     }
 
@@ -175,7 +185,7 @@ internal sealed class GalaxyMapLayout
         }
 
         var systems = placed
-            .Where(mark => mark.Kind != GalaxyMapMarkKind.Engineer || Detailed)
+            .Where(mark => mark.Kind is not (GalaxyMapMarkKind.Engineer or GalaxyMapMarkKind.FirstDiscovery) || Detailed)
             .GroupBy(mark => mark.System, StringComparer.OrdinalIgnoreCase);
 
         foreach (var system in systems)
@@ -211,6 +221,8 @@ internal sealed class GalaxyMapLayout
         {
             targets.AddRange(visited.Select(star => (star, Screen(star.At))));
         }
+
+        targets.AddRange(Discovered);
 
         if (Route.Count > 0 && Detailed)
         {
