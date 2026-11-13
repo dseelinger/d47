@@ -1235,7 +1235,16 @@ public partial class MainWindow : Window
             {
                 _host.AudioReloaded += handler;
                 return () => _host.AudioReloaded -= handler;
-            });
+            },
+            new BindingConflictEditing(
+                () => _host.Binds,
+                () => _host.Listener.Controllers(),
+                () => _host.SwitchEditing?.Store.Switches ?? [],
+                handler =>
+                {
+                    _host.BindsChanged += handler;
+                    return () => _host.BindsChanged -= handler;
+                }));
     }
 
     private ModulesSource? _modulesSource;

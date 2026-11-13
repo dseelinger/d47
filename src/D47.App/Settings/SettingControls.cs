@@ -58,7 +58,8 @@ internal sealed record SettingServices(
     Func<CoverageItem, D47.App.Coverage.ToolExercise?>? ToolExercise = null,
     Func<D47.Core.Audio.OwnAudioReport>? OwnAudio = null,
     Action? OpenAudioFolder = null,
-    Func<Action, Action>? WatchAudio = null);
+    Func<Action, Action>? WatchAudio = null,
+    BindingConflictEditing? BindingConflicts = null);
 
 /// <summary>What a system-name box needs: the lookup and the pause before asking.</summary>
 public sealed record SystemNameLookup(
@@ -144,6 +145,10 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             // The HOTAS switches page.
             case SettingKind.Info when row.Key == SwitchCapability.ListKey && services.Switches is not null:
                 return BuildSwitches(row);
+
+            // The Binding conflicts page.
+            case SettingKind.Info when row.Key == ListeningCapability.BindingConflictsKey && services.BindingConflicts is not null:
+                return BuildBindingConflicts(row);
 
             // The fifth row that offers a window.
             case SettingKind.Info when row.Key == LoreCapability.BookKey && services.Lore is not null:
@@ -999,23 +1004,72 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
     /// <summary>The switch summary, plus the way into the walk.</summary>
     private (Control, Action) BuildSwitches(SettingRow row) =>
-        OpenRow(row, "OpenSwitches", "Assign switches", async open =>
+        OpenRow(row, "OpenSwitches", "Assign switches", OpenSwitchesAsync);
+
+    /// <summary>Opens the Switch page on the panel <paramref name="from"/> is drawn on; false when there is none.</summary>
+    private async Task<bool> OpenSwitchesAsync(Control from)
+    {
+        if (services.Switches is not { } editing || from.FindAncestorOfType<Panel.PanelView>() is not { } panel)
         {
-            if (services.Switches is not { } editing || open.FindAncestorOfType<Panel.PanelView>() is not { } panel)
+            return false;
+        }
+
+        await panel.Open(new Controls.SwitchPage(
+            editing.Store,
+            editing.Reader,
+            editing.Reconciler,
+            editing.Now,
+            editing.ExportPath,
+            editing.Destinations(),
+            editing.Settings,
+            ((Panel.IPanelTabHost)panel).ColumnWidths));
+
+        return true;
+    }
+
+    /// <summary>How many of D47's bindings Elite binds too, beside the tile that opens the Binding conflicts page.</summary>
+    private (Control, Action) BuildBindingConflicts(SettingRow row)
+    {
+        var editing = services.BindingConflicts!;
+        var (inset, refresh) = BuildInfo(row);
+        var open = OwnAudioButton("OpenBindingConflicts", "Binding conflicts");
+
+        open.Click += async (_, _) =>
+        {
+            if (open.FindAncestorOfType<Panel.PanelView>() is { } panel)
             {
-                return false;
+                await panel.Open(new Controls.BindingConflictsPage(
+                    host.Settings,
+                    editing,
+                    (slotKey, slot, message, listening) => CaptureBindAsync(
+                        host.Settings.Find(slotKey)!,
+                        slotKey,
+                        KindOf(slotKey) == SettingKind.HotasButton,
+                        slot,
+                        message,
+                        listening,
+                        fromConflicts: true),
+                    (slotKey, message) => host.Apply(slotKey, null, message),
+                    OpenSwitchesAsync));
+                refresh();
             }
+        };
 
-            await panel.Open(new Controls.SwitchPage(
-                editing.Store,
-                editing.Reader,
-                editing.Reconciler,
-                editing.Now,
-                editing.ExportPath,
-                editing.Destinations(),
-                editing.Settings,
-                ((Panel.IPanelTabHost)panel).ColumnWidths));
+        var control = Beside(inset, open);
+        Action? unwatch = null;
 
-            return true;
-        });
+        control.AttachedToVisualTree += (_, _) =>
+        {
+            unwatch?.Invoke();
+            unwatch = editing.Watch(() => Dispatcher.UIThread.Post(refresh));
+        };
+
+        control.DetachedFromVisualTree += (_, _) =>
+        {
+            unwatch?.Invoke();
+            unwatch = null;
+        };
+
+        return (control, refresh);
+    }
 }

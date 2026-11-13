@@ -81,7 +81,10 @@ internal sealed class SettingsHost
         Func<D47.App.Panel.PhrasesPage>? phrases = null,
 
         // At the end, by the same rule.
-        ModulesSource? modules = null)
+        ModulesSource? modules = null,
+
+        // At the end, by the same rule.
+        D47.App.Settings.BindingConflictEditing? bindingConflicts = null)
     {
         // The whole page, for every test that is about a row rather than about the
         // fold.com/dseelinger/d47/issues/60).
@@ -119,7 +122,8 @@ internal sealed class SettingsHost
                 ownPersonas: ownPersonas,
                 recording: recording,
                 bindingProfiles: bindingProfiles,
-                customVoices: customVoices);
+                customVoices: customVoices,
+                bindingConflicts: bindingConflicts);
             return view;
         }, phrases: phrases);
 

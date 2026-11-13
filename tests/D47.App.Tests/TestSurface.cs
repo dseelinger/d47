@@ -169,7 +169,8 @@ public static class TestSurface
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
         Func<CancellationToken, Task<string?>>? guardianTest = null,
         string? root = null,
-        Func<SpeechCapability.SpeechSurface, SpeechCapability.SpeechSurface>? speech = null)
+        Func<SpeechCapability.SpeechSurface, SpeechCapability.SpeechSurface>? speech = null,
+        Func<ListeningCapability.ListeningSurface, ListeningCapability.ListeningSurface>? listening = null)
     {
         var paths = new AppPaths(root ?? Path.Combine(FakeRoot, Guid.NewGuid().ToString("N")));
 
@@ -221,7 +222,7 @@ public static class TestSurface
             new TurnCancellation(NullLogger<TurnCancellation>.Instance),
             new CalloutEngine(NullLogger<CalloutEngine>.Instance),
             () => built!,
-            new ListeningCapability.ListeningSurface
+            (listening ?? (surface => surface))(new ListeningCapability.ListeningSurface
             {
                 InputDevices = () => inputDevices ?? [],
                 DeviceLabel = id => id,
@@ -230,7 +231,7 @@ public static class TestSurface
                 Binds = () => EliteBinds.None,
                 InstalledModels = () => [],
                 ForgetCorrections = forgetCorrections,
-            },
+            }),
             new VrCapability.HeadsetSurface
             {
                 Report = () => (D47.Core.Vr.VrState.Unavailable, "No SteamVR runtime in a headless test."),

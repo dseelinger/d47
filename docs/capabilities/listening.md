@@ -229,6 +229,10 @@ the device the button is on. If the microphone will not open, this is the first 
 
 Only a clash is reported. When none is found, the reply says nothing about bindings.
 
+In Settings › Screens › Window, the Binding conflicts row opens a page listing every D47 key and button
+that works while Elite has the foreground and that Elite binds too, and rebinds or unbinds D47's side of
+each.
+
 ### Settings
 
 #### Microphone {#microphone}

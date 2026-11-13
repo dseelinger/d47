@@ -350,6 +350,29 @@ public sealed class SettingsService
     public IReadOnlyList<SettingRow> RowsForPlace(string placeId) =>
         [.. EntriesForPlace(placeId).SelectMany(RowsForEntry)];
 
+    /// <summary>
+    /// "Settings › Screens › Overlay": the area and place that draw <paramref name="key"/>, or the row whose control
+    /// also binds it; null when no place does.
+    /// </summary>
+    public string? PlaceTrailOf(string key)
+    {
+        foreach (var area in SettingsLayout.Areas)
+        {
+            foreach (var place in area.Places)
+            {
+                if (place.Groups
+                    .SelectMany(group => group.Entries)
+                    .SelectMany(RowsForEntry)
+                    .Any(row => row.Key == key || row.AlsoBinds == key))
+                {
+                    return $"Settings › {area.Title} › {place.Title}";
+                }
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>Whether a group reset puts this row back: not a stored key and not text the Commander typed in.</summary>
     public static bool ResetsWithItsGroup(SettingRow row) =>
         row is { Kind: not SettingKind.Secret, Binding.Write: not null }

@@ -234,7 +234,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         Func<CoverageItem, D47.App.Coverage.ToolExercise?>? toolExercise = null,
         Func<D47.Core.Audio.OwnAudioReport>? ownAudio = null,
         Action? openAudioFolder = null,
-        Func<Action, Action>? watchAudio = null)
+        Func<Action, Action>? watchAudio = null,
+        BindingConflictEditing? bindingConflicts = null)
     {
         _settings = settings;
         _viewStateStore = viewState;
@@ -265,7 +266,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
                 toolExercise,
                 ownAudio,
                 openAudioFolder,
-                watchAudio));
+                watchAudio,
+                bindingConflicts));
 
         Build();
 

@@ -899,6 +899,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Raised when the Commander's audio folder was re-read and the library replaced.</summary>
     public event Action? AudioReloaded;
 
+    /// <summary>Raised on the tick thread when Elite's bindings were re-read.</summary>
+    public event Action? BindsChanged;
+
     /// <summary>Raised on the thread that changed it when the story's hold on the Guardian cores changes.</summary>
     public event Action? CoreHoldChanged;
 
@@ -2457,6 +2460,7 @@ public sealed class AppHost : IDisposable
                         transcriber.Unavailable ?? "No speech model is selected."),
                     Binds = () => services.Binds.Current,
                     Controllers = () => services.SampledControllers.Poll(),
+                    Switches = () => services.Switches.Switches,
                     InstalledModels = () => services.Models.Installed(),
                     KeyStored = foundations.Secrets.Has,
 
@@ -3899,7 +3903,13 @@ public sealed class AppHost : IDisposable
         tick.Add("macros", _ => services.Macros.Poll(() => PhrasesAlreadyTaken(registry.Capabilities, registry.OtherDynamicCommands())));
 
         // Same shape, same reason: a file Elite owns, re-read only when it moves.
-        tick.Add("binds", _ => services.Binds.Poll());
+        tick.Add("binds", _ =>
+        {
+            if (services.Binds.Poll())
+            {
+                host.BindsChanged?.Invoke();
+            }
+        });
 
         // The switch path, in the tick's own shape: read the file if it changed, read the hardware, decide.
         tick.Add("switches", context =>

@@ -792,6 +792,7 @@ public static class SettingsLayout
                                 E("hotkeys.openSettings"),
                                 E("hotkeys.focusAsk"),
                                 E("hotkeys.find"),
+                                E("listening.bindingConflicts"),
                             ]),
                     ]),
                 new SettingsPlace(

@@ -989,7 +989,8 @@ internal sealed partial class SettingControls
         bool stick,
         Control slot,
         StatusLine message,
-        Action<bool> listening)
+        Action<bool> listening,
+        bool fromConflicts = false)
     {
         if (TopLevel.GetTopLevel(slot) is not { } top || (stick && services.Switches is null))
         {
@@ -1014,6 +1015,11 @@ internal sealed partial class SettingControls
                     message,
                     async (key, value) =>
                     {
+                        if (fromConflicts)
+                        {
+                            return ConflictRefusal(key, value);
+                        }
+
                         var reason = await HeldMessageAsync(top, key, value);
                         moving = reason is null && host.Settings.MoveOf(key, value) is { Refusal: null } ? key : null;
                         return reason;
@@ -1036,6 +1042,50 @@ internal sealed partial class SettingControls
             host.Refresh();
         }
     }
+
+    /// <summary>
+    /// On the Binding conflicts page, a press another D47 row holds or Elite binds is refused rather than offered as a
+    /// move; null when the press is free.
+    /// </summary>
+    private string? ConflictRefusal(string key, string value)
+    {
+        var settings = host.Settings;
+
+        if (settings.Find(key) is not { } slot)
+        {
+            return null;
+        }
+
+        var button = slot.Kind == SettingKind.HotasButton;
+
+        if (settings.HeldBy(key, value) is { } holder)
+        {
+            return $"{settings.AlreadyBound(holder, slot, value)} Clear it there first, or press another {(button ? "button" : "key")}.";
+        }
+
+        if (services.BindingConflicts is not { } editing)
+        {
+            return null;
+        }
+
+        var actions = D47.Core.Input.BindingConflicts.ForPress(
+            settings.Current,
+            [.. settings.Sections.SelectMany(section => section.Rows)],
+            key,
+            value,
+            editing.Binds(),
+            editing.Readings());
+
+        return actions.Count == 0
+            ? null
+            : D47.Core.Input.BindingConflicts.EliteBindsIt(Printed(button, value), actions, button, Printed(button, settings.Read(key)));
+    }
+
+    /// <summary>A stored key or button as the panel prints it.</summary>
+    private static string Printed(bool button, string? value) =>
+        button
+            ? D47.Core.Hotas.HotasButton.Parse(value)?.Describe() ?? value ?? "unbound"
+            : Gestures.Describe(value);
 
     /// <summary>Null when nothing holds the press or the Commander agreed to move it; otherwise the line to listen again under.</summary>
     private async Task<string?> HeldMessageAsync(TopLevel top, string key, string value)

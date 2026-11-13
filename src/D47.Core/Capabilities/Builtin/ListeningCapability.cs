@@ -59,6 +59,9 @@ public static class ListeningCapability
     /// </summary>
     public const string CorrectionsKey = "listening.corrections";
 
+    /// <summary>How many of D47's bindings Elite binds too, and the way to the Binding conflicts page.</summary>
+    public const string BindingConflictsKey = "listening.bindingConflicts";
+
     public sealed record ListeningSurface
     {
         /// <summary>What d47 has learned this transcriber gets wrong, as a few lines to read (#134).</summary>
@@ -101,6 +104,9 @@ public static class ListeningCapability
 
         /// <summary>The controllers as last read, to find the device a stick button is on.</summary>
         public Func<IReadOnlyList<Hotas.HotasReading>>? Controllers { get; init; }
+
+        /// <summary>The Commander's mapped switches, whose positions are checked against Elite's bindings too.</summary>
+        public Func<IReadOnlyList<Hotas.SwitchMapping>>? Switches { get; init; }
 
         /// <summary>Which speech models are already on disk, so the row can mark them.</summary>
         public required Func<IReadOnlyList<string>> InstalledModels { get; init; }
@@ -951,6 +957,32 @@ public static class ListeningCapability
                     Read = _ => surface.Corrections?.Invoke()
                                 ?? "Nothing yet. D47 learns one of these only when you correct a "
                                    + "name it misheard.",
+                },
+            },
+            new SettingRow
+            {
+                Key = BindingConflictsKey,
+                Label = "Binding conflicts",
+                Help =
+                    "D47's keys and buttons that work while Elite has the foreground, checked against Elite's "
+                    + "active preset. The page lists each one Elite binds too, and rebinds or unbinds D47's side.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "your-key-might-already-be-elites",
+                Binding = new SettingBinding
+                {
+                    Read = state =>
+                    {
+                        var rows = settings.Sections.SelectMany(section => section.Rows).ToList();
+                        var conflicts = BindingConflicts.Find(
+                            state,
+                            rows,
+                            surface.Switches?.Invoke() ?? [],
+                            surface.Binds(),
+                            surface.Controllers?.Invoke() ?? [],
+                            surface.KeyLabel);
+
+                        return BindingConflicts.Summary([.. conflicts.Select(conflict => BindingConflicts.ControlName(conflict, rows))]);
+                    },
                 },
             },
         ],
