@@ -289,6 +289,8 @@ receives a snapshot of that Commander: Frontier ID and Commander name, credits, 
 reputation, ships and their modules, your fleet carrier, engineers, ship materials, missions, checklists
 and goals, watches, route plans and the panel theme. A snapshot is sent only when it has changed, at most
 once a minute, and no sooner than five minutes after an upload failed.
+The web app's address is `https://d47-web.dseelinger.workers.dev`. Open it in any browser, sign in with
+Frontier, and its read-only pages draw the last snapshot; nothing on them changes D47 or the game.
 The snapshot is stored as it was sent, so D47's server can read it. Turning **Web app** off deletes every
 Commander's snapshot and upload token from the web app, which then keeps only the time it was turned off. A
 delete that fails keeps its token, the row says the snapshot is not deleted yet, and the next start of D47

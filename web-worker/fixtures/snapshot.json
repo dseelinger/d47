@@ -1,0 +1,153 @@
+{
+  "format": 1,
+  "frontierId": "F9900417",
+  "name": "Ilsa Marrow",
+  "takenAt": "2026-11-12T19:42:00+00:00",
+  "theme": "elite",
+  "progress": {
+    "balance": 1284550120,
+    "location": {
+      "starSystem": "Shinrarta Dezhra",
+      "stationName": "Jameson Memorial",
+      "mode": "Docked",
+      "body": "Shinrarta Dezhra A 1",
+      "systemFaction": "The Pilots Federation",
+      "powerplayState": "Unoccupied"
+    },
+    "ranks": [
+      { "career": "CQC", "rank": 0, "percent": 0 },
+      { "career": "Combat", "rank": 6, "percent": 34 },
+      { "career": "Trade", "rank": 10, "percent": 12 },
+      { "career": "Explore", "rank": 8, "percent": 76 },
+      { "career": "Soldier", "rank": 3, "percent": 51 },
+      { "career": "Exobiologist", "rank": 5, "percent": 8 }
+    ],
+    "navy": [
+      { "career": "Empire", "rank": 8, "percent": 41 },
+      { "career": "Federation", "rank": 4, "percent": 88 }
+    ],
+    "reputation": [
+      { "superpower": "Independent", "reputation": 58.2 },
+      { "superpower": "Empire", "reputation": 92 },
+      { "superpower": "Federation", "reputation": 41.4 },
+      { "superpower": "Alliance", "reputation": -6 }
+    ]
+  },
+  "ships": {
+    "fleet": [
+      { "type": "Python", "name": "Long Odds", "starSystem": "Shinrarta Dezhra", "stationName": "Jameson Memorial", "inTransit": false, "value": 142550300 },
+      { "type": "Anaconda", "name": "Brass Halo", "starSystem": "Shinrarta Dezhra", "inTransit": true, "value": 388104770 },
+      { "type": "Mamba", "starSystem": "Diaso", "stationName": "Ray Gateway", "inTransit": false, "value": 61920400 },
+      { "type": "Adder", "starSystem": "Lave", "inTransit": false }
+    ],
+    "flown": {
+      "typeName": "Krait Mk II",
+      "name": "Cold Iron",
+      "ident": "CI-04L",
+      "rebuy": 3412050,
+      "maxJumpRange": 32.41,
+      "cargoCapacity": 64,
+      "fuelCapacity": 32,
+      "unladenMass": 412.6,
+      "totalValue": 68240190,
+      "hullHealth": 100,
+      "modules": [
+        { "slot": "Large hardpoint 1", "item": "Multi-cannon 3B gimballed", "blueprint": "Overcharged", "blueprintLevel": 5, "experimental": "Corrosive shell", "health": 100 },
+        { "slot": "Medium hardpoint 1", "item": "Pulse laser 2E fixed", "blueprint": "Long range", "blueprintLevel": 3, "health": 96 },
+        { "slot": "Frame shift drive", "item": "Frame shift drive 5A", "blueprint": "Increased range", "blueprintLevel": 5, "experimental": "Mass manager", "health": 100 },
+        { "slot": "Size 6 optional", "item": "Shield cell bank 6A", "health": 100 },
+        { "slot": "Fuel tank", "item": "Fuel tank 5C" }
+      ]
+    }
+  },
+  "carrier": {
+    "callSign": "ZZT-99A",
+    "name": "Sacred Fire",
+    "balance": 990302661,
+    "starSystem": "Giryak",
+    "destinationSystem": "Col 285 Sector AB-C b14-3",
+    "departureTime": "2026-11-12T22:05:00+00:00",
+    "jumpRange": 500,
+    "maxJumpRange": 500,
+    "capacity": 25000,
+    "freeSpace": 23890,
+    "cargoTonnes": 180,
+    "dockingAccess": "all",
+    "weeklyUpkeep": 6450000,
+    "fuelLevel": 967,
+    "tritiumInHold": 120,
+    "services": [
+      { "role": "Refuel", "name": "", "activated": true, "enabled": true },
+      { "role": "Repair", "name": "", "activated": true, "enabled": true },
+      { "role": "Bartender", "name": "Edda", "activated": true, "enabled": false },
+      { "role": "Vista Genomics", "name": "", "activated": false, "enabled": false }
+    ]
+  },
+  "engineers": [
+    { "name": "Broo Tarquin", "station": "Broo's Legacy", "system": "Muang", "specialities": [{ "kind": "Beam laser", "grade": 5 }, { "kind": "Burst laser", "grade": 5 }], "unlockCost": "50 Fujin Tea", "reach": "WithinReach", "standing": { "progress": "Known" }, "lightYears": 230.4, "jumps": 6, "prerequisites": [{ "text": "Grade 3 with Hera Tani.", "state": "Met" }, { "text": "Gain combat rank Competent or higher.", "state": "InProgress", "percent": 34 }, { "text": "Provide 50 units of Fujin Tea.", "state": "Unknown" }] },
+    { "name": "Tiana Fortune", "reach": "WithinReach", "standing": { "progress": "Invited" }, "lightYears": 177, "jumps": 4 },
+    { "name": "Lei Cheung", "reach": "Unlocked", "standing": { "progress": "Unlocked", "rank": 5 }, "lightYears": 50, "jumps": 2 },
+    { "name": "Felicity Farseer", "reach": "Unlocked", "standing": { "progress": "Unlocked", "rank": 4, "rankProgress": 62 }, "lightYears": 192, "jumps": 5 },
+    { "name": "Petra Olmanova", "reach": "Locked", "referredBy": ["Professor Palin"], "lightYears": 890, "jumps": 22 }
+  ],
+  "materials": [
+    { "displayName": "Carbon", "category": "Raw", "count": 300, "grade": 1 },
+    { "displayName": "Iron", "category": "Raw", "count": 212, "grade": 1 },
+    { "displayName": "Arsenic", "category": "Raw", "count": 61, "grade": 2 },
+    { "displayName": "Boron", "category": "Raw", "count": 37, "grade": 3 },
+    { "displayName": "Polonium", "category": "Raw", "count": 12, "grade": 4 },
+    { "displayName": "Chemical Storage Units", "category": "Manufactured", "count": 40, "grade": 1 },
+    { "displayName": "Tagged Encryption Codes", "category": "Encoded", "count": 55, "grade": 2 },
+    { "displayName": "Unlisted Oddity", "category": "Encoded", "count": 3 }
+  ],
+  "missions": [
+    { "title": "Deliver 24 T of Gold", "faction": "Diaso Silver Advanced Holdings", "destinationStation": "Ray Gateway", "destinationSystem": "Diaso", "expiry": "2026-11-12T22:20:00+00:00", "reward": 4120000, "cargo": { "collected": 24, "delivered": 0, "total": 24 } },
+    { "title": "Assassinate a pirate lord", "faction": "The Pilots Federation", "targetFaction": "Black Omega", "destinationStation": "Jameson Memorial", "destinationSystem": "Shinrarta Dezhra", "expiry": "2026-11-14T23:42:00+00:00", "reward": 12500000 },
+    { "title": "Transport 8 passengers", "faction": "Shinrarta Dezhra Independents", "destinationStation": "Jameson Memorial", "destinationSystem": "Shinrarta Dezhra", "expiry": "2026-11-13T14:42:00+00:00", "reward": 3480000, "passengerCount": 8 },
+    { "title": "Source 40 T of Tritium", "faction": "Giryak Purple Universal", "destinationStation": "Ziegel Hub", "destinationSystem": "Giryak", "expiry": "2026-11-17T21:42:00+00:00", "reward": 6900000, "cargo": { "collected": 12, "delivered": 12, "total": 40 } },
+    { "title": "Courier data to Lave", "faction": "Lave Radio", "destinationStation": "Lave Station", "destinationSystem": "Lave", "reward": 540000 }
+  ],
+  "checklist": {
+    "lists": [
+      { "name": "Before the Colonia trip", "home": "Yours", "open": 4, "done": 2, "next": "Buy a 6A fuel scoop", "items": [{ "text": "Buy a 6A fuel scoop.", "state": "Open" }, { "text": "Fill the carrier with tritium.", "state": "Done" }] },
+      { "name": "Cold Iron", "home": "Ships", "open": 5, "done": 3, "isHere": true, "items": [{ "text": "Grade 5 Increased range on the frame shift drive.", "state": "Done" }, { "text": "Grade 5 Reinforced on the shield generator.", "state": "Open" }, { "text": "Fit a guardian FSD booster. Only at a guardian technology broker.", "state": "Elsewhere" }, { "text": "Pulse laser Long range G5. Needs Broo Tarquin unlocked.", "state": "Blocked" }, { "text": "Grade 3 Low emissions on the power plant. The journal has not confirmed it.", "state": "Unverified" }] },
+      { "name": "Long Odds", "home": "Ships", "open": 3, "done": 6, "next": "Engineer the shield generator" },
+      { "name": "Shinrarta Dezhra", "home": "Systems", "open": 2, "done": 0, "isHere": true },
+      { "name": "Maverick suit", "home": "SuitsAndWeapons", "open": 0, "done": 4 }
+    ],
+    "goals": [
+      { "name": "Elite in Combat", "have": 6, "need": 8, "fraction": 0.34, "rung": 0.34, "nextRank": "Deadly", "isDone": false },
+      { "name": "A billion credits", "have": 1284550120, "need": 1000000000, "fraction": 1, "isDone": true }
+    ]
+  },
+  "watches": [
+    { "name": "Tritium at Ziegel Hub", "kind": "Stock", "enabled": true, "station": "Ziegel Hub", "system": "Giryak", "commodity": "Tritium", "comparison": "Above", "threshold": 2000, "fired": "Fired 18:20, 2,410 in stock" },
+    { "name": "Fujin Tea at Futen Spaceport", "kind": "Stock", "enabled": true, "station": "Futen Spaceport", "system": "Fujin", "comparison": "Above", "threshold": 50 },
+    { "name": "Gold at Galileo", "kind": "Stock", "enabled": false, "station": "Galileo", "system": "Sol", "comparison": "Below", "threshold": 500 },
+    { "name": "New community goal", "kind": "NewCommunityGoal", "enabled": true },
+    { "name": "Next system with a material trader", "kind": "NextSystem", "enabled": true, "service": "Material trader", "serviceKind": "Raw", "minPad": "Large" }
+  ],
+  "routePlans": [
+    {
+      "kind": "Jump",
+      "headline": "Shinrarta Dezhra to Colonia",
+      "plottedAt": "2026-11-11T09:00:00+00:00",
+      "reached": 2,
+      "jump": {
+        "origin": "Shinrarta Dezhra",
+        "destination": "Colonia",
+        "totalDistance": 22011,
+        "totalJumps": 171,
+        "waypoints": [
+          { "system": "Shinrarta Dezhra", "jumps": 0, "distanceLeft": 22011, "isNeutron": false },
+          { "system": "Synuefe XR-H d11-102", "jumps": 4, "distanceLeft": 21402, "isNeutron": true },
+          { "system": "Col 173 Sector LY-Q d5-12", "jumps": 3, "distanceLeft": 20866, "isNeutron": true },
+          { "system": "Col 173 Sector PJ-N b49-1", "jumps": 1, "distanceLeft": 20612, "isNeutron": true },
+          { "system": "Swoilz HO-A d1-77", "jumps": 5, "distanceLeft": 19940, "isNeutron": true }
+        ]
+      }
+    },
+    { "kind": "Riches", "headline": "14 stops from Shinrarta Dezhra", "plottedAt": "2026-11-08T09:00:00+00:00" },
+    { "kind": "Carrier", "headline": "Giryak to Col 285 Sector AB-C b14-3", "plottedAt": "2026-11-12T09:00:00+00:00" }
+  ]
+}

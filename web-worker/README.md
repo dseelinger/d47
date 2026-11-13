@@ -24,8 +24,25 @@ release.
 | `DELETE /snapshot` | `Authorization: Bearer <upload token>`. Deletes the snapshot and that token, and writes the switch-off record. 204. |
 | `DELETE /account` | Needs a session. Deletes the snapshot, every session, every upload token, every link code and the switch-off record for the customer id. 204. |
 
-Any other `GET` is served from `public/`, which holds one placeholder page. Any other method on a
-route gets 405.
+Any other `GET` is served from `public/`. Any other method on a route gets 405.
+
+## The pages
+
+`public/` is the web app's pages: static HTML, CSS and JavaScript with no build step and no framework.
+`index.html` loads `components/bundle.css` (the d47 kit, copied from the design system), `web.css` (the
+layout over it) and `js/app.js`. The pages ask `GET /snapshot` for the document and draw one of the
+signed-out page, the four states and the nine pages from it. A page is chosen by the URL hash, as
+`#/ships/2`, so the Worker needs no route for it.
+
+- `js/views.js` turns a section of the document into what a page draws. It touches no DOM and is what
+  `views.test.mjs` covers, from `fixtures/snapshot.json`.
+- `js/dom.js` writes those values with `createTextNode` and `textContent`, never as markup, and sets
+  styles through the CSSOM. `js/app.js` owns the requests and timers.
+- The Content Security Policy allows this origin only and no inline script or style. `public/_headers`
+  sends it with the static files, which Cloudflare serves without running the Worker, and `src/index.js`
+  sends the same policy with the Worker's own responses. `views.test.mjs` checks the two match and that no
+  page uses `innerHTML`, an inline style or another host.
+- Fonts are the app's own, in `public/fonts/` with their licences.
 
 The session cookie is `__Host-d47-session`, `Secure`, `HttpOnly`, `SameSite=Lax`, holding 32 random
 bytes. A session lasts 30 days from its last use: a request more than a day after the last extension

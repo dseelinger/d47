@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The web app draws your snapshot. Sign in with Frontier at https://d47-web.dseelinger.workers.dev and the pages show what D47 last uploaded: Progress (credits, location, ranks, navy ranks and reputation), Checklist, Watches, Missions, Ships, Carrier, Engineers, Materials and the route Plan, in the theme you chose in D47, with My HUD colours recoloured by your HUD matrix. The pages are read-only. Missions count their time left from your clock and sort into expiring within the hour, hand in here and the rest. A snapshot older than 30 days shows OLD SNAPSHOT in amber. Account signs you out or, after a confirmation, deletes the snapshot. Signed out, no snapshot yet, never uploaded and uploads turned off each have their own page. A page open in a browser asks for the snapshot again once a minute and not while hidden. Nothing on the pages is requested from another site.
+
 Fixed: Route maps for Neutron Plotter, Road to Riches and Exobiology plans drew every stop that is not a neutron star with the unknown look. When Spansh knows a stop's star, the map now marks it scoopable or no fuel. D47 asks Spansh once, after the plotter answers, and a plan saved earlier keeps the unknown look.
 
 Added: With Web app on and the flying Commander signed in, D47 uploads that Commander's snapshot to the web app when it has changed, at most once a minute. Nothing is sent while nothing changes. After a failed upload D47 waits five minutes before trying again; if the web app no longer knows the sign-in, D47 removes the stored sign-in and the Web app line says to sign in again. A snapshot still waiting when D47 closes is sent then, with up to three seconds allowed. A test drive sends nothing.

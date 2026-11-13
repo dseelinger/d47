@@ -38,45 +38,58 @@ const ROUTES = {
   '/account': ['DELETE'],
 };
 
+// Also sent by public/_headers for the static files, which are served without running this script.
+export const CONTENT_SECURITY_POLICY =
+  "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    const methods = ROUTES[url.pathname];
-
-    if (!methods) {
-      if ((request.method === 'GET' || request.method === 'HEAD') && env.ASSETS) {
-        return env.ASSETS.fetch(request);
-      }
-      return said(404, 'Not found.');
-    }
-
-    if (!methods.includes(request.method)) {
-      return said(405, `This route takes ${methods.join(' or ')}.`);
-    }
-
-    // /callback is reached by Frontier's cross-site redirect; its state check stands in for this one.
-    if ((request.method !== 'GET' || url.pathname === '/link') && !sameSite(request, url)) {
-      return said(403, 'This route does not take requests from another site.');
-    }
-
-    const now = Date.now();
-    switch (`${request.method} ${url.pathname}`) {
-      case 'GET /signin': return signIn(request, url, env);
-      case 'GET /callback': return callback(request, url, env, now);
-      case 'POST /signout': return signOut(request, env);
-      case 'GET /link': return link(request, url, env, now);
-      case 'POST /link/token': return linkToken(request, env, now);
-      case 'GET /snapshot': return readSnapshot(request, env, now);
-      case 'PUT /snapshot': return writeSnapshot(request, env, now);
-      case 'DELETE /snapshot': return deleteSnapshot(request, env, now);
-      default: return deleteAccount(request, env, now);
-    }
+    const response = await route(request, env);
+    const headers = new Headers(response.headers);
+    headers.set('content-security-policy', CONTENT_SECURITY_POLICY);
+    headers.set('x-content-type-options', 'nosniff');
+    headers.set('referrer-policy', 'no-referrer');
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   },
 
   async scheduled(controller, env) {
     await expire(env, Date.now());
   },
 };
+
+async function route(request, env) {
+  const url = new URL(request.url);
+  const methods = ROUTES[url.pathname];
+
+  if (!methods) {
+    if ((request.method === 'GET' || request.method === 'HEAD') && env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+    return said(404, 'Not found.');
+  }
+
+  if (!methods.includes(request.method)) {
+    return said(405, `This route takes ${methods.join(' or ')}.`);
+  }
+
+  // /callback is reached by Frontier's cross-site redirect; its state check stands in for this one.
+  if ((request.method !== 'GET' || url.pathname === '/link') && !sameSite(request, url)) {
+    return said(403, 'This route does not take requests from another site.');
+  }
+
+  const now = Date.now();
+  switch (`${request.method} ${url.pathname}`) {
+    case 'GET /signin': return signIn(request, url, env);
+    case 'GET /callback': return callback(request, url, env, now);
+    case 'POST /signout': return signOut(request, env);
+    case 'GET /link': return link(request, url, env, now);
+    case 'POST /link/token': return linkToken(request, env, now);
+    case 'GET /snapshot': return readSnapshot(request, env, now);
+    case 'PUT /snapshot': return writeSnapshot(request, env, now);
+    case 'DELETE /snapshot': return deleteSnapshot(request, env, now);
+    default: return deleteAccount(request, env, now);
+  }
+}
 
 async function expire(env, now) {
   const snapshotsBefore = iso(now - SNAPSHOT_LIFETIME);
