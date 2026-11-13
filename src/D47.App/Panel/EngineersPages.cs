@@ -156,11 +156,11 @@ public static class EngineersPages
     /// A criterion's word on the status ladder and its ink — the same words wherever a criterion is shown
     /// (#126).
     /// </summary>
-    internal static (string Word, string Key) Ladder(UnlockCriterion criterion) => criterion switch
+    internal static (string Word, string Key) Ladder(UnlockCriterion criterion) => criterion.State switch
     {
-        { Met: true } => ("✓ MET", ThemeManager.BlueKey),
-        { Met: null } => ("? UNKNOWN", ThemeManager.WhiteKey),
-        { Measure.Fill: > 0 } => ("IN PROGRESS", ThemeManager.AKey),
+        UnlockCriterionState.Met => ("✓ MET", ThemeManager.BlueKey),
+        UnlockCriterionState.Unknown => ("? UNKNOWN", ThemeManager.WhiteKey),
+        UnlockCriterionState.InProgress => ("IN PROGRESS", ThemeManager.AKey),
         _ => ("NOT MET", ThemeManager.GreyKey),
     };
 

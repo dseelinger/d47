@@ -128,6 +128,24 @@ public sealed class RoutePlanBook(
         return plan;
     }
 
+    /// <summary>
+    /// The last plan of each kind stored under <paramref name="frontierId"/>, in kind order. Claims nothing
+    /// and writes nothing, unlike <see cref="Last"/>.
+    /// </summary>
+    public IReadOnlyList<StoredRoutePlan> PlansOf(string frontierId)
+    {
+        lock (_gate)
+        {
+            return
+            [
+                .. _plans
+                    .Where(entry => string.Equals(entry.Key.FrontierId, frontierId, StringComparison.Ordinal))
+                    .OrderBy(entry => entry.Key.Kind)
+                    .Select(entry => entry.Value),
+            ];
+        }
+    }
+
     /// <summary>The systems named by each kind's last plan: a jump's ends and waypoints, then the riches and trade stops.</summary>
     public IEnumerable<string?> Systems()
     {

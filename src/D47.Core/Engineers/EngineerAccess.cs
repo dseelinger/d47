@@ -135,6 +135,29 @@ public sealed record UnlockCriterion(string Text, bool? Met)
 
     /// <summary>The number and target behind this criterion, where the test is one that has them (#17).</summary>
     public UnlockMeasure? Measure { get; init; }
+
+    /// <summary>The word a prerequisite line shows.</summary>
+    public UnlockCriterionState State => this switch
+    {
+        { Met: true } => UnlockCriterionState.Met,
+        { Met: null } => UnlockCriterionState.Unknown,
+        { Measure.Fill: > 0 } => UnlockCriterionState.InProgress,
+        _ => UnlockCriterionState.NotMet,
+    };
+}
+
+/// <summary>Where a prerequisite stands, as its line shows it.</summary>
+public enum UnlockCriterionState
+{
+    Met,
+
+    /// <summary>Not met, with a measure partly filled.</summary>
+    InProgress,
+
+    /// <summary>Nothing d47 can read decides it.</summary>
+    Unknown,
+
+    NotMet,
 }
 
 /// <summary>

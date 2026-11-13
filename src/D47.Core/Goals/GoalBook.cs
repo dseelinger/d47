@@ -53,17 +53,32 @@ public sealed class GoalBook(
         get
         {
             var removed = Removed;
-            var mine = Mine;
-            var live = state();
 
             return
             [
-                .. GoalCatalogue.All(live)
-                    .Where(arc => !removed.Contains(arc.Key, StringComparer.OrdinalIgnoreCase))
-                    .Select(arc => GoalEvaluator.Evaluate(arc, live, mine))
+                .. Catalogued(commander(), state(), removed)
                     .Concat(StoryStandings().Where(standing => !removed.Contains(standing.Arc.Key, StringComparer.OrdinalIgnoreCase))),
             ];
         }
+    }
+
+    /// <summary>The built-in arcs for one Commander's state, less the ones they removed; no story arc.</summary>
+    public IReadOnlyList<GoalStanding> BuiltInStandingsOf(CommanderGameState commanderState)
+    {
+        ArgumentNullException.ThrowIfNull(commanderState);
+
+        var fid = commanderState.Identity.FrontierId;
+
+        return [.. Catalogued(fid, commanderState, store.SetAsideBy(fid))];
+    }
+
+    private IEnumerable<GoalStanding> Catalogued(string? fid, CommanderGameState? live, IReadOnlyList<string> removed)
+    {
+        var mine = store.MineFor(fid);
+
+        return GoalCatalogue.All(live)
+            .Where(arc => !removed.Contains(arc.Key, StringComparer.OrdinalIgnoreCase))
+            .Select(arc => GoalEvaluator.Evaluate(arc, live, mine));
     }
 
     /// <summary>Including the removed ones.</summary>
