@@ -851,8 +851,7 @@ public sealed class ShipPlanService(
             // The ship being flown names no slot on a hull not bought yet.
             build.IsOwned ? checklists.SlotFor : null);
 
-        // Every slot this build has an opinion about, so a slot the Commander cleared is dropped from the
-        // list rather than left standing because nothing mentioned it.
+        // Every slot this build has an opinion about.
         IReadOnlyCollection<string> replacing = [.. build.Slots.Select(slot => slot.Slot)];
 
         if (!build.IsOwned)
@@ -861,7 +860,7 @@ public sealed class ShipPlanService(
             replacing = [build.Hull, .. replacing];
         }
 
-        return checklists.AdoptPlan(scope, ChecklistSource.EngineeringPlan, items, replacing);
+        return checklists.AdoptPlan(scope, ChecklistSource.EngineeringPlan, items, replacing, wholePlan: true);
     }
 
     /// <summary>The first line of a planned ship's list: "Buy a Python".</summary>

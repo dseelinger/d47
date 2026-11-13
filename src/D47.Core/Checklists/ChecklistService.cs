@@ -1965,13 +1965,15 @@ public sealed class ChecklistService(
     /// else the plan says alone.
     /// </summary>
     /// <param name="replacing">The subjects this proposal has an opinion about.</param>
+    /// <param name="wholePlan">True when <paramref name="items"/> is the entire plan for the scope and source.</param>
     public string AdoptPlan(
         ChecklistScope scope,
         ChecklistSource source,
         IReadOnlyList<ChecklistItem> items,
-        IReadOnlyCollection<string> replacing)
+        IReadOnlyCollection<string> replacing,
+        bool wholePlan = false)
     {
-        var wanted = Wanted(scope, source, items, replacing);
+        var wanted = Wanted(scope, source, items, replacing, wholePlan);
 
         if (wanted.Count == 0)
         {
@@ -1995,9 +1997,10 @@ public sealed class ChecklistService(
         ChecklistSource source,
         IReadOnlyList<ChecklistItem> items,
         IReadOnlyCollection<string> replacing,
-        string? describing = null)
+        string? describing = null,
+        bool wholePlan = false)
     {
-        var wanted = Wanted(scope, source, items, replacing);
+        var wanted = Wanted(scope, source, items, replacing, wholePlan);
 
         if (wanted.Count == 0)
         {
@@ -2106,8 +2109,14 @@ public sealed class ChecklistService(
         ChecklistScope scope,
         ChecklistSource source,
         IReadOnlyList<ChecklistItem> items,
-        IReadOnlyCollection<string> replacing)
+        IReadOnlyCollection<string> replacing,
+        bool wholePlan)
     {
+        if (wholePlan)
+        {
+            return [.. items.GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase).Select(group => group.Last())];
+        }
+
         var touched = replacing.Select(ChecklistKeys.Compact).ToHashSet(StringComparer.Ordinal);
 
         var standing = Document.Items

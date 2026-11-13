@@ -84,7 +84,8 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
             ChecklistSource.EngineeringPlan,
             drift.Items,
             drift.Slots,
-            build.Describe());
+            build.Describe(),
+            wholePlan: true);
 
         _asked = (ship, drift.Fingerprint);
 
