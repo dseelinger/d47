@@ -89,6 +89,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _shipMarks;
     private readonly CheckBox _unvisited;
     private readonly CheckBox _beacons;
+    private readonly CheckBox _guardianSites;
     private readonly CheckBox _farming;
     private readonly CheckBox _missions;
     private readonly CheckBox _firstDiscovered;
@@ -196,6 +197,7 @@ public sealed class GalaxyMapPage : UserControl
         _shipMarks = Marked(StarChartKind.Ships, live => MarkDrawing(GalaxyMapMarkKind.Ships, live));
         _unvisited = Marked(StarChartKind.Unvisited, UnvisitedDrawing);
         _beacons = Marked(StarChartKind.GuardianBeacons, live => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, live));
+        _guardianSites = Marked(StarChartKind.GuardianSites, live => MarkDrawing(GalaxyMapMarkKind.GuardianSite, live));
         _farming = Marked(StarChartKind.FarmingSites, live => MarkDrawing(GalaxyMapMarkKind.FarmingSite, live));
         _missions = Marked(StarChartKind.MissionDestinations, live => MarkDrawing(GalaxyMapMarkKind.Mission, live));
         _firstDiscovered = Marked(StarChartKind.FirstDiscovered, live => MarkDrawing(GalaxyMapMarkKind.FirstDiscovery, live));
@@ -532,6 +534,7 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.Ships, _shipMarks),
         (StarChartKind.Unvisited, _unvisited),
         (StarChartKind.GuardianBeacons, _beacons),
+        (StarChartKind.GuardianSites, _guardianSites),
         (StarChartKind.FarmingSites, _farming),
         (StarChartKind.Exobiology, _exobiology),
         (StarChartKind.MissionDestinations, _missions),
@@ -824,6 +827,16 @@ public sealed class GalaxyMapPage : UserControl
             foreach (var system in StarCharts.Systems(StarChartKind.GuardianBeacons))
             {
                 marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.GuardianBeacon, system.Name, system.At, []));
+            }
+        }
+
+        if (Shows(StarChartKind.GuardianSites))
+        {
+            foreach (var system in GuardianSites.All.GroupBy(site => site.Address))
+            {
+                var first = system.First();
+
+                marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.GuardianSite, first.System, first.At, GuardianSites.Counted(system)));
             }
         }
 
@@ -1204,6 +1217,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.Bookmark => mark.Names.Count == 1 ? "Bookmark" : "Bookmarks",
         GalaxyMapMarkKind.Carrier => "Your carrier",
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
+        GalaxyMapMarkKind.GuardianSite => "Guardian site",
         GalaxyMapMarkKind.FarmingSite => "Farming site",
         GalaxyMapMarkKind.Mission => "Mission",
         GalaxyMapMarkKind.FirstDiscovery => "First discovery",
@@ -1623,6 +1637,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.Bookmark => "Bookmark",
         GalaxyMapMarkKind.Carrier => "Your carrier",
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
+        GalaxyMapMarkKind.GuardianSite => "Guardian site",
         GalaxyMapMarkKind.FarmingSite => "Farming site",
         GalaxyMapMarkKind.Mission => "Mission destination",
         GalaxyMapMarkKind.FirstDiscovery => "First discovery",
@@ -2041,6 +2056,7 @@ public sealed class GalaxyMapPage : UserControl
             GalaxyMapMarkKind.Bookmark => (new (double X, double Y)[] { (-4, -5.5), (4, -5.5), (4, 5.5), (0, 2), (-4, 5.5) }, ThemeManager.CyanKey),
             GalaxyMapMarkKind.Carrier => (new (double X, double Y)[] { (-7, 0), (-2, 0), (-2, -4), (2, -4), (2, 0), (7, 0), (7, 4), (-7, 4) }, ThemeManager.YellowKey),
             GalaxyMapMarkKind.GuardianBeacon => (new (double X, double Y)[] { (0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4) }, ThemeManager.AKey),
+            GalaxyMapMarkKind.GuardianSite => (new (double X, double Y)[] { (0, -7), (3, -4), (3, 2.5), (6, 2.5), (6, 6), (-6, 6), (-6, 2.5), (-3, 2.5), (-3, -4) }, ThemeManager.AKey),
             GalaxyMapMarkKind.FarmingSite => (new (double X, double Y)[] { (0, -5.5), (4.8, -2.75), (4.8, 2.75), (0, 5.5), (-4.8, 2.75), (-4.8, -2.75) }, ThemeManager.AKey),
             GalaxyMapMarkKind.Mission => (new (double X, double Y)[] { (-4.5, -6), (-2.5, -6), (5.5, -2.5), (-2.5, 1), (-2.5, 6), (-4.5, 6) }, ThemeManager.CyanKey),
             GalaxyMapMarkKind.FirstDiscovery => (new (double X, double Y)[] { (0, -6), (1.6, -1.6), (6, 0), (1.6, 1.6), (0, 6), (-1.6, 1.6), (-6, 0), (-1.6, -1.6) }, ThemeManager.BlueKey),
@@ -2077,6 +2093,7 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.Carrier => MarkDrawing(GalaxyMapMarkKind.Carrier, () => true),
         StarChartKind.Ships => MarkDrawing(GalaxyMapMarkKind.Ships, () => true),
         StarChartKind.GuardianBeacons => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, () => true),
+        StarChartKind.GuardianSites => MarkDrawing(GalaxyMapMarkKind.GuardianSite, () => true),
         StarChartKind.FarmingSites => MarkDrawing(GalaxyMapMarkKind.FarmingSite, () => true),
         StarChartKind.MissionDestinations => MarkDrawing(GalaxyMapMarkKind.Mission, () => true),
         StarChartKind.FirstDiscovered => MarkDrawing(GalaxyMapMarkKind.FirstDiscovery, () => true),

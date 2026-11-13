@@ -15,6 +15,7 @@ public enum StarChartKind
     Ships,
     Unvisited,
     GuardianBeacons,
+    GuardianSites,
     FarmingSites,
     Exobiology,
     MissionDestinations,
@@ -60,7 +61,7 @@ public static class StarCharts
         [.. All.Where(kind => !IsFixed(kind) && kind is not (StarChartKind.Exobiology or StarChartKind.MissionDestinations or StarChartKind.FirstDiscovered or StarChartKind.Deaths) && SearchOf(kind) is null)];
 
     /// <summary>Whether <paramref name="kind"/> draws a fixed list of systems that d47 carries.</summary>
-    public static bool IsFixed(StarChartKind kind) => kind is StarChartKind.GuardianBeacons or StarChartKind.FarmingSites;
+    public static bool IsFixed(StarChartKind kind) => kind is StarChartKind.GuardianBeacons or StarChartKind.GuardianSites or StarChartKind.FarmingSites;
 
     /// <summary>The galaxy search whose last answer <paramref name="kind"/> draws, or null for a kind that draws no search.</summary>
     public static GalaxySearchKind? SearchOf(StarChartKind kind) => kind switch
@@ -78,6 +79,7 @@ public static class StarCharts
     public static IReadOnlyList<StarChartSystem> Systems(StarChartKind kind) => kind switch
     {
         StarChartKind.GuardianBeacons => BeaconSystems,
+        StarChartKind.GuardianSites => GuardianSiteSystems,
         StarChartKind.FarmingSites => FarmingSystems,
         _ => [],
     };
@@ -86,6 +88,14 @@ public static class StarCharts
     [
         .. GuardianCores.Beacons
             .Select(pair => new StarChartSystem(pair.Value, pair.Key, GuardianCores.BeaconPositions[pair.Key]))
+            .OrderBy(system => system.Name, StringComparer.Ordinal),
+    ];
+
+    private static readonly IReadOnlyList<StarChartSystem> GuardianSiteSystems =
+    [
+        .. GuardianSites.All
+            .GroupBy(site => site.Address)
+            .Select(group => new StarChartSystem(group.First().System, group.Key, group.First().At))
             .OrderBy(system => system.Name, StringComparer.Ordinal),
     ];
 
@@ -108,6 +118,7 @@ public static class StarCharts
         StarChartKind.Ships => new("Ships", "Ship", StarChartShape.Points, Yours),
         StarChartKind.Unvisited => new("Unvisited", null, StarChartShape.Points, Galaxy),
         StarChartKind.GuardianBeacons => new("Guardian beacons", "Guardian beacon", StarChartShape.Points, Guardian),
+        StarChartKind.GuardianSites => new("Guardian sites", "Guardian site", StarChartShape.Points, Guardian),
         StarChartKind.FarmingSites => new("Farming sites", "Farming site", StarChartShape.Points, Galaxy),
         StarChartKind.Exobiology => new("Exobiology", null, StarChartShape.Area, Galaxy),
         StarChartKind.MissionDestinations => new("Missions", "Mission destination", StarChartShape.Points, Yours),

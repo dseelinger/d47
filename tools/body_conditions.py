@@ -1,4 +1,5 @@
-"""Spansh access and the body-condition fold shared by gen-exobiology.py and gen-geology.py.
+"""Spansh access shared by gen-exobiology.py, gen-geology.py and gen-guardian-sites.py, and the
+body-condition fold the first two share.
 
 The fold mirrors `BodyConditionFold` in src/D47.Core/Knowledge/: spansh's words are folded when a
 table is generated, the journal's when it is looked up.
@@ -43,9 +44,9 @@ def fetch(url: str, payload: dict[str, object] | None = None, agent: str = "d47-
     raise AssertionError("unreachable")
 
 
-def search(name: str, page: int, agent: str = "d47-gen") -> list[dict[str, object]]:
+def search(name: str, page: int, agent: str = "d47-gen", field: str = "landmark_subtype") -> list[dict[str, object]]:
     body = fetch(SEARCH, {
-        "filters": {"landmark_subtype": {"value": [name]}},
+        "filters": {field: {"value": [name]}},
         "sort": [],
         "size": PAGE_SIZE,
         "page": page,

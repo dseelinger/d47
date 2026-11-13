@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The Galaxy map can draw the Guardian sites: the 354 systems with a Guardian ruin or structure on one of their bodies. Add Guardian sites on the Layers picker, under Guardian, or say "show the Guardian sites", "Guardian sites on the map" or "where are the Guardian ruins"; D47 says how many systems it knows and which is nearest you, with the distance, then adds the layer. Each system gets one mark at every zoom, named Guardian site in the legend, and selecting one says how many of its bodies hold ruins and how many a structure. The sites come from a table d47 carries, so it needs no AI and no network, and the Star charts tool takes `guardian_sites`.
+
 Added: The Galaxy map can fill each region by how many exobiology species are known there. Add Exobiology on the Layers picker, or say "show exobiology by region"; D47 names the region with the fewest species and the one with the most, and the count for your region when it knows where you are, then shows the whole galaxy. Each region's ground is one of four steps of the accent colour, from the fewest species d47's exobiology catalogue lists for a region to the most, and the names over the two highest steps are white. The legend reads "Exobiology species known: fewer", the four steps, then "more". With Regions unticked the fill is drawn without borders or names. It needs no AI, and the Star charts tool takes `exobiology`.
 
 Fixed: Asking about codex discoveries in "The Formidine Rift" said D47 did not know the region, because its region map names it "Formidine Rift". A region name now matches with or without a leading "The".
