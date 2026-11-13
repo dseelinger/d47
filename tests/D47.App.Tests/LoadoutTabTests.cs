@@ -102,7 +102,7 @@ public class LoadoutTabTests
     }
 
     private static IReadOnlyList<string> Text(PanelView panel) =>
-        [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
+        [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? block.Inlines?.Text ?? string.Empty)];
 
     private static Control Modal(PanelView panel) =>
         panel.GetControl<Border>("ModalPane");
@@ -937,8 +937,10 @@ public class LoadoutTabTests
         // The sentence, then the grade, then the two arrows — in that order and nothing between.
         var said = Assert.IsAssignableFrom<TextBlock>(order[0]);
 
-        Assert.Contains("Lightweight Mount", said.Text ?? string.Empty, StringComparison.Ordinal);
-        Assert.DoesNotContain("grade 5", said.Text ?? string.Empty, StringComparison.Ordinal);
+        var sentence = said.Text ?? said.Inlines?.Text ?? string.Empty;
+
+        Assert.Contains("Lightweight Mount", sentence, StringComparison.Ordinal);
+        Assert.DoesNotContain("grade 5", sentence, StringComparison.Ordinal);
 
         Assert.Equal("Grade 5", Assert.IsType<TextBlock>(order[1]).Text);
         Assert.Equal("▲", Assert.IsType<Button>(order[2]).Content);

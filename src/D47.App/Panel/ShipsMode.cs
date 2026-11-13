@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.App.Controls;
+using D47.App.Theming;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Checklists;
 using D47.Core.Engineers;
@@ -763,6 +764,9 @@ public sealed class ShipsMode(
             // The plan is carried out, so the second column has nothing left to say.
             Met = planned is not null && !ShipPlanService.Outstanding(planned, module),
 
+            BlueprintApplied = planned is null || AppliedEngineering.Blueprint(planned, module),
+            ExperimentalApplied = planned is null || AppliedEngineering.Experimental(planned, module),
+
             Draw = draw is not null && draw.TryGetValue(slot.Name, out var figure)
                 ? new LoadoutDraw(Megawatts(figure.Megawatts), figure.Kind == FigureKind.Modelled)
                 : null,
@@ -1272,6 +1276,29 @@ public sealed class ShipsMode(
         return lines;
     }
 
+    /// <summary>The plan's module, blueprint and experimental in White, A and Cyan, separated as <see cref="SlotPlan.Describe"/> does.</summary>
+    private static IReadOnlyList<LoadoutRun> PlanRuns(SlotPlan plan, bool withGrade)
+    {
+        var (module, blueprint, experimental) = plan.Parts(withGrade);
+        var runs = new List<LoadoutRun>();
+
+        void Add(string? text, string key)
+        {
+            if (text is null)
+            {
+                return;
+            }
+
+            runs.Add(new LoadoutRun(runs.Count == 0 ? text : $", {text}", key));
+        }
+
+        Add(module, ThemeManager.WhiteKey);
+        Add(blueprint, ThemeManager.AKey);
+        Add(experimental, ThemeManager.CyanKey);
+
+        return runs;
+    }
+
     public IReadOnlyList<LoadoutLine> Planned(string item, string slot)
     {
         if (Resolve(item) is not { } build)
@@ -1296,7 +1323,11 @@ public sealed class ShipsMode(
         {
             // Without the grade where a stepper is going to carry it, and with it where there is no stepper
             // (remediation.md 17, item 11).
-            new(plan.Describe(withGrade: step is null), LoadoutTone.Body) { Step = step },
+            new(plan.Describe(withGrade: step is null), LoadoutTone.Body)
+            {
+                Step = step,
+                Runs = PlanRuns(plan, withGrade: step is null),
+            },
         };
 
         // The planned group, steppable, where the slot still has work left and draws power at all (#253).
@@ -1343,9 +1374,12 @@ public sealed class ShipsMode(
         // trying to read.
         if (special is { Length: > 0 } alsoDoes)
         {
-            lines.Add(new LoadoutLine(
-                rolled is { Length: > 0 } ? $"{plan.Experimental}: {alsoDoes}" : alsoDoes,
-                LoadoutTone.Engineered));
+            var sentence = rolled is { Length: > 0 } ? $"{plan.Experimental}: {alsoDoes}" : alsoDoes;
+
+            lines.Add(new LoadoutLine(sentence, LoadoutTone.Engineered)
+            {
+                Runs = [new LoadoutRun(sentence, ThemeManager.CyanKey)],
+            });
         }
 
         if (!build.IsOwned)

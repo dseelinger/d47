@@ -656,7 +656,7 @@ public static class LoadoutPages
     }
 
     /// <summary>Headings as sections; body and engineered lines as values in A; danger in Red; the rest Grey.</summary>
-    internal static Control Line(LoadoutLine line) => line.Tone switch
+    internal static Control Line(LoadoutLine line) => line.Runs.Count > 0 ? Coloured(line) : line.Tone switch
     {
         LoadoutTone.Heading => Section(line.Text),
         LoadoutTone.Body => Toned(line.Text, ThemeManager.AKey, TypeScale.Body),
@@ -667,6 +667,30 @@ public static class LoadoutPages
         LoadoutTone.Warn => Toned(line.Text, ThemeManager.AKey),
         _ => Muted(line.Text),
     };
+
+    /// <summary>A line drawn as one run per part, each in its own ink; the size follows the line's tone.</summary>
+    private static TextBlock Coloured(LoadoutLine line)
+    {
+        var block = new SelectableTextBlock
+        {
+            FontSize = line.Tone == LoadoutTone.Body ? TypeScale.Body : TypeScale.Secondary,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        var inlines = new InlineCollection();
+
+        foreach (var part in line.Runs)
+        {
+            var run = new Run(part.Text);
+
+            ThemeInk.Bind(run, Run.ForegroundProperty, part.InkKey);
+            inlines.Add(run);
+        }
+
+        block.Inlines = inlines;
+
+        return block;
+    }
 
     /// <summary>
     /// Lines in order, with each run of lines that carry figures laid as one grid of stat tiles and the
@@ -1035,7 +1059,7 @@ public static class LoadoutPages
         var current = Cell(parts.Current, parts.Vacant, row.Engineered, bold: true);
 
 
-        var plan = Planned(parts);
+        var plan = Planned(parts, showing);
 
 
         var draw = DrawCell(parts.Draw);
@@ -1064,7 +1088,7 @@ public static class LoadoutPages
     /// The plan column: a tick where the hull already matches, the roll alone where only the module
     /// does, and nothing at all where there is no plan.
     /// </summary>
-    private static Control Planned(LoadoutParts parts)
+    private static Control Planned(LoadoutParts parts, bool showing)
     {
         if (parts.Plan is not { } plan)
         {
@@ -1086,16 +1110,28 @@ public static class LoadoutPages
             return tick;
         }
 
-        // Where the module is already the right one, the plan is about the roll and says only that: "7A Power
-        // Dist." twice over is the noise this change exists to remove.
-        var agreed = plan.Module is { Length: > 0 } wanted
-                     && string.Equals(wanted, parts.Current.Module, StringComparison.Ordinal);
+        // Only what is still to change is drawn.
+        var moduleDue = plan.Module is { Length: > 0 } wanted
+                        && !string.Equals(wanted, parts.Current.Module, StringComparison.Ordinal);
+        var blueprintDue = plan.Blueprint is { Length: > 0 } && (moduleDue || !parts.BlueprintApplied);
+        var experimentalDue = plan.Experimental is { Length: > 0 } && (moduleDue || !parts.ExperimentalApplied);
+
+        var due = plan with
+        {
+            Module = moduleDue ? plan.Module : null,
+            Long = moduleDue ? plan.Long : null,
+            Blueprint = blueprintDue ? plan.Blueprint : null,
+            Grade = blueprintDue ? plan.Grade : null,
+            Experimental = experimentalDue ? plan.Experimental : null,
+            Effects = blueprintDue ? plan.Effects : [],
+        };
 
         return Cell(
-            agreed ? plan with { Module = null, Long = null } : plan,
+            due,
             string.Empty,
             gear: false,
-            bold: false);
+            bold: false,
+            showing ? null : new PlanInks(ThemeManager.WhiteKey, ThemeManager.AKey, ThemeManager.CyanKey));
     }
 
     /// <summary>
@@ -1130,7 +1166,7 @@ public static class LoadoutPages
     /// <param name="bold">
     /// Whether the module leads in bold, which the hull's side does and a plan does not.
     /// </param>
-    private static Control Cell(LoadoutSide side, string vacant, bool gear, bool bold)
+    private static Control Cell(LoadoutSide side, string vacant, bool gear, bool bold, PlanInks? inks = null)
     {
         var cell = new TextBlock
         {
@@ -1155,6 +1191,11 @@ public static class LoadoutPages
             cell.Text = vacant;
 
             return cell;
+        }
+
+        if (inks is not null)
+        {
+            return Coloured(cell, side, inks);
         }
 
         var head = Rolled(side);
@@ -1212,6 +1253,95 @@ public static class LoadoutPages
             cell.Inlines = inlines;
         }
 
+        Hover(cell, side);
+
+        return cell;
+    }
+
+    /// <summary>The theme brush keys of the three parts of a plan cell.</summary>
+    private sealed record PlanInks(string Module, string Blueprint, string Experimental);
+
+    /// <summary>
+    /// A plan cell with one run per part, each in its own ink, separated by " · "; the effects run, where
+    /// there is one, stays in the row's secondary ink.
+    /// </summary>
+    private static Control Coloured(TextBlock cell, LoadoutSide side, PlanInks inks)
+    {
+        var module = side.Module ?? string.Empty;
+        var head = Rolled(side);
+        var blueprint = side.Blueprint is { Length: > 0 } rolled
+            ? side.Grade is { } grade and > 0 ? $"{rolled} G{grade.ToString(CultureInfo.InvariantCulture)}" : rolled
+            : string.Empty;
+        var experimental = side.Experimental ?? string.Empty;
+
+        TableGrid.SetNaturalWidth(cell, NaturalWidth(cell, module, head, side.Effects, false));
+
+        var parts = new List<(string Text, string Ink, double Size)>();
+
+        if (module.Length > 0)
+        {
+            parts.Add((module, inks.Module, TypeScale.Body));
+        }
+
+        if (blueprint.Length > 0)
+        {
+            parts.Add((blueprint, inks.Blueprint, TypeScale.Secondary));
+        }
+
+        if (experimental.Length > 0)
+        {
+            parts.Add((experimental, inks.Experimental, TypeScale.Secondary));
+        }
+
+        if (parts.Count == 1 && side.Effects.Count == 0 && !side.Gated)
+        {
+            cell.Text = parts[0].Text;
+            cell.FontSize = parts[0].Size;
+            ThemeInk.Bind(cell, TextBlock.ForegroundProperty, parts[0].Ink);
+            Hover(cell, side);
+
+            return cell;
+        }
+
+        var inlines = new InlineCollection();
+
+        foreach (var (text, ink, size) in parts)
+        {
+            if (inlines.Count > 0)
+            {
+                inlines.Add(Secondary(new Run(" · ") { FontSize = TypeScale.Secondary }, cell));
+            }
+
+            var run = new Run(text) { FontSize = size };
+
+            ThemeInk.Bind(run, Run.ForegroundProperty, ink);
+            inlines.Add(run);
+
+            if (ink == inks.Module && side.Gated)
+            {
+                inlines.Add(Coin());
+            }
+        }
+
+        if (side.Effects.Count > 0)
+        {
+            var tail = Secondary(new Run { FontSize = TypeScale.Secondary }, cell);
+
+            inlines.Add(tail);
+
+            void Fit()
+            {
+                var said = Fitted(cell, module, head, side.Effects, false);
+                var rest = said.Length > head.Length ? said[head.Length..] : string.Empty;
+
+                tail.Text = head.Length == 0 && parts.Count > 0 && rest.Length > 0 ? $" · {rest}" : rest;
+            }
+
+            cell.SizeChanged += (_, _) => Fit();
+            Fit();
+        }
+
+        cell.Inlines = inlines;
         Hover(cell, side);
 
         return cell;

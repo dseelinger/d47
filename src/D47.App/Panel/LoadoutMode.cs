@@ -62,6 +62,9 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
     /// <summary>The grade this line's plan is at, where the line carries one that can be stepped.</summary>
     public LoadoutStep? Step { get; init; }
 
+    /// <summary>The line drawn as coloured runs in place of <see cref="Text"/>, which stays the whole sentence.</summary>
+    public IReadOnlyList<LoadoutRun> Runs { get; init; } = [];
+
     /// <summary>
     /// One value on this line the Commander can take away with them, where the line carries one.
     /// </summary>
@@ -70,6 +73,9 @@ public sealed record LoadoutLine(string Text, LoadoutTone Tone = LoadoutTone.Mut
     /// <summary>The line's figures, drawn as stat tiles in place of <see cref="Text"/> where there are any.</summary>
     public IReadOnlyList<LoadoutStat> Stats { get; init; } = [];
 }
+
+/// <summary>One part of a line and the theme brush key it is drawn in.</summary>
+public sealed record LoadoutRun(string Text, string InkKey);
 
 /// <summary>One read-only figure on a line, drawn as a stat tile.</summary>
 public sealed record LoadoutStat(string Label, string Value, D47.App.Controls.StatInk Ink = D47.App.Controls.StatInk.Number);
@@ -263,6 +269,12 @@ public sealed record LoadoutParts(
     /// and stops.
     /// </summary>
     public bool Met { get; init; }
+
+    /// <summary>Whether the fitted module has the planned blueprint at the planned grade or higher; true where none is planned.</summary>
+    public bool BlueprintApplied { get; init; } = true;
+
+    /// <summary>Whether the fitted module has the planned experimental; true where none is planned.</summary>
+    public bool ExperimentalApplied { get; init; } = true;
 
     /// <summary>What this slot draws in its planned configuration, or null where nothing is drawn (#252).</summary>
     public LoadoutDraw? Draw { get; init; }

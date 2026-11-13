@@ -55,41 +55,40 @@ public sealed record SlotPlan(
     /// </param>
     public string Describe(bool withGrade = true)
     {
-        var parts = new List<string>();
+        var (module, blueprint, experimental) = Parts(withGrade);
+        var parts = new[] { module, blueprint, experimental }.OfType<string>().ToList();
+
+        return parts.Count == 0 ? "nothing planned" : string.Join(", ", parts);
+    }
+
+    /// <summary>The module, blueprint and experimental as <see cref="Describe"/> words them; null for a part the plan lacks.</summary>
+    public (string? Module, string? Blueprint, string? Experimental) Parts(bool withGrade = true)
+    {
+        string? module = null;
 
         if (Variant is { Length: > 0 } variant
             && Knowledge.EliteSpecifications.ModuleName(variant) is { Length: > 0 } exact)
         {
-            parts.Add(exact);
+            module = exact;
         }
-        else if (Module is { Length: > 0 } module)
+        else if (Module is { Length: > 0 } named)
         {
-            parts.Add(module);
+            module = named;
         }
 
-        if (Blueprint is { Length: > 0 } blueprint)
+        string? blueprint = null;
+
+        if (Blueprint is { Length: > 0 } rolled)
         {
-            // **The grade is not printed where the blueprint has only one** (remediation.md 15, item 4):
-            // "grade 1 Ammo Capacity" on a Point Defence says the same thing as "Ammo Capacity" and takes
-            // longer.
-            parts.Add(withGrade
-                      && Grade > 0
-                      && !Knowledge.BlueprintCatalogue.HasOneGrade(blueprint, Module)
-                ? $"grade {Grade.ToString(CultureInfo.InvariantCulture)} {blueprint}"
-                : blueprint);
+            // The grade is not printed where the blueprint has only one grade.
+            blueprint = withGrade
+                        && Grade > 0
+                        && !Knowledge.BlueprintCatalogue.HasOneGrade(rolled, Module)
+                ? $"grade {Grade.ToString(CultureInfo.InvariantCulture)} {rolled}"
+                : rolled;
         }
 
-        if (Experimental is { Length: > 0 } effect)
-        {
-            parts.Add(effect);
-        }
-
-        if (parts.Count == 0)
-        {
-            return "nothing planned";
-        }
-
-        return string.Join(", ", parts);
+        return (module, blueprint, Experimental is { Length: > 0 } effect ? effect : null);
     }
 }
 
