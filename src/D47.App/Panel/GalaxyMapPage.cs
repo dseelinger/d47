@@ -1948,7 +1948,7 @@ public sealed class GalaxyMapPage : UserControl
             GalaxyMapMarkKind.Carrier => (new (double X, double Y)[] { (-7, 0), (-2, 0), (-2, -4), (2, -4), (2, 0), (7, 0), (7, 4), (-7, 4) }, ThemeManager.YellowKey),
             GalaxyMapMarkKind.GuardianBeacon => (new (double X, double Y)[] { (0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4) }, ThemeManager.AKey),
             GalaxyMapMarkKind.FarmingSite => (new (double X, double Y)[] { (0, -5.5), (4.8, -2.75), (4.8, 2.75), (0, 5.5), (-4.8, 2.75), (-4.8, -2.75) }, ThemeManager.AKey),
-            GalaxyMapMarkKind.Mission => (new (double X, double Y)[] { (0, -6.5), (6.5, 0), (0, 6.5), (-6.5, 0) }, ThemeManager.BlueKey),
+            GalaxyMapMarkKind.Mission => (new (double X, double Y)[] { (-4.5, -6), (-2.5, -6), (5.5, -2.5), (-2.5, 1), (-2.5, 6), (-4.5, 6) }, ThemeManager.CyanKey),
             _ => (new (double X, double Y)[] { (0, -6), (5.5, 5), (0, 2), (-5.5, 5) }, ThemeManager.YellowKey),
         };
 
