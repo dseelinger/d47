@@ -204,6 +204,12 @@ public sealed class Phonemiser(
     /// <summary>One dash-delimited segment, down the ladder in order.</summary>
     private (string Ipa, Reading Reading) Segment(string segment, SpeechAccent accent)
     {
+        // 0b.
+        if (segment == SpokenRatingA.Form)
+        {
+            return Fell(segment, PhonemeRung.Dictionary, "ˈeɪ", Reading.Spoken);
+        }
+
         // 1.
         if (segment.All(char.IsLetter) && Known(segment) is { Length: > 0 } known)
         {

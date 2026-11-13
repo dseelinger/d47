@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A capital A inside a sentence, such as the module rating in "not on A Shield Booster" or "five A Thrusters", is said as the letter on every voice instead of as the article. A sentence's first word and a lowercase a are unchanged, and the caption and panel still show "A".
+
 Changed: On the desktop window, with the 400-pixel side column showing, a ship, suit or weapon page's To buy, plan and slot table run the full width of the pane under both columns, instead of sitting beside an empty strip once the picture has scrolled away.
 
 Added: While a drill strip's leftmost pane is hidden, pressing the breadcrumb for that level shows the pane again at its remembered width, and the trail does not change. This works on the desktop window and the VR big panel; the edge handle and the ray's edge rule still work.
