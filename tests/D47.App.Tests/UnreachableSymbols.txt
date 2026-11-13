@@ -124,6 +124,7 @@ D47.Core.Journal.BiologyBodies.All
 D47.Core.Journal.BiologyBodies.For(long, int)
 D47.Core.Journal.ColonisationBackfill.FromHistory(D47.Core.Storage.IFileSystem, string, Microsoft.Extensions.Logging.ILogger, System.Threading.CancellationToken)
 D47.Core.Journal.CommodityLedger.Changed
+D47.Core.Journal.StarClasses.FromSubtype(string)
 D47.Core.Journal.TechBrokerUnlocks.NotKnownToBeUnlocked(string)
 D47.Core.Knowledge.CodexVariants.Of(string)
 D47.Core.Knowledge.CommodityBoard.Posted

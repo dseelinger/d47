@@ -62,6 +62,57 @@ public static class StarClasses
         return null;
     }
 
+    private static readonly Dictionary<string, string> BySubtype = new(StringComparer.Ordinal)
+    {
+        ["O (Blue-White) Star"] = "O",
+        ["B (Blue-White) Star"] = "B",
+        ["B (Blue-White super giant) Star"] = "B_BlueWhiteSuperGiant",
+        ["A (Blue-White) Star"] = "A",
+        ["A (Blue-White super giant) Star"] = "A_BlueWhiteSuperGiant",
+        ["F (White) Star"] = "F",
+        ["F (White super giant) Star"] = "F_WhiteSuperGiant",
+        ["G (White-Yellow) Star"] = "G",
+        ["G (White-Yellow super giant) Star"] = "G_WhiteSuperGiant",
+        ["K (Yellow-Orange) Star"] = "K",
+        ["K (Yellow-Orange giant) Star"] = "K_OrangeGiant",
+        ["M (Red dwarf) Star"] = "M",
+        ["M (Red giant) Star"] = "M_RedGiant",
+        ["M (Red super giant) Star"] = "M_RedSuperGiant",
+        ["L (Brown dwarf) Star"] = "L",
+        ["T (Brown dwarf) Star"] = "T",
+        ["Y (Brown dwarf) Star"] = "Y",
+        ["Herbig Ae/Be Star"] = "AeBe",
+        ["T Tauri Star"] = "TTS",
+        ["S-type Star"] = "S",
+        ["MS-type Star"] = "MS",
+        ["C Star"] = "C",
+        ["CN Star"] = "CN",
+        ["CJ Star"] = "CJ",
+        ["Wolf-Rayet Star"] = "W",
+        ["Wolf-Rayet N Star"] = "WN",
+        ["Wolf-Rayet NC Star"] = "WNC",
+        ["Wolf-Rayet C Star"] = "WC",
+        ["Wolf-Rayet O Star"] = "WO",
+        ["Neutron Star"] = "N",
+        ["Black Hole"] = "H",
+        ["Supermassive Black Hole"] = "SupermassiveBlackHole",
+        ["White Dwarf (D) Star"] = "D",
+        ["White Dwarf (DA) Star"] = "DA",
+        ["White Dwarf (DAB) Star"] = "DAB",
+        ["White Dwarf (DAV) Star"] = "DAV",
+        ["White Dwarf (DAZ) Star"] = "DAZ",
+        ["White Dwarf (DB) Star"] = "DB",
+        ["White Dwarf (DBV) Star"] = "DBV",
+        ["White Dwarf (DBZ) Star"] = "DBZ",
+        ["White Dwarf (DC) Star"] = "DC",
+        ["White Dwarf (DCV) Star"] = "DCV",
+        ["White Dwarf (DQ) Star"] = "DQ",
+    };
+
+    /// <summary>The journal class code for a Spansh star subtype; null for a planet, null or unknown subtype.</summary>
+    public static string? FromSubtype(string? subtype) =>
+        subtype is not null && BySubtype.TryGetValue(subtype.Trim(), out var code) ? code : null;
+
     /// <summary>A neutron star.</summary>
     public static bool IsNeutron(string? starClass) =>
         string.Equals(starClass?.Trim(), "N", StringComparison.OrdinalIgnoreCase);
