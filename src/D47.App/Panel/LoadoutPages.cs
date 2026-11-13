@@ -1201,7 +1201,7 @@ public static class LoadoutPages
         var head = Rolled(side);
         var module = side.Module ?? string.Empty;
 
-        TableGrid.SetNaturalWidth(cell, NaturalWidth(cell, module, head, side.Effects, bold));
+        Natural(cell, module, head, side.Effects, bold, gear, side.Gated);
 
         // **`Text` where one run would do.** A `TextBlock` carrying `Inlines` reports no `Text` at all, so a
         // cell drawn as inlines is invisible to anything reading the panel by text — which is how the tests
@@ -1274,7 +1274,7 @@ public static class LoadoutPages
             : string.Empty;
         var experimental = side.Experimental ?? string.Empty;
 
-        TableGrid.SetNaturalWidth(cell, NaturalWidth(cell, module, head, side.Effects, false));
+        Natural(cell, module, head, side.Effects, false, gear: false, side.Gated);
 
         var parts = new List<(string Text, string Ink, double Size)>();
 
@@ -1444,16 +1444,49 @@ public static class LoadoutPages
         return head;
     }
 
-    /// <summary>The cell's width with every effect showing, whatever <see cref="Trailing"/> has cut it to.</summary>
-    private static double NaturalWidth(TextBlock cell, string module, string head, IReadOnlyList<string> effects, bool bold)
+    /// <summary>
+    /// Supplies the cell's natural width in the font it is drawn in, which it inherits only once it is in
+    /// the tree, and again whenever that font changes.
+    /// </summary>
+    private static void Natural(
+        TextBlock cell, string module, string head, IReadOnlyList<string> effects, bool bold, bool gear, bool gated)
+    {
+        void Supply() => TableGrid.SetNaturalWidth(cell, NaturalWidth(cell, module, head, effects, bold, gear, gated));
+
+        cell.PropertyChanged += (_, change) =>
+        {
+            if (change.Property == TextBlock.FontFamilyProperty)
+            {
+                Supply();
+            }
+        };
+
+        Supply();
+    }
+
+    /// <summary>
+    /// The cell's width with every effect showing, whatever <see cref="Trailing"/> has cut it to, rounded up
+    /// as layout rounds a desired size.
+    /// </summary>
+    private static double NaturalWidth(
+        TextBlock cell, string module, string head, IReadOnlyList<string> effects, bool bold, bool gear, bool gated)
     {
         var tail = effects.Count == 0
             ? head
             : head.Length > 0 ? $"{head} · {string.Join(", ", effects)}" : string.Join(", ", effects);
         var lead = Wide(module, cell.FontFamily, TypeScale.Body, bold);
-        var rest = Wide(tail, cell.FontFamily, TypeScale.Secondary, false);
+        // The gear and the coin follow the module, and are drawn only with one.
+        var marks = module.Length == 0
+            ? 0
+            : (gear ? Wide(" ⚙", cell.FontFamily, TypeScale.Body, false) : 0)
+              + (gated ? Wide($" {ShipsMode.Coin}", cell.FontFamily, TypeScale.Body, false) : 0);
+        var rest = Wide(
+            module.Length > 0 && tail.Length > 0 ? $" · {tail}" : tail,
+            cell.FontFamily,
+            TypeScale.Secondary,
+            false);
 
-        return lead + (module.Length > 0 && tail.Length > 0 ? 12 : 0) + rest + cell.Margin.Right;
+        return Math.Ceiling(lead + marks + rest + cell.Margin.Right);
     }
 
     private static double Wide(string said, FontFamily family, double size, bool bold) =>
