@@ -70,9 +70,9 @@ public class TheGalaxyMapsLayersAreChosenOnAPickerTests
         Assert.Contains("YOURS", words);
         Assert.Contains("GALAXY", words);
         Assert.Contains("GUARDIAN", words);
-        Assert.Equal(9, boxes.Count);
-        Assert.All(boxes, box => Assert.Equal(AutomationProperties.GetName(box) != "Guardian beacons", box.IsChecked));
-        Assert.Equal(9, picker.GetVisualDescendants().OfType<Glyph>().Count());
+        Assert.Equal(10, boxes.Count);
+        Assert.All(boxes, box => Assert.Equal(AutomationProperties.GetName(box) is not ("Guardian beacons" or "Farming sites"), box.IsChecked));
+        Assert.Equal(10, picker.GetVisualDescendants().OfType<Glyph>().Count());
         Assert.False(picker.GetControl<Button>("DefaultButton").IsVisible);
     }
 
@@ -151,6 +151,6 @@ public class TheGalaxyMapsLayersAreChosenOnAPickerTests
 
         Assert.True(Tap(surface, panel, LayersTile(page)));
         var picker = panel.GetVisualDescendants().OfType<PickerPage>().Single();
-        Assert.Equal(9, picker.GetVisualDescendants().OfType<CheckBox>().Count());
+        Assert.Equal(10, picker.GetVisualDescendants().OfType<CheckBox>().Count());
     }
 }

@@ -85,6 +85,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _shipMarks;
     private readonly CheckBox _unvisited;
     private readonly CheckBox _beacons;
+    private readonly CheckBox _farming;
     private readonly Button _layersTile = Press(string.Empty, SwitchRail);
     private readonly StackPanel _rail = new() { Spacing = 2 };
     private int _railPage;
@@ -180,6 +181,7 @@ public sealed class GalaxyMapPage : UserControl
         _shipMarks = Marked(StarChartKind.Ships, live => MarkDrawing(GalaxyMapMarkKind.Ships, live));
         _unvisited = Marked(StarChartKind.Unvisited, UnvisitedDrawing);
         _beacons = Marked(StarChartKind.GuardianBeacons, live => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, live));
+        _farming = Marked(StarChartKind.FarmingSites, live => MarkDrawing(GalaxyMapMarkKind.FarmingSite, live));
 
         _unvisitedWanted = _layers.Ticked(StarChartKind.Unvisited);
         _range.SelectedIndex = _layers.Range;
@@ -490,6 +492,7 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.Ships, _shipMarks),
         (StarChartKind.Unvisited, _unvisited),
         (StarChartKind.GuardianBeacons, _beacons),
+        (StarChartKind.FarmingSites, _farming),
     ];
 
     /// <summary>Whether <paramref name="kind"/> is on the map and its switch is ticked.</summary>
@@ -741,6 +744,16 @@ public sealed class GalaxyMapPage : UserControl
             }
         }
 
+        if (Shows(StarChartKind.FarmingSites))
+        {
+            foreach (var system in StarCharts.Systems(StarChartKind.FarmingSites))
+            {
+                var sites = FarmingSites.All.Where(site => string.Equals(site.System, system.Name, StringComparison.OrdinalIgnoreCase));
+
+                marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.FarmingSite, system.Name, system.At, [.. sites.Select(site => site.Label)]));
+            }
+        }
+
         if (Shows(StarChartKind.Bookmarks) && _bookmarks is not null && fid.Length > 0)
         {
             foreach (var system in _bookmarks.For(fid).GroupBy(bookmark => bookmark.System, StringComparer.OrdinalIgnoreCase))
@@ -985,12 +998,19 @@ public sealed class GalaxyMapPage : UserControl
         _mark?.InvalidateVisual();
     }
 
-    /// <summary>The strip's second line: what is marked in the selected system, a kind each, in mark order.</summary>
+    /// <summary>The strip's second line: what is marked in the selected system, a kind each, in mark order; a farming site each.</summary>
     private void Kinds(GalaxyMapStar star)
     {
         _stripKinds.Children.Clear();
 
-        foreach (var mark in _placed.Where(mark => string.Equals(mark.System, star.Name, StringComparison.OrdinalIgnoreCase)).OrderBy(mark => mark.Kind))
+        var rows = _placed
+            .Where(mark => string.Equals(mark.System, star.Name, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(mark => mark.Kind)
+            .SelectMany(mark => mark.Kind == GalaxyMapMarkKind.FarmingSite
+                ? mark.Names.Select(name => mark with { Names = [name] })
+                : [mark]);
+
+        foreach (var mark in rows)
         {
             var label = RoutingKit.Tag(KindWord(mark), ThemeManager.GreyKey);
             label.FontSize = TypeScale.MetaSmall;
@@ -1017,6 +1037,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.Bookmark => mark.Names.Count == 1 ? "Bookmark" : "Bookmarks",
         GalaxyMapMarkKind.Carrier => "Your carrier",
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
+        GalaxyMapMarkKind.FarmingSite => "Farming site",
         _ => mark.Names.Count == 1 ? "Stored ship" : "Stored ships",
     };
 
@@ -1350,6 +1371,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.Bookmark => "Bookmark",
         GalaxyMapMarkKind.Carrier => "Your carrier",
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
+        GalaxyMapMarkKind.FarmingSite => "Farming site",
         _ => "Stored ship",
     };
 
@@ -1734,6 +1756,7 @@ public sealed class GalaxyMapPage : UserControl
             GalaxyMapMarkKind.Bookmark => (new (double X, double Y)[] { (-4, -5.5), (4, -5.5), (4, 5.5), (0, 2), (-4, 5.5) }, ThemeManager.CyanKey),
             GalaxyMapMarkKind.Carrier => (new (double X, double Y)[] { (-7, 0), (-2, 0), (-2, -4), (2, -4), (2, 0), (7, 0), (7, 4), (-7, 4) }, ThemeManager.YellowKey),
             GalaxyMapMarkKind.GuardianBeacon => (new (double X, double Y)[] { (0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4) }, ThemeManager.AKey),
+            GalaxyMapMarkKind.FarmingSite => (new (double X, double Y)[] { (0, -5.5), (4.8, -2.75), (4.8, 2.75), (0, 5.5), (-4.8, 2.75), (-4.8, -2.75) }, ThemeManager.AKey),
             _ => (new (double X, double Y)[] { (0, -6), (5.5, 5), (0, 2), (-5.5, 5) }, ThemeManager.YellowKey),
         };
 
@@ -1765,6 +1788,7 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.Carrier => MarkDrawing(GalaxyMapMarkKind.Carrier, () => true),
         StarChartKind.Ships => MarkDrawing(GalaxyMapMarkKind.Ships, () => true),
         StarChartKind.GuardianBeacons => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, () => true),
+        StarChartKind.FarmingSites => MarkDrawing(GalaxyMapMarkKind.FarmingSite, () => true),
         _ => UnvisitedDrawing(() => true),
     };
 

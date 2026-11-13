@@ -24,6 +24,10 @@ public sealed record FarmingSite(
     bool JumpRangeWarning,
     bool IsAlternate = false)
 {
+    /// <summary>The material, the method and the body, as the Galaxy map's strip lists a site.</summary>
+    public string Label =>
+        $"{MaterialCatalogue.Find(MaterialSymbol)?.Name ?? MaterialSymbol} by {Method} on {Body}";
+
     public string Coordinates =>
         Latitude is { } lat && Longitude is { } lon
             ? $"{lat.ToString("0.####", CultureInfo.InvariantCulture)}, {lon.ToString("0.####", CultureInfo.InvariantCulture)}"

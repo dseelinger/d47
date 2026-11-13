@@ -15,6 +15,7 @@ public enum StarChartKind
     Ships,
     Unvisited,
     GuardianBeacons,
+    FarmingSites,
 }
 
 /// <summary>How a chart is drawn on the map.</summary>
@@ -29,7 +30,7 @@ public enum StarChartShape
 public sealed record StarChartInfo(string Title, string? Mark, StarChartShape Shape, string Group);
 
 /// <summary>One system a fixed chart draws.</summary>
-public sealed record StarChartSystem(string Name, long Address, StarPosition At);
+public sealed record StarChartSystem(string Name, long? Address, StarPosition At);
 
 public static class StarCharts
 {
@@ -44,12 +45,13 @@ public static class StarCharts
     public static IReadOnlyList<StarChartKind> Default { get; } = [.. All.Where(kind => !IsFixed(kind))];
 
     /// <summary>Whether <paramref name="kind"/> draws a fixed list of systems that d47 carries.</summary>
-    public static bool IsFixed(StarChartKind kind) => kind == StarChartKind.GuardianBeacons;
+    public static bool IsFixed(StarChartKind kind) => kind is StarChartKind.GuardianBeacons or StarChartKind.FarmingSites;
 
     /// <summary>The systems a fixed kind draws, by name; empty for any other kind.</summary>
     public static IReadOnlyList<StarChartSystem> Systems(StarChartKind kind) => kind switch
     {
         StarChartKind.GuardianBeacons => BeaconSystems,
+        StarChartKind.FarmingSites => FarmingSystems,
         _ => [],
     };
 
@@ -57,6 +59,14 @@ public static class StarCharts
     [
         .. GuardianCores.Beacons
             .Select(pair => new StarChartSystem(pair.Value, pair.Key, GuardianCores.BeaconPositions[pair.Key]))
+            .OrderBy(system => system.Name, StringComparer.Ordinal),
+    ];
+
+    private static readonly IReadOnlyList<StarChartSystem> FarmingSystems =
+    [
+        .. FarmingSites.All
+            .GroupBy(site => site.System, StringComparer.OrdinalIgnoreCase)
+            .Select(group => new StarChartSystem(group.Key, null, group.First().Position))
             .OrderBy(system => system.Name, StringComparer.Ordinal),
     ];
 
@@ -71,6 +81,7 @@ public static class StarCharts
         StarChartKind.Ships => new("Ships", "Ship", StarChartShape.Points, Yours),
         StarChartKind.Unvisited => new("Unvisited", null, StarChartShape.Points, Galaxy),
         StarChartKind.GuardianBeacons => new("Guardian beacons", "Guardian beacon", StarChartShape.Points, Guardian),
+        StarChartKind.FarmingSites => new("Farming sites", "Farming site", StarChartShape.Points, Galaxy),
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
     };
 }

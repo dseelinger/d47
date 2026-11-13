@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The Galaxy map can draw the material farming sites. Add Farming sites on the Layers picker, or say "show the farming sites" or "material farming sites on the map"; D47 says how many sites it knows and which system is nearest, then adds the layer. Each system with a site gets a hexagon mark at every zoom, named Farming site in the legend, and selecting one lists each site there with its material, method and body. It needs no AI, and the Star charts tool takes `farming_sites`.
+
 Added: Say "show me all known Guardian beacons", "show the Guardian beacons", "where are the Guardian beacons" or "Guardian beacons on the map" and D47 says how many beacon systems it knows and which is nearest you, with the distance, then adds the Guardian beacons layer to the Galaxy map in the window and on the headset big panel. It needs no AI. With no known position it gives the count only. The model can do the same through a new Star charts capability.
 
 Added: The Galaxy map has a Guardian beacons layer, listed under Guardian in the Layers picker, marking each of the 28 known Guardian beacon systems at every zoom. A request for the Guardian beacons opens Astrometrics › Galaxy map in the window and on the big panel, adds the layer ticked, leaves the other layers as they were, and fits the view to the beacons at the current heading and tilt. With nine layers on the map the rail turns to the page that holds the new one. A beacon system can be selected; the strip names it a Guardian beacon, and Centre here and Bookmark work on it. The layer is off a map until it is asked for or put on in the picker. The Layers picker now wraps a long layer name onto a second line.

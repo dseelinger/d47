@@ -22,7 +22,7 @@ public class EveryStarChartHasATitleAndAShapeTests
     public void TheKindsAreListedInSwitchOrder()
     {
         Assert.Equal(
-            ["Travels", "Route", "Regions", "Engineers", "Bookmarks", "Carrier", "Ships", "Unvisited", "Guardian beacons"],
+            ["Travels", "Route", "Regions", "Engineers", "Bookmarks", "Carrier", "Ships", "Unvisited", "Guardian beacons", "Farming sites"],
             StarCharts.All.Select(kind => StarCharts.Info(kind).Title));
     }
 
@@ -44,6 +44,7 @@ public class EveryStarChartHasATitleAndAShapeTests
         Assert.Equal("Fleet carrier", StarCharts.Info(StarChartKind.Carrier).Mark);
         Assert.Equal("Ship", StarCharts.Info(StarChartKind.Ships).Mark);
         Assert.Equal("Guardian beacon", StarCharts.Info(StarChartKind.GuardianBeacons).Mark);
+        Assert.Equal("Farming site", StarCharts.Info(StarChartKind.FarmingSites).Mark);
         Assert.All(
             new[] { StarChartKind.Travels, StarChartKind.Route, StarChartKind.Regions, StarChartKind.Unvisited },
             kind => Assert.Null(StarCharts.Info(kind).Mark));
@@ -56,7 +57,7 @@ public class EveryStarChartHasATitleAndAShapeTests
             [StarChartKind.Travels, StarChartKind.Route, StarChartKind.Bookmarks, StarChartKind.Carrier, StarChartKind.Ships],
             StarCharts.All.Where(kind => StarCharts.Info(kind).Group == StarCharts.Yours));
         Assert.Equal(
-            [StarChartKind.Regions, StarChartKind.Engineers, StarChartKind.Unvisited],
+            [StarChartKind.Regions, StarChartKind.Engineers, StarChartKind.Unvisited, StarChartKind.FarmingSites],
             StarCharts.All.Where(kind => StarCharts.Info(kind).Group == StarCharts.Galaxy));
         Assert.Equal(
             [StarChartKind.GuardianBeacons],
@@ -64,10 +65,10 @@ public class EveryStarChartHasATitleAndAShapeTests
     }
 
     [Fact]
-    public void GuardianBeaconsIsTheOnlyFixedChartAndIsOffAMapWithNothingSaved()
+    public void TheFixedChartsAreOffAMapWithNothingSaved()
     {
-        Assert.Equal([StarChartKind.GuardianBeacons], StarCharts.All.Where(StarCharts.IsFixed));
-        Assert.Equal(StarCharts.All.Where(kind => kind != StarChartKind.GuardianBeacons), StarCharts.Default);
+        Assert.Equal([StarChartKind.GuardianBeacons, StarChartKind.FarmingSites], StarCharts.All.Where(StarCharts.IsFixed));
+        Assert.Equal(StarCharts.All.Where(kind => !StarCharts.IsFixed(kind)), StarCharts.Default);
     }
 
     [Fact]
@@ -78,9 +79,30 @@ public class EveryStarChartHasATitleAndAShapeTests
         Assert.Equal(28, systems.Count);
         Assert.All(systems, system =>
         {
-            Assert.Equal(GuardianCores.Beacons[system.Address], system.Name);
-            Assert.Equal(GuardianCores.BeaconPositions[system.Address], system.At);
+            Assert.Equal(GuardianCores.Beacons[system.Address!.Value], system.Name);
+            Assert.Equal(GuardianCores.BeaconPositions[system.Address!.Value], system.At);
         });
+    }
+
+    [Fact]
+    public void TheFarmingSitesChartIsOneSystemForEachSystemInTheFarmingTable()
+    {
+        var systems = StarCharts.Systems(StarChartKind.FarmingSites);
+        var expected = FarmingSites.All.Select(site => site.System).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+        Assert.NotEmpty(systems);
+        Assert.Equal(expected.Count, systems.Count);
+        Assert.Equal(expected.Order(StringComparer.Ordinal), systems.Select(system => system.Name));
+        Assert.All(systems, system => Assert.Equal(FarmingSites.All.First(site => site.System == system.Name).Position, system.At));
+        Assert.Contains(FarmingSites.All, site => site.IsAlternate && systems.Any(system => system.Name == site.System));
+    }
+
+    [Fact]
+    public void AFarmingSiteIsLabelledWithItsMaterialMethodAndBody()
+    {
+        var site = FarmingSites.All[0];
+
+        Assert.Equal("Adaptive Encryptors Capture by Jameson crash site on 1 b", site.Label);
     }
 
     [Fact]
