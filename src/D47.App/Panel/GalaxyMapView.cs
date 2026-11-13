@@ -60,6 +60,9 @@ public sealed record GalaxyMapDrawn(
     bool EngineersHidden = false,
     bool Unvisited = false)
 {
+    /// <summary>The mark kinds with a mark drawn inside the view, in <see cref="GalaxyMapMarkKind"/> order.</summary>
+    public IReadOnlyList<GalaxyMapMarkKind> MarkKinds { get; init; } = [];
+
     public static GalaxyMapDrawn Nothing { get; } = new(false, false, false, false, false, false, false, []);
 }
 
@@ -124,6 +127,7 @@ public sealed class GalaxyMapView : Control
     private bool _stale = true;
     private GalaxyMapStar? _selected;
     private Point? _selectedAt;
+    private double _bottomInset;
     private double? _fitInset;
     private bool _fitEachAxis;
 
@@ -151,7 +155,20 @@ public sealed class GalaxyMapView : Control
     public event Action<GalaxyMapDrawn>? Redrawn;
 
     /// <summary>Pixels at the bottom of the map that something else covers; the scale bar sits above them.</summary>
-    public double BottomInset { get; set; }
+    public double BottomInset
+    {
+        get => _bottomInset;
+        set
+        {
+            if (_bottomInset == value)
+            {
+                return;
+            }
+
+            _bottomInset = value;
+            InvalidateVisual();
+        }
+    }
 
     public GalaxyViewport Viewport => _viewport;
 
@@ -835,6 +852,20 @@ public sealed class GalaxyMapView : Control
             context.DrawGeometry(null, new Pen(Brush(ThemeManager.BgKey), 3, lineJoin: PenLineJoin.Round), glyphs);
             context.DrawGeometry(Brush(ThemeManager.YellowKey), null, glyphs);
         }
+    }
+
+    /// <summary>The map's ink for <paramref name="kind"/> without its halo, centred on <paramref name="at"/> and scaled by <paramref name="scale"/>, and the key of its colour.</summary>
+    internal static (StreamGeometry Ink, string Key) MarkInk(GalaxyMapMarkKind kind, Point at, double scale)
+    {
+        var (points, key) = kind switch
+        {
+            GalaxyMapMarkKind.Engineer => (Cross, ThemeManager.WhiteKey),
+            GalaxyMapMarkKind.Bookmark => (Ribbon, ThemeManager.CyanKey),
+            GalaxyMapMarkKind.Carrier => (Hull, ThemeManager.YellowKey),
+            _ => (Chevron, ThemeManager.YellowKey),
+        };
+
+        return (Polygon([.. points.Select(point => (point.X * scale, point.Y * scale))], at), key);
     }
 
     private static StreamGeometry Polygon((double X, double Y)[] points, Point at)

@@ -1207,6 +1207,15 @@ public sealed class GalaxyMapPage : UserControl
             Entry(Word(kind), (context, ink) => RouteMarks.Star(context, ink, kind, new Point(11, 5), 0.7));
         }
 
+        foreach (var kind in drawn.MarkKinds)
+        {
+            Entry(MarkWord(kind), (context, ink) =>
+            {
+                var (shape, key) = GalaxyMapView.MarkInk(kind, new Point(11, 5), 0.8);
+                context.DrawGeometry(ink(key), null, shape);
+            });
+        }
+
         if (drawn.StopsHidden || drawn.EngineersHidden)
         {
             var words = drawn.StopsHidden ? (drawn.EngineersHidden ? StopsAndEngineersHidden : StopsHidden) : EngineersHidden;
@@ -1217,6 +1226,30 @@ public sealed class GalaxyMapPage : UserControl
         }
 
         _legendOverlay?.SetCurrentValue(Visual.IsVisibleProperty, _legend.Children.Count > 0);
+        FitLegendBand();
+    }
+
+    private static string MarkWord(GalaxyMapMarkKind kind) => kind switch
+    {
+        GalaxyMapMarkKind.Engineer => "Engineer",
+        GalaxyMapMarkKind.Bookmark => "Bookmark",
+        GalaxyMapMarkKind.Carrier => "Your carrier",
+        _ => "Stored ship",
+    };
+
+    /// <summary>On the big panel the band is as wide as the map and wraps; the scale bar sits above its height.</summary>
+    private void FitLegendBand()
+    {
+        if (_legendOverlay is null)
+        {
+            return;
+        }
+
+        var width = _map.Bounds.Width > 0 ? _map.Bounds.Width : _mapWidth;
+        _legend.InvalidateMeasure();
+        _legendOverlay.InvalidateMeasure();
+        _legendOverlay.Measure(new Size(width > 0 ? width : double.PositiveInfinity, double.PositiveInfinity));
+        _map.BottomInset = Math.Max(LegendBand, _legendOverlay.DesiredSize.Height);
     }
 
     private void Entry(string word, Action<DrawingContext, Func<string, IBrush>> draw)
@@ -1304,7 +1337,6 @@ public sealed class GalaxyMapPage : UserControl
 
         if (_headset)
         {
-            _legend.MaxWidth = 640;
             _map.BottomInset = LegendBand;
             _legendOverlay = new Border
             {

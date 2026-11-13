@@ -138,7 +138,10 @@ internal sealed class GalaxyMapLayout
             RegionNames: scene.Regions && wide,
             Stars: [.. stars.Select(star => star.Kind).Distinct()],
             EngineersHidden: !Detailed && scene.Marks is { } marked && marked.Any(mark => mark.Kind == GalaxyMapMarkKind.Engineer),
-            Unvisited: Unvisited.Count > 0);
+            Unvisited: Unvisited.Count > 0)
+        {
+            MarkKinds = [.. Marks.Where(mark => InView(mark.At, 8)).Select(mark => mark.Kind).Distinct().Order()],
+        };
     }
 
     /// <summary>

@@ -10,6 +10,8 @@
 
 Added: The Market page has a Distance in LY box beside Max price age, opening on 50. Find it searches that far from your current system. Before, the radius was fixed at 50 light years and the page did not show it.
 
+Changed: The Galaxy map's legend names the engineers, bookmarks, your carrier and stored ships drawn in the view, each with its mark. Before, those marks had no legend entry. On the headset the legend now runs the width of the map and wraps to a second line when its entries do not fit, with the scale bar above it.
+
 Fixed: In the headset, the mini panel's avatar clip now plays across its whole width. Before, on a curved panel only a strip down the middle played and the panel's still frame showed at the left and right edges. The avatar is now curved to match the panel, mini or big, at any curvature.
 
 Fixed: A module search can ask for a weapon's mount, and finds only stations listing that mount. Say or type it as the first or last word, such as "2F Multi-Cannon gimballed" or "turreted multi-cannon", on Search › Outfitting, in an outfitting route, and with the new Mount choice on Search › Stations; a ship plan's outfitting route asks for the planned mount. Search › Outfitting offers a weapon once per mount where it comes in more than one at that size and rating. A mount the weapon does not come in is refused, naming the ones it does. Before, the mount was dropped, so the nearest medium gimballed Multi-Cannon could be a station listing only the turreted one. Spansh cannot filter on the mount, so these answers state no total of matching stations.
