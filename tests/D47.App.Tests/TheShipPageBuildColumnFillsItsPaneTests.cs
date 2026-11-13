@@ -13,10 +13,10 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>A ship's page is a build column of at most 900px, with a side column beside it where there is room (#2325).</summary>
+/// <summary>A ship's page build column takes its pane's width, less a 400 side column beside it where there is room (#2403).</summary>
 [Trait("Category", "Integration")]
 [Collection(nameof(ShipArtCollection))]
-public class TheShipPageIsOneColumnCappedAtNineHundredTests
+public class TheShipPageBuildColumnFillsItsPaneTests
 {
     private static (Window Window, PanelView Panel) Page(int width, bool pictures = true, bool headset = false)
     {
@@ -76,7 +76,7 @@ public class TheShipPageIsOneColumnCappedAtNineHundredTests
     }
 
     [AvaloniaFact]
-    public void AWideScrollerGetsABuildColumnOf900AndASideColumnOf400WithTheSlotTableInsideTheBuild()
+    public void AWideScrollerGetsABuildColumnOfItsWidthLessTheSideColumnAndTheSlotTableInsideTheBuild()
     {
         var (window, panel) = Page(3400);
 
@@ -85,21 +85,24 @@ public class TheShipPageIsOneColumnCappedAtNineHundredTests
         var grid = Columns(panel);
 
         Assert.NotNull(grid);
-        Assert.Equal(900, grid.Children[0].Bounds.Width, 1.5);
+        var buildWidth = grid.Bounds.Width - 400 - 32;
+
+        Assert.True(buildWidth > 900);
+        Assert.Equal(buildWidth, grid.Children[0].Bounds.Width, 1.5);
         Assert.Equal(400, grid.Children[1].Bounds.Width, 1.5);
-        Assert.Equal(900 + 32, grid.Children[1].Bounds.X, 2.5);
+        Assert.Equal(buildWidth + 32, grid.Children[1].Bounds.X, 2.5);
 
         var build = grid.Children[0];
 
         Assert.All(
             panel.GetVisualDescendants().OfType<TableGrid>(),
-            table => Assert.True(build.IsVisualAncestorOf(table) && table.Bounds.Width <= 901.5));
+            table => Assert.True(build.IsVisualAncestorOf(table) && table.Bounds.Width > 900));
 
         window.Close();
     }
 
     [AvaloniaFact]
-    public void ANarrowScrollerKeepsTodaysLayoutInsideTheCap()
+    public void ANarrowScrollerHasNoSideColumn()
     {
         var (window, panel) = Page(2000);
 
@@ -108,13 +111,12 @@ public class TheShipPageIsOneColumnCappedAtNineHundredTests
         var picture = panel.GetVisualDescendants().OfType<HullPicture>().Single();
 
         Assert.IsNotType<Grid>(picture.GetVisualParent() is Grid { ColumnDefinitions.Count: 3 } ? picture.GetVisualParent() : new Border());
-        Assert.True(picture.Bounds.Width <= 901.5);
 
         window.Close();
     }
 
     [AvaloniaFact]
-    public void WideAndPicturesOffAreOneColumnNoWiderThan900()
+    public void WideIsNoWiderThan900AndPicturesOffFillTheBuildColumn()
     {
         var (window, panel) = Page(3400);
 
@@ -137,7 +139,7 @@ public class TheShipPageIsOneColumnCappedAtNineHundredTests
         var (off, bare) = Page(3400, pictures: false);
 
         Assert.Empty(bare.GetVisualDescendants().OfType<HullPicture>());
-        Assert.All(bare.GetVisualDescendants().OfType<TableGrid>(), table => Assert.True(table.Bounds.Width <= 901.5));
+        Assert.All(bare.GetVisualDescendants().OfType<TableGrid>(), table => Assert.True(table.Bounds.Width > 900));
 
         off.Close();
     }

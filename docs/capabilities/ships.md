@@ -346,9 +346,8 @@ way without the setting: nothing new arrives, and the log says why.
 
 **Three sizes, above the picture.** Beside is where it opens: on a pane at least 1000 pixels wide, a
 column 400 pixels wide sits to the right of the build, with the picture and, under it, the hull's
-figures; on a narrower pane the picture takes half the width with the figures beside it. Wide is the
-width of the build column, with the figures under the picture. The third is the whole window. The build is
-at most 900 pixels wide in every size. The size you last chose is the size the next ship opens at.
+figures; on a narrower pane the picture takes half the width with the figures beside it. Wide is at most
+900 pixels wide, with the figures under the picture. The third is the whole window. The size you last chose is the size the next ship opens at.
 
 **The whole window is a picture you can get into.** The wheel zooms where you are pointing,
 dragging moves it, a double click fits it again, and Escape puts it back. It stops at one image

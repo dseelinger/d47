@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: On the desktop window a ship, suit or weapon page's build column takes the width of its pane instead of stopping at 900 pixels, and the slot tables grow with it. With the hull picture at Beside the 400-pixel side column keeps its place and the build takes the rest. The Wide hull picture is at most 900 pixels wide. The headset and mini panels are unchanged.
+
 Changed: A ship page's slot table now draws in the Plan column only what is still to change in the slot: the module if it is not the one fitted, the blueprint and grade if the fitted module lacks them or has a lower grade, and the experimental if it is not on the fitted module. The module is drawn in white, the blueprint in the accent colour and the experimental in cyan. The slot page's Planned line uses the same three colours for all three parts, and the experimental's effect line under Effect is cyan.
 
 Added: Every line on the Checklist tab can be deleted when selected, including a line a plan put there, and saying "remove" with a plan's line and answering yes removes it. A ship's list page, for an owned or a planned ship, has Delete this list beside Delete completed. It asks first, then removes every line in the list, your own included, and any plan waiting for that ship. Neither delete changes the ship's plan, and d47 does not offer the lines back on boarding until the plan changes.

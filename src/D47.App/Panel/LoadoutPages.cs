@@ -1809,7 +1809,7 @@ public sealed class ItemPage : LoadoutPage
 
     private BuildTalkSection? _talk;
 
-    /// <summary>The widest the desktop build column is.</summary>
+    /// <summary>The widest the Wide hull picture is on the desktop window.</summary>
     internal const double BuildWidth = 900;
 
     /// <summary>The side column beside the build column, and the gap between them.</summary>
@@ -1975,16 +1975,13 @@ public sealed class ItemPage : LoadoutPage
         && Mode.HullOf(_item) is { Length: > 0 } hull
         && HullPicture.Drawable(hull);
 
-    /// <summary>The build column, capped at <see cref="BuildWidth"/>, with the side column to its right when there is one.</summary>
+    /// <summary>The build column takes the scroller's width, less the side column and its gap when there is one.</summary>
     private void Arrange()
     {
         _page.Children.Clear();
         _page.ColumnDefinitions.Clear();
 
-        _page.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star)
-        {
-            MaxWidth = Capped ? BuildWidth : double.PositiveInfinity,
-        });
+        _page.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
 
         _page.Children.Add(_build);
 

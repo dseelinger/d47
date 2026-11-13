@@ -166,6 +166,11 @@ internal sealed class HullPicture : Grid
         ColumnDefinitions.Clear();
         RowDefinitions.Clear();
 
+        var capped = _size == HullPictureSize.Wide && !_stacked && !Headset;
+
+        MaxWidth = capped ? ItemPage.BuildWidth : double.PositiveInfinity;
+        HorizontalAlignment = capped ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
+
         var pose = Turnable;
 
         if (_picture is null && pose is null)
