@@ -28,7 +28,7 @@
                IsVisible="False"
                Margin="0,0,0,4" />
 
-    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+    <DockPanel x:Name="FilterLine" DockPanel.Dock="Top" Margin="0,0,0,8">
       <TextBlock x:Name="MatchCount"
                  DockPanel.Dock="Right"
                  IsVisible="False"
@@ -104,6 +104,13 @@
                Foreground="{DynamicResource D47.Grey}" />
 
     <!-- A glyph press plays and commits nothing; only Use this, Enter or a double-click chooses. -->
+    <Panel>
+    <!-- A several-choice request with groups is drawn here instead of in Choices. -->
+    <ScrollViewer x:Name="GroupGrid"
+                  IsVisible="False"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled" />
+
     <ListBox x:Name="Choices"
              Background="Transparent"
              BorderThickness="0"
@@ -263,6 +270,7 @@
         </DataTemplate>
       </ListBox.ItemTemplate>
     </ListBox>
+    </Panel>
 
   </DockPanel>
 </UserControl>

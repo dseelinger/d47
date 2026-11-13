@@ -9,6 +9,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Theming;
 using D47.Core.Capabilities;
 
 namespace D47.App.Controls;
@@ -81,9 +82,15 @@ public sealed record PickerRequest
     /// <summary>
     /// The group head a value is listed under, or null for rows with no head. A group's rows are gathered where its
     /// first row is, in the caller's order, and all headless rows gather first; the picker also shows the count.
-    /// Ignored under <see cref="Clips"/>.
+    /// With <see cref="Several"/> the groups are drawn as a grid with no filter. Ignored under <see cref="Clips"/>.
     /// </summary>
     public Func<string, string?>? GroupOf { get; init; }
+
+    /// <summary>
+    /// A 16 by 14 drawing shown beside a value in a several-choice grid, or null for none. Ignored unless
+    /// <see cref="Several"/> and <see cref="GroupOf"/> are both set.
+    /// </summary>
+    public Func<string, Action<DrawingContext, Func<string, IBrush>>?>? SwatchOf { get; init; }
 
     /// <summary>Whether a value is drawn indented and marked as belonging to the row above it.</summary>
     public Func<string, bool>? IsNested { get; init; }
@@ -380,6 +387,9 @@ public partial class PickerPage : UserControl
     /// <summary>The audition in flight, so the next press can drop it.</summary>
     private CancellationTokenSource? _auditioning;
 
+    /// <summary>Whether the choices are drawn as groups in <see cref="GroupGrid"/>.</summary>
+    private bool _grid;
+
     /// <summary>Ends the subscription to clip changes.</summary>
     private Action? _unwatch;
 
@@ -487,6 +497,15 @@ public partial class PickerPage : UserControl
             BindSeveral();
         }
 
+        _grid = _request.Several && _request.GroupOf is not null && _request.Clips is null;
+        FilterLine.IsVisible = !_grid;
+        GroupGrid.IsVisible = _grid;
+
+        if (_grid)
+        {
+            BindGrid();
+        }
+
         ApplyFilter();
 
         // The current value is highlighted, so Enter with no typing keeps it.
@@ -574,6 +593,103 @@ public partial class PickerPage : UserControl
 
             return box;
         });
+    }
+
+    /// <summary>
+    /// One block per group in the order the groups first appear: the name in a 104 px column, then the choices
+    /// in four columns.
+    /// </summary>
+    private void BindGrid()
+    {
+        var groupOf = _request.GroupOf!;
+        var blocks = new StackPanel { Spacing = 8 };
+
+        foreach (var group in _all.GroupBy(row => groupOf(row.Value) ?? string.Empty))
+        {
+            var rows = group.ToArray();
+            var cells = new Grid
+            {
+                ColumnDefinitions = [
+                    new ColumnDefinition(GridLength.Star), new ColumnDefinition(2, GridUnitType.Pixel),
+                    new ColumnDefinition(GridLength.Star), new ColumnDefinition(2, GridUnitType.Pixel),
+                    new ColumnDefinition(GridLength.Star), new ColumnDefinition(2, GridUnitType.Pixel),
+                    new ColumnDefinition(GridLength.Star)],
+            };
+
+            for (var index = 0; index < rows.Length; index++)
+            {
+                var line = index / 4 * 2;
+
+                while (cells.RowDefinitions.Count <= line)
+                {
+                    cells.RowDefinitions.Add(new RowDefinition(cells.RowDefinitions.Count % 2 == 0 ? GridLength.Auto : new GridLength(2)));
+                }
+
+                var cell = GridCell(rows[index]);
+                Grid.SetRow(cell, line);
+                Grid.SetColumn(cell, index % 4 * 2);
+                cells.Children.Add(cell);
+            }
+
+            var name = Grey(new TextBlock
+            {
+                Text = group.Key.ToUpperInvariant(),
+                FontFamily = new FontFamily(Fonts.ChromeFamily),
+                FontSize = TypeScale.Control,
+                FontWeight = FontWeight.SemiBold,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            });
+
+            var head = new Border
+            {
+                Height = 44,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+                Child = name,
+            };
+
+            var block = new Grid { ColumnDefinitions = [new ColumnDefinition(104, GridUnitType.Pixel), new ColumnDefinition(GridLength.Star)] };
+            Grid.SetColumn(cells, 1);
+            block.Children.Add(head);
+            block.Children.Add(cells);
+            blocks.Children.Add(block);
+        }
+
+        GroupGrid.Content = blocks;
+    }
+
+    private CheckBox GridCell(PickerChoice row)
+    {
+        var (box, label) = LabeledCheckBox.Build(row.Text);
+
+        box.MinHeight = 44;
+        box.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+        box.IsChecked = row.Ticked;
+        box.IsCheckedChanged += (_, _) => row.Ticked = box.IsChecked == true;
+        AutomationProperties.SetName(box, row.Text);
+
+        if (_request.SwatchOf?.Invoke(row.Value) is { } draw)
+        {
+            var ground = new Border
+            {
+                Width = 28,
+                Height = 28,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Child = new Glyph(draw)
+                {
+                    Width = 16,
+                    Height = 14,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                },
+            };
+
+            box.Content = null;
+            ground.Bind(Border.BackgroundProperty, this.GetResourceObservable("D47.Bg"));
+            box.Content = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8, Children = { ground, label } };
+        }
+
+        return box;
     }
 
     /// <summary>The caller's order, which the first option of <see cref="SortBox"/> keeps.</summary>
@@ -689,9 +805,9 @@ public partial class PickerPage : UserControl
 
         // The same row objects, filtered — never new ones.
         Choices.ItemsSource = matches;
-        Choices.IsVisible = matches.Length > 0;
+        Choices.IsVisible = matches.Length > 0 && !_grid;
 
-        EmptyHint.IsVisible = matches.Length == 0;
+        EmptyHint.IsVisible = matches.Length == 0 && !_grid;
 
         MatchCount.Inlines!.Clear();
         var number = new Run(matches.Length.ToString());
