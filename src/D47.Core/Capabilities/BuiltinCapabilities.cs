@@ -592,6 +592,8 @@ public static class BuiltinCapabilities
 
         CampaignCapability.Create(campaigns, () => gameState.Active, squadronFactions, galaxy, campaignSystems, campaignFronts, campaignFocus),
 
+        AstrometricsCapability.Create(() => gameState.Active),
+
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).
         AboutCapability.Create(

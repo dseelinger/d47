@@ -33,4 +33,7 @@ public sealed record PageRef(PageKind Kind, long Id, int? Region = null, string?
 
     /// <summary>The stored plan of one kind; <paramref name="headline"/> words its crumb.</summary>
     public static PageRef Plan(RoutePlanKind kind, string headline) => new(PageKind.Plan, (long)kind, null, headline);
+
+    /// <summary>The Galaxy map with one chart's layer added.</summary>
+    public static PageRef StarChart(StarChartKind kind) => new(PageKind.StarChart, (long)kind);
 }

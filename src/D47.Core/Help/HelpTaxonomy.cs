@@ -176,7 +176,11 @@ public static class HelpTaxonomy
             HelpNode.Leaf(
                 "Campaign",
                 "Keep a plan for one minor faction: what you mean to do in each of its systems.",
-                "campaign")),
+                "campaign"),
+            HelpNode.Leaf(
+                "Star charts",
+                "Add the Guardian beacons to the Galaxy map and hear which is nearest you.",
+                "astrometrics")),
 
         HelpNode.Category(
             "Ship and engineering",

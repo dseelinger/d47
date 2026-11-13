@@ -25,7 +25,7 @@ public class AskingForTheGuardianBeaconsAddsTheirLayerTests
 
     private static readonly IReadOnlyList<StarChartSystem> BeaconSystems = StarCharts.Systems(StarChartKind.GuardianBeacons);
 
-    private static PageRef Chart => new PageRef(PageKind.StarChart, (long)StarChartKind.GuardianBeacons);
+    private static PageRef Chart => PageRef.StarChart(StarChartKind.GuardianBeacons);
 
     private static GalaxyMapPage Page(Control panel) => panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single();
 
