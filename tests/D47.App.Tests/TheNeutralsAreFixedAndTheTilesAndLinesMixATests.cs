@@ -28,6 +28,7 @@ public class TheNeutralsAreFixedAndTheTilesAndLinesMixATests
             Enumerable.Range(0, BloomTiers.Table(tier).Count).Select(stop => ThemeManager.BloomStopKey(tier, stop))),
         ThemeManager.ScanlinesKey, ThemeManager.ScrimKey, ThemeManager.CyanGroundKey, ThemeManager.MapGroundKey,
         ThemeManager.RedTileKey, ThemeManager.RedGroundKey, ThemeManager.WarnGroundKey, ThemeManager.YellowTrackKey,
+        .. ThemeManager.ExobiologyStepKeys,
     ];
 
     /// <summary>A diagonal matrix taking Elite's a, #FF7A1A, to #1A7AFF.</summary>
@@ -112,6 +113,30 @@ public class TheNeutralsAreFixedAndTheTilesAndLinesMixATests
         Assert.Equal(
             Mix(Published(ThemeManager.SlabKey), Published(ThemeManager.YellowKey), 0.22),
             Published(ThemeManager.YellowTrackKey));
+    }
+
+    [AvaloniaTheory]
+    [InlineData(ThemeCatalog.Elite, false)]
+    [InlineData(ThemeCatalog.Dark, false)]
+    [InlineData(ThemeCatalog.Light, false)]
+    [InlineData(ThemeCatalog.ElitePaletteId, true)]
+    public void TheExobiologyStepsAreAMixedOntoBgAndFollowTheHudMatrix(string themeId, bool recoloured)
+    {
+        if (recoloured)
+        {
+            Manager().Apply(themeId, Blue);
+        }
+        else
+        {
+            Manager().Apply(themeId);
+        }
+
+        var bg = Published(ThemeManager.BgKey);
+        var a = Published(ThemeManager.AKey);
+
+        Assert.Equal(
+            new[] { 0.14, 0.24, 0.34, 0.46 }.Select(t => Mix(bg, a, t)),
+            ThemeManager.ExobiologyStepKeys.Select(Published));
     }
 
     [AvaloniaFact]

@@ -67,11 +67,11 @@ internal static class GalaxyMapOnScreen
         return picked;
     }
 
-    /// <summary>The legend's entries as drawn, in order, or empty while it has none.</summary>
+    /// <summary>The legend's entries as drawn, in order, each entry's words joined by a space, or empty while it has none.</summary>
     public static IReadOnlyList<string> LegendEntries(this GalaxyMapPage page) =>
         page.GetVisualDescendants().OfType<WrapPanel>()
             .FirstOrDefault(panel => panel.Children.OfType<StackPanel>().Any(entry => entry.Children.OfType<D47.App.Controls.Glyph>().Any())) is { } legend
-            ? [.. legend.Children.OfType<StackPanel>().Select(entry => Words(entry.Children.OfType<TextBlock>().Single()))]
+            ? [.. legend.Children.OfType<StackPanel>().Select(entry => string.Join(" ", entry.Children.OfType<TextBlock>().Select(Words)))]
             : [];
 
     /// <summary>The words of each text block shown under <paramref name="owner"/>, in tree order, leaving out button labels.</summary>

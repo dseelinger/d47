@@ -16,6 +16,8 @@ public static class AstrometricsCapability
 
     public const string FarmingSitesChart = "farming_sites";
 
+    public const string ExobiologyChart = "exobiology";
+
     public const string MissionDestinationsChart = "mission_destinations";
 
     public const string FirstDiscoveredChart = "first_discovered";
@@ -34,6 +36,11 @@ public static class AstrometricsCapability
     [
         "show the farming sites",
         "material farming sites on the map",
+    ];
+
+    private static readonly string[] ExobiologyPhrases =
+    [
+        "show exobiology by region",
     ];
 
     private static readonly string[] MissionPhrases =
@@ -61,7 +68,7 @@ public static class AstrometricsCapability
         Id = Id,
         Group = "Knowledge",
         Name = "Star charts",
-        Summary = "Adds a chart, such as the Guardian beacons, the material farming sites, your mission destinations, your first discoveries or where you died, to the Galaxy map and says what it holds.",
+        Summary = "Adds a chart, such as the Guardian beacons, the material farming sites, exobiology by region, your mission destinations, your first discoveries or where you died, to the Galaxy map and says what it holds.",
         Examples = ["show me all known Guardian beacons", "show the farming sites", "show my missions on the map", "show where I died"],
         Display = new CapabilityDisplay { PanelTitle = "Star charts", Order = 71, ShowOnPanel = false },
         Tools =
@@ -74,17 +81,20 @@ public static class AstrometricsCapability
                     + "Galaxy map and says how many beacon systems it knows and which is nearest you.",
                 Description =
                     "Adds a chart layer to the Galaxy map and opens the map: the Guardian beacons, the material "
-                    + "farming sites, the destinations of the Commander's active missions, the systems where the Commander was the first "
+                    + "farming sites, each region filled by how many exobiology species are known there, the destinations of the "
+                    + "Commander's active missions, the systems where the Commander was the first "
                     + "to discover a body or the systems the Commander has died in. Answers with how many "
-                    + "systems the chart marks and, when the Commander's position is known, the nearest one and its distance.",
+                    + "systems the chart marks and, when the Commander's position is known, the nearest one and its distance; "
+                    + "for exobiology, the fewest and most species a region has and the count for the Commander's region.",
                 Parameters =
                 [
-                    ToolParameter.OneOf("chart", "The chart to show.", [GuardianBeacons, FarmingSitesChart, MissionDestinationsChart, FirstDiscoveredChart, DeathsChart], required: true),
+                    ToolParameter.OneOf("chart", "The chart to show.", [GuardianBeacons, FarmingSitesChart, ExobiologyChart, MissionDestinationsChart, FirstDiscoveredChart, DeathsChart], required: true),
                 ],
                 Commands =
                 [
                     .. BeaconPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = GuardianBeacons })),
                     .. FarmingPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = FarmingSitesChart })),
+                    .. ExobiologyPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = ExobiologyChart })),
                     .. MissionPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = MissionDestinationsChart })),
                     .. FirstDiscoveryPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = FirstDiscoveredChart })),
                     .. DeathPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = DeathsChart })),
@@ -123,6 +133,28 @@ public static class AstrometricsCapability
         var nearest = systems.MinBy(system => system.At.DistanceTo(position))!;
 
         return $"{count} The nearest is {nearest.Name}, {nearest.At.DistanceTo(position).ToString("0.#", CultureInfo.InvariantCulture)} light years away.";
+    }
+
+    public static string DescribeExobiology(StarPosition? here)
+    {
+        var counts = ExobiologyCatalogue.SpeciesPerRegion();
+
+        if (counts.Count == 0)
+        {
+            return "I have no exobiology catalogue to fill the regions from.";
+        }
+
+        var fewest = counts.MinBy(pair => pair.Value);
+        var most = counts.MaxBy(pair => pair.Value);
+        var said = $"The catalogue lists species in {counts.Count} regions, from {fewest.Value} in {GalacticRegions.NameOf(fewest.Key)} "
+            + $"to {most.Value} in {GalacticRegions.NameOf(most.Key)}.";
+
+        if (here is not { } position || GalacticRegions.Find(position) is not { } region || GalacticRegions.IdOf(region) is not { } id)
+        {
+            return said;
+        }
+
+        return $"{said} Here in {region} it lists {counts.GetValueOrDefault(id)}.";
     }
 
     public static string DescribeMissionDestinations(MissionBoard missions)
@@ -167,7 +199,7 @@ public static class AstrometricsCapability
     {
         if (!arguments.TryGetString("chart", out var chart))
         {
-            return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart}, {MissionDestinationsChart}, {FirstDiscoveredChart} or {DeathsChart}.");
+            return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart}, {ExobiologyChart}, {MissionDestinationsChart}, {FirstDiscoveredChart} or {DeathsChart}.");
         }
 
         if (string.Equals(chart, GuardianBeacons, StringComparison.OrdinalIgnoreCase))
@@ -183,6 +215,14 @@ public static class AstrometricsCapability
             return ToolResult.Ok(DescribeFarmingSites(state?.Location.StarPos)) with
             {
                 Page = PageRef.StarChart(StarChartKind.FarmingSites),
+            };
+        }
+
+        if (string.Equals(chart, ExobiologyChart, StringComparison.OrdinalIgnoreCase))
+        {
+            return ToolResult.Ok(DescribeExobiology(state?.Location.StarPos)) with
+            {
+                Page = PageRef.StarChart(StarChartKind.Exobiology),
             };
         }
 
@@ -214,6 +254,6 @@ public static class AstrometricsCapability
             };
         }
 
-        return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart}, {MissionDestinationsChart}, {FirstDiscoveredChart} or {DeathsChart}.");
+        return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart}, {ExobiologyChart}, {MissionDestinationsChart}, {FirstDiscoveredChart} or {DeathsChart}.");
     }
 }

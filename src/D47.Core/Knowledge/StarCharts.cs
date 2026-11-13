@@ -16,6 +16,7 @@ public enum StarChartKind
     Unvisited,
     GuardianBeacons,
     FarmingSites,
+    Exobiology,
     MissionDestinations,
     FirstDiscovered,
     Deaths,
@@ -51,9 +52,12 @@ public static class StarCharts
     /// <summary>Every kind, in the order the switches are listed.</summary>
     public static IReadOnlyList<StarChartKind> All { get; } = Enum.GetValues<StarChartKind>();
 
-    /// <summary>The kinds on a map with nothing saved: every kind but the fixed charts, the mission destinations, the first discoveries, the deaths and the search answers, which a request adds.</summary>
+    /// <summary>
+    /// The kinds on a map with nothing saved: every kind but the fixed charts, the exobiology fill, the mission destinations,
+    /// the first discoveries, the deaths and the search answers, which a request adds.
+    /// </summary>
     public static IReadOnlyList<StarChartKind> Default { get; } =
-        [.. All.Where(kind => !IsFixed(kind) && kind is not (StarChartKind.MissionDestinations or StarChartKind.FirstDiscovered or StarChartKind.Deaths) && SearchOf(kind) is null)];
+        [.. All.Where(kind => !IsFixed(kind) && kind is not (StarChartKind.Exobiology or StarChartKind.MissionDestinations or StarChartKind.FirstDiscovered or StarChartKind.Deaths) && SearchOf(kind) is null)];
 
     /// <summary>Whether <paramref name="kind"/> draws a fixed list of systems that d47 carries.</summary>
     public static bool IsFixed(StarChartKind kind) => kind is StarChartKind.GuardianBeacons or StarChartKind.FarmingSites;
@@ -105,6 +109,7 @@ public static class StarCharts
         StarChartKind.Unvisited => new("Unvisited", null, StarChartShape.Points, Galaxy),
         StarChartKind.GuardianBeacons => new("Guardian beacons", "Guardian beacon", StarChartShape.Points, Guardian),
         StarChartKind.FarmingSites => new("Farming sites", "Farming site", StarChartShape.Points, Galaxy),
+        StarChartKind.Exobiology => new("Exobiology", null, StarChartShape.Area, Galaxy),
         StarChartKind.MissionDestinations => new("Missions", "Mission destination", StarChartShape.Points, Yours),
         StarChartKind.FirstDiscovered => new("First discovered", "First discovery", StarChartShape.Points, Yours),
         StarChartKind.Deaths => new("Deaths", "Died here", StarChartShape.Points, Yours),

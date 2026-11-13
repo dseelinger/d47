@@ -47,6 +47,7 @@ public sealed record GalaxyMapMark(GalaxyMapMarkKind Kind, string System, StarPo
 /// across or less, a first discovery drawn wider as a Blue square in place of its visited square.
 /// </param>
 /// <param name="Unvisited">Systems the Commander has not visited, drawn and selectable while the view is <see cref="GalaxyMapView.DetailAcross"/> across or less.</param>
+/// <param name="Exobiology">Whether each region's ground is filled by its step of <see cref="ExobiologyCatalogue.RegionSteps"/>; borders and names stay with <paramref name="Regions"/>.</param>
 public sealed record GalaxyMapScene(
     bool Regions,
     TravelPicture? Travels,
@@ -56,7 +57,8 @@ public sealed record GalaxyMapScene(
     string? Here,
     IReadOnlyList<GalaxyMapStar>? Visited = null,
     IReadOnlyList<GalaxyMapMark>? Marks = null,
-    IReadOnlyList<GalaxyMapStar>? Unvisited = null)
+    IReadOnlyList<GalaxyMapStar>? Unvisited = null,
+    bool Exobiology = false)
 {
     public static GalaxyMapScene Empty { get; } = new(true, null, null, -1, null, null);
 }
@@ -79,6 +81,9 @@ public sealed record GalaxyMapDrawn(
 
     /// <summary>Whether a first discovery is drawn as a square inside the view.</summary>
     public bool DiscoveredSquares { get; init; }
+
+    /// <summary>Whether the regions are filled by how many exobiology species are known in each.</summary>
+    public bool Exobiology { get; init; }
 
     public static GalaxyMapDrawn Nothing { get; } = new(false, false, false, false, false, false, false, []);
 }
@@ -149,12 +154,12 @@ public sealed class GalaxyMapView : Control
     private const double HollowPen = 1.5;
     private const double HollowHalo = 4.5;
 
-    private static Color? _groundColour;
-    private static WriteableBitmap? _ground;
+    private static (Color Colour, Color[]? Steps, WriteableBitmap Image)? _plainGround;
+    private static (Color Colour, Color[]? Steps, WriteableBitmap Image)? _filledGround;
     private static StreamGeometry? _borders;
     private static StreamGeometry? _angledBorders;
     private static (double Heading, double Tilt) _angledFor;
-    private static IReadOnlyList<(string Name, StarPosition At)>? _regionNames;
+    private static IReadOnlyList<(int Id, string Name, StarPosition At)>? _regionNames;
 
     private GalaxyMapScene _scene = GalaxyMapScene.Empty;
     private GalaxyViewport _viewport = GalaxyViewport.WholeGalaxy;
@@ -430,12 +435,15 @@ public sealed class GalaxyMapView : Control
             (size.Width / 2) - (centre.Across * scale),
             (size.Height / 2) + (centre.Up * scale));
 
+        if ((_scene.Regions || _scene.Exobiology) && !EdgeOn)
+        {
+            Ground(context, size);
+        }
+
         if (_scene.Regions)
         {
             if (!EdgeOn)
             {
-                Ground(context, size);
-
                 using (context.PushTransform(toScreen))
                 {
                     context.DrawGeometry(null, new Pen(Brush(ThemeManager.Line2Key), 1 / scale), Borders(_viewport));
@@ -592,8 +600,9 @@ public sealed class GalaxyMapView : Control
 
     private void Ground(DrawingContext context, Size size)
     {
-        var colour = (Brush(ThemeManager.MapGroundKey) as ISolidColorBrush)?.Color ?? Colors.Transparent;
-        var ground = GroundImage(colour);
+        var colour = Colour(ThemeManager.MapGroundKey);
+        var steps = _scene.Exobiology ? ThemeManager.ExobiologyStepKeys.Select(Colour).ToArray() : null;
+        var ground = GroundImage(colour, steps);
         var extent = GalacticRegions.Extent;
 
         if (_viewport.Heading != 0 || _viewport.Tilt != 0)
@@ -637,12 +646,21 @@ public sealed class GalaxyMapView : Control
         }
     }
 
-    /// <summary>One pixel per region cell, the ground colour inside the grid and clear outside; drawn once per colour.</summary>
-    private static WriteableBitmap GroundImage(Color colour)
+    private Color Colour(string key) => (Brush(key) as ISolidColorBrush)?.Color ?? Colors.Transparent;
+
+    /// <summary>
+    /// One pixel per region cell, clear outside the grid. Inside it each region is its exobiology step's colour when
+    /// <paramref name="steps"/> is given and it has one, else the ground colour. The plain and the filled image are kept
+    /// apart, so views drawing one each do not redraw them; each is drawn once per set of colours.
+    /// </summary>
+    private static WriteableBitmap GroundImage(Color colour, Color[]? steps)
     {
-        if (_ground is { } cached && _groundColour == colour)
+        var kept = steps is null ? _plainGround : _filledGround;
+
+        if (kept is { } cached && cached.Colour == colour
+            && (steps is null || (cached.Steps is not null && steps.SequenceEqual(cached.Steps))))
         {
-            return cached;
+            return cached.Image;
         }
 
         var extent = GalacticRegions.Extent;
@@ -651,7 +669,9 @@ public sealed class GalaxyMapView : Control
         var width = Math.Max(1, (int)Math.Round((extent.X1 - extent.X0) / cell));
         var height = Math.Max(1, (int)Math.Round((extent.Z1 - extent.Z0) / cell));
         var pixels = new int[width * height];
-        var ink = (colour.A << 24) | (colour.R << 16) | (colour.G << 8) | colour.B;
+        var ink = Packed(colour);
+        var fill = steps is null ? null : ExobiologyCatalogue.RegionSteps();
+        var stepInks = steps?.Select(Packed).ToArray();
 
         foreach (var run in runs)
         {
@@ -661,7 +681,9 @@ public sealed class GalaxyMapView : Control
 
             if (row >= 0 && row < height && from < to)
             {
-                Array.Fill(pixels, ink, (row * width) + from, to - from);
+                var runInk = fill is not null && stepInks is not null && fill.TryGetValue(run.RegionId, out var step) ? stepInks[step] : ink;
+
+                Array.Fill(pixels, runInk, (row * width) + from, to - from);
             }
         }
 
@@ -675,12 +697,21 @@ public sealed class GalaxyMapView : Control
             }
         }
 
-        _ground?.Dispose();
-        _ground = bitmap;
-        _groundColour = colour;
+        kept?.Image.Dispose();
+
+        if (steps is null)
+        {
+            _plainGround = (colour, null, bitmap);
+        }
+        else
+        {
+            _filledGround = (colour, steps, bitmap);
+        }
 
         return bitmap;
     }
+
+    private static int Packed(Color colour) => (colour.A << 24) | (colour.R << 16) | (colour.G << 8) | colour.B;
 
     /// <summary>The light years one ground pixel covers on each side.</summary>
     private static double GroundCell()
@@ -735,14 +766,14 @@ public sealed class GalaxyMapView : Control
         return _angledBorders = geometry;
     }
 
-    /// <summary>Each region's name and label point, largest region first.</summary>
-    private static IReadOnlyList<(string Name, StarPosition At)> RegionLabels() =>
+    /// <summary>Each region's id, name and label point, largest region first.</summary>
+    private static IReadOnlyList<(int Id, string Name, StarPosition At)> RegionLabels() =>
         _regionNames ??= [.. GalacticRegions.Runs()
             .GroupBy(run => run.RegionId)
             .OrderByDescending(region => region.Sum(run => (run.X1 - run.X0) * (run.Z1 - run.Z0)))
-            .Select(region => (Name: GalacticRegions.NameOf(region.Key), At: GalacticRegions.LabelAt(region.Key)))
+            .Select(region => (Id: region.Key, Name: GalacticRegions.NameOf(region.Key), At: GalacticRegions.LabelAt(region.Key)))
             .Where(label => label.Name is not null && label.At is not null)
-            .Select(label => (label.Name!, label.At!.Value))];
+            .Select(label => (label.Id, label.Name!, label.At!.Value))];
 
     private void RegionNames(DrawingContext context, Size size, Rect? readout)
     {
@@ -755,11 +786,16 @@ public sealed class GalaxyMapView : Control
 
         var room = new Rect(size).Deflate(EdgeMargin);
 
-        foreach (var (name, at) in RegionLabels())
+        var fill = _scene.Exobiology ? ExobiologyCatalogue.RegionSteps() : null;
+
+        foreach (var (id, name, at) in RegionLabels())
         {
             var centre = Screen(at);
+            var key = fill is not null && fill.TryGetValue(id, out var step) && step >= ExobiologyCatalogue.FillSteps - 2
+                ? ThemeManager.WhiteKey
+                : ThemeManager.GreyKey;
             var lines = Wrap(name.ToUpperInvariant(), RegionNameWrap)
-                .Select(line => Text(line, 10, ThemeManager.GreyKey, 0.6))
+                .Select(line => Text(line, 10, key, 0.6))
                 .ToList();
 
             var width = lines.Max(line => line.Width);

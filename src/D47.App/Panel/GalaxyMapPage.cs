@@ -34,6 +34,8 @@ public sealed class GalaxyMapPage : UserControl
     public const string StopsHidden = "Zoom to 6,400 ly to see the route's stops.";
     public const string EngineersHidden = "Zoom to 6,400 ly to see the engineers.";
     public const string StopsAndEngineersHidden = "Zoom to 6,400 ly to see the route's stops and the engineers.";
+    public const string ExobiologyFewer = "Exobiology species known: fewer";
+    public const string ExobiologyMore = "more";
     public const string NotVisited = "not visited";
     public const string YouAreHere = "You are here";
     public const string CentreHere = "Centre here";
@@ -80,6 +82,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _travels = Marked(StarChartKind.Travels, _ => TravelsDrawing);
     private readonly CheckBox _routeShown = Marked(StarChartKind.Route, _ => RouteDrawing);
     private readonly CheckBox _regions = Marked(StarChartKind.Regions, _ => RegionsDrawing);
+    private readonly CheckBox _exobiology = Marked(StarChartKind.Exobiology, _ => ExobiologyDrawing);
     private readonly CheckBox _engineers;
     private readonly CheckBox _bookmarkMarks;
     private readonly CheckBox _carrierMark;
@@ -478,7 +481,8 @@ public sealed class GalaxyMapPage : UserControl
             here,
             Named(steps, Since()),
             placement.Marks,
-            unvisited));
+            unvisited,
+            Shows(StarChartKind.Exobiology)));
 
         Strip(_map.Selected);
 
@@ -529,6 +533,7 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.Unvisited, _unvisited),
         (StarChartKind.GuardianBeacons, _beacons),
         (StarChartKind.FarmingSites, _farming),
+        (StarChartKind.Exobiology, _exobiology),
         (StarChartKind.MissionDestinations, _missions),
         (StarChartKind.FirstDiscovered, _firstDiscovered),
         (StarChartKind.Deaths, _deaths),
@@ -633,7 +638,7 @@ public sealed class GalaxyMapPage : UserControl
 
     /// <summary>
     /// Puts <paramref name="kind"/> on the map ticked, leaving the other layers as last saved by any surface, turns the
-    /// rail to it and fits the view to its systems at the same heading and tilt.
+    /// rail to it and fits the view to its systems at the same heading and tilt, or to the whole galaxy for an area.
     /// </summary>
     public void ShowChart(StarChartKind kind)
     {
@@ -648,6 +653,13 @@ public sealed class GalaxyMapPage : UserControl
 
         _railPage = GalaxyMapRailPages.PageOf(_layers.OnMap.Count, _layers.OnMap.ToList().IndexOf(kind));
         Rail();
+
+        if (StarCharts.Info(kind).Shape == StarChartShape.Area)
+        {
+            _framing.SelectedIndex = Galaxy;
+            Frame(Galaxy);
+            return;
+        }
 
         var now = _map.Viewport;
 
@@ -1587,6 +1599,11 @@ public sealed class GalaxyMapPage : UserControl
             Entry(MarkWord(GalaxyMapMarkKind.FirstDiscovery), (context, ink) => context.DrawRectangle(ink(ThemeManager.BlueKey), null, new Rect(9.5, 3.5, GalaxyMapView.VisitedSide, GalaxyMapView.VisitedSide)));
         }
 
+        if (drawn.Exobiology)
+        {
+            ExobiologyScale();
+        }
+
         if (drawn.StopsHidden || drawn.EngineersHidden)
         {
             var words = drawn.StopsHidden ? (drawn.EngineersHidden ? StopsAndEngineersHidden : StopsHidden) : EngineersHidden;
@@ -1634,19 +1651,36 @@ public sealed class GalaxyMapPage : UserControl
         _map.BottomInset = Math.Max(LegendBand, _legendOverlay.DesiredSize.Height);
     }
 
-    private void Entry(string word, Action<DrawingContext, Func<string, IBrush>> draw)
+    private void Entry(string word, Action<DrawingContext, Func<string, IBrush>> draw) =>
+        _legend.Children.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 5,
+            Children = { new Glyph(draw) { Width = 22, Height = 10, VerticalAlignment = VerticalAlignment.Center }, LegendWord(word) },
+        });
+
+    /// <summary>"Exobiology species known: fewer", the fill's four steps, then "more".</summary>
+    private void ExobiologyScale() =>
+        _legend.Children.Add(new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 5,
+            Children =
+            {
+                LegendWord(ExobiologyFewer),
+                new Glyph((context, ink) => ExobiologyBars(context, ink, new Point(1, 1))) { Width = 18, Height = 12, VerticalAlignment = VerticalAlignment.Center },
+                LegendWord(ExobiologyMore),
+            },
+        });
+
+    private static TextBlock LegendWord(string word)
     {
         var label = RoutingKit.Tag(word, ThemeManager.GreyKey);
         label.FontSize = TypeScale.MetaSmall;
         label.FontWeight = FontWeight.Medium;
         label.LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking;
 
-        _legend.Children.Add(new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 5,
-            Children = { new Glyph(draw) { Width = 22, Height = 10, VerticalAlignment = VerticalAlignment.Center }, label },
-        });
+        return label;
     }
 
     private static string Word(RouteStar kind) => kind switch
@@ -2037,6 +2071,7 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.Travels => TravelsDrawing,
         StarChartKind.Route => RouteDrawing,
         StarChartKind.Regions => RegionsDrawing,
+        StarChartKind.Exobiology => ExobiologyDrawing,
         StarChartKind.Engineers => MarkDrawing(GalaxyMapMarkKind.Engineer, () => true),
         StarChartKind.Bookmarks => MarkDrawing(GalaxyMapMarkKind.Bookmark, () => true),
         StarChartKind.Carrier => MarkDrawing(GalaxyMapMarkKind.Carrier, () => true),
@@ -2073,6 +2108,18 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>An 11 by 9 MapGround rectangle with a 1 px Line border, in a 16 by 14 glyph.</summary>
     private static void RegionsDrawing(DrawingContext context, Func<string, IBrush> ink) =>
         context.DrawRectangle(ink(ThemeManager.MapGroundKey), new Pen(ink(ThemeManager.LineKey), 1), new Rect(2.5, 2.5, 11, 9));
+
+    /// <summary>Four 4 by 10 bars side by side in the exobiology fill's steps, fewest species first, in a 16 by 14 glyph.</summary>
+    private static void ExobiologyDrawing(DrawingContext context, Func<string, IBrush> ink) => ExobiologyBars(context, ink, new Point(0, 2));
+
+    /// <summary>Four 4 by 10 bars in the exobiology fill's steps, fewest species first, from <paramref name="at"/>.</summary>
+    private static void ExobiologyBars(DrawingContext context, Func<string, IBrush> ink, Point at)
+    {
+        for (var step = 0; step < ThemeManager.ExobiologyStepKeys.Count; step++)
+        {
+            context.DrawRectangle(ink(ThemeManager.ExobiologyStepKeys[step]), null, new Rect(at.X + (step * 4), at.Y, 4, 10));
+        }
+    }
 
     /// <summary>The unvisited mark, a 5 px square outline, at the centre of a 16 by 14 glyph; Grey2 while <paramref name="live"/> is false.</summary>
     private static Action<DrawingContext, Func<string, IBrush>> UnvisitedDrawing(Func<bool> live) => (context, ink) =>

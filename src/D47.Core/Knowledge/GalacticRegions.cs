@@ -118,12 +118,22 @@ public static class GalacticRegions
     /// <summary>The name of the codex region with this number, or null for an unknown number.</summary>
     public static string? NameOf(int id) => Loaded.Value.Names.GetValueOrDefault(id);
 
-    /// <summary>The number of the codex region with this name, without regard to case, or null.</summary>
+    /// <summary>
+    /// The number of the codex region with this name, without regard to case or a leading "The" (the codex writes
+    /// "The Formidine Rift" where the map writes "Formidine Rift"), or null.
+    /// </summary>
     public static int? IdOf(string name) =>
         Loaded.Value.Names
-            .Where(pair => string.Equals(pair.Value, name.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Where(pair => string.Equals(WithoutThe(pair.Value), WithoutThe(name), StringComparison.OrdinalIgnoreCase))
             .Select(pair => (int?)pair.Key)
             .FirstOrDefault();
+
+    private static string WithoutThe(string name)
+    {
+        var trimmed = name.Trim();
+
+        return trimmed.StartsWith("The ", StringComparison.OrdinalIgnoreCase) ? trimmed[4..].TrimStart() : trimmed;
+    }
 
     private static IReadOnlyList<RegionRun> BuildRuns()
     {

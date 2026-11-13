@@ -41,6 +41,9 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
     /// <summary><see cref="Palette.MapGround"/>.</summary>
     public const string MapGroundKey = "D47.MapGround";
 
+    /// <summary><see cref="Palette.ExobiologySteps"/>, fewest species first.</summary>
+    public static IReadOnlyList<string> ExobiologyStepKeys { get; } = ["D47.Exobiology1", "D47.Exobiology2", "D47.Exobiology3", "D47.Exobiology4"];
+
     /// <summary><see cref="Palette.RedTile"/>.</summary>
     public const string RedTileKey = "D47.RedTile";
 
@@ -165,6 +168,11 @@ public sealed class ThemeManager(Application application, ILogger<ThemeManager> 
         resources[RedGroundKey] = new SolidColorBrush(palette.RedGround);
         resources[WarnGroundKey] = new SolidColorBrush(palette.WarnGround);
         resources[YellowTrackKey] = new SolidColorBrush(palette.YellowTrack);
+
+        for (var step = 0; step < ExobiologyStepKeys.Count; step++)
+        {
+            resources[ExobiologyStepKeys[step]] = new SolidColorBrush(palette.ExobiologySteps[step]);
+        }
 
         // Null on a theme that does not glow, which turns both off: an unset Effect or Background paints nothing.
         foreach (var tier in Enum.GetValues<BloomTier>())

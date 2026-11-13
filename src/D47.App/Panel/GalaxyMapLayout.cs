@@ -154,6 +154,7 @@ internal sealed class GalaxyMapLayout
         {
             MarkKinds = [.. Marks.Where(mark => InView(mark.At, 8)).Select(mark => mark.Kind).Distinct().Order()],
             DiscoveredSquares = Discovered.Count > 0,
+            Exobiology = scene.Exobiology,
         };
     }
 

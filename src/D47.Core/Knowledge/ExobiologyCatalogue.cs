@@ -79,6 +79,59 @@ public static class ExobiologyCatalogue
 
     public static IReadOnlyList<ExobiologyEntry> All => Loaded.Value;
 
+    /// <summary>Steps of the exobiology fill: the range of counts, lowest to highest, is divided into this many equal bands.</summary>
+    public const int FillSteps = 4;
+
+    private static readonly Lazy<IReadOnlyDictionary<int, int>> PerRegion =
+        new(CountPerRegion, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>How many species the catalogue lists for each codex region, by <see cref="GalacticRegions"/> id; a region with none is absent.</summary>
+    public static IReadOnlyDictionary<int, int> SpeciesPerRegion() => PerRegion.Value;
+
+    /// <summary>The fill step, 0 to <see cref="FillSteps"/> - 1, of each region with species, by region id.</summary>
+    public static IReadOnlyDictionary<int, int> RegionSteps()
+    {
+        var counts = PerRegion.Value;
+
+        if (counts.Count == 0)
+        {
+            return new Dictionary<int, int>();
+        }
+
+        var lowest = counts.Values.Min();
+        var highest = counts.Values.Max();
+
+        return counts.ToDictionary(pair => pair.Key, pair => Step(pair.Value, lowest, highest));
+    }
+
+    /// <summary>Which of <see cref="FillSteps"/> equal bands from <paramref name="lowest"/> to <paramref name="highest"/> holds <paramref name="count"/>; the highest is in the top band.</summary>
+    public static int Step(int count, int lowest, int highest)
+    {
+        if (highest <= lowest)
+        {
+            return FillSteps - 1;
+        }
+
+        var band = (int)Math.Floor((double)(count - lowest) * FillSteps / (highest - lowest));
+
+        return Math.Clamp(band, 0, FillSteps - 1);
+    }
+
+    private static IReadOnlyDictionary<int, int> CountPerRegion()
+    {
+        var counts = new Dictionary<int, int>();
+
+        foreach (var entry in Loaded.Value)
+        {
+            foreach (var id in entry.Regions.Select(GalacticRegions.IdOf).OfType<int>().Distinct())
+            {
+                counts[id] = counts.GetValueOrDefault(id) + 1;
+            }
+        }
+
+        return counts;
+    }
+
     /// <summary>The colony distance in metres for a genus, or null where the table has none.</summary>
     public static int? ColonyDistance(string genus) =>
         Loaded.Value.FirstOrDefault(entry => string.Equals(entry.Genus, genus, StringComparison.OrdinalIgnoreCase))
