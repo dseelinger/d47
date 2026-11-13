@@ -16,6 +16,7 @@ public enum StarChartKind
     Unvisited,
     GuardianBeacons,
     FarmingSites,
+    MissionDestinations,
 }
 
 /// <summary>How a chart is drawn on the map.</summary>
@@ -41,8 +42,8 @@ public static class StarCharts
     /// <summary>Every kind, in the order the switches are listed.</summary>
     public static IReadOnlyList<StarChartKind> All { get; } = Enum.GetValues<StarChartKind>();
 
-    /// <summary>The kinds on a map with nothing saved: every kind but the fixed charts, which a request adds.</summary>
-    public static IReadOnlyList<StarChartKind> Default { get; } = [.. All.Where(kind => !IsFixed(kind))];
+    /// <summary>The kinds on a map with nothing saved: every kind but the fixed charts and the mission destinations, which a request adds.</summary>
+    public static IReadOnlyList<StarChartKind> Default { get; } = [.. All.Where(kind => !IsFixed(kind) && kind != StarChartKind.MissionDestinations)];
 
     /// <summary>Whether <paramref name="kind"/> draws a fixed list of systems that d47 carries.</summary>
     public static bool IsFixed(StarChartKind kind) => kind is StarChartKind.GuardianBeacons or StarChartKind.FarmingSites;
@@ -82,6 +83,7 @@ public static class StarCharts
         StarChartKind.Unvisited => new("Unvisited", null, StarChartShape.Points, Galaxy),
         StarChartKind.GuardianBeacons => new("Guardian beacons", "Guardian beacon", StarChartShape.Points, Guardian),
         StarChartKind.FarmingSites => new("Farming sites", "Farming site", StarChartShape.Points, Galaxy),
+        StarChartKind.MissionDestinations => new("Missions", "Mission destination", StarChartShape.Points, Yours),
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
     };
 }

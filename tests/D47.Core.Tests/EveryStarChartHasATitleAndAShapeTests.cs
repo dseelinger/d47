@@ -22,7 +22,7 @@ public class EveryStarChartHasATitleAndAShapeTests
     public void TheKindsAreListedInSwitchOrder()
     {
         Assert.Equal(
-            ["Travels", "Route", "Regions", "Engineers", "Bookmarks", "Carrier", "Ships", "Unvisited", "Guardian beacons", "Farming sites"],
+            ["Travels", "Route", "Regions", "Engineers", "Bookmarks", "Carrier", "Ships", "Unvisited", "Guardian beacons", "Farming sites", "Missions"],
             StarCharts.All.Select(kind => StarCharts.Info(kind).Title));
     }
 
@@ -45,6 +45,7 @@ public class EveryStarChartHasATitleAndAShapeTests
         Assert.Equal("Ship", StarCharts.Info(StarChartKind.Ships).Mark);
         Assert.Equal("Guardian beacon", StarCharts.Info(StarChartKind.GuardianBeacons).Mark);
         Assert.Equal("Farming site", StarCharts.Info(StarChartKind.FarmingSites).Mark);
+        Assert.Equal("Mission destination", StarCharts.Info(StarChartKind.MissionDestinations).Mark);
         Assert.All(
             new[] { StarChartKind.Travels, StarChartKind.Route, StarChartKind.Regions, StarChartKind.Unvisited },
             kind => Assert.Null(StarCharts.Info(kind).Mark));
@@ -54,7 +55,7 @@ public class EveryStarChartHasATitleAndAShapeTests
     public void YourChartsAndTheGalaxysChartsAreGroupedApart()
     {
         Assert.Equal(
-            [StarChartKind.Travels, StarChartKind.Route, StarChartKind.Bookmarks, StarChartKind.Carrier, StarChartKind.Ships],
+            [StarChartKind.Travels, StarChartKind.Route, StarChartKind.Bookmarks, StarChartKind.Carrier, StarChartKind.Ships, StarChartKind.MissionDestinations],
             StarCharts.All.Where(kind => StarCharts.Info(kind).Group == StarCharts.Yours));
         Assert.Equal(
             [StarChartKind.Regions, StarChartKind.Engineers, StarChartKind.Unvisited, StarChartKind.FarmingSites],
@@ -68,7 +69,7 @@ public class EveryStarChartHasATitleAndAShapeTests
     public void TheFixedChartsAreOffAMapWithNothingSaved()
     {
         Assert.Equal([StarChartKind.GuardianBeacons, StarChartKind.FarmingSites], StarCharts.All.Where(StarCharts.IsFixed));
-        Assert.Equal(StarCharts.All.Where(kind => !StarCharts.IsFixed(kind)), StarCharts.Default);
+        Assert.Equal(StarCharts.All.Where(kind => !StarCharts.IsFixed(kind) && kind != StarChartKind.MissionDestinations), StarCharts.Default);
     }
 
     [Fact]

@@ -86,6 +86,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _unvisited;
     private readonly CheckBox _beacons;
     private readonly CheckBox _farming;
+    private readonly CheckBox _missions;
     private readonly Button _layersTile = Press(string.Empty, SwitchRail);
     private readonly StackPanel _rail = new() { Spacing = 2 };
     private int _railPage;
@@ -182,6 +183,7 @@ public sealed class GalaxyMapPage : UserControl
         _unvisited = Marked(StarChartKind.Unvisited, UnvisitedDrawing);
         _beacons = Marked(StarChartKind.GuardianBeacons, live => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, live));
         _farming = Marked(StarChartKind.FarmingSites, live => MarkDrawing(GalaxyMapMarkKind.FarmingSite, live));
+        _missions = Marked(StarChartKind.MissionDestinations, live => MarkDrawing(GalaxyMapMarkKind.Mission, live));
 
         _unvisitedWanted = _layers.Ticked(StarChartKind.Unvisited);
         _range.SelectedIndex = _layers.Range;
@@ -382,7 +384,7 @@ public sealed class GalaxyMapPage : UserControl
         var fid = commander?.Identity.FrontierId ?? string.Empty;
         var folded = log?.HistoryFolded ?? true;
 
-        return (fid, folded ? log?.Count(fid) ?? 0 : -1, folded, _route(), _here(), commander?.Location.StarPos, offDuty, commander?.Carrier.StarSystem, commander?.Fleet, _galaxy() is not null, _lookups.Generation);
+        return (fid, folded ? log?.Count(fid) ?? 0 : -1, folded, _route(), _here(), commander?.Location.StarPos, offDuty, commander?.Carrier.StarSystem, commander?.Fleet, commander?.Missions, _galaxy() is not null, _lookups.Generation);
     }
 
     /// <summary>Rebuilds what the map draws and the lines under it, keeping the viewport.</summary>
@@ -493,6 +495,7 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.Unvisited, _unvisited),
         (StarChartKind.GuardianBeacons, _beacons),
         (StarChartKind.FarmingSites, _farming),
+        (StarChartKind.MissionDestinations, _missions),
     ];
 
     /// <summary>Whether <paramref name="kind"/> is on the map and its switch is ticked.</summary>
@@ -606,12 +609,17 @@ public sealed class GalaxyMapPage : UserControl
 
         var now = _map.Viewport;
 
-        if (GalaxyViewport.Fitting([.. StarCharts.Systems(kind).Select(system => system.At)], now.Heading, now.Tilt) is { } fitted)
+        if (GalaxyViewport.Fitting(ChartPoints(kind), now.Heading, now.Tilt) is { } fitted)
         {
             _map.View(fitted);
             Moved();
         }
     }
+
+    /// <summary>Where <paramref name="kind"/> is drawn: its fixed systems, or the placed mission destinations.</summary>
+    private List<StarPosition> ChartPoints(StarChartKind kind) => kind == StarChartKind.MissionDestinations
+        ? [.. _placed.Where(mark => mark.Kind == GalaxyMapMarkKind.Mission).Select(mark => mark.At)]
+        : [.. StarCharts.Systems(kind).Select(system => system.At)];
 
     /// <summary>The rail lists a switch for each kind on the map, pages past eight, and the tile counts them.</summary>
     private void Rail()
@@ -798,8 +806,28 @@ public sealed class GalaxyMapPage : UserControl
             }
         }
 
+        if (Shows(StarChartKind.MissionDestinations) && commander is not null)
+        {
+            var bound = commander.Missions.Missions.Where(mission => mission.DestinationSystem is { Length: > 0 });
+
+            foreach (var system in bound.GroupBy(mission => mission.DestinationSystem!, StringComparer.OrdinalIgnoreCase))
+            {
+                if (PositionIn(system.Key) is { } at)
+                {
+                    marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.Mission, system.Key, at, [.. system.Select(MissionLabel)]));
+                }
+                else
+                {
+                    unplaced.Add(new UnplacedItem(GalaxyMapMarkKind.Mission, system.Key, 1));
+                }
+            }
+        }
+
         return new Placement(marks, unplaced);
     }
+
+    private static string MissionLabel(Mission mission) =>
+        mission.DestinationStation is { Length: > 0 } station ? $"{mission.Title} at {station}" : mission.Title;
 
     private static IReadOnlyList<GalaxyMapStar> Named(IReadOnlyList<TravelStep> steps, DateTimeOffset? since)
     {
@@ -998,7 +1026,7 @@ public sealed class GalaxyMapPage : UserControl
         _mark?.InvalidateVisual();
     }
 
-    /// <summary>The strip's second line: what is marked in the selected system, a kind each, in mark order; a farming site each.</summary>
+    /// <summary>The strip's second line: what is marked in the selected system, a kind each, in mark order; a farming site or a mission each.</summary>
     private void Kinds(GalaxyMapStar star)
     {
         _stripKinds.Children.Clear();
@@ -1006,7 +1034,7 @@ public sealed class GalaxyMapPage : UserControl
         var rows = _placed
             .Where(mark => string.Equals(mark.System, star.Name, StringComparison.OrdinalIgnoreCase))
             .OrderBy(mark => mark.Kind)
-            .SelectMany(mark => mark.Kind == GalaxyMapMarkKind.FarmingSite
+            .SelectMany(mark => mark.Kind is GalaxyMapMarkKind.FarmingSite or GalaxyMapMarkKind.Mission
                 ? mark.Names.Select(name => mark with { Names = [name] })
                 : [mark]);
 
@@ -1038,6 +1066,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.Carrier => "Your carrier",
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
         GalaxyMapMarkKind.FarmingSite => "Farming site",
+        GalaxyMapMarkKind.Mission => "Mission",
         _ => mark.Names.Count == 1 ? "Stored ship" : "Stored ships",
     };
 
@@ -1262,6 +1291,7 @@ public sealed class GalaxyMapPage : UserControl
         var bookmarks = items.Where(item => item.Kind == GalaxyMapMarkKind.Bookmark).Sum(item => item.Count);
         var carrier = items.Any(item => item.Kind == GalaxyMapMarkKind.Carrier);
         var ships = items.Where(item => item.Kind == GalaxyMapMarkKind.Ships).Sum(item => item.Count);
+        var missions = items.Where(item => item.Kind == GalaxyMapMarkKind.Mission).Sum(item => item.Count);
         var parts = new List<Run[]>();
 
         if (bookmarks > 0)
@@ -1279,6 +1309,11 @@ public sealed class GalaxyMapPage : UserControl
             parts.Add([Number(ships), Ink(ships == 1 ? " stored ship" : " stored ships")]);
         }
 
+        if (missions > 0)
+        {
+            parts.Add([Number(missions), Ink(missions == 1 ? " mission destination" : " mission destinations")]);
+        }
+
         for (var index = 0; index < parts.Count; index++)
         {
             if (index > 0)
@@ -1292,7 +1327,7 @@ public sealed class GalaxyMapPage : UserControl
             }
         }
 
-        yield return Ink(bookmarks + (carrier ? 1 : 0) + ships == 1 ? one : many);
+        yield return Ink(bookmarks + (carrier ? 1 : 0) + ships + missions == 1 ? one : many);
     }
 
     private void Legend(GalaxyMapDrawn drawn)
@@ -1372,6 +1407,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.Carrier => "Your carrier",
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
         GalaxyMapMarkKind.FarmingSite => "Farming site",
+        GalaxyMapMarkKind.Mission => "Mission destination",
         _ => "Stored ship",
     };
 
@@ -1757,6 +1793,7 @@ public sealed class GalaxyMapPage : UserControl
             GalaxyMapMarkKind.Carrier => (new (double X, double Y)[] { (-7, 0), (-2, 0), (-2, -4), (2, -4), (2, 0), (7, 0), (7, 4), (-7, 4) }, ThemeManager.YellowKey),
             GalaxyMapMarkKind.GuardianBeacon => (new (double X, double Y)[] { (0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4) }, ThemeManager.AKey),
             GalaxyMapMarkKind.FarmingSite => (new (double X, double Y)[] { (0, -5.5), (4.8, -2.75), (4.8, 2.75), (0, 5.5), (-4.8, 2.75), (-4.8, -2.75) }, ThemeManager.AKey),
+            GalaxyMapMarkKind.Mission => (new (double X, double Y)[] { (0, -6.5), (6.5, 0), (0, 6.5), (-6.5, 0) }, ThemeManager.BlueKey),
             _ => (new (double X, double Y)[] { (0, -6), (5.5, 5), (0, 2), (-5.5, 5) }, ThemeManager.YellowKey),
         };
 
@@ -1789,6 +1826,7 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.Ships => MarkDrawing(GalaxyMapMarkKind.Ships, () => true),
         StarChartKind.GuardianBeacons => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, () => true),
         StarChartKind.FarmingSites => MarkDrawing(GalaxyMapMarkKind.FarmingSite, () => true),
+        StarChartKind.MissionDestinations => MarkDrawing(GalaxyMapMarkKind.Mission, () => true),
         _ => UnvisitedDrawing(() => true),
     };
 

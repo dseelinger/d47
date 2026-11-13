@@ -16,6 +16,8 @@ public static class AstrometricsCapability
 
     public const string FarmingSitesChart = "farming_sites";
 
+    public const string MissionDestinationsChart = "mission_destinations";
+
     private static readonly string[] BeaconPhrases =
     [
         "show me all known Guardian beacons",
@@ -30,13 +32,18 @@ public static class AstrometricsCapability
         "material farming sites on the map",
     ];
 
+    private static readonly string[] MissionPhrases =
+    [
+        "show my missions on the map",
+    ];
+
     public static CapabilityDescriptor Create(Func<CommanderGameState?> state) => new()
     {
         Id = Id,
         Group = "Knowledge",
         Name = "Star charts",
-        Summary = "Adds a chart, such as the Guardian beacons or the material farming sites, to the Galaxy map and says what it holds.",
-        Examples = ["show me all known Guardian beacons", "show the farming sites"],
+        Summary = "Adds a chart, such as the Guardian beacons, the material farming sites or your mission destinations, to the Galaxy map and says what it holds.",
+        Examples = ["show me all known Guardian beacons", "show the farming sites", "show my missions on the map"],
         Display = new CapabilityDisplay { PanelTitle = "Star charts", Order = 71, ShowOnPanel = false },
         Tools =
         [
@@ -47,17 +54,18 @@ public static class AstrometricsCapability
                     "Say \"show me all known Guardian beacons\". D47 adds the Guardian beacons layer to the "
                     + "Galaxy map and says how many beacon systems it knows and which is nearest you.",
                 Description =
-                    "Adds a chart layer to the Galaxy map and opens the map: the Guardian beacons or the material "
-                    + "farming sites. Answers with how many systems the chart marks and, when the Commander's "
-                    + "position is known, the nearest one and its distance.",
+                    "Adds a chart layer to the Galaxy map and opens the map: the Guardian beacons, the material "
+                    + "farming sites or the destinations of the Commander's active missions. Answers with how many "
+                    + "systems the chart marks and, when the Commander's position is known, the nearest one and its distance.",
                 Parameters =
                 [
-                    ToolParameter.OneOf("chart", "The chart to show.", [GuardianBeacons, FarmingSitesChart], required: true),
+                    ToolParameter.OneOf("chart", "The chart to show.", [GuardianBeacons, FarmingSitesChart, MissionDestinationsChart], required: true),
                 ],
                 Commands =
                 [
                     .. BeaconPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = GuardianBeacons })),
                     .. FarmingPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = FarmingSitesChart })),
+                    .. MissionPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = MissionDestinationsChart })),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Answer(state(), arguments)),
             },
@@ -95,11 +103,25 @@ public static class AstrometricsCapability
         return $"{count} The nearest is {nearest.Name}, {nearest.At.DistanceTo(position).ToString("0.#", CultureInfo.InvariantCulture)} light years away.";
     }
 
+    public static string DescribeMissionDestinations(MissionBoard missions)
+    {
+        var bound = missions.Missions.Where(mission => mission.DestinationSystem is not null).ToList();
+
+        if (bound.Count == 0)
+        {
+            return "You have no active missions with a destination.";
+        }
+
+        var systems = bound.Select(mission => mission.DestinationSystem!).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+
+        return $"You have {bound.Count} active {(bound.Count == 1 ? "mission" : "missions")} bound for {systems} {(systems == 1 ? "system" : "systems")}.";
+    }
+
     private static ToolResult Answer(CommanderGameState? state, ToolArguments arguments)
     {
         if (!arguments.TryGetString("chart", out var chart))
         {
-            return ToolResult.Error($"chart must be {GuardianBeacons} or {FarmingSitesChart}.");
+            return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart} or {MissionDestinationsChart}.");
         }
 
         if (string.Equals(chart, GuardianBeacons, StringComparison.OrdinalIgnoreCase))
@@ -118,6 +140,14 @@ public static class AstrometricsCapability
             };
         }
 
-        return ToolResult.Error($"chart must be {GuardianBeacons} or {FarmingSitesChart}.");
+        if (string.Equals(chart, MissionDestinationsChart, StringComparison.OrdinalIgnoreCase))
+        {
+            return ToolResult.Ok(DescribeMissionDestinations(state?.Missions ?? MissionBoard.Empty)) with
+            {
+                Page = PageRef.StarChart(StarChartKind.MissionDestinations),
+            };
+        }
+
+        return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart} or {MissionDestinationsChart}.");
     }
 }

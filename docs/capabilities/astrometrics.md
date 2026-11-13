@@ -69,18 +69,19 @@ Adds a chart to the Galaxy map and says what it holds. Part of every run.
 > "Guardian beacons on the map"
 > "show the farming sites"
 > "material farming sites on the map"
+> "show my missions on the map"
 
-The last two add the Farming sites layer instead: a hexagon mark for each system with a material farming site. Select one and the strip lists each site there with its material, method and body. None of these needs an AI configured.
+The farming phrases add the Farming sites layer instead: a hexagon mark for each system with a material farming site. Select one and the strip lists each site there with its material, method and body. The last one adds the Missions layer: a diamond mark for each system an active mission is bound for. Select one and the strip lists each mission there by name, with its station where it has one. None of these needs an AI configured.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
 #### `show_star_chart`
 
-Adds a chart layer to the Galaxy map and opens the map: the Guardian beacons or the material farming sites. Answers with how many systems the chart marks and, when the Commander's position is known, the nearest one and its distance.
+Adds a chart layer to the Galaxy map and opens the map: the Guardian beacons, the material farming sites or the destinations of the Commander's active missions. Answers with how many systems the chart marks and, when the Commander's position is known, the nearest one and its distance.
 
 ```json
-{"type":"object","properties":{"chart":{"type":"string","description":"The chart to show.","enum":["guardian_beacons","farming_sites"]}},"required":["chart"],"additionalProperties":false}
+{"type":"object","properties":{"chart":{"type":"string","description":"The chart to show.","enum":["guardian_beacons","farming_sites","mission_destinations"]}},"required":["chart"],"additionalProperties":false}
 ```
 
 </details>

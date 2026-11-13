@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The Galaxy map can draw where your active missions are bound. Add Missions on the Layers picker, or say "show my missions on the map"; D47 says how many missions and systems that is, then adds the layer. Each destination system gets a diamond mark at every zoom, named Mission destination in the legend, and selecting one lists the missions bound there by name, with the station where there is one. A destination you have not visited is counted in the line under the map, as bookmarks are. The layer redraws when a mission is accepted, completed, failed or abandoned. It needs no AI, and the Star charts tool takes `mission_destinations`.
+
 Added: The Galaxy map can draw the material farming sites. Add Farming sites on the Layers picker, or say "show the farming sites" or "material farming sites on the map"; D47 says how many sites it knows and which system is nearest, then adds the layer. Each system with a site gets a hexagon mark at every zoom, named Farming site in the legend, and selecting one lists each site there with its material, method and body. It needs no AI, and the Star charts tool takes `farming_sites`.
 
 Added: Say "show me all known Guardian beacons", "show the Guardian beacons", "where are the Guardian beacons" or "Guardian beacons on the map" and D47 says how many beacon systems it knows and which is nearest you, with the distance, then adds the Guardian beacons layer to the Galaxy map in the window and on the headset big panel. It needs no AI. With no known position it gives the count only. The model can do the same through a new Star charts capability.
