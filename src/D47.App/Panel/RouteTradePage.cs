@@ -162,12 +162,11 @@ public sealed class RouteTradePage : UserControl
             },
             _ =>
             {
-                // The book is what the result level draws, and the capability has just written it — so
-                // redrawing the page is what puts "Show most recent" on the card.
-                Refresh();
-
+                // Redraw only when a plan was recorded: a redraw empties the credits box and the status
+                // line, and an error, an unseen market and "no trade run pays" record nothing.
                 if (_plans.Last(RoutePlanKind.Trade) is { } after && !ReferenceEquals(before, after))
                 {
+                    Refresh();
                     _nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Trade, after.Headline));
                 }
             });

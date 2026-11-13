@@ -1276,6 +1276,53 @@ public class TheRoutingTabTests
         return (panel, routes, plans);
     }
 
+    /// <summary>
+    /// A trade plot that records no plan leaves its answer and the credits figure on the page; a redraw
+    /// after every plot used to wipe both, so Plot looked as if it only cleared the form.
+    /// </summary>
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
+    public void ATradePlotThatFindsNothingKeepsItsAnswerOnThePage()
+    {
+        var folder = Scratch();
+
+        try
+        {
+            var settings = TestSurface.Settings();
+            var plans = Book(folder);
+
+            var registry = CapabilityRegistry.Build(
+            [
+                D47.Core.Capabilities.Builtin.RouteCapability.Create(
+                    new FakeRoutes(),
+                    trade: null,
+                    commander: () => null,
+                    settings,
+                    plans),
+            ]);
+
+            var panel = new PanelView { DataContext = new PanelViewModel() };
+
+            panel.EnableRouting(new RoutingSurface(() => NavRoute.None, () => "Sol", registry, plans, Settings: settings));
+
+            Laid(panel);
+            panel.Tab = PanelTab.Navigation;
+            panel.Nav.SelectRoot(RoutingPages.TradeRoot);
+            Dispatcher.UIThread.RunJobs();
+
+            FieldNamed(panel, "Credits to trade with, required").Text = "10000000";
+            PlotButton(panel).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+
+            Assert.Contains(TextOf(panel), text => text.Contains("Route planning is not available", StringComparison.Ordinal));
+            Assert.Equal("10000000", FieldNamed(panel, "Credits to trade with, required").Text);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
     private static TextBox DestinationBox(PanelView panel) =>
         panel.GetVisualDescendants()
             .OfType<TextBox>()
