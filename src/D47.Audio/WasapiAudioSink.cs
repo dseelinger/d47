@@ -214,15 +214,6 @@ public sealed class WasapiAudioSink : IAudioSink, IDefaultDeviceReopener, IDispo
         }
     }
 
-    public void StopAll()
-    {
-        lock (_gate)
-        {
-            _mixer.RemoveAllMixerInputs();
-            ReleaseAll();
-        }
-    }
-
     public void Pause(long playbackId) => Hold(playbackId, paused: true);
 
     public void Resume(long playbackId) => Hold(playbackId, paused: false);

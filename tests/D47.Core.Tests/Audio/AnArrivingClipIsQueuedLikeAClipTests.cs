@@ -89,8 +89,8 @@ public class AnArrivingClipIsQueuedLikeAClipTests
         var startedBefore = sink.Started.Count;
         arbiter.Silence();
 
-        Assert.Equal(1, sink.StopAllCount);
         Assert.False(arbiter.IsSpeaking);
+        Assert.Empty(sink.Live);
 
         sink.CompleteCurrent();
         Assert.Equal(startedBefore, sink.Started.Count);

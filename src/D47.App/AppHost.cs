@@ -6328,6 +6328,7 @@ public sealed class AppHost : IDisposable
 
         // Stop making noise before tearing anything down.
         Audio.Silence();
+        Audio.StopMusic();
         Audio.Dispose();
         _audioSink.Dispose();
         Speech.Dispose();

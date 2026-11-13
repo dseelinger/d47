@@ -33,8 +33,6 @@ internal sealed class FakeAudioSink : IAudioSink
 
     public List<long> Stopped { get; } = [];
 
-    public bool StoppedAll { get; private set; }
-
     public event Action<long>? Finished;
 
     public IRenderReferenceTap ReferenceTap { get; } = new FakeRenderTap();
@@ -42,8 +40,6 @@ internal sealed class FakeAudioSink : IAudioSink
     public void Play(PlaybackRequest request) => Played.Add(request);
 
     public void Stop(long playbackId) => Stopped.Add(playbackId);
-
-    public void StopAll() => StoppedAll = true;
 
     public void Pause(long playbackId)
     {

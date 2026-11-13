@@ -124,7 +124,7 @@ nav_order: 122
  <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">stop_speaking</text>
  <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">answers while a turn is mid-sentence</text>
 </svg>
-<p class="body">The tool is declared as <code>Immediately stop all speech and audio, discarding anything queued.</code> It leaves the turn running; the Cancel key also abandons the turn.</p>
+<p class="body">The tool is declared as <code>Immediately stop all speech, discarding anything queued. Music keeps playing.</code> It leaves the turn running; the Cancel key also abandons the turn.</p>
 </section>
 </div></div>
 </details>
@@ -164,7 +164,7 @@ the same thing.
 Silence is immediate: whatever is queued is dropped, the current sentence is cut off mid-word, and
 anything still being synthesised is abandoned rather than allowed to arrive a moment later and
 speak into the silence it was meant to end. It never waits for the model, for a turn to finish, or
-for Directive 47 to have focus.
+for Directive 47 to have focus. Music keeps playing; "pause the music" stops it.
 
 Bare "stop" only counts while there is something to interrupt. Idle, it stays out of the way — a
 common verb that hijacked every sentence containing it would be unusable. The longer phrases work

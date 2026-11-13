@@ -170,19 +170,33 @@ public class AmbienceTests : IDisposable
         Assert.Equal(0.5f, sink.GainOf(music)!.Value, 3);
     }
 
-    /// <summary>A Commander who asked for quiet asked for quiet, background layer or not.</summary>
     [Fact]
-    public void SilenceStopsTheMusic()
+    public void SilenceLeavesTheMusicAloneAndShelvedTracksStayShelved()
     {
         var (arbiter, sink) = Arbiter();
 
-        arbiter.PlayMusic(Track("track"));
-        Assert.True(arbiter.Activity.MusicPlaying);
+        arbiter.PlayMusic(Track("one"), "folder-a");
+        Assert.True(arbiter.ShelveMusic(DateTimeOffset.UtcNow));
+        arbiter.PlayMusic(Track("two"), "folder-b");
+        var live = sink.Started[^1].Id;
 
         arbiter.Silence();
 
+        Assert.True(arbiter.Activity.MusicPlaying);
+        Assert.DoesNotContain(live, sink.Stopped);
+        Assert.NotNull(arbiter.UnshelveMusic("folder-a"));
+    }
+
+    [Fact]
+    public void StoppingTheMusicAfterSilenceStillStopsIt()
+    {
+        var (arbiter, _) = Arbiter();
+
+        arbiter.PlayMusic(Track("track"));
+        arbiter.Silence();
+        arbiter.StopMusic();
+
         Assert.False(arbiter.Activity.MusicPlaying);
-        Assert.Equal(1, sink.StopAllCount);
     }
 
     [Fact]

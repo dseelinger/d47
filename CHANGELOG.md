@@ -10,6 +10,8 @@
 
 Fixed: A commodity search for a multi-word or renamed commodity, such as Performance Enhancers, Atmospheric Processors or Agri-Medicines, now asks the market index for its symbol and finds the stations selling it. Before, the index was asked under a spaced spelling, answered nothing, and the search reported that the 25 remembered markets had stale prices.
 
+Fixed: Saying "shut up", pressing Cancel, an urgent callout or the walkthrough's "stop" no longer stops the music. They end speech, alerts, chatter, cues and anything queued, and the music keeps playing at its normal level; closing d47 still stops it.
+
 Fixed: The check for a push-to-talk key or headset zoom key that Elite already binds now finds keys Elite spells differently from d47, such as Scroll Lock, 0, =, -, comma, the arrow keys and the numpad. Before, only letters and F-keys matched, so the default Scroll Lock key never showed as taken.
 
 Changed: The Navigation tab is now called Astrometrics, on the tab bar, in what D47 says and in the pages that name it. Saying "navigation" or "astro metrics" still opens it, and a saved tab or layout that says Navigation or Routing still opens it.

@@ -43,8 +43,6 @@ internal sealed class SteppedSink : IAudioSink
 
     public void Stop(long playbackId) => _done.Add(playbackId);
 
-    public void StopAll() => _done.AddRange(Started.Select(request => request.Id));
-
     public void Pause(long playbackId)
     {
     }

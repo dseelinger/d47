@@ -450,7 +450,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
-    /// <summary>Shut up (Phase 5). A playing playback is paused, not ended.</summary>
+    /// <summary>Stops speech, alerts, cues, the bed and everything queued; music is left playing. A playing playback is paused, not ended.</summary>
     public void Silence()
     {
         AudioActivity activity;
@@ -459,7 +459,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         lock (_gate)
         {
-            hadSomething = _current is not null || _bed is not null || _music is not null || _queue.Count > 0;
+            hadSomething = _current is not null || _bed is not null || _queue.Count > 0;
 
             if (_playbackGroup is not null && !_playbackPaused)
             {
@@ -468,14 +468,22 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
 
             _queue.Clear();
+
+            if (_current is { } playing)
+            {
+                sink.Stop(playing.Id);
+            }
+
+            if (_bed is { } bed)
+            {
+                sink.Stop(bed.Id);
+            }
+
             _current = null;
             _bed = null;
             _lastSpokenGroup = null;
 
-            // Silence is silence.
-            ClearLive();
-            _shelf.Clear();
-            sink.StopAll();
+            Relevel();
             activity = Snapshot();
         }
 

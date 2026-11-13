@@ -45,8 +45,6 @@ public interface IAudioSink
     /// <summary>Stops one playback.</summary>
     void Stop(long playbackId);
 
-    void StopAll();
-
     /// <summary>Holds one playback at its position, rendering silence without reading from it.</summary>
     void Pause(long playbackId);
 

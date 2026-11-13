@@ -28,10 +28,6 @@ internal sealed class SilentSink : IAudioSink
     {
     }
 
-    public void StopAll()
-    {
-    }
-
     public void Pause(long playbackId)
     {
     }
@@ -70,10 +66,6 @@ internal sealed class CollectingSink : IAudioSink
     }
 
     public void Stop(long playbackId)
-    {
-    }
-
-    public void StopAll()
     {
     }
 
@@ -128,10 +120,6 @@ internal sealed class HandDrivenSink : IAudioSink
     public void Play(PlaybackRequest request) => Started.Add(request.Id);
 
     public void Stop(long playbackId)
-    {
-    }
-
-    public void StopAll()
     {
     }
 

@@ -112,10 +112,6 @@ public class CommsArriveOverTheAirTests
         {
         }
 
-        public void StopAll()
-        {
-        }
-
         public void Pause(long playbackId)
         {
         }

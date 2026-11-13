@@ -275,7 +275,7 @@ public class AudioArbiterTests
     }
 
     [Fact]
-    public void SilenceStopsEverythingAndClearsWhatWasWaiting()
+    public void SilenceStopsEverythingAudibleButMusicAndClearsWhatWasWaiting()
     {
         var (arbiter, sink) = Build();
 
@@ -284,10 +284,13 @@ public class AudioArbiterTests
         arbiter.Enqueue(Speech("two"));
         arbiter.Enqueue(Speech("three"));
 
+        var bedId = sink.Started[0].Id;
+        var speechId = sink.Started[1].Id;
         var startedBefore = sink.Started.Count;
         arbiter.Silence();
 
-        Assert.Equal(1, sink.StopAllCount);
+        Assert.Contains(bedId, sink.Stopped);
+        Assert.Contains(speechId, sink.Stopped);
         Assert.False(arbiter.IsSpeaking);
         Assert.False(arbiter.Activity.BedPlaying);
 
@@ -316,8 +319,28 @@ public class AudioArbiterTests
 
         arbiter.Silence();
 
-        Assert.Equal(1, sink.StopAllCount);
+        Assert.Empty(sink.Stopped);
         Assert.False(arbiter.IsSpeaking);
+    }
+
+    [Fact]
+    public void SilenceLeavesTheMusicPlayingAtItsNormalLevel()
+    {
+        var (arbiter, sink) = Build();
+
+        arbiter.PlayMusic(new MusicTrack("track", () => WavReader.Open(new MemoryStream(WavWriter.ToBytes(new byte[480], AudioFormat.Standard)), "track")));
+        var music = sink.Started[0].Id;
+        var normal = sink.GainOf(music)!.Value;
+
+        arbiter.Enqueue(Speech("one"));
+        Assert.True(sink.GainOf(music)!.Value < normal);
+
+        arbiter.Silence();
+
+        Assert.DoesNotContain(music, sink.Stopped);
+        Assert.True(arbiter.Activity.MusicPlaying);
+        Assert.False(arbiter.IsSpeaking);
+        Assert.Equal(normal, sink.GainOf(music)!.Value, 3);
     }
 
     [Fact]

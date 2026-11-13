@@ -86,7 +86,7 @@ public class TheSwitchWaitsForTheArbiterToBeIdleTests
 
         Assert.Null(move);
         Assert.Equal(0, device.ReopenCount);
-        Assert.False(sink.StoppedAll);
+        Assert.Empty(sink.Stopped);
         Assert.True(arbiter.IsSpeaking);
 
         // Once the line finishes on its own, the still-due move goes through on the next poll.
@@ -120,7 +120,7 @@ public class TheSwitchWaitsForTheArbiterToBeIdleTests
 
         Assert.NotNull(move);
         Assert.True(move.Value.Interrupted);
-        Assert.True(sink.StoppedAll);
+        Assert.Single(sink.Stopped);
         Assert.False(arbiter.IsSpeaking);
         Assert.Equal(1, device.ReopenCount);
     }

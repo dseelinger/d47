@@ -534,10 +534,10 @@ public static class SpeechCapability
                 Name = "stop_speaking",
                 Exercise =
                     "While D47 is speaking, say \"stop\" or \"be quiet\". Speech and queued audio stop "
-                    + "at once and the reply is \"Stopped.\"",
+                    + "at once; music keeps playing. The reply is \"Stopped.\"",
                 AlwaysLoaded = true,
                 Description =
-                    "Immediately stop all speech and audio, discarding anything queued. " +
+                    "Immediately stop all speech, discarding anything queued. Music keeps playing. " +
                     "Use when the Commander asks for silence.",
 
                 // The one tool that must answer while a turn is mid-sentence, since that is the only moment

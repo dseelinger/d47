@@ -13,8 +13,6 @@ public sealed class RecordingAudioSink : IAudioSink
 
     public List<(long Id, float Gain)> GainChanges { get; } = [];
 
-    public int StopAllCount { get; private set; }
-
     /// <summary>Ids started and not since stopped or finished. "What would be audible now."</summary>
     public IReadOnlyCollection<long> Live =>
         [.. Started.Select(request => request.Id).Where(id => !Stopped.Contains(id) && !_finished.Contains(id))];
@@ -38,12 +36,6 @@ public sealed class RecordingAudioSink : IAudioSink
     {
         Stopped.Add(playbackId);
         _log.Add($"stop {playbackId}");
-    }
-
-    public void StopAll()
-    {
-        StopAllCount++;
-        _log.Add("stopAll");
     }
 
     public HashSet<long> Paused { get; } = [];

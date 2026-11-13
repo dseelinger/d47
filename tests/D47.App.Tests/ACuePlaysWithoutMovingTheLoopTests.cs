@@ -60,10 +60,6 @@ public class ACuePlaysWithoutMovingTheLoopTests
 
         public void Stop(long playbackId) => _ = Finished;
 
-        public void StopAll()
-        {
-        }
-
         public void Pause(long playbackId)
         {
         }

@@ -288,10 +288,6 @@ public sealed class TheCovasAndTheRadioPlayWhileTheyArriveTests
         {
         }
 
-        public void StopAll()
-        {
-        }
-
         public void Pause(long playbackId)
         {
         }

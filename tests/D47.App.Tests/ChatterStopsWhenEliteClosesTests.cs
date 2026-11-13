@@ -119,10 +119,6 @@ public class ChatterStopsWhenEliteClosesTests
 
         public void Stop(long playbackId) => Stopped.Add(playbackId);
 
-        public void StopAll()
-        {
-        }
-
         public void Pause(long playbackId)
         {
         }

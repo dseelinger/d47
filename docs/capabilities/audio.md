@@ -171,7 +171,7 @@ finish. Four things cut it, and a new turn also drops what the previous turn had
 | **An alert** | Anything being said, mid-word | Nothing; only "stop" overrules it |
 | **You starting to talk to it** | Invented NPC chatter, playing or queued | Everything else, including the sound cue |
 | **Elite closing** | Invented chatter and Narrator lines, playing or queued | Everything else |
-| **"Stop"** | Everything audible, including the alert | Nothing |
+| **"Stop"** | Everything audible but music, including the alert | Music |
 
 The middle row fires when the microphone opens, and also when a turn starts without you having
 spoken, rather than when the answer arrives. It stays shut until the loop goes quiet again, so
