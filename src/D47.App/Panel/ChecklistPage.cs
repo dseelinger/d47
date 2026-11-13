@@ -133,6 +133,15 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         Classes = { "destructive" },
     };
 
+    /// <summary>Removes every line of the ship's list on the page.</summary>
+    private readonly Button _deleteList = new()
+    {
+        Content = "Delete this list",
+        VerticalAlignment = VerticalAlignment.Top,
+        Classes = { "destructive" },
+        IsVisible = false,
+    };
+
     private IDisposable? _sized;
     private bool _mini;
 
@@ -192,6 +201,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         _add.Click += (_, _) => AddLine();
 
         _deleteCompleted.Click += (_, _) => DeleteCompletedItems();
+        _deleteList.Click += (_, _) => DeleteThisList();
 
         // A WrapPanel, because a DockPanel with a filling StackPanel does not shrink and the two groups drew
         // over each other below about 700 pixels.
@@ -209,6 +219,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                 _controls.Children.Add(_hereOnly);
                 _right.Children.Add(_add);
                 _right.Children.Add(_deleteCompleted);
+                _right.Children.Add(_deleteList);
                 break;
 
             default:
@@ -908,6 +919,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             _hereOnly.IsVisible = false;
             _add.IsVisible = false;
             _deleteCompleted.IsVisible = false;
+            _deleteList.IsVisible = false;
 
             _list.Children.Add(Muted("Nothing is on this list now."));
             return;
@@ -925,6 +937,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
         _add.IsVisible = _checklists.CanAdd(list);
         _deleteCompleted.IsVisible = true;
         _deleteCompleted.IsEnabled = list.Done > 0;
+        _deleteList.IsVisible = list.Scope.Group is ChecklistGroup.Ship or ChecklistGroup.Build;
 
         var lines = _checklists.Lines(list);
 
@@ -1184,23 +1197,26 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            var drop = new Button
-            {
-                Content = "Delete",
-                MinWidth = 0,
-                VerticalAlignment = VerticalAlignment.Center,
-                Classes = { "destructive" },
-            };
-
             edit.Click += (_, _) => EditLine(item);
-            drop.Click += (_, _) => DeleteLine(item);
 
             AutomationProperties.SetName(edit, "Edit this line");
-            AutomationProperties.SetName(drop, "Delete this line");
 
             movers.Children.Add(edit);
-            movers.Children.Add(drop);
         }
+
+        var drop = new Button
+        {
+            Content = "Delete",
+            MinWidth = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            Classes = { "destructive" },
+        };
+
+        drop.Click += (_, _) => DeleteLine(item);
+
+        AutomationProperties.SetName(drop, "Delete this line");
+
+        movers.Children.Add(drop);
 
         return movers;
     }
@@ -1234,6 +1250,30 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             new ChoiceOption("keep", "Keep it"),
             new ChoiceOption("delete", "Delete it"),
             () => Settle(_checklists.Delete(item.Id)));
+    }
+
+    /// <summary>Removes every line of the ship's list on the page, after asking.</summary>
+    private void DeleteThisList()
+    {
+        var list = _level == Level.One ? _checklists.Lists().FirstOrDefault(found => found.Id == _listId) : null;
+
+        if (list is null || list.Scope.Group is not (ChecklistGroup.Ship or ChecklistGroup.Build))
+        {
+            return;
+        }
+
+        var count = list.Open + list.Done;
+
+        PanelPrompts.Confirm(
+            _prompts,
+            "checklist.delete-list",
+            "Delete this list",
+            "Delete this list",
+            $"{list.Name} would lose {(count == 1 ? "its 1 line" : $"all {count} lines")}, your own included. "
+            + "Its plan on Asset Mgmt is not changed. There is no way back from this one.",
+            new ChoiceOption("keep", "Keep it"),
+            new ChoiceOption("delete", "Delete it"),
+            () => Settle(_checklists.DeleteList(list)));
     }
 
     private void Settle(ChecklistChange change)

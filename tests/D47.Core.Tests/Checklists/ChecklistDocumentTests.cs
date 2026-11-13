@@ -68,15 +68,15 @@ public class ChecklistDocumentTests
     }
 
     [Fact]
-    public void DeletingADerivedItemIsRefusedBecauseRevisingIsHowAPlanDropsOne()
+    public void DeletingADerivedItemRemovesIt()
     {
         var scope = ChecklistScope.Ship(12);
         var document = Empty with { Items = [Derived("MainEngines", "Dirty Drive Tuning", 5, scope)] };
 
         var change = document.Delete(document.Items[0].Id);
 
-        Assert.False(change.Changed);
-        Assert.Contains("revising the plan", change.Report, StringComparison.Ordinal);
+        Assert.True(change.Changed);
+        Assert.Empty(change.Document.Items);
     }
 
     [Fact]

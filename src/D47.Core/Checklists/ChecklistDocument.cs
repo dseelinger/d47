@@ -264,18 +264,12 @@ public sealed record ChecklistDocument
             $"Now reads \"{wanted}\".");
     }
 
-    /// <summary>Removes an item outright.</summary>
+    /// <summary>Removes an item outright, whatever put it there.</summary>
     public ChecklistChange Delete(ChecklistItemId id)
     {
         if (Find(id) is not { } item)
         {
             return ChecklistChange.Refused(this, "There is no such item on your checklist.");
-        }
-
-        if (item.Kind == ChecklistItemKind.Derived)
-        {
-            return ChecklistChange.Refused(
-                this, $"\"{item.Text}\" came from a plan, so revising the plan is what drops it.");
         }
 
         return new ChecklistChange(

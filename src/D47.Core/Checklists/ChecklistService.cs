@@ -60,6 +60,9 @@ public sealed class ChecklistService(
     /// </summary>
     public event Action<string, bool, string>? ProposalSettled;
 
+    /// <summary>Raised with the list's scope after the Commander deletes a line or a whole list.</summary>
+    public event Action<ChecklistScope>? LinesDeleted;
+
     /// <summary>The Commander typed a line into a surface's Add box, with the Commander it was filed under.</summary>
     public event Action<string, ChecklistItem>? Typed;
 
@@ -1477,6 +1480,7 @@ public sealed class ChecklistService(
 
     public ChecklistChange Delete(ChecklistItemId id)
     {
+        var deleted = Document.Find(id);
         var change = list.Apply(Fid, Name, document => document.Delete(id));
 
         // The selected line has gone, so the selection goes with it rather than pointing at an id nothing
@@ -1485,6 +1489,44 @@ public sealed class ChecklistService(
         {
             Select(null);
         }
+
+        if (change.Changed)
+        {
+            LinesDeleted?.Invoke(deleted!.Scope);
+        }
+
+        return change;
+    }
+
+    /// <summary>
+    /// Removes every line of a ship's list, the Commander's own included, and any plan waiting for that ship.
+    /// </summary>
+    public ChecklistChange DeleteList(ChecklistList target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        var scope = target.Scope;
+
+        var waiting = proposals.PendingFor(Fid).Where(proposal => proposal.Scope.Same(scope)).ToList();
+
+        if (waiting.Count > 0)
+        {
+            proposals.Write([.. proposals.Pending.Except(waiting)]);
+        }
+
+        var change = list.Apply(Fid, Name, document => document.RemoveList(scope));
+
+        if (!change.Changed)
+        {
+            return change;
+        }
+
+        if (Selected is { } held && change.Document.Find(held) is null)
+        {
+            Select(null);
+        }
+
+        LinesDeleted?.Invoke(scope);
 
         return change;
     }
@@ -1883,7 +1925,7 @@ public sealed class ChecklistService(
             return $"I could not tell which item \"{phrase}\" means.";
         }
 
-        if (!item.TicksByHand)
+        if (!item.TicksByHand && change != ProposalKind.Remove)
         {
             // Observing rather than asserting.
             var verdict = ChecklistEvaluator.Evaluate(item, State);

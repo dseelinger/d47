@@ -50,7 +50,7 @@ nav_order: 111
 </section>
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
-<p class="say">Say "remove buy a fuel scoop" and answer yes, or press Delete on a line of your own.</p>
+<p class="say">Say "remove buy a fuel scoop" and answer yes, or press Delete on a line.</p>
 <p class="expect">The line goes once you accept; until then a ticked line stays so you can see what you did.</p>
 <svg viewBox="0 0 880 152" role="img" aria-label="Finishing an item is not removing it, so a finished item stays on the list">
  <rect x="20" y="20" width="840" height="112" fill="var(--surface)" stroke="var(--danger)" stroke-width="2.5"/>
@@ -253,6 +253,12 @@ showing; on one list's page it takes only that list's Done lines. It is greyed o
 Done. A plan proposal still waiting to be accepted loses the same lines from what it
 would add, so accepting it afterwards does not put them back.
 
+**Delete this list** is beside it on a ship's list page, for an owned ship or a planned one. It asks
+first, naming the list and how many lines go, then removes every line in the list, your own
+included, and any plan still waiting for that ship. It is not on All lists or on a list that is not a
+ship's. It does not change the ship's plan on Asset Mgmt › Ships, and d47 does not offer the lines
+back on boarding until that plan changes.
+
 ### Changing a plan is a diff, not a rebuild
 
 Burst lasers instead of multi-cannons is a revision, and Directive 47 tells it apart from the world
@@ -324,7 +330,7 @@ ship's share of it, so scope is a label and a filter and never a partition.
 #### Reordering
 
 **Press a line to select it**; it grows four movers: Move to the top, Move up, Move down and Move
-to the bottom. A line of your own also gets Edit and Delete.
+to the bottom. Every line gets Delete, and a line of your own also gets Edit.
 
 Not a drag. A drag is the worst gesture available to a laser pointer at a metre — it needs a
 press, an aim held through movement, and a release — and it has no spoken form at all, where
@@ -512,7 +518,7 @@ says you can buy it into storage before you buy the ship. The checklist filter o
 
 Buying the ship ticks "Buy a Python", or removes it when **Remove fulfilled items** is on. The rest of
 the list, your own lines included, moves onto the new ship's list and keeps what was done. When two
-plans are for the same hull, neither moves. Deleting the plan removes its list.
+plans are for the same hull, neither moves. Deleting the plan removes its list, and so does **Delete this list** on the list's own page.
 
 ### What a plan costs
 

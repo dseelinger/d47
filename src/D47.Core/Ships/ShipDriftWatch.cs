@@ -7,8 +7,19 @@ namespace D47.Core.Ships;
 /// Asks, once, when the ship the Commander has just boarded carries a build their checklist does not
 /// (Phase 38, "Ask before the plan and the checklist drift apart").
 /// </summary>
-public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService checklists)
+public sealed class ShipDriftWatch
 {
+    private readonly ShipPlanService ships;
+    private readonly ChecklistService checklists;
+
+    public ShipDriftWatch(ShipPlanService ships, ChecklistService checklists)
+    {
+        this.ships = ships;
+        this.checklists = checklists;
+
+        checklists.LinesDeleted += Deleted;
+    }
+
     /// <summary>The last ship seen, so a <c>Loadout</c> for the same one is not a swap.</summary>
     private int? _aboard;
 
@@ -91,6 +102,20 @@ public sealed class ShipDriftWatch(ShipPlanService ships, ChecklistService check
 
         return $"You are in {build.Describe()}, and its build carries engineering your checklist "
                + $"has not got. {said}";
+    }
+
+    /// <summary>A line or list the Commander deleted is a no to the difference it leaves.</summary>
+    private void Deleted(ChecklistScope scope)
+    {
+        if (ships.Mine.FirstOrDefault(build => build.IsOwned && build.Scope.Same(scope)) is not { } build)
+        {
+            return;
+        }
+
+        if (Drift(build) is { } drift)
+        {
+            ships.Settle(build.Id, drift.Fingerprint);
+        }
     }
 
     /// <summary>Records a no.</summary>
