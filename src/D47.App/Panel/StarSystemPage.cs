@@ -48,6 +48,9 @@ public sealed record StarSystemSurface(
 
     /// <summary>The Biology section's body heads the Commander has opened or closed, for the app session.</summary>
     public BiologyHeads Heads { get; init; } = new();
+
+    /// <summary>What the Orbits section's simulated time runs from.</summary>
+    public TimeProvider Clock { get; init; } = TimeProvider.System;
 }
 
 /// <summary>
@@ -174,6 +177,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         Bodies,
         Powerplay,
         Biology,
+        Orbits,
     }
 
     private sealed record Shown(long Address, string Name);
@@ -231,6 +235,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         var tileChanged = _history.Refresh();
         Check();
         CheckBiology();
+        _orbitPlot?.Request();
 
         var redrawn = _redrawn;
         _redrawn = false;
@@ -351,6 +356,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         if (_opened?.Address != address)
         {
             _section = Section.Overview;
+            ResetOrbits();
             _stationFilter = new StationFilter { Query = _stationFilter.Query };
             ResetNearby();
             ResetSorts();
@@ -526,6 +532,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         _stationTable = null;
         _neighbourList = null;
         _biologyHolder = null;
+        _orbitPlot = null;
 
         _body.Children.Add(FieldRow());
 
@@ -574,6 +581,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
                     Section.Bodies => Bodies(profile),
                     Section.Powerplay => Powerplay(profile),
                     Section.Biology => Biology(profile),
+                    Section.Orbits => Orbits(profile),
                     _ => Overview(profile),
                 });
                 break;
@@ -696,6 +704,9 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         return TitleText.Block(named, context, reportedAt is { } at ? Reported(at) : null);
     }
 
+    /// <summary>"2026-11-10 08:14 UTC".</summary>
+    internal static string Stamp(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture);
+
     internal static StackPanel Reported(DateTimeOffset at)
     {
         var label = Caption("Last reported", ThemeManager.GreyKey);
@@ -703,7 +714,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
 
         var value = new TextBlock
         {
-            Text = at.UtcDateTime.ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture),
+            Text = Stamp(at),
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Body,
             HorizontalAlignment = HorizontalAlignment.Right,

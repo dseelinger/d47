@@ -167,6 +167,11 @@ public sealed partial class StarSystemPage
 
     private void ShowSection(Section section, string? kind = null)
     {
+        if (section == Section.Orbits && _section != Section.Orbits)
+        {
+            ResetOrbits();
+        }
+
         _section = section;
 
         if (section == Section.Powerplay && _profile is { } profile)
@@ -182,7 +187,7 @@ public sealed partial class StarSystemPage
         Draw();
     }
 
-    /// <summary>The section switch, laid on five equal columns.</summary>
+    /// <summary>The section switch, laid on six equal columns.</summary>
     private Grid Sections(StarSystemProfile profile)
     {
         var sections = new Segment
@@ -194,14 +199,15 @@ public sealed partial class StarSystemPage
                 $"Bodies {profile.Bodies.Count.ToString(CultureInfo.InvariantCulture)}",
                 "Powerplay",
                 BiologySegment(profile),
+                "Orbits",
             ],
             SelectedIndex = (int)_section,
         };
         Avalonia.Automation.AutomationProperties.SetName(sections, "Sections");
         sections.SelectionChanged += (_, _) => ShowSection((Section)sections.SelectedIndex);
 
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*,*") };
-        Grid.SetColumnSpan(sections, 5);
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*,*,*") };
+        Grid.SetColumnSpan(sections, 6);
         grid.Children.Add(sections);
 
         return grid;

@@ -512,6 +512,7 @@ public partial class MainWindow : Window
                     () => host.GameState.Active?.Location)
                 {
                     ColumnWidths = ((IPanelTabHost)Panel).ColumnWidths,
+                    Clock = TimeProvider.System,
                     SurfaceMining = (address, bodyId) => host.GameState.Active?.SurfaceMining.At(address, bodyId),
                     Biology = (address, region, surveyed) => host.GameState.Active is { } state
                         ? D47.Core.Journal.BiologyInSystem.For(state, address, region, surveyed, host.EarlierFinds.TryGet(address, out var finds) ? finds : null)

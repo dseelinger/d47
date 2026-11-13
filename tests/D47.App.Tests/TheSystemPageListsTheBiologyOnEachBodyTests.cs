@@ -238,7 +238,7 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
 
         var (page, window) = Shown(Surface(store));
 
-        Assert.Equal(["Overview", "Stations 0", "Bodies 4", "Powerplay", "Biology 2"], Sections(page).ItemsSource!.Cast<string>());
+        Assert.Equal(["Overview", "Stations 0", "Bodies 4", "Powerplay", "Biology 2", "Orbits"], Sections(page).ItemsSource!.Cast<string>());
 
         ShowBiology(page);
 
@@ -256,7 +256,7 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
     {
         var (page, window) = Shown(Surface(Store()));
 
-        Assert.Equal("Biology", Sections(page).ItemsSource!.Cast<string>().Last());
+        Assert.Equal("Biology", Sections(page).ItemsSource!.Cast<string>().ElementAt(4));
 
         ShowBiology(page);
 
@@ -448,7 +448,7 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
         Func<JournalLocation?> onThree = () => new JournalLocation("Vask Reach", BodyName(Here, 3), false, null) { SystemAddress = Here, BodyId = 3 };
 
         var (page, window) = Shown(Surface(store, onThree), open: Elsewhere);
-        Until(() => page.ShownAddress == Elsewhere && Sections(page).ItemsSource!.Cast<string>().Last() == "Biology 1");
+        Until(() => page.ShownAddress == Elsewhere && Sections(page).ItemsSource!.Cast<string>().ElementAt(4) == "Biology 1");
         ShowBiology(page);
 
         Assert.NotNull(Head(page, BodyName(Elsewhere, 3)));
@@ -537,7 +537,7 @@ public sealed class TheSystemPageListsTheBiologyOnEachBodyTests
 
         var (page, window) = Shown(Surface(store, surveyed: held));
 
-        Assert.Equal("Biology 3", Sections(page).ItemsSource!.Cast<string>().Last());
+        Assert.Equal("Biology 3", Sections(page).ItemsSource!.Cast<string>().ElementAt(4));
 
         ShowBiology(page);
 
