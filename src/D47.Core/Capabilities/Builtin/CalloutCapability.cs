@@ -904,12 +904,12 @@ public static class CalloutCapability
                 RivalTerritoryKey,
                 "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
                 + "open Settings › Your core › In flight, group Flight callouts, and find Rival Power territory "
-                + "(on by default). Fly in normal space in a system controlled by a Power other than yours: D47 "
+                + "(on by default). Drop at an orbital station or carrier in a system controlled by a Power other than yours: D47 "
                 + "says it is rival territory. Say \"stop calling out enemy territory\": the row shows off and that "
                 + "is no longer said. Say \"start calling out enemy territory\" and the row shows on. The row is "
                 + "absent while Speak without being asked is off.",
                 "Rival Power territory",
-                "Flying in normal space in a system controlled by a Power other than the one you fly for.",
+                "Arriving at or leaving an orbital station or carrier in a system controlled by a Power other than the one you fly for.",
                 "rival-territory",
                 "enemy territory",
                 s => s.Callouts.RivalTerritory,

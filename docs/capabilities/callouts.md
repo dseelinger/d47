@@ -484,14 +484,14 @@ through a session and it says nothing about promotions already in the journal.
 
 #### Rival Power territory {#rival-territory}
 
-If you fly for a Power, Directive 47 tells you when you drop into normal space somewhere another
-Power controls:
+If you fly for a Power, Directive 47 tells you when you arrive at or undock from an orbital station or
+carrier in a system another Power controls:
 
 ```text
 Yuri Grom controls this system, and you fly for Edmund Mahon. You are exposed here.
 ```
 
-Said once as you enter the condition, then silent for as long as it lasts. And **explained once
+Said on arriving at or undocking from one, then not again in that system for 15 minutes. And **explained once
 per day, full stop** — across restarts and whichever core is aboard, remembered in
 `view-state.json`. Every exposure after the first that day, whoever controls the space, is five
 words rather than the lecture:
@@ -503,10 +503,9 @@ Hostile territory. Be on guard.
 One name is trimmed for the ear: the journal writes *A. Lavigny-Duval*,
 and a voice reading "A." is reading punctuation, so she is spoken as *Lavigny-Duval*.
 
-It waits until you are
-in normal space rather than saying it as you arrive, because arriving happens in supercruise and
-nothing can reach you there — that is measured, not assumed: of the Power security contacts measured for
-`Phase15WarningTests`, none happened in supercruise and two thirds happened in normal space.
+It speaks at orbital stations, fleet and squadron carriers and Stronghold Carriers, and nowhere else in
+rival space: Power security attacks happen on approach to a station or carrier, not at planetary ports or
+in open space, so a drop at a star, planet or ring, a glide to a planetary port and a liftoff are silent.
 
 It also **stands down for anything dangerous**. A remark about enemy territory arriving as somebody
 opens fire is worse than silence, so if you are already being shot at, interdicted, or have just

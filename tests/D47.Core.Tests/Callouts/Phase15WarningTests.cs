@@ -182,6 +182,9 @@ public class Phase15WarningTests
 
     // ---- The standing condition ---------------------------------------------------------
 
+    private static JournalEvent StationExit(string system = "Deciat", long address = 1, int second = 2) =>
+        JournalScript.Parse($$"""{"timestamp":"3311-01-01T00:0{{second}}:00Z","event":"SupercruiseExit","StarSystem":"{{system}}","SystemAddress":{{address}},"BodyType":"Station","Body":"Some Station"}""");
+
     private static CommanderGameState InRivalSpace() => StateFrom(
         """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
         """{"timestamp":"3311-01-01T00:01:00Z","event":"FSDJump","StarSystem":"Deciat","ControllingPower":"Yuri Grom"}""",
@@ -193,7 +196,7 @@ public class Phase15WarningTests
         var callout = new RivalTerritoryCallout();
         var state = InRivalSpace();
 
-        var spoken = Assert.Single(callout.Examine(Context(state)));
+        var spoken = Assert.Single(callout.Examine(Context(state, events: [StationExit()])));
         Assert.Contains("Yuri Grom", spoken.Text, StringComparison.Ordinal);
         Assert.Contains("Edmund Mahon", spoken.Text, StringComparison.Ordinal);
         Assert.Equal(AlertCue.RivalTerritory, spoken.Cue);
@@ -215,7 +218,7 @@ public class Phase15WarningTests
     {
         var callout = new RivalTerritoryCallout();
 
-        var first = Assert.Single(callout.Examine(Context(InRivalSpace())));
+        var first = Assert.Single(callout.Examine(Context(InRivalSpace(), events: [StationExit()])));
         Assert.Contains("Yuri Grom controls this system", first.Text, StringComparison.Ordinal);
 
         // Out of the condition, then down into a different rival's space the same day.
@@ -228,7 +231,7 @@ public class Phase15WarningTests
             """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
             """{"timestamp":"3311-01-01T00:20:00Z","event":"FSDJump","StarSystem":"Cubeo","ControllingPower":"Denton Patreus"}""",
             """{"timestamp":"3311-01-01T00:21:00Z","event":"SupercruiseExit","StarSystem":"Cubeo","Body":"Cubeo 1"}""");
-        var second = Assert.Single(callout.Examine(Context(patreus, atSecond: 1260)));
+        var second = Assert.Single(callout.Examine(Context(patreus, atSecond: 1260, events: [StationExit("Cubeo", 2, 21)])));
         Assert.Equal("Hostile territory. Be on guard.", second.Text);
         Assert.Equal(AlertCue.RivalTerritory, second.Cue);
 
@@ -243,7 +246,7 @@ public class Phase15WarningTests
             """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
             """{"timestamp":"3311-01-02T02:00:00Z","event":"FSDJump","StarSystem":"Sol","ControllingPower":"Yuri Grom"}""",
             """{"timestamp":"3311-01-02T02:01:00Z","event":"SupercruiseExit","StarSystem":"Sol","Body":"Earth"}""");
-        var third = Assert.Single(callout.Examine(Context(nextDay, atSecond: 26 * 3600 + 60)));
+        var third = Assert.Single(callout.Examine(Context(nextDay, atSecond: 26 * 3600 + 60, events: [StationExit("Sol", 3, 1)])));
         Assert.Contains("Yuri Grom controls this system", third.Text, StringComparison.Ordinal);
     }
 
@@ -256,7 +259,7 @@ public class Phase15WarningTests
             """{"timestamp":"3311-01-01T00:01:00Z","event":"FSDJump","StarSystem":"Achenar","ControllingPower":"A. Lavigny-Duval"}""",
             """{"timestamp":"3311-01-01T00:02:00Z","event":"SupercruiseExit","StarSystem":"Achenar","Body":"Achenar 3"}""");
 
-        var spoken = Assert.Single(new RivalTerritoryCallout().Examine(Context(duval)));
+        var spoken = Assert.Single(new RivalTerritoryCallout().Examine(Context(duval, events: [StationExit("Achenar", 4)])));
 
         Assert.StartsWith("Lavigny-Duval controls this system", spoken.Text, StringComparison.Ordinal);
         Assert.Contains("you fly for Li Yong-Rui", spoken.Text, StringComparison.Ordinal);
@@ -285,7 +288,7 @@ public class Phase15WarningTests
             """{"timestamp":"3311-01-01T00:01:00Z","event":"FSDJump","StarSystem":"Deciat","ControllingPower":"Yuri Grom"}""",
             """{"timestamp":"3311-01-01T00:02:00Z","event":"SupercruiseExit","StarSystem":"Deciat","Body":"Deciat 6"}""");
 
-        Assert.Empty(new RivalTerritoryCallout().Examine(Context(home)));
+        Assert.Empty(new RivalTerritoryCallout().Examine(Context(home, events: [StationExit()])));
     }
 
     [Fact]
@@ -295,7 +298,7 @@ public class Phase15WarningTests
             """{"timestamp":"3311-01-01T00:01:00Z","event":"FSDJump","StarSystem":"Deciat","ControllingPower":"Yuri Grom"}""",
             """{"timestamp":"3311-01-01T00:02:00Z","event":"SupercruiseExit","StarSystem":"Deciat","Body":"Deciat 6"}""");
 
-        Assert.Empty(new RivalTerritoryCallout().Examine(Context(neutral)));
+        Assert.Empty(new RivalTerritoryCallout().Examine(Context(neutral, events: [StationExit()])));
     }
 
     /// <summary>
@@ -311,7 +314,7 @@ public class Phase15WarningTests
 
         Assert.Empty(callout.Examine(Context(
             state,
-            events: [JournalScript.Parse("""{"timestamp":"3311-01-01T00:02:00Z","event":"UnderAttack","Target":"You"}""")])));
+            events: [JournalScript.Parse("""{"timestamp":"3311-01-01T00:02:00Z","event":"UnderAttack","Target":"You"}"""), StationExit()])));
 
         // Still exposed, still silent — the edge has been and gone.
         Assert.Empty(callout.Examine(Context(state, atSecond: 300)));
@@ -324,7 +327,7 @@ public class Phase15WarningTests
 
         Assert.Empty(callout.Examine(Context(
             InRivalSpace(),
-            events: [Comms("$Pirate_StartInterdiction07;")])));
+            events: [Comms("$Pirate_StartInterdiction07;"), StationExit()])));
     }
 
     [Fact]
@@ -336,7 +339,7 @@ public class Phase15WarningTests
             ReadAt = Start,
         };
 
-        Assert.Empty(new RivalTerritoryCallout().Examine(Context(InRivalSpace(), status)));
+        Assert.Empty(new RivalTerritoryCallout().Examine(Context(InRivalSpace(), status, [StationExit()])));
     }
 
     [Fact]
@@ -345,7 +348,7 @@ public class Phase15WarningTests
         var callout = new RivalTerritoryCallout();
         var state = InRivalSpace();
 
-        Assert.Empty(callout.Examine(Context(state, priming: true)));
+        Assert.Empty(callout.Examine(Context(state, priming: true, events: [StationExit()])));
 
         // And having folded it, the first live tick does not treat the same condition as new.
         Assert.Empty(callout.Examine(Context(state, atSecond: 1)));
@@ -356,7 +359,7 @@ public class Phase15WarningTests
     {
         var callout = new RivalTerritoryCallout();
 
-        Assert.Single(callout.Examine(Context(InRivalSpace())));
+        Assert.Single(callout.Examine(Context(InRivalSpace(), events: [StationExit()])));
 
         var elsewhere = StateFrom(
             """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
@@ -369,11 +372,142 @@ public class Phase15WarningTests
             """{"timestamp":"3311-01-01T00:09:00Z","event":"FSDJump","StarSystem":"Shinrarta Dezhra","ControllingPower":"Li Yong-Rui"}"""),
             atSecond: 60)));
 
-        var second = Assert.Single(callout.Examine(Context(elsewhere, atSecond: 61)));
+        var second = Assert.Single(callout.Examine(Context(elsewhere, atSecond: 61, events: [StationExit("Shinrarta Dezhra", 5, 11)])));
 
         // Announced — a new rival's space is a new exposure and the edge fires — but shortened: the full
         // explanation is once per day now, whoever controls the space (2026-08-31).
         Assert.Equal("Hostile territory. Be on guard.", second.Text);
+    }
+
+    // ---- Where it speaks ----------------------------------------------------------------
+
+    private static JournalEvent Line(string json) => JournalScript.Parse(json);
+
+    private static CommanderGameState RivalSystemState() => StateFrom(
+        """{"timestamp":"3311-01-01T00:00:00Z","event":"Powerplay","Power":"Edmund Mahon","Rank":3,"Merits":10}""",
+        """{"timestamp":"3311-01-01T00:01:00Z","event":"FSDJump","StarSystem":"Deciat","SystemAddress":1,"ControllingPower":"Yuri Grom"}""");
+
+    private static List<Announcement> Tick(RivalTerritoryCallout callout, int atSecond, params string[] lines) =>
+        [.. callout.Examine(Context(RivalSystemState(), atSecond: atSecond, events: [.. lines.Select(Line)]))];
+
+    private const string StationExitLine =
+        """{"timestamp":"3311-01-01T00:02:00Z","event":"SupercruiseExit","StarSystem":"Deciat","SystemAddress":1,"BodyType":"Station","Body":"Some Station"}""";
+
+    [Theory]
+    [InlineData("Star")]
+    [InlineData("Planet")]
+    [InlineData("PlanetaryRing")]
+    public void ADropAtAStarPlanetOrRingIsSilent(string bodyType)
+    {
+        Assert.Empty(Tick(new RivalTerritoryCallout(), 0,
+            $$"""{"timestamp":"3311-01-01T00:02:00Z","event":"SupercruiseExit","StarSystem":"Deciat","SystemAddress":1,"BodyType":"{{bodyType}}","Body":"Deciat 6"}"""));
+    }
+
+    [Theory]
+    [InlineData("FleetCarrier", "T2F-81Z")]
+    [InlineData("SquadronCarrier", "GREYBEARD DELTA | GBD")]
+    [InlineData("StationMegaShip", "Stronghold Carrier")]
+    public void ADropAtACarrierSpeaksOnceItsExitArrives(string signalType, string signalName)
+    {
+        var callout = new RivalTerritoryCallout();
+
+        Assert.Empty(Tick(callout, 0,
+            $$"""{"timestamp":"3311-01-01T00:00:30Z","event":"FSSSignalDiscovered","SystemAddress":1,"SignalName":"{{signalName}}","SignalType":"{{signalType}}"}"""));
+
+        var spoken = Assert.Single(Tick(callout, 60,
+            $$"""{"timestamp":"3311-01-01T00:01:00Z","event":"SupercruiseDestinationDrop","Type":"{{signalName}}","MarketID":9}""",
+            """{"timestamp":"3311-01-01T00:01:02Z","event":"SupercruiseExit","StarSystem":"Deciat","SystemAddress":1,"BodyType":"Planet","Body":"Deciat 6"}"""));
+
+        Assert.Contains("Yuri Grom", spoken.Text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ADropAtAMegashipThatIsNotACarrierIsSilent()
+    {
+        var callout = new RivalTerritoryCallout();
+
+        Assert.Empty(Tick(callout, 0,
+            """{"timestamp":"3311-01-01T00:00:30Z","event":"FSSSignalDiscovered","SystemAddress":1,"SignalName":"Gordon-class Cutter XYZ-123","SignalType":"StationMegaShip"}"""));
+
+        Assert.Empty(Tick(callout, 60,
+            """{"timestamp":"3311-01-01T00:01:00Z","event":"SupercruiseDestinationDrop","Type":"Gordon-class Cutter XYZ-123"}""",
+            """{"timestamp":"3311-01-01T00:01:02Z","event":"SupercruiseExit","StarSystem":"Deciat","SystemAddress":1,"BodyType":"Planet","Body":"Deciat 6"}"""));
+    }
+
+    [Fact]
+    public void ACarrierSignalLearnedWhilePrimingCountsForTheNextDrop()
+    {
+        var callout = new RivalTerritoryCallout();
+
+        Assert.Empty(callout.Examine(Context(
+            RivalSystemState(),
+            priming: true,
+            events: [Line("""{"timestamp":"3311-01-01T00:00:30Z","event":"FSSSignalDiscovered","SystemAddress":1,"SignalName":"T2F-81Z","SignalType":"FleetCarrier"}""")])));
+
+        Assert.Single(Tick(callout, 60,
+            """{"timestamp":"3311-01-01T00:01:00Z","event":"SupercruiseDestinationDrop","Type":"T2F-81Z"}""",
+            """{"timestamp":"3311-01-01T00:01:02Z","event":"SupercruiseExit","StarSystem":"Deciat","SystemAddress":1,"BodyType":"Star","Body":"Deciat"}"""));
+    }
+
+    [Theory]
+    [InlineData("Coriolis", true)]
+    [InlineData("Orbis", true)]
+    [InlineData("Ocellus", true)]
+    [InlineData("Outpost", true)]
+    [InlineData("AsteroidBase", true)]
+    [InlineData("Dodec", true)]
+    [InlineData("MegaShip", true)]
+    [InlineData("FleetCarrier", true)]
+    [InlineData("CraterOutpost", false)]
+    [InlineData("CraterPort", false)]
+    [InlineData("OnFootSettlement", false)]
+    [InlineData("SpaceConstructionDepot", false)]
+    [InlineData("PlanetaryConstructionDepot", false)]
+    [InlineData("SurfaceStation", false)]
+    public void UndockingSpeaksFromAnOrbitalStationOrCarrierOnly(string stationType, bool speaks)
+    {
+        var callout = new RivalTerritoryCallout();
+
+        Assert.Empty(Tick(callout, 0,
+            $$"""{"timestamp":"3311-01-01T00:02:00Z","event":"Docked","StationName":"Somewhere","StationType":"{{stationType}}","StarSystem":"Deciat","SystemAddress":1}"""));
+
+        var spoken = Tick(callout, 600,
+            """{"timestamp":"3311-01-01T00:10:00Z","event":"Undocked","StationName":"Somewhere"}""");
+
+        Assert.Equal(speaks, spoken.Count == 1);
+    }
+
+    [Fact]
+    public void UndockingFromAStrongholdCarrierSpeaks()
+    {
+        var callout = new RivalTerritoryCallout();
+
+        Assert.Empty(Tick(callout, 0,
+            """{"timestamp":"3311-01-01T00:02:00Z","event":"Docked","StationName":"Stronghold Carrier","StationType":"SurfaceStation","StarSystem":"Deciat","SystemAddress":1}"""));
+
+        Assert.Single(Tick(callout, 600,
+            """{"timestamp":"3311-01-01T00:10:00Z","event":"Undocked","StationName":"Stronghold Carrier"}"""));
+    }
+
+    [Fact]
+    public void LiftoffAndAGlideToAPlanetaryPortAreSilent()
+    {
+        Assert.Empty(Tick(new RivalTerritoryCallout(), 0,
+            """{"timestamp":"3311-01-01T00:02:00Z","event":"Liftoff","PlayerControlled":true}""",
+            """{"timestamp":"3311-01-01T00:02:30Z","event":"SupercruiseDestinationDrop","Type":"Some Port"}""",
+            """{"timestamp":"3311-01-01T00:03:00Z","event":"ApproachSettlement","Name":"Some Port"}"""));
+    }
+
+    [Fact]
+    public void ASecondStationArrivalCarriesTheSameKeyAndCooldown()
+    {
+        var callout = new RivalTerritoryCallout();
+
+        var first = Assert.Single(Tick(callout, 0, StationExitLine));
+        var second = Assert.Single(Tick(callout, 300, StationExitLine));
+
+        Assert.Equal(first.Key, second.Key);
+        Assert.Equal(TimeSpan.FromMinutes(15), second.Cooldown);
     }
 
     // ---- The cues -----------------------------------------------------------------------
