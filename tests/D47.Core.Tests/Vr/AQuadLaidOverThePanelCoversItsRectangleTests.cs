@@ -80,15 +80,68 @@ public class AQuadLaidOverThePanelCoversItsRectangleTests
 
     [Theory]
     [MemberData(nameof(Panels))]
-    public void TheQuadIsAsWideAsItsRectangleAndFlat(string kind)
+    public void TheQuadIsAsWideAsItsRectangleAndCurvedLikeThePanel(string kind)
     {
         var panel = PanelFor(kind);
         var quad = VrPlacementMath.Over(panel, Pixels, Avatar).Sane();
 
         Assert.Equal(panel.WidthMetres * Avatar.Width / Pixels.Width, quad.WidthMetres, 5);
-        Assert.Equal(0f, quad.Curvature);
+        Assert.Equal(panel.Curvature * Avatar.Width / Pixels.Width, quad.Curvature, 5);
+
+        if (panel.Curvature == 0f)
+        {
+            Assert.Equal(0f, quad.Curvature);
+        }
+        else
+        {
+            Assert.Equal(
+                VrRay.RadiusFor(panel.WidthMetres, panel.Curvature),
+                VrRay.RadiusFor(quad.WidthMetres, quad.Curvature),
+                3);
+        }
+
         Assert.Equal(panel.Opacity, quad.Opacity);
         Assert.Equal(panel.Lock, quad.Lock);
+    }
+
+    [Theory]
+    [InlineData(0f, 0.5f)]
+    [InlineData(0f, 0.1f)]
+    [InlineData(0f, 0.9f)]
+    [InlineData(-0.98f, 0.5f)]
+    [InlineData(1f, 0.5f)]
+    [InlineData(-0.98f, 0.1f)]
+    [InlineData(1f, 0.9f)]
+    public void AMiniPanelsWholeAvatarQuadIsInFrontOfTheCurve(float side, float down)
+    {
+        var mini = (Width: 792, Height: 280);
+        var rect = new VrPixelRect(0, 0, 280, 280);
+        var panel = new SurfacePlacement { WidthMetres = 0.53f, Opacity = 0.8f, Curvature = 0.1f }.Sane();
+        var quad = VrPlacementMath.Over(panel, mini, rect).Sane();
+        var quadPose = quad.Where(Head);
+
+        // A point on the quad's surface: across its width and down its height, bent to its own radius.
+        var radius = VrRay.RadiusFor(quad.WidthMetres, quad.Curvature);
+        var angle = side * (quad.WidthMetres / 2f) / radius;
+        var local = new Vector3(radius * MathF.Sin(angle), (0.5f - down) * quad.WidthMetres, radius * (1f - MathF.Cos(angle)));
+        var point = Vector3.Transform(local, quadPose.ToMatrix());
+
+        // Look straight back at the panel along its own radius through that point.
+        var panelPose = panel.Where(Head);
+        var panelRadius = VrRay.RadiusFor(panel.WidthMetres, panel.Curvature);
+        var inLocal = Vector3.Transform(point, Matrix4x4.Invert(panelPose.ToMatrix(), out var inverse) ? inverse : throw new InvalidOperationException());
+        var phi = MathF.Atan2(inLocal.X, panelRadius - inLocal.Z);
+        var inward = Vector3.TransformNormal(new Vector3(-MathF.Sin(phi), 0f, MathF.Cos(phi)), panelPose.ToMatrix());
+
+        var hit = VrRay.Hit(
+            panelPose,
+            new VrExtent(panel.WidthMetres, mini.Width / (float)mini.Height),
+            panel.Curvature,
+            point + (inward * 0.5f),
+            -inward);
+
+        Assert.NotNull(hit);
+        Assert.True(0.5f < hit!.Value.DistanceMetres, $"quad at 0.5 m, panel at {hit.Value.DistanceMetres:0.0000} m");
     }
 
     [Fact]

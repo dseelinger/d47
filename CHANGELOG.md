@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: In the headset, the mini panel's avatar clip now plays across its whole width. Before, on a curved panel only a strip down the middle played and the panel's still frame showed at the left and right edges. The avatar is now curved to match the panel, mini or big, at any curvature.
+
 Fixed: A module search can ask for a weapon's mount, and finds only stations listing that mount. Say or type it as the first or last word, such as "2F Multi-Cannon gimballed" or "turreted multi-cannon", on Search › Outfitting, in an outfitting route, and with the new Mount choice on Search › Stations; a ship plan's outfitting route asks for the planned mount. Search › Outfitting offers a weapon once per mount where it comes in more than one at that size and rating. A mount the weapon does not come in is refused, naming the ones it does. Before, the mount was dropped, so the nearest medium gimballed Multi-Cannon could be a station listing only the turreted one. Spansh cannot filter on the mount, so these answers state no total of matching stations.
 
 Changed: A HOTAS switch position shows that Elite binds the same button only when that is certain. A button on a controller that Windows shows as several devices, such as a throttle in 4x32 mode, is no longer flagged, because Elite's binding may be on another of those devices. The startup log likewise names a push-to-talk button only when Elite binds that button on the same controller. Switch positions that open a page, set the headset view or press a key chord are now checked as well as those that name an action.

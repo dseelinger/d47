@@ -39,8 +39,8 @@ public static class VrPlacementMath
     public const float OverLiftMetres = 0.001f;
 
     /// <summary>
-    /// A flat quad covering <paramref name="rect"/> of a surface drawn at <paramref name="pixels"/>, a
-    /// little in front of it, following the surface's lock, placement and opacity.
+    /// A quad covering <paramref name="rect"/> of a surface drawn at <paramref name="pixels"/>, a
+    /// little in front of it and curved to the surface's radius, following the surface's lock, placement and opacity.
     /// </summary>
     public static SurfacePlacement Over(SurfacePlacement surface, (int Width, int Height) pixels, VrPixelRect rect)
     {
@@ -68,7 +68,7 @@ public static class VrPlacementMath
         return surface with
         {
             WidthMetres = rect.Width * metresPerPixel,
-            Curvature = 0f,
+            Curvature = surface.Curvature * rect.Width / pixels.Width,
             Offset = offset,
         };
     }
