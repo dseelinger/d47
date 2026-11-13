@@ -56,6 +56,7 @@ public sealed class MarketTakesEachCommodityAsATileTests
     {
         page.Weigh(tonnes);
         Typed(page, typed);
+        UiWait.Until(() => page.Suggestions.Shown.Contains(offered), showing: () => string.Join(", ", page.Suggestions.Shown));
         Assert.Contains(offered, page.Suggestions.Shown);
         page.Suggestions.Choose(offered);
         Dispatcher.UIThread.RunJobs();

@@ -111,9 +111,14 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         Dispatcher.UIThread.RunJobs();
     }
 
+    /// <summary>Pumps the UI thread until the type-ahead lists a row matching <paramref name="offered"/>, which the lookup posts back from the pool.</summary>
+    private static void Offers(OutfittingSearchPage page, Func<OutfittingItem, bool> offered) =>
+        UiWait.Until(() => page.Suggestions.Shown.Any(offered), showing: () => string.Join(", ", page.Suggestions.Shown.Select(item => item.Display)));
+
     private static void Choose(OutfittingSearchPage page, string typed, string offered)
     {
         Typed(page, typed);
+        Offers(page, item => item.Display == offered);
         Assert.Contains(page.Suggestions.Shown, item => item.Display == offered);
         page.Suggestions.Choose(page.Suggestions.Shown.First(item => item.Display == offered));
         Dispatcher.UIThread.RunJobs();
@@ -147,6 +152,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         var page = Page(panel);
 
         Typed(page, "5a fsd sco");
+        Offers(page, item => item.Display == "5A Frame Shift Drive (SCO)");
         Assert.Contains(page.Suggestions.Shown, item => item.Display == "5A Frame Shift Drive (SCO)");
 
         Choose(page, "5a fsd sco", "5A Frame Shift Drive (SCO)");
@@ -167,6 +173,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         var page = Page(panel);
 
         Typed(page, "frame shift drive sco");
+        Offers(page, item => item.Display == "4A Frame Shift Drive (SCO)");
 
         Assert.Contains(page.Suggestions.Shown, item => item.Display == "4A Frame Shift Drive (SCO)");
 
@@ -198,6 +205,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         var page = Page(panel);
 
         Typed(page, "python");
+        Offers(page, item => item.IsShip);
         Assert.Contains(page.Suggestions.Shown, item => item.IsShip);
 
         Choose(page, "python mkii", "Python MkII");
@@ -215,6 +223,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
         var page = Page(panel);
 
         Typed(page, "zzzzqq");
+        UiWait.Until(() => VisibleText(panel).Contains(OutfittingSearchPage.NothingText));
 
         Assert.Contains(OutfittingSearchPage.NothingText, VisibleText(panel));
 
@@ -361,6 +370,7 @@ public sealed class TheOutfittingSearchPageDrawsTheLastAnswerTests
 
         Choose(page, "python mkii", "Python MkII");
         Typed(page, "6a fuel");
+        Offers(page, item => item.Display == "6A Fuel Scoop");
 
         Assert.All(page.Suggestions.Shown, item => Assert.False(item.IsShip));
         Assert.Contains(page.Suggestions.Shown, item => item.Display == "6A Fuel Scoop");
