@@ -75,17 +75,21 @@ public class SongsAreTwoSecondsApartTests : IDisposable
     }
 
     [Fact]
-    public void SilenceDuringTheGapStartsNothingAfterIt()
+    public void SilenceDuringTheGapStillPlaysTheNextTrackAfterIt()
     {
         _bench.Music.Follow(Docked, musicTrack: null);
         _bench.Sink.CompletePlayback(_bench.Sink.Started[0].Id);
         var gap = _bench.Sink.Started[1];
 
         _bench.Audio.Silence();
+
+        Assert.DoesNotContain(gap.Id, _bench.Sink.Stopped);
+
         _bench.Sink.CompletePlayback(gap.Id);
 
-        Assert.Equal(2, _bench.Sink.Started.Count);
-        Assert.False(_bench.Audio.Activity.MusicPlaying);
+        Assert.Equal(3, _bench.Sink.Started.Count);
+        Assert.NotNull(_bench.Sink.Started[2].Track);
+        Assert.True(_bench.Audio.Activity.MusicPlaying);
     }
 
     [Fact]

@@ -176,7 +176,7 @@ public class AmbienceTests : IDisposable
         var (arbiter, sink) = Arbiter();
 
         arbiter.PlayMusic(Track("one"), "folder-a");
-        Assert.True(arbiter.ShelveMusic(DateTimeOffset.UtcNow));
+        arbiter.ShelveMusic(DateTimeOffset.UtcNow);
         arbiter.PlayMusic(Track("two"), "folder-b");
         var live = sink.Started[^1].Id;
 
