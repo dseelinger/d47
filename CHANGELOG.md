@@ -14,6 +14,8 @@ Fixed: A module search can ask for a weapon's mount, and finds only stations lis
 
 Changed: A HOTAS switch position shows that Elite binds the same button only when that is certain. A button on a controller that Windows shows as several devices, such as a throttle in 4x32 mode, is no longer flagged, because Elite's binding may be on another of those devices. The startup log likewise names a push-to-talk button only when Elite binds that button on the same controller. Switch positions that open a page, set the headset view or press a key chord are now checked as well as those that name an action.
 
+Changed: The Galaxy map has a LAYERS tile at the right of its toolbar, counting the layers on the map. It opens a picker listing every layer under Yours and Galaxy, each with its mark; a layer you take off is not drawn and leaves the rail, and one you put back comes in ticked. Travels, Route and Regions now show a swatch in the rail like the others. The choice is kept across a restart, and the big panel has the same tile, picker and rail.
+
 Fixed: A commodity search for a multi-word or renamed commodity, such as Performance Enhancers, Atmospheric Processors or Agri-Medicines, now asks the market index for its symbol and finds the stations selling it. Before, the index was asked under a spaced spelling, answered nothing, and the search reported that the 25 remembered markets had stale prices.
 
 Fixed: Saying "shut up", pressing Cancel, an urgent callout or the walkthrough's "stop" no longer stops the music. They end speech, alerts, chatter, cues and anything queued, and the music keeps playing at its normal level; closing d47 still stops it.

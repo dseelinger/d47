@@ -274,8 +274,11 @@ from journals already on this machine. Nothing is fetched.
   and **Page Down** tilt it, and **Home** is Top down.
 - **30 DAYS**, **1 YEAR** and **ALL** choose how far back the travels go, and the line under the map
   counts the jumps and systems in that range.
-- **TRAVELS**, **ROUTE** and **REGIONS** switch each layer off and on. The switches, and the travels
-  range, are kept across a restart; with nothing saved all eight are ticked and the range is **ALL**.
+- The layers on the map are chosen on the Layers picker, opened by **LAYERS · N** at the right of the
+  toolbar, where N is how many are on the map. A layer taken off is not drawn and leaves the rail.
+  Each row of the rail switches its layer off and on. The layers, the switches and the travels
+  range are kept across a restart; with nothing saved all eight are on the map and ticked, and the
+  range is **ALL**.
 
 Region names are drawn at 6,400 ly across and wider. The route's stops, the destination's name and
 your system's name are drawn at 6,400 ly and closer.

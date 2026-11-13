@@ -46,4 +46,15 @@ public class EveryStarChartHasATitleAndAShapeTests
             new[] { StarChartKind.Travels, StarChartKind.Route, StarChartKind.Regions, StarChartKind.Unvisited },
             kind => Assert.Null(StarCharts.Info(kind).Mark));
     }
+
+    [Fact]
+    public void YourChartsAndTheGalaxysChartsAreGroupedApart()
+    {
+        Assert.Equal(
+            [StarChartKind.Travels, StarChartKind.Route, StarChartKind.Bookmarks, StarChartKind.Carrier, StarChartKind.Ships],
+            StarCharts.All.Where(kind => StarCharts.Info(kind).Group == StarCharts.Yours));
+        Assert.Equal(
+            [StarChartKind.Regions, StarChartKind.Engineers, StarChartKind.Unvisited],
+            StarCharts.All.Where(kind => StarCharts.Info(kind).Group == StarCharts.Galaxy));
+    }
 }

@@ -213,9 +213,19 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         surface.MapLookups,
                         surface.Plans,
                         _planOnMap,
-                        surface.GalaxyLayers);
+                        surface.GalaxyLayers,
+                        host.Prompts);
 
                     galaxyPage.PlanChosen += kind => _planOnMap = kind;
+
+                    // Taking the picker can rebuild the page before the choice reaches it.
+                    galaxyPage.LayersChosen += kinds =>
+                    {
+                        if (_galaxyMap is { } shown && !ReferenceEquals(shown, galaxyPage))
+                        {
+                            shown.ChooseLayers(kinds);
+                        }
+                    };
 
                     return _galaxyMap = galaxyPage;
                 }

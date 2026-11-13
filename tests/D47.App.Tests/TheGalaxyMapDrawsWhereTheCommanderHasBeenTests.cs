@@ -191,7 +191,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 
     internal static (Window Window, PanelView Panel, GalaxyMapPage Page) Show() => InWindow(Played());
 
-    private static (Window Window, PanelView Panel, GalaxyMapPage Page) InWindow(Game game)
+    internal static (Window Window, PanelView Panel, GalaxyMapPage Page) InWindow(Game game)
     {
         var panel = Panel(game, headset: false);
         var window = new Window
@@ -222,8 +222,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     internal static Button Tile(Control page, string says) =>
         page.GetVisualDescendants().OfType<Button>().Single(button => Avalonia.Automation.AutomationProperties.GetName(button) == says);
 
-    private static CheckBox Box(Control page, string label) =>
-        page.GetVisualDescendants().OfType<CheckBox>().Single(box => (box.Content as string) == label);
+    private static CheckBox Box(Control page, string label) => page.Switch(label);
 
     private static RadioButton Option(Segment segment, string label) => segment.Option(label);
 
@@ -566,7 +565,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     /// The kind words the strip names for <paramref name="system"/> after a tap on <paramref name="at"/> with Travels off, so the
     /// tap selects a visited system only through a mark drawn there; none when it selects another. Starts and leaves nothing selected.
     /// </summary>
-    private static IReadOnlyList<string> MarkedAt(GalaxyMapPage page, string system, StarPosition at)
+    internal static IReadOnlyList<string> MarkedAt(GalaxyMapPage page, string system, StarPosition at)
     {
         var travels = Box(page, "Travels");
         var wasOn = travels.IsChecked;
@@ -728,7 +727,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     private const string Bubble12 = "Bubble 12";
 
     /// <summary>A bookmark, the carrier and two stored ships in visited systems, and one of each in a system never visited.</summary>
-    private static Game Keeping()
+    internal static Game Keeping()
     {
         var game = Played();
 
@@ -748,7 +747,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         return game;
     }
 
-    private static Engineer BubbleEngineer() => EngineerDirectory.All
+    internal static Engineer BubbleEngineer() => EngineerDirectory.All
         .Where(engineer => engineer.Position is not null && engineer.System is not null)
         .MinBy(engineer => engineer.Position!.Value.DistanceTo(StarPosition.Origin))!;
 
@@ -1125,7 +1124,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static GalaxyMapLayersMemory SavedLayers() =>
+    internal static GalaxyMapLayersMemory SavedLayers() =>
         new(new ViewStateStore(new AppPaths(@"C:\d47-galaxy-layers"), new MemoryFileSystem(), NullLogger<ViewStateStore>.Instance));
 
     [AvaloniaFact]

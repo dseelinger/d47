@@ -39,6 +39,8 @@ public sealed class GalaxyMapPage : UserControl
     public const string CentreHere = "Centre here";
     public const string Bookmark = "Bookmark";
     public const string ClearSelection = "Clear selection";
+    public const string LayersKey = "galaxy-map-layers";
+    public const string LayersHelp = "Choose what the galaxy map draws. A layer you take off is not drawn and leaves the rail.";
 
     private const int MostNamed = 3;
 
@@ -69,18 +71,22 @@ public sealed class GalaxyMapPage : UserControl
     private readonly RoutePlanBook? _plans;
     private readonly GalaxyMapLayers _layers;
     private readonly GalaxyMapLayersMemory? _memory;
+    private readonly PanelPrompts? _prompts;
 
     private readonly GalaxyMapView _map = new();
     private readonly Segment _framing = new() { ItemsSource = ["Galaxy", "Here", "Route"] };
     private readonly Segment _range = new() { ItemsSource = ["30 days", "1 year", "All"], SelectedIndex = All };
-    private readonly CheckBox _travels = Switch(StarChartKind.Travels);
-    private readonly CheckBox _routeShown = Switch(StarChartKind.Route);
-    private readonly CheckBox _regions = Switch(StarChartKind.Regions);
+    private readonly CheckBox _travels = Marked(StarChartKind.Travels, _ => TravelsDrawing);
+    private readonly CheckBox _routeShown = Marked(StarChartKind.Route, _ => RouteDrawing);
+    private readonly CheckBox _regions = Marked(StarChartKind.Regions, _ => RegionsDrawing);
     private readonly CheckBox _engineers;
     private readonly CheckBox _bookmarkMarks;
     private readonly CheckBox _carrierMark;
     private readonly CheckBox _shipMarks;
     private readonly CheckBox _unvisited;
+    private readonly Button _layersTile = Press(string.Empty, SwitchRail);
+    private readonly StackPanel _rail = new() { Spacing = 2 };
+    private bool _choosing;
     private readonly Button _zoomIn = Tile("+", "Zoom in", 20);
     private readonly Button _zoomOut = Tile("−", "Zoom out", 20);
     private readonly Button _turnLeft = Drawn("Turn anticlockwise", "M11 18.5 A6.5 6.5 0 1 0 4.5 11", "M1.5 10.5 h6 l-3 4.5 z");
@@ -145,7 +151,8 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapLookups? lookups = null,
         RoutePlanBook? plans = null,
         RoutePlanKind? plan = null,
-        GalaxyMapLayersMemory? layers = null)
+        GalaxyMapLayersMemory? layers = null,
+        PanelPrompts? prompts = null)
     {
         _travel = travel;
         _commander = commander;
@@ -161,6 +168,7 @@ public sealed class GalaxyMapPage : UserControl
         _plans = plans;
         _planKind = plan;
         _memory = layers;
+        _prompts = prompts;
         _layers = layers?.Read() ?? new GalaxyMapLayers();
 
         _engineers = Marked(StarChartKind.Engineers, live => MarkDrawing(GalaxyMapMarkKind.Engineer, live));
@@ -178,6 +186,7 @@ public sealed class GalaxyMapPage : UserControl
         }
 
         BuildStrip();
+        Rail();
 
         _counts.MaxWidth = double.PositiveInfinity;
         _unplaced.MaxWidth = double.PositiveInfinity;
@@ -216,6 +225,7 @@ public sealed class GalaxyMapPage : UserControl
         _map.Picked += Strip;
         _clear.Click += (_, _) => _map.Clear();
         _plotted.Click += (_, _) => ShowPlan(null);
+        _layersTile.Click += (_, _) => OpenLayers();
         _centre.Click += (_, _) => CentreOnSelected();
         _bookmark.Click += (_, _) => BookmarkSelected();
         _map.Redrawn += Legend;
@@ -407,16 +417,16 @@ public sealed class GalaxyMapPage : UserControl
         EnableUnvisited(galaxy is not null && offDuty is null);
 
         var placement = _placement = Place(log, commander, fid, offDuty is not null, galaxy is not null);
-        var unvisited = _unvisited.IsChecked == true ? Unvisited(steps, here) : [];
+        var unvisited = Shows(StarChartKind.Unvisited) ? Unvisited(steps, here) : [];
 
         _unvisitedNames = new HashSet<string>(unvisited.Select(star => star.Name), StringComparer.OrdinalIgnoreCase);
         _placed = placement.Marks;
         _carrierMark.IsEnabled = offDuty is null;
 
         _map.Show(new GalaxyMapScene(
-            _regions.IsChecked == true,
-            _travels.IsChecked == true ? travels : null,
-            _routeShown.IsChecked == true && hasRoute ? stops : null,
+            Shows(StarChartKind.Regions),
+            Shows(StarChartKind.Travels) ? travels : null,
+            Shows(StarChartKind.Route) && hasRoute ? stops : null,
             planned ? RouteMapStop.ReachedIndex(chosen!) : RouteProgress.For(route, here).Index,
             _position,
             here,
@@ -472,9 +482,17 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.Unvisited, _unvisited),
     ];
 
+    /// <summary>Whether <paramref name="kind"/> is on the map and its switch is ticked.</summary>
+    private bool Shows(StarChartKind kind) => _layers.OnMap.Contains(kind) && Boxes().First(pair => pair.Kind == kind).Box.IsChecked == true;
+
     /// <summary>Saves a switch the Commander moved, then redraws.</summary>
     private void LayerChanged(StarChartKind kind, CheckBox box)
     {
+        if (_choosing)
+        {
+            return;
+        }
+
         if (kind == StarChartKind.Unvisited)
         {
             if (_settingUnvisited)
@@ -489,6 +507,76 @@ public sealed class GalaxyMapPage : UserControl
         _layers.Tick(kind, box.IsChecked == true);
         _memory?.Write(_layers);
         Refresh();
+    }
+
+    /// <summary>Opens the Layers picker: every kind by group, the ones on the map ticked.</summary>
+    private void OpenLayers()
+    {
+        _prompts?.Pick(
+            LayersKey,
+            "Layers",
+            new PickerRequest
+            {
+                Prompt = "Layers",
+                Help = LayersHelp,
+                Choices = [.. StarCharts.All.Select(kind => kind.ToString())],
+                Describe = value => StarCharts.Info(Enum.Parse<StarChartKind>(value)).Title,
+                Several = true,
+                CurrentSeveral = [.. _layers.OnMap.Select(kind => kind.ToString())],
+                GroupOf = value => StarCharts.Info(Enum.Parse<StarChartKind>(value)).Group,
+                SwatchOf = value => Swatch(Enum.Parse<StarChartKind>(value)),
+            },
+            result =>
+            {
+                var kinds = (result.Values ?? []).Select(Enum.Parse<StarChartKind>).ToList();
+                ChooseLayers(kinds);
+                LayersChosen?.Invoke(kinds);
+            });
+    }
+
+    /// <summary>Raised when the Layers picker is taken, with the kinds chosen.</summary>
+    public event Action<IReadOnlyList<StarChartKind>>? LayersChosen;
+
+    /// <summary>Puts exactly <paramref name="kinds"/> on the map, saves them, and redraws the rail and the map.</summary>
+    public void ChooseLayers(IEnumerable<StarChartKind> kinds)
+    {
+        _layers.Choose(kinds);
+        _memory?.Write(_layers);
+
+        var wanted = _layers.Ticked(StarChartKind.Unvisited);
+
+        if (wanted != _unvisitedWanted)
+        {
+            _unvisitedWanted = wanted;
+            _asking.Forget();
+        }
+
+        _choosing = true;
+
+        foreach (var (kind, box) in Boxes().Where(pair => pair.Kind != StarChartKind.Unvisited))
+        {
+            box.IsChecked = _layers.Ticked(kind);
+        }
+
+        _choosing = false;
+
+        Rail();
+        Refresh();
+    }
+
+    /// <summary>The rail lists a switch for each kind on the map, and the tile counts them.</summary>
+    private void Rail()
+    {
+        _rail.Children.Clear();
+
+        foreach (var (_, box) in Boxes().Where(pair => _layers.OnMap.Contains(pair.Kind)))
+        {
+            _rail.Children.Add(box);
+        }
+
+        var says = $"LAYERS · {_layers.OnMap.Count}";
+        _layersTile.Content = says;
+        AutomationProperties.SetName(_layersTile, says);
     }
 
     /// <summary>Unvisited is disabled and unchecked while it cannot draw anything, and shows the Commander's choice otherwise.</summary>
@@ -529,7 +617,7 @@ public sealed class GalaxyMapPage : UserControl
             (log is null || fid.Length == 0 ? null : log.PositionOf(fid, system))
             ?? (lookups ? _lookups.PositionOf(system).At : null);
 
-        if (_engineers.IsChecked == true)
+        if (Shows(StarChartKind.Engineers))
         {
             var named = EngineerDirectory.All.Where(engineer => engineer.Position is not null && !string.IsNullOrEmpty(engineer.System));
 
@@ -539,7 +627,7 @@ public sealed class GalaxyMapPage : UserControl
             }
         }
 
-        if (_bookmarkMarks.IsChecked == true && _bookmarks is not null && fid.Length > 0)
+        if (Shows(StarChartKind.Bookmarks) && _bookmarks is not null && fid.Length > 0)
         {
             foreach (var system in _bookmarks.For(fid).GroupBy(bookmark => bookmark.System, StringComparer.OrdinalIgnoreCase))
             {
@@ -554,7 +642,7 @@ public sealed class GalaxyMapPage : UserControl
             }
         }
 
-        if (_carrierMark.IsChecked == true && !anotherCommander && commander?.Carrier is { StarSystem: { Length: > 0 } carrierSystem } held)
+        if (Shows(StarChartKind.Carrier) && !anotherCommander && commander?.Carrier is { StarSystem: { Length: > 0 } carrierSystem } held)
         {
             if (PositionIn(carrierSystem) is { } at)
             {
@@ -566,7 +654,7 @@ public sealed class GalaxyMapPage : UserControl
             }
         }
 
-        if (_shipMarks.IsChecked == true && commander is not null)
+        if (Shows(StarChartKind.Ships) && commander is not null)
         {
             var stored = commander.Fleet.Ships.Where(ship => ship.HasSystem && !ship.InTransit);
 
@@ -1156,18 +1244,29 @@ public sealed class GalaxyMapPage : UserControl
 
     private Control Toolbar()
     {
-        var width = _headset ? 360 : 330;
-        _framing.Width = width;
-        _range.Width = width;
+        _framing.Width = 330;
+        _range.Width = 330;
+        _layersTile.Margin = new Thickness(2, 0, 0, 0);
 
         var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { Label("View"), _framing } };
-        var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { Label("Travels"), _range } };
+        var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { Label("Travels"), _range, _layersTile } };
         right.HorizontalAlignment = HorizontalAlignment.Right;
 
+        // A window too narrow for both segments at 330 px narrows them equally.
         var bar = new DockPanel();
         DockPanel.SetDock(right, Dock.Right);
         bar.Children.Add(right);
         bar.Children.Add(left);
+        bar.SizeChanged += (_, e) =>
+        {
+            left.Measure(Size.Infinity);
+            right.Measure(Size.Infinity);
+
+            var others = left.DesiredSize.Width + right.DesiredSize.Width - _framing.Width - _range.Width + 10;
+            var width = Math.Clamp(Math.Floor((e.NewSize.Width - others) / 2), 200, 330);
+            _framing.Width = width;
+            _range.Width = width;
+        };
 
         return bar;
     }
@@ -1258,12 +1357,6 @@ public sealed class GalaxyMapPage : UserControl
         return tile;
     }
 
-    private StackPanel Switches() => new()
-    {
-        Spacing = 2,
-        Children = { _travels, _routeShown, _regions, _engineers, _bookmarkMarks, _carrierMark, _shipMarks, _unvisited },
-    };
-
     private StackPanel SystemWithCopy() => new()
     {
         Orientation = Orientation.Horizontal,
@@ -1299,7 +1392,7 @@ public sealed class GalaxyMapPage : UserControl
 
     private Control WindowLayout()
     {
-        var rail = new StackPanel { Spacing = 6, Children = { ZoomPair(), PanPad(), Switches() } };
+        var rail = new StackPanel { Spacing = 6, Children = { ZoomPair(), PanPad(), _rail } };
         var body = new Grid
         {
             MinHeight = WindowMapHeight,
@@ -1351,7 +1444,7 @@ public sealed class GalaxyMapPage : UserControl
         _unplaced.Margin = new Thickness(0, 6, 0, 0);
 
         var pad = new StackPanel { Spacing = 6, Children = { ZoomPair(), PanPad(), _unplaced, _counts, where } };
-        var side = Switches();
+        var side = _rail;
         var body = new Grid
         {
             Height = PanelMapHeight,
@@ -1453,15 +1546,6 @@ public sealed class GalaxyMapPage : UserControl
         return button;
     }
 
-    private static CheckBox Switch(StarChartKind kind)
-    {
-        var box = LabeledCheckBox.Caps(StarCharts.Info(kind).Title);
-        box.IsChecked = true;
-        box.HorizontalAlignment = HorizontalAlignment.Stretch;
-
-        return box;
-    }
-
     /// <summary>A layer switch with its swatch on the right, drawn by <paramref name="swatch"/> from whether the switch is enabled.</summary>
     private static CheckBox Marked(StarChartKind kind, Func<Func<bool>, Action<DrawingContext, Func<string, IBrush>>> swatch)
     {
@@ -1470,9 +1554,10 @@ public sealed class GalaxyMapPage : UserControl
         box.IsChecked = true;
         box.HorizontalAlignment = HorizontalAlignment.Stretch;
         box.Classes.Add("composed");
+        box.Padding = new Thickness(10, 0, 6, 0);
         AutomationProperties.SetName(box, label);
 
-        var text = new TextBlock { Text = label.ToUpperInvariant(), VerticalAlignment = VerticalAlignment.Center };
+        var text = new TextBlock { Text = label.ToUpperInvariant(), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.WrapWithOverflow, MaxLines = 2 };
         var mark = new Glyph(swatch(() => box.IsEnabled)) { Width = 16, Height = 14, VerticalAlignment = VerticalAlignment.Center };
 
         box.PropertyChanged += (_, e) =>
@@ -1516,6 +1601,38 @@ public sealed class GalaxyMapPage : UserControl
 
         context.DrawGeometry(ink(live() ? key : ThemeManager.Grey2Key), null, geometry);
     };
+
+    /// <summary>The swatch the rail and the Layers picker draw for <paramref name="kind"/>, in its live inks.</summary>
+    private static Action<DrawingContext, Func<string, IBrush>> Swatch(StarChartKind kind) => kind switch
+    {
+        StarChartKind.Travels => TravelsDrawing,
+        StarChartKind.Route => RouteDrawing,
+        StarChartKind.Regions => RegionsDrawing,
+        StarChartKind.Engineers => MarkDrawing(GalaxyMapMarkKind.Engineer, () => true),
+        StarChartKind.Bookmarks => MarkDrawing(GalaxyMapMarkKind.Bookmark, () => true),
+        StarChartKind.Carrier => MarkDrawing(GalaxyMapMarkKind.Carrier, () => true),
+        StarChartKind.Ships => MarkDrawing(GalaxyMapMarkKind.Ships, () => true),
+        _ => UnvisitedDrawing(() => true),
+    };
+
+    /// <summary>A 1 px Grey jump with an A square on each end, in a 16 by 14 glyph.</summary>
+    private static void TravelsDrawing(DrawingContext context, Func<string, IBrush> ink)
+    {
+        context.DrawLine(new Pen(ink(ThemeManager.GreyKey), 1), new Point(2, 10), new Point(14, 4));
+        context.DrawRectangle(ink(ThemeManager.AKey), null, new Rect(0.5, 8.5, 3, 3));
+        context.DrawRectangle(ink(ThemeManager.AKey), null, new Rect(12.5, 2.5, 3, 3));
+    }
+
+    /// <summary>A 2 px line, Grey left of the centre and A right of it, in a 16 by 14 glyph.</summary>
+    private static void RouteDrawing(DrawingContext context, Func<string, IBrush> ink)
+    {
+        context.DrawLine(new Pen(ink(ThemeManager.GreyKey), 2), new Point(1, 7), new Point(8, 7));
+        context.DrawLine(new Pen(ink(ThemeManager.AKey), 2), new Point(8, 7), new Point(15, 7));
+    }
+
+    /// <summary>An 11 by 9 MapGround rectangle with a 1 px Line border, in a 16 by 14 glyph.</summary>
+    private static void RegionsDrawing(DrawingContext context, Func<string, IBrush> ink) =>
+        context.DrawRectangle(ink(ThemeManager.MapGroundKey), new Pen(ink(ThemeManager.LineKey), 1), new Rect(2.5, 2.5, 11, 9));
 
     /// <summary>The unvisited mark, a 5 px square outline, at the centre of a 16 by 14 glyph; Grey2 while <paramref name="live"/> is false.</summary>
     private static Action<DrawingContext, Func<string, IBrush>> UnvisitedDrawing(Func<bool> live) => (context, ink) =>

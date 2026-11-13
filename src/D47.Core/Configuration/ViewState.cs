@@ -80,6 +80,9 @@ public sealed record ViewState
     /// <summary>Whether the Engineers tab has taken the on-foot engineers off its lists (#132).</summary>
     public bool EngineersOnFootHidden { get; init; }
 
+    /// <summary>The chart kinds the Commander has taken off the Galaxy map, by <c>StarChartKind</c> name.</summary>
+    public IReadOnlyList<string> GalaxyMapRemoved { get; init; } = [];
+
     /// <summary>The Galaxy map's chart kinds the Commander has unticked, by <c>StarChartKind</c> name.</summary>
     public IReadOnlyList<string> GalaxyMapUnticked { get; init; } = [];
 
