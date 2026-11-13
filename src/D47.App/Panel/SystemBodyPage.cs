@@ -33,6 +33,9 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
 
     public const string MissingText = "The galaxy record no longer lists this body.";
 
+    /// <summary>The name of the tile that opens the System page's Orbits section.</summary>
+    public const string ShowInOrbitsName = "ShowInOrbits";
+
     private const string Dash = "—";
 
     private readonly StarSystemSurface _surface;
@@ -43,6 +46,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
     private readonly Action<StarSystemProfile, BodyProfile>? _openBody;
     private readonly Action<StarSystemProfile, StationProfile>? _openStation;
     private readonly Action? _back;
+    private readonly Action<long, int>? _showInOrbits;
     private readonly StackPanel _page = new() { Spacing = 18 };
 
     private StarSystemProfile? _profile;
@@ -55,6 +59,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
     /// <param name="profile">The system's record when the page it was pressed on had read it; null fetches it.</param>
     /// <param name="openBody">Drills another body's page under this one.</param>
     /// <param name="back">Goes back to the crumb above.</param>
+    /// <param name="showInOrbits">Opens the system's Orbits section, given the system address and the body ID to focus.</param>
     public SystemBodyPage(
         StarSystemSurface surface,
         long address,
@@ -64,7 +69,8 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
         BodyCodex? codex = null,
         Action<StarSystemProfile, BodyProfile>? openBody = null,
         Action? back = null,
-        Action<StarSystemProfile, StationProfile>? openStation = null)
+        Action<StarSystemProfile, StationProfile>? openStation = null,
+        Action<long, int>? showInOrbits = null)
     {
         _surface = surface;
         _address = address;
@@ -74,6 +80,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
         _openBody = openBody;
         _back = back;
         _openStation = openStation;
+        _showInOrbits = showInOrbits;
 
         Content = new ScrollViewer
         {
@@ -646,13 +653,20 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
     /// <summary>"21.3%": one decimal of a share already given as a percentage.</summary>
     public static string ShareText(double percent) => percent.ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
-    private static StackPanel Orbit(StarSystemProfile profile, BodyProfile body)
+    private StackPanel Orbit(StarSystemProfile profile, BodyProfile body)
     {
         var column = new StackPanel { Spacing = 24 };
 
         if (OrbitFacts(body) is { Count: > 0 } orbit)
         {
-            column.Children.Add(Group("Orbit", null, StatTile.Grid(orbit), ParentName(profile, body)));
+            var content = new StackPanel { Spacing = 16, Children = { StatTile.Grid(orbit) } };
+
+            if (ShowInOrbits(profile, body) is { } show)
+            {
+                content.Children.Add(show);
+            }
+
+            column.Children.Add(Group("Orbit", null, content, ParentName(profile, body)));
         }
 
         if (RotationFacts(body) is { Count: > 0 } rotation)
@@ -661,6 +675,41 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
         }
 
         return column;
+    }
+
+    /// <summary>The SHOW IN ORBITS tile and its hint; null for a body with no parent in the system's orbit record.</summary>
+    private Control? ShowInOrbits(StarSystemProfile profile, BodyProfile body)
+    {
+        if (_showInOrbits is not { } show || body.Parents.Count == 0)
+        {
+            return null;
+        }
+
+        var nodes = Orrery.Nodes(profile);
+        var parent = nodes.FirstOrDefault(node => node.BodyId == body.Parents[0].BodyId);
+        var self = nodes.FirstOrDefault(node => node.BodyId == body.BodyId);
+
+        if (parent is null || self is null)
+        {
+            return null;
+        }
+
+        var parentName = parent.Body is { } named ? named.Name : $"barycentre {parent.BodyId.ToString(CultureInfo.InvariantCulture)}";
+        var tile = new Button { Name = ShowInOrbitsName, Content = "Show in Orbits", VerticalAlignment = VerticalAlignment.Center };
+        tile.Click += (_, _) => show(profile.SystemAddress, parent.BodyId);
+
+        var hint = Typeset.Prose(
+            $"Opens the System page's Orbits section on {parentName}, where {OrbitLevel.ShortName(self, profile.Name)} is drawn.",
+            TypeScale.Description,
+            ThemeManager.GreyKey,
+            wrap: true,
+            vertical: VerticalAlignment.Center);
+
+        var row = new WrapPanel { Orientation = Orientation.Horizontal, ItemSpacing = 16, LineSpacing = 8 };
+        row.Children.Add(tile);
+        row.Children.Add(hint);
+
+        return row;
     }
 
     private static List<Control> OrbitFacts(BodyProfile body)

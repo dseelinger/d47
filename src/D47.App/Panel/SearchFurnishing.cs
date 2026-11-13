@@ -351,7 +351,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             var profile = _drawn?.SystemAddress == bodyAddress ? _drawn : null;
 
-            return _body = new SystemBodyPage(surface, bodyAddress, bodyId, crumb.Word, profile, Codex, OpenBody, () => host.Nav.Back(), OpenStation);
+            return _body = new SystemBodyPage(surface, bodyAddress, bodyId, crumb.Word, profile, Codex, OpenBody, () => host.Nav.Back(), OpenStation, ShowInOrbits);
         }
 
         if (SystemStationPage.Parse(crumb.Key) is var (stationAddress, marketId))
@@ -597,6 +597,21 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     {
         _drawn = profile;
         host.Nav.Drill(PanelTab.Search, SystemBodyPage.Crumb(profile.SystemAddress, body));
+    }
+
+    /// <summary>Goes back to the System page under the body pages and shows its Orbits section focused on <paramref name="focus"/>.</summary>
+    private void ShowInOrbits(long address, int focus)
+    {
+        while (host.Nav.Trail is { Count: > 1 } trail && SystemBodyPage.IsKey(trail[^1].Key) && host.Nav.Back())
+        {
+        }
+
+        var key = host.Nav.Trail is { Count: > 0 } now ? now[^1].Key : string.Empty;
+        var page = key == StarSystemPage.RootKey ? _starSystem
+            : key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal) ? _found
+            : null;
+
+        page?.OpenSystemOrbits(address, focus);
     }
 
     /// <summary>Drills a station's page under the page it was pressed on, keeping the record already read.</summary>

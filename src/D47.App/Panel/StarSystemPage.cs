@@ -294,6 +294,22 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     /// <summary>As <see cref="OpenSystem(long)"/>, on the Bodies section.</summary>
     public bool OpenSystemBodies(long address) => OpenSystemOn(address, Section.Bodies);
 
+    /// <summary>Shows the Orbits section of the system at <paramref name="address"/> with <paramref name="focus"/> at the centre.</summary>
+    public bool OpenSystemOrbits(long address, int focus)
+    {
+        if ((_opened?.Address != address || _profile is null) && !OpenSystem(address))
+        {
+            return false;
+        }
+
+        _section = Section.Orbits;
+        ResetOrbits();
+        _orbitFocus = focus;
+        Draw();
+
+        return true;
+    }
+
     private bool OpenSystemOn(long address, Section section)
     {
         if (!OpenSystem(address))
