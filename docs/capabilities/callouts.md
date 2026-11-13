@@ -629,6 +629,22 @@ faction is not said); a mission failed for the faction; a mission accepted again
 murder in the faction's jurisdiction; and a sale to a fleet carrier where the faction is present, which does not count
 toward the BGS. Turn this one off with the Campaign warnings row.
 
+#### Binding conflicts with Elite {#binding-conflicts}
+
+When D47 starts and Elite binds one of its keys or buttons too, once. The count covers every conflict the Binding
+conflicts page lists (Settings › Screens › Window).
+
+```text
+Commander, Elite also binds four of my keys and buttons. They are on the Binding conflicts page.
+```
+
+Nothing is said until Elite's bindings and the controllers have been read, and nothing when there is no conflict. A
+conflict that appears while D47 runs, because Elite's bindings or D47's settings changed, is said once: *"Elite now
+binds one more of my buttons. It is on the Binding conflicts page."* A conflict already said is not said again in the
+same run, even after it goes away and comes back. While any conflict exists, the Transcript tab shows a warning above
+the messages with a tile that opens the page, whether or not the line was said. Turn this one off with the Binding
+conflicts with Elite row.
+
 #### BGS callouts: the Liaison {#bgs-callouts}
 
 The campaign faction's Liaison, on comms, about the front you work: a briefing when you choose it, a request to fly

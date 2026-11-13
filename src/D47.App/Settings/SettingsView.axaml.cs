@@ -1300,6 +1300,9 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         _viewStateStore?.Save(_viewState);
     }
 
+    /// <summary>The Binding conflicts page, acting through this view's settings; null before <see cref="Attach"/> or without the conflicts' inputs.</summary>
+    internal Controls.BindingConflictsPage? NewBindingConflictsPage() => _controls?.NewBindingConflictsPage();
+
     /// <summary>Re-reads every row from settings.</summary>
     public void Refresh()
     {

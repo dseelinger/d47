@@ -163,6 +163,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private bool _modelLoading;
     private string? _defaultChangeText;
     private string? _defaultChangeAction;
+    private int _bindingConflictCount;
 
     // True in every mode, and replaced by the host's own wording within a tick.
     private string _listeningPrompt = PanelPrompts.WaitingFallback;
@@ -489,6 +490,22 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     }
 
     public void AcceptDefaultChange() => DefaultChangeAccepted?.Invoke();
+
+    /// <summary>How many of D47's keys and buttons Elite binds too; the Transcript tab's notice shows while it is above 0.</summary>
+    public int BindingConflictCount
+    {
+        get => _bindingConflictCount;
+        set => Set(ref _bindingConflictCount, value);
+    }
+
+    /// <summary>"5 binding conflicts with Elite".</summary>
+    public static string BindingConflictsLabel(int count) =>
+        count == 1 ? "1 binding conflict with Elite" : $"{count} binding conflicts with Elite";
+
+    /// <summary>What the Transcript tab's notice says.</summary>
+    public static string BindingConflictsText(int count) =>
+        $"Elite also binds {count} of D47's keys and buttons. Rebind or unbind {(count == 1 ? "it" : "them")} on the "
+        + "Binding conflicts page.";
 
     public void DismissDefaultChange() => DefaultChangeDismissed?.Invoke();
 

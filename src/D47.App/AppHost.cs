@@ -640,6 +640,11 @@ public sealed class AppHost : IDisposable
     /// <summary>The Commander's Elite bindings.</summary>
     public EliteBinds Binds => _binds.Current;
 
+    private BindingConflictWatch? _bindingConflicts;
+
+    /// <summary>The certain conflicts between d47's bindings and Elite's, or null until both have been read.</summary>
+    public IReadOnlyList<BindingConflict>? BindingConflicts => _bindingConflicts?.Current;
+
     /// <summary>The Commander's macros.</summary>
     public MacroStore Macros { get; private set; } = null!;
 
@@ -1612,6 +1617,7 @@ public sealed class AppHost : IDisposable
                 StandingWarnings = standingWarnings,
                 MiningTargets = miningTargets,
                 StoryOpening = commander => late.StoryOpening?.Invoke(commander) == true,
+                BindingConflicts = () => late.Host?.BindingConflicts,
             },
             DateTimeOffset.Now);
 
@@ -3902,12 +3908,27 @@ public sealed class AppHost : IDisposable
         // The async half of a synchronous tick.
         tick.Add("macros", _ => services.Macros.Poll(() => PhrasesAlreadyTaken(registry.Capabilities, registry.OtherDynamicCommands())));
 
+        host._bindingConflicts = new BindingConflictWatch(
+            () => settings.Current,
+            () => [.. settings.Sections.SelectMany(section => section.Rows)],
+            () => services.Switches.Switches,
+            () => services.Binds.Current,
+            () => services.SampledControllers.IsSettled,
+            services.SampledControllers.Poll);
+
         // Same shape, same reason: a file Elite owns, re-read only when it moves.
         tick.Add("binds", _ =>
         {
             if (services.Binds.Poll())
             {
                 host.BindsChanged?.Invoke();
+            }
+
+            // The Transcript tab's notice follows the conflicts whether or not the callout is on.
+            if (host._bindingConflicts.Poll())
+            {
+                var count = host._bindingConflicts.Current?.Count ?? 0;
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => host.Panel.BindingConflictCount = count);
             }
         });
 

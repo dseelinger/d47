@@ -15,7 +15,8 @@ namespace D47.Core.Tests.Callouts;
 /// <summary>The catalogue <see cref="ShippedCallouts.Build"/> returns, over an in-memory install.</summary>
 public static class ShippedCatalogue
 {
-    public static (CalloutEngine Engine, SettingsService Settings) Build()
+    public static (CalloutEngine Engine, SettingsService Settings) Build(
+        Func<IReadOnlyList<D47.Core.Input.BindingConflict>?>? bindingConflicts = null)
     {
         var install = new MemoryInstall();
         var surface = TestSurface.For(install);
@@ -55,6 +56,7 @@ public static class ShippedCatalogue
                 StandingWarnings = new StandingWarnings(),
                 MiningTargets = new MiningTargetStore(Path.Combine(data, "mining.json"), files, NullLogger<MiningTargetStore>.Instance),
                 StoryOpening = _ => false,
+                BindingConflicts = bindingConflicts ?? (() => null),
             },
             new DateTimeOffset(3311, 1, 1, 12, 0, 0, TimeSpan.Zero));
 

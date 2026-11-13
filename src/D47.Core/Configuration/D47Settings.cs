@@ -640,6 +640,9 @@ public sealed record CalloutSettings
     /// <summary>Work that helps a rival of the campaign faction or hurts the faction.</summary>
     public bool CampaignWarnings { get; init; } = true;
 
+    /// <summary>Elite binding one of d47's keys or buttons too, said at start and when another appears.</summary>
+    public bool BindingConflicts { get; init; } = true;
+
     /// <summary>The Liaison's and the Nemesis's lines about a war or civil war.</summary>
     public bool BgsWars { get; init; } = true;
 

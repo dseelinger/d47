@@ -720,6 +720,21 @@
                   IsCheckedChanged="OnConversationFilterToggled" />
       </StackPanel>
 
+      <!-- Above the messages while Elite binds one of D47's keys or buttons; the Transcript tab of the full panel only. -->
+      <controls:Notice x:Name="BindingConflictsNotice"
+                       DockPanel.Dock="Top"
+                       Level="Warning"
+                       Margin="0,14,0,0"
+                       IsVisible="False">
+        <controls:Notice.Actions>
+          <Button x:Name="OpenBindingConflictsButton"
+                  Content="Binding conflicts"
+                  MinHeight="{x:Static theming:TypeScale.MinimumTarget}"
+                  VerticalContentAlignment="Center"
+                  Click="OnOpenBindingConflictsClick" />
+        </controls:Notice.Actions>
+      </controls:Notice>
+
       <Panel>
       <Border x:Name="TranscriptPane"
               Padding="14">

@@ -10,6 +10,11 @@ internal sealed class SettingsFurnishing(IPanelTabHost host)
 
     private PhrasesPage? _phrases;
 
+    private Func<Control>? _build;
+
+    /// <summary>A page <see cref="Built"/> made before the tab drew one, which the tab takes when it does.</summary>
+    private Control? _unplaced;
+
     /// <summary>The settings page this tab built, which a link naming a setting's row opens.</summary>
     public Control? Page { get; private set; }
 
@@ -19,6 +24,7 @@ internal sealed class SettingsFurnishing(IPanelTabHost host)
     public void EnableSettings(Func<Control> build, Action<string>? reveal = null, Func<PhrasesPage>? phrases = null)
     {
         Reveal = reveal;
+        _build = build;
 
         var roots = new List<NavCrumb>
         {
@@ -42,9 +48,19 @@ internal sealed class SettingsFurnishing(IPanelTabHost host)
             crumb => crumb.Key switch
             {
                 PhrasesPage.RootKey when phrases is not null => _phrases ??= phrases(),
-                _ => Page = build(),
+                _ => Page = Take(build),
             },
             [.. roots]);
+    }
+
+    /// <summary>The settings page, built now if the tab has not drawn it yet; null where the surface has none.</summary>
+    public Control? Built() => Page ??= _unplaced = _build?.Invoke();
+
+    private Control Take(Func<Control> build)
+    {
+        var page = _unplaced ?? build();
+        _unplaced = null;
+        return page;
     }
 
     /// <summary>Moves the Phrases footer on when the journal has.</summary>

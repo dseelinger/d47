@@ -348,6 +348,7 @@ public partial class PanelView : UserControl, IPanelTabHost
                 ApplyAskHint();
                 ApplyAudioReadout();
                 ApplyStoryReadout();
+                ApplyBindingConflicts();
             }
 
             // The model handed over is rarely empty — the window binds one that has already been written to —
@@ -528,6 +529,16 @@ public partial class PanelView : UserControl, IPanelTabHost
                 }
 
                 Dispatcher.UIThread.Post(ApplyAskHint);
+                return;
+
+            case nameof(PanelViewModel.BindingConflictCount):
+                if (Dispatcher.UIThread.CheckAccess())
+                {
+                    ApplyBindingConflicts();
+                    return;
+                }
+
+                Dispatcher.UIThread.Post(ApplyBindingConflicts);
                 return;
 
             // The turn status is cleared as each turn completes, after its cost is recorded.
@@ -783,6 +794,29 @@ public partial class PanelView : UserControl, IPanelTabHost
         PagePane.IsVisible = PagePane.IsVisible && !show;
         PlaceStoryProgress();
         ApplySpeaker();
+    }
+
+    /// <summary>The Binding conflicts notice, over the transcript of the full panel while Elite binds one of D47's keys or buttons.</summary>
+    private void ApplyBindingConflicts()
+    {
+        var count = _bound?.BindingConflictCount ?? 0;
+
+        BindingConflictsNotice.IsVisible = count > 0 && Mode == PanelMode.Full && TranscriptPane.IsVisible;
+
+        if (count > 0)
+        {
+            BindingConflictsNotice.Label = PanelViewModel.BindingConflictsLabel(count);
+            BindingConflictsNotice.Text = PanelViewModel.BindingConflictsText(count);
+        }
+    }
+
+    /// <summary>Opens the Binding conflicts page on this surface, over the transcript.</summary>
+    private async void OnOpenBindingConflictsClick(object? sender, RoutedEventArgs e)
+    {
+        if (_settings.Built() is D47.App.Settings.SettingsView view && view.NewBindingConflictsPage() is { } page)
+        {
+            await Open(page);
+        }
     }
 
     private void PlaceStoryProgress()
@@ -2480,6 +2514,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         PagePane.IsVisible = !transcript && !modal && !miniStory;
 
         ApplyStoryReadout();
+        ApplyBindingConflicts();
 
         // No tab has a frame of its own: the edge is the window's. The page's own bar keeps its inset.
         PageBar.Margin = transcript ? new Thickness(0, 8, 0, 0) : new Thickness(14, 12, 14, 0);

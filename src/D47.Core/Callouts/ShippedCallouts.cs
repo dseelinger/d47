@@ -77,6 +77,9 @@ public static class ShippedCallouts
 
         /// <summary>Whether a Commander's reached beats wait behind a story opening that must be said first.</summary>
         public required Func<string?, bool> StoryOpening { get; init; }
+
+        /// <summary>The certain conflicts between d47's bindings and Elite's, or null until both have been read.</summary>
+        public Func<IReadOnlyList<D47.Core.Input.BindingConflict>?> BindingConflicts { get; init; } = () => null;
     }
 
     /// <summary>What the shipped callouts are connected to once the services they call exist.</summary>
@@ -260,6 +263,8 @@ public static class ShippedCallouts
             })
 
             .Add(new CampaignWarningCallout())
+
+            .Add(new BindingConflictCallout(sources.BindingConflicts))
 
             .Add(new CampaignLiaisonCallout(sources.Fight) { TopicOn = topic => TopicOn(settings.Current.Callouts, topic) })
 
@@ -527,6 +532,7 @@ public static class ShippedCallouts
         engine.SetEnabled("powerplay-cycle", callouts.PowerplayCycle, now);
         engine.SetEnabled("bgs-tick", callouts.BgsTick, now);
         engine.SetEnabled("campaign-warnings", callouts.CampaignWarnings, now);
+        engine.SetEnabled(BindingConflictCallout.CalloutId, callouts.BindingConflicts, now);
         var anyTopic = callouts.BgsWars || callouts.BgsElections || callouts.BgsOther;
         engine.SetEnabled("campaign-liaison", anyTopic, now);
         engine.SetEnabled("campaign-arcs", anyTopic, now);

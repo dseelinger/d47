@@ -1038,19 +1038,7 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
         {
             if (open.FindAncestorOfType<Panel.PanelView>() is { } panel)
             {
-                await panel.Open(new Controls.BindingConflictsPage(
-                    host.Settings,
-                    editing,
-                    (slotKey, slot, message, listening) => CaptureBindAsync(
-                        host.Settings.Find(slotKey)!,
-                        slotKey,
-                        KindOf(slotKey) == SettingKind.HotasButton,
-                        slot,
-                        message,
-                        listening,
-                        fromConflicts: true),
-                    (slotKey, message) => host.Apply(slotKey, null, message),
-                    OpenSwitchesAsync));
+                await panel.Open(ConflictsPage(editing));
                 refresh();
             }
         };
@@ -1072,4 +1060,23 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
 
         return (control, refresh);
     }
+
+    /// <summary>The Binding conflicts page, its REBIND and UNBIND acting through this surface's settings; null without the conflicts' inputs.</summary>
+    public Controls.BindingConflictsPage? NewBindingConflictsPage() =>
+        services.BindingConflicts is { } editing ? ConflictsPage(editing) : null;
+
+    private Controls.BindingConflictsPage ConflictsPage(BindingConflictEditing editing) =>
+        new(
+            host.Settings,
+            editing,
+            (slotKey, slot, message, listening) => CaptureBindAsync(
+                host.Settings.Find(slotKey)!,
+                slotKey,
+                KindOf(slotKey) == SettingKind.HotasButton,
+                slot,
+                message,
+                listening,
+                fromConflicts: true),
+            (slotKey, message) => host.Apply(slotKey, null, message),
+            OpenSwitchesAsync);
 }

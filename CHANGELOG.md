@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: When D47 starts and Elite binds one of its keys or buttons too, it says so once, with the count, and that they are on the Binding conflicts page. A conflict that appears while D47 runs, because Elite's bindings or D47's settings changed, gets one line of its own; none is said twice in a run. The Binding conflicts with Elite switch in Settings › Your core › Callouts, group Plans and reminders, turns the line off. While any conflict exists the Transcript tab shows a warning above the messages, on the window and the headset big panel, whose BINDING CONFLICTS tile opens the page.
+
 Added: Every stop on a route map now has a mark, on the Progress page, the Plan result page, the galaxy map and the mini panel. A scoopable star is a yellow dot, a star whose class D47 does not know is a grey ring, and a stop on a carrier route is a small white square. The neutron, white dwarf, black hole, no fuel and out of tritium marks are unchanged, and the key under the map lists each look it shows. Before, only those marks and the two ends were drawn, so a route of ordinary stars showed bends in the line.
 
 Added: The Market page has a Distance in LY box beside Max price age, opening on 50. Find it searches that far from your current system. Before, the radius was fixed at 50 light years and the page did not show it.

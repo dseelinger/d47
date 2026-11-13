@@ -72,6 +72,7 @@ public static class CalloutCapability
     public const string PowerplayCycleKey = "callouts.powerplayCycle";
     public const string BgsTickKey = "callouts.bgsTick";
     public const string CampaignWarningsKey = "callouts.campaignWarnings";
+    public const string BindingConflictsKey = "callouts.bindingConflicts";
     public const string BgsWarsKey = "callouts.bgsWars";
     public const string BgsElectionsKey = "callouts.bgsElections";
     public const string BgsOtherKey = "callouts.bgsOther";
@@ -988,6 +989,23 @@ public static class CalloutCapability
                 "campaign warnings",
                 s => s.Callouts.CampaignWarnings,
                 (s, v) => s with { Callouts = s.Callouts with { CampaignWarnings = v } }),
+
+            Toggle(
+                BindingConflictsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Callouts, group Plans and reminders, and find Binding conflicts with "
+                + "Elite (on by default). Bind D47's push-to-talk key in Elite's active preset too, then start D47: "
+                + "it says that Elite also binds one of its keys and that it is on the Binding conflicts page, once. "
+                + "Say \"stop calling out binding conflicts\": the row shows off and that is no longer said. Say "
+                + "\"start calling out binding conflicts\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off.",
+                "Binding conflicts with Elite",
+                "At start, how many of D47's keys and buttons Elite binds too, and again when Elite binds another "
+                + "while D47 runs. Each conflict is said once a run.",
+                BindingConflictCallout.CalloutId,
+                "binding conflicts",
+                s => s.Callouts.BindingConflicts,
+                (s, v) => s with { Callouts = s.Callouts with { BindingConflicts = v } }),
 
             Toggle(
                 BgsWarsKey,
