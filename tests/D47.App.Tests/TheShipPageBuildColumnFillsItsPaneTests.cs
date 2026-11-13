@@ -105,7 +105,11 @@ public class TheShipPageBuildColumnFillsItsPaneTests
             {
                 Assert.True(below.IsVisualAncestorOf(table) && !build.IsVisualAncestorOf(table));
 
-                Assert.True(table.Bounds.Width > grid.Bounds.Width - 40, $"{table.Bounds.Width} {grid.Bounds.Width}");
+                var row = table.GetSelfAndVisualAncestors().OfType<Control>().First(ancestor => ancestor.GetVisualParent() == below);
+                var inset = table.TranslatePoint(default, row)!.Value.X;
+
+                Assert.Equal(below.Bounds.Width, row.Margin.Left + row.Bounds.Width + row.Margin.Right, 1.5);
+                Assert.Equal(row.Bounds.Width - (2 * inset), table.Bounds.Width, 1.5);
             });
 
         window.Close();
