@@ -761,6 +761,44 @@ public sealed class ShipPlanService(
         return !AppliedEngineering.Blueprint(plan, module) || !AppliedEngineering.Experimental(plan, module);
     }
 
+    /// <summary>
+    /// What a build's slots still ask of the game: each planned slot's request without the blueprint or
+    /// experimental the fitted module already has. A slot with nothing left is left out.
+    /// </summary>
+    public IReadOnlyList<BuildRequest> StillToDo(ShipBuild build)
+    {
+        ArgumentNullException.ThrowIfNull(build);
+
+        return [.. build.Slots.Select(slot => StillToDo(build, slot)).OfType<BuildRequest>()];
+    }
+
+    /// <summary>One slot's request without what the fitted module already has, or null when nothing is left.</summary>
+    public BuildRequest? StillToDo(ShipBuild build, SlotPlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(build);
+        ArgumentNullException.ThrowIfNull(plan);
+
+        var request = plan.ToRequest();
+
+        if (build.ShipId is { } shipId
+            && FittedModules(shipId).FirstOrDefault(candidate =>
+                string.Equals(candidate.Slot, plan.Slot, StringComparison.OrdinalIgnoreCase)) is { } module
+            && IsWhatWasWanted(plan, module))
+        {
+            if (AppliedEngineering.Blueprint(plan, module))
+            {
+                request = request with { Blueprint = null, Grade = null };
+            }
+
+            if (AppliedEngineering.Experimental(plan, module))
+            {
+                request = request with { Experimental = null };
+            }
+        }
+
+        return request.Blueprint is null && request.Grade is null && request.Experimental is null ? null : request;
+    }
+
     /// <summary>Whether the fitted module is the one the plan asked for.</summary>
     private static bool IsWhatWasWanted(SlotPlan plan, ShipModule module)
     {

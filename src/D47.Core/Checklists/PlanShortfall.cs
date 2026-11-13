@@ -15,7 +15,7 @@ public sealed record PlanShortfall
 
     public IReadOnlyList<OneTripSite> OneTrip { get; init; } = [];
 
-    /// <summary>Live engineering items costed.</summary>
+    /// <summary>Live engineering items costed; for a ship costed from its plan, the slots still to do.</summary>
     public int PlanCount { get; init; }
 
     /// <summary>Outstanding construction resources, one per site and commodity.</summary>

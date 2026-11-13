@@ -10,7 +10,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>The PLAN section of a ship's page: what its live plans and construction deliveries still need.</summary>
+/// <summary>The PLAN section of a ship's page: what its plan and construction deliveries still need.</summary>
 public static class PlanSection
 {
     public static Control Build(PlanShortfall plan)
@@ -52,14 +52,14 @@ public static class PlanSection
         }
 
         stack.Children.Add(LoadoutPages.Muted(
-            "Adds up every live plan for this ship, and construction deliveries. Redraws as you collect."));
+            "Adds up this ship's plan and construction deliveries. Redraws as you collect."));
 
         return stack;
     }
 
-    /// <summary>"2 plans · 1 construction delivery", for the line under the head.</summary>
+    /// <summary>"2 slots · 1 construction delivery", for the line under the head.</summary>
     public static string AsideText(PlanShortfall plan) =>
-        $"What the live plans for this ship still need · {Count(plan.PlanCount, "plan", "plans")}"
+        $"What this ship's plan still needs · {Count(plan.PlanCount, "slot", "slots")}"
         + $" · {Count(plan.DeliveryCount, "construction delivery", "construction deliveries")}";
 
     /// <summary>The short column: the amount still missing, or "✓ MET".</summary>

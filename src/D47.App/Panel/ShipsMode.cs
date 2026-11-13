@@ -306,7 +306,11 @@ public sealed class ShipsMode(
             return null;
         }
 
-        var shortfall = checklists.Shortfall(build.Scope);
+        var shortfall = checklists.Shortfall(
+            build.Scope,
+            build.IsOwned
+                ? EngineeringPlan.Items(build.Scope, build.Hull, [.. ships.StillToDo(build)], checklists.SlotFor)
+                : []);
 
         return shortfall.PlanCount == 0 && shortfall.DeliveryCount == 0 ? null : shortfall;
     }
@@ -2151,7 +2155,9 @@ public sealed class ShipsMode(
     private IReadOnlyList<LoadoutLine> Cost(ShipBuild build, SlotPlan plan, ChecklistScope scope)
     {
         var costing = EngineeringPlan.Cost(
-            EngineeringPlan.Items(scope, build.Hull, [plan.ToRequest()], checklists.SlotFor),
+            ships.StillToDo(build, plan) is { } left
+                ? EngineeringPlan.Items(scope, build.Hull, [left], checklists.SlotFor)
+                : [],
             state());
 
         var lines = new List<LoadoutLine>();

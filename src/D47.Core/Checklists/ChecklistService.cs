@@ -743,14 +743,38 @@ public sealed class ChecklistService(
     /// </summary>
     public PlanShortfall Shortfall(ChecklistScope? scope = null)
     {
-        var state = State;
         var live = Document.Items.Where(item => !item.IsComplete).ToList();
-        var ship = scope is { Group: ChecklistGroup.Ship or ChecklistGroup.Build };
 
         if (scope is not null)
         {
             live = [.. live.Where(item => item.Scope.Same(scope))];
         }
+
+        return Shortfall(scope, live);
+    }
+
+    /// <summary>
+    /// What a ship's planned items still need, costed as given rather than read from the checklist.
+    /// <see cref="PlanShortfall.PlanCount"/> counts the slots the items name.
+    /// </summary>
+    public PlanShortfall Shortfall(ChecklistScope scope, IReadOnlyList<ChecklistItem> planned)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(planned);
+
+        var slots = planned
+            .Where(item => item.Intent?.Kind is ChecklistIntentKind.Blueprint or ChecklistIntentKind.Experimental)
+            .Select(item => item.Intent!.Subject)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
+
+        return Shortfall(scope, [.. planned]) with { PlanCount = slots };
+    }
+
+    private PlanShortfall Shortfall(ChecklistScope? scope, List<ChecklistItem> live)
+    {
+        var state = State;
+        var ship = scope is { Group: ChecklistGroup.Ship or ChecklistGroup.Build };
 
         var costing = ship
             ? EngineeringPlan.Cost(live, state)
