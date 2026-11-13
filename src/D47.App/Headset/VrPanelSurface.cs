@@ -338,6 +338,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>One frame of the d47 is composing animation (asked for 2026-08-22).</summary>
     public void TickAdventures() => _dirty |= _view.TickAdventures();
 
+    /// <summary>One step of the System page's orbit view.</summary>
+    public void TickOrbits() => _dirty |= _view.TickOrbits();
+
     /// <summary>Redraws the route being flown, from the headset's own tick (#52).</summary>
     public void TickRouting() => _dirty |= _view.TickRouting();
 

@@ -95,6 +95,20 @@ internal sealed class OrbitPlot : Control
         });
     }
 
+    /// <summary>Advances one frame from the host's tick; true when the plot is visible and its clock runs.</summary>
+    public bool Tick()
+    {
+        if (!_clock.Running || !IsEffectivelyVisible)
+        {
+            return false;
+        }
+
+        Moved?.Invoke();
+        InvalidateVisual();
+
+        return true;
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);

@@ -904,6 +904,24 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     private readonly AssetsFurnishing _assets;
 
+    /// <summary>Moves the System page's Orbits plot one step from the host's tick, for a surface with no frames of its own; true when it moved.</summary>
+    public bool TickOrbits()
+    {
+        if (Tab is not PanelTab.Search)
+        {
+            return false;
+        }
+
+        var moved = false;
+
+        foreach (var plot in this.GetVisualDescendants().OfType<OrbitPlot>())
+        {
+            moved |= plot.Tick();
+        }
+
+        return moved;
+    }
+
     /// <summary>Beats the working pulses and refreshes the write bars on the Stories and Assets tabs, from the host's tick; true when either drew something new.</summary>
     public bool TickAdventures()
     {

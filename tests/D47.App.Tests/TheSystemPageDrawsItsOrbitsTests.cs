@@ -24,7 +24,7 @@ public sealed class TheSystemPageDrawsItsOrbitsTests
 
     private static readonly DateTimeOffset Start = new(2026, 11, 13, 12, 0, 0, TimeSpan.Zero);
 
-    private static (PanelView Panel, Window Window, AnOrbitMarkerStaysOnItsDrawnPathTests.FakeClock Clock) Shown(StarSystemProfile? profile = null)
+    internal static (PanelView Panel, Window Window, AnOrbitMarkerStaysOnItsDrawnPathTests.FakeClock Clock) Shown(StarSystemProfile? profile = null)
     {
         var clock = new AnOrbitMarkerStaysOnItsDrawnPathTests.FakeClock(Start);
         var systems = new TheSystemPageListsItsStationsTests.Systems(profile ?? TheSystemPageListsItsStationsTests.Ltt7786Profile());
@@ -57,13 +57,13 @@ public sealed class TheSystemPageDrawsItsOrbitsTests
     private static List<Button> Crumbs(Control root) =>
         [.. root.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains(StarSystemPage.OrbitCrumbClass))];
 
-    private static void Press(Button button)
+    internal static void Press(Button button)
     {
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static Button Named(Control root, string name) =>
+    internal static Button Named(Control root, string name) =>
         root.GetVisualDescendants().OfType<Button>().First(button => AutomationProperties.GetName(button) == name);
 
     private static string Readout(Control root) =>
