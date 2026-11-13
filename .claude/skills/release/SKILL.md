@@ -285,6 +285,22 @@ The invocation also authorizes `deploy-local.ps1` to close the installed d47 and
 
 ## Output
 
+The report's first line is a level-two heading that says whether the release succeeded. ✅ is the
+green mark and ❌ the red one:
+
+```
+## ✅ Release v<version> succeeded
+## ❌ Release v<version> failed at <stage>
+## ❌ Release v<version> is live and failed its <comparison | Defender scan>
+```
+
+The success heading goes out only when the release is published and both checks that follow it
+passed or did not run: `release.ps1` exited 0, or, after a re-arm, the watcher reported `success`
+and the comparison and the Defender scan found nothing. A difference from the rebuild (exit 4) or a
+Defender detection (exit 3) gets the third heading. Every other stop gets the second, naming the
+stage: the local suite, the runner's step, the avatar upload, the dispatch, or the script's own
+checks. No other line in the report is a heading.
+
 When the script exits 0:
 
 1. One line: the version published, the release URL
@@ -296,8 +312,8 @@ When the script exits 0:
 4. Anything still open: a test that failed only in the full run, a docs job that failed, a fix you
    could not make.
 
-When it stops without a release, lead with that and the stage it stopped at, then the install line
-and the same table.
+When it stops without a release, the failure heading names the stage it stopped at. Then come the
+install line and the same table.
 
 ## What this does not do
 
