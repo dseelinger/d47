@@ -432,8 +432,8 @@ controls.
 A page opens on Any for System and Signal, and on 3 days for Station and Outfitting; CLEAR puts it
 back. The choice goes to the service as `max_report_age_hours`, and replaying a search from history
 restores it. The Outfitting table's **Updated** column shows the stock date the age filters on. The
-Market page has the same dropdown, labelled **Max price age**, and opens on 3 days; the Trade page's
-**Max price age** box is the same dropdown.
+Market page has the same dropdown, labelled **Max price age**, and opens on 3 days, and a **Distance in LY**
+box that opens on 50; the Trade page's **Max price age** box is the same dropdown.
 
 **Start from** lists your saved searches and the [quick searches](#quick-searches), at the top of the
 form. Picking one fills the form and runs it. The button reads "Choose a saved search" until you pick
@@ -1002,7 +1002,7 @@ When no station has them all, the answer says how many had each one:
 A rare good in a list is refused when buying, with its one station named, because a radius search
 will not find that station; ask for it on its own. When selling, it is searched like any other commodity. On
 the Astrometrics tab's Market page, each commodity is added from a type-ahead as a tile with its tonnes, up to
-five. The market table gives each commodity a column with its price over its stock, then the total.
+five, and a **Distance in LY** box sets how far out the search looks. The market table gives each commodity a column with its price over its stock, then the total.
 
 **Commodity prices come from a second host** ([#350](https://github.com/dseelinger/d47/issues/350)).
 Everything else on this page is spansh; asking where to buy or sell one named commodity goes to

@@ -291,6 +291,12 @@ public class TheMarketPageTests
                                         Type = D47.Core.Capabilities.ToolParameterType.Integer,
                                         Description = "How stale a price may be.",
                                     },
+                                    new D47.Core.Capabilities.ToolParameter
+                                    {
+                                        Name = "max_distance",
+                                        Type = D47.Core.Capabilities.ToolParameterType.Number,
+                                        Description = "How far to look.",
+                                    },
                                 ],
                                 Handler = (arguments, _) =>
                                 {

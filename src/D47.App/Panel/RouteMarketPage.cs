@@ -29,6 +29,10 @@ public sealed class RouteMarketPage : UserControl
 
     public const string TonnesName = "CommodityTonnes";
 
+    public const string DistanceName = "MarketDistance";
+
+    public const int DefaultDistance = 50;
+
     public const string FullName = "CommoditiesFull";
 
     /// <summary>Marks an added commodity's tile; pressing it removes the commodity.</summary>
@@ -70,6 +74,16 @@ public sealed class RouteMarketPage : UserControl
         Step = 10,
         Format = "#,0",
         Placeholder = "Any",
+    };
+
+    private readonly Amount _distance = new()
+    {
+        Name = DistanceName,
+        Value = DefaultDistance,
+        Minimum = 1,
+        Maximum = 99999,
+        Step = 10,
+        Format = "#,0",
     };
 
     private readonly TextBlock _full = RoutingKit.Prose(FullText);
@@ -195,6 +209,7 @@ public sealed class RouteMarketPage : UserControl
             values["surface_stations"] = "true";
         }
 
+        values["max_distance"] = (_distance.Value ?? DefaultDistance).ToString("0.##", CultureInfo.InvariantCulture);
         values["max_price_age_hours"] = _age.Value.ToString(CultureInfo.InvariantCulture);
 
         return new ToolArguments(values);
@@ -223,6 +238,7 @@ public sealed class RouteMarketPage : UserControl
         Detach(_selling);
         Detach(_largePad);
         Detach(_surfaceStations);
+        Detach(_distance);
         Detach(_age.Picker);
         Detach(_status);
 
@@ -274,7 +290,7 @@ public sealed class RouteMarketPage : UserControl
             Children =
             {
                 RoutingKit.Section("The market"),
-                RoutingKit.Fields(Labelled("Max price age", _age.Picker)),
+                RoutingKit.Fields(Labelled("Distance in LY", _distance), Labelled("Max price age", _age.Picker)),
                 RoutingKit.Fields(_selling, _largePad, _surfaceStations),
                 RoutingKit.Actions(find, cancel),
                 _status,

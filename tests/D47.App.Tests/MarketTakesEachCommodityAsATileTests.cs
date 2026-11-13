@@ -219,4 +219,20 @@ public sealed class MarketTakesEachCommodityAsATileTests
 
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void TheDistanceBoxOpensOnFiftyAndGoesToTheSearch()
+    {
+        var (panel, window, page) = Furnished();
+        var distance = Named<Amount>(panel, RouteMarketPage.DistanceName);
+
+        Assert.Equal(50, distance.Value);
+        Assert.Equal("50", page.FormArguments().Values["max_distance"]);
+
+        distance.Value = 120;
+
+        Assert.Equal("120", page.FormArguments().Values["max_distance"]);
+
+        window.Close();
+    }
 }
