@@ -91,7 +91,7 @@ public sealed class TheCatalogSetsAStoryModelsEffortTests
 
         Assert.Equal(expected, catalog.TraitsFor("openai", "gpt-6-luna").StoryEffort);
         Assert.True(catalog.Knows("openai", "gpt-6-luna"));
-        Assert.Equal("gpt-6.1-sol", catalog.DefaultFor("openai"));
+        Assert.Equal(ModelCatalog.Embedded.DefaultFor("openai"), catalog.DefaultFor("openai"));
     }
 
     /// <summary>The shipped catalog with <paramref name="traits"/> as gpt-6-luna's traits.</summary>

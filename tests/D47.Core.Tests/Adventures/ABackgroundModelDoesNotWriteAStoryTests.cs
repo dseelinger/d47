@@ -50,12 +50,14 @@ public sealed class ABackgroundModelDoesNotWriteAStoryTests
     }
 
     [Fact]
-    public async Task LunaIsReplacedBySol()
+    public async Task LunaIsReplacedByOpenAIsDefault()
     {
         var requests = await Written("openai", "gpt-6-luna");
+        var openAIsDefault = ModelCatalog.Embedded.DefaultFor("openai")!;
 
-        Assert.All(requests, request => Assert.Equal("gpt-6.1-sol", request.Model));
-        Assert.All(requests, request => Assert.Equal(ModelCatalog.Embedded.TraitsFor("openai", "gpt-6.1-sol").StoryEffort ?? ThinkingEffort.Medium, request.Effort));
+        Assert.NotEqual("gpt-6-luna", openAIsDefault);
+        Assert.All(requests, request => Assert.Equal(openAIsDefault, request.Model));
+        Assert.All(requests, request => Assert.Equal(ModelCatalog.Embedded.TraitsFor("openai", openAIsDefault).StoryEffort ?? ThinkingEffort.Medium, request.Effort));
     }
 
     [Fact]
