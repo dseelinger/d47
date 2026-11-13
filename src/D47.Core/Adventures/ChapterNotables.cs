@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -20,8 +21,8 @@ public enum NotableKind
     Discoveries,
 }
 
-/// <summary>One notable thing the journal shows the Commander did. <see cref="Amount"/> ranks the "largest" kinds and counts discoveries.</summary>
-public sealed record Notable(NotableKind Kind, DateTimeOffset At, string Text, long Amount = 0, bool Pending = false);
+/// <summary>One notable thing the journal shows the Commander did. <see cref="Amount"/> ranks the "largest" kinds and counts discoveries. <see cref="Open"/> marks an interdiction whose ending is not yet known; <see cref="Pilot"/> is its interdictor.</summary>
+public sealed record Notable(NotableKind Kind, DateTimeOffset At, string Text, long Amount = 0, bool Pending = false, bool Open = false, string? Pilot = null);
 
 /// <summary>Classifies journal events into <see cref="Notable"/> entries and keeps the list a chapter's standing carries.</summary>
 public static class ChapterNotables
@@ -46,7 +47,12 @@ public static class ChapterNotables
                 return new Notable(NotableKind.Death, at, Killed(raw));
 
             case "Interdicted":
-                return new Notable(NotableKind.Interdicted, at, Interdicted(raw));
+                return new Notable(
+                    NotableKind.Interdicted,
+                    at,
+                    Interdicted(raw),
+                    Open: true,
+                    Pilot: KillCallout.Resolved(raw.String("Interdictor_Localised")) ?? KillCallout.Resolved(raw.String("Interdictor")));
 
             case "EscapeInterdiction":
                 return new Notable(
@@ -94,6 +100,8 @@ public static class ChapterNotables
     {
         ArgumentNullException.ThrowIfNull(notables);
         ArgumentNullException.ThrowIfNull(journalEvent);
+
+        notables = Ended(notables, journalEvent);
 
         var raw = journalEvent.Raw;
 
@@ -149,6 +157,51 @@ public static class ChapterNotables
 
         return [.. newest.Where(entry => entry.Kind != NotableKind.Death || ++deaths <= MostDeathsTold).Take(MostTold)];
     }
+
+    private static IReadOnlyList<Notable> Ended(IReadOnlyList<Notable> notables, JournalEvent journalEvent)
+    {
+        var index = -1;
+
+        for (var at = notables.Count - 1; at >= 0; at--)
+        {
+            if (notables[at].Open)
+            {
+                index = at;
+                break;
+            }
+        }
+
+        if (index < 0)
+        {
+            return notables;
+        }
+
+        var pilot = notables[index].Pilot;
+        var raw = journalEvent.Raw;
+        string? ending = journalEvent.Kind switch
+        {
+            "Bounty" when Names(pilot, KillCallout.Resolved(raw.String("PilotName_Localised"))) => "destroyed it",
+            "PVPKill" when Names(pilot, KillCallout.Resolved(raw.String("Victim"))) => "destroyed it",
+            "Died" => "died",
+            "SupercruiseEntry" or "FSDJump" or "Docked" => "got away",
+            "Interdicted" => string.Empty,
+            _ => null,
+        };
+
+        if (ending is null)
+        {
+            return notables;
+        }
+
+        var list = notables.ToList();
+        var text = ending.Length == 0 ? list[index].Text : list[index].Text.TrimEnd('.') + ", then " + ending + ".";
+        list[index] = list[index] with { Text = text, Open = false };
+
+        return list;
+    }
+
+    private static bool Names(string? pilot, string? named) =>
+        pilot is not null && string.Equals(pilot, named, StringComparison.OrdinalIgnoreCase);
 
     private static IReadOnlyList<Notable> Rebought(IReadOnlyList<Notable> notables, JsonElement raw)
     {

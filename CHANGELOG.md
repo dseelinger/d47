@@ -18,6 +18,8 @@ Fixed: Putting a ship's build on the checklist, from the ship page or from the b
 
 Fixed: Route maps for Neutron Plotter, Road to Riches and Exobiology plans drew every stop that is not a neutron star with the unknown look. When Spansh knows a stop's star, the map now marks it scoopable or no fuel. D47 asks Spansh once, after the plotter answers, and a plan saved earlier keeps the unknown look.
 
+Fixed: The chapter writer was told only that a ship pulled you out of supercruise and whether you submitted. It is now also told how it ended: you destroyed the interdictor's ship, you died, or you got away. Got away means you re-entered supercruise, jumped or docked before anything else resolved it; the journal does not say whether you escaped or the other ship broke off.
+
 Fixed: The last-session recap and the logbook said only that a ship pulled you out of supercruise and whether you submitted. They now say how it ended: you destroyed the interdictor's ship, you died, or you got away. Got away means you re-entered supercruise, jumped or docked before anything else resolved it; the journal does not say whether you escaped or the other ship broke off. The interdictor is named by its readable name instead of an internal ship-name key.
 
 Added: With Web app on and the flying Commander signed in, D47 uploads that Commander's snapshot to the web app when it has changed, at most once a minute. Nothing is sent while nothing changes. After a failed upload D47 waits five minutes before trying again; if the web app no longer knows the sign-in, D47 removes the stored sign-in and the Web app line says to sign in again. A snapshot still waiting when D47 closes is sent then, with up to three seconds allowed. A test drive sends nothing.
