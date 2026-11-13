@@ -317,10 +317,21 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
         stations.AddRange(system.Items("stations").Select(station => ReadStation(station, body: null)));
 
         var bodies = new List<BodyProfile>();
+        var barycentreElements = new List<JsonElement>();
+        var chains = new List<List<(string Kind, int BodyId)>>();
 
         foreach (var body in system.Items("bodies"))
         {
             var bodyName = body.String("name");
+
+            if (body.String("type") == "Barycentre")
+            {
+                barycentreElements.Add(body);
+            }
+            else
+            {
+                chains.Add(Parents(body));
+            }
 
             stations.AddRange(body.Items("stations").Select(station => ReadStation(station, bodyName)));
 
@@ -361,6 +372,7 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             Powerplay = ReadPowerplay(system),
             Stations = stations,
             Bodies = bodies,
+            Barycentres = [.. barycentreElements.Select(element => ReadBarycentre(element, chains)).OfType<BarycentreProfile>()],
             ReportedAt = Timestamp(system, "date"),
         };
     }
@@ -517,6 +529,7 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             SubType = body.String("subType"),
             DistanceToArrival = body.Double("distanceToArrival"),
             ParentId = Parent(body),
+            Parents = Parents(body),
             SpectralClass = body.String("spectralClass"),
             Luminosity = body.String("luminosity"),
             IsMainStar = body.Bool("mainStar"),
@@ -547,14 +560,55 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             OrbitalEccentricity = body.Double("orbitalEccentricity"),
             OrbitalInclination = body.Double("orbitalInclination"),
             ArgOfPeriapsis = body.Double("argOfPeriapsis"),
+            AscendingNode = body.Double("ascendingNode"),
+            MeanAnomaly = body.Double("meanAnomaly"),
+            MeanAnomalyAt = body.Object("timestamps") is { } timestamps ? Timestamp(timestamps, "meanAnomaly") : null,
             RotationalPeriod = body.Double("rotationalPeriod"),
             TidallyLocked = Flag(body, "rotationalPeriodTidallyLocked"),
-            AxialTilt = body.Double("axialTilt"),
+            AxialTilt = body.Double("axialTilt") * 180 / Math.PI,
             Age = body.Double("age"),
             AbsoluteMagnitude = body.Double("absoluteMagnitude"),
             ReportedAt = Timestamp(body, "updateTime"),
         };
     }
+
+    private static BarycentreProfile? ReadBarycentre(JsonElement barycentre, List<List<(string Kind, int BodyId)>> chains)
+    {
+        if (barycentre.Int("bodyId") is not { } bodyId)
+        {
+            return null;
+        }
+
+        var parents = chains
+            .Select(chain => chain.FindIndex(entry => entry == ("Null", bodyId)))
+            .Select((index, at) => (index, at))
+            .Where(found => found.index >= 0)
+            .Select(found => chains[found.at].Skip(found.index + 1).ToList())
+            .FirstOrDefault() ?? [];
+
+        return new BarycentreProfile
+        {
+            BodyId = bodyId,
+            Parents = parents,
+            SemiMajorAxis = barycentre.Double("semiMajorAxis"),
+            OrbitalEccentricity = barycentre.Double("orbitalEccentricity"),
+            OrbitalInclination = barycentre.Double("orbitalInclination"),
+            ArgOfPeriapsis = barycentre.Double("argOfPeriapsis"),
+            AscendingNode = barycentre.Double("ascendingNode"),
+            OrbitalPeriod = barycentre.Double("orbitalPeriod"),
+            MeanAnomaly = barycentre.Double("meanAnomaly"),
+            MeanAnomalyAt = barycentre.Object("timestamps") is { } timestamps ? Timestamp(timestamps, "meanAnomaly") : null,
+        };
+    }
+
+    private static List<(string Kind, int BodyId)> Parents(JsonElement body) =>
+    [
+        .. body.Items("parents")
+            .Where(parent => parent.ValueKind == JsonValueKind.Object)
+            .SelectMany(parent => parent.EnumerateObject())
+            .Where(entry => entry.Value.ValueKind == JsonValueKind.Number && entry.Value.TryGetInt32(out _))
+            .Select(entry => (entry.Name, entry.Value.GetInt32())),
+    ];
 
     /// <summary>The first entry of <c>parents</c> that is a star or planet, skipping barycentres.</summary>
     private static int? Parent(JsonElement body)

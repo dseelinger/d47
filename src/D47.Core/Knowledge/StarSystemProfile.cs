@@ -76,6 +76,9 @@ public sealed record StarSystemProfile
     /// <summary>Stars and planets; barycentres are not bodies.</summary>
     public IReadOnlyList<BodyProfile> Bodies { get; init; } = [];
 
+    /// <summary>The barycentres, which are not in <see cref="Bodies"/>.</summary>
+    public IReadOnlyList<BarycentreProfile> Barycentres { get; init; } = [];
+
     public DateTimeOffset? ReportedAt { get; init; }
 
     /// <summary>The flagged main star, else the star with the lowest <c>BodyId</c>; null with no star.</summary>
@@ -251,6 +254,9 @@ public sealed record BodyProfile
     /// <summary>The star or planet it orbits, past any barycentre, or null for the primary.</summary>
     public int? ParentId { get; init; }
 
+    /// <summary>The whole <c>parents</c> chain, nearest first; kind is Star, Planet or Null as written.</summary>
+    public IReadOnlyList<(string Kind, int BodyId)> Parents { get; init; } = [];
+
     /// <summary>A star's class and subclass, "K7".</summary>
     public string? SpectralClass { get; init; }
 
@@ -319,6 +325,14 @@ public sealed record BodyProfile
     /// <summary>In degrees.</summary>
     public double? ArgOfPeriapsis { get; init; }
 
+    /// <summary>In degrees.</summary>
+    public double? AscendingNode { get; init; }
+
+    /// <summary>In degrees, as of <see cref="MeanAnomalyAt"/>.</summary>
+    public double? MeanAnomaly { get; init; }
+
+    public DateTimeOffset? MeanAnomalyAt { get; init; }
+
     /// <summary>In days.</summary>
     public double? RotationalPeriod { get; init; }
 
@@ -336,4 +350,36 @@ public sealed record BodyProfile
 
     /// <summary>Whether a fuel scoop works on this star; null for a planet or an unknown class.</summary>
     public bool? Scoopable => Type == "Star" ? StarClasses.IsScoopable(SpectralClass?.TrimEnd("0123456789".ToCharArray())) : null;
+}
+
+/// <summary>The centre two or more bodies orbit; it has no physical body.</summary>
+public sealed record BarycentreProfile
+{
+    /// <summary>The journal's <c>BodyID</c>.</summary>
+    public required int BodyId { get; init; }
+
+    /// <summary>What it orbits, nearest first; empty when no body names it.</summary>
+    public IReadOnlyList<(string Kind, int BodyId)> Parents { get; init; } = [];
+
+    /// <summary>In astronomical units.</summary>
+    public double? SemiMajorAxis { get; init; }
+
+    public double? OrbitalEccentricity { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? OrbitalInclination { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? ArgOfPeriapsis { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? AscendingNode { get; init; }
+
+    /// <summary>In days.</summary>
+    public double? OrbitalPeriod { get; init; }
+
+    /// <summary>In degrees, as of <see cref="MeanAnomalyAt"/>.</summary>
+    public double? MeanAnomaly { get; init; }
+
+    public DateTimeOffset? MeanAnomalyAt { get; init; }
 }

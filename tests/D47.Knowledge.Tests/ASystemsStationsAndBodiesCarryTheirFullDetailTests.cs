@@ -120,8 +120,42 @@ public class ASystemsStationsAndBodiesCarryTheirFullDetailTests
         Assert.Equal(171.332966, body.ArgOfPeriapsis!.Value, 6);
         Assert.Equal(0.798204212395833, body.RotationalPeriod!.Value, 9);
         Assert.True(body.TidallyLocked);
-        Assert.Equal(0.090808, body.AxialTilt!.Value, 6);
+        Assert.Equal(5.2029, body.AxialTilt!.Value, 4);
         Assert.Equal(new DateTimeOffset(2026, 10, 31, 10, 20, 32, TimeSpan.Zero), body.ReportedAt);
+    }
+
+    private static Task<StarSystemProfile> Ltt7786() => Profile(Fixture.Text("spansh-dump-ltt-7786.json"));
+
+    [Fact]
+    public async Task BarycentresAreListedApartFromTheBodiesWithTheirOrbitsAndParents()
+    {
+        var profile = await Ltt7786();
+
+        Assert.Equal(7, profile.Barycentres.Count);
+        Assert.DoesNotContain(profile.Bodies, body => body.Type == "Barycentre");
+
+        var first = profile.Barycentres.Single(barycentre => barycentre.BodyId == 14);
+
+        Assert.Equal([("Star", 0)], first.Parents);
+        Assert.Equal(32.687657, first.MeanAnomaly!.Value, 6);
+        Assert.Equal(new DateTimeOffset(2026, 10, 4, 18, 49, 43, TimeSpan.Zero), first.MeanAnomalyAt);
+        Assert.Equal(26.783067, first.AscendingNode!.Value, 6);
+        Assert.Equal(1.23361759860611, first.SemiMajorAxis!.Value, 12);
+
+        Assert.Equal([("Planet", 36), ("Star", 0)], profile.Barycentres.Single(barycentre => barycentre.BodyId == 40).Parents);
+    }
+
+    [Fact]
+    public async Task ABodyKeepsItsWholeParentChainAndItsFullOrbitAndTiltInDegrees()
+    {
+        var body = (await Ltt7786()).Bodies.Single(candidate => candidate.BodyId == 15);
+
+        Assert.Equal([("Null", 14), ("Star", 0)], body.Parents);
+        Assert.Equal(0, body.ParentId);
+        Assert.Equal(153.87406, body.AscendingNode!.Value, 5);
+        Assert.Equal(14.713517, body.MeanAnomaly!.Value, 6);
+        Assert.Equal(new DateTimeOffset(2026, 9, 27, 21, 43, 25, TimeSpan.Zero), body.MeanAnomalyAt);
+        Assert.Equal(109.1416, body.AxialTilt!.Value, 4);
     }
 
     [Fact]
