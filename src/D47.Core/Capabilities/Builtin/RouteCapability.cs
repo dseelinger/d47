@@ -123,7 +123,8 @@ public static class RouteCapability
                     + "lists the legs, what to buy at each station and where to sell it.",
                 Description =
                     "Work out a chain of profitable trade runs from the station the Commander is docked "
-                    + "at, holding cargo past a station where a later one pays better. Needs to be told "
+                    + "at, or, when they are not docked, from the station in their system that pays best, "
+                    + "holding cargo past a station where a later one pays better. Needs to be told "
                     + "how many credits to trade with; their balance is never used unless they say it.",
                 Parameters =
                 [
@@ -801,6 +802,12 @@ public static class RouteCapability
             var route = await trade.PlanAsync(query, cancellationToken).ConfigureAwait(false);
 
             // Null and empty are different answers and are worded differently.
+            if (route is null && query.Station is null)
+            {
+                return ToolResult.Ok(
+                    $"No station in {query.System} has a market I can start a trade run from with these settings.");
+            }
+
             if (route is null)
             {
                 return ToolResult.Ok(
@@ -812,16 +819,18 @@ public static class RouteCapability
             if (route.Stops.Count == 0)
             {
                 return ToolResult.Ok(
-                    $"No trade run out of {query.Station} pays with {query.Capital:N0} credits and "
+                    $"No trade run out of {query.Station ?? query.System} pays with {query.Capital:N0} credits and "
                     + $"{query.CargoCapacity} tonnes, across {route.MarketsConsidered} markets within "
                     + $"{query.MaxJumps} jump{(query.MaxJumps == 1 ? "" : "s")} a leg, "
                     + $"{query.MaxHopDistance:N0} light years. More capital, more jumps a leg or a "
                     + "wider price age will find something.");
             }
 
+            var start = route.Stops[0].Station;
+
             plans?.Record(
                 route,
-                $"{route.Stops.Count} stops from {query.Station}",
+                $"{route.Stops.Count} stops from {start}",
                 now?.Invoke() ?? default,
                 query.System);
 
@@ -1023,8 +1032,15 @@ public static class RouteCapability
         var report = new StringBuilder();
         var legs = route.Stops.Count - 1;
 
+        if (query.Station is null)
+        {
+            report.AppendLine(
+                $"The Commander is not docked, so this route starts at {route.Stops[0].Station}, the station in "
+                + $"{query.System} that pays best.");
+        }
+
         report.AppendLine(
-            $"{legs} hop{(legs == 1 ? "" : "s")} from {query.Station}"
+            $"{legs} hop{(legs == 1 ? "" : "s")} from {route.Stops[0].Station}"
             + $"{(route.Loop ? " and back" : "")}, "
             + $"{route.TotalProfit.ToString("N0", CultureInfo.InvariantCulture)} credits on "
             + $"{query.Capital.ToString("N0", CultureInfo.InvariantCulture)} in a "

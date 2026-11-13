@@ -428,7 +428,8 @@ public sealed record TradeQuery
 
     public required string System { get; init; }
 
-    public required string Station { get; init; }
+    /// <summary>The station the route starts from; null plans from the best station in <see cref="System"/>.</summary>
+    public string? Station { get; init; }
 
     public long Capital { get; init; }
 
@@ -489,13 +490,10 @@ public sealed record TradeQuery
         query = null!;
         failure = string.Empty;
 
-        if (string.IsNullOrWhiteSpace(system) || string.IsNullOrWhiteSpace(station))
+        if (string.IsNullOrWhiteSpace(system))
         {
-            // The service keys the whole plot on a starting station id, so there is no version of this
-            // question that can be asked from supercruise.
-            failure =
-                "A trade route is plotted from a station, and the Commander is not docked at one. "
-                + "Ask which station to start from, or plot it once they have landed.";
+            failure = "I don't know which system the Commander is in, so I can't tell where to start "
+                      + "a trade route.";
             return false;
         }
 
@@ -523,7 +521,7 @@ public sealed record TradeQuery
         query = new TradeQuery
         {
             System = system.Trim(),
-            Station = station.Trim(),
+            Station = string.IsNullOrWhiteSpace(station) ? null : station.Trim(),
             Capital = Math.Clamp(capital.Value, 1, 1_000_000_000_000),
             CargoCapacity = Math.Clamp(cargoCapacity.Value, 1, 100_000),
             MaxHops = Math.Clamp(maxHops ?? 5, 1, 10),

@@ -552,9 +552,10 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
 
         // Unfiltered, and unchanged by #156: trade planning ranks every commodity at every market against
         // every other, so there is nothing to filter by.
-        var fetched = (await SweepAsync(
+        var sweep = await SweepAsync(
                 query.System, radius, cancellationToken, surfaceStations: query.Planetary)
-            .ConfigureAwait(false)).Markets;
+            .ConfigureAwait(false);
+        var fetched = sweep.Markets;
 
         var oldest = Oldest(query.MaxPriceAge);
         var merged = new List<MarketSnapshot>(fetched.Count);
@@ -565,7 +566,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
             foreach (var seen in _book.Markets)
             {
                 // A remembered market is only a candidate if it is somewhere this plan could reach.
-                var distance = StationDistance(seen, query, fetched);
+                var distance = StationDistance(seen, query, fetched, sweep.Reference);
 
                 if (distance is null || distance > radius)
                 {
@@ -612,14 +613,34 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
     private static double? StationDistance(
         MarketSnapshot seen,
         TradeQuery query,
-        IReadOnlyList<MarketSnapshot> fetched)
+        IReadOnlyList<MarketSnapshot> fetched,
+        (double X, double Y, double Z)? reference)
     {
-        if (seen.IsSamePlaceAs(query.Station, query.System))
+        if (query.Station is not { } station)
+        {
+            // No start station: measured from the system, by the coordinates the search resolved it to or,
+            // failing those, from any market in it.
+            if (reference is { } at)
+            {
+                var dx = seen.X - at.X;
+                var dy = seen.Y - at.Y;
+                var dz = seen.Z - at.Z;
+
+                return Math.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
+            }
+
+            var inSystem = fetched.FirstOrDefault(market =>
+                string.Equals(market.System, query.System, StringComparison.OrdinalIgnoreCase));
+
+            return inSystem?.DistanceTo(seen);
+        }
+
+        if (seen.IsSamePlaceAs(station, query.System))
         {
             return 0;
         }
 
-        var origin = fetched.FirstOrDefault(market => market.IsSamePlaceAs(query.Station, query.System));
+        var origin = fetched.FirstOrDefault(market => market.IsSamePlaceAs(station, query.System));
 
         return origin is null ? null : origin.DistanceTo(seen);
     }

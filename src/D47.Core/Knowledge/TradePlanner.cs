@@ -15,7 +15,9 @@ public static class TradePlanner
     /// <summary>
     /// Plans a route, or answers null where the origin's own market is not among the snapshots — which
     /// is "I cannot see the board you are standing in front of", a different answer from a route with
-    /// no stops.
+    /// no stops. With no <see cref="TradeQuery.Station"/> it plans from each station in
+    /// <see cref="TradeQuery.System"/> that passes the filters and answers the route with the highest
+    /// profit, or null where none qualifies.
     /// </summary>
     public static TradeRoute? Plan(TradeQuery query, IReadOnlyList<MarketSnapshot> markets)
     {
@@ -35,13 +37,62 @@ public static class TradePlanner
             usable.Add(market);
         }
 
-        var found = usable.FindIndex(market => market.IsSamePlaceAs(query.Station, query.System));
-
-        if (found < 0)
+        if (query.Station is { } station)
         {
-            return null;
+            var found = usable.FindIndex(market => market.IsSamePlaceAs(station, query.System));
+
+            return found < 0 ? null : PlanFrom(query, usable, found, carriers);
         }
 
+        TradeRoute? best = null;
+
+        for (var index = 0; index < usable.Count; index++)
+        {
+            var market = usable[index];
+
+            if (!string.Equals(market.System, query.System, StringComparison.OrdinalIgnoreCase)
+                || !PassesFilters(query, market, includePermits: false))
+            {
+                continue;
+            }
+
+            var route = PlanFrom(query, usable, index, carriers);
+
+            if (best is null || route.TotalProfit > best.TotalProfit)
+            {
+                best = route;
+            }
+        }
+
+        return best;
+    }
+
+    private static bool PassesFilters(TradeQuery query, MarketSnapshot market, bool includePermits)
+    {
+        if (query.LargePadOnly && !market.HasLargePad)
+        {
+            return false;
+        }
+
+        if (!query.Planetary && market.IsSurface)
+        {
+            return false;
+        }
+
+        if (includePermits && query.AvoidPermitSystems && PermitSystemTable.Locked(market.System))
+        {
+            return false;
+        }
+
+        return market.DistanceToArrival is not { } arrival || arrival <= query.MaxSystemDistance;
+    }
+
+    private static TradeRoute PlanFrom(
+        TradeQuery query,
+        IReadOnlyList<MarketSnapshot> usable,
+        int found,
+        int carriers)
+    {
         // The origin survives every filter below.
         var candidates = new List<MarketSnapshot>();
         var origin = 0;
@@ -57,22 +108,7 @@ public static class TradePlanner
                 continue;
             }
 
-            if (query.LargePadOnly && !market.HasLargePad)
-            {
-                continue;
-            }
-
-            if (!query.Planetary && market.IsSurface)
-            {
-                continue;
-            }
-
-            if (query.AvoidPermitSystems && PermitSystemTable.Locked(market.System))
-            {
-                continue;
-            }
-
-            if (market.DistanceToArrival is { } arrival && arrival > query.MaxSystemDistance)
+            if (!PassesFilters(query, market, includePermits: true))
             {
                 continue;
             }

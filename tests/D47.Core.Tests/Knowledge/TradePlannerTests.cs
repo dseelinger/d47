@@ -167,6 +167,66 @@ public class TradePlannerTests
     }
 
     [Fact]
+    public void WithNoStationTheRouteStartsAtTheOneInTheSystemThatPaysMost()
+    {
+        var markets = new[]
+        {
+            Market("Poor", 0, ("Gold", 1_000, 0, 1_000, 0)) with { System = "Sol" },
+            Market("Rich", 0, ("Gold", 400, 0, 1_000, 0)) with { System = "Sol" },
+            Market("Middle", 10, ("Gold", 0, 5_000, 0, 1_000)),
+        };
+
+        Assert.True(TradeQuery.TryParse(
+            "Sol", null, 1_000_000, 100, 1, 1, 15, 1_000, false, 720, false, false, true,
+            out var query,
+            out _));
+
+        var route = TradePlanner.Plan(query, markets);
+
+        Assert.NotNull(route);
+        Assert.Equal("Rich", route.Stops[0].Station);
+        Assert.Equal(460_000, route.TotalProfit);
+    }
+
+    [Fact]
+    public void WithNoStationAStationThatFailsTheLargePadFilterIsNotChosenEvenIfItPaysMore()
+    {
+        var markets = new[]
+        {
+            Market("Small", 0, ("Gold", 400, 0, 1_000, 0)) with { System = "Sol", HasLargePad = false },
+            Market("Large", 0, ("Gold", 1_000, 0, 1_000, 0)) with { System = "Sol" },
+            Market("Middle", 10, ("Gold", 0, 5_000, 0, 1_000)),
+        };
+
+        Assert.True(TradeQuery.TryParse(
+            "Sol", null, 1_000_000, 100, 1, 1, 15, 1_000, true, 720, false, false, true,
+            out var query,
+            out _));
+
+        var route = TradePlanner.Plan(query, markets);
+
+        Assert.NotNull(route);
+        Assert.Equal("Large", route.Stops[0].Station);
+    }
+
+    [Fact]
+    public void WithNoStationAndNoneQualifyingThereIsNoRoute()
+    {
+        var markets = new[]
+        {
+            Market("Small", 0, ("Gold", 400, 0, 1_000, 0)) with { System = "Sol", HasLargePad = false },
+            Market("Middle", 10, ("Gold", 0, 5_000, 0, 1_000)),
+        };
+
+        Assert.True(TradeQuery.TryParse(
+            "Sol", null, 1_000_000, 100, 1, 1, 15, 1_000, true, 720, false, false, true,
+            out var query,
+            out _));
+
+        Assert.Null(TradePlanner.Plan(query, markets));
+    }
+
+    [Fact]
     public void ARoundTripEndsWhereItStarted()
     {
         var markets = new[]

@@ -81,9 +81,17 @@ public class RouteCapabilityTests
 
         public Exception? Throws { get; set; }
 
+        public IReadOnlyList<MarketSnapshot>? Markets { get; set; }
+
         public override Task<TradeRoute?> PlanAsync(TradeQuery query, CancellationToken cancellationToken)
         {
             LastTrade = query;
+
+            if (Markets is not null)
+            {
+                return Task.FromResult(TradePlanner.Plan(query, Markets));
+            }
+
             return Throws is not null ? Task.FromException<TradeRoute?>(Throws) : Task.FromResult(Trade);
         }
 
@@ -523,21 +531,105 @@ public class RouteCapabilityTests
         Assert.Equal(48, trade.LastTrade?.MaxPriceAge);
     }
 
+    private static MarketSnapshot Seller(string station, int buyPrice, bool largePad = true) =>
+        new()
+        {
+            Station = station,
+            System = "Sol",
+            UpdatedAt = new DateTimeOffset(2026, 8, 19, 0, 0, 0, TimeSpan.Zero),
+            HasLargePad = largePad,
+            Type = "Coriolis Starport",
+            Quotes = new Dictionary<string, MarketQuote>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Gold"] = new MarketQuote("Gold") { BuyPrice = buyPrice, SellPrice = 0, Supply = 1_000, Demand = 0 },
+            },
+        };
+
+    private static MarketSnapshot Buyer(string station, double x, int price) =>
+        new()
+        {
+            Station = station,
+            System = station + " System",
+            X = x,
+            UpdatedAt = new DateTimeOffset(2026, 8, 19, 0, 0, 0, TimeSpan.Zero),
+            HasLargePad = true,
+            Type = "Coriolis Starport",
+            Quotes = new Dictionary<string, MarketQuote>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Gold"] = new MarketQuote("Gold") { BuyPrice = 0, SellPrice = price, Supply = 0, Demand = 1_000 },
+            },
+        };
+
+    private static ToolArguments TradeArgs() =>
+        Args(("capital", "1000000"), ("cargo_capacity", "100"), ("jump_range", "15"), ("max_jumps", "1"), ("hops", "1"));
+
     [Fact]
-    public async Task ATradeRouteCannotBePlottedFromSupercruise()
+    public async Task ATradeRouteFromSupercruiseStartsAtTheStationInTheSystemThatPaysMost()
     {
         var install = new MemoryInstall();
-        var (registry, routes, trade, _) = Build(install, docked: false);
+        var plans = new RoutePlanBook(
+            Path.Combine(install.Root, "data", "route-plans.json"),
+            new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
+        var (registry, _, trade, _) = Build(install, docked: false, plans: plans);
+
+        trade.Markets = [Seller("Galileo", 2_000), Seller("Abraham Lincoln", 1_000), Buyer("Far", 10, 5_000)];
 
         var result = await registry.InvokeAsync(
-            "plot_trade_route",
-            Args(("capital", "50000000")),
-            TestContext.Current.CancellationToken);
+            "plot_trade_route", TradeArgs(), TestContext.Current.CancellationToken);
 
-        // The service keys the whole plot on a starting station id, so there is no version of this question
-        // that can be asked in flight.
+        Assert.False(result.IsError);
+        Assert.Null(trade.LastTrade?.Station);
+        Assert.StartsWith(
+            "The Commander is not docked, so this route starts at Abraham Lincoln",
+            result.Content,
+            StringComparison.Ordinal);
+
+        var kept = plans.Last(RoutePlanKind.Trade);
+
+        Assert.NotNull(kept);
+        Assert.Equal("Abraham Lincoln", kept.Trade!.Stops[0].Station);
+        Assert.Equal($"{kept.Trade.Stops.Count} stops from Abraham Lincoln", kept.Headline);
+    }
+
+    [Fact]
+    public async Task ATradeRouteFromSupercruiseWithNoStationInTheSystemSaysSoWithoutAnError()
+    {
+        var install = new MemoryInstall();
+        var (registry, _, trade, _) = Build(install, docked: false);
+
+        trade.Markets = [Buyer("Far", 10, 5_000)];
+
+        var result = await registry.InvokeAsync(
+            "plot_trade_route", TradeArgs(), TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal(
+            "No station in Sol has a market I can start a trade run from with these settings.",
+            result.Content);
+    }
+
+    [Fact]
+    public async Task ATradeRouteFromAnUnknownSystemIsAnErrorThatDoesNotMentionDocking()
+    {
+        var install = new MemoryInstall();
+        var gameState = new GameStateStore();
+        Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
+        var registry = CapabilityRegistry.Build(
+        [
+            RouteCapability.Create(
+                new FakeRoutes(),
+                new FakeTrade(),
+                () => gameState.Active,
+                TestSurface.For(install).Settings,
+                null,
+                () => PlottedAt),
+        ]);
+
+        var result = await registry.InvokeAsync(
+            "plot_trade_route", TradeArgs(), TestContext.Current.CancellationToken);
+
         Assert.True(result.IsError);
-        Assert.Contains("not docked", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("docked", result.Content, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Asking the same question Trading Mode answers on its own, about any system (#313).</summary>

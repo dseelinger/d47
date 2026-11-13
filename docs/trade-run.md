@@ -13,13 +13,13 @@ nav_order: 203
   Colours are the nine Palette roles and nothing else — see .d47-eli5 in assets/main.scss.
 -->
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">A circuit of markets worked out here from your station, for a balance you type.</p>
+<p class="intro">A circuit of markets worked out from your station, or your system's best, for a balance you type.</p>
 <section>
 <h2><span class="num">1</span> Your balance is typed, never read.</h2>
 <svg viewBox="0 0 880 250" role="img" aria-label="Jump range and cargo capacity come from the journal; the credit balance is typed every time and never saved">
  <rect x="20" y="30" width="400" height="130" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="220" y="66" text-anchor="middle" font-size="16" font-weight="800" fill="var(--text)">FROM THE JOURNAL</text>
- <text x="220" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">where you are docked</text>
+ <text x="220" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">where you are</text>
  <text x="220" y="124" text-anchor="middle" font-size="15" fill="var(--text-muted)">your cargo capacity</text>
  <text x="220" y="148" text-anchor="middle" font-size="15" fill="var(--text-muted)">— both are facts about the ship</text>
  <rect x="460" y="30" width="400" height="130" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
@@ -30,7 +30,7 @@ nav_order: 203
  <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">Your balance is in the journal. It is the one figure here that is about you rather than your ship.</text>
  <text x="440" y="232" text-anchor="middle" font-size="15" fill="var(--text-muted)">Cargo capacity is a property of the hull. What you are worth is nobody's business but yours.</text>
 </svg>
-<p class="body">Cargo capacity and the station you are docked at come from the journal. Your credit balance does not: you type it each time, and it is not saved.</p>
+<p class="body">Cargo capacity and where you are come from the journal. Your credit balance does not: you type it each time, and it is not saved.</p>
 </section>
 <section>
 <h2><span class="num">2</span> The sums are done on your machine.</h2>
@@ -103,7 +103,9 @@ Everything here is saved and survives a restart, except the credits figure — s
 plot that names only a credit figure runs with whatever this page last saved for the rest;
 `plot_trade_route` reads its own saved values for any argument it isn't given.
 
-It plans **from the station you are docked at**. There is no origin box, because a trade run that
+It plans **from the station you are docked at**, or, when you are not docked, from the station in your
+system that makes the most. The large pad, planetary and distance filters apply to that choice, because
+you still have to land there; the permit filter does not. There is no origin box, because a trade run that
 starts somewhere you are not is a trade run that starts with an empty leg.
 
 ### Legs are measured in jumps, not light years
@@ -164,7 +166,7 @@ is a different approach than docking and nobody should be routed into one withou
 ### Systems you need a permit for
 
 `avoid_permit_systems` is on out of the box, so no stop is a system you cannot enter. The
-station you are docked at is always exempt — Sol and Shinrarta Dezhra both need permits and both
+station the route starts from is always exempt — Sol and Shinrarta Dezhra both need permits and both
 are busy trading hubs, and a planner that refused to start from them would be useless.
 
 Directive 47 answers this from a table it ships rather than by asking, because the station index

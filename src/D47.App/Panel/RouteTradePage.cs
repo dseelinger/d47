@@ -125,7 +125,8 @@ public sealed class RouteTradePage : UserControl
                 RoutingKit.Fields(loop, largePad, planetary, avoidPermit),
                 RoutingKit.Prose(
                     "Your balance is never read from the journal and never saved — say what you "
-                    + "want to trade with. It plans from the station you are docked at. Everything "
+                    + "want to trade with. It plans from the station you are docked at, or from the best one in "
+                    + "your system when you are not. Everything "
                     + "else on this page is saved, and a voice plot that says only the credits uses "
                     + "it."),
             },
