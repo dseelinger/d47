@@ -281,6 +281,14 @@ from journals already on this machine. Nothing is fetched.
   opens on the first. The layers, the switches and the travels
   range are kept across a restart; with nothing saved all eight are on the map and ticked, and the
   range is **ALL**.
+- The **Last search** group on the Layers picker lists **Systems search**, **Stations search** and
+  **Bodies search**. Each draws the last answer of that search this session, asked by voice or on
+  the **Search** tab: a hollow triangle, box or octagon in each system the answer names, at every
+  zoom. The map makes no search of its own; a new answer, or a further page loaded on the Search
+  tab, redraws the layer. Rows the answer gave no position are counted in the line under the map.
+  Where the answer has more matches than rows, the line says how many of how many the map has and
+  that the Search tab's page has the rest. With no search of that kind made yet, the line says so.
+  Selecting a system names the result kind and, for stations and bodies, the rows in that system.
 
 Region names are drawn at 6,400 ly across and wider. The route's stops, the destination's name and
 your system's name are drawn at 6,400 ly and closer.

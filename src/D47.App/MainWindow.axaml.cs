@@ -500,6 +500,7 @@ public partial class MainWindow : Window
                 AskSurveyed = host.Galaxy is { } bodySurveys ? bodySurveys.SystemBiologyAsync : null,
                 MapLookups = new GalaxyMapLookups(host.Loggers.CreateLogger<GalaxyMapLookups>()),
                 GalaxyLayers = new GalaxyMapLayersMemory(host.ViewState),
+                Searches = host.GalaxySearches,
             };
 
             Panel.EnableRouting(Routing);

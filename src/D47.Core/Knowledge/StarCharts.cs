@@ -17,6 +17,9 @@ public enum StarChartKind
     GuardianBeacons,
     FarmingSites,
     MissionDestinations,
+    SystemsSearch,
+    StationsSearch,
+    BodiesSearch,
 }
 
 /// <summary>How a chart is drawn on the map.</summary>
@@ -38,15 +41,26 @@ public static class StarCharts
     public const string Yours = "Yours";
     public const string Galaxy = "Galaxy";
     public const string Guardian = "Guardian";
+    public const string LastSearch = "Last search";
 
     /// <summary>Every kind, in the order the switches are listed.</summary>
     public static IReadOnlyList<StarChartKind> All { get; } = Enum.GetValues<StarChartKind>();
 
-    /// <summary>The kinds on a map with nothing saved: every kind but the fixed charts and the mission destinations, which a request adds.</summary>
-    public static IReadOnlyList<StarChartKind> Default { get; } = [.. All.Where(kind => !IsFixed(kind) && kind != StarChartKind.MissionDestinations)];
+    /// <summary>The kinds on a map with nothing saved: every kind but the fixed charts, the mission destinations and the search answers, which a request adds.</summary>
+    public static IReadOnlyList<StarChartKind> Default { get; } =
+        [.. All.Where(kind => !IsFixed(kind) && kind != StarChartKind.MissionDestinations && SearchOf(kind) is null)];
 
     /// <summary>Whether <paramref name="kind"/> draws a fixed list of systems that d47 carries.</summary>
     public static bool IsFixed(StarChartKind kind) => kind is StarChartKind.GuardianBeacons or StarChartKind.FarmingSites;
+
+    /// <summary>The galaxy search whose last answer <paramref name="kind"/> draws, or null for a kind that draws no search.</summary>
+    public static GalaxySearchKind? SearchOf(StarChartKind kind) => kind switch
+    {
+        StarChartKind.SystemsSearch => GalaxySearchKind.Systems,
+        StarChartKind.StationsSearch => GalaxySearchKind.Stations,
+        StarChartKind.BodiesSearch => GalaxySearchKind.Bodies,
+        _ => null,
+    };
 
     /// <summary>The systems a fixed kind draws, by name; empty for any other kind.</summary>
     public static IReadOnlyList<StarChartSystem> Systems(StarChartKind kind) => kind switch
@@ -84,6 +98,9 @@ public static class StarCharts
         StarChartKind.GuardianBeacons => new("Guardian beacons", "Guardian beacon", StarChartShape.Points, Guardian),
         StarChartKind.FarmingSites => new("Farming sites", "Farming site", StarChartShape.Points, Galaxy),
         StarChartKind.MissionDestinations => new("Missions", "Mission destination", StarChartShape.Points, Yours),
+        StarChartKind.SystemsSearch => new("Systems search", "System result", StarChartShape.Points, LastSearch),
+        StarChartKind.StationsSearch => new("Stations search", "Station result", StarChartShape.Points, LastSearch),
+        StarChartKind.BodiesSearch => new("Bodies search", "Body result", StarChartShape.Points, LastSearch),
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
     };
 }

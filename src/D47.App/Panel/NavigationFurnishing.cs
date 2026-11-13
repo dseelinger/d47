@@ -216,7 +216,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         _planOnMap,
                         surface.GalaxyLayers,
                         host.Prompts,
-                        _chartAsked);
+                        _chartAsked,
+                        surface.Searches);
 
                     _chartAsked = null;
 

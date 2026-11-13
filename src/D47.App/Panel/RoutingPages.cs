@@ -91,6 +91,9 @@ public sealed record RoutingSurface(
 
     /// <summary>The Galaxy map's galaxy search answers, kept for the session and shared by every surface.</summary>
     public GalaxyMapLookups MapLookups { get; init; } = new();
+
+    /// <summary>The last answer of each galaxy search, which the Galaxy map's search layers draw.</summary>
+    public GalaxySearchBoard? Searches { get; init; }
 }
 
 /// <summary>A start system for the Carrier Route card, asked for from Fleet › Carrier and taken once.</summary>

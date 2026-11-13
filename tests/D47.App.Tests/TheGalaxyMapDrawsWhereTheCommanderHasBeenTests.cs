@@ -49,6 +49,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         public GalaxyMapLookups Lookups { get; } = new();
 
         public GalaxyMapLayersMemory? Layers { get; set; }
+
+        public GalaxySearchBoard Searches { get; } = new();
     }
 
     private static JournalEvent Event(string line)
@@ -181,6 +183,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             Galaxy = () => game.GalaxyOffered ? game.Galaxy : null,
             MapLookups = game.Lookups,
             GalaxyLayers = game.Layers,
+            Searches = game.Searches,
         });
 
         panel.Tab = PanelTab.Astrometrics;

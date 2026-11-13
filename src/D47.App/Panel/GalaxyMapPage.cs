@@ -72,6 +72,7 @@ public sealed class GalaxyMapPage : UserControl
     private GalaxyMapLayers _layers;
     private readonly GalaxyMapLayersMemory? _memory;
     private readonly PanelPrompts? _prompts;
+    private readonly GalaxySearchBoard? _searches;
 
     private readonly GalaxyMapView _map = new();
     private readonly Segment _framing = new() { ItemsSource = ["Galaxy", "Here", "Route"] };
@@ -87,6 +88,9 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _beacons;
     private readonly CheckBox _farming;
     private readonly CheckBox _missions;
+    private readonly CheckBox _systemsSearch;
+    private readonly CheckBox _stationsSearch;
+    private readonly CheckBox _bodiesSearch;
     private readonly Button _layersTile = Press(string.Empty, SwitchRail);
     private readonly StackPanel _rail = new() { Spacing = 2 };
     private int _railPage;
@@ -157,7 +161,8 @@ public sealed class GalaxyMapPage : UserControl
         RoutePlanKind? plan = null,
         GalaxyMapLayersMemory? layers = null,
         PanelPrompts? prompts = null,
-        StarChartKind? chart = null)
+        StarChartKind? chart = null,
+        GalaxySearchBoard? searches = null)
     {
         _travel = travel;
         _commander = commander;
@@ -174,6 +179,7 @@ public sealed class GalaxyMapPage : UserControl
         _planKind = plan;
         _memory = layers;
         _prompts = prompts;
+        _searches = searches;
         _layers = layers?.Read() ?? new GalaxyMapLayers();
 
         _engineers = Marked(StarChartKind.Engineers, live => MarkDrawing(GalaxyMapMarkKind.Engineer, live));
@@ -184,6 +190,9 @@ public sealed class GalaxyMapPage : UserControl
         _beacons = Marked(StarChartKind.GuardianBeacons, live => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, live));
         _farming = Marked(StarChartKind.FarmingSites, live => MarkDrawing(GalaxyMapMarkKind.FarmingSite, live));
         _missions = Marked(StarChartKind.MissionDestinations, live => MarkDrawing(GalaxyMapMarkKind.Mission, live));
+        _systemsSearch = Marked(StarChartKind.SystemsSearch, live => MarkDrawing(GalaxyMapMarkKind.SystemResult, live));
+        _stationsSearch = Marked(StarChartKind.StationsSearch, live => MarkDrawing(GalaxyMapMarkKind.StationResult, live));
+        _bodiesSearch = Marked(StarChartKind.BodiesSearch, live => MarkDrawing(GalaxyMapMarkKind.BodyResult, live));
 
         _unvisitedWanted = _layers.Ticked(StarChartKind.Unvisited);
         _range.SelectedIndex = _layers.Range;
@@ -258,6 +267,12 @@ public sealed class GalaxyMapPage : UserControl
             _bookmarks.Changed += OnBookmarksChanged;
         }
 
+        if (_searches is not null)
+        {
+            _searches.Posted += OnSearchAnswered;
+            _searches.Extended += OnSearchAnswered;
+        }
+
         Open();
 
         if (!_headset)
@@ -276,7 +291,15 @@ public sealed class GalaxyMapPage : UserControl
         {
             _bookmarks.Changed -= OnBookmarksChanged;
         }
+
+        if (_searches is not null)
+        {
+            _searches.Posted -= OnSearchAnswered;
+            _searches.Extended -= OnSearchAnswered;
+        }
     }
+
+    private void OnSearchAnswered(GalaxySearchKind kind) => OnBookmarksChanged();
 
     private void OnBookmarksChanged()
     {
@@ -496,6 +519,9 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.GuardianBeacons, _beacons),
         (StarChartKind.FarmingSites, _farming),
         (StarChartKind.MissionDestinations, _missions),
+        (StarChartKind.SystemsSearch, _systemsSearch),
+        (StarChartKind.StationsSearch, _stationsSearch),
+        (StarChartKind.BodiesSearch, _bodiesSearch),
     ];
 
     /// <summary>Whether <paramref name="kind"/> is on the map and its switch is ticked.</summary>
@@ -616,10 +642,20 @@ public sealed class GalaxyMapPage : UserControl
         }
     }
 
-    /// <summary>Where <paramref name="kind"/> is drawn: its fixed systems, or the placed mission destinations.</summary>
-    private List<StarPosition> ChartPoints(StarChartKind kind) => kind == StarChartKind.MissionDestinations
-        ? [.. _placed.Where(mark => mark.Kind == GalaxyMapMarkKind.Mission).Select(mark => mark.At)]
+    /// <summary>Where <paramref name="kind"/> is drawn: its fixed systems, or its placed marks.</summary>
+    private List<StarPosition> ChartPoints(StarChartKind kind) => PlacedAs(kind) is { } placed
+        ? [.. _placed.Where(mark => mark.Kind == placed).Select(mark => mark.At)]
         : [.. StarCharts.Systems(kind).Select(system => system.At)];
+
+    /// <summary>The mark a kind places from what the Commander has or asked for, or null for a fixed chart or a kind with no mark of its own.</summary>
+    private static GalaxyMapMarkKind? PlacedAs(StarChartKind kind) => kind switch
+    {
+        StarChartKind.MissionDestinations => GalaxyMapMarkKind.Mission,
+        StarChartKind.SystemsSearch => GalaxyMapMarkKind.SystemResult,
+        StarChartKind.StationsSearch => GalaxyMapMarkKind.StationResult,
+        StarChartKind.BodiesSearch => GalaxyMapMarkKind.BodyResult,
+        _ => null,
+    };
 
     /// <summary>The rail lists a switch for each kind on the map, pages past eight, and the tile counts them.</summary>
     private void Rail()
@@ -719,7 +755,13 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>One kind of item in one system the map could not place.</summary>
     private sealed record UnplacedItem(GalaxyMapMarkKind Kind, string System, int Count);
 
-    private sealed record Placement(IReadOnlyList<GalaxyMapMark> Marks, IReadOnlyList<UnplacedItem> Unplaced);
+    /// <summary>
+    /// A search layer as drawn from its kind's last answer: whether there is one, the rows it has, how many matched,
+    /// whether the service has more, and the rows in systems with no position.
+    /// </summary>
+    private sealed record SearchDrawn(StarChartKind Kind, bool Answered, int Rows, int Total, bool More, int Unplaced);
+
+    private sealed record Placement(IReadOnlyList<GalaxyMapMark> Marks, IReadOnlyList<UnplacedItem> Unplaced, IReadOnlyList<SearchDrawn>? Searches = null);
 
     /// <summary>
     /// The markers whose switch is on, placed by the engineer's position, by where the Commander has been or, with galaxy
@@ -823,8 +865,49 @@ public sealed class GalaxyMapPage : UserControl
             }
         }
 
-        return new Placement(marks, unplaced);
+        var searches = StarCharts.All
+            .Where(kind => StarCharts.SearchOf(kind) is not null && Shows(kind))
+            .Select(kind => PlaceSearch(kind, marks))
+            .ToList();
+
+        return new Placement(marks, unplaced, searches);
     }
+
+    /// <summary>Adds a mark for each system in <paramref name="kind"/>'s last answer that the answer gives a position, and says what was drawn.</summary>
+    private SearchDrawn PlaceSearch(StarChartKind kind, List<GalaxyMapMark> marks)
+    {
+        if (_searches?.Last(StarCharts.SearchOf(kind)!.Value) is not { } posting)
+        {
+            return new SearchDrawn(kind, false, 0, 0, false, 0);
+        }
+
+        var (rows, total) = SearchRows(posting.Result);
+        var mark = PlacedAs(kind)!.Value;
+        var unplaced = 0;
+
+        foreach (var system in rows.GroupBy(row => row.System, StringComparer.OrdinalIgnoreCase))
+        {
+            if (system.Select(row => row.At).FirstOrDefault(at => at is not null) is { } at)
+            {
+                marks.Add(new GalaxyMapMark(mark, system.Key, at, [.. system.Select(row => row.Line).OfType<string>()]));
+            }
+            else
+            {
+                unplaced += system.Count();
+            }
+        }
+
+        return new SearchDrawn(kind, true, rows.Count, total, posting.More, unplaced);
+    }
+
+    /// <summary>Each row of a search answer as its system, position and the name the strip lists, with the number of matches.</summary>
+    private static (List<(string System, StarPosition? At, string? Line)> Rows, int Total) SearchRows(object result) => result switch
+    {
+        GalaxySearchResult systems => ([.. systems.Systems.Select(row => (row.Name, row.Position, (string?)null))], systems.Total),
+        StationSearchResult stations => ([.. stations.Stations.Select(row => (row.SystemName, row.Position, (string?)row.Name))], stations.Total),
+        BodySearchResult bodies => ([.. bodies.Bodies.Select(row => (row.SystemName, row.Position, (string?)row.Name))], bodies.Total),
+        _ => ([], 0),
+    };
 
     private static string MissionLabel(Mission mission) =>
         mission.DestinationStation is { Length: > 0 } station ? $"{mission.Title} at {station}" : mission.Title;
@@ -1067,6 +1150,9 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
         GalaxyMapMarkKind.FarmingSite => "Farming site",
         GalaxyMapMarkKind.Mission => "Mission",
+        GalaxyMapMarkKind.SystemResult => "System result",
+        GalaxyMapMarkKind.StationResult => mark.Names.Count == 1 ? "Station result" : "Station results",
+        GalaxyMapMarkKind.BodyResult => mark.Names.Count == 1 ? "Body result" : "Body results",
         _ => mark.Names.Count == 1 ? "Stored ship" : "Stored ships",
     };
 
@@ -1280,9 +1366,73 @@ public sealed class GalaxyMapPage : UserControl
                 " are in systems not looked up yet. Open the map again to look them up.");
         }
 
+        foreach (var search in placement.Searches ?? [])
+        {
+            foreach (var sentence in SearchSentences(search))
+            {
+                if (runs.Count > 0)
+                {
+                    runs.Add(Ink(" "));
+                }
+
+                runs.AddRange(sentence);
+            }
+        }
+
         _unplaced.IsVisible = runs.Count > 0;
         _unplaced.Text = null;
         _unplaced.Inlines = runs.Count > 0 ? [.. runs] : null;
+    }
+
+    /// <summary>
+    /// What a search layer could not draw: that no search of its kind has been made, how many rows have no position,
+    /// and how many matches the answer has past its rows. The big panel's are shorter, to fit its pad column.
+    /// </summary>
+    private IEnumerable<Run[]> SearchSentences(SearchDrawn search)
+    {
+        var info = StarCharts.Info(search.Kind);
+        var page = _headset ? "The Search tab" : $"The Search tab's {info.Title.Split(' ')[0]} page";
+        var one = info.Mark!.ToLowerInvariant();
+
+        if (!search.Answered)
+        {
+            yield return [Ink($"No {info.Title.ToLowerInvariant()} {(_headset ? "yet." : "has been made yet.")}")];
+            yield break;
+        }
+
+        if (search.Unplaced > 0)
+        {
+            var ending = _headset ? "no position." : "no position and {0} not drawn.";
+
+            yield return
+            [
+                Number(search.Unplaced),
+                Ink(search.Unplaced == 1
+                    ? $" {one} has {string.Format(CultureInfo.InvariantCulture, ending, "is")}"
+                    : $" {one}s have {string.Format(CultureInfo.InvariantCulture, ending, "are")}"),
+            ];
+        }
+
+        if (search.Total > search.Rows)
+        {
+            yield return
+            [
+                Ink(_headset ? string.Empty : "The map has the first "),
+                Number(search.Rows),
+                Ink(" of "),
+                Number(search.Total),
+                Ink($" {one}s; {char.ToLowerInvariant(page[0])}{page[1..]} has the rest."),
+            ];
+        }
+        else if (search.More)
+        {
+            yield return
+            [
+                Ink(_headset ? "First " : "The map has the first "),
+                Number(search.Rows),
+                Ink($" {(search.Rows == 1 ? one : one + "s")}; {char.ToLowerInvariant(page[0])}{page[1..]} has more."),
+            ];
+        }
     }
 
     /// <summary>"2 bookmarks, your carrier and 1 stored ship" and the ending for one item or several.</summary>
@@ -1380,11 +1530,7 @@ public sealed class GalaxyMapPage : UserControl
 
         foreach (var kind in drawn.MarkKinds)
         {
-            Entry(MarkWord(kind), (context, ink) =>
-            {
-                var (shape, key) = GalaxyMapView.MarkInk(kind, new Point(11, 5), 0.8);
-                context.DrawGeometry(ink(key), null, shape);
-            });
+            Entry(MarkWord(kind), (context, ink) => GalaxyMapView.DrawInk(context, ink, kind, new Point(11, 5), 0.8));
         }
 
         if (drawn.StopsHidden || drawn.EngineersHidden)
@@ -1408,6 +1554,9 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
         GalaxyMapMarkKind.FarmingSite => "Farming site",
         GalaxyMapMarkKind.Mission => "Mission destination",
+        GalaxyMapMarkKind.SystemResult => "System result",
+        GalaxyMapMarkKind.StationResult => "Station result",
+        GalaxyMapMarkKind.BodyResult => "Body result",
         _ => "Stored ship",
     };
 
@@ -1786,6 +1935,12 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>A marker's shape at the centre of a 16 by 14 glyph; grey while <paramref name="live"/> is false.</summary>
     private static Action<DrawingContext, Func<string, IBrush>> MarkDrawing(GalaxyMapMarkKind kind, Func<bool> live) => (context, ink) =>
     {
+        if (kind is GalaxyMapMarkKind.SystemResult or GalaxyMapMarkKind.StationResult or GalaxyMapMarkKind.BodyResult)
+        {
+            GalaxyMapView.DrawInk(context, ink, kind, new Point(8, 7), 1, live() ? null : ThemeManager.Grey2Key);
+            return;
+        }
+
         var (points, key) = kind switch
         {
             GalaxyMapMarkKind.Engineer => (new (double X, double Y)[] { (-1.5, -5.5), (1.5, -5.5), (1.5, -1.5), (5.5, -1.5), (5.5, 1.5), (1.5, 1.5), (1.5, 5.5), (-1.5, 5.5), (-1.5, 1.5), (-5.5, 1.5), (-5.5, -1.5), (-1.5, -1.5) }, ThemeManager.WhiteKey),
@@ -1827,6 +1982,9 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.GuardianBeacons => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, () => true),
         StarChartKind.FarmingSites => MarkDrawing(GalaxyMapMarkKind.FarmingSite, () => true),
         StarChartKind.MissionDestinations => MarkDrawing(GalaxyMapMarkKind.Mission, () => true),
+        StarChartKind.SystemsSearch => MarkDrawing(GalaxyMapMarkKind.SystemResult, () => true),
+        StarChartKind.StationsSearch => MarkDrawing(GalaxyMapMarkKind.StationResult, () => true),
+        StarChartKind.BodiesSearch => MarkDrawing(GalaxyMapMarkKind.BodyResult, () => true),
         _ => UnvisitedDrawing(() => true),
     };
 

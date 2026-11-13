@@ -26,6 +26,9 @@ public enum GalaxyMapMarkKind
     GuardianBeacon,
     FarmingSite,
     Mission,
+    SystemResult,
+    StationResult,
+    BodyResult,
 }
 
 /// <summary>One kind of marker in one system, with the names the strip lists; one mark is drawn however many names it holds.</summary>
@@ -116,6 +119,13 @@ public sealed class GalaxyMapView : Control
     private static readonly (double X, double Y)[] DiamondHalo = [(0, -8.2), (8.2, 0), (0, 8.2), (-8.2, 0)];
     private static readonly (double X, double Y)[] Diamond = [(0, -6.5), (6.5, 0), (0, 6.5), (-6.5, 0)];
     private static readonly (double X, double Y)[] Hex = [(0, -5.5), (4.8, -2.75), (4.8, 2.75), (0, 5.5), (-4.8, 2.75), (-4.8, -2.75)];
+    private static readonly (double X, double Y)[] Triangle = [(0, -5), (5.5, 4.5), (-5.5, 4.5)];
+    private static readonly (double X, double Y)[] Box = [(-6, -4), (6, -4), (6, 4), (-6, 4)];
+    private static readonly (double X, double Y)[] Slot = [(-3, -0.75), (3, -0.75), (3, 0.75), (-3, 0.75)];
+    private static readonly (double X, double Y)[] Octagon = [(-2.2, -5.25), (2.2, -5.25), (5.25, -2.2), (5.25, 2.2), (2.2, 5.25), (-2.2, 5.25), (-5.25, 2.2), (-5.25, -2.2)];
+
+    private const double HollowPen = 1.5;
+    private const double HollowHalo = 4.5;
 
     private static Color? _groundColour;
     private static WriteableBitmap? _ground;
@@ -827,6 +837,9 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.GuardianBeacon => (-4.6, -9.6, 4.6, 7.6),
             GalaxyMapMarkKind.FarmingSite => (-6.3, -7.2, 6.3, 7.2),
             GalaxyMapMarkKind.Mission => (-8.2, -8.2, 8.2, 8.2),
+            GalaxyMapMarkKind.SystemResult => (-9.4, -9.5, 9.4, 6.75),
+            GalaxyMapMarkKind.StationResult => (-8.25, -6.25, 8.25, 6.25),
+            GalaxyMapMarkKind.BodyResult => (-7.5, -7.5, 7.5, 7.5),
             _ => (-7.5, -8.5, mark.Count >= 2 ? CountGap + (6 * mark.Count.ToString("N0", CultureInfo.InvariantCulture).Length) + 1.5 : 7.5, 6.5),
         };
 
@@ -835,6 +848,13 @@ public sealed class GalaxyMapView : Control
 
     private void DrawMark(DrawingContext context, GalaxyMapLayout.Mark mark)
     {
+        if (Hollow(mark.Kind, mark.At, 1) is { } hollow)
+        {
+            context.DrawGeometry(Brush(ThemeManager.BgKey), new Pen(Brush(ThemeManager.BgKey), HollowHalo), hollow.Outline);
+            DrawHollow(context, Brush, hollow);
+            return;
+        }
+
         var (halo, ink, key) = mark.Kind switch
         {
             GalaxyMapMarkKind.Engineer => (CrossHalo, Cross, ThemeManager.WhiteKey),
@@ -869,8 +889,49 @@ public sealed class GalaxyMapView : Control
         }
     }
 
-    /// <summary>The map's ink for <paramref name="kind"/> without its halo, centred on <paramref name="at"/> and scaled by <paramref name="scale"/>, and the key of its colour.</summary>
-    internal static (StreamGeometry Ink, string Key) MarkInk(GalaxyMapMarkKind kind, Point at, double scale)
+    /// <summary>
+    /// Draws the map's ink for <paramref name="kind"/> without its halo, centred on <paramref name="at"/> and scaled by
+    /// <paramref name="scale"/>: a solid shape, or the outline of an answer from the last search; in <paramref name="key"/>
+    /// where given, otherwise in the kind's own ink.
+    /// </summary>
+    internal static void DrawInk(DrawingContext context, Func<string, IBrush> ink, GalaxyMapMarkKind kind, Point at, double scale, string? key = null)
+    {
+        if (Hollow(kind, at, scale) is { } hollow)
+        {
+            DrawHollow(context, key is null ? ink : _ => ink(key), hollow);
+            return;
+        }
+
+        var (shape, own) = MarkInk(kind, at, scale);
+        context.DrawGeometry(ink(key ?? own), null, shape);
+    }
+
+    /// <summary>The outline of an answer from the last search, and the slot filled inside a station's; null for a solid mark.</summary>
+    private static (StreamGeometry Outline, StreamGeometry? Filled, double Pen)? Hollow(GalaxyMapMarkKind kind, Point at, double scale)
+    {
+        (double X, double Y)[] Scaled((double X, double Y)[] points) => [.. points.Select(point => (point.X * scale, point.Y * scale))];
+
+        return kind switch
+        {
+            GalaxyMapMarkKind.SystemResult => (Polygon(Scaled(Triangle), at), null, HollowPen * scale),
+            GalaxyMapMarkKind.StationResult => (Polygon(Scaled(Box), at), Polygon(Scaled(Slot), at), HollowPen * scale),
+            GalaxyMapMarkKind.BodyResult => (Polygon(Scaled(Octagon), at), null, HollowPen * scale),
+            _ => null,
+        };
+    }
+
+    private static void DrawHollow(DrawingContext context, Func<string, IBrush> ink, (StreamGeometry Outline, StreamGeometry? Filled, double Pen) hollow)
+    {
+        context.DrawGeometry(null, new Pen(ink(ThemeManager.AKey), hollow.Pen), hollow.Outline);
+
+        if (hollow.Filled is { } filled)
+        {
+            context.DrawGeometry(ink(ThemeManager.AKey), null, filled);
+        }
+    }
+
+    /// <summary>The map's solid ink for <paramref name="kind"/> without its halo, centred on <paramref name="at"/> and scaled by <paramref name="scale"/>, and the key of its colour.</summary>
+    private static (StreamGeometry Ink, string Key) MarkInk(GalaxyMapMarkKind kind, Point at, double scale)
     {
         var (points, key) = kind switch
         {
