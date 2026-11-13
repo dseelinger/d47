@@ -86,6 +86,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _unvisited;
     private readonly Button _layersTile = Press(string.Empty, SwitchRail);
     private readonly StackPanel _rail = new() { Spacing = 2 };
+    private int _railPage;
     private bool _choosing;
     private readonly Button _zoomIn = Tile("+", "Zoom in", 20);
     private readonly Button _zoomOut = Tile("−", "Zoom out", 20);
@@ -540,8 +541,17 @@ public sealed class GalaxyMapPage : UserControl
     /// <summary>Puts exactly <paramref name="kinds"/> on the map, saves them, and redraws the rail and the map.</summary>
     public void ChooseLayers(IEnumerable<StarChartKind> kinds)
     {
+        var before = _layers.OnMap;
+
         _layers.Choose(kinds);
         _memory?.Write(_layers);
+
+        var added = _layers.OnMap.Where(kind => !before.Contains(kind)).Select(kind => (int?)_layers.OnMap.ToList().IndexOf(kind)).FirstOrDefault();
+
+        if (added is { } index)
+        {
+            _railPage = GalaxyMapRailPages.PageOf(_layers.OnMap.Count, index);
+        }
 
         var wanted = _layers.Ticked(StarChartKind.Unvisited);
 
@@ -564,19 +574,79 @@ public sealed class GalaxyMapPage : UserControl
         Refresh();
     }
 
-    /// <summary>The rail lists a switch for each kind on the map, and the tile counts them.</summary>
+    /// <summary>The rail lists a switch for each kind on the map, pages past eight, and the tile counts them.</summary>
     private void Rail()
     {
         _rail.Children.Clear();
 
-        foreach (var (_, box) in Boxes().Where(pair => _layers.OnMap.Contains(pair.Kind)))
+        var shown = Boxes().Where(pair => _layers.OnMap.Contains(pair.Kind)).Select(pair => pair.Box).ToList();
+        var count = shown.Count;
+
+        _railPage = Math.Clamp(_railPage, 0, GalaxyMapRailPages.PageCount(count) - 1);
+
+        var (first, rows) = GalaxyMapRailPages.Rows(count, _railPage);
+
+        foreach (var box in shown.Skip(first).Take(rows))
         {
             _rail.Children.Add(box);
+        }
+
+        if (GalaxyMapRailPages.Pages(count))
+        {
+            for (var gap = rows; gap < GalaxyMapRailPages.PageSize; gap++)
+            {
+                _rail.Children.Add(new Border { Height = TypeScale.MinimumTarget });
+            }
+
+            _rail.Children.Add(Pager(count));
         }
 
         var says = $"LAYERS · {_layers.OnMap.Count}";
         _layersTile.Content = says;
         AutomationProperties.SetName(_layersTile, says);
+    }
+
+    /// <summary>The eighth slot: previous tile, the rows shown over the total, next tile.</summary>
+    private Grid Pager(int count)
+    {
+        var last = GalaxyMapRailPages.PageCount(count) - 1;
+        var (range, total) = GalaxyMapRailPages.Readout(count, _railPage);
+
+        var previous = Tile("◄", "Previous layers", TypeScale.Body);
+        var next = Tile("►", "Next layers", TypeScale.Body);
+        previous.IsEnabled = _railPage > 0;
+        next.IsEnabled = _railPage < last;
+        previous.Click += (_, _) => TurnRail(-1);
+        next.Click += (_, _) => TurnRail(1);
+
+        var readout = Chrome(TypeScale.MetaSmall, ThemeManager.GreyKey);
+        readout.FontFamily = new FontFamily(Fonts.MonoFamily);
+        readout.Text = range + Environment.NewLine + total;
+        readout.TextAlignment = TextAlignment.Center;
+        readout.HorizontalAlignment = HorizontalAlignment.Center;
+        AutomationProperties.SetName(readout, range + " " + total);
+
+        var middle = new Border { Child = readout };
+        ThemeInk.Bind(middle, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        var pager = new Grid
+        {
+            Height = TypeScale.MinimumTarget,
+            ColumnSpacing = 2,
+            ColumnDefinitions = [new ColumnDefinition(TypeScale.MinimumTarget, GridUnitType.Pixel), new ColumnDefinition(GridLength.Star), new ColumnDefinition(TypeScale.MinimumTarget, GridUnitType.Pixel)],
+        };
+
+        Place(pager, previous, 0, 0);
+        Place(pager, middle, 1, 0);
+        Place(pager, next, 2, 0);
+
+        return pager;
+    }
+
+    private void TurnRail(int by)
+    {
+        _railPage += by;
+        Rail();
     }
 
     /// <summary>Unvisited is disabled and unchecked while it cannot draw anything, and shows the Commander's choice otherwise.</summary>

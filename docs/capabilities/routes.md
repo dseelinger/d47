@@ -276,7 +276,9 @@ from journals already on this machine. Nothing is fetched.
   counts the jumps and systems in that range.
 - The layers on the map are chosen on the Layers picker, opened by **LAYERS · N** at the right of the
   toolbar, where N is how many are on the map. A layer taken off is not drawn and leaves the rail.
-  Each row of the rail switches its layer off and on. The layers, the switches and the travels
+  Each row of the rail switches its layer off and on. Past eight layers the rail shows seven and
+  pages: a ◄ tile, a readout such as "1–7 of 12" and a ► tile fill the eighth slot, and the page
+  opens on the first. The layers, the switches and the travels
   range are kept across a restart; with nothing saved all eight are on the map and ticked, and the
   range is **ALL**.
 
