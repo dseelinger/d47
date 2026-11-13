@@ -91,6 +91,9 @@ public class ArdentCommodityRequestTests
         /// <summary>The catalogue answering 200 with nothing in it, until it is cleared.</summary>
         public bool CatalogueIsEmpty { get; set; }
 
+        /// <summary>The catalogue to answer with in place of the default.</summary>
+        public string? Names { get; init; }
+
         protected override Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
@@ -100,7 +103,7 @@ public class ArdentCommodityRequestTests
             Urls.Add(url);
 
             var body =
-                url.Contains("/v2/commodities", StringComparison.Ordinal) ? (CatalogueIsEmpty ? "[]" : Catalogue)
+                url.Contains("/v2/commodities", StringComparison.Ordinal) ? (CatalogueIsEmpty ? "[]" : Names ?? Catalogue)
                 : url.Contains("/nearby/", StringComparison.Ordinal) ? rows ?? "[]"
                 : EgaSystem;
 
@@ -260,6 +263,53 @@ public class ArdentCommodityRequestTests
             TestContext.Current.CancellationToken);
 
         Assert.Contains("/commodity/name/lowtemperaturediamond/nearby/", Query(index));
+    }
+
+    private const string Doubled =
+        """
+        [{"commodityName":"agri-medicines"},{"commodityName":"agriculturalmedicines"},
+         {"commodityName":"atmospheric processors"},{"commodityName":"atmosphericextractors"},
+         {"commodityName":"performance enhancers"},{"commodityName":"performanceenhancers"}]
+        """;
+
+    [Theory]
+    [InlineData("Performance Enhancers", "performanceenhancers")]
+    [InlineData("Atmospheric Processors", "atmosphericextractors")]
+    [InlineData("Agri-Medicines", "agriculturalmedicines")]
+    public async Task AMultiWordOrRenamedCommodityIsAskedForBySymbol(string spoken, string symbol)
+    {
+        var index = new Index("[]") { Names = Doubled };
+        using var commodities = Commodities(index);
+        using var service = Service(commodities);
+
+        await service.FindCommodityAsync(
+            Search(new CommodityQuery(spoken)), TestContext.Current.CancellationToken);
+
+        Assert.Contains($"/commodity/name/{symbol}/nearby/", Query(index));
+    }
+
+    [Fact]
+    public async Task ASpacedSpellingListedFirstDoesNotWinOverTheSymbol()
+    {
+        var index = new Index("[]") { Names = """[{"commodityName":"unknown goods"},{"commodityName":"unknowngoods"}]""" };
+        using var commodities = Commodities(index);
+        using var service = Service(commodities);
+
+        await service.FindCommodityAsync(
+            Search(new CommodityQuery("Unknown Goods")), TestContext.Current.CancellationToken);
+
+        Assert.Contains("/commodity/name/unknowngoods/nearby/", Query(index));
+    }
+
+    [Fact]
+    public async Task ANameNeitherCatalogueKnowsIsStillUnknown()
+    {
+        var index = new Index("[]") { Names = Doubled };
+        using var commodities = Commodities(index);
+        using var service = Service(commodities);
+
+        await Assert.ThrowsAsync<UnknownCommodityException>(() => service.FindCommodityAsync(
+            Search(new CommodityQuery("Zzyzx Quartz")), TestContext.Current.CancellationToken));
     }
 
     /// <summary>The side: exporters to buy from, importers to sell to.</summary>

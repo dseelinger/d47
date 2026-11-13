@@ -277,25 +277,38 @@ public sealed class ArdentCommodityService : IDisposable
 
         var names = await CatalogueAsync(cancellationToken).ConfigureAwait(false);
 
+        if (MaterialCatalogue.Find(commodity) is { } entry
+            && Preferred(names, Fold(entry.Symbol), exact: true) is { } known)
+        {
+            return known;
+        }
+
+        return Preferred(names, wanted, exact: true) ?? Preferred(names, Singular(wanted), exact: false);
+    }
+
+    /// <summary>The catalogue name matching a fold, preferring the one written without separators.</summary>
+    private static string? Preferred(IReadOnlyList<string> names, string wanted, bool exact)
+    {
+        string? first = null;
+
         foreach (var name in names)
         {
-            if (string.Equals(Fold(name), wanted, StringComparison.Ordinal))
+            var folded = Fold(name);
+
+            if (!string.Equals(exact ? folded : Singular(folded), wanted, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (string.Equals(name, folded, StringComparison.Ordinal))
             {
                 return name;
             }
+
+            first ??= name;
         }
 
-        var singular = Singular(wanted);
-
-        foreach (var name in names)
-        {
-            if (string.Equals(Singular(Fold(name)), singular, StringComparison.Ordinal))
-            {
-                return name;
-            }
-        }
-
-        return null;
+        return first;
     }
 
     private async Task<IReadOnlyList<string>> CatalogueAsync(CancellationToken cancellationToken)
