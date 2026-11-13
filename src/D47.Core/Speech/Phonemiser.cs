@@ -301,6 +301,8 @@ public sealed class Phonemiser(
     /// </summary>
     private static readonly Dictionary<string, string> Corrected = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["four"] = "fˈɔɹ",
+        ["fourteen"] = "fˈɔɹtiːn",
         ["story"] = "stˈɔɹi",
         ["stories"] = "stˈɔɹiz",
         ["storied"] = "stˈɔɹid",

@@ -23,7 +23,7 @@ public static class SpokenLetters
     private const string Zed = "zɛd";
 
     private static readonly string[] Digits =
-        ["zˈiəɹoʊ", "wˌʌn", "tˈuː", "θɹˈiː", "fˈoːɹ", "fˈaɪv", "sˈɪks", "sˈɛvən", "ˈeɪt", "nˈaɪn"];
+        ["zˈiəɹoʊ", "wˌʌn", "tˈuː", "θɹˈiː", "fˈɔɹ", "fˈaɪv", "sˈɪks", "sˈɛvən", "ˈeɪt", "nˈaɪn"];
 
     /// <summary>The accent a Kokoro voice id implies.</summary>
     public static SpeechAccent AccentOf(string? voiceId) =>

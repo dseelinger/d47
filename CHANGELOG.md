@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: On the local voice (Kokoro), "four", "fourteen" and a spelled 4 are said with the full vowel of "door" instead of the vowel Kokoro reduces.
+
 Fixed: A capital A inside a sentence, such as the module rating in "not on A Shield Booster" or "five A Thrusters", is said as the letter on every voice instead of as the article. A sentence's first word and a lowercase a are unchanged, and the caption and panel still show "A".
 
 Fixed: When Elite skipped the engineer roster at the start of a session, every engineer showed as not unlocked on the Engineers page and in a ship's plan. d47 now takes your standings from the last roster in your earlier journals. If none has been read at all, a plan row says engineer progress has not been read yet instead of claiming the engineer is not unlocked.
