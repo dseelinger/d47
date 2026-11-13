@@ -218,4 +218,39 @@ public class BindsTests
 
         Assert.Empty(Resolve().Using("Ctrl+Alt+X"));
     }
+
+    [Theory]
+    [InlineData("Scroll", "Key_ScrollLock", new string[0])]
+    [InlineData("Ctrl+Alt+D0", "Key_0", new[] { "Key_LeftControl", "Key_LeftAlt" })]
+    [InlineData("OemPlus", "Key_Equals", new string[0])]
+    [InlineData("OemMinus", "Key_Minus", new string[0])]
+    [InlineData("OemComma", "Key_Comma", new string[0])]
+    [InlineData("Up", "Key_UpArrow", new string[0])]
+    [InlineData("NumPad0", "Key_Numpad_0", new string[0])]
+    public void AKeyIsFoundWhicheverSideNamesIt(string gesture, string eliteKey, string[] modifiers)
+    {
+        StartPreset("StartPreset.4.start", "Custom");
+        Binds(Path.Combine(Bindings, "Custom.4.0.binds"), ("SomeAction", eliteKey, modifiers));
+
+        Assert.Equal("SomeAction", Assert.Single(Resolve().Using(gesture)).Action);
+    }
+
+    [Fact]
+    public void ABindingWhoseModifierIsAStickButtonMatchesNoKeyboardGesture()
+    {
+        StartPreset("StartPreset.4.start", "Custom");
+        _files.WriteText(Path.Combine(Bindings, "Custom.4.0.binds"), """
+            <Root>
+              <SomeAction>
+                <Primary Device="Keyboard" Key="Key_H"><Modifier Device="231D0200" Key="Joy_1" /></Primary>
+                <Secondary Device="{NoDevice}" Key="" />
+              </SomeAction>
+            </Root>
+            """);
+
+        var binds = Resolve();
+
+        Assert.Empty(binds.Using("H"));
+        Assert.Empty(binds.Using("Ctrl+H"));
+    }
 }

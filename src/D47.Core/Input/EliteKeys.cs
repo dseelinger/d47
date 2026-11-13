@@ -1,4 +1,4 @@
-namespace D47.Core.Input;
+﻿namespace D47.Core.Input;
 
 /// <summary>What kind of control a bindings entry names.</summary>
 public enum EliteInputKind
@@ -85,6 +85,49 @@ public static class EliteKeys
 
         ["PrintScreen"] = 0x2C, ["ScrollLock"] = 0x91, ["Pause"] = 0x13, ["NumLock"] = 0x90,
     };
+
+    /// <summary>The names d47 stores a key under, which are Avalonia's, to virtual-key codes.</summary>
+    private static readonly Dictionary<string, uint> StoredKeyCodes = BuildStoredKeyCodes();
+
+    private static Dictionary<string, uint> BuildStoredKeyCodes()
+    {
+        var codes = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Back"] = 0x08, ["Scroll"] = 0x91,
+            ["LeftCtrl"] = 0xA2, ["RightCtrl"] = 0xA3,
+            ["Return"] = 0x0D, ["Capital"] = 0x14, ["Prior"] = 0x21, ["Next"] = 0x22,
+            ["Oem1"] = 0xBA, ["Oem2"] = 0xBF, ["Oem3"] = 0xC0, ["Oem4"] = 0xDB,
+            ["Oem5"] = 0xDC, ["Oem6"] = 0xDD, ["Oem7"] = 0xDE,
+            ["Left"] = 0x25, ["Up"] = 0x26, ["Right"] = 0x27, ["Down"] = 0x28,
+            ["OemTilde"] = 0xC0, ["OemMinus"] = 0xBD, ["OemPlus"] = 0xBB,
+            ["OemOpenBrackets"] = 0xDB, ["OemCloseBrackets"] = 0xDD, ["OemPipe"] = 0xDC,
+            ["OemSemicolon"] = 0xBA, ["OemQuotes"] = 0xDE, ["OemComma"] = 0xBC,
+            ["OemPeriod"] = 0xBE, ["OemQuestion"] = 0xBF,
+        };
+
+        for (uint digit = 0; digit <= 9; digit++)
+        {
+            codes["D" + digit] = 0x30 + digit;
+            codes["NumPad" + digit] = 0x60 + digit;
+        }
+
+        for (uint function = 21; function <= 24; function++)
+        {
+            codes["F" + function] = 0x70 + function - 1;
+        }
+
+        return codes;
+    }
+
+    /// <summary>
+    /// The virtual-key code of one non-modifier gesture part, whether d47 spelled it (<c>Scroll</c>,
+    /// <c>D0</c>, <c>OemPlus</c>) or Elite did (<c>ScrollLock</c>, <c>0</c>, <c>Equals</c>), without a
+    /// <c>Key_</c> prefix. Null when the name is in neither table.
+    /// </summary>
+    public static uint? GestureCode(string part) =>
+        KeyboardCodes.TryGetValue(part, out var elite) ? elite
+        : StoredKeyCodes.TryGetValue(part, out var stored) ? stored
+        : null;
 
     /// <summary>Every keyboard symbol with its <c>Key_</c> prefix, in the order the table lists them.</summary>
     public static IEnumerable<string> KeyboardSymbols => KeyboardCodes.Keys.Select(name => "Key_" + name);

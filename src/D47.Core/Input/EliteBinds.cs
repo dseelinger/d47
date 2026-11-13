@@ -134,7 +134,8 @@ public sealed record EliteBinds
 
     /// <summary>
     /// A gesture reduced to something comparable: modifier aliases folded together, order fixed, case
-    /// ignored. "Ctrl+Alt+X" from the settings file and "LeftControl+LeftAlt+X" from the bindings file
+    /// ignored, and a key named by d47 or by Elite reduced to its virtual-key code ("Scroll" and "ScrollLock"
+    /// match). "Ctrl+Alt+X" from the settings file and "LeftControl+LeftAlt+X" from the bindings file
     /// are the same key to the Commander pressing it.
     /// </summary>
     public static string Normalise(string gesture)
@@ -150,6 +151,9 @@ public sealed record EliteBinds
                 "leftwin" or "rightwin" or "win" or "meta" or "cmd" => "win",
                 var other => other,
             })
+            .Select(part => IsModifier(part) || EliteKeys.GestureCode(part) is not { } code
+                ? part
+                : "vk" + code.ToString("X2"))
             .ToArray();
 
         var modifiers = parts.Where(IsModifier).Distinct().Order(StringComparer.Ordinal);
