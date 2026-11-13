@@ -13,9 +13,9 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Every system name the Navigation tab draws has a copy glyph beside it or at the end of its line.</summary>
+/// <summary>Every system name the Astrometrics tab draws has a copy glyph beside it or at the end of its line.</summary>
 [Trait("Category", "Integration")]
-public class TheNavigationTabCopiesEverySystemNameTests
+public class TheAstrometricsTabCopiesEverySystemNameTests
 {
     private static readonly DateTimeOffset Start = new(2026, 10, 3, 19, 0, 0, TimeSpan.Zero);
 

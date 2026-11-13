@@ -11,7 +11,7 @@ using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
-/// <summary>Navigation › Unsold data: the organic and exploration data carried, each with a protected reset (#556).</summary>
+/// <summary>Astrometrics › Unsold data: the organic and exploration data carried, each with a protected reset (#556).</summary>
 public sealed class UnsoldPage : UserControl
 {
     public const string RootKey = "routing.unsold";

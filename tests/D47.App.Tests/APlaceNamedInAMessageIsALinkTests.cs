@@ -57,8 +57,8 @@ public sealed class APlaceNamedInAMessageIsALinkTests
         var (view, window, _) = Shown();
         const string text = "Looking markets up is switched off. Turn it on in Settings to search.";
 
-        view.Furnish(PanelTab.Navigation, _ => new Notice(NoticeLevel.Warning) { Text = text }, new NavCrumb("plan", "Plan"));
-        Assert.True(view.Nav.Select(PanelTab.Navigation));
+        view.Furnish(PanelTab.Astrometrics, _ => new Notice(NoticeLevel.Warning) { Text = text }, new NavCrumb("plan", "Plan"));
+        Assert.True(view.Nav.Select(PanelTab.Astrometrics));
         Jobs();
 
         var block = view.GetVisualDescendants()

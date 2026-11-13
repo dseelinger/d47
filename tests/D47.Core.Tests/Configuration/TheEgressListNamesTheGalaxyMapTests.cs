@@ -7,7 +7,7 @@ namespace D47.Core.Tests.Configuration;
 public class TheEgressListNamesTheGalaxyMapTests
 {
     private const string Sentence =
-        "While the Navigation tab's Galaxy map page is open, opening it and arriving in a system send that system's "
+        "While the Astrometrics tab's Galaxy map page is open, opening it and arriving in a system send that system's "
         + "name to spansh.co.uk, to ask for the hundred systems nearest it; and opening it sends the names of systems "
         + "holding your bookmarks, your carrier or your stored ships that you have never visited, one at a time, to "
         + "find where they are.";

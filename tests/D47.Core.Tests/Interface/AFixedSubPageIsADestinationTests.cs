@@ -16,7 +16,7 @@ public class AFixedSubPageIsADestinationTests
 
         nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
         nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Stories"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("routing.plan", "Plan"));
 
         Assert.True(nav.Declare("adventures", ShortStory, canAsk ?? (() => true)));
         Assert.True(nav.Declare("adventures", Catalogue));
@@ -143,7 +143,7 @@ public class AFixedSubPageIsADestinationTests
         Assert.Equal(["adventures", "stories"], nav.Trail.Select(crumb => crumb.Key));
 
         Assert.Equal("Progress.", PanelPhrases.Apply("Progress.", nav));
-        Assert.Equal(PanelTab.Navigation, nav.Tab);
+        Assert.Equal(PanelTab.Astrometrics, nav.Tab);
         Assert.Equal("routing.progress", nav.DestinationKey);
     }
 
@@ -166,7 +166,7 @@ public class AFixedSubPageIsADestinationTests
         var nav = Furnished();
 
         Assert.NotNull(PanelPhrases.Apply(phrase, nav));
-        Assert.Equal(PanelTab.Navigation, nav.Tab);
+        Assert.Equal(PanelTab.Astrometrics, nav.Tab);
         Assert.Equal(["routing.plan", "routing.progress"], nav.Trail.Select(crumb => crumb.Key));
         Assert.Equal("routing.progress", nav.DestinationKey);
     }

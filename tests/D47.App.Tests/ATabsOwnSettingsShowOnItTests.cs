@@ -24,7 +24,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// A tab's own settings, drawn from its <see cref="SettingsLayout"/> tab place (#218): the strip
-/// SettingsView draws in place mode, and where it lands on Asset Mgmt › Ships, Navigation › Community Goal
+/// SettingsView draws in place mode, and where it lands on Asset Mgmt › Ships, Astrometrics › Community Goal
 /// and Adventures.
 /// </summary>
 public class ATabsOwnSettingsShowOnItTests

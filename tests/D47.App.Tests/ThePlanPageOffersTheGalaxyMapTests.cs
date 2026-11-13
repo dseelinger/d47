@@ -241,16 +241,16 @@ public class ThePlanPageOffersTheGalaxyMapTests
             Now = () => Now,
         });
 
-        panel.Tab = PanelTab.Navigation;
-        panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot);
+        panel.Tab = PanelTab.Astrometrics;
+        panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.PlanRoot);
 
         if (resultOpen)
         {
-            panel.Nav.Drill(PanelTab.Navigation, RoutingPages.ResultCrumb(RoutePlanKind.Riches, "Road to Riches"));
+            panel.Nav.Drill(PanelTab.Astrometrics, RoutingPages.ResultCrumb(RoutePlanKind.Riches, "Road to Riches"));
         }
         else
         {
-            Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.GalaxyMapRoot));
+            Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.GalaxyMapRoot));
         }
 
         return panel;
@@ -291,7 +291,7 @@ public class ThePlanPageOffersTheGalaxyMapTests
         Press(Tile(panel));
         surface?.Render();
 
-        Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Astrometrics));
         Assert.Equal(RoutePlanKind.Riches, panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single().PlanShown());
     }
 
@@ -308,7 +308,7 @@ public class ThePlanPageOffersTheGalaxyMapTests
         Press(MapPress(panel));
         surface?.Render();
 
-        Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Astrometrics));
         Assert.Equal(RoutePlanKind.Riches, panel.GetVisualDescendants().OfType<GalaxyMapPage>().Single().PlanShown());
     }
 }

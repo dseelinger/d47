@@ -1159,7 +1159,7 @@ public partial class MainWindow : Window
     /// <summary>The settings surface, built the first time the tab is selected.</summary>
     internal AdventureSurface? Adventures { get; }
 
-    /// <summary>What the Navigation tab reads and drives, for the headset copy of the panel (#52).</summary>
+    /// <summary>What the Astrometrics tab reads and drives, for the headset copy of the panel (#52).</summary>
     internal RoutingSurface? Routing { get; }
 
     /// <summary>The Search tab's System page, built here and handed to the headset copy.</summary>

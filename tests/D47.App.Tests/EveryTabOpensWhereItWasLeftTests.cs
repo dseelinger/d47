@@ -56,7 +56,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (first, window) = Shown(store);
 
-        first.Tab = PanelTab.Navigation;
+        first.Tab = PanelTab.Astrometrics;
         Jobs();
 
         window.Close();
@@ -64,7 +64,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         // A second panel over the same store, which is what the next launch has.
         var (next, second) = Shown(store);
 
-        Assert.Equal(PanelTab.Navigation, next.Tab);
+        Assert.Equal(PanelTab.Astrometrics, next.Tab);
 
         second.Close();
     }
@@ -141,12 +141,12 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         var store = Store();
 
         store.Save(store.Load()
-            .With(PanelTab.Navigation.ToString(), "routing.somewhere-that-was-renamed")
+            .With(PanelTab.Astrometrics.ToString(), "routing.somewhere-that-was-renamed")
             .With("Cartography", "a.tab.that.never.existed"));
 
         var (panel, window) = Shown(store);
 
-        Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Astrometrics));
         Assert.Equal(PanelTab.Transcript, panel.Tab);
 
         window.Close();
@@ -234,7 +234,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
     [InlineData("Adventures", PanelTab.Stories)]
     [InlineData("Checklist", PanelTab.Commander)]
     [InlineData("Loadout", PanelTab.Assets)]
-    [InlineData("Routing", PanelTab.Navigation)]
+    [InlineData("Routing", PanelTab.Astrometrics)]
     public void ATabSavedUnderItsOldNameReopensUnderItsNewOne(string saved, PanelTab renamed)
     {
         var store = Store();
@@ -253,8 +253,8 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (panel, window) = Shown(store);
 
-        Assert.Equal(PanelTab.Navigation, panel.Tab);
-        Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(PanelTab.Astrometrics, panel.Tab);
+        Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Astrometrics));
 
         window.Close();
     }
@@ -268,7 +268,7 @@ public sealed class EveryTabOpensWhereItWasLeftTests
 
         var (panel, window) = Shown(store);
 
-        Assert.Equal(PanelTab.Navigation, panel.Tab);
+        Assert.Equal(PanelTab.Astrometrics, panel.Tab);
         Assert.Equal(
             [RoutingPages.PlanRoot, RoutingPages.ProgressKey],
             panel.Nav.Trail.Select(crumb => crumb.Key));

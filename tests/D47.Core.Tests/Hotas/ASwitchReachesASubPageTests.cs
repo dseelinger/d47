@@ -16,8 +16,8 @@ public class ASwitchReachesASubPageTests
 
     private static readonly IReadOnlyList<PanelDestination> Pages =
     [
-        new(PanelTab.Navigation, Plan),
-        new(PanelTab.Navigation, Plan, new NavCrumb("routing.progress", "Progress")),
+        new(PanelTab.Astrometrics, Plan),
+        new(PanelTab.Astrometrics, Plan, new NavCrumb("routing.progress", "Progress")),
         new(PanelTab.Transcript, new NavCrumb("conversation", "Conversation")),
     ];
 

@@ -22,7 +22,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Navigation › Plan's Carrier Route card plots the Commander's own carrier through
+/// Astrometrics › Plan's Carrier Route card plots the Commander's own carrier through
 /// <c>plot_carrier_route</c>, and Fleet › Carrier opens it with From set (#637).
 /// </summary>
 [Trait("Category", "Integration")]
@@ -127,7 +127,7 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
         var window = new Window { Content = panel, Width = 1280, Height = 860 };
         window.Show();
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         Dispatcher.UIThread.RunJobs();
 
@@ -236,8 +236,8 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
 
         Press(action);
 
-        Assert.Equal(PanelTab.Navigation, surface.Panel.Tab);
-        Assert.Equal(RoutingPages.PlanRoot, surface.Panel.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(PanelTab.Astrometrics, surface.Panel.Tab);
+        Assert.Equal(RoutingPages.PlanRoot, surface.Panel.Nav.RootKeyOf(PanelTab.Astrometrics));
         Assert.Equal(CarrierSystem, Box(surface.Panel, "From, optional, filled from your carrier").Text);
 
         Save(surface.Window, "carrier-route-card-from-carrier-page.png");

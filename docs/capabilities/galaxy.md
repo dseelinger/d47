@@ -996,7 +996,7 @@ When no station has them all, the answer says how many had each one:
 
 A rare good in a list is refused when buying, with its one station named, because a radius search
 will not find that station; ask for it on its own. When selling, it is searched like any other commodity. On
-the Navigation tab's Market page, each commodity is added from a type-ahead as a tile with its tonnes, up to
+the Astrometrics tab's Market page, each commodity is added from a type-ahead as a tile with its tonnes, up to
 five. The market table gives each commodity a column with its price over its stock, then the total.
 
 **Commodity prices come from a second host** ([#350](https://github.com/dseelinger/d47/issues/350)).
@@ -1049,7 +1049,7 @@ Nearest for buying Palladium, Platinum Reach (HR 6012), 53.3 ly. System is on yo
 ```
 
 Price, stock, pad distance from the star and quote age used to be read out here too; they are
-still on the Navigation tab table, along with the rest of the ranking, and reading all of it out was
+still on the Astrometrics tab table, along with the rest of the ranking, and reading all of it out was
 detail the ear paid for and could not act on ([#325](https://github.com/dseelinger/d47/issues/325)).
 The price ordering still reads every station out, as it always did, and still names each one's
 distance from the star wherever the index knows it, because a pad 60,000 light seconds out is the

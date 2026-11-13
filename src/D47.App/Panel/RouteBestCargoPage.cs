@@ -34,7 +34,7 @@ public enum BestCargoView
     Picks,
 }
 
-/// <summary>Navigation › Best cargo: what to buy at the docked station to sell in another system (#849).</summary>
+/// <summary>Astrometrics › Best cargo: what to buy at the docked station to sell in another system (#849).</summary>
 public sealed class RouteBestCargoPage : UserControl
 {
     public const string Tool = "best_commodities_for";

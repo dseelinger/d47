@@ -201,7 +201,7 @@ A Sol-to-Colonia plot at a 50 ly range, measured on 2026-08-14, is 131 waypoints
 totals come first and the next handful of waypoints follow — which is how the route is flown
 anyway. You plot the next waypoint when you reach this one.
 
-**That cap belongs to speech, not to the plan.** The whole route is kept, and the **Navigation** tab
+**That cap belongs to speech, not to the plan.** The whole route is kept, and the **Astrometrics** tab
 in the window draws all of it — see [the panel](interface.md#panel). The same tab plots without
 speaking, and a route plotted by voice appears there the moment it is worked out, because both
 paths write and read one plan rather than each keeping their own.
@@ -253,7 +253,7 @@ again before then plots the same system again.
 
 ### The Galaxy map page
 
-The **Navigation** tab's **Galaxy map** is d47's own drawing, not Elite's galaxy map. It draws the
+The **Astrometrics** tab's **Galaxy map** is d47's own drawing, not Elite's galaxy map. It draws the
 42 regions, every system you have arrived in, the route Elite plotted and where you are, top-down,
 from journals already on this machine. Nothing is fetched.
 
@@ -294,7 +294,7 @@ one.
 #### `plot_route`
 
 A route between two systems that detours through neutron stars where they help — the **Neutron
-Plotter** card on the Navigation tab, and [a page of its own](../neutron-plotter.html).
+Plotter** card on the Astrometrics tab, and [a page of its own](../neutron-plotter.html).
 
 ```json
 {"type":"object","properties":{"efficiency":{"type":"integer","description":"How strictly to hold to the direct line, 1 to 99. Lower finds more neutron stars and so fewer jumps, at the cost of flying further off course. Defaults to 60."},"from":{"type":"string","description":"Where to plot from. Defaults to where the Commander is now."},"jump_range":{"type":"number","description":"The ship\u0027s jump range in light years. Defaults to this ship\u0027s, from the journal. Must be over 10."},"to":{"type":"string","description":"The destination system."}},"required":["to"],"additionalProperties":false}
@@ -507,7 +507,7 @@ distance. Where nothing at the destination pays more than you bought for, it say
 Nothing here sells at a profit in Sothis.
 ```
 
-The answer names the best two. The **Best cargo** page on the Navigation tab, after Market, draws
+The answer names the best two. The **Best cargo** page on the Astrometrics tab, after Market, draws
 every commodity that sells at a profit, best total first, from the same search. Type a system into
 **Sell in** and press **Find cargo** or Enter; **Route end** fills in the last system of the route
 you have plotted. Each row gives the station that pays most, the profit a tonne, the tonnes and the
@@ -567,7 +567,7 @@ cheapest total, because the station search carries no module prices. The answer 
 stops, the first stop and what to buy there, and the items not found.
 
 Only stock reported within `max_report_age_hours` counts, three days when the argument is left out. The
-stored plan keeps the age, the pad size and each stop's report date, and Navigation › Plan shows the
+stored plan keeps the age, the pad size and each stop's report date, and Astrometrics › Plan shows the
 age beside a Search button that plots the same list again with another age.
 
 ### Notes for anyone reading the code

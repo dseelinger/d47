@@ -57,12 +57,14 @@ public class PanelPhrasesTests
     [InlineData("stories", PanelTab.Stories, "Stories.")]
     [InlineData("open the stories tab", PanelTab.Stories, "Stories.")]
     [InlineData("assets", PanelTab.Assets, "Assets.")]
-    [InlineData("navigation", PanelTab.Navigation, "Navigation.")]
+    [InlineData("astrometrics", PanelTab.Astrometrics, "Astrometrics.")]
+    [InlineData("navigation", PanelTab.Astrometrics, "Astrometrics.")]
+    [InlineData("astro metrics", PanelTab.Astrometrics, "Astrometrics.")]
     public void ARenamedTabAnswersToItsNewName(string spoken, PanelTab tab, string answer)
     {
         var nav = Furnished();
         nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Stories"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("routing.plan", "Plan"));
 
         Assert.Equal(answer, PanelPhrases.Apply(spoken, nav));
         Assert.Equal(tab, nav.Tab);
@@ -204,8 +206,8 @@ public class PanelPhrasesTests
         var nav = Furnished();
         nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your story"));
         nav.Register(PanelTab.Assets, new NavCrumb("suits", "Suits"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("engineers", "Engineers"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("routing.plan", "Plan"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("engineers", "Engineers"));
 
         foreach (var phrase in PanelScroll.Phrases.Keys.Concat(PanelScroll.SidedPhrases.Keys))
         {
@@ -227,15 +229,15 @@ public class PanelPhrasesTests
     [Theory]
     [InlineData("suits", PanelTab.Assets, "suits")]
     [InlineData("show me the suits", PanelTab.Assets, "suits")]
-    [InlineData("engineers", PanelTab.Navigation, "engineers")]
+    [InlineData("engineers", PanelTab.Astrometrics, "engineers")]
     [InlineData("suits page", PanelTab.Assets, "suits")]
-    [InlineData("open the engineers page", PanelTab.Navigation, "engineers")]
+    [InlineData("open the engineers page", PanelTab.Astrometrics, "engineers")]
     public void ARootOfAnyTabIsReachedByName(string spoken, PanelTab tab, string key)
     {
         var nav = Furnished();
         nav.Register(PanelTab.Assets, new NavCrumb("suits", "Suits"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("engineers", "Engineers"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("routing.plan", "Plan"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("engineers", "Engineers"));
 
         Assert.NotNull(PanelPhrases.Apply(spoken, nav));
         Assert.Equal(tab, nav.Tab);
@@ -274,7 +276,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
         nav.Register(PanelTab.Assets, new NavCrumb("assets.history", "History"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("navigation.history", "History"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("navigation.history", "History"));
 
         Assert.Null(PanelPhrases.Apply("history", nav));
         Assert.Equal(PanelTab.Transcript, nav.Tab);

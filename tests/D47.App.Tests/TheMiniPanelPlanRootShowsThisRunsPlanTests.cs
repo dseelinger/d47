@@ -80,9 +80,9 @@ public class TheMiniPanelPlanRootShowsThisRunsPlanTests
             Now = () => Now,
         });
 
-        panel.Tab = PanelTab.Navigation;
-        panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot);
-        Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
+        panel.Tab = PanelTab.Astrometrics;
+        panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.PlanRoot);
+        Assert.Equal(RoutingPages.PlanRoot, panel.Nav.RootKeyOf(PanelTab.Astrometrics));
 
         var window = new Window
         {
@@ -112,7 +112,7 @@ public class TheMiniPanelPlanRootShowsThisRunsPlanTests
 
     private static void Open(PanelView panel, RoutePlanKind kind, string headline)
     {
-        panel.Nav.Drill(PanelTab.Navigation, RoutingPages.ResultCrumb(kind, headline));
+        panel.Nav.Drill(PanelTab.Astrometrics, RoutingPages.ResultCrumb(kind, headline));
         Settle();
     }
 

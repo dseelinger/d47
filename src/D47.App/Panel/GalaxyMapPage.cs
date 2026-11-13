@@ -17,7 +17,7 @@ using Keys = Avalonia.Input.Key;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Navigation tab's Galaxy map (#1406): where the Commander has been, where they are and the route Elite
+/// The Astrometrics tab's Galaxy map (#1406): where the Commander has been, where they are and the route Elite
 /// plotted, over Elite's regions. Every control is a button or a checkbox, so each one is pressed by a tap on the big panel.
 /// </summary>
 public sealed class GalaxyMapPage : UserControl

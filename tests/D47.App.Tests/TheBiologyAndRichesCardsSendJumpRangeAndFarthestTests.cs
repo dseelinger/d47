@@ -18,7 +18,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Navigation › Plan's Exobiology and Road to Riches cards take a jump range and a farthest-from-arrival
+/// Astrometrics › Plan's Exobiology and Road to Riches cards take a jump range and a farthest-from-arrival
 /// distance, and send them only when filled in (#1799).
 /// </summary>
 [Trait("Category", "Integration")]
@@ -95,7 +95,7 @@ public class TheBiologyAndRichesCardsSendJumpRangeAndFarthestTests
         var window = new Window { Content = panel, Width = 1280, Height = 1400 };
         window.Show();
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         Dispatcher.UIThread.RunJobs();
 

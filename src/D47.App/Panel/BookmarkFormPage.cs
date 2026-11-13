@@ -11,7 +11,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>Navigation › Bookmarks › Add, or › one bookmark: a place looked up as you type, a name and a note.</summary>
+/// <summary>Astrometrics › Bookmarks › Add, or › one bookmark: a place looked up as you type, a name and a note.</summary>
 public sealed class BookmarkFormPage : UserControl
 {
     public const string NoPlace = "That place's system could not be found.";

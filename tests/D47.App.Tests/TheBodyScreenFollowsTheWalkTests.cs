@@ -16,7 +16,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Navigation › On this body: the body's signals, the sampling run and the live distance (#555).</summary>
+/// <summary>Astrometrics › On this body: the body's signals, the sampling run and the live distance (#555).</summary>
 public class TheBodyScreenFollowsTheWalkTests
 {
     private const string Body = "Blae Drye XJ-A d14 7 a";
@@ -108,8 +108,8 @@ public class TheBodyScreenFollowsTheWalkTests
         };
         window.Show();
 
-        panel.Tab = PanelTab.Navigation;
-        panel.Nav.SelectRoot(PanelTab.Navigation, BodyPage.RootKey);
+        panel.Tab = PanelTab.Astrometrics;
+        panel.Nav.SelectRoot(PanelTab.Astrometrics, BodyPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel, live);
@@ -132,11 +132,11 @@ public class TheBodyScreenFollowsTheWalkTests
     }
 
     [AvaloniaFact]
-    public void OnThisBodyIsTheNavigationTabsLastRoot()
+    public void OnThisBodyIsTheAstrometricsTabsLastRoot()
     {
         var (window, panel, _) = Open(Walking(), 340);
 
-        var roots = panel.Nav.Roots(PanelTab.Navigation);
+        var roots = panel.Nav.Roots(PanelTab.Astrometrics);
         Assert.Equal(BodyPage.RootKey, roots[^1].Key);
         Assert.Equal("On this body", roots[^1].Word);
 

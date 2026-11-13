@@ -8,7 +8,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Navigation › On this body names the species other Commanders reported for a genus the Commander has not sampled.</summary>
+/// <summary>Astrometrics › On this body names the species other Commanders reported for a genus the Commander has not sampled.</summary>
 public class TheBodyPageNamesSpeciesOthersReportedTests
 {
     private const long System = 123;

@@ -22,7 +22,7 @@ public enum PanelTab
     /// Where the Commander is going: Plan with the route being flown beside it, bookmarks, markets and
     /// trade routes.
     /// </summary>
-    Navigation,
+    Astrometrics,
 
     /// <summary>The installed modules and the pages they draw; furnished only when a module is installed (#2083).</summary>
     Modules,
@@ -39,7 +39,8 @@ public static class PanelTabNames
         ["Adventures"] = PanelTab.Stories,
         ["Checklist"] = PanelTab.Commander,
         ["Loadout"] = PanelTab.Assets,
-        ["Routing"] = PanelTab.Navigation,
+        ["Navigation"] = PanelTab.Astrometrics,
+        ["Routing"] = PanelTab.Astrometrics,
     };
 
     /// <summary>The tab a saved name means, or null for a name that is no tab.</summary>

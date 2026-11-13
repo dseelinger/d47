@@ -2645,7 +2645,7 @@ public sealed class AppHost : IDisposable
                     Now = () => DateTimeOffset.Now,
                 },
 
-                // Where a commodity answer is posted on its way out (Phase 49), so the Navigation tab draws what
+                // Where a commodity answer is posted on its way out (Phase 49), so the Astrometrics tab draws what
                 // was just said rather than asking again.
                 stores.CommodityBoard,
 

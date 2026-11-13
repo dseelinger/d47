@@ -129,7 +129,7 @@ public sealed class RoutePlanPage : UserControl
 
     /// <summary>Whether Progress has the level beside Plan.</summary>
     public bool ProgressOpen =>
-        _nav.TrailOf(PanelTab.Navigation).Any(crumb => crumb.Key == RoutingPages.ProgressKey);
+        _nav.TrailOf(PanelTab.Astrometrics).Any(crumb => crumb.Key == RoutingPages.ProgressKey);
 
     private void ShowProgressOpen()
     {

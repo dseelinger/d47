@@ -97,8 +97,8 @@ public class TheRoutingTabIsInTheHeadsetTests
     {
         var root = page == RoutingPages.ProgressKey ? RoutingPages.PlanRoot : page;
 
-        panel.Nav.Select(PanelTab.Navigation);
-        panel.Nav.SelectRoot(PanelTab.Navigation, root);
+        panel.Nav.Select(PanelTab.Astrometrics);
+        panel.Nav.SelectRoot(PanelTab.Astrometrics, root);
 
         if (page == RoutingPages.ProgressKey)
         {
@@ -111,8 +111,8 @@ public class TheRoutingTabIsInTheHeadsetTests
 
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Navigation, panel.Nav.Tab);
-        Assert.Equal(root, panel.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(PanelTab.Astrometrics, panel.Nav.Tab);
+        Assert.Equal(root, panel.Nav.RootKeyOf(PanelTab.Astrometrics));
 
         // Twice: the first layout settles how many panes fit, and the strip redraws after it.
         for (var pass = 0; pass < 2; pass++)
@@ -167,11 +167,11 @@ public class TheRoutingTabIsInTheHeadsetTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(Tabs(window.Nav), Tabs(panel.Nav));
-        Assert.Contains(PanelTab.Navigation, Tabs(panel.Nav));
+        Assert.Contains(PanelTab.Astrometrics, Tabs(panel.Nav));
 
         var order = Tabs(panel.Nav);
 
-        Assert.Equal(order.IndexOf(PanelTab.Commander) + 1, order.IndexOf(PanelTab.Navigation));
+        Assert.Equal(order.IndexOf(PanelTab.Commander) + 1, order.IndexOf(PanelTab.Astrometrics));
     }
 
     /// <summary>The headset opens the tab on Plan › Progress, with the breadcrumb.</summary>
@@ -180,7 +180,7 @@ public class TheRoutingTabIsInTheHeadsetTests
     {
         var (panel, pixels, _) = Headset();
 
-        panel.Nav.Select(PanelTab.Navigation);
+        panel.Nav.Select(PanelTab.Astrometrics);
         Dispatcher.UIThread.RunJobs();
         panel.Invalidate();
         panel.Draw(pixels.Address, pixels.RowBytes);

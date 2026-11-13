@@ -290,7 +290,7 @@ public static class EgressDisclosure
                 : string.Empty)
             + "While the Search tab's System page is open and following you, arriving in a system sends "
             + "that system's address to spansh.co.uk, to read its record. "
-            + "While the Navigation tab's Galaxy map page is open, opening it and arriving in a system send that "
+            + "While the Astrometrics tab's Galaxy map page is open, opening it and arriving in a system send that "
             + "system's name to spansh.co.uk, to ask for the hundred systems nearest it; and opening it sends the "
             + "names of systems holding your bookmarks, your carrier or your stored ships that you have never "
             + "visited, one at a time, to find where they are. "

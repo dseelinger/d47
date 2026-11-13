@@ -313,7 +313,7 @@ neither plan is moved.
 A ship's page has a **To buy** block between the ship's figures and **Plan** while its plan still needs
 something bought: the hull, if you do not own it yet, and each planned module that is neither fitted in
 its slot nor in module storage. It names three items and counts the rest. **Plot a route to buy them**
-plots a route from your system and opens it on Navigation › Plan. The page then says how many stops there
+plots a route from your system and opens it on Astrometrics › Plan. The page then says how many stops there
 are, which one is first and how far it is, with **Open the route** to open it again. Opening module storage takes what you have stored off the
 list, and until D47 has seen your storage the block says **STORAGE NOT CHECKED**. The mini panel does not
 show the block.

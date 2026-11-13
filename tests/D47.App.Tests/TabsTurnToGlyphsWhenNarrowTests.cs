@@ -24,7 +24,7 @@ public class TabsTurnToGlyphsWhenNarrowTests
         panel.Furnish(PanelTab.Stories, _ => new TextBlock(), new NavCrumb("stories", "Stories"));
         panel.Furnish(PanelTab.Commander, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
         panel.Furnish(PanelTab.Assets, _ => new TextBlock(), new NavCrumb("fleet", "Ships"));
-        panel.Furnish(PanelTab.Navigation, _ => new TextBlock(), new NavCrumb("plan", "Plan"));
+        panel.Furnish(PanelTab.Astrometrics, _ => new TextBlock(), new NavCrumb("plan", "Plan"));
         panel.EnableSettings(() => new TextBlock());
 
         // As the desktop window does: HELP and the badge leave the tab row for the title bar.

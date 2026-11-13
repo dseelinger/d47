@@ -116,7 +116,7 @@ public class TheBookmarkFormsLookUpAndSavePlacesTests
         var window = new Window { Content = panel, Width = 1100, Height = 900 };
 
         window.Show();
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         panel.Nav.SelectRoot(BookmarksPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 

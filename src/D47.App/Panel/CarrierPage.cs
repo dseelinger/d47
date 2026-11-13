@@ -66,7 +66,7 @@ public sealed class CarrierPage : UserControl, IPageChrome
         // The captain and tower's own settings, on the tab they only affect (#218, #305).
         Control? settingsStrip = null,
 
-        // Opens Navigation › Plan's Carrier Route card with From set to the system given.
+        // Opens Astrometrics › Plan's Carrier Route card with From set to the system given.
         Func<string?, bool>? planRoute = null,
 
         // Whether Hull pictures is on.

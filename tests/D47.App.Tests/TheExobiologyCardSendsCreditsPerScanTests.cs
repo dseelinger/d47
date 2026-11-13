@@ -77,7 +77,7 @@ public class TheExobiologyCardSendsCreditsPerScanTests
         var window = new Window { Content = panel, Width = 1280, Height = 860 };
         window.Show();
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         Dispatcher.UIThread.RunJobs();
 

@@ -17,7 +17,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Navigation › Best cargo draws the last best cargo search, by voice or from the page (#849).</summary>
+/// <summary>Astrometrics › Best cargo draws the last best cargo search, by voice or from the page (#849).</summary>
 [Trait("Category", "Integration")]
 public class TheBestCargoPageDrawsTheLastSearchTests
 {
@@ -128,7 +128,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
 
         if (trade)
         {
@@ -221,7 +221,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
     {
         using var opened = Open();
 
-        var words = opened.Panel.Nav.Roots(PanelTab.Navigation).Select(root => root.Word).ToList();
+        var words = opened.Panel.Nav.Roots(PanelTab.Astrometrics).Select(root => root.Word).ToList();
         var market = words.IndexOf("Market");
 
         Assert.Equal(["Market", "Best cargo", "Trade route"], words.Skip(market).Take(3));
@@ -233,7 +233,7 @@ public class TheBestCargoPageDrawsTheLastSearchTests
     {
         using var opened = Open(trade: false);
 
-        Assert.DoesNotContain(opened.Panel.Nav.Roots(PanelTab.Navigation), root => root.Key == RoutingPages.BestCargoRoot);
+        Assert.DoesNotContain(opened.Panel.Nav.Roots(PanelTab.Astrometrics), root => root.Key == RoutingPages.BestCargoRoot);
     }
 
     [Trait("Category", "Integration")]

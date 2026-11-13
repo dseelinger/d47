@@ -20,7 +20,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Navigation › Unsold data: both totals, and a reset the page makes as the Commander (#556).</summary>
+/// <summary>Astrometrics › Unsold data: both totals, and a reset the page makes as the Commander (#556).</summary>
 [Trait("Category", "Integration")]
 public class TheUnsoldTotalsResetOnlyForTheCommanderTests
 {
@@ -123,8 +123,8 @@ public class TheUnsoldTotalsResetOnlyForTheCommanderTests
         };
         window.Show();
 
-        panel.Tab = PanelTab.Navigation;
-        panel.Nav.SelectRoot(PanelTab.Navigation, UnsoldPage.RootKey);
+        panel.Tab = PanelTab.Astrometrics;
+        panel.Nav.SelectRoot(PanelTab.Astrometrics, UnsoldPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -163,7 +163,7 @@ public class TheUnsoldTotalsResetOnlyForTheCommanderTests
         var fixture = Carrying();
         var (window, panel) = Open(fixture);
 
-        var roots = panel.Nav.Roots(PanelTab.Navigation).Select(root => root.Key).ToList();
+        var roots = panel.Nav.Roots(PanelTab.Astrometrics).Select(root => root.Key).ToList();
         Assert.Equal(UnsoldPage.RootKey, roots[^1]);
         Assert.Equal(BodyPage.RootKey, roots[^2]);
 

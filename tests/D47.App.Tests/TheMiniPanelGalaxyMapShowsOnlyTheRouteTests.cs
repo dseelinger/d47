@@ -107,8 +107,8 @@ public class TheMiniPanelGalaxyMapShowsOnlyTheRouteTests
             Now = () => Now,
         });
 
-        panel.Tab = PanelTab.Navigation;
-        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.GalaxyMapRoot));
+        panel.Tab = PanelTab.Astrometrics;
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.GalaxyMapRoot));
 
         var window = new Window
         {

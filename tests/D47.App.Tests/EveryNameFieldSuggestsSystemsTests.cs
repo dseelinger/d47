@@ -148,7 +148,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
     [AvaloniaFact]
     public void PickingANameFillsDestinationOnThePlan()
     {
-        var shown = Open(PanelTab.Navigation, RoutingPages.PlanRoot);
+        var shown = Open(PanelTab.Astrometrics, RoutingPages.PlanRoot);
 
         TypeAndPick(shown, "Destination, required");
 
@@ -158,7 +158,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
     [AvaloniaFact]
     public void PickingANameFillsFromOnThePlan()
     {
-        var shown = Open(PanelTab.Navigation, RoutingPages.PlanRoot);
+        var shown = Open(PanelTab.Astrometrics, RoutingPages.PlanRoot);
 
         TypeAndPick(shown, "From, optional, filled from your ship");
 
@@ -168,7 +168,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
     [AvaloniaFact]
     public void PickingANameFillsToOnTheCarrierRoute()
     {
-        var shown = Open(PanelTab.Navigation, RoutingPages.PlanRoot);
+        var shown = Open(PanelTab.Astrometrics, RoutingPages.PlanRoot);
 
         TypeAndPick(shown, "To, required");
 
@@ -178,7 +178,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
     [AvaloniaFact]
     public void PickingANameFillsFromOnTheCarrierRoute()
     {
-        var shown = Open(PanelTab.Navigation, RoutingPages.PlanRoot);
+        var shown = Open(PanelTab.Astrometrics, RoutingPages.PlanRoot);
 
         TypeAndPick(shown, "From, optional, filled from your carrier");
 
@@ -188,7 +188,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
     [AvaloniaFact]
     public void ACarrierStartFilledFromFleetOpensNoList()
     {
-        var shown = Open(PanelTab.Navigation, RoutingPages.PlanRoot);
+        var shown = Open(PanelTab.Astrometrics, RoutingPages.PlanRoot);
 
         typeof(PanelView)
             .GetMethod("PlanCarrierRoute", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
@@ -204,7 +204,7 @@ public sealed class EveryNameFieldSuggestsSystemsTests
     [AvaloniaFact]
     public void PickingANameFillsSellInOnBestCargo()
     {
-        var shown = Open(PanelTab.Navigation, RoutingPages.BestCargoRoot);
+        var shown = Open(PanelTab.Astrometrics, RoutingPages.BestCargoRoot);
 
         TypeAndPick(shown, "Sell in");
 
@@ -244,8 +244,8 @@ public sealed class EveryNameFieldSuggestsSystemsTests
         foreach (var (tab, root, field, file) in new[]
         {
             (PanelTab.Search, SystemSearchPage.RootKey, "near", "name-list-near.png"),
-            (PanelTab.Navigation, RoutingPages.PlanRoot, "Destination, required", "name-list-plan.png"),
-            (PanelTab.Navigation, RoutingPages.BestCargoRoot, "Sell in", "name-list-sell-in.png"),
+            (PanelTab.Astrometrics, RoutingPages.PlanRoot, "Destination, required", "name-list-plan.png"),
+            (PanelTab.Astrometrics, RoutingPages.BestCargoRoot, "Sell in", "name-list-sell-in.png"),
         })
         {
             var shown = Open(tab, root);

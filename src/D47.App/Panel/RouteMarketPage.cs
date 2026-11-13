@@ -14,7 +14,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Where to buy it, and what it costs there (Phase 49, "Asked by voice, and drawn on the Navigation tab").
+/// Where to buy it, and what it costs there (Phase 49, "Asked by voice, and drawn on the Astrometrics tab").
 /// </summary>
 public sealed class RouteMarketPage : UserControl
 {

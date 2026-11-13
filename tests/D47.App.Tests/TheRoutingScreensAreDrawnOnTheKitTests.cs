@@ -151,7 +151,7 @@ public class TheRoutingScreensAreDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel);

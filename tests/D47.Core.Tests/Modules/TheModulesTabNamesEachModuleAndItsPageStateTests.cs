@@ -19,14 +19,16 @@ public class TheModulesTabNamesEachModuleAndItsPageStateTests
     {
         var tabs = Enum.GetValues<PanelTab>().ToList();
 
-        Assert.Equal(tabs.IndexOf(PanelTab.Navigation) + 1, tabs.IndexOf(PanelTab.Modules));
+        Assert.Equal(tabs.IndexOf(PanelTab.Astrometrics) + 1, tabs.IndexOf(PanelTab.Modules));
         Assert.Equal(tabs.IndexOf(PanelTab.Modules) + 1, tabs.IndexOf(PanelTab.Settings));
     }
 
     [Fact]
     public void AStoredTabNameStillMeansTheSameTab()
     {
-        Assert.Equal(PanelTab.Navigation, PanelTabNames.Parse("Navigation"));
+        Assert.Equal(PanelTab.Astrometrics, PanelTabNames.Parse("Astrometrics"));
+        Assert.Equal(PanelTab.Astrometrics, PanelTabNames.Parse("Navigation"));
+        Assert.Equal(PanelTab.Astrometrics, PanelTabNames.Parse("Routing"));
         Assert.Equal(PanelTab.Settings, PanelTabNames.Parse("Settings"));
         Assert.Equal(PanelTab.Modules, PanelTabNames.Parse("Modules"));
     }

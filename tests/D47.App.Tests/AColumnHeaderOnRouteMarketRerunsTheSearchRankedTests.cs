@@ -91,7 +91,7 @@ public sealed class AColumnHeaderOnRouteMarketRerunsTheSearchRankedTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         return (panel, window, trade);

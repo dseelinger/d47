@@ -37,7 +37,7 @@ public class EveryTabDrawsOneHeaderTests
     private static readonly PanelTab[] Every =
     [
         PanelTab.Transcript, PanelTab.Stories, PanelTab.Commander, PanelTab.Assets,
-        PanelTab.Navigation, PanelTab.Settings,
+        PanelTab.Astrometrics, PanelTab.Settings,
     ];
 
     private static CommanderGameState State()

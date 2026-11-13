@@ -109,7 +109,7 @@ public class TheArrowKeysStepThroughAPagesRowsTests
         var panes = new Dictionary<string, List<Border>>();
 
         host.Panel.Furnish(
-            PanelTab.Navigation,
+            PanelTab.Astrometrics,
             crumb =>
             {
                 var column = new StackPanel { Spacing = 2 };
@@ -128,7 +128,7 @@ public class TheArrowKeysStepThroughAPagesRowsTests
             },
             new NavCrumb("left", "Left"));
 
-        host.Panel.Tab = PanelTab.Navigation;
+        host.Panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
         Assert.True(host.Panel.Nav.Drill(new NavCrumb("right", "Right")));
         Dispatcher.UIThread.RunJobs();
@@ -232,7 +232,7 @@ public class TheArrowKeysStepThroughAPagesRowsTests
         var tiles = new List<Border>();
 
         host.Panel.Furnish(
-            PanelTab.Navigation,
+            PanelTab.Astrometrics,
             _ =>
             {
                 var grid = new WrapPanel { Width = 330, HorizontalAlignment = HorizontalAlignment.Left };
@@ -249,7 +249,7 @@ public class TheArrowKeysStepThroughAPagesRowsTests
             },
             new NavCrumb("grid", "Grid"));
 
-        host.Panel.Tab = PanelTab.Navigation;
+        host.Panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(6, tiles.Count);
 

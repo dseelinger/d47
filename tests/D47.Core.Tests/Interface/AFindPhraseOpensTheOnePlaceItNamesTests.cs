@@ -96,12 +96,12 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
         var (find, _, nav) = FindRanksPagesSettingsAndHelpTests.Build();
         nav.Register(PanelTab.Assets, new NavCrumb("zorblax-assets", "Zorblax"));
         nav.Register(PanelTab.Commander, new NavCrumb("zorblax-commander", "Zorblax"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("zorblax-navigation", "Zorblax"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("zorblax-navigation", "Zorblax"));
 
         var answer = PanelFindPhrases.Answer("find the zorblax page", find);
 
         Assert.Equal(
-            "Three places: Commander › Zorblax, Asset Mgmt › Zorblax, or Navigation › Zorblax. Which one?",
+            "Three places: Commander › Zorblax, Asset Mgmt › Zorblax, or Astrometrics › Zorblax. Which one?",
             answer?.Said);
     }
 
@@ -111,7 +111,7 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
         var (find, _, nav) = FindRanksPagesSettingsAndHelpTests.Build();
         nav.Register(PanelTab.Assets, new NavCrumb("zorblax-assets", "Zorblax"));
         nav.Register(PanelTab.Commander, new NavCrumb("zorblax-commander", "Zorblax"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("zorblax-navigation", "Zorblax"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("zorblax-navigation", "Zorblax"));
         nav.Register(PanelTab.Stories, new NavCrumb("zorblax-stories", "Zorblax"));
 
         var answer = PanelFindPhrases.Answer("find the zorblax page", find);
@@ -140,7 +140,7 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
     {
         var (find, _, nav) = FindRanksPagesSettingsAndHelpTests.Build();
         nav.Register(PanelTab.Commander, new NavCrumb("zorblax", "Zorblax"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("zorblax-two", "Zorblax two"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("zorblax-two", "Zorblax two"));
 
         var answer = PanelFindPhrases.Answer("find the zorblax page", find);
 

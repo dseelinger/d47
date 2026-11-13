@@ -59,7 +59,7 @@ public class GoingBackRefocusesTheOpenedRowTests
         RowsPage? root = null;
 
         host.Panel.Furnish(
-            PanelTab.Navigation,
+            PanelTab.Astrometrics,
             crumb =>
             {
                 if (crumb.Key == "root")
@@ -71,7 +71,7 @@ public class GoingBackRefocusesTheOpenedRowTests
             },
             new NavCrumb("root", "Root"));
 
-        host.Panel.Tab = PanelTab.Navigation;
+        host.Panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         return (host, () => root!, () => count, n => count = n);
@@ -166,7 +166,7 @@ public class GoingBackRefocusesTheOpenedRowTests
         Press(host, Key.Down);
         Press(host, Key.Enter);
 
-        host.Panel.Forget(PanelTab.Navigation, key => key == "root");
+        host.Panel.Forget(PanelTab.Astrometrics, key => key == "root");
         Back(host);
 
         Assert.DoesNotContain(Focused(host), root().Rows);

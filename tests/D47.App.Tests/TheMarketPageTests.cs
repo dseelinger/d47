@@ -102,7 +102,7 @@ public class TheMarketPageTests
         var clipboard = new D47.Core.Capabilities.Builtin.RecordingClipboard();
         var panel = Furnished(Board(Market("Cheap", "Deciat", 0, 500, 1000)), clipboard: clipboard);
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         var glyph = panel.GetVisualDescendants()
@@ -120,7 +120,7 @@ public class TheMarketPageTests
     {
         var panel = Furnished(Board(Market("Cheap", "Sol", 0, 500, 1000)));
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("Market", panel.Nav.Root.Word);
@@ -137,7 +137,7 @@ public class TheMarketPageTests
             Market("Near and dear", "Sol", 0, 900, 1000),
             Market("Far and cheap", "Elsewhere", 40, 300, 1000)));
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         var drawn = TextOf(panel);
@@ -161,7 +161,7 @@ public class TheMarketPageTests
             Market("A station with a long enough name to fill its column", "Sol", 0, 900, 1000),
             Market("Far and cheap", "Elsewhere", 40, 300, 1000)));
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         var window = panel.GetVisualAncestors().OfType<Window>().Single();
@@ -178,7 +178,7 @@ public class TheMarketPageTests
     {
         var panel = Furnished(Board(Market("Somewhere", "Sol", 0, 500, 1000)));
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(TextOf(panel), text => text.Contains("6 hours ago", StringComparison.Ordinal));
@@ -190,7 +190,7 @@ public class TheMarketPageTests
     {
         var panel = Furnished(Board(Market("Under their feet", "Sol", 0, 500, 1000, PriceSource.Seen)));
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(TextOf(panel), text => text.Contains("you saw it", StringComparison.Ordinal));
@@ -201,7 +201,7 @@ public class TheMarketPageTests
     {
         var panel = Furnished(new CommodityBoard());
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         var drawn = TextOf(panel);
@@ -217,7 +217,7 @@ public class TheMarketPageTests
     {
         var panel = Furnished(new CommodityBoard());
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         Page(panel).Add("Tritium", 700);
@@ -237,7 +237,7 @@ public class TheMarketPageTests
     {
         var panel = Furnished(new CommodityBoard());
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         Find(panel);
@@ -308,7 +308,7 @@ public class TheMarketPageTests
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         Page(panel).Add("Tritium", null);

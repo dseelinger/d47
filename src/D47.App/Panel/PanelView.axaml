@@ -434,10 +434,10 @@
                          Content="ASSET MGMT"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
-            <RadioButton x:Name="NavigationTab"
+            <RadioButton x:Name="AstrometricsTab"
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"
-                         Content="NAVIGATION"
+                         Content="ASTROMETRICS"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
             <RadioButton x:Name="ModulesTab"

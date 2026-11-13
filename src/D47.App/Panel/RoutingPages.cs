@@ -9,7 +9,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>What the Navigation tab is made of, and what each of its pages needs (Phase 37).</summary>
+/// <summary>What the Astrometrics tab is made of, and what each of its pages needs (Phase 37).</summary>
 /// <param name="Route">The route Elite wrote, for Progress.</param>
 /// <param name="Here">Where the Commander is, for Progress.</param>
 /// <param name="Registry">How every button on this tab acts.</param>
@@ -131,7 +131,7 @@ public sealed class CarrierRouteRequest
     }
 }
 
-/// <summary>The Navigation tab (Phase 37).</summary>
+/// <summary>The Astrometrics tab (Phase 37).</summary>
 public static class RoutingPages
 {
     /// <summary>Where a route comes from: the three planners.</summary>
@@ -239,8 +239,8 @@ public static class RoutingPages
                 surface.Commander ?? (() => null),
                 surface.Route,
                 surface.Settings,
-                nav.Roots(PanelTab.Navigation).Any(root => root.Key == TradeRoot)
-                    ? () => nav.SelectRoot(PanelTab.Navigation, TradeRoot)
+                nav.Roots(PanelTab.Astrometrics).Any(root => root.Key == TradeRoot)
+                    ? () => nav.SelectRoot(PanelTab.Astrometrics, TradeRoot)
                     : null,
                 surface.PrefixNames,
                 surface.SuggestionPause,

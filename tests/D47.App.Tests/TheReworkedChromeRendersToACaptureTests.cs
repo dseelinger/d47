@@ -159,7 +159,7 @@ public class TheReworkedChromeRendersToACaptureTests
     [AvaloniaFact]
     public void TheRouteBeingFlown()
     {
-        var (window, panel) = Open(1180, PanelTab.Navigation);
+        var (window, panel) = Open(1180, PanelTab.Astrometrics);
 
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         panel.Nav.Drill(RoutingPages.ProgressCrumb);
@@ -170,7 +170,7 @@ public class TheReworkedChromeRendersToACaptureTests
     [AvaloniaFact]
     public void ThePlannersAsForms()
     {
-        var (window, panel) = Open(1180, PanelTab.Navigation);
+        var (window, panel) = Open(1180, PanelTab.Astrometrics);
 
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         Save(window, "routing-plan.png");
@@ -180,7 +180,7 @@ public class TheReworkedChromeRendersToACaptureTests
     [AvaloniaFact]
     public void APlanThatWasMade()
     {
-        var (window, panel) = Open(1180, PanelTab.Navigation);
+        var (window, panel) = Open(1180, PanelTab.Astrometrics);
 
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         panel.Nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Jump, "Sol to Colonia"));

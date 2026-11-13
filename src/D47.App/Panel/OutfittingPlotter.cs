@@ -41,7 +41,7 @@ public sealed record OutfittingPlotter(
         return new LoadoutToBuy(
             subhead,
             Summary(names),
-            $"Plots from {from}, within {Radius} ly, and opens the route on Navigation › Plan.",
+            $"Plots from {from}, within {Radius} ly, and opens the route on Astrometrics › Plan.",
             purchases.StorageChecked,
             Plot: async cancellationToken =>
             {

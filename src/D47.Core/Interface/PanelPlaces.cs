@@ -15,7 +15,7 @@ public static class PanelPlaces
     /// <summary>
     /// Every place <paramref name="text"/> names that <paramref name="nav"/> has, in order: a path such as
     /// "Asset Mgmt › Ships" or "Settings > About", resolved as far as its parts name a tab and a root of it;
-    /// "Settings" as a capitalised word; and "the Navigation tab". <paramref name="words"/> holds each tab's
+    /// "Settings" as a capitalised word; and "the Astrometrics tab". <paramref name="words"/> holds each tab's
     /// word as the tab bar draws it.
     /// </summary>
     public static IReadOnlyList<PanelPlace> Find(

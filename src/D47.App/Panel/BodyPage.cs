@@ -13,7 +13,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>Navigation › On this body: the body's signals, the genus being sampled and how far from the last sample (#555).</summary>
+/// <summary>Astrometrics › On this body: the body's signals, the genus being sampled and how far from the last sample (#555).</summary>
 public sealed class BodyPage : UserControl
 {
     public const string RootKey = "routing.body";

@@ -22,12 +22,12 @@ nav_order: 127
 <p class="intro">Two steps to making the window your own.</p>
 <section>
 <h2><span class="num">1</span> Learn the tab strip. Everything is behind it.</h2>
-<p class="say">Press the tabs along the top: Transcript, Search, Stories, Commander, Asset Mgmt, Navigation and Settings. A Modules tab sits before Settings once a module is installed; with none installed it is not there.</p>
+<p class="say">Press the tabs along the top: Transcript, Search, Stories, Commander, Asset Mgmt, Astrometrics and Settings. A Modules tab sits before Settings once a module is installed; with none installed it is not there.</p>
 <p class="expect">Each tab opens its page; the headset shows the same strip without the tabs it has no room for.</p>
 <svg viewBox="0 0 880 208" role="img" aria-label="The seven tabs">
  <rect x="20" y="16" width="840" height="172" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
- <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Transcript  Search  Stories  Commander  Asset Mgmt  Navigation  Settings</text>
+ <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Transcript  Search  Stories  Commander  Asset Mgmt  Astrometrics  Settings</text>
  <text x="44" y="92" font-size="16" fill="var(--text)">The page you land on</text>
  <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">the conversation</text>
  <text x="44" y="130" font-size="16" fill="var(--text)">Everything else</text>
@@ -454,7 +454,7 @@ to have. See [Settings](settings.md).
 One bar along the top, and each tab is a surface of its own:
 
 ```text
-Transcript   Search   Stories   Commander   Asset Mgmt   Navigation   Settings
+Transcript   Search   Stories   Commander   Asset Mgmt   Astrometrics   Settings
 ```
 
 Engineers is a page of Asset Mgmt, and the checklist is a page of Commander.
@@ -462,7 +462,7 @@ Engineers is a page of Asset Mgmt, and the checklist is a page of Commander.
 **The two surfaces carry the same tabs**, Settings included: the headset builds its settings page
 the same way the window does. Each tab reached the headset in its own turn, for its own reason. The checklist and Asset Mgmt were both
 withdrawn on the Commander's own instruction, and the checklist went back first — what a Commander is
-working on is worth reading in the one place there is no other way to read it (Phase 39). Navigation
+working on is worth reading in the one place there is no other way to read it (Phase 39). Astrometrics
 followed it, every root of it: the plan forms were held back for wanting a keyboard, and their
 boxes reach the drawn one the same way the checklist's edit box does. Asset Mgmt was held back longest,
 on the reasoning that a three-level drill ending in a search field is a bigger surface than a list
@@ -472,9 +472,9 @@ headset path and stays a mouse convenience; so does double-clicking a slot row t
 
 A tab you have not got is a tab that is not drawn. The surfaces arrive as they are built.
 
-**Each tab remembers which of its readings you were on.** Leaving Navigation on *Course* and going to
+**Each tab remembers which of its readings you were on.** Leaving Astrometrics on *Course* and going to
 Asset Mgmt comes back to *Course*, and so does closing Directive 47 and opening it again — the
-transcript's reading, Navigation's, and every other tab's. Settings comes back scrolled to the section
+transcript's reading, Astrometrics', and every other tab's. Settings comes back scrolled to the section
 you left it at, without opening any card you had closed. What is deliberately **not** remembered is
 which tab was showing: the panel opens on the transcript, the way it always has.
 
@@ -500,7 +500,7 @@ phrase, and on the keyboard Escape or Alt+Left. Say the name of the tab you are 
 pressing it does. A tab answers to its bare name, to "show", "open", "go to", "switch to" or
 "select" in front of it, and to "tab" or "page" after it — and to nothing looser, because a phrase that
 merely mentions a tab is not a request for it. The Stories tab also answers to "story", so
-"story tab", "story page" and "show the story" open it. "Route" opens Navigation › Plan › Progress,
+"story tab", "story page" and "show the story" open it. "Route" opens Astrometrics › Plan › Progress,
 and "engineers route" opens the Engineers Route page.
 
 **Voice jumps levels.** Asking for something three levels down takes you there with the whole

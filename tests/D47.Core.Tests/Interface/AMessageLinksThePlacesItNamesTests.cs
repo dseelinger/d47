@@ -14,7 +14,7 @@ public class AMessageLinksThePlacesItNamesTests
         [PanelTab.Stories] = "STORIES",
         [PanelTab.Commander] = "COMMANDER",
         [PanelTab.Assets] = "ASSET MGMT",
-        [PanelTab.Navigation] = "NAVIGATION",
+        [PanelTab.Astrometrics] = "ASTROMETRICS",
         [PanelTab.Settings] = "SETTINGS",
     };
 
@@ -28,7 +28,7 @@ public class AMessageLinksThePlacesItNamesTests
         nav.Register(PanelTab.Commander, new NavCrumb("missions", "Missions"));
         nav.Register(PanelTab.Assets, new NavCrumb("loadout.ships", "Ships"));
         nav.Register(PanelTab.Assets, new NavCrumb("loadout.carrier", "Carrier"));
-        nav.Register(PanelTab.Navigation, new NavCrumb("routing.plan", "Plan"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb("routing.plan", "Plan"));
 
         if (settings)
         {
@@ -125,12 +125,12 @@ public class AMessageLinksThePlacesItNamesTests
     [Fact]
     public void TheTabFormLinksTheTabAndTheWordTab()
     {
-        const string text = "Your route is on the Navigation tab.";
+        const string text = "Your route is on the Astrometrics tab.";
 
         var place = Assert.Single(Find(text));
 
-        Assert.Equal("Navigation tab", Linked(text, place));
-        Assert.Equal(PanelTab.Navigation, place.Tab);
+        Assert.Equal("Astrometrics tab", Linked(text, place));
+        Assert.Equal(PanelTab.Astrometrics, place.Tab);
     }
 
     [Fact]

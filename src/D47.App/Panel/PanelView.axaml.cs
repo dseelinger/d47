@@ -275,7 +275,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         _tabs[PanelTab.Stories] = StoriesTab;
         _tabs[PanelTab.Commander] = CommanderTab;
         _tabs[PanelTab.Assets] = AssetsTab;
-        _tabs[PanelTab.Navigation] = NavigationTab;
+        _tabs[PanelTab.Astrometrics] = AstrometricsTab;
         _tabs[PanelTab.Modules] = ModulesTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
@@ -901,7 +901,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     }
 
     /// <summary>
-    /// Gives this surface the Navigation tab (Phase 37): where the Commander is going. Progress is a level
+    /// Gives this surface the Astrometrics tab (Phase 37): where the Commander is going. Progress is a level
     /// beside Plan rather than a root, and needs <paramref name="plan"/>.
     /// </summary>
     public void EnableRouting(
@@ -2459,13 +2459,13 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         var modal = ModalPane.Child is not null;
 
-        // Mini reading the Stories tab (asked for 2026-08-22), the Navigation tab's Plan root (#197) or Galaxy map root (#1916) — the
+        // Mini reading the Stories tab (asked for 2026-08-22), the Astrometrics tab's Plan root (#197) or Galaxy map root (#1916) — the
         // rest of Routing keeps drawing its full-size page even at mini's size.
         Control? miniControl = Tab switch
         {
             PanelTab.Stories => _stories.Mini,
-            PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _navigation.PlanRootMini,
-            PanelTab.Navigation when Nav.RootKeyOf(Tab) == RoutingPages.GalaxyMapRoot => _navigation.GalaxyMini,
+            PanelTab.Astrometrics when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _navigation.PlanRootMini,
+            PanelTab.Astrometrics when Nav.RootKeyOf(Tab) == RoutingPages.GalaxyMapRoot => _navigation.GalaxyMini,
             _ => null,
         };
 

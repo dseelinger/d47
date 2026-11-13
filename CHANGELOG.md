@@ -10,7 +10,9 @@
 
 Fixed: The check for a push-to-talk key or headset zoom key that Elite already binds now finds keys Elite spells differently from d47, such as Scroll Lock, 0, =, -, comma, the arrow keys and the numpad. Before, only letters and F-keys matched, so the default Scroll Lock key never showed as taken.
 
-Fixed: On Navigation › Trade route, a Plot that finds no trade run now shows its answer under the button, such as an unseen market, no run that pays or a missing credits figure, and keeps the credits you typed. Before, the page redrew after every Plot, which erased the answer and the credits box.
+Changed: The Navigation tab is now called Astrometrics, on the tab bar, in what D47 says and in the pages that name it. Saying "navigation" or "astro metrics" still opens it, and a saved tab or layout that says Navigation or Routing still opens it.
+
+Fixed: On Astrometrics › Trade route, a Plot that finds no trade run now shows its answer under the button, such as an unseen market, no run that pays or a missing credits figure, and keeps the credits you typed. Before, the page redrew after every Plot, which erased the answer and the credits box.
 
 Added: A next-system watch with "Also tell me when a plotted route passes through one" ticked also checks each route you plot. D47 asks Spansh about the systems ahead one at a time, nearest first and at most 40, and says the first with a match once per route, such as "Your route passes a Manufactured material trader, Commander: Kremainn, jump 6 of 14. Wohler Terminal, 240 light seconds, large pad." The watch stays on and still speaks on arrival. A new route starts the checks over and a cleared route stops them. A watch added by voice has the box ticked, and the reply says so.
 

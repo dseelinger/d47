@@ -182,7 +182,7 @@ public sealed class TheDonationWalkthroughIsCapturedTests
             _ => new TextBlock(),
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("engineers", "Engineers"));
-        panel.Furnish(PanelTab.Navigation, _ => new TextBlock(), new NavCrumb("plan", "Plan"));
+        panel.Furnish(PanelTab.Astrometrics, _ => new TextBlock(), new NavCrumb("plan", "Plan"));
         panel.EnableSettings(() => new TextBlock());
         panel.EnableSearch();
         panel.EnableRawJournal();

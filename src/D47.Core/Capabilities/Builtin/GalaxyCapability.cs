@@ -2688,7 +2688,7 @@ public static class GalaxyCapability
                 }
             }
 
-            // Posted on the way out, so the Navigation tab draws the answer the Commander was just told rather
+            // Posted on the way out, so the Astrometrics tab draws the answer the Commander was just told rather
             // than running a second search that could disagree with it (Phase 49; the arrangement
             // RoutePlanBook already makes for routes).
             if (board is not null)

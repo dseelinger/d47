@@ -13,7 +13,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>Navigation › Bookmarks: the places a Commander has named, with a note on each.</summary>
+/// <summary>Astrometrics › Bookmarks: the places a Commander has named, with a note on each.</summary>
 public sealed class BookmarksPage : UserControl
 {
     public const string RootKey = RoutingPages.BookmarksRoot;

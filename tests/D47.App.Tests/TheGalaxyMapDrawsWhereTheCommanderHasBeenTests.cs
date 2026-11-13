@@ -21,7 +21,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The Navigation tab's Galaxy map draws the Commander's travels, position and route, in the window and on the big panel (#1406).</summary>
+/// <summary>The Astrometrics tab's Galaxy map draws the Commander's travels, position and route, in the window and on the big panel (#1406).</summary>
 public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 21, 12, 0, 0, TimeSpan.Zero);
@@ -144,7 +144,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         });
     }
 
-    /// <summary>The Navigation tab with every one of its pages, so its sub-tab row is as long as the app's.</summary>
+    /// <summary>The Astrometrics tab with every one of its pages, so its sub-tab row is as long as the app's.</summary>
     private static PanelView Panel(Game game, bool headset)
     {
         Themed();
@@ -178,8 +178,8 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             MapLookups = game.Lookups,
         });
 
-        panel.Tab = PanelTab.Navigation;
-        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.GalaxyMapRoot));
+        panel.Tab = PanelTab.Astrometrics;
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.GalaxyMapRoot));
 
         return panel;
     }
@@ -232,15 +232,15 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     }
 
     [AvaloniaFact]
-    public void GalaxyMapIsTheSecondPageOfTheNavigationTab()
+    public void GalaxyMapIsTheSecondPageOfTheAstrometricsTab()
     {
         var panel = Panel(Played(), headset: false);
 
-        var roots = panel.Nav.Roots(PanelTab.Navigation).Select(root => root.Key).ToList();
+        var roots = panel.Nav.Roots(PanelTab.Astrometrics).Select(root => root.Key).ToList();
 
         Assert.Equal(8, roots.Count);
         Assert.Equal(RoutingPages.GalaxyMapRoot, roots[1]);
-        Assert.Equal("Galaxy map", panel.Nav.Roots(PanelTab.Navigation)[1].Word);
+        Assert.Equal("Galaxy map", panel.Nav.Roots(PanelTab.Astrometrics)[1].Word);
     }
 
     [AvaloniaFact]
@@ -1229,9 +1229,9 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         Assert.Equal(1, game.Galaxy.Searches);
         Assert.Equal(2, game.Galaxy.PositionsAsked.Count);
 
-        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot));
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.PlanRoot));
         Dispatcher.UIThread.RunJobs();
-        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.GalaxyMapRoot));
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.GalaxyMapRoot));
         Dispatcher.UIThread.RunJobs();
 
         var reopened = Page(panel);
@@ -1330,9 +1330,9 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         Assert.Equal(25, game.Galaxy.PositionsAsked.Count);
         Assert.Equal("2 bookmarks are in systems not looked up yet. Open the map again to look them up.", UnplacedLine(page));
 
-        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot));
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.PlanRoot));
         Dispatcher.UIThread.RunJobs();
-        Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.GalaxyMapRoot));
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.GalaxyMapRoot));
         Dispatcher.UIThread.RunJobs();
 
         var reopened = Page(panel);

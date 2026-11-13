@@ -163,11 +163,11 @@ public class TheGalaxyMapDrawsAStoredPlanTests
             Now = () => Now,
         });
 
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
 
         if (openMap)
         {
-            Assert.True(panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.GalaxyMapRoot));
+            Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.GalaxyMapRoot));
         }
 
         return panel;
@@ -211,7 +211,7 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         var plan = RouteMapStop.From(game.Plans.Last(RoutePlanKind.Riches)!)!;
 
         Assert.Equal(RoutePlanKind.Riches, page.PlanShown());
-        Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(RoutingPages.GalaxyMapRoot, panel.Nav.RootKeyOf(PanelTab.Astrometrics));
         Assert.Equal(2, page.Framing().SelectedIndex);
         Assert.Equal(GalaxyViewport.Fitting(Positioned(plan))!.LightYearsAcross, page.Map().Viewport.LightYearsAcross);
         Assert.True(page.Map().Viewport.LightYearsAcross <= GalaxyMapView.DetailAcross);
@@ -331,8 +331,8 @@ public class TheGalaxyMapDrawsAStoredPlanTests
         Show(panel);
 
         // Plan, the plan, and its Show on galaxy map press, which builds the map page for the first time.
-        panel.Nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot);
-        panel.Nav.Drill(PanelTab.Navigation, RoutingPages.ResultCrumb(RoutePlanKind.Riches, "Road to Riches"));
+        panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.PlanRoot);
+        panel.Nav.Drill(PanelTab.Astrometrics, RoutingPages.ResultCrumb(RoutePlanKind.Riches, "Road to Riches"));
         Dispatcher.UIThread.RunJobs();
         Assert.Empty(panel.GetVisualDescendants().OfType<GalaxyMapPage>());
 

@@ -39,9 +39,9 @@ public sealed class TheHeadsetFollowsTheWindowTests
         headset.Draw(pixels.Address, pixels.RowBytes);
         Assert.False(headset.IsDirty);
 
-        Assert.True(window.Nav.Select(PanelTab.Navigation));
+        Assert.True(window.Nav.Select(PanelTab.Astrometrics));
 
-        Assert.Equal(PanelTab.Navigation, headset.Nav.Tab);
+        Assert.Equal(PanelTab.Astrometrics, headset.Nav.Tab);
         Assert.True(headset.IsDirty);
 
         headset.Dispose();
@@ -53,11 +53,11 @@ public sealed class TheHeadsetFollowsTheWindowTests
     {
         var store = Store();
         var window = Window();
-        var root = window.Nav.Roots(PanelTab.Navigation)[^1].Key;
+        var root = window.Nav.Roots(PanelTab.Astrometrics)[^1].Key;
 
-        store.Save(store.Load().With(PanelTab.Navigation.ToString(), root) with
+        store.Save(store.Load().With(PanelTab.Astrometrics.ToString(), root) with
         {
-            LastTab = PanelTab.Navigation.ToString(),
+            LastTab = PanelTab.Astrometrics.ToString(),
         });
 
         // In the order the app wires it: the window leads, then restores where it was left, and the
@@ -68,13 +68,13 @@ public sealed class TheHeadsetFollowsTheWindowTests
         window.RememberTab(new PanelTabMemory(store));
         Jobs();
 
-        Assert.Equal(PanelTab.Navigation, window.Nav.Tab);
+        Assert.Equal(PanelTab.Astrometrics, window.Nav.Tab);
 
         var headset = Headset();
         mirror.Add(headset.Nav);
 
-        Assert.Equal(PanelTab.Navigation, headset.Nav.Tab);
-        Assert.Equal(root, headset.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(PanelTab.Astrometrics, headset.Nav.Tab);
+        Assert.Equal(root, headset.Nav.RootKeyOf(PanelTab.Astrometrics));
 
         headset.Dispose();
     }

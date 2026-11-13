@@ -19,7 +19,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The To buy block on a ship page plots an outfitting route and opens it on Navigation › Plan (#1827).</summary>
+/// <summary>The To buy block on a ship page plots an outfitting route and opens it on Astrometrics › Plan (#1827).</summary>
 [Trait("Category", "Integration")]
 [Collection(nameof(ShipArtCollection))]
 public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
@@ -89,7 +89,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Assets, new NavCrumb(LoadoutPages.FleetRoot, "Ships"));
-        nav.Register(PanelTab.Navigation, new NavCrumb(RoutingPages.PlanRoot, "Plan"));
+        nav.Register(PanelTab.Astrometrics, new NavCrumb(RoutingPages.PlanRoot, "Plan"));
 
         var plotter = new OutfittingPlotter(registry, plans, () => game.Active?.Location.StarSystem);
         var mode = new ShipsMode(ships, checklists, () => game.Active, outfitting: plotter);
@@ -133,7 +133,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 
         Plot(bench.Page).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        for (var wait = 0; wait < 200 && bench.Nav.Tab != PanelTab.Navigation; wait++)
+        for (var wait = 0; wait < 200 && bench.Nav.Tab != PanelTab.Astrometrics; wait++)
         {
             Dispatcher.UIThread.RunJobs();
             await Task.Delay(10, TestContext.Current.CancellationToken);
@@ -143,11 +143,11 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 
         Assert.Equal("LHS 3447", asked.Near);
         Assert.Equal(["Python", "6A Fuel Scoop"], asked.Items.Select(item => item.Display));
-        Assert.Equal(PanelTab.Navigation, bench.Nav.Tab);
-        Assert.Equal(RoutingPages.PlanRoot, bench.Nav.RootKeyOf(PanelTab.Navigation));
+        Assert.Equal(PanelTab.Astrometrics, bench.Nav.Tab);
+        Assert.Equal(RoutingPages.PlanRoot, bench.Nav.RootKeyOf(PanelTab.Astrometrics));
         Assert.Equal(
             [RoutingPages.PlanRoot, RoutingPages.ResultPrefix + RoutePlanKind.Outfitting],
-            bench.Nav.TrailOf(PanelTab.Navigation).Select(crumb => crumb.Key));
+            bench.Nav.TrailOf(PanelTab.Astrometrics).Select(crumb => crumb.Key));
         Assert.False(bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.StorageChecked);
         Assert.Equal([72], bench.Galaxy.Ages);
         Assert.Equal(72, bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.MaxReportAgeHours);
@@ -162,7 +162,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 
         Plot(bench.Page).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        for (var wait = 0; wait < 200 && bench.Nav.Tab != PanelTab.Navigation; wait++)
+        for (var wait = 0; wait < 200 && bench.Nav.Tab != PanelTab.Astrometrics; wait++)
         {
             Dispatcher.UIThread.RunJobs();
             await Task.Delay(10, TestContext.Current.CancellationToken);
@@ -180,10 +180,10 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 
         Click(bench.Page.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "OpenToBuyRoute"));
 
-        Assert.Equal(PanelTab.Navigation, bench.Nav.Tab);
+        Assert.Equal(PanelTab.Astrometrics, bench.Nav.Tab);
         Assert.Equal(
             [RoutingPages.PlanRoot, RoutingPages.ResultPrefix + RoutePlanKind.Outfitting],
-            bench.Nav.TrailOf(PanelTab.Navigation).Select(crumb => crumb.Key));
+            bench.Nav.TrailOf(PanelTab.Astrometrics).Select(crumb => crumb.Key));
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         Assert.Empty(bench.Galaxy.Asked);
         Assert.DoesNotContain("Working it out…", Texts(bench.Page));
         Assert.Contains(Texts(bench.Page), text => text.Length > 0 && !text.StartsWith("1 stop", StringComparison.Ordinal) && text.Contains("system", StringComparison.OrdinalIgnoreCase));
-        Assert.NotEqual(PanelTab.Navigation, bench.Nav.Tab);
+        Assert.NotEqual(PanelTab.Astrometrics, bench.Nav.Tab);
         Assert.DoesNotContain(bench.Page.GetVisualDescendants().OfType<Button>(), button => button.Name == "OpenToBuyRoute");
     }
 
@@ -229,7 +229,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 
         Plot(bench.Page).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
-        for (var wait = 0; wait < 200 && bench.Nav.Tab != PanelTab.Navigation; wait++)
+        for (var wait = 0; wait < 200 && bench.Nav.Tab != PanelTab.Astrometrics; wait++)
         {
             Dispatcher.UIThread.RunJobs();
             await Task.Delay(10, TestContext.Current.CancellationToken);

@@ -4,7 +4,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>The Navigation tab: Plan, Galaxy map, Bookmarks, Market, Best cargo, Trade route, On this body and Unsold data.</summary>
+/// <summary>The Astrometrics tab: Plan, Galaxy map, Bookmarks, Market, Best cargo, Trade route, On this body and Unsold data.</summary>
 internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteRequest carrierRoute)
 {
     private RouteProgressPage? _routeProgress;
@@ -49,7 +49,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     public event Action? PlanRootMiniChanged;
 
     /// <summary>
-    /// Gives this surface the Navigation tab (Phase 37): where the Commander is going. Progress is a level
+    /// Gives this surface the Astrometrics tab (Phase 37): where the Commander is going. Progress is a level
     /// beside Plan rather than a root, and needs <paramref name="plan"/>.
     /// </summary>
     public void EnableRouting(
@@ -180,7 +180,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         }
 
         host.Furnish(
-            PanelTab.Navigation,
+            PanelTab.Astrometrics,
             crumb =>
             {
                 if (crumb.Key == BodyPage.RootKey && surface.Commander is { } commander)
@@ -248,10 +248,10 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         // Each launch opens Plan with Progress beside it; once the Commander leaves it, Plan stays alone.
         if (plan
             && progress
-            && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.PlanRoot
-            && host.Nav.TrailOf(PanelTab.Navigation).Count == 1)
+            && host.Nav.RootKeyOf(PanelTab.Astrometrics) == RoutingPages.PlanRoot
+            && host.Nav.TrailOf(PanelTab.Astrometrics).Count == 1)
         {
-            host.Nav.Drill(PanelTab.Navigation, RoutingPages.ProgressCrumb);
+            host.Nav.Drill(PanelTab.Astrometrics, RoutingPages.ProgressCrumb);
         }
 
         // A plot made anywhere - this tab's own button, or a spoken tool call - leaves the Plan page one
@@ -302,10 +302,10 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         }
     }
 
-    /// <summary>A plan's result page coming to the top of the Navigation trail puts that plan in play.</summary>
+    /// <summary>A plan's result page coming to the top of the Astrometrics trail puts that plan in play.</summary>
     private void NavigationMoved()
     {
-        var trail = host.Nav.TrailOf(PanelTab.Navigation);
+        var trail = host.Nav.TrailOf(PanelTab.Astrometrics);
         var top = trail.Count > 0 ? trail[^1].Key : null;
 
         if (top == _trailTop)
@@ -350,20 +350,20 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     /// </summary>
     public bool Tick()
     {
-        if (host.Tab != PanelTab.Navigation)
+        if (host.Tab != PanelTab.Astrometrics)
         {
             return false;
         }
 
         // On this body follows the game's position, so it ticks ahead of the route's guard.
-        var body = _bodyPage is { } bodyPage && host.Nav.RootKeyOf(PanelTab.Navigation) == BodyPage.RootKey && bodyPage.Tick();
-        body |= _unsoldPage is { } unsoldPage && host.Nav.RootKeyOf(PanelTab.Navigation) == UnsoldPage.RootKey && unsoldPage.Tick();
-        body |= _bestCargo is { } cargo && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.BestCargoRoot && cargo.Tick();
-        body |= _galaxyMap is { } map && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.GalaxyMapRoot && map.Tick();
+        var body = _bodyPage is { } bodyPage && host.Nav.RootKeyOf(PanelTab.Astrometrics) == BodyPage.RootKey && bodyPage.Tick();
+        body |= _unsoldPage is { } unsoldPage && host.Nav.RootKeyOf(PanelTab.Astrometrics) == UnsoldPage.RootKey && unsoldPage.Tick();
+        body |= _bestCargo is { } cargo && host.Nav.RootKeyOf(PanelTab.Astrometrics) == RoutingPages.BestCargoRoot && cargo.Tick();
+        body |= _galaxyMap is { } map && host.Nav.RootKeyOf(PanelTab.Astrometrics) == RoutingPages.GalaxyMapRoot && map.Tick();
 
-        body |= GalaxyMini is { } mini && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.GalaxyMapRoot && mini.Tick();
+        body |= GalaxyMini is { } mini && host.Nav.RootKeyOf(PanelTab.Astrometrics) == RoutingPages.GalaxyMapRoot && mini.Tick();
 
-        body |= _planStandIn is { } standIn && host.Nav.RootKeyOf(PanelTab.Navigation) == RoutingPages.PlanRoot && InPlay() is null && standIn.Tick();
+        body |= _planStandIn is { } standIn && host.Nav.RootKeyOf(PanelTab.Astrometrics) == RoutingPages.PlanRoot && InPlay() is null && standIn.Tick();
 
         var route = _routeState?.Invoke();
         var here = _routeHere?.Invoke();

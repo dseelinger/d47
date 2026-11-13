@@ -16,7 +16,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Navigation › Market adds each commodity from the type-ahead as a tile carrying its tonnes, up to five.</summary>
+/// <summary>Astrometrics › Market adds each commodity from the type-ahead as a tile carrying its tonnes, up to five.</summary>
 public sealed class MarketTakesEachCommodityAsATileTests
 {
     private static (PanelView Panel, Window Window, RouteMarketPage Page) Furnished()
@@ -38,7 +38,7 @@ public sealed class MarketTakesEachCommodityAsATileTests
 
         var window = new Window { Content = panel, Width = 1100, Height = 800 };
         window.Show();
-        panel.Tab = PanelTab.Navigation;
+        panel.Tab = PanelTab.Astrometrics;
         Dispatcher.UIThread.RunJobs();
 
         return (panel, window, panel.GetVisualDescendants().OfType<RouteMarketPage>().Single());

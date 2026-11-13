@@ -2145,7 +2145,7 @@ public sealed class ItemPage : LoadoutPage
     private StackPanel ToBuyBlock(LoadoutToBuy toBuy)
     {
         var plotting = _plotting is not null;
-        var planRoot = _nav.Roots(PanelTab.Navigation).Any(root => root.Key == RoutingPages.PlanRoot);
+        var planRoot = _nav.Roots(PanelTab.Astrometrics).Any(root => root.Key == RoutingPages.PlanRoot);
 
         var subhead = LoadoutPages.Muted(toBuy.Subhead.ToUpperInvariant());
         subhead.FontSize = TypeScale.Meta;
@@ -2224,7 +2224,7 @@ public sealed class ItemPage : LoadoutPage
         return block;
     }
 
-    /// <summary>Plots, then opens the stored plan on Navigation › Plan when the plot stored a new one.</summary>
+    /// <summary>Plots, then opens the stored plan on Astrometrics › Plan when the plot stored a new one.</summary>
     private async Task PlotToBuy(LoadoutToBuy toBuy)
     {
         if (_plotting is not null)
@@ -2267,12 +2267,12 @@ public sealed class ItemPage : LoadoutPage
 
     private void OpenPlan(NavCrumb crumb)
     {
-        _nav.Select(PanelTab.Navigation);
-        _nav.SelectRoot(PanelTab.Navigation, RoutingPages.PlanRoot);
+        _nav.Select(PanelTab.Astrometrics);
+        _nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.PlanRoot);
 
-        if (_nav.TrailOf(PanelTab.Navigation) is not [.., { } last] || last.Key != crumb.Key)
+        if (_nav.TrailOf(PanelTab.Astrometrics) is not [.., { } last] || last.Key != crumb.Key)
         {
-            _nav.Drill(PanelTab.Navigation, crumb);
+            _nav.Drill(PanelTab.Astrometrics, crumb);
         }
     }
 

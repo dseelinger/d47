@@ -57,6 +57,7 @@ public static class PanelPhrases
         new Dictionary<PanelTab, IReadOnlyList<string>>
         {
             [PanelTab.Stories] = ["story"],
+            [PanelTab.Astrometrics] = ["navigation", "astro metrics"],
         };
 
     /// <summary>Moves the panel if the phrase named somewhere it could go, and says what happened.</summary>
