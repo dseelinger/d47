@@ -2,6 +2,7 @@ using D47.Core.Capabilities;
 using D47.Core.Hotas;
 using D47.Core.Interface;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Ships;
 using Microsoft.Extensions.Logging;
 
@@ -21,7 +22,7 @@ public sealed class PanelRouting(
     private volatile Func<Heard, bool>[] _prompts = [];
     private volatile (PanelPrompts Prompts, Action<Action> Post, bool Headset)[] _promptSurfaces = [];
     private volatile PanelNavigator[] _navigators = [];
-    private volatile (PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem)[] _surfaces = [];
+    private volatile (PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem, Action<StarChartKind>? OpenChart)[] _surfaces = [];
     private volatile Func<PanelScrollStep, PanelScrollSide, PanelScrollOutcome>[] _scrollers = [];
     private volatile (PanelNavigator Nav, Action<Action> Post, Action<PanelFindResult>? OpenFound)[] _finders = [];
     private volatile PanelFind? _find;
@@ -58,12 +59,13 @@ public sealed class PanelRouting(
         Action<Action> post,
         bool leads = false,
         Action<long>? openSystem = null,
-        Action<PanelFindResult>? openFound = null)
+        Action<PanelFindResult>? openFound = null,
+        Action<StarChartKind>? openChart = null)
     {
         lock (_registration)
         {
             _navigators = [.. _navigators, nav];
-            _surfaces = [.. _surfaces, (nav, post, openSystem)];
+            _surfaces = [.. _surfaces, (nav, post, openSystem, openChart)];
             _finders = [.. _finders, (nav, post, openFound)];
 
             // Mirrored before the snapshot is hooked, so the first snapshot already reads the surfaces agreeing.
@@ -127,7 +129,7 @@ public sealed class PanelRouting(
     {
         if (RelativeTab.Direction(key) is { } direction)
         {
-            foreach (var (nav, post, _) in _surfaces)
+            foreach (var (nav, post, _, _) in _surfaces)
             {
                 post(() => Step(nav, direction));
             }
@@ -135,7 +137,7 @@ public sealed class PanelRouting(
             return;
         }
 
-        foreach (var (nav, post, _) in _surfaces)
+        foreach (var (nav, post, _, _) in _surfaces)
         {
             post(() => nav.Show(key));
         }

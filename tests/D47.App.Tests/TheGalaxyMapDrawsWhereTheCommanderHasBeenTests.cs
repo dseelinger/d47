@@ -149,7 +149,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
     }
 
     /// <summary>The Astrometrics tab with every one of its pages, so its sub-tab row is as long as the app's.</summary>
-    private static PanelView Panel(Game game, bool headset)
+    internal static PanelView Panel(Game game, bool headset, string root = RoutingPages.GalaxyMapRoot)
     {
         Themed();
 
@@ -184,7 +184,7 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         });
 
         panel.Tab = PanelTab.Astrometrics;
-        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, RoutingPages.GalaxyMapRoot));
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, root) || panel.Nav.Root.Key == root);
 
         return panel;
     }
@@ -1134,10 +1134,12 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
         game.Layers = SavedLayers();
         var (_, _, page) = InWindow(game);
 
-        foreach (var kind in StarCharts.All)
+        foreach (var kind in StarCharts.Default)
         {
             Assert.True(page.Switch(StarCharts.Info(kind).Title).IsChecked, StarCharts.Info(kind).Title);
         }
+
+        Assert.DoesNotContain(page.GetVisualDescendants().OfType<CheckBox>(), box => Avalonia.Automation.AutomationProperties.GetName(box) == "Guardian beacons");
 
         Assert.Equal(2, page.Range().SelectedIndex);
     }

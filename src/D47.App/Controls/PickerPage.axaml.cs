@@ -686,7 +686,10 @@ public partial class PickerPage : UserControl
 
             box.Content = null;
             ground.Bind(Border.BackgroundProperty, this.GetResourceObservable("D47.Bg"));
-            box.Content = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 8, Children = { ground, label } };
+            ground.Margin = new Thickness(0, 0, 8, 0);
+            label.TextWrapping = TextWrapping.WrapWithOverflow;
+            DockPanel.SetDock(ground, Dock.Left);
+            box.Content = new DockPanel { Children = { ground, label } };
         }
 
         return box;

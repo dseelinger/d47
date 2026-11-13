@@ -1,4 +1,5 @@
 using D47.Core.Knowledge;
+using D47.Core.Persona;
 using Xunit;
 
 namespace D47.Core.Tests;
@@ -21,7 +22,7 @@ public class EveryStarChartHasATitleAndAShapeTests
     public void TheKindsAreListedInSwitchOrder()
     {
         Assert.Equal(
-            ["Travels", "Route", "Regions", "Engineers", "Bookmarks", "Carrier", "Ships", "Unvisited"],
+            ["Travels", "Route", "Regions", "Engineers", "Bookmarks", "Carrier", "Ships", "Unvisited", "Guardian beacons"],
             StarCharts.All.Select(kind => StarCharts.Info(kind).Title));
     }
 
@@ -42,6 +43,7 @@ public class EveryStarChartHasATitleAndAShapeTests
         Assert.Equal("Bookmark", StarCharts.Info(StarChartKind.Bookmarks).Mark);
         Assert.Equal("Fleet carrier", StarCharts.Info(StarChartKind.Carrier).Mark);
         Assert.Equal("Ship", StarCharts.Info(StarChartKind.Ships).Mark);
+        Assert.Equal("Guardian beacon", StarCharts.Info(StarChartKind.GuardianBeacons).Mark);
         Assert.All(
             new[] { StarChartKind.Travels, StarChartKind.Route, StarChartKind.Regions, StarChartKind.Unvisited },
             kind => Assert.Null(StarCharts.Info(kind).Mark));
@@ -56,5 +58,34 @@ public class EveryStarChartHasATitleAndAShapeTests
         Assert.Equal(
             [StarChartKind.Regions, StarChartKind.Engineers, StarChartKind.Unvisited],
             StarCharts.All.Where(kind => StarCharts.Info(kind).Group == StarCharts.Galaxy));
+        Assert.Equal(
+            [StarChartKind.GuardianBeacons],
+            StarCharts.All.Where(kind => StarCharts.Info(kind).Group == StarCharts.Guardian));
+    }
+
+    [Fact]
+    public void GuardianBeaconsIsTheOnlyFixedChartAndIsOffAMapWithNothingSaved()
+    {
+        Assert.Equal([StarChartKind.GuardianBeacons], StarCharts.All.Where(StarCharts.IsFixed));
+        Assert.Equal(StarCharts.All.Where(kind => kind != StarChartKind.GuardianBeacons), StarCharts.Default);
+    }
+
+    [Fact]
+    public void TheGuardianBeaconsChartIsEveryKnownBeaconSystemWithItsAddressAndPosition()
+    {
+        var systems = StarCharts.Systems(StarChartKind.GuardianBeacons);
+
+        Assert.Equal(28, systems.Count);
+        Assert.All(systems, system =>
+        {
+            Assert.Equal(GuardianCores.Beacons[system.Address], system.Name);
+            Assert.Equal(GuardianCores.BeaconPositions[system.Address], system.At);
+        });
+    }
+
+    [Fact]
+    public void AChartThatIsNotFixedHasNoSystems()
+    {
+        Assert.All(StarCharts.Default, kind => Assert.Empty(StarCharts.Systems(kind)));
     }
 }

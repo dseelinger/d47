@@ -69,7 +69,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly Func<IGalaxyService?> _galaxy;
     private readonly GalaxyMapLookups _lookups;
     private readonly RoutePlanBook? _plans;
-    private readonly GalaxyMapLayers _layers;
+    private GalaxyMapLayers _layers;
     private readonly GalaxyMapLayersMemory? _memory;
     private readonly PanelPrompts? _prompts;
 
@@ -84,6 +84,7 @@ public sealed class GalaxyMapPage : UserControl
     private readonly CheckBox _carrierMark;
     private readonly CheckBox _shipMarks;
     private readonly CheckBox _unvisited;
+    private readonly CheckBox _beacons;
     private readonly Button _layersTile = Press(string.Empty, SwitchRail);
     private readonly StackPanel _rail = new() { Spacing = 2 };
     private int _railPage;
@@ -153,7 +154,8 @@ public sealed class GalaxyMapPage : UserControl
         RoutePlanBook? plans = null,
         RoutePlanKind? plan = null,
         GalaxyMapLayersMemory? layers = null,
-        PanelPrompts? prompts = null)
+        PanelPrompts? prompts = null,
+        StarChartKind? chart = null)
     {
         _travel = travel;
         _commander = commander;
@@ -177,6 +179,7 @@ public sealed class GalaxyMapPage : UserControl
         _carrierMark = Marked(StarChartKind.Carrier, live => MarkDrawing(GalaxyMapMarkKind.Carrier, live));
         _shipMarks = Marked(StarChartKind.Ships, live => MarkDrawing(GalaxyMapMarkKind.Ships, live));
         _unvisited = Marked(StarChartKind.Unvisited, UnvisitedDrawing);
+        _beacons = Marked(StarChartKind.GuardianBeacons, live => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, live));
 
         _unvisitedWanted = _layers.Ticked(StarChartKind.Unvisited);
         _range.SelectedIndex = _layers.Range;
@@ -235,6 +238,11 @@ public sealed class GalaxyMapPage : UserControl
 
         _framing.SelectedIndex = _planDrawn is not null ? RouteFraming : _position is null ? Galaxy : Here;
         Frame(_framing.SelectedIndex);
+
+        if (chart is { } asked)
+        {
+            ShowChart(asked);
+        }
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -481,6 +489,7 @@ public sealed class GalaxyMapPage : UserControl
         (StarChartKind.Carrier, _carrierMark),
         (StarChartKind.Ships, _shipMarks),
         (StarChartKind.Unvisited, _unvisited),
+        (StarChartKind.GuardianBeacons, _beacons),
     ];
 
     /// <summary>Whether <paramref name="kind"/> is on the map and its switch is ticked.</summary>
@@ -572,6 +581,33 @@ public sealed class GalaxyMapPage : UserControl
 
         Rail();
         Refresh();
+    }
+
+    /// <summary>
+    /// Puts <paramref name="kind"/> on the map ticked, leaving the other layers as last saved by any surface, turns the
+    /// rail to it and fits the view to its systems at the same heading and tilt.
+    /// </summary>
+    public void ShowChart(StarChartKind kind)
+    {
+        if (_memory is not null)
+        {
+            _layers = _memory.Read();
+            _range.SelectedIndex = _layers.Range;
+        }
+
+        _layers.Tick(kind, true);
+        ChooseLayers([.. _layers.OnMap, kind]);
+
+        _railPage = GalaxyMapRailPages.PageOf(_layers.OnMap.Count, _layers.OnMap.ToList().IndexOf(kind));
+        Rail();
+
+        var now = _map.Viewport;
+
+        if (GalaxyViewport.Fitting([.. StarCharts.Systems(kind).Select(system => system.At)], now.Heading, now.Tilt) is { } fitted)
+        {
+            _map.View(fitted);
+            Moved();
+        }
     }
 
     /// <summary>The rail lists a switch for each kind on the map, pages past eight, and the tile counts them.</summary>
@@ -694,6 +730,14 @@ public sealed class GalaxyMapPage : UserControl
             foreach (var system in named.GroupBy(engineer => engineer.System!, StringComparer.OrdinalIgnoreCase))
             {
                 marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.Engineer, system.Key, system.First().Position!.Value, [.. system.Select(engineer => engineer.Name)]));
+            }
+        }
+
+        if (Shows(StarChartKind.GuardianBeacons))
+        {
+            foreach (var system in StarCharts.Systems(StarChartKind.GuardianBeacons))
+            {
+                marks.Add(new GalaxyMapMark(GalaxyMapMarkKind.GuardianBeacon, system.Name, system.At, []));
             }
         }
 
@@ -972,6 +1016,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.Engineer => mark.Names.Count == 1 ? "Engineer" : "Engineers",
         GalaxyMapMarkKind.Bookmark => mark.Names.Count == 1 ? "Bookmark" : "Bookmarks",
         GalaxyMapMarkKind.Carrier => "Your carrier",
+        GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
         _ => mark.Names.Count == 1 ? "Stored ship" : "Stored ships",
     };
 
@@ -1304,6 +1349,7 @@ public sealed class GalaxyMapPage : UserControl
         GalaxyMapMarkKind.Engineer => "Engineer",
         GalaxyMapMarkKind.Bookmark => "Bookmark",
         GalaxyMapMarkKind.Carrier => "Your carrier",
+        GalaxyMapMarkKind.GuardianBeacon => "Guardian beacon",
         _ => "Stored ship",
     };
 
@@ -1687,6 +1733,7 @@ public sealed class GalaxyMapPage : UserControl
             GalaxyMapMarkKind.Engineer => (new (double X, double Y)[] { (-1.5, -5.5), (1.5, -5.5), (1.5, -1.5), (5.5, -1.5), (5.5, 1.5), (1.5, 1.5), (1.5, 5.5), (-1.5, 5.5), (-1.5, 1.5), (-5.5, 1.5), (-5.5, -1.5), (-1.5, -1.5) }, ThemeManager.WhiteKey),
             GalaxyMapMarkKind.Bookmark => (new (double X, double Y)[] { (-4, -5.5), (4, -5.5), (4, 5.5), (0, 2), (-4, 5.5) }, ThemeManager.CyanKey),
             GalaxyMapMarkKind.Carrier => (new (double X, double Y)[] { (-7, 0), (-2, 0), (-2, -4), (2, -4), (2, 0), (7, 0), (7, 4), (-7, 4) }, ThemeManager.YellowKey),
+            GalaxyMapMarkKind.GuardianBeacon => (new (double X, double Y)[] { (0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4) }, ThemeManager.AKey),
             _ => (new (double X, double Y)[] { (0, -6), (5.5, 5), (0, 2), (-5.5, 5) }, ThemeManager.YellowKey),
         };
 
@@ -1717,6 +1764,7 @@ public sealed class GalaxyMapPage : UserControl
         StarChartKind.Bookmarks => MarkDrawing(GalaxyMapMarkKind.Bookmark, () => true),
         StarChartKind.Carrier => MarkDrawing(GalaxyMapMarkKind.Carrier, () => true),
         StarChartKind.Ships => MarkDrawing(GalaxyMapMarkKind.Ships, () => true),
+        StarChartKind.GuardianBeacons => MarkDrawing(GalaxyMapMarkKind.GuardianBeacon, () => true),
         _ => UnvisitedDrawing(() => true),
     };
 

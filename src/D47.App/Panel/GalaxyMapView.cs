@@ -23,6 +23,7 @@ public enum GalaxyMapMarkKind
     Bookmark,
     Carrier,
     Ships,
+    GuardianBeacon,
 }
 
 /// <summary>One kind of marker in one system, with the names the strip lists; one mark is drawn however many names it holds.</summary>
@@ -107,6 +108,8 @@ public sealed class GalaxyMapView : Control
     private static readonly (double X, double Y)[] Hull = [(-7, 0), (-2, 0), (-2, -4), (2, -4), (2, 0), (7, 0), (7, 4), (-7, 4)];
     private static readonly (double X, double Y)[] ChevronHalo = [(0, -8.5), (7.5, 6.5), (0, 3.8), (-7.5, 6.5)];
     private static readonly (double X, double Y)[] Chevron = [(0, -6), (5.5, 5), (0, 2), (-5.5, 5)];
+    private static readonly (double X, double Y)[] PylonHalo = [(0, -9.6), (4.6, -5), (4.6, 7.6), (-4.6, 7.6), (-4.6, -5)];
+    private static readonly (double X, double Y)[] Pylon = [(0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4)];
 
     private static Color? _groundColour;
     private static WriteableBitmap? _ground;
@@ -815,6 +818,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.Engineer => (-7.0, -7.0, 7.0, 7.0),
             GalaxyMapMarkKind.Bookmark => (-5.5, -7.0, 5.5, 8.5),
             GalaxyMapMarkKind.Carrier => (-8.5, -5.5, 8.5, 5.5),
+            GalaxyMapMarkKind.GuardianBeacon => (-4.6, -9.6, 4.6, 7.6),
             _ => (-7.5, -8.5, mark.Count >= 2 ? CountGap + (6 * mark.Count.ToString("N0", CultureInfo.InvariantCulture).Length) + 1.5 : 7.5, 6.5),
         };
 
@@ -828,6 +832,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.Engineer => (CrossHalo, Cross, ThemeManager.WhiteKey),
             GalaxyMapMarkKind.Bookmark => (RibbonHalo, Ribbon, ThemeManager.CyanKey),
             GalaxyMapMarkKind.Carrier => (HullHalo, Hull, ThemeManager.YellowKey),
+            GalaxyMapMarkKind.GuardianBeacon => (PylonHalo, Pylon, ThemeManager.AKey),
             _ => (ChevronHalo, Chevron, ThemeManager.YellowKey),
         };
 
@@ -862,6 +867,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.Engineer => (Cross, ThemeManager.WhiteKey),
             GalaxyMapMarkKind.Bookmark => (Ribbon, ThemeManager.CyanKey),
             GalaxyMapMarkKind.Carrier => (Hull, ThemeManager.YellowKey),
+            GalaxyMapMarkKind.GuardianBeacon => (Pylon, ThemeManager.AKey),
             _ => (Chevron, ThemeManager.YellowKey),
         };
 

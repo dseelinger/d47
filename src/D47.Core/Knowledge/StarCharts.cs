@@ -1,3 +1,6 @@
+using D47.Core.Journal;
+using D47.Core.Persona;
+
 namespace D47.Core.Knowledge;
 
 /// <summary>A set of things the Galaxy map can draw, switched on and off as one.</summary>
@@ -11,6 +14,7 @@ public enum StarChartKind
     Carrier,
     Ships,
     Unvisited,
+    GuardianBeacons,
 }
 
 /// <summary>How a chart is drawn on the map.</summary>
@@ -24,13 +28,37 @@ public enum StarChartShape
 /// <summary>A chart's switch title, the word for one of its marks (null when it has none), its shape and the group the Layers picker lists it under.</summary>
 public sealed record StarChartInfo(string Title, string? Mark, StarChartShape Shape, string Group);
 
+/// <summary>One system a fixed chart draws.</summary>
+public sealed record StarChartSystem(string Name, long Address, StarPosition At);
+
 public static class StarCharts
 {
     public const string Yours = "Yours";
     public const string Galaxy = "Galaxy";
+    public const string Guardian = "Guardian";
 
     /// <summary>Every kind, in the order the switches are listed.</summary>
     public static IReadOnlyList<StarChartKind> All { get; } = Enum.GetValues<StarChartKind>();
+
+    /// <summary>The kinds on a map with nothing saved: every kind but the fixed charts, which a request adds.</summary>
+    public static IReadOnlyList<StarChartKind> Default { get; } = [.. All.Where(kind => !IsFixed(kind))];
+
+    /// <summary>Whether <paramref name="kind"/> draws a fixed list of systems that d47 carries.</summary>
+    public static bool IsFixed(StarChartKind kind) => kind == StarChartKind.GuardianBeacons;
+
+    /// <summary>The systems a fixed kind draws, by name; empty for any other kind.</summary>
+    public static IReadOnlyList<StarChartSystem> Systems(StarChartKind kind) => kind switch
+    {
+        StarChartKind.GuardianBeacons => BeaconSystems,
+        _ => [],
+    };
+
+    private static readonly IReadOnlyList<StarChartSystem> BeaconSystems =
+    [
+        .. GuardianCores.Beacons
+            .Select(pair => new StarChartSystem(pair.Value, pair.Key, GuardianCores.BeaconPositions[pair.Key]))
+            .OrderBy(system => system.Name, StringComparer.Ordinal),
+    ];
 
     public static StarChartInfo Info(StarChartKind kind) => kind switch
     {
@@ -42,6 +70,7 @@ public static class StarCharts
         StarChartKind.Carrier => new("Carrier", "Fleet carrier", StarChartShape.Points, Yours),
         StarChartKind.Ships => new("Ships", "Ship", StarChartShape.Points, Yours),
         StarChartKind.Unvisited => new("Unvisited", null, StarChartShape.Points, Galaxy),
+        StarChartKind.GuardianBeacons => new("Guardian beacons", "Guardian beacon", StarChartShape.Points, Guardian),
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
     };
 }

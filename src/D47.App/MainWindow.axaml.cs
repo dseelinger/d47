@@ -594,7 +594,8 @@ public partial class MainWindow : Window
                 move => ui.Post(move),
                 leads: true,
                 openSystem: address => Panel.OpenSystem(address),
-                openFound: Panel.OpenFound);
+                openFound: Panel.OpenFound,
+                openChart: Panel.OpenChart);
 
             // Searched from this surface's navigator; every surface resolves the result itself (#1473).
             host.PanelRouting.RouteFind(new PanelFind(Panel.Nav, host.Settings, Panel.TabWords, Bookmarks(host)));

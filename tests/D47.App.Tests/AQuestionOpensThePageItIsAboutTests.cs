@@ -36,7 +36,7 @@ public class AQuestionOpensThePageItIsAboutTests
     private static void Open(PageRef page, Action<long> openSystem, params PanelNavigator[] navs) =>
         PageTrail.OpenEverywhere(
             page,
-            navs.Select(nav => (nav, (Action<Action>)(action => action()), (Action<long>?)openSystem)),
+            navs.Select(nav => (nav, (Action<Action>)(action => action()), (Action<long>?)openSystem, (Action<StarChartKind>?)null)),
             () => [Runner]);
 
     [Fact]

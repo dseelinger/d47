@@ -10,7 +10,7 @@ public sealed class GalaxyMapLayers(IEnumerable<StarChartKind>? onMap = null, IE
     private readonly HashSet<StarChartKind> _unticked = [.. unticked ?? []];
 
     /// <summary>The kinds on the map, in <see cref="StarChartKind"/> order.</summary>
-    public IReadOnlyList<StarChartKind> OnMap { get; private set; } = InOrder(onMap ?? StarCharts.All);
+    public IReadOnlyList<StarChartKind> OnMap { get; private set; } = InOrder(onMap ?? StarCharts.Default);
 
     /// <summary>The travels range: 0 for 30 days, 1 for 1 year, 2 for all.</summary>
     public int Range { get; set; } = range is >= 0 and <= AllTime ? range : AllTime;
@@ -18,8 +18,11 @@ public sealed class GalaxyMapLayers(IEnumerable<StarChartKind>? onMap = null, IE
     /// <summary>The kinds the Commander has unticked.</summary>
     public IReadOnlyCollection<StarChartKind> Unticked => _unticked;
 
-    /// <summary>The kinds not on the map, in <see cref="StarChartKind"/> order.</summary>
-    public IEnumerable<StarChartKind> Removed => StarCharts.All.Where(kind => !OnMap.Contains(kind));
+    /// <summary>The kinds on the map by default that are not on it, in <see cref="StarChartKind"/> order.</summary>
+    public IEnumerable<StarChartKind> Removed => StarCharts.Default.Where(kind => !OnMap.Contains(kind));
+
+    /// <summary>The kinds off the map by default that are on it, in <see cref="StarChartKind"/> order.</summary>
+    public IEnumerable<StarChartKind> Added => OnMap.Where(kind => !StarCharts.Default.Contains(kind));
 
     public bool Ticked(StarChartKind kind) => OnMap.Contains(kind) && !_unticked.Contains(kind);
 

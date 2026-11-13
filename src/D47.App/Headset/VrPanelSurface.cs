@@ -350,6 +350,13 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Opens this surface's System page on one system.</summary>
     public void OpenSystem(long systemAddress) => _dirty |= _view.OpenSystem(systemAddress);
 
+    /// <summary>Adds a chart kind to this surface's Galaxy map and fits the view to it.</summary>
+    public void OpenChart(D47.Core.Knowledge.StarChartKind kind)
+    {
+        _view.OpenChart(kind);
+        _dirty = true;
+    }
+
     /// <summary>
     /// Takes this surface to a Find result. Redrawn once the posted reveal has run and again once its mark has
     /// cleared, since neither moves the navigator.

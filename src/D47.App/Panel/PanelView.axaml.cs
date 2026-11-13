@@ -971,6 +971,9 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     public bool OpenSystem(long systemAddress) => _searchFurnishing.OpenSystem(systemAddress);
 
+    /// <summary>Adds a chart kind to this surface's Galaxy map and fits the view to it.</summary>
+    public void OpenChart(D47.Core.Knowledge.StarChartKind kind) => _navigation.ShowChart(kind);
+
     private readonly SearchFurnishing _searchFurnishing;
     private readonly StoriesFurnishing _stories;
     private readonly NavigationFurnishing _navigation;

@@ -145,6 +145,9 @@ public sealed class VrHost : IDisposable
 
     public void OpenSystem(long systemAddress) => _panel.OpenSystem(systemAddress);
 
+    /// <summary>Adds a chart kind to the headset's Galaxy map. Call on the UI thread.</summary>
+    public void OpenChart(D47.Core.Knowledge.StarChartKind kind) => _panel.OpenChart(kind);
+
     /// <summary>Takes the headset panel to a Find result. Call on the UI thread.</summary>
     public void OpenFound(D47.Core.Interface.PanelFindResult found) => _panel.OpenFound(found);
 

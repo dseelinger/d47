@@ -50,7 +50,7 @@ public class TheGalaxyMapsLayersAreChosenOnAPickerTests
         var (_, _, page) = InWindow(game);
 
         Assert.Equal("LAYERS · 8", AutomationProperties.GetName(LayersTile(page)));
-        Assert.Equal(StarCharts.All.Select(kind => StarCharts.Info(kind).Title), RailTitles(page));
+        Assert.Equal(StarCharts.Default.Select(kind => StarCharts.Info(kind).Title), RailTitles(page));
         Assert.All(page.GetVisualDescendants().OfType<CheckBox>(), box => Assert.Single(box.GetVisualDescendants().OfType<Glyph>()));
     }
 
@@ -69,9 +69,10 @@ public class TheGalaxyMapsLayersAreChosenOnAPickerTests
         Assert.Contains(GalaxyMapPage.LayersHelp, words);
         Assert.Contains("YOURS", words);
         Assert.Contains("GALAXY", words);
-        Assert.Equal(8, boxes.Count);
-        Assert.All(boxes, box => Assert.True(box.IsChecked));
-        Assert.Equal(8, picker.GetVisualDescendants().OfType<Glyph>().Count());
+        Assert.Contains("GUARDIAN", words);
+        Assert.Equal(9, boxes.Count);
+        Assert.All(boxes, box => Assert.Equal(AutomationProperties.GetName(box) != "Guardian beacons", box.IsChecked));
+        Assert.Equal(9, picker.GetVisualDescendants().OfType<Glyph>().Count());
         Assert.False(picker.GetControl<Button>("DefaultButton").IsVisible);
     }
 
@@ -99,7 +100,7 @@ public class TheGalaxyMapsLayersAreChosenOnAPickerTests
         page.Map().View(GalaxyViewport.Around(engineer.Position!.Value));
 
         Assert.Equal("LAYERS · 8", AutomationProperties.GetName(LayersTile(page)));
-        Assert.Equal(StarCharts.All.Select(kind => StarCharts.Info(kind).Title), RailTitles(page));
+        Assert.Equal(StarCharts.Default.Select(kind => StarCharts.Info(kind).Title), RailTitles(page));
         Assert.True(page.Switch("Engineers").IsChecked);
         Assert.Contains(MarkedAt(page, engineer.System!, engineer.Position!.Value), word => word.StartsWith("ENGINEER", StringComparison.Ordinal));
     }
@@ -146,10 +147,10 @@ public class TheGalaxyMapsLayersAreChosenOnAPickerTests
         Assert.Equal(330, page.Framing().Bounds.Width);
         Assert.Equal(330, page.Range().Bounds.Width);
         Assert.Equal(152, LayersTile(page).Bounds.Width);
-        Assert.Equal(StarCharts.All.Select(kind => StarCharts.Info(kind).Title), RailTitles(page));
+        Assert.Equal(StarCharts.Default.Select(kind => StarCharts.Info(kind).Title), RailTitles(page));
 
         Assert.True(Tap(surface, panel, LayersTile(page)));
         var picker = panel.GetVisualDescendants().OfType<PickerPage>().Single();
-        Assert.Equal(8, picker.GetVisualDescendants().OfType<CheckBox>().Count());
+        Assert.Equal(9, picker.GetVisualDescendants().OfType<CheckBox>().Count());
     }
 }

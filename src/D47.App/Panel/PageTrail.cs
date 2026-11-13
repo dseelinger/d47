@@ -28,6 +28,7 @@ public static class PageTrail
                     entry.IsOwned && (entry.Stored?.ShipId == page.Id || entry.Build?.ShipId == page.Id)) is { } ship
                 => (LoadoutPages.FleetRoot, LoadoutPages.Ship(ship)),
             PageKind.System => (StarSystemPage.RootKey, new NavCrumb(StarSystemPage.RootKey, "System")),
+            PageKind.StarChart => (RoutingPages.GalaxyMapRoot, new NavCrumb(RoutingPages.GalaxyMapRoot, "Galaxy map")),
             PageKind.Plan => (RoutingPages.PlanRoot, RoutingPages.ResultCrumb((RoutePlanKind)page.Id, page.Name ?? "Plan")),
             PageKind.Search => SearchRoot((GalaxySearchKind)page.Id) is { } root ? (root, new NavCrumb(root, "Search")) : null,
             _ => null,
@@ -55,12 +56,13 @@ public static class PageTrail
 
     /// <summary>
     /// Opens the page on every surface, each through its own thread. A system page is opened on the system
-    /// through the surface's <c>OpenSystem</c>, which a surface with no System page leaves null. A surface
-    /// <paramref name="held"/> by a prompt stays where it is.
+    /// through the surface's <c>OpenSystem</c>, which a surface with no System page leaves null; a star chart is
+    /// added to the Galaxy map through <c>OpenChart</c> in the same way. A surface <paramref name="held"/> by a
+    /// prompt stays where it is.
     /// </summary>
     public static void OpenEverywhere(
         PageRef page,
-        IEnumerable<(PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem)> surfaces,
+        IEnumerable<(PanelNavigator Nav, Action<Action> Post, Action<long>? OpenSystem, Action<StarChartKind>? OpenChart)> surfaces,
         Func<IReadOnlyList<FleetEntry>> fleet,
         Func<PanelNavigator, bool>? held = null)
     {
@@ -69,13 +71,22 @@ public static class PageTrail
             return;
         }
 
-        foreach (var (nav, post, openSystem) in surfaces)
+        foreach (var (nav, post, openSystem, openChart) in surfaces)
         {
             post(() =>
             {
-                if (held?.Invoke(nav) != true && Open(nav, target.Root, target.Crumbs) && page.Kind == PageKind.System)
+                if (held?.Invoke(nav) == true || !Open(nav, target.Root, target.Crumbs))
+                {
+                    return;
+                }
+
+                if (page.Kind == PageKind.System)
                 {
                     openSystem?.Invoke(page.Id);
+                }
+                else if (page.Kind == PageKind.StarChart)
+                {
+                    openChart?.Invoke((StarChartKind)page.Id);
                 }
             });
         }

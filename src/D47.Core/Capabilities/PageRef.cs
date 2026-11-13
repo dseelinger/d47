@@ -10,6 +10,7 @@ public enum PageKind
     Search,
     CodexEntry,
     Plan,
+    StarChart,
 }
 
 /// <summary>What a tool's answer is about, for the panel to open; the App decides how it is drawn.</summary>

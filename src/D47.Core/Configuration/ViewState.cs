@@ -83,6 +83,9 @@ public sealed record ViewState
     /// <summary>The chart kinds the Commander has taken off the Galaxy map, by <c>StarChartKind</c> name.</summary>
     public IReadOnlyList<string> GalaxyMapRemoved { get; init; } = [];
 
+    /// <summary>The fixed chart kinds put on the Galaxy map, which are off it until added, by <c>StarChartKind</c> name.</summary>
+    public IReadOnlyList<string> GalaxyMapAdded { get; init; } = [];
+
     /// <summary>The Galaxy map's chart kinds the Commander has unticked, by <c>StarChartKind</c> name.</summary>
     public IReadOnlyList<string> GalaxyMapUnticked { get; init; } = [];
 

@@ -16,6 +16,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     private RouteBestCargoPage? _bestCargo;
     private GalaxyMapPage? _galaxyMap;
     private RoutePlanKind? _planOnMap;
+    private StarChartKind? _chartAsked;
 
     private static readonly RoutePlanKind[] PlanPageKinds = [RoutePlanKind.Jump, RoutePlanKind.Riches, RoutePlanKind.Exobiology, RoutePlanKind.Carrier];
 
@@ -214,7 +215,10 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         surface.Plans,
                         _planOnMap,
                         surface.GalaxyLayers,
-                        host.Prompts);
+                        host.Prompts,
+                        _chartAsked);
+
+                    _chartAsked = null;
 
                     galaxyPage.PlanChosen += kind => _planOnMap = kind;
 
@@ -353,6 +357,19 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         _planOnMap = kind;
         host.Nav.Show(RoutingPages.GalaxyMapRoot);
         _galaxyMap?.ShowPlan(kind);
+    }
+
+    /// <summary>Adds <paramref name="kind"/> to the Galaxy map and fits the view to it, or to the map built next when none is built yet.</summary>
+    public void ShowChart(StarChartKind kind)
+    {
+        if (_galaxyMap is { } map)
+        {
+            map.ShowChart(kind);
+        }
+        else
+        {
+            _chartAsked = kind;
+        }
     }
 
     /// <summary>
