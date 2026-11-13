@@ -19,15 +19,21 @@ public sealed record TravelStep(
     StarPosition Position,
     TravelArrival How);
 
+/// <summary>A system the Commander died in, with where it is and how many times the Commander died there.</summary>
+public sealed record DeathPlace(long SystemAddress, string System, StarPosition Position, int Count);
+
 /// <summary>
-/// Every system each Commander has arrived in, oldest first. Rebuilt from the journals on every start and
-/// extended by live events; holds no file.
+/// Every system each Commander has arrived in, oldest first, and when each Commander died. A death is in the system
+/// of the arrival at or before its time. Rebuilt from the journals on every start and extended by live events;
+/// holds no file.
 /// </summary>
 public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
 {
     private readonly Lock _gate = new();
 
     private readonly Dictionary<string, List<TravelStep>> _steps = new(StringComparer.Ordinal);
+
+    private readonly Dictionary<string, SortedSet<DateTimeOffset>> _deaths = new(StringComparer.Ordinal);
 
     private string _liveFid = string.Empty;
 
@@ -102,6 +108,70 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
         }
     }
 
+    /// <summary>The systems a Commander died in, with how many times each, ordered by name; a death before any arrival is left out.</summary>
+    public IReadOnlyList<DeathPlace> Deaths(string fid)
+    {
+        ArgumentNullException.ThrowIfNull(fid);
+
+        lock (_gate)
+        {
+            if (!_deaths.TryGetValue(fid, out var times) || !_steps.TryGetValue(fid, out var steps))
+            {
+                return [];
+            }
+
+            var places = new Dictionary<long, DeathPlace>();
+
+            foreach (var time in times)
+            {
+                if (StepAt(steps, time) is not { } step)
+                {
+                    continue;
+                }
+
+                places[step.SystemAddress] = places.TryGetValue(step.SystemAddress, out var seen)
+                    ? seen with { Count = seen.Count + 1 }
+                    : new DeathPlace(step.SystemAddress, step.System, step.Position, 1);
+            }
+
+            return [.. places.Values.OrderBy(place => place.System, StringComparer.OrdinalIgnoreCase)];
+        }
+    }
+
+    /// <summary>How many deaths a Commander has recorded, placed or not; zero for one with none.</summary>
+    public int DeathCount(string fid)
+    {
+        ArgumentNullException.ThrowIfNull(fid);
+
+        lock (_gate)
+        {
+            return _deaths.TryGetValue(fid, out var times) ? times.Count : 0;
+        }
+    }
+
+    /// <summary>The latest step at or before <paramref name="time"/>, or null when there is none.</summary>
+    private static TravelStep? StepAt(List<TravelStep> steps, DateTimeOffset time)
+    {
+        var low = 0;
+        var high = steps.Count;
+
+        while (low < high)
+        {
+            var middle = (low + high) / 2;
+
+            if (steps[middle].At <= time)
+            {
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle;
+            }
+        }
+
+        return low == 0 ? null : steps[low - 1];
+    }
+
     /// <summary>The position of the latest visit to a system, by name without regard to case, or null.</summary>
     public StarPosition? PositionOf(string fid, string system)
     {
@@ -127,7 +197,7 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
 
     private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "Commander", "NewCommander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown", "Location", "FSDJump",
-        "CarrierJump");
+        "CarrierJump", "Died");
 
     private void Fold(JournalEvent journalEvent, ref string fid)
     {
@@ -152,6 +222,22 @@ public sealed class TravelLog(IFileSystem fileSystem, ILogger logger)
                     {
                         before.RemoveAll(step => step.At <= journalEvent.Timestamp);
                     }
+
+                    _deaths.GetValueOrDefault(erased)?.RemoveWhere(time => time <= journalEvent.Timestamp);
+                }
+
+                return;
+
+            case "Died":
+                if (fid.Length > 0)
+                {
+                    if (!_deaths.TryGetValue(fid, out var times))
+                    {
+                        times = [];
+                        _deaths[fid] = times;
+                    }
+
+                    times.Add(journalEvent.Timestamp);
                 }
 
                 return;

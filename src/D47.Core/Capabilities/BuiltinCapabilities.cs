@@ -369,7 +369,10 @@ public static class BuiltinCapabilities
         Func<Campaigns.CampaignFrontsSnapshot?>? campaignFronts = null,
 
         // The one front the Commander is working, and the one proposed.
-        Campaigns.CampaignFocus? campaignFocus = null) =>
+        Campaigns.CampaignFocus? campaignFocus = null,
+
+        // Where the Commander has died, for show_star_chart.
+        Journal.TravelLog? travelLog = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -592,7 +595,7 @@ public static class BuiltinCapabilities
 
         CampaignCapability.Create(campaigns, () => gameState.Active, squadronFactions, galaxy, campaignSystems, campaignFronts, campaignFocus),
 
-        AstrometricsCapability.Create(() => gameState.Active),
+        AstrometricsCapability.Create(() => gameState.Active, fid => travelLog?.Deaths(fid) ?? []),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

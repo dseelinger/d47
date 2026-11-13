@@ -18,6 +18,8 @@ public static class AstrometricsCapability
 
     public const string MissionDestinationsChart = "mission_destinations";
 
+    public const string DeathsChart = "deaths";
+
     private static readonly string[] BeaconPhrases =
     [
         "show me all known Guardian beacons",
@@ -37,13 +39,19 @@ public static class AstrometricsCapability
         "show my missions on the map",
     ];
 
-    public static CapabilityDescriptor Create(Func<CommanderGameState?> state) => new()
+    private static readonly string[] DeathPhrases =
+    [
+        "show where I died",
+        "my deaths on the map",
+    ];
+
+    public static CapabilityDescriptor Create(Func<CommanderGameState?> state, Func<string, IReadOnlyList<DeathPlace>>? deaths = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
         Name = "Star charts",
-        Summary = "Adds a chart, such as the Guardian beacons, the material farming sites or your mission destinations, to the Galaxy map and says what it holds.",
-        Examples = ["show me all known Guardian beacons", "show the farming sites", "show my missions on the map"],
+        Summary = "Adds a chart, such as the Guardian beacons, the material farming sites, your mission destinations or where you died, to the Galaxy map and says what it holds.",
+        Examples = ["show me all known Guardian beacons", "show the farming sites", "show my missions on the map", "show where I died"],
         Display = new CapabilityDisplay { PanelTitle = "Star charts", Order = 71, ShowOnPanel = false },
         Tools =
         [
@@ -55,19 +63,20 @@ public static class AstrometricsCapability
                     + "Galaxy map and says how many beacon systems it knows and which is nearest you.",
                 Description =
                     "Adds a chart layer to the Galaxy map and opens the map: the Guardian beacons, the material "
-                    + "farming sites or the destinations of the Commander's active missions. Answers with how many "
+                    + "farming sites, the destinations of the Commander's active missions or the systems the Commander has died in. Answers with how many "
                     + "systems the chart marks and, when the Commander's position is known, the nearest one and its distance.",
                 Parameters =
                 [
-                    ToolParameter.OneOf("chart", "The chart to show.", [GuardianBeacons, FarmingSitesChart, MissionDestinationsChart], required: true),
+                    ToolParameter.OneOf("chart", "The chart to show.", [GuardianBeacons, FarmingSitesChart, MissionDestinationsChart, DeathsChart], required: true),
                 ],
                 Commands =
                 [
                     .. BeaconPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = GuardianBeacons })),
                     .. FarmingPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = FarmingSitesChart })),
                     .. MissionPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = MissionDestinationsChart })),
+                    .. DeathPhrases.Select(phrase => new ToolCommandPhrase(phrase, new Dictionary<string, string> { ["chart"] = DeathsChart })),
                 ],
-                Handler = (arguments, _) => Task.FromResult(Answer(state(), arguments)),
+                Handler = (arguments, _) => Task.FromResult(Answer(state(), deaths, arguments)),
             },
         ],
     };
@@ -117,11 +126,23 @@ public static class AstrometricsCapability
         return $"You have {bound.Count} active {(bound.Count == 1 ? "mission" : "missions")} bound for {systems} {(systems == 1 ? "system" : "systems")}.";
     }
 
-    private static ToolResult Answer(CommanderGameState? state, ToolArguments arguments)
+    public static string DescribeDeaths(IReadOnlyList<DeathPlace> places)
+    {
+        if (places.Count == 0)
+        {
+            return "I have no record of where you died.";
+        }
+
+        var deaths = places.Sum(place => place.Count);
+
+        return $"You have died {deaths} {(deaths == 1 ? "time" : "times")} in {places.Count} {(places.Count == 1 ? "system" : "systems")}.";
+    }
+
+    private static ToolResult Answer(CommanderGameState? state, Func<string, IReadOnlyList<DeathPlace>>? deaths, ToolArguments arguments)
     {
         if (!arguments.TryGetString("chart", out var chart))
         {
-            return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart} or {MissionDestinationsChart}.");
+            return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart}, {MissionDestinationsChart} or {DeathsChart}.");
         }
 
         if (string.Equals(chart, GuardianBeacons, StringComparison.OrdinalIgnoreCase))
@@ -148,6 +169,16 @@ public static class AstrometricsCapability
             };
         }
 
-        return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart} or {MissionDestinationsChart}.");
+        if (string.Equals(chart, DeathsChart, StringComparison.OrdinalIgnoreCase))
+        {
+            var fid = state?.Identity.FrontierId ?? string.Empty;
+
+            return ToolResult.Ok(DescribeDeaths(fid.Length == 0 || deaths is null ? [] : deaths(fid))) with
+            {
+                Page = PageRef.StarChart(StarChartKind.Deaths),
+            };
+        }
+
+        return ToolResult.Error($"chart must be {GuardianBeacons}, {FarmingSitesChart}, {MissionDestinationsChart} or {DeathsChart}.");
     }
 }

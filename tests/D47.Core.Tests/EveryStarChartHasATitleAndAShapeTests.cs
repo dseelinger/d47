@@ -22,7 +22,7 @@ public class EveryStarChartHasATitleAndAShapeTests
     public void TheKindsAreListedInSwitchOrder()
     {
         Assert.Equal(
-            ["Travels", "Route", "Regions", "Engineers", "Bookmarks", "Carrier", "Ships", "Unvisited", "Guardian beacons", "Farming sites", "Missions", "Systems search", "Stations search", "Bodies search", "Signals search", "Outfitting search", "Rares search"],
+            ["Travels", "Route", "Regions", "Engineers", "Bookmarks", "Carrier", "Ships", "Unvisited", "Guardian beacons", "Farming sites", "Missions", "Deaths", "Systems search", "Stations search", "Bodies search", "Signals search", "Outfitting search", "Rares search"],
             StarCharts.All.Select(kind => StarCharts.Info(kind).Title));
     }
 
@@ -46,6 +46,7 @@ public class EveryStarChartHasATitleAndAShapeTests
         Assert.Equal("Guardian beacon", StarCharts.Info(StarChartKind.GuardianBeacons).Mark);
         Assert.Equal("Farming site", StarCharts.Info(StarChartKind.FarmingSites).Mark);
         Assert.Equal("Mission destination", StarCharts.Info(StarChartKind.MissionDestinations).Mark);
+        Assert.Equal("Died here", StarCharts.Info(StarChartKind.Deaths).Mark);
         Assert.Equal("System result", StarCharts.Info(StarChartKind.SystemsSearch).Mark);
         Assert.Equal("Station result", StarCharts.Info(StarChartKind.StationsSearch).Mark);
         Assert.Equal("Body result", StarCharts.Info(StarChartKind.BodiesSearch).Mark);
@@ -61,7 +62,7 @@ public class EveryStarChartHasATitleAndAShapeTests
     public void YourChartsAndTheGalaxysChartsAreGroupedApart()
     {
         Assert.Equal(
-            [StarChartKind.Travels, StarChartKind.Route, StarChartKind.Bookmarks, StarChartKind.Carrier, StarChartKind.Ships, StarChartKind.MissionDestinations],
+            [StarChartKind.Travels, StarChartKind.Route, StarChartKind.Bookmarks, StarChartKind.Carrier, StarChartKind.Ships, StarChartKind.MissionDestinations, StarChartKind.Deaths],
             StarCharts.All.Where(kind => StarCharts.Info(kind).Group == StarCharts.Yours));
         Assert.Equal(
             [StarChartKind.Regions, StarChartKind.Engineers, StarChartKind.Unvisited, StarChartKind.FarmingSites],
@@ -91,7 +92,7 @@ public class EveryStarChartHasATitleAndAShapeTests
     {
         Assert.Equal([StarChartKind.GuardianBeacons, StarChartKind.FarmingSites], StarCharts.All.Where(StarCharts.IsFixed));
         Assert.Equal(
-            StarCharts.All.Where(kind => !StarCharts.IsFixed(kind) && kind != StarChartKind.MissionDestinations && StarCharts.SearchOf(kind) is null),
+            StarCharts.All.Where(kind => !StarCharts.IsFixed(kind) && kind is not (StarChartKind.MissionDestinations or StarChartKind.Deaths) && StarCharts.SearchOf(kind) is null),
             StarCharts.Default);
     }
 

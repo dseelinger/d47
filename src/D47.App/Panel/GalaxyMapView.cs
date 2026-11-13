@@ -26,6 +26,7 @@ public enum GalaxyMapMarkKind
     GuardianBeacon,
     FarmingSite,
     Mission,
+    Death,
     SystemResult,
     StationResult,
     BodyResult,
@@ -120,6 +121,8 @@ public sealed class GalaxyMapView : Control
     private static readonly (double X, double Y)[] Pylon = [(0, -7), (3, -4), (3, 6), (-3, 6), (-3, -4)];
     private static readonly (double X, double Y)[] HexHalo = [(0, -7.2), (6.3, -3.6), (6.3, 3.6), (0, 7.2), (-6.3, 3.6), (-6.3, -3.6)];
     private static readonly (double X, double Y)[] FlagHalo = [(-6, -7.5), (-2, -7.5), (8.5, -2.5), (-1, 2.6), (-1, 7.5), (-6, 7.5)];
+    private static readonly (double X, double Y)[] CrossedHalo = [(-7.2, -4.3), (-4.3, -7.2), (0, -2.9), (4.3, -7.2), (7.2, -4.3), (2.9, 0), (7.2, 4.3), (4.3, 7.2), (0, 2.9), (-4.3, 7.2), (-7.2, 4.3), (-2.9, 0)];
+    private static readonly (double X, double Y)[] Crossed = [(-5.5, -3.8), (-3.8, -5.5), (0, -1.7), (3.8, -5.5), (5.5, -3.8), (1.7, 0), (5.5, 3.8), (3.8, 5.5), (0, 1.7), (-3.8, 5.5), (-5.5, 3.8), (-1.7, 0)];
     private static readonly (double X, double Y)[] Flag = [(-4.5, -6), (-2.5, -6), (5.5, -2.5), (-2.5, 1), (-2.5, 6), (-4.5, 6)];
     private static readonly (double X, double Y)[] Hex = [(0, -5.5), (4.8, -2.75), (4.8, 2.75), (0, 5.5), (-4.8, 2.75), (-4.8, -2.75)];
     private static readonly (double X, double Y)[] Triangle = [(0, -5), (5.5, 4.5), (-5.5, 4.5)];
@@ -846,6 +849,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.GuardianBeacon => (-4.6, -9.6, 4.6, 7.6),
             GalaxyMapMarkKind.FarmingSite => (-6.3, -7.2, 6.3, 7.2),
             GalaxyMapMarkKind.Mission => (-6.0, -7.5, 8.5, 7.5),
+            GalaxyMapMarkKind.Death => (-7.2, -7.2, 7.2, 7.2),
             GalaxyMapMarkKind.SystemResult => (-9.4, -9.5, 9.4, 6.75),
             GalaxyMapMarkKind.StationResult => (-8.25, -6.25, 8.25, 6.25),
             GalaxyMapMarkKind.BodyResult => (-7.5, -7.5, 7.5, 7.5),
@@ -886,6 +890,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.GuardianBeacon => (PylonHalo, Pylon, ThemeManager.AKey),
             GalaxyMapMarkKind.FarmingSite => (HexHalo, Hex, ThemeManager.AKey),
             GalaxyMapMarkKind.Mission => (FlagHalo, Flag, ThemeManager.CyanKey),
+            GalaxyMapMarkKind.Death => (CrossedHalo, Crossed, ThemeManager.RedKey),
             _ => (ChevronHalo, Chevron, ThemeManager.YellowKey),
         };
 
@@ -982,6 +987,7 @@ public sealed class GalaxyMapView : Control
             GalaxyMapMarkKind.GuardianBeacon => (Pylon, ThemeManager.AKey),
             GalaxyMapMarkKind.FarmingSite => (Hex, ThemeManager.AKey),
             GalaxyMapMarkKind.Mission => (Flag, ThemeManager.CyanKey),
+            GalaxyMapMarkKind.Death => (Crossed, ThemeManager.RedKey),
             _ => (Chevron, ThemeManager.YellowKey),
         };
 

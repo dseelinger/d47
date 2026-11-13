@@ -2844,6 +2844,7 @@ public sealed class AppHost : IDisposable
                 campaignSystems: stores.CampaignSystems,
                 campaignFronts: () => late.Host?.CampaignFronts?.Snapshot,
                 campaignFocus: stores.CampaignFocus,
+                travelLog: stores.TravelLog,
                 neutronOffer: stores.NeutronOffer,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
