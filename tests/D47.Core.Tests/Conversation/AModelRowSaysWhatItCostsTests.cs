@@ -157,8 +157,8 @@ public class AModelRowSaysWhatItCostsTests
             var describe = ModelChoice.Describer(OpenAi, endpoint: null, PriceTable.Default);
 
             Assert.Equal(
-                "gpt-6.1-sol — the provider's default — $2 in / $10 out per million",
-                describe("gpt-6.1-sol"));
+                "gpt-6.1-terra — the provider's default — $1 in / $5 out per million",
+                describe("gpt-6.1-terra"));
 
             // The cents only where there are cents: "$2.00" beside "$0.20" reads as a table of figures, and
             // this is a sentence.
