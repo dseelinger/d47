@@ -11,12 +11,14 @@ namespace D47.App.Media;
 
 /// <summary>
 /// Copies each Elite screenshot to a named JPEG, with a <see cref="PictureNote"/> beside it, in a <c>D47</c> folder inside
-/// Elite's pictures folder, one at a time on the pool. Elite's BMP is only read.
+/// Elite's pictures folder, one at a time on the pool. Elite's BMP is read, and sent to the Recycle Bin through
+/// <c>recycle</c> once its JPEG is saved when the screenshot was queued with <c>deleteOriginal</c>.
 /// </summary>
 public sealed class ScreenshotConverter(
     IFileSystem files,
     string folder,
     ILogger<ScreenshotConverter> logger,
+    Func<string, bool> recycle,
     Func<Stream, byte[]> encode,
     Func<TimeSpan, Task> delay)
 {
@@ -25,12 +27,12 @@ public sealed class ScreenshotConverter(
 
     private static readonly TimeSpan Every = TimeSpan.FromSeconds(1);
 
-    private readonly ConcurrentQueue<(EliteScreenshot Shot, PictureNote Note)> _queue = new();
+    private readonly ConcurrentQueue<(EliteScreenshot Shot, PictureNote Note, bool DeleteOriginal)> _queue = new();
 
     private int _running;
 
-    public ScreenshotConverter(IFileSystem files, string folder, ILogger<ScreenshotConverter> logger)
-        : this(files, folder, logger, ToJpeg, delay => Task.Delay(delay))
+    public ScreenshotConverter(IFileSystem files, string folder, ILogger<ScreenshotConverter> logger, Func<string, bool> recycle)
+        : this(files, folder, logger, recycle, ToJpeg, delay => Task.Delay(delay))
     {
     }
 
@@ -44,7 +46,7 @@ public sealed class ScreenshotConverter(
     /// On the tick: queues the tick's screenshots, each with its note from <paramref name="state"/>, and starts the pool
     /// when it is idle. Reads no file. <paramref name="state"/> is null while Elite runs a Commander other than the one shown.
     /// </summary>
-    public void Observe(IReadOnlyList<JournalEvent> events, bool priming, bool enabled, JournalLocation fallback, CommanderGameState? state = null)
+    public void Observe(IReadOnlyList<JournalEvent> events, bool priming, bool enabled, bool deleteOriginal, JournalLocation fallback, CommanderGameState? state = null)
     {
         if (priming || !enabled)
         {
@@ -55,7 +57,7 @@ public sealed class ScreenshotConverter(
         {
             if (EliteScreenshot.TryParse(journalEvent, fallback) is { } shot)
             {
-                _queue.Enqueue((shot, ScreenCapability.ScreenshotNote(shot, journalEvent.Timestamp, state)));
+                _queue.Enqueue((shot, ScreenCapability.ScreenshotNote(shot, journalEvent.Timestamp, state), deleteOriginal));
             }
         }
 
@@ -73,7 +75,7 @@ public sealed class ScreenshotConverter(
             {
                 try
                 {
-                    await ConvertAsync(queued.Shot, queued.Note);
+                    await ConvertAsync(queued.Shot, queued.Note, queued.DeleteOriginal);
                 }
                 catch (Exception ex)
                 {
@@ -86,7 +88,7 @@ public sealed class ScreenshotConverter(
         while (!_queue.IsEmpty && Interlocked.CompareExchange(ref _running, 1, 0) == 0);
     }
 
-    private async Task ConvertAsync(EliteScreenshot shot, PictureNote note)
+    private async Task ConvertAsync(EliteScreenshot shot, PictureNote note, bool deleteOriginal)
     {
         var source = shot.SourcePath(folder);
 
@@ -128,7 +130,39 @@ public sealed class ScreenshotConverter(
         var written = Path.Combine(Target, shot.Name(local, copy));
 
         files.WriteBytes(written, jpeg);
+
+        if (deleteOriginal && Recycled(source, shot.FileName, state))
+        {
+            note = note with { Bmp = null, BmpLength = null, BmpWritten = null };
+        }
+
         files.WriteText(Path.ChangeExtension(written, ".json"), note.Write());
+    }
+
+    /// <summary>Sends the BMP to the Recycle Bin when it is still as it was read; false, with one log line, when it is not or cannot be.</summary>
+    private bool Recycled(string source, string name, FileState read)
+    {
+        if (files.Stat(source) is not { } now || now != read)
+        {
+            logger.LogInformation("The screenshot {File} changed after it was read and was left in place", name);
+            return false;
+        }
+
+        try
+        {
+            if (recycle(source))
+            {
+                return true;
+            }
+
+            logger.LogWarning("The screenshot {File} could not be moved to the Recycle Bin", name);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "The screenshot {File} could not be moved to the Recycle Bin", name);
+        }
+
+        return false;
     }
 
     /// <summary>Whether the BMP reached the length its header states within <see cref="Patience"/>.</summary>

@@ -12,7 +12,8 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// Each live <c>Screenshot</c> event becomes one JPEG under <c>D47\</c>, named for its time and place, once Elite's BMP
-/// is complete; Elite's BMP is never changed.
+/// is complete; Elite's BMP is sent to the Recycle Bin afterwards only when the screenshot was queued with the delete flag
+/// and the BMP is unchanged since it was read.
 /// </summary>
 public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
 {
@@ -32,11 +33,31 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
 
     private Action<int>? _onDelay;
 
+    private readonly List<string> _recycled = [];
+
+    private readonly RecordingLogger<ScreenshotConverter> _log = new();
+
+    private Func<string, bool?>? _recycle;
+
+    private Func<Stream, byte[]> _encode = stream => Encoding.ASCII.GetBytes($"jpeg of {stream.Length}");
+
     private ScreenshotConverter Converter() => new(
         _files,
         Folder,
-        NullLogger<ScreenshotConverter>.Instance,
-        stream => Encoding.ASCII.GetBytes($"jpeg of {stream.Length}"),
+        _log,
+        path =>
+        {
+            _recycled.Add(path);
+
+            if (_recycle?.Invoke(path) is { } result)
+            {
+                return result;
+            }
+
+            _files.Delete(path);
+            return true;
+        },
+        stream => _encode(stream),
         delay =>
         {
             _delays++;
@@ -57,9 +78,9 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
 
     private static string Stamp => Taken.LocalDateTime.ToString("yyyy-MM-dd HH-mm-ss", CultureInfo.InvariantCulture);
 
-    private static async Task Run(ScreenshotConverter converter, IReadOnlyList<JournalEvent> events, bool priming = false, bool enabled = true, JournalLocation? fallback = null, CommanderGameState? state = null)
+    private static async Task Run(ScreenshotConverter converter, IReadOnlyList<JournalEvent> events, bool priming = false, bool enabled = true, JournalLocation? fallback = null, CommanderGameState? state = null, bool deleteOriginal = false)
     {
-        converter.Observe(events, priming, enabled, fallback ?? Nowhere, state);
+        converter.Observe(events, priming, enabled, deleteOriginal, fallback ?? Nowhere, state);
         await converter.Running;
     }
 
@@ -185,6 +206,118 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
         Assert.NotNull(stat);
         Assert.Equal((stat.Value.Length, new DateTimeOffset(stat.Value.Written.ToUniversalTime())), (note.BmpLength, note.BmpWritten));
         Assert.Equal(2, Assert.Single(note.CodexEntries).EntryId);
+    }
+
+    private PictureNote NoteOf(string name) => PictureNote.Parse(_files.ReadText(Path.Combine(Target, name)))!;
+
+    [Fact]
+    public async Task WithTheDeleteFlagOnTheBmpIsRecycledAfterItsJpegAndTheNoteNamesNoBmp()
+    {
+        var path = Path.Combine(Folder, "Screenshot_0001.bmp");
+        _files.WriteBytes(path, Bmp(5, 3));
+
+        await Run(Converter(), [Event("Screenshot_0001.bmp")], deleteOriginal: true);
+
+        var note = NoteOf($"{Stamp} Example System A 1.json");
+
+        Assert.Single(Written());
+        Assert.Equal([path], _recycled);
+        Assert.Null(_files.Stat(path));
+        Assert.Equal((null, null, null), (note.Bmp, note.BmpLength, note.BmpWritten));
+    }
+
+    [Fact]
+    public async Task WithTheDeleteFlagOffTheBmpIsKeptAndTheNoteNamesIt()
+    {
+        var path = Path.Combine(Folder, "Screenshot_0001.bmp");
+        _files.WriteBytes(path, Bmp(5, 3));
+
+        await Run(Converter(), [Event("Screenshot_0001.bmp")]);
+
+        var note = NoteOf($"{Stamp} Example System A 1.json");
+
+        Assert.Single(Written());
+        Assert.Empty(_recycled);
+        Assert.NotNull(_files.Stat(path));
+        Assert.Equal("Screenshot_0001.bmp", note.Bmp);
+        Assert.NotNull(note.BmpLength);
+        Assert.NotNull(note.BmpWritten);
+    }
+
+    [Fact]
+    public async Task ABmpThatNeverArrivesIsNotRecycled()
+    {
+        await Run(Converter(), [Event("Screenshot_0001.bmp")], deleteOriginal: true);
+
+        Assert.Empty(Written());
+        Assert.Empty(_recycled);
+    }
+
+    [Fact]
+    public async Task AnEncoderThatThrowsRecyclesNothing()
+    {
+        var path = Path.Combine(Folder, "Screenshot_0001.bmp");
+        _files.WriteBytes(path, Bmp(5, 3));
+        _encode = _ => throw new InvalidOperationException("not an image");
+
+        await Run(Converter(), [Event("Screenshot_0001.bmp")], deleteOriginal: true);
+
+        Assert.Empty(Written());
+        Assert.Empty(_recycled);
+        Assert.NotNull(_files.Stat(path));
+    }
+
+    [Fact]
+    public async Task ABmpThatChangedAfterItWasReadIsKeptWithOneLogLineAndItsJpegAndNote()
+    {
+        var path = Path.Combine(Folder, "Screenshot_0001.bmp");
+        _files.WriteBytes(path, Bmp(5, 3));
+        _encode = stream =>
+        {
+            var jpeg = Encoding.ASCII.GetBytes($"jpeg of {stream.Length}");
+            _files.WriteBytes(path, Bmp(6, 3));
+            return jpeg;
+        };
+
+        await Run(Converter(), [Event("Screenshot_0001.bmp")], deleteOriginal: true);
+
+        var note = NoteOf($"{Stamp} Example System A 1.json");
+
+        Assert.Single(Written());
+        Assert.Empty(_recycled);
+        Assert.Single(_log.Lines);
+        Assert.Equal(("Screenshot_0001.bmp", (long)Bmp(5, 3).Length), (note.Bmp, note.BmpLength));
+        Assert.NotNull(note.BmpWritten);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ARecycleThatFailsKeepsTheJpegAndTheNoteAndTheNextScreenshotStillConverts(bool throws)
+    {
+        _files.WriteBytes(Path.Combine(Folder, "Screenshot_0001.bmp"), Bmp(5, 3));
+        _files.WriteBytes(Path.Combine(Folder, "Screenshot_0002.bmp"), Bmp(5, 3));
+        _recycle = path => path.EndsWith("0001.bmp", StringComparison.Ordinal)
+            ? throws ? throw new IOException("in use") : (bool?)false
+            : null;
+
+        await Run(
+            Converter(),
+            [Event("Screenshot_0001.bmp", ", \"System\":\"First\" "), Event("Screenshot_0002.bmp", ", \"System\":\"Second\" ")],
+            deleteOriginal: true);
+
+        var first = NoteOf($"{Stamp} First.json");
+        var second = NoteOf($"{Stamp} Second.json");
+
+        Assert.Equal(2, Written().Count);
+        Assert.Equal(2, _recycled.Count);
+        Assert.Single(_log.Lines);
+        Assert.Contains("Recycle Bin", _log.Lines[0], StringComparison.Ordinal);
+        Assert.Equal("Screenshot_0001.bmp", first.Bmp);
+        Assert.NotNull(first.BmpLength);
+        Assert.NotNull(first.BmpWritten);
+        Assert.Null(second.Bmp);
+        Assert.Null(_files.Stat(Path.Combine(Folder, "Screenshot_0002.bmp")));
     }
 
     [Fact]

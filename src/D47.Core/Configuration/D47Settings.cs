@@ -278,6 +278,9 @@ public sealed record ScreenshotSettings
 
     /// <summary>Whether each Elite screenshot is copied as a JPEG into a D47 folder beside it.</summary>
     public bool Convert { get; init; } = true;
+
+    /// <summary>Whether Elite's BMP goes to the Recycle Bin once its JPEG is saved; does nothing while <see cref="Convert"/> is off.</summary>
+    public bool DeleteOriginal { get; init; } = true;
 }
 
 /// <summary>Looking things up outside this machine (Phase 14).</summary>

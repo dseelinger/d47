@@ -707,6 +707,7 @@ public static class SettingsLayout
                             "Whether D47 saves a JPEG copy of each Elite screenshot, and where.",
                             [
                                 E("screenshots.convert"),
+                                E("screenshots.deleteOriginal"),
                                 E("screenshots.folder"),
                             ]),
                         G(

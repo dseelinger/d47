@@ -7,7 +7,7 @@ nav_order: 161
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Turn the JPEG copies of your Elite screenshots on or off.</p>
+<p class="intro">Turn the JPEG copies of your Elite screenshots on or off, and choose whether Elite's BMP goes to the Recycle Bin.</p>
 <section>
 <h2><span class="num">1</span> Stop the copies.</h2>
 <p class="say">Say "stop converting my screenshots".</p>
@@ -29,10 +29,10 @@ nav_order: 161
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">D47 saves a small copy of each screenshot and leaves Elite's alone.</p>
+<p class="intro">D47 saves a small copy of each screenshot, then sends Elite's original to the Recycle Bin.</p>
 <section>
 <h2><span class="num">1</span> Each screenshot is copied as a JPEG.</h2>
-<p class="body">Each screenshot you take in Elite, including high-resolution ones, is copied as a JPEG. Elite's BMP is left alone unless you tick the box when you delete a copy.</p>
+<p class="body">Each screenshot you take in Elite, including high-resolution ones, is copied as a JPEG. Once the copy is saved, Elite's BMP goes to the Recycle Bin, unless you turn off <strong>Delete Elite's BMP after converting</strong>.</p>
 </section>
 <section>
 <h2><span class="num">2</span> The copy is named for the time and the place.</h2>
@@ -59,6 +59,14 @@ nav_order: 161
 This is the first thing D47 writes into your Pictures folder, so it has a switch of its own, **Convert
 Elite's screenshots**, on by default. The setting is `screenshots.convert`. **Privacy and egress**
 lists it as **Your screenshots**: the copies are kept on this PC and sent nowhere.
+
+A second row, **Delete Elite's BMP after converting** (`screenshots.deleteOriginal`), is on by default and
+does nothing while converting is off. Once a screenshot's JPEG is saved, Elite's BMP goes to the Recycle
+Bin, so it can be restored; Windows deletes a file too large for the Recycle Bin outright. The BMP is
+left where it is if it changed after D47 read it, or if the Recycle Bin refuses it. Say "keep my
+screenshot originals" to turn the row off and "delete my screenshot originals" to turn it on. Both rows are
+protected: the AI model is refused if it tries to change them. A BMP that was recycled is not named in the
+picture's note, so the viewer's Delete dialog offers no BMP box for that picture.
 
 A copy's name comes from the `Name` method of `EliteScreenshot`, such as `2026-10-29 14-05-09 Sol.jpg`.
 A second screenshot in the same second adds ` (2)`, and characters Windows does not allow in a file name

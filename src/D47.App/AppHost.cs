@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
@@ -525,6 +526,48 @@ public sealed class AppHost : IDisposable
             path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
         return !File.Exists(path);
     }
+
+    /// <summary>Sends a file to the Recycle Bin from the pool; shows no dialog, confirmation or progress.</summary>
+    internal static bool RecycleFileSilently(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return true;
+        }
+
+        var operation = new ShFileOperation
+        {
+            Function = 0x3,
+            From = path + "\0\0",
+            Flags = 0x40 | 0x10 | 0x400 | 0x4,
+        };
+
+        return SHFileOperation(ref operation) == 0 && !operation.Aborted && !File.Exists(path);
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct ShFileOperation
+    {
+        public nint Window;
+
+        public uint Function;
+
+        public string From;
+
+        public string? To;
+
+        public ushort Flags;
+
+        [MarshalAs(UnmanagedType.Bool)]
+        public bool Aborted;
+
+        public nint Mappings;
+
+        public string? Title;
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern int SHFileOperation(ref ShFileOperation operation);
 
     /// <summary>The library tracks the maintainer queued for deletion.</summary>
     internal MusicRejects MusicRejects { get; }
@@ -1808,12 +1851,13 @@ public sealed class AppHost : IDisposable
 
         // Every Commander's screenshots are copied; the place they fall back to is the shown Commander's, and none
         // while Elite runs another.
-        var screenshots = new ScreenshotConverter(files, EliteScreenshot.Folder(), loggerFactory.CreateLogger<ScreenshotConverter>());
+        var screenshots = new ScreenshotConverter(files, EliteScreenshot.Folder(), loggerFactory.CreateLogger<ScreenshotConverter>(), RecycleFileSilently);
 
         tick.Add("screenshots", context => screenshots.Observe(
             journalTick.Events,
             context.IsFirst,
             foundations.Settings.Current.Screenshots.Convert,
+            foundations.Settings.Current.Screenshots.DeleteOriginal,
             gameState.IsOffDuty ? JournalLocation.Unknown : gameState.Active?.Location ?? JournalLocation.Unknown,
             gameState.IsOffDuty ? null : gameState.Active));
 
