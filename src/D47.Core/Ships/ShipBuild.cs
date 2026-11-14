@@ -1,6 +1,7 @@
 using D47.Core.Loadout;
 using System.Globalization;
 using D47.Core.Checklists;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Ships;
 
@@ -41,6 +42,25 @@ public sealed record SlotPlan(
     /// <summary>Whether anything is actually wanted here, or the line is an empty shell.</summary>
     public bool IsEmpty =>
         Blueprint is null && Grade == 0 && Experimental is null && Module is null;
+
+    /// <summary>Every grade of a named blueprint for this plan's module: by its type when the plan has a variant, else by name.</summary>
+    public IReadOnlyList<Blueprint> Recipes(string? name) =>
+        Variant is { Length: > 0 } variant && EliteSpecifications.Module(variant) is { } specification
+            ? BlueprintCatalogue.Named(name, specification)
+            : BlueprintCatalogue.Named(name, Module);
+
+    /// <summary>The grades the planned blueprint offers, highest first.</summary>
+    public IReadOnlyList<int> GradesOffered() =>
+    [
+        .. Recipes(Blueprint)
+            .Where(recipe => recipe.Grade is not null)
+            .Select(recipe => recipe.Grade!.Value)
+            .Distinct()
+            .OrderDescending(),
+    ];
+
+    /// <summary>Whether the planned blueprint offers exactly one grade.</summary>
+    public bool HasOneGrade() => GradesOffered().Count == 1;
 
     /// <summary>What this plan asks <see cref="EngineeringPlan"/> for.</summary>
     /// <param name="withModule">
@@ -83,7 +103,7 @@ public sealed record SlotPlan(
             // The grade is not printed where the blueprint has only one grade.
             blueprint = withGrade
                         && Grade > 0
-                        && !Knowledge.BlueprintCatalogue.HasOneGrade(rolled, Module)
+                        && !HasOneGrade()
                 ? $"grade {Grade.ToString(CultureInfo.InvariantCulture)} {rolled}"
                 : rolled;
         }

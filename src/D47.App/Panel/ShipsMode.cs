@@ -1287,7 +1287,7 @@ public sealed class ShipsMode(
         }
 
         // The grade, steppable in place (remediation.md 15, item 4).
-        var offered = BlueprintCatalogue.GradesFor(plan.Blueprint, plan.Module);
+        var offered = plan.GradesOffered();
 
         var step = offered.Count > 1
             ? new LoadoutStep(plan.Grade, offered, grade =>
@@ -1321,7 +1321,7 @@ public sealed class ShipsMode(
         }
 
         // What the engineering does, where something has been chosen.
-        var rolled = BlueprintCatalogue.Named(plan.Blueprint, plan.Module)
+        var rolled = plan.Recipes(plan.Blueprint)
             .Where(recipe => recipe.Kind == BlueprintKind.Modification)
             .Where(recipe => recipe.Grade == plan.Grade || recipe.Grade is null)
             .FirstOrDefault(recipe => recipe.Effects.Count > 0)?.Describe();
@@ -1330,7 +1330,7 @@ public sealed class ShipsMode(
         // `Blueprints.tsv` has carried an `effects` column for its 154 experimental rows all along — "Hull
         // Boost -3%, at the cost of Kinetic Resistance +8%" is derived by the same `Describe` from the same
         // three fields — and the block above only ever asked about the blueprint.
-        var special = BlueprintCatalogue.Named(plan.Experimental, plan.Module)
+        var special = plan.Recipes(plan.Experimental)
             .Where(recipe => recipe.Kind == BlueprintKind.Experimental)
             .FirstOrDefault(recipe => recipe.Effects.Count > 0)?.Describe();
 
@@ -1392,7 +1392,7 @@ public sealed class ShipsMode(
     /// </summary>
     private static IReadOnlyList<string> EngineersFor(SlotPlan plan) =>
     [
-        .. BlueprintCatalogue.Named(plan.Blueprint, plan.Module)
+        .. plan.Recipes(plan.Blueprint)
             .Where(recipe => recipe.Kind == BlueprintKind.Modification && recipe.Grade == plan.Grade)
             .SelectMany(recipe => recipe.Engineers)
             .Distinct(StringComparer.OrdinalIgnoreCase),

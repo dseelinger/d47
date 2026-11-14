@@ -260,28 +260,6 @@ public static class BlueprintCatalogue
     public static IReadOnlyList<Blueprint> ExperimentalsFor(string? spoken) =>
         [.. ForModule(spoken).Where(b => b.Kind == BlueprintKind.Experimental)];
 
-    /// <summary>Whether a blueprint offers exactly one grade, in which case saying which is superfluous.</summary>
-    public static bool HasOneGrade(string? blueprint, string? module)
-    {
-        var grades = Named(blueprint, module)
-            .Where(recipe => recipe.Grade is not null)
-            .Select(recipe => recipe.Grade)
-            .Distinct()
-            .ToList();
-
-        return grades.Count == 1;
-    }
-
-    /// <summary>Every grade a blueprint offers, highest first — what a stepper clamps to.</summary>
-    public static IReadOnlyList<int> GradesFor(string? blueprint, string? module) =>
-    [
-        .. Named(blueprint, module)
-            .Where(recipe => recipe.Grade is not null)
-            .Select(recipe => recipe.Grade!.Value)
-            .Distinct()
-            .OrderDescending(),
-    ];
-
     /// <summary>Blueprint names close enough to offer back when nothing matched.</summary>
     public static IReadOnlyList<string> Near(string spoken) =>
         Catalogue.Near([.. Loaded.Value.Select(b => b.Name).Distinct(StringComparer.Ordinal)], spoken);
