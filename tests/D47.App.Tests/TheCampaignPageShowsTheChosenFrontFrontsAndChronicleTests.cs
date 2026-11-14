@@ -306,6 +306,26 @@ public class TheCampaignPageShowsTheChosenFrontFrontsAndChronicleTests
         window.Close();
     }
 
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AChronicleEntryWithALegendShowsThePassageUnderItsRow(bool headset)
+    {
+        const string Passage = "The Compact held Haoria Hub through four days of war, and the Gang left the system.";
+        var fixture = new Fixture();
+        fixture.Store.Choose(Frontier, FrontKind.Conflict, "Haoria", BgsTick.AddDays(-20));
+        fixture.Store.Resolve(Frontier, FrontKind.Conflict, "Haoria", Entry("Conflict", "Haoria", "Won", BgsTick.AddDays(-19), BgsTick.AddDays(-18)));
+        Assert.True(fixture.Store.SetLegend(Frontier, 0, fixture.Store.For(Frontier).Chronicle[0], Passage));
+        var (window, page) = Open(fixture, headset);
+
+        ShowSection(page, CampaignModel.ChronicleSection);
+
+        Assert.True(Shows(page, Passage));
+        Assert.True(Shows(page, "Won"));
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void AFailedFetchWarnsAtTheTopAndMarksTheComputedTimeInWarn()
     {

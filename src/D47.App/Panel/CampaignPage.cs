@@ -1126,18 +1126,16 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             return RowBorder(grid);
         }
 
-        var bordered = RowBorder(grid);
         var legend = Typeset.Prose(entry.Legend, TypeScale.Description, ThemeManager.GreyKey, wrap: true);
 
         legend.Margin = new Thickness(0, 4, 0, 4);
-        bordered.Child = new StackPanel { Spacing = 2, Children = { grid, legend } };
 
-        return bordered;
+        return RowBorder(new StackPanel { Spacing = 2, Children = { grid, legend } });
     }
 
-    private static Border RowBorder(Grid grid)
+    private static Border RowBorder(Control content)
     {
-        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 4, 12, 4), Child = grid };
+        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 4, 12, 4), Child = content };
         ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
 
         return border;
