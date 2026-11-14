@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
 using D47.Core;
@@ -193,6 +194,21 @@ public class TheCommanderTabTablesFitTheirColumnsTests
         var window = Show(new CombatStatsPage(() => state, () => HistoryState.Done, () => Now));
 
         Fits(window, CombatStatsPage.TableId, 2);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheCombatStatsFactionTablesFitTheirColumns()
+    {
+        var state = State(CombatLines);
+        var page = new CombatStatsPage(() => state, () => HistoryState.Done, () => Now);
+        var window = Show(page);
+
+        page.GetVisualDescendants().OfType<Segment>().Last().GetVisualDescendants().OfType<RadioButton>().ElementAt(3).IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Fits(window, CombatStatsPage.TableId, 2);
+        Fits(window, CombatStatsPage.PaidTableId, 2);
         window.Close();
     }
 

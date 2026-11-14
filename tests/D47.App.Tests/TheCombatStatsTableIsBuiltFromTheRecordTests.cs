@@ -89,31 +89,68 @@ public class TheCombatStatsTableIsBuiltFromTheRecordTests
     }
 
     [Fact]
-    public void RowsWithoutTheValueSortLastEitherWay()
+    public void TheAgainstTableSortsByItsOwnHeadingsAndTheKillsOrderIsTheDefault()
     {
         Assert.Equal(
-            ["Pirates", "Raiders", "Losers", "Beta", "Alpha", "Holder"],
-            Order(CombatGrouping.Faction, Kills, SortDirection.Descending));
+            ["Pirates", "Raiders", "Losers"],
+            View(grouping: CombatGrouping.Faction).Rows.Select(row => row.Text));
         Assert.Equal(
-            ["Beta", "Alpha", "Holder", "Pirates", "Raiders", "Losers"],
+            ["Raiders", "Pirates", "Losers"],
             Order(CombatGrouping.Faction, Credits, SortDirection.Descending));
-        Assert.Equal(
-            ["Holder", "Alpha", "Beta", "Pirates", "Raiders", "Losers"],
-            Order(CombatGrouping.Faction, Credits, SortDirection.Ascending));
     }
 
     [Fact]
-    public void TheFactionTableMergesVictimAndPayingListsWithADashForTheMissingSide()
+    public void ThePaidByTableSortsByCreditsMostFirstAndByNameAToZ()
+    {
+        var paid = View(grouping: CombatGrouping.Faction).PaidBy!;
+        var heads = CombatStatsPage.PaidHeads();
+
+        Assert.Equal(["Beta", "Alpha", "Holder"], paid.Select(row => row.Text));
+        Assert.Equal(
+            ["Alpha", "Beta", "Holder"],
+            ColumnSort.Sorted(paid, heads, new SortOrder(0, SortDirection.Ascending)).Select(row => row.Text));
+        Assert.Equal(
+            ["Holder", "Alpha", "Beta"],
+            ColumnSort.Sorted(paid, heads, new SortOrder(1, SortDirection.Ascending)).Select(row => row.Text));
+        Assert.Equal(["Faction", "Credits"], heads.Select(head => head.Label));
+    }
+
+    [Fact]
+    public void TheFactionGroupingIsTwoTablesAndNoRowMixesKillsWithPayments()
     {
         var view = View(grouping: CombatGrouping.Faction);
+        var paid = view.PaidBy!;
 
-        Assert.Equal((3L, (long?)null), (Row(view, "Pirates").Kills, Row(view, "Pirates").Awarded));
-        Assert.Equal(((long?)null, 2200L), (Row(view, "Alpha").Kills, Row(view, "Alpha").Awarded));
-        Assert.Equal(((long?)null, 11000L), (Row(view, "Beta").Kills, Row(view, "Beta").Awarded));
-        Assert.Equal("—", CombatStatsPage.Number(Row(view, "Alpha").Kills));
-        Assert.Equal("—", CombatStatsPage.Credits(Row(view, "Pirates").Awarded));
-        Assert.Equal("2,200 CR", CombatStatsPage.Credits(Row(view, "Alpha").Awarded));
-        Assert.Equal(6, view.Rows.Count);
+        Assert.Equal((3L, 4200L), (Row(view, "Pirates").Kills, Row(view, "Pirates").Awarded));
+        Assert.Equal((1L, 9000L), (Row(view, "Raiders").Kills, Row(view, "Raiders").Awarded));
+        Assert.Equal((1L, 500L), (Row(view, "Losers").Kills, Row(view, "Losers").Awarded));
+        Assert.Equal(3, view.Rows.Count);
+
+        Assert.All(paid, row => Assert.Null(row.Kills));
+        Assert.Equal(2200L, paid.Single(row => row.Text == "Alpha").Awarded);
+        Assert.Equal(11000L, paid.Single(row => row.Text == "Beta").Awarded);
+        Assert.Equal(500L, paid.Single(row => row.Text == "Holder").Awarded);
+        Assert.Equal("2,200 CR", CombatStatsPage.Credits(paid.Single(row => row.Text == "Alpha").Awarded));
+        Assert.Null(View(grouping: CombatGrouping.System).PaidBy);
+    }
+
+    [Fact]
+    public void KillsOfOneFactionsShipsPaidByAnotherAreNotCreditedToTheVictim()
+    {
+        var record = Fold(
+            Bounty("2026-10-10T10:00:00Z", "eagle", 1000, "Kerr", Pay("Avalon", 1000)),
+            Bounty("2026-10-10T10:01:00Z", "eagle", 3000, "Kerr", Pay("Avalon", 1000) + "," + Pay("Yuma", 2000)),
+            Bounty("2026-10-10T10:02:00Z", "anaconda", 700, "Raiders", Pay("Kerr", 700)));
+        var view = View(record, grouping: CombatGrouping.Faction);
+
+        Assert.Equal((2L, 4000L), (Row(view, "Kerr").Kills, Row(view, "Kerr").Awarded));
+        Assert.Equal((1L, 700L), (Row(view, "Raiders").Kills, Row(view, "Raiders").Awarded));
+        Assert.DoesNotContain(view.Rows, row => row.Text == "Avalon");
+        Assert.Equal(
+            [("Avalon", 2000L), ("Yuma", 2000L), ("Kerr", 700L)],
+            view.PaidBy!.OrderByDescending(row => row.Awarded).ThenBy(row => row.Text).Select(row => (row.Text, row.Awarded!.Value)));
+        Assert.Equal(4700L, view.Rows.Sum(row => row.Awarded));
+        Assert.Equal(3, view.Kills);
     }
 
     [Fact]

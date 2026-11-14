@@ -500,8 +500,10 @@ awarded, counted from the journals on this PC. Choose a period (24 hours, 7 days
 Own ship, System or Faction). Press a column heading to sort, and the panel search narrows the rows by name.
 
 Kills in conflict zones carry no ship type, so they are grouped as "In conflict zones, ship type not recorded".
-Under Faction, a kill counts the faction whose ship you destroyed, and its credits count the faction that paid;
-a kill that paid several factions is split among them.
+Under Faction, two tables replace the one. Against has a row for each faction whose ships you destroyed, with
+those kills and the credits they were awarded. Paid by has a row for each faction that paid you, with the credits
+it paid; a kill that paid several factions counts once under Against and is split under Paid by. Each table sorts
+from its own headings, and the panel search narrows both.
 
 While D47 is still reading your older journals the page says "D47 is reading your journals for past kills.
 The counts appear here when it finishes." If that reading failed, **History not finished** gives the time the

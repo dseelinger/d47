@@ -56,7 +56,8 @@ public sealed record CombatStatsView(
     DateTimeOffset? OnRecordSince,
     int Kills,
     long Awarded,
-    IReadOnlyList<CombatRow> Rows);
+    IReadOnlyList<CombatRow> Rows,
+    IReadOnlyList<CombatRow>? PaidBy = null);
 
 /// <summary>Commander › Ledgers › Combat stats: the kills in the journals on this PC, grouped four ways (#1288).</summary>
 public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
@@ -68,8 +69,19 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
     public const string CareerLine =
         "These counts come from the journals on this PC. Statistics holds Elite's own career figures, which count vouchers claimed.";
 
-    public const string FactionLine =
-        "Kills count the faction whose ship you destroyed. Credits count the faction that paid; a kill that paid several factions is split among them.";
+    public const string AgainstName = "Against";
+
+    public const string AgainstText = "The faction whose ships you destroyed, and what those kills were awarded.";
+
+    public const string PaidByName = "Paid by";
+
+    public const string PaidByText = "The faction that paid you. A kill paid by several factions is split among them.";
+
+    public const string NoMatchInTableText = "No faction in this table matches that search.";
+
+    public const string AgainstEmptyText = "Your journals don't record whose ships these kills were.";
+
+    public const string PaidByEmptyText = "No faction paid for these kills.";
 
     public const string RunningText = "D47 is reading your journals for past kills. The counts appear here when it finishes.";
 
@@ -94,16 +106,26 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         ["Ship or on foot", "Destroyed", "Awarded"],
         ["Ship, on foot or SRV", "Destroyed", "Awarded"],
         ["Where the kill was", "Destroyed", "Awarded"],
-        ["Victim or paying", "Of their ships", "Paid by them"],
+        ["Whose ship it was", "Destroyed", "Awarded"],
     ];
 
     public const string TableId = "CombatStats";
+
+    public const string PaidTableId = "CombatStatsPaid";
+
+    private const double CreditsWidth = 200;
 
     private static readonly TableColumn[] ColumnList =
     [
         new("Name", ColumnFit.Fill),
         new("Kills"),
-        new("Credits"),
+        new("Credits", ColumnFit.Fixed) { Fixed = CreditsWidth },
+    ];
+
+    private static readonly TableColumn[] PaidColumnList =
+    [
+        new("Name", ColumnFit.Fill),
+        new("Credits", ColumnFit.Fixed) { Fixed = CreditsWidth },
     ];
 
     private readonly Func<CommanderGameState?> _state;
@@ -113,6 +135,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
     private readonly Func<string, Task<bool>>? _copy;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly SortHeader<CombatRow>[] _heads;
+    private readonly SortHeader<CombatRow> _paidHead;
     private readonly Segment _period = SortBar.Choice("CombatPeriod", Periods);
     private readonly Segment _grouping = SortBar.Choice("CombatGrouping", Groupings);
     private readonly WrapPanel _controls = new() { ItemSpacing = 16, LineSpacing = Gaps.Tile, Margin = new Thickness(0, 0, 0, 8) };
@@ -150,11 +173,15 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             }),
         ];
 
+        _paidHead = new SortHeader<CombatRow>("CombatStatsPaidHead", PaidHeads());
+        _paidHead.Changed += Draw;
+
         _period.SelectedIndex = (int)CombatPeriod.Week;
         _period.SelectionChanged += (_, _) => Draw();
         _grouping.SelectionChanged += (_, _) =>
         {
             Head.Show(null);
+            _paidHead.Show(null);
             Draw();
         };
 
@@ -176,7 +203,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         remove { }
     }
 
-    public bool Filters => Build() is { Running: false, Rows.Count: > 0 };
+    public bool Filters => Build() is { Running: false } view && (view.Rows.Count > 0 || view.PaidBy is { Count: > 0 });
 
     public string FilterPlaceholder => "Search by name";
 
@@ -268,8 +295,10 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             CombatGrouping.EnemyShip => slice.ByTarget.Select(group => EnemyRow(record, group)),
             CombatGrouping.OwnShip => slice.ByVehicle.Select(group => OwnRow(record, group)),
             CombatGrouping.System => slice.BySystem.Select(group => SystemRow(record, group)),
-            _ => FactionRows(slice),
+            _ => AgainstRows(slice),
         };
+
+        var paid = grouping == CombatGrouping.Faction ? PaidRows(slice) : null;
 
         return new CombatStatsView(
             running,
@@ -277,7 +306,8 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             record.OnRecordSince,
             slice.Kills,
             slice.Awarded,
-            [.. rows.OrderByDescending(row => row.Kills ?? 0).ThenByDescending(row => row.Awarded ?? 0)]);
+            [.. rows.OrderByDescending(row => row.Kills ?? 0).ThenByDescending(row => row.Awarded ?? 0)],
+            paid);
     }
 
     /// <summary>The rows whose shown name contains <paramref name="query"/>, ignoring case.</summary>
@@ -298,6 +328,13 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             SortColumn<CombatRow>.Figure("Credits", row => row.Awarded, SortDirection.Descending) with { Second = second[2] },
         ];
     }
+
+    /// <summary>The columns of the Paid by table.</summary>
+    public static IReadOnlyList<SortColumn<CombatRow>> PaidHeads() =>
+    [
+        SortColumn<CombatRow>.Text(Groupings[(int)CombatGrouping.Faction], row => row.SortName) with { Second = "Who paid" },
+        SortColumn<CombatRow>.Figure("Credits", row => row.Awarded, SortDirection.Descending) with { Second = "Paid" },
+    ];
 
     /// <summary><c>1,240,000 CR</c>, or a dash for none.</summary>
     public static string Credits(long? amount) =>
@@ -340,21 +377,17 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             ? new CombatRow(name, null, CombatNameStyle.System, group.Kills, group.Awarded, address)
             : new CombatRow(UnnamedSystem, null, CombatNameStyle.Unnamed, group.Kills, group.Awarded, group.Key);
 
-    private static IEnumerable<CombatRow> FactionRows(CombatSlice slice)
-    {
-        var victims = slice.ByVictimFaction.Where(group => group.Key is not null).ToList();
-        var names = victims.Select(group => group.Key!)
-            .Concat(slice.ByPayingFaction.Select(group => group.Key))
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+    private static IEnumerable<CombatRow> AgainstRows(CombatSlice slice) =>
+        slice.ByVictimFaction
+            .Where(group => group.Key is not null)
+            .Select(group => new CombatRow(group.Key!, null, CombatNameStyle.Named, group.Kills, group.Awarded));
 
-        foreach (var name in names)
-        {
-            var killed = victims.FirstOrDefault(group => string.Equals(group.Key, name, StringComparison.OrdinalIgnoreCase));
-            var paid = slice.ByPayingFaction.FirstOrDefault(group => string.Equals(group.Key, name, StringComparison.OrdinalIgnoreCase));
-
-            yield return new CombatRow(name, null, CombatNameStyle.Named, killed?.Kills, paid?.Awarded);
-        }
-    }
+    private static IReadOnlyList<CombatRow> PaidRows(CombatSlice slice) =>
+    [
+        .. slice.ByPayingFaction
+            .Select(group => new CombatRow(group.Key, null, CombatNameStyle.Named, null, group.Awarded))
+            .OrderByDescending(row => row.Awarded ?? 0),
+    ];
 
     private static string Plural(long count, string unit) => $"{count.ToString("N0", CultureInfo.InvariantCulture)} {unit}{(count == 1 ? string.Empty : "s")}";
 
@@ -396,12 +429,19 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             });
         }
 
-        var count = shown.Count == view.Rows.Count
-            ? CountText(Grouping, view.Rows.Count)
-            : $"{shown.Count.ToString("N0", CultureInfo.InvariantCulture)} of {CountText(Grouping, view.Rows.Count)}";
+        var split = Grouping == CombatGrouping.Faction;
 
-        _body.Children.Add(StarSystemPage.GroupHead(PeriodName(Period), Description(view), count));
+        _body.Children.Add(StarSystemPage.GroupHead(
+            PeriodName(Period),
+            Description(view),
+            split ? null : Counted(shown.Count, view.Rows.Count)));
         _body.Children.Add(CreditsKit.Note(CareerLine, 6));
+
+        if (split)
+        {
+            DrawFactions(view, state?.Location.SystemAddress);
+            return;
+        }
 
         if (view.Rows.Count == 0)
         {
@@ -415,12 +455,63 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
-        if (Grouping == CombatGrouping.Faction)
+        _body.Children.Add(Table(shown, state?.Location.SystemAddress, Head, TableId, ColumnList));
+    }
+
+    private string Counted(int shown, int total) =>
+        shown == total
+            ? CountText(Grouping, total)
+            : $"{shown.ToString("N0", CultureInfo.InvariantCulture)} of {CountText(Grouping, total)}";
+
+    private void DrawFactions(CombatStatsView view, long? current)
+    {
+        if (view.Kills == 0)
         {
-            _body.Children.Add(CreditsKit.Note(FactionLine, 6));
+            _body.Children.Add(CreditsKit.Message(EmptyText(Period)));
+            return;
         }
 
-        _body.Children.Add(Table(shown, state?.Location.SystemAddress));
+        var paid = view.PaidBy ?? [];
+        var against = Matching(view.Rows, _query);
+        var paying = Matching(paid, _query);
+
+        if (against.Count == 0 && paying.Count == 0 && (view.Rows.Count > 0 || paid.Count > 0))
+        {
+            _body.Children.Add(CreditsKit.Message(NoMatchText));
+            return;
+        }
+
+        Section(AgainstName, AgainstText, view.Rows, against, AgainstEmptyText, Head, TableId, ColumnList, current);
+        Section(PaidByName, PaidByText, paid, paying, PaidByEmptyText, _paidHead, PaidTableId, PaidColumnList, current);
+    }
+
+    private void Section(
+        string name,
+        string description,
+        IReadOnlyList<CombatRow> all,
+        IReadOnlyList<CombatRow> shown,
+        string emptyText,
+        SortHeader<CombatRow> head,
+        string tableId,
+        TableColumn[] columns,
+        long? current)
+    {
+        var group = StarSystemPage.GroupHead(name, description, Counted(shown.Count, all.Count));
+        group.Margin = new Thickness(0, 26, 0, 0);
+        _body.Children.Add(group);
+
+        if (all.Count == 0)
+        {
+            _body.Children.Add(CreditsKit.Message(emptyText));
+        }
+        else if (shown.Count == 0)
+        {
+            _body.Children.Add(CreditsKit.Message(NoMatchInTableText));
+        }
+        else
+        {
+            _body.Children.Add(Table(shown, current, head, tableId, columns));
+        }
     }
 
     private TextBlock Description(CombatStatsView view)
@@ -450,12 +541,16 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         return run;
     }
 
-    private StackPanel Table(IReadOnlyList<CombatRow> rows, long? current)
+    private StackPanel Table(
+        IReadOnlyList<CombatRow> rows,
+        long? current,
+        SortHeader<CombatRow> head,
+        string tableId,
+        TableColumn[] columns)
     {
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
-        var head = Head;
 
-        var layout = new TableLayout(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
+        var layout = new TableLayout(tableId, columns, _columnWidths, _headset ? 12 : 16);
 
         table.Children.Add(CreditsKit.HeaderRow(head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
 
@@ -473,8 +568,12 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         grid.VerticalAlignment = VerticalAlignment.Center;
 
         Place(grid, 0, NameOf(row, current, copy));
-        Place(grid, 1, Figure(Number(row.Kills), row.Kills));
-        Place(grid, 2, Figure(Credits(row.Awarded), row.Awarded));
+        if (layout.Columns.Count == 3)
+        {
+            Place(grid, 1, Figure(Number(row.Kills), row.Kills));
+        }
+
+        Place(grid, layout.Columns.Count - 1, Figure(Credits(row.Awarded), row.Awarded));
 
         var border = new Border
         {

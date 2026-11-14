@@ -82,6 +82,80 @@ public class TheCombatStatsPageShowsTheKillsOnTheCommanderTabTests
         window.Close();
     }
 
+    private static void ByFaction(CombatStatsPage page)
+    {
+        In<Segment>(page).Last().GetVisualDescendants().OfType<RadioButton>().ElementAt(3).IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void TheFactionGroupingDrawsAnAgainstTableAndAPaidByTableWithTheirCreditsAligned()
+    {
+        var (window, page) = Open(State(Kills), HistoryState.Done);
+
+        ByFaction(page);
+
+        Assert.True(Shows(page, CombatStatsPage.AgainstName.ToUpperInvariant()));
+        Assert.True(Shows(page, CombatStatsPage.AgainstText));
+        Assert.True(Shows(page, CombatStatsPage.PaidByName.ToUpperInvariant()));
+        Assert.True(Shows(page, CombatStatsPage.PaidByText));
+        Assert.Equal(2, In<TextBlock>(page).Count(block => block.Text == "3 FACTIONS"));
+        Assert.False(Shows(page, "6 FACTIONS"));
+
+        var grids = In<TableGrid>(page).ToList();
+        var against = grids.Where(grid => grid.Layout.Id == CombatStatsPage.TableId).ToList();
+        var paid = grids.Where(grid => grid.Layout.Id == CombatStatsPage.PaidTableId).ToList();
+
+        Assert.Equal(4, against.Count);
+        Assert.Equal(4, paid.Count);
+        Assert.Equal(
+            against.Select(grid => grid.ColumnDefinitions[^1].ActualWidth).Distinct().Single(),
+            paid.Select(grid => grid.ColumnDefinitions[^1].ActualWidth).Distinct().Single());
+        Assert.Equal(
+            against.Single(grid => grid.IsHeader).Bounds.Right,
+            paid.Single(grid => grid.IsHeader).Bounds.Right);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASearchFiltersBothFactionTablesAndEachKeepsItsOwnCountAndNoMatchLine()
+    {
+        var (window, page) = Open(State(Kills), HistoryState.Done);
+
+        ByFaction(page);
+        page.Filter("raiders");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Shows(page, "1 OF 3 FACTIONS"));
+        Assert.True(Shows(page, CombatStatsPage.NoMatchInTableText));
+        Assert.False(Shows(page, CombatStatsPage.NoMatchText));
+        Assert.True(Shows(page, CombatStatsPage.PaidByName.ToUpperInvariant()));
+
+        page.Filter("zzz");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Shows(page, CombatStatsPage.NoMatchText));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ATableWithNoRowsKeepsItsHeadAndSaysWhy()
+    {
+        var (window, page) = Open(
+            State("""{"timestamp":"2026-10-10T10:00:00Z","event":"Bounty","Target":"eagle","TotalReward":1000,"Rewards":[{"Faction":"Alpha","Reward":1000}]}"""),
+            HistoryState.Done);
+
+        ByFaction(page);
+
+        Assert.True(Shows(page, CombatStatsPage.AgainstName.ToUpperInvariant()));
+        Assert.True(Shows(page, CombatStatsPage.AgainstEmptyText));
+        Assert.False(Shows(page, CombatStatsPage.NoMatchText));
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void WhileHistoryRunsOnlyTheReadingLineShowsAndTheSearchHasNothingToFilter()
     {
