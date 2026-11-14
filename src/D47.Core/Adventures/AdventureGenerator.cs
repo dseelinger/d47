@@ -1012,7 +1012,7 @@ public sealed partial class AdventureGenerator(
         text.AppendLine();
         text.AppendLine(
             "List a phrase only where it breaks that rule. \"figurative\" is a metaphor or an image standing for a game thing or event, "
-            + "such as a rank called a line in a book, or a closing line that counts books. \"invented\" is a feature a game system does not "
+            + "such as a rank called a line in a book, or a closing line that counts books. A thing given feelings, opinions or wishes is figurative too, such as a drive that sulks. \"invented\" is a feature a game system does not "
             + "have, such as an address line on a Powerplay rank. A real object in the story, such as a logbook, a note or a station's door, "
             + "is not an objection.");
         text.AppendLine();
