@@ -16,7 +16,7 @@ public class EveryCheckboxShowsItsOwnSettingTests
     /// The checkboxes the settings page draws for a row of its own, less the one whose caption another row
     /// on its page shares (privacy.usageCounts and egress.usagecounts are both "Usage counts").
     /// </summary>
-    private const int DrawnCheckboxes = 159;
+    private const int DrawnCheckboxes = 160;
 
     /// <summary>
     /// Through the real drawn control, because the drawn control is the only place this fault was ever
