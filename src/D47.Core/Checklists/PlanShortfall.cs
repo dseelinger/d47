@@ -97,8 +97,7 @@ public sealed record PlanBlock(string Item, int Grade, string? Engineer, int? Ra
         : ProgressRead ? "not unlocked" : "engineer progress not read yet";
 
     public string Sentence =>
-        $"{Item} — no engineer you have unlocked offers grade "
-        + $"{Grade.ToString(CultureInfo.InvariantCulture)} yet; counted at the most rolls it can take.";
+        $"{Item} — no currently unlocked engineer can do Grade {Grade.ToString(CultureInfo.InvariantCulture)}";
 }
 
 /// <summary>Several short materials that one place gives.</summary>

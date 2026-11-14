@@ -107,7 +107,7 @@ public class ChecklistPlanTests
 
         Assert.Equal(5, cadmium.Needed);
         Assert.NotEmpty(costing.Gates);
-        Assert.Contains("grade 5", string.Join(" ", costing.Gates), StringComparison.Ordinal);
+        Assert.Contains("Grade 5", string.Join(" ", costing.Gates), StringComparison.Ordinal);
     }
 
     [Fact]

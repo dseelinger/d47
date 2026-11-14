@@ -84,6 +84,23 @@ public class EngineerStandingsSurviveASessionWithoutARosterTests
         Assert.Contains("not read", block.Reach, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("Slot1")]
+    [InlineData("TinyHardpoint4")]
+    public void ABlockSentenceNamesTheGradeAndBlueprintAndNoSlot(string slot)
+    {
+        var store = new GameStateStore();
+        store.Apply(Event(LoadGame("09-06")));
+        var items = EngineeringPlan.Items(
+            ChecklistScope.Ship(12),
+            "anaconda",
+            [new BuildRequest(slot, "Resistance Augmented", 5, Module: "Shield Booster")]);
+
+        var block = Assert.Single(EngineeringPlan.Cost(items, store.Active!).Blocks);
+
+        Assert.Equal("Grade 5 Resistance Augmented — no currently unlocked engineer can do Grade 5", block.Sentence);
+    }
+
     [Fact]
     public void RestoredStandingsBelongToTheirOwnCommander()
     {

@@ -145,7 +145,7 @@ public class AShipPageShowsWhatItsPlansStillNeedTests
         var key = Assert.Single(mode.Items()).Key;
 
         Assert.Empty(mode.Plan(key)!.Blocks);
-        Assert.DoesNotContain(mode.Planned(key, "MainEngines"), line => line.Text.Contains("no engineer you have unlocked"));
+        Assert.DoesNotContain(mode.Planned(key, "MainEngines"), line => line.Text.Contains("no currently unlocked engineer can do"));
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class AShipPageShowsWhatItsPlansStillNeedTests
         var key = Assert.Single(mode.Items()).Key;
 
         Assert.Single(mode.Plan(key)!.Blocks);
-        Assert.Contains(mode.Planned(key, "MainEngines"), line => line.Text.Contains("no engineer you have unlocked"));
+        Assert.Contains(mode.Planned(key, "MainEngines"), line => line.Text.Contains("no currently unlocked engineer can do"));
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public class AShipPageShowsWhatItsPlansStillNeedTests
         Assert.Equal(0, plan.PlanCount);
         Assert.Empty(plan.Blocks);
         Assert.All(plan.Rows, row => Assert.NotNull(row.Site));
-        Assert.DoesNotContain(mode.Planned(key, "MainEngines"), line => line.Text.Contains("no engineer you have unlocked"));
+        Assert.DoesNotContain(mode.Planned(key, "MainEngines"), line => line.Text.Contains("no currently unlocked engineer can do"));
         Assert.DoesNotContain(mode.Planned(key, "MainEngines"), line => line.Text == "What it costs");
     }
 
