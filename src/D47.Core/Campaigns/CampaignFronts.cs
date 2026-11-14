@@ -144,7 +144,7 @@ public static class CampaignFronts
                 conflict.OurStake) with { Conflict = conflict };
         }
 
-        var coup = row.Controls && rivals.FirstOrDefault(rival => rival.Influence >= FrontThresholds.CoupApproach) is { Name: not null } threat
+        var coup = row.Controls && !row.InConflict && rivals.FirstOrDefault(rival => rival.Influence >= FrontThresholds.CoupApproach) is { Name: not null } threat
             ? threat
             : default;
 

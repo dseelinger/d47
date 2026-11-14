@@ -68,6 +68,23 @@ public sealed class CampaignFrontsAreComputedAndRankedTests
         Assert.Equal("Lave Purple Gang is at 52%, near the 60% at which it can take control by a coup.", front.Reason);
     }
 
+    [Theory]
+    [InlineData("War", true)]
+    [InlineData("War", false)]
+    [InlineData("Election", true)]
+    [InlineData("Election", false)]
+    public void ACoupThreatIsSkippedWhileTheFactionIsInAConflictThere(string state, bool active)
+    {
+        var lave = Place(
+            "Lave",
+            0.40,
+            active: active ? [state] : null,
+            pending: active ? null : [state],
+            others: [new FactionNeighbour("Lave Purple Gang", 0.52) { ActiveStates = active ? [state] : [], PendingStates = active ? [] : [state] }]);
+
+        Assert.Equal([FrontKind.Conflict], Fronts(Report(lave)).Select(front => front.Kind));
+    }
+
     [Fact]
     public void ARivalNearSixtyPercentWhereWeDoNotControlIsNoCoupThreat()
     {

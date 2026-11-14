@@ -267,6 +267,27 @@ public sealed class OneCampaignFrontIsWorkedAtATimeTests
     }
 
     [Fact]
+    public void ACoupThreatHiddenByAConflictIsNotResolved()
+    {
+        var coup = Place("Lave", 0.40, others: [new FactionNeighbour("Lave Purple Gang", 0.55)]);
+
+        Hold(Now, coup);
+        Assert.Equal(FrontKind.Coup, _focus.Take(null, "Lave")!.Kind);
+
+        Hold(Now.AddHours(2), War());
+        _focus.Poll();
+
+        Assert.NotNull(_store.For("F1").Chosen);
+        Assert.Empty(_store.For("F1").Chronicle);
+
+        Hold(Now.AddHours(3), Place("Lave", 0.60));
+        _focus.Poll();
+
+        Assert.Null(_store.For("F1").Chosen);
+        Assert.Single(_store.For("F1").Chronicle);
+    }
+
+    [Fact]
     public void ATickIsNotedOnceOnTheChosenFront()
     {
         Hold(Now, War());

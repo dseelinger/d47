@@ -195,11 +195,15 @@ public sealed class CampaignFocus(
         }
     }
 
-    /// <summary>A front is resolved when it is gone from the fronts; a thin margin hidden by a conflict or coup threat is not.</summary>
+    /// <summary>A front is resolved when it is gone from the fronts; a thin margin or coup threat hidden by a conflict is not.</summary>
     private static bool Resolved(IReadOnlyList<Front> fronts, ChosenFront chosen) =>
         Find(fronts, chosen.Kind, chosen.System) is null
-        && (chosen.Kind != FrontKind.ThinMargin
-            || (Find(fronts, FrontKind.Conflict, chosen.System) is null && Find(fronts, FrontKind.Coup, chosen.System) is null));
+        && (chosen.Kind switch
+        {
+            FrontKind.ThinMargin => Find(fronts, FrontKind.Conflict, chosen.System) is null && Find(fronts, FrontKind.Coup, chosen.System) is null,
+            FrontKind.Coup => Find(fronts, FrontKind.Conflict, chosen.System) is null,
+            _ => true,
+        });
 
     private static ChronicleEntry Entry(string faction, ChosenFront chosen, CommanderGameState state)
     {

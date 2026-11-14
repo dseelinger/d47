@@ -199,7 +199,7 @@ every time it is asked for the same data. The model reads it and never ranks it.
 | Front | When |
 |---|---|
 | Conflict | A war, civil war or election, pending or active. Days won and stakes come from your journal when you have visited. |
-| Coup threat | Another faction at 50% or more in a system the faction controls; at 60% it can take control. |
+| Coup threat | Another faction at 50% or more in a system the faction controls; at 60% it can take control. Skipped during a conflict, when influence is frozen. |
 | Retreat | Retreat pending or active. |
 | Thin margin | In a controlled system, the lead over the nearest rival is under the intent's margin. Skipped during a conflict, when influence is frozen. |
 | Bad state | Lockdown, civil unrest, famine, blight, drought, outbreak, infrastructure failure, pirate attack, terrorist attack or bust. |
@@ -245,7 +245,7 @@ after each fetch and at the start of a session. A proposal writes nothing.
 A chosen front stays chosen across restarts until it resolves or you drop it. Naming another campaign
 faction drops it. D47 notes each BGS tick the front spans. A front resolves when the fronts computed
 after you chose it no longer hold it: the conflict ended, the state is gone, the margin is restored.
-A thin margin that disappears because a conflict or coup threat now covers the system has not resolved.
+A thin margin that disappears because a conflict or coup threat now covers the system, or a coup threat that disappears because a conflict now covers it, has not resolved.
 D47 then adds the front to the chronicle, with the BGS work you did for the faction there, and clears the choice.
 A conflict that ended with a result in your journal is recorded as won or lost.
 
