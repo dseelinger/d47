@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using D47.App.Diagnostics;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Interface;
@@ -95,6 +95,14 @@ public sealed class ScreenshotConverter(
             logger.LogInformation("The screenshot {File} did not arrive within {Seconds}s and was skipped", shot.FileName, Patience.TotalSeconds);
             return;
         }
+
+        if (files.Stat(source) is not { } state)
+        {
+            logger.LogInformation("The screenshot {File} was gone before it was read and was skipped", shot.FileName);
+            return;
+        }
+
+        note = note with { BmpLength = state.Length, BmpWritten = new DateTimeOffset(state.Written.ToUniversalTime()) };
 
         byte[] jpeg;
 

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Storage;
 
 namespace D47.Core.Interface;
@@ -129,7 +129,7 @@ public static class ScreenshotEdits
         return new ScreenshotRename(target, null);
     }
 
-    /// <summary>Elite's BMP the note of a converted picture names, when it is still in <paramref name="eliteFolder"/>; null otherwise.</summary>
+    /// <summary>Elite's BMP the note of a converted picture names, when it is still in <paramref name="eliteFolder"/> with the length and write time the note recorded; null otherwise.</summary>
     public static string? BmpToDelete(IFileSystem files, PictureNote? note, string eliteFolder)
     {
         ArgumentNullException.ThrowIfNull(files);
@@ -143,7 +143,11 @@ public static class ScreenshotEdits
 
         var path = Path.Combine(eliteFolder, name);
 
-        return files.Stat(path) is not null ? path : null;
+        return files.Stat(path) is { } state
+            && note.BmpLength == state.Length
+            && note.BmpWritten == new DateTimeOffset(state.Written.ToUniversalTime())
+            ? path
+            : null;
     }
 
     /// <summary>

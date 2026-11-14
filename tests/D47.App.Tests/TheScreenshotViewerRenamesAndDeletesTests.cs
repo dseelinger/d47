@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
@@ -34,8 +34,12 @@ public sealed class TheScreenshotViewerRenamesAndDeletesTests
         return stream.ToArray();
     }
 
-    private static PictureNote Noted(DateTimeOffset at, string? bmp) =>
-        new(at, ScreenPictures.FromScreenshot, 8, 8, "Sol", null, null, null, [new PictureNoteEntry(101, "Alpha", 1)], bmp);
+    private static PictureNote Noted(DateTimeOffset at, string? bmp, FileState? state = null) =>
+        new(at, ScreenPictures.FromScreenshot, 8, 8, "Sol", null, null, null, [new PictureNoteEntry(101, "Alpha", 1)], bmp)
+        {
+            BmpLength = state?.Length,
+            BmpWritten = state is { } s ? new DateTimeOffset(s.Written.ToUniversalTime()) : null,
+        };
 
     private sealed record Rig(
         Window Window, ScreenshotsPage Page, Visual Viewer, MemoryFileSystem Files, List<string> Recycled, List<(string, string)> Renamed, List<CodexPictureKey> Removed);
@@ -45,17 +49,19 @@ public sealed class TheScreenshotViewerRenamesAndDeletesTests
         var files = new MemoryFileSystem();
         var jpeg = Jpeg();
 
+        if (bmp)
+        {
+            files.WriteBytes(Path.Combine(Elite, "Screenshot_0001.bmp"), [1]);
+        }
+
+        var bmpState = files.Stat(Path.Combine(Elite, "Screenshot_0001.bmp"));
+
         for (var i = 0; i < Names.Length; i++)
         {
             files.WriteBytes(Path.Combine(Folder, Names[i]), jpeg);
             files.WriteText(
                 Path.Combine(Folder, Path.ChangeExtension(Names[i], ".json")),
-                Noted(new DateTimeOffset(2026, 11, 1 + i, 10, 0, 0, TimeSpan.Zero), i == 0 ? "Screenshot_0001.bmp" : null).Write());
-        }
-
-        if (bmp)
-        {
-            files.WriteBytes(Path.Combine(Elite, "Screenshot_0001.bmp"), [1]);
+                Noted(new DateTimeOffset(2026, 11, 1 + i, 10, 0, 0, TimeSpan.Zero), i == 0 ? "Screenshot_0001.bmp" : null, i == 0 ? bmpState : null).Write());
         }
 
         var recycled = new List<string>();

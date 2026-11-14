@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using D47.App.Media;
 using D47.Core.Interface;
@@ -172,6 +172,7 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
         }
 
         _files.WriteBytes(Path.Combine(Folder, "Screenshot_0001.bmp"), Bmp(5, 3));
+        var stat = _files.Stat(Path.Combine(Folder, "Screenshot_0001.bmp"));
 
         await Run(Converter(), [Event("Screenshot_0001.bmp")], state: store.Active);
 
@@ -181,6 +182,8 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
         Assert.Equal((Taken, ScreenPictures.FromScreenshot, 5, 3), (note.At, note.Source, note.Width, note.Height));
         Assert.Equal(("Example System", 42L, "A 1"), (note.System, note.SystemAddress, note.Body));
         Assert.Equal("Screenshot_0001.bmp", note.Bmp);
+        Assert.NotNull(stat);
+        Assert.Equal((stat.Value.Length, new DateTimeOffset(stat.Value.Written.ToUniversalTime())), (note.BmpLength, note.BmpWritten));
         Assert.Equal(2, Assert.Single(note.CodexEntries).EntryId);
     }
 

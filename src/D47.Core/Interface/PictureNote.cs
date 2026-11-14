@@ -1,11 +1,11 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace D47.Core.Interface;
 
 /// <summary>A codex entry logged shortly before a picture was taken.</summary>
 public sealed record PictureNoteEntry(long EntryId, string? Name, int? RegionId);
 
-/// <summary>Where and when a kept picture was taken, and the BMP of Elite's it was converted from. Stored beside the picture as JSON.</summary>
+/// <summary>Where and when a kept picture was taken, and the BMP of Elite's it was converted from, with the BMP's length and UTC write time when it was read. Stored beside the picture as JSON.</summary>
 public sealed record PictureNote(
     DateTimeOffset At,
     string Source,
@@ -16,7 +16,9 @@ public sealed record PictureNote(
     string? Body,
     int? RegionId,
     IReadOnlyList<PictureNoteEntry> CodexEntries,
-    string? Bmp = null)
+    string? Bmp = null,
+    long? BmpLength = null,
+    DateTimeOffset? BmpWritten = null)
 {
     private static readonly JsonSerializerOptions Options = new()
     {

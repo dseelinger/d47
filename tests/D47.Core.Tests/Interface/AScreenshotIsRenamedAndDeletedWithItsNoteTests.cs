@@ -1,4 +1,4 @@
-using D47.Core.Interface;
+﻿using D47.Core.Interface;
 using D47.Core.Storage;
 using Xunit;
 
@@ -19,8 +19,14 @@ public class AScreenshotIsRenamedAndDeletedWithItsNoteTests
 
     private static string Note(string stem) => Path.Combine(Folder, stem + ".json");
 
-    private static PictureNote Noted(string? bmp = "Screenshot_0001.bmp") =>
-        new(At, ScreenPictures.FromScreenshot, 3840, 2160, "Sol", 10477373803, "Earth", 18, [], bmp);
+    private static PictureNote Noted(string? bmp = "Screenshot_0001.bmp", MemoryFileSystem? files = null)
+    {
+        var note = new PictureNote(At, ScreenPictures.FromScreenshot, 3840, 2160, "Sol", 10477373803, "Earth", 18, [], bmp);
+
+        return files?.Stat(Path.Combine(Elite, bmp ?? "")) is { } state
+            ? note with { BmpLength = state.Length, BmpWritten = new DateTimeOffset(state.Written.ToUniversalTime()) }
+            : note;
+    }
 
     private static MemoryFileSystem Stocked()
     {
@@ -118,12 +124,39 @@ public class AScreenshotIsRenamedAndDeletedWithItsNoteTests
 
         var bmp = Path.Combine(Elite, "Screenshot_0001.bmp");
         files.WriteBytes(bmp, [7]);
+        var noted = Noted(files: files);
 
-        Assert.Equal(bmp, ScreenshotEdits.BmpToDelete(files, Noted(), Elite));
-        Assert.Null(ScreenshotEdits.BmpToDelete(files, Noted(null), Elite));
+        Assert.Equal(bmp, ScreenshotEdits.BmpToDelete(files, noted, Elite));
+        Assert.Null(ScreenshotEdits.BmpToDelete(files, noted with { Bmp = null }, Elite));
         Assert.Null(ScreenshotEdits.BmpToDelete(files, null, Elite));
-        Assert.Null(ScreenshotEdits.BmpToDelete(files, Noted(@"..\Screenshot_0001.bmp"), Elite));
-        Assert.Null(ScreenshotEdits.BmpToDelete(files, Noted("Screenshot_0001.png"), Elite));
+        Assert.Null(ScreenshotEdits.BmpToDelete(files, noted with { Bmp = @"..\Screenshot_0001.bmp" }, Elite));
+        Assert.Null(ScreenshotEdits.BmpToDelete(files, noted with { Bmp = "Screenshot_0001.png" }, Elite));
+    }
+
+    [Fact]
+    public void ABmpOfAnotherLengthOrWriteTimeThanTheNoteRecordedIsNotOffered()
+    {
+        var files = Stocked();
+        var bmp = Path.Combine(Elite, "Screenshot_0001.bmp");
+        files.WriteBytes(bmp, [7]);
+        var noted = Noted(files: files);
+
+        Assert.NotNull(noted.BmpLength);
+        Assert.Null(ScreenshotEdits.BmpToDelete(files, noted with { BmpLength = noted.BmpLength + 1 }, Elite));
+        Assert.Null(ScreenshotEdits.BmpToDelete(files, noted with { BmpWritten = noted.BmpWritten + TimeSpan.FromSeconds(1) }, Elite));
+
+        files.WriteBytes(bmp, [7]);
+
+        Assert.Null(ScreenshotEdits.BmpToDelete(files, noted, Elite));
+    }
+
+    [Fact]
+    public void ANoteWrittenBeforeTheBmpWasRecordedOffersNoBmp()
+    {
+        var files = Stocked();
+        files.WriteBytes(Path.Combine(Elite, "Screenshot_0001.bmp"), [7]);
+
+        Assert.Null(ScreenshotEdits.BmpToDelete(files, Noted(), Elite));
     }
 
     [Fact]

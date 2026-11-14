@@ -10,6 +10,8 @@
 
 Fixed: The Campaign page no longer lists a Coup threat beside a Conflict for the same system while the faction is in a war or election there; a chosen coup threat that turns into a conflict stays chosen instead of being recorded as resolved.
 
+Fixed: The screenshot viewer's Delete dialog offers "Also delete Elite's original BMP" only when that BMP is unchanged since D47 converted it, so a newer screenshot that Elite saved under a reused name is no longer recycled. Pictures converted before this change never offer the box.
+
 Fixed: Opening the Chronicle section of the Campaign page no longer closes D47 when an entry has a Chronicler's passage; the passage shows under its entry, on the desktop and in the headset.
 
 Fixed: The priority group stepper on a ship slot page no longer says "Grade 1" beside "Priority group 1"; it draws only its two buttons.

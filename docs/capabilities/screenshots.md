@@ -110,7 +110,7 @@ the JPEG and its note, and the date taken stays with the picture, so its place i
 change. A name that is empty, holds a character Windows refuses, or is already taken shows an error under
 the field and renames nothing. A Codex picture cut from the screenshot keeps working and still offers
 Re-crop. **Delete** opens a dialog saying the JPEG goes to the Recycle Bin. When the note names an Elite
-BMP that is still in Elite's pictures folder, a box, off by default, adds **Also delete Elite's original
+BMP that is still in Elite's pictures folder and unchanged since it was converted, a box, off by default, adds **Also delete Elite's original
 BMP**; ticked, the BMP goes to the Recycle Bin too. When Codex pictures are cut from the screenshot the
 dialog names up to three of them and counts the rest, and deleting removes them, so each entry shows its
 stock picture or placeholder again. After a delete the viewer shows the next picture, or closes after the
