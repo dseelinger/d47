@@ -38,7 +38,7 @@ public class TheCampaignPageShowsTheChosenFrontFrontsAndChronicleTests
 
         public CampaignStore Store { get; } = new("campaigns.json", new MemoryFileSystem(), NullLogger<CampaignStore>.Instance);
 
-        public CommanderGameState State { get; } = JournalScript.Commander(
+        public CommanderGameState State { get; set; } = JournalScript.Commander(
             Frontier,
             "Kade Orrin",
             """{ "timestamp":"2026-11-09T17:30:00Z", "event":"FSDJump", "StarSystem":"Arque", "SystemAddress":129, "StarPos":[0,0,0], "Factions":[{ "Name":"Arque Purple Cartel", "Influence":0.57 },{ "Name":"Kestrel Reach Compact", "Influence":0.245 }] }""",
@@ -92,8 +92,9 @@ public class TheCampaignPageShowsTheChosenFrontFrontsAndChronicleTests
         };
     }
 
-    private static FactionSystem Place(string name, double influence, bool controls, string[]? active = null, string[]? pending = null, double rival = 0.10, int age = 1) => new()
+    private static FactionSystem Place(string name, double influence, bool controls, string[]? active = null, string[]? pending = null, double rival = 0.10, int age = 1, StarPosition? at = null) => new()
     {
+        Position = at,
         Name = name,
         Influence = influence,
         Controls = controls,
@@ -106,12 +107,12 @@ public class TheCampaignPageShowsTheChosenFrontFrontsAndChronicleTests
 
     private static FactionReport Sample() => new(Us, "Cooperative", "Independent",
     [
-        Place("Gliese 868", 0.728, true, ["Boom"], rival: 0.147),
-        Place("Kanati", 0.610, true, rival: 0.225, age: 41),
-        Place("Haoria", 0.526, true, ["War", "Outbreak"], rival: 0.312),
-        Place("Wolf 1301", 0.440, true, rival: 0.406),
-        Place("Arque", 0.245, true, rival: 0.572),
-        Place("LHS 1914", 0.041, false, pending: ["Retreat"], rival: 0.351),
+        Place("Gliese 868", 0.728, true, ["Boom"], rival: 0.147, at: new StarPosition(0, 6, 8)),
+        Place("Kanati", 0.610, true, rival: 0.225, age: 41, at: new StarPosition(3, 4, 0)),
+        Place("Haoria", 0.526, true, ["War", "Outbreak"], rival: 0.312, at: new StarPosition(0, 0, 0)),
+        Place("Wolf 1301", 0.440, true, rival: 0.406, at: new StarPosition(-9530.5, -910.28, 19808.13)),
+        Place("Arque", 0.245, true, rival: 0.572, at: new StarPosition(1, 2, 2)),
+        Place("LHS 1914", 0.041, false, pending: ["Retreat"], rival: 0.351, at: new StarPosition(0, 0, 12)),
     ], []);
 
     private static (Window Window, CampaignPage Page) Open(Fixture fixture, bool headset = false)
@@ -270,6 +271,47 @@ public class TheCampaignPageShowsTheChosenFrontFrontsAndChronicleTests
             In<Segment>(page).Single(segment => segment.Name == CampaignPage.SectionsName).Statuses.Select(status => status!.Text));
         Assert.Contains(In<TextBlock>(page), block => block.Text == CampaignModel.OldLabel);
         Assert.True(Shows(page, "41 days ago"));
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EachFrontShowsItsSystemsDistanceAndAJumpMovesIt(bool headset)
+    {
+        var fixture = new Fixture();
+        var (window, page) = Open(fixture, headset);
+
+        Assert.Contains(fixture.Snapshot.Fronts, front => front.System == "Kanati");
+        Assert.Contains(fixture.Snapshot.Fronts, front => front.System == "LHS 1914");
+        Assert.True(Shows(page, "5.00 ly"));
+        Assert.True(Shows(page, "12.00 ly"));
+
+        fixture.State = JournalScript.Commander(
+            Frontier,
+            "Kade Orrin",
+            """{ "timestamp":"2026-11-09T17:50:00Z", "event":"FSDJump", "StarSystem":"LHS 1914", "SystemAddress":131, "StarPos":[0,0,12] }""");
+        Assert.True(page.Tick());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Shows(page, "5.00 ly"));
+        Assert.True(Shows(page, "13.00 ly"));
+        Assert.True(Shows(page, "0.00 ly"));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AFrontInASystemTheReportGivesNoPositionShowsADash()
+    {
+        var fixture = new Fixture(Sample() with
+        {
+            Systems = [.. Sample().Systems.Select(system => system with { Position = null })],
+        });
+        var (window, page) = Open(fixture);
+
+        Assert.DoesNotContain(In<TextBlock>(page), block => block.Text?.EndsWith(" ly", StringComparison.Ordinal) == true);
 
         window.Close();
     }

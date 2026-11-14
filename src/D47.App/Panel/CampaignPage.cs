@@ -76,6 +76,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     private static readonly TableColumn[] DesktopColumns =
     [
         new("System", ColumnFit.Fill) { Min = 180 },
+        new("Distance") { Whole = true },
         new("Influence", ColumnFit.Fixed) { Fixed = 84 },
         new("Lead", ColumnFit.Fixed) { Fixed = 84 },
         new("State", ColumnFit.Fixed) { Fixed = 130 },
@@ -84,7 +85,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
     private static readonly TableColumn[] HeadsetColumns =
     [
-        new("System", ColumnFit.Fill) { Min = 150 },
+        new("System", ColumnFit.Fill) { Min = 120 },
+        new("Distance") { Whole = true },
         new("Influence", ColumnFit.Fixed) { Fixed = 70 },
         new("Lead", ColumnFit.Fixed) { Fixed = 70 },
         new("State", ColumnFit.Fixed) { Fixed = 110 },
@@ -98,6 +100,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         new("Rank", ColumnFit.Fixed) { Fixed = 48 },
         new("Kind", ColumnFit.Fixed) { Fixed = 110 },
         new("System", ColumnFit.Fill) { Min = 150 },
+        new("Distance") { Whole = true },
         new("Reason", ColumnFit.Fill) { Min = 190 },
         new("Data age", ColumnFit.Fixed) { Fixed = 140 },
         new("Take", ColumnFit.Fixed) { Fixed = 80 },
@@ -107,8 +110,9 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     [
         new("Rank", ColumnFit.Fixed) { Fixed = 44 },
         new("Kind", ColumnFit.Fixed) { Fixed = 120 },
-        new("System", ColumnFit.Fill) { Min = 140 },
-        new("Reason", ColumnFit.Fill) { Min = 180 },
+        new("System", ColumnFit.Fill) { Min = 120 },
+        new("Distance") { Whole = true },
+        new("Reason", ColumnFit.Fill) { Min = 140 },
         new("Data age", ColumnFit.Fixed) { Fixed = 120 },
         new("Take", ColumnFit.Fixed) { Fixed = 96 },
     ];
@@ -367,7 +371,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var report = HeldReport();
 
         _reportShown = report is not null;
-        _rows = report is null ? [] : CampaignSystemRows.Of(report, state?.Standings ?? SystemStandings.Empty, _campaign.Intents, _now);
+        _rows = report is null ? [] : CampaignSystemRows.Of(report, state?.Standings ?? SystemStandings.Empty, _campaign.Intents, _now, state?.Location.StarPos);
 
         var summary = _faction is null
             ? "Choose the faction your campaign works for."
@@ -829,7 +833,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var layout = new TableLayout(TableId, _headset ? HeadsetColumns : DesktopColumns, _headset ? null : _columnWidths, _headset ? 14 : 16);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i is 1 or 2 ? HorizontalAlignment.Right : HorizontalAlignment.Left));
+        table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i is 1 or 2 or 3 ? HorizontalAlignment.Right : HorizontalAlignment.Left));
 
         if (sorted.Count == 0)
         {
@@ -887,10 +891,11 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             : lead;
 
         CreditsKit.Place(grid, 0, system);
-        CreditsKit.Place(grid, 1, Typeset.Mono(CampaignModel.InfluenceText(row.Influence), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
-        CreditsKit.Place(grid, 2, leadCell);
-        CreditsKit.Place(grid, 3, Typeset.Prose(row.State, TypeScale.ControlLarge, ink, wrap: true));
-        CreditsKit.Place(grid, 4, IntentStepper(row, frontier));
+        CreditsKit.Place(grid, 1, Typeset.Mono(CampaignModel.DistanceText(row.Distance), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
+        CreditsKit.Place(grid, 2, Typeset.Mono(CampaignModel.InfluenceText(row.Influence), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
+        CreditsKit.Place(grid, 3, leadCell);
+        CreditsKit.Place(grid, 4, Typeset.Prose(row.State, TypeScale.ControlLarge, ink, wrap: true));
+        CreditsKit.Place(grid, 5, IntentStepper(row, frontier));
 
         var border = new Border
         {
@@ -939,7 +944,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             return panel;
         }
 
-        var rows = CampaignModel.FrontRows(fronts, _campaign.Chosen);
+        var rows = CampaignModel.FrontRows(fronts, _campaign.Chosen, CampaignSystemRows.Distances(_snapshot.Report!, _sources.State()?.Location.StarPos));
         var matching = string.IsNullOrWhiteSpace(_query)
             ? rows
             : [.. rows.Where(row => row.Front.System.Contains(_query.Trim(), StringComparison.OrdinalIgnoreCase))];
@@ -947,7 +952,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var layout = new TableLayout(FrontsTableId, _headset ? HeadsetFrontColumns : FrontColumns, _headset ? null : _columnWidths, _headset ? 14 : 16);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        table.Children.Add(CreditsKit.HeaderRow(_frontHead, layout, i => i is 0 or 4 ? HorizontalAlignment.Right : HorizontalAlignment.Left));
+        table.Children.Add(CreditsKit.HeaderRow(_frontHead, layout, i => i is 0 or 3 or 5 ? HorizontalAlignment.Right : HorizontalAlignment.Left));
 
         if (sorted.Count == 0)
         {
@@ -1032,9 +1037,10 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         CreditsKit.Place(grid, 0, Typeset.Mono(row.Rank.ToString(System.Globalization.CultureInfo.InvariantCulture), TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
         CreditsKit.Place(grid, 1, Typeset.Prose(CampaignFronts.Describe(front.Kind), TypeScale.ControlLarge, ink, wrap: true));
         CreditsKit.Place(grid, 2, CopyGlyph.Beside(name, front.System, _copy));
-        CreditsKit.Place(grid, 3, Typeset.Prose(front.Reason, TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true));
-        CreditsKit.Place(grid, 4, age);
-        CreditsKit.Place(grid, 5, action);
+        CreditsKit.Place(grid, 3, Typeset.Mono(CampaignModel.DistanceText(row.Distance), TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.AKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
+        CreditsKit.Place(grid, 4, Typeset.Prose(front.Reason, TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true));
+        CreditsKit.Place(grid, 5, age);
+        CreditsKit.Place(grid, 6, action);
 
         return RowBorder(grid);
     }

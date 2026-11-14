@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -85,6 +86,27 @@ public class AFactionReportReadsEachSystemItIsPresentInTests
 
         var consulate = Assert.Single(report.Systems[0].Others, other => other.Name == "Eurybia Empire Consulate");
         Assert.Equal(["Civil Unrest", "Election"], consulate.ActiveStates);
+    }
+
+    [Fact]
+    public async Task EachSystemCarriesItsPosition()
+    {
+        var (report, _) = await Report(FactionAnswer.Recorded());
+
+        Assert.Equal(new StarPosition(51.40625, -54.40625, -30.5), report.Systems[0].Position);
+        Assert.Equal(new StarPosition(45.84375, -64.3125, -27.5625), report.Systems[2].Position);
+    }
+
+    [Fact]
+    public async Task ASystemWithoutCoordinatesHasNoPosition()
+    {
+        var recorded = JsonNode.Parse(FactionAnswer.Recorded())!;
+        recorded["results"]![1]!.AsObject().Remove("x");
+
+        var (report, _) = await Report(recorded.ToJsonString());
+
+        Assert.Null(report.Systems[1].Position);
+        Assert.NotNull(report.Systems[0].Position);
     }
 
     [Fact]

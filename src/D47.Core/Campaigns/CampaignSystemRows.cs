@@ -20,7 +20,11 @@ public sealed record CampaignSystemRow(
     bool IntentIsDefault,
     DateTimeOffset? Updated,
     bool OwnReading,
-    bool Old);
+    bool Old)
+{
+    /// <summary>Light years from the Commander's current system, or null when either position is unknown.</summary>
+    public double? Distance { get; init; }
+}
 
 /// <summary>Builds the Systems rows of the campaign faction from its galaxy report, the Commander's readings and the intents set.</summary>
 public static class CampaignSystemRows
@@ -28,29 +32,55 @@ public static class CampaignSystemRows
     public const string NoState = "None";
 
     /// <summary>
-    /// One row per system in the report, most influence first. A system the Commander has seen since the report takes
-    /// its figures from that reading, the rival's included.
+    /// One row per system in the report, most influence first, each with its distance from <paramref name="here"/>. A
+    /// system the Commander has seen since the report takes its figures from that reading, the rival's included.
     /// </summary>
     public static IReadOnlyList<CampaignSystemRow> Of(
         FactionReport report,
         SystemStandings standings,
         IReadOnlyDictionary<string, SystemIntent> intents,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        StarPosition? here)
     {
         ArgumentNullException.ThrowIfNull(report);
         ArgumentNullException.ThrowIfNull(standings);
         ArgumentNullException.ThrowIfNull(intents);
 
-        var systems = report.Systems
-            .GroupBy(system => system.Name, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var systems = ByName(report);
+        var distances = Distances(report, here);
 
         return
         [
             .. FactionRows.Of(report, standings)
-                .Select(row => RowOf(report.Name, row, systems[row.System], standings, intents, now)),
+                .Select(row => RowOf(report.Name, row, systems[row.System], standings, intents, now) with
+                {
+                    Distance = distances.TryGetValue(row.System, out var distance) ? distance : null,
+                }),
         ];
     }
+
+    /// <summary>
+    /// Light years from <paramref name="here"/> to each system in the report that has a position, by name, ignoring case;
+    /// empty when <paramref name="here"/> is null.
+    /// </summary>
+    public static IReadOnlyDictionary<string, double> Distances(FactionReport report, StarPosition? here)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+
+        if (here is not { } from)
+        {
+            return new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        return ByName(report)
+            .Where(pair => pair.Value.Position is not null)
+            .ToDictionary(pair => pair.Key, pair => from.DistanceTo(pair.Value.Position!.Value), StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static Dictionary<string, FactionSystem> ByName(FactionReport report) =>
+        report.Systems
+            .GroupBy(system => system.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
 
     private static CampaignSystemRow RowOf(
         string faction,

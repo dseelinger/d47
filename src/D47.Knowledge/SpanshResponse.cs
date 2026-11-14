@@ -692,6 +692,7 @@ internal static class SpanshResponse
                         }),
                 ],
                 ReportedAt = Timestamp(result, "updated_at"),
+                Position = Position(result),
             };
 
             systems.Add(new FactionPageSystem(

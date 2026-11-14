@@ -58,19 +58,20 @@ public static class CampaignModel
     /// <summary>The phrases beside the chosen front's tiles.</summary>
     public const string ChosenPhrases = "Or say \"next front\", \"drop the front\" or \"what should I do for the faction?\"";
 
-    /// <summary>One front with its place in the ranking.</summary>
-    public sealed record FrontRow(int Rank, Front Front, bool Chosen);
+    /// <summary>One front with its place in the ranking and its system's distance in light years, null when unknown.</summary>
+    public sealed record FrontRow(int Rank, Front Front, bool Chosen, double? Distance);
 
     /// <summary>One resolved front as the Chronicle section draws it.</summary>
     public sealed record ChronicleRow(ChronicleEntry Entry, DateTimeOffset? Ended);
 
-    /// <summary>The fronts in rank order; the one being worked is marked chosen.</summary>
-    public static IReadOnlyList<FrontRow> FrontRows(IReadOnlyList<Front> fronts, ChosenFront? chosen) =>
+    /// <summary>The fronts in rank order, each with its system's distance from <paramref name="distances"/>; the one being worked is marked chosen.</summary>
+    public static IReadOnlyList<FrontRow> FrontRows(IReadOnlyList<Front> fronts, ChosenFront? chosen, IReadOnlyDictionary<string, double> distances) =>
     [
         .. fronts.Select((front, index) => new FrontRow(
             index + 1,
             front,
-            chosen is not null && chosen.Kind == front.Kind && string.Equals(chosen.System, front.System, StringComparison.OrdinalIgnoreCase))),
+            chosen is not null && chosen.Kind == front.Kind && string.Equals(chosen.System, front.System, StringComparison.OrdinalIgnoreCase),
+            distances.TryGetValue(front.System, out var distance) ? distance : null)),
     ];
 
     /// <summary>The chronicle newest first. An entry ended at the last tick it spanned; it has no end time when it spanned none.</summary>
@@ -79,12 +80,13 @@ public static class CampaignModel
         .. campaign.Chronicle.Reverse().Select(entry => new ChronicleRow(entry, entry.Ticks.Count == 0 ? null : entry.Ticks.Max())),
     ];
 
-    /// <summary>The Fronts columns. Rank, Kind, System and Data age sort; Reason does not.</summary>
+    /// <summary>The Fronts columns. Rank, Kind, System, Distance and Data age sort; Reason does not.</summary>
     public static IReadOnlyList<SortColumn<FrontRow>> FrontHeads() =>
     [
         SortColumn<FrontRow>.Figure("Rank", row => (int?)row.Rank, SortDirection.Ascending),
         SortColumn<FrontRow>.Text("Kind", row => CampaignFronts.Describe(row.Front.Kind)),
         SortColumn<FrontRow>.Text("System", row => row.Front.System),
+        SortColumn<FrontRow>.Figure("Distance", row => row.Distance, SortDirection.Ascending),
         SortColumn<FrontRow>.Plain("Reason"),
         SortColumn<FrontRow>.Figure("Data age", row => row.Front.Updated, SortDirection.Descending),
         SortColumn<FrontRow>.Plain(string.Empty),
@@ -203,6 +205,10 @@ public static class CampaignModel
         .. Intents.Select(each => isDefault && each == intent ? $"{Label(each)} · default" : Label(each)),
     ];
 
+    /// <summary><c>6.12 ly</c>, or a dash when unknown.</summary>
+    public static string DistanceText(double? lightYears) =>
+        lightYears is { } distance ? StarSystemPage.DistanceText(distance) : Dash;
+
     /// <summary><c>68.0%</c>, or a dash when unknown.</summary>
     public static string InfluenceText(double? influence) =>
         influence is { } fraction ? (fraction * 100).ToString("0.0", CultureInfo.InvariantCulture) + "%" : Dash;
@@ -232,10 +238,11 @@ public static class CampaignModel
                 ? $"After the {PageKit.Clock(at)} UTC tick"
                 : $"{PageKit.Clock(computed)} UTC";
 
-    /// <summary>The Systems columns. System, Influence and Lead sort; State and Intent do not.</summary>
+    /// <summary>The Systems columns. System, Distance, Influence and Lead sort; State and Intent do not.</summary>
     public static IReadOnlyList<SortColumn<CampaignSystemRow>> Heads(bool headset) =>
     [
         SortColumn<CampaignSystemRow>.Text("System", row => row.System) with { Second = headset ? null : "Controlled or not" },
+        SortColumn<CampaignSystemRow>.Figure("Distance", row => row.Distance, SortDirection.Ascending),
         SortColumn<CampaignSystemRow>.Figure(headset ? "Infl." : "Influence", row => row.Influence, SortDirection.Descending),
         SortColumn<CampaignSystemRow>.Figure("Lead", row => row.Lead, SortDirection.Descending) with { Second = headset ? null : "Points" },
         SortColumn<CampaignSystemRow>.Plain("State"),
@@ -243,7 +250,7 @@ public static class CampaignModel
     ];
 
     /// <summary>The order the rows come in, drawn as Influence ▼.</summary>
-    public static readonly SortOrder DefaultOrder = new(1, SortDirection.Descending);
+    public static readonly SortOrder DefaultOrder = new(2, SortDirection.Descending);
 
     /// <summary>The rows whose system name contains <paramref name="query"/>, ignoring case.</summary>
     public static IReadOnlyList<CampaignSystemRow> Matching(IReadOnlyList<CampaignSystemRow> rows, string? query) =>

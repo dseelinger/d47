@@ -15,8 +15,9 @@ public sealed class CampaignSystemRowsGiveEachSystemItsFiguresTests
     private static IReadOnlyList<CampaignSystemRow> Rows(
         FactionReport report,
         SystemStandings? standings = null,
-        IReadOnlyDictionary<string, SystemIntent>? intents = null) =>
-        CampaignSystemRows.Of(report, standings ?? SystemStandings.Empty, intents ?? NoIntents, Now);
+        IReadOnlyDictionary<string, SystemIntent>? intents = null,
+        StarPosition? here = null) =>
+        CampaignSystemRows.Of(report, standings ?? SystemStandings.Empty, intents ?? NoIntents, Now, here);
 
     [Fact]
     public void ASystemWithNoIntentTakesHoldWhereControlledAndLeaveAloneElsewhere()
@@ -138,5 +139,42 @@ public sealed class CampaignSystemRowsGiveEachSystemItsFiguresTests
         var rows = Rows(Report(Place("Diso", 0.20, controls: false), Place("Lave", 0.60), Place("Leesti", 0.40)));
 
         Assert.Equal(["Lave", "Leesti", "Diso"], rows.Select(row => row.System));
+    }
+
+    [Fact]
+    public void EachRowHasItsDistanceFromTheCommandersSystem()
+    {
+        var lave = Place("Lave", 0.60) with { Position = new StarPosition(3, 4, 0) };
+        var diso = Place("Diso", 0.40, controls: false) with { Position = new StarPosition(-10, 0, 0) };
+
+        var rows = Rows(Report(lave, diso), here: new StarPosition(0, 0, 0));
+
+        Assert.Equal(5, rows.Single(row => row.System == "Lave").Distance!.Value, 6);
+        Assert.Equal(10, rows.Single(row => row.System == "Diso").Distance!.Value, 6);
+    }
+
+    [Fact]
+    public void ARowHasNoDistanceWithoutEitherPosition()
+    {
+        var placed = Place("Lave", 0.60) with { Position = new StarPosition(3, 4, 0) };
+        var unplaced = Place("Diso", 0.40, controls: false);
+
+        var anywhere = Rows(Report(placed, unplaced), here: new StarPosition(0, 0, 0));
+        var nowhere = Rows(Report(placed, unplaced), here: null);
+
+        Assert.Null(anywhere.Single(row => row.System == "Diso").Distance);
+        Assert.All(nowhere, row => Assert.Null(row.Distance));
+    }
+
+    [Fact]
+    public void DistancesAreLookedUpByNameIgnoringCase()
+    {
+        var report = Report(Place("Lave", 0.60) with { Position = new StarPosition(0, 6, 8) }, Place("Diso", 0.40));
+
+        var distances = CampaignSystemRows.Distances(report, new StarPosition(0, 0, 0));
+
+        Assert.Equal(10, distances["lave"], 6);
+        Assert.False(distances.ContainsKey("Diso"));
+        Assert.Empty(CampaignSystemRows.Distances(report, null));
     }
 }

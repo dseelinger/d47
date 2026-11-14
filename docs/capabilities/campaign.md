@@ -122,12 +122,13 @@ as "our campaign faction is" does. With no campaign faction known, the tile read
 newer journal readings in place of the report's figures. Each row shows:
 
 - the system, and whether the faction controls it;
+- its distance from you, in light years;
 - the faction's influence;
 - its lead over the nearest rival in points, marked "frozen" during a war, civil war or election;
 - its state;
 - its intent.
 
-System, Influence and Lead sort when you press the heading. A report more than 30 days old shows its
+System, Distance, Influence and Lead sort when you press the heading. A report more than 30 days old shows its
 age and OLD REPORT, and the rest of the row is grey. On the big panel the table shows 25 systems to
 a page.
 
@@ -141,7 +142,8 @@ public static IReadOnlyList<CampaignSystemRow> Of(
     FactionReport report,
     SystemStandings standings,
     IReadOnlyDictionary<string, SystemIntent> intents,
-    DateTimeOffset now)
+    DateTimeOffset now,
+    StarPosition? here)
 ```
 
 Above the sections the page shows the front you are working. With one chosen, **Chosen front** gives
@@ -162,18 +164,19 @@ computed** is in the warning colour.
 Under that, **Fronts**, **Systems** and **Chronicle** are one row of three, with a count on each on
 the desktop and none in the headset.
 
-**Fronts** lists the fronts in rank order, each with its kind, system, the reason, and how old its
-data is, "you saw it" for your own reading. A report more than 30 days old is marked OLD REPORT. Each
-row ends in **TAKE**, which chooses that front as "take the coup threat in Lave" does, or **CHOSEN**
-on the front you are working. The rows come from code:
+**Fronts** lists the fronts in rank order, each with its kind, system, how far the system is from you,
+the reason, and how old its data is, "you saw it" for your own reading. A report more than 30 days
+old is marked OLD REPORT. Each row ends in **TAKE**, which chooses that front as "take the coup
+threat in Lave" does, or **CHOSEN** on the front you are working. The rows come from code:
 
 ```csharp
-public static IReadOnlyList<FrontRow> FrontRows(IReadOnlyList<Front> fronts, ChosenFront? chosen) =>
+public static IReadOnlyList<FrontRow> FrontRows(IReadOnlyList<Front> fronts, ChosenFront? chosen, IReadOnlyDictionary<string, double> distances) =>
 [
     .. fronts.Select((front, index) => new FrontRow(
         index + 1,
         front,
-        chosen is not null && chosen.Kind == front.Kind && string.Equals(chosen.System, front.System, StringComparison.OrdinalIgnoreCase))),
+        chosen is not null && chosen.Kind == front.Kind && string.Equals(chosen.System, front.System, StringComparison.OrdinalIgnoreCase),
+        distances.TryGetValue(front.System, out var distance) ? distance : null)),
 ];
 ```
 

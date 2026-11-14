@@ -1,3 +1,5 @@
+using D47.Core.Journal;
+
 namespace D47.Core.Knowledge;
 
 /// <summary>Where one minor faction is present, as the galaxy service last had it reported.</summary>
@@ -39,6 +41,9 @@ public sealed record FactionSystem
 
     /// <summary>When the service last had a report of this system.</summary>
     public DateTimeOffset? ReportedAt { get; init; }
+
+    /// <summary>Where the system is, or null when the service gave no coordinates.</summary>
+    public StarPosition? Position { get; init; }
 }
 
 /// <summary>Another faction present in the same system, with its influence as a fraction of 1.</summary>

@@ -38,7 +38,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
     {
         public CampaignStore Store { get; } = new("campaigns.json", new MemoryFileSystem(), NullLogger<CampaignStore>.Instance);
 
-        public CommanderGameState State { get; } = JournalScript.Commander(
+        public CommanderGameState State { get; set; } = JournalScript.Commander(
             Frontier,
             "Kade Orrin",
             """{ "timestamp":"2026-11-09T17:00:00Z", "event":"FSDJump", "StarSystem":"Ross 128", "SystemAddress":128, "StarPos":[0,0,0], "Factions":[{ "Name":"Kestrel Reach Compact", "Influence":0.38, "ActiveStates":[{ "State":"War" }] },{ "Name":"Ross 128 Gold Life Inc", "Influence":0.376, "ActiveStates":[{ "State":"War" }] }] }""",
@@ -93,7 +93,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
                 []));
     }
 
-    private static FactionSystem Place(string name, double influence, bool controls, string[]? active = null, string[]? pending = null, double rival = 0.10, int age = 1) => new()
+    private static FactionSystem Place(string name, double influence, bool controls, string[]? active = null, string[]? pending = null, double rival = 0.10, int age = 1, StarPosition? at = null) => new()
     {
         Name = name,
         Influence = influence,
@@ -102,19 +102,20 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
         PendingStates = pending ?? [],
         Others = [new FactionNeighbour(Rival, rival)],
         ReportedAt = Now.AddDays(-age),
+        Position = at,
     };
 
     /// <summary>A twelve-system campaign like the handoff's.</summary>
     private static FactionReport Sample() => new(Us, "Cooperative", "Independent",
     [
-        Place("Lalande 29917", 0.680, true, ["Boom"], rival: 0.188),
-        Place("Gliese 868", 0.728, true, ["Boom"], rival: 0.147),
-        Place("Kanati", 0.610, true, rival: 0.225, age: 41),
-        Place("Haoria", 0.526, true, ["Outbreak"], rival: 0.312),
-        Place("Wolf 1301", 0.440, true, rival: 0.406),
-        Place("Ross 128", 0.380, true, ["War"], rival: 0.376),
-        Place("HIP 21991", 0.310, false, rival: 0.352),
-        Place("Arque", 0.245, true, rival: 0.572),
+        Place("Lalande 29917", 0.680, true, ["Boom"], rival: 0.188, at: new StarPosition(3, 4, 0)),
+        Place("Gliese 868", 0.728, true, ["Boom"], rival: 0.147, at: new StarPosition(-9.5, 13.25, 2)),
+        Place("Kanati", 0.610, true, rival: 0.225, age: 41, at: new StarPosition(-9530.5, -910.28, 19808.13)),
+        Place("Haoria", 0.526, true, ["Outbreak"], rival: 0.312, at: new StarPosition(40.1, -12.7, 61.9)),
+        Place("Wolf 1301", 0.440, true, rival: 0.406, at: new StarPosition(18.4, 2.2, -30.6)),
+        Place("Ross 128", 0.380, true, ["War"], rival: 0.376, at: new StarPosition(-0.8, 10.3, 2.9)),
+        Place("HIP 21991", 0.310, false, rival: 0.352, at: new StarPosition(55.2, -71.9, -120.4)),
+        Place("Arque", 0.245, true, rival: 0.572, at: new StarPosition(0, 0, 0)),
         Place("Mullag", 0.185, false, rival: 0.305),
         Place("Ngolo", 0.092, false, rival: 0.495),
         Place("Tau Bootis", 0.064, false, rival: 0.574),
@@ -286,6 +287,55 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
         Assert.True(Shows(page, CampaignModel.NoReportText));
         Assert.Equal("CHANGE FACTION", In<Button>(page).Single(button => button.Name == CampaignPage.ChangeName).Content);
         Assert.Equal($"Your campaign for {Us}: the front you chose, and what to do next.", page.Summary);
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EachSystemShowsItsDistanceAndAJumpMovesIt(bool headset)
+    {
+        var fixture = SampleCampaign();
+        var (window, page) = Open(fixture, headset);
+
+        Assert.True(Shows(page, "0.00 ly"));
+        Assert.True(Shows(page, "10.73 ly"));
+        Assert.True(Shows(page, "22000.48 ly"));
+
+        fixture.State = JournalScript.Commander(
+            Frontier,
+            "Kade Orrin",
+            """{ "timestamp":"2026-11-09T17:30:00Z", "event":"FSDJump", "StarSystem":"Arque", "SystemAddress":129, "StarPos":[0,0,0] }""",
+            """{ "timestamp":"2026-11-09T17:50:00Z", "event":"FSDJump", "StarSystem":"Lalande 29917", "SystemAddress":131, "StarPos":[3,4,0] }""");
+        Assert.True(page.Tick());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Shows(page, "10.73 ly"));
+        Assert.True(Shows(page, "7.91 ly"));
+        Assert.True(Shows(page, "22001.94 ly"));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheDistanceHeaderSortsNearestFirstThenFarthestFirstWithNoDistanceLast()
+    {
+        var (window, page) = Open(SampleCampaign());
+
+        string[] Order() => [.. In<Stepper>(page).Select(stepper => AutomationProperties.GetName(stepper)!.Replace("Intent ", string.Empty, StringComparison.Ordinal))];
+
+        Press(In<Button>(page).Single(button => button.Name == "CampaignHead.Distance"));
+
+        Assert.Equal(["Arque", "Lalande 29917", "Ross 128"], Order()[..3]);
+        Assert.Equal("Kanati", Order()[7]);
+        Assert.Equal(["Mullag", "Ngolo", "Tau Bootis", "LHS 1914"], Order()[8..]);
+
+        Press(In<Button>(page).Single(button => button.Name == "CampaignHead.Distance"));
+
+        Assert.Equal(["Kanati", "HIP 21991"], Order()[..2]);
+        Assert.Equal("Arque", Order()[7]);
+        Assert.Equal(["Mullag", "Ngolo", "Tau Bootis", "LHS 1914"], Order()[8..]);
 
         window.Close();
     }
