@@ -58,6 +58,7 @@ public sealed class AppPaths
         Modules = Path.Combine(Data, "modules");
         ShippedShips = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "ships");
         ShippedPortraits = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "portraits");
+        ShippedEngineers = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "engineers");
         ShippedCodexPlaceholders = Path.Combine(Path.GetFullPath(buildRoot ?? InstallRoot), "codex-placeholders");
     }
 
@@ -183,6 +184,9 @@ public sealed class AppPaths
 
     /// <summary>The speaker portraits that came with the build, read-only, beside the executable.</summary>
     public string ShippedPortraits { get; }
+
+    /// <summary>The engineer portraits that came with the build, read-only, beside the executable.</summary>
+    public string ShippedEngineers { get; }
 
     /// <summary>The codex family placeholders that came with the build, read-only, beside the executable.</summary>
     public string ShippedCodexPlaceholders { get; }

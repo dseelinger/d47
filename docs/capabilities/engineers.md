@@ -322,7 +322,7 @@ referral that has already happened, and no table can be more right about that th
 
 The last root of the Asset Mgmt tab. The directory is everybody in one table, ordered by what you
 can act on today; every header but Portrait sorts it, and the column widths can be dragged and are
-remembered. A cell that does not fit ends in an ellipsis and shows its whole value in a tooltip.
+remembered. Each row shows the engineer's portrait, and pressing it shows the whole picture full size. A cell that does not fit ends in an ellipsis and shows its whole value in a tooltip.
 In the headset the same table has no grips or tooltips and shows 25 rows a page. Its **Route** button opens the solver as a level beside it, and Back returns to the
 directory. Drilling a directory row opens the one engineer behind it. The search box filters on
 the name, the system and what they grade.

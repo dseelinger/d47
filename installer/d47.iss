@@ -77,6 +77,8 @@ Source: "..\src\D47.App\bin\Release\publish\runtimes\*"; DestDir: "{app}\runtime
 Source: "..\src\D47.App\bin\Release\publish\ships\*"; DestDir: "{app}\ships"; Flags: ignoreversion
 ; The speaker portraits the Conversation page shows.
 Source: "..\src\D47.App\bin\Release\publish\portraits\*"; DestDir: "{app}\portraits"; Flags: ignoreversion skipifsourcedoesntexist
+; The engineer portraits the Engineers table shows.
+Source: "..\src\D47.App\bin\Release\publish\engineers\*"; DestDir: "{app}\engineers"; Flags: ignoreversion
 Source: "..\src\D47.App\bin\Release\publish\codex-placeholders\*"; DestDir: "{app}\codex-placeholders"; Flags: ignoreversion
 ; The Chatterbox reference clips and voices.tsv.
 Source: "..\src\D47.App\bin\Release\publish\voices\chatterbox\*"; DestDir: "{app}\voices\chatterbox"; Flags: ignoreversion
@@ -96,6 +98,7 @@ Type: files; Name: "{app}\{#ExeName}.old"
 Type: filesandordirs; Name: "{app}\runtimes"
 Type: filesandordirs; Name: "{app}\ships"
 Type: filesandordirs; Name: "{app}\portraits"
+Type: filesandordirs; Name: "{app}\engineers"
 Type: filesandordirs; Name: "{app}\voices"
 
 [Code]

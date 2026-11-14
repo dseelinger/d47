@@ -44,6 +44,12 @@ was derived from in its own header:
     src/D47.Core/Knowledge/Missions.tsv             tools/gen-missions.py
     src/D47.Core/Knowledge/StepEvents.tsv           tools/gen-step-events.py
     src/D47.Core/Knowledge/StepFields.tsv           tools/gen-step-events.py
+    assets/engineers/                               tools/gen-engineer-portraits.py
+
+The pictures in assets/engineers/ are the page images of the engineers' articles on the
+Elite Dangerous Wiki (Fandom), saved by hand from each article and cropped by
+tools/gen-engineer-portraits.py. They are Frontier's in-game imagery under the rules
+quoted above. The wiki's CC BY-SA licence covers its text and does not cover them.
 
 
 Community data sources

@@ -427,6 +427,8 @@ public partial class MainWindow : Window
             ShipArt.Files = host.Files;
             ShipArt.Folder = host.Paths.Ships;
             ShipArt.Shipped = host.Paths.ShippedShips;
+            EngineerPictures.Files = host.Files;
+            EngineerPictures.Folder = host.Paths.ShippedEngineers;
 
             // Whether the hull viewer draws through OpenGL, and where it says why it does not.
             HullViewer.Enable(() => host.Settings.Current.Ui.HullGpu, host.Loggers.CreateLogger("D47.App.Panel.HullViewer"));

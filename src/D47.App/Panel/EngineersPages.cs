@@ -323,6 +323,9 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
     public const string PreviousName = "EngineersPrevious";
     public const string NextName = "EngineersNext";
 
+    /// <summary>The name prefix of a row's face; the engineer's id follows.</summary>
+    public const string PortraitPrefix = "EngineerPortrait.";
+
     private const int PortraitColumn = 0;
     private const int EngineerColumn = 1;
     private const int StatusColumn = 2;
@@ -541,6 +544,23 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
 
         var portrait = new Border { Width = TypeScale.MinimumTarget, Height = TypeScale.MinimumTarget };
         ThemeInk.Bind(portrait, Border.BackgroundProperty, ThemeManager.SlabKey);
+        var engineerId = entry.Engineer.Id;
+        var faceBitmap = EngineerPictures.Face(engineerId);
+
+        if (faceBitmap is not null)
+        {
+            var face = new Image
+            {
+                Name = PortraitPrefix + engineerId,
+                Source = faceBitmap,
+                Stretch = Stretch.UniformToFill,
+                Width = TypeScale.MinimumTarget,
+                Height = TypeScale.MinimumTarget,
+            };
+            SpeakerPictureViewer.Enlarges(face, () => EngineerPictures.Whole(engineerId));
+            portrait.Child = face;
+        }
+
         CreditsKit.Place(grid, PortraitColumn, portrait);
 
         var name = ListRow.Name(new TextBlock { Text = entry.Engineer.Name, TextTrimming = TextTrimming.CharacterEllipsis });

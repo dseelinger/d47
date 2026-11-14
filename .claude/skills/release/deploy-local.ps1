@@ -49,7 +49,7 @@ $Staging = [IO.Path]::GetFullPath($Staging)
 
 # What the installer and d47.zip carry. UpdateInstaller retires anything under these folders that a
 # new build does not ship, so a mirror matches what an update does.
-$payload = 'd47.exe', 'runtimes', 'ships', 'portraits', 'voices'
+$payload = 'd47.exe', 'runtimes', 'ships', 'portraits', 'engineers', 'voices'
 
 # Folders under data\ that D47 downloads or records, and backups, which holds zips older builds wrote.
 $leftOut = 'audio', 'avatar-clips', 'backups', 'flight', 'logs', 'models', 'modules', 'ships', 'stories'

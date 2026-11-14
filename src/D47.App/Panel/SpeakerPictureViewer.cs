@@ -76,6 +76,16 @@ internal sealed class SpeakerPictureViewer : Grid
     /// <summary>Makes <paramref name="image"/> open the already decoded <paramref name="picture"/> full size when pressed.</summary>
     internal static void Enlarges(Image image, Bitmap picture) => Press(image, () => Open(image, picture));
 
+    /// <summary>Makes <paramref name="image"/> open the picture <paramref name="load"/> returns full size when pressed; nothing opens when it returns null.</summary>
+    internal static void Enlarges(Image image, Func<Bitmap?> load) =>
+        Press(image, () =>
+        {
+            if (load() is { } picture)
+            {
+                Open(image, picture);
+            }
+        });
+
     private static void Press(Image image, Action open)
     {
         image.Cursor = new Cursor(StandardCursorType.Hand);

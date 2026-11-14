@@ -12,6 +12,8 @@ Fixed: Spoken lines no longer give ships, cargo or the galaxy feelings or opinio
 
 Changed: A table you can resize now shows a line on each column boundary you can drag, 1px at rest and 2px in the accent colour while the pointer is over it or you are dragging it.
 
+Added: The Engineers table's Portrait column shows each engineer's face, and pressing it shows the whole picture full size. The pictures are Frontier's in-game imagery and ship with the download.
+
 Fixed: On the local voice (Kokoro), "four", "fourteen" and a spelled 4 are said with the full vowel of "door" instead of the vowel Kokoro reduces.
 
 Changed: The ship page's Engineer rank notice drops the slot name and reads "Grade 5 Resistance Augmented — no currently unlocked engineer can do Grade 5". The same sentence is used in the slot detail, the build talk and the Materials page gates, and the spoken shortfall.

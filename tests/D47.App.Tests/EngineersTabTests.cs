@@ -22,7 +22,7 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public class EngineersTabTests
 {
-    private sealed record Surface(
+    internal sealed record Surface(
         Window Window,
         PanelView Panel,
         ShipPlanService Ships,
@@ -38,7 +38,7 @@ public class EngineersTabTests
             """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Liz Ryder","EngineerID":300080,"Progress":"Unlocked","Rank":5}]}""");
     }
 
-    private static Surface Open(
+    internal static Surface Open(
         bool planned = true,
         D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
         CommanderGameState? commander = null,

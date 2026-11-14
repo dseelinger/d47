@@ -64,6 +64,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\assets\engineers\*.jpg"
+          Link="engineers\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\assets\portraits\*.jpg"
           Link="portraits\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
