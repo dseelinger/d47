@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: The priority group stepper on a ship slot page no longer says "Grade 1" beside "Priority group 1"; it draws only its two buttons.
+
 Fixed: On a slot page, "Unlocked" and "Locked" under Engineers are drawn as smaller list heads with a thin rule, so they read as parts of the Engineers block instead of two more sections.
 
 Fixed: A planned Frame Shift Drive (SCO), shield generator or thruster variant whose name differs from its module type now shows its grade stepper, Effect lines and Engineers block on the ship slot page.

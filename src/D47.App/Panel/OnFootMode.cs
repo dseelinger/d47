@@ -354,7 +354,7 @@ public sealed class OnFootMode(
         // The grade, steppable in place, as a planned ship slot's is.
         var step = IsGrade(slot) && plan.Grade is { } planned
             ? new LoadoutStep(planned, GradesOffered, grade =>
-                kit.Plan(build.Id, plan with { Grade = grade }))
+                kit.Plan(build.Id, plan with { Grade = grade }), "Grade")
             : null;
 
         var lines = new List<LoadoutLine>

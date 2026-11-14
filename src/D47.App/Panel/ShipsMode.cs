@@ -1291,7 +1291,7 @@ public sealed class ShipsMode(
 
         var step = offered.Count > 1
             ? new LoadoutStep(plan.Grade, offered, grade =>
-                ships.Plan(build.Id, plan with { Grade = grade }))
+                ships.Plan(build.Id, plan with { Grade = grade }), "Grade")
             : null;
 
         var lines = new List<LoadoutLine>

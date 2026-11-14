@@ -87,7 +87,8 @@ public sealed record LoadoutStat(string Label, string Value, D47.App.Controls.St
 /// <param name="Value">Where it is now.</param>
 /// <param name="Offered">What it may be, highest first — the stepper clamps to these.</param>
 /// <param name="Set">Applies a new value.</param>
-public sealed record LoadoutStep(int Value, IReadOnlyList<int> Offered, Action<int> Set);
+/// <param name="Label">Drawn before the value; empty draws only the buttons.</param>
+public sealed record LoadoutStep(int Value, IReadOnlyList<int> Offered, Action<int> Set, string Label = "");
 
 /// <summary>Something on a line worth putting on the clipboard.</summary>
 /// <param name="Value">Exactly what goes on the clipboard.</param>

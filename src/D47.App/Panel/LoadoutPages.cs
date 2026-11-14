@@ -620,15 +620,16 @@ public static class LoadoutPages
 
         row.Children.Add(Line(line));
 
-        // **The grade last, then the buttons that move it** (remediation.md 17, item 11).
-        var grade = new TextBlock
+        // The label and value last, then the buttons that move it (remediation.md 17, item 11).
+        if (step.Label.Length > 0)
         {
-            Text = $"Grade {step.Value.ToString(CultureInfo.InvariantCulture)}",
-            FontSize = TypeScale.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        row.Children.Add(grade);
+            row.Children.Add(new TextBlock
+            {
+                Text = $"{step.Label} {step.Value.ToString(CultureInfo.InvariantCulture)}",
+                FontSize = TypeScale.Body,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        }
 
         // Highest first, which is how the offer is ordered and how a Commander reads a grade: up is better.
         var at = step.Offered.ToList().IndexOf(step.Value);
