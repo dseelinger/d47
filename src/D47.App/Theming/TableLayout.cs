@@ -188,6 +188,7 @@ public sealed class TableLayout
             }
 
             dragging = true;
+            grip.Dragging = true;
             startX = e.GetPosition(header).X;
             startWidth = _widths[column];
             e.Pointer.Capture(grip);
@@ -213,6 +214,8 @@ public sealed class TableLayout
             }
 
             dragging = false;
+            grip.Dragging = false;
+            grip.Hovered = new Rect(grip.Bounds.Size).Contains(e.GetPosition(grip));
             e.Pointer.Capture(null);
 
             if (_chosen.TryGetValue(Columns[column].Key, out var width))
@@ -220,6 +223,9 @@ public sealed class TableLayout
                 _memory!.Remember(Id, Columns[column].Key, width);
             }
         };
+
+        grip.PointerEntered += (_, _) => grip.Hovered = true;
+        grip.PointerExited += (_, _) => grip.Hovered = dragging;
 
         header.Children.Add(grip);
     }
@@ -239,8 +245,55 @@ public sealed class TableLayout
     }
 }
 
-/// <summary>The drag handle on a header boundary; not a cell.</summary>
-public sealed class ColumnGrip : Border;
+/// <summary>The drag handle on a header boundary; not a cell. Draws a vertical line: 1px Line2 at rest, 2px A while hovered or dragged.</summary>
+public sealed class ColumnGrip : Border
+{
+    private const double LineInset = 6;
+
+    private readonly Border _line = new()
+    {
+        HorizontalAlignment = HorizontalAlignment.Center,
+        Margin = new Thickness(0, LineInset),
+        IsHitTestVisible = false,
+    };
+
+    private IDisposable? _ink;
+    private bool _hovered;
+    private bool _dragging;
+
+    public ColumnGrip()
+    {
+        Child = _line;
+        Show();
+    }
+
+    internal bool Hovered
+    {
+        set
+        {
+            _hovered = value;
+            Show();
+        }
+    }
+
+    internal bool Dragging
+    {
+        set
+        {
+            _dragging = value;
+            Show();
+        }
+    }
+
+    private void Show()
+    {
+        var active = _hovered || _dragging;
+
+        _line.Width = active ? 2 : 1;
+        _ink?.Dispose();
+        _ink = ThemeInk.Bind(_line, Border.BackgroundProperty, active ? ThemeManager.AKey : ThemeManager.Line2Key);
+    }
+}
 
 /// <summary>A header or row of a <see cref="TableLayout"/>: a <see cref="Grid"/> whose column widths come from the table.</summary>
 public sealed class TableGrid : Grid

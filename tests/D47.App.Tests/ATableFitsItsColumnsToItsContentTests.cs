@@ -115,6 +115,48 @@ public class ATableFitsItsColumnsToItsContentTests
         GC.KeepAlive(paths);
     }
 
+    private static Avalonia.Media.Color Ink(string key) =>
+        ((Avalonia.Media.ISolidColorBrush)Application.Current!.Resources[key]!).Color;
+
+    private static Border Line(ColumnGrip grip) => (Border)grip.Child!;
+
+    private static Avalonia.Media.Color Drawn(ColumnGrip grip) => ((Avalonia.Media.ISolidColorBrush)Line(grip).Background!).Color;
+
+    [AvaloniaFact]
+    public void AGripDrawsALine2LineAtRestAndAnALineWhileHoveredOrDragged()
+    {
+        using var look = AppLook.Put();
+
+        var (_, store, _) = TestSurface.Create();
+        var (window, _, header, _) = Draw(new TableLayout(Table, Columns, new ColumnWidthMemory(store)));
+        var grip = header.Children.OfType<ColumnGrip>().Single(g => g.Name == TableLayout.GripName(Table, "plan"));
+        var point = Centre(grip, window);
+
+        Assert.Equal(12, grip.Bounds.Width, 1);
+        Assert.Equal(1, Line(grip).Bounds.Width, 1);
+        Assert.Equal(6, Line(grip).Bounds.Top, 1);
+        Assert.Equal(grip.Bounds.Height - 6, Line(grip).Bounds.Bottom, 1);
+        Assert.Equal(Ink(ThemeManager.Line2Key), Drawn(grip));
+
+        window.MouseMove(point);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(2, Line(grip).Bounds.Width, 1);
+        Assert.Equal(Ink(ThemeManager.AKey), Drawn(grip));
+
+        window.MouseDown(point, MouseButton.Left);
+        window.MouseMove(point + new Point(0, 400));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(Ink(ThemeManager.AKey), Drawn(grip));
+
+        window.MouseUp(point + new Point(0, 400), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(1, Line(grip).Bounds.Width, 1);
+        Assert.Equal(Ink(ThemeManager.Line2Key), Drawn(grip));
+    }
+
     [AvaloniaFact]
     public void DoubleClickingAGripClearsTheChosenWidth()
     {

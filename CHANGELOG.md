@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: A table you can resize now shows a line on each column boundary you can drag, 1px at rest and 2px in the accent colour while the pointer is over it or you are dragging it.
+
 Fixed: On the local voice (Kokoro), "four", "fourteen" and a spelled 4 are said with the full vowel of "door" instead of the vowel Kokoro reduces.
 
 Changed: The ship page's Engineer rank notice drops the slot name and reads "Grade 5 Resistance Augmented — no currently unlocked engineer can do Grade 5". The same sentence is used in the slot detail, the build talk and the Materials page gates, and the spoken shortfall.
