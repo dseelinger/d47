@@ -42,7 +42,9 @@ public class EngineersTabTests
         bool planned = true,
         D47.Core.Capabilities.Builtin.IClipboard? clipboard = null,
         CommanderGameState? commander = null,
-        int grade = 3)
+        int grade = 3,
+        bool headset = false,
+        bool resizable = false)
     {
         var root = TempFolders.Create("d47-engineers-tab-tests");
         var state = commander ?? State();
@@ -71,6 +73,16 @@ public class EngineersTabTests
             panel.EnableCopy(clipboard);
         }
 
+        if (headset)
+        {
+            panel.Classes.Add("headset");
+        }
+
+        if (resizable)
+        {
+            panel.EnableResizableColumns(new D47.App.Panel.ColumnWidthMemory(viewState));
+        }
+
         panel.EnableEngineers(unlocks, ships, () => state, onFoot, memory, checklists);
 
         var window = new Window { Content = panel, Width = 900, Height = 700 };
@@ -89,6 +101,103 @@ public class EngineersTabTests
         panel.GetVisualDescendants().OfType<Button>()
             .First(button => button.GetVisualDescendants().OfType<TextBlock>()
                 .Any(text => text.Text is { } said && said.Contains(label, StringComparison.Ordinal)));
+
+    private static IReadOnlyList<string> Names(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<Button>()
+            .Where(button => button.Classes.Contains(D47.App.Theming.ListRow.Class))
+            .Select(button => Avalonia.Automation.AutomationProperties.GetName(button) ?? string.Empty)];
+
+    [AvaloniaFact]
+    public void TheDirectoryIsATableWhoseStatusHeaderShowsTheDefaultOrder()
+    {
+        var surface = Open();
+
+        Assert.Contains("STATUS ▲", Text(surface.Panel));
+        Assert.Equal(38, Names(surface.Panel).Count);
+
+        var order = Text(surface.Panel)
+            .Select(text => text switch
+            {
+                "READY FOR UNLOCK" => 0,
+                "UNLOCKED AT GRADE 5" => 1,
+                "NEEDS A REFERRAL" => 2,
+                _ => -1,
+            })
+            .Where(rank => rank >= 0)
+            .ToList();
+
+        Assert.Equal(38, order.Count);
+        Assert.Equal(order.Order(), order);
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void FelicityFarseersModulesCellHoldsAllSevenInTableOrder()
+    {
+        var surface = Open();
+        var farseer = surface.Panel.GetVisualDescendants().OfType<Button>()
+            .First(button => Avalonia.Automation.AutomationProperties.GetName(button) == "Felicity Farseer");
+        var cell = farseer.GetVisualDescendants().OfType<TextBlock>()
+            .First(text => text.Inlines is { Count: > 0 });
+        var shown = string.Concat(cell.Inlines!.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text));
+
+        const string Expected =
+            "Frame Shift Drive 5 · Sensors 3 · Surface Scanner 3 · Thrusters 3 · Frame Shift Drive Interdictor 1 · Power Plant 1 · Shield Booster 1";
+
+        Assert.Equal(Expected, shown);
+        Assert.Equal(Avalonia.Media.TextWrapping.NoWrap, cell.TextWrapping);
+        Assert.Equal(Avalonia.Media.TextTrimming.CharacterEllipsis, cell.TextTrimming);
+
+        var entry = new EngineerEntry
+        {
+            Engineer = EngineerDirectory.All.First(engineer => engineer.Name == "Felicity Farseer"),
+            Reach = EngineerReach.Locked,
+        };
+
+        Assert.Equal(Expected, EngineerDirectoryPage.ModulesText(entry));
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheDesktopTableHasResizeGripsAndTheHeadsetTableHasNone()
+    {
+        var desktop = Open(resizable: true);
+
+        Assert.NotEmpty(desktop.Panel.GetVisualDescendants().OfType<D47.App.Theming.ColumnGrip>());
+        desktop.Window.Close();
+
+        var headset = Open(headset: true, resizable: true);
+
+        Assert.Empty(headset.Panel.GetVisualDescendants().OfType<D47.App.Theming.ColumnGrip>());
+        headset.Window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetTableShowsTwentyFiveRowsAPageAndReturnsToPageOneOnASort()
+    {
+        var surface = Open(headset: true);
+
+        Assert.Equal(25, Names(surface.Panel).Count);
+        Assert.Contains("1–25 of 38", Text(surface.Panel));
+
+        Press(surface.Panel, "NEXT").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(13, Names(surface.Panel).Count);
+        Assert.Contains("26–38 of 38", Text(surface.Panel));
+
+        surface.Panel.GetVisualDescendants().OfType<Button>()
+            .First(button => button.Name == "EngineersHead.Engineer")
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(25, Names(surface.Panel).Count);
+        Assert.Contains("1–25 of 38", Text(surface.Panel));
+
+        surface.Window.Close();
+    }
 
     /// <summary>The route is a level drilled from the directory's Route tile, and Back returns to it.</summary>
     [AvaloniaFact]
@@ -143,10 +252,10 @@ public class EngineersTabTests
                                        && line.Contains("not started", StringComparison.Ordinal));
 
         Assert.Contains("READY FOR UNLOCK", shown);
-        Assert.Contains("UNLOCKED", shown);
+        Assert.Contains("UNLOCKED AT GRADE 5", shown);
         Assert.Contains("NEEDS A REFERRAL", shown);
 
-        // The heading that can be acted on comes before the one that cannot.
+        // The status that can be acted on comes before the one that cannot.
         Assert.True(
             shown.ToList().IndexOf("READY FOR UNLOCK")
             < shown.ToList().IndexOf("NEEDS A REFERRAL"));
@@ -168,8 +277,11 @@ public class EngineersTabTests
 
         Assert.Contains(
             Text(surface.Panel),
-            line => line.Contains("LY, ABOUT", StringComparison.Ordinal)
-                    && line.Contains("JUMP", StringComparison.Ordinal));
+            line => line.EndsWith(" ly", StringComparison.Ordinal));
+        Assert.Contains(
+            Text(surface.Panel),
+            line => line.StartsWith("about ", StringComparison.Ordinal)
+                    && line.Contains("jump", StringComparison.Ordinal));
 
         surface.Window.Close();
     }
@@ -668,8 +780,8 @@ public class EngineersTabTests
 
         Assert.Contains(
             Text(panel),
-            line => line.Contains("MARCO QWENT", StringComparison.Ordinal)
-                    && line.Contains("GRADE 3 OPENS CHLOE SEDESI", StringComparison.Ordinal));
+            line => line.StartsWith("Grade 3 opens ", StringComparison.Ordinal)
+                    && line.Contains("Chloe Sedesi", StringComparison.Ordinal));
 
         panel.Nav.Drill(EngineersPages.Crumb(EngineerDirectory.All.First(e => e.Name == "Marco Qwent")));
         Dispatcher.UIThread.RunJobs();

@@ -12,6 +12,8 @@ Fixed: On the local voice (Kokoro), "four", "fourteen" and a spelled 4 are said 
 
 Changed: The ship page's Engineer rank notice drops the slot name and reads "Grade 5 Resistance Augmented — no currently unlocked engineer can do Grade 5". The same sentence is used in the slot detail, the build talk and the Materials page gates, and the spoken shortfall.
 
+Changed: The Engineers directory is a sortable table with Engineer, Status, Modules and grades, Planned, Opens and Distance columns, in place of the three headed lists and the Sort control. Every column sorts from its header and can be resized on the desktop, and the widths are remembered. A cell too long for its column ends in an ellipsis and shows its whole value in a tooltip. The headset panel shows the same table 25 rows to a page.
+
 Fixed: A capital A inside a sentence, such as the module rating in "not on A Shield Booster" or "five A Thrusters", is said as the letter on every voice instead of as the article. A sentence's first word and a lowercase a are unchanged, and the caption and panel still show "A".
 
 Fixed: When Elite skipped the engineer roster at the start of a session, every engineer showed as not unlocked on the Engineers page and in a ship's plan. d47 now takes your standings from the last roster in your earlier journals. If none has been read at all, a plan row says engineer progress has not been read yet instead of claiming the engineer is not unlocked.

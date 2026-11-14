@@ -236,7 +236,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         _engineerStamp = D47.Core.Engineers.UnlockPlanner.Stamp(state());
         _engineerState = state;
 
-        _engineerBuild = crumb => EngineersPages.Build(crumb, source, host.Nav, memory, host.Copy);
+        _engineerBuild = crumb => EngineersPages.Build(crumb, source, host.Nav, memory, host.Copy, host.Headset, host.ColumnWidths);
 
         host.Furnish(
             PanelTab.Assets,

@@ -5,14 +5,13 @@ using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
 using D47.Core.Audio;
-using D47.Core.Engineers;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Missions, the Engineers directory, Custom voices and voice pickers order their rows from a Segmented above the list.</summary>
+/// <summary>Missions, Custom voices and voice pickers order their rows from a Segmented above the list.</summary>
 public class ASortControlOrdersEachSingleLabelListTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 12, 18, 0, 0, TimeSpan.Zero);
@@ -56,31 +55,6 @@ public class ASortControlOrdersEachSingleLabelListTests
         var ranked = board.Ranked(Now, JournalLocation.Unknown);
 
         Assert.Equal(ranked, MissionsPage.Sorted(ranked, 0, Now, JournalLocation.Unknown));
-    }
-
-    private static EngineerEntry Entry(string name, EngineerReach reach, double? lightYears) =>
-        new() { Engineer = EngineerDirectory.ByName(name)!, Reach = reach, LightYears = lightYears };
-
-    [Fact]
-    public void DistanceListsEachReachGroupNearestFirstAndNoDistanceLast()
-    {
-        var far = Entry("Felicity Farseer", EngineerReach.WithinReach, 300);
-        var unknown = Entry("Elvira Martuuk", EngineerReach.WithinReach, null);
-        var near = Entry("Hera Tani", EngineerReach.WithinReach, 12);
-        var other = Entry("Lei Cheung", EngineerReach.Unlocked, 500);
-
-        var sorted = EngineerDirectoryPage.Sorted([far, unknown, near, other], 2);
-
-        Assert.Equal(["Hera Tani", "Felicity Farseer", "Elvira Martuuk", "Lei Cheung"], sorted.Select(entry => entry.Engineer.Name));
-    }
-
-    [Fact]
-    public void NameListsEachReachGroupAToZ()
-    {
-        var sorted = EngineerDirectoryPage.Sorted(
-            [Entry("Hera Tani", EngineerReach.WithinReach, 12), Entry("Elvira Martuuk", EngineerReach.WithinReach, 99)], 1);
-
-        Assert.Equal(["Elvira Martuuk", "Hera Tani"], sorted.Select(entry => entry.Engineer.Name));
     }
 
     [Fact]

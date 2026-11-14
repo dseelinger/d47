@@ -23,18 +23,25 @@ nav_order: 108
 <section>
 <h2><span class="num">1</span> Open Engineers on the Asset Mgmt tab and read the directory.</h2>
 <p class="say">Open Engineers on the Asset Mgmt tab and read the directory.</p>
-<p class="expect">Engineers are sorted as Ready for Unlock, Unlocked and Needs a Referral, with the doable ones first.</p>
-<svg viewBox="0 0 880 246" role="img" aria-label="The Engineers page">
+<p class="expect">The directory is a table. Its Status column gives Ready for Unlock, then Unlocked, then Needs a Referral, and any header re-sorts it.</p>
+<svg viewBox="0 0 880 246" role="img" aria-label="The Engineers table">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
  <rect x="20" y="16" width="840" height="42" fill="var(--surface)"/>
  <text x="44" y="44" font-size="16" font-weight="700" fill="var(--accent)">Engineers</text>
- <text x="44" y="92" font-size="16" fill="var(--text)">READY FOR UNLOCK</text>
- <text x="836" y="92" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing in your way</text>
- <text x="44" y="130" font-size="16" fill="var(--text)">UNLOCKED</text>
- <text x="836" y="130" text-anchor="end" font-size="16" fill="var(--text-muted)">and how far to the next grade</text>
- <text x="44" y="168" font-size="16" fill="var(--text)">NEEDS A REFERRAL</text>
- <text x="836" y="168" text-anchor="end" font-size="16" fill="var(--text-muted)">somebody else first</text>
- <text x="44" y="222" font-size="15" fill="var(--text-muted)">Sorted by what you can do today, not alphabetically.</text>
+ <text x="44" y="84" font-size="13" fill="var(--text-muted)">ENGINEER</text>
+ <text x="220" y="84" font-size="13" fill="var(--accent)">STATUS ▲</text>
+ <text x="420" y="84" font-size="13" fill="var(--text-muted)">MODULES AND GRADES</text>
+ <text x="836" y="84" text-anchor="end" font-size="13" fill="var(--text-muted)">DISTANCE</text>
+ <text x="44" y="120" font-size="16" fill="var(--text)">Felicity Farseer</text>
+ <text x="220" y="120" font-size="14" fill="var(--text)">READY FOR UNLOCK</text>
+ <text x="420" y="120" font-size="14" fill="var(--text-muted)">Frame Shift Drive 5 · Sensors 3 …</text>
+ <text x="836" y="120" text-anchor="end" font-size="14" fill="var(--text)">131 ly</text>
+ <text x="44" y="158" font-size="16" fill="var(--text)">Liz Ryder</text>
+ <text x="220" y="158" font-size="14" fill="var(--text)">UNLOCKED AT GRADE 5</text>
+ <text x="836" y="158" text-anchor="end" font-size="14" fill="var(--text)">34 ly</text>
+ <text x="44" y="196" font-size="16" fill="var(--text-muted)">Marco Qwent</text>
+ <text x="220" y="196" font-size="14" fill="var(--text-muted)">NEEDS A REFERRAL</text>
+ <text x="836" y="196" text-anchor="end" font-size="14" fill="var(--text)">67 ly</text>
 </svg>
 </section>
 <section>
@@ -110,18 +117,18 @@ nav_order: 108
 </svg>
 </section>
 <section>
-<h2><span class="num">2</span> The Directory is sorted by what you can do today.</h2>
-<svg viewBox="0 0 880 300" role="img" aria-label="Three bands: reachable now, already yours, behind somebody else">
+<h2><span class="num">2</span> The Status column sorts by what you can do today.</h2>
+<svg viewBox="0 0 880 300" role="img" aria-label="Status column: reachable now, already yours, behind somebody else">
  <rect x="40" y="24" width="800" height="68" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="72" y="66" font-size="21" font-weight="800" fill="var(--accent)">READY FOR UNLOCK</text>
  <text x="808" y="66" text-anchor="end" font-size="16" fill="var(--text-muted)">nothing standing in your way</text>
  <rect x="40" y="110" width="800" height="68" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="72" y="152" font-size="21" font-weight="800" fill="var(--text)">UNLOCKED</text>
- <text x="808" y="152" text-anchor="end" font-size="16" fill="var(--text-muted)">and how far to the next grade</text>
+ <text x="72" y="152" font-size="21" font-weight="800" fill="var(--text)">UNLOCKED AT GRADE 3</text>
+ <text x="808" y="152" text-anchor="end" font-size="16" fill="var(--text-muted)">grade from your journal</text>
  <rect x="40" y="196" width="800" height="68" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="72" y="238" font-size="21" font-weight="800" fill="var(--text-muted)">NEEDS A REFERRAL</text>
  <text x="808" y="238" text-anchor="end" font-size="16" fill="var(--text-muted)">somebody else has to introduce them</text>
- <text x="440" y="290" text-anchor="middle" font-size="16" fill="var(--text-muted)">Each engineer sits in the first band that fits.</text>
+ <text x="440" y="290" text-anchor="middle" font-size="16" fill="var(--text-muted)">Each engineer has one status; press a header to re-sort.</text>
 </svg>
 </section>
 <section>
@@ -313,8 +320,10 @@ referral that has already happened, and no table can be more right about that th
 
 ### The Engineers page
 
-The last root of the Asset Mgmt tab. The directory is everybody, ordered by what you can act on
-today; its **Route** button opens the solver as a level beside it, and Back returns to the
+The last root of the Asset Mgmt tab. The directory is everybody in one table, ordered by what you
+can act on today; every header but Portrait sorts it, and the column widths can be dragged and are
+remembered. A cell that does not fit ends in an ellipsis and shows its whole value in a tooltip.
+In the headset the same table has no grips or tooltips and shows 25 rows a page. Its **Route** button opens the solver as a level beside it, and Back returns to the
 directory. Drilling a directory row opens the one engineer behind it. The search box filters on
 the name, the system and what they grade.
 
@@ -323,24 +332,25 @@ the name, the system and what they grade.
 ```text
 9 of 38 unlocked. 16 in progress. 13 not started.
 
-Ready for Unlock
-  * Felicity Farseer - 1 module                        131 ly, about 5 jumps
-  * Elvira Martuuk - 1 module                          182 ly, about 7 jumps
-    The Dweller                                        34 ly, about 2 jumps
-    Jude Navarro                                       67 ly, about 3 jumps
+Engineer          Status               Modules and grades               Planned  Opens            Distance
+Felicity Farseer  READY FOR UNLOCK     Frame Shift Drive 5 · Sensors 3 …      1                    131 ly
+Elvira Martuuk    READY FOR UNLOCK     Sensors 5 · Thrusters 5 …                                   182 ly
+Liz Ryder         UNLOCKED AT GRADE 5  Power Plant 5 · Thrusters 5 …                                34 ly
+Marco Qwent       NEEDS A REFERRAL     Frame Shift Drive 3 …                   Grade 3 opens …      67 ly
 ```
 
-Sorted by what you can act on today — **within reach, then already yours, then behind somebody
-else** — rather than alphabetically or by speciality, because the question is nearly always *who
-can I go and get*. Alphabetical order answers that for nobody.
+The Status column, ascending, is the default order — **within reach, then already yours, then
+behind somebody else** — rather than alphabetical, because the question is nearly always *who can
+I go and get*. A header press sorts by that column, a second press reverses it, and a third
+returns to the default order.
 
 The line at the top counts the game's own three states — unlocked, in progress (known about or
 invited), not started — against the whole directory. It does not distinguish a plan blocked on an
 engineer from one blocked on materials; the gap analysis on the Asset Mgmt tab cannot tell the two
 apart either.
 
-One pane rather than two: a row already holds the name, where they are and what needs them, so a
-second column beside it would only repeat them.
+One pane rather than two: a row holds the name, status, every module they modify with its top
+grade, what is planned, who they open and how far they are.
 
 #### How do I get everything my plans need
 

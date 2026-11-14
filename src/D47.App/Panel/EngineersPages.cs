@@ -46,7 +46,9 @@ public static class EngineersPages
         EngineerSource source,
         PanelNavigator nav,
         EngineerDirectoryMemory? memory = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        bool headset = false,
+        ColumnWidthMemory? columnWidths = null)
     {
         if (crumb.Key.StartsWith(WhoPrefix, StringComparison.Ordinal))
         {
@@ -55,7 +57,7 @@ public static class EngineersPages
 
         return crumb.Key == RouteKey
             ? new EngineerRoutePage(source, nav, memory)
-            : new EngineerDirectoryPage(source, nav, memory);
+            : new EngineerDirectoryPage(source, nav, memory, headset, columnWidths);
     }
 
     /// <summary>Whether the two checkbox filters leave this engineer on the list (#132).</summary>
@@ -96,10 +98,6 @@ public static class EngineersPages
 
         return button;
     }
-
-    /// <summary>What the directory's mark means: modules still to engineer this engineer could finish.</summary>
-    internal static string Wanted(int many) =>
-        many == 0 ? string.Empty : EngineerSay.Count(many, "module", "modules");
 
     /// <summary>
     /// The control that adds every unmet line of an engineer's prerequisites to the checklist in one
@@ -317,29 +315,60 @@ public abstract class EngineerPageBase : UserControl
     private void OnChanged() => Dispatcher.UIThread.Post(Refresh);
 }
 
-/// <summary>The directory (Phase 28, "Who can roll this").</summary>
+/// <summary>The directory (Phase 28, "Who can roll this"): one sortable table.</summary>
 public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, IPageSummary
 {
-    private readonly PanelNavigator _nav;
+    public const string TableId = "Engineers.Directory";
+    public const string HeadName = "EngineersHead";
+    public const string PreviousName = "EngineersPrevious";
+    public const string NextName = "EngineersNext";
 
-    private readonly StackPanel _list = new() { Spacing = 2 };
+    private const int PortraitColumn = 0;
+    private const int EngineerColumn = 1;
+    private const int StatusColumn = 2;
+    private const int ModulesColumn = 3;
+    private const int PlannedColumn = 4;
+    private const int OpensColumn = 5;
+    private const int DistanceColumn = 6;
+
+    private static readonly TableColumn[] ColumnList =
+    [
+        new("Portrait", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget },
+        new("Engineer"),
+        new("Status"),
+        new("Modules", ColumnFit.Fill) { Min = 160 },
+        new("Planned"),
+        new("Opens"),
+        new("Distance"),
+    ];
+
+    private readonly PanelNavigator _nav;
+    private readonly bool _headset;
+    private readonly ColumnWidthMemory? _columnWidths;
+
+    private readonly StackPanel _list = new() { Spacing = Gaps.Tile };
     private readonly EngineerDirectoryMemory? _memory;
 
     private readonly CheckBox _colonia;
     private readonly CheckBox _onFoot;
 
-    /// <summary>The sort choices, in the order the Segmented shows them; the first is the directory's own order.</summary>
-    public static readonly IReadOnlyList<string> Sorts = ["Needed", "Name", "Distance"];
-
-    private readonly Segment _sort = SortBar.Choice("EngineerSort", [.. Sorts]);
+    private readonly SortHeader<EngineerEntry> _head = new(HeadName, Heads(), DefaultOrder);
 
     private string? _query;
+    private int _page;
 
-    public EngineerDirectoryPage(EngineerSource source, PanelNavigator nav, EngineerDirectoryMemory? memory = null)
+    public EngineerDirectoryPage(
+        EngineerSource source,
+        PanelNavigator nav,
+        EngineerDirectoryMemory? memory = null,
+        bool headset = false,
+        ColumnWidthMemory? columnWidths = null)
         : base(source)
     {
         _nav = nav;
         _memory = memory;
+        _headset = headset;
+        _columnWidths = headset ? null : columnWidths;
 
         _colonia = LabeledCheckBox.Caps("Hide the Colonia eight");
         _onFoot = LabeledCheckBox.Caps("Hide on-foot engineers");
@@ -352,12 +381,14 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         _colonia.IsCheckedChanged += (_, _) =>
         {
             _memory?.RememberColonia(_colonia.IsChecked == true);
+            _page = 0;
             Refresh();
         };
 
         _onFoot.IsCheckedChanged += (_, _) =>
         {
             _memory?.RememberOnFoot(_onFoot.IsChecked == true);
+            _page = 0;
             Refresh();
         };
 
@@ -369,18 +400,19 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             Children = { _colonia, _onFoot, LoadoutPages.Press("Route", () => nav.Drill(EngineersPages.RouteCrumb)) },
         };
 
-        _sort.SelectionChanged += (_, _) => Refresh();
+        _head.Changed += () =>
+        {
+            _page = 0;
+            Refresh();
+        };
 
-        var sort = SortBar.Bar(_sort, new Thickness(0, 0, 0, 10));
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
 
         DockPanel.SetDock(checks, Dock.Top);
-        DockPanel.SetDock(sort, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
         root.Children.Add(checks);
-        root.Children.Add(sort);
         root.Children.Add(say);
         root.Children.Add(LoadoutPages.Scrolling(_list));
 
@@ -389,29 +421,55 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         Refresh();
     }
 
-    /// <summary>The panel keeps a drilled page; opening it again returns the list to the directory's order.</summary>
+    /// <summary>Status ascending, which is the order the directory comes in.</summary>
+    public static readonly SortOrder DefaultOrder = new(StatusColumn, SortDirection.Ascending);
+
+    /// <summary>The table's columns. Portrait does not sort.</summary>
+    public static IReadOnlyList<SortColumn<EngineerEntry>> Heads() =>
+    [
+        SortColumn<EngineerEntry>.Plain(string.Empty),
+        SortColumn<EngineerEntry>.Text("Engineer", entry => entry.Engineer.Name),
+        SortColumn<EngineerEntry>.Figure("Status", entry => (int?)StatusRank(entry.Reach), SortDirection.Ascending),
+        SortColumn<EngineerEntry>.Figure("Modules and grades", entry => (int?)entry.Engineer.Specialities.Count, SortDirection.Descending),
+        SortColumn<EngineerEntry>.Figure("Planned", entry => entry.Wanted > 0 ? entry.Wanted : (int?)null, SortDirection.Descending) with { Second = "Modules" },
+        SortColumn<EngineerEntry>.Figure("Opens", entry => entry.Gate.Count > 0 ? entry.Gate.Count : (int?)null, SortDirection.Descending),
+        SortColumn<EngineerEntry>.Figure("Distance", entry => entry.LightYears, SortDirection.Ascending),
+    ];
+
+    /// <summary>Ready for Unlock, then Unlocked, then Needs a Referral.</summary>
+    public static int StatusRank(EngineerReach reach) => reach switch
+    {
+        EngineerReach.WithinReach => 0,
+        EngineerReach.Unlocked => 1,
+        _ => 2,
+    };
+
+    /// <summary>The Status cell's words.</summary>
+    public static string StatusText(EngineerEntry entry) => entry.Reach switch
+    {
+        EngineerReach.WithinReach => "Ready for Unlock",
+        EngineerReach.Unlocked => entry.Standing?.Rank is { } rank
+            ? $"Unlocked at grade {rank.ToString(CultureInfo.InvariantCulture)}"
+            : "Unlocked",
+        _ => "Needs a Referral",
+    };
+
+    /// <summary>Every module the engineer modifies with its top grade, in table order; the Modules and grades tooltip.</summary>
+    public static string ModulesText(EngineerEntry entry) =>
+        string.Join(" · ", entry.Engineer.Specialities.Select(speciality => speciality.IsGraded
+            ? $"{speciality.Kind} {speciality.MaxGrade.ToString(CultureInfo.InvariantCulture)}"
+            : speciality.Kind));
+
+    /// <summary>The Opens cell's words, or null where the engineer opens nobody.</summary>
+    public static string? OpensText(EngineerEntry entry) =>
+        entry.GateLine is { Length: > 0 } line ? char.ToUpperInvariant(line[0]) + line[1..] : null;
+
+    /// <summary>The panel keeps a drilled page; opening it again returns the table to its default order.</summary>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        _sort.SelectedIndex = 0;
+        _head.Reset();
         base.OnAttachedToVisualTree(e);
     }
-
-    /// <summary>
-    /// <paramref name="entries"/> with each reach group in the order of <see cref="Sorts"/>[<paramref name="sort"/>]:
-    /// by name, or nearest first with those at no known distance last; ties keep the directory's order.
-    /// The groups stay as they came.
-    /// </summary>
-    public static IReadOnlyList<EngineerEntry> Sorted(IReadOnlyList<EngineerEntry> entries, int sort) =>
-    [
-        .. entries
-            .GroupBy(entry => entry.Reach)
-            .SelectMany(group => sort switch
-            {
-                1 => group.OrderBy(entry => entry.Engineer.Name, StringComparer.CurrentCultureIgnoreCase),
-                2 => group.OrderBy(entry => entry.LightYears is null).ThenBy(entry => entry.LightYears),
-                _ => group.AsEnumerable(),
-            }),
-    ];
 
     /// <summary>
     /// Thirty-eight people with ten specialities each is a scroll hunt, so the query takes rows away
@@ -422,6 +480,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
     public void Filter(string? query)
     {
         _query = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
+        _page = 0;
         Refresh();
     }
 
@@ -432,9 +491,16 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         Summarise(report.Summary());
         _list.Children.Clear();
 
-        var shown = Sorted([.. report.Directory.Where(Matches).Where(NotHidden)], _sort.SelectedIndex);
+        var layout = new TableLayout(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
 
-        if (shown.Count == 0)
+        _list.Children.Add(CreditsKit.HeaderRow(
+            _head,
+            layout,
+            column => column is PlannedColumn or DistanceColumn ? HorizontalAlignment.Right : HorizontalAlignment.Left));
+
+        var sorted = _head.Sort([.. report.Directory.Where(Matches).Where(NotHidden)]);
+
+        if (sorted.Count == 0)
         {
             _list.Children.Add(LoadoutPages.Muted(_query is null
                 ? "No engineers on record, which should not be possible."
@@ -443,48 +509,236 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             return;
         }
 
-        var group = (EngineerReach?)null;
+        IReadOnlyList<EngineerEntry> shown = sorted;
+
+        if (_headset)
+        {
+            _page = FactionModel.ClampPage(_page, sorted.Count);
+            shown = [.. sorted.Skip(_page * FactionModel.PageSize).Take(FactionModel.PageSize)];
+        }
 
         foreach (var entry in shown)
         {
-            if (group != entry.Reach)
-            {
-                group = entry.Reach;
-                _list.Children.Add(ListRow.Head(Caption(entry.Reach)));
-            }
-
-            var line = entry.Engineer.Name;
-            var notes = new List<string>();
-
-            if (EngineersPages.Wanted(entry.Wanted) is { Length: > 0 } wanted)
-            {
-                notes.Add(wanted);
-            }
-
-            if (entry.GateLine is { Length: > 0 } gate)
-            {
-                notes.Add(gate);
-            }
-
-            if (notes.Count > 0)
-            {
-                line += $" — {string.Join(" · ", notes)}";
-            }
-
-            // Which row the right pane is drawing, and it is one comparison rather than a second piece of
-            // state to keep in step (#110).
-            var crumb = EngineersPages.Crumb(entry.Engineer);
-            var showing = _nav.Trail.Count > 0
-                          && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
-
-            _list.Children.Add(LoadoutPages.Row(
-                line,
-                entry.Aside,
-                entry.Wanted > 0 || entry.GateLine is not null,
-                () => _nav.Drill(crumb),
-                showing: showing,
-                markKey: entry.Reach == EngineerReach.Unlocked ? null : ThemeManager.RedKey));
+            _list.Children.Add(RowView(entry, layout));
         }
+
+        if (_headset && sorted.Count > FactionModel.PageSize)
+        {
+            _list.Children.Add(Pager(sorted.Count));
+        }
+    }
+
+    private Button RowView(EngineerEntry entry, TableLayout layout)
+    {
+        // Which row the right pane is drawing, and it is one comparison rather than a second piece of
+        // state to keep in step (#110).
+        var crumb = EngineersPages.Crumb(entry.Engineer);
+        var showing = _nav.Trail.Count > 0
+                      && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
+
+        var grid = layout.Row([]);
+        grid.VerticalAlignment = VerticalAlignment.Center;
+
+        var portrait = new Border { Width = TypeScale.MinimumTarget, Height = TypeScale.MinimumTarget };
+        ThemeInk.Bind(portrait, Border.BackgroundProperty, ThemeManager.SlabKey);
+        CreditsKit.Place(grid, PortraitColumn, portrait);
+
+        var name = ListRow.Name(new TextBlock { Text = entry.Engineer.Name, TextTrimming = TextTrimming.CharacterEllipsis });
+        Watched(name, entry.Engineer.Name);
+        CreditsKit.Place(grid, EngineerColumn, name);
+
+        var status = StatusText(entry).ToUpperInvariant();
+        var statusKey = entry.Reach switch
+        {
+            EngineerReach.WithinReach => ThemeManager.CyanKey,
+            EngineerReach.Unlocked => ThemeManager.BlueKey,
+            _ => ThemeManager.GreyKey,
+        };
+
+        var statusCell = Typeset.Chrome(
+            status,
+            TypeScale.Meta,
+            statusKey,
+            weight: FontWeight.SemiBold,
+            tracking: TypeScale.Meta * Fonts.ChromeTracking,
+            trimming: TextTrimming.CharacterEllipsis);
+        Watched(statusCell, status);
+        CreditsKit.Place(grid, StatusColumn, Followed(statusCell, showing, secondary: false));
+
+        CreditsKit.Place(grid, ModulesColumn, ModulesCell(entry, showing));
+
+        if (entry.Wanted > 0)
+        {
+            CreditsKit.Place(grid, PlannedColumn, Followed(
+                Typeset.Mono(
+                    entry.Wanted.ToString(CultureInfo.InvariantCulture),
+                    TypeScale.Small,
+                    ThemeManager.AKey,
+                    horizontal: HorizontalAlignment.Right,
+                    align: TextAlignment.Right),
+                showing,
+                secondary: false));
+        }
+
+        if (OpensText(entry) is { } opens)
+        {
+            var cell = Typeset.Prose(opens, TypeScale.Small, ThemeManager.WhiteKey, trimming: TextTrimming.CharacterEllipsis);
+            Watched(cell, opens);
+            CreditsKit.Place(grid, OpensColumn, Followed(cell, showing, secondary: false));
+        }
+
+        CreditsKit.Place(grid, DistanceColumn, DistanceCell(entry, showing));
+
+        var button = ListRow.Dress(
+            new Button
+            {
+                Content = grid,
+                MinHeight = TypeScale.MinimumTarget,
+                Padding = new Thickness(14, 6),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            },
+            showing);
+
+        Avalonia.Automation.AutomationProperties.SetName(button, entry.Engineer.Name);
+        button.Classes.Set(LoadoutPages.ShowingClass, showing);
+        button.Click += (_, _) => _nav.Drill(crumb);
+
+        return button;
+    }
+
+    private TextBlock ModulesCell(EngineerEntry entry, bool showing)
+    {
+        var cell = new TextBlock
+        {
+            FontFamily = new FontFamily(Fonts.ProseFamily),
+            FontSize = TypeScale.Small,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.NoWrap,
+        };
+
+        if (showing)
+        {
+            ListRow.NameInk(cell);
+        }
+        else
+        {
+            ThemeInk.Bind(cell, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        }
+
+        var inlines = cell.Inlines!;
+        var first = true;
+
+        foreach (var speciality in entry.Engineer.Specialities)
+        {
+            if (!first)
+            {
+                var separator = new Run(" · ");
+
+                if (!showing)
+                {
+                    ThemeInk.Bind(separator, TextElement.ForegroundProperty, ThemeManager.GreyKey);
+                }
+
+                inlines.Add(separator);
+            }
+
+            first = false;
+            inlines.Add(new Run(speciality.Kind));
+
+            if (speciality.IsGraded)
+            {
+                inlines.Add(new Run(" " + speciality.MaxGrade.ToString(CultureInfo.InvariantCulture))
+                {
+                    FontFamily = new FontFamily(Fonts.MonoFamily),
+                });
+            }
+        }
+
+        Watched(cell, ModulesText(entry));
+
+        return cell;
+    }
+
+    private static StackPanel DistanceCell(EngineerEntry entry, bool showing)
+    {
+        var cell = new StackPanel { HorizontalAlignment = HorizontalAlignment.Right };
+
+        cell.Children.Add(Followed(
+            Typeset.Mono(
+                EngineerSay.Distance(entry.LightYears),
+                TypeScale.Small,
+                entry.LightYears is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
+                horizontal: HorizontalAlignment.Right,
+                align: TextAlignment.Right),
+            showing,
+            secondary: entry.LightYears is null));
+
+        if (entry.Jumps is { } jumps)
+        {
+            cell.Children.Add(Followed(
+                Typeset.Prose(
+                    EngineerSay.Jumps(jumps),
+                    TypeScale.Meta,
+                    ThemeManager.GreyKey,
+                    horizontal: HorizontalAlignment.Right,
+                    align: TextAlignment.Right),
+                showing,
+                secondary: true));
+        }
+
+        return cell;
+    }
+
+    /// <summary>On the row of the engineer on show the inks follow the selected row's, not the cell's own.</summary>
+    private static TextBlock Followed(TextBlock block, bool showing, bool secondary)
+    {
+        if (showing)
+        {
+            _ = secondary ? ListRow.SecondaryInk(block) : ListRow.NameInk(block);
+        }
+
+        return block;
+    }
+
+    private void Watched(TextBlock cell, string full)
+    {
+        if (!_headset)
+        {
+            TruncationTip.Watch(cell, () => full);
+        }
+    }
+
+    private Grid Pager(int total)
+    {
+        var readout = CreditsKit.Mono(FactionModel.PageReadout(_page, total), TypeScale.Tip, ThemeManager.GreyKey, right: false);
+        readout.VerticalAlignment = VerticalAlignment.Center;
+
+        var previous = new Button { Name = PreviousName, Content = "◄ PREVIOUS", Height = TypeScale.MinimumTarget, IsEnabled = _page > 0 };
+        var next = new Button
+        {
+            Name = NextName,
+            Content = "NEXT ►",
+            Height = TypeScale.MinimumTarget,
+            IsEnabled = FactionModel.ClampPage(_page + 1, total) > _page,
+        };
+        previous.Click += (_, _) =>
+        {
+            _page--;
+            Refresh();
+        };
+        next.Click += (_, _) =>
+        {
+            _page++;
+            Refresh();
+        };
+
+        var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Children = { previous, next } };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 8, 0, 0) };
+        Grid.SetColumn(tiles, 1);
+        grid.Children.Add(readout);
+        grid.Children.Add(tiles);
+
+        return grid;
     }
 
     /// <summary>Whether this engineer survives the two checkbox filters (#132).</summary>
@@ -496,14 +750,6 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         || (entry.Engineer.System?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)
         || entry.Engineer.Specialities.Any(speciality =>
             speciality.Kind.Contains(query, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>The heading over each group (remediation.md 12, items 8, 9 and 10).</summary>
-    private static string Caption(EngineerReach reach) => reach switch
-    {
-        EngineerReach.WithinReach => "Ready for Unlock",
-        EngineerReach.Unlocked => "Unlocked",
-        _ => "Needs a Referral",
-    };
 }
 
 /// <summary>One engineer (Phase 28, "Who can roll this").</summary>
