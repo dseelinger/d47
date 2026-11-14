@@ -35,6 +35,12 @@ public class APlanShortfallIsDataPerShipTests : IDisposable
             "Engineers":[ {"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Unlocked","Rank":{{rank}}} ] }
           """;
 
+    private const string FelicityInvited =
+        """
+        { "timestamp":"2026-08-16T09:00:00Z", "event":"EngineerProgress",
+          "Engineers":[ {"Engineer":"Felicity Farseer","EngineerID":300100,"Progress":"Invited"} ] }
+        """;
+
     private static string Palin(int rank) =>
         $$"""
           { "timestamp":"2026-08-16T09:00:00Z", "event":"EngineerProgress",
@@ -154,7 +160,7 @@ public class APlanShortfallIsDataPerShipTests : IDisposable
     public void ABlockWithNoUnlockedEngineerSaysNotUnlocked()
     {
         var shortfall = Service(
-            State(Loadout),
+            State(Loadout, FelicityInvited),
             Plan(Krait, new BuildRequest("MainEngines", "Dirty Drive Tuning", 5))).Shortfall(Krait);
 
         var block = Assert.Single(shortfall.Blocks);
