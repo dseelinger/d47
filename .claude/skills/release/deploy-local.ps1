@@ -107,7 +107,11 @@ function Copy-Payload([string]$from, [string]$to) {
     foreach ($entry in $payload) {
         $source = Join-Path $from $entry
         $target = Join-Path $to $entry
-        if (Test-Path $source -PathType Container) {
+        # An entry a build does not ship is removed from the target, as a mirror would.
+        if (-not (Test-Path $source)) {
+            if (Test-Path $target) { Remove-Item $target -Recurse -Force }
+        }
+        elseif (Test-Path $source -PathType Container) {
             Copy-Mirror $source $target
         }
         else {
