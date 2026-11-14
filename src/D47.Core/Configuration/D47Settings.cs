@@ -276,7 +276,7 @@ public sealed record ScreenshotSettings
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; init; }
 
-    /// <summary>Whether each Elite screenshot is copied as a JPEG into a D47 folder beside it.</summary>
+    /// <summary>Whether each Elite screenshot is copied as a JPEG into Elite's pictures folder.</summary>
     public bool Convert { get; init; } = true;
 
     /// <summary>Whether Elite's BMP goes to the Recycle Bin once its JPEG is saved; does nothing while <see cref="Convert"/> is off.</summary>

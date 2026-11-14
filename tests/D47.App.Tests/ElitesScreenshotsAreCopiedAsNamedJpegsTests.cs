@@ -19,7 +19,7 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
 {
     private const string Folder = @"C:\Pictures\Frontier Developments\Elite Dangerous";
 
-    private const string Target = Folder + @"\D47";
+    private const string Target = Folder;
 
     private static readonly DateTimeOffset Taken = new(2026, 2, 10, 9, 5, 0, TimeSpan.Zero);
 
@@ -87,7 +87,7 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
     private IReadOnlyList<string> Written() => _files.Enumerate(Target, "*.jpg");
 
     [Fact]
-    public async Task ALiveScreenshotWithItsBmpPresentIsWrittenUnderD47AndTheBmpIsUnchanged()
+    public async Task ALiveScreenshotWithItsBmpPresentIsWrittenInTheFolderGivenAndTheBmpIsUnchanged()
     {
         var bmp = Bmp(5, 3);
         _files.WriteBytes(Path.Combine(Folder, "Screenshot_0001.bmp"), bmp);
@@ -98,6 +98,9 @@ public sealed class ElitesScreenshotsAreCopiedAsNamedJpegsTests
         Assert.Equal(Encoding.ASCII.GetBytes($"jpeg of {bmp.Length}"), _files.ReadBytes(Written()[0]));
         Assert.Equal(bmp, _files.ReadBytes(Path.Combine(Folder, "Screenshot_0001.bmp")));
         Assert.Equal(0, _delays);
+        Assert.Equal(Folder, Converter().Target);
+        Assert.Equal(Folder, Path.GetDirectoryName(Written()[0]));
+        Assert.NotNull(_files.ReadText(Path.Combine(Folder, $"{Stamp} Example System A 1.json")));
     }
 
     [Fact]

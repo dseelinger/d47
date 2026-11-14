@@ -143,7 +143,7 @@ public static class EgressDisclosure
     /// <summary>The codex pictures the Commander saves, kept on this PC.</summary>
     public const string CodexCaptures = "codexcaptures";
 
-    /// <summary>Elite's screenshots, copied as JPEG with a note into a D47 folder on this PC.</summary>
+    /// <summary>Elite's screenshots, copied as JPEG with a note into Elite's pictures folder on this PC.</summary>
     public const string Screenshots = "screenshots";
 
     /// <summary>The Commander's own recorded voice, kept on this PC and sent nowhere.</summary>

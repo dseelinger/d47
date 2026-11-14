@@ -96,7 +96,7 @@ public static class ScreenCapability
                 Exercise =
                     "With Let D47 press keys in Elite on and Elite the window in front, say \"take a picture\". "
                     + "D47 presses Elite's screenshot key, F10, and answers \"Picture taken.\" With Convert Elite's "
-                    + "screenshots on, a JPEG and a note of where it was taken appear in the D47 folder inside "
+                    + "screenshots on, a JPEG and a note of where it was taken appear in "
                     + "Elite's pictures folder. With another window in front nothing is pressed and the reply says "
                     + "why. The model cannot do this: it is refused if it asks.",
                 Description =

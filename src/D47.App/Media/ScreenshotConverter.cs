@@ -10,7 +10,7 @@ using Windows.Graphics.Imaging;
 namespace D47.App.Media;
 
 /// <summary>
-/// Copies each Elite screenshot to a named JPEG, with a <see cref="PictureNote"/> beside it, in a <c>D47</c> folder inside
+/// Copies each Elite screenshot to a named JPEG, with a <see cref="PictureNote"/> beside it, in
 /// Elite's pictures folder, one at a time on the pool. Elite's BMP is read, and sent to the Recycle Bin through
 /// <c>recycle</c> once its JPEG is saved when the screenshot was queued with <c>deleteOriginal</c>.
 /// </summary>
@@ -37,7 +37,7 @@ public sealed class ScreenshotConverter(
     }
 
     /// <summary>The folder the JPEGs are written to.</summary>
-    public string Target => Path.Combine(folder, "D47");
+    public string Target => folder;
 
     /// <summary>The pool's current run, for a test to wait on; completed when nothing is queued.</summary>
     internal Task Running { get; private set; } = Task.CompletedTask;

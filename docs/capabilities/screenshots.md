@@ -21,7 +21,7 @@ nav_order: 161
 <section>
 <h2><span class="num">!</span> The one that stops people.</h2>
 <p class="say">Open Settings › You and your records › Logs and goals, group Screenshots, and read the Saved to row.</p>
-<p class="expect">It shows the D47 folder inside Elite's pictures folder. If Windows syncs that folder, as OneDrive can, the copies are synced too.</p>
+<p class="expect">It shows Elite's pictures folder. If Windows syncs that folder, as OneDrive can, the copies are synced too.</p>
 </section>
 </div></div>
 </details>
@@ -36,7 +36,7 @@ nav_order: 161
 </section>
 <section>
 <h2><span class="num">2</span> The copy is named for the time and the place.</h2>
-<p class="body">The copy goes in a D47 folder inside Elite's own pictures folder. Its name is the local time, the system and the body, and a note beside it records where it was taken and the codex entries logged just before it.</p>
+<p class="body">The copy goes in Elite's own pictures folder. Its name is the local time, the system and the body, and a note beside it records where it was taken and the codex entries logged just before it.</p>
 </section>
 <section>
 <h2><span class="num">3</span> Only you can switch the copies off.</h2>

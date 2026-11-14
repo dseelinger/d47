@@ -15,7 +15,7 @@ public static class ScreenshotsCapability
     public const string FolderKey = "screenshots.folder";
 
     /// <summary>The folder the JPEG copies go in.</summary>
-    public static string TargetFolder() => Path.Combine(EliteScreenshot.Folder(), "D47");
+    public static string TargetFolder() => EliteScreenshot.Folder();
 
     public static CapabilityDescriptor Create() => new()
     {
@@ -41,7 +41,7 @@ public static class ScreenshotsCapability
         Exercise =
             "Open Settings › You and your records › Logs and goals, group Screenshots, and find "
             + "Convert Elite's screenshots (on by default). On, take a screenshot in Elite: a JPEG "
-            + "appears in the D47 folder inside Elite's pictures folder (the Saved to row beside it "
+            + "appears in Elite's pictures folder (the Saved to row beside it "
             + "shows the path), named for the local time, the system and the body, such as "
             + "\"2026-10-29 14-05-09 Sol.jpg\". Elite's BMP goes to the Recycle Bin (see the next row). Turn the row off, or say \"stop "
             + "converting my screenshots\", and take another: no new JPEG appears. \"start converting "
@@ -49,7 +49,7 @@ public static class ScreenshotsCapability
         Label = "Convert Elite's screenshots",
         Help =
             "When you take a screenshot in Elite, D47 saves a JPEG copy named after the time and the place, "
-            + "in a D47 folder beside Elite's own screenshots. Elite's BMP goes to the Recycle Bin once the JPEG is saved, "
+            + "in Elite's pictures folder. Elite's BMP goes to the Recycle Bin once the JPEG is saved, "
             + "unless you turn off Delete Elite's BMP after converting.",
         Kind = SettingKind.Toggle,
         DefaultDisplay = "on",

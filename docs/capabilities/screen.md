@@ -47,7 +47,7 @@ nav_order: 157
 <section>
 <h2><span class="num">3</span> Keep a picture.</h2>
 <p class="say">Say "take a picture".</p>
-<p class="expect">D47 presses Elite's screenshot key and answers "Picture taken." The copy goes in the D47 folder inside Elite's pictures folder. This needs Let D47 press keys in Elite on, works with this row off, and no model sees the picture.</p>
+<p class="expect">D47 presses Elite's screenshot key and answers "Picture taken." The copy goes in Elite's pictures folder. This needs Let D47 press keys in Elite on, works with this row off, and no model sees the picture.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="Phrases that save a picture">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">take a picture</text>
@@ -134,7 +134,7 @@ on screen and the game state it was given does not answer it.
 
 Presses Elite's regular screenshot key, F10, so Elite takes the screenshot, in VR as on the
 monitor. D47 keeps nothing itself: with Convert Elite's screenshots on, the screenshot is copied as a
-JPEG into the D47 folder inside Elite's pictures folder, as every screenshot is (see
+JPEG into Elite's pictures folder, as every screenshot is (see
 [Screenshots](screenshots.md)). No model sees it. It needs Let D47 press keys in Elite on, works with
 Let the model look at the screen off, and the model cannot call it: only the phrases above reach it.
 

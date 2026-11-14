@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: The JPEG copy of each screenshot, and its note, now go in Elite's own pictures folder instead of a D47 folder inside it. Copies already in a D47 folder are not moved.
+
 Changed: Elite's BMP now goes to the Recycle Bin once D47 has saved its JPEG copy. Turn off Delete Elite's BMP after converting (Settings › You and your records › Logs and goals › Screenshots), or say "keep my screenshot originals", to keep the BMPs. An existing install takes the default, so this applies after the update.
 
 Fixed: The Campaign page no longer lists a Coup threat beside a Conflict for the same system while the faction is in a war or election there; a chosen coup threat that turns into a conflict stays chosen instead of being recorded as resolved.

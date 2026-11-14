@@ -41,6 +41,12 @@ public sealed class ConvertingElitesScreenshotsIsTheCommandersSwitchTests
     }
 
     [Fact]
+    public void TheCopiesGoInElitesOwnPicturesFolder()
+    {
+        Assert.Equal(EliteScreenshot.Folder(), ScreenshotsCapability.TargetFolder());
+    }
+
+    [Fact]
     public void TheDisclosureNamesTheFolderWhenOnAndSaysNothingIsWrittenWhenOff()
     {
         var on = EgressDisclosure.Entry(EgressDisclosure.Screenshots, new D47Settings(), llmKeyPresent: false);
@@ -52,7 +58,7 @@ public sealed class ConvertingElitesScreenshotsIsTheCommandersSwitchTests
         Assert.Contains(EgressDisclosure.Screenshots, EgressDisclosure.Ids);
         Assert.Equal("Your screenshots", on.Name);
         Assert.False(on.Active);
-        Assert.Contains(Path.Combine(EliteScreenshot.Folder(), "D47"), on.What, StringComparison.Ordinal);
+        Assert.Contains(EliteScreenshot.Folder(), on.What, StringComparison.Ordinal);
         Assert.Contains("D47 sends them nowhere.", on.What, StringComparison.Ordinal);
         Assert.Contains("each with a note beside it of when and where it was taken", on.What, StringComparison.Ordinal);
         Assert.Equal("Converting Elite's screenshots is off. D47 writes nothing to your Pictures folder.", off.What);
