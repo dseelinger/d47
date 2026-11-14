@@ -27,13 +27,13 @@ internal static class EngineerLines
 
         if (groups.Unlocked.Count > 0)
         {
-            lines.Add(new LoadoutLine("Unlocked", LoadoutTone.Heading));
+            lines.Add(new LoadoutLine("Unlocked", LoadoutTone.ListHead));
             lines.AddRange(groups.Unlocked.Select(entry => Row(entry, groups.Grade)));
         }
 
         if (groups.Locked.Count > 0)
         {
-            lines.Add(new LoadoutLine("Locked", LoadoutTone.Heading));
+            lines.Add(new LoadoutLine("Locked", LoadoutTone.ListHead));
             lines.AddRange(groups.Locked.Select(entry => Row(entry, groups.Grade)));
         }
 

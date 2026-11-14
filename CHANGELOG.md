@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: On a slot page, "Unlocked" and "Locked" under Engineers are drawn as smaller list heads with a thin rule, so they read as parts of the Engineers block instead of two more sections.
+
 Fixed: Spoken lines no longer give ships, cargo or the galaxy feelings or opinions, joke that "nobody asked", or joke about "not complaining, only saying".
 
 Changed: A table you can resize now shows a line on each column boundary you can drag, 1px at rest and 2px in the accent colour while the pointer is over it or you are dragging it.

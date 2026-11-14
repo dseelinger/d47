@@ -1,3 +1,6 @@
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core.Checklists;
 using D47.Core.Journal;
@@ -74,6 +77,35 @@ public class EngineersListedOnASlotPageTests
         Assert.Contains(texts, text => text.StartsWith("Elvira Martuuk, grade 5", StringComparison.Ordinal));
         Assert.Contains(texts, text => text.StartsWith("Felicity Farseer", StringComparison.Ordinal));
         Assert.Contains(texts, text => text.StartsWith("Mel Brandon", StringComparison.Ordinal));
+    }
+
+    [AvaloniaFact]
+    public void UnlockedAndLockedDrawSmallerThanTheEngineersHeading()
+    {
+        var (mode, ships) = Ship(progressKnown: true);
+        var item = ships.Store.Builds[0].Id;
+
+        var lines = mode.Engineers(item, "FrameShiftDrive");
+
+        double SizeOf(string text)
+        {
+            var line = lines.Single(l => l.Text == text);
+            var window = KitWindow.ShowInStrip(LoadoutPages.Line(line));
+
+            try
+            {
+                return window.GetVisualDescendants().OfType<TextBlock>().Single().FontSize;
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        var group = SizeOf("Engineers");
+
+        Assert.True(SizeOf("Unlocked") < group);
+        Assert.True(SizeOf("Locked") < group);
     }
 
     /// <summary>Each row ends with the system, and carries it as the thing the copy glyph copies.</summary>

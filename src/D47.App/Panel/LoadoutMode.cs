@@ -49,6 +49,9 @@ public enum LoadoutTone
     /// <summary>The head of a block — "Fitted", "Planned", "What it costs".</summary>
     Heading,
 
+    /// <summary>A group inside a block, under its <see cref="Heading"/> — "Unlocked", "Locked".</summary>
+    ListHead,
+
     /// <summary>What a module has been engineered with (remediation.md 15, item 10).</summary>
     Engineered,
 

@@ -659,6 +659,7 @@ public static class LoadoutPages
     internal static Control Line(LoadoutLine line) => line.Runs.Count > 0 ? Coloured(line) : line.Tone switch
     {
         LoadoutTone.Heading => Section(line.Text),
+        LoadoutTone.ListHead => ListHead(line.Text),
         LoadoutTone.Body => Toned(line.Text, ThemeManager.AKey, TypeScale.Body),
         LoadoutTone.Danger => Toned(line.Text, ThemeManager.RedKey),
         LoadoutTone.Engineered => Toned(line.Text, ThemeManager.AKey),
@@ -737,6 +738,31 @@ public static class LoadoutPages
         section.Margin = compact ? new Thickness(0, 4, 0, 2) : new Thickness(0, 14, 0, 6);
 
         return section;
+    }
+
+    /// <summary>A group inside a block: uppercase A Saira at 13px over a 1px Line rule, selectable.</summary>
+    internal static Control ListHead(string text)
+    {
+        var block = new SelectableTextBlock
+        {
+            FontFamily = Fonts.ChromeFamily,
+            FontSize = TypeScale.Small,
+            FontWeight = FontWeight.SemiBold,
+            LetterSpacing = TypeScale.Small * 0.08,
+            TextWrapping = TextWrapping.NoWrap,
+        };
+
+        TitleText.Show(block, text);
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+        var rule = new Border { Height = 1, Margin = new Thickness(0, 6, 0, 0) };
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.LineKey);
+
+        return new StackPanel
+        {
+            Margin = new Thickness(0, 10, 0, 2),
+            Children = { block, rule },
+        };
     }
 
     /// <summary>Prose in a detail pane, and it is selectable (#122).</summary>
