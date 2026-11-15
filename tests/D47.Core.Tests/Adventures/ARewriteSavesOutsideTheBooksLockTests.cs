@@ -31,7 +31,7 @@ public sealed class ARewriteSavesOutsideTheBooksLockTests
         book.Store.Changed += () =>
         {
             // Every read of the book takes its lock; from another thread it blocks while the saver holds it.
-            reachable = Task.Run(() => book.IsStirring("F1", "the-lantern-route"))
+            reachable = Task.Factory.StartNew(() => book.IsStirring("F1", "the-lantern-route"), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default)
                 .Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         };
 

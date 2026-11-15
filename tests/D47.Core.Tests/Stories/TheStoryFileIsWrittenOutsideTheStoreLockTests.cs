@@ -9,6 +9,9 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
 {
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);
 
+    /// <summary>Longer than <see cref="Patience"/>, so a reader blocked by the held write times out before the write lets go.</summary>
+    private static readonly TimeSpan Hold = TimeSpan.FromSeconds(30);
+
     private readonly MemoryFileSystem _files = new();
     private readonly ManualResetEventSlim _writing = new();
     private readonly ManualResetEventSlim _release = new();
@@ -32,13 +35,20 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
             if (Interlocked.Increment(ref _writes) == 1)
             {
                 _writing.Set();
-                _release.Wait(Patience);
+                _release.Wait(Hold);
             }
         }), NullLogger<StoryStore>.Instance);
 
+    /// <summary>Runs <paramref name="work"/> on a dedicated thread, so the waits measure the store rather than how soon the pool has a thread free.</summary>
+    private static Task<T> Dedicated<T>(Func<T> work) =>
+        Task.Factory.StartNew(work, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
+    private static Task Dedicated(Action work) =>
+        Task.Factory.StartNew(work, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
     private Task StartHeldWrite(Action write)
     {
-        var task = Task.Run(write, TestContext.Current.CancellationToken);
+        var task = Dedicated(write);
 
         Assert.True(_writing.Wait(Patience), "the write never started");
 
@@ -51,7 +61,7 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
         var store = OpenWithAHeldFirstWrite();
         var saving = StartHeldWrite(() => store.Save("F1", Picked("a")));
 
-        var read = Task.Run(() => store.For("F1"), TestContext.Current.CancellationToken);
+        var read = Dedicated(() => store.For("F1"));
 
         var result = await read.WaitAsync(Patience, TestContext.Current.CancellationToken);
         Assert.Equal("a", Assert.Single(result).Id);
@@ -69,7 +79,7 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
 
         var updating = StartHeldWrite(() => store.Update("F1", "a", story => story with { Rating = 3 }));
 
-        var read = Task.Run(() => store.Find("F1", "a"), TestContext.Current.CancellationToken);
+        var read = Dedicated(() => store.Find("F1", "a"));
 
         var result = await read.WaitAsync(Patience, TestContext.Current.CancellationToken);
         Assert.Equal(3, result!.Rating);
@@ -84,7 +94,7 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
         var store = OpenWithAHeldFirstWrite();
         var minting = StartHeldWrite(() => store.EnsureVoter("F1"));
 
-        var read = Task.Run(() => store.BeaconForgotten("F1"), TestContext.Current.CancellationToken);
+        var read = Dedicated(() => store.BeaconForgotten("F1"));
 
         var result = await read.WaitAsync(Patience, TestContext.Current.CancellationToken);
         Assert.False(result);
@@ -98,7 +108,7 @@ public sealed class TheStoryFileIsWrittenOutsideTheStoreLockTests : IDisposable
     {
         var store = OpenWithAHeldFirstWrite();
         var first = StartHeldWrite(() => store.Save("F1", Picked("a")));
-        var second = Task.Run(() => store.Save("F1", Picked("b")), TestContext.Current.CancellationToken);
+        var second = Dedicated(() => store.Save("F1", Picked("b")));
 
         var sooner = await Task.WhenAny(second, Task.Delay(TimeSpan.FromMilliseconds(200), TestContext.Current.CancellationToken));
 
