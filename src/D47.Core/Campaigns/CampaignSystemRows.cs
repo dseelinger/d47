@@ -24,6 +24,9 @@ public sealed record CampaignSystemRow(
 {
     /// <summary>Light years from the Commander's current system, or null when either position is unknown.</summary>
     public double? Distance { get; init; }
+
+    /// <summary>Where the system is in the galaxy, or null when the report has no position for it.</summary>
+    public StarPosition? Position { get; init; }
 }
 
 /// <summary>Builds the Systems rows of the campaign faction from its galaxy report, the Commander's readings and the intents set.</summary>
@@ -55,6 +58,7 @@ public static class CampaignSystemRows
                 .Select(row => RowOf(report.Name, row, systems[row.System], standings, intents, now) with
                 {
                     Distance = distances.TryGetValue(row.System, out var distance) ? distance : null,
+                    Position = systems[row.System].Position,
                 }),
         ];
     }

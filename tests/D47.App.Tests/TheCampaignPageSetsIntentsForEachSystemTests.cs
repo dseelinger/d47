@@ -578,4 +578,67 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
 
         window.Close();
     }
+
+    private static int HubMarks(Control root) =>
+        In<TextBlock>(root).Sum(block => block.Inlines?.OfType<Avalonia.Controls.Documents.Run>().Count(run => run.Text == CampaignModel.HubMark) ?? 0)
+        + In<TextBlock>(root).Count(block => block.Text == CampaignModel.HubMark);
+
+    [AvaloniaFact]
+    public void TheSystemsSectionNamesTheHubOfTheFirstTenRowsAndMarksItsRow()
+    {
+        var fixture = SampleCampaign();
+        var (window, page) = Open(fixture);
+        var rows = CampaignSystemRows.Of(Sample(), SystemStandings.Empty, fixture.Store.For(Frontier).Intents, Now, null);
+        var hub = CampaignModel.Hub([.. rows.Take(CampaignHub.Span)], "Influence", SortDirection.Descending, headset: false);
+
+        Assert.NotNull(hub.System);
+        Assert.True(Shows(page, CampaignModel.HubLabel));
+        Assert.True(Shows(page, hub.Line));
+        Assert.Contains(In<TextBlock>(page), block => block.Text == hub.System);
+        Assert.Equal(1, HubMarks(page));
+        Assert.True(Shows(page, CampaignModel.FirstTenRule));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASearchWithFewerThanTwoRowsShowsADashNoHubMarkAndNoRule()
+    {
+        var fixture = SampleCampaign();
+        var (window, page) = Open(fixture);
+
+        page.Filter("Lalande");
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Shows(page, "Fewer than two of the first ten rows below have a position."));
+        Assert.Equal(0, HubMarks(page));
+        Assert.False(Shows(page, CampaignModel.FirstTenRule));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheBigPanelDrawsTheRuleOnPageOneOnly()
+    {
+        using var look = AppLook.Put();
+        var fixture = SampleCampaign();
+        fixture.Report = Sample() with
+        {
+            Systems = [.. Sample().Systems, .. Enumerable.Range(1, 18).Select(i => Place($"Extra {i:00}", 0.01, false))],
+        };
+
+        var (window, view) = OpenPanel(fixture, headset: true, AppLook.CaptureWidth, AppLook.CaptureHeight);
+
+        Assert.True(Shows(view, CampaignModel.HubLabel));
+        Assert.True(Shows(view, CampaignModel.FirstTenRule));
+        Assert.Equal(1, HubMarks(view));
+
+        Press(In<Button>(view).Single(button => button.Name == CampaignPage.NextName));
+
+        Assert.False(Shows(view, CampaignModel.FirstTenRule));
+        Assert.Equal(0, HubMarks(view));
+        Assert.True(Shows(view, CampaignModel.HubLabel));
+
+        window.Close();
+    }
 }

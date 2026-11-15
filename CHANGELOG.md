@@ -22,6 +22,8 @@ Fixed: On Search › Faction, a system whose own reading by you is the same as y
 
 Fixed: After a BGS tick the Liaison gives the dispatch only from a reading of the front's system that has changed since the tick. A reading identical to your last one before the tick gets a line saying so, and that Elite can take hours to update a system; the dispatch follows when a reading shows a change. The conflicts briefing says days won "stood" at their score "before the tick" for a system with no changed reading since.
 
+Added: The Systems section on Commander › Campaign names the hub: of the first ten rows of the table, the system nearest on average to the other nine. It follows the sort and the search, its row is marked HUB, and a line after the tenth row marks where the ten end.
+
 Added: Commander › Campaign has a CAMPAIGN ON checkbox beside CHANGE FACTION that turns the campaign off and on. While it is off the page says so, keeps the faction, and draws no front, sections or search field.
 
 Added: Say "turn off the campaign" to stop the whole campaign: D47 fetches no faction report, proposes no front, shows no campaign line on the NEXT strip, and the Liaison, the arcs, the Chronicler and the campaign warnings say nothing. Turning it off drops the chosen front without adding it to the chronicle. Say "turn on the campaign" to start it again from the faction, intents and chronicle it kept.

@@ -151,6 +151,10 @@ System, Distance, Influence and Lead sort when you press the heading. A report m
 age and OLD REPORT, and the rest of the row is grey. On the big panel the table shows 25 systems to
 a page.
 
+Above the table the Systems section names the hub: of the first ten rows of the table, the system nearest on
+average to the other nine. It follows the sort and the search, so pressing a heading or typing in the search field
+can change it, and its row is marked HUB. A row with no position is left out of the ten, not replaced.
+
 The intent is a stepper over the six intents, in this order: Hold, Grow, Expand from here, Stay
 under 75%, Take control, Leave alone. A system you have not set shows its default in grey, such as
 "Hold · default". A step sets the intent exactly as the phrase does, and every row carries the

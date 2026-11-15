@@ -299,6 +299,52 @@ public static class CampaignModel
     /// <summary>The order the rows come in, drawn as Influence ▼.</summary>
     public static readonly SortOrder DefaultOrder = new(2, SortDirection.Descending);
 
+    public const string HubLabel = "HUB OF THE FIRST TEN";
+
+    public const string HubMark = "HUB";
+
+    public const string FirstTenRule = "▲ FIRST TEN";
+
+    /// <summary>The Systems section's hub block: the hub's system, or null for a dash, and the line beside it.</summary>
+    public sealed record HubReading(string? System, string Line);
+
+    private static readonly string[] NumberWords = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+
+    /// <summary>
+    /// The hub of the first <see cref="CampaignHub.Span"/> of <paramref name="sorted"/>, which is the table in its sort and search,
+    /// with the line under the HUB OF THE FIRST TEN label. <paramref name="sortLabel"/> is the sorted column's desktop heading.
+    /// </summary>
+    public static HubReading Hub(IReadOnlyList<CampaignSystemRow> sorted, string sortLabel, SortDirection direction, bool headset)
+    {
+        ArgumentNullException.ThrowIfNull(sorted);
+
+        var ten = sorted.Take(CampaignHub.Span).ToList();
+        var index = CampaignHub.IndexOf([.. ten.Select(row => row.Position)]);
+        var rows = ten.Count is >= CampaignHub.Span or 0 ? "first ten" : ten.Count.ToString(CultureInfo.InvariantCulture);
+        var without = ten.Where(row => row.Position is null).Select(row => row.System).ToList();
+
+        if (index is not { } hub)
+        {
+            return new HubReading(null, $"Fewer than two of the first ten rows below have a position.");
+        }
+
+        var others = NumberWords[ten.Count - without.Count - 1];
+        var by = $"by {sortLabel} {(direction == SortDirection.Ascending ? "▲" : "▼")}";
+        var line = headset
+            ? $"of the {rows} rows, {by}"
+            : $"The system nearest on average to the other {others} of the {rows} rows below, {by}.";
+
+        if (without.Count > 0)
+        {
+            line += headset ? "." : string.Empty;
+            line += without.Count == 1
+                ? $" {without[0]} has no position, so it is left out."
+                : $" {string.Join(", ", without.Take(without.Count - 1))} and {without[^1]} have no position, so they are left out.";
+        }
+
+        return new HubReading(ten[hub].System, line);
+    }
+
     /// <summary>The rows whose system name contains <paramref name="query"/>, ignoring case.</summary>
     public static IReadOnlyList<CampaignSystemRow> Matching(IReadOnlyList<CampaignSystemRow> rows, string? query) =>
         string.IsNullOrWhiteSpace(query)

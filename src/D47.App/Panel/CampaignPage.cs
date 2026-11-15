@@ -905,8 +905,14 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             legend.HorizontalAlignment = HorizontalAlignment.Left;
         }
 
+        var here = _sources.State()?.Location.StarSystem;
+        var sorted = _head.Sort(CampaignModel.Matching(_rows, _query));
+        var order = _head.Order ?? _head.Default ?? CampaignModel.DefaultOrder;
+        var hub = CampaignModel.Hub(sorted, CampaignModel.Heads(headset: false)[order.Column].Label, order.Direction, _headset);
+
         panel.Children.Add(legend);
-        panel.Children.Add(Table(_now, _sources.State()?.Location.StarSystem, _frontier!));
+        panel.Children.Add(HubBlock(hub, here));
+        panel.Children.Add(Table(sorted, hub.System, _now, here, _frontier!));
 
         if (!_headset)
         {
@@ -916,9 +922,53 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return panel;
     }
 
-    private Control Table(DateTimeOffset now, string? here, string frontier)
+    private Border HubBlock(CampaignModel.HubReading hub, string? here)
     {
-        var sorted = _head.Sort(CampaignModel.Matching(_rows, _query));
+        var current = hub.System is not null && string.Equals(hub.System, here, StringComparison.OrdinalIgnoreCase);
+
+        Control name = hub.System is null
+            ? Typeset.Mono(CampaignModel.Dash, TypeScale.Body, ThemeManager.GreyKey)
+            : Typeset.Chrome(hub.System, TypeScale.Body, current ? ThemeManager.CyanKey : ThemeManager.AKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis);
+
+        if (hub.System is not null && !_headset)
+        {
+            name = CopyGlyph.Beside((TextBlock)name, hub.System, _copy);
+        }
+
+        var line = Typeset.Prose(hub.Line, TypeScale.Description, ThemeManager.GreyKey, wrap: true);
+        var body = new WrapPanel { Orientation = Orientation.Horizontal };
+        name.Margin = new Thickness(0, 0, 14, 0);
+        name.VerticalAlignment = VerticalAlignment.Center;
+        line.VerticalAlignment = VerticalAlignment.Center;
+        body.Children.Add(name);
+        body.Children.Add(line);
+
+        var block = new Border
+        {
+            Padding = new Thickness(14, 12),
+            Child = new StackPanel
+            {
+                Spacing = 4,
+                Children =
+                {
+                    Typeset.Chrome(CampaignModel.HubLabel, TypeScale.Meta, ThemeManager.GreyKey, weight: FontWeight.SemiBold, tracking: TypeScale.Meta * Fonts.ChromeTracking),
+                    body,
+                },
+            },
+        };
+        ThemeInk.Bind(block, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        if (!_headset)
+        {
+            block.MaxWidth = ProseWidth;
+            block.HorizontalAlignment = HorizontalAlignment.Left;
+        }
+
+        return block;
+    }
+
+    private Control Table(IReadOnlyList<CampaignSystemRow> sorted, string? hub, DateTimeOffset now, string? here, string frontier)
+    {
         var layout = new TableLayout(TableId, _headset ? HeadsetColumns : DesktopColumns, _headset ? null : _columnWidths, _headset ? 14 : 16);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
@@ -938,9 +988,17 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             shown = [.. sorted.Skip(_page * FactionModel.PageSize).Take(FactionModel.PageSize)];
         }
 
+        var rank = 0;
+
         foreach (var row in shown)
         {
-            table.Children.Add(RowView(row, layout, now, here, frontier));
+            table.Children.Add(RowView(row, layout, now, here, frontier, hub is not null && string.Equals(row.System, hub, StringComparison.OrdinalIgnoreCase)));
+            rank++;
+
+            if (rank == CampaignHub.Span && (!_headset || _page == 0) && sorted.Count > CampaignHub.Span)
+            {
+                table.Children.Add(FirstTenRule());
+            }
         }
 
         if (_headset && sorted.Count > FactionModel.PageSize)
@@ -951,7 +1009,24 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return table;
     }
 
-    private Border RowView(CampaignSystemRow row, TableLayout layout, DateTimeOffset now, string? here, string frontier)
+    private static DockPanel FirstTenRule()
+    {
+        var mark = Typeset.Chrome(CampaignModel.FirstTenRule, TypeScale.MetaSmall, ThemeManager.GreyKey, weight: FontWeight.SemiBold, tracking: TypeScale.MetaSmall * Fonts.ChromeTracking);
+        mark.VerticalAlignment = VerticalAlignment.Center;
+        mark.Margin = new Thickness(0, 0, 10, 0);
+
+        var rule = new Border { Height = 1, VerticalAlignment = VerticalAlignment.Center };
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.LineKey);
+
+        var line = new DockPanel { Margin = new Thickness(0, 4) };
+        DockPanel.SetDock(mark, Dock.Left);
+        line.Children.Add(mark);
+        line.Children.Add(rule);
+
+        return line;
+    }
+
+    private Border RowView(CampaignSystemRow row, TableLayout layout, DateTimeOffset now, string? here, string frontier, bool hub)
     {
         var grid = layout.Row([]);
         var ink = row.Old ? ThemeManager.GreyKey : ThemeManager.WhiteKey;
@@ -965,9 +1040,25 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             weight: FontWeight.Medium,
             trimming: TextTrimming.CharacterEllipsis);
 
-        Control system = _headset
-            ? name
-            : new StackPanel { Spacing = 2, Children = { CopyGlyph.Beside(name, row.System, _copy), ControlLine(row, now) } };
+        Control system;
+
+        if (_headset)
+        {
+            system = name;
+
+            if (hub)
+            {
+                var word = Typeset.Chrome(CampaignModel.HubMark, TypeScale.MetaSmall, ThemeManager.WhiteKey, weight: FontWeight.SemiBold, tracking: TypeScale.MetaSmall * Fonts.ChromeTracking);
+                word.VerticalAlignment = VerticalAlignment.Center;
+                word.Margin = new Thickness(8, 0, 0, 0);
+                DockPanel.SetDock(word, Dock.Right);
+                system = new DockPanel { Children = { word, name } };
+            }
+        }
+        else
+        {
+            system = new StackPanel { Spacing = 2, Children = { CopyGlyph.Beside(name, row.System, _copy), ControlLine(row, now, hub) } };
+        }
 
         var lead = Typeset.Mono(CampaignModel.LeadText(row.Lead), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right);
         Control leadCell = row.Frozen
@@ -999,7 +1090,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return border;
     }
 
-    private static TextBlock ControlLine(CampaignSystemRow row, DateTimeOffset now)
+    private static TextBlock ControlLine(CampaignSystemRow row, DateTimeOffset now, bool hub)
     {
         var line = new TextBlock { FontFamily = new FontFamily(Fonts.ProseFamily), FontSize = TypeScale.Meta, TextWrapping = TextWrapping.Wrap };
         ThemeInk.Bind(line, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
@@ -1017,6 +1108,15 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             line.Inlines.Add(age);
             line.Inlines.Add(new Run(" · "));
             line.Inlines.Add(label);
+        }
+
+        if (hub)
+        {
+            var mark = new Run(CampaignModel.HubMark) { FontFamily = new FontFamily(Fonts.ChromeFamily), FontSize = TypeScale.MetaSmall, FontWeight = FontWeight.SemiBold };
+            ThemeInk.Bind(mark, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+
+            line.Inlines.Add(new Run(" · "));
+            line.Inlines.Add(mark);
         }
 
         return line;
