@@ -47,8 +47,10 @@ public sealed class CommodityBoard
 /// <param name="Answer">What came back.</param>
 /// <param name="Near">The system it was measured from.</param>
 /// <param name="AskedAt">When.</param>
+/// <param name="CarriersOnly">No station answered, so the offers are fleet carriers found by a second search.</param>
 public sealed record CommodityPosting(
     CommodityQuery Query,
     CommodityAnswer Answer,
     string Near,
-    DateTimeOffset AskedAt);
+    DateTimeOffset AskedAt,
+    bool CarriersOnly = false);

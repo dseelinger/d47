@@ -57,7 +57,10 @@ public sealed record RoutingSurface(
     BestCargoBoard? Cargo = null,
 
     // The line for game-live data while another Commander shows, given what the data is; null on duty.
-    Func<string, string?>? OffDuty = null)
+    Func<string, string?>? OffDuty = null,
+
+    // How the Market page's hotspot link runs a Search › Bodies search; null where the host has no search.
+    Func<BodySearchLink?>? BodySearch = null)
 {
     /// <summary>The system names that start with the given letters, for the name fields; null for no suggestions.</summary>
     public Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? PrefixNames { get; init; }
@@ -234,7 +237,8 @@ public static class RoutingPages
                 Copy(surface),
                 columnWidths,
                 surface.Here,
-                surface.SuggestionPause)
+                surface.SuggestionPause,
+                surface.BodySearch)
             : Missing("Market lookups are not available on this surface.");
 
     private static Control BestCargo(RoutingSurface surface, PanelNavigator nav, ColumnWidthMemory? columnWidths) =>

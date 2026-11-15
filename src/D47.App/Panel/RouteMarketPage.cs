@@ -45,6 +45,23 @@ public sealed class RouteMarketPage : UserControl
 
     public const string NoneText = "Add a commodity first.";
 
+    public const string CarriersOnlyName = "MarketCarriersOnly";
+
+    public const string CarrierMarkName = "MarketCarrierMark";
+
+    public const string CarrierMarkText = "Fleet carrier";
+
+    public const string NoteName = "MarketObtainNote";
+
+    public const string NoteLabel = "How to get it";
+
+    public const string HotspotName = "MarketHotspotLink";
+
+    public const string NothingName = "MarketNothingFound";
+
+    /// <summary>The carriers-only Notice and the note stop at this width.</summary>
+    private const double NoteWidth = 900;
+
     private const double CopyGap = 6;
 
     /// <summary>Every name a market trades, ordinary and rare.</summary>
@@ -58,6 +75,7 @@ public sealed class RouteMarketPage : UserControl
     private readonly CommodityBoard _board;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly Func<string?> _here;
+    private readonly Func<BodySearchLink?>? _bodySearch;
 
     private readonly StackPanel _body = new() { Spacing = 12 };
 
@@ -111,9 +129,11 @@ public sealed class RouteMarketPage : UserControl
         Func<string, Task<bool>>? copy = null,
         ColumnWidthMemory? columnWidths = null,
         Func<string?>? here = null,
-        TimeSpan? suggestionPause = null)
+        TimeSpan? suggestionPause = null,
+        Func<BodySearchLink?>? bodySearch = null)
     {
         _columnWidths = columnWidths;
+        _bodySearch = bodySearch;
         _registry = registry;
         _board = board;
         _copy = copy;
@@ -391,7 +411,7 @@ public sealed class RouteMarketPage : UserControl
     {
         _results.Children.Clear();
 
-        if (_board.Last is not { } posting || posting.Answer.Offers.Count == 0)
+        if (_board.Last is not { } posting)
         {
             return;
         }
@@ -407,18 +427,38 @@ public sealed class RouteMarketPage : UserControl
             ThemeManager.AKey,
             wrap: true);
 
-        var heads = Heads(posting);
-        var rows = new StackPanel { Spacing = 2 };
-        var layout = new TableLayout(TableId, [.. heads.Select(head => head.Column)], _columnWidths, 10);
+        var stack = new StackPanel { Spacing = 10, Children = { RoutingKit.Section("What came back"), heading } };
+        var found = posting.Answer.Offers.Count > 0;
 
-        rows.Children.Add(HeaderRow(posting, layout, heads));
-
-        foreach (var offer in posting.Answer.Offers)
+        if (!found)
         {
-            rows.Children.Add(OfferRow(offer, posting, layout));
+            stack.Children.Add(NothingFound(posting, buying, named));
+        }
+        else if (posting.CarriersOnly)
+        {
+            stack.Children.Add(CarriersOnly(posting, buying));
         }
 
-        var stack = new StackPanel { Spacing = 10, Children = { RoutingKit.Section("What came back"), heading, rows } };
+        if (Note(posting) is { } note)
+        {
+            stack.Children.Add(note);
+        }
+
+        if (found)
+        {
+            var heads = Heads(posting);
+            var rows = new StackPanel { Spacing = 2 };
+            var layout = new TableLayout(TableId, [.. heads.Select(head => head.Column)], _columnWidths, 10);
+
+            rows.Children.Add(HeaderRow(posting, layout, heads));
+
+            foreach (var offer in posting.Answer.Offers)
+            {
+                rows.Children.Add(OfferRow(offer, posting, layout));
+            }
+
+            stack.Children.Add(rows);
+        }
 
         // The date on the answer itself, which is a different caveat from the date on each price.
         stack.Children.Add(RoutingKit.Prose(
@@ -426,6 +466,117 @@ public sealed class RouteMarketPage : UserControl
             + "Commanders; supply moves fastest of all."));
 
         _results.Children.Add(stack);
+    }
+
+    private static string Reach(CommodityPosting posting) =>
+        posting.Query.MaxDistance.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private static Control NothingFound(CommodityPosting posting, bool buying, List<string> named)
+    {
+        var text = Several(posting)
+            ? $"No station or fleet carrier within {Reach(posting)} ly {(buying ? "has" : "buys")} them all."
+            : $"Nothing within {Reach(posting)} ly {(buying ? "sells" : "buys")} {named[0]}, at a station or on a fleet carrier.";
+
+        var line = RoutingKit.Ink(text, TypeScale.Body, ThemeManager.WhiteKey, wrap: true);
+        line.Name = NothingName;
+
+        return line;
+    }
+
+    private static Control CarriersOnly(CommodityPosting posting, bool buying)
+    {
+        var text = Several(posting)
+            ? $"No station within {Reach(posting)} ly {(buying ? "has" : "buys")} them all, so these are fleet carriers."
+            : $"No station within {Reach(posting)} ly {(buying ? "sells" : "buys")} {posting.Query.Commodity}, so these are fleet carriers.";
+
+        return new Notice(NoticeLevel.Warning)
+        {
+            Name = CarriersOnlyName,
+            Label = "Carriers only",
+            Text = $"{text} Their owners set the prices, and the listings move.",
+            MaxWidth = NoteWidth,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+    }
+
+    /// <summary>The "how to get it" block, or null when no commodity has a method to show.</summary>
+    private Control? Note(CommodityPosting posting)
+    {
+        var lines = CommodityNote.For(posting);
+
+        if (lines.Count == 0)
+        {
+            return null;
+        }
+
+        var link = _bodySearch?.Invoke();
+        var sentences = new StackPanel { Spacing = 6, VerticalAlignment = VerticalAlignment.Center };
+
+        foreach (var line in lines)
+        {
+            var row = new Grid
+            {
+                ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+                ColumnSpacing = 12,
+            };
+
+            row.Children.Add(Typeset.Prose(
+                line.Sentence, TypeScale.Secondary, ThemeManager.WhiteKey, wrap: true, vertical: VerticalAlignment.Center));
+
+            if (link is not null && line.Hotspot is { } commodity)
+            {
+                var tile = new Button
+                {
+                    Name = HotspotName,
+                    Content = $"Find rings with {commodity} hotspots",
+                    Height = TypeScale.MinimumTarget,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Tag = commodity,
+                };
+                Grid.SetColumn(tile, 1);
+
+                var near = posting.Near;
+                var reach = Math.Min(posting.Query.MaxDistance, BodyQuery.MaxDistanceCeiling);
+
+                tile.Click += (_, _) => link.Run(new Dictionary<string, string>(StringComparer.Ordinal)
+                {
+                    ["hotspot"] = commodity,
+                    ["near"] = near,
+                    ["max_distance"] = reach.ToString("0.##", CultureInfo.InvariantCulture),
+                });
+
+                row.Children.Add(tile);
+            }
+
+            sentences.Children.Add(row);
+        }
+
+        var label = Typeset.Chrome(
+            NoteLabel.ToUpperInvariant(), TypeScale.Meta, ThemeManager.GreyKey,
+            weight: FontWeight.SemiBold, tracking: TypeScale.Meta * Fonts.ChromeTracking,
+            vertical: VerticalAlignment.Center);
+
+        Grid.SetColumn(sentences, 1);
+
+        var inside = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Star)],
+            ColumnSpacing = 14,
+            Children = { label, sentences },
+        };
+
+        var slab = new Border
+        {
+            Name = NoteName,
+            Child = inside,
+            Padding = new Thickness(14, 8),
+            MinHeight = TypeScale.MinimumTarget,
+            MaxWidth = NoteWidth,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        return slab;
     }
 
     /// <summary>One column of the answer table: its layout, its header, and whether its figures sit right.</summary>
@@ -584,7 +735,7 @@ public sealed class RouteMarketPage : UserControl
     private Control OfferRow(CommodityOffer offer, CommodityPosting posting, TableLayout layout)
     {
         var buying = posting.Query.Side == TradeSide.Buying;
-        List<Control> cells = [StationCell(offer.Market.Station, offer.Market.System)];
+        List<Control> cells = [StationCell(offer.Market.Station, offer.Market.System, offer.Market.IsCarrier)];
 
         if (posting.Answer.OriginKnown)
         {
@@ -649,7 +800,7 @@ public sealed class RouteMarketPage : UserControl
     };
 
     /// <summary>The Station column: the station in White, its system in A or Cyan where the Commander is, and a copy glyph for the system (#157).</summary>
-    private Control StationCell(string station, string system)
+    private Control StationCell(string station, string system, bool carrier)
     {
         // The name takes what the copy glyph leaves, so a long one trims rather than running under it.
         var cells = new DockPanel();
@@ -677,7 +828,17 @@ public sealed class RouteMarketPage : UserControl
             Inlines = [name, place],
         });
 
-        return cells;
+        if (!carrier)
+        {
+            return cells;
+        }
+
+        var mark = Typeset.Chrome(
+            CarrierMarkText.ToUpperInvariant(), TypeScale.MetaSmall, ThemeManager.GreyKey,
+            weight: FontWeight.SemiBold, tracking: TypeScale.MetaSmall * Fonts.ChromeTracking);
+        mark.Name = CarrierMarkName;
+
+        return new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center, Children = { cells, mark } };
     }
 
     /// <summary>Whether the answer is for several commodities at one station.</summary>

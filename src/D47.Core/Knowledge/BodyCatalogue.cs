@@ -50,10 +50,6 @@ public static class BodyCatalogue
         "Methanol Monohydrate Crystals", "Praseodymium", "Rutile", "Samarium", "Uraninite", "Water",
     ];
 
-    /// <summary>The name as <see cref="RingMinedMaterials"/> or <see cref="RingSignals"/> spells it, or null.</summary>
-    public static string? MatchRingMined(string spoken) =>
-        Catalogue.Match(RingSignals, spoken) ?? Catalogue.Match(RingMinedMaterials, spoken);
-
     /// <summary>Ring compositions.</summary>
     public static IReadOnlyList<string> RingTypes { get; } = ["Icy", "Metal Rich", "Metallic", "Rocky"];
 

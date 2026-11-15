@@ -67,7 +67,7 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     {
         var roots = new List<NavCrumb>();
 
-        surface = surface with { CarrierRoute = carrierRoute };
+        surface = surface with { CarrierRoute = carrierRoute, BodySearch = () => host.BodySearch };
 
         if (plan)
         {

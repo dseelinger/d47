@@ -2701,7 +2701,7 @@ public static class GalaxyCapability
             if (board is not null)
             {
                 board.Post(new CommodityPosting(
-                    query, answer, near, now?.Invoke() ?? DateTimeOffset.UtcNow));
+                    query, answer, near, now?.Invoke() ?? DateTimeOffset.UtcNow, carriersOnly));
 
                 board.Announce();
             }
@@ -3369,7 +3369,7 @@ public static class GalaxyCapability
         if (acquisition.Methods.Count > 0)
         {
             said.Append(' ')
-                .Append(SpokenText.Capitalised(string.Join(", or ", acquisition.Methods.Select(MethodWords))))
+                .Append(SpokenText.Capitalised(string.Join(", or ", acquisition.Methods.Select(AcquisitionWords.Of))))
                 .Append('.');
         }
 
@@ -3597,31 +3597,6 @@ public static class GalaxyCapability
         AcquisitionKind.Commodity => "a market commodity",
         AcquisitionKind.RareCommodity => "a rare commodity",
         _ => "something",
-    };
-
-    private static string MethodWords(AcquisitionMethod method) => method switch
-    {
-        AcquisitionMethod.Shipyard => "bought at a shipyard",
-        AcquisitionMethod.Outfitting => "bought at outfitting",
-        AcquisitionMethod.Market => "bought at a market",
-        AcquisitionMethod.RareMarket => "sold at one station only, allocation-limited",
-        AcquisitionMethod.PioneerSupplies => "bought at Pioneer Supplies",
-        AcquisitionMethod.ComesWithSuit => "issued with a suit",
-        AcquisitionMethod.MaterialTrader => "exchanged at a material trader",
-        AcquisitionMethod.Bartender => "exchanged with the Bartender for other Components",
-        AcquisitionMethod.RingMining => "mined from asteroid rings",
-        AcquisitionMethod.SurfaceMining =>
-            "surface mining from a Rhino SRV, at a Planetary Mining Location the Detailed Surface Scanner finds",
-        AcquisitionMethod.SurfaceProspecting => "found by surface prospecting",
-        AcquisitionMethod.Settlement => "found in settlements",
-        AcquisitionMethod.Salvage => "salvaged",
-        AcquisitionMethod.Scanning => "found by scanning",
-        AcquisitionMethod.MissionReward => "given as a mission reward",
-        AcquisitionMethod.GuardianSite => "found at Guardian sites",
-        AcquisitionMethod.TechBroker => "unlocked at a tech broker",
-        AcquisitionMethod.Engineer => "applied by an engineer",
-        AcquisitionMethod.Unobtainable => "no longer obtainable",
-        _ => method.ToString(),
     };
 
     private static string? Text(ToolArguments arguments, string name) =>

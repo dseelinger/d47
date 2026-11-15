@@ -387,8 +387,11 @@ caveat. Stations dropped for quoting prices too old to trust are counted rather 
 skipped — "nothing within fifty light years" and "eleven stations, all quoting last month" are
 different answers, and only one of them means you should look further out.
 
-**Fleet carriers are left out unless you ask for one.** Their prices are set by their owner and
-can be a joke, and the carrier may be a hundred light years away by the time you arrive.
+**Fleet carriers are left out unless you ask for one, or no station in range answers.** Their prices
+are set by their owner and can be a joke, and the carrier may be a hundred light years away by the time
+you arrive. When no station answers, the search runs again with carriers; the Market page marks each
+carrier row FLEET CARRIER and opens the answer with a Carriers only line saying no station in range
+sells it and that the owners set the prices.
 
 #### The radius answered is the radius searched
 
@@ -1004,6 +1007,11 @@ A rare good in a list is refused when buying, with its one station named, becaus
 will not find that station; ask for it on its own. When selling, it is searched like any other commodity. On
 the Astrometrics tab's Market page, each commodity is added from a type-ahead as a tile with its tonnes, up to
 five, and a **Distance in LY** box sets how far out the search looks. The market table gives each commodity a column with its price over its stock, then the total.
+Under Navigation, the Market page marks a fleet carrier row as a carrier and, under the heading, has a
+How to get it note in the words of `how_to_get`: ring mining and surface mining always, and any other
+method except a market sale only when no station answered. For a commodity with ring hotspots the note
+has a "Find rings with ... hotspots" tile that opens the Bodies search with Ring hotspot, Near and
+Distance in LY filled in and runs it.
 
 **Commodity prices come from a second host** ([#350](https://github.com/dseelinger/d47/issues/350)).
 Everything else on this page is spansh; asking where to buy or sell one named commodity goes to
@@ -1097,7 +1105,7 @@ outright.
 the Commander's to change:
 carriers are still out by default, because their prices are player-set and the station itself may
 be a hundred light years away by the time anybody arrives, but a carrier is sometimes the only
-seller.
+seller. The Market page marks them.
 
 Two rules ride along with that, and they are the reason the knobs are safe to expose.
 
