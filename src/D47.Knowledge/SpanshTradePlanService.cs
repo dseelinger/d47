@@ -492,7 +492,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
 
     /// <summary>
     /// What to buy where the Commander is docked for the system at the end of their route (#312). The
-    /// sweep is the destination system alone: radius 0 answers with the stations in it and no others.
+    /// sweep returns stations around the destination; only those in the destination system are ranked.
     /// </summary>
     public async Task<BestCargoAnswer?> BestCargoAsync(
         BestCargoSearch search,
@@ -526,6 +526,7 @@ public sealed class SpanshTradePlanService : ITradePlanService, IDisposable
         foreach (var market in fetched)
         {
             if (market.IsCarrier
+                || !string.Equals(market.System, search.Destination, StringComparison.OrdinalIgnoreCase)
                 || market.IsSamePlaceAs(here.Station, here.System)
                 || (market.UpdatedAt is { } when && when < oldest))
             {

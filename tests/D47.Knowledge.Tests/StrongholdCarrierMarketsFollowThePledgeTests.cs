@@ -41,6 +41,16 @@ public class StrongholdCarrierMarketsFollowThePledgeTests
             SweepRow("Quiet Outpost", "Quiet System", 7, "Outpost", null, Buys("Palladium", 60_000)))
         + "]}";
 
+    private static readonly string AnywhereSweep =
+        "{\"count\":4,\"results\":["
+        + string.Join(",",
+            SweepRow("Abraham Lincoln", "Sol", 0, "Ocellus Starport", null,
+                string.Join(",", Sells("Gold", 9_400), Sells("Silver", 4_000), Sells("Palladium", 50_000))),
+            SweepRow("Stronghold Carrier", "Anywhere", 5, "Planetary Outpost", "Li Yong-Rui", Buys("Gold", 60_000)),
+            SweepRow("Stronghold Carrier", "Anywhere", 5, "Planetary Outpost", "Aisling Duval", Buys("Silver", 40_000)),
+            SweepRow("Quiet Outpost", "Anywhere", 5, "Outpost", null, Buys("Palladium", 60_000)))
+        + "]}";
+
     private const string CarrierList =
         """{"count":1,"results":[{"name":"Stronghold Carrier","system_name":"System A","type":"Planetary Outpost"}]}""";
 
@@ -64,7 +74,7 @@ public class StrongholdCarrierMarketsFollowThePledgeTests
         + "]";
 
     /// <summary>Answers Spansh and Ardent from held strings, counting the Spansh carrier list requests.</summary>
-    private sealed class Held(bool listFails = false) : HttpMessageHandler
+    private sealed class Held(bool listFails = false, string? sweep = null) : HttpMessageHandler
     {
         public int ListRequests { get; private set; }
 
@@ -94,7 +104,7 @@ public class StrongholdCarrierMarketsFollowThePledgeTests
                 }
                 else
                 {
-                    body = Sweep;
+                    body = sweep ?? Sweep;
                 }
             }
             else
@@ -191,7 +201,7 @@ public class StrongholdCarrierMarketsFollowThePledgeTests
             },
         });
 
-        var held = new Held();
+        var held = new Held(sweep: AnywhereSweep);
         using var service = Service(held, power is null ? null : new PowerplayPledge(power), book);
 
         var answer = await service.BestCargoAsync(

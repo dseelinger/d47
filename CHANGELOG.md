@@ -18,6 +18,8 @@ Changed: The JPEG copy of each screenshot, and its note, now go in Elite's own p
 
 Changed: Elite's BMP now goes to the Recycle Bin once D47 has saved its JPEG copy. Turn off Delete Elite's BMP after converting (Settings › You and your records › Logs and goals › Screenshots), or say "keep my screenshot originals", to keep the BMPs. An existing install takes the default, so this applies after the update.
 
+Fixed: Best cargo (Trading Mode, "best commodities for" and the Best cargo page) ranks only the stations in the destination system, so it no longer names a station in a neighbouring system.
+
 Fixed: The Campaign page no longer lists a Coup threat beside a Conflict for the same system while the faction is in a war or election there; a chosen coup threat that turns into a conflict stays chosen instead of being recorded as resolved.
 
 Fixed: The screenshot viewer's Delete dialog offers "Also delete Elite's original BMP" only when that BMP is unchanged since D47 converted it, so a newer screenshot that Elite saved under a reused name is no longer recycled. Pictures converted before this change never offer the box.
