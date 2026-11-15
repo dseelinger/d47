@@ -1099,7 +1099,8 @@ It speaks on the first scan of a body in a session, of any kind, once per body. 
 before scanning it is left to the [mapped body](#mapping) line. Stars and belt clusters say nothing.
 The figure is an estimate and includes the first-discovery and first-mapping bonuses when the scan
 shows nobody has them, so a body someone else has mapped is worth less and may fall under the
-threshold. Bodies in the journal backlog are recorded and not said.
+threshold. Bodies in the journal backlog are recorded and not said. A ship with no Detailed Surface
+Scanner fitted hears nothing, since it cannot map the body.
 
 #### Notable bodies {#notable-bodies}
 

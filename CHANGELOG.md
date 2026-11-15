@@ -10,6 +10,8 @@
 
 Added: The Fronts and Systems tables on Commander › Campaign have a Distance column: how many light years each system is from the one you are in, or a dash when either position is not known. It sorts nearest first from its header, and farthest first on a second press.
 
+Changed: Valuable bodies is no longer said in a ship with no Detailed Surface Scanner fitted, since that ship cannot map the planet. Where D47 does not know what the ship has fitted, it still says it.
+
 Changed: Combat stats grouped by Faction (Commander › Ledgers) shows two tables, Against and Paid by, instead of one row per faction mixing kills with payments. Against lists the factions whose ships you destroyed with those kills and their awarded credits; Paid by lists the factions that paid you.
 
 Changed: The JPEG copy of each screenshot, and its note, now go in Elite's own pictures folder instead of a D47 folder inside it. Copies already in a D47 folder are not moved.

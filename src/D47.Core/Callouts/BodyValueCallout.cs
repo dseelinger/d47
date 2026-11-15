@@ -2,7 +2,10 @@ using D47.Core.Journal;
 
 namespace D47.Core.Callouts;
 
-/// <summary>A scanned planet worth mapping, said on its first scan this session, once per body.</summary>
+/// <summary>
+/// A scanned planet worth mapping, said on its first scan this session, once per body, unless the ship
+/// being flown is known to have no Detailed Surface Scanner.
+/// </summary>
 public sealed class BodyValueCallout : ICallout
 {
     private readonly HashSet<(long System, int Body)> _seen = [];
@@ -33,7 +36,8 @@ public sealed class BodyValueCallout : ICallout
                 || journalEvent.String("PlanetClass") is not { Length: > 0 } planetClass
                 || journalEvent.String("BodyName") is not { Length: > 0 } name
                 || Ledger?.IfMapped(system, body) is not { } value
-                || value < Threshold())
+                || value < Threshold()
+                || context.State?.Fitted(ShipLoadout.SurfaceScanner, "Scan", null) is false)
             {
                 continue;
             }

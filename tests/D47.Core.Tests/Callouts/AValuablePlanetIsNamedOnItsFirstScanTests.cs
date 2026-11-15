@@ -44,11 +44,41 @@ public class AValuablePlanetIsNamedOnItsFirstScanTests
         return ledger;
     }
 
+    private const string WithScanner =
+        """
+        {"timestamp":"2026-10-04T15:00:00Z","event":"Loadout","Ship":"diamondbackxl","ShipID":5,"Modules":[
+         {"Slot":"PowerPlant","Item":"int_powerplant_size4_class2"},
+         {"Slot":"Slot05_Size2","Item":"int_detailedsurfacescanner_tiny"}]}
+        """;
+
+    private const string WithoutScanner =
+        """
+        {"timestamp":"2026-10-04T15:00:00Z","event":"Loadout","Ship":"diamondbackxl","ShipID":5,"Modules":[
+         {"Slot":"PowerPlant","Item":"int_powerplant_size4_class2"},
+         {"Slot":"Slot05_Size2","Item":"int_fuelscoop_size2_class5"}]}
+        """;
+
+    private static CommanderGameState StateFrom(params string[] lines)
+    {
+        var store = new GameStateStore();
+        store.Apply(Parse("""{"timestamp":"2026-10-04T14:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}"""));
+
+        foreach (var line in lines)
+        {
+            store.Apply(Parse(line));
+        }
+
+        return store.Active!;
+    }
+
     private static List<Announcement> Say(BodyValueCallout callout, bool priming, params string[] lines) =>
+        Say(callout, null, priming, lines);
+
+    private static List<Announcement> Say(BodyValueCallout callout, CommanderGameState? state, bool priming, params string[] lines) =>
         [.. callout.Examine(new CalloutContext(
             DateTimeOffset.UnixEpoch,
             IsPriming: priming,
-            State: null,
+            State: state,
             Status: GameStatus.Unknown,
             Route: NavRoute.None,
             Events: [.. lines.Select(Parse)]))];
@@ -139,5 +169,41 @@ public class AValuablePlanetIsNamedOnItsFirstScanTests
 
         Assert.Empty(Say(callout, true, scan));
         Assert.Empty(Say(callout, false, scan));
+    }
+
+    [Fact]
+    public void AShipWithNoSurfaceScannerHearsNothing()
+    {
+        var scan = Scan("Water world");
+
+        Assert.Empty(Say(new BodyValueCallout { Ledger = Ledger(scan) }, StateFrom(WithoutScanner), false, scan));
+    }
+
+    [Fact]
+    public void AShipWithASurfaceScannerHearsTheLine()
+    {
+        var scan = Scan("Water world");
+        var said = Assert.Single(Say(new BodyValueCallout { Ledger = Ledger(scan) }, StateFrom(WithScanner), false, scan));
+
+        Assert.EndsWith(" if mapped.", said.Text);
+    }
+
+    [Fact]
+    public void AnUnknownLoadoutStillHearsTheLine()
+    {
+        var scan = Scan("Water world");
+
+        Assert.Single(Say(new BodyValueCallout { Ledger = Ledger(scan) }, StateFrom(), false, scan));
+    }
+
+    [Fact]
+    public void ABodyScannedWithoutAScannerIsNotSaidOnALaterScanWithOne()
+    {
+        var first = Scan("Water world", type: "AutoScan");
+        var second = Scan("Water world");
+        var callout = new BodyValueCallout { Ledger = Ledger(first, second) };
+
+        Assert.Empty(Say(callout, StateFrom(WithoutScanner), false, first));
+        Assert.Empty(Say(callout, StateFrom(WithScanner), false, second));
     }
 }

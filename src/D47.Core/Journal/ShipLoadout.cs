@@ -210,6 +210,9 @@ public sealed record ShipLoadout
     /// <summary>The Docking Computer symbol family, which matches the advanced variant as well.</summary>
     public const string DockingComputer = "int_dockingcomputer";
 
+    /// <summary>The Detailed Surface Scanner symbol family.</summary>
+    public const string SurfaceScanner = "int_detailedsurfacescanner";
+
     /// <summary>
     /// Whether a module from a symbol family is fitted — <c>int_fuelscoop</c>,
     /// <c>int_shieldgenerator</c>, <c>int_dronecontrol_collection</c> — or null when this loadout

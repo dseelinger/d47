@@ -585,8 +585,8 @@ public static class CalloutCapability
                 BodyValueKey,
                 "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
                 + "open Settings › Your core › Exploring, group Exploration callouts, and find Valuable bodies "
-                + "(on by default). Scan a planet that would pay at least the figure in Call out bodies from if "
-                + "mapped efficiently: D47 says so with about what mapping pays. Say \"stop calling out valuable "
+                + "(on by default). In a ship with a Detailed Surface Scanner fitted, scan a planet that would pay at "
+                + "least the figure in Call out bodies from if mapped efficiently: D47 says so with about what mapping pays. Say \"stop calling out valuable "
                 + "bodies\": the row shows off and that is no longer said. Say \"start calling out valuable bodies\" "
                 + "and the row shows on. The row is absent while Speak without being asked is off.",
                 "Valuable bodies",
