@@ -63,6 +63,7 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
     private DateTimeOffset _workSeen;
     private DateTimeOffset? _handInAt;
     private DateTimeOffset? _askedFor;
+    private DateTimeOffset? _toldUnchanged;
     private Front? _front;
     private int? _oursWon;
     private double? _margin;
@@ -101,6 +102,7 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
         if (!string.Equals(_commander, id, StringComparison.Ordinal))
         {
             _askedFor = null;
+            _toldUnchanged = null;
             _handInAt = null;
         }
 
@@ -189,16 +191,33 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
 
         if (LastTick() is { } tick && tick > chosen.Since && chosen.Reported != tick)
         {
-            if (state.Standings.Latest(front.System) is { } reading && reading.SeenAt >= tick)
+            switch (state.Standings.Since(front.System, tick))
             {
-                _pending.RemoveAll(pending => pending.Beat is LiaisonBeat.MorningReport or LiaisonBeat.Dispatch);
-                _pending.Add(new Pending(LiaisonBeat.Dispatch, now) { Tick = tick });
-            }
-            else if (_askedFor != tick)
-            {
-                _askedFor = tick;
-                _pending.RemoveAll(pending => pending.Beat is LiaisonBeat.MorningReport);
-                _pending.Add(new Pending(LiaisonBeat.MorningReport, now) { Tick = tick });
+                case SinceTick.Changed or SinceTick.NoEarlier:
+                    _pending.RemoveAll(pending => pending.Beat is LiaisonBeat.MorningReport or LiaisonBeat.Unchanged or LiaisonBeat.Dispatch);
+                    _pending.Add(new Pending(LiaisonBeat.Dispatch, now) { Tick = tick });
+                    break;
+
+                case SinceTick.Unchanged:
+                    _pending.RemoveAll(pending => pending.Beat is LiaisonBeat.MorningReport);
+
+                    if (_toldUnchanged != tick)
+                    {
+                        _toldUnchanged = tick;
+                        _pending.Add(new Pending(LiaisonBeat.Unchanged, now) { Tick = tick });
+                    }
+
+                    break;
+
+                default:
+                    if (_askedFor != tick)
+                    {
+                        _askedFor = tick;
+                        _pending.RemoveAll(pending => pending.Beat is LiaisonBeat.MorningReport);
+                        _pending.Add(new Pending(LiaisonBeat.MorningReport, now) { Tick = tick });
+                    }
+
+                    break;
             }
         }
     }
@@ -237,9 +256,11 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
             return;
         }
 
+        Func<string, SinceTick>? sinceTick = tick is { } since ? system => state.Standings.Since(system, since) : null;
+
         _pending.Add(new Pending(LiaisonBeat.Conflicts, now)
         {
-            Line = CampaignLiaison.Conflicts(conflicts, held.Faction, report.Government),
+            Line = CampaignLiaison.Conflicts(conflicts, held.Faction, report.Government, sinceTick),
             Tick = tick ?? now,
         });
     }
@@ -290,6 +311,10 @@ public sealed class CampaignLiaisonCallout(NearbyFight fight) : ICallout
 
                 case LiaisonBeat.MorningReport:
                     line = front is null ? null : CampaignLiaison.MorningReport(front, faction, government);
+                    break;
+
+                case LiaisonBeat.Unchanged:
+                    line = front is null ? null : CampaignLiaison.Unchanged(front, faction, state.Standings, now, government);
                     break;
 
                 case LiaisonBeat.Conflicts:

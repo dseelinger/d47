@@ -150,6 +150,55 @@ public sealed class TheLiaisonSpeaksAboutTheChosenFrontTests
     }
 
     [Fact]
+    public void AReadingIdenticalToTheOneBeforeTheTickGivesTheUnchangedLineAndTheDispatchWaitsForAChange()
+    {
+        var same = $"{Faction(Us, 0.31)},{Faction("Lave Purple Gang", 0.1)}";
+        Hold(Retreat());
+        _focus.Take(null, "Lave");
+        _state.Standings = _state.Standings.Apply(Jump("Lave", Now.AddMinutes(-20), same));
+        var liaison = Started();
+
+        _clock = Now.AddHours(2);
+        _tick = Now.AddMinutes(30);
+        _state.Standings = _state.Standings.Apply(Jump("Lave", Now.AddMinutes(50), same));
+
+        var told = Assert.Single(Examine(liaison));
+
+        Assert.Equal(CampaignLiaisonCallout.KeyPrefix + "unchanged", told.Key);
+        Assert.Contains("is the same as your last one before the tick", told.Text, StringComparison.Ordinal);
+        Assert.Contains("Elite can take hours after the tick to update a system", told.Text, StringComparison.Ordinal);
+        Assert.Null(_store.For("F1").Chosen!.Reported);
+        Assert.Empty(Examine(liaison));
+
+        _state.Standings = _state.Standings.Apply(Jump("Lave", Now.AddMinutes(90), $"{Faction(Us, 0.33)},{Faction("Lave Purple Gang", 0.1)}"));
+
+        var dispatch = Assert.Single(Examine(liaison));
+
+        Assert.Equal(CampaignLiaisonCallout.KeyPrefix + "dispatch", dispatch.Key);
+        Assert.Equal(_tick, _store.For("F1").Chosen!.Reported);
+    }
+
+    [Fact]
+    public void TheUnchangedLineIsSaidAgainAfterARestart()
+    {
+        var same = $"{Faction(Us, 0.31)},{Faction("Lave Purple Gang", 0.1)}";
+        Hold(Retreat());
+        _focus.Take(null, "Lave");
+        _state.Standings = _state.Standings.Apply(Jump("Lave", Now.AddMinutes(-20), same));
+        _state.Standings = _state.Standings.Apply(Jump("Lave", Now.AddMinutes(50), same));
+        _clock = Now.AddHours(1);
+        _tick = Now.AddMinutes(30);
+
+        var first = Liaison();
+        Examine(first, priming: true);
+        Assert.Equal(CampaignLiaisonCallout.KeyPrefix + "unchanged", Assert.Single(Examine(first)).Key);
+
+        var restarted = Liaison();
+        Examine(restarted, priming: true);
+        Assert.Equal(CampaignLiaisonCallout.KeyPrefix + "unchanged", Assert.Single(Examine(restarted)).Key);
+    }
+
+    [Fact]
     public void ATickHasOneDispatchAcrossARestart()
     {
         Hold(Retreat());

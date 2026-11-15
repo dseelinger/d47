@@ -295,16 +295,17 @@ fact the Liaison states; the language model only words them, and is told to add 
 | When | What the Liaison says |
 |---|---|
 | You choose a front | The briefing: the situation, the margin, what is at stake and the next action, with what does not count there. |
-| A BGS tick passes, and your journal has read the front's system since | The dispatch: what you handed in for the faction there since the tick, and what moved by your newest reading, with its age. |
+| A BGS tick passes, and your journal has read the front's system since and it has changed | The dispatch: what you handed in for the faction there since the tick, and what moved by your newest reading, with its age. |
+| A BGS tick passes, and your newest reading of the system is the same as your last one before the tick | A line saying so, and that Elite can take hours after the tick to update a system. The dispatch follows once a reading shows a change. |
 | A BGS tick passes, and your journal has not read the system since | A request to fly in to the system for the morning report. The dispatch follows once you have. |
 | You hand in work that counts on the front | A short acknowledgement, at most once every 30 minutes. |
 | The faction wins its first day in a conflict, or a margin is back within its threshold | A short acknowledgement. |
 | The front resolves | The outcome, then the next front proposed. |
-| A BGS tick passes, and d47 has the faction's report | The conflicts briefing: every war, civil war and election the faction is in, active or pending, once per tick, as soon as d47 has the report. Each states its type, system, status and opponent (or that the opponent is not yet known), with days won where you have read the system and the faction's stake where it has one. Nothing is said without conflicts. |
+| A BGS tick passes, and d47 has the faction's report | The conflicts briefing: every war, civil war and election the faction is in, active or pending, once per tick, as soon as d47 has the report. Each states its type, system, status and opponent (or that the opponent is not yet known), with days won where you have read the system (as they stood before the tick for a system you have not read since it changed) and the faction's stake where it has one. Nothing is said without conflicts. |
 
 The dispatch keeps your work and the movement as two separate facts. It never says how much of the change
 your work caused, because the BGS does not report that. In a conflict influence is frozen, so the Liaison
-speaks of days won and never of influence. Each tick has one dispatch, kept across restarts.
+speaks of days won and never of influence. Each tick has one dispatch, kept across restarts. It is given from the first reading of the front's system that has changed since the tick, and a tick whose system never changes has none.
 
 The Liaison's part follows the front: a field officer in a war, a campaign manager in an election, a relief
 coordinator in a bad state, and a liaison officer otherwise. Its manner follows the faction's government. It
@@ -353,7 +354,7 @@ Nemesis and its leader are kept in `data/campaigns.json` until you name another 
 | When | What the Nemesis says |
 |---|---|
 | It first leads a front against the faction | The introduction: the leader, the front and why it is a front. |
-| It wins a day in a conflict you have visited | A broadcast with the days won. |
+| It wins a day in a conflict you have visited | A broadcast with the days won, when your reading first shows it, which can be hours after the tick. A reading unchanged since the tick shows no new day, so it can delay the broadcast but not set off a false one. |
 | It moves ahead of the faction in a system where it leads a front | A broadcast with its lead in points. |
 | The faction wins a conflict against it for the first time in that system | A concession. |
 | The faction wins a conflict against it in a system they have contested before | A vow of revenge. |

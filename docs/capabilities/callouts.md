@@ -647,7 +647,7 @@ conflicts with Elite row.
 #### BGS callouts: the Liaison {#bgs-callouts}
 
 The campaign faction's Liaison, on comms, about the front you work: a briefing when you choose it, a request to fly
-in for the morning report or the dispatch after each BGS tick, an acknowledgement when you hand in work that counts
+in for the morning report, a line saying the system has not changed since the tick, or the dispatch after each BGS tick, an acknowledgement when you hand in work that counts
 there (at most once every 30 minutes), when the faction wins its first day in a conflict and when a margin is back
 within its threshold, and the outcome when the front resolves, with the next front proposed.
 
@@ -659,7 +659,7 @@ D47 decides every fact and the model words them; with no model, or when the mode
 are said as written. The dispatch never says how much of a change your work caused, and in a conflict it gives days
 won, never influence. The Liaison speaks under a stock core, since it is not your core, and waits while you are in a
 fight, in supercruise or a jump, or in an Operation. What is already true when d47 starts is not said, except
-what the last tick owes: the request to fly in, or the dispatch. Three rows switch it by topic: War callouts, Election callouts and
+what the last tick owes: the request to fly in, the line saying the system is unchanged, or the dispatch. Three rows switch it by topic: War callouts, Election callouts and
 Other BGS callouts. A line about a war or civil war front is a war line, one about an election front is an election line,
 and the rest are other; the conflicts briefing names only the conflicts whose topic is on, and is not said when none is.
 The [Liaison voice](speech.md#liaison-voice) row picks its voice. Nothing is said while the campaign is off. See [The Liaison](campaign.md#the-liaison).
@@ -673,6 +673,8 @@ and a concession, or a vow of revenge in a system contested before, when the fac
 ```text
 Lave Purple Gang has won a day in the war in Lave. Days won stand at 2 for Lave Purple Gang and 1 for Kestrel Reach Compact.
 ```
+
+A day won is broadcast when your reading first shows it, which can be hours after the tick.
 
 D47 decides every fact and the model writes the leader's words, free to invent a motive or a grudge but no number,
 state, outcome or place. A lead or a day won that the Nemesis already held when d47 started is not broadcast. The same three rows switch it, and the Informant's leaks, the Ideology arc, the council, the Crisis arc and the reveals

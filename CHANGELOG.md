@@ -16,6 +16,8 @@ Fixed: On Commander › Campaign, the chosen front's days won and a front's data
 
 Fixed: On Search › Faction, a system whose own reading by you is the same as your last one before the BGS tick says `unchanged since the tick` under Systems (Updated) and Conflicts (under the days won), rather than a reading that may predate the system's update.
 
+Fixed: After a BGS tick the Liaison gives the dispatch only from a reading of the front's system that has changed since the tick. A reading identical to your last one before the tick gets a line saying so, and that Elite can take hours to update a system; the dispatch follows when a reading shows a change. The conflicts briefing says days won "stood" at their score "before the tick" for a system with no changed reading since.
+
 Added: Commander › Campaign has a CAMPAIGN ON checkbox beside CHANGE FACTION that turns the campaign off and on. While it is off the page says so, keeps the faction, and draws no front, sections or search field.
 
 Added: Say "turn off the campaign" to stop the whole campaign: D47 fetches no faction report, proposes no front, shows no campaign line on the NEXT strip, and the Liaison, the arcs, the Chronicler and the campaign warnings say nothing. Turning it off drops the chosen front without adding it to the chronicle. Say "turn on the campaign" to start it again from the faction, intents and chronicle it kept.

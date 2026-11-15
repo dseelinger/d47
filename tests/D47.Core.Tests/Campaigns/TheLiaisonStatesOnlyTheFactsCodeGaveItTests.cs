@@ -47,6 +47,7 @@ public sealed class TheLiaisonStatesOnlyTheFactsCodeGaveItTests
         yield return CampaignLiaison.Briefing(retreat, Action(retreat), Us, "Cooperative");
         yield return CampaignLiaison.Dispatch(retreat, Us, WorkInLave(), SystemStandings.Empty, Tick, Now.AddHours(2), "Cooperative");
         yield return CampaignLiaison.MorningReport(retreat, Us, "Cooperative");
+        yield return CampaignLiaison.Unchanged(retreat, Us, Standings(Jump("Lave", Now.AddHours(1), Faction(Us, 0.3))), Now.AddHours(2), "Cooperative")!;
         yield return CampaignLiaison.HandIn(retreat, [new BgsEntry(Now, 1, Us, BgsWorkKind.Mission, 2)], Us, "Cooperative");
         yield return CampaignLiaison.FirstDayWon(war, Us, "Cooperative");
         yield return CampaignLiaison.MarginRestored(retreat, Us, "Cooperative");
@@ -171,6 +172,35 @@ public sealed class TheLiaisonStatesOnlyTheFactsCodeGaveItTests
         Assert.Equal(
             ["The BGS tick has passed, and there is no reading of Lave newer than it.", "Fly in to Lave for the morning report."],
             line.Facts);
+    }
+
+    [Fact]
+    public void AnUnchangedLineSaysTheReadingIsTheSameAndTheDispatchFollowsAChange()
+    {
+        var retreat = Retreat();
+        var standings = Standings(Jump("Lave", Now.AddHours(1), Faction(Us, 0.3)));
+        var line = CampaignLiaison.Unchanged(retreat, Us, standings, Now.AddHours(3), null)!;
+
+        Assert.Equal(
+            [
+                "Your newest reading of Lave, from 2 hours ago, is the same as your last one before the tick.",
+                "Elite can take hours after the tick to update a system; the dispatch follows when a reading of Lave shows a change.",
+            ],
+            line.Facts);
+        Assert.Null(CampaignLiaison.Unchanged(retreat, Us, SystemStandings.Empty, Now, null));
+    }
+
+    [Fact]
+    public void AConflictStoodBeforeTheTickUntilAChangedReadingStandsAfterIt()
+    {
+        var conflict = new FactionConflict("Lave", "War", true, OpponentKind.Named, "Lave Purple Gang", [], true, 2, 1, string.Empty, string.Empty);
+
+        string Said(SinceTick since) => CampaignLiaison.Conflicts([conflict], Us, null, _ => since).Text;
+
+        Assert.Contains("Days won stood at 2 to 1 before the tick.", Said(SinceTick.Unchanged), StringComparison.Ordinal);
+        Assert.Contains("Days won stood at 2 to 1 before the tick.", Said(SinceTick.NoReading), StringComparison.Ordinal);
+        Assert.Contains("Days won stand at 2 to 1.", Said(SinceTick.Changed), StringComparison.Ordinal);
+        Assert.Contains("Days won stand at 2 to 1.", CampaignLiaison.Conflicts([conflict], Us, null).Text, StringComparison.Ordinal);
     }
 
     [Fact]

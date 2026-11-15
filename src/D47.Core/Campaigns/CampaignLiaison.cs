@@ -15,6 +15,7 @@ public enum LiaisonBeat
     Briefing,
     Dispatch,
     MorningReport,
+    Unchanged,
     HandIn,
     FirstDayWon,
     MarginRestored,
@@ -172,6 +173,28 @@ public static partial class CampaignLiaison
             [$"The BGS tick has passed, and there is no reading of {front.System} newer than it.", $"Fly in to {front.System} for the morning report."]);
     }
 
+    /// <summary>The line after a tick that the newest reading of the front's system is the same as the last one before it; null with no reading.</summary>
+    public static CampaignLiaisonLine? Unchanged(Front front, string faction, SystemStandings standings, DateTimeOffset now, string? government)
+    {
+        ArgumentNullException.ThrowIfNull(front);
+        ArgumentNullException.ThrowIfNull(standings);
+
+        if (standings.Latest(front.System) is not { } reading)
+        {
+            return null;
+        }
+
+        return Line(
+            LiaisonBeat.Unchanged,
+            front,
+            faction,
+            government,
+            [
+                $"Your newest reading of {front.System}, from {Age(now - reading.SeenAt)} ago, is the same as your last one before the tick.",
+                $"Elite can take hours after the tick to update a system; the dispatch follows when a reading of {front.System} shows a change.",
+            ]);
+    }
+
     /// <summary>The acknowledgement of work handed in for the faction on the front.</summary>
     public static CampaignLiaisonLine HandIn(Front front, IReadOnlyList<BgsEntry> handedIn, string faction, string? government)
     {
@@ -248,7 +271,8 @@ public static partial class CampaignLiaison
     /// each. Each states its type, system, status and opponent, with days won when the Commander has read the system and
     /// the faction's stake when it has one.
     /// </summary>
-    public static CampaignLiaisonLine Conflicts(IReadOnlyList<FactionConflict> conflicts, string faction, string? government)
+    public static CampaignLiaisonLine Conflicts(
+        IReadOnlyList<FactionConflict> conflicts, string faction, string? government, Func<string, SinceTick>? sinceTick = null)
     {
         ArgumentNullException.ThrowIfNull(conflicts);
 
@@ -262,14 +286,14 @@ public static partial class CampaignLiaison
             faction,
             "liaison officer",
             MannerFor(government),
-            [.. ordered.Select(conflict => ConflictFact(conflict, faction))],
+            [.. ordered.Select(conflict => ConflictFact(conflict, faction, sinceTick))],
             Conflict: true)
         {
             Systems = [.. ordered.Select(conflict => conflict.System).Distinct(StringComparer.OrdinalIgnoreCase)],
         };
     }
 
-    private static string ConflictFact(FactionConflict conflict, string faction)
+    private static string ConflictFact(FactionConflict conflict, string faction, Func<string, SinceTick>? sinceTick)
     {
         var type = conflict.Type.ToLowerInvariant();
         var status = conflict.Active ? "active" : "pending";
@@ -279,7 +303,9 @@ public static partial class CampaignLiaison
 
         if (conflict.Visited)
         {
-            fact += $" Days won stand at {conflict.OursWon} to {conflict.TheirsWon}.";
+            var stood = sinceTick?.Invoke(conflict.System) is SinceTick.NoReading or SinceTick.Unchanged;
+
+            fact += $" Days won {(stood ? "stood" : "stand")} at {conflict.OursWon} to {conflict.TheirsWon}{(stood ? " before the tick" : string.Empty)}.";
         }
 
         return conflict.OurStake.Length > 0 ? $"{fact} {faction}'s stake is {conflict.OurStake}." : fact;
@@ -391,6 +417,9 @@ public static partial class CampaignLiaison
             + "including what does not count.",
         LiaisonBeat.Dispatch => "The BGS tick has passed. Give the Commander the morning dispatch.",
         LiaisonBeat.MorningReport => "The BGS tick has passed and you have no fresh reading. Ask the Commander to fly in for the morning report.",
+        LiaisonBeat.Unchanged =>
+            "The BGS tick has passed and your newest reading of the system is the same as the one before it. Tell the Commander "
+            + "that, and that the dispatch follows once a reading shows a change.",
         LiaisonBeat.HandIn => "Acknowledge what the Commander has just handed in, briefly.",
         LiaisonBeat.FirstDayWon => "Acknowledge the first day won, briefly.",
         LiaisonBeat.MarginRestored => "Acknowledge that the margin is restored, briefly.",
