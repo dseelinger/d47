@@ -358,7 +358,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
     public bool Tick()
     {
         var state = _searches.GameState?.Invoke();
-        var key = (_view, state?.Standings, state?.Squadron.IsMember, _searches.SquadronFaction?.Invoke(), state?.Location.StarSystem, PageKit.Minute(_now()));
+        var key = (_view, state?.Standings, state?.Squadron.IsMember, _searches.SquadronFaction?.Invoke(), state?.Location.StarSystem, _searches.BgsTick?.Invoke(), PageKit.Minute(_now()));
 
         if (Equals(key, _seen))
         {
@@ -499,12 +499,16 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         Draw();
     }
 
+    private bool UnchangedSinceTick(string system) =>
+        _searches.BgsTick?.Invoke() is { } tick
+        && _searches.GameState?.Invoke()?.Standings.Since(system, tick) == SinceTick.Unchanged;
+
     private bool EmptyLike => _view is FactionView.Empty or FactionView.Picking;
 
     private void Draw()
     {
         var state = _searches.GameState?.Invoke();
-        _seen = (_view, state?.Standings, state?.Squadron.IsMember, _searches.SquadronFaction?.Invoke(), state?.Location.StarSystem, PageKit.Minute(_now()));
+        _seen = (_view, state?.Standings, state?.Squadron.IsMember, _searches.SquadronFaction?.Invoke(), state?.Location.StarSystem, _searches.BgsTick?.Invoke(), PageKit.Minute(_now()));
 
         var standings = state?.Standings ?? SystemStandings.Empty;
         _rows = _report is null ? [] : FactionRows.Of(_report, standings);
@@ -1077,9 +1081,18 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             },
         };
 
-        var days = conflict.Visited
+        Control days = conflict.Visited
             ? CreditsKit.Mono(conflict.DaysText, TypeScale.ControlLarge, ThemeManager.WhiteKey, right: true)
             : CreditsKit.Mono(FactionModel.Dash, TypeScale.ControlLarge, ThemeManager.GreyKey, right: true);
+
+        if (conflict.Visited && UnchangedSinceTick(conflict.System))
+        {
+            var note = RoutingKit.Ink(FactionModel.UnchangedSinceTick, TypeScale.Meta, ThemeManager.GreyKey, wrap: true);
+            note.MaxWidth = double.PositiveInfinity;
+            note.HorizontalAlignment = HorizontalAlignment.Right;
+            note.TextAlignment = TextAlignment.Right;
+            days = new StackPanel { HorizontalAlignment = HorizontalAlignment.Right, Children = { days, note } };
+        }
 
         Control stake = conflict.Visited
             ? new StackPanel
@@ -1277,7 +1290,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         CreditsKit.Place(grid, 3, States(row.Pending, ink));
         CreditsKit.Place(grid, 4, States(row.Recovering, ink));
         CreditsKit.Place(grid, 5, controls);
-        CreditsKit.Place(grid, 6, Updated(row, now, old));
+        CreditsKit.Place(grid, 6, Updated(row, now, old, row.OwnReading && UnchangedSinceTick(row.System)));
 
         var border = new Border { MinHeight = 50, Padding = new Thickness(12, 0), Child = grid };
         ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
@@ -1293,10 +1306,10 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         return block;
     }
 
-    private static StackPanel Updated(FactionRow row, DateTimeOffset now, bool old)
+    private static StackPanel Updated(FactionRow row, DateTimeOffset now, bool old, bool unchanged)
     {
         var key = row.OwnReading ? ThemeManager.CyanKey : old ? ThemeManager.WarnKey : ThemeManager.GreyKey;
-        var age = CreditsKit.Line(FactionModel.Age(row, now), Fonts.ProseFamily, TypeScale.Tip, key);
+        var age = CreditsKit.Line(FactionModel.Age(row, now, unchanged), Fonts.ProseFamily, TypeScale.Tip, key);
         age.HorizontalAlignment = HorizontalAlignment.Right;
         age.TextAlignment = TextAlignment.Right;
 

@@ -102,6 +102,14 @@ public static class FactionModel
         ? Dash
         : row.OwnReading ? "you saw it " + Ago(now - at) : Ago(now - at);
 
+    /// <summary>What a Commander's own reading says when it matches the last one before the BGS tick.</summary>
+    public const string UnchangedSinceTick = "unchanged since the tick";
+
+    /// <summary>The Updated cell, reading <see cref="UnchangedSinceTick"/> for the Commander's own reading when <paramref name="unchanged"/>.</summary>
+    public static string Age(FactionRow row, DateTimeOffset now, bool unchanged) => unchanged && row.OwnReading && row.Updated is not null
+        ? UnchangedSinceTick
+        : Age(row, now);
+
     /// <summary>"less than a minute ago", "5 minutes ago", "1 hour ago", "14 days ago".</summary>
     public static string Ago(TimeSpan age)
     {

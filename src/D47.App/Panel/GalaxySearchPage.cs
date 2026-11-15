@@ -50,6 +50,9 @@ public sealed record GalaxySearchSurface(
 
     /// <summary>The Commander's game state, for their own readings of a system and their squadron.</summary>
     public Func<D47.Core.Journal.CommanderGameState?>? GameState { get; init; }
+
+    /// <summary>The time of the last BGS tick, or null when none is known.</summary>
+    public Func<DateTimeOffset?>? BgsTick { get; init; }
 }
 
 /// <summary>What a search page draws where the answer goes.</summary>

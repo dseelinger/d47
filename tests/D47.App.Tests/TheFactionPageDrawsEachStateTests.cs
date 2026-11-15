@@ -94,10 +94,10 @@ public sealed class TheFactionPageDrawsEachStateTests
 
     private sealed record Shown(PanelView Panel, Window Window, FactionPage Page, Fetches Fetches);
 
-    private static Shown Open(bool headset, string? squadron, CommanderGameState? state = null, string root = FactionPage.RootKey) =>
-        OpenWith(headset, () => squadron, state, root);
+    private static Shown Open(bool headset, string? squadron, CommanderGameState? state = null, string root = FactionPage.RootKey, DateTimeOffset? tick = null) =>
+        OpenWith(headset, () => squadron, state, root, tick);
 
-    private static Shown OpenWith(bool headset, Func<string?> squadron, CommanderGameState? state = null, string root = FactionPage.RootKey)
+    private static Shown OpenWith(bool headset, Func<string?> squadron, CommanderGameState? state = null, string root = FactionPage.RootKey, DateTimeOffset? tick = null)
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
@@ -118,6 +118,7 @@ public sealed class TheFactionPageDrawsEachStateTests
                 Faction = fetches.Ask,
                 SquadronFaction = squadron,
                 GameState = () => state,
+                BgsTick = () => tick,
             },
         });
 
@@ -153,6 +154,72 @@ public sealed class TheFactionPageDrawsEachStateTests
         shown.Fetches.Asked[index].Answer.SetResult(report);
         Until(() => shown.Page.View == FactionView.Answered);
         await Task.CompletedTask;
+    }
+
+    private const string Ours = "Kestrel Reach Compact";
+
+    private static readonly DateTimeOffset Tick = Fetched.AddHours(-20);
+
+    private static string Jump(DateTimeOffset at, string system, double influence) =>
+        "{\"timestamp\":\"" + at.UtcDateTime.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture) + "\",\"event\":\"FSDJump\",\"StarSystem\":\"" + system + "\",\"SystemAddress\":1,"
+        + "\"Factions\":[{\"Name\":\"" + Ours + "\",\"Influence\":" + influence.ToString(CultureInfo.InvariantCulture)
+        + ",\"ActiveStates\":[{\"State\":\"War\"}]},{\"Name\":\"Rivals\",\"Influence\":0.2,\"ActiveStates\":[{\"State\":\"War\"}]}],"
+        + "\"Conflicts\":[{\"WarType\":\"war\",\"Status\":\"active\",\"Faction1\":{\"Name\":\"" + Ours + "\",\"Stake\":\"Hub\",\"WonDays\":1},"
+        + "\"Faction2\":{\"Name\":\"Rivals\",\"Stake\":\"Camp\",\"WonDays\":2}}]}";
+
+    private static CommanderGameState StateAfterTwoIdenticalReadings(string system) =>
+        JournalScript.Commander("F1", "Kestrel Vane", Jump(Fetched.AddHours(-30), system, 0.5), Jump(Fetched.AddMinutes(-10), system, 0.5));
+
+    [AvaloniaFact]
+    public async Task AnOwnReadingUnchangedSinceTheTickSaysSoInSystemsAndConflicts()
+    {
+        foreach (var headset in new[] { false, true })
+        {
+            var shown = Open(headset, Ours, StateAfterTwoIdenticalReadings("Hollin 001"), tick: Tick);
+            await Answer(shown, 0, Report(Ours, 8));
+
+            shown.Page.ShowSection(1);
+            Dispatcher.UIThread.RunJobs();
+            var systems = Texts(shown);
+            Assert.Contains(FactionModel.UnchangedSinceTick, systems);
+            Assert.Single(systems, text => text == FactionModel.UnchangedSinceTick);
+            Save(shown.Window, headset ? "faction-headset-systems-unchanged.png" : "faction-desktop-systems-unchanged.png");
+
+            shown.Page.ShowSection(2);
+            Dispatcher.UIThread.RunJobs();
+            var note = shown.Page.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == FactionModel.UnchangedSinceTick);
+            Assert.True(note.Bounds.Width <= (headset ? 84 : 120));
+            Assert.Contains("1 – 2", Texts(shown).Select(text => text.Replace("-", "–")));
+            Save(shown.Window, headset ? "faction-headset-conflicts-unchanged.png" : "faction-desktop-conflicts-unchanged.png");
+            shown.Window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task WithNoTickKnownAnOwnReadingDrawsAsItDid()
+    {
+        var shown = Open(false, Ours, StateAfterTwoIdenticalReadings("Hollin 001"));
+        await Answer(shown, 0, Report(Ours, 8));
+
+        shown.Page.ShowSection(1);
+        Dispatcher.UIThread.RunJobs();
+        Assert.DoesNotContain(FactionModel.UnchangedSinceTick, Texts(shown));
+        shown.Window.Close();
+    }
+
+    private static List<string> Texts(Shown shown) =>
+        [.. shown.Page.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
+
+    [AvaloniaFact]
+    public void TheUpdatedCellSaysUnchangedOnlyForTheCommandersOwnReading()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var own = new FactionRow("A", null, 0.3, [], [], [], false, now.AddHours(-2), true);
+        var reported = own with { OwnReading = false };
+
+        Assert.Equal("you saw it 2 hours ago", FactionModel.Age(own, now, false));
+        Assert.Equal(FactionModel.UnchangedSinceTick, FactionModel.Age(own, now, true));
+        Assert.Equal("2 hours ago", FactionModel.Age(reported, now, true));
     }
 
     [AvaloniaFact]
