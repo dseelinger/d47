@@ -129,7 +129,9 @@ the systems with an intent set are listed.
 
 The page is **Commander › Campaign**, on the desktop window and on the headset's big panel. At the
 top are the campaign faction, how many systems it is in and how many it controls, when the fronts were
-computed, and a **CHANGE FACTION** tile.
+computed, a **CAMPAIGN ON** checkbox and a **CHANGE FACTION** tile.
+
+Untick **CAMPAIGN ON** to turn the campaign off, as "turn off the campaign" does; tick it to turn it on again. While it is off the page keeps the faction the campaign would resume with, shows a dash for its systems and **Not while off** for when the fronts were computed, and disables **CHANGE FACTION**. A **CAMPAIGN OFF** block says that D47 fetches no report, proposes no front and puts nothing on the NEXT strip, and that your faction, intents and chronicle are kept. The front, the Fronts, Systems and Chronicle sections and the search field are not drawn.
 
 **CHANGE FACTION** opens **Campaign faction**, a list with your squadron's faction first, then every
 faction your journal has seen and where. You can also type a name. **Use this** sets the faction exactly

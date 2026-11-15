@@ -14,6 +14,8 @@ Fixed: The warning "Something else is bound to ..." is no longer said when a HOT
 
 Fixed: On Search › Faction, a system whose own reading by you is the same as your last one before the BGS tick says `unchanged since the tick` under Systems (Updated) and Conflicts (under the days won), rather than a reading that may predate the system's update.
 
+Added: Commander › Campaign has a CAMPAIGN ON checkbox beside CHANGE FACTION that turns the campaign off and on. While it is off the page says so, keeps the faction, and draws no front, sections or search field.
+
 Added: Say "turn off the campaign" to stop the whole campaign: D47 fetches no faction report, proposes no front, shows no campaign line on the NEXT strip, and the Liaison, the arcs, the Chronicler and the campaign warnings say nothing. Turning it off drops the chosen front without adding it to the chronicle. Say "turn on the campaign" to start it again from the faction, intents and chronicle it kept.
 
 Added: The Fronts and Systems tables on Commander › Campaign have a Distance column: how many light years each system is from the one you are in, or a dash when either position is not known. It sorts nearest first from its header, and farthest first on a second press.

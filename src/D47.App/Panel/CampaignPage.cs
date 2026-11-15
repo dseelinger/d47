@@ -66,6 +66,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     public const string DropFrontName = "CampaignDropFront";
     public const string ChosenName = "CampaignChosen";
     public const string ProposedName = "CampaignProposed";
+    public const string SwitchName = "CampaignSwitch";
+    public const string OffName = "CampaignOff";
 
     /// <summary>The automation name of a row's Stepper.</summary>
     public static string StepperName(string system) => $"Intent {system}";
@@ -154,6 +156,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
     private object? _seenSnapshot;
     private string? _seenCampaignFaction;
+    private bool _seenOff;
     private ImmutableDictionary<string, SystemIntent>? _seenIntents;
     private SystemStandings? _seenStandings;
     private string? _seenSquadron;
@@ -258,7 +261,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         remove => _sectionWord.Changed -= value;
     }
 
-    public bool Filters => _reportShown || _campaign.Chronicle.Count > 0;
+    public bool Filters => !_campaign.Off && (_reportShown || _campaign.Chronicle.Count > 0);
 
     public string FilterPlaceholder => "Search system";
 
@@ -284,6 +287,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         if (!(Equals(Drawn(_snapshot), _seenSnapshot)
             && _campaign.Faction == _seenCampaignFaction
+            && _campaign.Off == _seenOff
             && ReferenceEquals(_campaign.Intents, _seenIntents)
             && ReferenceEquals(state?.Standings, _seenStandings)
             && _sources.SquadronFaction() == _seenSquadron
@@ -359,6 +363,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         _seenSnapshot = Drawn(_snapshot);
         _seenCampaignFaction = _campaign.Faction;
+        _seenOff = _campaign.Off;
         _seenIntents = _campaign.Intents;
         _seenStandings = state?.Standings;
         _seenSquadron = squadron;
@@ -373,11 +378,9 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         _reportShown = report is not null;
         _rows = report is null ? [] : CampaignSystemRows.Of(report, state?.Standings ?? SystemStandings.Empty, _campaign.Intents, _now, state?.Location.StarPos);
 
-        var summary = _faction is null
-            ? "Choose the faction your campaign works for."
-            : _headset
-                ? $"Your campaign for {_faction}."
-                : $"Your campaign for {_faction}: the front you chose, and what to do next.";
+        var off = _campaign.Off;
+        var shown = off ? CampaignModel.OffFaction(_campaign, squadron) : _faction;
+        var summary = CampaignModel.Summary(shown, off, _headset);
 
         if (summary != Summary)
         {
@@ -397,8 +400,12 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         _body.Children.Add(page);
         page.Children.Add(column);
 
-        column.Children.Add(_noticeSlot);
-        column.Children.Add(Frame(_faction, report is null ? null : _rows, report is null ? null : _snapshot, tick, _frontier));
+        if (!off)
+        {
+            column.Children.Add(_noticeSlot);
+        }
+
+        column.Children.Add(Frame(shown, off, report is null ? null : _rows, report is null ? null : _snapshot, tick, _frontier));
 
         if (_note.Text is { } message)
         {
@@ -411,9 +418,18 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         _frontSlot.Child = null;
         _sectionSlot.Child = null;
 
-        if (_faction is null)
+        if (off || _faction is null)
         {
-            column.Children.Add(Grey(CampaignModel.NoFactionText));
+            if (off)
+            {
+                column.Children.Add(OffBlock(shown));
+            }
+
+            if (CampaignModel.NoFactionLine(_faction, off) is { } none)
+            {
+                column.Children.Add(Grey(none));
+            }
+
             _sectionWord.Set(this, string.Empty);
             _seenFronts = FrontsKeyNow();
             return;
@@ -449,34 +465,102 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     private static object? Drawn(CampaignFrontsSnapshot? snapshot) =>
         snapshot is null ? null : (snapshot.FrontierId, snapshot.Faction, snapshot.Report, snapshot.ReportFetchedAt, snapshot.Failure);
 
-    private Control Frame(string? faction, IReadOnlyList<CampaignSystemRow>? rows, CampaignFrontsSnapshot? snapshot, DateTimeOffset? tick, string? frontier)
+    private Control Frame(string? faction, bool off, IReadOnlyList<CampaignSystemRow>? rows, CampaignFrontsSnapshot? snapshot, DateTimeOffset? tick, string? frontier)
     {
         var grid = new Grid { ColumnSpacing = Gaps.Tile, ColumnDefinitions = new ColumnDefinitions("*,*,*") };
         var failed = snapshot?.Failure is not null;
 
         Place(grid, 0, Datum("Campaign faction", Typeset.Chrome(faction ?? "None", TypeScale.Body, faction is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis)));
-        Place(grid, 1, Datum("Its systems", Typeset.Mono(rows is null ? CampaignModel.Dash : CampaignModel.SystemsText(rows), TypeScale.Small, ThemeManager.WhiteKey)));
-        _computed = Typeset.Mono(CampaignModel.ComputedText(snapshot, tick), TypeScale.Small, failed ? ThemeManager.WarnKey : ThemeManager.WhiteKey);
-        Place(grid, 2, Datum("Fronts computed", _computed));
+        Place(grid, 1, Datum("Its systems", Typeset.Mono(rows is null ? CampaignModel.Dash : CampaignModel.SystemsText(rows), TypeScale.Small, off ? ThemeManager.GreyKey : ThemeManager.WhiteKey)));
+
+        if (off)
+        {
+            _computed = null;
+            Place(grid, 2, Datum("Fronts computed", Typeset.Mono(CampaignModel.NotWhileOff, TypeScale.Small, ThemeManager.GreyKey)));
+        }
+        else
+        {
+            _computed = Typeset.Mono(CampaignModel.ComputedText(snapshot, tick), TypeScale.Small, failed ? ThemeManager.WarnKey : ThemeManager.WhiteKey);
+            Place(grid, 2, Datum("Fronts computed", _computed));
+        }
+
+        var power = LabeledCheckBox.Caps(CampaignModel.OffSwitchLabel);
+        power.Name = SwitchName;
+        power.IsChecked = !off;
+        power.MinHeight = TypeScale.MinimumTarget;
+        power.VerticalAlignment = VerticalAlignment.Stretch;
+        power.VerticalContentAlignment = VerticalAlignment.Center;
+        power.IsEnabled = frontier is { Length: > 0 };
+        power.Click += (_, _) => _ = Switch(power, off);
 
         var change = new Button
         {
             Name = ChangeName,
-            Content = faction is null ? "CHOOSE FACTION" : "CHANGE FACTION",
+            Content = CampaignModel.FactionTileLabel(faction, off),
             MinHeight = TypeScale.MinimumTarget,
             VerticalAlignment = VerticalAlignment.Stretch,
             VerticalContentAlignment = VerticalAlignment.Center,
             Padding = new Thickness(18, 0),
-            IsEnabled = frontier is { Length: > 0 } && _prompts is not null,
+            IsEnabled = !off && frontier is { Length: > 0 } && _prompts is not null,
         };
         change.Click += (_, _) => OpenPicker(faction);
 
-        var line = new Grid { ColumnSpacing = Gaps.Tile, ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        Grid.SetColumn(change, 1);
+        var line = new Grid { ColumnSpacing = Gaps.Tile, ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+        Grid.SetColumn(power, 1);
+        Grid.SetColumn(change, 2);
         line.Children.Add(grid);
+        line.Children.Add(power);
         line.Children.Add(change);
 
         return line;
+    }
+
+    /// <summary>The block under the top line while the campaign is off.</summary>
+    private Control OffBlock(string? faction)
+    {
+        if (_headset)
+        {
+            var compact = new StackPanel
+            {
+                Spacing = 6,
+                Children =
+                {
+                    Typeset.Chrome(CampaignModel.OffLabel, TypeScale.Meta, ThemeManager.GreyKey, weight: FontWeight.SemiBold, tracking: TypeScale.Meta * Fonts.ChromeTracking),
+                    Typeset.Prose(CampaignModel.OffBody, TypeScale.Description, ThemeManager.WhiteKey, wrap: true),
+                    Typeset.Prose(CampaignModel.OffCompact, TypeScale.Meta, ThemeManager.GreyKey, wrap: true),
+                },
+            };
+
+            var border = new Border { Name = OffName, Padding = new Thickness(14, 10), Child = compact };
+            ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+            return border;
+        }
+
+        var slab = Slab();
+        slab.Children.Add(Typeset.Prose(CampaignModel.OffText(faction), TypeScale.Body, ThemeManager.WhiteKey, wrap: true));
+        slab.Children.Add(Typeset.Prose(CampaignModel.OffKept, TypeScale.Description, ThemeManager.GreyKey, wrap: true));
+
+        var slabBorder = new Border { Padding = new Thickness(18, 16), Child = slab };
+        ThemeInk.Bind(slabBorder, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        return new StackPanel
+        {
+            Name = OffName,
+            Spacing = 12,
+            Children =
+            {
+                Typeset.Chrome(CampaignModel.OffLabel, TypeScale.Meta, ThemeManager.GreyKey, weight: FontWeight.SemiBold, tracking: TypeScale.Meta * Fonts.ChromeTracking),
+                slabBorder,
+                Typeset.Prose(CampaignModel.OffHint, TypeScale.Description, ThemeManager.GreyKey, wrap: true),
+            },
+        };
+    }
+
+    private async Task Switch(CheckBox box, bool wasOff)
+    {
+        await Call(CampaignCapability.SwitchTool, new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = wasOff ? "true" : "false" })).ConfigureAwait(true);
+        box.IsChecked = !_sources.Campaigns.For(_frontier).Off;
     }
 
     private static Border Datum(string label, TextBlock value)

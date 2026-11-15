@@ -16,6 +16,48 @@ public static class CampaignModel
 
     public const string NoFactionText = "No campaign faction yet. Choose one, or say 'our campaign faction is' and its name.";
 
+    public const string OffLabel = "CAMPAIGN OFF";
+
+    public const string OffSwitchLabel = "CAMPAIGN ON";
+
+    public const string NotWhileOff = "Not while off";
+
+    public const string OffBody =
+        "D47 fetches no faction report, proposes no front and puts nothing on the NEXT strip. "
+        + "The Liaison, the arcs and the campaign warnings are quiet.";
+
+    public const string OffKept =
+        "Your faction, the intent on each system and the chronicle are kept. Turn the campaign on and D47 picks up from them.";
+
+    public const string OffHint = "Tick CAMPAIGN ON, or say \"turn on the campaign\".";
+
+    /// <summary>The faction an off campaign would resume with: the one named, else the squadron's, else null.</summary>
+    public static string? OffFaction(Campaign campaign, string? squadronFaction) =>
+        campaign.Faction is { Length: > 0 } named ? named : squadronFaction is { Length: > 0 } squadron ? squadron : null;
+
+    /// <summary>The first sentence of the off block and the header summary.</summary>
+    public static string OffOpening(string? faction) =>
+        faction is null ? "Your campaign is off." : $"Your campaign for {faction} is off.";
+
+    /// <summary>The off block's first line on the desktop.</summary>
+    public static string OffText(string? faction) => OffOpening(faction) + " " + OffBody;
+
+    /// <summary>The off block's second and third lines joined, as the headset draws them.</summary>
+    public static string OffCompact => OffKept + " " + OffHint;
+
+    /// <summary>The header summary for the page.</summary>
+    public static string Summary(string? faction, bool off, bool headset) =>
+        off ? OffOpening(faction)
+        : faction is null ? "Choose the faction your campaign works for."
+        : headset ? $"Your campaign for {faction}."
+        : $"Your campaign for {faction}: the front you chose, and what to do next.";
+
+    /// <summary>The line under the top line when no faction is known; none while the campaign is off.</summary>
+    public static string? NoFactionLine(string? faction, bool off) => faction is null && !off ? NoFactionText : null;
+
+    /// <summary>The faction tile's label; CHOOSE FACTION only when the campaign is on and has no faction.</summary>
+    public static string FactionTileLabel(string? faction, bool off) => faction is null && !off ? "CHOOSE FACTION" : "CHANGE FACTION";
+
     public const string NoReportText = "No faction report yet. D47 fetches it after the next tick.";
 
     public const string NoSystemText = "No system of the campaign faction has that name.";
