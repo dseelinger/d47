@@ -136,6 +136,17 @@ public sealed class TheCompositionKeepsItsOrderTests
     }
 
     [Fact]
+    public void EliteIsLookedForBeforeThePrimingTick()
+    {
+        var prime = Stage("PrimeGameLoop");
+        var running = Invocations(prime, "GameRunning").FirstOrDefault();
+
+        Assert.True(running is not null, "PrimeGameLoop does not tell the game state whether Elite is running.");
+        Assert.True(running.SpanStart < PrimingTick(prime), "Elite's running state is set after the priming tick.");
+        Assert.Contains("IsRunning", running.ArgumentList.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TheHostIsBuiltAfterThePrimingTick()
     {
         PrimingTick(Stage("PrimeGameLoop"));

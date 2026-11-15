@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Starting D47 while Elite is closed no longer says the break reminder ("You have been flying 4 hours, Commander") for a session that ended without a shutdown, such as a crash, and the recap calls that session "Last session" instead of "Earlier this session". D47 now checks whether Elite is running before it reads the journal at startup.
+
 Fixed: The warning "Something else is bound to ..." is no longer said when a HOTAS switch press worked. A press is confirmed only by a Status.json written after it, and a reversal is said only when the state is still back four seconds after the press.
 
 Added: Say "turn off the campaign" to stop the whole campaign: D47 fetches no faction report, proposes no front, shows no campaign line on the NEXT strip, and the Liaison, the arcs, the Chronicler and the campaign warnings say nothing. Turning it off drops the chosen front without adding it to the chronicle. Say "turn on the campaign" to start it again from the faction, intents and chronicle it kept.

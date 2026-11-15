@@ -1895,6 +1895,13 @@ public sealed class AppHost : IDisposable
         // arrives.
         stores.AdventureBook.CatchUp(D47.Core.Adventures.AdventureBook.FilesToWalk(files, journalDirectory, stores.AdventureBook.EarliestAcceptance()));
 
+        // The only thing that presses a key in the game. Checked before the priming tick: the journal subscriber
+        // reads whether Elite runs on that tick and on the first live tick, before "ambience" checks again.
+        var eliteWindow = StartupTimer.Time(
+            "Elite window", () => new EliteWindow(loggerFactory.CreateLogger<EliteWindow>()));
+
+        gameState.GameRunning(eliteWindow.IsRunning);
+
         // Primed synchronously before anything reads game state, so a journal already on disk when d47 starts
         // is answered correctly, backlog and all — and so the panel's first status is not a race against the
         // first timer tick.
@@ -1913,6 +1920,7 @@ public sealed class AppHost : IDisposable
             Feed = journalTick,
             Tick = tick,
             Eddn = eddn,
+            EliteWindow = eliteWindow,
         };
     }
 
@@ -2108,9 +2116,7 @@ public sealed class AppHost : IDisposable
         var pushToTalkButton = new D47.Core.Hotas.BoundButton();
         var sources = new D47.Core.Hotas.PushToTalkSources();
 
-        // The only thing that presses a key in the game.
-        var eliteWindow = StartupTimer.Time(
-            "Elite window", () => new EliteWindow(loggerFactory.CreateLogger<EliteWindow>()));
+        var eliteWindow = loop.EliteWindow;
 
         // The input trace's stills and the pictures of the screen, from one capture. Nothing touches Direct3D
         // until the first still.
@@ -4653,6 +4659,8 @@ public sealed class AppHost : IDisposable
         public required TickLoop Tick { get; init; }
 
         public required D47.Knowledge.EddnUploader Eddn { get; init; }
+
+        public required EliteWindow EliteWindow { get; init; }
     }
 
     private sealed record ServiceParts
