@@ -232,6 +232,24 @@ public sealed record SystemStandings
                 : null;
     }
 
+    /// <summary>How a system's newest reading stands against a tick time.</summary>
+    public SinceTick Since(string system, DateTimeOffset tick)
+    {
+        ArgumentNullException.ThrowIfNull(system);
+
+        if (!Spans.TryGetValue(system, out var spans) || spans.Count == 0 || spans[^1].LastSeen < tick)
+        {
+            return SinceTick.NoReading;
+        }
+
+        if (spans[^1].FirstSeen < tick)
+        {
+            return SinceTick.Unchanged;
+        }
+
+        return spans.Any(span => span.FirstSeen < tick) ? SinceTick.Changed : SinceTick.NoEarlier;
+    }
+
     /// <summary>
     /// A faction's influence in each kept span of a system, oldest first, leaving out spans that lack the faction.
     /// Empty when the system has no spans.
