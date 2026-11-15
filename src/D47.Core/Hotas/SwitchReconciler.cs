@@ -564,7 +564,7 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
             }
 
             steps.AddRange(InputSequence.Tap(binding));
-            pressed.Add(new WatchedPart(action, state));
+            pressed.Add(new WatchedPart(action, state, tick.Now, flag));
         }
 
         // Item 5's watch starts here, with the states the presses were for and the mode they were made in. A press
@@ -1209,11 +1209,29 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         {
             _watching.Remove(mapping.Name);
 
-            // The press that never took, said out loud (#147).
+            // The press that never took, said out loud (#147). A press that arrived and is back against it now is
+            // a reversal.
             foreach (var part in watch.Parts)
             {
-                if (part.Arrived || part.Action.AlreadyIn(part.State, tick.Status) != false)
+                if (part.Action.AlreadyIn(part.State, tick.Status) != false)
                 {
+                    continue;
+                }
+
+                if (part.Arrived)
+                {
+                    if (part.Seen != false)
+                    {
+                        continue;
+                    }
+
+                    NoteReversal(
+                        mapping,
+                        part.Action.Label,
+                        $"Something else is bound to {part.Action.Label}: it went back on its own right after D47 set it. "
+                        + $"D47 still acts on every flip of {mapping.Name}.",
+                        $"{part.Action.Id} {part.State} (flags {tick.Status.Flags})",
+                        tick.Now - part.PressedAt);
                     continue;
                 }
 
@@ -1232,34 +1250,33 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         }
 
         var parts = watch.Parts.ToArray();
+        var fresh = tick.Status.ReadAt;
 
         for (var index = 0; index < parts.Length; index++)
         {
             var part = parts[index];
+
+            // A Status.json written before the press says nothing about it.
+            if (fresh is not { } readAt || readAt <= part.PressedAt)
+            {
+                continue;
+            }
+
             var there = part.Action.AlreadyIn(part.State, tick.Status);
 
-            if (there == true)
+            if (there != part.Seen)
             {
-                parts[index] = part with { Arrived = true };
-                continue;
+                logger.LogInformation(
+                    "Switch {Name}: {Action} {State} now reads {Flag} in Status.json read at {ReadAt}, flags {Flags}",
+                    mapping.Name,
+                    part.Action.Id,
+                    part.State,
+                    there?.ToString() ?? "unknown",
+                    readAt.ToString("O"),
+                    tick.Status.Flags);
             }
 
-            if (there != false || !part.Arrived)
-            {
-                continue;
-            }
-
-            _watching.Remove(mapping.Name);
-
-            NoteReversal(
-                mapping,
-                part.Action.Label,
-                $"Something else is bound to {part.Action.Label}: it went back on its own right after D47 set it. "
-                + $"D47 still acts on every flip of {mapping.Name}.",
-                $"{part.Action.Id} {part.State} (flags {tick.Status.Flags})",
-                tick.Now - (watch.Until - ContestWindow));
-
-            return;
+            parts[index] = part with { Seen = there, Arrived = part.Arrived || there == true };
         }
 
         _watching[mapping.Name] = watch with { Parts = parts };
@@ -1367,7 +1384,12 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         ControlContext Context,
         bool Arrived = false);
 
-    private readonly record struct WatchedPart(GameAction Action, DesiredState State, bool Arrived = false);
+    private readonly record struct WatchedPart(
+        GameAction Action,
+        DesiredState State,
+        DateTimeOffset PressedAt,
+        bool? Seen,
+        bool Arrived = false);
 
     private readonly record struct Watch(
         IReadOnlyList<WatchedPart> Parts,

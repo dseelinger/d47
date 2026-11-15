@@ -185,12 +185,13 @@ public class ASwitchFlickBetweenPollsIsSeenTests
         reconciler.Poll(Tick([9], [9]), switches);
         reconciler.Poll(Tick([9], [9], StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
         reconciler.Poll(Tick([9], [9], StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        reconciler.Poll(Tick([9], [9], StatusFlags.None, Start.AddSeconds(5)), switches);
         Assert.NotNull(Assert.Single(reconciler.States).Reversed);
 
-        reconciler.Poll(Tick([9], [], StatusFlags.None, Start.AddSeconds(1)), switches);
+        reconciler.Poll(Tick([9], [], StatusFlags.None, Start.AddSeconds(6)), switches);
         reconciler.Drain();
 
-        reconciler.Poll(Tick([9], [], StatusFlags.None, Start.AddSeconds(2)), switches);
+        reconciler.Poll(Tick([9], [], StatusFlags.None, Start.AddSeconds(7)), switches);
 
         Assert.NotEmpty(Assert.Single(reconciler.Drain()).Steps);
     }

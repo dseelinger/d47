@@ -28,8 +28,8 @@ public class SwitchReconcilerTests
         ],
     };
 
-    private static GameStatus Status(StatusFlags flags) =>
-        new() { Flags = flags | StatusFlags.InMainShip, ReadAt = Start };
+    private static GameStatus Status(StatusFlags flags, DateTimeOffset? at = null) =>
+        new() { Flags = flags | StatusFlags.InMainShip, ReadAt = at ?? Start };
 
     private static HotasReading Held(params int[] held)
     {
@@ -60,11 +60,12 @@ public class SwitchReconcilerTests
         HotasReading reading,
         StatusFlags flags,
         DateTimeOffset? at = null,
-        bool enabled = true) => new()
+        bool enabled = true,
+        DateTimeOffset? readAt = null) => new()
         {
             Now = at ?? Start,
             Readings = [reading],
-            Status = Status(flags),
+            Status = Status(flags, readAt ?? at),
             Binds = Binds(),
             Enabled = enabled,
         };
@@ -294,6 +295,7 @@ public class SwitchReconcilerTests
 
         // And then it goes back, with nothing having moved.
         reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddSeconds(5)), switches);
 
         var said = reconciler.Drain();
         var state = Assert.Single(reconciler.States);
@@ -308,6 +310,63 @@ public class SwitchReconcilerTests
     }
 
     [Fact]
+    public void ADeployAndRetractDecidedFromOneOldStatusAreNotBlamedOnAnythingElse()
+    {
+        var reconciler = New();
+        var switches = new[] { GearSwitch() };
+        var old = Start.AddSeconds(-5);
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start, readAt: old), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(100), readAt: old), switches);
+        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start.AddMilliseconds(1100), readAt: old), switches);
+
+        // The old Status.json is read again; then the deploy lands, then the retract.
+        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start.AddMilliseconds(1400), readAt: old), switches);
+        reconciler.Poll(Tick(Held(9), StatusFlags.LandingGearDown, Start.AddMilliseconds(1700)), switches);
+        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start.AddMilliseconds(2000)), switches);
+        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start.AddSeconds(6)), switches);
+
+        Assert.DoesNotContain(reconciler.Drain(), pending => pending.Say is not null);
+        Assert.Null(Assert.Single(reconciler.States).Reversed);
+    }
+
+    [Fact]
+    public void AFlagThatDropsAndComesBackInsideTheWindowIsNotReported()
+    {
+        var reconciler = New();
+        var switches = new[] { GearSwitch() };
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(1200)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddSeconds(5)), switches);
+
+        Assert.DoesNotContain(reconciler.Drain(), pending => pending.Say is not null);
+        Assert.Null(Assert.Single(reconciler.States).Reversed);
+    }
+
+    [Fact]
+    public void AReversalIsNotSaidBeforeTheWindowEnds()
+    {
+        var reconciler = New();
+        var switches = new[] { GearSwitch() };
+
+        reconciler.Poll(Tick(Held(9), StatusFlags.None), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
+        reconciler.Drain();
+        reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
+
+        Assert.Empty(reconciler.Drain());
+
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddSeconds(5)), switches);
+
+        Assert.Single(reconciler.Drain(), pending => pending.Say is not null);
+    }
+
+    [Fact]
     public void AFlipAfterAReversalPressesLikeAnyOther()
     {
         var reconciler = New();
@@ -317,6 +376,7 @@ public class SwitchReconcilerTests
         reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
         reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
         reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddSeconds(5)), switches);
         reconciler.Drain();
 
         reconciler.Poll(Tick(Held(9), StatusFlags.LandingGearDown, Start.AddSeconds(10)), switches);
@@ -338,9 +398,10 @@ public class SwitchReconcilerTests
         reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
         reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
         reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddSeconds(5)), switches);
         reconciler.Drain();
 
-        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start.AddMilliseconds(900)), switches);
+        reconciler.Poll(Tick(Held(9), StatusFlags.None, Start.AddSeconds(6)), switches);
 
         Assert.Empty(reconciler.Drain());
     }
@@ -355,6 +416,7 @@ public class SwitchReconcilerTests
         reconciler.Poll(Tick(Held(8), StatusFlags.None), switches);
         reconciler.Poll(Tick(Held(8), StatusFlags.LandingGearDown, Start.AddMilliseconds(300)), switches);
         reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddMilliseconds(600)), switches);
+        reconciler.Poll(Tick(Held(8), StatusFlags.None, Start.AddSeconds(5)), switches);
         Assert.Contains(reconciler.Drain(), pending => pending.Say is not null);
 
         reconciler.Poll(Tick(Held(9), StatusFlags.LandingGearDown, Start.AddSeconds(10)), switches);
@@ -393,7 +455,7 @@ public class SwitchReconcilerTests
         reconciler.Drain();
 
         reconciler.Poll(Tick(Held(10), StatusFlags.LandingGearDown, Start.AddMilliseconds(600)), switches);
-        reconciler.Poll(Tick(Held(10), StatusFlags.None, Start.AddMilliseconds(900)), switches);
+        reconciler.Poll(Tick(Held(10), StatusFlags.None, Start.AddSeconds(6)), switches);
 
         Assert.Empty(reconciler.Drain());
         Assert.Null(Assert.Single(reconciler.States).Reversed);

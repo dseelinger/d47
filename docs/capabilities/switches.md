@@ -547,9 +547,11 @@ button in Elite, or move the switch.
 A virtual device is the case that cannot be seen. If SimApp Pro or Joystick Gremlin is publishing a
 vJoy device, Elite's binds name *that* device and nothing connects it back to your physical switch.
 
-So the symptom is watched instead. When a state goes back on its own within four seconds of
-Directive 47 setting it, the switch's row on the HOTAS switches page notes it, and D47 says so the
-first time it happens to that switch. **The switch keeps acting on every flip.** D47 presses only
+So the symptom is watched instead. When a state goes back on its own after Directive 47 sets it and is
+still back four seconds after the press, the switch's row on the HOTAS switches page notes it, and D47
+says so the first time it happens to that switch. A `Status.json` written before the press does not
+count as the state arriving, and a state that goes back and returns within the four seconds is not
+reported. **The switch keeps acting on every flip.** D47 presses only
 on a flip, never because the game changed something by itself, so it does not fight anything; the
 next flip is decided from what `Status.json` reports.
 
