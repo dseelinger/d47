@@ -381,6 +381,26 @@ the rebuy and then falls short once more, or you change ship. Nothing is said wh
 on another Commander's ship or riding in a taxi. The line is never reworded, so the figures are
 always the ones Elite wrote.
 
+#### Fighter bay crew {#fighter-crew}
+
+When you dock at a station with a crew lounge, or at a fleet carrier that lists one, in a ship with a
+fighter bay, your core checks that a hired pilot is posted to that hull. It checks the same way after
+you swap into or buy a ship with a fighter bay while docked. It is said at most once per hull per
+docking, and not while you crew another Commander's ship. It is on by default.
+
+```text
+No pilot for this ship's fighter bay. The crew lounge here can hire one.
+No pilot in this ship's fighter bay. Make Ines Varga active in the crew lounge, or hire one here.
+No pilot in this ship's fighter bay. Make one of your 2 pilots active in the crew lounge, or hire one here.
+Make Ines Varga active in the crew lounge.
+```
+
+The first three are for a hull no pilot is posted to. At a fleet carrier the lines never offer hiring.
+The last is for a hull a pilot was posted to when you have swapped to another hull since. Elite
+sometimes keeps the pilot on duty when you come back and sometimes does not, and writes nothing
+either way, so the line is a plain reminder. Nothing is said while a pilot is posted to this hull and
+you have not swapped away since.
+
 #### Landing pad {#docking}
 
 When docking is granted at a Coriolis, Orbis, Ocellus, Bernal or asteroid base, your core says where the pad

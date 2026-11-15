@@ -174,6 +174,7 @@ public static class ShippedCallouts
             .Add(new FuelCallout(loggers.CreateLogger<FuelCallout>()))
             .Add(new FuelReachCallout(loggers.CreateLogger<FuelReachCallout>()))
             .Add(new RebuyCallout())
+            .Add(new FighterBayCrewCallout(loggers.CreateLogger<FighterBayCrewCallout>()))
             .Add(new RouteCallout(loggers.CreateLogger<RouteCallout>()) { Offer = sources.NeutronOffer })
             .Add(new LongJumpCallout())
             .Add(new ArrivalCallout())
@@ -525,6 +526,7 @@ public static class ShippedCallouts
         engine.SetEnabled("kills", callouts.Kills, now);
         engine.SetEnabled("met-before", callouts.MetBefore, now);
         engine.SetEnabled("rebuy", callouts.Rebuy, now);
+        engine.SetEnabled("fighter-crew", callouts.FighterCrew, now);
         engine.SetEnabled("rival-territory", callouts.RivalTerritory, now);
         engine.SetEnabled("community", callouts.Community, now);
         engine.SetEnabled("powerplay-merits", callouts.PowerplayMerits, now);

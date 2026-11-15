@@ -591,6 +591,9 @@ public sealed record CalloutSettings
     /// <summary>A balance that will not cover the rebuy on the ship being flown.</summary>
     public bool Rebuy { get; init; } = true;
 
+    /// <summary>A reminder at a crew lounge when the ship's fighter bay has no pilot posted to it.</summary>
+    public bool FighterCrew { get; init; } = true;
+
     public bool Route { get; init; } = true;
 
     public bool LongJump { get; init; } = true;

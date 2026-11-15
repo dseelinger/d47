@@ -17,6 +17,7 @@ public static class CalloutCapability
     public const string DangerKey = "callouts.danger";
     public const string FuelKey = "callouts.fuel";
     public const string RebuyKey = "callouts.rebuy";
+    public const string FighterCrewKey = "callouts.fighterCrew";
     public const string RouteKey = "callouts.routeProgress";
     public const string LongJumpKey = "callouts.longJumpRemark";
     public const string ArrivalKey = "callouts.arrival";
@@ -258,6 +259,21 @@ public static class CalloutCapability
                 "rebuy",
                 s => s.Callouts.Rebuy,
                 (s, v) => s with { Callouts = s.Callouts with { Rebuy = v } }),
+
+            Toggle(
+                FighterCrewKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Fighter bay crew (on by "
+                + "default). Dock at a station with a crew lounge in a ship that has a fighter bay and no pilot "
+                + "posted to it: D47 says so once. With the row off nothing is said. Say \"stop calling out fighter "
+                + "bay crew\": the row shows off and that is no longer said. Say \"start calling out fighter bay "
+                + "crew\" and the row shows on. The row is absent while Speak without being asked is off.",
+                "Fighter bay crew",
+                "Once per docking, at a crew lounge, when the ship's fighter bay has no pilot posted to it.",
+                "fighter-crew",
+                "fighter bay crew",
+                s => s.Callouts.FighterCrew,
+                (s, v) => s with { Callouts = s.Callouts with { FighterCrew = v } }),
 
             Toggle(
                 RouteKey,

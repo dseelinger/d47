@@ -93,9 +93,10 @@ public static class SettingsLayout
     /// the plans and reminders toggles (25 entries, the week rows Advanced); <c>exploring</c> holds the
     /// exploration and exobiology callout toggles (17 entries); <c>chatter</c> holds the scene chatter row
     /// beside NPC chatter as well as the seven messages rows, the accent and NPC humor rows, the carrier
-    /// captain and the fighter pilot (19 entries, the chatter rows Advanced).
+    /// captain and the fighter pilot (19 entries, the chatter rows Advanced); <c>in-flight</c> holds the flight
+    /// callout toggles (15 entries, all Advanced).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "callouts", "exploring", "chatter"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "callouts", "exploring", "chatter", "in-flight"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -270,6 +271,7 @@ public static class SettingsLayout
                                 E("callouts.danger"),
                                 E("callouts.fuel"),
                                 E("callouts.rebuy"),
+                                E("callouts.fighterCrew"),
                                 E("callouts.carrierFuel"),
                                 E("callouts.carrierUpkeep"),
                                 E("callouts.routeProgress"),

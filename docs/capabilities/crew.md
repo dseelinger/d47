@@ -184,7 +184,7 @@ characters: see [Characters](characters.md).
 
 The pilot in the fighter bay speaks, unprompted, when the fighter launches, docks, is destroyed or is
 rebuilt. The lines are fixed phrases, not model output, and state only what the journal event says.
-With no pilot assigned nothing is said. See [Fighter pilot](callouts.html#fighter).
+With no pilot assigned nothing is said. See [Fighter pilot](callouts.html#fighter). At a crew lounge, D47 also reminds you when a ship's fighter bay has no pilot: see [Fighter bay crew](callouts.html#fighter-crew).
 
 #### `describe_crew`
 
