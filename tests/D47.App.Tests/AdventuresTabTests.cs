@@ -233,7 +233,10 @@ public class AdventuresTabTests
 
         book.Observe(jump!, "F1");
 
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route"));
+        // Observing writes nothing, so the root redraws when it is shown again.
+        panel.Nav.SelectRoot(AdventuresPage.AskKey);
+        Dispatcher.UIThread.RunJobs();
+        panel.Nav.SelectRoot(AdventuresPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         var drawn = Drawn(panel);
@@ -242,7 +245,7 @@ public class AdventuresTabTests
         Assert.Contains(drawn, text => text.Contains("Objective 2 of 2"));
 
  // What to do next, headed "Next" and phrased as an instruction.
-        Assert.Contains(drawn, text => text.Contains("Next"));
+        Assert.Contains(drawn, text => text == "NEXT");
         Assert.Contains(drawn, text => text.Contains("Dock at Maren Anchorage in Dyson's Hollow."));
 
         Assert.DoesNotContain(drawn, text => text.Contains("To one name."));
@@ -319,7 +322,6 @@ public class AdventuresTabTests
     {
         var (panel, book, said) = Open(Story(null));
 
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route"));
         Dispatcher.UIThread.RunJobs();
 
         var begin = panel.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Begin"));
@@ -469,7 +471,6 @@ public class AdventuresTabTests
             At = Now,
         });
 
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route"));
         Dispatcher.UIThread.RunJobs();
 
         var drawn = Drawn(panel);

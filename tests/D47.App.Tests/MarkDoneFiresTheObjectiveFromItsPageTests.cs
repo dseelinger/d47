@@ -146,7 +146,6 @@ public sealed class MarkDoneFiresTheObjectiveFromItsPageTests
 
         vr.Nav.Select(PanelTab.Stories);
         vr.Nav.SelectRoot(AdventuresPage.RootKey);
-        vr.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + ChapterKey, "The First Light"));
         Dispatcher.UIThread.RunJobs();
         vr.Board.Render();
         Dispatcher.UIThread.RunJobs();

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: With one chapter under way and no draft, Stories › Your story is that chapter's page, below any endings waiting for your answer, instead of a list with one card. With two or more stories under way, or a draft, it stays a list, and a chapter opened from it takes the whole width.
+
 Fixed: Starting D47 while Elite is closed no longer says the break reminder ("You have been flying 4 hours, Commander") for a session that ended without a shutdown, such as a crash, and the recap calls that session "Last session" instead of "Earlier this session". D47 now checks whether Elite is running before it reads the journal at startup.
 
 Fixed: The warning "Something else is bound to ..." is no longer said when a HOTAS switch press worked. A press is confirmed only by a Status.json written after it, and a reversal is said only when the state is still back four seconds after the press.

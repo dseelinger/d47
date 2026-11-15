@@ -84,7 +84,7 @@ public sealed class StorySoFarIsOnBothStoryPagesTests
     {
         var (panel, window, asked) = Open(AdventuresTabTests.Story(Now.AddHours(-1), AdventureSource.Generated));
 
-        Go(panel, new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route"));
+        Dispatcher.UIThread.RunJobs();
         Assert.Single(Buttons(panel)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal(["the-lantern-route"], asked);

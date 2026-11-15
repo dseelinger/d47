@@ -149,7 +149,12 @@ internal static class NotForMeGroupFixture
     internal static void ReadChapter(Surface surface)
     {
         surface.Panel.Nav.SelectRoot(AdventuresPage.RootKey);
-        surface.Panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + ChapterKey, "The First Light"));
+
+        if (AdventuresPage.SoleChapter(surface.Stories!) != ChapterKey)
+        {
+            surface.Panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + ChapterKey, "The First Light") { Whole = true });
+        }
+
         Dispatcher.UIThread.RunJobs();
     }
 

@@ -95,7 +95,6 @@ public sealed class TheStoryPageShowsEachSpeakersPictureTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
         panel.Tab = PanelTab.Stories;
-        panel.Nav.GoTo(new NavCrumb(AdventuresPage.ReadPrefix + Key, "Yard Paint"));
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);

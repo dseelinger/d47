@@ -27,6 +27,16 @@ public sealed class StoriesAdventuresAndMessagesRowsOpenByKeyboardTests
     {
         var surface = Build(TriggerKind.Arrive);
 
+        // A second chapter under way keeps Your story a list of cards.
+        Assert.Null(surface.Book.Write("F1", new Adventure
+        {
+            Key = "the-other-light",
+            Name = "The Other Light",
+            Source = AdventureSource.Generated,
+            Beats = [new AdventureBeat { Title = "The Echo", Trigger = new AdventureTrigger { Kind = TriggerKind.Arrive, SystemAddress = 1, System = "Ossen's Lantern" }, Line = "Listen." }],
+            AcceptedAt = Now.AddHours(-1),
+        }));
+
         if (messages is not null)
         {
             surface = surface with { Messages = messages };

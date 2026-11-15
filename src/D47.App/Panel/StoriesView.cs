@@ -1146,7 +1146,11 @@ public sealed class StoriesView : UserControl, IPageSummary
             && _surface.Book.Store.Find(commander, key) is { } chapter)
         {
             _nav.SelectRoot(PanelTab.Stories, AdventuresPage.RootKey);
-            _nav.GoTo(PanelTab.Stories, new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name));
+
+            if (AdventuresPage.SoleChapter(_surface) != key)
+            {
+                _nav.GoTo(PanelTab.Stories, new NavCrumb(AdventuresPage.ReadPrefix + key, chapter.Name) { Whole = true });
+            }
         }
     }
 

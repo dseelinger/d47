@@ -88,6 +88,9 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
 
         Assert.Null(book.Write("F1", Story("Shinrarta Dezhra")));
 
+        // A second chapter under way keeps Your story a list of cards.
+        Assert.Null(book.Write("F1", Story("Shinrarta Dezhra") with { Key = "the-other-route", Name = "The Other Route", Beats = [new AdventureBeat { Title = "The Echo", Trigger = new AdventureTrigger { Kind = TriggerKind.Board, ShipType = "cobramkiii" }, Line = "Listen." }], Told = [] }));
+
         var state = State();
 
         var generator = new AdventureGenerator(
@@ -148,12 +151,12 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
     {
         var surface = Open();
 
-        surface.Panel.Nav.Drill(new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route"));
+        surface.Panel.Nav.Drill(new NavCrumb(AdventuresPage.ReadPrefix + "the-lantern-route", "The Lantern Route") { Whole = true });
         Dispatcher.UIThread.RunJobs();
 
         var glyphs = Glyphs(surface.Panel);
 
-        Assert.Equal([Far, Far, Far], glyphs.Select(glyph => CopyGlyph.GetCopies(glyph)));
+        Assert.Equal([Far, Far], glyphs.Select(glyph => CopyGlyph.GetCopies(glyph)));
 
         Click(glyphs[0]);
 

@@ -226,6 +226,15 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
 
         var standings = _surface.Book.Standings(_surface.Commander());
+
+        if (SoleChapter(_surface, standings) is { } sole)
+        {
+            var page = new StackPanel { Spacing = 8 };
+            FillReading(page, sole);
+            _list.Children.Add(page);
+            return;
+        }
+
         var storyCard = WritingStoryCard(standings);
 
         if (storyCard is not null)
@@ -260,15 +269,34 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
     }
 
-    /// <summary>A card for the Commander's stock story while its next chapter is being written or its write failed and no chapter of it is live.</summary>
-    private Control? WritingStoryCard(IReadOnlyList<AdventureStanding> standings)
+    /// <summary>The key of the one chapter under way when it is all Your story would list: no draft, no writing card, no other chapter.</summary>
+    internal static string? SoleChapter(AdventureSurface surface) =>
+        SoleChapter(surface, surface.Book.Standings(surface.Commander()));
+
+    private static string? SoleChapter(AdventureSurface surface, IReadOnlyList<AdventureStanding> standings)
     {
-        if (_surface.Stories is not { } director)
+        if (WritingStory(surface, standings) is not null || standings.Any(standing => standing.Adventure.IsDraft))
         {
             return null;
         }
 
-        var commander = _surface.Commander();
+        var cards = standings
+            .Where(standing => standing.Adventure.IsActive && !standing.IsDone && !standing.IsFailed)
+            .Concat(standings.Where(standing => !standing.Adventure.IsBegun))
+            .ToList();
+
+        return cards.Count == 1 ? cards[0].Adventure.Key : null;
+    }
+
+    /// <summary>The Commander's stock story while its next chapter is being written or its write failed and no chapter of it is live.</summary>
+    private static (Story Story, bool Writing)? WritingStory(AdventureSurface surface, IReadOnlyList<AdventureStanding> standings)
+    {
+        if (surface.Stories is not { } director)
+        {
+            return null;
+        }
+
+        var commander = surface.Commander();
         var writing = director.IsWriting(commander);
 
         if (director.Stories.Current(commander) is not { } story || !(writing || director.WriteFailed(commander)))
@@ -283,6 +311,19 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         {
             return null;
         }
+
+        return (story, writing);
+    }
+
+    /// <summary>A card for the Commander's stock story while its next chapter is being written or its write failed and no chapter of it is live.</summary>
+    private Control? WritingStoryCard(IReadOnlyList<AdventureStanding> standings)
+    {
+        if (WritingStory(_surface, standings) is not var (story, writing) || _surface.Stories is not { } director)
+        {
+            return null;
+        }
+
+        var commander = _surface.Commander();
 
         var card = Row();
         var body = (StackPanel)card.Child!;
@@ -303,7 +344,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
 
         card.Margin = new Thickness(0, 0, 0, 10);
-        ListRow.Opens(card, () => _nav.Drill(new NavCrumb(StoriesView.ReadPrefix + story.Id, story.Title) { Level = StoriesView.ReadPrefix }));
+        ListRow.Opens(card, () => _nav.Drill(new NavCrumb(StoriesView.ReadPrefix + story.Id, story.Title) { Level = StoriesView.ReadPrefix, Whole = true }));
         return card;
     }
 
@@ -338,7 +379,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
             body.Children.Add(new AdventureThinking());
         }
 
-        ListRow.Opens(card, () => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name)));
+        ListRow.Opens(card, () => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name) { Whole = true }));
         return card;
     }
 
@@ -395,7 +436,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         buttons.Children.Add(decline);
 
         var read = new Button { Content = "Read it" };
-        read.Click += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name));
+        read.Click += (_, _) => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name) { Whole = true });
         buttons.Children.Add(read);
 
         body.Children.Add(buttons);
@@ -404,57 +445,59 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
     // ---- the reading level -------------------------------------------------------------------
 
+    private void FillReading(StackPanel page, string key)
+    {
+        page.Children.Clear();
+
+        if (_surface.Book.Standing(_surface.Commander(), key) is not { } standing)
+        {
+            page.Children.Add(Muted("That story is no longer on file."));
+            return;
+        }
+
+        var adventure = standing.Adventure;
+
+        page.Children.Add(RoutingKit.Title(adventure.Name).Row);
+
+        var where = standing.Step() is { } step
+            ? $"{By(adventure)} — {standing.Place()} · {step}"
+            : $"{By(adventure)} — {standing.Place()}";
+
+        page.Children.Add(Muted(where));
+
+        if (FollowsLine(adventure) is { } follows)
+        {
+            page.Children.Add(Muted(follows));
+        }
+
+        if (ShowsSpine(adventure) && adventure.Spine is { } spine && !string.IsNullOrWhiteSpace(spine.Premise))
+        {
+            page.Children.Add(Text(spine.Premise, TypeScale.Body));
+        }
+
+        Told(page, standing, Here(), speaker => _entries.SpeakerName(adventure.StoryId, speaker), Copy());
+
+        // The wait, drawn (asked for 2026-08-22).
+        if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
+        {
+            page.Children.Add(new AdventureThinking());
+        }
+
+        AddObjective(page, standing);
+
+        if (standing.IsDone && adventure.Beats.Count > 0)
+        {
+            page.Children.Add(Muted(EndLine(_surface, adventure)));
+        }
+
+        page.Children.Add(ReadingBar(standing));
+    }
+
     private Control BuildReading(string key)
     {
         var page = new StackPanel { Spacing = 8, Margin = new Thickness(14) };
 
-        void Fill()
-        {
-            page.Children.Clear();
-
-            if (_surface.Book.Standing(_surface.Commander(), key) is not { } standing)
-            {
-                page.Children.Add(Muted("That story is no longer on file."));
-                return;
-            }
-
-            var adventure = standing.Adventure;
-
-            page.Children.Add(RoutingKit.Title(adventure.Name).Row);
-
-            var where = standing.Step() is { } step
-                ? $"{By(adventure)} — {standing.Place()} · {step}"
-                : $"{By(adventure)} — {standing.Place()}";
-
-            page.Children.Add(Muted(where));
-
-            if (FollowsLine(adventure) is { } follows)
-            {
-                page.Children.Add(Muted(follows));
-            }
-
-            if (ShowsSpine(adventure) && adventure.Spine is { } spine && !string.IsNullOrWhiteSpace(spine.Premise))
-            {
-                page.Children.Add(Text(spine.Premise, TypeScale.Body));
-            }
-
-            Told(page, standing, Here(), speaker => _entries.SpeakerName(adventure.StoryId, speaker), Copy());
-
-            // The wait, drawn (asked for 2026-08-22).
-            if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
-            {
-                page.Children.Add(new AdventureThinking());
-            }
-
-            AddObjective(page, standing);
-
-            if (standing.IsDone && adventure.Beats.Count > 0)
-            {
-                page.Children.Add(Muted(EndLine(_surface, adventure)));
-            }
-
-            page.Children.Add(ReadingBar(standing));
-        }
+        void Fill() => FillReading(page, key);
 
         Fill();
 
@@ -1287,7 +1330,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         // Below the root only: the root is the tab's own and GoTo keeps it. The Stories tab rather than the one
         // showing, which the Commander may have changed while the story was written.
         _nav.SelectRoot(PanelTab.Stories, RootKey);
-        _nav.GoTo(PanelTab.Stories, new NavCrumb(ReadPrefix + key, offer.Name ?? key));
+        _nav.GoTo(PanelTab.Stories, new NavCrumb(ReadPrefix + key, offer.Name ?? key) { Whole = true });
     }
 
     private string UniqueKey(string wanted, string? keep)

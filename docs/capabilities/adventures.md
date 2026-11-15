@@ -414,7 +414,9 @@ Reject the Commander's draft short story and remove it, as the Decline button do
 
 Every objective said is also kept as a written message, from whoever said it, so a line said during a fight
 is not lost. A stock story's lines are listed on that run's page on the **Story bench**, below. **Your story**,
-the first sub-tab of the Stories tab, lists the endings waiting for your answer, and nothing else from the messages.
+the first sub-tab of the Stories tab, shows the endings waiting for your answer and nothing else from the messages. With one
+chapter under way, Your story is that chapter's page, below any endings waiting for your answer; otherwise it lists the stories
+under way and the drafts, and a chapter opened from the list takes the whole width.
 
 **Waiting for your answer** shows each story ending still waiting for your choice, with its
 answers, **Play** and **Change voice**. A message that was spoken has a
