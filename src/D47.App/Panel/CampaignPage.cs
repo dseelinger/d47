@@ -651,6 +651,11 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
                 : null;
     }
 
+    private SinceTick SinceTickOf(Front front) =>
+        front.OwnReading && _sources.Tick() is { } tick && _sources.State()?.Standings.Since(front.System, tick) is { } since
+            ? since
+            : SinceTick.NoReading;
+
     private Control ChosenBlock(ChosenFront chosen, IReadOnlyList<Front>? fronts)
     {
         var front = fronts?.FirstOrDefault(candidate =>
@@ -684,7 +689,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         }
         else
         {
-            slab.Children.Add(FrontLine(CampaignFronts.Describe(front.Kind), front.System, CampaignModel.DaysWonText(front), CampaignModel.DaysWonText(front) is null ? null : CampaignModel.DaysWonNote(front, _now)));
+            slab.Children.Add(FrontLine(CampaignFronts.Describe(front.Kind), front.System, CampaignModel.DaysWonText(front), CampaignModel.DaysWonText(front) is null ? null : CampaignModel.DaysWonNote(front, _now, SinceTickOf(front))));
             slab.Children.Add(Typeset.Prose(front.Reason, TypeScale.Body, ThemeManager.WhiteKey, wrap: true));
 
             if (_action is { } action)
@@ -1087,7 +1092,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         var age = new StackPanel { Spacing = 2, HorizontalAlignment = HorizontalAlignment.Right };
         age.Children.Add(Typeset.Prose(
-            CampaignModel.AgeText(front, _now),
+            CampaignModel.AgeText(front, _now, SinceTickOf(front)),
             TypeScale.Meta,
             old ? ThemeManager.WarnKey : front.OwnReading ? ThemeManager.CyanKey : ThemeManager.GreyKey,
             horizontal: HorizontalAlignment.Right,

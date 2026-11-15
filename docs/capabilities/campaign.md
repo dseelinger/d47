@@ -169,7 +169,8 @@ Above the sections the page shows the front you are working. With one chosen, **
 its kind, its system with a copy glyph, how many BGS ticks it has spanned, the sentence that says why
 it is a front, and **NEXT**: the one thing to do, with at most one grey line saying what does not
 count there. In a conflict you have visited it also gives the days won, in cyan with when you saw
-them. **NEXT FRONT** and **DROP THE FRONT** sit under it, with the phrases that do the same.
+them, or `unchanged since the tick` while your newest reading of the system is the same as your
+last one before the tick; Elite can take hours after the tick to update a system. **NEXT FRONT** and **DROP THE FRONT** sit under it, with the phrases that do the same.
 
 With no front chosen, **Proposed front** shows the one D47 proposes in the same place, with **TAKE IT**
 and **NEXT FRONT**. With neither, the block is left out. Each tile calls the protected tool its
@@ -184,7 +185,7 @@ Under that, **Fronts**, **Systems** and **Chronicle** are one row of three, with
 the desktop and none in the headset.
 
 **Fronts** lists the fronts in rank order, each with its kind, system, how far the system is from you,
-the reason, and how old its data is, "you saw it" for your own reading. A report more than 30 days
+the reason, and how old its data is, "you saw it" or "unchanged since the tick" for your own reading. A report more than 30 days
 old is marked OLD REPORT. Each row ends in **TAKE**, which chooses that front as "take the coup
 threat in Lave" does, or **CHOSEN** on the front you are working. The rows come from code:
 

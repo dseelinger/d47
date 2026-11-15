@@ -12,6 +12,8 @@ Fixed: Starting D47 while Elite is closed no longer says the break reminder ("Yo
 
 Fixed: The warning "Something else is bound to ..." is no longer said when a HOTAS switch press worked. A press is confirmed only by a Status.json written after it, and a reversal is said only when the state is still back four seconds after the press.
 
+Fixed: On Commander › Campaign, the chosen front's days won and a front's data age in Fronts say `unchanged since the tick` when your own reading of the system is the same as your last one before the BGS tick, rather than a reading that may predate the system's update.
+
 Fixed: On Search › Faction, a system whose own reading by you is the same as your last one before the BGS tick says `unchanged since the tick` under Systems (Updated) and Conflicts (under the days won), rather than a reading that may predate the system's update.
 
 Added: Commander › Campaign has a CAMPAIGN ON checkbox beside CHANGE FACTION that turns the campaign off and on. While it is off the page says so, keeps the faction, and draws no front, sections or search field.

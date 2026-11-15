@@ -162,18 +162,23 @@ public static class CampaignModel
         !front.OwnReading && front.Updated is { } at && now - at > FactionRow.OldAfter;
 
     /// <summary>The Data age cell: <c>2 hours ago</c>, or <c>you saw it 2 hours ago</c> for the Commander's own reading.</summary>
-    public static string AgeText(Front front, DateTimeOffset now) =>
-        front.Updated is not { } at ? Dash : front.OwnReading ? "you saw it " + FactionModel.Ago(now - at) : FactionModel.Ago(now - at);
+    public static string AgeText(Front front, DateTimeOffset now, SinceTick sinceTick = SinceTick.NoReading) =>
+        front.Updated is not { } at ? Dash
+        : front.OwnReading && sinceTick == SinceTick.Unchanged ? FactionModel.UnchangedSinceTick
+        : front.OwnReading ? "you saw it " + FactionModel.Ago(now - at)
+        : FactionModel.Ago(now - at);
 
     /// <summary>The days won in a conflict the Commander has seen, <c>2 – 1</c>; null otherwise.</summary>
     public static string? DaysWonText(Front front) =>
         front.Conflict is { Visited: true } conflict ? $"{conflict.OursWon} – {conflict.TheirsWon}" : null;
 
-    /// <summary>The cyan note beside the days won: <c>days won · you saw it 20 minutes ago</c>.</summary>
-    public static string DaysWonNote(Front front, DateTimeOffset now) =>
+    /// <summary>The cyan note beside the days won: <c>days won · you saw it 20 minutes ago</c>, or <c>days won · unchanged since the tick</c>.</summary>
+    public static string DaysWonNote(Front front, DateTimeOffset now, SinceTick sinceTick = SinceTick.NoReading) =>
         front.Updated is not { } at
             ? "days won"
-            : "days won · " + (front.OwnReading ? "you saw it " : string.Empty) + FactionModel.Ago(now - at);
+            : front.OwnReading && sinceTick == SinceTick.Unchanged
+                ? "days won · " + FactionModel.UnchangedSinceTick
+                : "days won · " + (front.OwnReading ? "you saw it " : string.Empty) + FactionModel.Ago(now - at);
 
     /// <summary>The count beside the chosen front's heading: <c>3 ticks</c>.</summary>
     public static string TicksText(ChosenFront chosen) => chosen.Ticks.Count == 1 ? "1 tick" : $"{chosen.Ticks.Count} ticks";

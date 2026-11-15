@@ -464,6 +464,63 @@ public class TheCampaignPageShowsTheChosenFrontFrontsAndChronicleTests
         window.Close();
     }
 
+    private static CommanderGameState HaoriaUnchangedSinceTheTick() => JournalScript.Commander(
+        Frontier,
+        "Kade Orrin",
+        """{ "timestamp":"2026-11-09T13:00:00Z", "event":"FSDJump", "StarSystem":"Haoria", "SystemAddress":130, "StarPos":[0,0,0], "Factions":[{ "Name":"Kestrel Reach Compact", "Influence":0.526, "ActiveStates":[{ "State":"War" }] },{ "Name":"Lave Purple Gang", "Influence":0.312, "ActiveStates":[{ "State":"War" }] }], "Conflicts":[{ "WarType":"war", "Status":"active", "Faction1":{ "Name":"Kestrel Reach Compact", "Stake":"Haoria Hub", "WonDays":2 }, "Faction2":{ "Name":"Lave Purple Gang", "Stake":"", "WonDays":1 } }] }""",
+        """{ "timestamp":"2026-11-09T17:40:00Z", "event":"FSDJump", "StarSystem":"Haoria", "SystemAddress":130, "StarPos":[0,0,0], "Factions":[{ "Name":"Kestrel Reach Compact", "Influence":0.526, "ActiveStates":[{ "State":"War" }] },{ "Name":"Lave Purple Gang", "Influence":0.312, "ActiveStates":[{ "State":"War" }] }], "Conflicts":[{ "WarType":"war", "Status":"active", "Faction1":{ "Name":"Kestrel Reach Compact", "Stake":"Haoria Hub", "WonDays":2 }, "Faction2":{ "Name":"Lave Purple Gang", "Stake":"", "WonDays":1 } }] }""");
+
+    [AvaloniaFact]
+    public void ADaysWonNoteAndAgeCellForASystemUnchangedSinceTheTickSaySo()
+    {
+        var fixture = new Fixture { State = HaoriaUnchangedSinceTheTick() };
+        fixture.Recompute();
+        Assert.Equal(SinceTick.Unchanged, fixture.State.Standings.Since("Haoria", BgsTick));
+        fixture.Focus.Take(FrontKind.Conflict, "Haoria");
+        var (window, page) = Open(fixture);
+
+        var block = In<StackPanel>(page).Single(panel => panel.Name == CampaignPage.ChosenName);
+        Assert.True(Shows(block, "days won · unchanged since the tick"));
+        Assert.Contains(In<TextBlock>(page), text => text.Text == "unchanged since the tick" && !block.GetVisualDescendants().Contains(text));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AnUnchangedReadingIsCapturedOnTheDesktopAndTheHeadset()
+    {
+        if (!TestSurface.CapturesWanted)
+        {
+            return;
+        }
+
+        using var look = AppLook.Put();
+        var fixture = new Fixture { State = HaoriaUnchangedSinceTheTick() };
+        fixture.Recompute();
+        fixture.Focus.Take(FrontKind.Conflict, "Haoria");
+
+        foreach (var headset in new[] { false, true })
+        {
+            var (window, _) = Open(fixture, headset);
+            using var frame = window.CaptureRenderedFrame()!;
+            frame.SaveCapture(headset ? "campaign-unchanged-headset.png" : "campaign-unchanged-desktop.png");
+            window.Close();
+        }
+    }
+
+    [Theory]
+    [InlineData(SinceTick.Unchanged, true, "unchanged since the tick", "days won · unchanged since the tick")]
+    [InlineData(SinceTick.Changed, true, "you saw it 20 minutes ago", "days won · you saw it 20 minutes ago")]
+    [InlineData(SinceTick.NoReading, true, "you saw it 20 minutes ago", "days won · you saw it 20 minutes ago")]
+    [InlineData(SinceTick.Unchanged, false, "20 minutes ago", "days won · 20 minutes ago")]
+    public void TheAgeAndTheDaysWonNoteSayUnchangedOnlyForTheCommandersOwnUnchangedReading(SinceTick since, bool own, string age, string note)
+    {
+        var front = new Fixture().Snapshot.Fronts[0] with { Updated = Now.AddMinutes(-20), OwnReading = own };
+
+        Assert.Equal(age, CampaignModel.AgeText(front, Now, since));
+        Assert.Equal(note, CampaignModel.DaysWonNote(front, Now, since));
+    }
+
     [AvaloniaFact]
     public void TheHeadsetFrontIsOneSlabWithTheTwoTilesStackedBesideIt()
     {
