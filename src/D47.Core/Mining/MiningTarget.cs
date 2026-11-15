@@ -8,9 +8,9 @@ namespace D47.Core.Mining;
 /// <param name="Percent">Null where any amount of the material will do.</param>
 public sealed record MiningTarget(string Material, double? Percent)
 {
-    /// <summary>The ring hotspot materials, plus the five prospected in rocks that are not hotspots.</summary>
+    /// <summary>The ring hotspot materials, the other ring-mined minerals, and the five prospected in rocks that are not from rings.</summary>
     public static IReadOnlyList<string> Materials { get; } =
-        [.. BodyCatalogue.RingSignals.Concat(["Gold", "Silver", "Osmium", "Palladium", "Haematite"]).Order(StringComparer.Ordinal)];
+        [.. BodyCatalogue.RingSignals.Concat(BodyCatalogue.RingMinedMaterials).Concat(["Gold", "Silver", "Osmium", "Palladium", "Haematite"]).Order(StringComparer.Ordinal)];
 
     /// <summary>The material folded the way <see cref="Callouts.ProspectedMaterial.Symbol"/> is.</summary>
     public string Symbol => SymbolOf(Material);

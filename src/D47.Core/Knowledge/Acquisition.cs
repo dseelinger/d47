@@ -303,7 +303,7 @@ public static class AcquisitionGuide
                 break;
 
             case MaterialLedger.Cargo
-                when BodyCatalogue.MatchRingSignal(entry.Name) is { } ring
+                when BodyCatalogue.MatchRingMined(entry.Name) is { } ring
                      && string.Equals(ring, entry.Name, StringComparison.OrdinalIgnoreCase):
                 methods.Add(AcquisitionMethod.RingMining);
                 break;

@@ -142,7 +142,7 @@ A percentage goes through the language model:
 
 > "mining target platinum above twenty five percent"
 
-The materials are the ring hotspot materials plus Gold, Silver, Osmium, Palladium and Haematite.
+The materials are the ring hotspot materials, the other ring-mined minerals, and Gold, Silver, Osmium, Palladium and Haematite.
 
 ### Clearing it
 

@@ -1250,7 +1250,7 @@ At most one search follows, the first of these that applies: a shipyard or outfi
 ship or module, with no distance limit, which names the nearest station at any distance and, when
 spansh reports 20 stations or fewer in the whole galaxy, adds "Only N stations are reported to sell
 it." (or "No station is reported to sell it." for none); a commodity market search for anything bought or sold by the tonne; a body search
-for something mined from a ring, with the material as the hotspot filter; a station search for the
+for something with a ring hotspot, with the material as the hotspot filter; a station search for the
 nearest material trader of the right kind. A rare good is answered from its one station in the
 table and searches nothing, and surface mining is said in words and searches nothing, since neither
 question the galaxy search answers is the one being asked. Every search is cut to the nearest one

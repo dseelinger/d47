@@ -128,6 +128,21 @@ public class HowToGetAsksWhatThenSearchesOnceTests
     }
 
     [Fact]
+    public async Task ARingMinedMaterialWithNoHotspotNamesRingMiningAndSearchesNothing()
+    {
+        var install = new MemoryInstall();
+        var (registry, galaxy) = Build(install);
+
+        var result = await registry.InvokeAsync(
+            "how_to_get", Args(("item", "Lithium Hydroxide")), TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains("ined from asteroid rings", result.Content, StringComparison.Ordinal);
+        Assert.Null(galaxy.LastBodyQuery);
+        Assert.Null(galaxy.LastStationQuery);
+    }
+
+    [Fact]
     public async Task EdenApplesOfAerialNameAndradeLegacyAndSearchNothing()
     {
         var install = new MemoryInstall();

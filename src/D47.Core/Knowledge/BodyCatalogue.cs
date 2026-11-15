@@ -34,16 +34,25 @@ public static class BodyCatalogue
         "Void Opal",
     ];
 
-    /// <summary>Hotspot materials in a ring.</summary>
+    /// <summary>Materials that have ring hotspots.</summary>
     public static IReadOnlyList<string> RingSignals { get; } =
     [
-        "Alexandrite", "Bauxite", "Benitoite", "Bertrandite", "Bromellite", "Cobalt", "Coltan",
-        "Gallite", "Grandidierite", "Hydrogen Peroxide", "Indite", "Lepidolite", "Liquid oxygen",
-        "Lithium Hydroxide", "Low Temperature Diamonds", "Methane Clathrate",
-        "Methanol Monohydrate Crystals", "Monazite", "Musgravite", "Painite", "Platinum",
-        "Praseodymium", "Rhodplumsite", "Rutile", "Samarium", "Serendibite", "Tritium", "Uraninite",
-        "Void Opal", "Water",
+        "Alexandrite", "Benitoite", "Bromellite", "Grandidierite", "Low Temperature Diamonds",
+        "Monazite", "Musgravite", "Painite", "Platinum", "Rhodplumsite", "Serendibite", "Tritium",
+        "Void Opal",
     ];
+
+    /// <summary>Materials mined from rings that have no hotspots.</summary>
+    public static IReadOnlyList<string> RingMinedMaterials { get; } =
+    [
+        "Bauxite", "Bertrandite", "Cobalt", "Coltan", "Gallite", "Hydrogen Peroxide", "Indite",
+        "Lepidolite", "Liquid oxygen", "Lithium Hydroxide", "Methane Clathrate",
+        "Methanol Monohydrate Crystals", "Praseodymium", "Rutile", "Samarium", "Uraninite", "Water",
+    ];
+
+    /// <summary>The name as <see cref="RingMinedMaterials"/> or <see cref="RingSignals"/> spells it, or null.</summary>
+    public static string? MatchRingMined(string spoken) =>
+        Catalogue.Match(RingSignals, spoken) ?? Catalogue.Match(RingMinedMaterials, spoken);
 
     /// <summary>Ring compositions.</summary>
     public static IReadOnlyList<string> RingTypes { get; } = ["Icy", "Metal Rich", "Metallic", "Rocky"];

@@ -3518,7 +3518,8 @@ public static class GalaxyCapability
             return $"Nearest: {winner.Market.Station} ({winner.Market.System}), {winner.Distance:0.#} ly.";
         }
 
-        if (acquisition.Methods.Contains(AcquisitionMethod.RingMining))
+        if (acquisition.Methods.Contains(AcquisitionMethod.RingMining)
+            && BodyCatalogue.MatchRingSignal(acquisition.Name) is not null)
         {
             if (!BodyQuery.TryParse(
                     new BodyRequest
