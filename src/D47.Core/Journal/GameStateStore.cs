@@ -1,4 +1,4 @@
-﻿namespace D47.Core.Journal;
+namespace D47.Core.Journal;
 
 /// <summary>What moved the shown Commander to another.</summary>
 public enum CommanderSwitchCause
@@ -143,6 +143,9 @@ public sealed class GameStateStore
 
     /// <summary>The squadron faction sightings this Commander's journals hold, merged into what is known.</summary>
     public Func<string, SquadronFactionSightings?>? RestoreSquadronFactions { get; init; }
+
+    /// <summary>The hired pilots this Commander's journals show; live crew events win by crew id.</summary>
+    public Func<string, ShipCrew?>? RestoreCrew { get; init; }
 
     /// <summary>The tech broker unlocks this Commander's older journals show, merged into what is known.</summary>
     public Func<string, TechBrokerUnlocks?>? RestoreTechBroker { get; init; }
@@ -423,6 +426,7 @@ public sealed class GameStateStore
         // The other way round from the rest: the live unlocks take the restored ones.
         Part<TechBrokerUnlocks>(s => s.RestoreTechBroker, v => v.IsKnown, (c, v) => c.TechBroker = v, (c, v) => c.TechBroker = c.TechBroker.With(v)),
         Part<SquadronFactionSightings>(s => s.RestoreSquadronFactions, v => v.IsKnown, (c, v) => c.SquadronFactions = v, (c, v) => c.SquadronFactions = c.SquadronFactions.With(v)),
+        Part<ShipCrew>(s => s.RestoreCrew, v => v.Any, (c, v) => c.Crew = v, (c, v) => c.Crew = v.With(c.Crew)),
         new Restorer(Credits, Credits),
     ];
 }

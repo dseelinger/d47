@@ -32,10 +32,9 @@ public static class CrewCapability
             {
                 Name = "describe_crew",
                 Exercise =
-                    "Say \"who is my crew\". After you hire, fire or reassign an NPC pilot this "
-                    + "session, the reply lists each pilot with rank, on or off duty in the fighter "
-                    + "bay, and the ship assigned. Before that it says it has not seen you hire any "
-                    + "crew this session.",
+                    "Say \"who is my crew\". Hire a pilot, restart d47 and ask again: the reply "
+                    + "lists each pilot with rank, on or off duty in the fighter bay, and the ship "
+                    + "assigned. With no hired pilot in your journals it says so.",
                 Description =
                     "Report the NPC pilots the Commander has hired, their combat ranks, which one is "
                     + "currently assigned to the fighter bay, and which ship each was assigned aboard.",
@@ -49,8 +48,7 @@ public static class CrewCapability
         if (state?.Crew is not { Any: true } crew)
         {
             // Not "you have no crew".
-            return "I have not seen you hire any crew this session. If you have, I would not know "
-                   + "about them until you next hire, fire or reassign somebody.";
+            return "I find no hired pilot in your journals.";
         }
 
         var report = new StringBuilder();

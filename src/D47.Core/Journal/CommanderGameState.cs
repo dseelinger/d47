@@ -155,7 +155,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     }
 
     /// <summary>The hired NPC pilots on the books (Phase 11, "Ship Crew").</summary>
-    public ShipCrew Crew { get; private set; } = ShipCrew.Empty;
+    public ShipCrew Crew { get; internal set; } = ShipCrew.Empty;
 
     /// <summary>The ship currently targeted, or null when none is.</summary>
     public TargetedShip? Target { get; private set; }
@@ -320,6 +320,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             Colonisation = ColonisationSites.Empty;
             TechBroker = TechBrokerUnlocks.Empty;
             SquadronFactions = SquadronFactionSightings.Empty;
+            Crew = ShipCrew.Empty;
             CycleMerits = PowerplayCycleMerits.None;
             return;
         }
@@ -387,7 +388,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
 
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather than the one
         // they were in a moment ago.
-        Crew = Crew.Apply(journalEvent, Ship.Name ?? Ship.TypeSaid);
+        Crew = Crew.Apply(journalEvent, Ship.Name ?? Ship.TypeSaid, Ship.ShipId);
 
         InOperationSince = journalEvent.Kind switch
         {

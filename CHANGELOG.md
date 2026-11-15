@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: D47 reads your hired pilots from every journal on disk at startup, so "who is my crew" and Fleet › Crew list a pilot you hired before you last restarted D47. With none on record, they say "I find no hired pilot in your journals."
+
 Changed: With one chapter under way and no draft, Stories › Your story is that chapter's page, below any endings waiting for your answer, instead of a list with one card. With two or more stories under way, or a draft, it stays a list, and a chapter opened from it takes the whole width.
 
 Fixed: The Bodies page hotspot picker and `find_body` offer only the 13 materials that have ring hotspots (Alexandrite, Benitoite, Bromellite, Grandidierite, Low Temperature Diamonds, Monazite, Musgravite, Painite, Platinum, Rhodplumsite, Serendibite, Tritium, Void Opal). Lithium Hydroxide and the other ring-mined minerals are no longer offered as hotspots, and "how do I get" for them says they are mined from asteroid rings without searching. They stay valid mining targets.

@@ -8,12 +8,19 @@ namespace D47.Core.Journal;
 /// <param name="PostedTo">
 /// The ship that was active when they were last assigned, or null if d47 has not seen that happen.
 /// </param>
+/// <param name="PostedShipId">The <c>ShipID</c> of the hull they were last assigned on.</param>
+/// <param name="HullLeft">
+/// Set when the Commander swapped to another hull after the assignment; cleared by the next assignment.
+/// Swapping back does not clear it.
+/// </param>
 public sealed record CrewMember(
     string Name,
     long CrewId,
     int? CombatRank = null,
     bool Active = false,
-    string? PostedTo = null)
+    string? PostedTo = null,
+    int? PostedShipId = null,
+    bool HullLeft = false)
 {
     /// <summary>The highest rank a hired pilot reaches.</summary>
     public const int RankTop = RankStanding.Elite;
@@ -43,7 +50,7 @@ public sealed record ShipCrew
     public bool Any => Members.Count > 0;
 
     /// <summary>Folds one event.</summary>
-    public ShipCrew Apply(JournalEvent journalEvent, string? activeShip = null) => journalEvent.Kind switch
+    public ShipCrew Apply(JournalEvent journalEvent, string? activeShip = null, int? activeShipId = null) => journalEvent.Kind switch
     {
         "CrewHire" when Read(journalEvent) is { } hired => this with
         {
@@ -73,7 +80,19 @@ public sealed record ShipCrew
                         Active = string.Equals(
                             journalEvent.String("Role"), "Active", StringComparison.OrdinalIgnoreCase),
                         PostedTo = activeShip ?? member.PostedTo,
+                        PostedShipId = activeShipId ?? member.PostedShipId,
+                        HullLeft = false,
                     }),
+            ],
+        },
+
+        "ShipyardSwap" when journalEvent.Int("ShipID") is { } swappedTo => this with
+        {
+            Members =
+            [
+                .. Members.Select(member => member.PostedShipId is { } posted && posted != swappedTo
+                    ? member with { HullLeft = true }
+                    : member),
             ],
         },
 
@@ -89,6 +108,31 @@ public sealed record ShipCrew
 
         _ => this,
     };
+
+    /// <summary>
+    /// This roster with <paramref name="live"/> laid over it: a pilot in both is the live one, and the active
+    /// pilot is the live one when it has one.
+    /// </summary>
+    public ShipCrew With(ShipCrew live)
+    {
+        if (!live.Any)
+        {
+            return this;
+        }
+
+        var liveActive = live.Active is not null;
+
+        return this with
+        {
+            Members =
+            [
+                .. Members
+                    .Where(member => live.Members.All(other => other.CrewId != member.CrewId))
+                    .Select(member => liveActive ? member with { Active = false } : member),
+                .. live.Members,
+            ],
+        };
+    }
 
     private static int? Rank(JournalEvent journalEvent, string property) =>
         journalEvent.Int(property) is >= 0 and <= CrewMember.RankTop and { } rank ? rank : null;

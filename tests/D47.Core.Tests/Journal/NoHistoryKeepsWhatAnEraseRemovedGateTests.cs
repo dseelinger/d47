@@ -91,6 +91,8 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
         Line(day + "T09:25:50", "\"event\":\"FSSAllBodiesFound\",\"SystemAddress\":1,\"SystemName\":\"Sol\",\"Count\":8"),
         Line(day + "T09:25:55", "\"event\":\"SquadronStartup\",\"SquadronName\":\"Greybeards\",\"SquadronID\":7,\"CurrentRank\":1"),
         Line(day + "T09:25:56", "\"event\":\"Location\",\"StarSystem\":\"Sol\",\"Factions\":[{\"Name\":\"Sol Workers\",\"SquadronFaction\":true}]"),
+        Line(day + "T09:25:57", "\"event\":\"CrewHire\",\"Name\":\"Vance Ilo\",\"CrewID\":7,\"CombatRank\":3"),
+        Line(day + "T09:25:58", "\"event\":\"CrewAssign\",\"Name\":\"Vance Ilo\",\"CrewID\":7,\"Role\":\"Active\""),
         Line(day + "T09:26:00", "\"event\":\"FSDJump\",\"StarSystem\":\"Sol\",\"SystemAddress\":1,\"StarPos\":[0.0,0.0,0.0],\"JumpDist\":5.0"),
     ];
 

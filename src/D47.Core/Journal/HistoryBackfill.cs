@@ -168,6 +168,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's codex entries.</summary>
     public IReadOnlyDictionary<string, CodexLedger>? CodexLedgers { get; private set; }
 
+    /// <summary>Each Commander's hired pilots, folded over every journal.</summary>
+    public IReadOnlyDictionary<string, ShipCrew>? Crews { get; private set; }
+
     /// <summary>The credits each Commander's newest LoadGame reported.</summary>
     public IReadOnlyDictionary<string, long>? Credits { get; private set; }
 
@@ -369,6 +372,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(CodexLedgerBackfill)),
+                    cancellation));
+
+            Crews = Timed(
+                "crew backfill",
+                () => CrewBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(CrewBackfill)),
                     cancellation));
 
             Credits = Timed(

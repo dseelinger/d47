@@ -20,7 +20,7 @@ public sealed class CrewPage : UserControl
     public const string Phrase = "who is my crew";
 
     public const string Unseen =
-        "I have not seen you hire any crew this session. The game lists them when you hire, fire or reassign a pilot.";
+        "I find no hired pilot in your journals. The game lists a pilot when you hire, fire or reassign one.";
 
     public const string OnDuty = "ON FIGHTER DUTY";
 

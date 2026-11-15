@@ -81,7 +81,7 @@ nav_order: 103
 </section>
 <section>
 <h2><span class="num">4</span> The roster is what Elite writes.</h2>
-<p class="body">Elite records a name, a combat rank and whether they are on duty, so there is no engineer, gunner or navigator. With no roster seen, the answer is "I have not seen you hire any crew this session."</p>
+<p class="body">Elite records a name, a combat rank and whether they are on duty, so there is no engineer, gunner or navigator. The roster comes from your journals. With none hired, the answer is "I find no hired pilot in your journals."</p>
 </section>
 </div></div>
 </details>
