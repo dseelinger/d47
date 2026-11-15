@@ -28,6 +28,10 @@ public static class CampaignCapability
 
     public const string ChronicleTool = "read_campaign_chronicle";
 
+    public const string SwitchTool = "switch_campaign";
+
+    private const string IsOff = "The campaign is off. Say 'turn on the campaign' to start it again.";
+
     private const int FrontsSpoken = 3;
 
     private const int ChronicleSpoken = 3;
@@ -77,7 +81,7 @@ public static class CampaignCapability
                     + "controls and LeaveAlone elsewhere unless the Commander chose otherwise), and the chronicle of "
                     + "resolved fronts. The faction is the squadron's unless the Commander named another.",
                 Commands = [.. Questions.Select(phrase => new ToolCommandPhrase(phrase))],
-                Handler = (_, cancellationToken) => GetAsync(store, gameState(), squadronFactions, galaxy, seen, cancellationToken),
+                Handler = (_, cancellationToken) => Unless(store, gameState(), state => GetAsync(store, state, squadronFactions, galaxy, seen, cancellationToken)),
             },
             new ToolDefinition
             {
@@ -92,7 +96,7 @@ public static class CampaignCapability
                     + "for each, a count of the rest, and when they were computed. The ranking is d47's; do not reorder "
                     + "it or add fronts.",
                 Commands = [.. FrontQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
-                Handler = (_, _) => Task.FromResult(Fronts(store, gameState(), squadronFactions, fronts?.Invoke())),
+                Handler = (_, _) => Unless(store, gameState(), state => Task.FromResult(Fronts(store, state, squadronFactions, fronts?.Invoke()))),
             },
             new ToolDefinition
             {
@@ -105,7 +109,7 @@ public static class CampaignCapability
                     + "first, at most three, with a count of the rest. Read the passages as given; add nothing to them. "
                     + "Call it only when the Commander asks for the chronicle.",
                 Commands = [new ToolCommandPhrase("read the chronicle"), new ToolCommandPhrase("read the legend")],
-                Handler = (_, _) => Task.FromResult(ReadChronicle(store, gameState(), squadronFactions)),
+                Handler = (_, _) => Unless(store, gameState(), state => Task.FromResult(ReadChronicle(store, state, squadronFactions))),
             },
             new ToolDefinition
             {
@@ -118,7 +122,7 @@ public static class CampaignCapability
                     + "Commander's unredeemed bounties and combat bonds: one sentence, then at most one sentence naming "
                     + "work that does not count there. With no front chosen it names the front d47 proposes.",
                 Commands = [.. ActionQuestions.Select(phrase => new ToolCommandPhrase(phrase))],
-                Handler = (_, _) => Task.FromResult(NextAction(focus, store, gameState())),
+                Handler = (_, _) => Unless(store, gameState(), state => Task.FromResult(NextAction(focus, store, state))),
             },
             new ToolDefinition
             {
@@ -135,7 +139,7 @@ public static class CampaignCapability
                 ],
                 Protected = true,
                 RefusalExample = "take it",
-                Handler = (arguments, _) => Task.FromResult(Take(focus, store, gameState(), arguments)),
+                Handler = (arguments, _) => Unless(store, gameState(), state => Task.FromResult(Take(focus, store, state, arguments))),
             },
             new ToolDefinition
             {
@@ -145,7 +149,7 @@ public static class CampaignCapability
                 Commands = [new ToolCommandPhrase("next front")],
                 Protected = true,
                 RefusalExample = "next front",
-                Handler = (_, _) => Task.FromResult(NextFront(focus)),
+                Handler = (_, _) => Unless(store, gameState(), _ => Task.FromResult(NextFront(focus))),
             },
             new ToolDefinition
             {
@@ -155,7 +159,7 @@ public static class CampaignCapability
                 Commands = [new ToolCommandPhrase("drop the front")],
                 Protected = true,
                 RefusalExample = "drop the front",
-                Handler = (_, _) => Task.FromResult(Drop(focus)),
+                Handler = (_, _) => Unless(store, gameState(), _ => Task.FromResult(Drop(focus))),
             },
             new ToolDefinition
             {
@@ -172,8 +176,8 @@ public static class CampaignCapability
                 ],
                 Protected = true,
                 RefusalExample = "our campaign faction is Hutton Truckers",
-                Handler = (arguments, cancellationToken) =>
-                    SetFactionAsync(store, gameState(), squadronFactions, galaxy, seen, arguments, cancellationToken),
+                Handler = (arguments, cancellationToken) => Unless(
+                    store, gameState(), state => SetFactionAsync(store, state, squadronFactions, galaxy, seen, arguments, cancellationToken)),
             },
             new ToolDefinition
             {
@@ -191,10 +195,74 @@ public static class CampaignCapability
                 ],
                 Protected = true,
                 RefusalExample = "hold Shinrarta Dezhra",
-                Handler = (arguments, _) => Task.FromResult(SetIntent(store, gameState(), arguments)),
+                Handler = (arguments, _) => Unless(store, gameState(), state => Task.FromResult(SetIntent(store, state, arguments))),
+            },
+            new ToolDefinition
+            {
+                Name = SwitchTool,
+                Exercise =
+                    "Say \"turn off the campaign\". The reply says the campaign is off, and the NEXT strip shows no "
+                    + "campaign line. Then say \"turn on the campaign\". The reply says the campaign is on again.",
+                Description =
+                    "Turn the Commander's campaign off or on. While it is off d47 fetches no faction report, proposes no "
+                    + "front and says nothing about the campaign. Turning it off drops the chosen front, adding nothing "
+                    + "to the chronicle; the faction, the intents and the chronicle are kept. The Commander's own decision.",
+                Parameters =
+                [
+                    ToolParameter.Flag("on", "True to turn the campaign on, false to turn it off.", required: true),
+                ],
+                Commands =
+                [
+                    new ToolCommandPhrase("turn off the campaign", new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = "false" }),
+                    new ToolCommandPhrase("turn on the campaign", new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = "true" }),
+                ],
+                Protected = true,
+                RefusalExample = "turn off the campaign",
+                Handler = (arguments, _) => Task.FromResult(Switch(store, gameState(), arguments)),
             },
         ],
     };
+
+    /// <summary>The answer that the campaign is off while it is, else <paramref name="run"/>'s.</summary>
+    private static Task<ToolResult> Unless(CampaignStore? store, CommanderGameState? state, Func<CommanderGameState?, Task<ToolResult>> run) =>
+        store is not null && state?.Identity.FrontierId is { Length: > 0 } frontierId && store.For(frontierId).Off
+            ? Task.FromResult(ToolResult.Ok(IsOff))
+            : run(state);
+
+    private static ToolResult Switch(CampaignStore? store, CommanderGameState? state, ToolArguments arguments)
+    {
+        if (store is null || state?.Identity.FrontierId is not { Length: > 0 } frontierId)
+        {
+            return ToolResult.Error("No Elite Dangerous journal has been detected yet, so there is no campaign to change.");
+        }
+
+        if (!arguments.TryGetBoolean("on", out var on))
+        {
+            return ToolResult.Error("Say whether to turn the campaign on or off.");
+        }
+
+        var campaign = store.For(frontierId);
+
+        if (campaign.Off != on)
+        {
+            return ToolResult.Ok(on ? "The campaign is already on." : "The campaign is already off.");
+        }
+
+        if (!store.SetOff(frontierId, !on))
+        {
+            return ToolResult.Error("I couldn't save that.");
+        }
+
+        if (on)
+        {
+            return ToolResult.Ok("The campaign is on again.");
+        }
+
+        return ToolResult.Ok(campaign.Chosen is { } chosen
+            ? $"The campaign is off, and the {CampaignFronts.Describe(chosen.Kind).ToLowerInvariant()} in {chosen.System} is dropped. "
+                + "Say 'turn on the campaign' to start it again."
+            : "The campaign is off. Say 'turn on the campaign' to start it again.");
+    }
 
     /// <summary>"hold Lave", "grow Lave" and the rest, for each system the campaign faction is known to be in or that has an intent.</summary>
     public static IEnumerable<DynamicCommand> Phrases(

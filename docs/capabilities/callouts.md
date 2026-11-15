@@ -617,7 +617,7 @@ Turn this one off with the BGS tick row.
 #### Campaign warnings {#campaign-warnings}
 
 When work helps a rival of the campaign faction or hurts the faction, once per kind per session. Nothing is said
-until a campaign faction is known, and nothing while d47 catches up on the journal at startup.
+until a campaign faction is known or while the campaign is off, and nothing while d47 catches up on the journal at startup.
 
 ```text
 That bounty voucher raises Lave Pirates here, where Lave Revolutionary Party is present. It works against the campaign.
@@ -662,7 +662,7 @@ fight, in supercruise or a jump, or in an Operation. What is already true when d
 what the last tick owes: the request to fly in, or the dispatch. Three rows switch it by topic: War callouts, Election callouts and
 Other BGS callouts. A line about a war or civil war front is a war line, one about an election front is an election line,
 and the rest are other; the conflicts briefing names only the conflicts whose topic is on, and is not said when none is.
-The [Liaison voice](speech.md#liaison-voice) row picks its voice. See [The Liaison](campaign.md#the-liaison).
+The [Liaison voice](speech.md#liaison-voice) row picks its voice. Nothing is said while the campaign is off. See [The Liaison](campaign.md#the-liaison).
 
 #### BGS callouts: the Nemesis {#bgs-nemesis}
 
@@ -677,7 +677,7 @@ Lave Purple Gang has won a day in the war in Lave. Days won stand at 2 for Lave 
 D47 decides every fact and the model writes the leader's words, free to invent a motive or a grudge but no number,
 state, outcome or place. A lead or a day won that the Nemesis already held when d47 started is not broadcast. The same three rows switch it, and the Informant's leaks, the Ideology arc, the council, the Crisis arc and the reveals
 of the Nemesis's secret, by the topic of each line. A line whose topic is off is left out before the lines are ranked, its
-state is not saved and it does not start the two-hour wait. See [Arcs](campaign.md#arcs).
+state is not saved and it does not start the two-hour wait. Nothing is said while the campaign is off. See [Arcs](campaign.md#arcs).
 
 #### Background watches {#watches}
 

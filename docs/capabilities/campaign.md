@@ -42,7 +42,7 @@ nav_order: 166
 <p class="intro">A campaign is one faction and what you mean to do in each of its systems.</p>
 <section>
 <h2><span class="num">1</span> The faction is your squadron's unless you name another.</h2>
-<p class="body">D47 already knows your squadron's faction. Naming another replaces it for the campaign, and the intents set for the old faction's systems are cleared.</p>
+<p class="body">D47 already knows your squadron's faction. Naming another replaces it for the campaign, and the intents set for the old faction's systems are cleared. Say "turn off the campaign" to run none of it until you turn it on again.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Each system has one intent from a fixed list.</h2>
@@ -73,6 +73,23 @@ The campaign faction is your squadron's faction until you name another:
 
 D47 checks the name with galaxy search, which sends it to the galaxy search service, and stores the
 spelling the service gives. Naming a different faction clears the intents set for the previous one.
+
+### Turning the campaign off
+
+> "turn off the campaign"
+
+While the campaign is off, D47 runs none of it, whether the faction is named or is your squadron's: no
+faction report is fetched after a tick, no front is proposed, the NEXT strip shows no campaign line,
+and the Liaison, the arcs, the Chronicler and the campaign warnings say nothing. Turning it off drops
+the chosen front, adding nothing to the chronicle, as "drop the front" does. The other campaign
+phrases answer that the campaign is off and change nothing. The faction, the intents and the
+chronicle are kept, and the switch is kept per Commander in `data/campaigns.json` across restarts.
+
+> "turn on the campaign"
+
+D47 starts the campaign again as it does at launch: it fetches the faction report, proposes a front,
+and takes what the report shows then as the starting point, so nothing that changed while the campaign
+was off is announced.
 
 ### Intents
 
@@ -226,7 +243,7 @@ The margins a thin margin is measured against are D47's own: 10 points for hold,
 75%, 15 for expand from here, and none for take control or leave alone.
 
 D47 fetches the report when it first knows the campaign faction, again after each BGS tick, and
-again when you name another faction. The fetch runs in the background and sends the faction's name
+again when you name another faction; it fetches nothing while the campaign is off. The fetch runs in the background and sends the faction's name
 to the galaxy search service, as the Faction search on the Search tab does. When it fails, the fronts from the last
 report are kept, the answer says when they were computed, and D47 tries again after half an hour.
 Asking for the fronts never fetches.
@@ -244,6 +261,8 @@ after each fetch and at the start of a session. A proposal writes nothing.
 | "take the front in Lave" | Works the front there, whatever its kind. |
 | "drop the front" | Stops working it. Nothing is added to the chronicle. |
 | "what should I do for the faction" | One sentence naming the work, then at most one sentence naming work that does not count. |
+| "turn off the campaign" | Stops the whole campaign and drops the chosen front, adding nothing to the chronicle. |
+| "turn on the campaign" | Starts the campaign again from the kept faction, intents and chronicle. |
 
 A chosen front stays chosen across restarts until it resolves or you drop it. Naming another campaign
 faction drops it. D47 notes each BGS tick the front spans. A front resolves when the fronts computed
@@ -263,7 +282,7 @@ A war says that trade does not count, an election that combat does not count and
 may void some election missions, a Lockdown that only bounties help, and an Outbreak that bounty
 vouchers do nothing. The model reads the answer and does not compose it.
 
-The first sentence of the next action also shows on the NEXT strip under every tab of the full panel, with a Story and Campaign toggle; see [The NEXT strip](adventures.md#the-next-strip).
+The first sentence of the next action also shows on the NEXT strip under every tab of the full panel, with a Story and Campaign toggle; see [The NEXT strip](adventures.md#the-next-strip). While the campaign is off, the strip shows no campaign line.
 
 ### The Liaison
 
@@ -461,7 +480,7 @@ faction clears it, and the three BGS callout rows switch the reveals by topic wi
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 
-`set_campaign_faction`, `set_system_intent`, `take_campaign_front`, `next_campaign_front` and `drop_campaign_front` are protected: the phrases above reach them, and the
+`set_campaign_faction`, `set_system_intent`, `take_campaign_front`, `next_campaign_front`, `drop_campaign_front` and `switch_campaign` are protected: the phrases above reach them, and the
 model is refused.
 
 #### `get_campaign`
@@ -510,6 +529,12 @@ model is refused.
 
 ```json
 {"type":"object","properties":{"faction":{"type":"string","description":"The minor faction\u0027s exact name, as the Commander said it."}},"required":["faction"],"additionalProperties":false}
+```
+
+#### `switch_campaign`
+
+```json
+{"type":"object","properties":{"on":{"type":"boolean","description":"True to turn the campaign on, false to turn it off."}},"required":["on"],"additionalProperties":false}
 ```
 
 #### `set_system_intent`

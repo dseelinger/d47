@@ -10,6 +10,8 @@
 
 Fixed: The warning "Something else is bound to ..." is no longer said when a HOTAS switch press worked. A press is confirmed only by a Status.json written after it, and a reversal is said only when the state is still back four seconds after the press.
 
+Added: Say "turn off the campaign" to stop the whole campaign: D47 fetches no faction report, proposes no front, shows no campaign line on the NEXT strip, and the Liaison, the arcs, the Chronicler and the campaign warnings say nothing. Turning it off drops the chosen front without adding it to the chronicle. Say "turn on the campaign" to start it again from the faction, intents and chronicle it kept.
+
 Added: The Fronts and Systems tables on Commander › Campaign have a Distance column: how many light years each system is from the one you are in, or a dash when either position is not known. It sorts nearest first from its header, and farthest first on a second press.
 
 Changed: Valuable bodies is no longer said in a ship with no Detailed Surface Scanner fitted, since that ship cannot map the planet. Where D47 does not know what the ship has fitted, it still says it.

@@ -64,6 +64,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                     Ideology = Ideology(record.Ideology),
                     Council = Council(record.Council),
                     ConflictsBriefed = record.ConflictsBriefed,
+                    Off = record.Off == true,
                     Crises =[.. (record.Crises ?? []).Where(crisis => !string.IsNullOrWhiteSpace(crisis.System) && !string.IsNullOrWhiteSpace(crisis.State)).Select(crisis => new OpenCrisis(crisis.System!, crisis.State!, string.IsNullOrWhiteSpace(crisis.Blamed) ? null : crisis.Blamed, crisis.Since, crisis.Exploited))],
                 };
             }
@@ -117,13 +118,39 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         });
     }
 
-    /// <summary>Makes <paramref name="kind"/> in <paramref name="system"/> the front being worked. False when the write failed.</summary>
+    /// <summary>Makes <paramref name="kind"/> in <paramref name="system"/> the front being worked. False when the campaign is off or the write failed.</summary>
     public bool Choose(string frontierId, FrontKind kind, string system, DateTimeOffset since)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
         ArgumentException.ThrowIfNullOrWhiteSpace(system);
 
-        return Change(frontierId, campaign => campaign with { Chosen = new ChosenFront(kind, system.Trim(), since, []) });
+        var chosen = false;
+
+        return Change(
+            frontierId,
+            campaign =>
+            {
+                if (campaign.Off)
+                {
+                    return campaign;
+                }
+
+                chosen = true;
+
+                return campaign with { Chosen = new ChosenFront(kind, system.Trim(), since, []) };
+            })
+            && chosen;
+    }
+
+    /// <summary>
+    /// Turns the campaign off or on. Turning it off drops the chosen front without a chronicle entry; the faction, the
+    /// intents and the chronicle are kept. False when the write failed.
+    /// </summary>
+    public bool SetOff(string frontierId, bool off)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(frontierId);
+
+        return Change(frontierId, campaign => campaign with { Off = off, Chosen = off ? null : campaign.Chosen });
     }
 
     /// <summary>Drops the front being worked without a chronicle entry. False when the write failed or none was chosen.</summary>
@@ -480,6 +507,7 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
                                 }
                                 : null,
                             ConflictsBriefed = pair.Value.ConflictsBriefed,
+                            Off = pair.Value.Off ? true : null,
                             Crises = [.. pair.Value.Crises.Select(crisis => new CrisisRecord { System = crisis.System, State = crisis.State, Blamed = crisis.Blamed, Since = crisis.Since, Exploited = crisis.Exploited })],
                         }),
                 ],
@@ -607,6 +635,8 @@ public sealed class CampaignStore(string path, IFileSystem files, ILogger<Campai
         public IReadOnlyList<CrisisRecord>? Crises { get; set; }
 
         public DateTimeOffset? ConflictsBriefed { get; set; }
+
+        public bool? Off { get; set; }
     }
 
     private sealed class CrisisRecord

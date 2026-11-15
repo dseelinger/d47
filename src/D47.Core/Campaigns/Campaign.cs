@@ -123,9 +123,12 @@ public sealed record Campaign
     /// <summary>The BGS tick the Liaison last briefed the conflicts for, or the time of the briefing when no tick was known; null before the first.</summary>
     public DateTimeOffset? ConflictsBriefed { get; init; }
 
-    /// <summary>The faction named, else <paramref name="squadronFaction"/>.</summary>
+    /// <summary>The Commander turned the campaign off: <see cref="FactionOr"/> gives no faction, so nothing of the campaign runs.</summary>
+    public bool Off { get; init; }
+
+    /// <summary>The faction named, else <paramref name="squadronFaction"/>; null while the campaign is off.</summary>
     public string? FactionOr(string? squadronFaction) =>
-        Faction is { Length: > 0 } named ? named : squadronFaction is { Length: > 0 } ? squadronFaction : null;
+        Off ? null : Faction is { Length: > 0 } named ? named : squadronFaction is { Length: > 0 } ? squadronFaction : null;
 
     /// <summary>The intent set for <paramref name="system"/>, else Hold where the faction controls it and LeaveAlone where it does not.</summary>
     public SystemIntent IntentFor(string system, bool controls) =>
@@ -134,5 +137,5 @@ public sealed record Campaign
     /// <summary>The intent of a system with none set: Hold where the faction controls it, else LeaveAlone.</summary>
     public static SystemIntent DefaultIntent(bool controls) => controls ? SystemIntent.Hold : SystemIntent.LeaveAlone;
 
-    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Secret is null && Informant is null && Ideology is null && Council is null && Crises.Count == 0 && ConflictsBriefed is null;
+    public bool IsEmpty => Faction is null && Intents.IsEmpty && Chosen is null && Chronicle.Count == 0 && Arc is null && Secret is null && Informant is null && Ideology is null && Council is null && Crises.Count == 0 && ConflictsBriefed is null && !Off;
 }
