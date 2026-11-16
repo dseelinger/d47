@@ -5947,11 +5947,11 @@ public sealed class AppHost : IDisposable
     }
 
     /// <summary>A cast member's answer, posted to Messages and its story run's record with the clip it was spoken in, once the turn has been spoken.</summary>
-    public void NoteCastReply(TurnEvent.Addressed addressed, string asked, TurnResult? result)
+    public void NoteCastReply(TurnEvent.Addressed addressed, string asked, TurnResult? result, SpokenClip? kept)
     {
         if (addressed.Cast is { } castId && result is { Outcome: TurnOutcome.Answered, Text.Length: > 0 })
         {
-            Records.RecordCastReply(castId, asked, result.Text, Voice.KeptTurn);
+            Records.RecordCastReply(castId, asked, result.Text, kept);
         }
     }
 

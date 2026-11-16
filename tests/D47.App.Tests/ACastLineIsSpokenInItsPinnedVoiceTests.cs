@@ -114,7 +114,7 @@ public sealed class ACastLineIsSpokenInItsPinnedVoiceTests
         Assert.Equal([("Only to listen.", "am_michael")], built.Kokoro.Asked);
         Assert.Empty(built.Aboard.Asked);
         Assert.Empty(built.Npcs.Asked);
-        Assert.Equal(TtsProviderCatalog.KokoroId, built.Voice.KeptTurn!.Provider);
+        Assert.Equal(TtsProviderCatalog.KokoroId, Assert.Single(built.Voice.KeptReplies)!.Provider);
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public sealed class ACastLineIsSpokenInItsPinnedVoiceTests
 
         Assert.Equal([("Standing by.", "the-persona's-voice")], built.Aboard.Asked);
         Assert.Empty(built.Kokoro.Asked);
-        Assert.Null(built.Voice.KeptTurn);
+        Assert.Null(Assert.Single(built.Voice.KeptReplies));
     }
 
     private static async IAsyncEnumerable<D47.Core.Conversation.TurnEvent> Turn(string text)

@@ -11,7 +11,10 @@ namespace D47.App.Panel;
 /// </summary>
 public sealed class TurnPresenter(PanelViewModel model, string? shipPicture = null, Func<TurnEvent.Addressed, string?>? addressedPicture = null)
 {
-    private readonly int _start = model.RunCount;
+    /// <summary>Where the reply in progress began; a reply after the first starts at its own <c>Addressed</c>.</summary>
+    private int _start = model.RunCount;
+
+    private bool _addressed;
 
     /// <summary>The speaker the reply is drawn under, once Addressed names someone other than the ship's AI.</summary>
     private string? _speaker;
@@ -27,6 +30,14 @@ public sealed class TurnPresenter(PanelViewModel model, string? shipPicture = nu
         switch (turnEvent)
         {
             case TurnEvent.Addressed addressed:
+                if (_addressed)
+                {
+                    _start = model.RunCount;
+                    _translation = null;
+                }
+
+                _addressed = true;
+
                 // A speaker with a picture of their own is somebody the Commander made, even over the radio.
                 var invented = addressed.Role == VoiceRole.Comms && addressed.Picture is null;
 

@@ -1532,13 +1532,13 @@ public partial class MainWindow : Window
 
         // Set when the turn is answered by someone other than the ship's AI, and undone in the finally.
         D47.App.Voice.AddressedVoices.AddressedVoice? addressedVoice = null;
-        TurnEvent.Addressed? addressedTo = null;
+        List<(TurnEvent.Addressed To, TurnResult? Result)> replies = [];
 
         try
         {
             // Through the voice pipeline rather than straight off the turn loop, so the panel and the speaker
             // are fed from one traversal of one stream.
-            var result = await _host.Voice.RunAsync(
+            await _host.Voice.RunAsync(
                 _host.Turns.RunAsync(input, source, target, cancelling.Token),
                 turnEvent =>
                 {
@@ -1547,11 +1547,17 @@ public partial class MainWindow : Window
                     switch (turnEvent)
                     {
                         case TurnEvent.Addressed addressed:
-                            addressedVoice ??= _host.AddressedVoices.SpeakAs(addressed);
-                            addressedTo ??= addressed;
+                            addressedVoice?.Dispose();
+                            addressedVoice = _host.AddressedVoices.SpeakAs(addressed);
+                            replies.Add((addressed, null));
                             break;
 
                         case TurnEvent.Completed completed:
+                            if (replies.Count > 0)
+                            {
+                                replies[^1] = (replies[^1].To, completed.Result);
+                            }
+
                             // And onto the story's own feed, if it was about one (asked for 2026-08-22).
                             _host.NoteTurn(input, completed.Result.Text);
 
@@ -1564,9 +1570,11 @@ public partial class MainWindow : Window
                     }
                 });
 
-            if (addressedTo is not null)
+            var kept = _host.Voice.KeptReplies;
+
+            for (var i = 0; i < replies.Count; i++)
             {
-                _host.NoteCastReply(addressedTo, input, result);
+                _host.NoteCastReply(replies[i].To, input, replies[i].Result, i < kept.Count ? kept[i] : null);
             }
         }
         catch (Exception ex)

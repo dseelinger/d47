@@ -91,8 +91,8 @@ public sealed class VoicePipeline(
     /// <summary>The picture name of the speaker answering the next turn, or null for the ship's AI.</summary>
     public string? Picture { get; set; }
 
-    /// <summary>What the last turn spoken in a <see cref="Pinned"/> voice queued to play, or null.</summary>
-    public SpokenClip? KeptTurn { get; private set; }
+    /// <summary>What each reply of the last turn queued to play, in order: one entry per <see cref="TurnEvent.Addressed"/> segment, null where a reply kept no clip.</summary>
+    public IReadOnlyList<SpokenClip?> KeptReplies { get; private set; } = [];
 
     /// <summary>Who to name on the captions of the next turn, or null for the ship's AI (#201).</summary>
     public string? CaptionSpeaker { get; set; }
@@ -184,8 +184,28 @@ public sealed class VoicePipeline(
         TurnResult? result = null;
         var signal = 1.0;
         string? translation = null;
+        var addressedSeen = false;
+        List<SpokenClip?> kept = [];
 
-        KeptTurn = null;
+        KeptReplies = [];
+
+        // Ends the reply in progress; the next text opens a pipeline in whatever voice is set by then.
+        async Task FinishReplyAsync()
+        {
+            if (speech is null)
+            {
+                kept.Add(null);
+                return;
+            }
+
+            await speech.CompleteAsync().ConfigureAwait(false);
+            kept.Add(speech.Kept);
+
+            speech.SynthesisFailed -= OnSynthesisFailed;
+            speech.VoiceRejected -= OnVoiceRejected;
+            await speech.DisposeAsync().ConfigureAwait(false);
+            speech = null;
+        }
 
         try
         {
@@ -199,6 +219,13 @@ public sealed class VoicePipeline(
                 switch (turnEvent)
                 {
                     case TurnEvent.Addressed addressed:
+                        if (addressedSeen)
+                        {
+                            await FinishReplyAsync().ConfigureAwait(false);
+                            translation = null;
+                        }
+
+                        addressedSeen = true;
                         signal = addressed.Signal;
                         break;
 
@@ -262,12 +289,9 @@ public sealed class VoicePipeline(
                 }
             }
 
-            if (speech is not null)
-            {
-                await speech.CompleteAsync().ConfigureAwait(false);
+            await FinishReplyAsync().ConfigureAwait(false);
 
-                KeptTurn = speech.Kept;
-            }
+            KeptReplies = kept;
         }
         finally
         {
