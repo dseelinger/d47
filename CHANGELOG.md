@@ -10,7 +10,7 @@
 
 Added: When your hold first covers a collect, mining, altruism or piracy mission, D47 says the cargo is all aboard and where to hand it in, such as "All 20 tons of Gold aboard. Hand in at Jameson Memorial in Sol. Say plot it to set the course." It is said once per mission, under Mission hand-ins and expiry.
 
-Added: Comms ends the sub-channel cycle with All on Carrier, System, Story and Characters when two or more parties are on the channel. Say "comms all" or "comms everyone" to select it. D47 reads it as "Carrier, all." and a turn spoken to All is answered by the first named party whose line takes it.
+Added: Comms ends the sub-channel cycle with All on Carrier, System, Story and Characters when two or more parties are on the channel. Say "comms all" or "comms everyone" to select it. D47 reads it as "Carrier, all." A message spoken to All reaches everyone on the channel in range, the model picks up to three of them to answer, and they answer in turn, each in its own voice and picture and told what the others said. Everyone who heard it remembers the message and the replies, so Tower asked alone later knows what you told the whole Carrier channel.
 
 Changed: The How to get it note on the Market page under Navigation names the ring types a ring-mined commodity comes from, such as "Mined from Icy rings." A commodity with no ring hotspot gets a tile such as "Find Metallic rings" that runs Search › Bodies for the first of those ring types near the market search origin.
 

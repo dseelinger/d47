@@ -52,4 +52,7 @@ public sealed record LlmSampling
 
     /// <summary>Rewording a debrief proposal.</summary>
     public static readonly LlmSampling Debrief = new(Cold);
+
+    /// <summary>Choosing who answers a message said to everyone on a comms channel.</summary>
+    public static readonly LlmSampling CommsRouting = new(Cold);
 }

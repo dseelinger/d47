@@ -22,7 +22,7 @@ public class TheSamplerIsChosenPerCallClassTests
     {
         LlmSampling[] mechanical =
         [
-            LlmSampling.VoiceCasting, LlmSampling.Log, LlmSampling.Adventure, LlmSampling.Lore,
+            LlmSampling.VoiceCasting, LlmSampling.Log, LlmSampling.Adventure, LlmSampling.Lore, LlmSampling.CommsRouting,
         ];
 
         Assert.All(mechanical, sampling => Assert.Equal(LlmSampling.Cold, sampling.Temperature));

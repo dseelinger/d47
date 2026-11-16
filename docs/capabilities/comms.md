@@ -275,8 +275,11 @@ selects it directly. A name can be the whole name or the last word of it.
 Carrier, System, Story and Characters end the sub-channel cycle with All once two or more
 parties are on them. Story counts cast members only, so one cast member and the narrator show no All.
 Crew, Target and Shuttle never show it. "Comms all" and "comms everyone" select All on the
-selected channel. A turn spoken to All is answered by the first named party whose line takes it; when every
-line refuses, the first refusal is said. Each channel keeps All, and Story keeps it for each story.
+selected channel. A turn spoken to All reaches everyone on the channel who can hear it; a party out of
+range hears nothing, and when no one can hear it the first refusal is said. The model picks who answers,
+at most three: the party you name, or the ones whose job the message concerns. They answer in turn, each
+told the replies before its own, and everyone who heard it remembers the message and every reply. Each
+channel keeps All, and Story keeps it for each story.
 If the channel drops below two parties, the first party is selected until a second returns.
 
 Each channel opens from the game:

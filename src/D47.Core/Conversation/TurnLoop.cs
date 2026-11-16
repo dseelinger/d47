@@ -897,36 +897,33 @@ public sealed class TurnLoop(
         }
     }
 
-    /// <summary>A comms turn: the first line that speaks for the selected party answers, or the ship's AI says no one is there.</summary>
+    /// <summary>
+    /// A comms turn: the first line that speaks for the selected party answers, or the ship's AI says no one is there. With
+    /// All selected, the parties chosen from those whose lines take it answer in turn.
+    /// </summary>
     private async IAsyncEnumerable<TurnEvent> CommsTurnAsync(
         string input,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        var selected = CommsSelected?.Invoke();
         List<(CommsSelection Party, Persona.LineDecision.Taken Taken)> candidates = [];
-        var decision = await CommsDecisionAsync(input, candidates, cancellationToken).ConfigureAwait(false);
+        var decision = await CommsDecisionAsync(selected, input, candidates, cancellationToken).ConfigureAwait(false);
 
-        if (decision is Persona.LineDecision.Taken taken)
+        if (selected is { IsAll: true } && candidates.Count > 0)
         {
-            string? answer = null;
-
-            await foreach (var turnEvent in AddressedTurnAsync(input, taken, cancellationToken).ConfigureAwait(false))
+            await foreach (var turnEvent in AllTurnAsync(selected.Channel, input, candidates, cancellationToken).ConfigureAwait(false))
             {
-                if (turnEvent is TurnEvent.Completed { Result: { Outcome: TurnOutcome.Answered } result })
-                {
-                    answer = result.Text;
-                }
-
                 yield return turnEvent;
             }
 
-            if (candidates.Count > 0 && answer is not null && CommsSelected?.Invoke() is { } all)
-            {
-                var exchange = new Persona.CommsExchange(all.Channel, input, [new Persona.CommsReply(taken.Speaker.Name, answer)]);
+            yield break;
+        }
 
-                foreach (var (party, candidate) in candidates)
-                {
-                    Lines.ForEach(line => line.Overhear(party, exchange, ReferenceEquals(candidate, taken) ? 0 : null));
-                }
+        if (decision is Persona.LineDecision.Taken taken)
+        {
+            await foreach (var turnEvent in AddressedTurnAsync(input, taken, cancellationToken).ConfigureAwait(false))
+            {
+                yield return turnEvent;
             }
 
             yield break;
@@ -943,13 +940,123 @@ public sealed class TurnLoop(
             TurnOutcome.Answered, refused.Route, refused.Line, Effort: null, Cost: null));
     }
 
-    /// <summary>Taken or Refused, never NotMine: a party no line speaks for is no one.</summary>
-    private async Task<Persona.LineDecision> CommsDecisionAsync(
+    /// <summary>
+    /// The parties chosen from <paramref name="candidates"/> answer in turn, each told the replies before its own; then every
+    /// candidate overhears the exchange.
+    /// </summary>
+    private async IAsyncEnumerable<TurnEvent> AllTurnAsync(
+        CommsChannel channel,
+        string input,
+        List<(CommsSelection Party, Persona.LineDecision.Taken Taken)> candidates,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var chosen = candidates.Count == 1 ? [0] : await AnswerersAsync(channel, input, candidates, cancellationToken).ConfigureAwait(false);
+        List<Persona.CommsReply> replies = [];
+        var ownReply = new int?[candidates.Count];
+
+        foreach (var index in chosen)
+        {
+            var taken = candidates[index].Taken;
+            var asked = taken with { Question = AllOnComms.Question(channel, taken.Question, replies) };
+            var cameThrough = new StrongBox<string?>();
+
+            await foreach (var turnEvent in AddressedTurnAsync(input, asked, cancellationToken, cameThrough).ConfigureAwait(false))
+            {
+                yield return turnEvent;
+            }
+
+            if (cameThrough.Value is not { } said)
+            {
+                break;
+            }
+
+            ownReply[index] = replies.Count;
+            replies.Add(new Persona.CommsReply(taken.Speaker.Name, said));
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+
+        if (replies.Count == 0)
+        {
+            yield break;
+        }
+
+        var exchange = new Persona.CommsExchange(channel, input, replies);
+
+        _lastAllExchange[channel] = [.. D47.Core.Persona.Overheard.ForTranscript(exchange, ownReply: null).TakeLast(D47.Core.Persona.ExchangeLines.Most)];
+
+        for (var i = 0; i < candidates.Count; i++)
+        {
+            var (party, own) = (candidates[i].Party, ownReply[i]);
+
+            Lines.ForEach(line => line.Overhear(party, exchange, own));
+        }
+    }
+
+    /// <summary>The lines of the last message said to everyone on each comms channel and its replies, oldest first.</summary>
+    private readonly Dictionary<CommsChannel, List<string>> _lastAllExchange = [];
+
+    /// <summary>Indexes into <paramref name="candidates"/> of the parties that answer, in speaking order; the first on any miss.</summary>
+    private async Task<IReadOnlyList<int>> AnswerersAsync(
+        CommsChannel channel,
         string input,
         List<(CommsSelection Party, Persona.LineDecision.Taken Taken)> candidates,
         CancellationToken cancellationToken)
     {
-        if (CommsSelected?.Invoke() is not { } selected)
+        var asking = Provider;
+
+        if (asking is null || !availability.CanAttemptModelTurn)
+        {
+            return [0];
+        }
+
+        List<AllOnComms.Candidate> parties =
+        [
+            .. candidates.Select(candidate => new AllOnComms.Candidate(
+                candidate.Party.SubChannel!.Key,
+                candidate.Taken.Speaker.Name,
+                candidate.Taken.Speaker.Brief)),
+        ];
+
+        var reply = await FlavourTurn.AskForAsync(
+            asking,
+            BackgroundModel,
+            persona: null,
+            aboutMe: null,
+            AllOnComms.Instruction(channel, input, parties, _lastAllExchange.GetValueOrDefault(channel) ?? []),
+            gameState: null,
+            spend,
+            prices,
+            logger,
+            cancellationToken,
+            effort: ThinkingEffort.Low,
+            sampling: LlmSampling.CommsRouting,
+            thinking: false,
+            limits: asking.RunsOnThisMachine ? null : new FlavourLimits(AllOnComms.RoutingLimit, AllOnComms.RoutingLimit),
+            responseSchema: AllOnComms.Schema(parties)).ConfigureAwait(false);
+
+        var chosen = AllOnComms.Chosen(reply.Line, parties);
+
+        logger.LogInformation(
+            "All on {Channel} answered by {Parties}{Miss}",
+            channel,
+            string.Join(", ", chosen.Select(index => parties[index].Name)),
+            reply.Line is null ? $" ({reply.Miss})" : string.Empty);
+
+        return chosen;
+    }
+
+    /// <summary>Taken or Refused, never NotMine: a party no line speaks for is no one.</summary>
+    private async Task<Persona.LineDecision> CommsDecisionAsync(
+        CommsSelection? selected,
+        string input,
+        List<(CommsSelection Party, Persona.LineDecision.Taken Taken)> candidates,
+        CancellationToken cancellationToken)
+    {
+        if (selected is null)
         {
             return new Persona.LineDecision.Refused(NoChannel, TurnRoute.NoOneOnComms);
         }
@@ -1008,10 +1115,12 @@ public sealed class TurnLoop(
     /// A turn answered by an addressed speaker, from their own brief and transcript. Skips the model-free
     /// routes, leaves the said-aloud block unread, and records the exchange into it as overheard.
     /// </summary>
+    /// <param name="cameThrough">Set to the reply as the Commander heard it, when the speaker answered.</param>
     private async IAsyncEnumerable<TurnEvent> AddressedTurnAsync(
         string input,
         Persona.LineDecision.Taken taken,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken,
+        StrongBox<string?>? cameThrough = null)
     {
         var speaker = taken.Speaker;
 
@@ -1133,7 +1242,14 @@ public sealed class TurnLoop(
         // The ship AI overhears what came through.
         if (result is { Outcome: TurnOutcome.Answered })
         {
-            Record(thinner is null || speaker.ScreenReply is not null ? result.Text : heard.ToString().Trim(), input, speaker.Name);
+            var said = thinner is null || speaker.ScreenReply is not null ? result.Text : heard.ToString().Trim();
+
+            Record(said, input, speaker.Name);
+
+            if (cameThrough is not null)
+            {
+                cameThrough.Value = said;
+            }
         }
     }
 
