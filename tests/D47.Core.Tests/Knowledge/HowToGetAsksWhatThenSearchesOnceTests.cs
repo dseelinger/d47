@@ -127,6 +127,22 @@ public class HowToGetAsksWhatThenSearchesOnceTests
         Assert.Null(galaxy.LastStationQuery);
     }
 
+    [Theory]
+    [InlineData("Void Opal", "racked from core asteroids in Icy rings")]
+    [InlineData("Tritium", "ined from Icy rings")]
+    [InlineData("Gold", "ined from Metallic or Metal Rich rings")]
+    public async Task ARingMinedMaterialNamesItsRingTypes(string item, string expected)
+    {
+        var install = new MemoryInstall();
+        var (registry, _) = Build(install);
+
+        var result = await registry.InvokeAsync(
+            "how_to_get", Args(("item", item)), TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Contains(expected, result.Content, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task ARingMinedMaterialWithNoHotspotNamesRingMiningAndSearchesNothing()
     {
@@ -137,7 +153,7 @@ public class HowToGetAsksWhatThenSearchesOnceTests
             "how_to_get", Args(("item", "Lithium Hydroxide")), TestContext.Current.CancellationToken);
 
         Assert.False(result.IsError);
-        Assert.Contains("ined from asteroid rings", result.Content, StringComparison.Ordinal);
+        Assert.Contains("ined from Icy rings", result.Content, StringComparison.Ordinal);
         Assert.Null(galaxy.LastBodyQuery);
         Assert.Null(galaxy.LastStationQuery);
     }

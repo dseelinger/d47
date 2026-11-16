@@ -3369,7 +3369,7 @@ public static class GalaxyCapability
         if (acquisition.Methods.Count > 0)
         {
             said.Append(' ')
-                .Append(SpokenText.Capitalised(string.Join(", or ", acquisition.Methods.Select(AcquisitionWords.Of))))
+                .Append(SpokenText.Capitalised(string.Join(", or ", acquisition.Methods.Select(method => MethodSaid(acquisition, method)))))
                 .Append('.');
         }
 
@@ -3394,6 +3394,21 @@ public static class GalaxyCapability
         }
 
         return said.ToString();
+    }
+
+    /// <summary>The method in words; ring mining names the ring types the material comes from.</summary>
+    private static string MethodSaid(Acquisition acquisition, AcquisitionMethod method)
+    {
+        if (method != AcquisitionMethod.RingMining)
+        {
+            return AcquisitionWords.Of(method);
+        }
+
+        var rows = RingMaterials.For(acquisition.Name);
+
+        return RingMaterials.Phrase(rows) is { } phrase
+            ? (rows[0].Method == MiningMethod.Core ? "cracked from core asteroids in " : "mined from ") + phrase
+            : AcquisitionWords.Of(method);
     }
 
     /// <summary>The rank a Power unlocks a Powerplay module at, said against the pledge; null for any other item.</summary>

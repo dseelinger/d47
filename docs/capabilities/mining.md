@@ -192,7 +192,8 @@ finished reading your older journals it says so and lists nothing.
 
 - **Prospector results** and **Core asteroids** are rows on the [Callouts](callouts.md) page, each
   with its own switch.
-- **Which ring to mine** is the `hotspot` filter of `find_body` in [Galaxy search](galaxy.md). The
+- **Which ring to mine** is the `hotspot` filter of `find_body` in [Galaxy search](galaxy.md); `how_to_get`
+  also names the ring types a material comes from. The
   Market page links to the same search from its How to get it note.
 - **Where to sell** is `find_nearest_station` with `selling` in [Galaxy search](galaxy.md).
 

@@ -25,6 +25,16 @@ public static class RingMaterials
     public static IReadOnlyList<RingMaterial> For(string material) =>
         Loaded.Value.TryGetValue(MiningTarget.SymbolOf(material), out var rows) ? rows : [];
 
+    /// <summary>The rows as ring types, best rank first: "Metal Rich or Metallic rings, then Rocky rings"; null for no rows.</summary>
+    public static string? Phrase(IReadOnlyList<RingMaterial> rows) =>
+        rows.Count == 0
+            ? null
+            : string.Join(
+                ", then ",
+                rows.GroupBy(row => row.Rank)
+                    .OrderBy(rank => rank.Key)
+                    .Select(rank => string.Join(" or ", rank.Select(row => row.RingType)) + " rings"));
+
     private static Dictionary<string, List<RingMaterial>> Load()
     {
         var bySymbol = new Dictionary<string, List<RingMaterial>>(StringComparer.Ordinal);

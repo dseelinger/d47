@@ -1246,7 +1246,9 @@ Before this, the model chose among `find_nearest_station`, `find_material` and
 `find_micro_resource` on its own, and a name that landed on the wrong one was redirected rather
 than answered. `how_to_get` asks `AcquisitionGuide` instead, which already resolves a name against
 every one of those catalogues, and answers in order: what the thing is, how it is acquired in
-words, what has to be reached or held first, and any further detail the table carries.
+words, what has to be reached or held first, and any further detail the table carries. For a
+ring-mined commodity the method names the ring types, best first ("mined from Icy rings", "mined from
+Metallic or Metal Rich rings", "cracked from core asteroids in Icy rings").
 
 For a Powerplay module, a sentence follows the pledge: the rank the Power unlocks it at, said against
 the Commander's own rank and merits. A pledged Commander below the rank hears the shortfall, for
