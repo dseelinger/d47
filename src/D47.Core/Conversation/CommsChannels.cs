@@ -26,6 +26,20 @@ public sealed record CommsSubChannel(string Key, string Name);
 public sealed record CommsSelection(CommsChannel Channel, CommsSubChannel? SubChannel)
 {
     public bool IsNoOne => SubChannel is null;
+
+    /// <summary>Whether the selection is <see cref="CommsChannels.AllKey"/>.</summary>
+    public bool IsAll => SubChannel?.Key == CommsChannels.AllKey;
+
+    /// <summary>The named parties All reaches, in channel order, narrator left out; empty unless <see cref="IsAll"/>.</summary>
+    public IReadOnlyList<CommsSubChannel> Everyone { get; init; } = [];
+
+    public bool Equals(CommsSelection? other) =>
+        other is not null
+        && Channel == other.Channel
+        && EqualityComparer<CommsSubChannel?>.Default.Equals(SubChannel, other.SubChannel)
+        && Everyone.SequenceEqual(other.Everyone);
+
+    public override int GetHashCode() => HashCode.Combine(Channel, SubChannel);
 }
 
 /// <summary>What the channels are built from, read once per update.</summary>
@@ -95,6 +109,9 @@ public sealed class CommsChannels
     public const string TargetKey = "target";
 
     public const string NarratorKey = ":narrator";
+
+    /// <summary>The reserved party key for everyone named on the channel.</summary>
+    public const string AllKey = ":all";
 
     public const string PilotKey = "pilot";
 
@@ -232,7 +249,21 @@ public sealed class CommsChannels
             return true;
         }
 
-        if (Match(PartiesOn(channel), subChannel) is not { } party)
+        var parties = PartiesOn(channel);
+
+        if (IsAllWord(subChannel))
+        {
+            if (parties.FirstOrDefault(party => party.Key == AllKey) is not { } all)
+            {
+                return false;
+            }
+
+            _channel = channel;
+            Remember(channel, all.Key);
+            return true;
+        }
+
+        if (Match(parties, subChannel) is not { } party)
         {
             return false;
         }
@@ -331,7 +362,7 @@ public sealed class CommsChannels
         var remembered = RememberedKey(channel);
         var chosen = parties.FirstOrDefault(party => remembered is not null && Same(party.Key, remembered)) ?? parties.FirstOrDefault();
 
-        if (chosen is not null)
+        if (chosen is not null && remembered != AllKey)
         {
             Remember(channel, chosen.Key);
         }
@@ -381,7 +412,14 @@ public sealed class CommsChannels
             ? parties.FirstOrDefault()
             : parties.FirstOrDefault(party => remembered is not null && Same(party.Key, remembered));
 
-        return new CommsSelection(channel, party);
+        if (party is null && remembered == AllKey)
+        {
+            party = parties.FirstOrDefault();
+        }
+
+        return party?.Key == AllKey
+            ? new CommsSelection(channel, party) { Everyone = Named(parties) }
+            : new CommsSelection(channel, party);
     }
 
     private List<CommsChannel> AvailableNow() => [.. Order.Where(IsAvailable)];
@@ -399,6 +437,22 @@ public sealed class CommsChannels
     };
 
     private List<CommsSubChannel> PartiesOn(CommsChannel channel)
+    {
+        var parties = NamedAndNarrator(channel);
+
+        if (channel is CommsChannel.Carrier or CommsChannel.System or CommsChannel.Story or CommsChannel.Characters
+            && parties.Count(party => party.Key != NarratorKey) >= 2)
+        {
+            parties.Add(new CommsSubChannel(AllKey, "All"));
+        }
+
+        return parties;
+    }
+
+    private static List<CommsSubChannel> Named(List<CommsSubChannel> parties) =>
+        [.. parties.Where(party => party.Key is not (AllKey or NarratorKey))];
+
+    private List<CommsSubChannel> NamedAndNarrator(CommsChannel channel)
     {
         if (!IsAvailable(channel))
         {
@@ -437,6 +491,9 @@ public sealed class CommsChannels
     };
 
     private TargetedShip? NpcTarget() => _inputs.Target is { IsCommander: false } target ? target : null;
+
+    private static bool IsAllWord(string name) =>
+        name.Trim() is var word && (Same(word, "all") || Same(word, "everyone"));
 
     private static CommsSubChannel? Match(List<CommsSubChannel> parties, string name)
     {

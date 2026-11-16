@@ -206,7 +206,8 @@ public static class CommsCapability
                 Name = SelectTool,
                 Exercise =
                     "Say \"channel up\". The reply names the comms channel now selected, and \"next sub-channel\" "
-                    + "moves who on it. The model cannot do this: it is refused if it asks.",
+                    + "moves who on it, ending at all on a channel with two or more parties; \"comms all\" selects all, "
+                    + "and the reply is \"Carrier, all.\" The model cannot do this: it is refused if it asks.",
                 Description =
                     "Choose which comms channel, and who on it, the Commander's comms key reaches, and say "
                     + "the selection.",
@@ -217,7 +218,7 @@ public static class CommsCapability
                         "A channel by name, or next, previous or current to move from the one selected.",
                         [.. ChannelNames.Values, Next, Previous, Current],
                         required: true),
-                    ToolParameter.Text("sub_channel", "Who on the channel, by name, or next or previous."),
+                    ToolParameter.Text("sub_channel", "Who on the channel, by name, all or everyone for every named party on it, or next or previous."),
                 ],
 
                 // Who the Commander's voice reaches is the Commander's choice alone.
@@ -233,6 +234,8 @@ public static class CommsCapability
                     new ToolCommandPhrase("sub-channel up", Move(Current, Next)),
                     new ToolCommandPhrase("previous sub-channel", Move(Current, Previous)),
                     new ToolCommandPhrase("sub-channel down", Move(Current, Previous)),
+                    new ToolCommandPhrase("comms all", Move(Current, "all")),
+                    new ToolCommandPhrase("comms everyone", Move(Current, "everyone")),
                     .. ChannelNames.Values.Select(name => new ToolCommandPhrase($"comms {name}", Move(name, null))),
                 ],
                 Handler = (arguments, _) => Task.FromResult(Choose(
@@ -266,6 +269,7 @@ public static class CommsCapability
         var phrases = (
             from channel in channels.Available
             from party in channels.SubChannels(channel)
+            where party.Key != CommsChannels.AllKey && !IsAllWord(party.Name)
             let arguments = Move(ChannelNames[channel], party.Name)
             let words = party.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             from said in words.Length > 1 ? [party.Name, words[^1]] : new[] { party.Name }
@@ -371,7 +375,7 @@ public static class CommsCapability
 
     /// <summary>The selection in the fewest words: "Carrier, Tower." or "Story, no one."</summary>
     public static string Say(CommsSelection selection) =>
-        $"{selection.Channel}, {selection.SubChannel?.Name ?? "no one"}.";
+        $"{selection.Channel}, {(selection.IsAll ? "all" : selection.SubChannel?.Name ?? "no one")}.";
 
     private static Dictionary<string, string> Move(string channel, string? subChannel) =>
         subChannel is null
@@ -379,6 +383,8 @@ public static class CommsCapability
             : new(StringComparer.Ordinal) { ["channel"] = channel, ["sub_channel"] = subChannel };
 
     private static bool Same(string left, string right) => string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsAllWord(string name) => Same(name.Trim(), "all") || Same(name.Trim(), "everyone");
 
     private static ToolResult FriendsOnline(FriendRoster? friends, Func<bool>? gameRunning)
     {

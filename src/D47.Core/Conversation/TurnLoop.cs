@@ -933,20 +933,49 @@ public sealed class TurnLoop(
             return new Persona.LineDecision.Refused(NoChannel, TurnRoute.NoOneOnComms);
         }
 
-        if (!selected.IsNoOne)
+        if (selected.IsAll)
         {
-            foreach (var line in Lines)
-            {
-                var decision = await line.RouteAsync(selected, input, cancellationToken).ConfigureAwait(false);
+            Persona.LineDecision? firstRefusal = null;
 
-                if (decision is not D47.Core.Persona.LineDecision.NotMine)
+            foreach (var party in selected.Everyone)
+            {
+                var decision = await RouteToAsync(new CommsSelection(selected.Channel, party), input, cancellationToken).ConfigureAwait(false);
+
+                if (decision is Persona.LineDecision.Taken)
                 {
                     return decision;
                 }
+
+                if (decision is not null)
+                {
+                    firstRefusal ??= decision;
+                }
             }
+
+            return firstRefusal ?? new Persona.LineDecision.Refused(NoOneOn(selected.Channel), TurnRoute.NoOneOnComms);
+        }
+
+        if (!selected.IsNoOne && await RouteToAsync(selected, input, cancellationToken).ConfigureAwait(false) is { } routed)
+        {
+            return routed;
         }
 
         return new Persona.LineDecision.Refused(NoOneOn(selected.Channel), TurnRoute.NoOneOnComms);
+    }
+
+    private async Task<Persona.LineDecision?> RouteToAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
+    {
+        foreach (var line in Lines)
+        {
+            var decision = await line.RouteAsync(selected, input, cancellationToken).ConfigureAwait(false);
+
+            if (decision is not D47.Core.Persona.LineDecision.NotMine)
+            {
+                return decision;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>What the ship's AI says to a comms turn while no comms channel is available.</summary>

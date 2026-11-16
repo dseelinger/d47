@@ -153,7 +153,7 @@ nav_order: 139
  <text x="681" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">CHARACTERS</text>
  <rect x="746" y="30" width="112" height="64" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="802" y="68" text-anchor="middle" font-size="14" font-weight="800" fill="var(--text-muted)">SHUTTLE</text>
- <text x="440" y="136" text-anchor="middle" font-size="17" fill="var(--text)">“Channel up” skips any channel with nobody on it. “Next sub-channel” picks who on it.</text>
+ <text x="440" y="136" text-anchor="middle" font-size="17" fill="var(--text)">“Channel up” skips any channel with nobody on it. “Next sub-channel” picks who on it, ending at All.</text>
  <text x="440" y="168" text-anchor="middle" font-size="16" fill="var(--text-muted)">After each move D47 says where you are: “Carrier, Tower.”</text>
  <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text-muted)">The AI cannot move it, so text from the game cannot redirect your voice.</text>
 </svg>
@@ -264,11 +264,20 @@ reported, not who is online now. With Elite closed it says so.
 > "next sub-channel"
 > "comms carrier"
 > "comms Tower"
+> "comms all"
+> "comms everyone"
 
 The comms channels are Carrier, Target, System, Story, Crew, Characters and Shuttle. Channel up and down
 skip any channel that has no one on it, and wrap around. Sub-channel up and down step through
 who is on the selected channel and wrap within it. "Comms" followed by a channel or a name
 selects it directly. A name can be the whole name or the last word of it.
+
+Carrier, System, Story and Characters end the sub-channel cycle with All once two or more
+parties are on them. Story counts cast members only, so one cast member and the narrator show no All.
+Crew, Target and Shuttle never show it. "Comms all" and "comms everyone" select All on the
+selected channel. A turn spoken to All is answered by the first named party whose line takes it; when every
+line refuses, the first refusal is said. Each channel keeps All, and Story keeps it for each story.
+If the channel drops below two parties, the first party is selected until a second returns.
 
 Each channel opens from the game:
 
@@ -299,6 +308,8 @@ After each change D47 says the selection in the fewest words. A change made by k
 ```text
 Carrier, Tower.
 ```
+
+All is read as "Carrier, all."
 
 If no one is on the channel, D47 says "no one":
 
@@ -390,7 +401,7 @@ Choose which comms channel, and who on it, the Commander's comms key reaches, an
 Protected: the keyword router, the keys and the stick buttons reach it, and the model is refused.
 
 ```json
-{"type":"object","properties":{"channel":{"type":"string","description":"A channel by name, or next, previous or current to move from the one selected.","enum":["carrier","target","system","story","crew","characters","shuttle","next","previous","current"]},"sub_channel":{"type":"string","description":"Who on the channel, by name, or next or previous."}},"required":["channel"],"additionalProperties":false}
+{"type":"object","properties":{"channel":{"type":"string","description":"A channel by name, or next, previous or current to move from the one selected.","enum":["carrier","target","system","story","crew","characters","shuttle","next","previous","current"]},"sub_channel":{"type":"string","description":"Who on the channel, by name, all or everyone for every named party on it, or next or previous."}},"required":["channel"],"additionalProperties":false}
 ```
 
 </details>

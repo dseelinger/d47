@@ -88,7 +88,7 @@ public sealed class TheCommanderMovesTheCommsSelectionTests
 
         var said = CommsCapability.Choose(channels, CommsCapability.Current, CommsCapability.Previous);
 
-        Assert.Equal("Carrier, Tower.", said.Spoken);
+        Assert.Equal("Carrier, all.", said.Spoken);
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public sealed class TheCommanderMovesTheCommsSelectionTests
     [InlineData("channel down", "System, Kestrel Vane.")]
     [InlineData("next sub-channel", "Carrier, Tower.")]
     [InlineData("next sub channel", "Carrier, Tower.")]
-    [InlineData("previous sub-channel", "Carrier, Tower.")]
+    [InlineData("previous sub-channel", "Carrier, all.")]
     [InlineData("comms system", "System, Kestrel Vane.")]
     [InlineData("comms target", "Target, Mara Okafor.")]
     [InlineData("comms tower", "Carrier, Tower.")]

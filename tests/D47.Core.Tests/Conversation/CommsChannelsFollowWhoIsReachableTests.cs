@@ -37,7 +37,7 @@ public class CommsChannelsFollowWhoIsReachableTests
         var channels = With(new CommsInputs { CarrierOwned = true });
 
         Assert.Equal([CommsChannel.Carrier], channels.Available);
-        Assert.Equal(["Captain", "Tower"], channels.SubChannels(CommsChannel.Carrier).Select(party => party.Name));
+        Assert.Equal(["Captain", "Tower", "All"], channels.SubChannels(CommsChannel.Carrier).Select(party => party.Name));
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class CommsChannelsFollowWhoIsReachableTests
         var channels = With(new CommsInputs { Heard = [Npc("Vance", 5), Npc("Okafor", 2)] });
 
         Assert.Equal([CommsChannel.System], channels.Available);
-        Assert.Equal(["Vance", "Okafor"], channels.SubChannels(CommsChannel.System).Select(party => party.Name));
+        Assert.Equal(["Vance", "Okafor", "All"], channels.SubChannels(CommsChannel.System).Select(party => party.Name));
         Assert.Equal("Vance", Party(channels));
     }
 
@@ -96,7 +96,7 @@ public class CommsChannelsFollowWhoIsReachableTests
         });
 
         Assert.Equal([CommsChannel.Story], channels.Available);
-        Assert.Equal(["Ilse Varga", "Rho"], channels.SubChannels(CommsChannel.Story).Select(party => party.Name));
+        Assert.Equal(["Ilse Varga", "Rho", "All"], channels.SubChannels(CommsChannel.Story).Select(party => party.Name));
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public class CommsChannelsFollowWhoIsReachableTests
         var channels = With(new CommsInputs { Characters = [Character("0a1b2c3d", "Wren"), Character("4e5f6a7b", "Tamsin Holt")] });
 
         Assert.Equal([CommsChannel.Characters], channels.Available);
-        Assert.Equal(["Wren", "Tamsin Holt"], channels.SubChannels(CommsChannel.Characters).Select(party => party.Name));
+        Assert.Equal(["Wren", "Tamsin Holt", "All"], channels.SubChannels(CommsChannel.Characters).Select(party => party.Name));
     }
 
     [Fact]
@@ -249,7 +249,13 @@ public class CommsChannelsFollowWhoIsReachableTests
         Assert.Equal("Tower", Party(channels));
 
         channels.NextSubChannel();
+        Assert.Equal("All", Party(channels));
+
+        channels.NextSubChannel();
         Assert.Equal("Captain", Party(channels));
+
+        channels.PreviousSubChannel();
+        Assert.Equal("All", Party(channels));
 
         channels.PreviousSubChannel();
         Assert.Equal("Tower", Party(channels));
