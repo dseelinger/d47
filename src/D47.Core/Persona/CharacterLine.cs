@@ -16,6 +16,7 @@ public sealed class CharacterLine(
     Func<string?>? station = null) : ILine
 {
     private readonly Dictionary<string, List<ConversationMessage>> _transcripts = [];
+    private readonly Dictionary<string, List<string>> _overheard = [];
 
     public async Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
@@ -50,7 +51,7 @@ public sealed class CharacterLine(
             new Speaker(
                 character.Aboard ? VoiceRole.Crew : VoiceRole.Comms,
                 character.Name,
-                Brief(character),
+                Brief(character) + Overheard.Block(CommsChannel.Characters, _overheard.GetValueOrDefault(character.Id) ?? []),
                 transcript,
                 OffersTools: false,
                 Signal: character.Aboard ? 1 : LinkSignal.Strength(lightYears),
@@ -58,6 +59,25 @@ public sealed class CharacterLine(
                 Voice: character.Voice,
                 Picture: character.Picture),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
+    }
+
+    public void Overhear(CommsSelection party, CommsExchange exchange, int? ownReply)
+    {
+        ArgumentNullException.ThrowIfNull(party);
+        ArgumentNullException.ThrowIfNull(exchange);
+
+        if (party is not { Channel: CommsChannel.Characters, SubChannel.Key: var id }
+            || characters().All(c => c.Id != id))
+        {
+            return;
+        }
+
+        if (!_overheard.TryGetValue(id, out var held))
+        {
+            _overheard[id] = held = [];
+        }
+
+        Overheard.Keep(held, Overheard.ForTranscript(exchange, ownReply));
     }
 
     /// <summary>The refusal for a character who cannot hear the Commander from <paramref name="away"/>.</summary>

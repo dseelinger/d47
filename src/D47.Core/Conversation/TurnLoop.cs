@@ -902,13 +902,31 @@ public sealed class TurnLoop(
         string input,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var decision = await CommsDecisionAsync(input, cancellationToken).ConfigureAwait(false);
+        List<(CommsSelection Party, Persona.LineDecision.Taken Taken)> candidates = [];
+        var decision = await CommsDecisionAsync(input, candidates, cancellationToken).ConfigureAwait(false);
 
         if (decision is Persona.LineDecision.Taken taken)
         {
+            string? answer = null;
+
             await foreach (var turnEvent in AddressedTurnAsync(input, taken, cancellationToken).ConfigureAwait(false))
             {
+                if (turnEvent is TurnEvent.Completed { Result: { Outcome: TurnOutcome.Answered } result })
+                {
+                    answer = result.Text;
+                }
+
                 yield return turnEvent;
+            }
+
+            if (candidates.Count > 0 && answer is not null && CommsSelected?.Invoke() is { } all)
+            {
+                var exchange = new Persona.CommsExchange(all.Channel, input, [new Persona.CommsReply(taken.Speaker.Name, answer)]);
+
+                foreach (var (party, candidate) in candidates)
+                {
+                    Lines.ForEach(line => line.Overhear(party, exchange, ReferenceEquals(candidate, taken) ? 0 : null));
+                }
             }
 
             yield break;
@@ -926,7 +944,10 @@ public sealed class TurnLoop(
     }
 
     /// <summary>Taken or Refused, never NotMine: a party no line speaks for is no one.</summary>
-    private async Task<Persona.LineDecision> CommsDecisionAsync(string input, CancellationToken cancellationToken)
+    private async Task<Persona.LineDecision> CommsDecisionAsync(
+        string input,
+        List<(CommsSelection Party, Persona.LineDecision.Taken Taken)> candidates,
+        CancellationToken cancellationToken)
     {
         if (CommsSelected?.Invoke() is not { } selected)
         {
@@ -941,18 +962,17 @@ public sealed class TurnLoop(
             {
                 var decision = await RouteToAsync(new CommsSelection(selected.Channel, party), input, cancellationToken).ConfigureAwait(false);
 
-                if (decision is Persona.LineDecision.Taken)
+                if (decision is Persona.LineDecision.Taken candidate)
                 {
-                    return decision;
+                    candidates.Add((new CommsSelection(selected.Channel, party), candidate));
                 }
-
-                if (decision is not null)
+                else if (decision is not null)
                 {
                     firstRefusal ??= decision;
                 }
             }
 
-            return firstRefusal ?? new Persona.LineDecision.Refused(NoOneOn(selected.Channel), TurnRoute.NoOneOnComms);
+            return candidates.Count > 0 ? candidates[0].Taken : firstRefusal ?? new Persona.LineDecision.Refused(NoOneOn(selected.Channel), TurnRoute.NoOneOnComms);
         }
 
         if (!selected.IsNoOne && await RouteToAsync(selected, input, cancellationToken).ConfigureAwait(false) is { } routed)

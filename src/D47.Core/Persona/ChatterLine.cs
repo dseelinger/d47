@@ -46,7 +46,7 @@ public sealed class ChatterLine(
     private long _lines;
 
     /// <summary>The conversation held with each real comms NPC, in the system it began in.</summary>
-    private readonly Dictionary<string, (string? System, List<ConversationMessage> Messages)> _conversations = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, (string? System, List<ConversationMessage> Messages, List<string> Overheard)> _conversations = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>NPCs whose personality could not be written, so the plain brief is used for the stay.</summary>
     private readonly HashSet<string> _noPersonality = new(StringComparer.OrdinalIgnoreCase);
@@ -194,7 +194,7 @@ public sealed class ChatterLine(
             _ => Audio.VoiceGender.Unlabelled,
         });
 
-        var transcript = Conversation(npc.Name);
+        var (transcript, overheard) = Held(npc.Name);
 
         var brief = $"""
                      {CannedSpeakers.For(npc.Family ?? string.Empty)}
@@ -205,7 +205,7 @@ public sealed class ChatterLine(
                      You do not scan, interdict, target, fine or put a bounty on the Commander, grant or deny
                      them docking, give them or take their cargo, or send them a wing or friend invite.{(accent is null ? string.Empty : " " + accent)}
                      {SigningOff(npc.Name)}
-                     """;
+                     """ + Overheard.Block(CommsChannel.System, overheard);
 
         return new LineDecision.Taken(
             new Speaker(
@@ -222,10 +222,41 @@ public sealed class ChatterLine(
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
     }
 
+    public void Overhear(CommsSelection party, CommsExchange exchange, int? ownReply)
+    {
+        ArgumentNullException.ThrowIfNull(party);
+        ArgumentNullException.ThrowIfNull(exchange);
+
+        if (party is not { Channel: CommsChannel.System, SubChannel.Key: var key })
+        {
+            return;
+        }
+
+        if (roster?.Invoke()?.Find(key) is { Kind: NpcKind.Comms } npc)
+        {
+            var held = Held(npc.Name).Overheard;
+
+            lock (_lock)
+            {
+                Overheard.Keep(held, Overheard.ForTranscript(exchange, ownReply));
+            }
+
+            return;
+        }
+
+        lock (_lock)
+        {
+            if (_heardIn.TryGetValue(key, out var heardIn) && In(heardIn, system()))
+            {
+                Overheard.Keep(heardIn.Said, Overheard.ForExchange(exchange, ownReply));
+            }
+        }
+    }
+
     private string Knows() => OffShipKnowledge.Describe(system(), station?.Invoke());
 
-    /// <summary>The held conversation with a comms NPC, empty for a new stay and trimmed to the last <see cref="ExchangeLines.Most"/> messages.</summary>
-    private List<ConversationMessage> Conversation(string name)
+    /// <summary>The held conversation with a comms NPC and the lines overheard since, both empty for a new stay; the conversation is trimmed to the last <see cref="ExchangeLines.Most"/> messages.</summary>
+    private (List<ConversationMessage> Messages, List<string> Overheard) Held(string name)
     {
         lock (_lock)
         {
@@ -243,7 +274,7 @@ public sealed class ChatterLine(
 
             if (!_conversations.TryGetValue(name, out var held))
             {
-                _conversations[name] = held = (here, []);
+                _conversations[name] = held = (here, [], []);
             }
 
             if (held.Messages.Count > ExchangeLines.Most)
@@ -251,7 +282,7 @@ public sealed class ChatterLine(
                 held.Messages.RemoveRange(0, held.Messages.Count - ExchangeLines.Most);
             }
 
-            return held.Messages;
+            return (held.Messages, held.Overheard);
         }
     }
 

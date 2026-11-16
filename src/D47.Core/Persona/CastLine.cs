@@ -61,6 +61,27 @@ public sealed class CastLine(
         }
     }
 
+    public void Overhear(CommsSelection party, CommsExchange exchange, int? ownReply)
+    {
+        ArgumentNullException.ThrowIfNull(party);
+        ArgumentNullException.ThrowIfNull(exchange);
+
+        if (party is not { Channel: CommsChannel.Story, SubChannel.Key: var castId } || member(castId) is null)
+        {
+            return;
+        }
+
+        lock (_lock)
+        {
+            if (!_said.TryGetValue(castId, out var held))
+            {
+                _said[castId] = held = [];
+            }
+
+            Overheard.Keep(held, Overheard.ForExchange(exchange, ownReply));
+        }
+    }
+
     public Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selected);

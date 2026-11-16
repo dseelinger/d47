@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 
 namespace D47.Core.Persona;
@@ -74,4 +75,72 @@ public interface ILine
 {
     /// <summary>The answer for <paramref name="selected"/>; <see cref="LineDecision.NotMine"/> for a party this line does not speak for.</summary>
     Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken);
+
+    /// <summary>Records an exchange said to everyone on the party's channel. ownReply is the index of the party's own reply, or null when it did not answer.</summary>
+    void Overhear(CommsSelection party, CommsExchange exchange, int? ownReply) { }
+}
+
+/// <summary>What the Commander asked everyone on a channel and the replies, in the order spoken.</summary>
+public sealed record CommsExchange(CommsChannel Channel, string Asked, IReadOnlyList<CommsReply> Replies);
+
+/// <summary>One party's reply within a <see cref="CommsExchange"/>.</summary>
+public sealed record CommsReply(string Name, string Said);
+
+/// <summary>The lines a party keeps of an exchange said to everyone on its channel.</summary>
+public static class Overheard
+{
+    /// <summary>For a line with a transcript: the Commander's words when the party did not answer, then the replies it lacks.</summary>
+    public static IEnumerable<string> ForTranscript(CommsExchange exchange, int? ownReply)
+    {
+        if (ownReply is null)
+        {
+            foreach (var line in Commander(exchange))
+            {
+                yield return line;
+            }
+        }
+
+        for (var i = ownReply + 1 ?? 0; i < exchange.Replies.Count; i++)
+        {
+            if (Reply(exchange.Replies[i]) is { } line)
+            {
+                yield return line;
+            }
+        }
+    }
+
+    /// <summary>For a line whose exchange already holds the Commander's words and its own reply: every other reply.</summary>
+    public static IEnumerable<string> ForExchange(CommsExchange exchange, int? ownReply)
+    {
+        for (var i = 0; i < exchange.Replies.Count; i++)
+        {
+            if (i != ownReply && Reply(exchange.Replies[i]) is { } line)
+            {
+                yield return line;
+            }
+        }
+    }
+
+    /// <summary>Appends <paramref name="lines"/> to <paramref name="held"/>, keeping the last <see cref="ExchangeLines.Most"/>.</summary>
+    public static void Keep(List<string> held, IEnumerable<string> lines)
+    {
+        held.AddRange(lines);
+
+        if (held.Count > ExchangeLines.Most)
+        {
+            held.RemoveRange(0, held.Count - ExchangeLines.Most);
+        }
+    }
+
+    /// <summary>The brief block for lines overheard on <paramref name="channel"/>; empty when there are none.</summary>
+    public static string Block(CommsChannel channel, IReadOnlyList<string> held) =>
+        held.Count == 0
+            ? string.Empty
+            : $"\n\nSaid to everyone on the {CommsCapability.ChannelNames[channel]} channel, oldest first:\n{ExchangeLines.Recent(held)}";
+
+    private static IEnumerable<string> Commander(CommsExchange exchange) =>
+        exchange.Asked.Trim() is { Length: > 0 } asked ? [$"Commander: {asked}"] : [];
+
+    private static string? Reply(CommsReply reply) =>
+        reply.Said.Trim() is { Length: > 0 } said ? $"{reply.Name}: {said}" : null;
 }

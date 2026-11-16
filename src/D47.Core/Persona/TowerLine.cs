@@ -18,6 +18,7 @@ public sealed class TowerLine(
     Func<string?>? notes = null) : ILine
 {
     private readonly List<ConversationMessage> _transcript = [];
+    private readonly List<string> _overheard = [];
 
     public async Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
@@ -46,12 +47,23 @@ public sealed class TowerLine(
             new Speaker(
                 VoiceRole.TowerControl,
                 NpcChatter.TowerName,
-                Brief(state, notes?.Invoke()),
+                Brief(state, notes?.Invoke()) + Overheard.Block(CommsChannel.Carrier, _overheard),
                 _transcript,
                 OffersTools: false,
                 Signal: LinkSignal.Strength(lightYears),
                 LiveState: () => CarrierCapability.Describe(commander(), now())),
             question.Length == 0 ? "The Commander is calling the tower." : question);
+    }
+
+    public void Overhear(CommsSelection party, CommsExchange exchange, int? ownReply)
+    {
+        ArgumentNullException.ThrowIfNull(party);
+        ArgumentNullException.ThrowIfNull(exchange);
+
+        if (party is { Channel: CommsChannel.Carrier, SubChannel.Key: CommsChannels.TowerKey })
+        {
+            Overheard.Keep(_overheard, Overheard.ForTranscript(exchange, ownReply));
+        }
     }
 
     /// <summary>The prompt block for the tower.</summary>

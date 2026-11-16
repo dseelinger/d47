@@ -23,6 +23,7 @@ public sealed class CaptainLine(
     public const double RangeLightYears = CarrierComms.RangeLightYears;
 
     private readonly List<ConversationMessage> _transcript = [];
+    private readonly List<string> _overheard = [];
 
     public async Task<LineDecision> RouteAsync(CommsSelection selected, string input, CancellationToken cancellationToken)
     {
@@ -53,12 +54,23 @@ public sealed class CaptainLine(
             new Speaker(
                 VoiceRole.CarrierCaptain,
                 NpcChatter.CaptainName,
-                Brief(state, captainName?.Invoke(), notes?.Invoke()),
+                Brief(state, captainName?.Invoke(), notes?.Invoke()) + Overheard.Block(CommsChannel.Carrier, _overheard),
                 _transcript,
                 OffersTools: false,
                 Signal: LinkSignal.Strength(lightYears),
                 LiveState: () => Knows(commander(), now(), fight?.Invoke())),
             question.Length == 0 ? "The Commander is trying to get your attention." : question);
+    }
+
+    public void Overhear(CommsSelection party, CommsExchange exchange, int? ownReply)
+    {
+        ArgumentNullException.ThrowIfNull(party);
+        ArgumentNullException.ThrowIfNull(exchange);
+
+        if (party is { Channel: CommsChannel.Carrier, SubChannel.Key: CommsChannels.CaptainKey })
+        {
+            Overheard.Keep(_overheard, Overheard.ForTranscript(exchange, ownReply));
+        }
     }
 
     /// <summary>The captain's live game state: the carrier report, the roster, then any fight in the carrier's system.</summary>
