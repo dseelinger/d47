@@ -315,9 +315,11 @@ lookup, so the numbers are the ones you would recognise.
 work"*, *"what have I done for the BGS"*. It comes from the last seven days of your journals, so it
 survives a restart. With no tick time it covers the last 24 hours and says so, naming the BGS tick
 time setting in Galaxy. At most three system and faction pairs are named, the one with the most
-entries first, and the rest are counted. When d47 knows your squadron's faction, its work comes
-first and is introduced as "for your squadron's faction", then work for other factions in that
-faction's systems, then everything else, each in order of entries:
+entries first, and the rest are counted. The campaign faction's work comes first, then work for
+other factions in that faction's systems, then everything else, each in order of entries. The
+campaign faction is the one you named, else your squadron's, and its work is introduced as "for
+your campaign faction" or "for your squadron's faction". With the campaign off, the squadron's
+faction leads:
 
 ```text
 Since the BGS tick at 16:14 UTC, 3 hours ago:

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Asking for your BGS work puts the campaign faction first: the faction you named on the Campaign page, else your squadron's. Its lines open with "For your campaign faction" when you named a different faction, and "For your squadron's faction" otherwise. With the campaign off, the squadron's faction leads as before.
+
 Added: When your hold first covers a collect, mining, altruism or piracy mission, D47 says the cargo is all aboard and where to hand it in, such as "All 20 tons of Gold aboard. Hand in at Jameson Memorial in Sol. Say plot it to set the course." It is said once per mission, under Mission hand-ins and expiry.
 
 Added: Comms ends the sub-channel cycle with All on Carrier, System, Story and Characters when two or more parties are on the channel. Say "comms all" or "comms everyone" to select it. D47 reads it as "Carrier, all." A message spoken to All reaches everyone on the channel in range, the model picks up to three of them to answer, and they answer in turn, each in its own voice and picture and told what the others said. Everyone who heard it remembers the message and the replies, so Tower asked alone later knows what you told the whole Carrier channel.

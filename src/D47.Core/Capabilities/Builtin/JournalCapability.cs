@@ -44,7 +44,8 @@ public static class JournalCapability
         Func<GameStatus>? liveStatus = null,
         Func<DateTimeOffset?>? bgsTick = null,
         Func<LiveRoute?>? liveRoute = null,
-        Knowledge.SquadronFactions? squadronFactions = null)
+        Knowledge.SquadronFactions? squadronFactions = null,
+        Campaigns.CampaignStore? campaigns = null)
     {
         var state = history ?? (() => HistoryState.Done);
         var plotted = route ?? (() => NavRoute.None);
@@ -397,7 +398,7 @@ public static class JournalCapability
                     ],
                     Commands = Asking(BgsWorkQuestions),
                     Handler = (arguments, _) => Task.FromResult(ToolResult.Ok(
-                        DescribeBgsWork(gameState, arguments, bgsTick?.Invoke(), now?.Invoke() ?? DateTimeOffset.UtcNow, squadronFactions))),
+                        DescribeBgsWork(gameState, arguments, bgsTick?.Invoke(), now?.Invoke() ?? DateTimeOffset.UtcNow, squadronFactions, campaigns))),
                 },
                 new ToolDefinition
                 {
@@ -2503,7 +2504,8 @@ public static class JournalCapability
     }
 
     private static string DescribeBgsWork(
-        GameStateStore gameState, ToolArguments arguments, DateTimeOffset? tick, DateTimeOffset now, Knowledge.SquadronFactions? squadronFactions = null)
+        GameStateStore gameState, ToolArguments arguments, DateTimeOffset? tick, DateTimeOffset now,
+        Knowledge.SquadronFactions? squadronFactions = null, Campaigns.CampaignStore? campaigns = null)
     {
         if (!TryActive(gameState, out var active, out var reason))
         {
@@ -2514,7 +2516,12 @@ public static class JournalCapability
         var work = active.BgsWork;
         var faction = arguments.Text("faction")?.Trim();
         var system = arguments.Text("system")?.Trim();
-        var squadronFaction = SquadronFactionResolver.Resolve(active, squadronFactions);
+        var squadron = SquadronFactionResolver.Resolve(active, squadronFactions);
+        var campaign = campaigns?.For(active.Identity.FrontierId);
+        var squadronFaction = campaign is null or { Off: true } ? squadron : campaign.FactionOr(squadron);
+        var lead = squadronFaction is not null && string.Equals(squadronFaction, squadron, StringComparison.OrdinalIgnoreCase)
+            ? "For your squadron's faction, "
+            : "For your campaign faction, ";
 
         var pairs = work.Entries
             .Where(entry => entry.At >= from)
@@ -2553,12 +2560,12 @@ public static class JournalCapability
                 kinds.Add(InfluenceClause(across));
             }
 
-            var lead = squadronFaction is not null
+            var leader = squadronFaction is not null
                 && work.GroupOf(pair.Key.SystemAddress, pair.Key.Faction, squadronFaction) == SquadronWorkGroup.Squadron
-                    ? "For your squadron's faction, "
+                    ? lead
                     : string.Empty;
 
-            report.AppendLine($"{lead}{pair.Key.Faction} in {place}: {string.Join("; ", kinds)}.");
+            report.AppendLine($"{leader}{pair.Key.Faction} in {place}: {string.Join("; ", kinds)}.");
         }
 
         if (pairs.Count > named.Count)
