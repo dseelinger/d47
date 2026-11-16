@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: The How to get it note on the Market page under Navigation names the ring types a ring-mined commodity comes from, such as "Mined from Icy rings." A commodity with no ring hotspot gets a tile such as "Find Metallic rings" that runs Search › Bodies for the first of those ring types near the market search origin.
+
 Changed: "How do I get" a ring-mined material names the ring types it comes from, best first, for example "mined from Icy rings" for Tritium and "cracked from core asteroids in Icy rings" for Void Opal, instead of "mined from asteroid rings".
 
 Added: At a station or fleet carrier with a crew lounge, D47 says once per docking when your ship has a fighter bay and no hired pilot is posted to it, and reminds you to make the pilot active after you swap back to their hull. The setting is Fighter bay crew, under Settings › Your core › In flight, on by default.

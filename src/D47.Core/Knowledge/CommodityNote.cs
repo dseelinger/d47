@@ -35,7 +35,9 @@ public static class AcquisitionWords
 /// <summary>One line of the Market page's "how to get it" note.</summary>
 /// <param name="Sentence">The line, with the commodity's name first when the answer asked for several.</param>
 /// <param name="Hotspot">The commodity a ring-hotspot search can be run for, or null.</param>
-public sealed record CommodityNoteLine(string Sentence, string? Hotspot);
+/// <param name="RingTypes">The ring types it comes from, as a sentence, or null when the table has none.</param>
+/// <param name="RingType">The ring type a Bodies search runs for when there is no hotspot search, or null.</param>
+public sealed record CommodityNoteLine(string Sentence, string? Hotspot, string? RingTypes = null, string? RingType = null);
 
 /// <summary>How to obtain what a commodity answer was for, in the words <c>how_to_get</c> uses.</summary>
 public static class CommodityNote
@@ -77,9 +79,26 @@ public static class CommodityNote
                 ? signal
                 : null;
 
+            string? ringTypes = null;
+            string? ringType = null;
+
+            if (shown.Contains(AcquisitionMethod.RingMining))
+            {
+                var rows = RingMaterials.For(acquisition.Name);
+
+                if (RingMaterials.Phrase(rows) is { } phrase)
+                {
+                    var lead = rows.All(row => row.Method == MiningMethod.Core) ? "Cracked from core asteroids in" : "Mined from";
+                    ringTypes = $"{(several ? $"{acquisition.Name}: " : string.Empty)}{lead} {phrase}.";
+                    ringType = hotspot is null ? rows[0].RingType : null;
+                }
+            }
+
             lines.Add(new CommodityNoteLine(
                 several ? $"{acquisition.Name}: {words}." : $"{SpokenText.Capitalised(words)}.",
-                hotspot));
+                hotspot,
+                ringTypes,
+                ringType));
         }
 
         return lines;

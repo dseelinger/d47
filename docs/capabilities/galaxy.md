@@ -1012,7 +1012,11 @@ Under Navigation, the Market page marks a fleet carrier row as a carrier and, un
 How to get it note in the words of `how_to_get`: ring mining and surface mining always, and any other
 method except a market sale only when no station answered. For a commodity with ring hotspots the note
 has a "Find rings with ... hotspots" tile that opens the Bodies search with Ring hotspot, Near and
-Distance in LY filled in and runs it.
+Distance in LY filled in and runs it. For a ring-mined commodity the note also names the ring types it
+comes from, "Mined from Icy rings." or "Cracked from core asteroids in Icy rings." for a core material.
+A ring-mined commodity with no hotspot tile has a "Find Metallic rings" tile instead, named for the first
+of its ring types, that opens the Bodies search with Ring type, Near and Distance in LY filled in and runs
+it; a hotspot commodity searches by hotspot alone.
 
 **Commodity prices come from a second host** ([#350](https://github.com/dseelinger/d47/issues/350)).
 Everything else on this page is spansh; asking where to buy or sell one named commodity goes to

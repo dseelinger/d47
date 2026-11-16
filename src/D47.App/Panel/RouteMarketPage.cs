@@ -58,6 +58,10 @@ public sealed class RouteMarketPage : UserControl
 
     public const string HotspotName = "MarketHotspotLink";
 
+    public const string RingTypeLineName = "MarketRingTypeLine";
+
+    public const string RingTypeLinkName = "MarketRingTypeLink";
+
     public const string NothingName = "MarketNothingFound";
 
     /// <summary>The carriers-only Notice and the note stop at this width.</summary>
@@ -554,6 +558,11 @@ public sealed class RouteMarketPage : UserControl
             }
 
             sentences.Children.Add(row);
+
+            if (line.RingTypes is { } ringTypes)
+            {
+                sentences.Children.Add(RingTypeRow(posting, link, ringTypes, line.RingType));
+            }
         }
 
         var label = Typeset.Chrome(
@@ -582,6 +591,46 @@ public sealed class RouteMarketPage : UserControl
         ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return slab;
+    }
+
+    private static Grid RingTypeRow(CommodityPosting posting, BodySearchLink? link, string text, string? ringType)
+    {
+        var row = new Grid
+        {
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
+            ColumnSpacing = 12,
+        };
+
+        var prose = Typeset.Prose(text, TypeScale.Secondary, ThemeManager.WhiteKey, wrap: true, vertical: VerticalAlignment.Center);
+        prose.Name = RingTypeLineName;
+        row.Children.Add(prose);
+
+        if (link is not null && ringType is not null)
+        {
+            var tile = new Button
+            {
+                Name = RingTypeLinkName,
+                Content = $"Find {ringType} rings",
+                Height = TypeScale.MinimumTarget,
+                VerticalAlignment = VerticalAlignment.Center,
+                Tag = ringType,
+            };
+            Grid.SetColumn(tile, 1);
+
+            var near = posting.Near;
+            var reach = Math.Min(posting.Query.MaxDistance, BodyQuery.MaxDistanceCeiling);
+
+            tile.Click += (_, _) => link.Run(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["ring_type"] = ringType,
+                ["near"] = near,
+                ["max_distance"] = reach.ToString("0.##", CultureInfo.InvariantCulture),
+            });
+
+            row.Children.Add(tile);
+        }
+
+        return row;
     }
 
     /// <summary>One column of the answer table: its layout, its header, and whether its figures sit right.</summary>

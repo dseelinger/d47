@@ -124,6 +124,52 @@ public sealed class TheMarketPageMarksCarriersAndSaysHowToGetItTests
     }
 
     [AvaloniaFact]
+    public void AHotspotCommodityNamesItsRingTypesAndKeepsOnlyTheHotspotLink()
+    {
+        var (_, page) = Show(Posting("Tritium", false, Market("Galileo", "Coriolis Starport")), new BodySearchLink(_ => { }));
+
+        Assert.Equal("Mined from Icy rings.", Named<TextBlock>(page, RouteMarketPage.RingTypeLineName)?.Text);
+        Assert.NotNull(Named<Button>(page, RouteMarketPage.HotspotName));
+        Assert.Null(Named<Button>(page, RouteMarketPage.RingTypeLinkName));
+    }
+
+    [AvaloniaFact]
+    public void ACommodityWithNoHotspotLinksToTheBodiesSearchByItsFirstRingType()
+    {
+        IReadOnlyDictionary<string, string>? ran = null;
+        var (_, page) = Show(Posting("Gold", false, Market("Galileo", "Coriolis Starport")), new BodySearchLink(arguments => ran = arguments));
+
+        Assert.StartsWith("Mined from Metallic or Metal Rich rings", Named<TextBlock>(page, RouteMarketPage.RingTypeLineName)?.Text);
+
+        var tile = Named<Button>(page, RouteMarketPage.RingTypeLinkName);
+
+        Assert.Equal("Find Metallic rings", tile?.Content);
+        tile!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal("Metallic", ran!["ring_type"]);
+        Assert.Equal("Sol", ran["near"]);
+        Assert.Equal("50", ran["max_distance"]);
+        Assert.False(ran.ContainsKey("hotspot"));
+    }
+
+    [AvaloniaFact]
+    public void AMotherlodeCommodityIsCrackedFromCoreAsteroids()
+    {
+        var (_, page) = Show(Posting("Void Opal", false, Market("Galileo", "Coriolis Starport")), new BodySearchLink(_ => { }));
+
+        Assert.Equal("Cracked from core asteroids in Icy rings.", Named<TextBlock>(page, RouteMarketPage.RingTypeLineName)?.Text);
+    }
+
+    [AvaloniaFact]
+    public void ACommodityWithNoHotspotAndOneRingTypeLinksToThatType()
+    {
+        var (_, page) = Show(Posting("Haematite", false, Market("Galileo", "Coriolis Starport")), new BodySearchLink(_ => { }));
+
+        Assert.Equal("Mined from Rocky rings.", Named<TextBlock>(page, RouteMarketPage.RingTypeLineName)?.Text);
+        Assert.Equal("Find Rocky rings", Named<Button>(page, RouteMarketPage.RingTypeLinkName)?.Content);
+    }
+
+    [AvaloniaFact]
     public void ACommodityBoughtOnlyAtMarketsHasNoNote()
     {
         var (_, page) = Show(Posting("CMM Composite", false), null);
