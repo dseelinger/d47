@@ -398,7 +398,7 @@ public sealed class GameStateStore
     [
         Part<OrganicSampling>(s => s.Restore, _ => true, (c, v) => c.Sampling = v, null),
         Part<FleetRegistry>(s => s.RestoreFleet, v => v.IsKnown, (c, v) => c.Fleet = v, (c, v) => c.Fleet = c.Fleet.IsKnown ? c.Fleet : v),
-        Part<JournalLocation>(s => s.RestoreLocation, v => v.StarSystem is not null, null, (c, v) => c.Location = c.Location.StarSystem is null ? v : c.Location),
+        Part<JournalLocation>(s => s.RestoreLocation, v => v.StarSystem is not null, (c, v) => c.Location = v, (c, v) => c.Location = c.Location.StarSystem is null ? v : c.Location),
         // Merged rather than taken or refused: a ship boarded this session is in the live set and every
         // other ship the Commander owns is only in the recovered one.
         Part<ShipLoadouts>(s => s.RestoreLoadouts, v => v.IsKnown, (c, v) => c.Loadouts = v, (c, v) => c.Loadouts = v.With(c.Loadouts)),

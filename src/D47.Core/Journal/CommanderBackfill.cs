@@ -16,10 +16,10 @@ public static class CommanderBackfill
 {
     private const string FidKey = "\"FID\":\"";
 
-    /// <summary>
-    /// Each Commander's sighting from their newest file in the window <see cref="FleetBackfill"/> uses,
-    /// and the number of files in that window.
-    /// </summary>
+    /// <summary>How many of the newest files <see cref="LastLogin"/> looks at.</summary>
+    private const int LoginLookback = 25;
+
+    /// <summary>Each Commander's sighting from their newest file, and the number of files examined.</summary>
     public static (IReadOnlyDictionary<string, CommanderSighting> Commanders, int FilesExamined) FromHistory(
         IFileSystem fileSystem,
         IReadOnlyList<string> files,
@@ -30,9 +30,7 @@ public static class CommanderBackfill
         ArgumentNullException.ThrowIfNull(logger);
 
         var found = new Dictionary<string, CommanderSighting>(StringComparer.Ordinal);
-        var floor = Math.Max(0, files.Count - FleetBackfill.MaxLookback);
-
-        for (var i = files.Count - 1; i >= floor; i--)
+        for (var i = files.Count - 1; i >= 0; i--)
         {
             cancellation.ThrowIfCancellationRequested();
 
@@ -47,13 +45,12 @@ public static class CommanderBackfill
             }
         }
 
-        return (found, files.Count - floor);
+        return (found, files.Count);
     }
 
     /// <summary>
-    /// The Commander the newest of these files to name one logs in as, looking at no more files than <see
-    /// cref="FleetBackfill"/> does, or null when none of them names one. Each file is read only as far as its
-    /// first login.
+    /// The Commander the newest of these files to name one logs in as, looking at no more than the newest 25
+    /// files, or null when none of them names one. Each file is read only as far as its first login.
     /// </summary>
     /// <param name="files">Oldest first.</param>
     public static CommanderIdentity? LastLogin(IFileSystem fileSystem, IReadOnlyList<string> files, ILogger logger)
@@ -61,7 +58,7 @@ public static class CommanderBackfill
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(logger);
 
-        var floor = Math.Max(0, files.Count - FleetBackfill.MaxLookback);
+        var floor = Math.Max(0, files.Count - LoginLookback);
 
         for (var i = files.Count - 1; i >= floor; i--)
         {

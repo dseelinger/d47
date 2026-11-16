@@ -55,6 +55,78 @@ public class EveryCommanderInTheJournalsIsListedTests
     }
 
     [Fact]
+    public void ACommanderWhoseJournalsAreOlderThanTheNewestTwentyFiveFilesIsListed()
+    {
+        var install = new MemoryInstall();
+
+        Write(
+            install,
+            "Journal.2026-01-01T100000.01.log",
+            """{ "timestamp":"2026-01-01T10:00:00Z", "event":"LoadGame", "FID":"F1", "Commander":"Dormant", "Ship":"python" }""");
+
+        for (var day = 1; day <= 30; day++)
+        {
+            Write(
+                install,
+                $"Journal.2026-09-{day:00}T100000.01.log",
+                $$"""{ "timestamp":"2026-09-{{day:00}}T10:00:00Z", "event":"LoadGame", "FID":"F2", "Commander":"Active", "Ship":"python" }""");
+        }
+
+        var (commanders, examined) = CommanderBackfill.FromHistory(
+            install.Files,
+            Files(install), NullLogger.Instance, TestContext.Current.CancellationToken);
+
+        Assert.Equal(31, examined);
+        Assert.Equal(["F1", "F2"], commanders.Keys.Order());
+        Assert.Equal("Dormant", commanders["F1"].Name);
+    }
+
+    [Fact]
+    public void AClearedSaveShowsOnceUnderItsNewestName()
+    {
+        var install = new MemoryInstall();
+
+        Write(
+            install,
+            "Journal.2026-08-01T100000.01.log",
+            """{ "timestamp":"2026-08-01T10:00:00Z", "event":"LoadGame", "FID":"F1", "Commander":"Old Name", "Ship":"python" }""");
+
+        Write(
+            install,
+            "Journal.2026-08-02T100000.01.log",
+            """{ "timestamp":"2026-08-02T10:00:00Z", "event":"NewCommander", "FID":"F1", "Name":"Middle Name" }""");
+
+        Write(
+            install,
+            "Journal.2026-08-03T100000.01.log",
+            """{ "timestamp":"2026-08-03T10:00:00Z", "event":"LoadGame", "FID":"F1", "Commander":"New Name", "Ship":"python" }""");
+
+        var (commanders, _) = CommanderBackfill.FromHistory(
+            install.Files,
+            Files(install), NullLogger.Instance, TestContext.Current.CancellationToken);
+
+        Assert.Equal("New Name", Assert.Single(commanders).Value.Name);
+    }
+
+    [Fact]
+    public void ALastLoginBeyondTheNewestTwentyFiveFilesIsNotFound()
+    {
+        var install = new MemoryInstall();
+
+        Write(
+            install,
+            "Journal.2026-01-01T100000.01.log",
+            """{ "timestamp":"2026-01-01T10:00:00Z", "event":"LoadGame", "FID":"F1", "Commander":"Dormant", "Ship":"python" }""");
+
+        for (var day = 1; day <= 25; day++)
+        {
+            Write(install, $"Journal.2026-09-{day:00}T100000.01.log", """{ "timestamp":"2026-09-01T10:00:00Z", "event":"Fileheader", "part":1 }""");
+        }
+
+        Assert.Null(CommanderBackfill.LastLogin(install.Files, Files(install), NullLogger.Instance));
+    }
+
+    [Fact]
     public void ALoadGameMadeOnFootWithAPlaceholderNameStoresNoPlaceholder()
     {
         var install = new MemoryInstall();

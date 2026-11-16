@@ -126,22 +126,25 @@ public class FleetBackfillTests
         Assert.Equal([1], fleets["F7654321"].Ships.Select(ship => ship.ShipId));
     }
 
-    /// <summary>The documented bound, pinned so it is a decision rather than a surprise.</summary>
     [Fact]
-    public void ASnapshotOlderThanTheSearchWindowIsNotRecovered()
+    public void ASnapshotOlderThanTheNewestTwentyFiveFilesIsRecoveredWithLaterChangesApplied()
     {
         var install = new MemoryInstall();
-        Write(install, "Journal.2026-08-01T000000.01.log", LoadGame, Stored(("Anaconda", 51)));
+        Write(install, "Journal.2026-08-01T000000.01.log", LoadGame, Stored(("Anaconda", 51), ("Python", 52)));
+        Write(
+            install,
+            "Journal.2026-08-02T000000.01.log",
+            LoadGame,
+            """{ "timestamp":"2026-08-02T10:05:00Z", "event":"ShipyardSell", "ShipType":"python", "SellShipID":52 }""");
 
-        // Comfortably past the look-back, so the snapshot above falls outside the window.
         for (var day = 2; day <= 40; day++)
         {
             Write(install, $"Journal.2026-09-{day:00}T100000.01.log", LoadGame, Loadout);
         }
 
-        var fleets = Fleets(install);
+        var fleet = Fleets(install)[Fid];
 
-        Assert.Empty(fleets);
+        Assert.Equal([51], fleet.Ships.Select(ship => ship.ShipId));
     }
 
     /// <summary>A delta with no snapshot under it is not a fleet of one — it is a guess.</summary>

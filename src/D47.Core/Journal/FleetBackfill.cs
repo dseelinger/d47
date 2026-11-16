@@ -46,39 +46,18 @@ public static class FleetBackfill
         // exactly one Commander, since a journal file belongs to one Commander and every older snapshot would
         // fall outside the fold.
         var newestSnapshot = new Dictionary<string, int>(StringComparer.Ordinal);
-        var met = new HashSet<string>(StringComparer.Ordinal);
 
-        // The whole window, without an early exit.
-        var floor = Math.Max(0, files.Count - MaxLookback);
-
-        for (var i = files.Count - 1; i >= floor; i--)
+        for (var i = files.Count - 1; i >= 0; i--)
         {
             cancellation.ThrowIfCancellationRequested();
 
             var (owner, holds) = Scan(fileSystem, files[i], logger);
 
-            if (owner is null)
-            {
-                continue;
-            }
-
-            met.Add(owner);
-
-            if (holds)
+            if (owner is not null && holds)
             {
                 // Newest-first, so the first one seen for a Commander is their newest.
                 _ = newestSnapshot.TryAdd(owner, i);
             }
-        }
-
-        if (floor > 0 && met.Count > newestSnapshot.Count)
-        {
-            // Said out loud rather than silently truncating: a Commander who last docked beyond this window
-            // is not recovered, and a limit nobody knows about is worse than a log line nobody reads.
-            logger.LogInformation(
-                "Looked back {Window} journal files for fleet snapshots; {Missing} Commander(s) had none in that window",
-                MaxLookback,
-                met.Count - newestSnapshot.Count);
         }
 
         if (newestSnapshot.Count == 0)
@@ -146,9 +125,6 @@ public static class FleetBackfill
 
         return fleets;
     }
-
-    /// <summary>How far back the search for a snapshot goes, in files.</summary>
-    internal const int MaxLookback = 25;
 
     /// <summary>
     /// Whose file this is, and whether it holds a <c>StoredShips</c> at all — both in one pass, as a

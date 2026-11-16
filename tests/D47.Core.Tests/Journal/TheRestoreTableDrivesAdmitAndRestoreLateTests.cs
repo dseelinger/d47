@@ -116,18 +116,16 @@ public class TheRestoreTableDrivesAdmitAndRestoreLateTests
         Assert.Same(FleetRegistry.Empty, state.Fleet);
     }
 
-    // JournalLocation: RestoreLate only
+    // JournalLocation: both
 
     [Fact]
-    public void ALocationRestoreIsNotReadWhenACommanderIsMet()
+    public void ALocationRestoreIsReadWhenACommanderIsMet()
     {
-        var reads = 0;
-        var store = new GameStateStore { RestoreLocation = _ => { reads++; return Here("Sol"); } };
+        var store = new GameStateStore { RestoreLocation = _ => Here("Sol") };
 
         var state = Met(store);
 
-        Assert.Equal(0, reads);
-        Assert.Null(state.Location.StarSystem);
+        Assert.Equal("Sol", state.Location.StarSystem);
     }
 
     [Fact]

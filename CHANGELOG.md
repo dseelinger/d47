@@ -14,6 +14,8 @@ Added: When your hold first covers a collect, mining, altruism or piracy mission
 
 Added: Comms ends the sub-channel cycle with All on Carrier, System, Story and Characters when two or more parties are on the channel. Say "comms all" or "comms everyone" to select it. D47 reads it as "Carrier, all." A message spoken to All reaches everyone on the channel in range, the model picks up to three of them to answer, and they answer in turn, each in its own voice and picture and told what the others said. Everyone who heard it remembers the message and the replies, so Tower asked alone later knows what you told the whole Carrier channel.
 
+Fixed: The Commanders page, the title-bar switcher and the switch phrases list every Commander with a journal on disk, not only those in the newest 25 journal files, and switching to one who has not flown for a while shows their last location and fleet. A Commander first picked after the history walk has finished also gets their last location.
+
 Fixed: A message to All on the System channel is recorded once, with its replies, in an exchange shared by several overheard speakers, so each speaker's brief no longer shows your line and the replies repeated.
 
 Changed: The How to get it note on the Market page under Navigation names the ring types a ring-mined commodity comes from, such as "Mined from Icy rings." A commodity with no ring hotspot gets a tile such as "Find Metallic rings" that runs Search › Bodies for the first of those ring types near the market search origin.

@@ -36,6 +36,39 @@ public class ACommanderShownWithNoLiveLocationTakesTheLastOneTests
     }
 
     [Fact]
+    public void ACommanderFirstMetThroughPickAfterTheWalkGetsTheBackfilledLocation()
+    {
+        var install = new MemoryInstall();
+        Write(install, "Journal.2026-10-28T100000.01.log", LoadGame(Fid), Jump("Tavell's Rest", "[442.5,-69.21875,-11.3125]"));
+
+        var backfill = Backfill(install);
+        var store = StoreOver(backfill);
+
+        backfill.Run(TestContext.Current.CancellationToken);
+        store.RestoreLate();
+        store.Pick(new CommanderIdentity(Fid, "Fixture"));
+
+        Assert.Equal("Tavell's Rest", store.Active!.Location.StarSystem);
+    }
+
+    [Fact]
+    public void ALocationOlderThanTheNewestTwentyFiveFilesIsRecovered()
+    {
+        var install = new MemoryInstall();
+        Write(install, "Journal.2026-01-01T100000.01.log", LoadGame(Fid), Jump("Tavell's Rest", "[442.5,-69.21875,-11.3125]"));
+
+        for (var day = 1; day <= 30; day++)
+        {
+            Write(install, $"Journal.2026-09-{day:00}T100000.01.log", LoadGame("F7654321"), Jump("Lantern Reach", "[10.5,-2.25,3]"));
+        }
+
+        var backfill = Backfill(install);
+        backfill.Run(TestContext.Current.CancellationToken);
+
+        Assert.Equal("Tavell's Rest", backfill.Locations![Fid].StarSystem);
+    }
+
+    [Fact]
     public void ALiveLocationIsNotReplaced()
     {
         var install = new MemoryInstall();

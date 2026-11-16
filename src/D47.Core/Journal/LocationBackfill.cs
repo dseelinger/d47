@@ -6,7 +6,7 @@ namespace D47.Core.Journal;
 /// <summary>Each Commander's last known location, recovered from journals d47 was not running for.</summary>
 public static class LocationBackfill
 {
-    /// <summary>The location each Commander's newest journals left them in, over the last <see cref="FleetBackfill.MaxLookback"/> files.</summary>
+    /// <summary>The location each Commander's newest journals left them in, over every file.</summary>
     public static IReadOnlyDictionary<string, JournalLocation> FromHistory(
         IFileSystem fileSystem,
         IReadOnlyList<string> files,
@@ -19,7 +19,7 @@ public static class LocationBackfill
         var locations = new Dictionary<string, JournalLocation>(StringComparer.Ordinal);
         var current = string.Empty;
 
-        for (var i = Math.Max(0, files.Count - FleetBackfill.MaxLookback); i < files.Count; i++)
+        for (var i = 0; i < files.Count; i++)
         {
             cancellation.ThrowIfCancellationRequested();
 
