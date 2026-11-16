@@ -149,9 +149,16 @@ public sealed class ChatterLine(
 
         lock (_lock)
         {
-            if (question.Length > 0)
+            if (exchange is not null)
             {
-                exchange?.Said.Add($"{Commander}: {question}");
+                exchange.Replied.Clear();
+
+                var line = $"{Commander}: {question}";
+
+                if (question.Length > 0 && (exchange.Said.Count == 0 || exchange.Said[^1] != line))
+                {
+                    exchange.Said.Add(line);
+                }
             }
 
             brief = Brief(name, exchange, npc?.VoiceId);
@@ -246,9 +253,14 @@ public sealed class ChatterLine(
 
         lock (_lock)
         {
-            if (_heardIn.TryGetValue(key, out var heardIn) && In(heardIn, system()))
+            if (_heardIn.TryGetValue(key, out var heardIn) && In(heardIn, system()) && !ReferenceEquals(heardIn.OverheardFrom, exchange))
             {
-                Overheard.Keep(heardIn.Said, Overheard.ForExchange(exchange, ownReply));
+                heardIn.OverheardFrom = exchange;
+
+                var unrecorded = Overheard.ForExchange(exchange, ownReply).Where(line => !heardIn.Replied.Remove(line));
+
+                Overheard.Keep(heardIn.Said, unrecorded.ToList());
+                heardIn.Replied.Clear();
             }
         }
     }
@@ -341,7 +353,11 @@ public sealed class ChatterLine(
 
         lock (_lock)
         {
-            exchange?.Said.Add($"{name}: {said}");
+            if (exchange is not null)
+            {
+                exchange.Said.Add($"{name}: {said}");
+                exchange.Replied.Add($"{name}: {said}");
+            }
 
             if (left)
             {
@@ -413,5 +429,11 @@ public sealed class ChatterLine(
 
         /// <summary>Every line so far, overheard and replied, as "Name: text".</summary>
         public List<string> Said { get; } = [];
+
+        /// <summary>The replies recorded in <see cref="Said"/> by their own speakers since the last message routed here.</summary>
+        public List<string> Replied { get; } = [];
+
+        /// <summary>The All exchange whose replies <see cref="Said"/> already holds.</summary>
+        public CommsExchange? OverheardFrom { get; set; }
     }
 }
