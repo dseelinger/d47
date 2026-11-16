@@ -1,0 +1,12 @@
+symbol	name	ring_type	rank	method
+bauxite	Bauxite	Rocky	1	laser
+gold	Gold	Metal Rich	1	laser
+gold	Gold	Metallic	1	laser
+lowtemperaturediamond	Low Temperature Diamonds	Icy	1	laser
+opal	Void Opal	Icy	1	core
+opal	Void Opal	Rocky	1	core
+platinum	Platinum	Metal Rich	1	laser
+platinum	Platinum	Metallic	2	laser
+silver	Silver	Metal Rich	1	laser
+silver	Silver	Metallic	1	laser
+water	Water	Icy	1	laser

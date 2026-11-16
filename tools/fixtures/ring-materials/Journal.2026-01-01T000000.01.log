@@ -1,0 +1,120 @@
+{"timestamp":"2026-01-01T00:00:01Z", "event":"Fileheader", "part":1}
+{"timestamp":"2026-01-01T00:00:02Z", "event":"LoadGame", "Commander":"Fixture"}
+{"timestamp":"2026-01-01T00:00:03Z", "event":"Scan", "BodyName":"Fixa 1", "Rings":[{"Name":"Fixa 1 A Ring", "RingClass":"eRingClass_Icy"}]}
+{"timestamp":"2026-01-01T00:00:04Z", "event":"Scan", "BodyName":"Fixa 2", "Rings":[{"Name":"Fixa 2 A Ring", "RingClass":"eRingClass_Icy"}]}
+{"timestamp":"2026-01-01T00:00:05Z", "event":"Scan", "BodyName":"Fixb 1", "Rings":[{"Name":"Fixb 1 A Ring", "RingClass":"eRingClass_Metalic"}]}
+{"timestamp":"2026-01-01T00:00:06Z", "event":"Scan", "BodyName":"Fixb 2", "Rings":[{"Name":"Fixb 2 A Ring", "RingClass":"eRingClass_Metalic"}]}
+{"timestamp":"2026-01-01T00:00:07Z", "event":"Scan", "BodyName":"Fixb 3", "Rings":[{"Name":"Fixb 3 A Ring", "RingClass":"eRingClass_Metalic"}]}
+{"timestamp":"2026-01-01T00:00:08Z", "event":"Scan", "BodyName":"Fixc 1", "Rings":[{"Name":"Fixc 1 A Ring", "RingClass":"eRingClass_MetalRich"}]}
+{"timestamp":"2026-01-01T00:00:09Z", "event":"Scan", "BodyName":"Fixc 2", "Rings":[{"Name":"Fixc 2 A Ring", "RingClass":"eRingClass_MetalRich"}]}
+{"timestamp":"2026-01-01T00:00:10Z", "event":"Scan", "BodyName":"Fixd A", "Rings":[{"Name":"Fixd A A Belt", "RingClass":"eRingClass_Rocky"}]}
+{"timestamp":"2026-01-01T00:00:11Z", "event":"Scan", "BodyName":"Fixd B", "Rings":[{"Name":"Fixd B A Belt", "RingClass":"eRingClass_Rocky"}]}
+{"timestamp":"2026-01-01T00:00:12Z", "event":"SupercruiseExit", "StarSystem":"Fixa", "Body":"Fixa 1 A Ring", "BodyType":"PlanetaryRing"}
+{"timestamp":"2026-01-01T00:00:13Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Water", "Proportion":10.0}, {"Name":"LowTemperatureDiamond", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:14Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"water", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0, "MotherlodeMaterial":"Opal"}
+{"timestamp":"2026-01-01T00:00:15Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Tritium", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:16Z", "event":"SAASignalsFound", "BodyName":"Fixa 2 A Ring", "Signals":[{"Type":"Opal", "Count":2}, {"Type":"$SAA_SignalType_Other;", "Count":1}]}
+{"timestamp":"2026-01-01T00:00:17Z", "event":"SupercruiseEntry", "StarSystem":"Fixa"}
+{"timestamp":"2026-01-01T00:00:18Z", "event":"SupercruiseExit", "StarSystem":"Fixb", "Body":"Fixb 1 A Ring", "BodyType":"PlanetaryRing"}
+{"timestamp":"2026-01-01T00:00:19Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:20Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:21Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:22Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:23Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:24Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:25Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:26Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:27Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:28Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:29Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:30Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:31Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:32Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:33Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:34Z", "event":"SupercruiseEntry", "StarSystem":"Fixb"}
+{"timestamp":"2026-01-01T00:00:35Z", "event":"SupercruiseExit", "StarSystem":"Fixb", "Body":"Fixb 2 A Ring", "BodyType":"PlanetaryRing"}
+{"timestamp":"2026-01-01T00:00:36Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:37Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:38Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:39Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:40Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:41Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:42Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:43Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:44Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:45Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:46Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:47Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:48Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:49Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:50Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:51Z", "event":"SupercruiseEntry", "StarSystem":"Fixb"}
+{"timestamp":"2026-01-01T00:00:52Z", "event":"SAASignalsFound", "BodyName":"Fixb 3 A Ring", "Signals":[{"Type":"Platinum", "Count":3}]}
+{"timestamp":"2026-01-01T00:00:53Z", "event":"SupercruiseExit", "StarSystem":"Fixb", "Body":"Fixb 3 A Ring", "BodyType":"PlanetaryRing"}
+{"timestamp":"2026-01-01T00:00:54Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:55Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:56Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:57Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:58Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:00:59Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:00Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:01Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:02Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:03Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:04Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:05Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:06Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:07Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:08Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:09Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:10Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:11Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:12Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:13Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:14Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:15Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:16Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:17Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:18Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:19Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:20Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:21Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:22Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:23Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:24Z", "event":"FSDJump", "StarSystem":"Fixc"}
+{"timestamp":"2026-01-01T00:01:25Z", "event":"SupercruiseExit", "StarSystem":"Fixc", "Body":"Fixc 1 A Ring", "BodyType":"PlanetaryRing"}
+{"timestamp":"2026-01-01T00:01:26Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:27Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:28Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:29Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:30Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:31Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:32Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:33Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:34Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:35Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:36Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:37Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:38Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:39Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:40Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:41Z", "event":"Docked", "StationName":"Fixc Port"}
+{"timestamp":"2026-01-01T00:01:42Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Tritium", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:43Z", "event":"Undocked", "StationName":"Fixc Port"}
+{"timestamp":"2026-01-01T00:01:44Z", "event":"SupercruiseExit", "StarSystem":"Fixc", "Body":"Fixc 2 A Ring", "BodyType":"PlanetaryRing"}
+{"timestamp":"2026-01-01T00:01:45Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:46Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:47Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}, {"Name":"Gold", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:48Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:49Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:50Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:51Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}, {"Name":"Platinum", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:52Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:53Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:54Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:55Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:56Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:57Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:58Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:01:59Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Silver", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:02:00Z", "event":"Shutdown"}

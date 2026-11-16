@@ -1,0 +1,17 @@
+{"timestamp":"2026-01-01T00:02:01Z", "event":"Fileheader", "part":1}
+{"timestamp":"2026-01-01T00:02:02Z", "event":"LoadGame", "Commander":"Fixture"}
+{"timestamp":"2026-01-01T00:02:03Z", "event":"Location", "StarSystem":"Fixa", "Body":"Fixa 1 B Ring", "BodyType":"PlanetaryRing"}
+{"timestamp":"2026-01-01T00:02:04Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Water", "Proportion":10.0}, {"Name":"LowTemperatureDiamond", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0, "MotherlodeMaterial":"LowTemperatureDiamond"}
+{"timestamp":"2026-01-01T00:02:05Z", "event":"SupercruiseEntry", "StarSystem":"Fixa"}
+{"timestamp":"2026-01-01T00:02:06Z", "event":"SupercruiseExit", "StarSystem":"Fixd", "Body":"Fixd A A Belt Cluster 2", "BodyType":"AsteroidCluster"}
+{"timestamp":"2026-01-01T00:02:07Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Bauxite", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0, "MotherlodeMaterial":"Opal"}
+{"timestamp":"2026-01-01T00:02:08Z", "event":"SupercruiseEntry", "StarSystem":"Fixd"}
+{"timestamp":"2026-01-01T00:02:09Z", "event":"SupercruiseExit", "StarSystem":"Fixd", "Body":"Fixd B A Belt Cluster 4", "BodyType":"AsteroidCluster"}
+{"timestamp":"2026-01-01T00:02:10Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"bauxite", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0, "MotherlodeMaterial":"Opal"}
+{"timestamp":"2026-01-01T00:02:11Z", "event":"SupercruiseExit", "StarSystem":"Fixd", "Body":"Fixd B 1", "BodyType":"Planet"}
+{"timestamp":"2026-01-01T00:02:12Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Tritium", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:02:13Z", "event":"SupercruiseEntry", "StarSystem":"Fixd"}
+{"timestamp":"2026-01-01T00:02:14Z", "event":"SupercruiseExit", "StarSystem":"Fixe", "Body":"Fixe 1 A Ring", "BodyType":"PlanetaryRing"}
+{"timestamp":"2026-01-01T00:02:15Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Tritium", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:02:16Z", "event":"ProspectedAsteroid", "Materials":[{"Name":"Tritium", "Proportion":10.0}], "Content":"$AsteroidMaterialContent_Medium;", "Remaining":100.0}
+{"timestamp":"2026-01-01T00:02:17Z", "event":"Scan", "BodyName":"Fixa 1", "Rings":[{"Name":"Fixa 1 B Ring", "RingClass":"eRingClass_Icy"}]}
