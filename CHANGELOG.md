@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: When your hold first covers a collect, mining, altruism or piracy mission, D47 says the cargo is all aboard and where to hand it in, such as "All 20 tons of Gold aboard. Hand in at Jameson Memorial in Sol. Say plot it to set the course." It is said once per mission, under Mission hand-ins and expiry.
+
 Changed: The How to get it note on the Market page under Navigation names the ring types a ring-mined commodity comes from, such as "Mined from Icy rings." A commodity with no ring hotspot gets a tile such as "Find Metallic rings" that runs Search › Bodies for the first of those ring types near the market search origin.
 
 Changed: "How do I get" a ring-mined material names the ring types it comes from, best first, for example "mined from Icy rings" for Tritium and "cracked from core asteroids in Icy rings" for Void Opal, instead of "mined from asteroid rings".

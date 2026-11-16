@@ -195,4 +195,155 @@ public class MissionCalloutTests
         Assert.Equal("missions", new MissionCallout().Id);
         Assert.Equal("callouts.missions", CalloutCapability.MissionsKey);
     }
+
+    private static JournalEvent Gold(long id, string kind = "Mission_Mining", int count = 20) =>
+        Event("MissionAccepted",
+            ("MissionID", id),
+            ("Name", kind),
+            ("LocalisedName", $"Gold {id}"),
+            ("DestinationSystem", "Sol"),
+            ("DestinationStation", "Jameson Memorial"),
+            ("Commodity", "$Gold_Name;"),
+            ("Commodity_Localised", "Gold"),
+            ("Count", count),
+            ("Expiry", Start.AddDays(2).UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ")));
+
+    private static CommanderGameState Flying(string system, int gold, bool docked, params JournalEvent[] missions)
+    {
+        var state = Commander(missions);
+        state.Apply(Event(docked ? "Docked" : "Location", ("StarSystem", system), ("StationName", "Jameson Memorial"), ("Docked", docked)));
+        state.Hold = Aboard(gold);
+        return state;
+    }
+
+    private static CargoHold Aboard(int gold, string vessel = "Ship") => new()
+    {
+        Vessel = vessel,
+        Count = gold,
+        Items = gold > 0 ? [new CargoItem("gold", gold)] : [],
+        ReadAt = DateTimeOffset.UnixEpoch,
+    };
+
+    private static bool IsReady(Announcement line) => line.Key.StartsWith(MissionCallout.ReadyKey, StringComparison.Ordinal);
+
+    private static string? Ready(MissionCallout callout, CommanderGameState state) =>
+        Run(callout, state, Start).SingleOrDefault(IsReady)?.Text;
+
+    [Fact]
+    public void AMiningMissionFilledInAnotherSystemSaysWhereToHandInAndOffersToPlotIt()
+    {
+        var offer = new D47.Core.Conversation.HandInOffer();
+        var callout = new MissionCallout { Offer = offer };
+        var state = Flying("Wolf 359", 0, false, Gold(1));
+        Assert.Null(Ready(callout, state));
+
+        state.Hold = Aboard(20);
+
+        Assert.Equal("All 20 tons of Gold aboard. Hand in at Jameson Memorial in Sol. Say plot it to set the course.", Ready(callout, state));
+        Assert.Equal(1, offer.MissionId);
+        Assert.Equal("Sol", offer.System);
+        Assert.Null(Ready(callout, state));
+    }
+
+    [Fact]
+    public void AMissionFilledInTheHandInSystemOffersNothing()
+    {
+        var offer = new D47.Core.Conversation.HandInOffer();
+
+        Assert.Equal(
+            "All 20 tons of Gold aboard. Hand in at Jameson Memorial.",
+            Ready(new MissionCallout { Offer = offer }, Flying("Sol", 20, false, Gold(1))));
+        Assert.Null(offer.System);
+    }
+
+    [Fact]
+    public void AMissionFilledWhileDockedAtTheHandInSaysToHandItInHere()
+    {
+        Assert.Equal(
+            "All 20 tons of Gold aboard. Hand it in here.",
+            Ready(new MissionCallout(), Flying("Sol", 20, true, Gold(1, "Mission_Collect"))));
+    }
+
+    [Fact]
+    public void AMissionWithASystemAndNoStationSaysTheSystem()
+    {
+        var accept = Event("MissionAccepted",
+            ("MissionID", 1L), ("Name", "Mission_Mining"), ("LocalisedName", "Gold 1"), ("DestinationSystem", "Sol"),
+            ("Commodity", "$Gold_Name;"), ("Commodity_Localised", "Gold"), ("Count", 20));
+
+        Assert.Equal(
+            "All 20 tons of Gold aboard. Hand-in is in Sol. Say plot it to set the course.",
+            Ready(new MissionCallout(), Flying("Wolf 359", 20, false, accept)));
+    }
+
+    [Fact]
+    public void AMissionAcceptedWithTheHoldAlreadyFullIsAnnouncedOnTheFirstTick()
+    {
+        var callout = new MissionCallout();
+        var state = Flying("Wolf 359", 20, false);
+        Assert.Null(Ready(callout, state));
+
+        state.Apply(Gold(1, "Mission_Altruism"));
+
+        Assert.NotNull(Ready(callout, state));
+    }
+
+    [Fact]
+    public void DeliveryAndSmuggleMissionsAreNeverAnnounced()
+    {
+        var state = Flying("Wolf 359", 40, false, Gold(1, "Mission_Delivery"), Gold(2, "Mission_Smuggle"));
+
+        Assert.Null(Ready(new MissionCallout(), state));
+    }
+
+    [Fact]
+    public void TwoMissionsForOneCommodityAreAnnouncedWhenTheHoldCoversEach()
+    {
+        var callout = new MissionCallout();
+        var state = Flying("Wolf 359", 20, false, Gold(1), Gold(2));
+
+        Assert.Single(Run(callout, state, Start), IsReady);
+
+        state.Hold = Aboard(40);
+
+        Assert.Equal("missions.ready.2", Assert.Single(Run(callout, state, Start), IsReady).Key);
+    }
+
+    [Fact]
+    public void APartLoadAnUnknownHoldAndTheSrvManifestAnnounceNothing()
+    {
+        var callout = new MissionCallout();
+        var state = Flying("Wolf 359", 19, false, Gold(1));
+        Assert.Null(Ready(callout, state));
+
+        state.Hold = CargoHold.Empty;
+        Assert.Null(Ready(callout, state));
+
+        state.Hold = Aboard(20, "SRV");
+        Assert.Null(Ready(callout, state));
+    }
+
+    [Fact]
+    public void AMissionIsAnnouncedOnceEvenIfTheHoldDropsAndRefills()
+    {
+        var callout = new MissionCallout();
+        var state = Flying("Wolf 359", 20, false, Gold(1));
+        Assert.NotNull(Ready(callout, state));
+
+        state.Hold = Aboard(5);
+        Assert.Null(Ready(callout, state));
+
+        state.Hold = Aboard(20);
+        Assert.Null(Ready(callout, state));
+    }
+
+    [Fact]
+    public void AMissionAlreadyReadyWhenD47StartsIsNotAnnounced()
+    {
+        var callout = new MissionCallout();
+        var state = Flying("Wolf 359", 20, false, Gold(1));
+
+        Assert.Empty(Run(callout, state, Start, priming: true));
+        Assert.Null(Ready(callout, state));
+    }
 }

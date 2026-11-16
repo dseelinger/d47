@@ -22,6 +22,8 @@ public sealed class MissionCallout : ICallout
 
     public const string ExpiryKey = "missions.expiry";
 
+    public const string ReadyKey = "missions.ready";
+
     public const string RedirectedKey = "missions.redirected";
 
     public const string AcceptedKey = "missions.accepted";
@@ -62,6 +64,14 @@ public sealed class MissionCallout : ICallout
 
     private readonly HashSet<(long Id, string Warning)> _warned = [];
 
+    /// <summary>The cargo missions already announced as ready, while they stay on the board.</summary>
+    private readonly HashSet<long> _readySaid = [];
+
+    private static readonly HashSet<string> FilledByCommander = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Mission_Collect", "Mission_Mining", "Mission_Altruism", "Mission_Piracy",
+    };
+
     private readonly ConcurrentQueue<Trip> _trips = new();
 
     private bool _acceptedSinceDock;
@@ -92,7 +102,7 @@ public sealed class MissionCallout : ICallout
         {
             _acceptedSinceDock = false;
             _deferred = null;
-            Prime(board, context.Now);
+            Prime(board, hold, context.Now);
             yield break;
         }
 
@@ -165,6 +175,12 @@ public sealed class MissionCallout : ICallout
         }
 
         _warned.RemoveWhere(warned => board.For(warned.Id) is null);
+        _readySaid.RemoveWhere(id => board.For(id) is null);
+
+        foreach (var mission in FreshlyReady(board, hold))
+        {
+            yield return CargoAboard(mission, context.State?.Location);
+        }
 
         foreach (var mission in board.BySoonest())
         {
@@ -363,10 +379,56 @@ public sealed class MissionCallout : ICallout
         return count == 1 ? $"{heading}: {said}." : $"{heading}. The tightest is {said}.";
     }
 
+    /// <summary>The missions the Commander fills themselves that the hold now covers and that have not been announced; each is marked as said.</summary>
+    private List<Mission> FreshlyReady(MissionBoard board, CargoHold hold) =>
+        [.. MissionReadiness.Ready(board.Missions, hold).Where(IsFilledByCommander).Where(mission => _readySaid.Add(mission.Id))];
+
+    private static bool IsFilledByCommander(Mission mission) =>
+        !mission.Redirected && MissionCatalogue.Find(mission.Name)?.Family is { } family && FilledByCommander.Contains(family);
+
+    /// <summary>Says the cargo is aboard and where it goes, opening the plot offer when the hand-in is in another system.</summary>
+    private Announcement CargoAboard(Mission mission, JournalLocation? where)
+    {
+        var commodity = mission.CommodityLocalised ?? mission.Commodity;
+        var aboard = $"All {mission.Count} tons of {commodity} aboard.";
+        var key = $"{ReadyKey}.{mission.Id}";
+        var system = mission.DestinationSystem;
+        var station = mission.DestinationStation;
+
+        if (system is not { Length: > 0 })
+        {
+            return new Announcement(key, aboard);
+        }
+
+        var here = string.Equals(where?.StarSystem, system, StringComparison.OrdinalIgnoreCase);
+
+        if (!here)
+        {
+            Offer?.Open(mission.Id, system);
+            var place = station is { Length: > 0 } ? $"Hand in at {station} in {system}." : $"Hand-in is in {system}.";
+            return new Announcement(key, $"{aboard} {place} Say plot it to set the course.");
+        }
+
+        if (station is not { Length: > 0 })
+        {
+            return new Announcement(key, $"{aboard} Hand-in is in {system}.");
+        }
+
+        return where is { Docked: true } && string.Equals(where.StationName, station, StringComparison.OrdinalIgnoreCase)
+            ? new Announcement(key, $"{aboard} Hand it in here.")
+            : new Announcement(key, $"{aboard} Hand in at {station}.");
+    }
+
     /// <summary>Marks every warning already behind a mission as said, so a restart does not repeat it.</summary>
-    private void Prime(MissionBoard board, DateTimeOffset now)
+    private void Prime(MissionBoard board, CargoHold hold, DateTimeOffset now)
     {
         _warned.Clear();
+        _readySaid.Clear();
+
+        foreach (var mission in MissionReadiness.Ready(board.Missions, hold).Where(IsFilledByCommander))
+        {
+            _readySaid.Add(mission.Id);
+        }
 
         foreach (var mission in board.Missions)
         {

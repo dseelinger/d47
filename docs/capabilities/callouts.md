@@ -1562,13 +1562,23 @@ Commander's are never said. A reminder that has been said is removed at the next
 
 #### Mission hand-ins and expiry {#missions}
 
-D47 speaks about the missions on your [mission board](missions.html) at four moments
+D47 speaks about the missions on your [mission board](missions.html) at five moments
 ([#662](https://github.com/dseelinger/d47/issues/662)). Docking where one or more missions hand in
 says how many and what they pay together. Undocking from that station with one still unclaimed says
-so. An hour before a mission expires, and again ten minutes before, it names the mission.
+so. An hour before a mission expires, and again ten minutes before, it names the mission. When the
+hold first covers a collect, mining, altruism or piracy mission, it says the cargo is aboard and where
+to hand it in.
 
 ```text
 Two missions conclude here. 2.9 million waiting.
+```
+
+When the cargo of a collect, mining, altruism or piracy mission is all aboard, D47 says so once, and
+where it goes. Delivery and smuggling missions load their cargo on accept, so they are not announced.
+A hand-in in another system also offers to plot it:
+
+```text
+All 20 tons of Gold aboard. Hand in at Jameson Memorial in Sol. Say plot it to set the course.
 ```
 
 A mission counts as handing in only when it can be handed in now. A courier or passenger mission is
@@ -1582,7 +1592,7 @@ and undocking say nothing.
 Docking anywhere else says nothing, and neither does a mission you have already handed in. Each
 expiry warning is said once per mission. A mission already inside the hour when D47 starts gets no
 hour warning, and gets the ten-minute one only if that mark passed less than a minute ago. The
-warnings are fixed at an hour and ten minutes. Switching this off stops all four and leaves the
+warnings are fixed at an hour and ten minutes. Switching this off stops all five and leaves the
 mission board as it was.
 
 On accepting a mission with an expiry, D47 asks the galaxy search how far the destination is

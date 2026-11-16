@@ -1420,13 +1420,13 @@ public static class CalloutCapability
                 + "open Settings › Your core › Callouts, group Plans and reminders, and find Mission hand-ins and "
                 + "expiry (on by default). Dock where a mission hands in, leave with one unclaimed, or wait until "
                 + "an hour and ten minutes before one expires: D47 speaks. Accept a mission whose cargo is more "
-                + "than your hold, or a collect mission whose cargo is sold where you are docked: D47 says so. "
+                + "than your hold, or a collect mission whose cargo is sold where you are docked: D47 says so. Fill a collect or mining mission's cargo: D47 says where to hand it in. "
                 + "Say \"stop calling out mission callouts\": the row shows off and that is no longer said. Say "
                 + "\"start calling out mission callouts\" and the row shows on. The row is absent while Speak "
                 + "without being asked is off.",
                 "Mission hand-ins and expiry",
                 "On docking where missions hand in, on leaving with one unclaimed, and an hour and ten "
-                + "minutes before a mission expires. On accepting a mission, when its cargo is more than "
+                + "minutes before a mission expires, and when a collect or mining mission's cargo is all aboard. On accepting a mission, when its cargo is more than "
                 + "your hold or a collect mission's cargo is sold at the station you are docked at.",
                 "missions",
                 "mission callouts",
