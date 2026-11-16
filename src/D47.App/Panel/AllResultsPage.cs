@@ -174,6 +174,7 @@ internal sealed class AllResultsPage : UserControl, IPageSummary
         new("FLEET CARRIERS", false, r => r.Kind == PanelFindKind.Carrier),
         new("MINOR FACTIONS", false, r => r.Kind == PanelFindKind.Faction),
         new("ENGINEERS", false, r => r.Kind == PanelFindKind.Engineer),
+        new("COMMODITIES", false, r => r.Kind == PanelFindKind.Commodity),
         new("BOOKMARKS", true, r => r.Kind == PanelFindKind.Bookmark),
     ];
 }

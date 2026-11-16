@@ -10,6 +10,8 @@
 
 Added: At a station or fleet carrier with a crew lounge, D47 says once per docking when your ship has a fighter bay and no hired pilot is posted to it, and reminds you to make the pilot active after you swap back to their hull. The setting is Fighter bay crew, under Settings › Your core › In flight, on by default.
 
+Changed: Find lists every commodity by name, marked COMMODITY, and the All results page groups them under COMMODITIES. Choosing one opens Navigation › Market with that commodity as the only tile and runs the search for it, as Find it does, with the page's other fields as they stand.
+
 Changed: D47 reads your hired pilots from every journal on disk at startup, so "who is my crew" and Fleet › Crew list a pilot you hired before you last restarted D47. With none on record, they say "I find no hired pilot in your journals."
 
 Changed: The Market page under Navigation marks each fleet carrier row FLEET CARRIER, opens a carriers-only answer with a Carriers only line, and shows a How to get it note under the heading: ring mining and surface mining always, other methods such as a mission reward only when no station answered. A commodity with ring hotspots gets a "Find rings with ... hotspots" tile that opens Search › Bodies, filled in, and runs it. A search that finds nothing still shows the heading, the note and when it was searched. Silver, Palladium and Haematite are now ring-mined commodities, so "how do I get Silver" names ring mining.

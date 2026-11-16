@@ -14,6 +14,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     private RouteTradePage? _routeTrade;
     private RoutePlanResultPage? _routeResult;
     private RouteBestCargoPage? _bestCargo;
+    private RouteMarketPage? _market;
+    private string? _marketAsked;
     private GalaxyMapPage? _galaxyMap;
     private RoutePlanKind? _planOnMap;
     private StarChartKind? _chartAsked;
@@ -250,6 +252,12 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                 _routeResult = page as RoutePlanResultPage ?? _routeResult;
                 _bestCargo = page as RouteBestCargoPage ?? _bestCargo;
 
+                if (page is RouteMarketPage marketPage)
+                {
+                    _market = marketPage;
+                    RunMarketAsked();
+                }
+
                 return page;
             },
             [.. roots]);
@@ -358,6 +366,23 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         _planOnMap = kind;
         host.Nav.Show(RoutingPages.GalaxyMapRoot);
         _galaxyMap?.ShowPlan(kind);
+    }
+
+    /// <summary>Opens Navigation › Market with <paramref name="commodity"/> as the only tile and runs the search.</summary>
+    public void OpenMarketFor(string commodity)
+    {
+        _marketAsked = commodity;
+        host.Nav.Show(RoutingPages.MarketRoot);
+        RunMarketAsked();
+    }
+
+    private void RunMarketAsked()
+    {
+        if (_marketAsked is { } commodity && _market is { } page)
+        {
+            _marketAsked = null;
+            page.SearchFor(commodity);
+        }
     }
 
     /// <summary>Adds <paramref name="kind"/> to the Galaxy map and fits the view to it, or to the map built next when none is built yet.</summary>

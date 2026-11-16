@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -64,13 +65,6 @@ public sealed class RouteMarketPage : UserControl
 
     private const double CopyGap = 6;
 
-    /// <summary>Every name a market trades, ordinary and rare.</summary>
-    private static readonly Lazy<IReadOnlyList<string>> Commodities = new(() =>
-        [.. MaterialCatalogue.All
-            .Where(entry => entry.Ledger is MaterialLedger.Cargo or MaterialLedger.RareCargo)
-            .Select(entry => entry.Name)
-            .Distinct(StringComparer.OrdinalIgnoreCase)]);
-
     private readonly CapabilityRegistry _registry;
     private readonly CommodityBoard _board;
     private readonly Func<string, Task<bool>>? _copy;
@@ -115,6 +109,8 @@ public sealed class RouteMarketPage : UserControl
     private readonly MaxReportAge _age = new(72);
 
     private readonly StatusLine _status;
+
+    private Button _find = new();
 
     private IReadOnlyList<CommodityWant> _items = [];
 
@@ -193,6 +189,15 @@ public sealed class RouteMarketPage : UserControl
         DrawItems();
     }
 
+    /// <summary>Replaces the tiles with <paramref name="commodity"/> alone and runs the search, as Find it does.</summary>
+    public void SearchFor(string commodity)
+    {
+        _items = [];
+        Add(commodity, null);
+        _tonnes.Value = null;
+        _find.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    }
+
     /// <summary>Removes a commodity, as its tile does.</summary>
     public void Remove(string commodity)
     {
@@ -262,7 +267,7 @@ public sealed class RouteMarketPage : UserControl
         Detach(_age.Picker);
         Detach(_status);
 
-        var find = new Button { Content = "Find it" };
+        var find = _find = new Button { Content = "Find it" };
         var cancel = new Button { Content = "Cancel", IsVisible = false };
 
         RoutingKit.RunPlot(
@@ -347,7 +352,7 @@ public sealed class RouteMarketPage : UserControl
 
         return
         [
-            .. Commodities.Value
+            .. MarketCommodities.Names
                 .Where(name => kept.All(item => !string.Equals(item.Commodity, name, StringComparison.OrdinalIgnoreCase)))
                 .Where(name => words.All(word => name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                     .Any(known => known.StartsWith(word, StringComparison.OrdinalIgnoreCase))))

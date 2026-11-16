@@ -453,6 +453,7 @@ public sealed class FindDialog : ModalDialog
         PanelFindKind.Faction => "FACTION",
         PanelFindKind.Engineer => "ENGINEER",
         PanelFindKind.Bookmark => "BOOKMARK",
+        PanelFindKind.Commodity => "COMMODITY",
         _ => "HELP",
     };
 

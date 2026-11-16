@@ -20,6 +20,7 @@ public enum PanelFindKind
     Faction,
     Engineer,
     Bookmark,
+    Commodity,
 }
 
 /// <summary>A name to rank beside the pages: what it is, how it reads, where it sits and the key that reaches it.</summary>
@@ -135,6 +136,11 @@ public sealed class PanelFind(
         foreach (var engineer in EngineerDirectory.All)
         {
             yield return new PanelFindName(PanelFindKind.Engineer, engineer.Name, "Engineer", engineer.Name);
+        }
+
+        foreach (var commodity in MarketCommodities.Names)
+        {
+            yield return new PanelFindName(PanelFindKind.Commodity, commodity, "Commodity", commodity);
         }
 
         foreach (var bookmark in bookmarks?.Invoke() ?? [])

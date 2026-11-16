@@ -1152,6 +1152,10 @@ public partial class PanelView : UserControl, IPanelTabHost
             case PanelFindKind.Bookmark:
                 Nav.Show(RoutingPages.BookmarksRoot);
                 break;
+
+            case PanelFindKind.Commodity:
+                _navigation.OpenMarketFor(found.Target);
+                break;
         }
     }
 
