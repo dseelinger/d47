@@ -203,7 +203,7 @@ public sealed class ShipsMode(
         Figures("Armour", hull => hull.Armour),
         Figures("Shields", hull => hull.Shields),
         Figures("Seats", hull => hull.Crew is > 0 ? hull.Crew : null),
-        new("Price", hull => BgsWorkPage.Credits(EliteSpecifications.Ship(hull)?.Cost), hull => EliteSpecifications.Ship(hull)?.Cost, Right: true),
+        new("Price", hull => BgsWorkTable.Credits(EliteSpecifications.Ship(hull)?.Cost), hull => EliteSpecifications.Ship(hull)?.Cost, Right: true),
     ];
 
     private static EntryColumn Figures(string label, Func<ShipSpecification, int?> read)

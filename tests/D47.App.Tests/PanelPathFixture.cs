@@ -96,7 +96,6 @@ internal sealed class PanelPathFixture : IDisposable
             () => null,
             CapabilityRegistry.Build([])));
         panel.EnableSession(state);
-        panel.EnableBgsWork(state, () => null, now);
         panel.EnableCombatStats(state, () => HistoryState.Done, now);
         panel.EnableCredits(state, () => HistoryState.Done, now);
         panel.EnableCodex(state, () => HistoryState.Done, now);

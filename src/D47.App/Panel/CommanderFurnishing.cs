@@ -3,7 +3,7 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Commander tab: Checklist, Watches, Missions, Progress, Statistics, Campaign, Ledgers (with This session among them) and Commanders.</summary>
+/// <summary>The Commander tab: Checklist, Watches, Missions, Progress, Statistics, BGS, Ledgers (with This session among them) and Commanders.</summary>
 internal sealed class CommanderFurnishing(IPanelTabHost host)
 {
     private Func<NavCrumb, Control>? _checklistBuild;
@@ -11,7 +11,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private Func<NavCrumb, Control>? _standingBuild;
     private Func<NavCrumb, Control>? _statisticsBuild;
     private Func<NavCrumb, Control>? _sessionBuild;
-    private Func<NavCrumb, Control>? _bgsWorkBuild;
     private Func<NavCrumb, Control>? _combatStatsBuild;
     private Func<NavCrumb, Control>? _creditsBuild;
     private Func<NavCrumb, Control>? _codexBuild;
@@ -25,7 +24,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private StandingPage? _standing;
     private StatisticsPage? _statistics;
     private SessionPage? _session;
-    private BgsWorkPage? _bgsWork;
     private CombatStatsPage? _combatStats;
     private CreditsPage? _credits;
     private CreditTransactionsPage? _creditTransactions;
@@ -223,9 +221,10 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         host.Furnish(
             PanelTab.Commander,
             BuildCommander,
-            new NavCrumb(CampaignPage.RootKey, "Campaign")
+            new NavCrumb(CampaignPage.RootKey, "BGS")
             {
                 Help = D47.Core.Capabilities.Builtin.CampaignCapability.Id,
+                Spoken = ["campaign", "BGS work"],
             });
     }
 
@@ -237,19 +236,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         _sessionBuild = _ => _session = new SessionPage(state, clock);
 
         DeclareLedger(SessionPage.RootKey, "This session");
-    }
-
-    public void EnableBgsWork(
-        Func<D47.Core.Journal.CommanderGameState?> state,
-        Func<DateTimeOffset?> tick,
-        Func<DateTimeOffset> now,
-        Func<string?>? squadronFaction = null)
-    {
-        var headset = host.Headset;
-
-        _bgsWorkBuild = _ => _bgsWork = new BgsWorkPage(state, tick, now, headset, host.ColumnWidths, host.Copy, squadronFaction);
-
-        DeclareLedger(BgsWorkPage.PageKey, "BGS work");
     }
 
     public void EnableCombatStats(
@@ -388,11 +374,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= session.Tick();
         }
 
-        if (_bgsWork is { } bgsWork && leaf == BgsWorkPage.PageKey)
-        {
-            changed |= bgsWork.Tick();
-        }
-
         if (_combatStats is { } combatStats && leaf == CombatStatsPage.PageKey)
         {
             changed |= combatStats.Tick();
@@ -420,13 +401,13 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Missions, Progress, Statistics, Campaign, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: Missions, Progress, Statistics, BGS, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
         IsLedger(crumb.Key) ? new LedgersPage(host.Nav, Page, crumb.Key)
         : Page(crumb);
 
     private static bool IsLedger(string key) =>
-        key is BgsWorkPage.PageKey or CombatStatsPage.PageKey or CreditsPage.PageKey or CodexPage.PageKey or ScreenshotsPage.PageKey or SessionPage.RootKey;
+        key is CombatStatsPage.PageKey or CreditsPage.PageKey or CodexPage.PageKey or ScreenshotsPage.PageKey or SessionPage.RootKey;
 
     private Control Page(NavCrumb crumb) =>
         IsWatches(crumb.Key) && _watchesBuild is { } watches ? watches(crumb)
@@ -436,7 +417,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == CampaignPage.RootKey && _campaignBuild is { } campaign ? campaign(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
         : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav, Page)
-        : crumb.Key == BgsWorkPage.PageKey && _bgsWorkBuild is { } bgsWork ? bgsWork(crumb)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
         : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)

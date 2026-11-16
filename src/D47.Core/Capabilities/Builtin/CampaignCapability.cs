@@ -215,6 +215,8 @@ public static class CampaignCapability
                 [
                     new ToolCommandPhrase("turn off the campaign", new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = "false" }),
                     new ToolCommandPhrase("turn on the campaign", new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = "true" }),
+                    new ToolCommandPhrase("turn off BGS", new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = "false" }),
+                    new ToolCommandPhrase("turn on BGS", new Dictionary<string, string>(StringComparer.Ordinal) { ["on"] = "true" }),
                 ],
                 Protected = true,
                 RefusalExample = "turn off the campaign",

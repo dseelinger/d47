@@ -5,15 +5,14 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
-using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
-/// <summary>The rows of one squadron group on the BGS work page.</summary>
+/// <summary>The rows of one group on the WORK section.</summary>
 public sealed record BgsWorkGroup(string Title, IReadOnlyList<BgsWorkRow> Rows);
 
-/// <summary>One system and faction in the BGS work table; a null figure is nothing in the period.</summary>
+/// <summary>One system and faction in the WORK table; a null figure is nothing in the period.</summary>
 public sealed record BgsWorkRow(
     long SystemAddress,
     string? System,
@@ -28,7 +27,7 @@ public sealed record BgsWorkRow(
     long? Cartography,
     InfluenceAcrossResult? Influence)
 {
-    public string SystemText => System ?? BgsWorkPage.UnnamedSystem;
+    public string SystemText => System ?? BgsWorkTable.UnnamedSystem;
 
     internal long? Marks => MarksUp is null && MarksDown is null ? null : (MarksUp ?? 0) - (MarksDown ?? 0);
 
@@ -39,11 +38,9 @@ public sealed record BgsWorkRow(
     internal double? InfluenceChange => Influence is { } across ? across.After - across.Before : null;
 }
 
-/// <summary>Commander › Ledgers › BGS work: the work done for minor factions since the BGS tick, or in the last 24 hours (#1287).</summary>
-public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
+/// <summary>The rows and words of Commander › BGS › WORK: the work done for minor factions since the BGS tick, or in the last 24 hours (#1287).</summary>
+public static class BgsWorkTable
 {
-    public const string PageKey = "bgs-work";
-
     public const string UnnamedSystem = "A system not in your recent journals";
 
     public const string Hint = "Missions, bounties, combat bonds, trade and data you hand in show here as you hand them in.";
@@ -54,14 +51,10 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         "D47 doesn't know when the BGS last ticked, so this shows the last 24 hours. "
         + "It counts from the tick and shows influence once the tick time has been read.";
 
-    public const string UnknownFactionLabel = "Squadron faction unknown";
+    public const string TableId = "BgsWork";
 
-    public const string UnknownFactionText =
-        "D47 learns your squadron's faction when you are in one of its systems. "
-        + "You can also say 'my squadron's faction is' and its name.";
-
-    private const string Dash = "—";
-    private const int InfluenceColumn = 5;
+    internal const string Dash = "—";
+    internal const int InfluenceColumn = 5;
 
     /// <summary>The columns, each sortable from its heading; Influence is drawn only with a tick time.</summary>
     public static readonly IReadOnlyList<SortColumn<BgsWorkRow>> Heads =
@@ -74,9 +67,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         SortColumn<BgsWorkRow>.Figure("Influence", row => row.InfluenceChange, SortDirection.Descending) with { Second = "Tick → visit" },
     ];
 
-    public const string TableId = "BgsWork";
-
-    private static readonly TableColumn[] ColumnList =
+    internal static readonly TableColumn[] ColumnList =
     [
         new("System", ColumnFit.Fill),
         new("Missions"),
@@ -85,82 +76,6 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         new("Data"),
         new("Influence"),
     ];
-
-    private readonly Func<CommanderGameState?> _state;
-    private readonly Func<DateTimeOffset?> _tick;
-    private readonly Func<DateTimeOffset> _now;
-    private readonly Func<string, Task<bool>>? _copy;
-    private readonly bool _headset;
-    private readonly ColumnWidthMemory? _columnWidths;
-    private readonly SortHeader<BgsWorkRow> _head = new("BgsWorkHead", Heads);
-    private readonly StackPanel _body = new();
-    private readonly Func<string?> _squadronFaction;
-
-    private BgsWork? _seenWork;
-    private SystemStandings? _seenStandings;
-    private DateTimeOffset? _seenTick;
-    private string? _seenSystem;
-    private long _seenMinute;
-    private string? _seenFaction;
-    private string _query = string.Empty;
-
-    public BgsWorkPage(
-        Func<CommanderGameState?> state,
-        Func<DateTimeOffset?> tick,
-        Func<DateTimeOffset> now,
-        bool headset = false,
-        ColumnWidthMemory? columnWidths = null,
-        Func<string, Task<bool>>? copy = null,
-        Func<string?>? squadronFaction = null)
-    {
-        _squadronFaction = squadronFaction ?? (() => null);
-        _copy = copy;
-        _state = state;
-        _tick = tick;
-        _now = now;
-        _headset = headset;
-        _columnWidths = columnWidths;
-
-        Margin = new Thickness(14);
-        Content = LoadoutPages.Scrolling(_body);
-        _head.Changed += Draw;
-        Draw();
-    }
-
-    public string Summary { get; private set; } = string.Empty;
-
-    public event EventHandler? SummaryChanged;
-
-    public bool Filters => Rows(_state()?.BgsWork ?? BgsWork.None, _tick(), _now(), SystemStandings.Empty).Count > 0;
-
-    public string FilterPlaceholder => "Search system or faction";
-
-    public void Filter(string? query)
-    {
-        if (PageKit.Retarget(query, ref _query))
-        {
-            Draw();
-        }
-    }
-
-    /// <summary>Redraws when the work, the standings, the tick, the current system or the minute has changed.</summary>
-    public bool Tick()
-    {
-        var state = _state();
-
-        if (ReferenceEquals(state?.BgsWork, _seenWork)
-            && ReferenceEquals(state?.Standings, _seenStandings)
-            && _tick() == _seenTick
-            && state?.Location.StarSystem == _seenSystem
-            && _squadronFaction() == _seenFaction
-            && PageKit.Minute(_now()) == _seenMinute)
-        {
-            return false;
-        }
-
-        Draw();
-        return true;
-    }
 
     /// <summary>The rows for the period, most entries first.</summary>
     public static IReadOnlyList<BgsWorkRow> Rows(
@@ -178,15 +93,15 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         ];
     }
 
-    /// <summary>The rows in the three squadron groups, in order, leaving out any group with no rows.</summary>
-    public static IReadOnlyList<BgsWorkGroup> Groups(IReadOnlyList<BgsWorkRow> rows, BgsWork work, string squadronFaction)
+    /// <summary>The rows in the three groups around <paramref name="faction"/>, in order, leaving out any group with no rows.</summary>
+    public static IReadOnlyList<BgsWorkGroup> Groups(IReadOnlyList<BgsWorkRow> rows, BgsWork work, string faction)
     {
-        var titles = new[] { $"For {squadronFaction}", "Other factions in its systems", "Elsewhere" };
+        var titles = new[] { $"For {faction}", "Other factions in its systems", "Elsewhere" };
 
         return
         [
             .. rows
-                .GroupBy(row => work.GroupOf(row.SystemAddress, row.Faction, squadronFaction))
+                .GroupBy(row => work.GroupOf(row.SystemAddress, row.Faction, faction))
                 .OrderBy(group => group.Key)
                 .Select(group => new BgsWorkGroup(titles[(int)group.Key], [.. group])),
         ];
@@ -211,15 +126,16 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
     public static string MarksDownText(long? marks) => marks is { } down ? "−" + down.ToString(CultureInfo.InvariantCulture) : Dash;
 
     /// <summary><c>38.4% → 41.9%</c>.</summary>
-    public static string InfluenceText(InfluenceAcrossResult across) => Percent(across.Before) + " → " + Percent(across.After);
+    public static string InfluenceText(InfluenceAcrossResult across) =>
+        CampaignModel.InfluenceText(across.Before) + " → " + CampaignModel.InfluenceText(across.After);
 
     /// <summary><c>VISIT 19:42</c>, in UTC.</summary>
     public static string VisitText(InfluenceAcrossResult across) =>
         "VISIT " + across.LastSeen.UtcDateTime.ToString("HH:mm", CultureInfo.InvariantCulture);
 
-    public static string SummaryText(DateTimeOffset? tick) => tick is null
-        ? "The work you have done for minor factions in the last 24 hours."
-        : "The work you have done for minor factions since the BGS tick.";
+    public static string IntroText(string faction) =>
+        $"Your work for other factions, and any work for {faction} that Systems cannot show. "
+        + $"Your work for {faction} in its own systems is on Systems.";
 
     public static string EmptyText(DateTimeOffset? tick) => tick is { } at
         ? $"No BGS work since the tick at {PageKit.Clock(at)} UTC."
@@ -256,6 +172,8 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         return string.Join(' ', parts) + " ago";
     }
 
+    internal static string Plural(long count, string unit) => $"{count} {unit}{(count == 1 ? string.Empty : "s")}";
+
     private static BgsWorkRow RowOf(
         long address,
         string faction,
@@ -290,103 +208,124 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
         return ofKind.Count > 0 ? ofKind.Sum(entry => entry.Amount) : null;
     }
+}
 
-    private static string Percent(double share) => (share * 100).ToString("0.0", CultureInfo.InvariantCulture) + "%";
+/// <summary>What the WORK section is drawn from.</summary>
+public sealed record BgsWorkInput(
+    IReadOnlyList<BgsWorkRow> Rows,
+    BgsWork Work,
+    string Faction,
+    DateTimeOffset? Tick,
+    DateTimeOffset Now,
+    string? Current,
+    string Query);
 
+/// <summary>The WORK section of Commander › BGS: the work grouped around the BGS faction, one table per group.</summary>
+public sealed class BgsWorkSection
+{
+    private readonly bool _headset;
+    private readonly ColumnWidthMemory? _columnWidths;
+    private readonly Func<string, Task<bool>>? _copy;
 
-    private static string Plural(long count, string unit) => $"{count} {unit}{(count == 1 ? string.Empty : "s")}";
-
-
-    private void Draw()
+    public BgsWorkSection(bool headset, ColumnWidthMemory? columnWidths, Func<string, Task<bool>>? copy)
     {
-        var state = _state();
-        var now = _now();
-        var tick = _tick();
-        var work = state?.BgsWork ?? BgsWork.None;
-        var standings = state?.Standings ?? SystemStandings.Empty;
+        _headset = headset;
+        _columnWidths = columnWidths;
+        _copy = copy;
+        Head = new SortHeader<BgsWorkRow>("BgsWorkHead", BgsWorkTable.Heads);
+    }
 
-        _seenWork = state?.BgsWork;
-        _seenStandings = state?.Standings;
-        _seenTick = tick;
-        _seenSystem = state?.Location.StarSystem;
-        _seenMinute = PageKit.Minute(now);
-        var squadronFaction = _squadronFaction();
-        _seenFaction = squadronFaction;
+    public SortHeader<BgsWorkRow> Head { get; }
 
-        var summary = SummaryText(tick);
+    /// <summary>The rows matching the search, across every group; the pager counts these.</summary>
+    public int Count { get; private set; }
 
-        if (summary != Summary)
+    /// <summary>Draws the section. On the headset <paramref name="page"/> is clamped to the pages the rows fill.</summary>
+    public Control Build(BgsWorkInput input, ref int page)
+    {
+        var tick = input.Tick;
+        var body = new StackPanel();
+
+        if (tick is null && Head.Order?.Column == BgsWorkTable.InfluenceColumn)
         {
-            Summary = summary;
-            SummaryChanged?.Invoke(this, EventArgs.Empty);
+            Head.Show(null);
         }
 
-        if (tick is null && _head.Order?.Column == InfluenceColumn)
-        {
-            _head.Show(null);
-        }
-
-        var all = Rows(work, tick, now, standings);
-        var shown = Matching(all, _query);
-
-        _body.Children.Clear();
+        var shown = BgsWorkTable.Matching(input.Rows, input.Query);
+        Count = shown.Count;
 
         if (tick is null)
         {
-            _body.Children.Add(UnknownTick());
+            body.Children.Add(new Notice(NoticeLevel.Warning)
+            {
+                Label = BgsWorkTable.UnknownTickLabel,
+                Text = BgsWorkTable.UnknownTickText,
+                Margin = new Thickness(0, 0, 0, 14),
+            });
         }
 
-        if (squadronFaction is null && state?.Squadron.IsMember == true)
+        var intro = Typeset.Prose(BgsWorkTable.IntroText(input.Faction), TypeScale.Description, ThemeManager.GreyKey, wrap: true);
+        intro.MaxWidth = 900;
+        intro.HorizontalAlignment = HorizontalAlignment.Left;
+        intro.Margin = new Thickness(0, 0, 0, 8);
+        body.Children.Add(intro);
+
+        if (input.Rows.Count == 0)
         {
-            _body.Children.Add(UnknownFaction());
-        }
-
-        var count = all.Count == shown.Count
-            ? Plural(all.Count, "faction")
-            : $"{shown.Count} of {Plural(all.Count, "faction")}";
-
-        var headed = squadronFaction is not null && shown.Count > 0
-            ? Groups(shown, work, squadronFaction)[0]
-            : null;
-
-        _body.Children.Add(StarSystemPage.GroupHead(
-            headed?.Title ?? (tick is null ? "Last 24 hours" : "Since the tick"),
-            Description(tick, now),
-            headed is null ? count : Plural(headed.Rows.Count, "faction")));
-
-        if (all.Count == 0)
-        {
-            _body.Children.Add(CreditsKit.Message(EmptyText(tick)));
-            _body.Children.Add(CreditsKit.Note(Hint, 18));
-            return;
+            body.Children.Add(CreditsKit.Message(BgsWorkTable.EmptyText(tick)));
+            body.Children.Add(CreditsKit.Note(BgsWorkTable.Hint, 18));
+            return body;
         }
 
         if (shown.Count == 0)
         {
-            _body.Children.Add(CreditsKit.Message(NoMatchText(tick)));
-            return;
+            body.Children.Add(CreditsKit.Message(BgsWorkTable.NoMatchText(tick)));
+            return body;
         }
 
-        if (squadronFaction is null)
-        {
-            _body.Children.Add(Table(shown, tick is not null, state?.Location.StarSystem));
-            return;
-        }
+        var groups = BgsWorkTable.Groups(shown, input.Work, input.Faction)
+            .Select(group => new BgsWorkGroup(group.Title, Head.Sort(group.Rows)))
+            .ToList();
 
-        var groups = Groups(shown, work, squadronFaction);
+        var onPage = groups;
 
-        for (var i = 0; i < groups.Count; i++)
+        if (_headset)
         {
-            if (i > 0)
+            page = FactionModel.ClampPage(page, shown.Count);
+            var skip = page * FactionModel.PageSize;
+            var take = FactionModel.PageSize;
+            var slice = new List<BgsWorkGroup>();
+
+            foreach (var group in groups)
             {
-                _body.Children.Add(StarSystemPage.GroupHead(groups[i].Title, string.Empty, Plural(groups[i].Rows.Count, "faction")));
+                var rows = group.Rows.Skip(Math.Max(0, skip)).Take(Math.Max(0, take)).ToList();
+                skip -= group.Rows.Count;
+                take -= rows.Count;
+
+                if (rows.Count > 0)
+                {
+                    slice.Add(new BgsWorkGroup(group.Title, rows));
+                }
             }
 
-            _body.Children.Add(Table(groups[i].Rows, tick is not null, state?.Location.StarSystem));
+            onPage = slice;
         }
+
+        for (var i = 0; i < onPage.Count; i++)
+        {
+            var total = groups.First(group => group.Title == onPage[i].Title).Rows.Count;
+            var count = BgsWorkTable.Plural(total, "faction");
+
+            body.Children.Add(i == 0
+                ? StarSystemPage.GroupHead(onPage[i].Title, Description(tick, input.Now), count)
+                : StarSystemPage.GroupHead(onPage[i].Title, string.Empty, count));
+            body.Children.Add(Table(onPage[i].Rows, tick is not null, input.Current));
+        }
+
+        return body;
     }
 
-    private TextBlock Description(DateTimeOffset? tick, DateTimeOffset now)
+    private static TextBlock Description(DateTimeOffset? tick, DateTimeOffset now)
     {
         var note = RoutingKit.Ink(string.Empty, TypeScale.ControlLarge, ThemeManager.GreyKey);
         var sort = " Press a heading to sort.";
@@ -394,7 +333,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         if (tick is { } at)
         {
             note.Inlines!.Add(Fonts.Mono($"{PageKit.Clock(at)} UTC"));
-            note.Inlines.Add(new Avalonia.Controls.Documents.Run($" · {Ago(now - at)}.{sort}"));
+            note.Inlines.Add(new Avalonia.Controls.Documents.Run($" · {BgsWorkTable.Ago(now - at)}.{sort}"));
         }
         else
         {
@@ -404,35 +343,16 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         return note;
     }
 
-    private static Notice UnknownFaction() => new(NoticeLevel.Warning)
-    {
-        Label = UnknownFactionLabel,
-        Text = UnknownFactionText,
-        Margin = new Thickness(0, 0, 0, 14),
-    };
-
-    private Notice UnknownTick()
-    {
-        var notice = new Notice(NoticeLevel.Warning)
-        {
-            Label = UnknownTickLabel,
-            Text = UnknownTickText,
-            Margin = new Thickness(0, 0, 0, 14),
-        };
-
-        return notice;
-    }
-
     private StackPanel Table(IReadOnlyList<BgsWorkRow> rows, bool withInfluence, string? current)
     {
-        var columns = withInfluence ? Heads.Count : Heads.Count - 1;
+        var columns = withInfluence ? BgsWorkTable.Heads.Count : BgsWorkTable.Heads.Count - 1;
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
 
-        var layout = new TableLayout(TableId, [.. ColumnList.Take(columns)], _columnWidths, _headset ? 12 : 16);
+        var layout = new TableLayout(BgsWorkTable.TableId, [.. BgsWorkTable.ColumnList.Take(columns)], _columnWidths, _headset ? 12 : 16);
 
-        table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
+        table.Children.Add(CreditsKit.HeaderRow(Head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
 
-        foreach (var row in _head.Sort(rows))
+        foreach (var row in rows)
         {
             table.Children.Add(RowView(row, withInfluence, current, layout, _copy));
         }
@@ -447,7 +367,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
         var isCurrent = row.System is not null && string.Equals(row.System, current, StringComparison.OrdinalIgnoreCase);
         var system = row.System is null
-            ? CreditsKit.Line(UnnamedSystem, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey)
+            ? CreditsKit.Line(BgsWorkTable.UnnamedSystem, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey)
             : CopyGlyph.LinkBeside(
                 CreditsKit.Line(row.System, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey),
                 row.System,
@@ -455,19 +375,19 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         var faction = CreditsKit.Line(row.Faction, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
 
         Place(grid, 0, new StackPanel { Children = { system, faction } });
-        Place(grid, 1, Values((MarksUpText(row.MarksUp), Key(row.MarksUp)), (MarksDownText(row.MarksDown), row.MarksDown is null ? ThemeManager.Grey2Key : ThemeManager.RedKey)));
-        Place(grid, 2, Values((Credits(row.Bounties), Key(row.Bounties)), (Credits(row.Bonds), Key(row.Bonds))));
-        Place(grid, 3, Values((Credits(row.Sold), Key(row.Sold)), (Credits(row.Profit), row.Profit switch { null => ThemeManager.Grey2Key, < 0 => ThemeManager.RedKey, _ => ThemeManager.AKey })));
-        Place(grid, 4, Values((Credits(row.Cartography), Key(row.Cartography))));
+        Place(grid, 1, Values((BgsWorkTable.MarksUpText(row.MarksUp), Key(row.MarksUp)), (BgsWorkTable.MarksDownText(row.MarksDown), row.MarksDown is null ? ThemeManager.Grey2Key : ThemeManager.RedKey)));
+        Place(grid, 2, Values((BgsWorkTable.Credits(row.Bounties), Key(row.Bounties)), (BgsWorkTable.Credits(row.Bonds), Key(row.Bonds))));
+        Place(grid, 3, Values((BgsWorkTable.Credits(row.Sold), Key(row.Sold)), (BgsWorkTable.Credits(row.Profit), row.Profit switch { null => ThemeManager.Grey2Key, < 0 => ThemeManager.RedKey, _ => ThemeManager.AKey })));
+        Place(grid, 4, Values((BgsWorkTable.Credits(row.Cartography), Key(row.Cartography))));
 
         if (withInfluence)
         {
             Place(
                 grid,
-                InfluenceColumn,
+                BgsWorkTable.InfluenceColumn,
                 row.Influence is { } across
-                    ? Values((InfluenceText(across), ThemeManager.AKey), (VisitText(across), ThemeManager.AKey))
-                    : Values((Dash, ThemeManager.Grey2Key)));
+                    ? Values((BgsWorkTable.InfluenceText(across), ThemeManager.AKey), (BgsWorkTable.VisitText(across), ThemeManager.AKey))
+                    : Values((BgsWorkTable.Dash, ThemeManager.Grey2Key)));
         }
 
         var border = new Border
@@ -510,5 +430,4 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
 
         return stack;
     }
-
 }

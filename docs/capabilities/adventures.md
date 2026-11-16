@@ -344,7 +344,7 @@ current objective's title, or *finished*. *Objective 3 of 7* is checklist langua
 ### The NEXT strip
 
 On the full panel, under the title rule of every tab, a one-line NEXT strip shows the story's next objective
-with its system and a copy glyph. When you are also working a campaign front, a Story and Campaign toggle
+with its system and a copy glyph. When you are also working a campaign front, a Story and BGS toggle
 appears at the right end of the strip. Campaign shows the first sentence of the front's next action, the
 front's kind and the faction it concerns, and the glyph copies the system. With only one of the two, the
 strip shows that one and no toggle. The choice is kept across restarts and is the same on the desktop and in

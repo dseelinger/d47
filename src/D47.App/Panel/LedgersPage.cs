@@ -26,7 +26,6 @@ public sealed class LedgersPage : UserControl, IPageSummary
 
     private static readonly (string Key, string Description)[] Known =
     [
-        (BgsWorkPage.PageKey, "The work done for minor factions since the BGS tick."),
         (CombatStatsPage.PageKey, "Your kills and the credits they were awarded."),
         (CreditsPage.PageKey, "Where your credits came from and where they went."),
         (CodexPage.PageKey, "The codex entries you have logged, by region."),

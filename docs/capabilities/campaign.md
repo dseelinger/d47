@@ -15,7 +15,7 @@ nav_order: 166
 </section>
 <section>
 <h2><span class="num">2</span> Say what you mean to do in a system.</h2>
-<p class="say">Say "hold Shinrarta Dezhra", "grow Lave" or "leave Lave alone", or step the intent on Commander › Campaign.</p>
+<p class="say">Say "hold Shinrarta Dezhra", "grow Lave" or "leave Lave alone", or step the intent on Commander › BGS.</p>
 <p class="expect">D47 confirms the system and the intent, such as "Lave: grow."</p>
 </section>
 <section>
@@ -125,15 +125,15 @@ line per system, with "(default)" after an intent nobody set, and the chronicle'
 fronts. Asking fetches the faction's systems from galaxy search; when that is not available, only
 the systems with an intent set are listed.
 
-### The Campaign page
+### The BGS page
 
-The page is **Commander › Campaign**, on the desktop window and on the headset's big panel. At the
-top are the campaign faction, how many systems it is in and how many it controls, when the fronts were
-computed, a **CAMPAIGN ON** checkbox and a **CHANGE FACTION** tile.
+The page is **Commander › BGS**, on the desktop window and on the headset's big panel; "show the campaign" and "show BGS work" open it too. At the
+top are the BGS faction, how many systems it is in and how many it controls, when the fronts were
+computed, a **BGS ON** checkbox and a **CHANGE FACTION** tile. "Turn on BGS", "turn off BGS" and "our BGS faction is" do what the campaign phrases do.
 
-Untick **CAMPAIGN ON** to turn the campaign off, as "turn off the campaign" does; tick it to turn it on again. While it is off the page keeps the faction the campaign would resume with, shows a dash for its systems and **Not while off** for when the fronts were computed, and disables **CHANGE FACTION**. A **CAMPAIGN OFF** block says that D47 fetches no report, proposes no front and puts nothing on the NEXT strip, and that your faction, intents and chronicle are kept. The front, the Fronts, Systems and Chronicle sections and the search field are not drawn.
+Untick **BGS ON** to turn the campaign off, as "turn off the campaign" does; tick it to turn it on again. While it is off the page keeps the faction the campaign would resume with, shows a dash for its systems and **Not while off** for when the fronts were computed, and disables **CHANGE FACTION**. A **BGS OFF** block says that D47 fetches no report, proposes no front and puts nothing on the NEXT strip, and that your faction, intents and chronicle are kept. The front, the Fronts, Systems, Work and Chronicle sections, your work and the search field are not drawn.
 
-**CHANGE FACTION** opens **Campaign faction**, a list with your squadron's faction first, then every
+**CHANGE FACTION** opens **BGS faction**, a list with your squadron's faction first, then every
 faction your journal has seen and where. You can also type a name. **Use this** sets the faction exactly
 as "our campaign faction is" does. With no campaign faction known, the tile reads **CHOOSE FACTION**.
 
@@ -144,10 +144,11 @@ newer journal readings in place of the report's figures. Each row shows:
 - its distance from you, in light years;
 - the faction's influence;
 - its lead over the nearest rival in points, marked "frozen" during a war, civil war or election;
+- your work for the faction there since the BGS tick, or in the last 24 hours when the tick time is unknown, one line per kind such as `+5 marks` or `1,200,000 CR in bounties`, and `none` in grey when there is none (on the big panel the lines sit under the system's name, and a system with none draws nothing);
 - its state;
 - its intent.
 
-System, Distance, Influence and Lead sort when you press the heading. A report more than 30 days old shows its
+System, Distance, Influence and Lead sort when you press the heading; Your work does not. A report more than 30 days old shows its
 age and OLD REPORT, and the rest of the row is grey. On the big panel the table shows 25 systems to
 a page.
 
@@ -185,8 +186,10 @@ already chosen, or the faction has none."
 When the last fetch failed, a warning at the top says when the fronts were computed, and **Fronts
 computed** is in the warning colour.
 
-Under that, **Fronts**, **Systems** and **Chronicle** are one row of three, with a count on each on
+Under that, **Fronts**, **Systems**, **Work** and **Chronicle** are one row of four, with a count on each on
 the desktop and none in the headset.
+
+**Work** lists the work you have done for other factions since the BGS tick (the last 24 hours when the tick time is unknown), in the groups "Other factions in its systems" and "Elsewhere", with missions, combat, trade and data columns and, with a tick time, the influence from the tick to your visit. Work for the BGS faction that Systems cannot show, such as work before the first report or in a system the report does not list, is under "For" and its name. The search matches a system or a faction here. It is journal data, so it is drawn without a faction report.
 
 **Fronts** lists the fronts in rank order, each with its kind, system, how far the system is from you,
 the reason, and how old its data is, "you saw it" or "unchanged since the tick" for your own reading. A report more than 30 days
@@ -270,6 +273,7 @@ after each fetch and at the start of a session. A proposal writes nothing.
 | "what should I do for the faction" | One sentence naming the work, then at most one sentence naming work that does not count. |
 | "turn off the campaign" | Stops the whole campaign and drops the chosen front, adding nothing to the chronicle. |
 | "turn on the campaign" | Starts the campaign again from the kept faction, intents and chronicle. |
+| "turn off BGS", "turn on BGS" | The same as the two phrases above. |
 
 A chosen front stays chosen across restarts until it resolves or you drop it. Naming another campaign
 faction drops it. D47 notes each BGS tick the front spans. A front resolves when the fronts computed
@@ -289,7 +293,7 @@ A war says that trade does not count, an election that combat does not count and
 may void some election missions, a Lockdown that only bounties help, and an Outbreak that bounty
 vouchers do nothing. The model reads the answer and does not compose it.
 
-The first sentence of the next action also shows on the NEXT strip under every tab of the full panel, with a Story and Campaign toggle; see [The NEXT strip](adventures.md#the-next-strip). While the campaign is off, the strip shows no campaign line.
+The first sentence of the next action also shows on the NEXT strip under every tab of the full panel, with a Story and BGS toggle; see [The NEXT strip](adventures.md#the-next-strip). While the campaign is off, the strip shows no campaign line.
 
 ### The Liaison
 
@@ -456,7 +460,7 @@ writes each chronicle entry once as faction history with you in it, from the ent
 system, the opponent, the outcome and the ticks it spanned. The passage is stored on the entry and never written again.
 It is written in the background on the turn model after a front resolves and at launch for entries that have none, and a
 failed write is tried again at the next launch or resolved front. A passage that gives a number the facts did not, or runs
-over 700 characters, is refused. The passage shows under its entry in the Chronicle section of the Campaign page and is read
+over 700 characters, is refused. The passage shows under its entry in the Chronicle section of the BGS page and is read
 aloud only on request:
 
 > "read the chronicle"

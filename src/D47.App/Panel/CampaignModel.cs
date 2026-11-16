@@ -9,27 +9,27 @@ namespace D47.App.Panel;
 /// <summary>One faction the Campaign faction picker offers, with the line under its name.</summary>
 public sealed record CampaignFactionChoice(string Name, string Detail);
 
-/// <summary>The words, figures and columns of Commander › Campaign.</summary>
+/// <summary>The words, figures and columns of Commander › BGS.</summary>
 public static class CampaignModel
 {
     public const string Dash = "—";
 
-    public const string NoFactionText = "No campaign faction yet. Choose one, or say 'our campaign faction is' and its name.";
+    public const string NoFactionText = "No BGS faction yet. Choose one, or say 'our BGS faction is' and its name.";
 
-    public const string OffLabel = "CAMPAIGN OFF";
+    public const string OffLabel = "BGS OFF";
 
-    public const string OffSwitchLabel = "CAMPAIGN ON";
+    public const string OffSwitchLabel = "BGS ON";
 
     public const string NotWhileOff = "Not while off";
 
     public const string OffBody =
         "D47 fetches no faction report, proposes no front and puts nothing on the NEXT strip. "
-        + "The Liaison, the arcs and the campaign warnings are quiet.";
+        + "The Liaison, the arcs and the BGS warnings are quiet.";
 
     public const string OffKept =
-        "Your faction, the intent on each system and the chronicle are kept. Turn the campaign on and D47 picks up from them.";
+        "Your faction, the intent on each system and the chronicle are kept. Turn BGS on and D47 picks up from them.";
 
-    public const string OffHint = "Tick CAMPAIGN ON, or say \"turn on the campaign\".";
+    public const string OffHint = "Tick BGS ON, or say \"turn on BGS\".";
 
     /// <summary>The faction an off campaign would resume with: the one named, else the squadron's, else null.</summary>
     public static string? OffFaction(Campaign campaign, string? squadronFaction) =>
@@ -37,7 +37,7 @@ public static class CampaignModel
 
     /// <summary>The first sentence of the off block and the header summary.</summary>
     public static string OffOpening(string? faction) =>
-        faction is null ? "Your campaign is off." : $"Your campaign for {faction} is off.";
+        faction is null ? "Your BGS work is off." : $"Your BGS work for {faction} is off.";
 
     /// <summary>The off block's first line on the desktop.</summary>
     public static string OffText(string? faction) => OffOpening(faction) + " " + OffBody;
@@ -48,9 +48,9 @@ public static class CampaignModel
     /// <summary>The header summary for the page.</summary>
     public static string Summary(string? faction, bool off, bool headset) =>
         off ? OffOpening(faction)
-        : faction is null ? "Choose the faction your campaign works for."
-        : headset ? $"Your campaign for {faction}."
-        : $"Your campaign for {faction}: the front you chose, and what to do next.";
+        : faction is null ? "Choose the faction your BGS work is for."
+        : headset ? $"Your BGS work for {faction}."
+        : $"Your BGS work for {faction}: the front you chose, and what to do next.";
 
     /// <summary>The line under the top line when no faction is known; none while the campaign is off.</summary>
     public static string? NoFactionLine(string? faction, bool off) => faction is null && !off ? NoFactionText : null;
@@ -71,15 +71,16 @@ public static class CampaignModel
         + "you have not set follows the default in grey: Hold where the faction controls it, Leave alone where it does not.";
 
     public const string PickerHelp =
-        "The campaign starts with your squadron's faction. Choose any faction D47 has seen in your journal, or type a "
+        "Your BGS work starts with your squadron's faction. Choose any faction D47 has seen in your journal, or type a "
         + "name; its report comes from the same source as Search › Faction.";
 
     /// <summary>The sections under the frame, in order.</summary>
-    public static readonly IReadOnlyList<string> Sections = ["FRONTS", "SYSTEMS", "CHRONICLE"];
+    public static readonly IReadOnlyList<string> Sections = ["FRONTS", "SYSTEMS", "WORK", "CHRONICLE"];
 
     public const int FrontsSection = 0;
     public const int SystemsSection = 1;
-    public const int ChronicleSection = 2;
+    public const int WorkSection = 2;
+    public const int ChronicleSection = 3;
 
     public const string NoFrontsText = "The faction has no front that needs work.";
 
@@ -149,11 +150,12 @@ public static class CampaignModel
 
     public static readonly SortOrder ChronicleOrder = new(0, SortDirection.Descending);
 
-    /// <summary>The count under a section's name on the desktop: <c>7 fronts</c>, <c>12 systems</c>, <c>4 resolved</c>.</summary>
-    public static IReadOnlyList<string> SectionCounts(int fronts, int systems, int resolved) =>
+    /// <summary>The count under a section's name on the desktop: <c>7 fronts</c>, <c>12 systems</c>, <c>6 factions</c>, <c>4 resolved</c>.</summary>
+    public static IReadOnlyList<string> SectionCounts(int fronts, int systems, int work, int resolved) =>
     [
         fronts == 1 ? "1 front" : $"{fronts} fronts",
         systems == 1 ? "1 system" : $"{systems} systems",
+        work == 1 ? "1 faction" : $"{work} factions",
         $"{resolved} resolved",
     ];
 
@@ -214,18 +216,37 @@ public static class CampaignModel
     }
 
     /// <summary>The Commander's work on a resolved front, one line per kind: <c>+12 marks</c>, <c>1,200,000 CR in bounties</c>; <c>none</c> without any.</summary>
-    public static IReadOnlyList<string> WorkLines(ChronicleEntry entry) =>
-        entry.Work.Count == 0
+    public static IReadOnlyList<string> WorkLines(ChronicleEntry entry) => WorkLines(entry.Work);
+
+    /// <summary>The lines for <paramref name="work"/>, one per kind; <c>none</c> without any.</summary>
+    public static IReadOnlyList<string> WorkLines(IReadOnlyList<ChronicleWork> work) =>
+        work.Count == 0
             ? ["none"]
-            : [.. entry.Work.Select(WorkLine)];
+            : [.. work.Select(WorkLine)];
+
+    /// <summary>The totals of <paramref name="entries"/> by kind, as a chronicle entry holds them.</summary>
+    public static IReadOnlyList<ChronicleWork> WorkOf(IEnumerable<BgsEntry> entries) =>
+    [
+        .. entries
+            .GroupBy(entry => entry.Kind)
+            .Select(group => new ChronicleWork(group.Key, group.Sum(entry => entry.Amount)))
+            .OrderBy(work => work.Kind),
+    ];
+
+    /// <summary>The second line of the Your work head: <c>Since the tick</c>, or <c>Last 24 hours</c> without a tick time.</summary>
+    public static string WorkPeriod(bool ticked) => ticked ? "Since the tick" : "Last 24 hours";
+
+    /// <summary>The headset's line above the Systems table, which has no column to name the period in.</summary>
+    public static string WorkUnderNames(string faction, DateTimeOffset? tick) =>
+        $"Under each system: your work for {faction} " + (tick is { } at ? $"since the {PageKit.Clock(at)} UTC tick." : "in the last 24 hours.");
 
     private static string WorkLine(ChronicleWork work) => work.Kind switch
     {
         BgsWorkKind.Mission => (work.Amount < 0 ? "−" : "+") + Math.Abs(work.Amount).ToString(CultureInfo.InvariantCulture) + (Math.Abs(work.Amount) == 1 ? " mark" : " marks"),
-        BgsWorkKind.Bounty => BgsWorkPage.Credits(work.Amount) + " in bounties",
-        BgsWorkKind.CombatBond => BgsWorkPage.Credits(work.Amount) + " in bonds",
-        BgsWorkKind.Trade => BgsWorkPage.Credits(work.Amount) + " of trade",
-        _ => BgsWorkPage.Credits(work.Amount) + " in data sales",
+        BgsWorkKind.Bounty => BgsWorkTable.Credits(work.Amount) + " in bounties",
+        BgsWorkKind.CombatBond => BgsWorkTable.Credits(work.Amount) + " in bonds",
+        BgsWorkKind.Trade => BgsWorkTable.Credits(work.Amount) + " of trade",
+        _ => BgsWorkTable.Credits(work.Amount) + " in data sales",
     };
 
     /// <summary>The date a chronicle entry ended: <c>2 Nov</c>, or a dash when it spanned no tick.</summary>
@@ -285,13 +306,14 @@ public static class CampaignModel
                 ? $"After the {PageKit.Clock(at)} UTC tick"
                 : $"{PageKit.Clock(computed)} UTC";
 
-    /// <summary>The Systems columns. System, Distance, Influence and Lead sort; State and Intent do not.</summary>
-    public static IReadOnlyList<SortColumn<CampaignSystemRow>> Heads(bool headset) =>
+    /// <summary>The Systems columns. System, Distance, Influence and Lead sort; Your work (desktop only), State and Intent do not.</summary>
+    public static IReadOnlyList<SortColumn<CampaignSystemRow>> Heads(bool headset, bool ticked = true) =>
     [
         SortColumn<CampaignSystemRow>.Text("System", row => row.System) with { Second = headset ? null : "Controlled or not" },
         SortColumn<CampaignSystemRow>.Figure("Distance", row => row.Distance, SortDirection.Ascending),
         SortColumn<CampaignSystemRow>.Figure(headset ? "Infl." : "Influence", row => row.Influence, SortDirection.Descending),
         SortColumn<CampaignSystemRow>.Figure("Lead", row => row.Lead, SortDirection.Descending) with { Second = headset ? null : "Points" },
+        .. headset ? Array.Empty<SortColumn<CampaignSystemRow>>() : [SortColumn<CampaignSystemRow>.Plain("Your work") with { Second = WorkPeriod(ticked) }],
         SortColumn<CampaignSystemRow>.Plain("State"),
         SortColumn<CampaignSystemRow>.Plain("Intent"),
     ];
@@ -385,7 +407,7 @@ public static class CampaignModel
 
         if (current is { Length: > 0 })
         {
-            Add(current, seen.TryGetValue(current, out var at) ? $"The campaign faction · {SeenIn(at)}" : "The campaign faction");
+            Add(current, seen.TryGetValue(current, out var at) ? $"The BGS faction · {SeenIn(at)}" : "The BGS faction");
         }
 
         foreach (var (name, systems) in seen.OrderByDescending(pair => pair.Value.Count).ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))

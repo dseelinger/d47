@@ -267,7 +267,7 @@ public class TheCampaignPageShowsTheChosenFrontFrontsAndChronicleTests
         var fronts = fixture.Snapshot.Fronts;
         Assert.Contains(fronts, front => front.Kind == FrontKind.Stale);
         Assert.Equal(
-            [$"{fronts.Count} fronts", "6 systems", "0 resolved"],
+            [$"{fronts.Count} fronts", "6 systems", "0 factions", "0 resolved"],
             In<Segment>(page).Single(segment => segment.Name == CampaignPage.SectionsName).Statuses.Select(status => status!.Text));
         Assert.Contains(In<TextBlock>(page), block => block.Text == CampaignModel.OldLabel);
         Assert.True(Shows(page, "41 days ago"));

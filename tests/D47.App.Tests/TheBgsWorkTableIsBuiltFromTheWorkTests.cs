@@ -60,10 +60,10 @@ public class TheBgsWorkTableIsBuiltFromTheWorkTests
         Mission("Epsilon Front", "DownBad", "+"));
 
     private static IReadOnlyList<BgsWorkRow> Rows(BgsWork? work = null, DateTimeOffset? tick = null) =>
-        BgsWorkPage.Rows(work ?? Week(), tick, Now, SystemStandings.Empty);
+        BgsWorkTable.Rows(work ?? Week(), tick, Now, SystemStandings.Empty);
 
     private static string[] Order(IReadOnlyList<BgsWorkRow> rows, int column, SortDirection direction) =>
-        [.. ColumnSort.Sorted(rows, BgsWorkPage.Heads, new SortOrder(column, direction)).Select(row => row.Faction)];
+        [.. ColumnSort.Sorted(rows, BgsWorkTable.Heads, new SortOrder(column, direction)).Select(row => row.Faction)];
 
     private static JournalEvent Jump(string at, double influence) =>
         Event("{\"timestamp\":\"" + at + "\",\"event\":\"FSDJump\",\"StarSystem\":\"Alpha\",\"SystemAddress\":1,"
@@ -117,20 +117,20 @@ public class TheBgsWorkTableIsBuiltFromTheWorkTests
 
         Assert.Equal(
             ["Alpha Mining", "Zeta Group"],
-            Order(BgsWorkPage.Rows(work, null, Now, SystemStandings.Empty), System, SortDirection.Ascending));
+            Order(BgsWorkTable.Rows(work, null, Now, SystemStandings.Empty), System, SortDirection.Ascending));
     }
 
     [Fact]
     public void ANegativeProfitHasATrueMinusAndAnAbsentValueIsADash()
     {
         Assert.Equal(-286400, Rows().Single(row => row.Faction == "Alpha Mining").Profit);
-        Assert.Equal("−386,400 CR", BgsWorkPage.Credits(-386400));
-        Assert.Equal("1,284,500 CR", BgsWorkPage.Credits(1284500));
-        Assert.Equal("—", BgsWorkPage.Credits(null));
+        Assert.Equal("−386,400 CR", BgsWorkTable.Credits(-386400));
+        Assert.Equal("1,284,500 CR", BgsWorkTable.Credits(1284500));
+        Assert.Equal("—", BgsWorkTable.Credits(null));
         Assert.Null(Rows().Single(row => row.Faction == "Gamma Pirates").Profit);
-        Assert.Equal("+6", BgsWorkPage.MarksUpText(6));
-        Assert.Equal("−3", BgsWorkPage.MarksDownText(3));
-        Assert.Equal("—", BgsWorkPage.MarksDownText(null));
+        Assert.Equal("+6", BgsWorkTable.MarksUpText(6));
+        Assert.Equal("−3", BgsWorkTable.MarksDownText(3));
+        Assert.Equal("—", BgsWorkTable.MarksDownText(null));
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class TheBgsWorkTableIsBuiltFromTheWorkTests
 
         Assert.Equal(
             ["Beta Union", "Epsilon Front", "Alpha Mining"],
-            BgsWorkPage.Rows(Week(), tick, Now, SystemStandings.Empty).Select(row => row.Faction));
+            BgsWorkTable.Rows(Week(), tick, Now, SystemStandings.Empty).Select(row => row.Faction));
     }
 
     [Fact]
@@ -163,19 +163,19 @@ public class TheBgsWorkTableIsBuiltFromTheWorkTests
 
         Assert.Equal(
             ["Alpha Mining", "Delta Party", "Gamma Pirates"],
-            BgsWorkPage.Matching(rows, "ALPHA").Select(row => row.Faction).Order());
-        Assert.Equal(["Gamma Pirates"], BgsWorkPage.Matching(rows, "pirates").Select(row => row.Faction));
-        Assert.Equal(rows, BgsWorkPage.Matching(rows, "  "));
-        Assert.Empty(BgsWorkPage.Matching(rows, "nowhere"));
+            BgsWorkTable.Matching(rows, "ALPHA").Select(row => row.Faction).Order());
+        Assert.Equal(["Gamma Pirates"], BgsWorkTable.Matching(rows, "pirates").Select(row => row.Faction));
+        Assert.Equal(rows, BgsWorkTable.Matching(rows, "  "));
+        Assert.Empty(BgsWorkTable.Matching(rows, "nowhere"));
     }
 
     [Fact]
     public void ASystemTheJournalsCannotNameMatchesOnItsText()
     {
-        var unnamed = BgsWorkPage.Matching(Rows(), "recent journals");
+        var unnamed = BgsWorkTable.Matching(Rows(), "recent journals");
 
         Assert.Equal(["Beta Union", "Epsilon Front"], unnamed.Select(row => row.Faction).Order());
-        Assert.All(unnamed, row => Assert.Equal(BgsWorkPage.UnnamedSystem, row.SystemText));
+        Assert.All(unnamed, row => Assert.Equal(BgsWorkTable.UnnamedSystem, row.SystemText));
     }
 
     [Fact]
@@ -184,22 +184,22 @@ public class TheBgsWorkTableIsBuiltFromTheWorkTests
         var standings = new[] { Jump("2026-10-10T08:00:00Z", 0.384), Jump("2026-10-10T19:42:00Z", 0.419) }
             .Aggregate(SystemStandings.Empty, (all, jump) => all.Apply(jump));
 
-        var withTick = BgsWorkPage.Rows(Week(), Tick, Now, standings).Single(row => row.Faction == "Alpha Mining");
-        var withoutTick = BgsWorkPage.Rows(Week(), null, Now, standings).Single(row => row.Faction == "Alpha Mining");
+        var withTick = BgsWorkTable.Rows(Week(), Tick, Now, standings).Single(row => row.Faction == "Alpha Mining");
+        var withoutTick = BgsWorkTable.Rows(Week(), null, Now, standings).Single(row => row.Faction == "Alpha Mining");
 
-        Assert.Equal("38.4% → 41.9%", BgsWorkPage.InfluenceText(withTick.Influence!.Value));
-        Assert.Equal("VISIT 19:42", BgsWorkPage.VisitText(withTick.Influence.Value));
+        Assert.Equal("38.4% → 41.9%", BgsWorkTable.InfluenceText(withTick.Influence!.Value));
+        Assert.Equal("VISIT 19:42", BgsWorkTable.VisitText(withTick.Influence.Value));
         Assert.Null(withoutTick.Influence);
-        Assert.Null(BgsWorkPage.Rows(Week(), Tick, Now, SystemStandings.Empty)[0].Influence);
+        Assert.Null(BgsWorkTable.Rows(Week(), Tick, Now, SystemStandings.Empty)[0].Influence);
     }
 
     [Fact]
     public void TheAgeIsInHoursAndMinutes()
     {
-        Assert.Equal("3 hours 28 minutes ago", BgsWorkPage.Ago(new TimeSpan(3, 28, 30)));
-        Assert.Equal("1 hour ago", BgsWorkPage.Ago(TimeSpan.FromMinutes(60)));
-        Assert.Equal("1 hour 1 minute ago", BgsWorkPage.Ago(TimeSpan.FromMinutes(61)));
-        Assert.Equal("28 minutes ago", BgsWorkPage.Ago(TimeSpan.FromMinutes(28)));
-        Assert.Equal("less than a minute ago", BgsWorkPage.Ago(TimeSpan.FromSeconds(20)));
+        Assert.Equal("3 hours 28 minutes ago", BgsWorkTable.Ago(new TimeSpan(3, 28, 30)));
+        Assert.Equal("1 hour ago", BgsWorkTable.Ago(TimeSpan.FromMinutes(60)));
+        Assert.Equal("1 hour 1 minute ago", BgsWorkTable.Ago(TimeSpan.FromMinutes(61)));
+        Assert.Equal("28 minutes ago", BgsWorkTable.Ago(TimeSpan.FromMinutes(28)));
+        Assert.Equal("less than a minute ago", BgsWorkTable.Ago(TimeSpan.FromSeconds(20)));
     }
 }

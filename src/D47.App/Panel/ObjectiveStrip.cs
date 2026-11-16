@@ -260,7 +260,7 @@ internal sealed class ObjectiveStrip : UserControl
 
         var toggle = new Segment
         {
-            ItemsSource = ["Story", "Campaign"],
+            ItemsSource = ["Story", "BGS"],
             SelectedIndex = (int)text.Source,
             Width = StripPanel.ToggleWidth,
             Height = TypeScale.MinimumTarget,

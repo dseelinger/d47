@@ -40,7 +40,7 @@ public sealed class CampaignNote
 }
 
 /// <summary>
-/// Commander › Campaign: the campaign faction, the front being worked or proposed, and the Fronts, Systems and
+/// Commander › BGS: the campaign faction, the front being worked or proposed, and the Fronts, Systems and
 /// Chronicle sections. A step, a tile and the faction picker call the same protected tools as the phrases, as the Commander.
 /// </summary>
 public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFilterablePage
@@ -81,6 +81,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         new("Distance") { Whole = true },
         new("Influence", ColumnFit.Fixed) { Fixed = 84 },
         new("Lead", ColumnFit.Fixed) { Fixed = 84 },
+        new("Your work", ColumnFit.Fixed) { Fixed = 190 },
         new("State", ColumnFit.Fixed) { Fixed = 130 },
         new("Intent", ColumnFit.Fixed) { Fixed = 300 },
     ];
@@ -144,7 +145,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     private readonly bool _headset;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly Func<string, Task<bool>>? _copy;
-    private readonly SortHeader<CampaignSystemRow> _head;
+    private SortHeader<CampaignSystemRow> _head;
+    private readonly BgsWorkSection _work;
     private readonly SortHeader<CampaignModel.FrontRow> _frontHead;
     private readonly SortHeader<CampaignModel.ChronicleRow> _chronicleHead;
     private readonly StackPanel _body = new() { Spacing = 20 };
@@ -165,6 +167,10 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     private DateTimeOffset? _seenTick;
     private long _seenHour;
     private string? _seenNote;
+    private BgsWork? _seenWork;
+    private long _seenMinute;
+    private bool _headTicked = true;
+    private IReadOnlyDictionary<string, IReadOnlyList<ChronicleWork>> _systemWork = new Dictionary<string, IReadOnlyList<ChronicleWork>>();
     private FrontsKey? _seenFronts;
     private string _query = string.Empty;
     private readonly CampaignNote _note;
@@ -217,6 +223,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         _copy = headset ? null : copy;
         _head = new SortHeader<CampaignSystemRow>(HeadName, CampaignModel.Heads(headset), CampaignModel.DefaultOrder);
         _head.Changed += FillSection;
+        _work = new BgsWorkSection(headset, columnWidths, _copy);
+        _work.Head.Changed += FillSection;
         _frontHead = new SortHeader<CampaignModel.FrontRow>(FrontHeadName, CampaignModel.FrontHeads(), CampaignModel.FrontOrder);
         _frontHead.Changed += FillSection;
         _chronicleHead = new SortHeader<CampaignModel.ChronicleRow>(ChronicleHeadName, CampaignModel.ChronicleHeads(), CampaignModel.ChronicleOrder);
@@ -261,9 +269,9 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         remove => _sectionWord.Changed -= value;
     }
 
-    public bool Filters => !_campaign.Off && (_reportShown || _campaign.Chronicle.Count > 0);
+    public bool Filters => !_campaign.Off && (_reportShown || _campaign.Chronicle.Count > 0 || (_faction is not null && WorkNow().Rows.Count > 0));
 
-    public string FilterPlaceholder => "Search system";
+    public string FilterPlaceholder => "Search system or faction";
 
     public void Filter(string? query)
     {
@@ -301,9 +309,25 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             return true;
         }
 
+        var workMoved = false;
+
+        if (_faction is not null
+            && !_campaign.Off
+            && (!ReferenceEquals(state?.BgsWork, _seenWork) || (_section == CampaignModel.WorkSection && PageKit.Minute(_now) != _seenMinute)))
+        {
+            FillCounts();
+            FillSection();
+            workMoved = true;
+        }
+
         if (!FrontsKeyNow().Same(_seenFronts))
         {
             DrawFronts();
+            return true;
+        }
+
+        if (workMoved)
+        {
             return true;
         }
 
@@ -345,6 +369,56 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             ? held
             : null;
 
+    /// <summary>Rebuilds the Systems header when the tick time becomes known or unknown, keeping the sort chosen.</summary>
+    private void UseHead(bool ticked)
+    {
+        if (ticked == _headTicked)
+        {
+            return;
+        }
+
+        _headTicked = ticked;
+        var order = _head.Order;
+
+        _head = new SortHeader<CampaignSystemRow>(HeadName, CampaignModel.Heads(_headset, ticked), CampaignModel.DefaultOrder);
+        _head.Show(order);
+        _head.Changed += FillSection;
+    }
+
+    /// <summary>
+    /// The work the WORK section lists, and the campaign faction's work by the name of each system in the report.
+    /// The faction's work in a system the report lists is on Systems, so WORK leaves it out.
+    /// </summary>
+    private (IReadOnlyList<BgsWorkRow> Rows, IReadOnlyDictionary<string, IReadOnlyList<ChronicleWork>> BySystem) WorkNow()
+    {
+        var state = _sources.State();
+        var tick = _sources.Tick();
+        var work = state?.BgsWork ?? BgsWork.None;
+        var named = _rows.Select(row => row.System).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var faction = _faction;
+
+        if (faction is null)
+        {
+            return ([], new Dictionary<string, IReadOnlyList<ChronicleWork>>());
+        }
+
+        var from = BgsWork.PeriodStart(tick, _now);
+        var bySystem = work.Entries
+            .Where(entry => entry.At >= from && string.Equals(entry.Faction, faction, StringComparison.OrdinalIgnoreCase))
+            .Select(entry => (Name: work.NameOf(entry.SystemAddress), Entry: entry))
+            .Where(pair => pair.Name is not null && named.Contains(pair.Name))
+            .GroupBy(pair => pair.Name!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => CampaignModel.WorkOf(group.Select(pair => pair.Entry)), StringComparer.OrdinalIgnoreCase);
+
+        var rows = BgsWorkTable.Rows(work, tick, _now, state?.Standings ?? SystemStandings.Empty)
+            .Where(row => !(string.Equals(row.Faction, faction, StringComparison.OrdinalIgnoreCase)
+                && row.System is not null
+                && named.Contains(row.System)))
+            .ToList();
+
+        return (rows, bySystem);
+    }
+
     private FrontsKey FrontsKeyNow() => new(
         HeldReport() is null ? [] : _snapshot!.Fronts,
         CampaignModel.ComputedText(HeldReport() is null ? null : _snapshot, _sources.Tick()),
@@ -372,6 +446,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         _seenTick = tick;
         _seenHour = Hour(_now);
         _seenNote = _note.Text;
+        UseHead(tick is not null);
 
         var report = HeldReport();
 
@@ -470,7 +545,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var grid = new Grid { ColumnSpacing = Gaps.Tile, ColumnDefinitions = new ColumnDefinitions("*,*,*") };
         var failed = snapshot?.Failure is not null;
 
-        Place(grid, 0, Datum("Campaign faction", Typeset.Chrome(faction ?? "None", TypeScale.Body, faction is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis)));
+        Place(grid, 0, Datum("BGS faction", Typeset.Chrome(faction ?? "None", TypeScale.Body, faction is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis)));
         Place(grid, 1, Datum("Its systems", Typeset.Mono(rows is null ? CampaignModel.Dash : CampaignModel.SystemsText(rows), TypeScale.Small, off ? ThemeManager.GreyKey : ThemeManager.WhiteKey)));
 
         if (off)
@@ -619,7 +694,11 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         }
 
         var report = HeldReport();
-        var counts = CampaignModel.SectionCounts(report is null ? 0 : _snapshot!.Fronts.Count, report is null ? 0 : _rows.Count, _campaign.Chronicle.Count);
+        var counts = CampaignModel.SectionCounts(
+            report is null ? 0 : _snapshot!.Fronts.Count,
+            report is null ? 0 : _rows.Count,
+            WorkNow().Rows.Count,
+            _campaign.Chronicle.Count);
 
         _segment.Statuses = [.. counts.Select(count => (ChoiceStatus?)new ChoiceStatus(count, ChoiceTone.Grey))];
     }
@@ -871,9 +950,13 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     {
         var report = HeldReport();
 
+        _seenWork = _sources.State()?.BgsWork;
+        _seenMinute = PageKit.Minute(_now);
+
         _sectionSlot.Child = _section switch
         {
             CampaignModel.ChronicleSection => ChronicleSection(),
+            CampaignModel.WorkSection => WorkSection(),
             _ when report is null => NoReport(),
             CampaignModel.SystemsSection => SystemsSection(),
             _ => FrontsSection(),
@@ -893,9 +976,34 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return panel;
     }
 
+    private StackPanel WorkSection()
+    {
+        var state = _sources.State();
+        var (rows, _) = WorkNow();
+        var input = new BgsWorkInput(
+            rows,
+            state?.BgsWork ?? BgsWork.None,
+            _faction!,
+            _sources.Tick(),
+            _now,
+            state?.Location.StarSystem,
+            _query);
+
+        var body = _work.Build(input, ref _page);
+        var panel = new StackPanel { Spacing = 20, Children = { body } };
+
+        if (_headset && _work.Count > FactionModel.PageSize)
+        {
+            panel.Children.Add(Pager(_work.Count));
+        }
+
+        return panel;
+    }
+
     private StackPanel SystemsSection()
     {
         var panel = new StackPanel { Spacing = 20 };
+        _systemWork = WorkNow().BySystem;
 
         var legend = LegendLine();
 
@@ -912,6 +1020,12 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         panel.Children.Add(legend);
         panel.Children.Add(HubBlock(hub, here));
+
+        if (_headset)
+        {
+            panel.Children.Add(Typeset.Prose(CampaignModel.WorkUnderNames(_faction!, _sources.Tick()), TypeScale.Description, ThemeManager.GreyKey, wrap: true));
+        }
+
         panel.Children.Add(Table(sorted, hub.System, _now, here, _frontier!));
 
         if (!_headset)
@@ -972,7 +1086,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var layout = new TableLayout(TableId, _headset ? HeadsetColumns : DesktopColumns, _headset ? null : _columnWidths, _headset ? 14 : 16);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i is 1 or 2 or 3 ? HorizontalAlignment.Right : HorizontalAlignment.Left));
+        table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i is 1 or 2 or 3 || (!_headset && i == 4) ? HorizontalAlignment.Right : HorizontalAlignment.Left));
 
         if (sorted.Count == 0)
         {
@@ -1045,6 +1159,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         if (_headset)
         {
             system = name;
+            var under = _systemWork.TryGetValue(row.System, out var held) ? WorkStack(held, left: true) : null;
 
             if (hub)
             {
@@ -1053,6 +1168,11 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
                 word.Margin = new Thickness(8, 0, 0, 0);
                 DockPanel.SetDock(word, Dock.Right);
                 system = new DockPanel { Children = { word, name } };
+            }
+
+            if (under is not null)
+            {
+                system = new StackPanel { Spacing = 2, Children = { system, under } };
             }
         }
         else
@@ -1074,8 +1194,16 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         CreditsKit.Place(grid, 1, Typeset.Mono(CampaignModel.DistanceText(row.Distance), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
         CreditsKit.Place(grid, 2, Typeset.Mono(CampaignModel.InfluenceText(row.Influence), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
         CreditsKit.Place(grid, 3, leadCell);
-        CreditsKit.Place(grid, 4, Typeset.Prose(row.State, TypeScale.ControlLarge, ink, wrap: true));
-        CreditsKit.Place(grid, 5, IntentStepper(row, frontier));
+        var next = 4;
+
+        if (!_headset)
+        {
+            var held = _systemWork.TryGetValue(row.System, out var work) ? work : [];
+            CreditsKit.Place(grid, next++, WorkStack(held, left: false));
+        }
+
+        CreditsKit.Place(grid, next++, Typeset.Prose(row.State, TypeScale.ControlLarge, ink, wrap: true));
+        CreditsKit.Place(grid, next, IntentStepper(row, frontier));
 
         var border = new Border
         {
@@ -1088,6 +1216,25 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         ThemeInk.Bind(border, Border.BorderBrushProperty, ThemeManager.AKey);
 
         return border;
+    }
+
+    /// <summary>The work lines of one system: right aligned in the column, left aligned under the name on the headset. Grey <c>none</c> without any.</summary>
+    private static StackPanel WorkStack(IReadOnlyList<ChronicleWork> work, bool left)
+    {
+        var align = left ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+        var stack = new StackPanel { Spacing = 2, HorizontalAlignment = align };
+
+        foreach (var line in CampaignModel.WorkLines(work))
+        {
+            stack.Children.Add(Typeset.Mono(
+                line,
+                TypeScale.Meta,
+                work.Count == 0 ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
+                horizontal: align,
+                align: left ? TextAlignment.Left : TextAlignment.Right));
+        }
+
+        return stack;
     }
 
     private static TextBlock ControlLine(CampaignSystemRow row, DateTimeOffset now, bool hub)
@@ -1407,7 +1554,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         var request = new PickerRequest
         {
-            Prompt = "Campaign faction",
+            Prompt = "BGS faction",
             Help = CampaignModel.PickerHelp,
             Choices = [.. choices.Select(choice => choice.Name)],
             DetailOf = name => details.GetValueOrDefault(name),
@@ -1416,7 +1563,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             AllowsFreeText = true,
         };
 
-        _prompts.Pick(PickerKey, "Campaign faction", request, result =>
+        _prompts.Pick(PickerKey, "BGS faction", request, result =>
         {
             if ((result.Value ?? squadron) is { Length: > 0 } chosen)
             {

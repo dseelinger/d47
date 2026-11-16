@@ -164,14 +164,18 @@ public class TheCommanderTabCopiesEverySystemNameTests
     {
         var state = State(BgsLines);
         var (copy, written) = Clipboard();
-        var window = Show(new BgsWorkPage(() => state, () => Now.AddHours(-4), () => Now, copy: copy));
+        var page = BgsPageForTests.Page(state, "Alpha Mining", Now.AddHours(-4), Now, copy);
+        var window = Show(page);
+        BgsPageForTests.ShowWork(page);
 
         Assert.Contains("Alpha", Copied(window));
         Press(window, "Alpha");
         Assert.Equal(["Alpha"], written);
         window.Close();
 
-        var bare = Show(new BgsWorkPage(() => state, () => Now.AddHours(-4), () => Now));
+        var barePage = BgsPageForTests.Page(state, "Alpha Mining", Now.AddHours(-4), Now);
+        var bare = Show(barePage);
+        BgsPageForTests.ShowWork(barePage);
         Assert.Empty(Copied(bare));
         bare.Close();
     }

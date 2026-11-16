@@ -26,7 +26,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     private static readonly DateTimeOffset BgsTick = DateTimeOffset.Parse("2026-10-10T16:14:00Z", CultureInfo.InvariantCulture);
 
     private static readonly string[] SubTabs =
-        ["Checklist", "Missions", "Progress", "Statistics", "Campaign", "Ledgers", "Commanders"];
+        ["Checklist", "Missions", "Progress", "Statistics", "BGS", "Ledgers", "Commanders"];
 
     private static readonly string[] Work =
     [
@@ -60,7 +60,6 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         {
             var word = key switch
             {
-                BgsWorkPage.PageKey => "BGS work",
                 CombatStatsPage.PageKey => "Combat stats",
                 CodexPage.PageKey => "Codex",
                 SessionPage.RootKey => "This session",
@@ -76,18 +75,17 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     [Fact]
     public void TheRowsFollowTheListsOrderWhateverOrderTheLedgersWereDeclaredIn()
     {
-        var rows = LedgersPage.Rows(Declared(CodexPage.PageKey, CreditsPage.PageKey, BgsWorkPage.PageKey, CombatStatsPage.PageKey));
+        var rows = LedgersPage.Rows(Declared(CodexPage.PageKey, CreditsPage.PageKey, CombatStatsPage.PageKey));
 
-        Assert.Equal(["BGS work", "Combat stats", "Credits", "Codex"], rows.Select(row => row.Name));
+        Assert.Equal(["Combat stats", "Credits", "Codex"], rows.Select(row => row.Name));
         Assert.Equal(
             [
-                "The work done for minor factions since the BGS tick.",
                 "Your kills and the credits they were awarded.",
                 "Where your credits came from and where they went.",
                 "The codex entries you have logged, by region.",
             ],
             rows.Select(row => row.Description));
-        Assert.Equal([BgsWorkPage.PageKey, CombatStatsPage.PageKey, CreditsPage.PageKey, CodexPage.PageKey], rows.Select(row => row.Crumb.Key));
+        Assert.Equal([CombatStatsPage.PageKey, CreditsPage.PageKey, CodexPage.PageKey], rows.Select(row => row.Crumb.Key));
     }
 
     [Fact]
@@ -124,7 +122,6 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         view.EnableStanding(() => state);
         view.EnableStatistics(() => state);
         view.EnableCampaign(Campaign(state));
-        view.EnableBgsWork(() => state, () => BgsTick, () => Now);
         view.EnableCombatStats(() => state, () => HistoryState.Done, () => Now);
         view.EnableCredits(() => state, () => HistoryState.Done, () => Now);
         view.EnableCodex(() => state, () => HistoryState.Done, () => Now);
@@ -240,16 +237,13 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         Assert.IsNotAssignableFrom<IFilterablePage>(list);
 
         var rows = In<Button>(list).Where(button => button.Name?.StartsWith("Ledger.", StringComparison.Ordinal) == true).ToList();
-        Assert.Equal(["Ledger.bgs-work", "Ledger.combat-stats", "Ledger.credits", "Ledger.codex", "Ledger.session"], rows.Select(row => row.Name));
+        Assert.Equal(["Ledger.combat-stats", "Ledger.credits", "Ledger.codex", "Ledger.session"], rows.Select(row => row.Name));
         Assert.All(rows, row => Assert.True(row.Bounds.Height >= TypeScale.MinimumTarget));
-        Assert.True(Shows(list, "BGS WORK"));
-        Assert.True(Shows(list, "The work done for minor factions since the BGS tick."));
+        Assert.False(Shows(list, "BGS WORK"));
         Assert.True(Shows(list, "What you have earned and done since the game started."));
-        Assert.Empty(In<BgsWorkPage>(view));
 
         foreach (var (row, word, page) in new (string, string, Type)[]
         {
-            ("Ledger.bgs-work", "BGS work", typeof(BgsWorkPage)),
             ("Ledger.combat-stats", "Combat stats", typeof(CombatStatsPage)),
             ("Ledger.credits", "Credits", typeof(CreditsPage)),
             ("Ledger.codex", "Codex", typeof(CodexPage)),
@@ -263,7 +257,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
             Assert.True(view.FindControl<Control>("ModePicker")!.IsVisible);
             Assert.Single(In<LedgersPage>(view));
             Assert.Single(In<Control>(view), control => control.GetType() == page);
-            Assert.Equal(5, In<Button>(view).Count(button => button.Name?.StartsWith("Ledger.", StringComparison.Ordinal) == true));
+            Assert.Equal(4, In<Button>(view).Count(button => button.Name?.StartsWith("Ledger.", StringComparison.Ordinal) == true));
 
             if (TestSurface.CapturesWanted && row == "Ledger.credits")
             {
@@ -377,7 +371,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
 
         var underLedgers = view.Nav.Destinations.Where(destination => destination.Root.Key == LedgersPage.RootKey).ToList();
         Assert.Equal(
-            ["Ledgers (Commander)", "BGS work (Ledgers)", "Combat stats (Ledgers)", "Credits (Ledgers)", "Codex (Ledgers)", "This session (Ledgers)"],
+            ["Ledgers (Commander)", "Combat stats (Ledgers)", "Credits (Ledgers)", "Codex (Ledgers)", "This session (Ledgers)"],
             underLedgers.Select(destination => destination.Describe()));
         Assert.Equal(underLedgers.Count - 1, LedgersPage.Rows(view.Nav).Count);
 
@@ -398,22 +392,12 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     }
 
     [AvaloniaFact]
-    public void BgsWorkAndCombatStatsStillRedrawOnTheTickUnderLedgers()
+    public void CombatStatsStillRedrawOnTheTickUnderLedgers()
     {
         using var look = AppLook.Put();
         var state = JournalScript.Commander("F735466", "John Deparagon");
         var view = Desktop(state);
         var window = Show(view);
-
-        Assert.True(view.Nav.Show(BgsWorkPage.PageKey));
-        Dispatcher.UIThread.RunJobs();
-        view.TickCommander();
-        Assert.True(Shows(In<BgsWorkPage>(view).Single(), "0 FACTIONS"));
-
-        Apply(state, Work);
-        Assert.True(view.TickCommander());
-        Dispatcher.UIThread.RunJobs();
-        Assert.True(Shows(In<BgsWorkPage>(view).Single(), "3 FACTIONS"));
 
         Assert.True(view.Nav.Show(CombatStatsPage.PageKey));
         Dispatcher.UIThread.RunJobs();

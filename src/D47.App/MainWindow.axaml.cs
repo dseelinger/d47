@@ -285,7 +285,7 @@ public partial class MainWindow : Window
 
             // The checklist, on the other hand, goes to both surfaces — which is the whole headline of the
             // item that moved it out of a Window.
-            // Commander roots land in call order: Checklist, Watches, Missions, Progress, Statistics, Campaign, Ledgers, Commanders.
+            // Commander roots land in call order: Checklist, Watches, Missions, Progress, Statistics, BGS, Ledgers, Commanders.
             Panel.EnableChecklist(host.Checklists, host.Goals?.Book);
             if (host.WatchesDesk is { } watchesDesk)
             {
@@ -305,11 +305,6 @@ public partial class MainWindow : Window
                 Panel.EnableCampaign(campaignSources);
             }
 
-            Panel.EnableBgsWork(
-                () => host.GameState.Active,
-                () => host.BgsTick?.Last,
-                () => DateTimeOffset.UtcNow,
-                () => D47.Core.Journal.SquadronFactionResolver.Resolve(host.GameState.Active, host.SquadronFactions));
             FollowServerStatus(host.ServerStatus);
             Panel.EnableCombatStats(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCredits(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);

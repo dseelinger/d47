@@ -689,19 +689,11 @@ public partial class PanelView : UserControl, IPanelTabHost
         Func<D47.Core.Journal.CommanderGameState?> state,
         D47.Core.Activities.ActivityLedger? activities = null) => _commander.EnableStatistics(state, activities);
 
-    /// <summary>Gives this surface Commander › Campaign, after Statistics.</summary>
+    /// <summary>Gives this surface Commander › BGS, after Statistics.</summary>
     public void EnableCampaign(CampaignSources sources) => _commander.EnableCampaign(sources);
 
     /// <summary>Gives this surface Commander › Ledgers › This session.</summary>
     public void EnableSession(Func<D47.Core.Journal.CommanderGameState?> state) => _commander.EnableSession(state);
-
-    /// <summary>Gives this surface Commander › Ledgers › BGS work.</summary>
-    public void EnableBgsWork(
-        Func<D47.Core.Journal.CommanderGameState?> state,
-        Func<DateTimeOffset?> tick,
-        Func<DateTimeOffset> now,
-        Func<string?>? squadronFaction = null) =>
-        _commander.EnableBgsWork(state, tick, now, squadronFaction);
 
     /// <summary>Gives this surface Commander › Ledgers › Combat stats.</summary>
     public void EnableCombatStats(Func<D47.Core.Journal.CommanderGameState?> state, Func<D47.Core.Journal.HistoryState> history, Func<DateTimeOffset> now) =>

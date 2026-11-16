@@ -179,7 +179,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
             view.EnableStanding(() => fixture.State);
             view.EnableStatistics(() => fixture.State);
             view.EnableCampaign(fixture.Sources);
-            view.EnableBgsWork(() => fixture.State, () => BgsTick, () => Now);
+            view.EnableCombatStats(() => fixture.State, () => HistoryState.Done, () => Now);
             view.EnableCommanders(new CommanderRoster(() => null, () => 0, () => null, () => false, _ => { }));
         }
 
@@ -286,7 +286,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
 
         Assert.True(Shows(page, CampaignModel.NoReportText));
         Assert.Equal("CHANGE FACTION", In<Button>(page).Single(button => button.Name == CampaignPage.ChangeName).Content);
-        Assert.Equal($"Your campaign for {Us}: the front you chose, and what to do next.", page.Summary);
+        Assert.Equal($"Your BGS work for {Us}: the front you chose, and what to do next.", page.Summary);
 
         window.Close();
     }
@@ -464,7 +464,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
         view.TickCommander();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Campaign"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["BGS"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Null(fixture.Store.For(Frontier).Faction);
         var message = In<TextBlock>(view).Single(block => block.Name == CampaignPage.MessageName);
         Assert.Equal($"I found no minor faction called {Unknown}, so I have not changed the campaign.", message.Text);
@@ -511,7 +511,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
 
         Press(In<Button>(view).Single(button => button.Name == CampaignPage.ChangeName));
 
-        Assert.Equal(["Campaign", "Campaign faction"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["BGS", "BGS faction"], view.Nav.Trail.Select(crumb => crumb.Word));
         var picker = Assert.Single(In<PickerPage>(view));
 
         if (TestSurface.CapturesWanted)
@@ -525,7 +525,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
         Assert.Equal(Us, fixture.Store.For(Frontier).Faction);
         var call = Assert.Single(fixture.Invoked);
         Assert.Equal((CampaignCapability.SetFactionTool, ToolCaller.Commander), (call.Tool, call.Caller));
-        Assert.Equal(["Campaign"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["BGS"], view.Nav.Trail.Select(crumb => crumb.Word));
 
         window.Close();
     }
@@ -537,7 +537,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
         var (window, view) = OpenPanel(SampleCampaign(), headset: false, 1280, 1300);
 
         Assert.Equal(
-            ["Checklist", "Missions", "Progress", "Statistics", "Campaign", "Ledgers", "Commanders"],
+            ["Checklist", "Missions", "Progress", "Statistics", "BGS", "Ledgers", "Commanders"],
             view.Nav.Roots(PanelTab.Commander).Select(root => root.Word));
         Assert.Equal(12, In<Stepper>(view).Count());
 

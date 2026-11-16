@@ -216,9 +216,11 @@ public class TheCommanderTabTablesFitTheirColumnsTests
     public void TheBgsWorkFitsItsColumns()
     {
         var state = State(BgsLines);
-        var window = Show(new BgsWorkPage(() => state, () => Now.AddHours(-4), () => Now));
+        var page = BgsPageForTests.Page(state, "Nobody Party", Now.AddHours(-4), Now);
+        var window = Show(page);
+        BgsPageForTests.ShowWork(page);
 
-        Fits(window, BgsWorkPage.TableId);
+        Fits(window, BgsWorkTable.TableId);
         window.Close();
     }
 

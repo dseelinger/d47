@@ -40,7 +40,7 @@ public class TheCampaignTablesShowEachSystemsDistanceTests
     public void DistanceSitsBetweenSystemAndReasonInTheFrontsAndBetweenSystemAndInfluenceInTheSystems()
     {
         Assert.Equal(["Rank", "Kind", "System", "Distance", "Reason", "Data age", ""], CampaignModel.FrontHeads().Select(head => head.Label));
-        Assert.Equal(["System", "Distance", "Influence", "Lead", "State", "Intent"], CampaignModel.Heads(headset: false).Select(head => head.Label));
+        Assert.Equal(["System", "Distance", "Influence", "Lead", "Your work", "State", "Intent"], CampaignModel.Heads(headset: false).Select(head => head.Label));
         Assert.Equal(["System", "Distance", "Infl.", "Lead", "State", "Intent"], CampaignModel.Heads(headset: true).Select(head => head.Label));
     }
 

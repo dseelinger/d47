@@ -90,8 +90,8 @@ public class TheCampaignPageTurnsTheCampaignOffAndOnTests
         Assert.Equal("CHANGE FACTION", CampaignModel.FactionTileLabel(null, off: true));
         Assert.Equal("CHOOSE FACTION", CampaignModel.FactionTileLabel(null, off: false));
         Assert.Equal("CHANGE FACTION", CampaignModel.FactionTileLabel(Squadron, off: false));
-        Assert.Equal("Your campaign is off.", CampaignModel.Summary(null, off: true, headset: false));
-        Assert.Equal($"Your campaign for {Squadron} is off.", CampaignModel.Summary(Squadron, off: true, headset: true));
+        Assert.Equal("Your BGS work is off.", CampaignModel.Summary(null, off: true, headset: false));
+        Assert.Equal($"Your BGS work for {Squadron} is off.", CampaignModel.Summary(Squadron, off: true, headset: true));
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class TheCampaignPageTurnsTheCampaignOffAndOnTests
         Assert.Equal("Lave", CampaignModel.OffFaction(Campaign.None with { Faction = "Lave" }, Squadron));
         Assert.Equal(Squadron, CampaignModel.OffFaction(Campaign.None, Squadron));
         Assert.Null(CampaignModel.OffFaction(Campaign.None, null));
-        Assert.StartsWith("Your campaign for Lave is off. D47 fetches no faction report", CampaignModel.OffText("Lave"), StringComparison.Ordinal);
+        Assert.StartsWith("Your BGS work for Lave is off. D47 fetches no faction report", CampaignModel.OffText("Lave"), StringComparison.Ordinal);
     }
 
     [AvaloniaFact]
@@ -109,7 +109,7 @@ public class TheCampaignPageTurnsTheCampaignOffAndOnTests
         var fixture = new Fixture();
         var (window, page) = Open(fixture);
 
-        Assert.Equal("CAMPAIGN ON", Switch(page).Content);
+        Assert.Equal("BGS ON", Switch(page).Content);
         Assert.True(Switch(page).IsChecked);
         Assert.True(Switch(page).IsEnabled);
         Assert.DoesNotContain(In<Control>(page), control => control.Name == CampaignPage.OffName);
@@ -147,7 +147,7 @@ public class TheCampaignPageTurnsTheCampaignOffAndOnTests
         fixture.Store.SetOff(Frontier, true);
         var (window, page) = Open(fixture);
 
-        Assert.Equal($"Your campaign for {Squadron} is off.", page.Summary);
+        Assert.Equal($"Your BGS work for {Squadron} is off.", page.Summary);
         Assert.True(Shows(page, Squadron));
         Assert.True(Shows(page, CampaignModel.NotWhileOff));
         Assert.True(Shows(page, CampaignModel.OffLabel));
@@ -170,11 +170,11 @@ public class TheCampaignPageTurnsTheCampaignOffAndOnTests
         fixture.Store.SetOff(Frontier, true);
         var (window, page) = Open(fixture);
 
-        Assert.Equal("Your campaign is off.", page.Summary);
+        Assert.Equal("Your BGS work is off.", page.Summary);
         Assert.True(Shows(page, "None"));
         Assert.True(Shows(page, CampaignModel.OffText(null)));
         Assert.False(Shows(page, CampaignModel.NoFactionText));
-        Assert.False(Shows(page, "Choose the faction your campaign works for."));
+        Assert.False(Shows(page, "Choose the faction your BGS work is for."));
         Assert.Equal("CHANGE FACTION", Change(page).Content);
         Assert.False(Change(page).IsEnabled);
 
@@ -192,7 +192,7 @@ public class TheCampaignPageTurnsTheCampaignOffAndOnTests
 
         Assert.Contains(In<Control>(page), control => control.Name == CampaignPage.OffName);
         Assert.False(Switch(page).IsChecked);
-        Assert.Equal($"Your campaign for {Squadron} is off.", page.Summary);
+        Assert.Equal($"Your BGS work for {Squadron} is off.", page.Summary);
 
         fixture.Store.SetOff(Frontier, false);
         Assert.True(page.Tick());

@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace D47.Core.Conversation;
 
-/// <summary>The model-free grammar for naming the campaign's minor faction: "our campaign faction is &lt;name&gt;".</summary>
+/// <summary>The model-free grammar for naming the campaign's minor faction: "our BGS faction is &lt;name&gt;" or "our campaign faction is &lt;name&gt;".</summary>
 public static partial class CampaignFactionPhrase
 {
     /// <summary>The faction named in the utterance, or null when it is not a sentence this grammar takes.</summary>
@@ -22,7 +22,7 @@ public static partial class CampaignFactionPhrase
     }
 
     [GeneratedRegex(
-        @"^(?:my|our|the) campaign (?:minor )?faction (?:is called|is named|is now|is) (?<name>.+)$",
+        @"^(?:my|our|the) (?:campaign|BGS) (?:minor )?faction (?:is called|is named|is now|is) (?<name>.+)$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex Sentence();
 }

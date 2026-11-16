@@ -141,11 +141,6 @@ public sealed record MiniPanelServices
                 view.EnableCampaign(Campaign);
             }
 
-            view.EnableBgsWork(
-                gameState,
-                BgsTick ?? (() => null),
-                () => DateTimeOffset.UtcNow,
-                () => D47.Core.Journal.SquadronFactionResolver.Resolve(gameState(), SquadronFactions));
             view.EnableCombatStats(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCredits(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCodex(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow, CodexPictures);

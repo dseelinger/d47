@@ -20,7 +20,7 @@ public class TheHullTableSortsAndFiltersOnEveryColumnTests
     private static readonly IReadOnlyList<EntryColumn> Columns =
     [
         new("Ship", hull => hull),
-        new("Price", hull => BgsWorkPage.Credits(Prices[hull]), hull => Prices[hull], Right: true),
+        new("Price", hull => BgsWorkTable.Credits(Prices[hull]), hull => Prices[hull], Right: true),
     ];
 
     private static IReadOnlyList<string> SortedByPrice(SortDirection direction) =>
