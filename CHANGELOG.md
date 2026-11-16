@@ -8,6 +8,10 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: A ship's page under Asset Mgmt › Ships has a Clear completed press while any slot shows the tick. It clears the plan of every ticked slot at once and leaves the other slots and your checklist as they are.
+
+Fixed: The presses at the top of a ship's page wrap onto a second line on a narrow window instead of running off the right edge.
+
 Changed: Asking for your BGS work puts the campaign faction first: the faction you named on the Campaign page, else your squadron's. Its lines open with "For your campaign faction" when you named a different faction, and "For your squadron's faction" otherwise. With the campaign off, the squadron's faction leads as before.
 
 Changed: Commander › Campaign is now Commander › BGS, with BGS FACTION, BGS ON and BGS OFF. "Turn on BGS", "turn off BGS" and "our BGS faction is" work beside the campaign phrases, and "show BGS work" opens the page.

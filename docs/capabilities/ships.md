@@ -272,6 +272,18 @@ there.
 public string StandardA(string buildId)
 ```
 
+### Clear completed
+
+A slot whose fitted module already carries out its plan shows a tick in the plan column. While any
+slot of a ship shows one, the ship's page has a **Clear completed** press. It removes the plan from
+every ticked slot at once and says how many it cleared on the line under the heading. Slots without
+a tick keep their plans, and what the cleared plans put on your checklist is kept. With **Remove
+fulfilled items** on, ticked slots are cleared on their own, so the press rarely shows.
+
+```csharp
+public int DropMetSlots(string buildId)
+```
+
 ### One build per ship
 
 Comparing a combat fit against an exploration fit for the same hull is a planner feature this

@@ -1869,7 +1869,15 @@ public sealed class ItemPage : LoadoutPage
     private readonly string _item;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly ColumnWidthMemory? _columnWidths;
-    private readonly Button? _drop;
+    private Button? _drop;
+
+    /// <summary>
+    /// Holds the presses under the heading: wrapped onto further lines where the page is too narrow, and on one
+    /// line on the mini surface, which has six rows to give.
+    /// </summary>
+    private readonly Border _actions = new() { Margin = new Thickness(0, 0, 0, 10) };
+
+    private string[] _offered = [];
     private readonly StackPanel _list = new() { Spacing = IndexPage.ListGap };
 
     /// <summary>To buy, the Plan section and the slot table; full width under the side column when there is one.</summary>
@@ -1935,49 +1943,17 @@ public sealed class ItemPage : LoadoutPage
         _heading = TitleText.Block(_title);
         _heading.Margin = new Thickness(0, 0, 0, 10);
 
-        var promote = LoadoutPages.Press(mode.PromoteLabel, () => Said(Mode.Promote(_item)));
-
-        var actions = new StackPanel
-        {
-            Orientation = Avalonia.Layout.Orientation.Horizontal,
-            Spacing = Gaps.Tile,
-            Margin = new Thickness(0, 0, 0, 10),
-            Children = { promote },
-        };
-
-        if (mode.StandardLabel(item) is { Length: > 0 } standardLabel)
-        {
-            actions.Children.Add(LoadoutPages.Press(standardLabel, PlanStandard));
-        }
-
-        if (mode.ImportLabel(item) is { Length: > 0 } importLabel)
-        {
-            actions.Children.Add(LoadoutPages.Press(importLabel, ImportFromClipboard));
-        }
-
-        if (mode.ExportLabel(item) is { Length: > 0 } exportLabel)
-        {
-            actions.Children.Add(LoadoutPages.Press(exportLabel, ExportToClipboard));
-        }
-
-        // Only where there is something to drop or clear.
-        if (mode.DropLabel(item) is { Length: > 0 } label)
-        {
-            _drop = LoadoutPages.Press(label, Drop);
-            actions.Children.Add(_drop);
-        }
-
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine(mode.SayAtItem);
 
         DockPanel.SetDock(_heading, Dock.Top);
         DockPanel.SetDock(_summary, Dock.Top);
-        DockPanel.SetDock(actions, Dock.Top);
+        DockPanel.SetDock(_actions, Dock.Top);
         DockPanel.SetDock(say, Dock.Bottom);
 
         root.Children.Add(_heading);
         root.Children.Add(_summary);
-        root.Children.Add(actions);
+        root.Children.Add(_actions);
         root.Children.Add(say);
 
         _build = new StackPanel { Children = { _talkSlot, _list } };
@@ -2172,8 +2148,74 @@ public sealed class ItemPage : LoadoutPage
         _side = null;
         _twoColumns = false;
 
+        Offer();
         Draw();
         Arrange();
+    }
+
+    /// <summary>Redraws the presses only when their labels change, so a refresh leaves a press being pressed alone.</summary>
+    private void Offer()
+    {
+        var standard = Mode.StandardLabel(_item);
+        var import = Mode.ImportLabel(_item);
+        var export = Mode.ExportLabel(_item);
+        var clearMet = Mode.ClearMetLabel(_item);
+
+        // Only where there is something to drop or clear.
+        var drop = Mode.DropLabel(_item);
+
+        string[] offered =
+            [Mini ? "mini" : "", Mode.PromoteLabel, standard ?? "", import ?? "", export ?? "", clearMet ?? "", drop ?? ""];
+
+        if (offered.SequenceEqual(_offered, StringComparer.Ordinal))
+        {
+            return;
+        }
+
+        _offered = offered;
+
+        Avalonia.Controls.Panel presses = Mini
+            ? new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = Gaps.Tile }
+            : new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
+
+        presses.Children.Add(LoadoutPages.Press(Mode.PromoteLabel, () => Said(Mode.Promote(_item))));
+
+        if (standard is { Length: > 0 })
+        {
+            presses.Children.Add(LoadoutPages.Press(standard, PlanStandard));
+        }
+
+        if (import is { Length: > 0 })
+        {
+            presses.Children.Add(LoadoutPages.Press(import, ImportFromClipboard));
+        }
+
+        if (export is { Length: > 0 })
+        {
+            presses.Children.Add(LoadoutPages.Press(export, ExportToClipboard));
+        }
+
+        if (clearMet is { Length: > 0 })
+        {
+            presses.Children.Add(LoadoutPages.Press(clearMet, ClearCompleted));
+        }
+
+        _drop = drop is { Length: > 0 } ? LoadoutPages.Press(drop, Drop) : null;
+
+        if (_drop is not null)
+        {
+            presses.Children.Add(_drop);
+        }
+
+        _actions.Child = presses;
+    }
+
+    /// <summary>Clears every met slot's plan and reports on the summary line, after the refresh the change posts.</summary>
+    private void ClearCompleted()
+    {
+        var said = Mode.ClearMet(_item);
+
+        Dispatcher.UIThread.Post(() => Said(said));
     }
 
     private void Draw()

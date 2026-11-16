@@ -631,31 +631,51 @@ public sealed class ShipPlanService(
     /// </summary>
     public void DropMetSlots()
     {
-        foreach (var build in Mine)
+        foreach (var build in Mine.ToList())
         {
-            if (build.ShipId is not { } shipId)
-            {
-                continue;
-            }
-
-            var fitted = FittedModules(shipId);
-
-            foreach (var slot in build.Slots)
-            {
-                if (slot.IsEmpty)
-                {
-                    continue;
-                }
-
-                var module = fitted.FirstOrDefault(candidate =>
-                    string.Equals(candidate.Slot, slot.Slot, StringComparison.OrdinalIgnoreCase));
-
-                if (!Outstanding(slot, module))
-                {
-                    Clear(build.Id, slot.Slot);
-                }
-            }
+            DropMetSlots(build.Id);
         }
+    }
+
+    /// <summary>Deletes the plan of each of one build's met slots in a single write, and returns how many.</summary>
+    public int DropMetSlots(string buildId)
+    {
+        if (store.Find(buildId) is not { } build)
+        {
+            return 0;
+        }
+
+        var met = MetSlots(build);
+
+        if (met.Count == 0)
+        {
+            return 0;
+        }
+
+        Replace(met.Aggregate(build, (kept, slot) => kept.Without(slot)));
+        return met.Count;
+    }
+
+    /// <summary>The slots of a build whose plan nothing is still owed against, by the slot names the plan uses.</summary>
+    public IReadOnlyList<string> MetSlots(ShipBuild build)
+    {
+        ArgumentNullException.ThrowIfNull(build);
+
+        if (build.ShipId is not { } shipId)
+        {
+            return [];
+        }
+
+        var fitted = FittedModules(shipId);
+
+        return
+        [
+            .. build.Slots
+                .Where(slot => !slot.IsEmpty
+                               && !Outstanding(slot, fitted.FirstOrDefault(candidate =>
+                                   string.Equals(candidate.Slot, slot.Slot, StringComparison.OrdinalIgnoreCase))))
+                .Select(slot => slot.Slot),
+        ];
     }
 
     /// <summary>

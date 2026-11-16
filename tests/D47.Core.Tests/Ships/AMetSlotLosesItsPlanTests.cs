@@ -79,6 +79,28 @@ public class AMetSlotLosesItsPlanTests
         Assert.NotNull(ships.ForShip(ShipId)!.For("MainEngines"));
     }
 
+    [Fact]
+    public void ClearingOneBuildTakesItsMetSlotsAndLeavesTheRest()
+    {
+        var install = new MemoryInstall();
+        var (game, ships) = Set(install);
+
+        var build = ships.ForShip(ShipId)!;
+
+        ships.Plan(build.Id, new SlotPlan("PowerPlant", Module: "Power Plant") { Variant = "int_powerplant_size7_class5" });
+        game.Apply(ShipPlanFixtures.Engineered(ShipId));
+
+        Assert.Equal(["MainEngines"], ships.MetSlots(ships.ForShip(ShipId)!));
+        Assert.Equal(1, ships.DropMetSlots(build.Id));
+
+        var after = ships.ForShip(ShipId)!;
+
+        Assert.Null(after.For("MainEngines"));
+        Assert.NotNull(after.For("PowerPlant"));
+        Assert.Empty(ships.MetSlots(after));
+        Assert.Equal(0, ships.DropMetSlots(build.Id));
+    }
+
     private static JournalEvent Event(string json)
     {
         Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));

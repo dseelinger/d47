@@ -1078,6 +1078,24 @@ public sealed class ShipsMode(
     public string Standard(string item) =>
         Resolve(item) is { } build ? ships.StandardA(build.Id) : "That build is not there any more.";
 
+    public string? ClearMetLabel(string item) =>
+        Resolve(item) is { } build && ships.MetSlots(build).Count > 0 ? "Clear completed" : null;
+
+    public string ClearMet(string item)
+    {
+        if (Resolve(item) is not { } build)
+        {
+            return "That build is not there any more.";
+        }
+
+        return ships.DropMetSlots(build.Id) switch
+        {
+            0 => "No slot's plan is complete.",
+            1 => "Cleared 1 completed slot. What it put on your checklist is kept.",
+            var cleared => $"Cleared {cleared} completed slots. What they put on your checklist is kept.",
+        };
+    }
+
     public string? ImportLabel(string item) =>
         clipboardText is not null && Resolve(item) is not null ? "Import from clipboard" : null;
 

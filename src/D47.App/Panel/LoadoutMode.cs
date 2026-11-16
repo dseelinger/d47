@@ -401,6 +401,12 @@ public interface ILoadoutMode
     /// <summary>Plans the item's core internals at Standard-A, and says what happened.</summary>
     string Standard(string item) => string.Empty;
 
+    /// <summary>The label for clearing every met slot's plan, or null where no slot's plan is met.</summary>
+    string? ClearMetLabel(string item) => null;
+
+    /// <summary>Clears every met slot's plan, and says what happened.</summary>
+    string ClearMet(string item) => string.Empty;
+
     /// <summary>The label for importing a plan from the clipboard, or null where this item has none.</summary>
     string? ImportLabel(string item) => null;
 
