@@ -788,7 +788,8 @@ and its state, the controlling power and its Powerplay state, the main star's cl
 the date of Spansh's last report. With no `system`, it describes the system the Commander is in.
 
 The panel opens **Search › System** on that system and stops following the Commander, as typing
-the name there does. Only a question the Commander asked moves the panel, and a surface holding a
+the name there does. Pressing a system's name on any other page opens Search › System on it the same
+way, and the copy glyph beside it still copies. Only a question the Commander asked moves the panel, and a surface holding a
 chooser stays where it is.
 
 A name with no exact match answers with up to three close names and opens nothing; a misheard name

@@ -149,7 +149,7 @@ public sealed class CommandersPage : UserControl
 
         var ship = Text(sighting.Ship ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
 
-        var location = CopyGlyph.Beside(
+        var location = CopyGlyph.LinkBeside(
             Text(sighting.StarSystem ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, current ? ThemeManager.CyanKey : ThemeManager.AKey),
             sighting.StarSystem,
             _copy);

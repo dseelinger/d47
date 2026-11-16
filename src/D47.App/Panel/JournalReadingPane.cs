@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
@@ -347,9 +347,13 @@ internal sealed class JournalReadingPane : Border
             {
                 var item = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
                 var value = values[i];
+                var drawn = Value(value);
+
                 item.Children.Add(value.Tone == ReadingTone.System && !value.Typed
-                    ? CopyGlyph.Beside(Value(value), value.Text, copy)
-                    : Value(value));
+                    ? drawn is TextBlock name
+                        ? CopyGlyph.LinkBeside(name, value.Text, copy)
+                        : CopyGlyph.Beside(drawn, value.Text, copy)
+                    : drawn);
 
                 if (i < shown - 1)
                 {

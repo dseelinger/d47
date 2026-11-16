@@ -120,6 +120,10 @@ public sealed class GalaxyMapPage : UserControl
     private readonly TextBlock _unplaced = RoutingKit.Prose(string.Empty);
     private readonly StackPanel _stripKinds = new() { Orientation = Orientation.Horizontal, Spacing = 18, Height = 20 };
     private readonly TextBlock _stripName = Chrome(14, ThemeManager.AKey);
+    private Button? _stripLink;
+    private Button? _systemLink;
+    private string? _stripSystem;
+    private string? _hereName;
     private readonly TextBlock _stripFacts = RoutingKit.Ink(string.Empty, 13, ThemeManager.GreyKey);
     private readonly TextBlock _stripResult = RoutingKit.Ink(string.Empty, 13, ThemeManager.GreyKey);
     private readonly ContentControl _copyHolder = new();
@@ -1121,7 +1125,7 @@ public sealed class GalaxyMapPage : UserControl
         _stripKinds.IsVisible = false;
         _stripResult.Height = 20;
 
-        var one = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Height = 20, Children = { _stripName, _stripFacts } };
+        var one = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Height = 20, Children = { new Avalonia.Controls.Panel { Height = 20, Children = { StripLink } }, _stripFacts } };
         var words = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center, Children = { one, _stripKinds, _stripResult } };
 
         var actions = new StackPanel
@@ -1169,6 +1173,7 @@ public sealed class GalaxyMapPage : UserControl
         _stripCurrent = _current is not null && string.Equals(star.Name, _current, StringComparison.OrdinalIgnoreCase);
         _stripUnvisited = _unvisitedNames.Contains(star.Name);
         _strip.IsVisible = true;
+        _stripSystem = star.Name;
         _stripName.Text = star.Name.ToUpperInvariant();
         ThemeInk.Bind(_stripName, TextBlock.ForegroundProperty, _stripCurrent ? ThemeManager.CyanKey : ThemeManager.AKey);
         _copyHolder.Content = _copy is { } copy ? CopyGlyph.For(star.Name, copy) : null;
@@ -1353,21 +1358,22 @@ public sealed class GalaxyMapPage : UserControl
         {
             _note.Text = offDuty;
             _note.IsVisible = true;
-            _system.IsVisible = _dot.IsVisible = _region.IsVisible = _systemCopy.IsVisible = false;
+            SystemButton.IsVisible = _dot.IsVisible = _region.IsVisible = _systemCopy.IsVisible = false;
             _systemCopy.Content = null;
             return;
         }
 
         _note.IsVisible = false;
+        _hereName = here;
         _system.Text = here?.ToUpperInvariant() ?? string.Empty;
-        _system.IsVisible = !string.IsNullOrEmpty(here);
+        SystemButton.IsVisible = !string.IsNullOrEmpty(here);
         _systemCopy.Content = _copy is { } copy && !string.IsNullOrEmpty(here) ? CopyGlyph.For(here, copy) : null;
         _systemCopy.IsVisible = _systemCopy.Content is not null;
 
         var region = _position is { } at ? GalacticRegions.Find(at) : null;
         _region.Text = region?.ToUpperInvariant() ?? string.Empty;
         _region.IsVisible = region is not null;
-        _dot.IsVisible = _system.IsVisible && _region.IsVisible;
+        _dot.IsVisible = SystemButton.IsVisible && _region.IsVisible;
     }
 
     private void Counts(TravelLog? log, int stepCount, TravelPicture travels)
@@ -1827,7 +1833,7 @@ public sealed class GalaxyMapPage : UserControl
     {
         Orientation = Orientation.Horizontal,
         Spacing = 6,
-        Children = { _system, _systemCopy },
+        Children = { SystemButton, _systemCopy },
     };
 
     private Control WhereLine()
@@ -1893,6 +1899,10 @@ public sealed class GalaxyMapPage : UserControl
     /// the legend is a band over the bottom of the map, so the map keeps its height. There is no room for the
     /// strip's own row, so it covers the same band.
     /// </summary>
+    private Button StripLink => _stripLink ??= SystemLink.Of(_stripName, () => _stripSystem);
+
+    private Button SystemButton => _systemLink ??= SystemLink.Of(_system, () => _hereName);
+
     private Control PanelLayout()
     {
         foreach (var text in new[] { _counts, _system, _note })

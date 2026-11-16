@@ -440,7 +440,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         List<Control> cells =
         [
                 Cell(Pair(name, Sub(station.Type)), 0),
-                Cell(Pair(CopyGlyph.Beside(systemName, station.SystemName, Copy), Sub(system)), 1),
+                Cell(Pair(CopyGlyph.Beside(SystemLink.Look(systemName), station.SystemName, Copy), Sub(system)), 1),
                 Cell(Right(Mono(station.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
                 Cell(Value(LargestPad(station)), 3),
                 Cell(Right(Mono(station.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 4),

@@ -514,15 +514,21 @@ public sealed class MaterialsPage : UserControl
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var place = new TextBlock
+        TextBlock Place(string text)
         {
-            Text = $"{stop.System} {stop.Body}".ToUpperInvariant(),
-            FontFamily = Fonts.ChromeFamily,
-            FontSize = TypeScale.Control,
-            FontWeight = FontWeight.SemiBold,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        ThemeInk.Bind(place, TextBlock.ForegroundProperty, stop.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey);
+            var block = new TextBlock
+            {
+                Text = text,
+                FontFamily = Fonts.ChromeFamily,
+                FontSize = TypeScale.Control,
+                FontWeight = FontWeight.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            ThemeInk.Bind(block, TextBlock.ForegroundProperty, stop.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey);
+            return block;
+        }
+
+        var place = Place($"{stop.System} {stop.Body}".ToUpperInvariant());
 
         var coordinates = new TextBlock
         {
@@ -538,6 +544,14 @@ public sealed class MaterialsPage : UserControl
 
         if (copy is not null)
         {
+            where.Children.Clear();
+            where.Children.Add(SystemLink.Of(Place(stop.System.ToUpperInvariant()), stop.System));
+
+            if (stop.Body is { Length: > 0 } body)
+            {
+                where.Children.Add(Place(body.ToUpperInvariant()));
+            }
+
             var glyph = CopyGlyph.For(stop.System, copy);
             glyph.VerticalAlignment = VerticalAlignment.Center;
             where.Children.Add(glyph);

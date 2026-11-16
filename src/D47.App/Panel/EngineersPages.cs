@@ -951,7 +951,7 @@ public sealed class EngineerPage : EngineerPageBase
         var ink = Here(system, here) ? StatInk.Here : StatInk.Value;
         var tile = StatTile.Build("Workshop", engineer.Where, ink);
 
-        return CopyGlyph.WithCopy(tile, system, _copy);
+        return CopyGlyph.WithCopy(tile, system, _copy, link: true);
     }
 
     private static bool Here(string? system, string? here) =>
@@ -967,18 +967,19 @@ public sealed class EngineerPage : EngineerPageBase
 
         if (step.SystemSplit() is { } split && _copy is { } stopCopy)
         {
-            var named = Said(split.Before + split.System);
+            var system = Said(split.System);
 
             if (Here(split.System, here))
             {
-                var system = new Run(split.System);
-                ThemeInk.Bind(system, Run.ForegroundProperty, ThemeManager.CyanKey);
-
-                named.Inlines = [new Run(split.Before), system];
+                ThemeInk.Bind(system, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
             }
 
-            row.Children.Add(named);
-            row.Children.Add(CopyGlyph.For(split.System, stopCopy));
+            if (split.Before.Length > 0)
+            {
+                row.Children.Add(Said(split.Before));
+            }
+
+            row.Children.Add(CopyGlyph.LinkBeside(system, split.System, stopCopy));
             row.Children.Add(Said(split.After));
         }
         else

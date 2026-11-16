@@ -797,7 +797,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
                 TextWrapping = TextWrapping.Wrap,
             };
             ThemeInk.Bind(system, TextBlock.ForegroundProperty, Here(systemName, state) ? ThemeManager.CyanKey : ThemeManager.AKey);
-            heading.Children.Add(system);
+            heading.Children.Add(_copy is null ? system : SystemLink.Of(system, systemName));
         }
 
         if (line is not null)
@@ -1075,7 +1075,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         };
         ThemeInk.Bind(system, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
-        var names = new WrapPanel { ItemSpacing = 12, Children = { station, CopyGlyph.Beside(system, stop.Market.System, _copy) } };
+        var names = new WrapPanel { ItemSpacing = 12, Children = { station, CopyGlyph.LinkBeside(system, stop.Market.System, _copy) } };
 
         if (stop.Distance > 0)
         {

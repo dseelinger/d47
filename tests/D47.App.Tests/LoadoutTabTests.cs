@@ -102,7 +102,15 @@ public class LoadoutTabTests
     }
 
     private static IReadOnlyList<string> Text(PanelView panel) =>
-        [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? block.Inlines?.Text ?? string.Empty)];
+        [.. panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? Said(block))];
+
+    private static string Said(TextBlock block) =>
+        string.Concat((block.Inlines ?? []).Select(inline => inline switch
+        {
+            Avalonia.Controls.Documents.Run run => run.Text,
+            Avalonia.Controls.Documents.InlineUIContainer { Child: Button { Content: Border { Child: TextBlock name } } } => name.Text,
+            _ => string.Empty,
+        }));
 
     private static Control Modal(PanelView panel) =>
         panel.GetControl<Border>("ModalPane");

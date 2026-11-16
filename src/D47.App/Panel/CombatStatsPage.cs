@@ -599,7 +599,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         if (row.Style == CombatNameStyle.System)
         {
             var isCurrent = current is { } address && row.SystemAddress == address;
-            dock.Children.Add(CopyGlyph.Beside(
+            dock.Children.Add(CopyGlyph.LinkBeside(
                 CreditsKit.Line(row.Text, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey),
                 row.Text,
                 copy));

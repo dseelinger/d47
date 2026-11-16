@@ -154,5 +154,9 @@ internal static class GalaxyMapOnScreen
         page.Strip().GetVisualDescendants().OfType<StackPanel>().First(panel => panel.Children.Count == 3 && panel.Children[0] is StackPanel && panel.Children[2] is TextBlock);
 
     private static TextBlock StripRow(GalaxyMapPage page, int row, int column) =>
-        (TextBlock)((StackPanel)StripWords(page).Children[row]).Children[column];
+        ((StackPanel)StripWords(page).Children[row]).Children[column] switch
+        {
+            Avalonia.Controls.Panel { Children: [Button { Content: Border { Child: TextBlock name } }] } => name,
+            var other => (TextBlock)other,
+        };
 }

@@ -349,7 +349,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         system.VerticalAlignment = VerticalAlignment.Center;
         ThemeInk.Bind(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
 
-        var systemCell = CopyGlyph.Beside(system, station.SystemName, Copy);
+        var systemCell = CopyGlyph.Beside(SystemLink.Look(system), station.SystemName, Copy);
 
         List<Control> cells =
         [

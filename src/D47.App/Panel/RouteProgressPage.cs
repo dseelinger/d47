@@ -219,6 +219,17 @@ public sealed class RouteProgressPage : UserControl
             _aside.IsVisible = false;
         }
 
+        if (asideSystem is not null && _copy is not null)
+        {
+            SystemLink.InSentence(_aside, asideSystem, part => new TextBlock
+            {
+                Text = part,
+                FontSize = _aside.FontSize,
+                FontFamily = _aside.FontFamily,
+                FontWeight = _aside.FontWeight,
+            });
+        }
+
         (_aside.Parent as Avalonia.Controls.Panel)?.Children.Remove(_aside);
         _asideLine.Children.Clear();
         _asideLine.Children.Add(CopyGlyph.Beside(_aside, asideSystem, _copy));
@@ -272,7 +283,7 @@ public sealed class RouteProgressPage : UserControl
         };
 
         Place(grid, number, 0);
-        Place(grid, system, 1);
+        Place(grid, _copy is null ? system : SystemLink.Of(system, hop.StarSystem), 1);
         Place(grid, star, 2);
 
         if (Decision(hop, current) is { } tag)
@@ -346,7 +357,7 @@ public sealed class RouteProgressPage : UserControl
     }
 
     private Control HeadlineName(string system, string key) =>
-        CopyGlyph.Beside(HeadlineText(system, key, sentence: false), system, _copy);
+        CopyGlyph.LinkBeside(HeadlineText(system, key, sentence: false), system, _copy);
 
     private static TextBlock HeadlineText(string text, string key, bool sentence)
     {

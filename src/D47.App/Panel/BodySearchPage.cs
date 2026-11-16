@@ -372,7 +372,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         List<Control> cells =
         [
                 Cell(Pair(name, Sub(body.Subtype)), 0),
-                Cell(CopyGlyph.Beside(system, body.SystemName, Copy), 1),
+                Cell(CopyGlyph.Beside(SystemLink.Look(system), body.SystemName, Copy), 1),
                 Cell(Right(Mono(body.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
                 Cell(Right(Mono(body.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 3),
                 Cell(Value(body.IsLandable ? "Yes" : "No"), 4),

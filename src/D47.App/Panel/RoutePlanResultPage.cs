@@ -615,7 +615,8 @@ public sealed class RoutePlanResultPage : UserControl
 
         var place = new WrapPanel { ItemSpacing = 6, LineSpacing = 2 };
 
-        place.Children.Add(RoutingKit.Ink(stop.System, TypeScale.Secondary, RoutingKit.SystemKey(stop.System, here, state.Reached)));
+        var systemName = RoutingKit.Ink(stop.System, TypeScale.Secondary, RoutingKit.SystemKey(stop.System, here, state.Reached));
+        place.Children.Add(_copy is null ? systemName : SystemLink.Of(systemName, stop.System));
 
         var facts = new List<string>();
 

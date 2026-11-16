@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using D47.App.Theming;
 using D47.App.Timing;
 
 namespace D47.App.Controls;
@@ -35,7 +36,7 @@ public static class CopyGlyph
     public static string? GetCopies(Button button) => button.GetValue(CopiesProperty);
 
     /// <summary>Puts a copy glyph for <paramref name="system"/> beside the tile's figures; the tile is unchanged without a system or a clipboard.</summary>
-    public static Border WithCopy(Border tile, string? system, Func<string, Task<bool>>? copy)
+    public static Border WithCopy(Border tile, string? system, Func<string, Task<bool>>? copy, bool link = false)
     {
         if (system is not { Length: > 0 } target || copy is null || tile.Child is not { } figures)
         {
@@ -43,6 +44,13 @@ public static class CopyGlyph
         }
 
         tile.Child = null;
+
+        if (link && figures is StackPanel { Children: [.., TextBlock value] } stack)
+        {
+            var at = stack.Children.IndexOf(value);
+            stack.Children.RemoveAt(at);
+            stack.Children.Insert(at, SystemLink.Of(value, target));
+        }
 
         var glyph = For(target, copy);
         glyph.VerticalAlignment = VerticalAlignment.Center;
@@ -59,26 +67,41 @@ public static class CopyGlyph
     }
 
     /// <summary>The name with a copy glyph for <paramref name="system"/> to its right; the name alone without a system or a clipboard.</summary>
-    public static Control Beside(Control name, string? system, Func<string, Task<bool>>? copy)
+    public static Control Beside(Control name, string? system, Func<string, Task<bool>>? copy) =>
+        Place(name, system, copy, linked: false);
+
+    /// <summary>As <see cref="Beside"/>, with the name a <see cref="SystemLink"/> that opens Search › System.</summary>
+    public static Control LinkBeside(TextBlock name, string? system, Func<string, Task<bool>>? copy) =>
+        Place(name, system, copy, linked: true);
+
+    private static Control Place(Control name, string? system, Func<string, Task<bool>>? copy, bool linked)
     {
         if (system is not { Length: > 0 } target || copy is null)
         {
             return name;
         }
 
+        var link = linked ? SystemLink.Of((TextBlock)name, target) : null;
+
+        name = link ?? name;
         name.VerticalAlignment = VerticalAlignment.Center;
         name.HorizontalAlignment = HorizontalAlignment.Left;
 
         var glyph = For(target, copy);
         Grid.SetColumn(glyph, 1);
 
-        return new Grid
+        var grid = new Grid
         {
             HorizontalAlignment = HorizontalAlignment.Left,
             ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto)],
             ColumnSpacing = 6,
             Children = { name, glyph },
         };
+
+        link?.GetObservable(SystemLink.OpenProperty).Subscribe(new SystemLink.Observer<Action<string>?>(
+            open => grid.ColumnSpacing = open is null ? 6 : Gaps.Tile));
+
+        return grid;
     }
 
     /// <summary>A copy glyph that copies <paramref name="value"/> through <paramref name="copy"/>.</summary>

@@ -233,10 +233,12 @@ internal sealed class ObjectiveStrip : UserControl
 
         if (text.System is not null)
         {
-            system = Prose(text.System, text.InSystem && !text.Grey ? ThemeManager.CyanKey : ink);
+            var name = Prose(text.System, text.InSystem && !text.Grey ? ThemeManager.CyanKey : ink);
+            system = name;
 
             if (text.CopyValue is not null && _copy() is { } copy)
             {
+                system = SystemLink.Of(name, text.CopyValue, keepFont: true);
                 glyph = CopyGlyph.For(text.CopyValue, copy);
             }
         }

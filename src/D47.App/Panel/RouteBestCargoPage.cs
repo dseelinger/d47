@@ -392,7 +392,7 @@ public sealed class RouteBestCargoPage : UserControl
 
         if (location?.StarSystem is { Length: > 0 } system)
         {
-            heading.Children.Add(CopyGlyph.Beside(Chrome(docked ? $"{system} · Docked" : system, TypeScale.Small, ThemeManager.CyanKey), system, _copy));
+            heading.Children.Add(CopyGlyph.LinkBeside(Chrome(docked ? $"{system} · Docked" : system, TypeScale.Small, ThemeManager.CyanKey), system, _copy));
         }
 
         var hold = new StackPanel
@@ -509,9 +509,23 @@ public sealed class RouteBestCargoPage : UserControl
         TitleText.Style(head, TypeScale.Secondary, TitleRank.Group);
         head.Inlines!.Add(new Run("WHAT TO CARRY TO "));
 
-        var system = new Run(destination.ToUpperInvariant());
-        system.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
-        head.Inlines.Add(system);
+        if (destination.Length > 0 && _copy is not null)
+        {
+            var name = new TextBlock { Text = destination.ToUpperInvariant(), FontSize = TypeScale.Secondary };
+            ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.AKey);
+
+            head.Inlines.Add(new InlineUIContainer
+            {
+                BaselineAlignment = BaselineAlignment.Center,
+                Child = SystemLink.Of(name, destination, flush: false),
+            });
+        }
+        else
+        {
+            var system = new Run(destination.ToUpperInvariant());
+            system.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
+            head.Inlines.Add(system);
+        }
 
         var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 14, VerticalAlignment = VerticalAlignment.Center, Children = { head } };
 

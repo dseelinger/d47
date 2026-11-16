@@ -448,7 +448,7 @@ public sealed class BgsWorkPage : UserControl, IPageSummary, IFilterablePage
         var isCurrent = row.System is not null && string.Equals(row.System, current, StringComparison.OrdinalIgnoreCase);
         var system = row.System is null
             ? CreditsKit.Line(UnnamedSystem, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey)
-            : CopyGlyph.Beside(
+            : CopyGlyph.LinkBeside(
                 CreditsKit.Line(row.System, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey),
                 row.System,
                 copy);

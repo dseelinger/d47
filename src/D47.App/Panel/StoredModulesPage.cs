@@ -305,7 +305,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         };
         ThemeInk.Bind(detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var head = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { CopyGlyph.Beside(name, group.System == InTransit ? null : group.System, _copy), detail } };
+        var head = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { CopyGlyph.LinkBeside(name, group.System == InTransit ? null : group.System, _copy), detail } };
 
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 

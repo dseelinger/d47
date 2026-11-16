@@ -1101,7 +1101,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             }
             : CreditsKit.Line(FactionModel.Dash, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
 
-        CreditsKit.Place(grid, 0, CopyGlyph.Beside(name, conflict.System, Copy));
+        CreditsKit.Place(grid, 0, CopyGlyph.LinkBeside(name, conflict.System, Copy));
         CreditsKit.Place(grid, 1, kind);
         CreditsKit.Place(grid, 2, Opponent(conflict));
         CreditsKit.Place(grid, 3, days);
@@ -1215,7 +1215,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         var pad = FactionAssets.PadLetter(station.LargestPad);
 
         CreditsKit.Place(grid, 0, CopyGlyph.Beside(name, station.Name, Copy));
-        CreditsKit.Place(grid, 1, CopyGlyph.Beside(system, station.System, Copy));
+        CreditsKit.Place(grid, 1, CopyGlyph.LinkBeside(system, station.System, Copy));
         CreditsKit.Place(grid, 2, CreditsKit.Line(type ?? FactionModel.Dash, Fonts.ProseFamily, TypeScale.ControlLarge, type is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey));
         CreditsKit.Place(grid, 3, CreditsKit.Mono(pad ?? FactionModel.Dash, TypeScale.ControlLarge, pad is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, right: true));
         CreditsKit.Place(
@@ -1284,7 +1284,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         var controls = CreditsKit.Line(row.Controls ? "✓" : string.Empty, Fonts.ChromeFamily, 15, ThemeManager.WhiteKey);
         controls.HorizontalAlignment = HorizontalAlignment.Center;
 
-        CreditsKit.Place(grid, 0, CopyGlyph.Beside(name, row.System, Copy));
+        CreditsKit.Place(grid, 0, CopyGlyph.LinkBeside(name, row.System, Copy));
         CreditsKit.Place(grid, 1, influence);
         CreditsKit.Place(grid, 2, States(row.Active, ink));
         CreditsKit.Place(grid, 3, States(row.Pending, ink));

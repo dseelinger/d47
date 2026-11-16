@@ -579,7 +579,14 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
                 block.Inlines.Add(Ink(" · ", ThemeManager.GreyKey));
             }
 
-            block.Inlines.Add(Ink(system, Here(mission, location) ? ThemeManager.CyanKey : ThemeManager.AKey));
+            var name = new TextBlock { Text = system, FontSize = TypeScale.Small };
+            ThemeInk.Bind(name, TextBlock.ForegroundProperty, Here(mission, location) ? ThemeManager.CyanKey : ThemeManager.AKey);
+
+            block.Inlines.Add(new InlineUIContainer
+            {
+                BaselineAlignment = BaselineAlignment.Center,
+                Child = SystemLink.Of(name, system, flush: false),
+            });
         }
 
         if (block.Inlines!.Count == 0)

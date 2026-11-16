@@ -47,7 +47,7 @@ internal static class RoutingKit
         {
             var block = TitleText.Build(text, TypeScale.Heading, TitleRank.Screen, sentence: true);
             block.VerticalAlignment = VerticalAlignment.Center;
-            line.Children.Add(system is null ? block : D47.App.Controls.CopyGlyph.Beside(block, system, copy));
+            line.Children.Add(system is null ? block : D47.App.Controls.CopyGlyph.LinkBeside(block, system, copy));
         }
 
         return Framed(line);

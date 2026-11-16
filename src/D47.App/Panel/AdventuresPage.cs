@@ -1598,21 +1598,19 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         }
 
         var end = at + system!.Length;
-        var name = new Run(text[at..end]);
-
-        if (string.Equals(system, here, StringComparison.OrdinalIgnoreCase))
-        {
-            ThemeInk.Bind(name, TextElement.ForegroundProperty, ThemeManager.CyanKey);
-        }
-
-        var before = Text("", TypeScale.Secondary, ThemeManager.AKey);
-        before.Text = null;
-        before.Inlines = [new Run(text[..at]), name];
-        before.VerticalAlignment = VerticalAlignment.Center;
+        var name = Text(text[at..end], TypeScale.Secondary, string.Equals(system, here, StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+        name.VerticalAlignment = VerticalAlignment.Center;
 
         var row = new WrapPanel { Orientation = Orientation.Horizontal };
-        row.Children.Add(before);
-        row.Children.Add(CopyGlyph.For(system, copy));
+
+        if (at > 0)
+        {
+            var before = Text(text[..at], TypeScale.Secondary, ThemeManager.AKey);
+            before.VerticalAlignment = VerticalAlignment.Center;
+            row.Children.Add(before);
+        }
+
+        row.Children.Add(CopyGlyph.LinkBeside(name, system, copy));
 
         if (end < text.Length)
         {

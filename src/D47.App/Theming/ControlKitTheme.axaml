@@ -46,7 +46,7 @@
         </ControlTemplate>
       </Setter>
 
-      <Style Selector="^:pointerover">
+      <Style Selector="^:pointerover:not(:link)">
         <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
       </Style>
       <Style Selector="^:focus-visible">
@@ -65,7 +65,7 @@
       <Style Selector="^.on-row">
         <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
       </Style>
-      <Style Selector="^.on-row:pointerover, ^.on-row:focus-visible, ^.on-row:pressed">
+      <Style Selector="^.on-row:pointerover:not(:link), ^.on-row:focus-visible, ^.on-row:pressed">
         <Setter Property="Background" Value="{DynamicResource D47.A}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.Knock}" />
       </Style>
@@ -119,7 +119,7 @@
         <Setter Property="theming:ListRow.NameBrush" Value="{DynamicResource D47.Grey}" />
         <Setter Property="theming:ListRow.SecondaryBrush" Value="{DynamicResource D47.Grey}" />
       </Style>
-      <Style Selector="^.d47-row:pointerover">
+      <Style Selector="^.d47-row:pointerover:not(:link)">
         <Setter Property="Background" Value="{DynamicResource D47.Tile2}" />
         <Setter Property="Foreground" Value="{DynamicResource D47.White}" />
       </Style>

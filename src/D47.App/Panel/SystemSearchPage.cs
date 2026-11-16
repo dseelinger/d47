@@ -308,7 +308,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         List<Control> cells =
         [
-                Cell(Pair(CopyGlyph.Beside(name, system.Name, Copy), Sub(faction)), 0),
+                Cell(Pair(CopyGlyph.Beside(SystemLink.Look(name), system.Name, Copy), Sub(faction)), 0),
                 Cell(Right(Mono(system.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 1),
                 Cell(Pair(Value(system.Allegiance), Sub(system.Government)), 2),
                 Cell(Pair(Value(system.PrimaryEconomy), Sub(system.Security)), 3),

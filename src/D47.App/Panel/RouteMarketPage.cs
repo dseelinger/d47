@@ -821,17 +821,36 @@ public sealed class RouteMarketPage : UserControl
         }
 
         var name = new Run(station);
-        var place = new Run($" ({system})");
         ThemeInk.Bind(name, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
-        ThemeInk.Bind(place, TextElement.ForegroundProperty, RoutingKit.SystemKey(system, _here()));
 
-        cells.Children.Add(new TextBlock
+        var sentence = new TextBlock
         {
             FontSize = TypeScale.Secondary,
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
-            Inlines = [name, place],
-        });
+        };
+
+        if (_copy is null)
+        {
+            var place = new Run($" ({system})");
+            ThemeInk.Bind(place, TextElement.ForegroundProperty, RoutingKit.SystemKey(system, _here()));
+            sentence.Inlines = [name, place];
+        }
+        else
+        {
+            var link = new TextBlock { Text = system, FontSize = TypeScale.Secondary };
+            ThemeInk.Bind(link, TextBlock.ForegroundProperty, RoutingKit.SystemKey(system, _here()));
+
+            sentence.Inlines =
+            [
+                name,
+                new Run(" ("),
+                new InlineUIContainer { BaselineAlignment = BaselineAlignment.Center, Child = SystemLink.Of(link, system, flush: false) },
+                new Run(")"),
+            ];
+        }
+
+        cells.Children.Add(sentence);
 
         if (!carrier)
         {

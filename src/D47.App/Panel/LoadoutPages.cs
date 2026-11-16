@@ -266,6 +266,8 @@ public static class LoadoutPages
 
             if (system is { Length: > 0 } && copy is not null)
             {
+                SystemLink.InSentence(note, system, part => ListRow.Aside(new TextBlock { Text = part }));
+
                 var glyph = D47.App.Controls.CopyGlyph.For(system, copy);
                 glyph.Margin = new Thickness(6, 0, 0, 0);
                 Grid.SetColumn(glyph, 3);
@@ -468,6 +470,7 @@ public static class LoadoutPages
                 {
                     glyphed = true;
                     said.VerticalAlignment = VerticalAlignment.Center;
+                    SystemLink.InSentence(said, system, part => ListRow.SecondaryInk(new TextBlock { Text = part, FontSize = TypeScale.Secondary }));
 
                     var glyph = D47.App.Controls.CopyGlyph.For(system, copy);
                     Grid.SetColumn(glyph, 1);
@@ -598,6 +601,11 @@ public static class LoadoutPages
             var said = Line(line);
             said.VerticalAlignment = VerticalAlignment.Center;
             copyable.Children.Add(said);
+
+            if (said is TextBlock sentence)
+            {
+                SystemLink.InSentence(sentence, target.Value, part => Toned(part, line.Tone == LoadoutTone.Here ? ThemeManager.CyanKey : ThemeManager.AKey, line.Tone == LoadoutTone.Body ? TypeScale.Body : TypeScale.Secondary));
+            }
 
             var glyph = D47.App.Controls.CopyGlyph.For(target.Value, copy);
             Grid.SetColumn(glyph, 1);

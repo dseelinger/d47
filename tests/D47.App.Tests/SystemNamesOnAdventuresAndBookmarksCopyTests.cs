@@ -1,4 +1,4 @@
-using D47.Core.Storage;
+﻿using D47.Core.Storage;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Controls.Documents;
@@ -165,14 +165,16 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
         surface.Window.Close();
     }
 
+    private static TextBlock NameOf(WrapPanel trigger) =>
+        (TextBlock)((Border)((Button)((Grid)trigger.Children[1]).Children[0]).Content!).Child!;
+
     [AvaloniaFact]
     public void ASystemThatIsNotWhereTheCommanderIsStaysInA()
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
         Brush? Name(string? here) =>
-            ((Run)((TextBlock)((WrapPanel)AdventuresPage.Trigger($"Arrive at {Far}.", here, Far, _ => Task.FromResult(true)))
-                .Children[0]).Inlines![1]).Foreground as Brush;
+            NameOf((WrapPanel)AdventuresPage.Trigger($"Arrive at {Far}.", here, Far, _ => Task.FromResult(true))).Foreground as Brush;
 
         var cyan = Assert.IsAssignableFrom<ISolidColorBrush>(Name(Far));
         var plain = Name("Shinrarta Dezhra") as ISolidColorBrush;
@@ -188,9 +190,8 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
         var trigger = Assert.IsType<WrapPanel>(
             AdventuresPage.Trigger("Arrive at Sol.", "Sol", "Sol", _ => Task.FromResult(true)));
 
-        var head = Assert.IsType<TextBlock>(trigger.Children[0]);
-        Assert.IsAssignableFrom<ISolidColorBrush>(((Run)head.Inlines![1]).Foreground);
-        Assert.IsType<Button>(trigger.Children[1]);
+        Assert.IsAssignableFrom<ISolidColorBrush>(NameOf(trigger).Foreground);
+        Assert.IsType<Button>(Assert.IsType<Grid>(trigger.Children[1]).Children[1]);
     }
 
     [AvaloniaFact]
@@ -199,8 +200,10 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
         var trigger = Assert.IsType<WrapPanel>(
             AdventuresPage.Trigger($"Arrive at {Far}.", "Sol", Far, _ => Task.FromResult(true)));
 
-        var glyph = Assert.IsType<Button>(trigger.Children[1]);
+        var beside = Assert.IsType<Grid>(trigger.Children[1]);
+        var glyph = Assert.IsType<Button>(beside.Children[1]);
         Assert.Equal(VerticalAlignment.Center, glyph.VerticalAlignment);
+        Assert.Equal(VerticalAlignment.Center, beside.Children[0].VerticalAlignment);
         Assert.Equal(VerticalAlignment.Center, Assert.IsType<TextBlock>(trigger.Children[0]).VerticalAlignment);
         Assert.Equal(VerticalAlignment.Center, Assert.IsType<TextBlock>(trigger.Children[2]).VerticalAlignment);
     }

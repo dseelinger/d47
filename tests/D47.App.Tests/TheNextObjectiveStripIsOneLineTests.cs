@@ -115,7 +115,7 @@ public class TheNextObjectiveStripIsOneLineTests
         var blocks = window.GetVisualDescendants().OfType<TextBlock>().ToList();
         var sentence = blocks.Single(block => block.Text!.StartsWith("Analyse", StringComparison.Ordinal));
         var system = blocks.Single(block => block.Text == "Pipe (stem) Sector ZE-A d89");
-        var glyph = Assert.Single(window.GetVisualDescendants().OfType<Button>());
+        var glyph = Assert.Single(window.GetVisualDescendants().OfType<Button>(), button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null);
         var right = glyph.TranslatePoint(new Point(glyph.Bounds.Width, 0), window)!.Value.X;
 
         Assert.True(sentence.Bounds.Width <= 820 - system.Bounds.Width - glyph.Bounds.Width);

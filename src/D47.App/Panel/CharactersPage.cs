@@ -1156,13 +1156,14 @@ public sealed class CharactersPage : UserControl, IPageSummary
             return Plain("D47 has not seen your carrier yet.");
         }
 
-        var place = new TextBlock
+        TextBlock Part(string text)
         {
-            Text = $"{carrier.CallSign ?? carrier.Name ?? "Your carrier"} · {system} · ",
-            FontSize = TypeScale.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        ThemeInk.Bind(place, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+            var part = new TextBlock { Text = text, FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
+            ThemeInk.Bind(part, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+            return part;
+        }
+
+        var carrierName = carrier.CallSign ?? carrier.Name ?? "Your carrier";
 
         _distanceText = new TextBlock
         {
@@ -1175,15 +1176,17 @@ public sealed class CharactersPage : UserControl, IPageSummary
 
         LookUpDistance(_state()?.Location.StarSystem, system);
 
-        var where = new StackPanel { Orientation = Orientation.Horizontal, Children = { place, _distanceText } };
-
-        if (_copy is not null)
+        if (_copy is null)
         {
-            where.Spacing = 6;
-            where.Children.Add(CopyGlyph.For(system, _copy));
+            return new StackPanel { Orientation = Orientation.Horizontal, Children = { Part($"{carrierName} · {system} · "), _distanceText } };
         }
 
-        return where;
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 6,
+            Children = { Part($"{carrierName} ·"), CopyGlyph.LinkBeside(Part(system), system, _copy), Part("·"), _distanceText },
+        };
     }
 
     private void LookUpDistance(string? here, string? there)

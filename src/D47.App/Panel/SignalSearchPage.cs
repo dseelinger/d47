@@ -250,7 +250,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
         system.VerticalAlignment = VerticalAlignment.Center;
         ThemeInk.Bind(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
 
-        var systemCell = CopyGlyph.Beside(system, finding.System, Copy);
+        var systemCell = CopyGlyph.Beside(SystemLink.Look(system), finding.System, Copy);
 
         var grid = columns.Row(
             [

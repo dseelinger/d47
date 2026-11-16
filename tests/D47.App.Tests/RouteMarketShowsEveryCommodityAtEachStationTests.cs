@@ -131,6 +131,9 @@ public sealed class RouteMarketShowsEveryCommodityAtEachStationTests
     private static Color Ink(string key) =>
         ((ISolidColorBrush)Avalonia.Application.Current!.FindResource(key)!).Color;
 
+    private static Color SystemInk(PanelView panel, string system) =>
+        ((ISolidColorBrush)panel.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == system).Foreground!).Color;
+
     private static Color InkOf(List<Run> runs, string text) =>
         ((ISolidColorBrush)runs.Single(run => run.Text == text).Foreground!).Color;
 
@@ -223,8 +226,8 @@ public sealed class RouteMarketShowsEveryCommodityAtEachStationTests
             .. panel.GetVisualDescendants().OfType<TextBlock>().SelectMany(block => block.Inlines?.OfType<Run>() ?? []),
         ];
 
-        Assert.Equal(Ink(ThemeManager.CyanKey), InkOf(runs, " (Sol)"));
-        Assert.Equal(Ink(ThemeManager.AKey), InkOf(runs, " (Ohm)"));
+        Assert.Equal(Ink(ThemeManager.CyanKey), SystemInk(panel, "Sol"));
+        Assert.Equal(Ink(ThemeManager.AKey), SystemInk(panel, "Ohm"));
         Assert.Equal(Ink(ThemeManager.WhiteKey), InkOf(runs, "Galileo"));
 
         window.Close();

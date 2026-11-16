@@ -286,6 +286,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         _places = new Controls.PlaceLinker(text => PanelPlaces.Find(text, Nav, TabWords), OpenPlace, SettingsFurnishing.Root);
         Controls.PlaceLinks.SetLinker(this, _places);
+        Controls.SystemLink.SetOpen(this, OpenSystemNamed);
 
         foreach (var (tab, button) in _tabs)
         {
@@ -3232,6 +3233,8 @@ public partial class PanelView : UserControl, IPanelTabHost
             return text;
         }
 
+        Controls.SystemLink.InSentence(text, system, part => new TextBlock { Text = part });
+
         return new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -3511,7 +3514,7 @@ public partial class PanelView : UserControl, IPanelTabHost
                     ? Theming.ThemeManager.CyanKey
                     : Theming.ThemeManager.AKey));
 
-            var chip = new Border { MinHeight = 32, Padding = new Thickness(12, 0), Child = label };
+            var chip = new Border { MinHeight = 32, Padding = new Thickness(4, 0), Child = Controls.SystemLink.Of(label, name, keepFont: true, flush: false) };
 
             chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.SlabKey));
 

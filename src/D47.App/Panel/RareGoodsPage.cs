@@ -481,6 +481,12 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
         var name = Value(rare.Rare.Name);
         name.FontSize = TypeScale.Secondary;
 
+        var system = Typeset.Prose(
+            rare.Rare.System,
+            TypeScale.Tip,
+            string.Equals(rare.Rare.System, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey,
+            vertical: VerticalAlignment.Center);
+
         var station = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -490,11 +496,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
             Children =
             {
                 Typeset.Prose(rare.Rare.Station, TypeScale.Tip, ThemeManager.WhiteKey, trimming: TextTrimming.CharacterEllipsis, vertical: VerticalAlignment.Center),
-                Typeset.Prose(
-                    $"({rare.Rare.System})",
-                    TypeScale.Tip,
-                    string.Equals(rare.Rare.System, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey,
-                    vertical: VerticalAlignment.Center),
+                CopyGlyph.LinkBeside(system, rare.Rare.System, _copy),
             },
         };
 
@@ -515,7 +517,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
         var grid = layout.Row(
             [
                 Cell(name, 0),
-                Cell(new Border { ClipToBounds = true, Child = CopyGlyph.Beside(station, rare.Rare.System, _copy) }, 1),
+                Cell(new Border { ClipToBounds = true, Child = station }, 1),
                 Cell(Right(Mono(rare.Rare.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} ls" : Dash, ThemeManager.AKey)), 2),
                 Cell(Right(Mono(rare.Distance.ToString("0.0", CultureInfo.InvariantCulture), ThemeManager.AKey)), 3),
                 Cell(Right(Mono(rare.Supply is { } supply ? supply.ToString("N0", CultureInfo.InvariantCulture) : Dash, stockInk)), 4),

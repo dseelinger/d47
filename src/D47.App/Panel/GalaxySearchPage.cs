@@ -1417,7 +1417,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             var isSystem = !string.Equals(words.Reference, YourSystem, StringComparison.Ordinal);
             var line = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Bottom };
             line.Children.Add(Words(words.Lead, ThemeManager.AKey));
-            line.Children.Add(CopyGlyph.Beside(Words(words.Reference, ThemeManager.CyanKey), isSystem ? words.Reference : null, Copy));
+            line.Children.Add(CopyGlyph.LinkBeside(Words(words.Reference, ThemeManager.CyanKey), isSystem ? words.Reference : null, Copy));
             left.Children.Add(line);
         }
 

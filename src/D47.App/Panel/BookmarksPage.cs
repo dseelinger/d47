@@ -202,12 +202,20 @@ public sealed class BookmarksPage : UserControl
                 BookmarkPlaces.Word(kind).ToUpperInvariant(), Fonts.ChromeFamily, TypeScale.Meta, ThemeManager.GreyKey));
         }
 
-        var place = string.IsNullOrEmpty(bookmark.Place) ? bookmark.System : $"{bookmark.Place} · {bookmark.System}";
-        first.Children.Add(WatchesPage.Text(place, Fonts.ChromeFamily, TypeScale.Body, ThemeManager.AKey));
-
         if (RoutingPages.Copy(_surface) is { } copy)
         {
-            first.Children.Add(CopyGlyph.For(bookmark.System, copy));
+            if (!string.IsNullOrEmpty(bookmark.Place))
+            {
+                first.Children.Add(WatchesPage.Text($"{bookmark.Place} ·", Fonts.ChromeFamily, TypeScale.Body, ThemeManager.AKey));
+            }
+
+            first.Children.Add(CopyGlyph.LinkBeside(
+                WatchesPage.Text(bookmark.System, Fonts.ChromeFamily, TypeScale.Body, ThemeManager.AKey), bookmark.System, copy));
+        }
+        else
+        {
+            var place = string.IsNullOrEmpty(bookmark.Place) ? bookmark.System : $"{bookmark.Place} · {bookmark.System}";
+            first.Children.Add(WatchesPage.Text(place, Fonts.ChromeFamily, TypeScale.Body, ThemeManager.AKey));
         }
 
         first.Children.Add(WatchesPage.Text(

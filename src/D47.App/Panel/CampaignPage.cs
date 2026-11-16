@@ -821,7 +821,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         }
 
         Left(Typeset.Chrome(kind.ToUpperInvariant(), TypeScale.Meta, ThemeManager.GreyKey, weight: FontWeight.SemiBold, tracking: TypeScale.Meta * Fonts.ChromeTracking));
-        Left(CopyGlyph.Beside(Typeset.Chrome(system, TypeScale.Body, ThemeManager.CyanKey, weight: FontWeight.Medium), system, _copy));
+        Left(CopyGlyph.LinkBeside(Typeset.Chrome(system, TypeScale.Body, ThemeManager.CyanKey, weight: FontWeight.Medium), system, _copy));
 
         if (note is not null)
         {
@@ -932,7 +932,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         if (hub.System is not null && !_headset)
         {
-            name = CopyGlyph.Beside((TextBlock)name, hub.System, _copy);
+            name = CopyGlyph.LinkBeside((TextBlock)name, hub.System, _copy);
         }
 
         var line = Typeset.Prose(hub.Line, TypeScale.Description, ThemeManager.GreyKey, wrap: true);
@@ -1057,7 +1057,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         }
         else
         {
-            system = new StackPanel { Spacing = 2, Children = { CopyGlyph.Beside(name, row.System, _copy), ControlLine(row, now, hub) } };
+            system = new StackPanel { Spacing = 2, Children = { CopyGlyph.LinkBeside(name, row.System, _copy), ControlLine(row, now, hub) } };
         }
 
         var lead = Typeset.Mono(CampaignModel.LeadText(row.Lead), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right);
@@ -1225,7 +1225,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         CreditsKit.Place(grid, 0, Typeset.Mono(row.Rank.ToString(System.Globalization.CultureInfo.InvariantCulture), TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
         CreditsKit.Place(grid, 1, Typeset.Prose(CampaignFronts.Describe(front.Kind), TypeScale.ControlLarge, ink, wrap: true));
-        CreditsKit.Place(grid, 2, CopyGlyph.Beside(name, front.System, _copy));
+        CreditsKit.Place(grid, 2, CopyGlyph.LinkBeside(name, front.System, _copy));
         CreditsKit.Place(grid, 3, Typeset.Mono(CampaignModel.DistanceText(row.Distance), TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.AKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
         CreditsKit.Place(grid, 4, Typeset.Prose(front.Reason, TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true));
         CreditsKit.Place(grid, 5, age);
@@ -1297,7 +1297,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             Spacing = 2,
             Children =
             {
-                CopyGlyph.Beside(Typeset.Chrome(entry.System, TypeScale.ControlLarge, ThemeManager.AKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis), entry.System, _copy),
+                CopyGlyph.LinkBeside(Typeset.Chrome(entry.System, TypeScale.ControlLarge, ThemeManager.AKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis), entry.System, _copy),
                 Typeset.Prose(entry.Opponent ?? "No opponent", TypeScale.Meta, ThemeManager.GreyKey, trimming: TextTrimming.CharacterEllipsis),
             },
         };

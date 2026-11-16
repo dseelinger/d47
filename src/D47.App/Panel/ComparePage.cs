@@ -351,7 +351,7 @@ public sealed class ComparePage : UserControl
         where.FontWeight = FontWeight.Medium;
         where.TextTrimming = TextTrimming.CharacterEllipsis;
         ThemeInk.Bind(where, TextBlock.ForegroundProperty, ship.InCurrentSystem ? ThemeManager.CyanKey : ThemeManager.AKey);
-        cells.Add(Cell(CopyGlyph.Beside(where, ship.System, _copy), left: true));
+        cells.Add(Cell(CopyGlyph.LinkBeside(where, ship.System, _copy), left: true));
 
         var grid = _layout.Row(cells);
         grid.Margin = new Thickness(14, 0);

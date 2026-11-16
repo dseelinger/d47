@@ -119,7 +119,7 @@ A value Directive 47 decoded from one of Frontier's tokens is underlined with do
 the token. A row label that the reading knows explains its field when hovered. An engineer, or a
 ship you still own, is a link to its page. A row with more than six values shows six and a
 **+N more** tile for the rest. A field that names a system, such as StarSystem or Next system,
-has a copy button to its right.
+is a link that opens Search › System on that system, with a copy button to its right.
 
 The rows are Directive 47's reading and can be wrong about what an event meant; the fields cannot
 be, because they are the file. Open Every field to copy one into a bug report.

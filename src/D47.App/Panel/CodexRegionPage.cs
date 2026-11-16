@@ -321,7 +321,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 
         if (row.System is { } system)
         {
-            cell.Children.Add(CopyGlyph.Beside(
+            cell.Children.Add(CopyGlyph.LinkBeside(
                 CreditsKit.Line(system, Fonts.ChromeFamily, TypeScale.ControlLarge, row.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey),
                 system,
                 copy));

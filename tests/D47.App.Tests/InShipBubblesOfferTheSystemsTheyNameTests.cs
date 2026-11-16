@@ -35,7 +35,7 @@ public class InShipBubblesOfferTheSystemsTheyNameTests
     /// <summary>The copy chips this reading drew, in first-appearance order — the toolbar's own "copy the
     /// whole page" button lives outside <c>Bubbles</c> and is never among them.</summary>
     private static IReadOnlyList<Button> Chips(PanelView panel) =>
-        [.. panel.GetControl<StackPanel>("Bubbles").GetVisualDescendants().OfType<Button>()];
+        [.. panel.GetControl<StackPanel>("Bubbles").GetVisualDescendants().OfType<Button>().Where(button => D47.App.Controls.CopyGlyph.GetCopies(button) is not null)];
 
     private static (PanelView Panel, RecordingClipboard Clipboard) Open(string said, SystemsInPlay? known)
     {

@@ -515,7 +515,7 @@ public sealed class CarrierPage : UserControl, IPageChrome
 
         var tile = StatTile.Build(label, value, here ? StatInk.Here : StatInk.Value);
 
-        return CopyGlyph.WithCopy(tile, system, _copy);
+        return CopyGlyph.WithCopy(tile, system, _copy, link: true);
     }
 }
 
