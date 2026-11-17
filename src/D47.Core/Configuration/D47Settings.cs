@@ -482,6 +482,12 @@ public sealed record VrSettings
     /// </summary>
     public bool Controllers { get; init; } = true;
 
+    /// <summary>
+    /// Whether the surfaces may go through d47's OpenXR layer when Elite runs on an OpenXR runtime that is
+    /// not SteamVR's.
+    /// </summary>
+    public bool OpenXrLayer { get; init; }
+
     /// <summary>Where the full panel sits and what it looks like.</summary>
     public VrSurfaceSettings Panel { get; init; } = new();
 

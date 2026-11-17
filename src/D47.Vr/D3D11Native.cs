@@ -41,6 +41,49 @@ public static class D3D11Native
         }
     }
 
+    /// <summary>The index of the DXGI adapter with this LUID, or null when none has it. Throws when DXGI cannot be asked.</summary>
+    public static int? AdapterWithLuid(uint luidLow, int luidHigh)
+    {
+        var iid = DxgiFactory1;
+        Marshal.ThrowExceptionForHR(CreateDXGIFactory1(in iid, out var factory));
+
+        try
+        {
+            var description = new byte[AdapterDescSize];
+
+            for (uint index = 0; ; index++)
+            {
+                var listed = Slot<EnumAdapters1Fn>(factory, FactoryEnumAdapters1)(factory, index, out var adapter);
+
+                if (listed == DxgiErrorNotFound)
+                {
+                    return null;
+                }
+
+                Marshal.ThrowExceptionForHR(listed);
+
+                try
+                {
+                    Marshal.ThrowExceptionForHR(Slot<GetDescFn>(adapter, AdapterGetDesc)(adapter, description));
+                }
+                finally
+                {
+                    Marshal.Release(adapter);
+                }
+
+                if (BitConverter.ToUInt32(description, AdapterDescLuidOffset) == luidLow
+                    && BitConverter.ToInt32(description, AdapterDescLuidOffset + 4) == luidHigh)
+                {
+                    return (int)index;
+                }
+            }
+        }
+        finally
+        {
+            Marshal.Release(factory);
+        }
+    }
+
     /// <summary>The method at <paramref name="slot"/> in a COM object's table.</summary>
     public static T Slot<T>(nint com, int slot)
         where T : Delegate =>
@@ -63,6 +106,16 @@ public static class D3D11Native
     private delegate int EnumAdapters1Fn(nint factory, uint index, out nint adapter);
 
     private const int FactoryEnumAdapters1 = 12;
+
+    private delegate int GetDescFn(nint adapter, [Out] byte[] description);
+
+    private const int AdapterGetDesc = 8;
+
+    /// <summary>The size of DXGI_ADAPTER_DESC and the offset of its AdapterLuid.</summary>
+    private const int AdapterDescSize = 304;
+    private const int AdapterDescLuidOffset = 296;
+
+    private const int DxgiErrorNotFound = unchecked((int)0x887A0002);
 
     /// <summary>Required with an explicit adapter.</summary>
     private const uint DriverTypeUnknown = 0;

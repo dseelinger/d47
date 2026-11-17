@@ -28,6 +28,43 @@ public sealed class FakeTextureDevice(FakeOpenVr? openVr = null) : IVrTextureDev
     /// <summary>The texture each <c>Write</c> went into, in order.</summary>
     public List<IntPtr> Writes { get; } = [];
 
+    /// <summary>The LUID each <c>OpenOnLuid</c> named, in order.</summary>
+    public List<(uint Low, int High)> LuidOpens { get; } = [];
+
+    /// <summary>The name and size of each shared texture, by texture.</summary>
+    public Dictionary<IntPtr, (string Name, int Width, int Height)> Shared { get; } = [];
+
+    /// <summary>The texture, size and first byte of each region write, in order.</summary>
+    public List<(IntPtr Texture, int Width, int Height, byte First)> RegionWrites { get; } = [];
+
+    /// <summary>Called at each <c>Flush</c>, before it returns.</summary>
+    public Action? Flushed { get; set; }
+
+    public string? OpenOnLuid(uint luidLow, int luidHigh)
+    {
+        LuidOpens.Add((luidLow, luidHigh));
+        IsOpen = OpenRefused is null;
+        return OpenRefused;
+    }
+
+    public IntPtr CreateShared(int width, int height, string name, out string? refused)
+    {
+        var texture = Create(width, height, out refused);
+
+        if (texture != 0)
+        {
+            Shared[texture] = (name, width, height);
+        }
+
+        return texture;
+    }
+
+    public unsafe void Write(IntPtr texture, IntPtr pixels, int rowBytes, int width, int height)
+    {
+        Writes.Add(texture);
+        RegionWrites.Add((texture, width, height, *(byte*)pixels));
+    }
+
     public string? Open(int adapter)
     {
         Opens.Add(adapter);
@@ -55,7 +92,11 @@ public sealed class FakeTextureDevice(FakeOpenVr? openVr = null) : IVrTextureDev
 
     public void Write(IntPtr texture, IntPtr pixels, int rowBytes) => Writes.Add(texture);
 
-    public void Flush() => FlushedAfterSubmits.Add(openVr?.TexturesSubmitted.Count ?? -1);
+    public void Flush()
+    {
+        FlushedAfterSubmits.Add(openVr?.TexturesSubmitted.Count ?? -1);
+        Flushed?.Invoke();
+    }
 
     public void Release(IntPtr texture) => Live.Remove(texture);
 

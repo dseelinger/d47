@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="D47.Vr.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\D47.Core\D47.Core.csproj" />
   </ItemGroup>
 

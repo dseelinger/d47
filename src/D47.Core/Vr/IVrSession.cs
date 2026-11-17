@@ -8,6 +8,9 @@ public interface IVrSession : IVrRuntime
     /// <summary>Whether d47 may touch the motion controllers at all (#198).</summary>
     bool Pointing { get; set; }
 
+    /// <summary>Whether a surface's curvature is drawn. Where it is not, every surface is flat.</summary>
+    bool SupportsCurvature { get; }
+
     /// <summary>The last head pose read.</summary>
     VrPose? Head { get; }
 

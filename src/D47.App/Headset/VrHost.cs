@@ -108,7 +108,7 @@ public sealed class VrHost : IDisposable
     public string? Reason => _lifecycle.Reason;
 
     /// <summary>The SteamVR session while d47 is attached to it, otherwise null (#601).</summary>
-    public SteamVrRuntime? Session => _lifecycle.State == VrState.Active ? _runtime as SteamVrRuntime : null;
+    public SteamVrRuntime? Session => _lifecycle.State == VrState.Active ? (_runtime as HeadsetRuntime)?.SteamVr as SteamVrRuntime : null;
 
     /// <summary>
     /// The headset panel's own prompts, so a spoken value can reach a chooser the Commander opened in
@@ -247,13 +247,23 @@ public sealed class VrHost : IDisposable
         // After the panel, so it reads the avatar's place from the panel's draw in the same serve.
         var avatar = new VrAvatarSurface(panel);
 
-        var runtime = new SteamVrRuntime(
+        var steamVr = new SteamVrRuntime(
             [panel, avatar, captions],
             loggers.CreateLogger<SteamVrRuntime>(),
             OpenVrBinding.Instance,
             new D3D11TextureDevice(),
             files,
             paths.VrActions);
+        var throughTheLayer = new OpenXrLayerRuntime(
+            [panel, avatar, captions],
+            loggers.CreateLogger<OpenXrLayerRuntime>(),
+            new XrSharedBlock(),
+            new D3D11TextureDevice());
+        var runtime = new HeadsetRuntime(
+            steamVr,
+            throughTheLayer,
+            () => settings.Current.Vr.OpenXrLayer,
+            loggers.CreateLogger<HeadsetRuntime>());
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(
@@ -546,6 +556,9 @@ public sealed class VrHost : IDisposable
         try
         {
             _lifecycle.Tick(now);
+
+            // The ray tests read the panel's placement, so a flat route makes them flat too.
+            _panel.Curved = _runtime.SupportsCurvature;
 
             if (_lifecycle.State == VrState.Active)
             {

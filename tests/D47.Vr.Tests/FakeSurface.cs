@@ -17,13 +17,26 @@ public sealed class FakeSurface : IVrSurfaceSource
 
     public bool UploadsAsTexture { get; init; }
 
+    public (int Width, int Height) LargestSize { get; set; } = (8, 8);
+
+    /// <summary>The byte every pixel channel is drawn as, or null to draw nothing.</summary>
+    public byte? Paint { get; set; }
+
     /// <summary>How many times the runtime asked for pixels.</summary>
     public int Draws { get; private set; }
 
     /// <summary>The last head pose the runtime passed on.</summary>
     public VrPose? Seen { get; private set; }
 
-    public void Draw(IntPtr destination, int rowBytes) => Draws++;
+    public unsafe void Draw(IntPtr destination, int rowBytes)
+    {
+        Draws++;
+
+        if (Paint is { } paint)
+        {
+            new Span<byte>((void*)destination, rowBytes * Size.Height).Fill(paint);
+        }
+    }
 
     public void Observe(VrPose head) => Seen = head;
 }

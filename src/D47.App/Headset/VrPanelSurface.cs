@@ -416,12 +416,20 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Through <c>SetOverlayRaw</c> a redraw flickers; if no texture can be made the runtime logs it and goes up raw.</summary>
     public bool UploadsAsTexture => true;
 
+    /// <summary>Whether the runtime draws curvature. While false the placement's curvature is 0.</summary>
+    public bool Curved { get; set; } = true;
+
     /// <summary>Where this surface goes and what it looks like.</summary>
     public SurfacePlacement Placement
     {
         get
         {
             var placement = Settings().ToPlacement(_settings.Current.Vr.Opacity);
+
+            if (!Curved)
+            {
+                placement = placement with { Curvature = 0f };
+            }
 
             if (_reshaping is { } live)
             {
@@ -438,6 +446,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public string Slot => Mode == PanelMode.Mini
         ? D47.Core.Capabilities.Builtin.VrCapability.MiniSlot
         : D47.Core.Capabilities.Builtin.VrCapability.PanelSlot;
+
+    /// <summary>The most pixels a resize drag can reach, in either mode.</summary>
+    public (int Width, int Height) LargestSize => VrResize.MostPixels;
 
     /// <summary>How many pixels to render: a resize drag's while one is running, otherwise the slot's own.</summary>
     public (int Width, int Height) Size =>

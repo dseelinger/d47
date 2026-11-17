@@ -22,6 +22,9 @@ public interface IVrSurfaceSource
     /// <summary>The pixel size it wants.</summary>
     (int Width, int Height) Size { get; }
 
+    /// <summary>The largest pixel size <see cref="Size"/> can reach without the surface being rebuilt.</summary>
+    (int Width, int Height) LargestSize => Size;
+
     /// <summary>Whether anything has changed since the last draw.</summary>
     bool IsDirty { get; }
 
@@ -145,6 +148,8 @@ public sealed class SteamVrRuntime(
 
     /// <summary>The last head pose read.</summary>
     public VrPose? Head { get; private set; }
+
+    public bool SupportsCurvature => true;
 
     public VrStart Start()
     {
