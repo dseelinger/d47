@@ -101,7 +101,7 @@ internal static class MissionTypes
         return said.Append(Caveat).ToString();
     }
 
-    private static string Holding(string navy, RankState? ranks)
+    internal static string Holding(string navy, RankState? ranks)
     {
         if (ranks is not { IsKnown: true })
         {

@@ -259,7 +259,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchOutfittingAsync(
-                        galaxy, currentSystem, settings, searches, Remember(history), now, arguments,
+                        galaxy, currentSystem, settings, searches, Remember(history), now, gameState, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -531,7 +531,7 @@ public static class GalaxyCapability
                 Handler = (arguments, cancellationToken) =>
                     FindStationAsync(
                         galaxy, trade, currentSystem, currentStation, settings, board, now, clipboard, lastFound,
-                        arguments, cancellationToken),
+                        gameState, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -1345,6 +1345,7 @@ public static class GalaxyCapability
         GalaxySearchBoard? searches,
         Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
+        Func<Journal.CommanderGameState?>? gameState,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1392,7 +1393,7 @@ public static class GalaxyCapability
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
 
-            var said = Describe(result, query) + LeftOutSaid(result.LeftOut, result.Pledged) + LimitRefused(askedLimit)
+            var said = Describe(result, query, gameState?.Invoke()?.Ranks) + LeftOutSaid(result.LeftOut, result.Pledged) + LimitRefused(askedLimit)
                        + ReportAgeSaid(reportAge);
 
             var posting = new GalaxySearchPosting(
@@ -2408,6 +2409,7 @@ public static class GalaxyCapability
         Func<DateTimeOffset>? now,
         IClipboard? clipboard,
         Conversation.LastFoundSystem? lastFound,
+        Func<Journal.CommanderGameState?>? gameState,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -2552,7 +2554,7 @@ public static class GalaxyCapability
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
 
             return ToolResult.Ok(
-                Describe(result, query) + LeftOutSaid(result.LeftOut, result.Pledged) + LimitRefused(askedLimit) + ReportAgeSaid(reportAge));
+                Describe(result, query, gameState?.Invoke()?.Ranks) + LeftOutSaid(result.LeftOut, result.Pledged) + LimitRefused(askedLimit) + ReportAgeSaid(reportAge));
         }
         catch (GalaxyUnavailableException ex)
         {
@@ -3845,7 +3847,7 @@ public static class GalaxyCapability
             : string.Empty;
 
     /// <summary>Station results as prose, with the age of the data said out loud.</summary>
-    internal static string Describe(StationSearchResult result, StationQuery query)
+    internal static string Describe(StationSearchResult result, StationQuery query, Journal.RankState? ranks = null)
     {
         if (result.Refusal is not null)
         {
@@ -3868,6 +3870,16 @@ public static class GalaxyCapability
             : result.Total == result.Stations.Count
             ? $"{GalaxyQuery.SayTotal(result.Total)} station{(result.Total == 1 ? "" : "s")} sell {wanted}."
             : $"{GalaxyQuery.SayTotal(result.Total)} stations sell {wanted}; here are the nearest {result.Stations.Count}.");
+
+        if (query.Ship is not null)
+        {
+            report.AppendLine(CrowdReported);
+
+            if (HullRankSaid(query.Ship, ranks) is { } rank)
+            {
+                report.AppendLine(rank);
+            }
+        }
 
         foreach (var station in result.Stations)
         {
@@ -3902,6 +3914,34 @@ public static class GalaxyCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    private const string CrowdReported =
+        "Shipyards are as other Commanders' tools reported them, so a listed hull is not always on sale.";
+
+    /// <summary>The navy rank a hull needs when the Commander is below it, or null.</summary>
+    private static string? HullRankSaid(string ship, Journal.RankState? ranks)
+    {
+        var hull = EliteSpecifications.Ship(ship);
+
+        if (NavalRanks.Gate(hull?.Requirement) is not { } gate)
+        {
+            return null;
+        }
+
+        var navy = gate.Navy.ToString();
+        var needed = (gate.Navy == Navy.Empire ? NavalRanks.EmpireName(gate.Rank) : NavalRanks.FederationName(gate.Rank))
+                     ?? gate.Rank.ToString(CultureInfo.InvariantCulture);
+        var said = $"The {hull!.Name} needs {navy} rank {needed}.";
+
+        if (ranks is not { IsKnown: true })
+        {
+            return said;
+        }
+
+        var held = ranks.For(navy)?.Rank ?? 0;
+
+        return held >= gate.Rank ? null : $"{said} {MissionTypes.Holding(navy, ranks)}";
     }
 
     /// <summary>A station search's answer: each station's place, type, largest pad and the asked-for services it has.</summary>
