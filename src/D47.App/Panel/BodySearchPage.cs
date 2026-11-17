@@ -27,7 +27,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = (decimal)BodyQuery.MaxDistanceCeiling, Step = 10, Format = "#,0" };
+    private readonly Amount _distance = new() { Placeholder = "50", Minimum = 1, Maximum = (decimal)BodyQuery.MaxDistanceCeiling, Step = 10, Format = "#,0" };
     private readonly CheckBox _landable = Tile("Landable");
     private readonly CheckBox _terraformable = Tile("Terraforming candidate");
     private readonly CheckBox _tidallyLocked = Tile("Tidally locked");
@@ -67,6 +67,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         _signalCount.PlaceholderText = Any;
         _hotspotCount.PlaceholderText = Any;
         _codexEntry.PlaceholderText = Any;
+        _codexEntry.TextChanged += (_, _) => ShowDistanceDefault();
         _volcanism.PlaceholderText = Any;
         _atmosphere.PlaceholderText = Any;
 
@@ -87,6 +88,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private static IReadOnlyList<(string Name, IReadOnlyList<string> Choices)> PickerChoices { get; } =
     [
+        ("region", GalacticRegions.Names),
         ("body_type", BodyCatalogue.Subtypes),
         ("material", BodyCatalogue.SurfaceMaterials),
         ("signal", BodyCatalogue.Signals),
@@ -98,13 +100,22 @@ public sealed class BodySearchPage : GalaxySearchPage
     ];
 
     /// <summary>Sets a text field by its tool argument name.</summary>
-    public void Type(string name, string value) => TextField(name).Text = value;
+    public void Type(string name, string value)
+    {
+        TextField(name).Text = value;
+        ShowDistanceDefault();
+    }
 
     public override IReadOnlyDictionary<string, string> FormArguments()
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        PutNear(arguments, _near, _distance, DefaultDistance);
+        Put(arguments, "near", _near.Text);
+
+        if (_distance.Value is { } typed)
+        {
+            arguments["max_distance"] = typed.ToString("0", CultureInfo.InvariantCulture);
+        }
 
         foreach (var (name, value) in _picked)
         {
@@ -143,7 +154,8 @@ public sealed class BodySearchPage : GalaxySearchPage
             FlagField(name).IsChecked = false;
         }
 
-        _distance.Value = DefaultDistance;
+        _distance.Value = null;
+        ShowDistanceDefault();
 
         ResetPickers(_pickers, _picked, null, several: false);
     }
@@ -170,8 +182,16 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         FillDistance(arguments, _distance, BodyQuery.MaxDistanceCeiling);
+        ShowDistanceDefault();
 
-        ResetPickers(_pickers, _picked, arguments, several: false);
+        var shown = new Dictionary<string, string>(arguments, StringComparer.Ordinal);
+
+        if (Get("region") is { } region && GalacticRegions.Match(region) is { } named)
+        {
+            shown["region"] = named;
+        }
+
+        ResetPickers(_pickers, _picked, shown, several: false);
     }
 
     protected override bool Refusal(IReadOnlyDictionary<string, string> arguments)
@@ -197,6 +217,7 @@ public sealed class BodySearchPage : GalaxySearchPage
             Landable = Flag("landable"),
             Terraformable = Flag("terraformable"),
             CodexEntry = Get("codex_entry"),
+            Region = Get("region"),
             Volcanism = Get("volcanism"),
             Atmosphere = Get("atmosphere"),
             TidallyLocked = Flag("tidally_locked"),
@@ -214,8 +235,20 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     protected override (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference)
     {
+        if (!arguments.ContainsKey("max_distance") && Text(arguments, "codex_entry") is not null)
+        {
+            return ("NEAREST TO ", AsideFrom(arguments, reference));
+        }
+
         return WithinAside(arguments, reference, DefaultDistance);
     }
+
+    private static string? Text(IReadOnlyDictionary<string, string> arguments, string key) =>
+        arguments.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
+
+    /// <summary>With no distance typed, the box shows what the search will use: Any for a codex entry, else 50.</summary>
+    private void ShowDistanceDefault() =>
+        _distance.Placeholder = string.IsNullOrWhiteSpace(_codexEntry.Text) ? DefaultDistance.ToString(CultureInfo.InvariantCulture) : Any.ToUpperInvariant();
 
     protected override int Count(GalaxySearchPosting posting) =>
         posting.Result is BodySearchResult result ? result.Bodies.Count : 0;
@@ -323,7 +356,8 @@ public sealed class BodySearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
-            Labelled("Distance in LY", _distance)));
+            Labelled("Distance in LY", _distance),
+            Labelled("Region", _pickers["region"].Picker)));
 
         var flags = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _landable, _terraformable, _tidallyLocked } };
 

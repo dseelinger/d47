@@ -610,7 +610,10 @@ public static class GalaxyCapability
                     ToolParameter.Text(
                         "codex_entry",
                         "A species or geological feature to find, by its codex name — \"Bacterium Cerbrus\", "
-                            + "\"Fumarole\". A colour variant is searched as its species."),
+                            + "\"Water Ice Fumarole\". A colour variant is searched as its species."),
+                    ToolParameter.Text(
+                        "region",
+                        "Only bodies in this codex region, by name — \"Norma Arm\", \"Inner Orion Spur\"."),
                     ToolParameter.Text(
                         "volcanism",
                         "Volcanism by name — \"Water Geysers\", \"Minor Rocky Magma\"."),
@@ -637,7 +640,8 @@ public static class GalaxyCapability
                     NearParameter,
                     ToolParameter.Number(
                         "max_distance",
-                        "How far to look, in light years. Default 50, at most 1,000."),
+                        "How far to look, in light years. Default 50, at most 1,000. A codex_entry search "
+                            + "with no max_distance has no limit."),
                     LimitParameter,
                     PageParameter,
                 ],
@@ -3364,6 +3368,7 @@ public static class GalaxyCapability
             Landable = arguments.Boolean("landable"),
             Terraformable = arguments.Boolean("terraformable"),
             CodexEntry = Text(arguments, "codex_entry"),
+            Region = Text(arguments, "region"),
             Volcanism = Text(arguments, "volcanism"),
             Atmosphere = Text(arguments, "atmosphere"),
             TidallyLocked = arguments.Boolean("tidally_locked"),
@@ -3743,8 +3748,10 @@ public static class GalaxyCapability
                 return NothingOnPage(query.Page, result.More);
             }
 
-            return $"Nothing within {query.MaxDistance:N0} light years matches that"
-                + (query.CodexEntry is { } none ? $", with {none} recorded." : ".");
+            var where = query.Region is { } region ? $"in {region} " : string.Empty;
+            var range = query.NoDistanceLimit ? string.Empty : $"within {query.MaxDistance:N0} light years ";
+
+            return $"Nothing {range}{where}matches that" + (query.CodexEntry is { } none ? $", with {none} recorded." : ".");
         }
 
         var report = new StringBuilder();
@@ -3771,6 +3778,11 @@ public static class GalaxyCapability
         if (query.CodexEntry is { } entry)
         {
             report.Append($", with {entry} recorded");
+        }
+
+        if (query.Region is { } searched)
+        {
+            report.Append($", in {searched}");
         }
 
         if (result.Reference is not null)

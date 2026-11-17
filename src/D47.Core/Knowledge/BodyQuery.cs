@@ -122,6 +122,9 @@ public sealed record BodyRequest
     /// <summary>A codex entry by name; a colour variant is searched as its species.</summary>
     public string? CodexEntry { get; init; }
 
+    /// <summary>A codex region by name; see <see cref="GalacticRegions.Names"/>.</summary>
+    public string? Region { get; init; }
+
     /// <summary>A name from <see cref="SearchSorts.For"/>; null is distance.</summary>
     public string? OrderBy { get; init; }
 
@@ -151,8 +154,14 @@ public sealed record BodyQuery
     /// <summary>Centres the search on a point instead of <see cref="ReferenceSystem"/>.</summary>
     public StarPosition? ReferencePosition { get; init; }
 
-    /// <summary>Maximum light years from the reference.</summary>
+    /// <summary>Maximum light years from the reference; unused where <see cref="NoDistanceLimit"/>.</summary>
     public double MaxDistance { get; init; } = 50;
+
+    /// <summary>True for a codex entry search that gave no distance: the nearest anywhere, with no radius.</summary>
+    public bool NoDistanceLimit { get; init; }
+
+    /// <summary>The map's spelling of the codex region to search in.</summary>
+    public string? Region { get; init; }
 
     /// <summary>The catalogue name of the body kind wanted, if that is the question.</summary>
     public string? Subtype { get; init; }
@@ -311,6 +320,19 @@ public sealed record BodyQuery
         }
 
         var codexEntry = CodexSpecies.Of(request.CodexEntry);
+        string? region = null;
+
+        if (!string.IsNullOrWhiteSpace(request.Region))
+        {
+            region = GalacticRegions.Match(request.Region);
+
+            if (region is null)
+            {
+                failure = $"'{request.Region.Trim()}' is not one of the 42 codex regions.";
+                return false;
+            }
+        }
+
         var arrival = request.MaxArrivalDistance is > 0 ? request.MaxArrivalDistance : null;
 
         if (matchedSubtype is null
@@ -361,6 +383,8 @@ public sealed record BodyQuery
             MaxArrivalDistance = arrival,
             Material = matchedMaterial,
             CodexEntry = codexEntry,
+            Region = region,
+            NoDistanceLimit = codexEntry is not null && request.MaxDistance is not > 0,
             Criteria = criteria,
             OrderByMaterial = orderByMaterial,
             Sort = orderByMaterial ? null : sort,

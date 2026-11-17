@@ -128,6 +128,13 @@ public static class GalacticRegions
             .Select(pair => (int?)pair.Key)
             .FirstOrDefault();
 
+    /// <summary>The 42 region names as the map spells them, in alphabetical order.</summary>
+    public static IReadOnlyList<string> Names { get; } = [.. Loaded.Value.Names.Values.Order(StringComparer.OrdinalIgnoreCase)];
+
+    /// <summary>The map's spelling of the region <paramref name="name"/> names, without regard to case or a leading "The", or null.</summary>
+    public static string? Match(string name) =>
+        IdOf(name) is { } id ? NameOf(id) : null;
+
     private static string WithoutThe(string name)
     {
         var trimmed = name.Trim();

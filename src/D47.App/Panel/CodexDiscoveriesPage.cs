@@ -320,7 +320,14 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
             VerticalAlignment = VerticalAlignment.Stretch,
         };
         Avalonia.Automation.AutomationProperties.SetName(tile, "Search " + row.Name);
-        tile.Click += (_, _) => link.Run(new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name });
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name };
+
+        if (_regionId is { } region && GalacticRegions.NameOf(region) is { } regionName)
+        {
+            arguments["region"] = regionName;
+        }
+
+        tile.Click += (_, _) => link.Run(arguments);
 
         return tile;
     }

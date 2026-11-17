@@ -42,6 +42,69 @@ public class ABodySearchReachesInarasFiltersTests
         Assert.Equal("{\"value\":[\"Frutexa Flammasis\"]}", Raw(filters, "landmark_subtype"));
     }
 
+    [Theory]
+    [InlineData("Norma Arm", "Norma Arm")]
+    [InlineData("norma arm", "Norma Arm")]
+    [InlineData("The Formidine Rift", "Formidine Rift")]
+    public void ARegionIsASystemRegionChoiceInTheMapsSpelling(string spoken, string sent)
+    {
+        var filters = Filters(new() { CodexEntry = "Bacterium Cerbrus", Region = spoken });
+
+        Assert.Equal($"{{\"value\":[\"{sent}\"]}}", Raw(filters, "system_region"));
+        Assert.False(filters.TryGetProperty("region", out _));
+    }
+
+    [Fact]
+    public void ACodexEntryWithNoDistanceSendsNoDistanceFilter()
+    {
+        var request = new BodyRequest { ReferenceSystem = "Sol", CodexEntry = "Bacterium Cerbrus" };
+        Assert.True(BodyQuery.TryParse(request, out var query, out var failure), failure);
+
+        var filters = JsonDocument.Parse(SpanshRequest.Bodies(query)).RootElement.GetProperty("filters");
+
+        Assert.False(filters.TryGetProperty("distance", out _));
+    }
+
+    [Fact]
+    public void ACodexEntryWithADistanceIsBoundedByIt()
+    {
+        var request = new BodyRequest { ReferenceSystem = "Sol", CodexEntry = "Bacterium Cerbrus", MaxDistance = 5000 };
+        Assert.True(BodyQuery.TryParse(request, out var query, out var failure), failure);
+
+        var filters = JsonDocument.Parse(SpanshRequest.Bodies(query)).RootElement.GetProperty("filters");
+
+        Assert.Equal("1000", filters.GetProperty("distance").GetProperty("max").GetString());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("Norma Arm")]
+    public void ASearchWithoutACodexEntryKeepsTheDefaultDistance(string? region)
+    {
+        var request = new BodyRequest { ReferenceSystem = "Sol", Landable = true, Region = region };
+        Assert.True(BodyQuery.TryParse(request, out var query, out var failure), failure);
+
+        var filters = JsonDocument.Parse(SpanshRequest.Bodies(query)).RootElement.GetProperty("filters");
+
+        Assert.Equal("50", filters.GetProperty("distance").GetProperty("max").GetString());
+    }
+
+    [Fact]
+    public void AnUnknownRegionIsRefusedByName()
+    {
+        var request = new BodyRequest { CodexEntry = "Bacterium Cerbrus", Region = "Narnia" };
+
+        Assert.False(BodyQuery.TryParse(request, out _, out var failure));
+        Assert.Contains("Narnia", failure);
+    }
+
+    [Fact]
+    public void ARegionAloneIsNotAFilter()
+    {
+        Assert.False(BodyQuery.TryParse(new BodyRequest { Region = "Norma Arm" }, out _, out var failure));
+        Assert.Contains("no filters", failure);
+    }
+
     [Fact]
     public void GravityIsAComparisonBetweenItsBounds()
     {

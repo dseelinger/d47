@@ -299,7 +299,12 @@ internal static class SpanshRequest
             writer.WriteStartObject();
             writer.WriteStartObject("filters");
 
-            WriteDistance(writer, query.MaxDistance);
+            if (!query.NoDistanceLimit)
+            {
+                WriteDistance(writer, query.MaxDistance);
+            }
+
+            WriteChoice(writer, "system_region", query.Region);
 
             if (query.SystemNames.Count > 0)
             {

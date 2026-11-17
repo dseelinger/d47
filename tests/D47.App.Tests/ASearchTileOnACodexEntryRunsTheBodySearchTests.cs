@@ -54,7 +54,7 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
 
     }
 
-    private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(long entry, string name, bool headset = false)
+    private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(long entry, string name, bool headset = false, int? region = 1)
     {
         var settings = TestSurface.Settings();
         var board = new GalaxySearchBoard();
@@ -92,8 +92,8 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
             PanelTab.Commander,
             LedgersPage.Root,
             new NavCrumb(CodexPage.PageKey, "Codex"),
-            CodexPage.RegionCrumb(1),
-            CodexPage.EntryCrumb(1, entry, name)));
+            CodexPage.RegionCrumb(region),
+            CodexPage.EntryCrumb(region, entry, name)));
         Dispatcher.UIThread.RunJobs();
 
         return (panel, window, galaxy);
@@ -116,13 +116,35 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
 
         var asked = Assert.Single(galaxy.Asked);
         Assert.Equal("Frutexa Flammasis", asked.CodexEntry);
+        Assert.Equal(GalacticRegions.NameOf(1), asked.Region);
+        Assert.True(asked.NoDistanceLimit);
         Assert.Equal(PanelTab.Search, panel.Tab);
         Assert.Equal(BodySearchPage.RootKey, panel.Nav.Root.Key);
 
         var page = panel.GetVisualDescendants().OfType<BodySearchPage>().Single();
         var form = page.FormArguments();
         Assert.Equal(ListedName, form["codex_entry"]);
+        Assert.Equal(GalacticRegions.NameOf(1), form["region"]);
+        Assert.False(form.ContainsKey("max_distance"));
         Assert.False(form.TryGetValue("near", out var near) && !string.IsNullOrEmpty(near));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ARegionD47CannotNameSearchesEveryRegion()
+    {
+        var (panel, window, galaxy) = Shown(Listed, ListedName, region: null);
+
+        Tile(panel)!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var asked = Assert.Single(galaxy.Asked);
+        Assert.Null(asked.Region);
+        Assert.True(asked.NoDistanceLimit);
+
+        var form = panel.GetVisualDescendants().OfType<BodySearchPage>().Single().FormArguments();
+        Assert.False(form.ContainsKey("region"));
 
         window.Close();
     }

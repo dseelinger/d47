@@ -137,6 +137,53 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
     }
 
     [AvaloniaFact]
+    public void ACodexEntrySearchFromATileShowsItsRegionAndNoDistanceLimit()
+    {
+        var world = new World();
+        var (panel, window) = Shown(world);
+        var page = Page(panel);
+
+        page.Run(new Dictionary<string, string> { ["codex_entry"] = "Bacterium Cerbrus", ["region"] = "norma arm" });
+        Dispatcher.UIThread.RunJobs();
+
+        var asked = Assert.Single(world.Galaxy.Asked);
+        Assert.True(asked.NoDistanceLimit);
+        Assert.Equal("Norma Arm", asked.Region);
+
+        var arguments = page.FormArguments();
+        Assert.Equal("Norma Arm", arguments["region"]);
+        Assert.False(arguments.ContainsKey("max_distance"));
+        Assert.Contains(VisibleText(panel), text => text == "ANY");
+        Assert.Contains(VisibleText(panel), text => text.StartsWith("NEAREST TO ", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ATypedDistanceIsSentAndWithoutACodexEntryTheBoxShowsTheDefault()
+    {
+        var world = new World();
+        var (panel, window) = Shown(world);
+        var page = Page(panel);
+
+        Assert.Contains(VisibleText(panel), text => text == "50");
+
+        page.Type("codex_entry", "Bacterium Cerbrus");
+        Assert.DoesNotContain(VisibleText(panel), text => text == "50");
+        Assert.Contains(VisibleText(panel), text => text == "ANY");
+        Assert.False(page.FormArguments().ContainsKey("max_distance"));
+
+        page.Run(new Dictionary<string, string> { ["codex_entry"] = "Bacterium Cerbrus", ["max_distance"] = "300" });
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("300", page.FormArguments()["max_distance"]);
+        Assert.Equal(300, world.Galaxy.Asked[^1].MaxDistance);
+        Assert.False(world.Galaxy.Asked[^1].NoDistanceLimit);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void SearchOffersBodiesAfterStations()
     {
         var world = new World();
@@ -291,10 +338,11 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
             page.TickFlag(name, true);
         }
 
-        foreach (var name in (string[])["body_type", "material", "signal", "hotspot", "ring_type", "reserve_level", "power", "power_state"])
+        foreach (var name in (string[])["region", "body_type", "material", "signal", "hotspot", "ring_type", "reserve_level", "power", "power_state"])
         {
             page.Pick(name, name switch
             {
+                "region" => GalacticRegions.Names[0],
                 "body_type" => BodyCatalogue.Subtypes[0],
                 "material" => BodyCatalogue.SurfaceMaterials[0],
                 "signal" => BodyCatalogue.Signals[0],

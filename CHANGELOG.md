@@ -14,6 +14,8 @@ Fixed: Idle chatter while you are on foot inside a station, a hangar or a social
 
 Fixed: The mini panel, on the desktop and in the headset, now shows a linked system name, such as the system in "Next: Dock at a station in a system". It was dropped, leaving a gap in the sentence. The name is plain text there, not pressable, and the copy glyph stays hidden.
 
+Fixed: The Search tile on a codex entry page and on a Discoveries row finds the nearest bodies where that entry is recorded in the page's region, however far away. A codex entry search that asks for no distance has no distance limit, by voice and on the Search › Bodies form as well; the Distance in LY box reads ANY then, and the line above the results reads NEAREST TO the reference system. Search › Bodies and "find_body" gain a Region, one of the 42 codex regions, and an answer with nothing in it names the region searched.
+
 Added: Show D47 without SteamVR, under Settings › Screens › Headset, off by default. While D47 is running with it and Show D47 in the headset on, D47 registers its OpenXR layer for the current user so Elite on an OpenXR runtime that is not SteamVR's shows the panel. The registration is removed when either setting goes off, when D47 exits and by the uninstaller. Start D47 before Elite. Tested on Virtual Desktop's runtime; Meta's is untested.
 
 Fixed: Callouts are spoken in the order the game caused them. A line that is reworded no longer lets a later line go first, and a story reaction, clue, narration or NPC chatter, which take longer to write, is spoken once written without holding up the callouts queued with it. An urgent warning waits for no other callout to be written, and now also cuts short the pause between lines of NPC chatter while the warning waits to be spoken.

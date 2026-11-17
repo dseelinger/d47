@@ -17,10 +17,10 @@ public sealed class ASearchTileOnADiscoveriesRowRunsTheBodySearchTests
         "1\tAlpha tree\tBiological and Geological\tOrganic structures\t18:50\n"
         + "2\tBeta tree\tBiological and Geological\tOrganic structures\t18:30\n");
 
-    private static (Window Window, CodexDiscoveriesPage Page) Shown(BodySearchLink? link)
+    private static (Window Window, CodexDiscoveriesPage Page) Shown(BodySearchLink? link, int? regionId = 18, CodexTable? table = null)
     {
         var state = new CommanderGameState(new CommanderIdentity("F735466", "Test Commander"));
-        var page = new CodexDiscoveriesPage(() => state, () => HistoryState.Done, 18, Table, bodySearch: () => link);
+        var page = new CodexDiscoveriesPage(() => state, () => HistoryState.Done, regionId, table ?? Table, bodySearch: () => link);
         var window = new Window { Content = page, Width = 1280, Height = 900 };
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -42,8 +42,28 @@ public sealed class ASearchTileOnADiscoveriesRowRunsTheBodySearchTests
         Assert.Equal(96, tile.Width);
         tile.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-        Assert.Equal("Beta tree", Assert.Single(asked)["codex_entry"]);
+        var sent = Assert.Single(asked);
+        Assert.Equal("Beta tree", sent["codex_entry"]);
+        Assert.Equal(GalacticRegions.NameOf(18), sent["region"]);
+        Assert.False(sent.ContainsKey("max_distance"));
         Assert.NotNull(Find(page, "CodexMissing.2"));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ARegionD47CannotNameSendsTheEntryAlone()
+    {
+        var asked = new List<IReadOnlyDictionary<string, string>>();
+        var (window, page) = Shown(
+            new BodySearchLink(asked.Add),
+            regionId: 99,
+            table: CodexTable.Parse("2\tBeta tree\tBiological and Geological\tOrganic structures\t99:30\n"));
+
+        Assert.IsType<Button>(Find(page, "CodexSearch.2")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        var sent = Assert.Single(asked);
+        Assert.Equal(["codex_entry"], sent.Keys);
 
         window.Close();
     }

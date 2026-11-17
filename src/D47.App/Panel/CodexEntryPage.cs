@@ -224,7 +224,14 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         }
 
         var button = new Button { Name = "CodexSearch", Content = "Search" };
-        button.Click += (_, _) => link.Run(new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name });
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name };
+
+        if (_regionId is { } region && GalacticRegions.NameOf(region) is { } regionName)
+        {
+            arguments["region"] = regionName;
+        }
+
+        button.Click += (_, _) => link.Run(arguments);
         column.Children.Add(button);
     }
 
