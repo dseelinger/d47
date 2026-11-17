@@ -15,7 +15,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>An owned ship's page draws its presses whole, Clear completed among them, on the desktop window and the headset panel; the mini surface keeps them on one line.</summary>
+/// <summary>An owned ship's page draws its presses whole, Clear completed among them, on the desktop window and the headset panel; the mini surface draws none.</summary>
 [Trait("Category", "Integration")]
 [Collection(nameof(ShipArtCollection))]
 public class ClearCompletedFitsTheActionRowTests
@@ -98,12 +98,18 @@ public class ClearCompletedFitsTheActionRowTests
                 or "Clear completed" or "Clear this plan")
             .ToList();
 
-        Assert.Equal(met ? 5 : 4, presses.Count);
+        Assert.Equal(surface == "mini" ? 0 : met ? 5 : 4, presses.Count);
 
         var page = panel.GetVisualDescendants().OfType<ItemPage>().Single();
 
-        // The mini surface keeps the row on one line and lets it run off, as before; its slots are what it shows.
-        foreach (var press in surface == "mini" ? [] : presses)
+        if (surface == "mini")
+        {
+            Assert.Contains(
+                page.GetVisualDescendants().OfType<TextBlock>(),
+                text => text.Text == "Increased Range G5");
+        }
+
+        foreach (var press in presses)
         {
             var right = press.TranslatePoint(new Point(press.Bounds.Width, 0), page)!.Value.X;
 

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: The mini panel no longer draws the Asset Mgmt page presses (Plan a ship you do not own, Compare, Clear completed, Plan this slot and the rest). On the mini, a ship's page now shows its slot rows that disagree with the plan.
+
 Fixed: Two ranks gained at once in one career, such as Exploration 1 then 2 after a large data sale, are now said as the higher rank only. A promotion is said about three seconds after it arrives, once no higher one follows.
 
 Fixed: Opening a station's shipyard no longer sends a ship list to EDDN. The game's Shipyard file lists only the hull you are flying, so the message told EDDN the station sold one ship and disclosed yours. Outfitting, market and journal messages are unchanged.

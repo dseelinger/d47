@@ -1645,6 +1645,9 @@ public sealed class IndexPage : LoadoutPage, IPageChrome
 
     private readonly ScrollViewer _scroller;
 
+    /// <summary>The presses at the top of the page; not drawn on the mini surface.</summary>
+    private readonly DockPanel _head = new() { Margin = new Thickness(0, 0, 0, 10) };
+
     public IndexPage(
         ILoadoutMode mode,
         PanelNavigator nav,
@@ -1663,7 +1666,7 @@ public sealed class IndexPage : LoadoutPage, IPageChrome
         var intend = LoadoutPages.Press(mode.NewLabel, Intend);
 
         // The head of the page: what you can add, and how you want to look at what is there.
-        var head = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
+        var head = _head;
 
         DockPanel.SetDock(intend, Dock.Left);
         head.Children.Add(intend);
@@ -1748,6 +1751,7 @@ public sealed class IndexPage : LoadoutPage, IPageChrome
 
     protected override void Refresh()
     {
+        _head.IsVisible = !Mini;
         _list.Children.Clear();
 
         // A question left over from one d47 asked out loud (Phase 38).
@@ -1872,8 +1876,8 @@ public sealed class ItemPage : LoadoutPage
     private Button? _drop;
 
     /// <summary>
-    /// Holds the presses under the heading: wrapped onto further lines where the page is too narrow, and on one
-    /// line on the mini surface, which has six rows to give.
+    /// Holds the presses under the heading, wrapped onto further lines where the page is too narrow; empty on
+    /// the mini surface.
     /// </summary>
     private readonly Border _actions = new() { Margin = new Thickness(0, 0, 0, 10) };
 
@@ -2174,9 +2178,15 @@ public sealed class ItemPage : LoadoutPage
 
         _offered = offered;
 
-        Avalonia.Controls.Panel presses = Mini
-            ? new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = Gaps.Tile }
-            : new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
+        _drop = null;
+
+        if (Mini)
+        {
+            _actions.Child = null;
+            return;
+        }
+
+        var presses = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
 
         presses.Children.Add(LoadoutPages.Press(Mode.PromoteLabel, () => Said(Mode.Promote(_item))));
 
@@ -2852,7 +2862,10 @@ public sealed class SlotPage : LoadoutPage
             _body.Children.Add(LoadoutPages.Stepped(line, _copy));
         }
 
-        Buttons(Mode.HasPlan(_item, _slot));
+        if (!Mini)
+        {
+            Buttons(Mode.HasPlan(_item, _slot));
+        }
     }
 
     private void Buttons(bool planned)
