@@ -10,6 +10,8 @@ internal sealed unsafe class LayerRig : IDisposable
     public const ulong LocalSpace = 0x10;
     public const ulong ViewSpace = 0x11;
     public const long Millisecond = 1_000_000;
+    public const ulong Instance = 0x1257;
+    public const string TouchProfile = "/interaction_profiles/oculus/touch_controller";
 
     private readonly XrBaseHeader* eliteLayer;
     private XrD47Half d47;
@@ -27,12 +29,15 @@ internal sealed unsafe class LayerRig : IDisposable
 
         var binding = new XrGraphicsBindingD3D11 { Type = bindingType, Device = 0xD3D };
         var createInfo = new XrSessionCreateInfo { Type = XrType.SessionCreateInfo, Next = &binding };
-        Session = EliteSession.Attach(Next, Block, 0x1257, &createInfo, SessionHandle);
+        Session = EliteSession.Attach(Next, Block, Bindings, Instance, &createInfo, SessionHandle);
     }
 
     public XrBlock* Block { get; }
 
     public FakeNext Next { get; } = new();
+
+    /// <summary>What Elite suggested through the layer's xrSuggestInteractionProfileBindings.</summary>
+    public SuggestedBindings Bindings { get; } = new();
 
     public FakeDevice Device => Next.Device;
 
@@ -67,6 +72,70 @@ internal sealed unsafe class LayerRig : IDisposable
     public ref XrQuadSlot Slot(int index) => ref d47.Slots[index];
 
     public void Publish() => XrSeqLock.Write(&Block->D47, d47);
+
+    /// <summary>Sets the block's pointing switch, as d47 does.</summary>
+    public void Point(bool on)
+    {
+        d47.Pointing = on ? 1u : 0u;
+        Publish();
+    }
+
+    /// <summary>Elite's session reaching the focused state, as xrPollEvent reports it.</summary>
+    public void Focus() => Session.StateChanged(XrConstant.SessionStateFocused);
+
+    /// <summary>Elite suggesting bindings for the Touch profile, accepted by the runtime.</summary>
+    public void EliteSuggests(params (ulong Action, string Binding)[] bindings)
+    {
+        var suggested = stackalloc XrActionSuggestedBinding[Math.Max(bindings.Length, 1)];
+        for (var i = 0; i < bindings.Length; i++)
+        {
+            suggested[i] = new XrActionSuggestedBinding { Action = bindings[i].Action, Binding = Next.Path(bindings[i].Binding) };
+        }
+
+        var info = new XrInteractionProfileSuggestedBinding
+        {
+            Type = XrType.InteractionProfileSuggestedBinding,
+            InteractionProfile = Next.Path(TouchProfile),
+            CountSuggestedBindings = (uint)bindings.Length,
+            SuggestedBindings = suggested,
+        };
+        Bindings.Record(Instance, &info);
+    }
+
+    /// <summary>Elite's xrAttachSessionActionSets with its own sets, through the layer.</summary>
+    public int EliteAttaches(params ulong[] sets)
+    {
+        fixed (ulong* elites = sets)
+        {
+            var info = new XrSessionActionSetsAttachInfo
+            {
+                Type = XrType.SessionActionSetsAttachInfo,
+                CountActionSets = (uint)sets.Length,
+                ActionSets = elites,
+            };
+            Next.ElitesAttach = (nint)(&info);
+            return Session.AttachActionSets(&info);
+        }
+    }
+
+    /// <summary>Elite's xrSyncActions with its own sets, through the layer.</summary>
+    public int EliteSyncs(params ulong[] sets)
+    {
+        var active = stackalloc XrActiveActionSet[Math.Max(sets.Length, 1)];
+        for (var i = 0; i < sets.Length; i++)
+        {
+            active[i] = new XrActiveActionSet { ActionSet = sets[i] };
+        }
+
+        var info = new XrActionsSyncInfo
+        {
+            Type = XrType.ActionsSyncInfo,
+            CountActiveActionSets = (uint)sets.Length,
+            ActiveActionSets = active,
+        };
+        Next.ElitesSync = (nint)(&info);
+        return Session.SyncActions(&info);
+    }
 
     public void Beat()
     {
@@ -121,7 +190,24 @@ internal sealed unsafe class LayerRig : IDisposable
 /// <summary>Stands in for the next layer's functions and records each call.</summary>
 internal sealed unsafe class FakeNext : ILayerCalls
 {
+    public const string LocateHand = "LocateSpace(hand)";
+    public const string EliteAttachCall = "Elite's " + nameof(AttachSessionActionSets);
+    public const string EliteSyncCall = "Elite's " + nameof(SyncActions);
+    public const ulong LayerSet = 0xA5E7;
+
+    private static readonly HashSet<string> ActionFunctions =
+    [
+        nameof(StringToPath), nameof(CreateActionSet), nameof(DestroyActionSet), nameof(CreateAction),
+        nameof(SuggestInteractionProfileBindings), nameof(AttachSessionActionSets), nameof(SyncActions),
+        nameof(CreateActionSpace), nameof(GetActionStateFloat), LocateHand, EliteAttachCall, EliteSyncCall,
+    ];
+
+    private readonly Dictionary<string, ulong> paths = [];
+    private readonly Dictionary<ulong, (ulong Action, ulong Hand)> actionSpaces = [];
     private ulong nextSwapchain = 0x100;
+    private ulong nextAction = 0xAC00;
+    private ulong nextActionSpace = 0xB000;
+    private bool setsAttached;
 
     public FakeDevice Device { get; } = new();
 
@@ -137,6 +223,54 @@ internal sealed unsafe class FakeNext : ILayerCalls
     public bool RejectQuads { get; set; }
 
     public nint Original { get; set; }
+
+    /// <summary>Elite's own attach info, to tell its call passed on unchanged from one the layer built.</summary>
+    public nint ElitesAttach { get; set; }
+
+    /// <summary>Elite's own sync info.</summary>
+    public nint ElitesSync { get; set; }
+
+    /// <summary>The action function calls in order, Elite's passed on unchanged named as such.</summary>
+    public List<string> ActionCalls => Calls.Where(ActionFunctions.Contains).ToList();
+
+    /// <summary>Each attach that reached the runtime: whether it was Elite's own info, and its sets.</summary>
+    public List<(bool IsElitesOwn, ulong[] Sets)> Attaches { get; } = [];
+
+    /// <summary>Each sync that reached the runtime: whether it was Elite's own info, and its active sets.</summary>
+    public List<(bool IsElitesOwn, ulong[] Sets)> Syncs { get; } = [];
+
+    public List<(ulong Profile, XrActionSuggestedBinding[] Bindings)> Suggestions { get; } = [];
+
+    /// <summary>The actions created, by name.</summary>
+    public Dictionary<string, (ulong Handle, int Type, ulong[] Subactions)> Actions { get; } = [];
+
+    /// <summary>What every sync returns: success, or XR_SESSION_NOT_FOCUSED.</summary>
+    public int SyncResult { get; set; } = XrResult.Success;
+
+    /// <summary>Float states by action name and hand path.</summary>
+    public Dictionary<(string Action, string Hand), float> Values { get; } = [];
+
+    /// <summary>The path's id, as xrStringToPath gives it.</summary>
+    public ulong Path(string path)
+    {
+        if (!paths.TryGetValue(path, out var id))
+        {
+            id = 0x9000 + (ulong)paths.Count;
+            paths[path] = id;
+        }
+
+        return id;
+    }
+
+    public string PathName(ulong path) => paths.Single(p => p.Value == path).Key;
+
+    /// <summary>The pose an action space locates at: x is 1 for an aim pose and 2 for a grip, y is -1 for the left hand and 1 for the right.</summary>
+    public static XrPosef HandPose(string action, string hand) => new()
+    {
+        OrientationW = 1f,
+        PositionX = action == "aim" ? 1f : 2f,
+        PositionY = hand.EndsWith("left", StringComparison.Ordinal) ? -1f : 1f,
+    };
 
     public int GetInstanceProperties(ulong instance, XrInstanceProperties* properties)
     {
@@ -172,6 +306,14 @@ internal sealed unsafe class FakeNext : ILayerCalls
 
     public int LocateSpace(ulong space, ulong baseSpace, long time, XrSpaceLocation* location)
     {
+        if (actionSpaces.TryGetValue(space, out var actionSpace))
+        {
+            Calls.Add(LocateHand);
+            location->LocationFlags = XrConstant.LocationOrientationValid | XrConstant.LocationPositionValid;
+            location->Pose = HandPose(ActionName(actionSpace.Action), PathName(actionSpace.Hand));
+            return XrResult.Success;
+        }
+
         Calls.Add(nameof(LocateSpace));
         location->LocationFlags = XrConstant.LocationOrientationValid | XrConstant.LocationPositionValid;
         location->Pose = new XrPosef { OrientationW = 1f, PositionY = 1.2f };
@@ -241,6 +383,88 @@ internal sealed unsafe class FakeNext : ILayerCalls
         return RejectQuads && quads.Count > 0 ? XrResult.ErrorPoseInvalid : XrResult.Success;
     }
 
+    public int StringToPath(ulong instance, byte* pathString, ulong* path)
+    {
+        Calls.Add(nameof(StringToPath));
+        *path = Path(new string((sbyte*)pathString));
+        return XrResult.Success;
+    }
+
+    public int CreateActionSet(ulong instance, XrActionSetCreateInfo* createInfo, ulong* actionSet)
+    {
+        Calls.Add(nameof(CreateActionSet));
+        *actionSet = LayerSet;
+        return XrResult.Success;
+    }
+
+    public int DestroyActionSet(ulong actionSet)
+    {
+        Calls.Add(nameof(DestroyActionSet));
+        return XrResult.Success;
+    }
+
+    public int CreateAction(ulong actionSet, XrActionCreateInfo* createInfo, ulong* action)
+    {
+        Calls.Add(nameof(CreateAction));
+        *action = nextAction++;
+        var subactions = new ReadOnlySpan<ulong>(createInfo->SubactionPaths, (int)createInfo->CountSubactionPaths).ToArray();
+        Actions[new string((sbyte*)createInfo->ActionName)] = (*action, createInfo->ActionType, subactions);
+        return XrResult.Success;
+    }
+
+    public int SuggestInteractionProfileBindings(ulong instance, XrInteractionProfileSuggestedBinding* suggestedBindings)
+    {
+        Calls.Add(nameof(SuggestInteractionProfileBindings));
+        var bindings = new ReadOnlySpan<XrActionSuggestedBinding>(
+            suggestedBindings->SuggestedBindings, (int)suggestedBindings->CountSuggestedBindings);
+        Suggestions.Add((suggestedBindings->InteractionProfile, bindings.ToArray()));
+        return XrResult.Success;
+    }
+
+    public int AttachSessionActionSets(ulong session, XrSessionActionSetsAttachInfo* attachInfo)
+    {
+        var elites = (nint)attachInfo == ElitesAttach;
+        Calls.Add(elites ? EliteAttachCall : nameof(AttachSessionActionSets));
+        Attaches.Add((elites, new ReadOnlySpan<ulong>(attachInfo->ActionSets, (int)attachInfo->CountActionSets).ToArray()));
+        if (setsAttached)
+        {
+            return XrResult.ErrorActionSetsAlreadyAttached;
+        }
+
+        setsAttached = true;
+        return XrResult.Success;
+    }
+
+    public int SyncActions(ulong session, XrActionsSyncInfo* syncInfo)
+    {
+        var elites = (nint)syncInfo == ElitesSync;
+        Calls.Add(elites ? EliteSyncCall : nameof(SyncActions));
+        var sets = new ulong[syncInfo->CountActiveActionSets];
+        for (var i = 0; i < sets.Length; i++)
+        {
+            sets[i] = syncInfo->ActiveActionSets[i].ActionSet;
+        }
+
+        Syncs.Add((elites, sets));
+        return SyncResult;
+    }
+
+    public int CreateActionSpace(ulong session, XrActionSpaceCreateInfo* createInfo, ulong* space)
+    {
+        Calls.Add(nameof(CreateActionSpace));
+        *space = nextActionSpace++;
+        actionSpaces[*space] = (createInfo->Action, createInfo->SubactionPath);
+        return XrResult.Success;
+    }
+
+    public int GetActionStateFloat(ulong session, XrActionStateGetInfo* getInfo, XrActionStateFloat* state)
+    {
+        Calls.Add(nameof(GetActionStateFloat));
+        state->CurrentState = Values.GetValueOrDefault((ActionName(getInfo->Action), PathName(getInfo->SubactionPath)));
+        state->IsActive = 1;
+        return XrResult.Success;
+    }
+
     public ITextureDevice? OpenDevice(nint d3d11Device)
     {
         Calls.Add(nameof(OpenDevice));
@@ -248,6 +472,8 @@ internal sealed unsafe class FakeNext : ILayerCalls
     }
 
     public static nint SwapchainImage(ulong swapchain, int index) => (nint)((swapchain << 8) + (ulong)index + 1);
+
+    private string ActionName(ulong action) => Actions.Single(a => a.Value.Handle == action).Key;
 
     /// <summary>One call to the next xrEndFrame.</summary>
     public sealed record Frame(bool IsElitesOwn, long DisplayTime, IReadOnlyList<nint> Layers, IReadOnlyList<XrCompositionLayerQuad> Quads);

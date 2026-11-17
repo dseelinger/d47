@@ -26,6 +26,48 @@ public sealed unsafe class TheOpenXrStructsHaveTheirNativeSizesTests
     }
 
     [Fact]
+    public void EachActionStructHasItsHeaderSize()
+    {
+        Assert.Equal(40, sizeof(XrEventDataSessionStateChanged));
+        Assert.Equal(216, sizeof(XrActionSetCreateInfo));
+        Assert.Equal(224, sizeof(XrActionCreateInfo));
+        Assert.Equal(16, sizeof(XrActionSuggestedBinding));
+        Assert.Equal(40, sizeof(XrInteractionProfileSuggestedBinding));
+        Assert.Equal(32, sizeof(XrSessionActionSetsAttachInfo));
+        Assert.Equal(16, sizeof(XrActiveActionSet));
+        Assert.Equal(32, sizeof(XrActionsSyncInfo));
+        Assert.Equal(64, sizeof(XrActionSpaceCreateInfo));
+        Assert.Equal(32, sizeof(XrActionStateGetInfo));
+        Assert.Equal(40, sizeof(XrActionStateFloat));
+    }
+
+    [Fact]
+    public void TheActionFieldsSitWhereTheRuntimeReadsThem()
+    {
+        var setInfo = default(XrActionSetCreateInfo);
+        var s = (byte*)&setInfo;
+        Assert.Equal(80, setInfo.LocalizedActionSetName - s);
+        Assert.Equal(208, (byte*)&setInfo.Priority - s);
+
+        var actionInfo = default(XrActionCreateInfo);
+        var a = (byte*)&actionInfo;
+        Assert.Equal(80, (byte*)&actionInfo.ActionType - a);
+        Assert.Equal(88, (byte*)&actionInfo.SubactionPaths - a);
+        Assert.Equal(96, actionInfo.LocalizedActionName - a);
+
+        var state = default(XrActionStateFloat);
+        var f = (byte*)&state;
+        Assert.Equal(16, (byte*)&state.CurrentState - f);
+        Assert.Equal(24, (byte*)&state.LastChangeTime - f);
+        Assert.Equal(32, (byte*)&state.IsActive - f);
+
+        var changed = default(XrEventDataSessionStateChanged);
+        var e = (byte*)&changed;
+        Assert.Equal(16, (byte*)&changed.Session - e);
+        Assert.Equal(24, (byte*)&changed.State - e);
+    }
+
+    [Fact]
     public void TheQuadsFieldsSitWhereTheRuntimeReadsThem()
     {
         var quad = default(XrCompositionLayerQuad);

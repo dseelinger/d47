@@ -63,7 +63,11 @@ public unsafe class OutsideEliteEveryCallPassesThroughTests
         Assert.True(forwardedNextInfo == &second);
         Assert.Equal(42ul, instance);
 
-        foreach (var name in new[] { "xrEndFrame", "xrCreateSession", "xrDestroySession", "xrGetInstanceProcAddr" })
+        foreach (var name in new[]
+        {
+            "xrEndFrame", "xrCreateSession", "xrDestroySession", "xrGetInstanceProcAddr", "xrPollEvent",
+            "xrSuggestInteractionProfileBindings", "xrAttachSessionActionSets", "xrSyncActions",
+        })
         {
             nint function = 0;
             Assert.Equal(XrResult.Success, GetProc(request, name, &function));

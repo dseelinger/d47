@@ -153,6 +153,7 @@ D47.Vr.SteamVrRuntime.Beam
 D47.Vr.SteamVrRuntime.Cursor
 D47.XrLayer.XrBlock
 D47.XrLayer.XrBlockPose
+D47.XrLayer.XrControllerRefusal
 D47.XrLayer.XrD47Half
 D47.XrLayer.XrHand
 D47.XrLayer.XrHands

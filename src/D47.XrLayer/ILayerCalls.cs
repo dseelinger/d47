@@ -27,6 +27,24 @@ internal unsafe interface ILayerCalls
 
     int EndFrame(ulong session, XrFrameEndInfo* frameEndInfo);
 
+    int StringToPath(ulong instance, byte* pathString, ulong* path);
+
+    int CreateActionSet(ulong instance, XrActionSetCreateInfo* createInfo, ulong* actionSet);
+
+    int DestroyActionSet(ulong actionSet);
+
+    int CreateAction(ulong actionSet, XrActionCreateInfo* createInfo, ulong* action);
+
+    int SuggestInteractionProfileBindings(ulong instance, XrInteractionProfileSuggestedBinding* suggestedBindings);
+
+    int AttachSessionActionSets(ulong session, XrSessionActionSetsAttachInfo* attachInfo);
+
+    int SyncActions(ulong session, XrActionsSyncInfo* syncInfo);
+
+    int CreateActionSpace(ulong session, XrActionSpaceCreateInfo* createInfo, ulong* space);
+
+    int GetActionStateFloat(ulong session, XrActionStateGetInfo* getInfo, XrActionStateFloat* state);
+
     /// <summary>The session's Direct3D 11 device, or null when it cannot be used.</summary>
     ITextureDevice? OpenDevice(nint d3d11Device);
 }

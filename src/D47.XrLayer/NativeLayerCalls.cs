@@ -17,6 +17,15 @@ internal sealed unsafe class NativeLayerCalls : ILayerCalls
     private readonly delegate* unmanaged<ulong, XrSwapchainImageWaitInfo*, int> waitSwapchainImage;
     private readonly delegate* unmanaged<ulong, XrBaseHeader*, int> releaseSwapchainImage;
     private readonly delegate* unmanaged<ulong, XrFrameEndInfo*, int> endFrame;
+    private readonly delegate* unmanaged<ulong, byte*, ulong*, int> stringToPath;
+    private readonly delegate* unmanaged<ulong, XrActionSetCreateInfo*, ulong*, int> createActionSet;
+    private readonly delegate* unmanaged<ulong, int> destroyActionSet;
+    private readonly delegate* unmanaged<ulong, XrActionCreateInfo*, ulong*, int> createAction;
+    private readonly delegate* unmanaged<ulong, XrInteractionProfileSuggestedBinding*, int> suggestInteractionProfileBindings;
+    private readonly delegate* unmanaged<ulong, XrSessionActionSetsAttachInfo*, int> attachSessionActionSets;
+    private readonly delegate* unmanaged<ulong, XrActionsSyncInfo*, int> syncActions;
+    private readonly delegate* unmanaged<ulong, XrActionSpaceCreateInfo*, ulong*, int> createActionSpace;
+    private readonly delegate* unmanaged<ulong, XrActionStateGetInfo*, XrActionStateFloat*, int> getActionStateFloat;
 
     private NativeLayerCalls(delegate* unmanaged<ulong, byte*, nint*, int> next, ulong instance)
     {
@@ -32,6 +41,15 @@ internal sealed unsafe class NativeLayerCalls : ILayerCalls
         waitSwapchainImage = (delegate* unmanaged<ulong, XrSwapchainImageWaitInfo*, int>)Find(next, instance, "xrWaitSwapchainImage"u8);
         releaseSwapchainImage = (delegate* unmanaged<ulong, XrBaseHeader*, int>)Find(next, instance, "xrReleaseSwapchainImage"u8);
         endFrame = (delegate* unmanaged<ulong, XrFrameEndInfo*, int>)Find(next, instance, "xrEndFrame"u8);
+        stringToPath = (delegate* unmanaged<ulong, byte*, ulong*, int>)Find(next, instance, "xrStringToPath"u8);
+        createActionSet = (delegate* unmanaged<ulong, XrActionSetCreateInfo*, ulong*, int>)Find(next, instance, "xrCreateActionSet"u8);
+        destroyActionSet = (delegate* unmanaged<ulong, int>)Find(next, instance, "xrDestroyActionSet"u8);
+        createAction = (delegate* unmanaged<ulong, XrActionCreateInfo*, ulong*, int>)Find(next, instance, "xrCreateAction"u8);
+        suggestInteractionProfileBindings = (delegate* unmanaged<ulong, XrInteractionProfileSuggestedBinding*, int>)Find(next, instance, "xrSuggestInteractionProfileBindings"u8);
+        attachSessionActionSets = (delegate* unmanaged<ulong, XrSessionActionSetsAttachInfo*, int>)Find(next, instance, "xrAttachSessionActionSets"u8);
+        syncActions = (delegate* unmanaged<ulong, XrActionsSyncInfo*, int>)Find(next, instance, "xrSyncActions"u8);
+        createActionSpace = (delegate* unmanaged<ulong, XrActionSpaceCreateInfo*, ulong*, int>)Find(next, instance, "xrCreateActionSpace"u8);
+        getActionStateFloat = (delegate* unmanaged<ulong, XrActionStateGetInfo*, XrActionStateFloat*, int>)Find(next, instance, "xrGetActionStateFloat"u8);
     }
 
     /// <summary>The next layer's functions, or null when any of them is missing.</summary>
@@ -48,6 +66,10 @@ internal sealed unsafe class NativeLayerCalls : ILayerCalls
             || calls.createSwapchain is null || calls.destroySwapchain is null
             || calls.enumerateSwapchainImages is null || calls.acquireSwapchainImage is null
             || calls.waitSwapchainImage is null || calls.releaseSwapchainImage is null || calls.endFrame is null
+            || calls.stringToPath is null || calls.createActionSet is null || calls.destroyActionSet is null
+            || calls.createAction is null || calls.suggestInteractionProfileBindings is null
+            || calls.attachSessionActionSets is null || calls.syncActions is null || calls.createActionSpace is null
+            || calls.getActionStateFloat is null
             ? null
             : calls;
     }
@@ -93,6 +115,30 @@ internal sealed unsafe class NativeLayerCalls : ILayerCalls
     }
 
     public int EndFrame(ulong session, XrFrameEndInfo* frameEndInfo) => endFrame(session, frameEndInfo);
+
+    public int StringToPath(ulong instance, byte* pathString, ulong* path) => stringToPath(instance, pathString, path);
+
+    public int CreateActionSet(ulong instance, XrActionSetCreateInfo* createInfo, ulong* actionSet) =>
+        createActionSet(instance, createInfo, actionSet);
+
+    public int DestroyActionSet(ulong actionSet) => destroyActionSet(actionSet);
+
+    public int CreateAction(ulong actionSet, XrActionCreateInfo* createInfo, ulong* action) =>
+        createAction(actionSet, createInfo, action);
+
+    public int SuggestInteractionProfileBindings(ulong instance, XrInteractionProfileSuggestedBinding* suggestedBindings) =>
+        suggestInteractionProfileBindings(instance, suggestedBindings);
+
+    public int AttachSessionActionSets(ulong session, XrSessionActionSetsAttachInfo* attachInfo) =>
+        attachSessionActionSets(session, attachInfo);
+
+    public int SyncActions(ulong session, XrActionsSyncInfo* syncInfo) => syncActions(session, syncInfo);
+
+    public int CreateActionSpace(ulong session, XrActionSpaceCreateInfo* createInfo, ulong* space) =>
+        createActionSpace(session, createInfo, space);
+
+    public int GetActionStateFloat(ulong session, XrActionStateGetInfo* getInfo, XrActionStateFloat* state) =>
+        getActionStateFloat(session, getInfo, state);
 
     public ITextureDevice? OpenDevice(nint d3d11Device) => D3D11TextureDevice.Open(d3d11Device);
 

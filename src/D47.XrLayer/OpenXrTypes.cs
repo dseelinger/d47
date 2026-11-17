@@ -9,14 +9,23 @@ internal static class XrType
     public const int SessionCreateInfo = 8;
     public const int SwapchainCreateInfo = 9;
     public const int FrameEndInfo = 12;
+    public const int EventDataSessionStateChanged = 18;
+    public const int ActionStateFloat = 24;
+    public const int ActionSetCreateInfo = 28;
+    public const int ActionCreateInfo = 29;
     public const int InstanceProperties = 32;
     public const int CompositionLayerProjection = 35;
     public const int CompositionLayerQuad = 36;
     public const int ReferenceSpaceCreateInfo = 37;
+    public const int ActionSpaceCreateInfo = 38;
     public const int SpaceLocation = 42;
+    public const int InteractionProfileSuggestedBinding = 51;
     public const int SwapchainImageAcquireInfo = 55;
     public const int SwapchainImageWaitInfo = 56;
     public const int SwapchainImageReleaseInfo = 57;
+    public const int ActionStateGetInfo = 58;
+    public const int SessionActionSetsAttachInfo = 60;
+    public const int ActionsSyncInfo = 61;
     public const int GraphicsBindingVulkan = 1000025000;
     public const int GraphicsBindingD3D11 = 1000027000;
     public const int SwapchainImageD3D11 = 1000027001;
@@ -33,6 +42,13 @@ internal static class XrConstant
     public const ulong SwapchainUsageSampled = 0x20;
     public const ulong LocationOrientationValid = 0x1;
     public const ulong LocationPositionValid = 0x2;
+    public const int SessionStateFocused = 5;
+    public const int ActionTypeFloatInput = 2;
+    public const int ActionTypePoseInput = 4;
+    public const int MaxActionSetNameSize = 64;
+    public const int MaxLocalizedActionSetNameSize = 128;
+    public const int MaxActionNameSize = 64;
+    public const int MaxLocalizedActionNameSize = 128;
 
     /// <summary>XR_MIN_COMPOSITION_LAYERS_SUPPORTED: every runtime takes at least this many layers.</summary>
     public const int MinLayersSupported = 16;
@@ -179,6 +195,110 @@ internal unsafe struct XrCompositionLayerQuad
     public XrPosef Pose;
     public float Width;
     public float Height;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrEventDataSessionStateChanged
+{
+    public int Type;
+    public void* Next;
+    public ulong Session;
+    public int State;
+    public long Time;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrActionSetCreateInfo
+{
+    public int Type;
+    public void* Next;
+    public fixed byte ActionSetName[XrConstant.MaxActionSetNameSize];
+    public fixed byte LocalizedActionSetName[XrConstant.MaxLocalizedActionSetNameSize];
+    public uint Priority;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrActionCreateInfo
+{
+    public int Type;
+    public void* Next;
+    public fixed byte ActionName[XrConstant.MaxActionNameSize];
+    public int ActionType;
+    public uint CountSubactionPaths;
+    public ulong* SubactionPaths;
+    public fixed byte LocalizedActionName[XrConstant.MaxLocalizedActionNameSize];
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct XrActionSuggestedBinding
+{
+    public ulong Action;
+    public ulong Binding;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrInteractionProfileSuggestedBinding
+{
+    public int Type;
+    public void* Next;
+    public ulong InteractionProfile;
+    public uint CountSuggestedBindings;
+    public XrActionSuggestedBinding* SuggestedBindings;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrSessionActionSetsAttachInfo
+{
+    public int Type;
+    public void* Next;
+    public uint CountActionSets;
+    public ulong* ActionSets;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct XrActiveActionSet
+{
+    public ulong ActionSet;
+    public ulong SubactionPath;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrActionsSyncInfo
+{
+    public int Type;
+    public void* Next;
+    public uint CountActiveActionSets;
+    public XrActiveActionSet* ActiveActionSets;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrActionSpaceCreateInfo
+{
+    public int Type;
+    public void* Next;
+    public ulong Action;
+    public ulong SubactionPath;
+    public XrPosef PoseInActionSpace;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrActionStateGetInfo
+{
+    public int Type;
+    public void* Next;
+    public ulong Action;
+    public ulong SubactionPath;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrActionStateFloat
+{
+    public int Type;
+    public void* Next;
+    public float CurrentState;
+    public uint ChangedSinceLastSync;
+    public long LastChangeTime;
+    public uint IsActive;
 }
 
 /// <summary>D3D11_TEXTURE2D_DESC.</summary>

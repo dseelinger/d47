@@ -15,7 +15,7 @@ internal struct XrBlock
     /// <summary>"D47X" read as a little-endian uint.</summary>
     public const uint MagicValue = 0x58373444;
 
-    public const uint CurrentLayoutVersion = 1;
+    public const uint CurrentLayoutVersion = 2;
 
     public const int SlotCount = 6;
 
@@ -48,6 +48,8 @@ internal struct XrBlock
 internal struct XrD47Half
 {
     public uint Sequence;
+
+    /// <summary>1 while d47 reads the motion controllers. While it is 0 the layer makes no action call.</summary>
     public uint Pointing;
     public ulong Heartbeat;
     public XrQuadSlots Slots;
@@ -112,6 +114,10 @@ internal struct XrLayerHalf
     public ulong FrameCounter;
 
     public XrRefusal Refusal;
+
+    /// <summary>Why the layer reads no controllers in the current session. Quads are drawn regardless.</summary>
+    public XrControllerRefusal ControllerRefusal;
+
     public uint AdapterLuidLow;
     public int AdapterLuidHigh;
 
@@ -133,12 +139,14 @@ internal struct XrHands
     private XrHand hand;
 }
 
-/// <summary>One controller. Index 0 is the left hand.</summary>
+/// <summary>One controller, in the LOCAL space at the frame's display time. Index 0 is the left hand.</summary>
 [StructLayout(LayoutKind.Sequential)]
 internal struct XrHand
 {
     public XrBlockPose Aim;
     public XrBlockPose Grip;
+
+    /// <summary>1 when a focused sync read the hand and both poses located with orientation and position. 0 leaves every field zero.</summary>
     public uint Valid;
     public float TriggerValue;
     public float GripValue;
@@ -159,6 +167,23 @@ internal enum XrRefusal
     SetupFailed = 3,
     FrameRejected = 4,
     Faulted = 5,
+}
+
+/// <summary>Why the layer reads no controllers in the current session.</summary>
+internal enum XrControllerRefusal
+{
+    None = 0,
+
+    /// <summary>Elite attached its action sets after the layer attached its own. The runtime refused Elite's call.</summary>
+    EliteAttachedAfterLayer = 1,
+
+    /// <summary>Pointing was off when Elite attached, so the layer's set is not attached. Elite must restart.</summary>
+    PointingTurnedOnAfterEliteAttached = 2,
+
+    /// <summary>Creating, suggesting, attaching or syncing the layer's action set failed.</summary>
+    SetupFailed = 3,
+
+    Faulted = 4,
 }
 
 /// <summary>An XrPosef: orientation as a quaternion, then position in metres.</summary>

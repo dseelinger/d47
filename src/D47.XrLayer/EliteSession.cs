@@ -1,8 +1,8 @@
 namespace D47.XrLayer;
 
 /// <summary>
-/// The layer's work in one Elite session: appends d47's quads after Elite's layers and publishes the layer's half
-/// of the block. <see cref="EndFrame"/> never throws and never waits on d47.
+/// The layer's work in one Elite session: appends d47's quads after Elite's layers, reads the motion controllers and
+/// publishes the layer's half of the block. <see cref="EndFrame"/> never throws and never waits on d47.
 /// </summary>
 internal sealed unsafe class EliteSession
 {
@@ -19,6 +19,7 @@ internal sealed unsafe class EliteSession
     private readonly ILayerCalls calls;
     private readonly XrBlock* block;
     private readonly Slot[] slots = new Slot[XrBlock.SlotCount];
+    private readonly Controllers controllers;
     private ITextureDevice? device;
     private ulong localSpace;
     private ulong viewSpace;
@@ -32,11 +33,12 @@ internal sealed unsafe class EliteSession
     private long lastAdvance;
     private long textureUses;
 
-    private EliteSession(ILayerCalls calls, XrBlock* block, ulong handle)
+    private EliteSession(ILayerCalls calls, XrBlock* block, SuggestedBindings suggested, ulong instance, ulong handle)
     {
         this.calls = calls;
         this.block = block;
         Handle = handle;
+        controllers = new Controllers(calls, suggested, instance, handle);
         for (var i = 0; i < slots.Length; i++)
         {
             slots[i] = new Slot();
@@ -47,9 +49,9 @@ internal sealed unsafe class EliteSession
 
     /// <summary>Starts the layer's work in a session Elite has just created. <paramref name="block"/> may be null.</summary>
     public static EliteSession Attach(
-        ILayerCalls calls, XrBlock* block, ulong instance, XrSessionCreateInfo* createInfo, ulong handle)
+        ILayerCalls calls, XrBlock* block, SuggestedBindings suggested, ulong instance, XrSessionCreateInfo* createInfo, ulong handle)
     {
-        var session = new EliteSession(calls, block, handle);
+        var session = new EliteSession(calls, block, suggested, instance, handle);
         try
         {
             session.Start(instance, createInfo);
@@ -94,12 +96,22 @@ internal sealed unsafe class EliteSession
         return calls.EndFrame(Handle, frameEndInfo);
     }
 
-    /// <summary>Releases the session's textures, swapchains, spaces and device, and marks the block detached. Called before the session is destroyed.</summary>
+    /// <summary>Elite's xrAttachSessionActionSets, passed on through <see cref="Controllers.EliteAttach"/>.</summary>
+    public int AttachActionSets(XrSessionActionSetsAttachInfo* attachInfo) => controllers.EliteAttach(attachInfo, ReadPointing());
+
+    /// <summary>Elite's xrSyncActions, passed on through <see cref="Controllers.EliteSync"/>.</summary>
+    public int SyncActions(XrActionsSyncInfo* syncInfo) => controllers.EliteSync(syncInfo);
+
+    /// <summary>Notes a state change xrPollEvent returned for this session.</summary>
+    public void StateChanged(int sessionState) => controllers.StateChanged(sessionState);
+
+    /// <summary>Releases the session's textures, swapchains, spaces, action set and device, and marks the block detached. Called before the session is destroyed.</summary>
     public void Destroy()
     {
         drawing = false;
         try
         {
+            controllers.Destroy();
             ReleaseTextures();
             foreach (var slot in slots)
             {
@@ -127,6 +139,7 @@ internal sealed unsafe class EliteSession
         }
 
         published.Attached = 0;
+        published.Hands = default;
         TryPublish();
     }
 
@@ -175,6 +188,7 @@ internal sealed unsafe class EliteSession
             return;
         }
 
+        controllers.LocalSpace = localSpace;
         drawing = true;
         Publish();
     }
@@ -187,19 +201,28 @@ internal sealed unsafe class EliteSession
         }
 
         published.FrameCounter++;
-        if (!drawing || frameEndInfo is null)
+        if (frameEndInfo is null)
         {
             Publish();
             return 0;
         }
 
-        var time = frameEndInfo->DisplayTime;
-        LocateHead(time);
-        Publish();
-
         if (XrSeqLock.TryRead(&block->D47, out var d47))
         {
             lastD47 = d47;
+        }
+
+        var time = frameEndInfo->DisplayTime;
+        if (drawing)
+        {
+            LocateHead(time);
+        }
+
+        controllers.Frame(time, lastD47.Pointing == 1, ref published);
+        Publish();
+        if (!drawing)
+        {
+            return 0;
         }
 
         if (!HeartbeatIsMoving(time))
@@ -686,6 +709,17 @@ internal sealed unsafe class EliteSession
         };
         ulong space = 0;
         return calls.CreateReferenceSpace(Handle, &createInfo, &space) < XrResult.Success ? 0 : space;
+    }
+
+    /// <summary>Whether d47 has pointing on, read from the block now. Elite's attach can come before the first frame.</summary>
+    private bool ReadPointing()
+    {
+        if (block is null)
+        {
+            return false;
+        }
+
+        return XrSeqLock.TryRead(&block->D47, out var d47) ? d47.Pointing == 1 : lastD47.Pointing == 1;
     }
 
     private void Refuse(XrRefusal refusal)
