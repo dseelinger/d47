@@ -31,6 +31,9 @@ public static class SystemLink
     /// <summary>Set on the pressable row a linked name sits in while the pointer or focus is on the name.</summary>
     public const string RowHeld = ":link";
 
+    /// <summary>The class on a link's button; an output-only surface keeps it visible, as text.</summary>
+    public const string ButtonClass = "system-link";
+
     private const double FaceTarget = TypeScale.MinimumTarget;
     private const double Edge = 8;
     private const double UnderlineOffset = 4;
@@ -72,6 +75,7 @@ public static class SystemLink
             Cursor = new Cursor(StandardCursorType.Hand),
         };
 
+        button.Classes.Add(ButtonClass);
         Avalonia.Automation.AutomationProperties.SetName(button, AutomationName);
 
         var line = new TextDecoration

@@ -44,6 +44,11 @@
       <Setter Property="IsVisible" Value="False" />
     </Style>
 
+    <!-- A linked system name is drawn as text; the surface withdraws the open action, so it is not pressable. -->
+    <Style Selector="panel|PanelView.output-only Button.system-link">
+      <Setter Property="IsVisible" Value="True" />
+    </Style>
+
     <!--
       And the page's own chrome, as a container (#202).
 

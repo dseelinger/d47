@@ -184,6 +184,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             _scroll.ShowFollowButton();
             ShowResizeButton();
             ShowSearch();
+            Controls.SystemLink.SetOpen(this, OutputOnly ? null : OpenSystemNamed);
         };
 
         // A drag that crosses from one bubble into another keeps both ends: no single SelectableTextBlock
