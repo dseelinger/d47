@@ -41,29 +41,6 @@ public static class SpeakerAccent
             ? cast.SexAnswerFor(speaker, announcement.SpeakerIsPlayer, announcement.Voice, kind: announcement.SpeakerKind)
             : null;
 
-    /// <summary>Splits a batch into the lines to speak now and the first lines from NPCs that wait, each with its answer.</summary>
-    public static (List<Announcement> Ready, List<(Announcement Line, Task Answer)> Held) SplitByNameWait(
-        IEnumerable<Announcement> batch,
-        Func<Announcement, VoiceCast> castFor)
-    {
-        var ready = new List<Announcement>();
-        var held = new List<(Announcement, Task)>();
-
-        foreach (var announcement in batch)
-        {
-            if (NameAnswerFor(castFor(announcement), announcement) is { } answer)
-            {
-                held.Add((announcement, answer));
-            }
-            else
-            {
-                ready.Add(announcement);
-            }
-        }
-
-        return (ready, held);
-    }
-
     /// <summary>Completes when <paramref name="answer"/> does or the ceiling passes, whichever is first.</summary>
     public static async Task WaitForNameAsync(Task answer, TimeProvider? time = null)
     {

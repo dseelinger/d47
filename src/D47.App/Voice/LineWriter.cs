@@ -646,6 +646,16 @@ internal sealed class LineWriter
         return [.. (await ComposeAsync(announcement).ConfigureAwait(false)).Select(Owing)];
     }
 
+    /// <summary>
+    /// Whether <see cref="ComposeAsync"/> hands the line to a model or a galaxy lookup: a chatter marker, a clue, a
+    /// reaction marker or a narrator line. A story chapter line said as written is not composed.
+    /// </summary>
+    internal static bool IsComposed(Announcement announcement) =>
+        announcement.Key.StartsWith(NpcChatter.KeyPrefix, StringComparison.Ordinal)
+        || D47.Core.Stories.StoryClueCallout.Parse(announcement.Key) is not null
+        || D47.Core.Stories.StoryReactionCallout.Parse(announcement.Key) is ({ } _, null)
+        || announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal);
+
     private async Task<IReadOnlyList<Announcement>> ComposeAsync(Announcement announcement)
     {
         // Invented chatter is composed rather than varied (#244): the marker carries no text of its

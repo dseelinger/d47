@@ -192,19 +192,6 @@ public class AFirstHeardNpcWaitsForItsGivenNamesSexTests
     }
 
     [Fact]
-    public void ACalloutInTheSameBatchIsNotHeldBehindAnNpcLine()
-    {
-        var rig = new Rig(Model(given => All(given, "male")));
-        var npc = new Announcement("message.npc", "Hello") { Speaker = "Dan Roberts", Voice = VoiceRole.Comms };
-        var callout = new Announcement("ship.fuel", "Fuel low");
-
-        var (ready, held) = SpeakerAccent.SplitByNameWait([npc, callout], _ => rig.Cast);
-
-        Assert.Equal([callout], ready);
-        Assert.Equal([npc], held.Select(item => item.Line));
-    }
-
-    [Fact]
     public async Task SexesStoredBeforeGivenNamesWereKeptSeedTheGivenNames()
     {
         var files = new MemoryFileSystem();
