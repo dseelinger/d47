@@ -5,7 +5,8 @@
 .DESCRIPTION
     Exit codes: 0 every entry matches, 1 an entry differs, 2 the comparison could not run
     (B: in use, download or hash failure, build failure), 3 the release was built before releases
-    were built from B:\ and cannot be compared.
+    were built from B:\ and cannot be compared, 4 every entry matches except the OpenXR layer DLL,
+    which another MSVC linker version built.
 
     -ZipPath compares against a local zip instead of downloading d47.zip and d47.zip.sha256.
 
@@ -141,6 +142,40 @@ public static class D47Bundle
         throw new InvalidDataException("No single-file bundle header found in " + path);
     }
 }
+
+public static class D47Pe
+{
+    const int LinkerProductId = 0x102;
+
+    // Major.minor from the PE optional header, then the build of the linker's own Rich header entry when there is one.
+    public static string LinkerVersion(string path)
+    {
+        var d = File.ReadAllBytes(path);
+        int pe = d.Length >= 0x40 ? BitConverter.ToInt32(d, 0x3c) : -1;
+        if (pe < 0x40 || pe + 28 > d.Length || BitConverter.ToUInt32(d, pe) != 0x00004550)
+            throw new InvalidDataException("Not a PE file: " + path);
+        string version = d[pe + 26] + "." + d[pe + 27];
+
+        int rich = -1;
+        for (int i = 0x80; i + 8 <= pe; i += 4)
+            if (d[i] == 'R' && d[i + 1] == 'i' && d[i + 2] == 'c' && d[i + 3] == 'h') { rich = i; break; }
+        if (rich < 0) return version;
+
+        uint key = BitConverter.ToUInt32(d, rich + 4);
+        int start = -1;
+        for (int i = 0x80; i < rich; i += 4)
+            if ((BitConverter.ToUInt32(d, i) ^ key) == 0x536e6144) { start = i; break; }
+        if (start < 0) return version;
+
+        int build = -1;
+        for (int i = start + 16; i + 8 <= rich; i += 8)
+        {
+            uint id = BitConverter.ToUInt32(d, i) ^ key;
+            if ((id >> 16) == LinkerProductId) build = (int)(id & 0xffff);
+        }
+        return build < 0 ? version : version + "." + build;
+    }
+}
 '@
 
 $tag = "v$Version"
@@ -239,6 +274,22 @@ try {
         break
     }
 
+    # The linker writes its own version into the OpenXR layer DLL, so a runner image with another MSVC
+    # linker gives a different DLL from the same source.
+    $layerDll = 'runtimes\openxr\XR_APILAYER_D47_panel.dll'
+    if ($differing -contains $layerDll) {
+        $theirLinker = [D47Pe]::LinkerVersion((Join-Path $unpacked $layerDll))
+        $ourLinker = [D47Pe]::LinkerVersion((Join-Path $publish $layerDll))
+        if ($theirLinker -ne $ourLinker) {
+            Write-Host "$layerDll was linked by MSVC linker $theirLinker in the release and $ourLinker in the rebuild."
+            if ($differing.Count -eq 1) {
+                Write-Host "${tag}: $($total - 1) of $total entries in d47.zip match a rebuild of the tag; $layerDll differs because another linker version built it" -ForegroundColor Yellow
+                $code = 4
+                break
+            }
+        }
+    }
+
     Write-Host "${tag}: $($differing.Count) of $total entries in d47.zip differ from a rebuild of the tag:" -ForegroundColor Red
     foreach ($name in $differing) { Write-Host "  $name" }
 
@@ -266,5 +317,5 @@ finally {
 }
 
 if ($code -eq 0) { Remove-Item -LiteralPath $work -Recurse -Force }
-elseif ($code -eq 1) { Write-Host "Kept $work" }
+elseif ($code -eq 1 -or $code -eq 4) { Write-Host "Kept $work" }
 exit $code

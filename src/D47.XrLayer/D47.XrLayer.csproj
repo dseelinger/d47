@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Loaded into Elite's process by the OpenXR loader, so it references nothing else in the solution.
+       A build compiles it as managed code; a publish compiles it with NativeAOT. -->
+  <PropertyGroup>
+    <AssemblyName>XR_APILAYER_D47_panel</AssemblyName>
+    <RootNamespace>D47.XrLayer</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishAot>true</PublishAot>
+    <NativeLib>Shared</NativeLib>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- No symbols: ILCompiler links with /DEBUG whenever DebugType is set, and a PDB left by an earlier
+         publish changes the PDB GUID written into the DLL. -->
+    <DebugType>none</DebugType>
+    <NativeDebugSymbols>false</NativeDebugSymbols>
+    <!-- 10.0.11, the SDK's default, resolves an ILCompiler with advisory NU1903. -->
+    <RuntimeFrameworkVersion>10.0.15</RuntimeFrameworkVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="D47.XrLayer.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="XR_APILAYER_D47_panel.json" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Reproducible link: two publishes of one commit give the same DLL. -->
+  <ItemGroup>
+    <LinkerArg Include="/Brepro" />
+  </ItemGroup>
+
+  <!-- The Visual Studio setup scripts that find the MSVC linker call vswhere.exe through PATH. This runs
+       ILCompiler's own lookup with the installer folder on PATH and hands it the result, so publishing
+       needs no change to the caller's environment. -->
+  <Target Name="FindTheMsvcLinker" BeforeTargets="SetupOSSpecificProps">
+    <Exec Command="&quot;$([System.IO.Path]::GetDirectoryName($(ILCompilerTargetsPath)))\findvcvarsall.bat&quot; $(_targetArchitecture)"
+          EnvironmentVariables="$([MSBuild]::Escape('PATH=$(MSBuildProgramFiles32)\Microsoft Visual Studio\Installer;$(PATH)'))"
+          IgnoreExitCode="true" ConsoleToMSBuild="true" StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_FindVCVarsallOutput" />
+      <Output TaskParameter="ExitCode" PropertyName="_VCVarsAllFound" />
+    </Exec>
+    <PropertyGroup>
+      <IlcUseEnvironmentalTools>true</IlcUseEnvironmentalTools>
+    </PropertyGroup>
+  </Target>
+
+</Project>

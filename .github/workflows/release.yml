@@ -136,6 +136,9 @@ jobs:
           if (-not (Test-Path "$publish/runtimes/vulkan/win-x64/ggml-vulkan-whisper.dll")) {
             throw "Publish is missing the Vulkan whisper runtime; --selftest would exit 8"
           }
+          foreach ($layerFile in 'XR_APILAYER_D47_panel.dll', 'XR_APILAYER_D47_panel.json') {
+            if (-not (Test-Path "$publish/runtimes/openxr/$layerFile")) { throw "Publish is missing the OpenXR layer's runtimes/openxr/$layerFile" }
+          }
           Compress-Archive -Force -DestinationPath d47.zip -Path `
             "$publish/d47.exe", "$publish/runtimes", "$publish/ships", "$publish/portraits", "$publish/engineers", "$publish/codex-placeholders", "$publish/voices"
 

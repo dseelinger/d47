@@ -141,7 +141,10 @@ if ($verifyCode -eq 1) {
     Write-Host '############################################################' -ForegroundColor Red
     exit 4
 }
-if ($verifyCode -ne 0) {
+if ($verifyCode -eq 4) {
+    Write-Host "v$next matches a rebuild of its tag except the OpenXR layer DLL, which another MSVC linker version built; both versions are listed above." -ForegroundColor Yellow
+}
+elseif ($verifyCode -ne 0) {
     Write-Host "The comparison of v$next did not run (exit $verifyCode); the release itself succeeded." -ForegroundColor Yellow
 }
 if ($scanCode -eq 1) { exit 3 }

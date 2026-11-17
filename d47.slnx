@@ -9,6 +9,7 @@
     <Project Path="src/D47.Stt/D47.Stt.csproj" />
     <Project Path="src/D47.Tts/D47.Tts.csproj" />
     <Project Path="src/D47.Vr/D47.Vr.csproj" />
+    <Project Path="src/D47.XrLayer/D47.XrLayer.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/D47.App.Tests/D47.App.Tests.csproj" />
@@ -23,6 +24,7 @@
     <Project Path="tests/D47.TestSupport/D47.TestSupport.csproj" />
     <Project Path="tests/D47.Tts.Tests/D47.Tts.Tests.csproj" />
     <Project Path="tests/D47.Vr.Tests/D47.Vr.Tests.csproj" />
+    <Project Path="tests/D47.XrLayer.Tests/D47.XrLayer.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/D47.Donations/D47.Donations.csproj" />

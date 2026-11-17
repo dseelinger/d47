@@ -112,6 +112,21 @@
     </ItemGroup>
   </Target>
 
+  <!-- The OpenXR layer: published with NativeAOT to a folder of its own, then the DLL and its manifest are
+       copied to runtimes\openxr\. Not a ProjectReference, so neither file enters d47.exe's bundle. -->
+  <Target Name="PublishTheOpenXrLayer" AfterTargets="Publish">
+    <PropertyGroup>
+      <_XrLayerProject>$(MSBuildProjectDirectory)\..\D47.XrLayer\D47.XrLayer.csproj</_XrLayerProject>
+      <_XrLayerPublishDir>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)xrlayer\$(Configuration)\</_XrLayerPublishDir>
+    </PropertyGroup>
+    <MSBuild Projects="$(_XrLayerProject)" Targets="Restore"
+             Properties="Configuration=$(Configuration);MSBuildRestoreSessionId=$([System.Guid]::NewGuid())" />
+    <MSBuild Projects="$(_XrLayerProject)" Targets="Publish"
+             Properties="Configuration=$(Configuration);PublishDir=$(_XrLayerPublishDir)" />
+    <Copy SourceFiles="$(_XrLayerPublishDir)XR_APILAYER_D47_panel.dll;$(_XrLayerPublishDir)XR_APILAYER_D47_panel.json"
+          DestinationFolder="$(PublishDir)runtimes\openxr\" />
+  </Target>
+
   <Target Name="ShipWhisperNativesBesideTheExe" AfterTargets="_ComputeCopyToPublishDirectoryItems">
     <ItemGroup>
       <_WhisperNative

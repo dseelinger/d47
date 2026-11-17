@@ -244,6 +244,10 @@ clone mapped to `B:\` and only reports.
   and stop. The verifier keeps its temporary folder; name its path.
 - **Exit 0 with `did not run`**: the release succeeded and the comparison could not run. Say so in
   the closing lines, with the reason the script printed.
+- **Exit 0 with `except the OpenXR layer DLL`**: every entry matches except
+  `runtimes\openxr\XR_APILAYER_D47_panel.dll`, which the runner linked with another MSVC linker
+  version. Say so in the closing lines with both linker versions the script printed. It is not a
+  mismatch to report as one.
 
 ### Defender detections
 
