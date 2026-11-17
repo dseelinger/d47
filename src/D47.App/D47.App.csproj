@@ -127,6 +127,31 @@
           DestinationFolder="$(PublishDir)runtimes\openxr\" />
   </Target>
 
+  <!-- A Debug build of this project alone, as the test drive runs it, puts the NativeAOT layer in
+       runtimes\openxr\ beside d47.exe, publishing only when the layer's sources are newer. A solution
+       build skips it: it builds D47.XrLayer itself, and the nested publish would write the same obj folder. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug' And '$(BuildingSolutionFile)' != 'true'">
+    <_XrLayerSource Include="..\D47.XrLayer\**\*.cs;..\D47.XrLayer\D47.XrLayer.csproj;..\D47.XrLayer\XR_APILAYER_D47_panel.json"
+                    Exclude="..\D47.XrLayer\bin\**;..\D47.XrLayer\obj\**" />
+  </ItemGroup>
+
+  <Target Name="PutTheOpenXrLayerBesideADebugBuild" AfterTargets="Build"
+          Condition="'$(Configuration)' == 'Debug' And '$(BuildingSolutionFile)' != 'true'"
+          Inputs="@(_XrLayerSource)"
+          Outputs="$(OutDir)runtimes\openxr\XR_APILAYER_D47_panel.dll;$(OutDir)runtimes\openxr\XR_APILAYER_D47_panel.json">
+    <PropertyGroup>
+      <_XrLayerProject>$(MSBuildProjectDirectory)\..\D47.XrLayer\D47.XrLayer.csproj</_XrLayerProject>
+      <_XrLayerPublishDir>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)xrlayer\$(Configuration)\</_XrLayerPublishDir>
+    </PropertyGroup>
+    <MSBuild Projects="$(_XrLayerProject)" Targets="Restore"
+             Properties="Configuration=$(Configuration);MSBuildRestoreSessionId=$([System.Guid]::NewGuid())" />
+    <MSBuild Projects="$(_XrLayerProject)" Targets="Publish"
+             Properties="Configuration=$(Configuration);PublishDir=$(_XrLayerPublishDir);_IsPublishing=true" />
+    <Copy SourceFiles="$(_XrLayerPublishDir)XR_APILAYER_D47_panel.dll;$(_XrLayerPublishDir)XR_APILAYER_D47_panel.json"
+          DestinationFolder="$(OutDir)runtimes\openxr\" />
+    <Touch Files="$(OutDir)runtimes\openxr\XR_APILAYER_D47_panel.dll;$(OutDir)runtimes\openxr\XR_APILAYER_D47_panel.json" />
+  </Target>
+
   <Target Name="ShipWhisperNativesBesideTheExe" AfterTargets="_ComputeCopyToPublishDirectoryItems">
     <ItemGroup>
       <_WhisperNative
