@@ -1800,7 +1800,6 @@ public sealed class AppHost : IDisposable
                 () => files.ReadText(Path.Combine(journalDirectory, "Market.json")),
                 useTestSchemas: EddnTestSchemas,
                 readOutfitting: () => files.ReadText(Path.Combine(journalDirectory, "Outfitting.json")),
-                readShipyard: () => files.ReadText(Path.Combine(journalDirectory, "Shipyard.json")),
                 readNavRoute: () => files.ReadText(Path.Combine(journalDirectory, "NavRoute.json")),
                 statusBodyName: () => stores.Status.Current.BodyName),
             eddn,

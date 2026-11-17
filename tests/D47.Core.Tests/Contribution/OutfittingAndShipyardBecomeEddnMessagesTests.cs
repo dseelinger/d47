@@ -40,15 +40,6 @@ public sealed class OutfittingAndShipyardBecomeEddnMessagesTests
          ]}
         """;
 
-    private static string ShipyardFile(string stamp = Stamp, long id = 128000001) =>
-        $$"""
-        {"timestamp":"{{stamp}}","event":"Shipyard","MarketID":{{id}},"StationName":"Test Port","StarSystem":"Sol","Horizons":true,"AllowCobraMkIV":true,
-         "PriceList":[
-          {"id":1,"ShipType":"anacondamkii","ShipType_Localised":"Anaconda","ShipPrice":146000000},
-          {"id":2,"ShipType":"sidewinder","ShipType_Localised":"Sidewinder","ShipPrice":32000}
-         ]}
-        """;
-
     private static JournalEvent Event(string line)
     {
         Assert.True(JournalEvent.TryParse(line, NullLogger.Instance, out var parsed));
@@ -56,9 +47,9 @@ public sealed class OutfittingAndShipyardBecomeEddnMessagesTests
         return parsed!;
     }
 
-    private static EddnEnvelope? Compose(string? outfitting, string? shipyard, string eventLine)
+    private static EddnEnvelope? Compose(string? outfitting, string eventLine)
     {
-        var composer = new EddnComposer(() => "anon", "1.2.3", () => null, false, () => outfitting, () => shipyard);
+        var composer = new EddnComposer(() => "anon", "1.2.3", () => null, false, () => outfitting);
 
         foreach (var line in Preamble)
         {
@@ -71,7 +62,7 @@ public sealed class OutfittingAndShipyardBecomeEddnMessagesTests
     [Fact]
     public void AMatchingOutfittingFileBuildsOneOutfittingMessage()
     {
-        var envelope = Compose(OutfittingFile(), null, OutfittingLine);
+        var envelope = Compose(OutfittingFile(), OutfittingLine);
 
         Assert.NotNull(envelope);
         Assert.Equal("https://eddn.edcd.io/schemas/outfitting/2", envelope.SchemaRef);
@@ -89,7 +80,7 @@ public sealed class OutfittingAndShipyardBecomeEddnMessagesTests
     [Fact]
     public void OutfittingLeavesOutWhatOnlySomeCommandersCanBuy()
     {
-        var text = Compose(OutfittingFile(), null, OutfittingLine)!.Message.ToJsonString();
+        var text = Compose(OutfittingFile(), OutfittingLine)!.Message.ToJsonString();
 
         Assert.DoesNotContain("paintjob", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("decal", text, StringComparison.OrdinalIgnoreCase);
@@ -100,44 +91,31 @@ public sealed class OutfittingAndShipyardBecomeEddnMessagesTests
     }
 
     [Fact]
-    public void ANoPriceOrLocalisedKeyIsSentWithOutfittingOrShipyard()
+    public void ANoPriceOrLocalisedKeyIsSentWithOutfitting()
     {
-        var outfitting = Compose(OutfittingFile(), null, OutfittingLine)!.Message.ToJsonString();
-        var shipyard = Compose(null, ShipyardFile(), ShipyardLine)!.Message.ToJsonString();
+        var text = Compose(OutfittingFile(), OutfittingLine)!.Message.ToJsonString();
 
-        foreach (var text in new[] { outfitting, shipyard })
-        {
-            Assert.DoesNotContain("_Localised", text, StringComparison.Ordinal);
-            Assert.DoesNotContain("Price", text, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("BuyPrice", text, StringComparison.Ordinal);
-        }
+        Assert.DoesNotContain("_Localised", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Price", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("BuyPrice", text, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void AMatchingShipyardFileBuildsOneShipyardMessage()
+    public void AShipyardEventBuildsNothing()
     {
-        var envelope = Compose(null, ShipyardFile(), ShipyardLine);
-
-        Assert.NotNull(envelope);
-        Assert.Equal("https://eddn.edcd.io/schemas/shipyard/2", envelope.SchemaRef);
-        Assert.Equal("Test Port", (string?)envelope.Message["stationName"]);
-        Assert.Equal(128000001, (long?)envelope.Message["marketId"]);
-        Assert.Equal(["anacondamkii", "sidewinder"], envelope.Message["ships"]!.AsArray().Select(node => (string?)node).ToList());
+        Assert.Null(Compose(OutfittingFile(), ShipyardLine));
     }
 
     [Fact]
     public void AFileForAnotherTimeOrStationBuildsNothing()
     {
-        Assert.Null(Compose(OutfittingFile("2026-10-20T09:59:00Z"), null, OutfittingLine));
-        Assert.Null(Compose(OutfittingFile(id: 5), null, OutfittingLine));
-        Assert.Null(Compose(null, ShipyardFile("2026-10-20T09:59:00Z"), ShipyardLine));
-        Assert.Null(Compose(null, ShipyardFile(id: 5), ShipyardLine));
+        Assert.Null(Compose(OutfittingFile("2026-10-20T09:59:00Z"), OutfittingLine));
+        Assert.Null(Compose(OutfittingFile(id: 5), OutfittingLine));
     }
 
     [Fact]
     public void AMissingFileBuildsNothing()
     {
-        Assert.Null(Compose(null, null, OutfittingLine));
-        Assert.Null(Compose(null, null, ShipyardLine));
+        Assert.Null(Compose(null, OutfittingLine));
     }
 }

@@ -415,7 +415,7 @@ public static class EgressDisclosure
                 "When you open a station's commodity market, every commodity's buy and sell price, stock and "
                 + "demand, with the station, its market id and its system. With it go the game's version and "
                 + "build, whether Horizons and Odyssey are running, and a random number made on this PC for "
-                + "your Commander. When you open a station's outfitting or shipyard, the modules and ships it sells go "
+                + "your Commander. When you open a station's outfitting, the modules it sells go "
                 + "the same way, names only. The system you jump to, the station you dock at and what you scan are "
                 + "sent too, with the system's position and no fines, fuel, reputation or position on a planet. "
                 + "The signals your scanner finds in a system and the number of bodies it counts go as well. "

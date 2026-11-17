@@ -225,7 +225,7 @@ for it ([Galaxy search](galaxy.md#rare-index)).
 
 **EDDN** — `eddn.edcd.io`. When you open a station's commodity market, D47 sends its prices,
 with the station, its system, the game's version and a random number made on this PC for your Commander.
-Opening its outfitting or shipyard sends the names of the modules and ships it sells.
+Opening its outfitting sends the names of the modules it sells.
 The signals and body counts your scanner finds go too, as do codex discoveries, settlements you
 approach, nav beacon scans and routes you plot; a route is where you intend to go.
 Your Commander name, Frontier ID, credits, cargo and ship do not go, and nothing from journals read

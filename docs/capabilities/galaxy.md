@@ -228,8 +228,8 @@ station's commodity market while d47 is running sends that market's prices to ED
 galaxy sites read, so other Commanders' searches see them. Each commodity's buy and sell price,
 stock and demand goes, with the station, its market id and its system, the game's version and
 build, whether Horizons and Odyssey are running, and a random number made on this PC for your
-Commander. Opening a station's outfitting or shipyard sends the names of the modules and ships it
-sells, with no prices. The signals and body counts your system scanner finds are sent too, with
+Commander. Opening a station's outfitting sends the names of the modules it sells, with no
+prices. The signals and body counts your system scanner finds are sent too, with
 the system's name and position. Codex discoveries, settlements you approach, nav beacon scans and
 routes you plot go too; a plotted route is where you intend to go, not something the galaxy shows.
 

@@ -720,8 +720,8 @@ public static class GalaxyCapability
                 Label = "Share with EDDN",
                 Help =
                     "Sends the market prices your game shows you to EDDN, the relay the galaxy sites read, so "
-                    + "other Commanders' searches see them. The modules and ships a station sells are sent when "
-                    + "you open its outfitting or shipyard. The system you jump to, the station you dock at and what you scan "
+                    + "other Commanders' searches see them. The modules a station sells are sent when "
+                    + "you open its outfitting. The system you jump to, the station you dock at and what you scan "
                     + "are sent with the system's position, and nothing of your own state: no fines, fuel, "
                     + "reputation or position on a planet. "
                     + "The signals and body counts your scanner finds are sent too, as are codex discoveries, settlements "

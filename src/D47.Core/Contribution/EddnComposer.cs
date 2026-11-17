@@ -8,7 +8,6 @@ namespace D47.Core.Contribution;
 /// <param name="uploaderId">Returns the random number standing for the Commander, or null when there is none; read only when a message is built.</param>
 /// <param name="readMarket">Returns the text of <c>Market.json</c>, or null when it cannot be read.</param>
 /// <param name="readOutfitting">Returns the text of <c>Outfitting.json</c>, or null when it cannot be read.</param>
-/// <param name="readShipyard">Returns the text of <c>Shipyard.json</c>, or null when it cannot be read.</param>
 /// <param name="readNavRoute">Returns the text of <c>NavRoute.json</c>, or null when it cannot be read.</param>
 /// <param name="statusBodyName">Returns the <c>BodyName</c> in <c>Status.json</c>, or null when it has none.</param>
 public sealed class EddnComposer(
@@ -17,7 +16,6 @@ public sealed class EddnComposer(
     Func<string?> readMarket,
     bool useTestSchemas = false,
     Func<string?>? readOutfitting = null,
-    Func<string?>? readShipyard = null,
     Func<string?>? readNavRoute = null,
     Func<string?>? statusBodyName = null)
 {
@@ -25,7 +23,6 @@ public sealed class EddnComposer(
 
     private const string CommoditySchema = "https://eddn.edcd.io/schemas/commodity/3";
     private const string OutfittingSchema = "https://eddn.edcd.io/schemas/outfitting/2";
-    private const string ShipyardSchema = "https://eddn.edcd.io/schemas/shipyard/2";
     private const string JournalSchema = "https://eddn.edcd.io/schemas/journal/1";
     private const string FssDiscoveryScanSchema = "https://eddn.edcd.io/schemas/fssdiscoveryscan/1";
     private const string FssSignalDiscoveredSchema = "https://eddn.edcd.io/schemas/fsssignaldiscovered/1";
@@ -159,7 +156,6 @@ public sealed class EddnComposer(
         {
             "Market" => ComposeCommodity(journalEvent),
             "Outfitting" => ComposeOutfitting(journalEvent),
-            "Shipyard" => ComposeShipyard(journalEvent),
             "Docked" => ComposeJournal(journalEvent, ["Wanted", "ActiveFine", "CockpitBreach"], false, true),
             "Scan" or "SAASignalsFound" => ComposeJournal(journalEvent, [], false, true),
             "FSDJump" => ComposeJournal(journalEvent, JumpRemovals, true, false),
@@ -308,38 +304,6 @@ public sealed class EddnComposer(
         message["modules"] = modules;
 
         return new EddnEnvelope(SchemaRef(OutfittingSchema), Header(station.Uploader), message);
-    }
-
-    private EddnEnvelope? ComposeShipyard(JournalEvent shipyardEvent)
-    {
-        using var station = OpenStationFile(readShipyard, shipyardEvent);
-
-        if (station is null)
-        {
-            return null;
-        }
-
-        var ships = new JsonArray();
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-
-        foreach (var item in station.File.Items("PriceList"))
-        {
-            if (item.String("ShipType") is { Length: > 0 } ship && seen.Add(ship))
-            {
-                ships.Add(ship);
-            }
-        }
-
-        if (ships.Count == 0)
-        {
-            return null;
-        }
-
-        var message = station.Message();
-        AddIdentity(message, station);
-        message["ships"] = ships;
-
-        return new EddnEnvelope(SchemaRef(ShipyardSchema), Header(station.Uploader), message);
     }
 
     private EddnEnvelope? ComposeJournal(JournalEvent journalEvent, string[] removals, bool factions, bool addLocation)
