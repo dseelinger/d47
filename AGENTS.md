@@ -149,9 +149,11 @@ The source of truth for the look is the **Directive 47** design system artifact
 it, and where the two disagree on look, the design system is right. Behaviour, strings and data
 come from the code.
 
-The design system is canonical the way a written specification is. When something in it does not
-work in practice during implementation, make the change in the code and then work it back into the
-design system; do not stop to amend the design system first.
+The design system is canonical the way a written specification is, and it changes when the design
+changes, not after the code does. When a design is accepted, its card and rules go into the design
+system at that point, before any of it is built. When implementation finds that something in the
+design system does not work and changes the look, the design system is changed in the same piece of
+work as the code.
 
 `design/system/` is a read-only snapshot pulled on 2026-09-26 and older than the artifact. Do not edit
 it. An agent without claude.ai access uses it as its nearest reference.

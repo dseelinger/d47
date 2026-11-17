@@ -10,9 +10,11 @@ patterns; the Avalonia app is built to match them through issues. Where the desi
 code disagree on look, the design system is right. Behaviour, strings and data come from the code;
 the text on the design system's cards and screens is placeholder.
 
-The design system is canonical the way a written specification is. When something in it does not
-work in practice during implementation, make the change in the code and then work it back into the
-design system; do not stop to amend the design system first.
+The design system is canonical the way a written specification is, and it changes when the design
+changes, not after the code does. When a design is accepted, its card and rules go into the design
+system at that point, before any of it is built. When implementation finds that something in the
+design system does not work and changes the look, the design system is changed in the same piece of
+work as the code.
 
 The Claude Design project **D47 Design System** is older than the artifact:
 https://claude.ai/design/p/33498e27-9fc4-425e-b580-0425d82e4597
