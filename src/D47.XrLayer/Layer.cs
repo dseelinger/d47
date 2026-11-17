@@ -2,7 +2,10 @@ using System.Runtime.InteropServices;
 
 namespace D47.XrLayer;
 
-/// <summary>The layer's entry points. Each hook calls the next function exactly once, whatever its own work throws.</summary>
+/// <summary>
+/// The layer's entry points. Each hook calls the next function whatever its own work throws: once, or for an
+/// xrEndFrame the runtime rejected with d47's quads, a second time without them.
+/// </summary>
 internal static unsafe class Layer
 {
     private const uint LoaderInterfaceVersion = 1;
@@ -13,6 +16,9 @@ internal static unsafe class Layer
     private static delegate* unmanaged<ulong, void*, ulong*, int> nextCreateSession;
     private static delegate* unmanaged<ulong, void*, int> nextEndFrame;
     private static delegate* unmanaged<ulong, int> nextDestroySession;
+    private static bool blockMapped;
+    private static XrBlock* block;
+    private static EliteSession? current;
 
     [UnmanagedCallersOnly(EntryPoint = "xrNegotiateLoaderApiLayerInterface")]
     public static int Negotiate(NegotiateLoaderInfo* loaderInfo, byte* layerName, NegotiateApiLayerRequest* request)
@@ -115,7 +121,19 @@ internal static unsafe class Layer
         {
             if (result >= XrResult.Success && session is not null)
             {
-                SessionWatch.Created(*session);
+                current?.Destroy();
+                current = null;
+                var calls = NativeLayerCalls.Resolve(nextGetInstanceProcAddr, instance);
+                if (calls is not null)
+                {
+                    if (!blockMapped)
+                    {
+                        blockMapped = true;
+                        block = SharedBlock.Map();
+                    }
+
+                    current = EliteSession.Attach(calls, block, instance, (XrSessionCreateInfo*)createInfo, *session);
+                }
             }
         }
         catch (Exception)
@@ -129,16 +147,10 @@ internal static unsafe class Layer
     [UnmanagedCallersOnly]
     private static int EndFrame(ulong session, void* frameEndInfo)
     {
-        try
-        {
-            SessionWatch.FrameEnding(session);
-        }
-        catch (Exception)
-        {
-            // Never reaches the loader.
-        }
-
-        return nextEndFrame(session, frameEndInfo);
+        var attached = current;
+        return attached is not null && attached.Handle == session
+            ? attached.EndFrame((XrFrameEndInfo*)frameEndInfo)
+            : nextEndFrame(session, frameEndInfo);
     }
 
     [UnmanagedCallersOnly]
@@ -146,7 +158,12 @@ internal static unsafe class Layer
     {
         try
         {
-            SessionWatch.Destroying(session);
+            var attached = current;
+            if (attached is not null && attached.Handle == session)
+            {
+                current = null;
+                attached.Destroy();
+            }
         }
         catch (Exception)
         {

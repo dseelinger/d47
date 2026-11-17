@@ -7,8 +7,11 @@ namespace D47.XrLayer;
 internal static class XrResult
 {
     public const int Success = 0;
+    public const int TimeoutExpired = 1;
+    public const int ErrorRuntimeFailure = -2;
     public const int ErrorInitializationFailed = -6;
     public const int ErrorFunctionUnsupported = -7;
+    public const int ErrorPoseInvalid = -39;
 }
 
 internal enum LoaderInterfaceStruct

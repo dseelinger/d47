@@ -151,3 +151,16 @@ D47.Core.Vr.VrLifecycle.Changed
 D47.Core.Watches.WatchStore.Changed
 D47.Vr.SteamVrRuntime.Beam
 D47.Vr.SteamVrRuntime.Cursor
+D47.XrLayer.XrBlock
+D47.XrLayer.XrBlockPose
+D47.XrLayer.XrD47Half
+D47.XrLayer.XrHand
+D47.XrLayer.XrHands
+D47.XrLayer.XrLayerHalf
+D47.XrLayer.XrQuadSlot
+D47.XrLayer.XrQuadSlots
+D47.XrLayer.XrQuadSpace
+D47.XrLayer.XrRefusal
+D47.XrLayer.XrRuntimeName
+D47.XrLayer.XrSeqLock
+D47.XrLayer.XrTextureName

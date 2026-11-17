@@ -13,4 +13,9 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
   </ItemGroup>
 
+  <!-- The block shared with the OpenXR layer: both sides compile the same layout. -->
+  <ItemGroup>
+    <Compile Include="..\D47.XrLayer\XrBlock.cs" Link="XrLayer\XrBlock.cs" />
+  </ItemGroup>
+
 </Project>
