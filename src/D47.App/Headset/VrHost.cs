@@ -23,14 +23,12 @@ public sealed class VrHost : IDisposable
     private readonly ViewStateStore _viewState;
     private readonly Dictionary<string, SurfaceAnchor> _anchors;
     private readonly VrLifecycle _lifecycle;
-    private readonly SteamVrRuntime _runtime;
+    private readonly IVrSession _runtime;
     private readonly VrPanelSurface _panel;
     private readonly VrAvatarSurface _avatar;
     private readonly VrCaptionSurface _captions;
     private readonly CaptionLayer _layer;
     private readonly ILogger<VrHost> _logger;
-    private readonly D47.Core.AppPaths _paths;
-    private readonly D47.Core.Storage.IFileSystem _files;
 
     private int _pending;
     private bool _disposed;
@@ -89,10 +87,8 @@ public sealed class VrHost : IDisposable
         VrAvatarSurface avatar,
         VrCaptionSurface captions,
         CaptionLayer layer,
-        SteamVrRuntime runtime,
+        IVrSession runtime,
         VrLifecycle lifecycle,
-        D47.Core.AppPaths paths,
-        D47.Core.Storage.IFileSystem files,
         ILogger<VrHost> logger)
     {
         _settings = settings;
@@ -104,8 +100,6 @@ public sealed class VrHost : IDisposable
         _layer = layer;
         _runtime = runtime;
         _lifecycle = lifecycle;
-        _paths = paths;
-        _files = files;
         _logger = logger;
     }
 
@@ -114,7 +108,7 @@ public sealed class VrHost : IDisposable
     public string? Reason => _lifecycle.Reason;
 
     /// <summary>The SteamVR session while d47 is attached to it, otherwise null (#601).</summary>
-    public SteamVrRuntime? Session => _lifecycle.State == VrState.Active ? _runtime : null;
+    public SteamVrRuntime? Session => _lifecycle.State == VrState.Active ? _runtime as SteamVrRuntime : null;
 
     /// <summary>
     /// The headset panel's own prompts, so a spoken value can reach a chooser the Commander opened in
@@ -257,11 +251,13 @@ public sealed class VrHost : IDisposable
             [panel, avatar, captions],
             loggers.CreateLogger<SteamVrRuntime>(),
             OpenVrBinding.Instance,
-            new D3D11TextureDevice());
+            new D3D11TextureDevice(),
+            files,
+            paths.VrActions);
         var lifecycle = new VrLifecycle(runtime, loggers.CreateLogger<VrLifecycle>());
 
         var host = self = new VrHost(
-            settings, viewState, panel, avatar, captions, layer, runtime, lifecycle, paths, files,
+            settings, viewState, panel, avatar, captions, layer, runtime, lifecycle,
             loggers.CreateLogger<VrHost>());
 
         host.Configure();
@@ -555,9 +551,7 @@ public sealed class VrHost : IDisposable
             {
                 if (_runtime.Pointing)
                 {
-                    // Here rather than inside the runtime: this is the real application, and only the real
-                    // application may claim the d47 application key with SteamVR.
-                    _runtime.Actions.Register(_files, _paths.VrActions);
+                    _runtime.PrepareInput();
                 }
 
                 RestIfNeverPlaced();
@@ -660,7 +654,7 @@ public sealed class VrHost : IDisposable
 
             // A claim made on the last frame that got past this line would otherwise stand for as long as
             // this line keeps returning — see VrActionInput.Release.
-            _runtime.Actions.Release();
+            _runtime.ReleaseInput();
             return;
         }
 
@@ -687,10 +681,10 @@ public sealed class VrHost : IDisposable
         // Claimed only while a ray is on the panel or a carry is already running — the second because a hand
         // can swing the panel far enough that its own ray leaves it, and dropping the claim there would drop
         // the panel mid-move.
-        var held = _runtime.Actions.TriggerHeld(found is not null || _carrying is not null || _resizing is not null);
+        var held = _runtime.TriggerHeld(found is not null || _carrying is not null || _resizing is not null);
 
         // Back, on the grip (Phase 25), which leaves resize mode instead while the panel is in it.
-        if (_runtime.Actions.BackPressed() && _resizing is null)
+        if (_runtime.BackPressed() && _resizing is null)
         {
             if (_resizeMode)
             {
@@ -906,7 +900,7 @@ public sealed class VrHost : IDisposable
         Volatile.Write(ref _aimGeometry, null);
 
         // A claim standing from before the row moved would otherwise stand until the session ended.
-        _runtime.Actions.Release();
+        _runtime.ReleaseInput();
 
         if (_scrolling)
         {

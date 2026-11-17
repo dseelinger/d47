@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using D47.Core.Storage;
 using D47.Core.Vr;
 using D47.Vr.Binding;
 using Microsoft.Extensions.Logging;
@@ -41,11 +42,17 @@ public interface IVrSurfaceSource
 
 /// <summary>The headset, for real.</summary>
 /// <param name="textures">The device a surface that uploads as a texture uses. Without one, it goes up as raw pixels.</param>
+/// <param name="actionFolder">
+/// Where the action manifest is written. Without it and <paramref name="files"/>, <see cref="PrepareInput"/>
+/// registers nothing; only the real application may claim the d47 application key with SteamVR.
+/// </param>
 public sealed class SteamVrRuntime(
     IReadOnlyList<IVrSurfaceSource> sources,
     ILogger<SteamVrRuntime> logger,
     IOpenVrSession openVr,
-    IVrTextureDevice? textures = null) : IVrRuntime
+    IVrTextureDevice? textures = null,
+    IFileSystem? files = null,
+    string? actionFolder = null) : IVrSession
 {
     /// <summary>Reverse-domain, one per quad.</summary>
     private static readonly IReadOnlyDictionary<VrSurface, (string Key, string Name)> Keys =
@@ -278,10 +285,20 @@ public sealed class SteamVrRuntime(
     /// <summary>The cursor sprite, if the runtime allowed one.</summary>
     public VrOverlay? Cursor => _cursor;
 
-    /// <summary>
-    /// Points the beam along a hand and stops it at <paramref name="lengthMetres"/>, or takes it off
-    /// screen when nothing is being aimed at.
-    /// </summary>
+    public void PrepareInput()
+    {
+        if (files is not null && actionFolder is not null)
+        {
+            Actions.Register(files, actionFolder);
+        }
+    }
+
+    public bool TriggerHeld(bool wanted) => Actions.TriggerHeld(wanted);
+
+    public bool BackPressed() => Actions.BackPressed();
+
+    public void ReleaseInput() => Actions.Release();
+
     public void Reposition(VrSurface surface, VrPose where)
     {
         lock (_session)
