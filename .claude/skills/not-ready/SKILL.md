@@ -1,6 +1,6 @@
 ---
 name: not-ready
-description: List every open GitHub issue that cannot be built yet because it needs Claude Design (the `needs-design` label) or a pass through /architect (the `needs-architect` label), with spikes in a table of their own. Reports only; labels, files and starts nothing. Use when the user invokes /not-ready, or says "what needs design", "list the design issues", "what needs the architect", "what is under-speced", "which issues need Claude Design", "what isn't ready to build".
+description: List every open GitHub issue that cannot be built yet because it needs Claude Design (the `needs-design` label) or a pass through /architect (the `needs-architect` label), and every open spike (the `Spike` label) whether or not it carries either, with spikes in a table of their own. Reports only; labels, files and starts nothing. Use when the user invokes /not-ready, or says "what needs design", "list the design issues", "what needs the architect", "what is under-speced", "which issues need Claude Design", "what isn't ready to build".
 ---
 
 # Not ready
@@ -11,15 +11,15 @@ The two labels that keep an issue out of `/triage`:
 - `needs-architect` — needs a pass through `/architect` before it can be built. An issue that only
   waits on other issues or on outside data does not carry it.
 
-This skill lists the issues carrying either one, leaving out any issue labelled `tabled` or
-`needs-gameplay`. It reads and reports; it does not label, comment, file or start a session.
+This skill lists the issues carrying either one, and every issue labelled `Spike` whether or not it
+carries either, leaving out any issue labelled `tabled` or `needs-gameplay`. It reads and reports; it does not label, comment, file or start a session.
 
 ## The query
 
 One call. A comma inside `label:` is an OR in GitHub search; `-label:` excludes:
 
 ```bash
-gh issue list --state open --limit 500 --search 'label:needs-design,needs-architect -label:tabled -label:needs-gameplay' --json number,title,labels,author --jq '.[] | "\(.number)\t\([.labels[].name] | map(select(. == "needs-design" or . == "needs-architect" or . == "Spike" or . == "Vetted")) | join(","))\t\(.author.login)\t\(.title)"'
+gh issue list --state open --limit 500 --search 'label:needs-design,needs-architect,Spike -label:tabled -label:needs-gameplay' --json number,title,labels,author --jq '.[] | "\(.number)\t\([.labels[].name] | map(select(. == "needs-design" or . == "needs-architect" or . == "Spike" or . == "Vetted")) | join(","))\t\(.author.login)\t\(.title)"'
 ```
 
 Do not fetch issue bodies. The title and labels are the report.
@@ -29,7 +29,7 @@ Do not fetch issue bodies. The title and labels are the report.
 Three tables, newest issue first in each:
 
 1. **Needs Claude Design** — issues labelled `needs-design`.
-2. **Spikes** — issues labelled `Spike` and not `needs-design`.
+2. **Spikes** — issues labelled `Spike` and not `needs-design`, with or without `needs-architect`.
 3. **Needs the Architect** — issues labelled `needs-architect` and neither `needs-design` nor `Spike`.
 
 An issue goes in the first table it qualifies for, so no issue appears twice. An issue in the first
