@@ -333,7 +333,7 @@ public sealed class RouteProgressPage : UserControl
         : hop.Hazardous ? RoutingKit.Tag(
             StarClasses.IsNeutron(hop.StarClass) ? "supercharge here" : "exclusion zone",
             StarClasses.IsNeutron(hop.StarClass) ? ThemeManager.AKey : ThemeManager.RedKey)
-        : hop.Scoopable is false ? RoutingKit.Tag("no scoop", ThemeManager.WarnKey)
+        : hop.Scoopable is false ? RoutingKit.Tag("no scoop", ThemeManager.RedKey)
         : hop.Scoopable is null ? RoutingKit.Tag("scoop unknown", ThemeManager.GreyKey)
         : null;
 

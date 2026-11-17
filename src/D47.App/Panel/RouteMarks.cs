@@ -86,7 +86,7 @@ internal static class RouteMarks
 
             default:
                 context.DrawGeometry(bg, null, Polygon((0, -7.5), (7.5, 6), (-7.5, 6)));
-                context.DrawGeometry(ink(ThemeManager.WarnKey), null, Polygon((0, -5.5), (5.5, 4.5), (-5.5, 4.5)));
+                context.DrawGeometry(ink(ThemeManager.RedKey), null, Polygon((0, -5.5), (5.5, 4.5), (-5.5, 4.5)));
                 break;
         }
     }
