@@ -488,7 +488,7 @@ against a number nobody checked.
 
 #### Promotions {#promotion}
 
-When you are promoted, your core makes one remark about it in its own voice. That covers the six
+When you are promoted, your core makes one remark about it in its own voice. Two ranks gained at once in one career are said as the higher rank only. That covers the six
 career ladders (Combat, Trade, Exploration, Mercenary, Exobiology and CQC), both navies and your
 Powerplay rank. It keeps the career, the rank number and the rank name as Elite gives them.
 With personality off, or no model, the plain line is spoken:

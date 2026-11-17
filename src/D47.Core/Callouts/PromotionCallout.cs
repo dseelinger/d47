@@ -18,11 +18,25 @@ public sealed class PromotionCallout : ICallout
 
     private static readonly IReadOnlyList<string> Ladders = [.. RankState.Careers, "Empire", "Federation"];
 
+    /// <summary>How long a promotion waits for a higher one on the same ladder; each further promotion restarts it.</summary>
+    public static readonly TimeSpan Hold = TimeSpan.FromSeconds(3);
+
+    /// <summary>How long past its time a held promotion is still said; one held while the callout was off is dropped.</summary>
+    private static readonly TimeSpan StaleAfter = TimeSpan.FromSeconds(30);
+
+    private readonly List<Held> _held = [];
+
     public string Id => "promotion";
 
     public IEnumerable<Announcement> Examine(CalloutContext context)
     {
-        if (context.IsPriming || context.State is not { } state)
+        if (context.IsPriming)
+        {
+            _held.Clear();
+            yield break;
+        }
+
+        if (context.State is not { } state)
         {
             yield break;
         }
@@ -39,14 +53,18 @@ public sealed class PromotionCallout : ICallout
                             continue;
                         }
 
-                        // The folded standing has Percent cleared, so Describe says the rank alone.
-                        var standing = state.Ranks.For(ladder) is { } folded && folded.Rank == rank
-                            ? folded
-                            : new RankStanding(ladder, rank);
+                        var index = _held.FindIndex(h => h.Ladder == ladder);
+                        var highest = index >= 0 ? Math.Max(rank, _held[index].Rank) : rank;
+                        var held = new Held(ladder, highest, context.Now + Hold);
 
-                        yield return new Announcement(
-                            KeyPrefix + ladder.ToLowerInvariant(),
-                            $"Promoted. {standing.Say()}.");
+                        if (index >= 0)
+                        {
+                            _held[index] = held;
+                        }
+                        else
+                        {
+                            _held.Add(held);
+                        }
                     }
 
                     break;
@@ -60,5 +78,34 @@ public sealed class PromotionCallout : ICallout
                     break;
             }
         }
+
+        for (var i = 0; i < _held.Count;)
+        {
+            var held = _held[i];
+
+            if (context.Now < held.Due)
+            {
+                i++;
+                continue;
+            }
+
+            _held.RemoveAt(i);
+
+            if (context.Now - held.Due > StaleAfter)
+            {
+                continue;
+            }
+
+            // The folded standing has Percent cleared, so Say says the rank alone.
+            var standing = state.Ranks.For(held.Ladder) is { } folded && folded.Rank == held.Rank
+                ? folded
+                : new RankStanding(held.Ladder, held.Rank);
+
+            yield return new Announcement(
+                KeyPrefix + held.Ladder.ToLowerInvariant(),
+                $"Promoted. {standing.Say()}.");
+        }
     }
+
+    private readonly record struct Held(string Ladder, int Rank, DateTimeOffset Due);
 }

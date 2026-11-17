@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Two ranks gained at once in one career, such as Exploration 1 then 2 after a large data sale, are now said as the higher rank only. A promotion is said about three seconds after it arrives, once no higher one follows.
+
 Fixed: Opening a station's shipyard no longer sends a ship list to EDDN. The game's Shipyard file lists only the hull you are flying, so the message told EDDN the station sold one ship and disclosed yours. Outfitting, market and journal messages are unchanged.
 
 Added: A ship's page under Asset Mgmt › Ships has a Clear completed press while any slot shows the tick. It clears the plan of every ticked slot at once and leaves the other slots and your checklist as they are.
