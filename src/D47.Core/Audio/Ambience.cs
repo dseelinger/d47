@@ -163,11 +163,7 @@ public static class Situations
 
         if (status.OnFoot)
         {
-            return status.Has2(StatusFlags2.OnFootInStation)
-                   || status.Has2(StatusFlags2.OnFootInHangar)
-                   || status.Has2(StatusFlags2.OnFootSocialSpace)
-                ? OnFootStation
-                : OnFoot;
+            return status.OnFootInsideStation ? OnFootStation : OnFoot;
         }
 
         if (status.Has(StatusFlags.Docked))

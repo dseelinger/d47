@@ -1753,8 +1753,8 @@ A fourth rule is not this feature's own: a line from inside your ship and an exc
 it are never spoken back to back. That one is a rule *between* the two, and it is explained under
 [NPC chatter](#npc-chatter) below.
 
-Seven situations are covered: docked, landed, supercruise, normal space, fuel scooping, in the
-SRV, and on foot.
+Eight situations are covered: docked, landed, supercruise, normal space, fuel scooping, in the
+SRV, on foot on a planet, and on foot in a station.
 
 **A stock core makes no idle remarks.** While COVAS is aboard, this line, the
 [opening line](#continuity) and the word on getting into or leaving a game are not said; the

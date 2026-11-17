@@ -120,6 +120,13 @@ public sealed record GameStatus
     /// </summary>
     public bool OnFoot => Has2(StatusFlags2.OnFoot);
 
+    /// <summary>On foot inside a station, a hangar or a social space.</summary>
+    public bool OnFootInsideStation =>
+        OnFoot
+        && (Has2(StatusFlags2.OnFootInStation)
+            || Has2(StatusFlags2.OnFootInHangar)
+            || Has2(StatusFlags2.OnFootSocialSpace));
+
     /// <summary>
     /// The journal shows the Commander in the Nomad. Status.json sets <see cref="StatusFlags.InSrv"/> for
     /// the Nomad and cannot tell it from an SRV.

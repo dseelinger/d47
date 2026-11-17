@@ -23,7 +23,10 @@ public enum AmbientSituation
 
     Srv,
 
+    /// <summary>On foot anywhere but inside a station.</summary>
     OnFoot,
+
+    OnFootStation,
 }
 
 /// <summary>The stock ambient lines (Phase 11, "Ambient Voice").</summary>
@@ -32,9 +35,9 @@ public static class AmbientLines
     /// <summary>Which situation the Commander is in, from Status.json alone.</summary>
     public static AmbientSituation Situate(GameStatus status)
     {
-        if (status.Has2(StatusFlags2.OnFoot))
+        if (status.OnFoot)
         {
-            return AmbientSituation.OnFoot;
+            return status.OnFootInsideStation ? AmbientSituation.OnFootStation : AmbientSituation.OnFoot;
         }
 
         if (status.Has(StatusFlags.InSrv))
@@ -80,6 +83,7 @@ public static class AmbientLines
         AmbientSituation.Scooping => "scooping fuel from a star",
         AmbientSituation.Srv => "driving an SRV on a planet surface",
         AmbientSituation.OnFoot => "out of the ship on foot",
+        AmbientSituation.OnFootStation => "on foot inside a station",
         _ => "aboard the ship",
     };
 
@@ -93,6 +97,7 @@ public static class AmbientLines
         AmbientSituation.Scooping => Scooping,
         AmbientSituation.Srv => Srv,
         AmbientSituation.OnFoot => OnFoot,
+        AmbientSituation.OnFootStation => OnFootStation,
         _ => [],
     };
 
@@ -236,6 +241,20 @@ public static class AmbientLines
         "Standing on a world is a strange way to see one. Most of it is under your feet.",
         "Your suit is doing the work of an entire ship, at a fraction of the size.",
         "Nothing on local scan. That is as much as I can tell you from here.",
+        "It is quiet on this channel. I am still here.",
+        "Take your time. The ship is not going anywhere without you.",
+    ];
+
+    private static readonly string[] OnFootStation =
+    [
+        "You are inside the station now. I can hear you, but I am not much use to you in there.",
+        "The ship is where you left it. I am watching it.",
+        "Station air and station gravity. Neither one is my work.",
+        "There are more people around you than I usually have to account for.",
+        "Somebody else is keeping the air in for once.",
+        "Nothing on the ship needs you. Stay as long as the station takes.",
+        "I have no sensors in there. You will have to tell me what it is like.",
+        "Everything aboard is where it should be. That is the whole of the report.",
         "It is quiet on this channel. I am still here.",
         "Take your time. The ship is not going anywhere without you.",
     ];

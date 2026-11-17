@@ -36,6 +36,60 @@ public class AmbientCalloutTests
         Assert.Equal(expected, AmbientLines.Situate(In(flags)));
     }
 
+    [Theory]
+    [InlineData(StatusFlags2.OnFootInStation)]
+    [InlineData(StatusFlags2.OnFootSocialSpace)]
+    [InlineData(StatusFlags2.OnFootInHangar)]
+    [InlineData(StatusFlags2.OnFootOnPlanet | StatusFlags2.OnFootSocialSpace)]
+    public void OnFootInsideAStationIsSituatedAsOnFootStation(StatusFlags2 inside)
+    {
+        var status = GameStatus.Unknown with { Flags2 = (uint)(StatusFlags2.OnFoot | inside) };
+
+        Assert.Equal(AmbientSituation.OnFootStation, AmbientLines.Situate(status));
+    }
+
+    [Fact]
+    public void OnFootOnAPlanetOutsideIsStillOnFoot()
+    {
+        var status = GameStatus.Unknown with
+        {
+            Flags2 = (uint)(StatusFlags2.OnFoot | StatusFlags2.OnFootOnPlanet | StatusFlags2.OnFootExterior),
+        };
+
+        Assert.Equal(AmbientSituation.OnFoot, AmbientLines.Situate(status));
+    }
+
+    [Fact]
+    public void OnFootInAStationIsDescribedAsInsideOne()
+    {
+        Assert.Equal("on foot inside a station", AmbientLines.Describe(AmbientSituation.OnFootStation));
+    }
+
+    [Fact]
+    public void OnFootStationLinesClaimNeitherAPlanetNorExposure()
+    {
+        string[] banned = ["world", "planet", "surface", "oxygen", "suit", "outside"];
+
+        foreach (var line in AmbientLines.For(AmbientSituation.OnFootStation))
+        {
+            foreach (var word in banned)
+            {
+                Assert.DoesNotContain(word, line, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+    }
+
+    [Fact]
+    public void AnOnFootStationAnnouncementIsBriefedAsInsideAStation()
+    {
+        var announcement = new Announcement("ambient.onfootstation", "Take your time.", CalloutUrgency.Routine);
+
+        var brief = FlavourBriefs.For(announcement, personalityEnabled: true);
+
+        Assert.NotNull(brief);
+        Assert.Contains("on foot inside a station", brief.Instruction, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ScoopingOutranksSupercruiseBecauseItIsTheMoreSpecificThingToBeDoing()
     {
