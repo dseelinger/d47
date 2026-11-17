@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Show D47 without SteamVR, under Settings › Screens › Headset, off by default. While D47 is running with it and Show D47 in the headset on, D47 registers its OpenXR layer for the current user so Elite on an OpenXR runtime that is not SteamVR's shows the panel. The registration is removed when either setting goes off, when D47 exits and by the uninstaller. Start D47 before Elite. Tested on Virtual Desktop's runtime; Meta's is untested.
+
 Fixed: Callouts are spoken in the order the game caused them. A line that is reworded no longer lets a later line go first, and a story reaction, clue, narration or NPC chatter, which take longer to write, is spoken once written without holding up the callouts queued with it. An urgent warning waits for no other callout to be written, and now also cuts short the pause between lines of NPC chatter while the warning waits to be spoken.
 
 Changed: a star d47 knows is unscoopable is now red on every route map and the galaxy map, in both map keys, and in the "no scoop" tag on the Route progress page, so it stands out from a scoopable star.

@@ -94,9 +94,10 @@ public static class SettingsLayout
     /// exploration and exobiology callout toggles (17 entries); <c>chatter</c> holds the scene chatter row
     /// beside NPC chatter as well as the seven messages rows, the accent and NPC humor rows, the carrier
     /// captain and the fighter pilot (19 entries, the chatter rows Advanced); <c>in-flight</c> holds the flight
-    /// callout toggles (15 entries, all Advanced).
+    /// callout toggles (15 entries, all Advanced); <c>headset</c> holds the overlay, captions and placement
+    /// rows beside the OpenXR layer switch (15 entries, most Advanced).
     /// </summary>
-    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "callouts", "exploring", "chatter", "in-flight"];
+    public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "callouts", "exploring", "chatter", "in-flight", "headset"];
 
     private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
 
@@ -835,6 +836,7 @@ public static class SettingsLayout
                                 E("vr.mode"),
                                 E("vr.opacity", under: true),
                                 E("vr.controllers", under: true),
+                                E("vr.openXrLayer"),
                                 E("vr.state"),
                                 F(IsVrHotkeyFamily),
                             ]),

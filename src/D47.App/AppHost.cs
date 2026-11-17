@@ -3526,6 +3526,22 @@ public sealed class AppHost : IDisposable
         // (Phase 4, "Apply every setting without a restart").
         settings.Changed += host.OnSettingsChanged;
 
+        // The OpenXR layer's registry value follows the headset settings, off the tick thread.
+        var layerRegistration = new Headset.OpenXrLayerRegistration(
+            new Headset.RegistryImplicitLayerStore(),
+            Headset.OpenXrLayerRegistration.ManifestPathBeside(
+                Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory),
+            host.Loggers.CreateLogger<Headset.OpenXrLayerRegistration>());
+        Headset.OpenXrLayerRegistration.Current = layerRegistration;
+        _ = Task.Run(() => layerRegistration.Apply(settings.Current.Vr));
+        settings.Changed += change =>
+        {
+            if (change.Key is VrCapability.EnabledKey or VrCapability.OpenXrLayerKey)
+            {
+                _ = Task.Run(() => layerRegistration.Apply(settings.Current.Vr));
+            }
+        };
+
         // The one instance, shared: the injector's foreground rule and the overlay's visibility rule are the
         // same question about the same window, and two readers would be two caches of one handle.
         host.Elite = services.EliteWindow;
@@ -6434,6 +6450,8 @@ public sealed class AppHost : IDisposable
 
         // And then let go of the game (#206).
         _gameInput.Dispose();
+
+        Headset.OpenXrLayerRegistration.Current?.RemoveAtExit();
 
         // After the tick, so a serve cannot land on a destroyed overlay handle.
         Vr?.Dispose();

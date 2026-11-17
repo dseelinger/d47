@@ -22,7 +22,7 @@ nav_order: 128
 <p class="intro">Three steps to D47 in the headset.</p>
 <section>
 <h2><span class="num">1</span> Start SteamVR first, then D47.</h2>
-<p class="say">Start SteamVR first, then D47, and check that Show D47 in the headset is on.</p>
+<p class="say">Start SteamVR first, then D47, and check that Show D47 in the headset is on. With Elite on OpenXR and no SteamVR, turn on Show D47 without SteamVR and start D47 before Elite.</p>
 <p class="expect">The panel appears in the headset as an overlay beside the game, and the Headset row reads "Showing in the headset."</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Headset">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -88,7 +88,7 @@ nav_order: 128
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">D47 attaches to SteamVR and draws its panel over Elite, never inside it.</p>
+<p class="intro">D47 attaches to SteamVR, or loads as an OpenXR layer in Elite, and draws its panel over the game.</p>
 <section>
 <h2><span class="num">1</span> D47 attaches to SteamVR and never starts it.</h2>
 <svg viewBox="0 0 880 128" role="img" aria-label="D47 waits for SteamVR and a switched-on headset">
@@ -176,6 +176,12 @@ No headset is switched on. D47 will attach when one appears.
 
 Nothing here starts SteamVR on your behalf. Launching it uninvited on a machine whose headset is
 off takes over your desktop for no reason.
+
+### Without SteamVR
+
+Elite can run on OpenXR through a mod, on a runtime that is not SteamVR's. Turn on **Show D47 without
+SteamVR** and D47 serves the headset through an OpenXR layer in Elite's own process. The route was
+tested on Virtual Desktop's runtime; Meta's runtime is untested.
 
 ### What you get
 
@@ -346,6 +352,23 @@ showing and the session stays up. "Show VR panel" brings it back where it was, a
 setting on if it was off. A hidden panel is not remembered across a restart.
 
 > "hide VR panel" / "show VR panel"
+
+#### Show D47 without SteamVR {#openxr-layer}
+
+Off by default, and shown while Show D47 in the headset is on. For Elite running on OpenXR through a
+mod, with no SteamVR.
+
+While D47 is running with both switches on, D47 writes one value under the current user's OpenXR
+implicit-layer key, `HKCU\SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit`, naming
+`runtimes\openxr\XR_APILAYER_D47_panel.json` beside the running `d47.exe`. The value needs no
+elevation. D47 removes it when either switch goes off, when D47 exits (including on a crash) and at
+the next start if a run left it behind; the uninstaller removes it too.
+
+Every OpenXR application on the PC loads the layer while the value exists, because the loader has no
+per-application filter. Outside Elite the layer passes every call through and does nothing. Start D47
+before Elite: Elite loads the layer when it starts, so a change takes effect the next time Elite starts.
+
+Nothing here leaves the machine.
 
 #### Panel content {#mode}
 
@@ -576,7 +599,9 @@ Directive 47's own panel keeps its place.
 #### Headset {#state}
 
 Not a setting but a state, shown next to the switch — because *switched off* and *SteamVR is not
-running* look identical from the outside unless something says which.
+running* look identical from the outside unless something says which. With Show D47 without SteamVR
+on, a SteamVR reason that applies is followed by "No OpenXR runtime has the D47 layer in an Elite
+session either."; "Showing in the headset." is the same for both routes.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>

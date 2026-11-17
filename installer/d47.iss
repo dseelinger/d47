@@ -109,6 +109,13 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   DataDir: String;
 begin
+  if CurUninstallStep = usUninstall then
+  begin
+    { The OpenXR implicit-layer value d47.exe writes while the layer setting is on. }
+    RegDeleteValue(HKEY_CURRENT_USER, 'SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit',
+                   ExpandConstant('{app}\runtimes\openxr\XR_APILAYER_D47_panel.json'));
+  end;
+
   if CurUninstallStep = usPostUninstall then
   begin
     DataDir := ExpandConstant('{app}\data');

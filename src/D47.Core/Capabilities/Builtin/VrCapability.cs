@@ -25,6 +25,9 @@ public static class VrCapability
     /// <summary>Whether d47 touches the motion controllers at all.</summary>
     public const string ControllersKey = "vr.controllers";
 
+    /// <summary>Whether the OpenXR layer route is registered for Elite running without SteamVR.</summary>
+    public const string OpenXrLayerKey = "vr.openXrLayer";
+
     /// <summary>The four hotkeys that reach zoom and resize with no headset controller (#189).</summary>
     public const string ZoomInHotkeyKey = "hotkeys.zoomHeadsetIn";
 
@@ -107,7 +110,7 @@ public static class VrCapability
         Id = Id,
         Group = "Interface",
         Name = "Headset",
-        Summary = "Show D47 in the headset as a SteamVR overlay, over Elite, in your own cockpit.",
+        Summary = "Show D47 in the headset over Elite, in your own cockpit, as a SteamVR overlay or through an OpenXR layer.",
         Examples = ["is the headset connected", "turn the headset overlay off"],
         Keywords =
         [
@@ -415,6 +418,28 @@ public static class VrCapability
                     new SettingCommandPhrase("motion controllers on", "true"),
                     new SettingCommandPhrase("motion controllers off", "false"),
                 ],
+            },
+
+            new SettingRow
+            {
+                Key = OpenXrLayerKey,
+                Exercise =
+                    "Open Settings › Screens › Headset, group Headset overlay, and find Show D47 without SteamVR "
+                    + "(it appears while Show D47 in the headset is on; off by default). Turn it on while D47 is "
+                    + "running: D47 registers its OpenXR layer for the current user, and Elite started afterwards "
+                    + "on an OpenXR runtime that is not SteamVR's shows the panel. Turn it off, or turn Show D47 in "
+                    + "the headset off: the registration is removed and Elite started afterwards shows no panel. "
+                    + "Closing D47 removes it too. Needs Elite on a non-SteamVR OpenXR runtime and a headset.",
+                Label = "Show D47 without SteamVR",
+                Help = "For Elite running on OpenXR through a mod, with no SteamVR. While D47 is running, every "
+                       + "OpenXR application on this PC loads D47's layer; it acts only in Elite. Start D47 before "
+                       + "Elite; takes effect the next time Elite starts.",
+                Kind = SettingKind.Toggle,
+                DocsAnchor = "openxr-layer",
+                AppliesWhen = s => s.Vr.Enabled,
+                Binding = SettingBinding.Toggle(
+                    s => s.Vr.OpenXrLayer,
+                    (s, on) => s with { Vr = s.Vr with { OpenXrLayer = on } }),
             },
 
             // Reach zoom and resize from the keyboard, since #107 left them reachable by voice only (#189).

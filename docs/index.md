@@ -100,8 +100,8 @@ nav_order: 0
 ## The details
 
 A voice companion for Elite Dangerous on Windows 11. It reads the journal Elite already
-writes, answers out loud, and renders the same panel to a desktop window and a SteamVR
-overlay.
+writes, answers out loud, and renders the same panel to a desktop window and a headset overlay, through
+SteamVR or an OpenXR layer.
 
 This site is the long form. In-app help is the short form.
 
