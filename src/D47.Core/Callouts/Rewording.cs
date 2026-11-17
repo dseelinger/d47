@@ -97,6 +97,13 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             said = null;
         }
 
+        if (said is not null
+            && announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
+            && Squashed(said) == Squashed(announcement.Text))
+        {
+            said = null;
+        }
+
         string? figure = null;
 
         if (said is not null
@@ -124,6 +131,9 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
 
         return AsWritten(announcement, reason, ship, commanderName, checkFacts: true);
     }
+
+    private static string Squashed(string text) =>
+        new([.. text.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant)]);
 
     /// <summary>
     /// The authored line, checked against the ship on the paths that asked a model, and wherever a

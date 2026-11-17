@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Idle chatter no longer repeats its sample line word for word. A reply that matches the sample, ignoring case and punctuation, is dropped and nothing is said.
+
 Fixed: Idle chatter while you are on foot inside a station, a hangar or a social space no longer talks about standing on a world, oxygen or exposure to the outside. It is briefed as being inside a station and uses its own ten lines. On foot anywhere else is unchanged.
 
 Fixed: The mini panel, on the desktop and in the headset, now shows a linked system name, such as the system in "Next: Dock at a station in a system". It was dropped, leaving a gap in the sentence. The name is plain text there, not pressable, and the copy glyph stays hidden.
