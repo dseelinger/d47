@@ -548,6 +548,10 @@ public sealed class GalaxyMapView : Control
         {
             ScaleBar(context, size);
         }
+        else if (_layout.Route.Count >= 2)
+        {
+            FittedScaleBar(context, size);
+        }
 
         DrawAngles(context, size);
     }
@@ -1156,8 +1160,22 @@ public sealed class GalaxyMapView : Control
     private void ScaleBar(DrawingContext context, Size size)
     {
         var length = Math.Min(size.Width, size.Height) / 4;
+
+        Bracket(context, size, ScaleInset, length, ScaleWords(_viewport.LightYearsAcross), false);
+    }
+
+    /// <summary>At the bottom right, a round number of light years no more than a quarter of the shorter side.</summary>
+    private void FittedScaleBar(DrawingContext context, Size size)
+    {
+        var lightYears = RoundScale(_viewport.LightYearsAcross / 4);
+        var length = lightYears * Scale;
+
+        Bracket(context, size, size.Width - ScaleInset - length, length, ScaleWords(lightYears * 4), true);
+    }
+
+    private void Bracket(DrawingContext context, Size size, double left, double length, string words, bool rightAligned)
+    {
         var bottom = size.Height - ScaleInset - BottomInset;
-        var left = ScaleInset;
         var pen = new Pen(Brush(ThemeManager.GreyKey), 1);
 
         var geometry = new StreamGeometry();
@@ -1173,8 +1191,24 @@ public sealed class GalaxyMapView : Control
 
         context.DrawGeometry(null, pen, geometry);
 
-        var label = Text(ScaleWords(_viewport.LightYearsAcross), 11, ThemeManager.GreyKey, 0, Fonts.MonoFamily);
-        label.Draw(context, new Point(left, bottom - 5.5 - 3 - label.Height));
+        var label = Text(words, 11, ThemeManager.GreyKey, 0, Fonts.MonoFamily);
+        var x = rightAligned ? left + length - label.Width : left;
+
+        label.Draw(context, new Point(x, bottom - 5.5 - 3 - label.Height));
+    }
+
+    /// <summary>The largest of 1, 2, 5, 10, 20, 50 … that is no more than <paramref name="atMost"/>, and never less than 1.</summary>
+    internal static double RoundScale(double atMost)
+    {
+        if (atMost < 2)
+        {
+            return 1;
+        }
+
+        var tens = Math.Pow(10, Math.Floor(Math.Log10(atMost)));
+        var lead = Math.Floor(atMost / tens);
+
+        return (lead >= 5 ? 5 : lead >= 2 ? 2 : 1) * tens;
     }
 
     /// <summary>The scale bar's label for a view this many light years across.</summary>
