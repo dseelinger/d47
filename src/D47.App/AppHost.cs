@@ -2982,6 +2982,7 @@ public sealed class AppHost : IDisposable
 
                 // And the fixed quick searches, such as "interstellar factors search" (#812).
                 .Concat(D47.Core.Knowledge.QuickSearches.Phrases())
+                .Concat(D47.Core.Knowledge.QuickSearches.CoursePhrases())
 
                 // And the Commander's own saved searches, such as "large pad repairs search" (#1078).
                 .Concat(D47.Core.Knowledge.SavedSearchPhrases.Commands(stores.SavedSearches))

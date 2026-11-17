@@ -492,8 +492,11 @@ Task<FactionReport> FactionAsync(string faction, CancellationToken cancellationT
 ### Quick searches {#quick-searches}
 
 Eleven fixed searches run by phrase with no model involved, measured from the Commander's own
-system. Each has four phrases: "{name} search", "run the {name} search", "nearest {name}" and
-"find the nearest {name}".
+system. Each has four search phrases: "{name} search", "run the {name} search", "nearest {name}" and
+"find the nearest {name}". Each also has four course phrases: "set course for nearest {name}",
+"set a course for nearest {name}", "plot a course to nearest {name}" and "plot a route to nearest {name}",
+which run the search and then plot a course to the first result's system. "Closest" is heard as "nearest"
+in every phrase, and "the" is ignored.
 
 | Name | Tool | Arguments |
 | --- | --- | --- |
@@ -511,6 +514,16 @@ system. Each has four phrases: "{name} search", "run the {name} search", "neares
 
 ```csharp
 yield return new DynamicCommand(phrase, GalaxyCapability.Id, search.Tool, search.Arguments);
+```
+
+#### `course_to_quick_search`
+
+Runs a quick search and plots a course to the system of its first result. The Commander reaches it
+by voice; a model that asks for it is refused. It says one sentence naming the station and system as
+the map starts moving, then reports the plot. With nothing found it plots nothing and says so.
+
+```json
+{"type":"object","properties":{"search":{"type":"string","description":"Which quick search to run.","enum":["raw material trader","manufactured material trader","encoded material trader","guardian technology broker","human technology broker","interstellar factors","universal cartographics","vista genomics","black market","pioneer supplies","anarchy outbreak"]}},"required":["search"],"additionalProperties":false}
 ```
 
 ### Tools
@@ -1080,8 +1093,9 @@ half of "how far" the Commander feels after the jump.
 there, so a nearest-first search is also the fastest way to get a system name into the galaxy map.
 Saying **"set a course"** afterwards plots to it without the Commander repeating the name, and
 **"set a course and take us out"** does the same and then leaves the pad — see
-[flight controls](flight-controls.html#set-a-course-and-take-us-out) for both. Neither phrase has
-anywhere to route with nothing found yet.
+[flight controls](flight-controls.html#set-a-course-and-take-us-out) for both. A nearest-first
+station or system search records its first system the same way, so both phrases also work after one.
+Neither phrase has anywhere to route with nothing found yet.
 
 The saved **Community Goal search** — the INARA query with every one of these baked in — lives on
 the [community goals page](community-goals.html), and runs through this tool.

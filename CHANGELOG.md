@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: "Set course for the closest Vista Genomics" finds the nearest station with that service and plots a course to its system, with no model. It works for every quick search ("nearest" or "closest", four ways of asking). "Closest" is now heard as "nearest" in every phrase. "Set a course" and "set a course and take us out" now also work after a nearest-first station or system search.
+
 Fixed: A search for a ship now says the shipyard lists are as other Commanders' tools reported them, so a listed hull is not always on sale. When the hull needs an Empire or Federation rank you do not hold, the answer says which rank and what you hold. The stations are still listed.
 
 Fixed: The mini panel no longer draws the Asset Mgmt page presses (Plan a ship you do not own, Compare, Clear completed, Plan this slot and the rest). On the mini, a ship's page now shows its slot rows that disagree with the plan.

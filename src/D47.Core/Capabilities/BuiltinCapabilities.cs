@@ -415,7 +415,8 @@ public static class BuiltinCapabilities
             () => gameState.Active?.Location.StarPos,
             squadronFactions,
             rareIndex,
-            gameStatus),
+            gameStatus,
+            navigation),
         RouteCapability.Create(
             routes,
             trade,

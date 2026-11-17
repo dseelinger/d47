@@ -385,6 +385,7 @@ public sealed class KeywordRouter(
                 ("e c m", "ecm"),
                 ("2 d", "2d"),
                 ("two d", "2d"),
+                ("closest", "nearest"),
             }
             .Select(entry => (Run: entry.Run.Split(' '), entry.Spelling))
             .OrderByDescending(entry => entry.Run.Length)];

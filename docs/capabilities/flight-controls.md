@@ -379,7 +379,7 @@ destination locked in your nav panel and refuses without one, where supercruise 
 
 ### Set a course and take us out
 
-Say **set a course** after a nearest-first commodity search — the Community Goal search names one
+Say **set a course** after a nearest-first search — the Community Goal search names one
 station in full — and Directive 47 plots to the system it just named, the same way it would if you
 had asked it to plot there by name. Say **set a course and take us out** and it plots and then
 walks the left panel to the launch button, exactly as *take us out* does.

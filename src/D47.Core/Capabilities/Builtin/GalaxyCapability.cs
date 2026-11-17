@@ -34,6 +34,9 @@ public static class GalaxyCapability
     /// <summary>The descriptor's id, named once so a help link cannot spell it differently.</summary>
     public const string Id = "galaxy";
 
+    /// <summary>The voice-only tool that runs a quick search and plots to its first result.</summary>
+    public const string CourseToQuickSearch = "course_to_quick_search";
+
     /// <summary>How far the commodity search looks when nobody said (#157).</summary>
     private const double DefaultDistance = 50;
 
@@ -84,8 +87,8 @@ public static class GalaxyCapability
         // What this Commander has met, and what their transcriber gets wrong (#134).
         SpokenNamesSurface? heard = null,
 
-        // Where a nearest-first commodity search puts its winner (#325): on the clipboard, the same way
-        // plot_course does, and into `lastFound` so "set a course" has something to mean.
+        // Where a nearest-first search puts its winner (#325): a commodity search on the clipboard, the same way
+        // plot_course does, and every nearest-first search into `lastFound` so "set a course" has something to mean.
         IClipboard? clipboard = null,
         Conversation.LastFoundSystem? lastFound = null,
 
@@ -125,7 +128,10 @@ public static class GalaxyCapability
         IRareIndexSource? rareIndex = null,
 
         // The live Status.json, whose Destination is the navigation panel's selection.
-        Func<Journal.GameStatus>? gameStatus = null) => new()
+        Func<Journal.GameStatus>? gameStatus = null,
+
+        // What the quick-search course command plots through.
+        NavigationSurface? navigation = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -166,8 +172,8 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, arguments,
-                        cancellationToken),
+                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, lastFound,
+                        arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -224,8 +230,34 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchStationsAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, arguments,
-                        cancellationToken),
+                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, lastFound,
+                        arguments, cancellationToken),
+            },
+            new ToolDefinition
+            {
+                Name = CourseToQuickSearch,
+                Exercise =
+                    "Say \"set course for the nearest Vista Genomics\". D47 names the nearest station with that "
+                    + "service and its system, then plots a course to the system. The model cannot do this: it is "
+                    + "refused if it asks.",
+                Description =
+                    "Run one of the fixed quick searches and plot a course to its nearest result. Spoken only — "
+                    + "the Commander reaches it by voice.",
+                Parameters =
+                [
+                    ToolParameter.OneOf(
+                        "search",
+                        "Which quick search to run.",
+                        [.. QuickSearches.All.Select(quick => quick.Name)],
+                        required: true),
+                ],
+                Protected = true,
+                SendsInput = true,
+                RefusalExample = "set course for the nearest vista genomics",
+                Handler = (arguments, cancellationToken) =>
+                    CourseToQuickSearchAsync(
+                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, lastFound,
+                        navigation, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -470,7 +502,8 @@ public static class GalaxyCapability
                     "Find the nearest station selling a named module or ship, or trading a commodity "
                     + "— cargo carried in tonnes, never an engineering material. A rare good answers "
                     + "with its one selling station and the quantity currently on offer there. For "
-                    + "something that may not be for sale, use how_to_get.",
+                    + "something that may not be for sale, use how_to_get. For a station by service "
+                    + "(Vista Genomics, Universal Cartographics, Interstellar Factors), use search_stations.",
                 Parameters =
                 [
                     ToolParameter.Text(
@@ -1102,6 +1135,70 @@ public static class GalaxyCapability
         }
     }
 
+    private static async Task<ToolResult> CourseToQuickSearchAsync(
+        IGalaxyService? galaxy,
+        Func<string?> currentSystem,
+        Configuration.SettingsService settings,
+        Func<IReadOnlyCollection<string>>? factions,
+        GalaxySearchBoard? searches,
+        Action<SearchHistoryEntry>? remember,
+        Func<DateTimeOffset>? now,
+        Func<Journal.CommanderGameState?>? gameState,
+        Conversation.LastFoundSystem? lastFound,
+        NavigationSurface? navigation,
+        ToolArguments arguments,
+        CancellationToken cancellationToken)
+    {
+        if (!arguments.TryGetString("search", out var name)
+            || QuickSearches.All.FirstOrDefault(
+                quick => string.Equals(quick.Name, name?.Trim(), StringComparison.OrdinalIgnoreCase)) is not { } quick)
+        {
+            return ToolResult.Error("No quick search was named.");
+        }
+
+        if (navigation is null)
+        {
+            return ToolResult.Error("Plotting is not available here.");
+        }
+
+        var found = lastFound ?? new Conversation.LastFoundSystem();
+        found.Remember(null);
+
+        var search = new ToolArguments(new Dictionary<string, string>(quick.Arguments, StringComparer.Ordinal));
+
+        var searched = quick.Tool == "search_stations"
+            ? await SearchStationsAsync(
+                galaxy, currentSystem, settings, factions, searches, remember, now, gameState, found, search, cancellationToken)
+                .ConfigureAwait(false)
+            : await SearchAsync(
+                galaxy, currentSystem, settings, factions, searches, remember, now, gameState, found, search, cancellationToken)
+                .ConfigureAwait(false);
+
+        if (searched.IsError)
+        {
+            return searched;
+        }
+
+        if (found.System is not { Length: > 0 } system)
+        {
+            return ToolResult.Ok($"Nothing was found for {quick.Name}, so I have plotted nothing.");
+        }
+
+        navigation.Actions.Acknowledge(
+            found.Station is { Length: > 0 } station
+                ? $"Closest {quick.Name} is {station} in {system}."
+                : $"Closest {quick.Name} is {system}.");
+
+        var plotted = await NavigationCapability
+            .Plot(
+                new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = system }),
+                navigation,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return plotted.IsError ? plotted : ToolResult.Relay(plotted.Content);
+    }
+
     private static async Task<ToolResult> SearchAsync(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
@@ -1111,6 +1208,7 @@ public static class GalaxyCapability
         Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
         Func<Journal.CommanderGameState?>? gameState,
+        Conversation.LastFoundSystem? lastFound,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1151,6 +1249,11 @@ public static class GalaxyCapability
         try
         {
             var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (query.Page == 1 && query.Sort?.Words is null)
+            {
+                lastFound?.Remember(result.Systems.Count > 0 ? result.Systems[0].Name : null);
+            }
 
             var notes = FactionNotes(corrected, result.Systems.Count == 0 ? unknown : [], known);
             var said = notes + Describe(result, query) + ReportAgeSaid(reportAge);
@@ -1245,6 +1348,7 @@ public static class GalaxyCapability
         Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
         Func<Journal.CommanderGameState?>? gameState,
+        Conversation.LastFoundSystem? lastFound,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -1310,6 +1414,13 @@ public static class GalaxyCapability
         try
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (query.Page == 1 && query.Sort?.Words is null)
+            {
+                lastFound?.Remember(
+                    result.Stations.Count > 0 ? result.Stations[0].SystemName : null,
+                    result.Stations.Count > 0 ? result.Stations[0].Name : null);
+            }
 
             var said = FactionNotes(corrected, result.Stations.Count == 0 ? unknown : [], known)
                        + DescribeStations(result, query)

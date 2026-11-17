@@ -38,7 +38,24 @@ public static class QuickSearches
         $"find the nearest {search.Name}",
     ];
 
+    /// <summary>The four phrases that set a course to the nearest result of a quick search.</summary>
+    public static IEnumerable<string> CoursePhrasesOf(QuickSearch search) =>
+    [
+        $"set course for nearest {search.Name}",
+        $"set a course for nearest {search.Name}",
+        $"plot a course to nearest {search.Name}",
+        $"plot a route to nearest {search.Name}",
+    ];
+
     public static IEnumerable<DynamicCommand> Phrases() =>
         All.SelectMany(search => PhrasesOf(search).Select(phrase =>
             new DynamicCommand(phrase, GalaxyCapability.Id, search.Tool, search.Arguments)));
+
+    public static IEnumerable<DynamicCommand> CoursePhrases() =>
+        All.SelectMany(search => CoursePhrasesOf(search).Select(phrase =>
+            new DynamicCommand(
+                phrase,
+                GalaxyCapability.Id,
+                GalaxyCapability.CourseToQuickSearch,
+                new Dictionary<string, string>(StringComparer.Ordinal) { ["search"] = search.Name })));
 }
