@@ -24,23 +24,13 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
     public const string HeadsetSummaryText = "Where your credits came from and went.";
 
-    private static readonly TableColumn[] KindColumns =
-    [
-        new("Kind", ColumnFit.Fill),
-        new("In"),
-        new("Out"),
-        new("Entries"),
-        new("Open", ColumnFit.Fixed) { Fixed = 20 },
-    ];
-
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
     private readonly Func<DateTimeOffset> _now;
     private readonly CreditsChoice _choice;
     private readonly PanelNavigator _nav;
     private readonly bool _headset;
-    private readonly ColumnWidthMemory? _columnWidths;
-    private readonly SortHeader<CreditKindRow> _head = new("CreditsHead", CreditsModel.KindHeads());
+    private readonly ArrangedTable<CreditKindRow> _columns;
     private readonly Segment _period = CreditsKit.PeriodSegment();
     private readonly WrapPanel _controls = new() { ItemSpacing = 16, LineSpacing = Gaps.Tile, Margin = new Thickness(0, 0, 0, 8) };
     private readonly StackPanel _notice = new();
@@ -58,7 +48,8 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
         CreditsChoice choice,
         PanelNavigator nav,
         bool headset = false,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _state = state;
         _history = history;
@@ -66,9 +57,9 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
         _choice = choice;
         _nav = nav;
         _headset = headset;
-        _columnWidths = columnWidths;
-
-        _head.Changed += Draw;
+        _columns = new ArrangedTable<CreditKindRow>(
+            TableId, Fields(), columnArrangements, headset ? null : columnWidths, headset ? 12 : 16, headName: "CreditsHead");
+        _columns.Changed += Draw;
         _period.SelectedIndex = choice.Period;
         _period.SelectionChanged += (_, _) =>
         {
@@ -271,16 +262,20 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
     private StackPanel Table(IReadOnlyList<CreditKindRow> kinds, IReadOnlyList<CreditKindRow> moved)
     {
+        var columns = _columns;
+        columns.Refresh();
+
+        var rows = new StackPanel { Spacing = Gaps.Tile };
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
-        var layout = new TableLayout(TableId, KindColumns, _columnWidths, _headset ? 12 : 16);
 
         if (kinds.Count > 0)
         {
-            table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
+            table.Children.Add(LedgerTables.Arranger(columns));
+            rows.Children.Add(LedgerTables.Head(columns, new Thickness(LedgerTables.RowInset, 0)));
 
-            foreach (var row in _head.Sort(kinds))
+            foreach (var row in columns.Sort(kinds))
             {
-                table.Children.Add(RowView(row, layout));
+                rows.Children.Add(RowView(row, columns));
             }
         }
 
@@ -288,30 +283,48 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
         {
             var label = CreditsKit.Label(CreditsModel.MovedLabel);
             label.Margin = new Thickness(14, 12, 0, 4);
-            table.Children.Add(label);
+            rows.Children.Add(label);
 
             foreach (var row in moved)
             {
-                table.Children.Add(RowView(row, layout));
+                rows.Children.Add(RowView(row, columns));
             }
         }
+
+        table.Children.Add(LedgerTables.Sideways(columns, rows));
 
         return table;
     }
 
-    private Button RowView(CreditKindRow row, TableLayout layout)
+    private IReadOnlyList<TableField<CreditKindRow>> Fields()
     {
-        var grid = layout.Row([]);
+        var heads = CreditsModel.KindHeads();
+
+        return
+        [
+            StarSystemPage.Headed(heads[0], new TableColumn("Kind", ColumnFit.Fill), NameOf),
+            StarSystemPage.Headed(heads[1], new TableColumn("In"), row => Figure(row.In, 1, FigureInk(row)), right: true),
+            StarSystemPage.Headed(heads[2], new TableColumn("Out"), row => Figure(row.Out, -1, FigureInk(row)), right: true),
+            StarSystemPage.Headed(
+                heads[3],
+                new TableColumn("Entries"),
+                row => CreditsKit.Mono(CreditsModel.Number(row.Count), TypeScale.Small, ThemeManager.AKey, right: true),
+                right: true),
+            LedgerTables.Control<CreditKindRow>(
+                new TableColumn("Open", ColumnFit.Fixed) { Fixed = 20 },
+                _ => CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey),
+                right: true),
+            LedgerTables.Added<CreditKindRow>(
+                "Events", new TableColumn("Events", ColumnFit.Fill) { Min = 160 }, row => TableCells.List(row.Events), "Journal events"),
+        ];
+    }
+
+    private static string FigureInk(CreditKindRow row) => row.Kind == CreditKind.CarrierBank ? ThemeManager.YellowKey : ThemeManager.AKey;
+
+    private Button RowView(CreditKindRow row, ArrangedTable<CreditKindRow> columns)
+    {
+        var grid = columns.Row(row);
         grid.VerticalAlignment = VerticalAlignment.Center;
-
-        var bank = row.Kind == CreditKind.CarrierBank;
-        var figure = bank ? ThemeManager.YellowKey : ThemeManager.AKey;
-
-        CreditsKit.Place(grid, 0, NameOf(row));
-        CreditsKit.Place(grid, 1, Figure(row.In, 1, figure));
-        CreditsKit.Place(grid, 2, Figure(row.Out, -1, figure));
-        CreditsKit.Place(grid, 3, CreditsKit.Mono(CreditsModel.Number(row.Count), TypeScale.Small, ThemeManager.AKey, right: true));
-        CreditsKit.Place(grid, 4, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
 
         var button = ListRow.Dress(new Button
         {

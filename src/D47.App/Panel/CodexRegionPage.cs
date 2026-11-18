@@ -17,14 +17,6 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 {
     public const string TableId = "Codex.Entries";
 
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Entry", ColumnFit.Fill),
-        new("System", ColumnFit.Fill),
-        new("Time"),
-        new("Status"),
-    ];
-
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
     private readonly Func<DateTimeOffset> _now;
@@ -32,18 +24,12 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     private readonly int? _regionId;
     private readonly bool _headset;
     private readonly Func<string, Task<bool>>? _copy;
-    private TableLayout _layout;
-    private readonly ColumnWidthMemory? _columnWidths;
     private readonly PanelNavigator? _nav;
     private readonly CodexTable _table;
-    private readonly SortHeader<CodexEntryRow> _head = new("CodexEntryHead", CodexModel.EntryHeads());
+    private readonly ArrangedTable<CodexEntryRow> _columns;
+    private readonly ArrangedList _list;
     private readonly Segment _period = CodexKit.PeriodSegment();
     private readonly Grid _periodRow;
-    private readonly StackPanel _top = new();
-    private readonly ItemsControl _list;
-    private readonly ScrollViewer _scroll;
-
-    private IReadOnlyList<object> _shown = [];
     private CodexLedger? _seenLedger;
     private HistoryState _seenHistory;
     private long _seenMinute;
@@ -60,7 +46,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         PanelNavigator? nav = null,
         CodexTable? table = null,
         ColumnWidthMemory? columnWidths = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _copy = copy;
         _state = state;
@@ -69,13 +56,26 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         _choice = choice;
         _regionId = regionId;
         _headset = headset;
-        _columnWidths = columnWidths;
-        _layout = NewLayout();
         _nav = nav;
         _table = table ?? CodexCatalogue.Table;
 
         _periodRow = CodexKit.PeriodRow(_period);
-        _head.Changed += Draw;
+        _columns = new ArrangedTable<CodexEntryRow>(
+            TableId, Fields(), columnArrangements, headset ? null : columnWidths, headset ? 12 : 16, headName: "CodexEntryHead");
+        _list = new ArrangedList(
+            headset,
+            "CodexRows",
+            item => item switch
+            {
+                CodexGroup group => GroupView(group),
+                CodexEntryRow row => RowView(row),
+                _ => null,
+            });
+        _columns.Changed += () =>
+        {
+            _columns.Refresh();
+            Draw();
+        };
         _period.SelectedIndex = choice.Period;
         _period.SelectionChanged += (_, _) =>
         {
@@ -83,20 +83,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
             Draw();
         };
 
-        _list = new ItemsControl
-        {
-            Name = "CodexRows",
-            ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => new VirtualizingStackPanel()),
-            ItemTemplate = new FuncDataTemplate<object>((item, _) => item switch
-            {
-                CodexGroup group => GroupView(group),
-                CodexEntryRow row => RowView(row),
-                _ => null,
-            }),
-        };
-
         Margin = new Thickness(14);
-        Content = LoadoutPages.HeaderAndList(_top, _list, out _scroll);
+        Content = _list.View;
         Draw();
     }
 
@@ -165,57 +153,56 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 
         var view = Build();
 
-        _top.Children.Clear();
+        _list.Top.Children.Clear();
 
         if (view.Running)
         {
-            _top.Children.Add(RoutingKit.Ink(CodexModel.RunningText, TypeScale.ControlLarge, ThemeManager.GreyKey, wrap: true));
+            _list.Top.Children.Add(RoutingKit.Ink(CodexModel.RunningText, TypeScale.ControlLarge, ThemeManager.GreyKey, wrap: true));
             Rows([]);
             return;
         }
 
         CodexKit.ShowSince(_periodRow, view.OnRecordSince, view.Failed);
-        _top.Children.Add(_periodRow);
+        _list.Top.Children.Add(_periodRow);
 
         if (view.Failed)
         {
-            _top.Children.Add(CodexKit.Warning(view.OnRecordSince));
+            _list.Top.Children.Add(CodexKit.Warning(view.OnRecordSince));
         }
 
         var count = view.Shown == view.Entries
             ? CodexModel.EntryCount(view.Entries)
             : $"{CodexModel.Number(view.Shown)} of {CodexModel.EntryCount(view.Entries)}";
 
-        _top.Children.Add(StarSystemPage.GroupHead(
+        _list.Top.Children.Add(StarSystemPage.GroupHead(
             CodexModel.PeriodName(Period) + " · " + CodexModel.RegionName(_regionId), CodexKit.Line(view.Line), count));
 
         if (view.Empty is { } empty)
         {
-            _top.Children.Add(CreditsKit.Message(empty));
-            _top.Children.Add(DiscoveriesRow());
+            _list.Top.Children.Add(CreditsKit.Message(empty));
+            _list.Top.Children.Add(DiscoveriesRow());
             Rows([]);
             return;
         }
 
-        _top.Children.Add(CodexKit.Strip(view.Entries, view.New, view.Logged, "Subcategories", view.Subcategories));
-        _top.Children.Add(DiscoveriesRow());
+        _list.Top.Children.Add(CodexKit.Strip(view.Entries, view.New, view.Logged, "Subcategories", view.Subcategories));
+        _list.Top.Children.Add(DiscoveriesRow());
 
         if (view.Shown == 0)
         {
-            _top.Children.Add(CreditsKit.Message(CodexModel.NoEntryMatchText));
+            _list.Top.Children.Add(CreditsKit.Message(CodexModel.NoEntryMatchText));
             Rows([]);
             return;
         }
 
-        _layout = NewLayout();
-        _top.Children.Add(CreditsKit.HeaderRow(_head, _layout, i => HorizontalAlignment.Left));
+        _list.Top.Children.Add(LedgerTables.Arranger(_columns));
 
         var items = new List<object>();
 
         foreach (var group in view.Groups)
         {
             items.Add(group);
-            items.AddRange(_head.Sort(group.Rows));
+            items.AddRange(_columns.Sort(group.Rows));
         }
 
         Rows(items);
@@ -263,20 +250,21 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     }
 
     /// <summary>Shows <paramref name="items"/>, leaving the list and its scroll position alone when they are the items already shown.</summary>
-    private void Rows(IReadOnlyList<object> items)
+    private void Rows(IReadOnlyList<object> items) =>
+        _list.Show(_columns, items, new Thickness(LedgerTables.RowInset, 0));
+
+    private IReadOnlyList<TableField<CodexEntryRow>> Fields()
     {
-        _scroll.IsVisible = items.Count > 0;
+        var heads = CodexModel.EntryHeads();
 
-        if (items.Count > 0 && _shown.SequenceEqual(items))
-        {
-            return;
-        }
-
-        _shown = items;
-        _list.ItemsSource = items;
+        return
+        [
+            StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), row => CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
+            StarSystemPage.Headed(heads[1], new TableColumn("System", ColumnFit.Fill), row => SystemCell(row, _copy)),
+            StarSystemPage.Headed(heads[2], new TableColumn("Time"), row => CreditsKit.Mono(CodexModel.DateTime(row.At), TypeScale.Small, ThemeManager.GreyKey, right: false)),
+            StarSystemPage.Headed(heads[3], new TableColumn("Status"), StatusCell),
+        ];
     }
-
-    private TableLayout NewLayout() => new(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
 
     private static DockPanel GroupView(CodexGroup group)
     {
@@ -292,13 +280,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 
     private Button RowView(CodexEntryRow row)
     {
-        var grid = _layout.Row([]);
+        var grid = _columns.Row(row);
         grid.VerticalAlignment = VerticalAlignment.Center;
-
-        CreditsKit.Place(grid, 0, CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));
-        CreditsKit.Place(grid, 1, SystemCell(row, _copy));
-        CreditsKit.Place(grid, 2, CreditsKit.Mono(CodexModel.DateTime(row.At), TypeScale.Small, ThemeManager.GreyKey, right: false));
-        CreditsKit.Place(grid, 3, StatusCell(row));
 
         var button = ListRow.Dress(new Button
         {

@@ -587,6 +587,9 @@ public static class CodexModel
     /// <summary>The index of "Reported in" in <see cref="MissingHeads"/>, the column the default order follows.</summary>
     public const int MissingDefaultColumn = 4;
 
+    /// <summary>The key of "Reported in" in the Discoveries table's fields.</summary>
+    public const string MissingDefaultKey = "ReportedIn";
+
     /// <summary>The regions table's columns.</summary>
     public static IReadOnlyList<SortColumn<CodexRegionRow>> RegionHeads() =>
     [

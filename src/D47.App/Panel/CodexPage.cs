@@ -31,25 +31,13 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     public const string TableId = "Codex.Regions";
 
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Region", ColumnFit.Fill),
-        new("New"),
-        new("Logged"),
-        new("Entries"),
-        new("Discoveries"),
-        new("Open", ColumnFit.Fixed) { Fixed = 16 },
-    ];
-
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
     private readonly Func<DateTimeOffset> _now;
     private readonly CodexChoice _choice;
     private readonly PanelNavigator _nav;
     private readonly bool _headset;
-    private TableLayout _layout;
-    private readonly ColumnWidthMemory? _columnWidths;
-    private readonly SortHeader<CodexRegionRow> _head = new("CodexHead", CodexModel.RegionHeads());
+    private readonly ArrangedTable<CodexRegionRow> _columns;
     private readonly Segment _period = CodexKit.PeriodSegment();
     private readonly Grid _row;
     private readonly StackPanel _body = new();
@@ -66,7 +54,8 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         CodexChoice choice,
         PanelNavigator nav,
         bool headset = false,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _state = state;
         _history = history;
@@ -74,11 +63,11 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         _choice = choice;
         _nav = nav;
         _headset = headset;
-        _columnWidths = columnWidths;
-        _layout = NewLayout();
 
+        _columns = new ArrangedTable<CodexRegionRow>(
+            TableId, Fields(), columnArrangements, headset ? null : columnWidths, headset ? 12 : 16, headName: "CodexHead");
         _row = CodexKit.PeriodRow(_period);
-        _head.Changed += Draw;
+        _columns.Changed += Draw;
         _period.SelectedIndex = choice.Period;
         _period.SelectionChanged += (_, _) =>
         {
@@ -236,7 +225,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         var view = Build();
 
         _body.Children.Clear();
-        _layout = NewLayout();
+        _columns.Refresh();
 
         if (view.Running)
         {
@@ -302,35 +291,48 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     private StackPanel Table(IReadOnlyList<CodexRegionRow> rows, bool header = true)
     {
+        var columns = _columns;
+        var list = new StackPanel { Spacing = Gaps.Tile };
         var table = new StackPanel { Spacing = Gaps.Tile };
+
         if (header)
         {
-            table.Children.Add(CreditsKit.HeaderRow(_head, _layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
+            table.Children.Add(LedgerTables.Arranger(columns));
+            list.Children.Add(LedgerTables.Head(columns, new Thickness(LedgerTables.RowInset, 0)));
         }
 
-        foreach (var row in _head.Sort(rows))
+        foreach (var row in columns.Sort(rows))
         {
-            table.Children.Add(RowView(row, _layout));
+            list.Children.Add(RowView(row, columns));
         }
+
+        table.Children.Add(LedgerTables.Sideways(columns, list));
 
         return table;
     }
 
-    private TableLayout NewLayout() => new(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
-
-    private Button RowView(CodexRegionRow row, TableLayout layout)
+    private IReadOnlyList<TableField<CodexRegionRow>> Fields()
     {
-        var grid = layout.Row([]);
-        grid.VerticalAlignment = VerticalAlignment.Center;
+        var heads = CodexModel.RegionHeads();
 
-        CreditsKit.Place(grid, 0, NameOf(row));
-        CreditsKit.Place(grid, 1, PeriodFigure(row, row.New, ThemeManager.BlueKey));
-        CreditsKit.Place(grid, 2, PeriodFigure(row, row.Logged, ThemeManager.AKey));
-        CreditsKit.Place(grid, 3, PeriodFigure(row, row.Entries, ThemeManager.AKey));
+        return
+        [
+            StarSystemPage.Headed(heads[0], new TableColumn("Region", ColumnFit.Fill), NameOf),
+            StarSystemPage.Headed(heads[1], new TableColumn("New"), row => PeriodFigure(row, row.New, ThemeManager.BlueKey), right: true),
+            StarSystemPage.Headed(heads[2], new TableColumn("Logged"), row => PeriodFigure(row, row.Logged, ThemeManager.AKey), right: true),
+            StarSystemPage.Headed(heads[3], new TableColumn("Entries"), row => PeriodFigure(row, row.Entries, ThemeManager.AKey), right: true),
+            StarSystemPage.Headed(heads[4], new TableColumn("Discoveries"), RecordedCell, right: true),
+            LedgerTables.Control(
+                new TableColumn("Open", ColumnFit.Fixed) { Fixed = 16 },
+                _ => CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey),
+                heads[5],
+                right: true),
+        ];
+    }
 
-        if (row is { Recorded: { } recorded, Known: { } known })
-        {
-            CreditsKit.Place(grid, 4, new StackPanel
+    private static Control RecordedCell(CodexRegionRow row) =>
+        row is { Recorded: { } recorded, Known: { } known }
+            ? new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -339,10 +341,13 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
                     CreditsKit.Mono(CodexModel.Number(recorded), TypeScale.Small, ThemeManager.WhiteKey, right: true),
                     CreditsKit.Mono(" / " + CodexModel.Number(known), TypeScale.Small, ThemeManager.GreyKey, right: true),
                 },
-            });
-        }
+            }
+            : new Border();
 
-        CreditsKit.Place(grid, 5, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
+    private Button RowView(CodexRegionRow row, ArrangedTable<CodexRegionRow> columns)
+    {
+        var grid = columns.Row(row);
+        grid.VerticalAlignment = VerticalAlignment.Center;
 
         var button = ListRow.Dress(new Button
         {

@@ -16,30 +16,16 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
 {
     public const string TableId = "Credits.Transactions";
 
-    private static readonly TableColumn[] TxColumns =
-    [
-        new("Time"),
-        new("Kind", ColumnFit.Fill),
-        new("Amount"),
-        new("Balance"),
-    ];
-
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
     private readonly Func<DateTimeOffset> _now;
     private readonly CreditsChoice _choice;
     private readonly CreditKind? _kind;
     private readonly bool _headset;
-    private readonly ColumnWidthMemory? _columnWidths;
-    private TableLayout _layout;
-    private readonly SortHeader<CreditTxRow> _head = new("CreditsTxHead", CreditsModel.TxHeads());
+    private readonly ArrangedTable<CreditTxRow> _columns;
+    private readonly ArrangedList _table;
     private readonly Segment _period = CreditsKit.PeriodSegment();
     private readonly WrapPanel _controls = new() { ItemSpacing = 16, LineSpacing = Gaps.Tile, Margin = new Thickness(0, 0, 0, 8) };
-    private readonly StackPanel _top = new();
-    private readonly ItemsControl _list;
-    private readonly ScrollViewer _scroll;
-
-    private IReadOnlyList<CreditTxRow> _shown = [];
     private CreditLedger? _seenLedger;
     private HistoryState _seenHistory;
     private long _seenMinute;
@@ -52,7 +38,8 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         CreditsChoice choice,
         CreditKind? kind,
         bool headset = false,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _state = state;
         _history = history;
@@ -60,10 +47,14 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         _choice = choice;
         _kind = kind;
         _headset = headset;
-        _columnWidths = columnWidths;
-        _layout = NewLayout();
-
-        _head.Changed += Draw;
+        _columns = new ArrangedTable<CreditTxRow>(
+            TableId, Fields(), columnArrangements, headset ? null : columnWidths, headset ? 12 : 16, headName: "CreditsTxHead");
+        _table = new ArrangedList(headset, "CreditsRows", item => item is CreditTxRow row ? RowView(row) : null);
+        _columns.Changed += () =>
+        {
+            _columns.Refresh();
+            Draw();
+        };
         _period.SelectedIndex = choice.Period;
         _period.SelectionChanged += (_, _) =>
         {
@@ -73,15 +64,8 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
 
         _controls.Children.Add(_period);
 
-        _list = new ItemsControl
-        {
-            Name = "CreditsRows",
-            ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => new VirtualizingStackPanel()),
-            ItemTemplate = new FuncDataTemplate<CreditTxRow>((row, _) => row is null ? null : RowView(row)),
-        };
-
         Margin = new Thickness(14);
-        Content = LoadoutPages.HeaderAndList(_top, _list, out _scroll);
+        Content = _table.View;
         Draw();
     }
 
@@ -134,22 +118,22 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
 
         var view = Build();
 
-        _top.Children.Clear();
+        _table.Top.Children.Clear();
         _controls.IsVisible = !view.Running;
 
         if (view.Running)
         {
-            _top.Children.Add(RoutingKit.Ink(CreditsModel.RunningText, TypeScale.ControlLarge, ThemeManager.GreyKey, wrap: true));
+            _table.Top.Children.Add(RoutingKit.Ink(CreditsModel.RunningText, TypeScale.ControlLarge, ThemeManager.GreyKey, wrap: true));
             Rows([]);
             return;
         }
 
         if (view.Failed)
         {
-            _top.Children.Add(CreditsKit.Warning(view.OnRecordSince));
+            _table.Top.Children.Add(CreditsKit.Warning(view.OnRecordSince));
         }
 
-        _top.Children.Add(_controls);
+        _table.Top.Children.Add(_controls);
 
         var title = _kind is { } kind
             ? CombatStatsPage.PeriodName(Period) + " · " + CreditsModel.KindName(kind)
@@ -158,11 +142,11 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
             ? CreditsModel.EntryCount(view.Entries)
             : $"{CreditsModel.Number(view.Shown)} of {CreditsModel.EntryCount(view.Entries)}";
 
-        _top.Children.Add(StarSystemPage.GroupHead(title, Description(view), count));
+        _table.Top.Children.Add(StarSystemPage.GroupHead(title, Description(view), count));
 
         if (view.Entries == 0)
         {
-            _top.Children.Add(CreditsKit.Message(
+            _table.Top.Children.Add(CreditsKit.Message(
                 _kind is { } empty ? CreditsModel.EmptyKindText(empty, Period) : CreditsModel.EmptyText(Period)));
             Rows([]);
             return;
@@ -170,45 +154,31 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
 
         if (view.Shown == 0)
         {
-            _top.Children.Add(CreditsKit.Message(CreditsModel.NoMatchText));
+            _table.Top.Children.Add(CreditsKit.Message(CreditsModel.NoMatchText));
             Rows([]);
             return;
         }
 
         if (view.HasGap)
         {
-            _top.Children.Add(CreditsKit.Note(CreditsModel.GapLine, 6));
+            _table.Top.Children.Add(CreditsKit.Note(CreditsModel.GapLine, 6));
         }
 
         if (view.HasNoBalance)
         {
-            _top.Children.Add(CreditsKit.Note(CreditsModel.NoBalanceLine, 6));
+            _table.Top.Children.Add(CreditsKit.Note(CreditsModel.NoBalanceLine, 6));
         }
 
-        _layout = NewLayout();
+        _table.Top.Children.Add(LedgerTables.Arranger(_columns));
 
-        var header = CreditsKit.HeaderRow(_head, _layout, i => i is 0 or 1 ? HorizontalAlignment.Left : HorizontalAlignment.Right);
-        header.Margin = new Thickness(14, 10, 14, 0);
-        _top.Children.Add(header);
-
-        IReadOnlyList<CreditTxRow> rows = view.Fold is { } fold ? [.. _head.Sort(view.Rows), fold] : _head.Sort(view.Rows);
+        IReadOnlyList<CreditTxRow> rows = view.Fold is { } fold ? [.. _columns.Sort(view.Rows), fold] : _columns.Sort(view.Rows);
 
         Rows(rows);
     }
 
     /// <summary>Shows <paramref name="rows"/>, leaving the list and its scroll position alone when they are the rows already shown.</summary>
-    private void Rows(IReadOnlyList<CreditTxRow> rows)
-    {
-        _scroll.IsVisible = rows.Count > 0;
-
-        if (rows.Count > 0 && _shown.SequenceEqual(rows))
-        {
-            return;
-        }
-
-        _shown = rows;
-        _list.ItemsSource = rows;
-    }
+    private void Rows(IReadOnlyList<CreditTxRow> rows) =>
+        _table.Show(_columns, [.. rows.Cast<object>()], new Thickness(LedgerTables.RowInset, 10, LedgerTables.RowInset, 0));
 
     private static TextBlock Description(CreditTxView view)
     {
@@ -230,8 +200,6 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         return note;
     }
 
-    private TableLayout NewLayout() => new(TableId, TxColumns, _columnWidths, _headset ? 12 : 16);
-
     /// <summary>"2026-10-17 19:32", or "10-17 19:32" on the big panel; a folded row gives its first and last dates.</summary>
     public string TimeText(CreditTxRow row)
     {
@@ -242,25 +210,37 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
             : row.At.UtcDateTime.ToString(format, CultureInfo.InvariantCulture);
     }
 
+    private IReadOnlyList<TableField<CreditTxRow>> Fields()
+    {
+        var heads = CreditsModel.TxHeads();
+
+        return
+        [
+            StarSystemPage.Headed(heads[0], new TableColumn("Time"), row => CreditsKit.Mono(TimeText(row), TypeScale.Small, ThemeManager.GreyKey, right: false)),
+            StarSystemPage.Headed(heads[1], new TableColumn("Kind", ColumnFit.Fill), KindCell),
+            StarSystemPage.Headed(
+                heads[2],
+                new TableColumn("Amount"),
+                row => CreditsKit.Mono(
+                    CreditsModel.Signed(row.Amount),
+                    TypeScale.Small,
+                    row.Kind == CreditKind.CarrierBank ? ThemeManager.YellowKey : ThemeManager.AKey,
+                    right: true),
+                right: true),
+            StarSystemPage.Headed(
+                heads[3],
+                new TableColumn("Balance"),
+                row => row.Balance is { } balance
+                    ? CreditsKit.Mono(CreditsModel.Credits(balance), TypeScale.Small, ThemeManager.WhiteKey, right: true)
+                    : CreditsKit.Mono(CreditsKit.Dash, TypeScale.Small, ThemeManager.Grey2Key, right: true),
+                right: true),
+        ];
+    }
+
     private Border RowView(CreditTxRow row)
     {
-        var grid = _layout.Row([]);
+        var grid = _columns.Row(row);
         grid.VerticalAlignment = VerticalAlignment.Center;
-
-        var bank = row.Kind == CreditKind.CarrierBank;
-
-        CreditsKit.Place(grid, 0, CreditsKit.Mono(TimeText(row), TypeScale.Small, ThemeManager.GreyKey, right: false));
-        CreditsKit.Place(grid, 1, KindCell(row));
-        CreditsKit.Place(
-            grid,
-            2,
-            CreditsKit.Mono(CreditsModel.Signed(row.Amount), TypeScale.Small, bank ? ThemeManager.YellowKey : ThemeManager.AKey, right: true));
-        CreditsKit.Place(
-            grid,
-            3,
-            row.Balance is { } balance
-                ? CreditsKit.Mono(CreditsModel.Credits(balance), TypeScale.Small, ThemeManager.WhiteKey, right: true)
-                : CreditsKit.Mono(CreditsKit.Dash, TypeScale.Small, ThemeManager.Grey2Key, right: true));
 
         var border = new Border
         {

@@ -21,38 +21,23 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 
     public const string TableId = "Codex.Discoveries";
 
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Mark", ColumnFit.Fixed) { Fixed = 44 },
-        new("Entry", ColumnFit.Fill),
-        new("Category", ColumnFit.Fill),
-        new("SubCategory", ColumnFit.Fill),
-        new("ReportedIn"),
-        new("Status"),
-    ];
-
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
     private readonly int? _regionId;
     private readonly CodexTable _table;
     private readonly bool _headset;
-    private TableLayout _layout;
-    private readonly ColumnWidthMemory? _columnWidths;
     private readonly PanelNavigator? _nav;
     private readonly Func<BodySearchLink?>? _bodySearch;
     private readonly CodexPictureSet? _pictures;
     private readonly Dictionary<long, (Bitmap Bitmap, string Name)> _thumbs = [];
     private readonly Dictionary<string, Bitmap?> _families = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<long, (CodexMissingRow Row, Border Square)> _squares = [];
-    private readonly SortHeader<CodexMissingRow> _head = new("CodexMissingHead", CodexModel.MissingHeads(), new SortOrder(CodexModel.MissingDefaultColumn, SortDirection.Descending));
+    private readonly ArrangedTable<CodexMissingRow> _columns;
+    private readonly ArrangedList _list;
     private readonly CodexDiscoveryFilters _filters = new();
-    private readonly StackPanel _top = new();
-    private readonly ItemsControl _list;
-    private readonly ScrollViewer _scroll;
 
     private IReadOnlySet<CodexPictureKey> _local = new HashSet<CodexPictureKey>();
     private IReadOnlyList<CodexPictureRow> _stock = [];
-    private IReadOnlyList<CodexMissingRow> _shown = [];
     private CodexLedger? _seenLedger;
     private HistoryState _seenHistory;
     private string _query = string.Empty;
@@ -67,7 +52,8 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         PanelNavigator? nav = null,
         CodexPictureSet? pictures = null,
         ColumnWidthMemory? columnWidths = null,
-        Func<BodySearchLink?>? bodySearch = null)
+        Func<BodySearchLink?>? bodySearch = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _nav = nav;
         _bodySearch = bodySearch;
@@ -78,21 +64,19 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         _regionId = regionId;
         _table = table ?? CodexCatalogue.Table;
         _headset = headset;
-        _columnWidths = columnWidths;
-        _layout = NewLayout();
 
-        _head.Changed += Draw;
+        _columns = new ArrangedTable<CodexMissingRow>(
+            TableId, Fields(), columnArrangements, headset ? null : columnWidths, headset ? 12 : 16, CodexModel.MissingDefaultKey, "CodexMissingHead");
+        _list = new ArrangedList(headset, "CodexMissingRows", item => item is CodexMissingRow row ? RowView(row) : null, _squares.Clear);
+        _columns.Changed += () =>
+        {
+            _columns.Refresh();
+            Draw();
+        };
         _filters.Changed += (_, _) => Draw();
 
-        _list = new ItemsControl
-        {
-            Name = "CodexMissingRows",
-            ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => new VirtualizingStackPanel()),
-            ItemTemplate = new FuncDataTemplate<object>((item, _) => item is CodexMissingRow row ? RowView(row) : null),
-        };
-
         Margin = new Thickness(14);
-        Content = LoadoutPages.HeaderAndList(_top, _list, out _scroll);
+        Content = _list.View;
         Draw();
     }
 
@@ -109,7 +93,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _head.Reset();
+        _columns.Reset();
         Refresh();
 
         foreach (var (row, square) in _squares.Values)
@@ -154,69 +138,61 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         if (hasSearch != _seenSearch)
         {
             _seenSearch = hasSearch;
-            _shown = [];
+            _list.Forget();
         }
 
         var view = Build();
 
-        _top.Children.Clear();
+        _list.Top.Children.Clear();
 
         if (view.Running)
         {
-            _top.Children.Add(RoutingKit.Ink(CodexModel.RunningText, TypeScale.ControlLarge, ThemeManager.GreyKey, wrap: true));
+            _list.Top.Children.Add(RoutingKit.Ink(CodexModel.RunningText, TypeScale.ControlLarge, ThemeManager.GreyKey, wrap: true));
             Rows([]);
             return;
         }
 
-        _top.Children.Add(Intro(view));
+        _list.Top.Children.Add(Intro(view));
 
         if (view.Failed)
         {
-            _top.Children.Add(CodexKit.Warning(view.OnRecordSince));
+            _list.Top.Children.Add(CodexKit.Warning(view.OnRecordSince));
         }
 
         var name = CodexModel.RegionName(_regionId);
 
-        _top.Children.Add(StarSystemPage.GroupHead(
+        _list.Top.Children.Add(StarSystemPage.GroupHead(
             "Discoveries · " + name, CodexKit.Line(CodexModel.DiscoveriesGroupLine(_filters.Filter.Status))));
-        _top.Children.Add(CodexKit.Strip(Strip(view)));
+        _list.Top.Children.Add(CodexKit.Strip(Strip(view)));
 
         if (view.Known == 0)
         {
-            _top.Children.Add(CreditsKit.Message(view.Empty!));
+            _list.Top.Children.Add(CreditsKit.Message(view.Empty!));
             Rows([]);
             return;
         }
 
         _filters.Show(view.Categories, view.SubCategories, view.Shown, view.Known);
-        _top.Children.Add(_filters);
-        _top.Children.Add(Note(CodexModel.DiscoveriesNote(view.OnRecordSince, view.Uncovered)));
+        _list.Top.Children.Add(_filters);
+        _list.Top.Children.Add(Note(CodexModel.DiscoveriesNote(view.OnRecordSince, view.Uncovered)));
 
         if (view.Empty is { } empty)
         {
-            _top.Children.Add(CreditsKit.Message(empty));
+            _list.Top.Children.Add(CreditsKit.Message(empty));
             Rows([]);
             return;
         }
 
         if (view.Shown == 0)
         {
-            _top.Children.Add(CreditsKit.Message(CodexModel.NoMissingMatchText));
+            _list.Top.Children.Add(CreditsKit.Message(CodexModel.NoMissingMatchText));
             Rows([]);
             return;
         }
 
-        _layout = NewLayout();
-        var header = CreditsKit.HeaderRow(_head, _layout, i => HorizontalAlignment.Left);
+        _list.Top.Children.Add(LedgerTables.Arranger(_columns));
 
-        if (_bodySearch is not null)
-        {
-            header.Margin = new Thickness(14, 0, 14 + Gaps.Tile + SearchWidth, 0);
-        }
-
-        _top.Children.Add(header);
-
-        Rows(_head.Sort(view.Rows));
+        Rows(_columns.Sort(view.Rows));
     }
 
     private static StripCell[] Strip(CodexDiscoveriesView view) =>
@@ -245,39 +221,42 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     }
 
     /// <summary>Shows <paramref name="items"/>, leaving the list and its scroll position alone when they are the items already shown.</summary>
-    private void Rows(IReadOnlyList<CodexMissingRow> items)
+    private void Rows(IReadOnlyList<CodexMissingRow> items) =>
+        _list.Show(
+            _columns,
+            [.. items.Cast<object>()],
+            new Thickness(LedgerTables.RowInset, 0, LedgerTables.RowInset + (_bodySearch is not null ? Gaps.Tile + SearchWidth : 0), 0));
+
+    private IReadOnlyList<TableField<CodexMissingRow>> Fields()
     {
-        _scroll.IsVisible = items.Count > 0;
+        var heads = CodexModel.MissingHeads();
 
-        if (items.Count > 0 && _shown.SequenceEqual(items))
-        {
-            return;
-        }
-
-        _shown = items;
-        _squares.Clear();
-        _list.ItemsSource = items;
+        return
+        [
+            LedgerTables.Control(new TableColumn("Mark", ColumnFit.Fixed) { Fixed = 44 }, Thumbnail, heads[0]),
+            StarSystemPage.Headed(heads[1], new TableColumn("Entry", ColumnFit.Fill), row => CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
+            StarSystemPage.Headed(heads[2], new TableColumn("Category", ColumnFit.Fill), row => CreditsKit.Line(row.Category, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey)),
+            StarSystemPage.Headed(heads[3], new TableColumn("SubCategory", ColumnFit.Fill), row => CreditsKit.Line(row.SubCategory, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey)),
+            StarSystemPage.Headed(heads[4], new TableColumn(CodexModel.MissingDefaultKey), row => CreditsKit.Mono(CodexModel.Number(row.Systems), TypeScale.Small, ThemeManager.AKey, right: false)),
+            StarSystemPage.Headed(heads[5], new TableColumn("Status"), StatusCell),
+        ];
     }
 
-    private TableLayout NewLayout() => new(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
+    private static TextBlock StatusCell(CodexMissingRow row)
+    {
+        var status = CreditsKit.Line(
+            row.OnRecord ? "ON RECORD" : "MISSING", Fonts.ChromeFamily, TypeScale.Meta, row.OnRecord ? ThemeManager.BlueKey : ThemeManager.GreyKey);
+        status.FontWeight = Avalonia.Media.FontWeight.SemiBold;
+
+        return status;
+    }
 
     private bool HasSearch() => _bodySearch?.Invoke() is not null;
 
     private Grid RowView(CodexMissingRow row)
     {
-        var grid = _layout.Row([]);
+        var grid = _columns.Row(row);
         grid.VerticalAlignment = VerticalAlignment.Center;
-
-        var status = CreditsKit.Line(
-            row.OnRecord ? "ON RECORD" : "MISSING", Fonts.ChromeFamily, TypeScale.Meta, row.OnRecord ? ThemeManager.BlueKey : ThemeManager.GreyKey);
-        status.FontWeight = Avalonia.Media.FontWeight.SemiBold;
-
-        CreditsKit.Place(grid, 0, Thumbnail(row));
-        CreditsKit.Place(grid, 1, CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));
-        CreditsKit.Place(grid, 2, CreditsKit.Line(row.Category, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
-        CreditsKit.Place(grid, 3, CreditsKit.Line(row.SubCategory, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
-        CreditsKit.Place(grid, 4, CreditsKit.Mono(CodexModel.Number(row.Systems), TypeScale.Small, ThemeManager.AKey, right: false));
-        CreditsKit.Place(grid, 5, status);
 
         var button = ListRow.Dress(new Button
         {
