@@ -364,7 +364,7 @@ public sealed class SpendDialog : ModalDialog
             .OrderByDescending(key => charged[last]
                 .Where(share => Is(share, key.Kind, key.Provider))
                 .Sum(share => share.Dollars))
-            .ThenBy(key => ProviderName(key.Kind, key.Provider), StringComparer.OrdinalIgnoreCase);
+            .ThenBy(key => SpendBreakdownModel.ProviderName(key.Kind, key.Provider), StringComparer.OrdinalIgnoreCase);
 
         foreach (var (kind, provider) in providers)
         {
@@ -375,7 +375,7 @@ public sealed class SpendDialog : ModalDialog
             var cells = own.Select(shares => ProviderCell(kind, shares)).ToList();
 
             stack.Children.Add(TableRow(
-                Label(ProviderName(kind, provider), ThemeManager.WhiteKey, 0, FontWeight.Medium),
+                Label(SpendBreakdownModel.ProviderName(kind, provider), ThemeManager.WhiteKey, 0, FontWeight.Medium),
                 cells,
                 rule: true));
 
@@ -510,14 +510,6 @@ public sealed class SpendDialog : ModalDialog
 
         return border;
     }
-
-    /// <summary>What each catalog calls a provider.</summary>
-    private static string ProviderName(SpendKind kind, string providerId) => kind switch
-    {
-        SpendKind.Voice => TtsProviderCatalog.Selected(providerId).Name,
-        SpendKind.Transcription => SttProviderCatalog.Selected(providerId).Name,
-        _ => LlmProviderCatalog.Selected(providerId).Name,
-    };
 
     private static IReadOnlyList<Control> ColdPrefixRow(SpendTracker session) =>
         session.UnexplainedColdPrefixes > 0

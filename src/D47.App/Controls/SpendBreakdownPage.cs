@@ -9,20 +9,30 @@ using D47.Core.Conversation;
 
 namespace D47.App.Controls;
 
-/// <summary>What D47's estimate went on in one window, by purpose: the page SPEND BREAKDOWN opens.</summary>
+/// <summary>What D47's estimate went on in one window, by purpose and charge by charge: the page SPEND BREAKDOWN opens.</summary>
 public sealed class SpendBreakdownPage : DialogPage, IPageSummary
 {
     public const string TableId = "Spend.ByPurpose";
 
+    public const string ChargeTableId = "Spend.EveryCharge";
+
     public const string HeadName = "SpendPurposeHead";
+
+    public const string ChargeHeadName = "SpendChargeHead";
+
+    public const string PreviousName = "SpendChargesPrevious";
+
+    public const string NextName = "SpendChargesNext";
 
     private readonly SpendLedger _ledger;
     private readonly TimeZoneInfo _zone;
     private readonly SortHeader<SpendPurposeShare> _head = new(HeadName, SpendBreakdownModel.PurposeColumns, SpendBreakdownModel.ByDefault);
+    private readonly SortHeader<SpendEntry> _chargeHead = new(ChargeHeadName, SpendBreakdownModel.ChargeColumns, SpendBreakdownModel.ChargesByDefault);
+    private readonly SpendChargeList _charges = new();
     private readonly Stepper _window;
     private readonly Border _figures = new() { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(14, 0) };
     private readonly Border _body = new() { Margin = new Thickness(0, 12, 0, 0) };
-    private bool _headset;
+    private int _section = SpendBreakdownModel.ByPurposeSection;
     private bool _drawn;
     private double _barWidth;
 
@@ -45,7 +55,11 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
             Width = Stepper.MaximumWidth,
             VerticalAlignment = VerticalAlignment.Top,
         };
-        _window.SelectionChanged += (_, _) => Draw();
+        _window.SelectionChanged += (_, _) =>
+        {
+            _charges.WindowChanged();
+            Draw();
+        };
 
         ThemeInk.Bind(_figures, Border.BackgroundProperty, ThemeManager.SlabKey);
 
@@ -67,6 +81,11 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
         Content = page;
 
         _head.Changed += Draw;
+        _chargeHead.Changed += () =>
+        {
+            _charges.SortBy(_chargeHead.Order);
+            Draw();
+        };
 
         Draw();
     }
@@ -87,9 +106,9 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
 
         var headset = PanelView.OnHeadset(this);
 
-        if (!_drawn || headset != _headset)
+        if (!_drawn || headset != _charges.Headset)
         {
-            _headset = headset;
+            _charges.Headset = headset;
             Draw();
         }
     }
@@ -125,7 +144,21 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
 
         top.Children.Add(Sections(figures));
 
-        var layout = new TableLayout(TableId, Columns(), spacing: _headset ? 12 : 16);
+        if (_section == SpendBreakdownModel.EveryChargeSection)
+        {
+            DrawCharges(top, window);
+        }
+        else
+        {
+            DrawPurposes(top, purposes, figures);
+        }
+    }
+
+    private void DrawPurposes(StackPanel top, IReadOnlyList<SpendPurposeShare> purposes, SpendBreakdownModel.WindowFigures figures)
+    {
+        top.Children.Add(CreditsKit.Note(SpendBreakdownModel.PressHint, 0, full: true));
+
+        var layout = new TableLayout(TableId, PurposeTable(), spacing: _charges.Headset ? 12 : 16);
         var header = CreditsKit.HeaderRow(_head, layout, column => column == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right);
 
         var list = new StackPanel { Name = "SpendPurposeRows", Spacing = Gaps.Tile };
@@ -135,22 +168,61 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
             list.Children.Add(Row(layout, share, figures.Dollars));
         }
 
-        _body.Child = LoadoutPages.HeaderAndList(top, header, list, _headset ? null : layout, out var scroll);
+        _body.Child = LoadoutPages.HeaderAndList(top, header, list, _charges.Headset ? null : layout, out var scroll);
         FollowRows(header, scroll);
     }
 
-    private IReadOnlyList<TableColumn> Columns() =>
+    private void DrawCharges(StackPanel top, SpendPeriod window)
+    {
+        var page = _charges.Of(_ledger.Charges(window));
+
+        top.Children.Add(Results(page));
+
+        var layout = new TableLayout(ChargeTableId, ChargeTable(), spacing: _charges.Headset ? 12 : 16);
+        var header = CreditsKit.HeaderRow(
+            _chargeHead,
+            layout,
+            column => column == SpendBreakdownModel.ChargeCostColumn ? HorizontalAlignment.Right : HorizontalAlignment.Left);
+
+        var rows = new StackPanel { Name = "SpendChargeRows", Spacing = Gaps.Tile };
+
+        foreach (var entry in page.Rows)
+        {
+            rows.Children.Add(ChargeRow(layout, entry));
+        }
+
+        var list = new StackPanel { Children = { rows } };
+
+        if (page.Listed > 0)
+        {
+            list.Children.Add(Pager(page));
+        }
+
+        _body.Child = LoadoutPages.HeaderAndList(top, header, list, _charges.Headset ? null : layout, out var scroll);
+        FollowRows(header, scroll);
+    }
+
+    private IReadOnlyList<TableColumn> PurposeTable() =>
     [
-        new("Purpose", ColumnFit.Fill) { Min = _headset ? 220 : 260 },
-        new("Charges", ColumnFit.Fixed) { Fixed = _headset ? 100 : 120 },
-        new("Share", ColumnFit.Fixed) { Fixed = _headset ? 90 : 110 },
-        new("Cost", ColumnFit.Fixed) { Fixed = _headset ? 150 : 170 },
+        new("Purpose", ColumnFit.Fill) { Min = _charges.Headset ? 220 : 260 },
+        new("Charges", ColumnFit.Fixed) { Fixed = _charges.Headset ? 100 : 120 },
+        new("Share", ColumnFit.Fixed) { Fixed = _charges.Headset ? 90 : 110 },
+        new("Cost", ColumnFit.Fixed) { Fixed = _charges.Headset ? 150 : 170 },
+    ];
+
+    private IReadOnlyList<TableColumn> ChargeTable() =>
+    [
+        new("Time", ColumnFit.Fixed) { Fixed = _charges.Headset ? 130 : 150 },
+        new("Purpose", ColumnFit.Fill) { Min = _charges.Headset ? 150 : 170 },
+        new("Model", ColumnFit.Fixed) { Fixed = _charges.Headset ? 190 : 220 },
+        new("Used", ColumnFit.Fill) { Min = _charges.Headset ? 250 : 360 },
+        new("Cost", ColumnFit.Fixed) { Fixed = _charges.Headset ? 100 : 110 },
     ];
 
     /// <summary>In the headset the header is kept as wide as the rows, so both report one width to the table.</summary>
     private void FollowRows(Grid header, ScrollViewer rows)
     {
-        if (!_headset)
+        if (!_charges.Headset)
         {
             return;
         }
@@ -178,13 +250,13 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
         {
             Name = "SpendSection",
             ItemsSource = SpendBreakdownModel.Sections,
-            SelectedIndex = SpendBreakdownModel.ByPurposeSection,
+            SelectedIndex = _section,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Height = _headset ? TypeScale.MinimumTarget : Segment.StatusHeight,
+            Height = _charges.Headset ? TypeScale.MinimumTarget : Segment.StatusHeight,
             Margin = new Thickness(0, 6, 0, 0),
         };
 
-        if (!_headset)
+        if (!_charges.Headset)
         {
             section.Statuses =
             [
@@ -193,10 +265,24 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
             ];
         }
 
-        // EVERY CHARGE is drawn and cannot be chosen until its section is built.
-        section.SetOptionEnabled(1, false);
+        section.SelectionChanged += (_, _) =>
+        {
+            if (section.SelectedIndex >= 0 && section.SelectedIndex != _section)
+            {
+                _section = section.SelectedIndex;
+                Draw();
+            }
+        };
 
         return section;
+    }
+
+    /// <summary>Every charge filtered to <paramref name="share"/>'s purpose and kind.</summary>
+    private void ListCharges(SpendPurposeShare share)
+    {
+        _charges.FilterTo(share.Purpose, share.Kind);
+        _section = SpendBreakdownModel.EveryChargeSection;
+        Draw();
     }
 
     /// <summary>The window's range at the left, and the number of charges and the total at the right.</summary>
@@ -223,6 +309,104 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
         return new DockPanel { LastChildFill = true, Children = { right, range } };
     }
 
+    /// <summary>
+    /// The count, then what spoken lines come to and the SHOW SPOKEN LINES checkbox; filtered to a purpose, its total
+    /// and unpriced count and the SHOW EVERY PURPOSE tile.
+    /// </summary>
+    private DockPanel Results(SpendChargePage page)
+    {
+        Control action;
+        var left = new DockPanel { LastChildFill = true, VerticalAlignment = VerticalAlignment.Center };
+
+        if (page.Purpose is { } purpose)
+        {
+            var count = CreditsKit.Mono(SpendBreakdownModel.FilteredText(purpose), TypeScale.Small, ThemeManager.WhiteKey, right: false);
+            count.Name = "SpendResultsCount";
+            left.Children.Add(count);
+
+            count.Margin = new Thickness(0, 0, 16, 0);
+            var cost = CreditsKit.Mono(
+                SpendBreakdownModel.CostText(purpose),
+                TypeScale.Small,
+                SpendBreakdownModel.Priced(purpose) ? ThemeManager.AKey : ThemeManager.GreyKey,
+                right: false);
+            cost.Name = "SpendResultsCost";
+            left.Children.Add(cost);
+
+            if (SpendBreakdownModel.UnpricedText(purpose) is { } unpriced)
+            {
+                cost.Margin = new Thickness(0, 0, 16, 0);
+                left.Children.Add(CreditsKit.Mono(unpriced, TypeScale.Small, ThemeManager.GreyKey, right: false));
+            }
+
+            var every = new Button { Name = "SpendShowEveryPurpose", Content = SpendBreakdownModel.ShowEveryPurpose, MinHeight = TypeScale.MinimumTarget };
+            every.Click += (_, _) =>
+            {
+                _charges.ShowEveryPurpose();
+                Draw();
+            };
+            action = every;
+        }
+        else
+        {
+            var count = CreditsKit.Mono(SpendBreakdownModel.ChargesText(page.Listed), TypeScale.Small, ThemeManager.WhiteKey, right: false);
+            count.Name = "SpendResultsCount";
+            count.Margin = new Thickness(0, 0, 16, 0);
+            left.Children.Add(count);
+
+            var hint = CreditsKit.Note(SpendBreakdownModel.SpokenText(page.Spoken, _charges.ShowSpoken), 0, full: true);
+            hint.Name = "SpendResultsHint";
+            hint.VerticalAlignment = VerticalAlignment.Center;
+            left.Children.Add(hint);
+
+            var spoken = LabeledCheckBox.Caps(SpendBreakdownModel.ShowSpokenLines);
+            spoken.Name = "SpendShowSpoken";
+            spoken.MinHeight = TypeScale.MinimumTarget;
+            spoken.IsChecked = _charges.ShowSpoken;
+            spoken.IsCheckedChanged += (_, _) =>
+            {
+                _charges.ShowSpoken = spoken.IsChecked == true;
+                Draw();
+            };
+            action = spoken;
+        }
+
+        action.VerticalAlignment = VerticalAlignment.Center;
+        action.Margin = new Thickness(16, 0, 0, 0);
+        DockPanel.SetDock(action, Dock.Right);
+
+        return new DockPanel { Name = "SpendResults", MinHeight = TypeScale.MinimumTarget, LastChildFill = true, Children = { action, left } };
+    }
+
+    private Grid Pager(SpendChargePage page)
+    {
+        var readout = CreditsKit.Mono(page.Readout, TypeScale.Tip, ThemeManager.GreyKey, right: false);
+        readout.Name = "SpendChargesReadout";
+        readout.VerticalAlignment = VerticalAlignment.Center;
+
+        var previous = new Button { Name = PreviousName, Content = "◄ PREVIOUS", Height = TypeScale.MinimumTarget, IsEnabled = page.HasPrevious };
+        var next = new Button { Name = NextName, Content = "NEXT ►", Height = TypeScale.MinimumTarget, IsEnabled = page.HasNext };
+
+        previous.Click += (_, _) =>
+        {
+            _charges.PreviousPage();
+            Draw();
+        };
+        next.Click += (_, _) =>
+        {
+            _charges.NextPage();
+            Draw();
+        };
+
+        var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Children = { previous, next } };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 8, 0, 0) };
+        Grid.SetColumn(tiles, 1);
+        grid.Children.Add(readout);
+        grid.Children.Add(tiles);
+
+        return grid;
+    }
+
     private Border Row(TableLayout layout, SpendPurposeShare share, decimal window)
     {
         var grid = layout.Row([]);
@@ -240,6 +424,35 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
             Padding = new Thickness(14, 6),
             Child = grid,
         };
+        Avalonia.Automation.AutomationProperties.SetName(border, SpendBreakdownModel.NameOf(share));
+
+        ListRow.Dress(border);
+        ListRow.Opens(border, () => ListCharges(share));
+
+        return border;
+    }
+
+    private Border ChargeRow(TableLayout layout, SpendEntry entry)
+    {
+        var grid = layout.Row([]);
+        grid.VerticalAlignment = VerticalAlignment.Center;
+
+        CreditsKit.Place(grid, 0, CreditsKit.Mono(SpendBreakdownModel.TimeText(entry, _zone), TypeScale.Small, ThemeManager.GreyKey, right: false));
+        CreditsKit.Place(grid, 1, ChargePurposeCell(entry));
+        CreditsKit.Place(grid, 2, ModelCell(entry));
+        CreditsKit.Place(grid, 3, UsedCell(entry));
+        CreditsKit.Place(grid, 4, CreditsKit.Mono(
+            SpendBreakdownModel.ChargeCostText(entry),
+            TypeScale.Small,
+            entry.Priced ? ThemeManager.AKey : ThemeManager.GreyKey,
+            right: true));
+
+        var border = new Border
+        {
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(14, 6),
+            Child = grid,
+        };
         ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return border;
@@ -251,11 +464,7 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
 
         var name = CreditsKit.Line(SpendBreakdownModel.NameOf(share), Fonts.ProseFamily, TypeScale.Secondary, notRecorded ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
 
-        var kind = CreditsKit.Line(SpendBreakdownModel.KindWord(share.Kind), Fonts.ChromeFamily, TypeScale.MetaSmall, ThemeManager.GreyKey);
-        kind.FontWeight = FontWeight.SemiBold;
-        kind.LetterSpacing = TypeScale.MetaSmall * 0.06;
-
-        var cell = new StackPanel { Spacing = 1, Children = { name, kind } };
+        var cell = new StackPanel { Spacing = 1, Children = { name, Caps(SpendBreakdownModel.KindWord(share.Kind)) } };
 
         if (notRecorded)
         {
@@ -263,6 +472,68 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
         }
 
         return cell;
+    }
+
+    private static StackPanel ChargePurposeCell(SpendEntry entry)
+    {
+        var name = CreditsKit.Line(
+            SpendPurposes.NameOf(entry.Purpose),
+            Fonts.ProseFamily,
+            TypeScale.Secondary,
+            entry.Purpose is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+
+        var cell = new StackPanel { Spacing = 1, Children = { name } };
+
+        if (SpendBreakdownModel.StepWord(entry) is { } step)
+        {
+            cell.Children.Add(Caps(step));
+        }
+
+        return cell;
+    }
+
+    private static Control ModelCell(SpendEntry entry)
+    {
+        if (SpendBreakdownModel.ProviderLine(entry) is not { } provider)
+        {
+            return CreditsKit.Line(SpendBreakdownModel.ModelText(entry), Fonts.ProseFamily, TypeScale.Secondary, ThemeManager.WhiteKey);
+        }
+
+        return new StackPanel
+        {
+            Spacing = 1,
+            Children =
+            {
+                CreditsKit.Mono(SpendBreakdownModel.ModelText(entry), TypeScale.Small, ThemeManager.WhiteKey, right: false),
+                CreditsKit.Line(provider, Fonts.ProseFamily, TypeScale.Meta, ThemeManager.GreyKey),
+            },
+        };
+    }
+
+    private static StackPanel UsedCell(SpendEntry entry)
+    {
+        var cell = new StackPanel
+        {
+            Spacing = 1,
+            Children = { CreditsKit.Mono(SpendBreakdownModel.UsedText(entry), TypeScale.Small, ThemeManager.WhiteKey, right: false) },
+        };
+
+        if (SpendBreakdownModel.UsedDetail(entry) is { } detail)
+        {
+            cell.Children.Add(CreditsKit.Mono(detail, TypeScale.Meta, ThemeManager.GreyKey, right: false));
+        }
+
+        return cell;
+    }
+
+    /// <summary>A chrome 11 Grey caps line under a name: a kind or a story step.</summary>
+    private static TextBlock Caps(string text)
+    {
+        var line = CreditsKit.Line(text, Fonts.ChromeFamily, TypeScale.MetaSmall, ThemeManager.GreyKey);
+        line.FontWeight = FontWeight.SemiBold;
+        line.LetterSpacing = TypeScale.MetaSmall * 0.06;
+
+        return line;
     }
 
     private static StackPanel CostCell(SpendPurposeShare share)
