@@ -42,6 +42,9 @@ public sealed record MarketQuote(string Commodity)
 
     /// <summary>The galaxy-wide mean price.</summary>
     public int? MeanPrice { get; init; }
+
+    /// <summary>The market's group for the commodity, such as <c>Metals</c>.</summary>
+    public string? Category { get; init; }
 }
 
 /// <summary>One station's whole commodity market at one moment (Phase 36).</summary>
@@ -91,6 +94,85 @@ public sealed record MarketSnapshot
 
     /// <summary>The system's Powerplay state, in the service's spelling.</summary>
     public string? PowerState { get; init; }
+
+    /// <summary>Light years from the reference system of the search.</summary>
+    public double? Distance { get; init; }
+
+    /// <summary>Pads of each size; null where the search does not give the count.</summary>
+    public int? SmallPads { get; init; }
+
+    public int? MediumPads { get; init; }
+
+    public int? LargePads { get; init; }
+
+    public IReadOnlyList<string> Services { get; init; } = [];
+
+    public string? ControllingFaction { get; init; }
+
+    public string? ControllingFactionState { get; init; }
+
+    /// <summary>The controlling minor faction's influence as a fraction of 1.</summary>
+    public double? ControllingFactionInfluence { get; init; }
+
+    /// <summary>The station's own state, in the service's spelling.</summary>
+    public string? State { get; init; }
+
+    /// <summary>When the service last had a report of the station, as opposed to its prices (<see cref="UpdatedAt"/>).</summary>
+    public DateTimeOffset? StationUpdatedAt { get; init; }
+
+    public string? Allegiance { get; init; }
+
+    public string? Government { get; init; }
+
+    public string? PrimaryEconomy { get; init; }
+
+    public string? SecondaryEconomy { get; init; }
+
+    public IReadOnlyList<EconomyShare> Economies { get; init; } = [];
+
+    public bool? HasMarket { get; init; }
+
+    public bool? HasOutfitting { get; init; }
+
+    public bool? HasShipyard { get; init; }
+
+    public bool? IsPlanetary { get; init; }
+
+    public string? BodyType { get; init; }
+
+    public string? BodySubtype { get; init; }
+
+    /// <summary>The body's id64.</summary>
+    public long? BodyAddress { get; init; }
+
+    /// <summary>Surface gravity in g.</summary>
+    public double? BodyGravity { get; init; }
+
+    public bool? BodyHasAtmosphere { get; init; }
+
+    public bool? BodyHasRings { get; init; }
+
+    public double? Latitude { get; init; }
+
+    public double? Longitude { get; init; }
+
+    public IReadOnlyList<string> ExportCommodities { get; init; } = [];
+
+    public IReadOnlyList<string> ImportCommodities { get; init; } = [];
+
+    public IReadOnlyList<string> ProhibitedCommodities { get; init; } = [];
+
+    public long? SystemPopulation { get; init; }
+
+    public IReadOnlyList<string> SystemPowers { get; init; } = [];
+
+    public string? SystemPrimaryEconomy { get; init; }
+
+    public string? SystemSecondaryEconomy { get; init; }
+
+    public bool? SystemIsColonised { get; init; }
+
+    public bool? SystemIsBeingColonised { get; init; }
 
     /// <summary>A Stronghold Carrier: one named so in a Stronghold system, or one Ardent types so.</summary>
     public bool IsStrongholdCarrier =>

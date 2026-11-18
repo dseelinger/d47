@@ -50,6 +50,9 @@ public sealed record PlottedRoute(
 {
     /// <summary>The origin, which the waypoints leave out.</summary>
     public RouteEndpoint? Start { get; init; }
+
+    /// <summary>The plotter's own jump total, which can differ from <see cref="TotalJumps"/>, the sum over the waypoints.</summary>
+    public int? ReportedJumps { get; init; }
 }
 
 /// <summary>One body worth scanning, on a Road to Riches stop.</summary>
@@ -61,6 +64,15 @@ public sealed record RichesBody(string Name, string? Subtype)
     public double? DistanceToArrival { get; init; }
 
     public bool Terraformable { get; init; }
+
+    public string? Type { get; init; }
+
+    /// <summary>The body's id64.</summary>
+    public long? BodyAddress { get; init; }
+
+    public long? ScanValue { get; init; }
+
+    public long? LandmarkValue { get; init; }
 }
 
 public sealed record RichesStop(string System, int Jumps, IReadOnlyList<RichesBody> Bodies)
@@ -106,6 +118,15 @@ public sealed record ExobiologyBody(string Name, string? Subtype)
     public long LandmarkValue { get; init; }
 
     public IReadOnlyList<ExobiologySpecies> Species { get; init; } = [];
+
+    public string? Type { get; init; }
+
+    /// <summary>The body's id64.</summary>
+    public long? BodyAddress { get; init; }
+
+    public long? ScanValue { get; init; }
+
+    public long? MappingValue { get; init; }
 }
 
 public sealed record ExobiologyStop(string System, int Jumps, IReadOnlyList<ExobiologyBody> Bodies)

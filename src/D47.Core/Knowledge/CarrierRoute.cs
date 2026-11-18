@@ -20,10 +20,16 @@ public sealed record CarrierWaypoint(
 {
     /// <summary>Spansh's x, y, z, or null where the jump does not carry them.</summary>
     public StarPosition? Position { get; init; }
+
+    /// <summary>The system's id64, or null where the plotter's answer lacks it.</summary>
+    public long? SystemAddress { get; init; }
 }
 
 public sealed record CarrierRoute(IReadOnlyList<CarrierWaypoint> Waypoints)
 {
+    /// <summary>The carrier's mass in tonnes as the plotter reckons it, or null where the answer lacks it.</summary>
+    public int? Mass { get; init; }
+
     public int TotalTritium => Waypoints.Sum(waypoint => waypoint.FuelUsed);
 
     public IReadOnlyList<CarrierWaypoint> RestockStops => [.. Waypoints.Where(waypoint => waypoint.MustRestock)];

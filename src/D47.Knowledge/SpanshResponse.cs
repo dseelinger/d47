@@ -124,6 +124,7 @@ internal static class SpanshResponse
                     Demand = (int)(Number(commodity, "demand") ?? 0),
                     Supply = (int)(Number(commodity, "supply") ?? 0),
                     IsRare = Boolean(commodity, "is_rare"),
+                    Category = String(commodity, "category"),
                 };
             }
 
@@ -147,6 +148,49 @@ internal static class SpanshResponse
                 UpdatedAt = Timestamp(result, "market_updated_at"),
                 Source = PriceSource.Reported,
                 Quotes = quotes,
+                MarketId = Integer(result, "market_id"),
+                SystemAddress = Integer(result, "system_id64"),
+                Distance = Number(result, "distance"),
+                SmallPads = Count(result, "small_pads"),
+                MediumPads = Count(result, "medium_pads"),
+                LargePads = Count(result, "large_pads"),
+                Services = ReadServiceNames(result),
+                ControllingFaction = String(result, "controlling_minor_faction"),
+                ControllingFactionState = String(result, "controlling_minor_faction_state"),
+                ControllingFactionInfluence = Number(result, "controlling_minor_faction_influence"),
+                State = String(result, "state"),
+                StationUpdatedAt = Timestamp(result, "updated_at"),
+                Allegiance = String(result, "allegiance"),
+                Government = String(result, "government"),
+                PrimaryEconomy = String(result, "primary_economy"),
+                SecondaryEconomy = String(result, "secondary_economy"),
+                Economies = [.. result.Items("economies")
+                    .Where(economy => economy.ValueKind == JsonValueKind.Object && String(economy, "name") is not null)
+                    .Select(economy => new EconomyShare(String(economy, "name")!, Number(economy, "share") ?? 0))],
+                HasMarket = OptionalFlag(result, "has_market"),
+                HasOutfitting = OptionalFlag(result, "has_outfitting"),
+                HasShipyard = OptionalFlag(result, "has_shipyard"),
+                IsPlanetary = OptionalFlag(result, "is_planetary"),
+                Body = String(result, "body_name"),
+                BodyType = String(result, "body_type"),
+                BodySubtype = String(result, "body_subtype"),
+                BodyAddress = Integer(result, "body_id64"),
+                BodyGravity = Number(result, "body_gravity"),
+                BodyHasAtmosphere = OptionalFlag(result, "body_has_atmosphere"),
+                BodyHasRings = OptionalFlag(result, "body_has_rings"),
+                Latitude = Number(result, "latitude"),
+                Longitude = Number(result, "longitude"),
+                ExportCommodities = CommodityNames(result, "export_commodities"),
+                ImportCommodities = CommodityNames(result, "import_commodities"),
+                ProhibitedCommodities = CommodityNames(result, "prohibited_commodities"),
+                SystemPopulation = Integer(result, "system_population"),
+                SystemPowers = [.. result.Items("system_power")
+                    .Where(power => power.ValueKind == JsonValueKind.String)
+                    .Select(power => power.GetString()!)],
+                SystemPrimaryEconomy = String(result, "system_primary_economy"),
+                SystemSecondaryEconomy = String(result, "system_secondary_economy"),
+                SystemIsColonised = OptionalFlag(result, "system_is_colonised"),
+                SystemIsBeingColonised = OptionalFlag(result, "system_is_being_colonised"),
             });
         }
 
@@ -210,6 +254,7 @@ internal static class SpanshResponse
             waypoints)
         {
             Start = start,
+            ReportedJumps = Count(result, "total_jumps"),
         };
     }
 
@@ -238,6 +283,10 @@ internal static class SpanshResponse
                     MappingValue = Integer(body, "estimated_mapping_value"),
                     DistanceToArrival = Number(body, "distance_to_arrival"),
                     Terraformable = Boolean(body, "is_terraformable"),
+                    Type = String(body, "type"),
+                    BodyAddress = Address(body),
+                    ScanValue = Integer(body, "estimated_scan_value"),
+                    LandmarkValue = Integer(body, "landmark_value"),
                 });
             }
 
@@ -302,6 +351,10 @@ internal static class SpanshResponse
                     DistanceToArrival = Number(body, "distance_to_arrival"),
                     LandmarkValue = Integer(body, "landmark_value") ?? 0,
                     Species = species,
+                    Type = String(body, "type"),
+                    BodyAddress = Address(body),
+                    ScanValue = Integer(body, "estimated_scan_value"),
+                    MappingValue = Integer(body, "estimated_mapping_value"),
                 });
             }
 
@@ -351,7 +404,11 @@ internal static class SpanshResponse
             Flag(jump, "is_desired_destination"))
         {
             Position = Position(jump),
-        })]);
+            SystemAddress = Address(jump),
+        })])
+        {
+            Mass = (int?)Integer(result, "mass"),
+        };
     }
 
     private static StarPosition? Position(JsonElement element) =>
