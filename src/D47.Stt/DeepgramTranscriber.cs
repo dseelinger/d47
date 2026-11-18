@@ -74,7 +74,10 @@ public sealed class DeepgramTranscriber : HostedSpeechTranscriber
         return new Uri(url.ToString());
     }
 
-    private protected override string? ErrorMessage(string body)
+    private protected override string? ErrorMessage(string body) => MessageFromBody(body);
+
+    /// <summary>The <c>err_msg</c> Deepgram puts in an error body, or null when there is not one to read.</summary>
+    internal static string? MessageFromBody(string body)
     {
         try
         {

@@ -165,6 +165,7 @@ D47.Core.Utilities.AlarmStore.Changed
 D47.Core.Vr.VrLifecycle.Changed
 D47.Core.Watches.WatchStore.Changed
 D47.Knowledge.CanonnBiologyService.SystemRecordAsync(string, System.Threading.CancellationToken)
+D47.Stt.DeepgramBalanceReader
 D47.Tts.ElevenLabsAccountReader
 D47.Vr.SteamVrRuntime.Beam
 D47.Vr.SteamVrRuntime.Cursor
