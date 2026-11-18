@@ -214,19 +214,32 @@ public sealed record MarketCommodity(
     long BuyPrice,
     long SellPrice,
     long Supply,
-    long Demand);
+    long Demand)
+{
+    /// <summary>True for a rare good; null where the reply does not say.</summary>
+    public bool? IsRare { get; init; }
+}
 
 /// <summary>A station's market as last reported.</summary>
 public sealed record StationMarket(IReadOnlyList<MarketCommodity> Commodities, DateTimeOffset? ReportedAt);
 
 /// <summary>One module row of a station's outfitting.</summary>
-public sealed record StationModule(string Name, string? Symbol, string? Category, int? Class, string? Rating, string? Ship);
+public sealed record StationModule(string Name, string? Symbol, string? Category, int? Class, string? Rating, string? Ship)
+{
+    public long? Price { get; init; }
+
+    /// <summary>fixed, gimballed or turreted, as <c>ModuleSpecification.Mount</c> spells it; null for a module that is not a weapon.</summary>
+    public string? Mount { get; init; }
+}
 
 /// <summary>A station's outfitting as last reported.</summary>
 public sealed record StationOutfitting(IReadOnlyList<StationModule> Modules, DateTimeOffset? ReportedAt);
 
 /// <summary>One ship row of a station's shipyard.</summary>
-public sealed record StationShip(string Name, string? Symbol);
+public sealed record StationShip(string Name, string? Symbol)
+{
+    public long? Price { get; init; }
+}
 
 /// <summary>A station's shipyard as last reported.</summary>
 public sealed record StationShipyard(IReadOnlyList<StationShip> Ships, DateTimeOffset? ReportedAt);

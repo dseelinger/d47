@@ -100,6 +100,79 @@ public sealed record StationSummary
     /// <summary>The system's Powerplay state, in the service's spelling.</summary>
     public string? PowerState { get; init; }
 
+    public string? Allegiance { get; init; }
+
+    public string? Government { get; init; }
+
+    public string? PrimaryEconomy { get; init; }
+
+    public string? SecondaryEconomy { get; init; }
+
+    /// <summary>Each economy with its share, in the service's order.</summary>
+    public IReadOnlyList<EconomyShare> Economies { get; init; } = [];
+
+    public string? ControllingFactionState { get; init; }
+
+    /// <summary>The controlling minor faction's influence as a fraction of 1.</summary>
+    public double? ControllingFactionInfluence { get; init; }
+
+    public bool? HasMarket { get; init; }
+
+    public bool? HasOutfitting { get; init; }
+
+    public bool? HasShipyard { get; init; }
+
+    /// <summary>The body it stands on or orbits, or null when the reply names none.</summary>
+    public string? Body { get; init; }
+
+    public string? BodyType { get; init; }
+
+    public string? BodySubtype { get; init; }
+
+    /// <summary>The body's id64.</summary>
+    public long? BodyAddress { get; init; }
+
+    /// <summary>Surface gravity in g.</summary>
+    public double? BodyGravity { get; init; }
+
+    public bool? BodyHasAtmosphere { get; init; }
+
+    public bool? BodyHasRings { get; init; }
+
+    public bool? IsPlanetary { get; init; }
+
+    public double? Latitude { get; init; }
+
+    public double? Longitude { get; init; }
+
+    public IReadOnlyList<string> ExportCommodities { get; init; } = [];
+
+    public IReadOnlyList<string> ImportCommodities { get; init; } = [];
+
+    public IReadOnlyList<string> ProhibitedCommodities { get; init; } = [];
+
+    public long? SystemPopulation { get; init; }
+
+    /// <summary>The Powers with a stake in the system, in the service's spelling.</summary>
+    public IReadOnlyList<string> SystemPowers { get; init; } = [];
+
+    public string? SystemPrimaryEconomy { get; init; }
+
+    public string? SystemSecondaryEconomy { get; init; }
+
+    public bool? SystemIsColonised { get; init; }
+
+    public bool? SystemIsBeingColonised { get; init; }
+
+    /// <summary>Null when the reply carries no market list.</summary>
+    public StationMarket? Market { get; init; }
+
+    /// <summary>Null when the reply carries no module list.</summary>
+    public StationOutfitting? Outfitting { get; init; }
+
+    /// <summary>Null when the reply carries no ship list.</summary>
+    public StationShipyard? Shipyard { get; init; }
+
     /// <summary>A Stronghold Carrier in a Stronghold system.</summary>
     public bool IsStrongholdCarrier => StrongholdCarrier.IsNamedOne(Name, PowerState);
 

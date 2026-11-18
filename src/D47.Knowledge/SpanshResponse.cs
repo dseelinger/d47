@@ -938,7 +938,95 @@ internal static class SpanshResponse
         ControllingPower = String(element, "system_controlling_power"),
         PowerState = String(element, "system_power_state"),
         UpdatedAt = Timestamp(element, "updated_at"),
+        Allegiance = String(element, "allegiance"),
+        Government = String(element, "government"),
+        PrimaryEconomy = String(element, "primary_economy"),
+        SecondaryEconomy = String(element, "secondary_economy"),
+        Economies = [.. element.Items("economies")
+            .Where(economy => economy.ValueKind == JsonValueKind.Object && String(economy, "name") is not null)
+            .Select(economy => new EconomyShare(String(economy, "name")!, Number(economy, "share") ?? 0))],
+        ControllingFactionState = String(element, "controlling_minor_faction_state"),
+        ControllingFactionInfluence = Number(element, "controlling_minor_faction_influence"),
+        HasMarket = OptionalFlag(element, "has_market"),
+        HasOutfitting = OptionalFlag(element, "has_outfitting"),
+        HasShipyard = OptionalFlag(element, "has_shipyard"),
+        Body = String(element, "body_name"),
+        BodyType = String(element, "body_type"),
+        BodySubtype = String(element, "body_subtype"),
+        BodyAddress = Integer(element, "body_id64"),
+        BodyGravity = Number(element, "body_gravity"),
+        BodyHasAtmosphere = OptionalFlag(element, "body_has_atmosphere"),
+        BodyHasRings = OptionalFlag(element, "body_has_rings"),
+        IsPlanetary = OptionalFlag(element, "is_planetary"),
+        Latitude = Number(element, "latitude"),
+        Longitude = Number(element, "longitude"),
+        ExportCommodities = CommodityNames(element, "export_commodities"),
+        ImportCommodities = CommodityNames(element, "import_commodities"),
+        ProhibitedCommodities = CommodityNames(element, "prohibited_commodities"),
+        SystemPopulation = Integer(element, "system_population"),
+        SystemPowers = [.. element.Items("system_power")
+            .Where(power => power.ValueKind == JsonValueKind.String)
+            .Select(power => power.GetString()!)],
+        SystemPrimaryEconomy = String(element, "system_primary_economy"),
+        SystemSecondaryEconomy = String(element, "system_secondary_economy"),
+        SystemIsColonised = OptionalFlag(element, "system_is_colonised"),
+        SystemIsBeingColonised = OptionalFlag(element, "system_is_being_colonised"),
+        Market = element.TryGetProperty("market", out var market) && market.ValueKind == JsonValueKind.Array
+            ? new StationMarket(
+                [.. market.EnumerateArray()
+                    .Where(row => row.ValueKind == JsonValueKind.Object && String(row, "commodity") is not null)
+                    .Select(row => new MarketCommodity(
+                        String(row, "commodity")!,
+                        null,
+                        String(row, "category"),
+                        Integer(row, "buy_price") ?? 0,
+                        Integer(row, "sell_price") ?? 0,
+                        Integer(row, "supply") ?? 0,
+                        Integer(row, "demand") ?? 0)
+                    {
+                        IsRare = OptionalFlag(row, "is_rare"),
+                    })],
+                Timestamp(element, "market_updated_at"))
+            : null,
+        Outfitting = element.TryGetProperty("modules", out var modules) && modules.ValueKind == JsonValueKind.Array
+            ? new StationOutfitting(
+                [.. modules.EnumerateArray()
+                    .Where(row => row.ValueKind == JsonValueKind.Object && String(row, "name") is not null)
+                    .Select(row => new StationModule(
+                        String(row, "name")!,
+                        String(row, "ed_symbol"),
+                        String(row, "category"),
+                        ModuleClass(row),
+                        String(row, "rating"),
+                        String(row, "ship"))
+                    {
+                        Price = Integer(row, "price"),
+                        Mount = Mount(String(row, "weapon_mode")),
+                    })],
+                Timestamp(element, "outfitting_updated_at"))
+            : null,
+        Shipyard = element.TryGetProperty("ships", out var ships) && ships.ValueKind == JsonValueKind.Array
+            ? new StationShipyard(
+                [.. ships.EnumerateArray()
+                    .Where(row => row.ValueKind == JsonValueKind.String || (row.ValueKind == JsonValueKind.Object && String(row, "name") is not null))
+                    .Select(row => row.ValueKind == JsonValueKind.String
+                        ? new StationShip(row.GetString()!, null)
+                        : new StationShip(String(row, "name")!, String(row, "symbol"))
+                        {
+                            Price = Integer(row, "price"),
+                        })],
+                Timestamp(element, "shipyard_updated_at"))
+            : null,
     };
+
+    private static IReadOnlyList<string> CommodityNames(JsonElement element, string name) =>
+        [.. element.Items(name).Where(commodity => commodity.ValueKind == JsonValueKind.Object).Select(commodity => String(commodity, "name")).OfType<string>()];
+
+    /// <summary>True or false as sent; null where the member is absent or not a boolean.</summary>
+    private static bool? OptionalFlag(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) && value.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? value.ValueKind == JsonValueKind.True
+            : null;
 
     private static DateTimeOffset? Timestamp(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value)
