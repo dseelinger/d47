@@ -57,6 +57,8 @@ public sealed class VrHost : IDisposable
 
     private AimGeometry? _aimGeometry;
 
+    private readonly VrStickScroll _stickScroll = new();
+
     /// <summary>The last hands the aim loop read, for the serve to act on.</summary>
     private IReadOnlyList<VrHand> _aimHands = [];
 
@@ -729,6 +731,11 @@ public sealed class VrHost : IDisposable
 
         // What the ray is resting on, lit so the Commander can see they have found it.
         _panel.Aim(found?.Hit.U, found?.Hit.V);
+
+        if (_stickScroll.Step(hands, found?.Hand.Device, _carrying is not null || _resizing is not null || _scrolling, _now) is { } stick)
+        {
+            _panel.Scroll(stick, D47.Core.Interface.PanelScrollSide.Either);
+        }
 
         if (!held)
         {

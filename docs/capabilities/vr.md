@@ -246,6 +246,11 @@ costs.
 Point a controller at the panel, pull the **trigger**, and it comes with you —
 position and angle together, so it feels attached rather than dragged. Let go and it stays.
 
+While a controller's ray is on the panel, push that controller's **stick** up or down and the page
+under the ray scrolls a few lines, again every 150 ms while the stick stays pushed. Left and right
+do nothing, and a stick on a controller that is not pointing at the panel scrolls nothing. It does
+not scroll while the panel is being carried or resized.
+
 While a ray is on the panel, Directive 47 asks SteamVR for the trigger and grip of that controller
 at overlay priority, and gives them back the moment the ray leaves. On a default SteamVR install
 that changes nothing you would notice: taking inputs away from other applications needs SteamVR's

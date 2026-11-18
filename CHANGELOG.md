@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: In the headset, pushing a controller's stick up or down while its ray is on the panel scrolls the page under the ray by lines, repeating while the stick stays pushed. Left and right do nothing, and a stick on a controller that is not pointing at the panel scrolls nothing. This works on both routes, SteamVR and Show D47 without SteamVR, whenever Motion controllers are on.
+
 Changed: On SteamVR, D47 also reads A, B, X, Y, the menu button, and each stick (a Vive controller's trackpad) and its click on both hands, whenever Motion controllers are on, not only while a ray is on the panel. Nothing acts on them yet; the trigger and grip work as before. D47 still takes the trigger and grip from other applications only while a ray is on the panel. D47's log says when each button is pressed or released and when a stick moves. A SteamVR install that already has D47's bindings saved keeps them until you reset them in SteamVR's controller bindings.
 
 Changed: With Show D47 without SteamVR, the D47 layer in Elite also reads A, B, X, Y, the menu button, and each thumbstick and its click on both Touch controllers. Nothing acts on them yet; the trigger and grip work as before. Restart Elite once after this update: until you do, D47 says Elite loaded an older D47 layer and shows nothing in the headset on this route.
