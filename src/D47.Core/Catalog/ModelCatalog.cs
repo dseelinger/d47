@@ -62,6 +62,17 @@ public sealed record SpeechModel(string Id, string Label, bool Offered)
     public int GroupsSentencesUpTo { get; init; }
 }
 
+/// <summary>What one hosted transcription model costs.</summary>
+/// <param name="DollarsPerMinute">Per minute of audio sent, including any add-on every request d47 makes carries.</param>
+public sealed record TranscriptionPrice(decimal DollarsPerMinute)
+{
+    /// <summary>The fewest seconds a request is billed as.</summary>
+    public double MinimumSeconds { get; init; }
+
+    public decimal DollarsFor(TimeSpan audio) =>
+        DollarsPerMinute * (decimal)Math.Max(audio.TotalSeconds, MinimumSeconds) / 60m;
+}
+
 /// <summary>Every model fact d47 needs that a provider's API does not return.</summary>
 public sealed class ModelCatalog
 {
@@ -79,14 +90,19 @@ public sealed class ModelCatalog
 
     private readonly Dictionary<string, SpeechProvider> _speech;
 
+    /// <summary>Hosted transcription prices, by provider and then model.</summary>
+    private readonly Dictionary<string, Dictionary<string, TranscriptionPrice?>> _transcription;
+
     private ModelCatalog(
         DateOnly published,
         Dictionary<string, Provider> providers,
-        Dictionary<string, SpeechProvider> speech)
+        Dictionary<string, SpeechProvider> speech,
+        Dictionary<string, Dictionary<string, TranscriptionPrice?>> transcription)
     {
         Published = published;
         _providers = providers;
         _speech = speech;
+        _transcription = transcription;
     }
 
     /// <summary>The catalog built into this release.</summary>
@@ -124,6 +140,10 @@ public sealed class ModelCatalog
 
     public SpeechModel? SpeechModelFor(string providerId, string model) =>
         _speech.GetValueOrDefault(providerId)?.Models.GetValueOrDefault(model);
+
+    /// <summary>Null when the catalog gives the transcription model no price.</summary>
+    public TranscriptionPrice? TranscriptionPriceFor(string providerId, string model) =>
+        _transcription.GetValueOrDefault(providerId)?.GetValueOrDefault(model);
 
     /// <summary>Reads a catalog, throwing <see cref="FormatException"/> for one d47 cannot use.</summary>
     public static ModelCatalog Parse(string json)
@@ -181,7 +201,47 @@ public sealed class ModelCatalog
             }
         }
 
-        return new ModelCatalog(published, providers, speech);
+        // Optional: a catalog published before transcription was priced has no section.
+        var transcription = new Dictionary<string, Dictionary<string, TranscriptionPrice?>>(StringComparer.Ordinal);
+
+        if (root.TryGetProperty("transcription", out var section))
+        {
+            foreach (var entry in section.EnumerateObject())
+            {
+                transcription[entry.Name] = ReadTranscriptionProvider(entry.Name, entry.Value);
+            }
+        }
+
+        return new ModelCatalog(published, providers, speech, transcription);
+    }
+
+    private static Dictionary<string, TranscriptionPrice?> ReadTranscriptionProvider(string providerId, JsonElement element)
+    {
+        var models = new Dictionary<string, TranscriptionPrice?>(StringComparer.Ordinal);
+
+        foreach (var item in element.GetProperty("models").EnumerateArray())
+        {
+            var id = item.GetProperty("id").GetString();
+
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new FormatException($"The model catalog has a {providerId} transcription model with no id.");
+            }
+
+            var price = item.TryGetProperty("dollarsPerMinute", out var rate) && rate.ValueKind is not JsonValueKind.Null
+                ? new TranscriptionPrice(rate.GetDecimal())
+                {
+                    MinimumSeconds = item.TryGetProperty("minimumSeconds", out var least) ? least.GetDouble() : 0d,
+                }
+                : null;
+
+            if (!models.TryAdd(id, price))
+            {
+                throw new FormatException($"The model catalog lists {providerId}/{id} transcription twice.");
+            }
+        }
+
+        return models;
     }
 
     private static SpeechProvider ReadSpeechProvider(string providerId, JsonElement element)

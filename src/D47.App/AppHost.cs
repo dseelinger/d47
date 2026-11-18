@@ -170,6 +170,7 @@ public sealed class AppHost : IDisposable
             _logger,
             token);
         SpendLedger = spendLedger;
+        Transcription = new TranscriptionSpend(spendLedger);
         _audioSink = audioSink;
         _outputFollow = new DefaultDeviceFollowPolicy(audioSink);
         Audio = audio;
@@ -264,7 +265,8 @@ public sealed class AppHost : IDisposable
             pushToTalk,
             pushToTalkButton,
             wake,
-            heardAt);
+            heardAt,
+            Transcription);
 
         OwnVoice = ownVoice;
         CustomVoices = customVoices;
@@ -463,6 +465,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Every charge, kept between runs.</summary>
     public SpendLedger SpendLedger { get; }
+
+    /// <summary>What hosted transcription has cost this session.</summary>
+    public TranscriptionSpend Transcription { get; }
 
     /// <summary>The one queue every audible thing goes through.</summary>
     public AudioArbiter Audio { get; }

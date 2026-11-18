@@ -64,7 +64,8 @@ public sealed class ACommsCaptureReachesTheTurnAsCommsTests : IDisposable
             new PushToTalkKey(NullLogger<PushToTalkKey>.Instance),
             new BoundButton(),
             new WakeWordGate(),
-            new StrongBox<DateTimeOffset?>(null))
+            new StrongBox<DateTimeOffset?>(null),
+            new D47.Core.Listening.TranscriptionSpend())
         {
             TranscriberOverride = new SaysWhereAmI(),
         };

@@ -52,6 +52,9 @@ public sealed class Listener : IDisposable
     /// <summary>When the Commander was last heard and understood.</summary>
     private readonly StrongBox<DateTimeOffset?> _heardAt;
 
+    /// <summary>Where each hosted transcription's charge is recorded.</summary>
+    private readonly TranscriptionSpend _spend;
+
     /// <summary>The hearing provider as of the last apply.</summary>
     private volatile SttProviderInfo _hearing = SttProviderCatalog.Local;
 
@@ -91,7 +94,8 @@ public sealed class Listener : IDisposable
         PushToTalkKey pushToTalk,
         BoundButton pushToTalkButton,
         WakeWordGate wake,
-        StrongBox<DateTimeOffset?> heardAt)
+        StrongBox<DateTimeOffset?> heardAt,
+        TranscriptionSpend spend)
     {
         _settings = settings;
         _secrets = secrets;
@@ -116,6 +120,7 @@ public sealed class Listener : IDisposable
         _pushToTalkButton = pushToTalkButton;
         Wake = wake;
         _heardAt = heardAt;
+        _spend = spend;
 
         CommsKey = new PushToTalkKey(loggers.CreateLogger<PushToTalkKey>());
 
@@ -245,10 +250,13 @@ public sealed class Listener : IDisposable
             {
                 var secret = provider.KeySecretName!;
 
-                transcriber = Hearing.Hosted(
+                transcriber = new MeteredTranscriber(
+                    Hearing.Hosted(
+                        provider,
+                        () => _secrets.TryGet(secret, out var key) ? key : null,
+                        _loggers),
                     provider,
-                    () => _secrets.TryGet(secret, out var key) ? key : null,
-                    _loggers);
+                    _spend);
 
                 _hosted[provider.Id] = transcriber;
             }

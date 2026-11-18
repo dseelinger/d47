@@ -53,7 +53,7 @@ public class TheSpendRowOpensItsFiguresInTheHeadsetTests
         var desk = new SpendDesk(
             owner => new SpendDialog(
                 session.Last, session, speech, ledger, settings.Current, TimeZoneInfo.Utc).Over(owner),
-            () => SpendDialog.SessionDollars(session, speech, settings.Current),
+            () => SpendDialog.SessionDollars(session, speech, settings.Current, new D47.Core.Listening.TranscriptionSpend()),
             () => SpendDialog.SessionDetail(session, speech, settings.Current));
 
         var surface = new VrPanelSurface(new PanelViewModel(), settings, _ => null, spend: desk);

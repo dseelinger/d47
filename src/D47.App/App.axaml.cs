@@ -148,6 +148,7 @@ public partial class App(AppHost? host) : Application
                 storyPlayback: () => host.NewStoryPlayback(headset: true));
 
             host.Speech.Spend.Recorded += host.Vr.RefreshSessionSpend;
+            host.Transcription.Recorded += host.Vr.RefreshSessionSpend;
 
             // And the headset's copy of the panel can be the one asking for a spoken value (Phase 25), or
             // the one with a keyboard up for a value to be spelled onto (#51).

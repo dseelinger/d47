@@ -497,7 +497,8 @@ Who turns your speech into words. **This computer** runs the Whisper model chose
 nothing. **Groq**, **OpenAI**, **Deepgram** and **ElevenLabs Scribe** are hosted: no model sits in
 your memory, and the audio goes to them instead. Each uses one fixed model — `whisper-large-v3-turbo`
 on Groq, `gpt-4o-mini-transcribe` on OpenAI, `nova-3` on Deepgram, `scribe_v3` on ElevenLabs. Deepgram also says how sure it is of what it
-heard, so a panel prompt can ask you to say it again or type it when it is unsure.
+heard, so a panel prompt can ask you to say it again or type it when it is unsure. What each hosted transcription costs
+is counted in [SPEND](conversation.md#running-totals), by the minute of audio sent.
 
 What a hosted provider receives: the audio of every utterance Directive 47 transcribes, your API key,
 and the names from your journal it uses to recognise proper nouns. In push-to-talk that is what you

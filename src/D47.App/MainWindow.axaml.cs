@@ -575,6 +575,7 @@ public partial class MainWindow : Window
 
             Panel.EnableTurnDetails(spend.Show, spend.Session, spend.Detail);
             host.Speech.Spend.Recorded += Panel.RefreshSessionSpend;
+            host.Transcription.Recorded += Panel.RefreshSessionSpend;
 
             // A value being said rather than typed reaches this surface's open prompt, if it has one (Phase
             // 25).
@@ -1852,8 +1853,9 @@ public partial class MainWindow : Window
 
             // What makes the Reset button appear, and what "this session" means to it (#197).
             host.LaunchedAt,
-            host.AccountReadersInUse()).Over(owner),
-        () => SpendDialog.SessionDollars(host.Spend, host.Speech.Spend, host.Settings.Current),
+            host.AccountReadersInUse(),
+            transcription: host.Transcription).Over(owner),
+        () => SpendDialog.SessionDollars(host.Spend, host.Speech.Spend, host.Settings.Current, host.Transcription),
         () => SpendDialog.SessionDetail(host.Spend, host.Speech.Spend, host.Settings.Current));
 
     /// <summary>

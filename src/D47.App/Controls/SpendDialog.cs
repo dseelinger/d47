@@ -8,6 +8,7 @@ using D47.App.Theming;
 using D47.Core.Audio;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
+using D47.Core.Listening;
 
 namespace D47.App.Controls;
 
@@ -19,6 +20,7 @@ public sealed class SpendDialog : ModalDialog
 {
     private readonly SpendTracker _session;
     private readonly SpeechSpend _speech;
+    private readonly TranscriptionSpend? _transcription;
     private readonly SpendLedger _ledger;
     private readonly D47Settings _settings;
     private readonly TimeZoneInfo _zone;
@@ -58,11 +60,13 @@ public sealed class SpendDialog : ModalDialog
         TimeZoneInfo zone,
         DateTimeOffset? launchedAt = null,
         IReadOnlyList<IAccountReader>? accounts = null,
-        Func<DateTimeOffset>? now = null)
+        Func<DateTimeOffset>? now = null,
+        TranscriptionSpend? transcription = null)
     {
         _turn = turn;
         _session = session;
         _speech = speech;
+        _transcription = transcription;
         _ledger = ledger;
         _settings = settings;
         _zone = zone;
@@ -114,7 +118,7 @@ public sealed class SpendDialog : ModalDialog
             "Now",
             [
                 TurnRow(_turn),
-                SessionRow(_session, _speech, _settings),
+                SessionRow(_session, _speech, _settings, _transcription),
                 .. ColdPrefixRow(_session),
             ]));
 
@@ -125,7 +129,7 @@ public sealed class SpendDialog : ModalDialog
             _body.Children.Add(ResetSection(launched));
         }
 
-        _figure.Text = SessionDollars(_session, _speech, _settings).ToString("C4");
+        _figure.Text = SessionDollars(_session, _speech, _settings, _transcription).ToString("C4");
 
         _buttons.Children.Clear();
         Buttons(_buttons);
@@ -208,6 +212,7 @@ public sealed class SpendDialog : ModalDialog
         // there is nothing here to filter by.
         _session.Forget();
         _speech.Forget();
+        _transcription?.Forget();
 
         Draw();
     }
@@ -217,9 +222,19 @@ public sealed class SpendDialog : ModalDialog
     {
         var line = totals.Dollars.ToString("C4", System.Globalization.CultureInfo.CurrentCulture);
 
-        if (totals.VoiceDollars > 0m)
+        if (totals.VoiceDollars > 0m || totals.TranscriptionDollars > 0m)
         {
-            line += $" — {totals.ModelDollars:C4} model, {totals.VoiceDollars:C4} voice";
+            line += $" — {totals.ModelDollars:C4} model";
+
+            if (totals.VoiceDollars > 0m)
+            {
+                line += $", {totals.VoiceDollars:C4} voice";
+            }
+
+            if (totals.TranscriptionDollars > 0m)
+            {
+                line += $", {totals.TranscriptionDollars:C4} transcription";
+            }
         }
 
         return totals.Complete ? line : $"at least {line}, part of it unpriced";
@@ -251,10 +266,10 @@ public sealed class SpendDialog : ModalDialog
     }
 
     /// <summary>This session, on one row (#227).</summary>
-    private static Control SessionRow(SpendTracker session, SpeechSpend speech, D47Settings settings) =>
+    private static Control SessionRow(SpendTracker session, SpeechSpend speech, D47Settings settings, TranscriptionSpend? transcription) =>
         Row(
             "Session",
-            SessionDollars(session, speech, settings).ToString("C4"),
+            SessionDollars(session, speech, settings, transcription).ToString("C4"),
             $"{session.TurnCount:N0} {(session.TurnCount == 1 ? "turn" : "turns")} · {BilledCharacters(speech):N0} chars");
 
     /// <summary>Characters spoken through voice providers that charge.</summary>
@@ -263,9 +278,13 @@ public sealed class SpendDialog : ModalDialog
             .Where(charge => TtsProviderCatalog.Selected(charge.ProviderId).Billed)
             .Sum(charge => charge.Characters);
 
-    /// <summary>The session's model turns and priced speech together (#432).</summary>
-    public static decimal SessionDollars(SpendTracker session, SpeechSpend speech, D47Settings settings) =>
-        session.RunningTotalDollars + speech.Dollars(settings);
+    /// <summary>The session's model turns, priced speech and priced hosted transcription together (#432).</summary>
+    public static decimal SessionDollars(
+        SpendTracker session,
+        SpeechSpend speech,
+        D47Settings settings,
+        TranscriptionSpend? transcription) =>
+        session.RunningTotalDollars + speech.Dollars(settings) + (transcription?.Dollars ?? 0m);
 
     /// <summary>The turn count and the voice sentence behind the session figure.</summary>
     public static string SessionDetail(SpendTracker session, SpeechSpend speech, D47Settings settings)
@@ -341,7 +360,7 @@ public sealed class SpendDialog : ModalDialog
                 cells,
                 rule: true));
 
-            if (kind == SpendKind.Voice)
+            if (kind != SpendKind.Model)
             {
                 continue;
             }
@@ -378,7 +397,12 @@ public sealed class SpendDialog : ModalDialog
             return new FigureCell(Dash, ThemeManager.Grey2Key);
         }
 
-        var use = kind == SpendKind.Voice ? $"{shares.Sum(share => share.Characters):N0} ch" : null;
+        var use = kind switch
+        {
+            SpendKind.Voice => $"{shares.Sum(share => share.Characters):N0} ch",
+            SpendKind.Transcription => $"{shares.Sum(share => share.AudioSeconds) / 60:N1} min",
+            _ => null,
+        };
 
         if (shares.All(share => !share.Priced))
         {
@@ -468,11 +492,13 @@ public sealed class SpendDialog : ModalDialog
         return border;
     }
 
-    /// <summary>What each catalog calls a provider — the model provider's name where it is one.</summary>
-    private static string ProviderName(SpendKind kind, string providerId) =>
-        kind == SpendKind.Voice
-            ? TtsProviderCatalog.Selected(providerId).Name
-            : LlmProviderCatalog.Selected(providerId).Name;
+    /// <summary>What each catalog calls a provider.</summary>
+    private static string ProviderName(SpendKind kind, string providerId) => kind switch
+    {
+        SpendKind.Voice => TtsProviderCatalog.Selected(providerId).Name,
+        SpendKind.Transcription => SttProviderCatalog.Selected(providerId).Name,
+        _ => LlmProviderCatalog.Selected(providerId).Name,
+    };
 
     private static IReadOnlyList<Control> ColdPrefixRow(SpendTracker session) =>
         session.UnexplainedColdPrefixes > 0

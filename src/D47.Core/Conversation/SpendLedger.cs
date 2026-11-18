@@ -11,6 +11,7 @@ public enum SpendKind
 {
     Model,
     Voice,
+    Transcription,
 }
 
 /// <summary>One charge, with the instant it happened.</summary>
@@ -22,7 +23,7 @@ public sealed record SpendEntry
 
     public string ProviderId { get; init; } = string.Empty;
 
-    /// <summary>The model that answered, or the voice provider that spoke.</summary>
+    /// <summary>The model that answered or transcribed, or the voice provider that spoke.</summary>
     public string Model { get; init; } = string.Empty;
 
     public decimal Dollars { get; init; }
@@ -50,7 +51,7 @@ public sealed record SpendEntry
 
     /// <summary>
     /// How much audio a speech charge produced, for a provider billed by the length of it rather than
-    /// by the characters handed over (#63).
+    /// by the characters handed over (#63), or how much audio a transcription charge was sent.
     /// </summary>
     public double? AudioSeconds { get; init; }
 
@@ -69,7 +70,7 @@ public sealed record SpendEntry
         ResetFrom is { } from && charge.At >= from && charge.At <= At;
 }
 
-/// <summary>What one model or one voice provider cost inside a window (#226).</summary>
+/// <summary>What one model, voice provider or transcription provider cost inside a window (#226).</summary>
 /// <param name="Model">The model that answered, or the provider that spoke.</param>
 /// <param name="Priced">False when any row in this group had no rate behind it.</param>
 public sealed record SpendShare(
@@ -80,6 +81,9 @@ public sealed record SpendShare(
     long Characters,
     bool Priced)
 {
+    /// <summary>The seconds of audio behind it.</summary>
+    public double AudioSeconds { get; init; }
+
     /// <summary>What to call it: the model where there is one, and the provider where there is not.</summary>
     public string Name => string.IsNullOrWhiteSpace(Model) ? Provider : Model;
 }
@@ -100,9 +104,14 @@ public sealed record SpendTotals(
     /// </summary>
     public IReadOnlyList<SpendShare> Shares { get; init; } = [];
 
-    public decimal Dollars => ModelDollars + VoiceDollars;
+    public decimal TranscriptionDollars { get; init; }
 
-    public bool Any => Turns > 0 || Characters > 0;
+    /// <summary>How many hosted transcriptions were charged.</summary>
+    public int Transcriptions { get; init; }
+
+    public decimal Dollars => ModelDollars + VoiceDollars + TranscriptionDollars;
+
+    public bool Any => Turns > 0 || Characters > 0 || Transcriptions > 0;
 }
 
 /// <summary>
@@ -239,6 +248,9 @@ public sealed class SpendLedger
                 inside.Sum(e => e.Characters),
                 inside.All(e => e.Priced))
             {
+                TranscriptionDollars = inside.Where(e => e.Kind == SpendKind.Transcription).Sum(e => e.Dollars),
+                Transcriptions = inside.Count(e => e.Kind == SpendKind.Transcription),
+
                 // **From `inside` and from nothing else** (#226).
                 Shares = [.. inside
                     .GroupBy(entry => (entry.Kind, entry.ProviderId, entry.Model))
@@ -248,7 +260,10 @@ public sealed class SpendLedger
                         group.Key.Model,
                         group.Sum(entry => entry.Dollars),
                         group.Sum(entry => entry.Characters),
-                        group.All(entry => entry.Priced)))
+                        group.All(entry => entry.Priced))
+                    {
+                        AudioSeconds = group.Sum(entry => entry.AudioSeconds ?? 0d),
+                    })
                     .OrderByDescending(share => share.Dollars)
                     .ThenBy(share => share.Name, StringComparer.OrdinalIgnoreCase)],
             };

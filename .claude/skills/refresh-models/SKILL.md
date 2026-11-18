@@ -20,7 +20,10 @@ An argument narrows the run: a provider (`anthropic`, `openai`, `elevenlabs`) or
    - Anthropic pricing: `https://docs.claude.com/en/docs/about-claude/pricing`
    - OpenAI pricing: `https://platform.openai.com/docs/pricing`
    - ElevenLabs models: `https://elevenlabs.io/docs/overview/models`
-   - ElevenLabs API pricing: `https://elevenlabs.io/pricing/api`
+   - ElevenLabs API pricing: `https://elevenlabs.io/pricing/api` (also Scribe, for transcription)
+   - Groq transcription pricing: `https://console.groq.com/docs/speech-to-text`
+   - OpenAI transcription pricing: the Transcription table on the OpenAI pricing page above
+   - Deepgram pricing: `https://deepgram.com/pricing`
 
    If a page cannot be fetched or no longer says what it did, name it in the report; do not fill the
    gap from memory. Where the `claude-api` skill is available, use it as the reference for Anthropic
@@ -28,6 +31,12 @@ An argument narrows the run: a provider (`anthropic`, `openai`, `elevenlabs`) or
 
 Prices are dollars per million tokens (ElevenLabs: dollars per thousand characters). Cartesia and
 OpenAI speech entries carry no price in the catalog; check only that their ids still exist.
+
+The `transcription` section prices the one model each hosted hearing provider in
+`SttProviderCatalog` uses, in dollars per minute of audio. The figure includes the keyterm add-on
+wherever d47 sends keyterms: Deepgram's pre-recorded rate plus Keyterm Prompting, and ElevenLabs
+Scribe's hourly rate plus keyterm prompting, divided by 60. Groq's is its hourly rate divided by 60,
+with `minimumSeconds` set to the shortest request it bills.
 
 ## Report
 

@@ -69,7 +69,8 @@ public sealed class AnUtteranceWithNoModelSaysSoTests : IDisposable
             new PushToTalkKey(NullLogger<PushToTalkKey>.Instance),
             new BoundButton(),
             new WakeWordGate(),
-            new StrongBox<DateTimeOffset?>(null));
+            new StrongBox<DateTimeOffset?>(null),
+            new D47.Core.Listening.TranscriptionSpend());
 
         _listener.Heard += (text, _) => _heard.Add(text);
     }

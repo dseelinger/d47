@@ -66,7 +66,7 @@ public class SpeechCountsInTheSessionTotalTests
 
         panel.EnableTurnDetails(
             _ => Task.CompletedTask,
-            () => SpendDialog.SessionDollars(session, speech, ElevenAtFiveCents),
+            () => SpendDialog.SessionDollars(session, speech, ElevenAtFiveCents, new D47.Core.Listening.TranscriptionSpend()),
             () => SpendDialog.SessionDetail(session, speech, ElevenAtFiveCents));
         speech.Recorded += panel.RefreshSessionSpend;
 

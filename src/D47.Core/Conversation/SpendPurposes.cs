@@ -2,7 +2,7 @@ using D47.Core.Audio;
 
 namespace D47.Core.Conversation;
 
-/// <summary>What a model charge paid for, as the id written on its <see cref="SpendEntry"/> row.</summary>
+/// <summary>What a charge paid for, as the id written on its <see cref="SpendEntry"/> row.</summary>
 public static class SpendPurposes
 {
     public const string Conversation = "conversation";
@@ -27,6 +27,7 @@ public static class SpendPurposes
     public const string VoiceDirectMessages = "voice-direct-messages";
     public const string VoiceAnyoneInRange = "voice-anyone-in-range";
     public const string VoiceStoryCast = "voice-story-cast";
+    public const string Transcription = "transcription";
 
     /// <summary>Every id this build writes, with the name a Commander reads.</summary>
     public static IReadOnlyList<(string Id, string Name)> All { get; } =
@@ -53,6 +54,7 @@ public static class SpendPurposes
         (VoiceDirectMessages, VoiceGroups.DirectMessages.Name),
         (VoiceAnyoneInRange, VoiceGroups.AnyoneInRange.Name),
         (VoiceStoryCast, "Story cast"),
+        (Transcription, "Transcription"),
     ];
 
     /// <summary>The purpose id written on a speech row for the slot that spoke.</summary>

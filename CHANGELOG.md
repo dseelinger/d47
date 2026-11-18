@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: SPEND counts hosted transcription. Each utterance Groq, OpenAI, Deepgram or ElevenLabs Scribe transcribes is a charge in `data\spend.jsonl` with the seconds of audio sent, priced per minute from the model catalog, and the session figure includes it. In the Totals table each of those providers is a row of its own with the minutes it transcribed under each figure. A request that fails or is cancelled is not counted, and Whisper on this computer costs nothing and is not listed.
+
 Changed: Each model charge D47 writes to `data\spend.jsonl` also records what the call was for, such as conversation, story chapters, NPC chatter or the logbook, and a story chapter's charge records the writing step. Charges written before this have no purpose and count in every total as before. SPEND shows the same figures it did.
 
 Changed: After an organic analysis on a body whose biological signals Elite has counted, D47 ends the line with how many species are left on that body. The analysis that completes the last one says the body's total (every species you have analysed there, sold or not) in place of the unsold total.

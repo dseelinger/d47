@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "published": "2026-11-13",
+  "published": "2026-11-17",
   "providers": {
     "anthropic": {
       "default": "claude-sonnet-5-5",
@@ -146,6 +146,28 @@
       "default": "sonic-3.6",
       "models": [
         { "id": "sonic-3.6", "offered": true }
+      ]
+    }
+  },
+  "transcription": {
+    "groq": {
+      "models": [
+        { "id": "whisper-large-v3-turbo", "dollarsPerMinute": 0.000666667, "minimumSeconds": 10 }
+      ]
+    },
+    "openai": {
+      "models": [
+        { "id": "gpt-4o-mini-transcribe", "dollarsPerMinute": 0.003 }
+      ]
+    },
+    "deepgram": {
+      "models": [
+        { "id": "nova-3", "dollarsPerMinute": 0.0056 }
+      ]
+    },
+    "elevenlabs": {
+      "models": [
+        { "id": "scribe_v3", "dollarsPerMinute": 0.00416667 }
       ]
     }
   }

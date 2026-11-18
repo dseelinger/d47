@@ -178,9 +178,11 @@ On a Sunday, *today* and *this week* start at the same midnight and show the sam
 fault.
 
 The charges behind them are kept in `data/spend.jsonl`, one line per charge, written as it happens and read
-back when Directive 47 starts. Both the model and the voices go in it; a total covering only half
+back when Directive 47 starts. The model, the voices and hosted transcription all go in it; a total covering only part
 of what you spent would be worse than no total at all. Each model row also records what the call
 was for, such as conversation, story chapters or NPC chatter. Each speech row records the voice slot that spoke, or story cast for a story's cast voices.
+Each transcription row records the hosted provider, its model and the seconds of audio sent, priced per minute from the
+model catalog. Whisper on this computer writes no row.
 
 Each row records the instant it happened, in UTC. "Today", "this week" and "this month" are
 worked out against **your** clock at the moment you ask, which is what keeps them right across a
@@ -188,8 +190,8 @@ daylight saving change and right if you ask from a different timezone than you f
 clocks moved in is 23 or 25 hours long, and *today* still means the midnight your clock showed
 rather than a fixed number of hours back.
 
-A charge Directive 47 could not price — a model with no published rate, or a voice provider you
-have not set a rate for — is recorded with its tokens or characters and no dollar figure. Any
+A charge Directive 47 could not price — a model with no published rate, a voice provider you
+have not set a rate for, or a transcription model the catalog has no rate for — is recorded with its tokens or characters and no dollar figure. Any
 window containing one reports **at least** its total rather than presenting a figure that silently
 leaves part of the cost out.
 
@@ -205,7 +207,8 @@ later crash. Delete it and the running totals start again from empty; nothing el
 The totals are one table: the five windows are its columns, the first row is the total for each
 window, and below it each provider that charged anything is a row with its models indented under
 it, ordered by the last 30 days, highest first. A voice provider has no model rows; the characters
-it spoke sit under each figure. A cell with nothing charged shows a dash, a model with no
+it spoke sit under each figure. A hosted transcription provider (Groq, OpenAI, Deepgram or ElevenLabs) is a row of its
+own in the same way, with the minutes of audio it transcribed under each figure. A cell with nothing charged shows a dash, a model with no
 published rate shows "no rate", and a total that includes one starts with "≥". Providers that
 charged nothing, such as Edge Neural and Chatterbox, are not listed.
 
