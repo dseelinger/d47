@@ -266,7 +266,7 @@ public partial class MainWindow : Window
                 RevealSetting,
                 () => new PhrasesPage(
                     host.Capabilities, host.Wording.Phrases, () => host.GameState.Active, () => host.Router.Book,
-                    ((IPanelTabHost)Panel).ColumnWidths));
+                    ((IPanelTabHost)Panel).ColumnWidths, ((IPanelTabHost)Panel).ColumnArrangements));
 
             // Every system name the panel draws goes through this one seam (#157).
             if (host.Clipboard is { } clipboard)

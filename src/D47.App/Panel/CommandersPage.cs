@@ -22,15 +22,6 @@ public sealed class CommandersPage : UserControl
 
     public const string TableId = "Commanders";
 
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Name", ColumnFit.Fill),
-        new("Ship"),
-        new("LastLocation"),
-        new("LastDetected"),
-        new("Switch", ColumnFit.Fixed) { Fixed = 140 },
-    ];
-
     /// <summary>The table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<CommanderSighting>> Heads =
     [
@@ -40,27 +31,25 @@ public sealed class CommandersPage : UserControl
         SortColumn<CommanderSighting>.Figure("LAST DETECTED", sighting => (DateTimeOffset?)sighting.LastSeen, SortDirection.Descending),
     ];
 
-    /// <summary>The default order: last detected first.</summary>
-    public static readonly SortOrder ByLastDetected = new(3, SortDirection.Descending);
-
     /// <summary>The width the title, helper and tally keep; the table fills the page.</summary>
     public const double Cap = 1100;
 
-    private readonly SortHeader<CommanderSighting> _head = new("CommandersHead", Heads, ByLastDetected);
+    private readonly ArrangedTable<CommanderSighting> _table;
     private readonly CommanderRoster _roster;
-    private readonly ColumnWidthMemory? _columnWidths;
-    private TableLayout _layout;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new();
     private (object? Sightings, string? Shown, int Files, bool OffDuty) _seen;
 
-    public CommandersPage(CommanderRoster roster, ColumnWidthMemory? columnWidths = null, Func<string, Task<bool>>? copy = null)
+    public CommandersPage(
+        CommanderRoster roster,
+        ColumnWidthMemory? columnWidths = null,
+        Func<string, Task<bool>>? copy = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _roster = roster;
         _copy = copy;
-        _columnWidths = columnWidths;
-        _layout = new TableLayout(TableId, ColumnList, columnWidths, 16);
-        _head.Changed += Draw;
+        _table = new ArrangedTable<CommanderSighting>(TableId, Fields(), columnArrangements, columnWidths, 16, "LastDetected", "CommandersHead");
+        _table.Changed += Draw;
 
         Content = new DockPanel
         {
@@ -77,7 +66,8 @@ public sealed class CommandersPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _head.Reset();
+        _table.StopArranging();
+        _table.Reset();
     }
 
     /// <summary>Redraws when the list or the shown Commander has changed since the last draw.</summary>
@@ -117,86 +107,97 @@ public sealed class CommandersPage : UserControl
             return;
         }
 
-        _layout = new TableLayout(TableId, ColumnList, _columnWidths, 16);
+        _table.Refresh();
+        _body.Children.Add(LedgerTables.Arranger(_table));
 
         var rows = new StackPanel { Spacing = 2 };
         rows.Children.Add(Header());
 
-        foreach (var sighting in _head.Sort(commanders))
+        foreach (var sighting in _table.Sort(commanders))
         {
-            rows.Children.Add(Row(sighting, string.Equals(sighting.FrontierId, _roster.ShownFrontierId, StringComparison.Ordinal)));
+            rows.Children.Add(Row(sighting, Current(sighting)));
         }
 
-        _body.Children.Add(rows);
+        _body.Children.Add(LedgerTables.Sideways(_table, rows));
 
         var tally = Text(Tally(commanders.Count, _roster.FilesExamined), Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey);
         tally.Margin = new Thickness(0, 14, 0, 0);
         _body.Children.Add(PageFooter.Capped(tally, Cap));
     }
 
-    private Grid Header()
+    private bool Current(CommanderSighting sighting) =>
+        string.Equals(sighting.FrontierId, _roster.ShownFrontierId, StringComparison.Ordinal);
+
+    private TableGrid Header()
     {
-        var grid = _layout.Header([.. Enumerable.Range(0, Heads.Count).Select(column => _head.Cell(column, HorizontalAlignment.Left)), new Border()]);
+        var grid = _table.Header();
         grid.Margin = new Thickness(14, 0, 4, 6);
 
         return grid;
     }
 
-    private Border Row(CommanderSighting sighting, bool current)
+    private IReadOnlyList<TableField<CommanderSighting>> Fields() =>
+    [
+        StarSystemPage.Headed(Heads[0], new TableColumn("Name", ColumnFit.Fill), NameCell),
+        StarSystemPage.Headed(Heads[1], new TableColumn("Ship"), sighting => Text(sighting.Ship ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
+        StarSystemPage.Headed(Heads[2], new TableColumn("LastLocation"), LocationCell),
+        StarSystemPage.Headed(Heads[3], new TableColumn("LastDetected"), sighting => Text(CommanderRoster.Detected(sighting.LastSeen), Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey)),
+        LedgerTables.Control<CommanderSighting>(new TableColumn("Switch", ColumnFit.Fixed) { Fixed = 140 }, ActionCell),
+    ];
+
+    private Control NameCell(CommanderSighting sighting)
     {
-        var name = Text(CommanderRoster.Called(sighting.Name), Fonts.ChromeFamily, TypeScale.ControlLarge, current ? ThemeManager.CyanKey : ThemeManager.WhiteKey);
+        var name = Text(CommanderRoster.Called(sighting.Name), Fonts.ChromeFamily, TypeScale.ControlLarge, Current(sighting) ? ThemeManager.CyanKey : ThemeManager.WhiteKey);
         name.FontWeight = FontWeight.SemiBold;
 
-        var ship = Text(sighting.Ship ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
+        return name;
+    }
 
-        var location = CopyGlyph.LinkBeside(
-            Text(sighting.StarSystem ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, current ? ThemeManager.CyanKey : ThemeManager.AKey),
+    private Control LocationCell(CommanderSighting sighting) =>
+        CopyGlyph.LinkBeside(
+            Text(sighting.StarSystem ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, Current(sighting) ? ThemeManager.CyanKey : ThemeManager.AKey),
             sighting.StarSystem,
             _copy);
 
-        var detected = Text(CommanderRoster.Detected(sighting.LastSeen), Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey);
-
-        Control action;
-
-        if (current)
+    private Control ActionCell(CommanderSighting sighting)
+    {
+        if (Current(sighting))
         {
             var mark = Text("✓ CURRENT", Fonts.ChromeFamily, TypeScale.Meta, ThemeManager.CyanKey);
             mark.FontWeight = FontWeight.SemiBold;
             mark.LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking;
             mark.HorizontalAlignment = HorizontalAlignment.Center;
-            action = mark;
+
+            return mark;
         }
-        else
+
+        var button = new Button
         {
-            var button = new Button
-            {
-                Name = "CommanderSwitch",
-                Content = "SWITCH",
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Center,
-            };
-            AutomationProperties.SetName(button, $"Switch to {sighting.Name}");
-            button.Click += (_, _) => _roster.Pick(sighting);
-            action = button;
-        }
+            Name = "CommanderSwitch",
+            Content = "SWITCH",
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
+        AutomationProperties.SetName(button, $"Switch to {sighting.Name}");
+        button.Click += (_, _) => _roster.Pick(sighting);
+
+        return button;
+    }
+
+    private Border Row(CommanderSighting sighting, bool current)
+    {
+        var cells = _table.Row(sighting);
+        cells.VerticalAlignment = VerticalAlignment.Center;
 
         var row = new Border
         {
             MinHeight = 52,
             Padding = new Thickness(14, 4, 4, 4),
-            Child = Cells(name, ship, location, detected, action),
+            Child = cells,
         };
         ThemeInk.Bind(row, Border.BackgroundProperty, current ? ThemeManager.CyanGroundKey : ThemeManager.SlabKey);
 
         return row;
-    }
-
-    private Grid Cells(params Control[] cells)
-    {
-        var grid = _layout.Row(cells);
-        grid.VerticalAlignment = VerticalAlignment.Center;
-
-        return grid;
     }
 
     private static TextBlock Text(string text, string family, double size, string key)

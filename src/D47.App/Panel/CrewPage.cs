@@ -33,14 +33,6 @@ public sealed class CrewPage : UserControl
     /// <summary>The width the title and message keep; the table fills the page.</summary>
     public const double Cap = 1000;
 
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Pilot", ColumnFit.Fill),
-        new("CombatRank"),
-        new("FighterBay"),
-        new("PostedTo", ColumnFit.Fill),
-    ];
-
     /// <summary>The table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<CrewMember>> ColumnHeadings =
     [
@@ -51,21 +43,24 @@ public sealed class CrewPage : UserControl
     ];
 
     private readonly Func<CommanderGameState?> _state;
-    private readonly SortHeader<CrewMember> _head = new("CrewHead", ColumnHeadings);
+    private readonly ArrangedTable<CrewMember> _table;
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly SpeakerPictures? _pictures;
-    private readonly ColumnWidthMemory? _columnWidths;
     private object? _seen;
 
     /// <summary>Each hired pilot's row carries a picture chooser when <paramref name="pictures"/> is given.</summary>
-    public CrewPage(Func<CommanderGameState?> state, SpeakerPictures? pictures = null, ColumnWidthMemory? columnWidths = null)
+    public CrewPage(
+        Func<CommanderGameState?> state,
+        SpeakerPictures? pictures = null,
+        ColumnWidthMemory? columnWidths = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _state = state;
         _pictures = pictures;
-        _columnWidths = columnWidths;
+        _table = new ArrangedTable<CrewMember>(TableId, Fields(), columnArrangements, columnWidths, headName: "CrewHead");
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
-        _head.Changed += Draw;
+        _table.Changed += Draw;
 
         Content = PageFooter.Shell(_body, Phrase, _clock);
         Draw();
@@ -74,7 +69,8 @@ public sealed class CrewPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _head.Reset();
+        _table.StopArranging();
+        _table.Reset();
     }
 
     /// <summary>Redraws when the crew changes.</summary>
@@ -123,26 +119,39 @@ public sealed class CrewPage : UserControl
             return;
         }
 
-        var table = new TableLayout(TableId, ColumnList, _columnWidths);
+        _table.Refresh();
+        _body.Children.Add(new StackPanel { Margin = new Thickness(0, 28, 0, 0), Children = { LedgerTables.Arranger(_table) } });
+
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
-        foreach (var member in _head.Sort(crew.Members))
+        foreach (var member in _table.Sort(crew.Members))
         {
-            rows.Children.Add(Row(member, _pictures, table));
+            rows.Children.Add(Row(member));
         }
 
-        _body.Children.Add(new StackPanel { Margin = new Thickness(0, 28, 0, 0), Children = { ColumnHeads(table), rows } });
+        _body.Children.Add(LedgerTables.Sideways(_table, new StackPanel { Children = { ColumnHeads(), rows } }));
     }
 
-    private Control ColumnHeads(TableLayout table)
-    {
-        var grid = table.Header(_head);
-        grid.MinHeight = TypeScale.MinimumTarget;
+    private Control ColumnHeads() =>
+        new Border { Padding = new Thickness(14, 0), Child = LedgerTables.Head(_table, default) };
 
-        return new Border { Padding = new Thickness(14, 0), Child = grid };
-    }
+    private IReadOnlyList<TableField<CrewMember>> Fields() =>
+    [
+        StarSystemPage.Headed(ColumnHeadings[0], new TableColumn("Pilot", ColumnFit.Fill), NameCell),
+        StarSystemPage.Headed(
+            ColumnHeadings[1],
+            new TableColumn("CombatRank"),
+            member => Cell(member.CombatRankName ?? "—", member.CombatRankName is not null ? ThemeManager.AKey : ThemeManager.GreyKey)),
+        StarSystemPage.Headed(
+            ColumnHeadings[2], new TableColumn("FighterBay"), member => Cell(Duty(member), member.Active ? ThemeManager.YellowKey : ThemeManager.GreyKey)),
+        StarSystemPage.Headed(
+            ColumnHeadings[3],
+            new TableColumn("PostedTo", ColumnFit.Fill),
+            member => Cell(Posting(member), member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey)),
+        LedgerTables.Added<CrewMember>("HullLeft", new TableColumn("HullLeft"), member => TableCells.Flag(member.HullLeft), "Ship changed"),
+    ];
 
-    private static Border Row(CrewMember member, SpeakerPictures? pictures, TableLayout table)
+    private static Control NameCell(CrewMember member)
     {
         var name = new TextBlock
         {
@@ -153,19 +162,19 @@ public sealed class CrewPage : UserControl
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var rank = Cell(member.CombatRankName ?? "—",
-            member.CombatRankName is not null ? ThemeManager.AKey : ThemeManager.GreyKey);
-        var duty = Cell(Duty(member), member.Active ? ThemeManager.YellowKey : ThemeManager.GreyKey);
-        var posted = Cell(Posting(member), member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey);
+        return name;
+    }
 
-        var line = table.Row([name, rank, duty, posted]);
+    private Border Row(CrewMember member)
+    {
+        var line = _table.Row(member);
         line.Height = TypeScale.MinimumTarget;
 
         var content = new StackPanel { Children = { line } };
 
-        if (pictures is not null)
+        if (_pictures is not null)
         {
-            content.Children.Add(new PictureChooser(pictures, SpeakerPictures.Crew(member.CrewId), 120) { Margin = new Thickness(0, 0, 0, 8) });
+            content.Children.Add(new PictureChooser(_pictures, SpeakerPictures.Crew(member.CrewId), 120) { Margin = new Thickness(0, 0, 0, 8) });
         }
 
         var row = new Border { Padding = new Thickness(14, 0), Child = content };

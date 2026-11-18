@@ -320,7 +320,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
     public void EnableCommanders(CommanderRoster roster)
     {
-        _commandersBuild = _ => _commanders = new CommandersPage(roster, host.ColumnWidths, host.Copy);
+        _commandersBuild = _ => _commanders = new CommandersPage(roster, host.ColumnWidths, host.Copy, host.ColumnArrangements);
 
         host.Furnish(
             PanelTab.Commander,

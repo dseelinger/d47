@@ -66,20 +66,6 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
 
     public const string BuiltInTable = "Phrases.BuiltIn";
 
-    private static readonly TableColumn[] OwnColumns =
-    [
-        new("Phrase", ColumnFit.Fill),
-        new("Arrow", ColumnFit.Fixed) { Fixed = 28 },
-        new("Meaning", ColumnFit.Fill),
-        new("Forget", ColumnFit.Fixed) { Fixed = 44 },
-    ];
-
-    private static readonly TableColumn[] BuiltInColumns =
-    [
-        new("Phrase", ColumnFit.Fill),
-        new("Does", ColumnFit.Fill),
-    ];
-
     /// <summary>One built-in phrase and the sentence saying what it does.</summary>
     public sealed record BuiltIn(string Phrase, string Sentence);
 
@@ -91,28 +77,13 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
     private readonly Func<CommanderGameState?> _commander;
     private readonly Func<PhraseBook> _book;
     private readonly JournalClock _clock;
-    private readonly ColumnWidthMemory? _columnWidths;
-    private TableLayout _own;
-    private TableLayout _builtIn;
+    private readonly ArrangedTable<LearnedPhrase> _own;
+    private readonly ArrangedTable<BuiltIn> _builtIn;
 
     private readonly TextBox _say;
     private readonly InlinePicker _picker = new() { ListMaxHeight = 280, Label = PickPlaceholder };
     private readonly Notice _notice = new() { IsVisible = false, Margin = new Thickness(0, 2, 0, 0) };
     private readonly StackPanel _lists = new();
-
-    private readonly SortHeader<LearnedPhrase> _ownHead = new(
-        "OwnPhrasesHead",
-        [
-            SortColumn<LearnedPhrase>.Text("Phrase", phrase => phrase.Said),
-            SortColumn<LearnedPhrase>.Text("Meaning", phrase => phrase.Phrase),
-        ]);
-
-    private readonly SortHeader<BuiltIn> _builtInHead = new(
-        "BuiltInPhrasesHead",
-        [
-            SortColumn<BuiltIn>.Text("Phrase", phrase => phrase.Phrase),
-            SortColumn<BuiltIn>.Text("Does", phrase => phrase.Sentence),
-        ]);
 
     private string? _picked;
     private string _query = string.Empty;
@@ -122,13 +93,13 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         LearnedPhrasesStore store,
         Func<CommanderGameState?> commander,
         Func<PhraseBook>? book = null,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
-        _columnWidths = columnWidths;
-        _own = new TableLayout(OwnTable, OwnColumns, columnWidths);
-        _builtIn = new TableLayout(BuiltInTable, BuiltInColumns, columnWidths, 12);
-        _ownHead.Changed += Build;
-        _builtInHead.Changed += Build;
+        _own = new ArrangedTable<LearnedPhrase>(OwnTable, OwnFields(), columnArrangements, columnWidths, headName: "OwnPhrasesHead");
+        _builtIn = new ArrangedTable<BuiltIn>(BuiltInTable, BuiltInFields(), columnArrangements, columnWidths, 12, headName: "BuiltInPhrasesHead");
+        _own.Changed += Build;
+        _builtIn.Changed += Build;
         _registry = registry;
         _store = store;
         _commander = commander;
@@ -448,8 +419,8 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             : [];
 
         var groups = Groups(_book(), _registry, _query);
-        _own = new TableLayout(OwnTable, OwnColumns, _columnWidths);
-        _builtIn = new TableLayout(BuiltInTable, BuiltInColumns, _columnWidths, 12);
+        _own.Refresh();
+        _builtIn.Refresh();
 
         if (_query.Length > 0 && own.Count == 0 && groups.Count == 0)
         {
@@ -463,12 +434,12 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
 
             if (own.Count > 0)
             {
-                rows.Children.Add(Heads(_own, [_ownHead.Cell(0, HorizontalAlignment.Left), new Border(), _ownHead.Cell(1, HorizontalAlignment.Left), new Border()], new Thickness(14, 0, 2, 0)));
+                rows.Children.Add(Heads(_own, new Thickness(14, 0, 2, 0)));
             }
 
-            foreach (var phrase in _ownHead.Sort(own))
+            foreach (var phrase in _own.Sort(own))
             {
-                rows.Children.Add(OwnRow(phrase, _own));
+                rows.Children.Add(OwnRow(phrase));
             }
 
             if (own.Count == 0)
@@ -476,33 +447,72 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
                 rows.Children.Add(Muted(fid.Length > 0 ? NothingTaught : NobodyFlying, new Thickness(0, 4, 0, 0)));
             }
 
-            _lists.Children.Add(Section("Your phrases", own.Count, rows));
+            var section = Section("Your phrases", own.Count, own.Count > 0 ? LedgerTables.Sideways(_own, rows) : rows);
+
+            if (own.Count > 0)
+            {
+                section.Children.Insert(1, LedgerTables.Arranger(_own));
+            }
+
+            _lists.Children.Add(section);
         }
 
         if (groups.Count > 0)
         {
-            var heads = Heads(_builtIn, [_builtInHead.Cell(0, HorizontalAlignment.Left), _builtInHead.Cell(1, HorizontalAlignment.Left)], new Thickness(14, 0));
-            heads.Margin = new Thickness(0, 28, 0, 0);
-            _lists.Children.Add(heads);
-        }
+            var arranger = LedgerTables.Arranger(_builtIn);
+            arranger.Margin = new Thickness(0, 28, 0, 0);
+            _lists.Children.Add(arranger);
 
-        foreach (var group in groups)
-        {
-            var rows = new StackPanel { Spacing = 2 };
+            var table = new StackPanel { Children = { Heads(_builtIn, new Thickness(14, 0)) } };
 
-            foreach (var phrase in _builtInHead.Sort(group.Phrases))
+            foreach (var group in groups)
             {
-                rows.Children.Add(BuiltInRow(phrase, _builtIn));
+                var rows = new StackPanel { Spacing = 2 };
+
+                foreach (var phrase in _builtIn.Sort(group.Phrases))
+                {
+                    rows.Children.Add(BuiltInRow(phrase));
+                }
+
+                table.Children.Add(Section(group.Title, group.Phrases.Count, rows));
             }
 
-            _lists.Children.Add(Section(group.Title, group.Phrases.Count, rows));
+            _lists.Children.Add(LedgerTables.Sideways(_builtIn, table));
         }
     }
 
-    private static Control Heads(TableLayout table, IReadOnlyList<Control> cells, Thickness padding) =>
-        new Border { MinHeight = TypeScale.MinimumTarget, Padding = padding, Child = table.Header(cells) };
+    private static Control Heads<TRow>(ArrangedTable<TRow> table, Thickness padding) =>
+        new Border { MinHeight = TypeScale.MinimumTarget, Padding = padding, Child = table.Header() };
 
-    private Border OwnRow(LearnedPhrase phrase, TableLayout table)
+    private IReadOnlyList<TableField<LearnedPhrase>> OwnFields() =>
+    [
+        StarSystemPage.Headed(SortColumn<LearnedPhrase>.Text("Phrase", phrase => phrase.Said), new TableColumn("Phrase", ColumnFit.Fill), SaidCell)
+            with { More = [LedgerTables.Control<LearnedPhrase>(new TableColumn("Arrow", ColumnFit.Fixed) { Fixed = 28 }, ArrowCell)] },
+        StarSystemPage.Headed(
+            SortColumn<LearnedPhrase>.Text("Meaning", phrase => phrase.Phrase),
+            new TableColumn("Meaning", ColumnFit.Fill),
+            phrase => Prose(phrase.Phrase, ThemeManager.WhiteKey, TypeScale.Secondary)),
+        LedgerTables.Added<LearnedPhrase>(
+            "Learned",
+            new TableColumn("Learned"),
+            phrase => Typeset.Mono(phrase.LearnedAt.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), TypeScale.Control, ThemeManager.WhiteKey),
+            "Learned"),
+        LedgerTables.Control<LearnedPhrase>(new TableColumn("Forget", ColumnFit.Fixed) { Fixed = 44 }, ForgetCell),
+    ];
+
+    private static IReadOnlyList<TableField<BuiltIn>> BuiltInFields() =>
+    [
+        StarSystemPage.Headed(
+            SortColumn<BuiltIn>.Text("Phrase", phrase => phrase.Phrase),
+            new TableColumn("Phrase", ColumnFit.Fill),
+            phrase => Prose(phrase.Phrase, ThemeManager.WhiteKey, TypeScale.Secondary)),
+        StarSystemPage.Headed(
+            SortColumn<BuiltIn>.Text("Does", phrase => phrase.Sentence),
+            new TableColumn("Does", ColumnFit.Fill),
+            phrase => Prose(phrase.Sentence, ThemeManager.GreyKey, TypeScale.Small)),
+    ];
+
+    private static Control SaidCell(LearnedPhrase phrase)
     {
         var said = new TextBlock
         {
@@ -514,11 +524,19 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         };
         ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
 
+        return said;
+    }
+
+    private static Control ArrowCell(LearnedPhrase phrase)
+    {
         var arrow = MaterialsPage.Chrome("›", ThemeManager.GreyKey);
         arrow.HorizontalAlignment = HorizontalAlignment.Center;
 
-        var standsFor = Prose(phrase.Phrase, ThemeManager.WhiteKey, TypeScale.Secondary);
+        return arrow;
+    }
 
+    private Control ForgetCell(LearnedPhrase phrase)
+    {
         var forget = new Button
         {
             Width = 44,
@@ -543,17 +561,14 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
                 ToolCaller.Commander);
         };
 
-        return Slab(table.Row([said, arrow, standsFor, forget]), new Thickness(14, 0, 2, 0));
+        return forget;
     }
 
-    private static Border BuiltInRow(BuiltIn phrase, TableLayout table)
-    {
-        var said = Prose(phrase.Phrase, ThemeManager.WhiteKey, TypeScale.Secondary);
+    private Border OwnRow(LearnedPhrase phrase) =>
+        Slab(_own.Row(phrase), new Thickness(14, 0, 2, 0));
 
-        var sentence = Prose(phrase.Sentence, ThemeManager.GreyKey, TypeScale.Small);
-
-        return Slab(table.Row([said, sentence]), new Thickness(14, 0));
-    }
+    private Border BuiltInRow(BuiltIn phrase) =>
+        Slab(_builtIn.Row(phrase), new Thickness(14, 0));
 
     private static Border Slab(Control content, Thickness padding)
     {
