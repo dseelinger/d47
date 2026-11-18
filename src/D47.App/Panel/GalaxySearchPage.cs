@@ -1397,8 +1397,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         Control? columns = null)
     {
         var name = Chrome(count, TypeScale.Section, ThemeManager.AKey);
+        name.VerticalAlignment = VerticalAlignment.Center;
         _count = name;
-        var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Bottom, Children = { name } };
+        var left = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Center, Children = { name } };
 
         if (aside is { } words)
         {
@@ -1411,14 +1412,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                     FontSize = TypeScale.Small,
                     FontWeight = FontWeight.Medium,
                     LetterSpacing = TypeScale.Small * Fonts.ChromeTracking,
-                    VerticalAlignment = VerticalAlignment.Bottom,
+                    VerticalAlignment = VerticalAlignment.Center,
                 };
                 ThemeInk.Bind(block, TextBlock.ForegroundProperty, ink);
                 return block;
             }
 
             var isSystem = !string.Equals(words.Reference, YourSystem, StringComparison.Ordinal);
-            var line = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Bottom };
+            var line = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
             line.Children.Add(Words(words.Lead, ThemeManager.AKey));
             line.Children.Add(CopyGlyph.LinkBeside(Words(words.Reference, ThemeManager.CyanKey), isSystem ? words.Reference : null, Copy));
             left.Children.Add(line);
@@ -1428,7 +1429,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             var order = Chrome($"· {sorted}", TypeScale.Small, ThemeManager.AKey);
             order.Name = SortedName;
-            order.VerticalAlignment = VerticalAlignment.Bottom;
+            order.VerticalAlignment = VerticalAlignment.Center;
             left.Children.Add(order);
         }
 
@@ -1436,7 +1437,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             var when = Chrome(asked, TypeScale.Small, ThemeManager.GreyKey);
             when.Name = AskedName;
-            when.VerticalAlignment = VerticalAlignment.Bottom;
+            when.VerticalAlignment = VerticalAlignment.Center;
             left.Children.Add(when);
         }
 

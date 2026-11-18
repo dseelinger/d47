@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -753,6 +754,46 @@ public sealed class TheSystemsSearchPageDrawsTheLastAnswerTests
         Press(glyph);
 
         Assert.Single(panel.Nav.TrailOf(PanelTab.Search));
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void EveryPieceOfTheAnswerHeadSitsOnOneCentreLine(bool namedSystem)
+    {
+        var world = new World();
+        var result = namedSystem ? TwoSystems : TwoSystems with { Reference = null };
+        var (panel, window) = Shown(world, copy: true);
+        var entry = SearchHistoryEntry.Of(
+            "search_systems",
+            new Dictionary<string, string> { ["distance"] = "100", ["order_by"] = "population", ["order"] = "desc" },
+            result.Reference,
+            null,
+            result,
+            DateTimeOffset.UtcNow.AddHours(-1));
+
+        Page(panel).ShowEntry(entry);
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = panel.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).ToList();
+        var count = texts.Single(text => text.Text == "2 SYSTEMS");
+        var head = count.GetVisualAncestors().OfType<Border>().First();
+        var pieces = new List<TextBlock>
+        {
+            count,
+            texts.Single(text => text.Text?.StartsWith("WITHIN 100 LY OF", StringComparison.Ordinal) == true),
+            texts.Single(text => text.Name == GalaxySearchPage.SortedName),
+            texts.Single(text => text.Name == GalaxySearchPage.AskedName),
+        };
+        var reference = namedSystem ? "LTT 7786" : "YOUR SYSTEM";
+        pieces.Add(head.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Text == reference));
+
+        Assert.Equal(namedSystem, Copies(head).Contains("LTT 7786"));
+
+        var centres = pieces.Select(piece => piece.TranslatePoint(new Point(0, piece.Bounds.Height / 2), head)!.Value.Y).ToList();
+        Assert.True(centres.Max() - centres.Min() <= 1, string.Join(", ", centres));
 
         window.Close();
     }
