@@ -106,8 +106,6 @@ public sealed class TheMiniPanelShowsTheStoryPlaybackTests
 
         player.Pause(StoryRunPause.Commander);
         Jobs();
-        Named<StoryPlaybackReadout>(view, "StoryReadout").Refresh();
-        Jobs();
 
         var readout = Named<StoryPlaybackReadout>(view, "StoryReadout");
 

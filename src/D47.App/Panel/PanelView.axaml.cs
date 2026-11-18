@@ -145,6 +145,11 @@ public partial class PanelView : UserControl, IPanelTabHost
         _navigation.PlanRootMiniChanged += () => Dispatcher.UIThread.Post(ApplyChrome);
         InitializeComponent();
         StoryReadout.Moved += PlaceStoryProgress;
+        StoryReadout.Refreshed += () =>
+        {
+            ApplySpeaker();
+            ApplyAvatar();
+        };
         MiniRail.SizeChanged += (_, _) => PlaceStoryProgress();
         MiniTrailRow.Beside = CommsMini;
         CommsMini.SizeChanged += (_, _) => MiniTrailRow.InvalidateMeasure();
@@ -346,8 +351,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
                 // The avatar follows the loop state.
                 _bound.PropertyChanged += OnModelChanged;
-                Avatar.Core = _bound.CoreId;
-                Avatar.Show(_bound.LoopState);
+                ApplyAvatar();
                 ApplySpeaker();
                 ApplyMicrophone();
                 ApplyAskHint();
@@ -468,25 +472,14 @@ public partial class PanelView : UserControl, IPanelTabHost
         switch (e.PropertyName)
         {
             case nameof(PanelViewModel.LoopState):
-                if (Dispatcher.UIThread.CheckAccess())
-                {
-                    Avatar.Show(_bound.LoopState);
-                    return;
-                }
-
-                var state = _bound.LoopState;
-                Dispatcher.UIThread.Post(() => Avatar.Show(state));
-                return;
-
             case nameof(PanelViewModel.CoreId):
                 if (Dispatcher.UIThread.CheckAccess())
                 {
-                    Avatar.Core = _bound.CoreId;
+                    ApplyAvatar();
                     return;
                 }
 
-                var core = _bound.CoreId;
-                Dispatcher.UIThread.Post(() => Avatar.Core = core);
+                Dispatcher.UIThread.Post(ApplyAvatar);
                 return;
 
             case nameof(PanelViewModel.SpeakingPicture):
@@ -780,6 +773,37 @@ public partial class PanelView : UserControl, IPanelTabHost
         Avatar.Speaker = picture is { } shown ? _portraits?.For(shown, SpeakerAvatarWidth) : null;
     }
 
+    /// <summary>
+    /// Shows the core aboard in its loop state. While mini reads out a line a core spoke, shows that core instead:
+    /// speaking while the line is heard, idle while it is paused or not yet spoken.
+    /// </summary>
+    private void ApplyAvatar()
+    {
+        if (_bound is null)
+        {
+            return;
+        }
+
+        var playback = StoryReadoutShowing ? _bound.StoryPlayer?.Now : null;
+
+        if (playback is null || StoryRunPlayer.CoreOf(playback.Line) is not { } core)
+        {
+            Avatar.Core = _bound.CoreId;
+            Avatar.Show(_bound.LoopState);
+            return;
+        }
+
+        if (!string.Equals(core, Avatar.Core, StringComparison.Ordinal))
+        {
+            AvatarClipStore.Want(core);
+            Avatar.Core = core;
+        }
+
+        Avatar.Show(playback is { IsPaused: false, State: StoryRunLineState.Playing }
+            ? D47.Core.Audio.LoopState.Speaking
+            : D47.Core.Audio.LoopState.Idle);
+    }
+
     /// <summary>Whether mini is showing the story playback read-out.</summary>
     private bool StoryReadoutShowing => Mode == PanelMode.Mini && _bound?.StoryPlayback == true && _bound.StoryPlayer is not null;
 
@@ -796,6 +820,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         PagePane.IsVisible = PagePane.IsVisible && !show;
         PlaceStoryProgress();
         ApplySpeaker();
+        ApplyAvatar();
     }
 
     /// <summary>The Binding conflicts notice, over the transcript of the full panel while Elite binds one of D47's keys or buttons.</summary>

@@ -8,6 +8,10 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: While the mini panel reads out a story playback, its avatar shows the ship's core that spoke the line, speaking while the line is heard and idle while paused, and the core aboard returns when the playback ends. It used to show the core aboard for every core's line.
+
+Fixed: The mini panel's story playback read-out follows the playback to the next line and shows Paused when it pauses. Its label and text used to stay on the line the playback started with.
+
 Fixed: The story playback box shows a ship's core's speaking clip while a line that core spoke plays. The picture area used to stay black for those lines. The clip holds still while the playback is paused, and the headset's box shows its first frame.
 
 Fixed: A story or adventure objective to land on a body is met by docking at a surface port on that body. It used to need a touchdown on open ground, so a pad at a port left the objective waiting.

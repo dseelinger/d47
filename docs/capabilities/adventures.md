@@ -472,7 +472,8 @@ paused line again from its start. It keeps playing when you leave the page. The 
 message, stops it. **Play** on a single line replaces it with that line.
 
 The mini panels, on the desktop and in the headset, have no buttons, so while a playback runs they show a read-out in place
-of their text. The avatar slot shows the playing line's picture whole, with a 3px progress line along its bottom edge, cyan
+of their text. The avatar slot shows the playing line's picture whole, or for a line a ship's core spoke that core in place
+of the core aboard, speaking while the line is heard and idle while paused, with a 3px progress line along its bottom edge, cyan
 or amber while paused. Beside it are the head, **Playing 3 of 6 · Ysolt Garrow** or **Paused · …** with the time played
 (a held line shows its countdown), the line, which scrolls by itself to reach its end as the clip does, and the hint
 Say: “play”, “pause”, “next” or “stop”. When the playback ends the panel shows what it showed before.

@@ -31,6 +31,7 @@ public sealed class StoryPlaybackReadout : Border
     private readonly Border _thumb = new();
     private readonly DispatcherTimer _poll = new() { Interval = PollEvery };
     private StoryRunPlayer? _player;
+    private StoryRunPlayer? _followed;
     private Func<TrackProgress?>? _progress;
     private string? _shown;
 
@@ -82,7 +83,12 @@ public sealed class StoryPlaybackReadout : Border
         Child = rows;
 
         _poll.Tick += (_, _) => Poll();
-        DetachedFromVisualTree += (_, _) => _poll.Stop();
+        AttachedToVisualTree += (_, _) => Follow(_player);
+        DetachedFromVisualTree += (_, _) =>
+        {
+            _poll.Stop();
+            Follow(null);
+        };
     }
 
     /// <summary>The share of the line played, 0 to 1.</summary>
@@ -94,11 +100,15 @@ public sealed class StoryPlaybackReadout : Border
     /// <summary>Raised when <see cref="Share"/> or <see cref="Paused"/> may have changed.</summary>
     public event Action? Moved;
 
+    /// <summary>Raised on the UI thread after the playback's line, label or pause has been drawn again.</summary>
+    public event Action? Refreshed;
+
     /// <summary>Reads <paramref name="player"/>'s playback and <paramref name="progress"/>; null stops reading.</summary>
     public void Watch(StoryRunPlayer? player, Func<TrackProgress?>? progress)
     {
         _player = player;
         _progress = progress;
+        Follow(player);
 
         if (player is null)
         {
@@ -109,6 +119,24 @@ public sealed class StoryPlaybackReadout : Border
         Refresh();
         _poll.Start();
     }
+
+    /// <summary>Listens to <paramref name="player"/> for a change of line or pause, and to no other player.</summary>
+    private void Follow(StoryRunPlayer? player)
+    {
+        if (_followed is not null)
+        {
+            _followed.Changed -= OnPlayerChanged;
+        }
+
+        _followed = player;
+
+        if (player is not null)
+        {
+            player.Changed += OnPlayerChanged;
+        }
+    }
+
+    private void OnPlayerChanged() => Dispatcher.UIThread.Post(Refresh);
 
     /// <summary>Draws the playback's label, line and hint.</summary>
     internal void Refresh()
@@ -131,6 +159,7 @@ public sealed class StoryPlaybackReadout : Border
         }
 
         Poll();
+        Refreshed?.Invoke();
     }
 
     internal void Poll()
