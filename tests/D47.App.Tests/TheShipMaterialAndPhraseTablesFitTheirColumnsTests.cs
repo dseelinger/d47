@@ -75,7 +75,7 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         [.. root.GetVisualDescendants().OfType<TableGrid>().Where(grid => grid.Layout.Id == id)];
 
     /// <summary>The header and every row share column edges, and no Content column is wider than its widest cell.</summary>
-    private static void Fits(Visual root, string id, int rowsAtLeast = 1, int headers = 1)
+    private static void Fits(Visual root, string id, int rowsAtLeast = 1, int headers = 1, bool evenSpare = true)
     {
         var grids = Grids(root, id);
         var heads = grids.Where(grid => grid.IsHeader).ToList();
@@ -94,9 +94,11 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         var columns = heads[0].Layout.Columns;
         var spacing = heads[0].Layout.Spacing;
 
+        var spare = new List<double>();
+
         for (var column = 0; column < columns.Count; column++)
         {
-            if (columns[column].Fit != ColumnFit.Content)
+            if (columns[column].Fit == ColumnFit.Fixed)
             {
                 continue;
             }
@@ -105,19 +107,29 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
                 .SelectMany(grid => grid.Children.Where(child => Grid.GetColumn(child) == column && Grid.GetColumnSpan(child) == 1 && child is not ColumnGrip))
                 .Select(Natural).DefaultIfEmpty(0).Max();
 
-            Assert.True(edges[column] - spacing <= widest + 1, $"{id}.{columns[column].Key} is {edges[column]} wide; its widest cell is {widest} (spacing {spacing})");
+            Assert.True(edges[column] - spacing >= widest - 1, $"{id}.{columns[column].Key} is {edges[column]} wide; its widest cell is {widest}");
+
+            if (columns[column].Min is null)
+            {
+                spare.Add(edges[column] - spacing - widest);
+            }
+        }
+
+        if (evenSpare && spare.Count > 1)
+        {
+            Assert.True(spare.Max() - spare.Min() <= 2, $"{id}: spare width per column is not even: {string.Join(", ", spare.Select(width => Math.Round(width, 1)))}");
         }
     }
 
     private static ColumnWidthMemory Memory() =>
         new(new ViewStateStore(new AppPaths("memory"), new MemoryFileSystem(), NullLogger<ViewStateStore>.Instance));
 
-    private static void Remembered(Visual root, string id, string key, double width)
+    private static void Remembered(Visual root, string id, string key, double share)
     {
         var header = Grids(root, id).First(grid => grid.IsHeader);
         var column = header.Layout.Columns.ToList().FindIndex(c => c.Key == key);
 
-        Assert.Equal(width + header.Layout.Spacing, header.ColumnDefinitions[column].ActualWidth, 1.5);
+        Assert.Equal((share * header.Layout.Widths.Sum()) + header.Layout.Spacing, header.ColumnDefinitions[column].ActualWidth, 1.5);
         Assert.NotEmpty(header.Children.OfType<ColumnGrip>());
     }
 
@@ -138,11 +150,11 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
     public void ADraggedCrewWidthHoldsWhenThePageIsReopened()
     {
         var memory = Memory();
-        memory.Remember(CrewPage.TableId, "CombatRank", 300);
+        memory.Remember(CrewPage.TableId, "CombatRank", 0.3);
         var store = Store(Commander, Hire("Samira Voss", 1, 6));
         var window = Show(new CrewPage(() => store.Active, columnWidths: memory));
 
-        Remembered(window, CrewPage.TableId, "CombatRank", 300);
+        Remembered(window, CrewPage.TableId, "CombatRank", 0.3);
         window.Close();
     }
 
@@ -177,13 +189,13 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
     public void ADraggedStoredModuleWidthHoldsInEveryGroup()
     {
         var memory = Memory();
-        memory.Remember(StoredModulesPage.TableId, "TransferCost", 260);
+        memory.Remember(StoredModulesPage.TableId, "TransferCost", 0.2);
         var store = Store(StoredJournal);
         var window = Show(new StoredModulesPage(() => store.Active, memory));
 
         foreach (var header in Grids(window, StoredModulesPage.TableId).Where(grid => grid.IsHeader))
         {
-            Assert.Equal(260, header.ColumnDefinitions[2].ActualWidth, 0.5);
+            Assert.Equal((0.2 * header.Layout.Widths.Sum()) + header.Layout.Spacing, header.ColumnDefinitions[2].ActualWidth, 1.5);
         }
 
         window.Close();
@@ -210,11 +222,11 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
     public void ADraggedCompareWidthHoldsWhenThePageIsReopened()
     {
         var memory = Memory();
-        memory.Remember(ComparePage.TableId, "Value", 240);
+        memory.Remember(ComparePage.TableId, "Value", 0.2);
         var store = Store(CompareJournal);
         var window = Show(new ComparePage(() => store.Active, memory), 1200);
 
-        Remembered(window, ComparePage.TableId, "Value", 240);
+        Remembered(window, ComparePage.TableId, "Value", 0.2);
         window.Close();
     }
 
@@ -293,15 +305,15 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         ]);
 
         var memory = Memory();
-        memory.Remember(PhrasesPage.OwnTable, "Phrase", 300);
+        memory.Remember(PhrasesPage.OwnTable, "Phrase", 0.3);
         var window = Show(new PhrasesPage(registry, learned, () => store.Active, columnWidths: memory), 1100);
 
-        Fits(window, PhrasesPage.OwnTable, 2);
-        Remembered(window, PhrasesPage.OwnTable, "Phrase", 300);
+        Fits(window, PhrasesPage.OwnTable, 2, evenSpare: false);
+        Remembered(window, PhrasesPage.OwnTable, "Phrase", 0.3);
 
         var groups = PhrasesPage.Groups(PhraseBook.From(registry, []), registry, string.Empty).Count;
         Assert.True(groups >= 2, $"{groups} built-in groups");
-        Fits(window, PhrasesPage.BuiltInTable, groups);
+        Fits(window, PhrasesPage.BuiltInTable, groups, evenSpare: false);
         window.Close();
     }
 

@@ -128,7 +128,7 @@ public sealed class TheSearchTablesFitTheirColumnsTests
     }
 
     [AvaloniaFact]
-    public async Task TheSystemTableSharesColumnEdgesAndDoesNotStretchItsFigureColumns()
+    public async Task TheSystemTableSharesColumnEdgesAndGivesEveryColumnItsContent()
     {
         var (panel, window, _) = Shown(SystemSearchPage.RootKey);
 
@@ -144,7 +144,7 @@ public sealed class TheSearchTablesFitTheirColumnsTests
         label.Measure(new Avalonia.Size(double.PositiveInfinity, double.PositiveInfinity));
         var populationLabel = label.DesiredSize.Width;
 
-        Assert.True(head.Layout.Widths[4] <= Math.Max(populationNeed, populationLabel) + 1);
+        Assert.True(head.Layout.Widths[4] >= Math.Max(populationNeed, populationLabel) - 1);
         Assert.True(head.Layout.Widths[0] > head.Layout.Widths[1]);
 
         window.Close();

@@ -104,7 +104,7 @@ public class TheCommanderTabTablesFitTheirColumnsTests
         return double.IsNaN(supplied) ? child.DesiredSize.Width : Math.Max(supplied, child.DesiredSize.Width);
     }
 
-    private static void Fits(Window window, string id, int rowsAtLeast = 1)
+    private static void Fits(Window window, string id, int rowsAtLeast = 1, bool evenSpare = true)
     {
         var grids = window.GetVisualDescendants().OfType<TableGrid>().Where(grid => grid.Layout.Id == id).ToList();
         var header = Assert.Single(grids, grid => grid.IsHeader);
@@ -122,9 +122,11 @@ public class TheCommanderTabTablesFitTheirColumnsTests
 
         var columns = header.Layout.Columns;
 
+        var spare = new List<double>();
+
         for (var column = 0; column < columns.Count; column++)
         {
-            if (columns[column].Fit != ColumnFit.Content)
+            if (columns[column].Fit == ColumnFit.Fixed)
             {
                 continue;
             }
@@ -133,7 +135,17 @@ public class TheCommanderTabTablesFitTheirColumnsTests
                 .SelectMany(grid => grid.Children.Where(child => Grid.GetColumn(child) == column && Grid.GetColumnSpan(child) == 1 && child is not ColumnGrip))
                 .Select(Natural).DefaultIfEmpty(0).Max();
 
-            Assert.True(edges[column] - spacing <= widest + 1, $"{id}.{columns[column].Key} is {edges[column]} wide; its widest cell is {widest}");
+            Assert.True(edges[column] - spacing >= widest - 1, $"{id}.{columns[column].Key} is {edges[column]} wide; its widest cell is {widest}");
+
+            if (columns[column].Min is null)
+            {
+                spare.Add(edges[column] - spacing - widest);
+            }
+        }
+
+        if (evenSpare && spare.Count > 1)
+        {
+            Assert.True(spare.Max() - spare.Min() <= 2, $"{id}: spare width per column is not even: {string.Join(", ", spare.Select(width => Math.Round(width, 1)))}");
         }
     }
 
@@ -253,13 +265,13 @@ public class TheCommanderTabTablesFitTheirColumnsTests
     public void ADraggedCreditKindWidthHoldsWhenThePageIsReopened()
     {
         var memory = new ColumnWidthMemory(new ViewStateStore(new AppPaths("memory"), new MemoryFileSystem(), NullLogger<ViewStateStore>.Instance));
-        memory.Remember(CreditsPage.TableId, "In", 300);
+        memory.Remember(CreditsPage.TableId, "In", 0.25);
 
         var state = State(CreditLines);
         var window = Show(new CreditsPage(() => state, () => HistoryState.Done, () => Now, new CreditsChoice(), new PanelNavigator(), columnWidths: memory));
         var header = window.GetVisualDescendants().OfType<TableGrid>().Single(grid => grid.IsHeader);
 
-        Assert.Equal(300 + header.Layout.Spacing, header.ColumnDefinitions[1].ActualWidth, 0.5);
+        Assert.Equal((0.25 * header.Layout.Widths.Sum()) + header.Layout.Spacing, header.ColumnDefinitions[1].ActualWidth, 1.5);
         Assert.NotEmpty(header.Children.OfType<ColumnGrip>());
         window.Close();
     }

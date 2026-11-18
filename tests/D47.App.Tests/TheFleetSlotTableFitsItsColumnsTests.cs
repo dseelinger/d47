@@ -114,11 +114,11 @@ public class TheFleetSlotTableFitsItsColumnsTests
         var store = new ViewStateStore(new AppPaths("memory"), new MemoryFileSystem(), NullLogger<ViewStateStore>.Instance);
         var memory = new ColumnWidthMemory(store);
 
-        memory.Remember(LoadoutPages.SlotTable, "Plan", 420);
+        memory.Remember(LoadoutPages.SlotTable, "Plan", 0.4);
 
         var (window, _, rows) = Draw(LoadoutPages.NewSlotTable(memory), Row(Empty, Beam));
 
-        Assert.Equal(420, Width(rows[0], 3), 0.5);
+        Assert.Equal(0.4 * rows[0].Layout.Widths.Sum(), Width(rows[0], 3), 1.5);
 
         window.Close();
     }

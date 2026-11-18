@@ -310,7 +310,7 @@ public class ColumnsAreArrangedInTheTableTests
     {
         var views = ViewState();
         var widths = new ColumnWidthMemory(views);
-        widths.Remember(Id, "Module", 300);
+        widths.Remember(Id, "Module", 0.25);
         var memory = new ColumnArrangementMemory(views);
         memory.Remember(Id, ["Hot", "Module"]);
         var store = Store();
@@ -321,7 +321,7 @@ public class ColumnsAreArrangedInTheTableTests
 
         Assert.Equal(["Module", "Class", "TransferCost", "TransferTime"], Keys(window));
         Assert.False(views.Load().ColumnArrangements.ContainsKey(Id));
-        Assert.Equal(300, views.Load().ColumnWidths[Id]["Module"]);
+        Assert.Equal(0.25, views.Load().ColumnShares[Id]["Module"]);
         Assert.False(Named<Button>(window, Part("Default")).IsEnabled);
         window.Close();
     }

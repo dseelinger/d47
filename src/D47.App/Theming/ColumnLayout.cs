@@ -5,7 +5,7 @@ public enum ColumnFit
     /// <summary>As wide as its widest cell or header label.</summary>
     Content,
 
-    /// <summary>Takes the space the other columns leave.</summary>
+    /// <summary>Marks a table's main column; spare width is shared as for <see cref="Content"/>.</summary>
     Fill,
 
     /// <summary>A set width.</summary>
@@ -28,12 +28,16 @@ public sealed record TableColumn(string Key, ColumnFit Fit = ColumnFit.Content)
 /// <summary>Column widths for a table whose columns fit their content.</summary>
 public static class ColumnLayout
 {
-    /// <summary>Widths for <paramref name="available"/> pixels, spacing already taken off.</summary>
+    /// <summary>
+    /// Widths for <paramref name="available"/> pixels, spacing already taken off. A column in
+    /// <paramref name="shares"/> takes that fraction of <paramref name="available"/>; every other column
+    /// that is not fixed takes its natural width plus an equal part of what is left.
+    /// </summary>
     public static IReadOnlyList<double> Widths(
         IReadOnlyList<TableColumn> columns,
         IReadOnlyList<double> natural,
         IReadOnlyList<double> minimum,
-        IReadOnlyDictionary<string, double> chosen,
+        IReadOnlyDictionary<string, double> shares,
         double available)
     {
         var count = columns.Count;
@@ -51,15 +55,15 @@ public static class ColumnLayout
             }
 
             floor[i] = Math.Max(0, minimum[i]);
-            isChosen[i] = chosen.TryGetValue(columns[i].Key, out var width) && double.IsFinite(width) && width > 0;
-            widths[i] = Math.Max(floor[i], isChosen[i] ? chosen[columns[i].Key] : natural[i]);
+            isChosen[i] = shares.TryGetValue(columns[i].Key, out var share) && double.IsFinite(share) && share > 0;
+            widths[i] = Math.Max(floor[i], isChosen[i] ? shares[columns[i].Key] * available : natural[i]);
         }
 
         var extra = available - widths.Sum();
 
         if (extra > 0)
         {
-            Grow(columns, natural, widths, isChosen, extra);
+            Grow(columns, widths, isChosen, extra);
         }
         else if (extra < 0)
         {
@@ -70,28 +74,15 @@ public static class ColumnLayout
         return widths;
     }
 
-    private static void Grow(
-        IReadOnlyList<TableColumn> columns, IReadOnlyList<double> natural, double[] widths, bool[] isChosen, double extra)
+    private static void Grow(IReadOnlyList<TableColumn> columns, double[] widths, bool[] isChosen, double extra)
     {
         var receivers = Enumerable.Range(0, columns.Count)
-            .Where(c => !isChosen[c] && columns[c].Fit == ColumnFit.Fill)
+            .Where(c => !isChosen[c] && columns[c].Fit != ColumnFit.Fixed)
             .ToList();
-
-        if (receivers.Count == 0)
-        {
-            receivers = [.. Enumerable.Range(0, columns.Count).Where(c => !isChosen[c] && columns[c].Fit == ColumnFit.Content)];
-        }
-
-        if (receivers.Count == 0)
-        {
-            return;
-        }
-
-        var total = receivers.Sum(c => Math.Max(0, natural[c]));
 
         foreach (var c in receivers)
         {
-            widths[c] += total > 0 ? extra * Math.Max(0, natural[c]) / total : extra / receivers.Count;
+            widths[c] += extra / receivers.Count;
         }
     }
 

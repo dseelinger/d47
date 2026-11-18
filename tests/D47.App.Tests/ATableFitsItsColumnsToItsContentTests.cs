@@ -84,7 +84,7 @@ public class ATableFitsItsColumnsToItsContentTests
     }
 
     [AvaloniaFact]
-    public void DraggingAGripSetsTheColumnWidthAndReleasingRemembersIt()
+    public void DraggingAGripMovesWidthBetweenItsTwoColumnsAndReleasingRemembersBothShares()
     {
         var (settings, store, paths) = TestSurface.Create();
         var memory = new ColumnWidthMemory(store);
@@ -92,25 +92,80 @@ public class ATableFitsItsColumnsToItsContentTests
         var (window, _, header, data) = Draw(layout);
         var grip = header.Children.OfType<ColumnGrip>().Single(g => g.Name == TableLayout.GripName(Table, "plan"));
         var start = Centre(grip, window);
-        var before = Edges(header)[2];
+        var before = Edges(header);
 
         window.MouseDown(start, MouseButton.Left);
         window.MouseMove(start + new Point(40, 0));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(before + 40, Edges(header)[2], 1);
-        Assert.Equal(Edges(header), Edges(data[1]));
+        var during = Edges(header);
+
+        Assert.Equal(before[2] + 40, during[2], 1);
+        Assert.Equal(before[3] - 40, during[3], 1);
+        Assert.Equal(before[1], during[1], 1);
+        Assert.Equal(during, Edges(data[1]));
         Assert.Empty(memory.Remembered(Table));
 
         window.MouseUp(start + new Point(40, 0), MouseButton.Left);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(before + 40, memory.Remembered(Table)["plan"], 1);
+        var total = during.Sum();
+        var shares = memory.Remembered(Table);
 
-        var redrawn = new TableLayout(Table, Columns, new ColumnWidthMemory(store));
-        var (_, _, again, _) = Draw(redrawn);
+        Assert.Equal(during[2] / total, shares["plan"], 3);
+        Assert.Equal(during[3] / total, shares["notes"], 3);
+        Assert.Equal(2, shares.Count);
 
-        Assert.Equal(before + 40, Edges(again)[2], 1);
+        var (_, _, again, _) = Draw(new TableLayout(Table, Columns, new ColumnWidthMemory(store)));
+
+        Assert.Equal(during[2], Edges(again)[2], 1);
+        Assert.Equal(during[3], Edges(again)[3], 1);
+        GC.KeepAlive(settings);
+        GC.KeepAlive(paths);
+    }
+
+    [AvaloniaFact]
+    public void ADraggedColumnKeepsItsProportionWhenTheTableIsWiderAndAfterARestart()
+    {
+        TableColumn[] two = [new("left"), new("right")];
+        var (settings, store, paths) = TestSurface.Create();
+
+        double[] Drawn(double width, ColumnWidthMemory memory, Func<Window, TableGrid, bool> drag)
+        {
+            var layout = new TableLayout(Table, two, memory);
+            var header = layout.Header([Text("LEFT"), Text("RIGHT")]);
+            var row = layout.Row([Text("a"), Text("b")]);
+            var window = new Window { Content = new StackPanel { Children = { header, row } }, Width = width, Height = 200 };
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            if (drag(window, header))
+            {
+                Dispatcher.UIThread.RunJobs();
+            }
+
+            return Edges(header);
+        }
+
+        var first = Drawn(1200, new ColumnWidthMemory(store), (window, header) =>
+        {
+            var grip = header.Children.OfType<ColumnGrip>().Single();
+            var start = Centre(grip, window);
+            var want = 300 - Edges(header)[0];
+
+            window.MouseDown(start, MouseButton.Left);
+            window.MouseMove(start + new Point(want, 0));
+            window.MouseUp(start + new Point(want, 0), MouseButton.Left);
+
+            return true;
+        });
+
+        Assert.InRange(first[0], 299, 301);
+
+        var wider = Drawn(1600, new ColumnWidthMemory(store), (_, _) => false);
+
+        Assert.InRange(wider[0], 399, 401);
+        Assert.InRange(wider[1], 1199, 1201);
         GC.KeepAlive(settings);
         GC.KeepAlive(paths);
     }
@@ -158,16 +213,20 @@ public class ATableFitsItsColumnsToItsContentTests
     }
 
     [AvaloniaFact]
-    public void DoubleClickingAGripClearsTheChosenWidth()
+    public void DoubleClickingAGripReturnsBothColumnsToTheEvenSpread()
     {
+        var (_, evenStore, _) = TestSurface.Create();
+        var (_, _, even, _) = Draw(new TableLayout(Table, Columns, new ColumnWidthMemory(evenStore)));
         var (_, store, _) = TestSurface.Create();
         var memory = new ColumnWidthMemory(store);
-        memory.Remember(Table, "plan", 300);
+        memory.Remember(Table, "plan", 0.3);
+        memory.Remember(Table, "notes", 0.4);
         var (window, _, header, _) = Draw(new TableLayout(Table, Columns, memory));
         var grip = header.Children.OfType<ColumnGrip>().Single(g => g.Name == TableLayout.GripName(Table, "plan"));
         var point = Centre(grip, window);
 
-        Assert.Equal(300, Edges(header)[2], 1);
+        Assert.Equal(0.3 * Edges(header).Sum(), Edges(header)[2], 1);
+        Assert.Equal(0.4 * Edges(header).Sum(), Edges(header)[3], 1);
 
         window.MouseDown(point, MouseButton.Left);
         window.MouseUp(point, MouseButton.Left);
@@ -176,6 +235,22 @@ public class ATableFitsItsColumnsToItsContentTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Empty(memory.Remembered(Table));
-        Assert.True(Edges(header)[2] < 300);
+        Assert.Equal(Edges(even), Edges(header).Select(width => Math.Round(width, 1)).ToArray(), new Tolerance());
+    }
+
+    [AvaloniaFact]
+    public void AFixedColumnHasNoGripAndNeitherDoesTheLastColumn()
+    {
+        var (_, store, _) = TestSurface.Create();
+        var (_, _, header, _) = Draw(new TableLayout(Table, Columns, new ColumnWidthMemory(store)));
+
+        Assert.Equal(["current", "plan"], header.Children.OfType<ColumnGrip>().Select(g => g.Name!.Split('.')[^2]).Order());
+    }
+
+    private sealed class Tolerance : IEqualityComparer<double>
+    {
+        public bool Equals(double x, double y) => Math.Abs(x - y) < 0.6;
+
+        public int GetHashCode(double value) => 0;
     }
 }

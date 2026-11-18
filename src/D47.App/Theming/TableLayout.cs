@@ -11,7 +11,8 @@ namespace D47.App.Theming;
 /// The column model of one drawn table, shared by its header and its rows. Rows and the header are
 /// <see cref="TableGrid"/>s registered with it; each reports its cells' natural widths and takes its
 /// column widths from <see cref="ColumnLayout.Widths"/>. A table built with a <see cref="ColumnWidthMemory"/>
-/// gets a grip on each header boundary.
+/// gets a grip after each column that is not fixed and has another such column to its right; dragging it
+/// moves width between those two columns.
 /// </summary>
 public sealed class TableLayout
 {
@@ -135,9 +136,9 @@ public sealed class TableLayout
         {
             for (var i = 0; i < Columns.Count - 1; i++)
             {
-                if (Columns[i].Fit != ColumnFit.Fixed)
+                if (Columns[i].Fit != ColumnFit.Fixed && PartnerOf(i) is var partner and >= 0)
                 {
-                    AddGrip(grid, i);
+                    AddGrip(grid, i, partner);
                 }
             }
         }
@@ -160,7 +161,21 @@ public sealed class TableLayout
         }
     }
 
-    private void AddGrip(TableGrid header, int column)
+    /// <summary>The next column to the right that is not fixed; -1 when there is none.</summary>
+    private int PartnerOf(int column)
+    {
+        for (var next = column + 1; next < Columns.Count; next++)
+        {
+            if (Columns[next].Fit != ColumnFit.Fixed)
+            {
+                return next;
+            }
+        }
+
+        return -1;
+    }
+
+    private void AddGrip(TableGrid header, int column, int partner)
     {
         var grip = new ColumnGrip
         {
@@ -176,7 +191,8 @@ public sealed class TableLayout
         Grid.SetColumn(grip, column);
 
         var startX = 0.0;
-        var startWidth = 0.0;
+        var startLeft = 0.0;
+        var startRight = 0.0;
         var dragging = false;
 
         grip.PointerPressed += (_, e) =>
@@ -190,8 +206,12 @@ public sealed class TableLayout
 
             if (e.ClickCount >= 2)
             {
-                _chosen.Remove(Columns[column].Key);
-                _memory!.Forget(Id, Columns[column].Key);
+                foreach (var key in new[] { Columns[column].Key, Columns[partner].Key })
+                {
+                    _chosen.Remove(key);
+                    _memory!.Forget(Id, key);
+                }
+
                 Reflow(header);
                 return;
             }
@@ -199,7 +219,8 @@ public sealed class TableLayout
             dragging = true;
             grip.Dragging = true;
             startX = e.GetPosition(header).X;
-            startWidth = _widths[column];
+            startLeft = _widths[column];
+            startRight = _widths[partner];
             e.Pointer.Capture(grip);
         };
 
@@ -211,7 +232,20 @@ public sealed class TableLayout
             }
 
             e.Handled = true;
-            _chosen[Columns[column].Key] = Clamp(column, startWidth + e.GetPosition(header).X - startX);
+
+            var room = _available - (Spacing * Math.Max(0, Columns.Count - 1));
+
+            if (room <= 0)
+            {
+                return;
+            }
+
+            var delta = Math.Max(
+                MinimumOf(column) - startLeft,
+                Math.Min(e.GetPosition(header).X - startX, startRight - MinimumOf(partner)));
+
+            _chosen[Columns[column].Key] = (startLeft + delta) / room;
+            _chosen[Columns[partner].Key] = (startRight - delta) / room;
             Reflow(header);
         };
 
@@ -227,9 +261,12 @@ public sealed class TableLayout
             grip.Hovered = new Rect(grip.Bounds.Size).Contains(e.GetPosition(grip));
             e.Pointer.Capture(null);
 
-            if (_chosen.TryGetValue(Columns[column].Key, out var width))
+            foreach (var key in new[] { Columns[column].Key, Columns[partner].Key })
             {
-                _memory!.Remember(Id, Columns[column].Key, width);
+                if (_chosen.TryGetValue(key, out var share))
+                {
+                    _memory!.Remember(Id, key, share);
+                }
             }
         };
 
@@ -237,14 +274,6 @@ public sealed class TableLayout
         grip.PointerExited += (_, _) => grip.Hovered = dragging;
 
         header.Children.Add(grip);
-    }
-
-    private double Clamp(int column, double width)
-    {
-        var others = Enumerable.Range(0, Columns.Count).Where(c => c != column).Sum(MinimumOf);
-        var room = _available - (Spacing * Math.Max(0, Columns.Count - 1)) - others;
-
-        return Math.Max(MinimumOf(column), Math.Min(width, room));
     }
 
     private void Reflow(TableGrid header)

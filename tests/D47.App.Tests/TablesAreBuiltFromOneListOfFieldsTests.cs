@@ -129,7 +129,7 @@ public class TablesAreBuiltFromOneListOfFieldsTests
     {
         var views = ViewState();
         var widths = new ColumnWidthMemory(views);
-        widths.Remember(StoredModulesPage.TableId, "Module", 300);
+        widths.Remember(StoredModulesPage.TableId, "Module", 0.25);
         var arrangement = new ColumnArrangementMemory(views);
         arrangement.Remember(StoredModulesPage.TableId, ["Class", "Module", "TransferCost"]);
         var store = Store();
@@ -138,7 +138,7 @@ public class TablesAreBuiltFromOneListOfFieldsTests
         foreach (var header in Grids(window).Where(grid => grid.IsHeader))
         {
             Assert.Equal("Module", header.Layout.Columns[1].Key);
-            Assert.Equal(300, header.ColumnDefinitions[1].ActualWidth, 0.5);
+            Assert.Equal((0.25 * header.Layout.Widths.Sum()) + header.Layout.Spacing, header.ColumnDefinitions[1].ActualWidth, 1.5);
         }
 
         window.Close();
