@@ -308,7 +308,7 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
         return new PowerplayNeighbourhood(Math.Max(0, sawItself ? total - 1 : total), neighbours);
     }
 
-    private static StarSystemProfile ReadProfile(JsonElement system, long systemAddress)
+    internal static StarSystemProfile ReadProfile(JsonElement system, long systemAddress)
     {
         var name = system.String("name") ?? "an unnamed system";
 

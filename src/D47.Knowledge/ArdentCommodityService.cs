@@ -154,7 +154,7 @@ public sealed class ArdentCommodityService : IDisposable
     }
 
     /// <summary>The rows, as <see cref="MarketSnapshot"/> reads them.</summary>
-    private static IReadOnlyList<MarketSnapshot> Read(JsonDocument document, string commodity)
+    internal static IReadOnlyList<MarketSnapshot> Read(JsonDocument document, string commodity)
     {
         var markets = new List<MarketSnapshot>();
 
