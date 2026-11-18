@@ -149,6 +149,15 @@ public sealed partial record CombatRecord
 
         switch (journalEvent.Kind)
         {
+            case "Bounty":
+                return result.Killed(BountyOf(journalEvent, result), journalEvent);
+
+            case "FactionKillBond":
+                return result.Killed(BondOf(journalEvent, result), journalEvent);
+
+            case "LoadGame" when CombatVehicles.IsSuit(journalEvent.String("Ship")):
+                return result with { Vehicle = CombatVehicle.OnFoot };
+
             case "LoadGame" or "Loadout" when journalEvent.Int("ShipID") is { } id:
                 return result.Boarded(id, journalEvent.String("Ship"), journalEvent.String("ShipName"));
 
@@ -158,26 +167,11 @@ public sealed partial record CombatRecord
             case "Location" or "FSDJump" or "CarrierJump":
                 return result.Located(journalEvent);
 
-            case "Disembark":
-                return result with { Vehicle = CombatVehicle.OnFoot };
-
-            case "LaunchSRV" or "LaunchVessel" when journalEvent.LaunchesSrv:
-                return result with { Vehicle = CombatVehicle.Srv };
-
-            case "Embark":
-                return result with { Vehicle = journalEvent.Bool("SRV") ? CombatVehicle.Srv : CombatVehicle.Ship };
-
-            case "DockSRV":
-                return result with { Vehicle = CombatVehicle.Ship };
-
-            case "Bounty":
-                return result.Killed(BountyOf(journalEvent, result), journalEvent);
-
-            case "FactionKillBond":
-                return result.Killed(BondOf(journalEvent, result), journalEvent);
+            case "Embark" when CombatVehicles.After(journalEvent) == CombatVehicle.Ship && journalEvent.Int("ID") is { } boarded:
+                return result with { Vehicle = CombatVehicle.Ship, ShipId = boarded };
 
             default:
-                return result;
+                return CombatVehicles.After(journalEvent) is { } vehicle ? result with { Vehicle = vehicle } : result;
         }
     }
 
@@ -236,14 +230,16 @@ public sealed partial record CombatRecord
 
     private CombatRecord Located(JournalEvent journalEvent)
     {
+        var placed = CombatVehicles.After(journalEvent) is { } vehicle ? this with { Vehicle = vehicle } : this;
+
         if (journalEvent.Long("SystemAddress") is not { } address)
         {
-            return this;
+            return placed;
         }
 
         var name = journalEvent.String("StarSystem");
 
-        return this with
+        return placed with
         {
             Address = address,
             Systems = name is { Length: > 0 } && !string.Equals(Systems.GetValueOrDefault(address), name, StringComparison.Ordinal)

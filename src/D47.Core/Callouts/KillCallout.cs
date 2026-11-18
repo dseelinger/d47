@@ -46,6 +46,11 @@ public sealed class KillCallout : ICallout
 
         foreach (var journalEvent in context.Events)
         {
+            if (CombatVehicles.After(journalEvent) is { } vehicle)
+            {
+                _afoot = vehicle == CombatVehicle.OnFoot;
+            }
+
             switch (journalEvent.Kind)
             {
                 case "LoadGame" when journalEvent.StartsSession:
@@ -55,19 +60,6 @@ public sealed class KillCallout : ICallout
                     _lastKillAt = null;
                     _quickRun = 0;
                     _lastLines.Clear();
-                    _afoot = false;
-                    break;
-
-                case "LoadGame":
-                    _afoot = false;
-                    break;
-
-                case "Disembark":
-                    _afoot = !journalEvent.Bool("SRV");
-                    break;
-
-                case "Embark" or "LaunchSRV" or "DockSRV":
-                    _afoot = false;
                     break;
 
                 case "ReceiveText":

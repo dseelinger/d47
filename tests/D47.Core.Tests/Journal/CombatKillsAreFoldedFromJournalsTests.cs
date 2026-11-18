@@ -219,4 +219,84 @@ public class CombatKillsAreFoldedFromJournalsTests
         Assert.Empty(found["F1"].Kills);
         Assert.Single(found["F2"].Kills);
     }
+
+    private const string Bond = "\"event\":\"FactionKillBond\",\"Reward\":5000,\"AwardingFaction\":\"A\",\"VictimFaction\":\"B\"";
+
+    private static readonly string[] DropshipRun =
+    [
+        At("2026-10-10T09:00:00Z", "\"event\":\"LoadGame\",\"Ship\":\"eagle\",\"ShipID\":1"),
+        At("2026-10-10T09:01:00Z", "\"event\":\"Disembark\",\"OnStation\":true"),
+        At("2026-10-10T09:02:00Z", "\"event\":\"BookDropship\""),
+        At("2026-10-10T09:03:00Z", "\"event\":\"Embark\",\"Taxi\":true,\"SRV\":false"),
+        At("2026-10-10T09:04:00Z", "\"event\":\"DropshipDeploy\""),
+        At("2026-10-10T09:05:00Z", Bond),
+    ];
+
+    [Fact]
+    public void ADropshipConflictZoneBondIsOnFootAndCreditedToNoShip()
+    {
+        var kill = Assert.Single(Fold(DropshipRun).Kills);
+
+        Assert.Equal((CombatVehicle.OnFoot, (int?)null), (kill.Vehicle, kill.ShipId));
+    }
+
+    [Fact]
+    public void ABackfillOverTheDropshipRunGivesTheSameKillsAsTheLiveFold()
+    {
+        var files = new MemoryFileSystem();
+        files.WriteText(
+            "j/Journal.1.log",
+            string.Join("\n", [At("2026-10-10T08:59:00Z", "\"event\":\"Commander\",\"FID\":\"F1\",\"Name\":\"One\""), .. DropshipRun]));
+
+        var found = CombatBackfill.FromHistory(files, ["j/Journal.1.log"], NullLogger.Instance, TestContext.Current.CancellationToken);
+
+        static (DateTimeOffset, CombatVehicle, int?, long) Shape(CombatRecord record) =>
+            (record.Kills[0].At, record.Kills[0].Vehicle, record.Kills[0].ShipId, record.Kills[0].Awarded);
+
+        Assert.Equal(Shape(Fold(DropshipRun)), Shape(found["F1"]));
+    }
+
+    private const string SuitLoad = "\"event\":\"LoadGame\",\"Ship\":\"TacticalSuit_Class5\",\"ShipID\":4293000003";
+
+    [Fact]
+    public void ALoadGameInASuitIsOnFootAndTheSuitIsNotAShip()
+    {
+        var record = Fold(At("2026-10-10T09:00:00Z", SuitLoad), Eagle("2026-10-10T09:01:00Z"));
+
+        Assert.Equal(CombatVehicle.OnFoot, Assert.Single(record.Kills).Vehicle);
+        Assert.Null(record.ShipName(unchecked((int)4293000003u)));
+    }
+
+    [Fact]
+    public void BoardingAShipAfterASuitLoadGameCreditsItsIdToTheNextKill()
+    {
+        var kill = Assert.Single(Fold(
+            At("2026-10-10T09:00:00Z", SuitLoad),
+            At("2026-10-10T09:01:00Z", "\"event\":\"Embark\",\"SRV\":false,\"Taxi\":false,\"ID\":1"),
+            Eagle("2026-10-10T09:02:00Z")).Kills);
+
+        Assert.Equal((CombatVehicle.Ship, (int?)1), (kill.Vehicle, kill.ShipId));
+    }
+
+    [Fact]
+    public void ALocationOnFootPutsTheNextKillOnFoot()
+    {
+        var kill = Assert.Single(Fold(
+            At("2026-10-10T09:00:00Z", "\"event\":\"LoadGame\",\"Ship\":\"eagle\",\"ShipID\":1"),
+            At("2026-10-10T09:01:00Z", "\"event\":\"Location\",\"OnFoot\":true,\"SystemAddress\":1,\"StarSystem\":\"X\""),
+            Eagle("2026-10-10T09:02:00Z")).Kills);
+
+        Assert.Equal(CombatVehicle.OnFoot, kill.Vehicle);
+    }
+
+    [Fact]
+    public void ALocationInAnSrvPutsTheNextKillInTheSrv()
+    {
+        var kill = Assert.Single(Fold(
+            At("2026-10-10T09:00:00Z", "\"event\":\"LoadGame\",\"Ship\":\"eagle\",\"ShipID\":1"),
+            At("2026-10-10T09:01:00Z", "\"event\":\"Location\",\"InSRV\":true,\"SystemAddress\":1,\"StarSystem\":\"X\""),
+            Eagle("2026-10-10T09:02:00Z")).Kills);
+
+        Assert.Equal(CombatVehicle.Srv, kill.Vehicle);
+    }
 }

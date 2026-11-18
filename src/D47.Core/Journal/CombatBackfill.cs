@@ -8,7 +8,7 @@ public static class CombatBackfill
 {
     private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "Location", "FSDJump", "CarrierJump", "Loadout", "ShipyardSwap",
-        "LaunchSRV", "LaunchVessel", "DockSRV", "Embark", "Disembark", "Bounty", "FactionKillBond");
+        "LaunchSRV", "LaunchVessel", "DockSRV", "Embark", "Disembark", "DropshipDeploy", "Bounty", "FactionKillBond");
 
     /// <summary>Each Commander's kills, keyed by Frontier id, over journals oldest-first.</summary>
     public static IReadOnlyDictionary<string, CombatRecord> FromHistory(

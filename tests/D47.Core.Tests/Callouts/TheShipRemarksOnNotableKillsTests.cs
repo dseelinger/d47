@@ -187,6 +187,23 @@ public class TheShipRemarksOnNotableKillsTests
         Assert.True(announcement.OnFoot);
     }
 
+    [Theory]
+    [InlineData("""{"timestamp":"2026-09-24T13:59:00Z","event":"DropshipDeploy"}""")]
+    [InlineData("""{"timestamp":"2026-09-24T13:59:00Z","event":"Disembark","SRV":true}""")]
+    public void ACombatBondAfterThisEventCountsOnFootNotAsAShipKill(string line)
+    {
+        var events = new List<JournalEvent> { Event(line) };
+
+        for (var n = 0; n < 25; n++)
+        {
+            events.Add(Event(Bond.Replace("14:00:00", $"14:00:{n:D2}", StringComparison.Ordinal)));
+        }
+
+        var announcement = Assert.Single(Replay(new KillCallout(), events)).Said;
+
+        Assert.Equal("25 kills on foot this session.", announcement.Text);
+    }
+
     [Fact]
     public void ACombatBondAfterReboardingIsAShipAgain()
     {
@@ -210,7 +227,7 @@ public class TheShipRemarksOnNotableKillsTests
         var said = Replay(
             new KillCallout(),
             [
-                Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"Disembark","SRV":true,"OnPlanet":true}"""),
+                Event("""{"timestamp":"2026-09-24T13:59:00Z","event":"LaunchSRV"}"""),
                 Event(Bond),
             ]);
 

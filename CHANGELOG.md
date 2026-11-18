@@ -10,6 +10,8 @@
 
 Fixed: The head above a Search answer drew its count, "within n ly of" words, system name and copy glyph at three different heights; they now sit on one centre line on all five Search pages.
 
+Fixed: Kills made on foot after a dropship drop, after a relog in a suit, or after leaving an SRV are counted on foot in the combat record and the kill callouts, not as ship kills.
+
 Fixed: The Rare index row in Privacy and egress names the folder data\rares; it showed a line break where the backslash and r belong.
 
 Changed: While you are away, the two hands-free listening settings stop opening the microphone when the hearing provider is hosted, the model is not on this machine, or the voice aboard charges. The panel reads idle meanwhile, a key still opens the microphone, and a stretch of speech already being captured is finished. Listening resumes when you return.
