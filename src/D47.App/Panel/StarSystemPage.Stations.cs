@@ -93,17 +93,6 @@ public sealed partial class StarSystemPage
 
     public const string StationsTable = "StarSystem.Stations";
 
-    private static readonly TableColumn[] StationColumns =
-    [
-        new("Station", ColumnFit.Fill) { Min = 120 },
-        new("Type"),
-        new("Faction", ColumnFit.Fill) { Min = 100 },
-        new("Government"),
-        new("Economy"),
-        new("Pad"),
-        new("Arrival"),
-    ];
-
     /// <summary>The stations table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<StationProfile>> StationHeads =
     [
@@ -119,6 +108,8 @@ public sealed partial class StarSystemPage
     /// <summary>The default order: nearest first.</summary>
     public static readonly SortOrder ByArrival = new(6, SortDirection.Ascending);
 
+    private const double StationSpacing = 12;
+
     /// <summary>Marks a station's row on the Stations section.</summary>
     public const string StationRowClass = "station-row";
 
@@ -127,7 +118,7 @@ public sealed partial class StarSystemPage
     /// <summary>Drills a station's page; null leaves the rows unpressable.</summary>
     public Action<StarSystemProfile, StationProfile>? OpenStation { get; init; }
 
-    private readonly SortHeader<StationProfile> _stationHead = new("StationHead", StationHeads, ByArrival);
+    private ArrangedTable<StationProfile>? _stationColumns;
     private StationFilter _stationFilter = new();
     private Border? _stationTable;
 
@@ -371,9 +362,85 @@ public sealed partial class StarSystemPage
         }
     }
 
+    private ArrangedTable<StationProfile> StationColumns
+    {
+        get
+        {
+            if (_stationColumns is null)
+            {
+                _stationColumns = new ArrangedTable<StationProfile>(
+                    StationsTable, StationFields(), ColumnArrangements, Widths, StationSpacing, sortedByDefault: "Arrival", headName: "StationHead");
+                _stationColumns.Changed += ShowStations;
+            }
+
+            return _stationColumns;
+        }
+    }
+
+    /// <summary>Every field the stations table can show; the › that opens a station is a control column at the right.</summary>
+    private IReadOnlyList<TableField<StationProfile>> StationFields() =>
+    [
+        StationHead(0, new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, station => Ellipsed(station.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.WhiteKey)),
+        StationHead(1, new TableColumn("Type"), station => Ellipsed(StationType(station), TypeScale.Control, FontWeight.Medium, station.Kind == StationKind.Other && station.Type is null ? ThemeManager.GreyKey : ThemeManager.AKey)),
+        StationHead(2, new TableColumn("Faction", ColumnFit.Fill) { Min = 100 }, station => Ellipsed(Faction(station), TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)),
+        StationHead(3, new TableColumn("Government"), station => Ellipsed(station.Government ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)),
+        StationHead(4, new TableColumn("Economy"), station => Ellipsed(station.PrimaryEconomy ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)),
+        StationHead(5, new TableColumn("Pad"), station => Mono(PadText(station.LargestPad), ThemeManager.WhiteKey)),
+        StationHead(6, new TableColumn("Arrival"), station => RightAligned(Mono(ArrivalText(station.DistanceToArrival), ThemeManager.AKey)), right: true),
+        Added<StationProfile>("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 100 }, station => TableCells.Text(station.Body)),
+        Added<StationProfile>("Allegiance", new TableColumn("Allegiance"), station => TableCells.Text(station.Allegiance)),
+        Added<StationProfile>("FactionState", new TableColumn("FactionState"), station => TableCells.Text(station.ControllingFactionState), "Faction state"),
+        Added<StationProfile>("Updated", new TableColumn("Updated"), station => station.UpdatedAt is { } at ? Mono(at.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), ThemeManager.WhiteKey) : TableCells.Missing()),
+        Added<StationProfile>("Pads", new TableColumn("Pads"), station => TableCells.Text(PadCountsText(station.Pads))),
+        Added<StationProfile>("Economies", new TableColumn("Economies", ColumnFit.Fill) { Min = 120 }, station => TableCells.List([.. station.Economies.Select(economy => economy.Name)])),
+        Added<StationProfile>("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, station => TableCells.List([.. station.Services.Select(SystemStationPage.ServiceLabel)])),
+        Added<StationProfile>("DockingAccess", new TableColumn("DockingAccess"), station => TableCells.Text(station.CarrierDockingAccess), "Docking access"),
+        Added<StationProfile>("Market", new TableColumn("Market"), station => TableCells.Flag(station.Market is { Commodities.Count: > 0 })),
+        Added<StationProfile>("Outfitting", new TableColumn("Outfitting"), station => TableCells.Flag(station.Outfitting is { Modules.Count: > 0 })),
+        Added<StationProfile>("Shipyard", new TableColumn("Shipyard"), station => TableCells.Flag(station.Shipyard is { Ships.Count: > 0 })),
+        new TableField<StationProfile>("More", new TableColumn("More", ColumnFit.Fixed) { Fixed = MoreWidth - StationSpacing }, MoreCell),
+    ];
+
+    private static TableField<StationProfile> StationHead(int head, TableColumn column, Func<StationProfile, Control> cell, bool right = false) =>
+        Headed(StationHeads[head], column, cell, right);
+
+    /// <summary>A field that keeps a column the table always had, with that column's header and sort.</summary>
+    internal static TableField<TRow> Headed<TRow>(SortColumn<TRow> head, TableColumn column, Func<TRow, Control> cell, bool right = false) =>
+        new(column.Key, column, row => Centred(cell(row)))
+        {
+            Label = head.Label,
+            Sort = head,
+            Alignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
+        };
+
+    /// <summary>A field the Commander can add; it is not shown until they do.</summary>
+    private static TableField<TRow> Added<TRow>(string key, TableColumn column, Func<TRow, Control> cell, string? label = null) =>
+        new(key, column, row => Centred(cell(row))) { Label = label ?? key, ByDefault = false };
+
+    private Control MoreCell(StationProfile station) =>
+        OpenStation is not null && station.MarketId is not null
+            ? Typeset.Chrome("›", TypeScale.ControlLarge, ThemeManager.AKey, vertical: VerticalAlignment.Center, horizontal: HorizontalAlignment.Right)
+            : new Border();
+
+    /// <summary>"S 2 · M 3 · L 1", or null where the station reports no pad counts.</summary>
+    private static string? PadCountsText(PadCounts? pads) =>
+        pads is null
+            ? null
+            : string.Create(CultureInfo.InvariantCulture, $"S {pads.Small} · M {pads.Medium} · L {pads.Large}");
+
+    private static TextBlock RightAligned(TextBlock block)
+    {
+        block.HorizontalAlignment = HorizontalAlignment.Right;
+
+        return block;
+    }
+
     private StackPanel StationTable(StarSystemProfile profile)
     {
-        var shown = _stationHead.Sort(_stationFilter.Apply(profile.Stations));
+        var columns = StationColumns;
+        columns.Refresh();
+
+        var shown = columns.Sort(_stationFilter.Apply(profile.Stations));
 
         var table = new StackPanel { Spacing = Gaps.Tile };
 
@@ -381,7 +448,7 @@ public sealed partial class StarSystemPage
         {
             Orientation = Orientation.Horizontal,
             Spacing = 6,
-            Margin = new Thickness(0, 0, 0, 8),
+            VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
                 Caption("Showing", ThemeManager.GreyKey),
@@ -391,21 +458,35 @@ public sealed partial class StarSystemPage
             },
         };
         Avalonia.Automation.AutomationProperties.SetName(showing, $"Showing {shown.Count} of {profile.Stations.Count}");
-        table.Children.Add(showing);
 
-        var layout = new TableLayout(StationsTable, StationColumns, _surface.ColumnWidths, 12);
-        var header = layout.Header(
-            _stationHead,
-            [.. StationHeads.Select((_, i) => i == StationHeads.Count - 1 ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
+        var line = new DockPanel { MinHeight = TypeScale.MinimumTarget, Margin = new Thickness(0, 0, 0, 8) };
+
+        if (ColumnArranger.Tile(columns) is { } tile)
+        {
+            DockPanel.SetDock(tile, Dock.Right);
+            line.Children.Add(tile);
+        }
+
+        line.Children.Add(showing);
+        table.Children.Add(line);
+
+        if (ColumnArranger.Bar(columns) is { } bar)
+        {
+            table.Children.Add(bar);
+        }
+
+        var header = columns.Header();
         header.MinHeight = TypeScale.MinimumTarget;
-        header.Margin = new Thickness(12, 0, 12 + MoreWidth, 0);
+        header.Margin = new Thickness(12, 0);
 
-        table.Children.Add(header);
+        var rows = new StackPanel { Spacing = Gaps.Tile, Children = { header } };
 
         foreach (var station in shown)
         {
-            table.Children.Add(StationRow(profile, station, layout));
+            rows.Children.Add(StationRow(profile, station));
         }
+
+        table.Children.Add(columns.Headset ? rows : new TableScroll(columns.Layout, rows));
 
         if (shown.Count == 0)
         {
@@ -417,53 +498,18 @@ public sealed partial class StarSystemPage
         return table;
     }
 
-    private Border StationRow(StarSystemProfile profile, StationProfile station, TableLayout layout)
+    private Border StationRow(StarSystemProfile profile, StationProfile station)
     {
-        List<Control> cells = [];
-
-        var name = Ellipsed(station.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.WhiteKey);
-        var untyped = station.Kind == StationKind.Other && station.Type is null;
-
-        cells.Add(Centred(name));
-        cells.Add(Centred(Ellipsed(StationType(station), TypeScale.Control, FontWeight.Medium, untyped ? ThemeManager.GreyKey : ThemeManager.AKey)));
-        cells.Add(Centred(Ellipsed(Faction(station), TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)));
-        cells.Add(Centred(Ellipsed(station.Government ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)));
-        cells.Add(Centred(Ellipsed(station.PrimaryEconomy ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)));
-        cells.Add(Centred(Mono(PadText(station.LargestPad), ThemeManager.WhiteKey)));
-
-        var arrival = Mono(ArrivalText(station.DistanceToArrival), ThemeManager.AKey);
-        arrival.HorizontalAlignment = HorizontalAlignment.Right;
-        cells.Add(Centred(arrival));
-
-        var content = new DockPanel();
-        var more = Typeset.Chrome("›", TypeScale.ControlLarge, ThemeManager.AKey, vertical: VerticalAlignment.Center);
-        more.Width = MoreWidth;
-        more.TextAlignment = TextAlignment.Right;
-        DockPanel.SetDock(more, Dock.Right);
-
-        var opens = OpenStation is not null && station.MarketId is not null;
-
-        if (opens)
-        {
-            content.Children.Add(more);
-        }
-        else
-        {
-            content.Margin = new Thickness(0, 0, MoreWidth, 0);
-        }
-
-        content.Children.Add(layout.Row(cells));
-
         var row = new Border
         {
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
-            Child = content,
+            Child = StationColumns.Row(station),
         };
         row.Classes.Add(StationRowClass);
         Avalonia.Automation.AutomationProperties.SetName(row, station.Name);
 
-        if (opens && OpenStation is { } open)
+        if (OpenStation is { } open && station.MarketId is not null)
         {
             ListRow.Dress(row);
             ListRow.Opens(row, () => open(profile, station));

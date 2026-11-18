@@ -32,15 +32,6 @@ public sealed partial class StarSystemPage
 
     public const string PowerplayTable = "StarSystem.Powerplay";
 
-    private static readonly TableColumn[] NeighbourColumns =
-    [
-        new("System", ColumnFit.Fill) { Min = 120 },
-        new("Distance"),
-        new("State"),
-        new("Power", ColumnFit.Fill) { Min = 100 },
-        new("Progress"),
-    ];
-
     private enum Nearby
     {
         None,
@@ -62,7 +53,7 @@ public sealed partial class StarSystemPage
     /// <summary>The default order: nearest first, as Spansh returns it.</summary>
     public static readonly SortOrder ByDistance = new(1, SortDirection.Ascending);
 
-    private readonly SortHeader<PowerplayNeighbour> _neighbourHead = new("NeighbourHead", NeighbourHeads, ByDistance);
+    private ArrangedTable<PowerplayNeighbour>? _neighbourColumns;
     private Nearby _nearby;
     private PowerplayNeighbourhood? _neighbours;
     private string? _neighbourFailure;
@@ -282,29 +273,71 @@ public sealed partial class StarSystemPage
         }
     }
 
+    private ArrangedTable<PowerplayNeighbour> NeighbourColumns
+    {
+        get
+        {
+            if (_neighbourColumns is null)
+            {
+                _neighbourColumns = new ArrangedTable<PowerplayNeighbour>(
+                    PowerplayTable, NeighbourFields(), ColumnArrangements, Widths, 12, sortedByDefault: "Distance", headName: "NeighbourHead");
+                _neighbourColumns.Changed += ShowNeighbours;
+            }
+
+            return _neighbourColumns;
+        }
+    }
+
+    private IReadOnlyList<TableField<PowerplayNeighbour>> NeighbourFields() =>
+    [
+        Headed(NeighbourHeads[0], new TableColumn("System", ColumnFit.Fill) { Min = 120 }, system => CopyGlyph.LinkBeside(Ellipsed(system.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.AKey), system.Name, _copy)),
+        Headed(NeighbourHeads[1], new TableColumn("Distance"), system => Mono(DistanceText(system.Distance), ThemeManager.AKey)),
+        Headed(NeighbourHeads[2], new TableColumn("State"), system => Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)),
+        Headed(NeighbourHeads[3], new TableColumn("Power", ColumnFit.Fill) { Min = 100 }, system => Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)),
+        Headed(NeighbourHeads[4], new TableColumn("Progress"), system => Influence(system.ControlProgress)),
+        Added<PowerplayNeighbour>("Powers", new TableColumn("Powers", ColumnFit.Fill) { Min = 140 }, system => TableCells.List(system.Powers)),
+    ];
+
     private void ResetSorts()
     {
-        _factionHead.Reset();
-        _stationHead.Reset();
-        _neighbourHead.Reset();
+        _factionColumns?.StopArranging();
+        _factionColumns?.Reset();
+        _stationColumns?.StopArranging();
+        _stationColumns?.Reset();
+        _neighbourColumns?.StopArranging();
+        _neighbourColumns?.Reset();
     }
 
     internal StackPanel NeighbourTable(PowerplayNeighbourhood near)
     {
-        var shown = _neighbourHead.Sort([.. near.Systems.Where(PowerplayStateFilter.All[_stateFilter].Holds)]);
+        var columns = NeighbourColumns;
+        columns.Refresh();
+
+        var shown = columns.Sort([.. near.Systems.Where(PowerplayStateFilter.All[_stateFilter].Holds)]);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        var layout = new TableLayout(PowerplayTable, NeighbourColumns, _surface.ColumnWidths, 12);
-        var header = layout.Header(_neighbourHead);
+        if (ColumnArranger.Line(columns) is { } line)
+        {
+            table.Children.Add(line);
+        }
+
+        if (ColumnArranger.Bar(columns) is { } bar)
+        {
+            table.Children.Add(bar);
+        }
+
+        var header = columns.Header();
         header.MinHeight = TypeScale.MinimumTarget;
         header.Margin = new Thickness(12, 0);
 
-        table.Children.Add(header);
+        var rows = new StackPanel { Spacing = Gaps.Tile, Children = { header } };
 
         foreach (var system in shown)
         {
-            table.Children.Add(NeighbourRow(system, layout));
+            rows.Children.Add(NeighbourRow(system, columns));
         }
+
+        table.Children.Add(columns.Headset ? rows : new TableScroll(columns.Layout, rows));
 
         if (shown.Count == 0)
         {
@@ -322,21 +355,13 @@ public sealed partial class StarSystemPage
         return table;
     }
 
-    private Border NeighbourRow(PowerplayNeighbour system, TableLayout layout)
+    private Border NeighbourRow(PowerplayNeighbour system, ArrangedTable<PowerplayNeighbour> columns)
     {
-        List<Control> cells = [];
-
-        cells.Add(Centred(CopyGlyph.LinkBeside(Ellipsed(system.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.AKey), system.Name, _copy)));
-        cells.Add(Centred(Mono(DistanceText(system.Distance), ThemeManager.AKey)));
-        cells.Add(Centred(Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)));
-        cells.Add(Centred(Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)));
-        cells.Add(Centred(Influence(system.ControlProgress)));
-
         var row = new Border
         {
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
-            Child = layout.Row(cells),
+            Child = columns.Row(system),
         };
         MaterialsPage.Hover(row);
         MaterialsPage.Pressable(row, () => Look(system.Name));

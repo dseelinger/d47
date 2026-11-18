@@ -45,16 +45,6 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
 
     private const string Dash = "—";
 
-    private static readonly TableColumn[] MarketColumns =
-    [
-        new("Commodity", ColumnFit.Fill) { Min = 140 },
-        new("Category", ColumnFit.Fill) { Min = 100 },
-        new("Buy"),
-        new("Sell"),
-        new("Supply"),
-        new("Demand"),
-    ];
-
     /// <summary>The market table's columns; every one but Category sorts.</summary>
     public static readonly IReadOnlyList<SortColumn<MarketCommodity>> MarketHeads =
     [
@@ -71,7 +61,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
     private readonly long _marketId;
     private readonly string _word;
     private readonly Action? _back;
-    private readonly SortHeader<MarketCommodity> _marketHead = new("MarketHead", MarketHeads, new SortOrder(0, SortDirection.Ascending));
+    private ArrangedTable<MarketCommodity>? _marketColumns;
     private readonly StackPanel _page = new() { Spacing = 18 };
 
     private StarSystemProfile? _profile;
@@ -80,6 +70,9 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
     private bool _redrawn;
     private CancellationTokenSource? _inFlight;
     private Section _section;
+
+    /// <summary>Which columns the market table shows; the headset's memory when the page is drawn there.</summary>
+    public ColumnArrangementMemory? ColumnArrangements { get; init; }
 
     /// <param name="profile">The system's record when the page it was pressed on had read it; null fetches it.</param>
     /// <param name="back">Goes back to the crumb above.</param>
@@ -96,14 +89,6 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
         _marketId = marketId;
         _word = word;
         _back = back;
-
-        _marketHead.Changed += () =>
-        {
-            if (_section == Section.Market)
-            {
-                Draw();
-            }
-        };
 
         Content = new ScrollViewer
         {
@@ -195,6 +180,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
     /// <summary>Shows one section.</summary>
     public void Show(Section section)
     {
+        _marketColumns?.StopArranging();
         _section = section;
         Draw();
     }
@@ -339,6 +325,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
         {
             if (segment.SelectedIndex >= 0 && (Section)segment.SelectedIndex != _section)
             {
+                _marketColumns?.StopArranging();
                 _section = (Section)segment.SelectedIndex;
                 Draw();
             }
@@ -449,7 +436,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
         return line;
     }
 
-    private static string ServiceLabel(string spansh) =>
+    internal static string ServiceLabel(string spansh) =>
         StationService.All.FirstOrDefault(service => service.Spansh == spansh)?.Label ?? spansh;
 
     /// <summary>A pressable tile that selects the section, or a read-only block where the record holds nothing.</summary>
@@ -529,10 +516,20 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
 
         column.Children.Add(Intro($"{station.Name}'s market", market.ReportedAt, PricesText, "MarketReported"));
 
-        var layout = new TableLayout(MarketTable, MarketColumns, _surface.ColumnWidths, 16);
-        var header = layout.Header(
-            _marketHead,
-            [HorizontalAlignment.Left, HorizontalAlignment.Left, HorizontalAlignment.Right, HorizontalAlignment.Right, HorizontalAlignment.Right, HorizontalAlignment.Right]);
+        var columns = MarketColumns;
+        columns.Refresh();
+
+        if (ColumnArranger.Line(columns) is { } line)
+        {
+            column.Children.Add(line);
+        }
+
+        if (ColumnArranger.Bar(columns) is { } bar)
+        {
+            column.Children.Add(bar);
+        }
+
+        var header = columns.Header();
         header.MinHeight = TypeScale.MinimumTarget;
         header.Margin = new Thickness(12, 0);
 
@@ -543,40 +540,61 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
         rows.Children.Add(header);
         rows.Children.Add(rule);
 
-        foreach (var commodity in _marketHead.Sort(market.Commodities))
+        foreach (var commodity in columns.Sort(market.Commodities))
         {
-            rows.Children.Add(CommodityRow(commodity, layout));
+            rows.Children.Add(CommodityRow(commodity, columns));
         }
 
-        column.Children.Add(rows);
+        column.Children.Add(columns.Headset ? rows : new TableScroll(columns.Layout, rows));
 
         return column;
     }
 
-    private static Border CommodityRow(MarketCommodity commodity, TableLayout layout)
+    private ArrangedTable<MarketCommodity> MarketColumns
     {
-        List<Control> cells =
-        [
-            Cell(Typeset.Chrome(commodity.Name, TypeScale.Control, ThemeManager.WhiteKey, weight: FontWeight.SemiBold, trimming: TextTrimming.CharacterEllipsis)),
-            Cell(Typeset.Chrome(commodity.Category ?? Dash, TypeScale.Secondary, ThemeManager.AKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis)),
-            Figure(Amount(commodity.BuyPrice), ThemeManager.AKey),
-            Figure(Amount(commodity.SellPrice), ThemeManager.AKey),
-            Figure(Amount(commodity.Supply), ThemeManager.WhiteKey),
-            Figure(Amount(commodity.Demand), ThemeManager.WhiteKey),
-        ];
+        get
+        {
+            if (_marketColumns is null)
+            {
+                var widths = ColumnArrangements?.Headset == true ? null : _surface.ColumnWidths;
+                _marketColumns = new ArrangedTable<MarketCommodity>(
+                    MarketTable, MarketFields(), ColumnArrangements, widths, 16, sortedByDefault: "Commodity", headName: "MarketHead");
+                _marketColumns.Changed += () =>
+                {
+                    if (_section == Section.Market)
+                    {
+                        Draw();
+                    }
+                };
+            }
 
+            return _marketColumns;
+        }
+    }
+
+    private static IReadOnlyList<TableField<MarketCommodity>> MarketFields() =>
+    [
+        StarSystemPage.Headed(MarketHeads[0], new TableColumn("Commodity", ColumnFit.Fill) { Min = 140 }, commodity => Typeset.Chrome(commodity.Name, TypeScale.Control, ThemeManager.WhiteKey, weight: FontWeight.SemiBold, trimming: TextTrimming.CharacterEllipsis)),
+        StarSystemPage.Headed(MarketHeads[1], new TableColumn("Category", ColumnFit.Fill) { Min = 100 }, commodity => Typeset.Chrome(commodity.Category ?? Dash, TypeScale.Secondary, ThemeManager.AKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis)),
+        StarSystemPage.Headed(MarketHeads[2], new TableColumn("Buy"), commodity => Figure(Amount(commodity.BuyPrice), ThemeManager.AKey), right: true),
+        StarSystemPage.Headed(MarketHeads[3], new TableColumn("Sell"), commodity => Figure(Amount(commodity.SellPrice), ThemeManager.AKey), right: true),
+        StarSystemPage.Headed(MarketHeads[4], new TableColumn("Supply"), commodity => Figure(Amount(commodity.Supply), ThemeManager.WhiteKey), right: true),
+        StarSystemPage.Headed(MarketHeads[5], new TableColumn("Demand"), commodity => Figure(Amount(commodity.Demand), ThemeManager.WhiteKey), right: true),
+    ];
+
+    private static Border CommodityRow(MarketCommodity commodity, ArrangedTable<MarketCommodity> columns)
+    {
         var row = new Border
         {
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(12, 0),
-            Child = layout.Row(cells),
+            Child = columns.Row(commodity),
         };
         ListRow.Dress(row);
         Avalonia.Automation.AutomationProperties.SetName(row, commodity.Name);
 
         return row;
     }
-
     /// <summary>The figure with thousands separators, or a dash for none.</summary>
     private static string Amount(long figure) => figure > 0 ? figure.ToString("N0", CultureInfo.InvariantCulture) : Dash;
 

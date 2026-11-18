@@ -365,13 +365,13 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             var profile = _drawn?.SystemAddress == stationAddress ? _drawn : null;
 
-            return _station = new SystemStationPage(surface, stationAddress, marketId, crumb.Word, profile, () => host.Nav.Back());
+            return _station = new SystemStationPage(surface, stationAddress, marketId, crumb.Word, profile, () => host.Nav.Back()) { ColumnArrangements = host.ColumnArrangements };
         }
 
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && FoundTarget(crumb.Key) is var (address, suffix))
         {
-            var found = _found = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex };
+            var found = _found = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex, ColumnArrangements = host.ColumnArrangements };
             found.FiltersChanged += (_, _) =>
             {
                 host.ShowSearch();
@@ -399,7 +399,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             return found;
         }
 
-        _starSystem = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex };
+        _starSystem = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex, ColumnArrangements = host.ColumnArrangements };
         _starSystem.FiltersChanged += (_, _) =>
         {
             host.ShowSearch();

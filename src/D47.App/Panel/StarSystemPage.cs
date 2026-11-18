@@ -104,23 +104,18 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     private Section _section;
     private bool _filtering;
 
+    /// <summary>Which columns each table shows; the headset's memory when the page is drawn there.</summary>
+    public ColumnArrangementMemory? ColumnArrangements { get; init; }
+
+    /// <summary>The surface's dragged widths; the headset does not drag.</summary>
+    private ColumnWidthMemory? Widths => ColumnArrangements?.Headset == true ? null : _surface.ColumnWidths;
+
     /// <param name="copy">Puts text on the clipboard; null draws no copy glyph.</param>
     public StarSystemPage(StarSystemSurface surface, Func<string, Task<bool>>? copy = null)
     {
         _surface = surface;
         _copy = copy;
         _history = new HistoryTile(surface.Searches);
-
-        _factionHead.Changed += () =>
-        {
-            if (_factionTable is not null && _profile is { } profile)
-            {
-                _factionTable.Child = FactionRows(profile);
-                _redrawn = true;
-            }
-        };
-        _stationHead.Changed += ShowStations;
-        _neighbourHead.Changed += ShowNeighbours;
 
         _name = new TextBox
         {
@@ -851,16 +846,6 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
 
     public const string FactionsTable = "StarSystem.Factions";
 
-    private static readonly TableColumn[] FactionColumns =
-    [
-        new("Faction", ColumnFit.Fill) { Min = 120 },
-        new("Government"),
-        new("Allegiance"),
-        new("Influence"),
-        new("Active"),
-        new("Pending"),
-    ];
-
     /// <summary>The factions table's columns, each sortable from its header.</summary>
     public static readonly IReadOnlyList<SortColumn<FactionStanding>> FactionHeads =
     [
@@ -875,7 +860,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     /// <summary>The default order: most influence first, as Spansh returns it.</summary>
     public static readonly SortOrder ByInfluence = new(3, SortDirection.Descending);
 
-    private readonly SortHeader<FactionStanding> _factionHead = new("FactionHead", FactionHeads, ByInfluence);
+    private ArrangedTable<FactionStanding>? _factionColumns;
     private Border? _factionTable;
 
     private StackPanel Factions(StarSystemProfile profile)
@@ -894,32 +879,36 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         };
     }
 
-    private StackPanel FactionRows(StarSystemProfile profile)
+    private ArrangedTable<FactionStanding> FactionColumns
     {
-        var rows = new StackPanel { Spacing = Gaps.Tile };
-
-        var layout = new TableLayout(FactionsTable, FactionColumns, _surface.ColumnWidths, 16);
-        var header = layout.Header(_factionHead);
-        header.MinHeight = TypeScale.MinimumTarget;
-        header.Margin = new Thickness(14, 0);
-
-        rows.Children.Add(header);
-
-        foreach (var faction in _factionHead.Sort(profile.Factions))
+        get
         {
-            rows.Children.Add(FactionRow(
-                faction,
-                string.Equals(faction.Name, profile.ControllingFaction, StringComparison.OrdinalIgnoreCase),
-                layout));
-        }
+            if (_factionColumns is null)
+            {
+                _factionColumns = new ArrangedTable<FactionStanding>(
+                    FactionsTable, FactionFields(), ColumnArrangements, Widths, 16, sortedByDefault: "Influence", headName: "FactionHead");
+                _factionColumns.Changed += ShowFactions;
+            }
 
-        return rows;
+            return _factionColumns;
+        }
     }
 
-    private static Border FactionRow(FactionStanding faction, bool controls, TableLayout layout)
-    {
-        List<Control> cells = [];
+    private IReadOnlyList<TableField<FactionStanding>> FactionFields() =>
+    [
+        Headed(FactionHeads[0], new TableColumn("Faction", ColumnFit.Fill) { Min = 120 }, FactionNameCell),
+        Headed(FactionHeads[1], new TableColumn("Government"), faction => Word(faction.Government ?? Dash)),
+        Headed(FactionHeads[2], new TableColumn("Allegiance"), faction => Word(faction.Allegiance ?? Dash)),
+        Headed(FactionHeads[3], new TableColumn("Influence"), faction => Influence(faction.Influence)),
+        Headed(FactionHeads[4], new TableColumn("Active"), faction => States(faction.ActiveStates, ThemeManager.AKey)),
+        Headed(FactionHeads[5], new TableColumn("Pending"), faction => States(faction.PendingStates, ThemeManager.GreyKey)),
+    ];
 
+    private bool ControlsSystem(FactionStanding faction) =>
+        string.Equals(faction.Name, _profile?.ControllingFaction, StringComparison.OrdinalIgnoreCase);
+
+    private Control FactionNameCell(FactionStanding faction)
+    {
         var name = new WrapPanel { ItemSpacing = 10, VerticalAlignment = VerticalAlignment.Center };
         var named = new TextBlock
         {
@@ -933,26 +922,69 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         ThemeInk.Bind(named, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         name.Children.Add(named);
 
-        if (controls)
+        if (ControlsSystem(faction))
         {
             var tag = RoutingKit.Tag("Controls", ThemeManager.AKey);
             tag.FontSize = TypeScale.MetaSmall;
             name.Children.Add(tag);
         }
 
-        cells.Add(Centred(name));
-        cells.Add(Centred(Word(faction.Government ?? Dash)));
-        cells.Add(Centred(Word(faction.Allegiance ?? Dash)));
-        cells.Add(Centred(Influence(faction.Influence)));
-        cells.Add(Centred(States(faction.ActiveStates, ThemeManager.AKey)));
-        cells.Add(Centred(States(faction.PendingStates, ThemeManager.GreyKey)));
+        return name;
+    }
+
+    private void ShowFactions()
+    {
+        if (_factionTable is not null && _profile is { } profile)
+        {
+            _factionTable.Child = FactionRows(profile);
+            _redrawn = true;
+        }
+    }
+
+    private StackPanel FactionRows(StarSystemProfile profile)
+    {
+        var columns = FactionColumns;
+        columns.Refresh();
+
+        var rows = new StackPanel { Spacing = Gaps.Tile };
+        var body = new StackPanel { Spacing = Gaps.Tile };
+
+        var header = columns.Header();
+        header.MinHeight = TypeScale.MinimumTarget;
+        header.Margin = new Thickness(14, 0);
+
+        body.Children.Add(header);
+
+        foreach (var faction in columns.Sort(profile.Factions))
+        {
+            body.Children.Add(FactionRow(faction, columns));
+        }
+
+        if (ColumnArranger.Line(columns) is { } line)
+        {
+            rows.Children.Add(line);
+        }
+
+        if (ColumnArranger.Bar(columns) is { } bar)
+        {
+            rows.Children.Add(bar);
+        }
+
+        rows.Children.Add(columns.Headset ? body : new TableScroll(columns.Layout, body));
+
+        return rows;
+    }
+
+    private Border FactionRow(FactionStanding faction, ArrangedTable<FactionStanding> columns)
+    {
+        var controls = ControlsSystem(faction);
 
         var row = new Border
         {
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(11, 0, 14, 0),
             BorderThickness = new Thickness(3, 0, 0, 0),
-            Child = layout.Row(cells),
+            Child = columns.Row(faction),
         };
         ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
