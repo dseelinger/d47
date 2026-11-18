@@ -233,7 +233,7 @@ public sealed class AccountsSection : StackPanel
             parts.Add(Alert(
                 NoticeLevel.Error,
                 "Limit reached",
-                $"ElevenLabs refuses anything more on this account {until}. Raise the limit on elevenlabs.io, or choose another voice until then."));
+                $"ElevenLabs refuses anything more on this account {until}, unless auto top-up buys more credits. Raise the limit on elevenlabs.io, or choose another voice until then."));
         }
 
         var rows = new List<(string Key, Inline[] Value, string Ink)>
@@ -367,7 +367,7 @@ public sealed class AccountsSection : StackPanel
             case PaceOutcome.RunsOut:
                 return
                 [
-                    Word("Runs out about "),
+                    Word("Reaches the limit about "),
                     Num(Day(pace.LimitAt!.Value)),
                     Word(", "),
                     Num(pace.DaysBeforeReset!.Value.ToString(Culture)),
@@ -396,7 +396,7 @@ public sealed class AccountsSection : StackPanel
     {
         if (extension.IsStop)
         {
-            return [Word("Stops. This account can't go past its limit.")];
+            return [Word("Stops, unless auto top-up is on in your ElevenLabs billing.")];
         }
 
         return extension.IsUnlimited

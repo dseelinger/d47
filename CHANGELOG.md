@@ -12,6 +12,8 @@ Fixed: The head above a Search answer drew its count, "within n ly of" words, sy
 
 Fixed: Kills made on foot after a dropship drop, after a relog in a suit, or after leaving an SRV are counted on foot in the combat record and the kill callouts, not as ship kills.
 
+Fixed: The ElevenLabs card in SPEND > Your accounts no longer says the account stops or runs out as fact. D47 cannot see whether auto top-up is on, so it reads "Reaches the limit about 25 Nov" instead of "Runs out about", "Stops, unless auto top-up is on in your ElevenLabs billing.", and the Limit reached notice adds "unless auto top-up buys more credits".
+
 Fixed: The Rare index row in Privacy and egress names the folder data\rares; it showed a line break where the backslash and r belong.
 
 Changed: While you are away, the two hands-free listening settings stop opening the microphone when the hearing provider is hosted, the model is not on this machine, or the voice aboard charges. The panel reads idle meanwhile, a key still opens the microphone, and a stretch of speech already being captured is finished. Listening resumes when you return.

@@ -240,8 +240,8 @@ public class TheSpendDialogShowsTheProvidersAccountsTests
         var words = Words(dialog);
 
         Assert.Contains("39,230", words, StringComparison.Ordinal);
-        Assert.Contains("Runs out about 28 Nov, 4 days before the reset", words, StringComparison.Ordinal);
-        Assert.Contains("Stops. This account can't go past its limit.", words, StringComparison.Ordinal);
+        Assert.Contains("Reaches the limit about 28 Nov, 4 days before the reset", words, StringComparison.Ordinal);
+        Assert.Contains("Stops, unless auto top-up is on in your ElevenLabs billing.", words, StringComparison.Ordinal);
 
         window.SaveFrame("spend-accounts-runs-out.png");
         window.Close();
@@ -306,7 +306,7 @@ public class TheSpendDialogShowsTheProvidersAccountsTests
         var words = Words(dialog);
 
         Assert.Contains("characters left of 100,000", words, StringComparison.Ordinal);
-        Assert.Contains("ElevenLabs refuses anything more on this account until the reset at 2 Dec 00:00.", words, StringComparison.Ordinal);
+        Assert.Contains("ElevenLabs refuses anything more on this account until the reset at 2 Dec 00:00, unless auto top-up buys more credits.", words, StringComparison.Ordinal);
         Assert.DoesNotContain("AT THIS RATE", words.ToUpperInvariant(), StringComparison.Ordinal);
 
         window.SaveFrame("spend-accounts-at-limit.png");
