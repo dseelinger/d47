@@ -152,6 +152,7 @@ public sealed class TheMiniPanelShowsTheStoryPlaybackTests
 
         Assert.False(readout.IsVisible);
         Assert.False(Named<Border>(view, "StoryReadoutProgress").IsVisible);
+        Assert.True(Named<Border>(view, "TranscriptPane").IsVisible);
 
         window.Close();
     }

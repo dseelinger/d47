@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: When a story playback ends, the mini panel, on the desktop and in the headset, goes back to what it showed before: on the Stories tab, Your story. It used to stay blank until you changed tab or mode.
+
 Fixed: While the mini panel reads out a story playback, its avatar shows the ship's core that spoke the line, speaking while the line is heard and idle while paused, and the core aboard returns when the playback ends. It used to show the core aboard for every core's line.
 
 Fixed: The mini panel's story playback read-out follows the playback to the next line and shows Paused when it pauses. Its label and text used to stay on the line the playback started with.

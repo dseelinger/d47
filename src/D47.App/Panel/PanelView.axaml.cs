@@ -492,8 +492,9 @@ public partial class PanelView : UserControl, IPanelTabHost
                 Dispatcher.UIThread.Post(ApplySpeaker);
                 return;
 
+            // The read-out only hides the panes, so the chrome puts them back when the playback ends.
             case nameof(PanelViewModel.StoryPlayback):
-                Dispatcher.UIThread.Post(ApplyStoryReadout);
+                Dispatcher.UIThread.Post(ApplyChrome);
                 return;
 
             case nameof(PanelViewModel.AudioPlayer):
