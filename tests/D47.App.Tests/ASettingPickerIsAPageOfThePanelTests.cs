@@ -258,10 +258,10 @@ public class ASettingPickerIsAPageOfThePanelTests
 
         Assert.NotNull(Page(host.Panel));
 
-        var glyph = button.GetVisualAncestors().OfType<DockPanel>().First()
-            .Children.OfType<BusyGlyph>().Single();
+        var mark = button.GetVisualAncestors().OfType<DockPanel>().First()
+            .Children.OfType<WaitingState>().Single();
 
-        Assert.False(glyph.IsVisible);
+        Assert.False(mark.IsVisible);
         Assert.True(button.IsEnabled);
 
         host.Close();

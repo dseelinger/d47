@@ -160,6 +160,7 @@ public sealed class OverlayPanel : Window
     private void TickPages()
     {
         _view.TickEngineers();
+        _view.TickWaiting();
         _view.TickAdventures();
         _view.TickRouting();
         _view.TickSearch();

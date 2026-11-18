@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Waiting has one mark: five small squares in a row, one lit cell stepping along them. It replaces the spinning arc beside a Settings picker, the Core row while a new core decides what to say, and the Transcript › Log File reading. On the Astrometrics Plan, Trade route, Market and plan result pages the status line shows the mark before its sentence, such as "Reading the markets nearby…", once a search has run a moment, and keeps it up long enough to be seen. It moves in the headset as it does on the desktop.
+
 Added: A waiting bed, a quiet pulsing loop that plays while a page waits on a search. On the Astrometrics Plan, Trade route, Market and plan result pages, a search that runs past a second plays it until the answer appears or the search is cancelled. It sounds different from the thinking bed, and is silent while the thinking bed plays. Turn it off with Waiting bed in Settings › Hearing and sound › Sounds and levels, group Cues; its level, mute and duck are a new Waiting bed row in the Levels group.
 
 Changed: Hide comms traffic and Hide invented chatter on Transcript › In Ship are now settings, under a SETTINGS 2 tile on the title line (closed until pressed) in place of the checkboxes above the messages. You can change them by voice, and Settings search finds them. A box you had checked stays on after the update.

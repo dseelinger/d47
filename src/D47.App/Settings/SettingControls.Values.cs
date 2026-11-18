@@ -360,13 +360,12 @@ internal sealed partial class SettingControls
     {
         var (button, value, status) = SettingsView.DropdownTile(row.Label, out var state);
 
-        var busy = new BusyGlyph
+        var busy = new WaitingState
         {
             IsVisible = false,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 8, 0),
         };
-        ThemeInk.Bind(busy, BusyGlyph.StrokeProperty, ThemeManager.AKey);
 
         button.Click += async (_, _) => await ChooseAsync(row, button, busy, message);
 
@@ -910,7 +909,7 @@ internal sealed partial class SettingControls
 
     private SettingKind KindOf(string key) => host.Settings.Find(key)?.Kind ?? SettingKind.Hotkey;
 
-    private async Task ChooseAsync(SettingRow row, Button button, BusyGlyph busy, StatusLine message)
+    private async Task ChooseAsync(SettingRow row, Button button, WaitingState busy, StatusLine message)
     {
         // The surface this view is drawn on, so the page opens there: the window's panel or the headset's.
         if (button.FindAncestorOfType<Panel.PanelView>()?.Prompts is not { } prompts)
@@ -933,7 +932,7 @@ internal sealed partial class SettingControls
             },
             onListed: () => listed.TrySetResult());
 
-        await Busy.While(button, busy, () => listed.Task);
+        await Waiting.While(busy, null, () => listed.Task, shut: button);
     }
 
     /// <summary>The picker page's request for a choice row, with <paramref name="value"/> as the current choice.</summary>

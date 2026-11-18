@@ -142,7 +142,7 @@ internal static class RoutingKit
 
     /// <summary>
     /// Wires <paramref name="run"/> and <paramref name="cancel"/> around a tool call: <paramref name="validate"/> gates it,
-    /// <paramref name="working"/> is shown while it runs, the result goes to the status line and then to
+    /// the status line waits with <paramref name="working"/> while it runs, the result goes to the status line and then to
     /// <paramref name="done"/>, and <paramref name="budget"/> bounds it. <paramref name="waitSound"/> plays the waiting
     /// bed while it runs, or nothing plays where it is null.
     /// </summary>
@@ -160,22 +160,21 @@ internal static class RoutingKit
             inFlight?.Cancel();
             inFlight = new CancellationTokenSource(budget);
 
-            run.IsEnabled = false;
+            var token = inFlight.Token;
+            ToolResult? result = null;
+
             cancel.IsVisible = true;
-            Say(status, working);
 
             try
             {
-                var running = call(inFlight.Token);
+                await Waiting.While(
+                    status,
+                    working,
+                    waitSound,
+                    async () => result = await call(token).ConfigureAwait(true),
+                    shut: run).ConfigureAwait(true);
 
-                if (waitSound is not null)
-                {
-                    _ = waitSound.PlayWhile(running);
-                }
-
-                var result = await running.ConfigureAwait(true);
-
-                Say(status, result.Content, result.IsError);
+                Say(status, result!.Content, result.IsError);
                 done(result);
             }
             catch (OperationCanceledException)
@@ -184,7 +183,6 @@ internal static class RoutingKit
             }
             finally
             {
-                run.IsEnabled = true;
                 cancel.IsVisible = false;
                 inFlight?.Dispose();
                 inFlight = null;

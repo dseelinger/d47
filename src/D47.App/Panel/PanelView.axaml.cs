@@ -83,8 +83,13 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>The tab buttons, by tab, so a bar can be driven from the navigator.</summary>
     private readonly Dictionary<PanelTab, RadioButton> _tabs = [];
 
-    /// <summary>The glyph the log mode carries while it reads the file (Phase 12).</summary>
-    private readonly Controls.BusyGlyph _logBusy = new() { IsVisible = false, Margin = new Thickness(7, 0, 0, 0) };
+    /// <summary>The wait mark the log mode carries while it reads the file.</summary>
+    private readonly Controls.WaitingState _logBusy = new()
+    {
+        IsVisible = false,
+        Margin = new Thickness(7, 0, 0, 0),
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+    };
 
     /// <summary>Whether the search affordance belongs on this surface.</summary>
     private bool _searchable;
@@ -253,10 +258,6 @@ public partial class PanelView : UserControl, IPanelTabHost
             });
 
         // Beside the box rather than inside it (#231).
-        _logBusy.Bind(
-            Avalonia.Controls.Shapes.Shape.StrokeProperty,
-            this.GetResourceObservable(Theming.ThemeManager.AKey));
-
         ModePicker.Children.Add(_logBusy);
 
         Prompts = new PanelPrompts(Nav, Layer)
@@ -913,6 +914,11 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         return moved;
     }
+
+    private Controls.WaitTicker? _waits;
+
+    /// <summary>Beats every wait mark shown on this surface, on any tab, from the host's tick; true when one moved, appeared or went.</summary>
+    public bool TickWaiting() => (_waits ??= new Controls.WaitTicker(this)).Tick();
 
     /// <summary>Beats the working pulses and refreshes the write bars on the Stories and Assets tabs, from the host's tick; true when either drew something new.</summary>
     public bool TickAdventures()
@@ -3015,7 +3021,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         }
 
         // Both halves inside the busy window (remediation.md 10, item 5).
-        await Controls.Busy.While(ModeReadings, _logBusy, async () =>
+        await Controls.Waiting.While(_logBusy, null, async () =>
         {
             // The same split as above: the file work on a worker, the property set here.
             if (_bound is { } bound)
@@ -3030,7 +3036,8 @@ public partial class PanelView : UserControl, IPanelTabHost
             // At the end, because a log is read newest-first and this page has always opened at the top of
             // it.
             _scroll.ScrollToEnd();
-        });
+        },
+        shut: ModeReadings);
     }
 
     /// <summary>

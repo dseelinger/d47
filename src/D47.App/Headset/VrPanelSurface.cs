@@ -50,6 +50,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Where a modal opened from this copy of the panel is drawn (#530).</summary>
     private readonly Windowing.ModalHost _modals = new();
 
+    /// <summary>Beats the wait marks in <see cref="_modals"/>, which is not under the view.</summary>
+    private readonly Controls.WaitTicker _modalWaits;
+
     private readonly Func<Controls.AudioPlayerDialog>? _audioPlayer;
     private Controls.AudioPlayerDialog? _player;
     private readonly Func<Controls.StoryPlaybackDialog>? _storyPlaybackBox;
@@ -161,6 +164,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     {
         _storyPlaybackBox = storyPlayback;
         _dumpTo = dumpTo;
+        _modalWaits = new Controls.WaitTicker(_modals);
         _audioPlayer = audioPlayer;
 
         _model = model;
@@ -350,6 +354,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         _view.InvalidateLoadout();
         _dirty = true;
     }
+
+    /// <summary>One beat of the wait marks on the panel and in its dialogs.</summary>
+    public void TickWaiting() => _dirty |= _view.TickWaiting() | _modalWaits.Tick();
 
     /// <summary>One frame of the d47 is composing animation (asked for 2026-08-22).</summary>
     public void TickAdventures() => _dirty |= _view.TickAdventures();

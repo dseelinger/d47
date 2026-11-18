@@ -613,6 +613,15 @@ public partial class MainWindow : Window
             host.Tick.Add("engineers", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickEngineers()));
 
+            // And the wait marks, on any tab and in a dialog over the panel, by the same route again.
+            var dialogWaits = new Controls.WaitTicker(Modals);
+            host.Tick.Add("waiting", _ =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    Panel.TickWaiting();
+                    dialogWaits.Tick();
+                }));
+
             // And the working pulse on the Stories tab and in a ship's build talk, by the same route again.
             host.Tick.Add("adventures", _ =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.TickAdventures()));

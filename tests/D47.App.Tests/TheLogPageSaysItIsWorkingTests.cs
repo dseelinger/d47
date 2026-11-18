@@ -11,9 +11,9 @@ namespace D47.App.Tests;
 /// <summary>Opening the log file says it is working.</summary>
 public class TheLogPageSaysItIsWorkingTests
 {
-    /// <summary>The glyph is up while the page is being built, not only while the file is being read.</summary>
+    /// <summary>The mark is up while the page is being built, not only while the file is being read.</summary>
     [AvaloniaFact]
-    public async Task TheGlyphIsUpForTheDrawAndNotOnlyForTheRead()
+    public async Task TheMarkIsUpForTheDrawAndNotOnlyForTheRead()
     {
         var reading = new TaskCompletionSource();
         var release = new TaskCompletionSource();
@@ -35,9 +35,9 @@ public class TheLogPageSaysItIsWorkingTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
-        var glyph = view.GetControl<DockPanel>("ModePicker")
+        var mark = view.GetControl<DockPanel>("ModePicker")
             .Children
-            .OfType<BusyGlyph>()
+            .OfType<WaitingState>()
             .Single();
 
         Assert.True(view.GetControl<DockPanel>("ModePicker").IsVisible, "there was no control to announce on");
@@ -48,7 +48,7 @@ public class TheLogPageSaysItIsWorkingTests
 
         // Waited for rather than slept through.
         Assert.True(
-            await Eventually(() => glyph.IsVisible),
+            await Eventually(() => mark.IsVisible),
             "nothing said the log was being read");
         Assert.False(view.GetControl<TextChoice>("ModeReadings").IsEnabled, "the control was still pressable");
 
@@ -88,7 +88,7 @@ public class TheLogPageSaysItIsWorkingTests
 
     /// <summary>And it is put away again, whatever the read did.</summary>
     [AvaloniaFact]
-    public async Task TheGlyphGoesAwayWhenTheReadFails()
+    public async Task TheMarkGoesAwayWhenTheReadFails()
     {
         var model = new PanelViewModel
         {
@@ -103,16 +103,16 @@ public class TheLogPageSaysItIsWorkingTests
 
         view.Page = TranscriptPage.Log;
 
-        var glyph = view.GetControl<DockPanel>("ModePicker")
+        var mark = view.GetControl<DockPanel>("ModePicker")
             .Children
-            .OfType<BusyGlyph>()
+            .OfType<WaitingState>()
             .Single();
 
         Assert.True(
-            await Eventually(() => !glyph.IsVisible && view.GetControl<TextChoice>("ModeReadings").IsEnabled),
-            "the glyph was left spinning after the read failed");
+            await Eventually(() => !mark.IsVisible && view.GetControl<TextChoice>("ModeReadings").IsEnabled),
+            "the mark was left up after the read failed");
 
-        Assert.False(glyph.IsVisible);
+        Assert.False(mark.IsVisible);
         Assert.True(view.GetControl<TextChoice>("ModeReadings").IsEnabled, "a page that failed once can never be opened again");
     }
 

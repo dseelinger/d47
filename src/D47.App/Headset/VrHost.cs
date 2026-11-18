@@ -510,6 +510,9 @@ public sealed class VrHost : IDisposable
             // changes with the Commander having done nothing (asked for 2026-08-22).
             _panel.TickAdventures();
 
+            // And the wait marks, which move only on this tick.
+            _panel.TickWaiting();
+
             // And the orbit view on the System page, which has no frames of its own off-screen.
             _panel.TickOrbits();
 

@@ -29,19 +29,16 @@ public class PickerButtonSaysItIsWorkingTests
         return host;
     }
 
-    /// <summary>
-    /// The glyph is built with the row and starts hidden — nothing is spinning on a surface that is
-    /// merely open.
-    /// </summary>
+    /// <summary>The mark is built with the row and starts hidden: nothing moves on a surface that is merely open.</summary>
     [AvaloniaFact]
-    public void ThePickerRowCarriesABusyGlyphThatStartsHidden()
+    public void ThePickerRowCarriesAWaitMarkThatStartsHidden()
     {
         var host = Open();
 
-        var glyphs = host.View.GetVisualDescendants().OfType<BusyGlyph>().ToList();
+        var marks = host.View.GetVisualDescendants().OfType<WaitingState>().ToList();
 
-        Assert.NotEmpty(glyphs);
-        Assert.All(glyphs, glyph => Assert.False(glyph.IsVisible));
+        Assert.NotEmpty(marks);
+        Assert.All(marks, mark => Assert.False(mark.IsVisible));
 
         host.Close();
     }
@@ -61,13 +58,13 @@ public class PickerButtonSaysItIsWorkingTests
             .GetVisualDescendants()
             .OfType<Avalonia.Controls.Panel>()
             .FirstOrDefault(panel =>
-                panel.Children.OfType<BusyGlyph>().Any() && panel.Children.OfType<Button>().Any());
+                panel.Children.OfType<WaitingState>().Any() && panel.Children.OfType<Button>().Any());
 
         Assert.NotNull(row);
 
         // Before the button, so it appears where the eye already is rather than off past the end of a control
         // whose width follows its contents.
-        Assert.IsType<BusyGlyph>(row.Children[0]);
+        Assert.IsType<WaitingState>(row.Children[0]);
         Assert.IsType<Button>(row.Children[1]);
         Assert.Equal(Dock.Left, DockPanel.GetDock(row.Children[0]));
 

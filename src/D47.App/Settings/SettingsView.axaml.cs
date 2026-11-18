@@ -9,6 +9,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
@@ -1997,27 +1998,10 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             return;
         }
 
-        if (busy && view.Busy is null && view.Body is Grid grid)
+        // The mark the row's picker tile carries beside its button; a row without one is only shut.
+        if (view.Control?.GetLogicalDescendants().OfType<WaitingState>().FirstOrDefault() is { } mark)
         {
-            // In the spacer column between the caption and the control, which is 16 wide and holds nothing —
-            // so the glyph lands beside the control that was touched without taking a pixel from either side
-            // of it.
-            var glyph = new BusyGlyph
-            {
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            };
-            ThemeInk.Bind(glyph, BusyGlyph.StrokeProperty, ThemeManager.AKey);
-
-            Grid.SetColumn(glyph, 1);
-            grid.Children.Add(glyph);
-
-            view.Busy = glyph;
-        }
-
-        if (view.Busy is not null)
-        {
-            view.Busy.IsVisible = busy;
+            mark.IsVisible = busy;
         }
 
         // Shut while it runs, like every other affordance that is working: picking a second core before the
@@ -2202,9 +2186,6 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         /// <summary>The row's layout, which is a three-column grid where the row is compact.</summary>
         public Control? Body { get; init; }
-
-        /// <summary>Made the first time this row has something slow to say.</summary>
-        public BusyGlyph? Busy { get; set; }
 
         /// <summary>The row's words, held so a query can be painted into them and taken out again.</summary>
         public TextBlock? Label { get; init; }
