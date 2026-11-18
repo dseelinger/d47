@@ -64,6 +64,24 @@ public sealed record StarSystemProfile
 
     public string? ControllingFaction { get; init; }
 
+    public string? ControllingFactionAllegiance { get; init; }
+
+    public string? ControllingFactionGovernment { get; init; }
+
+    /// <summary>The controlling faction's pending states by name, each with its trend.</summary>
+    public IReadOnlyDictionary<string, double> ControllingFactionPendingStates { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>The bodies the service counts in the system, which can exceed <see cref="Bodies"/>.</summary>
+    public int? BodyCount { get; init; }
+
+    public DateTimeOffset? ControllingPowerAt { get; init; }
+
+    public DateTimeOffset? FactionsAt { get; init; }
+
+    public DateTimeOffset? PowerStateAt { get; init; }
+
+    public DateTimeOffset? PowersAt { get; init; }
+
     /// <summary>Most influence first.</summary>
     public IReadOnlyList<FactionStanding> Factions { get; init; } = [];
 
@@ -94,7 +112,13 @@ public sealed record FactionStanding(
     string? Allegiance,
     double? Influence,
     IReadOnlyList<string> ActiveStates,
-    IReadOnlyList<string> PendingStates);
+    IReadOnlyList<string> PendingStates)
+{
+    public string? State { get; init; }
+
+    /// <summary>Each pending state's trend by state name.</summary>
+    public IReadOnlyDictionary<string, double> PendingTrends { get; init; } = new Dictionary<string, double>();
+}
 
 /// <summary>A system's Powerplay state.</summary>
 public sealed record PowerplayStanding
@@ -181,6 +205,15 @@ public sealed record StationProfile
 
     public string? ControllingFactionState { get; init; }
 
+    /// <summary>The station's own state, "UnderRepairs" for one being repaired; null when none is reported.</summary>
+    public string? State { get; init; }
+
+    /// <summary>In degrees; set for a station on a surface.</summary>
+    public double? Latitude { get; init; }
+
+    /// <summary>In degrees; set for a station on a surface.</summary>
+    public double? Longitude { get; init; }
+
     /// <summary>Each economy with its share as a percentage, largest first.</summary>
     public IReadOnlyList<EconomyShare> Economies { get; init; } = [];
 
@@ -218,15 +251,23 @@ public sealed record MarketCommodity(
 {
     /// <summary>True for a rare good; null where the reply does not say.</summary>
     public bool? IsRare { get; init; }
+
+    public long? CommodityId { get; init; }
 }
 
 /// <summary>A station's market as last reported.</summary>
-public sealed record StationMarket(IReadOnlyList<MarketCommodity> Commodities, DateTimeOffset? ReportedAt);
+public sealed record StationMarket(IReadOnlyList<MarketCommodity> Commodities, DateTimeOffset? ReportedAt)
+{
+    /// <summary>Commodities the station will not trade.</summary>
+    public IReadOnlyList<string> ProhibitedCommodities { get; init; } = [];
+}
 
 /// <summary>One module row of a station's outfitting.</summary>
 public sealed record StationModule(string Name, string? Symbol, string? Category, int? Class, string? Rating, string? Ship)
 {
     public long? Price { get; init; }
+
+    public long? ModuleId { get; init; }
 
     /// <summary>fixed, gimballed or turreted, as <c>ModuleSpecification.Mount</c> spells it; null for a module that is not a weapon.</summary>
     public string? Mount { get; init; }
@@ -239,13 +280,25 @@ public sealed record StationOutfitting(IReadOnlyList<StationModule> Modules, Dat
 public sealed record StationShip(string Name, string? Symbol)
 {
     public long? Price { get; init; }
+
+    public long? ShipId { get; init; }
 }
 
 /// <summary>A station's shipyard as last reported.</summary>
 public sealed record StationShipyard(IReadOnlyList<StationShip> Ships, DateTimeOffset? ReportedAt);
 
 /// <summary>A ring and the signals reported in it.</summary>
-public sealed record RingProfile(string Name, string? Type, IReadOnlyDictionary<string, int> Signals);
+public sealed record RingProfile(string Name, string? Type, IReadOnlyDictionary<string, int> Signals)
+{
+    /// <summary>In metres.</summary>
+    public double? InnerRadius { get; init; }
+
+    /// <summary>In metres.</summary>
+    public double? OuterRadius { get; init; }
+
+    /// <summary>In megatons.</summary>
+    public double? Mass { get; init; }
+}
 
 /// <summary>An asteroid belt around a star. Radii are in metres, mass in megatons.</summary>
 public sealed record BeltProfile(string Name, string? Type, double? Mass, double? InnerRadius, double? OuterRadius);
@@ -255,6 +308,9 @@ public sealed record BodyProfile
 {
     /// <summary>The journal's <c>BodyID</c>.</summary>
     public required int BodyId { get; init; }
+
+    /// <summary>The body's id64.</summary>
+    public long? BodyAddress { get; init; }
 
     public required string Name { get; init; }
 
@@ -311,6 +367,15 @@ public sealed record BodyProfile
     public string? ReserveLevel { get; init; }
 
     public IReadOnlyList<RingProfile> Rings { get; init; } = [];
+
+    /// <summary>The belts around a star.</summary>
+    public IReadOnlyList<BeltProfile> Belts { get; init; } = [];
+
+    /// <summary>When the signal counts were last reported.</summary>
+    public DateTimeOffset? SignalsSeen { get; init; }
+
+    /// <summary>When <see cref="DistanceToArrival"/> was last reported.</summary>
+    public DateTimeOffset? DistanceToArrivalAt { get; init; }
 
     /// <summary>Signal counts by the service's signal name.</summary>
     public IReadOnlyDictionary<string, int> Signals { get; init; } = new Dictionary<string, int>();

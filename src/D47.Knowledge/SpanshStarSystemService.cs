@@ -358,7 +358,15 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             Security = system.String("security"),
             Population = system.Long("population"),
             NeedsPermit = PermitSystemTable.Locked(name),
+            BodyCount = system.Int("bodyCount"),
             ControllingFaction = system.Object("controllingFaction")?.String("name"),
+            ControllingFactionAllegiance = system.Object("controllingFaction")?.String("allegiance"),
+            ControllingFactionGovernment = system.Object("controllingFaction")?.String("government"),
+            ControllingFactionPendingStates = system.Object("controllingFaction") is { } controlling ? Trends(controlling) : new Dictionary<string, double>(),
+            ControllingPowerAt = SystemStamp(system, "controllingPower"),
+            FactionsAt = SystemStamp(system, "factions"),
+            PowerStateAt = SystemStamp(system, "powerState"),
+            PowersAt = SystemStamp(system, "powers"),
             Factions = [.. system.Items("factions")
                 .Where(faction => faction.String("name") is not null)
                 .Select(faction => new FactionStanding(
@@ -367,7 +375,11 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
                     faction.String("allegiance"),
                     faction.Double("influence"),
                     States(faction, "activeStates"),
-                    States(faction, "pendingStates")))
+                    States(faction, "pendingStates"))
+                {
+                    State = faction.String("state"),
+                    PendingTrends = Trends(faction),
+                })
                 .OrderByDescending(faction => faction.Influence ?? 0)],
             Powerplay = ReadPowerplay(system),
             Stations = stations,
@@ -375,6 +387,24 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             Barycentres = [.. barycentreElements.Select(element => ReadBarycentre(element, chains)).OfType<BarycentreProfile>()],
             ReportedAt = Timestamp(system, "date"),
         };
+    }
+
+    private static DateTimeOffset? SystemStamp(JsonElement system, string name) =>
+        system.Object("timestamps") is { } stamps ? Timestamp(stamps, name) : null;
+
+    private static Dictionary<string, double> Trends(JsonElement faction)
+    {
+        var trends = new Dictionary<string, double>(StringComparer.Ordinal);
+
+        foreach (var state in faction.Items("pendingStates"))
+        {
+            if (state.String("state") is { } name && state.Double("trend") is { } trend)
+            {
+                trends[name] = trend;
+            }
+        }
+
+        return trends;
     }
 
     private static string[] States(JsonElement faction, string property) =>
@@ -421,6 +451,9 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             MarketId = station.Long("id"),
             Allegiance = station.String("allegiance"),
             ControllingFactionState = station.String("controllingFactionState"),
+            State = station.String("state"),
+            Latitude = station.Double("latitude"),
+            Longitude = station.Double("longitude"),
             Economies = [.. Shares(station.Object("economies"))
                 .OrderByDescending(economy => economy.Value)
                 .Select(economy => new EconomyShare(economy.Key, economy.Value))],
@@ -437,8 +470,16 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
                             row.Long("buyPrice") ?? 0,
                             row.Long("sellPrice") ?? 0,
                             row.Long("supply") ?? 0,
-                            row.Long("demand") ?? 0))],
+                            row.Long("demand") ?? 0)
+                        {
+                            CommodityId = row.Long("commodityId"),
+                        })],
                     Timestamp(market, "updateTime"))
+                {
+                    ProhibitedCommodities = [.. market.Items("prohibitedCommodities")
+                        .Where(name => name.ValueKind == JsonValueKind.String)
+                        .Select(name => name.GetString()!)],
+                }
                 : null,
             Outfitting = station.Object("outfitting") is { } outfitting
                 ? new StationOutfitting(
@@ -450,14 +491,20 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
                             row.String("category"),
                             row.Int("class"),
                             row.String("rating"),
-                            row.String("ship")))],
+                            row.String("ship"))
+                        {
+                            ModuleId = row.Long("moduleId"),
+                        })],
                     Timestamp(outfitting, "updateTime"))
                 : null,
             Shipyard = station.Object("shipyard") is { } shipyard
                 ? new StationShipyard(
                     [.. shipyard.Items("ships")
                         .Where(row => row.String("name") is not null)
-                        .Select(row => new StationShip(row.String("name")!, row.String("symbol")))],
+                        .Select(row => new StationShip(row.String("name")!, row.String("symbol"))
+                        {
+                            ShipId = row.Long("shipId"),
+                        })],
                     Timestamp(shipyard, "updateTime"))
                 : null,
         };
@@ -524,6 +571,7 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
         return new BodyProfile
         {
             BodyId = bodyId,
+            BodyAddress = body.Long("id64"),
             Name = name,
             Type = body.String("type")!,
             SubType = body.String("subType"),
@@ -547,7 +595,22 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             ReserveLevel = body.String("reserveLevel"),
             Rings = [.. body.Items("rings")
                 .Where(ring => ring.String("name") is not null)
-                .Select(ring => new RingProfile(ring.String("name")!, ring.String("type"), Signals(ring)))],
+                .Select(ring => new RingProfile(ring.String("name")!, ring.String("type"), Signals(ring))
+                {
+                    InnerRadius = ring.Double("innerRadius"),
+                    OuterRadius = ring.Double("outerRadius"),
+                    Mass = ring.Double("mass"),
+                })],
+            Belts = [.. body.Items("belts")
+                .Where(belt => belt.String("name") is not null)
+                .Select(belt => new BeltProfile(
+                    belt.String("name")!,
+                    belt.String("type"),
+                    belt.Double("mass"),
+                    belt.Double("innerRadius"),
+                    belt.Double("outerRadius")))],
+            SignalsSeen = body.Object("signals") is { } signalStamp ? Timestamp(signalStamp, "updateTime") : null,
+            DistanceToArrivalAt = body.Object("timestamps") is { } arrivalStamp ? Timestamp(arrivalStamp, "distanceToArrival") : null,
             Signals = Signals(body),
             Materials = Shares(body.Object("materials")),
             AtmosphereComposition = Shares(body.Object("atmosphereComposition")),

@@ -81,7 +81,7 @@ public class ASystemsStationsAndBodiesCarryTheirFullDetailTests
 
         Assert.Equal(new DateTimeOffset(2026, 10, 31, 16, 59, 58, TimeSpan.Zero), outfitting.ReportedAt);
         Assert.Equal(
-            new StationModule("Lightweight Alloy", "Adder_Armour_Grade1", "standard", 1, "I", "Adder"),
+            new StationModule("Lightweight Alloy", "Adder_Armour_Grade1", "standard", 1, "I", "Adder") { ModuleId = 128049268 },
             outfitting.Modules[0]);
     }
 
@@ -91,7 +91,7 @@ public class ASystemsStationsAndBodiesCarryTheirFullDetailTests
         var shipyard = Station(await Sol(), "Galileo").Shipyard!;
 
         Assert.Equal(new DateTimeOffset(2026, 10, 31, 16, 59, 58, TimeSpan.Zero), shipyard.ReportedAt);
-        Assert.Equal(new StationShip("Beluga Liner", "BelugaLiner"), shipyard.Ships[1]);
+        Assert.Equal(new StationShip("Beluga Liner", "BelugaLiner") { ShipId = 128049345 }, shipyard.Ships[1]);
     }
 
     [Fact]
