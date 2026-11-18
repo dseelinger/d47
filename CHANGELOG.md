@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: A COLUMNS tile above the Stored modules table, on the desktop and in the headset. It opens a bar for choosing the table's columns: press a header to choose a column, then MOVE LEFT, MOVE RIGHT or REMOVE it; ADD A COLUMN lists every column as checkboxes, including System, Station, In transit, Hot, Engineering and Grade; DEFAULT COLUMNS returns the four default columns. Headers do not sort while the bar is open. Each change is kept, and the headset keeps its own columns.
+
 Changed: Waiting has one mark: five small squares in a row, one lit cell stepping along them. It replaces the spinning arc beside a Settings picker, the Core row while a new core decides what to say, and the Transcript › Log File reading. On the Astrometrics Plan, Trade route, Market and plan result pages the status line shows the mark before its sentence, such as "Reading the markets nearby…", once a search has run a moment, and keeps it up long enough to be seen. It moves in the headset as it does on the desktop.
 
 Changed: The search and market pages show the same waiting mark. Construction, Best cargo, Market, Rare goods and the Materials detail page show it with their own sentence, such as "Looking up prices…" or "Searching the galaxy…", once a search has run a moment, and a ship's "Plot a route to buy them" shows it with "Working it out…". The Combat page shows it with its sentence while your journals are read for past kills. The waiting bed plays on these pages as it does on Plan and Market.

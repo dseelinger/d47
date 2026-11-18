@@ -16,10 +16,14 @@ public sealed class ColumnArrangementMemory(ViewStateStore store, bool headset =
     }
 
     /// <summary>Stores the column keys a table shows, in order.</summary>
-    public void Remember(string table, IReadOnlyList<string> keys)
-    {
-        var next = store.Load().WithArrangement(ColumnArrangement.IdFor(table, headset), keys);
+    public void Remember(string table, IReadOnlyList<string> keys) =>
+        Save(store.Load().WithArrangement(ColumnArrangement.IdFor(table, headset), keys));
 
+    /// <summary>Forgets a table's arrangement, so it shows its default columns.</summary>
+    public void Forget(string table) => Save(store.Load().WithoutArrangement(ColumnArrangement.IdFor(table, headset)));
+
+    private void Save(ViewState next)
+    {
         store.Save(next);
         _cached = next;
     }

@@ -245,7 +245,8 @@ public sealed class SortHeader<TRow>
         return button;
     }
 
-    private static TextBlock Line(string text, double size, FontWeight weight, string key)
+    /// <summary>A header label line in the chrome font, inked from <paramref name="key"/>.</summary>
+    internal static TextBlock Line(string text, double size, FontWeight weight, string key)
     {
         var block = TitleText.Build(text, size, TitleRank.Subgroup);
         block.FontFamily = Fonts.ChromeFamily;

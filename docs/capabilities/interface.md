@@ -478,6 +478,19 @@ transcript's reading, Astrometrics', and every other tab's. Settings comes back 
 you left it at, without opening any card you had closed. What is deliberately **not** remembered is
 which tab was showing: the panel opens on the transcript, the way it always has.
 
+#### Tables {#tables}
+
+Every table works the same way. Pressing a column's header sorts the rows by it. On the desktop,
+dragging the boundary between two headers sets a column's width, and double-clicking it forgets that
+width.
+
+**COLUMNS** opens a bar above the table for changing which columns it shows. Press a header to
+choose that column, then **MOVE LEFT**, **MOVE RIGHT** or **REMOVE** it. **ADD A COLUMN** lists every
+column the table can show, as checkboxes: tick one to add it at the right, untick one to remove it.
+**DEFAULT COLUMNS** returns the table to its own columns and leaves dragged widths as they are.
+Headers do not sort while the bar is open; **DONE** closes it. Each change is kept as it is made, and
+the headset keeps its columns apart from the window's.
+
 #### Drilling in, and finding your way back {#drilling}
 
 Every surface below the transcript is a stack — Ships, then a ship, then a slot, then a

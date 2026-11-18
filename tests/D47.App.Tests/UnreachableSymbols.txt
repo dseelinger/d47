@@ -39,7 +39,6 @@ D47.App.Panel.CatalogueFilters.RatingsShown
 D47.App.Panel.CharactersPage.DistanceSettled
 D47.App.Panel.CharactersPage.Selected
 D47.App.Panel.CodexPublishResult.Landed
-D47.App.Panel.ColumnArrangementMemory.Remember(string, System.Collections.Generic.IReadOnlyList<string>)
 D47.App.Panel.CommanderSwitcher.Label
 D47.App.Panel.ComparePage.Minimum(int)
 D47.App.Panel.ConstructionPage.Selected
@@ -111,13 +110,6 @@ D47.Core.Checklists.ChecklistProposalStore.Path
 D47.Core.Checklists.ChecklistService.SelectionChanged
 D47.Core.Checklists.ChecklistStore.Path
 D47.Core.Checklists.PlanBlock.Unlocked
-D47.Core.Configuration.ColumnArrangement.Added(System.Collections.Generic.IReadOnlyList<D47.Core.Configuration.ArrangedColumn>, System.Collections.Generic.IReadOnlyList<string>, string)
-D47.Core.Configuration.ColumnArrangement.Edited(System.Collections.Generic.List<string>, System.Collections.Generic.IReadOnlyList<string>, System.Collections.Generic.IReadOnlyList<D47.Core.Configuration.ArrangedColumn>)
-D47.Core.Configuration.ColumnArrangement.IsDefault(System.Collections.Generic.IReadOnlyList<D47.Core.Configuration.ArrangedColumn>, System.Collections.Generic.IReadOnlyList<string>)
-D47.Core.Configuration.ColumnArrangement.Moved(System.Collections.Generic.IReadOnlyList<D47.Core.Configuration.ArrangedColumn>, System.Collections.Generic.IReadOnlyList<string>, string, bool)
-D47.Core.Configuration.ColumnArrangement.Removed(System.Collections.Generic.IReadOnlyList<D47.Core.Configuration.ArrangedColumn>, System.Collections.Generic.IReadOnlyList<string>, string)
-D47.Core.Configuration.ViewState.WithArrangement(string, System.Collections.Generic.IReadOnlyList<string>)
-D47.Core.Configuration.ViewState.WithoutArrangement(string)
 D47.Core.Conversation.TurnLoop.Target
 D47.Core.Debrief.DebriefWriteRefused.Attempted
 D47.Core.Debrief.DebriefWriteRefused.Why

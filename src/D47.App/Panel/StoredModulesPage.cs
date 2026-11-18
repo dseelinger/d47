@@ -167,6 +167,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _table.StopArranging();
         _table.Reset();
     }
 
@@ -332,6 +333,17 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         {
             _body.Children.Add(Message(NoMatch(_query)));
             return;
+        }
+
+        if (ColumnArranger.Line(_table) is { } line)
+        {
+            line.Margin = new Thickness(0, 18, 0, 0);
+            _body.Children.Add(line);
+        }
+
+        if (ColumnArranger.Bar(_table) is { } bar)
+        {
+            _body.Children.Add(bar);
         }
 
         foreach (var group in groups)
