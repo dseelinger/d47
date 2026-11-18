@@ -243,7 +243,7 @@ public sealed class Announcer : IDisposable
                 var spoken = await SayAsync(announcement).ConfigureAwait(false);
 
                 // Only a line actually spoken can be answered.
-                if (announcement.Invented is { } chatter)
+                if (spoken is not null && announcement.Invented is { } chatter)
                 {
                     Turns.LineHeard<D47.Core.Persona.ChatterLine>(line => line.Heard(chatter.Line, chatter.ExchangeIndex));
 
@@ -253,12 +253,12 @@ public sealed class Announcer : IDisposable
                     }
                 }
 
-                if (announcement.Voice == VoiceRole.Narrator)
+                if (spoken is not null && announcement.Voice == VoiceRole.Narrator)
                 {
                     Turns.LineHeard<D47.Core.Persona.NarratorLine>(line => line.Heard(announcement.Text));
                 }
 
-                if (announcement.Cast is { } castId)
+                if (spoken is not null && announcement.Cast is { } castId)
                 {
                     Turns.LineHeard<D47.Core.Persona.CastLine>(line => line.Heard(castId, announcement.Text));
                 }

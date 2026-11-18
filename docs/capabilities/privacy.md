@@ -493,6 +493,11 @@ away:
 - a chapter that was already being written when you left;
 - your own turns, the Commander's log, and anything you start from a button.
 
+Unprompted speech on a voice that charges stops the same way: while you are away, a callout, chatter
+line, Narrator line, story line or timer announcement is written to the log and the comms page but not
+synthesised, and is not said when you return. A voice that is free to run speaks as before, and so does
+the answer to anything you ask.
+
 **The model cannot reach this row.** You change it here.
 
 ## The disclosure rows {#egress-llm}

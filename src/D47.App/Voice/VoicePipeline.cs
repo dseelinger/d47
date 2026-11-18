@@ -80,6 +80,12 @@ public sealed class VoicePipeline(
         set => _held = value;
     }
 
+    /// <summary>While true, an announcement on a billed provider is not synthesised.</summary>
+    public Func<bool> PaidCallsStopped { get; set; } = () => false;
+
+    private bool Refuses(ITtsProvider provider) =>
+        PaidCallsStopped() && TtsProviderCatalog.Selected(provider.Id).Billed;
+
     public VoiceSelection Voice { get; set; } = VoiceSelection.Default;
 
     /// <summary>The story cast member's voice the next turn is spoken in, or null for <see cref="Voice"/>.</summary>
@@ -346,7 +352,7 @@ public sealed class VoicePipeline(
         string? picture = null,
         string? utteranceCaption = null)
     {
-        if (_held || Speaker(slot) is not { } provider)
+        if (_held || Speaker(slot) is not { } provider || Refuses(provider))
         {
             return null;
         }
@@ -584,7 +590,7 @@ public sealed class VoicePipeline(
     /// <summary>Speaks one unprompted callout (Phase 8), and returns what was queued to play.</summary>
     public async Task<SpokenClip?> AnnounceAsync(Announcement announcement, VoiceSelection? voice = null)
     {
-        if (_held)
+        if (_held || Refuses(announcement))
         {
             return null;
         }
@@ -693,6 +699,21 @@ public sealed class VoicePipeline(
                 picture: announcement.Picture,
                 utteranceCaption: announcement.Translation)
             .ConfigureAwait(false);
+    }
+
+    private bool Refuses(Announcement announcement)
+    {
+        if (!PaidCallsStopped())
+        {
+            return false;
+        }
+
+        return announcement.Pinned switch
+        {
+            { IsCrewVoice: true, Fallback: null } => Speaker(VoiceGroup.Aboard) is { } crew && Refuses(crew),
+            { } pinned => TtsProviderCatalog.Selected(pinned.ProviderId).Billed,
+            _ => Speaker(VoiceGroups.Of(announcement.Voice, announcement.CommsChannel)) is { } slot && Refuses(slot),
+        };
     }
 
     /// <summary>Raised as the loop moves.</summary>

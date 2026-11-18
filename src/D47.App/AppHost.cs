@@ -2087,6 +2087,7 @@ public sealed class AppHost : IDisposable
         {
             // What a voice is called, for the log line that says who spoke (remediation.md 10, item 9).
             VoiceName = id => id is { Length: > 0 } ? late.Host?.Speech.VoiceNameFor(id) : null,
+            PaidCallsStopped = () => late.Host is { PaidCallsStopped: true },
         };
 
         // The loop settles back to idle when the arbiter goes quiet rather than when the turn returns,

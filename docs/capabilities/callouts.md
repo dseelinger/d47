@@ -1683,6 +1683,8 @@ the callout settings turns it off.
 
 Off means Directive 47 only ever answers. Every line on this page stops with it, the
 chatter and the Narrator included. Answers to what you ask keep working.
+While you are away, these lines are not spoken on a voice that charges; see
+[Away after (minutes)](privacy.md#away-minutes).
 
 > "stop calling things out"
 > "start calling things out"
