@@ -65,7 +65,7 @@ public class SpeechCountsInTheSessionTotalTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.EnableTurnDetails(
-            _ => Task.CompletedTask,
+            (_, _) => Task.CompletedTask,
             () => SpendDialog.SessionDollars(session, speech, ElevenAtFiveCents, new D47.Core.Listening.TranscriptionSpend()),
             () => SpendDialog.SessionDetail(session, speech, ElevenAtFiveCents));
         speech.Recorded += panel.RefreshSessionSpend;

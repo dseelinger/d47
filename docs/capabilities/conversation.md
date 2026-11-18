@@ -167,6 +167,9 @@ The line under the panel says what the last turn cost, and **SPEND** beside it o
 the token counts, what the session has come to, and five running totals — **today**, **the last 7
 days**, **the last 30 days**, **this week** (Sunday to Saturday) and **this calendar month**.
 
+**SPEND BREAKDOWN**, after **Close** at the foot of **SPEND**, opens a page with what each purpose came to and every
+charge, for one window: today, this week, the last 7 days, this month or the last 30 days.
+
 When ElevenLabs or Deepgram is in use, **SPEND** starts with a **Your accounts** section that shows what the provider reports about your account: ElevenLabs' characters left and when they reset, Deepgram's credit left. Those figures are the provider's, read when the dialog opens, not D47's estimate.
 
 **Today is first because it is the one you read**, and the freshest window earns the top of the

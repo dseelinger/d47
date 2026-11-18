@@ -1843,7 +1843,7 @@ public partial class MainWindow : Window
 
     /// <summary>The SPEND row's figure and the dialog it opens, for whichever surface shows the row.</summary>
     internal static SpendDesk SpendDeskFor(AppHost host) => new(
-        owner => new SpendDialog(
+        (owner, open) => new SpendDialog(
             host.Spend.Last,
             host.Spend,
             host.Speech.Spend,
@@ -1854,7 +1854,8 @@ public partial class MainWindow : Window
             // What makes the Reset button appear, and what "this session" means to it (#197).
             host.LaunchedAt,
             host.AccountReadersInUse(),
-            transcription: host.Transcription).Over(owner),
+            transcription: host.Transcription,
+            breakdown: () => open(new SpendBreakdownPage(host.SpendLedger, TimeZoneInfo.Local))).Over(owner),
         () => SpendDialog.SessionDollars(host.Spend, host.Speech.Spend, host.Settings.Current, host.Transcription),
         () => SpendDialog.SessionDetail(host.Spend, host.Speech.Spend, host.Settings.Current));
 

@@ -95,7 +95,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     private bool _searchable;
 
     /// <summary>How the host shows the turn's figures, when it gave a way.</summary>
-    private Func<Window, Task>? _showTurnDetails;
+    private Func<Window, Func<Controls.DialogPage, Task>, Task>? _showTurnDetails;
 
     /// <summary>The tab to come back to when a furnished one is left.</summary>
     private PanelTab _lastTab = PanelTab.Transcript;
@@ -1616,7 +1616,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// name="detail"/> as its tooltip, and read again after each turn, when the figures close and on <see
     /// cref="RefreshSessionSpend"/>.
     /// </remarks>
-    public void EnableTurnDetails(Func<Window, Task> show, Func<decimal> session, Func<string>? detail = null)
+    public void EnableTurnDetails(Func<Window, Func<Controls.DialogPage, Task>, Task> show, Func<decimal> session, Func<string>? detail = null)
     {
         _showTurnDetails = show;
         _sessionSpend = session;
@@ -1633,11 +1633,11 @@ public partial class PanelView : UserControl, IPanelTabHost
         }
     }
 
-    private async Task ShowTurnDetailsAsync(Func<Window, Task> show)
+    private async Task ShowTurnDetailsAsync(Func<Window, Func<Controls.DialogPage, Task>, Task> show)
     {
         if (TopLevel.GetTopLevel(this) is Window owner)
         {
-            await show(owner);
+            await show(owner, Open);
         }
 
         ApplySessionSpend();

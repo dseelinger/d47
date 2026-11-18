@@ -33,6 +33,9 @@ public sealed class SpendDialog : ModalDialog
     /// </summary>
     private readonly DateTimeOffset? _launchedAt;
 
+    /// <summary>Opens the spend breakdown page on the panel the dialog is over; null draws no tile for it.</summary>
+    private readonly Func<Task>? _breakdown;
+
     /// <summary>The last turn, kept so the dialog can be redrawn after a reset.</summary>
     private readonly TurnCost? _turn;
 
@@ -61,7 +64,8 @@ public sealed class SpendDialog : ModalDialog
         DateTimeOffset? launchedAt = null,
         IReadOnlyList<IAccountReader>? accounts = null,
         Func<DateTimeOffset>? now = null,
-        TranscriptionSpend? transcription = null)
+        TranscriptionSpend? transcription = null,
+        Func<Task>? breakdown = null)
     {
         _turn = turn;
         _session = session;
@@ -71,6 +75,7 @@ public sealed class SpendDialog : ModalDialog
         _settings = settings;
         _zone = zone;
         _launchedAt = launchedAt;
+        _breakdown = breakdown;
 
         if (accounts is { Count: > 0 })
         {
@@ -135,7 +140,7 @@ public sealed class SpendDialog : ModalDialog
         Buttons(_buttons);
     }
 
-    /// <summary>The help mark and Close.</summary>
+    /// <summary>The help mark, Close, and SPEND BREAKDOWN where there is a panel to open it on.</summary>
     private void Buttons(StackPanel row)
     {
         var close = new Button { Content = "Close", MinWidth = 110, MinHeight = TypeScale.MinimumTarget };
@@ -152,6 +157,20 @@ public sealed class SpendDialog : ModalDialog
         row.Children.Add(help);
 
         row.Children.Add(close);
+
+        if (_breakdown is { } breakdown)
+        {
+            var open = new Button { Name = "SpendBreakdown", Content = "Spend breakdown", MinHeight = TypeScale.MinimumTarget };
+
+            // Not awaited: the page's task completes only when the Commander leaves it.
+            open.Click += (_, _) =>
+            {
+                Close();
+                _ = breakdown();
+            };
+
+            row.Children.Add(open);
+        }
     }
 
     /// <summary>How far back to reset, as a list that opens in the page.</summary>

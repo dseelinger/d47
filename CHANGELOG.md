@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: SPEND BREAKDOWN, after Close in the SPEND dialog, closes the dialog and opens a Spend breakdown page on the panel it was over, in the headset too. Choose a window (Today, This week, Last 7 days, This month or Last 30 days; it opens on Last 30 days) to see its range, how many charges it had and what they came to. By purpose lists what each purpose came to, with its kind, its number of charges, its share of the window and its cost, most costly first; press Purpose, Charges or Cost to sort. A purpose with charges that have no rate reads "≥" and how many had none, and charges written before purposes were recorded are listed as Not recorded. EVERY CHARGE is shown but cannot be chosen yet.
+
 Added: With Show D47 without SteamVR, the panel and the avatar are curved by the Curvature setting on an OpenXR runtime that can draw a curved layer, such as Virtual Desktop's. Pointing follows the curve. On a runtime that cannot, or one that refuses a curved frame, the panel, the avatar and pointing are flat for the rest of Elite's session, as they were on this route before.
 
 Added: SPEND counts hosted transcription. Each utterance Groq, OpenAI, Deepgram or ElevenLabs Scribe transcribes is a charge in `data\spend.jsonl` with the seconds of audio sent, priced per minute from the model catalog, and the session figure includes it. In the Totals table each of those providers is a row of its own with the minutes it transcribed under each figure. A request that fails or is cancelled is not counted, and Whisper on this computer costs nothing and is not listed.

@@ -51,8 +51,14 @@ public class TheSpendRowOpensItsFiguresInTheHeadsetTests
         var speech = new SpeechSpend();
 
         var desk = new SpendDesk(
-            owner => new SpendDialog(
-                session.Last, session, speech, ledger, settings.Current, TimeZoneInfo.Utc).Over(owner),
+            (owner, open) => new SpendDialog(
+                session.Last,
+                session,
+                speech,
+                ledger,
+                settings.Current,
+                TimeZoneInfo.Utc,
+                breakdown: () => open(new SpendBreakdownPage(ledger, TimeZoneInfo.Utc))).Over(owner),
             () => SpendDialog.SessionDollars(session, speech, settings.Current, new D47.Core.Listening.TranscriptionSpend()),
             () => SpendDialog.SessionDetail(session, speech, settings.Current));
 
@@ -120,6 +126,45 @@ public class TheSpendRowOpensItsFiguresInTheHeadsetTests
 
         Assert.True(Press(surface, close));
         Assert.Null(surface.Modal);
+    }
+
+    [AvaloniaFact]
+    public void SpendBreakdownInTheHeadsetOpensThePageOnTheHeadsetPanel()
+    {
+        var (surface, session, _) = Headset();
+        using var _ = surface;
+
+        session.Record(
+            new TurnCost(new LlmUsage(1_240, 380, 0, 18_400), 0.0231m, true),
+            SpendPurposes.Conversation,
+            coldPrefixExpected: true,
+            "anthropic",
+            "claude-opus-5");
+
+        Press(surface, Spend(surface));
+
+        var dialog = surface.Modal!;
+        var tile = dialog.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "SpendBreakdown");
+
+        Assert.True(Press(surface, tile));
+        Assert.Null(surface.Modal);
+
+        var view = surface.Board.View as PanelView ?? surface.Board.View.GetVisualDescendants().OfType<PanelView>().First();
+        Assert.Equal("Spend breakdown", view.Nav.Trail[^1].Word);
+
+        var page = view.GetVisualDescendants().OfType<SpendBreakdownPage>().Single();
+        // The headset's window is offscreen and never shown, so visibility is read up to the page only.
+        static bool Drawn(Visual control, Visual page) =>
+            control.IsVisible && control.GetVisualAncestors().TakeWhile(ancestor => ancestor != page).All(ancestor => ancestor.IsVisible);
+
+        Assert.True(page.Bounds.Width > 0, "the page is laid out");
+
+        var section = page.GetVisualDescendants().OfType<Segment>().Single(segment => segment.Name == "SpendSection");
+        Assert.Equal(TypeScale.MinimumTarget, section.Bounds.Height, 0.5);
+
+        var pressable = page.GetVisualDescendants().OfType<Button>().Where(button => Drawn(button, page)).ToList();
+        Assert.NotEmpty(pressable);
+        Assert.All(pressable, button => Assert.True(button.Bounds.Height >= 44 - 0.5, $"{button.Name} is {button.Bounds.Height} tall"));
     }
 
     [AvaloniaFact]
