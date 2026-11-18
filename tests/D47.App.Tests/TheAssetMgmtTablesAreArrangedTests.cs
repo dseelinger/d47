@@ -143,7 +143,7 @@ public sealed class TheAssetMgmtTablesAreArrangedTests
     }
 
     [AvaloniaFact]
-    public void TheSlotTableHeaderPressesNothingAndASizeColumnReadsTheSlotsSize()
+    public void EverySlotTableHeaderPressesAndASizeColumnReadsTheSlotsSize()
     {
         var table = LoadoutPages.NewSlotTable(null, new ColumnArrangementMemory(Views()));
         table.Show("Size");
@@ -157,7 +157,7 @@ public sealed class TheAssetMgmtTablesAreArrangedTests
         var button = Assert.IsType<Button>(LoadoutPages.SlotRow(row, () => { }, table));
         var cells = Assert.IsType<TableGrid>(button.Content);
 
-        Assert.Empty(header.GetVisualDescendants().OfType<Button>());
+        Assert.Equal(5, header.GetVisualDescendants().OfType<Button>().Count());
         Assert.Contains(cells.Children.OfType<TextBlock>(), cell => cell.Text == "4");
     }
 

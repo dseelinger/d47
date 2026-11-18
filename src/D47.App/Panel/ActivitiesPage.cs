@@ -86,7 +86,6 @@ public sealed class ActivitiesPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        ResetSorts();
         _ledger.Changed += Follow;
         Fill();
     }
@@ -104,7 +103,6 @@ public sealed class ActivitiesPage : UserControl
         if (narrow != _narrow)
         {
             _narrow = narrow;
-            ResetSorts();
             Dispatcher.UIThread.Post(Fill);
         }
 
@@ -112,12 +110,6 @@ public sealed class ActivitiesPage : UserControl
     }
 
     private ArrangedTable<ActivityRow> Columns => _narrow ? _narrowTable : _wide;
-
-    private void ResetSorts()
-    {
-        _wide.ShowSort(null, SortDirection.Ascending);
-        _narrowTable.ShowSort(null, SortDirection.Ascending);
-    }
 
     /// <summary>The ledger raises this from whichever thread folded.</summary>
     private void Follow() => Dispatcher.UIThread.Post(Fill);

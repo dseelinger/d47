@@ -387,17 +387,45 @@ public sealed partial class StarSystemPage
         StationHead(4, new TableColumn("Economy"), station => Ellipsed(station.PrimaryEconomy ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)),
         StationHead(5, new TableColumn("Pad"), station => Mono(PadText(station.LargestPad), ThemeManager.WhiteKey)),
         StationHead(6, new TableColumn("Arrival"), station => RightAligned(Mono(ArrivalText(station.DistanceToArrival), ThemeManager.AKey)), right: true),
-        Added<StationProfile>("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 100 }, station => TableCells.Text(station.Body)),
-        Added<StationProfile>("Allegiance", new TableColumn("Allegiance"), station => TableCells.Text(station.Allegiance)),
-        Added<StationProfile>("FactionState", new TableColumn("FactionState"), station => TableCells.Text(station.ControllingFactionState), "Faction state"),
-        Added<StationProfile>("Updated", new TableColumn("Updated"), station => station.UpdatedAt is { } at ? Mono(at.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), ThemeManager.WhiteKey) : TableCells.Missing()),
-        Added<StationProfile>("Pads", new TableColumn("Pads"), station => TableCells.Text(PadCountsText(station.Pads))),
-        Added<StationProfile>("Economies", new TableColumn("Economies", ColumnFit.Fill) { Min = 120 }, station => TableCells.List([.. station.Economies.Select(economy => economy.Name)])),
-        Added<StationProfile>("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, station => TableCells.List([.. station.Services.Select(SystemStationPage.ServiceLabel)])),
-        Added<StationProfile>("DockingAccess", new TableColumn("DockingAccess"), station => TableCells.Text(station.CarrierDockingAccess), "Docking access"),
-        Added<StationProfile>("Market", new TableColumn("Market"), station => TableCells.Flag(station.Market is { Commodities.Count: > 0 })),
-        Added<StationProfile>("Outfitting", new TableColumn("Outfitting"), station => TableCells.Flag(station.Outfitting is { Modules.Count: > 0 })),
-        Added<StationProfile>("Shipyard", new TableColumn("Shipyard"), station => TableCells.Flag(station.Shipyard is { Ships.Count: > 0 })),
+        Added("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 100 }, station => TableCells.Text(station.Body), SortColumn<StationProfile>.Text("Body", station => station.Body)),
+        Added("Allegiance", new TableColumn("Allegiance"), station => TableCells.Text(station.Allegiance), SortColumn<StationProfile>.Text("Allegiance", station => station.Allegiance)),
+        Added("FactionState", new TableColumn("FactionState"), station => TableCells.Text(station.ControllingFactionState), SortColumn<StationProfile>.Text("Faction state", station => station.ControllingFactionState)),
+        Added(
+            "Updated",
+            new TableColumn("Updated"),
+            station => station.UpdatedAt is { } at ? Mono(at.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), ThemeManager.WhiteKey) : TableCells.Missing(),
+            SortColumn<StationProfile>.Figure<DateTimeOffset>("Updated", station => station.UpdatedAt, SortDirection.Descending)),
+        Added(
+            "Pads",
+            new TableColumn("Pads"),
+            station => TableCells.Text(PadCountsText(station.Pads)),
+            SortColumn<StationProfile>.Figure<int>("Pads", station => station.Pads is { } pads ? pads.Small + pads.Medium + pads.Large : null, SortDirection.Descending)),
+        Added(
+            "Economies",
+            new TableColumn("Economies", ColumnFit.Fill) { Min = 120 },
+            station => TableCells.List([.. station.Economies.Select(economy => economy.Name)]),
+            SortColumn<StationProfile>.Figure<int>("Economies", station => station.Economies.Count, SortDirection.Descending)),
+        Added(
+            "Services",
+            new TableColumn("Services", ColumnFit.Fill) { Min = 140 },
+            station => TableCells.List([.. station.Services.Select(SystemStationPage.ServiceLabel)]),
+            SortColumn<StationProfile>.Figure<int>("Services", station => station.Services.Count, SortDirection.Descending)),
+        Added("DockingAccess", new TableColumn("DockingAccess"), station => TableCells.Text(station.CarrierDockingAccess), SortColumn<StationProfile>.Text("Docking access", station => station.CarrierDockingAccess)),
+        Added(
+            "Market",
+            new TableColumn("Market"),
+            station => TableCells.Flag(station.Market is { Commodities.Count: > 0 }),
+            SortColumn<StationProfile>.Figure<int>("Market", station => station.Market is { Commodities.Count: > 0 } ? 1 : 0, SortDirection.Descending)),
+        Added(
+            "Outfitting",
+            new TableColumn("Outfitting"),
+            station => TableCells.Flag(station.Outfitting is { Modules.Count: > 0 }),
+            SortColumn<StationProfile>.Figure<int>("Outfitting", station => station.Outfitting is { Modules.Count: > 0 } ? 1 : 0, SortDirection.Descending)),
+        Added(
+            "Shipyard",
+            new TableColumn("Shipyard"),
+            station => TableCells.Flag(station.Shipyard is { Ships.Count: > 0 }),
+            SortColumn<StationProfile>.Figure<int>("Shipyard", station => station.Shipyard is { Ships.Count: > 0 } ? 1 : 0, SortDirection.Descending)),
         new TableField<StationProfile>("More", new TableColumn("More", ColumnFit.Fixed) { Fixed = MoreWidth - StationSpacing }, MoreCell),
     ];
 
@@ -414,8 +442,8 @@ public sealed partial class StarSystemPage
         };
 
     /// <summary>A field the Commander can add; it is not shown until they do.</summary>
-    private static TableField<TRow> Added<TRow>(string key, TableColumn column, Func<TRow, Control> cell, string? label = null) =>
-        new(key, column, row => Centred(cell(row))) { Label = label ?? key, ByDefault = false };
+    private static TableField<TRow> Added<TRow>(string key, TableColumn column, Func<TRow, Control> cell, SortColumn<TRow> sort) =>
+        new(key, column, row => Centred(cell(row))) { Label = sort.Label, Sort = sort, ByDefault = false };
 
     private Control MoreCell(StationProfile station) =>
         OpenStation is not null && station.MarketId is not null

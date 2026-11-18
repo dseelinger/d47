@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Every labelled table column sorts, including the columns added with ADD A COLUMN, and a table keeps its sort when its page is left and opened again and when d47 restarts; the headset keeps its own. A third press still returns the table to its default order. Tables whose rows a search service sorts are unchanged.
+
 Changed: The hull picture controls on a ship page and the carrier page read SMALL, LARGE and FULL SCREEN in place of BESIDE, WIDE and the square or ZOOM button; FULL SCREEN is one text button on both the turnable hull and the still picture.
 
 Changed: The sidebar on Commander > Statistics shows the section names only; the figure count beside each name read as a career total.

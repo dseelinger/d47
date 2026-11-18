@@ -427,7 +427,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
         if (_table is null)
         {
-            _table = new ArrangedTable<object>(TableId, Fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: HeadName);
+            _table = new ArrangedTable<object>(TableId, Fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: HeadName, unsortedAllowed: true);
             _table.Changed += Draw;
             _table.Sorted += () => _ = RunAsync(_sortFields.Sorted(_posted!.Arguments, _table));
         }

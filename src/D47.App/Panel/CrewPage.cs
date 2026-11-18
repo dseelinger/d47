@@ -70,7 +70,6 @@ public sealed class CrewPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _table.StopArranging();
-        _table.Reset();
     }
 
     /// <summary>Redraws when the crew changes.</summary>
@@ -148,7 +147,11 @@ public sealed class CrewPage : UserControl
             ColumnHeadings[3],
             new TableColumn("PostedTo", ColumnFit.Fill),
             member => Cell(Posting(member), member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey)),
-        LedgerTables.Added<CrewMember>("HullLeft", new TableColumn("HullLeft"), member => TableCells.Flag(member.HullLeft), "Ship changed"),
+        LedgerTables.Added<CrewMember>(
+            "HullLeft",
+            new TableColumn("HullLeft"),
+            member => TableCells.Flag(member.HullLeft),
+            SortColumn<CrewMember>.Figure<int>("Ship changed", member => member.HullLeft ? 1 : 0, SortDirection.Descending)),
     ];
 
     private static Control NameCell(CrewMember member)

@@ -42,6 +42,9 @@ public sealed record SortColumn<TRow>
 
     public bool Sortable => Compare is not null;
 
+    /// <summary>The rows are sorted elsewhere (<see cref="Remote"/>), so the sort is not kept by the table.</summary>
+    public bool IsRemote { get; init; }
+
     internal Func<TRow, bool>? Present { get; }
 
     internal Comparison<TRow>? Compare { get; }
@@ -50,7 +53,7 @@ public sealed record SortColumn<TRow>
 
     /// <summary>A column whose rows are sorted elsewhere, such as by a service: it presses and shows its arrow, and compares nothing.</summary>
     public static SortColumn<TRow> Remote(string label, SortDirection first) =>
-        new(label, first, _ => true, (_, _) => 0);
+        new(label, first, _ => true, (_, _) => 0) { IsRemote = true };
 
     /// <summary>Sorts A–Z first, ignoring case; a null or blank value is missing. Equal keys compare by <paramref name="then"/>.</summary>
     public static SortColumn<TRow> Text(string label, Func<TRow, string?> key, Func<TRow, string?>? then = null) => new(

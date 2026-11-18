@@ -45,11 +45,11 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
 
     private const string Dash = "—";
 
-    /// <summary>The market table's columns; every one but Category sorts.</summary>
+    /// <summary>The market table's columns.</summary>
     public static readonly IReadOnlyList<SortColumn<MarketCommodity>> MarketHeads =
     [
         SortColumn<MarketCommodity>.Text("Commodity", commodity => commodity.Name),
-        SortColumn<MarketCommodity>.Plain("Category"),
+        SortColumn<MarketCommodity>.Text("Category", commodity => commodity.Category),
         SortColumn<MarketCommodity>.Figure("Buy", commodity => (long?)commodity.BuyPrice, SortDirection.Ascending),
         SortColumn<MarketCommodity>.Figure("Sell", commodity => (long?)commodity.SellPrice, SortDirection.Descending),
         SortColumn<MarketCommodity>.Figure("Supply", commodity => (long?)commodity.Supply, SortDirection.Descending),

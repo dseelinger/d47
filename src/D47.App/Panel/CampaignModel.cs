@@ -123,29 +123,29 @@ public static class CampaignModel
         .. campaign.Chronicle.Reverse().Select(entry => new ChronicleRow(entry, entry.Ticks.Count == 0 ? null : entry.Ticks.Max())),
     ];
 
-    /// <summary>The Fronts columns. Rank, Kind, System, Distance and Data age sort; Reason does not.</summary>
+    /// <summary>The Fronts columns.</summary>
     public static IReadOnlyList<SortColumn<FrontRow>> FrontHeads() =>
     [
         SortColumn<FrontRow>.Figure("Rank", row => (int?)row.Rank, SortDirection.Ascending),
         SortColumn<FrontRow>.Text("Kind", row => CampaignFronts.Describe(row.Front.Kind)),
         SortColumn<FrontRow>.Text("System", row => row.Front.System),
         SortColumn<FrontRow>.Figure("Distance", row => row.Distance, SortDirection.Ascending),
-        SortColumn<FrontRow>.Plain("Reason"),
+        SortColumn<FrontRow>.Text("Reason", row => row.Front.Reason),
         SortColumn<FrontRow>.Figure("Data age", row => row.Front.Updated, SortDirection.Descending),
         SortColumn<FrontRow>.Plain(string.Empty),
     ];
 
     public static readonly SortOrder FrontOrder = new(0, SortDirection.Ascending);
 
-    /// <summary>The Chronicle columns. Ended, Kind, System and Ticks sort; Outcome and Your work do not.</summary>
+    /// <summary>The Chronicle columns.</summary>
     public static IReadOnlyList<SortColumn<ChronicleRow>> ChronicleHeads() =>
     [
         SortColumn<ChronicleRow>.Figure("Ended", row => row.Ended, SortDirection.Descending),
         SortColumn<ChronicleRow>.Text("Kind", row => row.Entry.Kind),
         SortColumn<ChronicleRow>.Text("System", row => row.Entry.System) with { Second = "Opponent" },
-        SortColumn<ChronicleRow>.Plain("Outcome"),
+        SortColumn<ChronicleRow>.Text("Outcome", row => row.Entry.Outcome),
         SortColumn<ChronicleRow>.Figure("Ticks", row => (int?)row.Entry.Ticks.Count, SortDirection.Descending),
-        SortColumn<ChronicleRow>.Plain("Your work") with { Second = "While it ran" },
+        SortColumn<ChronicleRow>.Figure<int>("Your work", row => row.Entry.Work.Count > 0 ? row.Entry.Work.Count : null, SortDirection.Descending) with { Second = "While it ran" },
     ];
 
     public static readonly SortOrder ChronicleOrder = new(0, SortDirection.Descending);
@@ -306,16 +306,18 @@ public static class CampaignModel
                 ? $"After the {PageKit.Clock(at)} UTC tick"
                 : $"{PageKit.Clock(computed)} UTC";
 
-    /// <summary>The Systems columns. System, Distance, Influence and Lead sort; Your work (desktop only), State and Intent do not.</summary>
-    public static IReadOnlyList<SortColumn<CampaignSystemRow>> Heads(bool headset, bool ticked = true) =>
+    /// <summary>The Systems columns; <paramref name="workOn"/> counts the Commander's kinds of work in a system.</summary>
+    public static IReadOnlyList<SortColumn<CampaignSystemRow>> Heads(bool headset, bool ticked = true, Func<string, int>? workOn = null) =>
     [
         SortColumn<CampaignSystemRow>.Text("System", row => row.System) with { Second = headset ? null : "Controlled or not" },
         SortColumn<CampaignSystemRow>.Figure("Distance", row => row.Distance, SortDirection.Ascending),
         SortColumn<CampaignSystemRow>.Figure(headset ? "Infl." : "Influence", row => row.Influence, SortDirection.Descending),
         SortColumn<CampaignSystemRow>.Figure("Lead", row => row.Lead, SortDirection.Descending) with { Second = headset ? null : "Points" },
-        .. headset ? Array.Empty<SortColumn<CampaignSystemRow>>() : [SortColumn<CampaignSystemRow>.Plain("Your work") with { Second = WorkPeriod(ticked) }],
-        SortColumn<CampaignSystemRow>.Plain("State"),
-        SortColumn<CampaignSystemRow>.Plain("Intent"),
+        .. headset
+            ? Array.Empty<SortColumn<CampaignSystemRow>>()
+            : [SortColumn<CampaignSystemRow>.Figure<int>("Your work", row => workOn?.Invoke(row.System) is > 0 and var kinds ? kinds : null, SortDirection.Descending) with { Second = WorkPeriod(ticked) }],
+        SortColumn<CampaignSystemRow>.Text("State", row => row.State),
+        SortColumn<CampaignSystemRow>.Text("Intent", row => Label(row.Intent)),
     ];
 
     /// <summary>The order the rows come in, drawn as Influence ▼.</summary>

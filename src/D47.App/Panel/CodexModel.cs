@@ -581,7 +581,7 @@ public static class CodexModel
         SortColumn<CodexMissingRow>.Text("Category", row => row.Category, row => row.SubCategory) with { Second = "Then sub-category" },
         SortColumn<CodexMissingRow>.Text("Sub-category", row => row.Category, row => row.SubCategory) with { Second = "Within category" },
         SortColumn<CodexMissingRow>.Figure("Reported in", row => (long?)row.Systems, SortDirection.Descending) with { Second = "Systems" },
-        SortColumn<CodexMissingRow>.Plain("Status") with { Second = "Whole record" },
+        SortColumn<CodexMissingRow>.Figure<int>("Status", row => row.OnRecord ? 1 : 0, SortDirection.Ascending) with { Second = "Whole record" },
     ];
 
     /// <summary>The index of "Reported in" in <see cref="MissingHeads"/>, the column the default order follows.</summary>

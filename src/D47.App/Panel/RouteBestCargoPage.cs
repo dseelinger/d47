@@ -54,7 +54,7 @@ public sealed class RouteBestCargoPage : UserControl
     /// <summary>The table's columns; the picks arrive ordered by total.</summary>
     public static readonly IReadOnlyList<SortColumn<CargoPick>> Headings =
     [
-        SortColumn<CargoPick>.Plain("#"),
+        SortColumn<CargoPick>.Figure<long>("#", pick => pick.Total, SortDirection.Descending),
         SortColumn<CargoPick>.Text("Commodity", pick => pick.Commodity),
         SortColumn<CargoPick>.Text("Sell at", pick => pick.Station),
         SortColumn<CargoPick>.Figure("Profit / t", pick => (long?)pick.ProfitPerTonne, SortDirection.Descending),
@@ -268,7 +268,6 @@ public sealed class RouteBestCargoPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _table.StopArranging();
-        _table.Reset();
         _board.Posted += OnPosted;
     }
 

@@ -628,7 +628,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             SortFields.Clear();
 
-            var table = new ArrangedTable<object>(id, fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: headName);
+            var table = new ArrangedTable<object>(id, fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: headName, unsortedAllowed: true);
             table.Changed += Draw;
             table.Sorted += () => _ = RunAsync(SortFields.Sorted(Rerun(Posted), table));
             _arranged = table;

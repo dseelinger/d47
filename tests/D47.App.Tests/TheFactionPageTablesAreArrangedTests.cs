@@ -272,13 +272,14 @@ public sealed class TheFactionPageTablesAreArrangedTests
     }
 
     [AvaloniaFact]
-    public void NoConflictsHeaderSorts()
+    public void EveryConflictsHeaderSorts()
     {
         var table = Tables[1];
         var (panel, window) = Open(new ColumnArrangementMemory(Views()), false, table.Section);
 
-        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => button.Name is { } name && name.StartsWith(table.Head, StringComparison.Ordinal));
-        Assert.DoesNotContain(Texts(panel), text => text is not null && (text.EndsWith('▲') || text.EndsWith('▼')));
+        Assert.Equal(
+            5,
+            panel.GetVisualDescendants().OfType<Button>().Count(button => button.Name is { } name && name.StartsWith(table.Head, StringComparison.Ordinal)));
 
         window.Close();
     }

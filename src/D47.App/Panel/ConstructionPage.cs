@@ -75,7 +75,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         SortColumn<ConstructionNeeds>.Figure("In hold", need => (int?)need.InHold, SortDirection.Descending),
         SortColumn<ConstructionNeeds>.Figure("On carrier", need => need.OnCarrier, SortDirection.Descending),
         SortColumn<ConstructionNeeds>.Figure("To buy", need => (int?)need.ToBuy, SortDirection.Descending),
-        SortColumn<ConstructionNeeds>.Plain("Order"),
+        SortColumn<ConstructionNeeds>.Figure<int>("Order", need => need.OrderOpen ? 1 : 0, SortDirection.Descending),
     ];
 
     private readonly ArrangedTable<ConstructionNeeds> _needs;
@@ -337,7 +337,6 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     {
         base.OnAttachedToVisualTree(e);
         _needs.StopArranging();
-        _needs.Reset();
 
         if (_surface.Sourcing is { } board)
         {
@@ -932,12 +931,18 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         StarSystemPage.Headed(NeedHeadings[4], new TableColumn("ToBuy"), ToBuyCell, right: true),
         StarSystemPage.Headed(NeedHeadings[5], new TableColumn("Order"), OrderCell),
         LedgerTables.Added<ConstructionNeeds>(
-            "Required", new TableColumn("Required"), need => TableCells.Number(need.Resource.Required), "Required") with
+            "Required",
+            new TableColumn("Required"),
+            need => TableCells.Number(need.Resource.Required),
+            SortColumn<ConstructionNeeds>.Figure<int>("Required", need => need.Resource.Required, SortDirection.Descending)) with
         {
             Alignment = HorizontalAlignment.Right,
         },
         LedgerTables.Added<ConstructionNeeds>(
-            "Delivered", new TableColumn("Delivered"), need => TableCells.Number(need.Resource.Provided), "Delivered") with
+            "Delivered",
+            new TableColumn("Delivered"),
+            need => TableCells.Number(need.Resource.Provided),
+            SortColumn<ConstructionNeeds>.Figure<int>("Delivered", need => need.Resource.Provided, SortDirection.Descending)) with
         {
             Alignment = HorizontalAlignment.Right,
         },

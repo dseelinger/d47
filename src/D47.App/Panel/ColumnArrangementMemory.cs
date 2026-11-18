@@ -7,6 +7,9 @@ public sealed class ColumnArrangementMemory(ViewStateStore store, bool headset =
 {
     private ViewState? _cached;
 
+    /// <summary>The sorts of the same tables, stored beside the arrangements.</summary>
+    public ColumnSortMemory Sorts { get; } = new(store, headset);
+
     /// <summary>The arrangements are the headset's.</summary>
     public bool Headset => headset;
 

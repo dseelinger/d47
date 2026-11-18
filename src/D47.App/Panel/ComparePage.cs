@@ -111,7 +111,6 @@ public sealed class ComparePage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _head.StopArranging();
-        _head.Reset();
     }
 
     /// <summary>Filters the list by <see cref="Tonnes"/>[<paramref name="index"/>].</summary>

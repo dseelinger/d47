@@ -228,9 +228,9 @@ public class TablesAreBuiltFromOneListOfFieldsTests
         Field("Pick", null, _ => "o"),
         Field("Name", "Name", row => row.Name, SortColumn<Line>.Text("Name", row => row.Name)),
         Field("Size", "Size", row => row.Size.ToString(System.Globalization.CultureInfo.InvariantCulture), SortColumn<Line>.Figure("Size", row => (int?)row.Size, SortDirection.Descending)),
-        Field("Market", "Market", _ => "m") with
+        Field("Market", "Market", _ => "m", SortColumn<Line>.Text("Market", _ => "m")) with
         {
-            More = [Field("Gold", "Gold", _ => "g"), Field("Silver", "Silver", _ => "s")],
+            More = [Field("Gold", "Gold", _ => "g", SortColumn<Line>.Text("Gold", _ => "g")), Field("Silver", "Silver", _ => "s", SortColumn<Line>.Text("Silver", _ => "s"))],
         },
         Field("Go", null, _ => ">"),
     ];

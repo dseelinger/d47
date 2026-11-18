@@ -14,14 +14,14 @@ public static class FactionConflicts
 
     public const string NoneText = "No system of this faction is in a conflict.";
 
-    /// <summary>The Conflicts columns; the headings do not sort.</summary>
+    /// <summary>The Conflicts columns.</summary>
     public static IReadOnlyList<SortColumn<FactionConflict>> Heads { get; } =
     [
-        SortColumn<FactionConflict>.Plain("System"),
-        SortColumn<FactionConflict>.Plain("Conflict") with { Second = "Active or pending" },
-        SortColumn<FactionConflict>.Plain("Opponent"),
-        SortColumn<FactionConflict>.Plain("Days won") with { Second = "Ours – theirs" },
-        SortColumn<FactionConflict>.Plain("At stake"),
+        SortColumn<FactionConflict>.Text("System", conflict => conflict.System),
+        SortColumn<FactionConflict>.Text("Conflict", conflict => conflict.Type, conflict => conflict.Status) with { Second = "Active or pending" },
+        SortColumn<FactionConflict>.Text("Opponent", conflict => conflict.Opponent),
+        SortColumn<FactionConflict>.Figure<int>("Days won", conflict => conflict.Visited ? conflict.OursWon - conflict.TheirsWon : null, SortDirection.Descending) with { Second = "Ours – theirs" },
+        SortColumn<FactionConflict>.Text("At stake", conflict => conflict.OurStake),
     ];
 
 }

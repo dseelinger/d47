@@ -1,3 +1,4 @@
+using Avalonia.VisualTree;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -67,7 +68,7 @@ public class TheFleetSlotTableFitsItsColumnsTests
     {
         var (window, header, rows) = Draw(LoadoutPages.NewSlotTable(), Row(Empty, Beam), Row(Empty, Beam));
 
-        var label = header.Children.OfType<TextBlock>().Single(text => text.Text == "CURRENT");
+        var label = header.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Text == "CURRENT");
         var empty = rows[0].Children.OfType<TextBlock>().Single(text => text.Text == "empty");
 
         Assert.True(Width(header, 2) <= Math.Max(label.Bounds.Width, empty.Bounds.Width + 10) + 1);

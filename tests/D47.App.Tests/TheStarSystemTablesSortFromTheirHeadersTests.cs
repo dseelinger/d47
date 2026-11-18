@@ -141,7 +141,7 @@ public sealed class TheStarSystemTablesSortFromTheirHeadersTests
     }
 
     [AvaloniaFact]
-    public void OpeningThePageAgainShowsTheDefaultOrders()
+    public void OpeningThePageAgainKeepsTheChosenOrders()
     {
         var (panel, window, _) = TheSystemPageListsItsStationsTests.Shown();
         var byInfluence = FactionNames(panel);
@@ -158,10 +158,10 @@ public sealed class TheStarSystemTablesSortFromTheirHeadersTests
         Dispatcher.UIThread.RunJobs();
 
         TheSystemPageListsItsStationsTests.Section(panel, "Stations");
-        Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "ARRIVAL ▲");
+        Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "PAD ▼");
         TheSystemPageListsItsStationsTests.Section(panel, "Overview");
-        Assert.Equal(byInfluence, FactionNames(panel));
-        Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "INFLUENCE ▼");
+        Assert.Equal(byInfluence.OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase), FactionNames(panel));
+        Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "FACTION ▲");
 
         window.Close();
     }

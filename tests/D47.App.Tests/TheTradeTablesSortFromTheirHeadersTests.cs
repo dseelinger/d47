@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Best cargo and Construction needs sort from their column headers (#1116).</summary>
+/// <summary>Best cargo and Construction needs sort from their column headers (#1116); every column does (#2575).</summary>
 public sealed class TheTradeTablesSortFromTheirHeadersTests
 {
     [Fact]
@@ -25,13 +25,13 @@ public sealed class TheTradeTablesSortFromTheirHeadersTests
     }
 
     [Fact]
-    public void TheNumberColumnDoesNotSort()
+    public void TheNumberColumnSortsByTotalProfitHighestFirst()
     {
-        Assert.Null(ColumnSort.Next(RouteBestCargoPage.Headings, null, 0));
+        Assert.Equal(new SortOrder(0, SortDirection.Descending), ColumnSort.Next(RouteBestCargoPage.Headings, null, 0));
     }
 
     [Fact]
-    public void ToBuyListsTheLargestPurchaseFirstAndOrderDoesNotSort()
+    public void ToBuyListsTheLargestPurchaseFirstAndOrderListsTheOpenOrdersFirst()
     {
         static ConstructionNeeds Need(string name, int toBuy) =>
             new(new ConstructionResource(name, 0, 0), toBuy, 0, null, false, toBuy);
@@ -41,6 +41,6 @@ public sealed class TheTradeTablesSortFromTheirHeadersTests
         var sorted = ColumnSort.Sorted(needs, ConstructionPage.NeedHeadings, new SortOrder(4, SortDirection.Descending));
 
         Assert.Equal(["Water", "Steel", "Fruit"], sorted.Select(need => need.Resource.Name));
-        Assert.Null(ColumnSort.Next(ConstructionPage.NeedHeadings, null, 5));
+        Assert.Equal(new SortOrder(5, SortDirection.Descending), ColumnSort.Next(ConstructionPage.NeedHeadings, null, 5));
     }
 }

@@ -315,7 +315,10 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
                 _ => CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey),
                 right: true),
             LedgerTables.Added<CreditKindRow>(
-                "Events", new TableColumn("Events", ColumnFit.Fill) { Min = 160 }, row => TableCells.List(row.Events), "Journal events"),
+                "Events",
+                new TableColumn("Events", ColumnFit.Fill) { Min = 160 },
+                row => TableCells.List(row.Events),
+                SortColumn<CreditKindRow>.Figure<int>("Journal events", row => row.Events.Count, SortDirection.Descending)),
         ];
     }
 

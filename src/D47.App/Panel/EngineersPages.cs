@@ -456,7 +456,6 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         _table.StopArranging();
-        _table.Reset();
         base.OnAttachedToVisualTree(e);
     }
 
@@ -533,9 +532,21 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             StarSystemPage.Headed(heads[4], new TableColumn("Planned"), entry => PlannedCell(entry, Showing(entry)), right: true),
             StarSystemPage.Headed(heads[5], new TableColumn("Opens"), entry => OpensCell(entry, Showing(entry))),
             StarSystemPage.Headed(heads[6], new TableColumn("Distance"), entry => DistanceCell(entry, Showing(entry)), right: true),
-            LedgerTables.Added<EngineerEntry>("System", new TableColumn("System"), entry => CopyGlyph.LinkBeside(TableCells.Text(entry.Engineer.System), entry.Engineer.System, _copy), "System"),
-            LedgerTables.Added<EngineerEntry>("Station", new TableColumn("Station"), entry => TableCells.Text(entry.Engineer.Station), "Station"),
-            LedgerTables.Added<EngineerEntry>("ReferredBy", new TableColumn("ReferredBy", ColumnFit.Fill) { Min = 140 }, entry => TableCells.List(entry.Engineer.ReferredBy), "Referred by"),
+            LedgerTables.Added<EngineerEntry>(
+                "System",
+                new TableColumn("System"),
+                entry => CopyGlyph.LinkBeside(TableCells.Text(entry.Engineer.System), entry.Engineer.System, _copy),
+                SortColumn<EngineerEntry>.Text("System", entry => entry.Engineer.System)),
+            LedgerTables.Added<EngineerEntry>(
+                "Station",
+                new TableColumn("Station"),
+                entry => TableCells.Text(entry.Engineer.Station),
+                SortColumn<EngineerEntry>.Text("Station", entry => entry.Engineer.Station)),
+            LedgerTables.Added<EngineerEntry>(
+                "ReferredBy",
+                new TableColumn("ReferredBy", ColumnFit.Fill) { Min = 140 },
+                entry => TableCells.List(entry.Engineer.ReferredBy),
+                SortColumn<EngineerEntry>.Figure<int>("Referred by", entry => entry.Engineer.ReferredBy.Count, SortDirection.Descending)),
         ];
     }
 

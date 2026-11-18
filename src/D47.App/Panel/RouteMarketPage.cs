@@ -663,7 +663,7 @@ public sealed class RouteMarketPage : UserControl
         if (_table is null || _shape != shape)
         {
             var table = new ArrangedTable<CommodityOffer>(
-                TableId, Fields(posting), _arrangements, _arrangements?.Headset == true ? null : _columnWidths, 10, headName: HeadName);
+                TableId, Fields(posting), _arrangements, _arrangements?.Headset == true ? null : _columnWidths, 10, headName: HeadName, unsortedAllowed: true);
             table.Changed += DrawResults;
             table.Sorted += SortByHeader;
             _table = table;
@@ -810,7 +810,7 @@ public sealed class RouteMarketPage : UserControl
     }
 
     private static TableField<CommodityOffer> Added(string key, string label, Func<CommodityOffer, Control> cell, bool right = false) =>
-        LedgerTables.Added(key, new TableColumn(key), cell, label) with
+        LedgerTables.Added(key, new TableColumn(key), cell, SortColumn<CommodityOffer>.Plain(label)) with
         {
             Alignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
         };

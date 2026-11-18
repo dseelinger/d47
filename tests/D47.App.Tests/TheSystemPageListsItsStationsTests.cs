@@ -64,7 +64,7 @@ public sealed class TheSystemPageListsItsStationsTests
             SurfaceMining = surfaceMining,
         };
 
-    internal static (PanelView Panel, Window Window, Systems Systems) Shown(double width = 1280, double height = 1180, Func<long, int, SurfaceMiningSite?>? surfaceMining = null, IClipboard? clipboard = null)
+    internal static (PanelView Panel, Window Window, Systems Systems) Shown(double width = 1280, double height = 1180, Func<long, int, SurfaceMiningSite?>? surfaceMining = null, IClipboard? clipboard = null, ColumnArrangementMemory? arrangements = null)
     {
         var systems = new Systems(Ltt7786Profile());
         var panel = new PanelView { DataContext = new PanelViewModel() };
@@ -73,6 +73,11 @@ public sealed class TheSystemPageListsItsStationsTests
         if (clipboard is not null)
         {
             panel.EnableCopy(clipboard);
+        }
+
+        if (arrangements is not null)
+        {
+            panel.EnableColumnArrangements(arrangements);
         }
 
         panel.EnableStarSystem(Surface(systems, surfaceMining));

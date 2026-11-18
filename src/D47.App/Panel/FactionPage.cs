@@ -430,7 +430,6 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         {
             _report = null;
             StopArranging();
-            _systemColumns?.Reset();
             _find.Text = string.Empty;
             _section = 0;
             _sections.SelectedIndex = 0;
@@ -969,7 +968,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         rows.ScrollChanged += (_, _) => Follow();
     }
 
-    private static TableField<T> Added<T>(string key, TableColumn column, Func<T, Control> cell, string label) =>
+    private static TableField<T> Added<T>(string key, TableColumn column, Func<T, Control> cell, SortColumn<T> sort) =>
         new(key, column, row =>
         {
             var control = cell(row);
@@ -977,7 +976,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
             return control;
         })
-        { Label = label, ByDefault = false };
+        { Label = sort.Label, Sort = sort, ByDefault = false };
 
     private IReadOnlyList<TableField<FactionRow>> SystemFields()
     {
@@ -996,7 +995,11 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
                 Sized("Updated", 190, 132),
                 row => Updated(row, _drawnAt, FactionModel.IsOld(row, _drawnAt), row.OwnReading && UnchangedSinceTick(row.System)),
                 right: true),
-            Added<FactionRow>("InConflict", Sized("InConflict", 96, 96), row => TableCells.Flag(row.InConflict), "In conflict"),
+            Added(
+                "InConflict",
+                Sized("InConflict", 96, 96),
+                row => TableCells.Flag(row.InConflict),
+                SortColumn<FactionRow>.Figure<int>("In conflict", row => row.InConflict ? 1 : 0, SortDirection.Descending)),
         ];
     }
 

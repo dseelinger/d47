@@ -298,7 +298,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
         Press(page, "Sub-category");
         Assert.Equal(reversed, Names(page));
 
-        Assert.IsNotType<Button>(Head(page, "Status"));
+        Assert.IsType<Button>(Head(page, "Status"));
 
         window.Close();
     }
@@ -365,7 +365,7 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
     }
 
     [AvaloniaFact]
-    public void TheFiltersSurviveLeavingAndComingBackButTheSortResets()
+    public void TheFiltersAndTheSortSurviveLeavingAndComingBack()
     {
         var (window, page) = PageHost.Open(() => Discoveries(State(Lines), table: Wide));
 
@@ -380,8 +380,8 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
         Dispatch();
 
         Assert.True(Shows(Token(page, "Status"), "All"));
-        Assert.Equal(["Alpha tree", "Beta tree", "Delta vent", "Gamma tree", "Epsilon cloud"], Names(page));
-        Assert.True(Shows(Head(page, "Reportedin"), "Reported in ▼"));
+        Assert.Equal("Delta vent", Names(page)[0]);
+        Assert.True(Shows(Head(page, "Category"), "Category ▲"));
 
         window.Close();
     }

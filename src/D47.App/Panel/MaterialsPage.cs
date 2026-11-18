@@ -314,7 +314,6 @@ public sealed class MaterialsPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _needed.StopArranging();
-        _needed.Reset();
         _gap.Changed -= OnChanged;
         _gap.Changed += OnChanged;
         Refresh();
@@ -871,8 +870,16 @@ public sealed class MaterialsPage : UserControl
             new TableColumn("Short"),
             line => line.Short > 0 ? Mono(Count(line.Short), ThemeManager.AKey) : Mono(Met, ThemeManager.BlueKey),
             right: true),
-        LedgerTables.Added<GapBuildLine>("Grade", new TableColumn("Grade"), line => TableCells.Number(line.Material.Grade), "Grade") with { Alignment = HorizontalAlignment.Right },
-        LedgerTables.Added<GapBuildLine>("FoundAt", new TableColumn("FoundAt", ColumnFit.Fill) { Min = 140 }, line => TableCells.List(line.Material.Origins), "Found at"),
+        LedgerTables.Added<GapBuildLine>(
+            "Grade",
+            new TableColumn("Grade"),
+            line => TableCells.Number(line.Material.Grade),
+            SortColumn<GapBuildLine>.Figure<int>("Grade", line => line.Material.Grade, SortDirection.Descending)) with { Alignment = HorizontalAlignment.Right },
+        LedgerTables.Added<GapBuildLine>(
+            "FoundAt",
+            new TableColumn("FoundAt", ColumnFit.Fill) { Min = 140 },
+            line => TableCells.List(line.Material.Origins),
+            SortColumn<GapBuildLine>.Figure<int>("Found at", line => line.Material.Origins.Count, SortDirection.Descending)),
         LedgerTables.Control<GapBuildLine>(new TableColumn("Gauge", ColumnFit.Fixed) { Fixed = GaugeColumn }, GaugeCell),
     ];
 

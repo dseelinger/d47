@@ -496,7 +496,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             "Learned",
             new TableColumn("Learned"),
             phrase => Typeset.Mono(phrase.LearnedAt.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), TypeScale.Control, ThemeManager.WhiteKey),
-            "Learned"),
+            SortColumn<LearnedPhrase>.Figure<DateTimeOffset>("Learned", phrase => phrase.LearnedAt, SortDirection.Descending)),
         LedgerTables.Control<LearnedPhrase>(new TableColumn("Forget", ColumnFit.Fixed) { Fixed = 44 }, ForgetCell),
     ];
 

@@ -1032,26 +1032,35 @@ public static class LoadoutPages
 
     private static IReadOnlyList<TableField<SlotLine>> SlotFields() =>
     [
-        new("Slot", new TableColumn("Slot"), SlotCell) { Label = "Slot" },
+        new("Slot", new TableColumn("Slot"), SlotCell) { Label = "Slot", Sort = SortColumn<SlotLine>.Text("Slot", line => line.Row.Parts?.Slot) },
         new("Current", new TableColumn("Current", ColumnFit.Fill), line => Cell(line.Row.Parts!.Current, line.Row.Parts.Vacant, line.Row.Engineered, bold: true))
         {
             Label = "Current",
+            Sort = SortColumn<SlotLine>.Text("Current", line => line.Row.Parts?.Current.Module),
             More = [new TableField<SlotLine>("Mark", new TableColumn("Mark", ColumnFit.Fixed) { Fixed = 22 }, MarkCell)],
         },
-        new("Plan", new TableColumn("Plan", ColumnFit.Fill), line => Planned(line.Row.Parts!, line.Showing)) { Label = "Plan" },
+        new("Plan", new TableColumn("Plan", ColumnFit.Fill), line => Planned(line.Row.Parts!, line.Showing))
+        {
+            Label = "Plan",
+            Sort = SortColumn<SlotLine>.Text("Plan", line => line.Row.Parts?.Plan?.Module),
+        },
         new("Draw", new TableColumn("Draw", ColumnFit.Fixed) { Fixed = 60 }, line => DrawCell(line.Row.Parts!.Draw))
         {
             Label = "Draw",
-            Sort = SortColumn<SlotLine>.Plain("MW"),
+            Sort = SortColumn<SlotLine>.Figure<double>("MW", line => DrawAmount(line.Row.Parts?.Draw), SortDirection.Descending),
             Alignment = HorizontalAlignment.Right,
         },
         new("Size", new TableColumn("Size"), line => SizeCell(line.Row.Parts!.Size))
         {
             Label = "Size",
+            Sort = SortColumn<SlotLine>.Figure<int>("Size", line => line.Row.Parts?.Size, SortDirection.Descending),
             Alignment = HorizontalAlignment.Right,
             ByDefault = false,
         },
     ];
+
+    private static double? DrawAmount(LoadoutDraw? draw) =>
+        draw is not null && double.TryParse(Figure(draw.Reading), NumberStyles.Float, CultureInfo.InvariantCulture, out var megawatts) ? megawatts : null;
 
     private static Control SlotCell(SlotLine line)
     {
@@ -2412,7 +2421,7 @@ public sealed class ItemPage : LoadoutPage
         // screen rather than as thirty-odd names in journal order (remediation.md 12, item 1).
         var group = (string?)null;
 
-        foreach (var row in slots)
+        foreach (var row in SortedWithinGroups(slots))
         {
             if (row.Group is { Length: > 0 } heading && heading != group)
             {
@@ -2446,6 +2455,33 @@ public sealed class ItemPage : LoadoutPage
 
             table.Children.Add(control);
         }
+    }
+
+    /// <summary>The rows with each run of one group sorted by the slot table's sort; the groups keep their order.</summary>
+    private IReadOnlyList<LoadoutRow> SortedWithinGroups(IReadOnlyList<LoadoutRow> rows)
+    {
+        if (_slots.SortedBy is null)
+        {
+            return rows;
+        }
+
+        var sorted = new List<LoadoutRow>(rows.Count);
+
+        for (var start = 0; start < rows.Count;)
+        {
+            var end = start;
+
+            while (end < rows.Count && rows[end].Group == rows[start].Group)
+            {
+                end++;
+            }
+
+            var lines = rows.Skip(start).Take(end - start).Select(row => new LoadoutPages.SlotLine(row, false)).ToList();
+            sorted.AddRange(_slots.Sort(lines).Select(line => line.Row));
+            start = end;
+        }
+
+        return sorted;
     }
 
     private CancellationTokenSource? _plotting;

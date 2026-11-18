@@ -480,7 +480,7 @@ which tab was showing: the panel opens on the transcript, the way it always has.
 
 #### Tables {#tables}
 
-Every table works the same way. Pressing a column's header sorts the rows by it. On the desktop,
+Every table works the same way. Pressing a column's header sorts the rows by it, and the sort is kept between sessions, apart for the headset. On the desktop,
 dragging the boundary between two headers moves width between those two columns and keeps their
 proportion of the table between sessions; double-clicking it forgets both.
 

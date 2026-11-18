@@ -202,7 +202,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        ResetSorts();
+        CloseColumnBars();
         _history.Attach();
     }
 
@@ -370,7 +370,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             ResetOrbits();
             _stationFilter = new StationFilter { Query = _stationFilter.Query };
             ResetNearby();
-            ResetSorts();
+            CloseColumnBars();
         }
 
         _following = following;

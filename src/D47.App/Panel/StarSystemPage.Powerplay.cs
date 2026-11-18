@@ -295,17 +295,18 @@ public sealed partial class StarSystemPage
         Headed(NeighbourHeads[2], new TableColumn("State"), system => Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)),
         Headed(NeighbourHeads[3], new TableColumn("Power", ColumnFit.Fill) { Min = 100 }, system => Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)),
         Headed(NeighbourHeads[4], new TableColumn("Progress"), system => Influence(system.ControlProgress)),
-        Added<PowerplayNeighbour>("Powers", new TableColumn("Powers", ColumnFit.Fill) { Min = 140 }, system => TableCells.List(system.Powers)),
+        Added(
+            "Powers",
+            new TableColumn("Powers", ColumnFit.Fill) { Min = 140 },
+            system => TableCells.List(system.Powers),
+            SortColumn<PowerplayNeighbour>.Figure<int>("Powers", system => system.Powers.Count, SortDirection.Descending)),
     ];
 
-    private void ResetSorts()
+    private void CloseColumnBars()
     {
         _factionColumns?.StopArranging();
-        _factionColumns?.Reset();
         _stationColumns?.StopArranging();
-        _stationColumns?.Reset();
         _neighbourColumns?.StopArranging();
-        _neighbourColumns?.Reset();
     }
 
     internal StackPanel NeighbourTable(PowerplayNeighbourhood near)

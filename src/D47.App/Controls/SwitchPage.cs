@@ -69,16 +69,38 @@ public sealed class SwitchPage : DialogPage
     public const string PositionsTable = "Switch.Positions";
 
     /// <summary>The controls of one position's row, built once and placed by the fields the Commander has arranged.</summary>
-    private sealed record PositionRow(Control Mark, Control Button, Control Action, Control State, Control Page, Action<SwitchPosition?> Held);
+    private sealed record PositionRow(Control Mark, Control Button, Control Action, Control State, Control Page, Action<SwitchPosition?> Held, MutablePosition Source);
 
-    private static readonly IReadOnlyList<TableField<PositionRow>> PositionFields =
+    private IReadOnlyList<TableField<PositionRow>> PositionFields() =>
     [
         new("Mark", new TableColumn("Mark", ColumnFit.Fixed) { Fixed = 3 }, row => row.Mark),
-        new("Position", new TableColumn("Position"), row => row.Button) { Label = "Position" },
-        new("Action", new TableColumn("Action", ColumnFit.Fill) { Min = 120 }, row => row.Action) { Label = "Action" },
-        new("Means", new TableColumn("Means"), row => row.State) { Label = "Means" },
-        new("Page", new TableColumn("Page", ColumnFit.Fill) { Min = 120 }, row => row.Page) { Label = "Or opens a D47 page" },
+        new("Position", new TableColumn("Position"), row => row.Button)
+        {
+            Label = "Position",
+            Sort = SortColumn<PositionRow>.Figure<int>("Position", row => row.Source.Button, SortDirection.Ascending),
+        },
+        new("Action", new TableColumn("Action", ColumnFit.Fill) { Min = 120 }, row => row.Action)
+        {
+            Label = "Action",
+            Sort = SortColumn<PositionRow>.Text("Action", row => ActionWord(row.Source)),
+        },
+        new("Means", new TableColumn("Means"), row => row.State)
+        {
+            Label = "Means",
+            Sort = SortColumn<PositionRow>.Text("Means", row => row.Source.View?.ToString() ?? row.Source.State),
+        },
+        new("Page", new TableColumn("Page", ColumnFit.Fill) { Min = 120 }, row => row.Page)
+        {
+            Label = "Or opens a D47 page",
+            Sort = SortColumn<PositionRow>.Text("Or opens a D47 page", row => _pageWords.GetValueOrDefault(row.Source.Destination, row.Source.Destination)),
+        },
     ];
+
+    private static string? ActionWord(MutablePosition position) =>
+        position.Chord is not null ? ChordWord
+        : position.View is not null ? HeadsetWord
+        : (SwitchTargets.Find(position.Target)?.Name ?? FocusTargets.Find(position.Target)?.Name ?? PipTargets.Find(position.Target)?.Name)
+          ?? Assignable.FirstOrDefault(known => known.Id == position.Action).Name;
 
     /// <summary>Only the actions Elite reports the state of, by the name a list shows.</summary>
     private static readonly IReadOnlyList<(string Id, string Name)> Assignable =
@@ -127,7 +149,7 @@ public sealed class SwitchPage : DialogPage
         Panel.ColumnWidthMemory? columnWidths = null,
         Panel.ColumnArrangementMemory? columnArrangements = null)
     {
-        _positions = new ArrangedTable<PositionRow>(PositionsTable, PositionFields, columnArrangements, columnWidths, ColumnGap, headName: "SwitchHead");
+        _positions = new ArrangedTable<PositionRow>(PositionsTable, PositionFields(), columnArrangements, columnWidths, ColumnGap, headName: "SwitchHead");
         _positions.Changed += Rebuild;
         _settings = settings;
         _store = store;
@@ -518,9 +540,10 @@ public sealed class SwitchPage : DialogPage
         var positions = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0), Children = { _positions.Header() } };
         var holds = new List<Action<SwitchPosition?>>();
 
-        foreach (var position in mapping.Positions)
+        var rows = mapping.Positions.Select(position => BuildPosition(mapping, position)).ToList();
+
+        foreach (var built in _positions.Sort(rows))
         {
-            var built = BuildPosition(mapping, position);
             positions.Children.Add(_positions.Row(built));
             holds.Add(built.Held);
         }
@@ -871,7 +894,7 @@ public sealed class SwitchPage : DialogPage
 
         Held(null);
 
-        return new PositionRow(bar, buttonCell, action, stateCell, pageButton, Held);
+        return new PositionRow(bar, buttonCell, action, stateCell, pageButton, Held, position);
     }
 
     private static string PickerWord(MutableSwitch mapping, MutablePosition position) =>

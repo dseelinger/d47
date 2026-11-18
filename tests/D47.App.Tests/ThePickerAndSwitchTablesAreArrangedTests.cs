@@ -207,7 +207,7 @@ public class ThePickerAndSwitchTablesAreArrangedTests
     }
 
     [AvaloniaFact]
-    public void WithNothingStoredTheSwitchPositionsDrawTheirFiveColumnsAndNoHeaderSorts()
+    public void WithNothingStoredTheSwitchPositionsDrawTheirFiveColumnsAndEveryLabelledHeaderSorts()
     {
         var window = ShowSwitches(ViewState(), headset: false);
 
@@ -216,7 +216,7 @@ public class ThePickerAndSwitchTablesAreArrangedTests
         var heads = window.GetVisualDescendants().OfType<TableGrid>().Where(grid => grid.Layout.Id == SwitchPage.PositionsTable && grid.IsHeader).ToList();
 
         Assert.Equal(2, heads.Count);
-        Assert.All(heads, head => Assert.Empty(head.GetVisualDescendants().OfType<Button>()));
+        Assert.All(heads, head => Assert.Equal(4, head.GetVisualDescendants().OfType<Button>().Count()));
     }
 
     [AvaloniaTheory]

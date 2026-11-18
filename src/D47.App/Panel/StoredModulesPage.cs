@@ -168,7 +168,6 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     {
         base.OnAttachedToVisualTree(e);
         _table.StopArranging();
-        _table.Reset();
     }
 
     public bool Filters => Store is { IsKnown: true, Modules.Count: > 0 };

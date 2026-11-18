@@ -119,7 +119,7 @@ public static class SpendBreakdownModel
     [
         SortColumn<SpendPurposeShare>.Text("Purpose", NameOf, share => KindWord(share.Kind)),
         SortColumn<SpendPurposeShare>.Figure("Charges", share => (int?)share.Charges, SortDirection.Descending),
-        SortColumn<SpendPurposeShare>.Plain("Share"),
+        SortColumn<SpendPurposeShare>.Figure("Share", share => Priced(share) ? share.Dollars : (decimal?)null, SortDirection.Descending),
         SortColumn<SpendPurposeShare>.Figure("Cost", share => Priced(share) ? share.Dollars : (decimal?)null, SortDirection.Descending),
     ];
 
@@ -153,7 +153,7 @@ public static class SpendBreakdownModel
         SortColumn<SpendEntry>.Figure("Time", entry => (DateTimeOffset?)entry.At, SortDirection.Descending),
         SortColumn<SpendEntry>.Text("Purpose", entry => SpendPurposes.NameOf(entry.Purpose), StepWord) with { Second = "Step" },
         SortColumn<SpendEntry>.Text("Model", ModelText, ProviderLine) with { Second = "Provider" },
-        SortColumn<SpendEntry>.Plain("Used"),
+        SortColumn<SpendEntry>.Figure("Used", UsedAmount, SortDirection.Descending),
         SortColumn<SpendEntry>.Figure("Cost", entry => entry.Priced ? entry.Dollars : (decimal?)null, SortDirection.Descending),
     ];
 
@@ -180,6 +180,15 @@ public static class SpendBreakdownModel
     /// <summary>The provider under the model; null for a voice charge, which shows the provider alone.</summary>
     public static string? ProviderLine(SpendEntry entry) =>
         entry.Kind == SpendKind.Voice || string.IsNullOrWhiteSpace(entry.Model) ? null : ProviderName(entry.Kind, entry.ProviderId);
+
+    /// <summary>The figure <see cref="UsedText"/> reads: tokens for a model call, characters or seconds of audio otherwise.</summary>
+    private static double? UsedAmount(SpendEntry entry) => entry.Kind switch
+    {
+        SpendKind.Model => entry.InputTokens + (double)entry.OutputTokens,
+        SpendKind.Voice when entry.Characters == 0 && entry.AudioSeconds is { } seconds => seconds,
+        SpendKind.Voice => entry.Characters,
+        _ => entry.AudioSeconds ?? 0d,
+    };
 
     /// <summary>"48,210 in · 9,804 out" for a model call, "938 characters" for speech, "3.4 s of audio" for transcription.</summary>
     public static string UsedText(SpendEntry entry) => entry.Kind switch

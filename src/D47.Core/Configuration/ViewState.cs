@@ -213,6 +213,28 @@ public sealed record ViewState
         return this with { ColumnArrangements = next };
     }
 
+    /// <summary>The sort each table was left in, by arrangement id; a table with none is in its default order.</summary>
+    public IReadOnlyDictionary<string, StoredSort> ColumnSorts { get; init; } =
+        new Dictionary<string, StoredSort>(StringComparer.Ordinal);
+
+    /// <summary>Stores the sort of a table.</summary>
+    public ViewState WithSort(string id, StoredSort sort) =>
+        this with { ColumnSorts = new Dictionary<string, StoredSort>(ColumnSorts, StringComparer.Ordinal) { [id] = sort } };
+
+    /// <summary>Forgets the sort of a table, so it is in its default order.</summary>
+    public ViewState WithoutSort(string id)
+    {
+        if (!ColumnSorts.ContainsKey(id))
+        {
+            return this;
+        }
+
+        var next = new Dictionary<string, StoredSort>(ColumnSorts, StringComparer.Ordinal);
+        next.Remove(id);
+
+        return this with { ColumnSorts = next };
+    }
+
     private Dictionary<string, IReadOnlyDictionary<string, double>> Replacing(string table, Dictionary<string, double> columns)
     {
         var next = new Dictionary<string, IReadOnlyDictionary<string, double>>(ColumnShares, StringComparer.Ordinal);
@@ -432,6 +454,9 @@ public sealed record OverlayPlacement
 
     public double? Height { get; init; }
 }
+
+/// <summary>The field a table is sorted by and whether the sort runs largest or last first.</summary>
+public sealed record StoredSort(string Key, bool Descending);
 
 /// <summary>The third store, and the one that shrugs hardest.</summary>
 public sealed class ViewStateStore(AppPaths paths, IFileSystem files, ILogger<ViewStateStore> logger)

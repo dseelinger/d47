@@ -215,19 +215,20 @@ public class TheFleetComparesByAnyColumnTests
     }
 
     [AvaloniaFact]
-    public void TheSortLastsUntilThePageIsOpenedAgain()
+    public void TheSortLastsWhenThePageIsOpenedAgain()
     {
         var surface = Open(Journal);
 
         Press(surface.Panel, "Value");
         Assert.Contains("VALUE ▼", Text(Page(surface.Panel)));
+        var sorted = Order(Page(surface.Panel));
 
         Assert.True(surface.Panel.Nav.Back());
         Dispatcher.UIThread.RunJobs();
         Drill(surface.Panel);
 
-        Assert.Contains("JUMP ▼", Text(Page(surface.Panel)));
-        Assert.Equal(["FAR WALKER", "DEEP HOLD", "SPARE"], Order(Page(surface.Panel)));
+        Assert.Contains("VALUE ▼", Text(Page(surface.Panel)));
+        Assert.Equal(sorted, Order(Page(surface.Panel)));
 
         surface.Window.Close();
     }

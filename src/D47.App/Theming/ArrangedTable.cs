@@ -12,7 +12,8 @@ namespace D47.App.Theming;
 
 /// <summary>
 /// A table drawn from its fields in the order its stored arrangement names. Control columns stay at the edge
-/// they are declared at. The sort is kept by field key, so a moved column keeps it and a column left out drops it.
+/// they are declared at. The sort is kept by field key, so a moved column keeps it and a column left out drops it. It is also
+/// stored with the arrangement memory, apart for the headset, unless the rows are sorted elsewhere.
 /// Every header and row built between two calls of <see cref="Refresh"/> shares one <see cref="Layout"/>.
 /// While <see cref="Arranging"/>, a header press chooses a column instead of sorting, and every edit is stored as it is made.
 /// In the headset each column's minimum is its header's width, and the arranged columns that do not fit the table's width
@@ -29,6 +30,7 @@ public sealed class ArrangedTable<TRow>
     private readonly ColumnWidthMemory? _widths;
     private readonly double _spacing;
     private readonly string? _sortedByDefault;
+    private readonly bool _remembers;
     private IReadOnlyList<string>? _unstored;
     private (string Key, SortDirection Direction)? _sort;
     private IReadOnlyList<TableField<TRow>> _drawn = [];
@@ -44,7 +46,8 @@ public sealed class ArrangedTable<TRow>
         ColumnWidthMemory? widths,
         double spacing = 0,
         string? sortedByDefault = null,
-        string? headName = null)
+        string? headName = null,
+        bool unsortedAllowed = false)
     {
         Id = id;
         _headName = headName ?? id + "Head";
@@ -54,6 +57,18 @@ public sealed class ArrangedTable<TRow>
         _widths = widths;
         _spacing = spacing;
         _sortedByDefault = sortedByDefault;
+
+        if (!unsortedAllowed)
+        {
+            RequireSorts(id, fields);
+        }
+
+        _remembers = !unsortedAllowed && _arrangeable.All(field => field.Sort is { IsRemote: false });
+
+        if (_remembers)
+        {
+            _sort = _arrangement?.Sorts.Remembered(id);
+        }
 
         Refresh();
     }
@@ -202,19 +217,6 @@ public sealed class ArrangedTable<TRow>
         _head.Show(new SortOrder(column, direction));
 
         return true;
-    }
-
-    /// <summary>Returns the table to its default order.</summary>
-    public void Reset()
-    {
-        if (_sort is null)
-        {
-            return;
-        }
-
-        _sort = null;
-        _head.Show(null);
-        Changed?.Invoke();
     }
 
     /// <summary>The control name of the choose cell for the drawn field <paramref name="key"/>.</summary>
@@ -517,11 +519,31 @@ public sealed class ArrangedTable<TRow>
         head.Changed += () =>
         {
             _sort = head.Order is { } order ? (drawn[order.Column].Key, order.Direction) : null;
+            Remember();
             Sorted?.Invoke();
             Changed?.Invoke();
         };
 
         return head;
+    }
+
+    private void Remember()
+    {
+        if (_remembers)
+        {
+            _arrangement?.Sorts.Remember(Id, _sort);
+        }
+    }
+
+    private static void RequireSorts(string table, IReadOnlyList<TableField<TRow>> fields)
+    {
+        foreach (var field in fields.SelectMany(field => field.More.Prepend(field)))
+        {
+            if (field.Label is not null && field.Sort is not { Sortable: true })
+            {
+                throw new ArgumentException($"Table {table}: the labelled field {field.Key} has no sort that presses.", nameof(fields));
+            }
+        }
     }
 
     private int? SortedAt(string? key)

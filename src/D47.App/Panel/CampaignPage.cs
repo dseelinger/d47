@@ -1295,16 +1295,25 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             StarSystemPage.Headed(heads[3], new TableColumn("Distance") { Whole = true }, row => FrontMono(row, CampaignModel.DistanceText(row.Distance), ThemeManager.AKey), right: true),
             StarSystemPage.Headed(heads[4], Filled("Reason", 190, 140), row => Typeset.Prose(row.Front.Reason, TypeScale.ControlLarge, FrontInk(row), wrap: true)),
             StarSystemPage.Headed(heads[5], Fixed("Data age", 140, 120), AgeCell, right: true),
-            Added<CampaignModel.FrontRow>("Opponent", Filled("Opponent", 140, 120), row => TableCells.Text(row.Front.Opponent)),
-            Added<CampaignModel.FrontRow>("At stake", Filled("At stake", 140, 120), row => TableCells.Text(row.Front.Stake), "At stake"),
-            Added<CampaignModel.FrontRow>(
+            Added("Opponent", Filled("Opponent", 140, 120), row => TableCells.Text(row.Front.Opponent), SortColumn<CampaignModel.FrontRow>.Text("Opponent", row => row.Front.Opponent)),
+            Added("At stake", Filled("At stake", 140, 120), row => TableCells.Text(row.Front.Stake), SortColumn<CampaignModel.FrontRow>.Text("At stake", row => row.Front.Stake)),
+            Added(
                 "Lead",
                 Fixed("Lead", 84, 70),
-                row => row.Front.Lead is null ? TableCells.Missing() : Typeset.Mono(CampaignModel.LeadText(row.Front.Lead), TypeScale.Control, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right))
+                row => row.Front.Lead is null ? TableCells.Missing() : Typeset.Mono(CampaignModel.LeadText(row.Front.Lead), TypeScale.Control, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right),
+                SortColumn<CampaignModel.FrontRow>.Figure("Lead", row => row.Front.Lead, SortDirection.Descending))
                 with { Alignment = HorizontalAlignment.Right },
-            Added<CampaignModel.FrontRow>("Intent", Fixed("Intent", 130, 130), row => TableCells.Text(CampaignModel.Label(row.Front.Intent))),
-            Added<CampaignModel.FrontRow>("Controls", Fixed("Controls", 96, 96), row => TableCells.Flag(row.Front.Controls)),
-            Added<CampaignModel.FrontRow>("States", Filled("States", 140, 120), row => TableCells.List(row.Front.States)),
+            Added("Intent", Fixed("Intent", 130, 130), row => TableCells.Text(CampaignModel.Label(row.Front.Intent)), SortColumn<CampaignModel.FrontRow>.Text("Intent", row => CampaignModel.Label(row.Front.Intent))),
+            Added(
+                "Controls",
+                Fixed("Controls", 96, 96),
+                row => TableCells.Flag(row.Front.Controls),
+                SortColumn<CampaignModel.FrontRow>.Figure<int>("Controls", row => row.Front.Controls ? 1 : 0, SortDirection.Descending)),
+            Added(
+                "States",
+                Filled("States", 140, 120),
+                row => TableCells.List(row.Front.States),
+                SortColumn<CampaignModel.FrontRow>.Figure<int>("States", row => row.Front.States.Count, SortDirection.Descending)),
             new TableField<CampaignModel.FrontRow>("Take", Fixed("Take", 80, 96), row => Centred(TakeCell(row))),
         ];
     }
@@ -1644,8 +1653,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return cell;
     }
 
-    private static TableField<T> Added<T>(string key, TableColumn column, Func<T, Control> cell, string? label = null) =>
-        new(key, column, row => Centred(cell(row))) { Label = label ?? key, ByDefault = false };
+    private static TableField<T> Added<T>(string key, TableColumn column, Func<T, Control> cell, SortColumn<T> sort) =>
+        new(key, column, row => Centred(cell(row))) { Label = sort.Label, Sort = sort, ByDefault = false };
 
     private ArrangedTable<T> Arranged<T>(string id, IReadOnlyList<TableField<T>> fields, string headName, string sortedByDefault)
     {
@@ -1666,8 +1675,9 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
     private IReadOnlyList<TableField<CampaignSystemRow>> SystemFields(bool ticked)
     {
-        var desktop = CampaignModel.Heads(headset: false, ticked);
-        var heads = _headset ? CampaignModel.Heads(headset: true, ticked) : desktop;
+        Func<string, int> workOn = system => _systemWork.TryGetValue(system, out var held) ? held.Count : 0;
+        var desktop = CampaignModel.Heads(headset: false, ticked, workOn);
+        var heads = _headset ? CampaignModel.Heads(headset: true, ticked, workOn) : desktop;
         var state = _headset ? 4 : 5;
 
         return
@@ -1680,12 +1690,13 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
                 with { ByDefault = !_headset },
             StarSystemPage.Headed(heads[state], Fixed("State", 130, 110), row => Typeset.Prose(row.State, TypeScale.ControlLarge, row.Old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true)),
             StarSystemPage.Headed(heads[state + 1], Fixed("Intent", 300, 300), row => IntentStepper(row, _frontier!)),
-            Added<CampaignSystemRow>(
+            Added(
                 "Updated",
                 Fixed("Updated", 110, 110),
                 row => row.Updated is { } at
                     ? Typeset.Mono(at.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), TypeScale.Control, ThemeManager.WhiteKey)
-                    : TableCells.Missing()),
+                    : TableCells.Missing(),
+                SortColumn<CampaignSystemRow>.Figure<DateTimeOffset>("Updated", row => row.Updated, SortDirection.Descending)),
         ];
     }
 

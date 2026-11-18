@@ -93,7 +93,6 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _columns.Reset();
         Refresh();
 
         foreach (var (row, square) in _squares.Values)

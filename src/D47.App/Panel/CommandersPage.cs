@@ -67,7 +67,6 @@ public sealed class CommandersPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         _table.StopArranging();
-        _table.Reset();
     }
 
     /// <summary>Redraws when the list or the shown Commander has changed since the last draw.</summary>
