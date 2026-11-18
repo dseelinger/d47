@@ -80,8 +80,6 @@ public sealed class SignalSearchPage : GalaxySearchPage
     protected override string Noun => "Signals";
     protected override string NounOne => "Signal";
 
-    protected override string RunningText => "Searching signals";
-
     protected override string RefusedLabel => "SEARCH REFUSED";
 
     protected override string Origin => "INDEX AND YOUR SCANS";

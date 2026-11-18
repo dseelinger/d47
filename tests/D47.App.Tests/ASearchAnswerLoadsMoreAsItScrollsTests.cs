@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Headset;
 using D47.App.Panel;
 using D47.Core.Capabilities;
@@ -295,7 +296,8 @@ public sealed class ASearchAnswerLoadsMoreAsItScrollsTests
         Run(panel);
 
         Assert.Equal([null, "2"], PagesAsked(world));
-        Assert.Contains("ASKING THE GALAXY SEARCH", TextOf(panel));
+        Assert.Single(panel.GetVisualDescendants().OfType<WaitingState>(), mark => mark.IsEffectivelyVisible);
+        Assert.Contains(GalaxySearchPage.RetrievingText, TextOf(panel));
 
         world.Total = 3;
         world.Prefix = "Sorted";
@@ -308,7 +310,8 @@ public sealed class ASearchAnswerLoadsMoreAsItScrollsTests
         Assert.Equal(["Sorted 1", "Sorted 2", "Sorted 3"], Names(panel));
         Assert.Equal(3, RowList(panel).ItemCount);
         Assert.Contains("3 SYSTEMS", TextOf(panel));
-        Assert.DoesNotContain("ASKING THE GALAXY SEARCH", TextOf(panel));
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<WaitingState>(), mark => mark.IsEffectivelyVisible);
+        Assert.DoesNotContain(GalaxySearchPage.RetrievingText, TextOf(panel));
 
         window.Close();
     }

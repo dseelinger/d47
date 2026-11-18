@@ -273,9 +273,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The singular of <see cref="Noun"/>, upper case.</summary>
     protected abstract string NounOne { get; }
 
-    /// <summary>The label of the box drawn while a search runs.</summary>
-    protected virtual string RunningText => "Asking the galaxy search";
-
     /// <summary>The label of the notice drawn when the tool refused the form.</summary>
     protected virtual string RefusedLabel => "FILTER REFUSED";
 
@@ -1222,7 +1219,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             case GalaxySearchView.Running:
                 block.Children.Add(Head("Searching", Aside(_running!, null), refresh: null, save: false, disabled: true));
 
-                block.Children.Add(LoadingSlab());
+                block.Children.Add(LoadingMark());
                 break;
 
             case GalaxySearchView.Unavailable:
@@ -1305,7 +1302,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => _headset ? new StackPanel() : new VirtualizingStackPanel()),
             ItemTemplate = new FuncDataTemplate<object>((item, _) => item switch
             {
-                PageLoading => Spaced(LoadingSlab()),
+                PageLoading => Spaced(LoadingMark()),
                 PageFailed failed => Spaced(PageNotice(failed)),
                 null => null,
                 _ => Spaced(paged.Row(item)),
@@ -1323,13 +1320,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>A row with the gap the table keeps between rows.</summary>
     private static Border Spaced(Control row) => new() { Margin = new Thickness(0, 2, 0, Gaps.Tile - 2), Child = row };
 
-    /// <summary>The slab drawn while a search runs.</summary>
-    private Border LoadingSlab()
-    {
-        var asking = new Border { MinHeight = 50, Padding = new Thickness(14, 0), Child = Label(RunningText, width: null) };
-        ThemeInk.Bind(asking, Border.BackgroundProperty, ThemeManager.SlabKey);
-        return asking;
-    }
+    /// <summary>The sentence the wait mark says while a search runs.</summary>
+    public const string RetrievingText = "Retrieving results…";
+
+    /// <summary>The wait mark drawn while a search runs.</summary>
+    private static WaitingState LoadingMark() => new(WaitForm.Body, RetrievingText);
 
     /// <summary>The failure of a later page, with RETRY asking for that page again.</summary>
     private Notice PageNotice(PageFailed failed)

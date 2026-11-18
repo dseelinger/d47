@@ -712,14 +712,19 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         }
     }
 
-    /// <summary>"SYSTEMS READ 120 OF 590", or "ASKING THE GALAXY SEARCH" before the first page arrives.</summary>
-    public static string ProgressText(FactionProgress? progress) => progress is { } read
-        ? $"SYSTEMS READ {read.Read.ToString("N0", CultureInfo.InvariantCulture)} OF {read.Total.ToString("N0", CultureInfo.InvariantCulture)}"
-        : "ASKING THE GALAXY SEARCH";
+    /// <summary>"SYSTEMS READ 120 OF 590".</summary>
+    public static string ProgressText(FactionProgress read) =>
+        $"SYSTEMS READ {read.Read.ToString("N0", CultureInfo.InvariantCulture)} OF {read.Total.ToString("N0", CultureInfo.InvariantCulture)}";
 
-    private TextBlock ProgressLine()
+    /// <summary>The wait mark before the first page arrives, then the count of systems read.</summary>
+    private Control ProgressLine()
     {
-        var line = CreditsKit.Mono(ProgressText(_progress), 11, ThemeManager.GreyKey, right: false);
+        if (_progress is not { } read)
+        {
+            return new WaitingState(WaitForm.Line, GalaxySearchPage.RetrievingText) { Name = ProgressName };
+        }
+
+        var line = CreditsKit.Mono(ProgressText(read), 11, ThemeManager.GreyKey, right: false);
         line.Name = ProgressName;
 
         return line;

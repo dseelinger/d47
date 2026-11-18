@@ -45,12 +45,15 @@ public sealed class TheFactionPageDrawsEachStateTests
     {
         public List<(string Faction, bool Refresh, TaskCompletionSource<FactionReport> Answer)> Asked { get; } = [];
 
+        public List<IProgress<FactionProgress>> Reporters { get; } = [];
+
         public Task<FactionReport> Ask(string faction, bool refresh, IProgress<FactionProgress> progress, CancellationToken token)
         {
             var answer = new TaskCompletionSource<FactionReport>();
             lock (Asked)
             {
                 Asked.Add((faction, refresh, answer));
+                Reporters.Add(progress);
             }
 
             return answer.Task;
@@ -446,13 +449,29 @@ public sealed class TheFactionPageDrawsEachStateTests
     }
 
     [AvaloniaFact]
+    public void TheLoadingSlabShowsTheWaitMarkUntilAPageArrives()
+    {
+        var shown = Open(false, "Kestrel Reach Compact");
+        _ = shown.Fetches.Asking(0);
+
+        Assert.Equal(FactionView.Loading, shown.Page.View);
+        var mark = shown.Page.GetVisualDescendants().OfType<D47.App.Controls.WaitingState>().Single();
+        Assert.Equal(FactionPage.ProgressName, mark.Name);
+        Assert.Contains(GalaxySearchPage.RetrievingText, shown.Page.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+
+        shown.Fetches.Reporters[0].Report(new FactionProgress(120, 590));
+        Until(() => shown.Page.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "SYSTEMS READ 120 OF 590"));
+        Assert.Empty(shown.Page.GetVisualDescendants().OfType<D47.App.Controls.WaitingState>());
+        shown.Window.Close();
+    }
+
+    [AvaloniaFact]
     public void ThePageSummaryIsTheDesignsLine() =>
         Assert.Equal("Where a minor faction is present, and the state it is in.", FactionPage.SummaryText);
 
     [AvaloniaFact]
     public void TheProgressLineSaysHowManySystemsAreRead()
     {
-        Assert.Equal("ASKING THE GALAXY SEARCH", FactionPage.ProgressText(null));
         Assert.Equal("SYSTEMS READ 1,200 OF 6,000", FactionPage.ProgressText(new FactionProgress(1200, 6000)));
         _ = CultureInfo.InvariantCulture;
     }
