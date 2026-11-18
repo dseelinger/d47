@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: The hull picture controls on a ship page and the carrier page read SMALL, LARGE and FULL SCREEN in place of BESIDE, WIDE and the square or ZOOM button; FULL SCREEN is one text button on both the turnable hull and the still picture.
+
 Changed: The sidebar on Commander > Statistics shows the section names only; the figure count beside each name read as a career total.
 
 Changed: Organic data sales are counted as Exobiology, apart from Exploration, in Earnings by source on the This session page, in "how have I done this session", in the Credits page and `get_credit_ledger` (new `exobiology` kind), and in the Quartermaster remark. Chart's exploration remark counts cartographic and organic sales together and names the larger share.

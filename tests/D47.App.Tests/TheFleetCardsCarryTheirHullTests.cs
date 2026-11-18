@@ -264,7 +264,7 @@ public class TheFleetCardsCarryTheirHullTests
 
         Assert.Single(
             picture.GetVisualDescendants().OfType<Button>(),
-            button => button.Content as string == "ZOOM");
+            button => button.Content as string == "FULL SCREEN");
 
         // The segment is rebuilt with every size change, so it is looked up again before each press.
         void Press(string size)
@@ -276,20 +276,20 @@ public class TheFleetCardsCarryTheirHullTests
 
         // Pressed rather than assumed, because the size is kept for the session: a test that opened by
         // asserting the default would pass or fail on which test ran before it.
-        Press("WIDE");
-        Press("BESIDE");
+        Press("LARGE");
+        Press("SMALL");
 
         // Half the pane: two columns, the figures in one and the picture in the other.
         Assert.Equal(2, picture.ColumnDefinitions.Count);
 
-        Press("WIDE");
+        Press("LARGE");
 
         // The width of the pane: one column, the figures under it.
         Assert.Empty(picture.ColumnDefinitions);
         Assert.Equal(2, picture.RowDefinitions.Count);
         Assert.Single(Large(panel));
 
-        Press("BESIDE");
+        Press("SMALL");
 
         Assert.Equal(2, picture.ColumnDefinitions.Count);
     }

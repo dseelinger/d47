@@ -229,14 +229,14 @@ internal sealed class HullPicture : Grid
         }
     }
 
-    /// <summary>Beside or wide, and the way into the whole-window view.</summary>
+    /// <summary>Small or large, and the way into the full-screen view.</summary>
     private void Marks()
     {
         _marks.Children.Clear();
 
         var sizes = new Segment
         {
-            ItemsSource = ["BESIDE", "WIDE"],
+            ItemsSource = ["SMALL", "LARGE"],
             SelectedIndex = _size == HullPictureSize.Beside ? 0 : 1,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -246,7 +246,7 @@ internal sealed class HullPicture : Grid
             Resize(sizes.SelectedIndex == 0 ? HullPictureSize.Beside : HullPictureSize.Wide);
 
         var zoom = Glyphs.Quiet(
-            new Button { VerticalAlignment = VerticalAlignment.Center }, "ZOOM", "The whole window, with zoom");
+            new Button { VerticalAlignment = VerticalAlignment.Center }, "FULL SCREEN", "Full screen");
 
         zoom.Click += (_, _) => Expand();
 
@@ -284,7 +284,7 @@ internal sealed class HullPicture : Grid
 
         var sizes = new Segment
         {
-            ItemsSource = ["BESIDE", "WIDE"],
+            ItemsSource = ["SMALL", "LARGE"],
             SelectedIndex = _size == HullPictureSize.Beside ? 0 : 1,
             VerticalAlignment = VerticalAlignment.Center,
         };
@@ -293,13 +293,14 @@ internal sealed class HullPicture : Grid
         sizes.SelectionChanged += (_, _) =>
             Resize(sizes.SelectedIndex == 0 ? HullPictureSize.Beside : HullPictureSize.Wide);
 
-        var whole = HullMarks.Glyph("□", "Whole window");
+        var whole = Glyphs.Quiet(
+            new Button { VerticalAlignment = VerticalAlignment.Center }, "FULL SCREEN", "Full screen");
         whole.Click += (_, _) => Expand();
 
         var (label, level) = HullMarks.Light(pose);
         level.Width = 200;
 
-        // Two groups, so the size marks drop under the light marks where Beside leaves too little width.
+        // Two groups, so the size marks drop under the light marks where Small leaves too little width.
         var strip = new WrapPanel
         {
             ItemSpacing = 24,

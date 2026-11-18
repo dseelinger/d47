@@ -155,9 +155,8 @@ public class AHullTurnsOnItsOwnPageTests
 
         Assert.Single(picture.GetVisualDescendants().OfType<HullViewer>());
         Assert.DoesNotContain(picture.GetVisualDescendants().OfType<Image>(), image => image.Source is Bitmap);
-        Assert.DoesNotContain(picture.GetVisualDescendants().OfType<Button>(), button => button.Content as string == "ZOOM");
         Named(picture, "Reset the view");
-        Named(picture, "Whole window");
+        Named(picture, "Full screen");
         Assert.Contains(picture.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == HullMarks.Hints);
         Assert.Contains(picture.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "LIGHT");
 
@@ -366,7 +365,7 @@ public class AHullTurnsOnItsOwnPageTests
         viewer.Focus();
         Key(viewer, Avalonia.Input.Key.Right);
 
-        Named(panel, "Whole window").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Named(panel, "Full screen").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Frame();
 
         var full = window.GetVisualDescendants().OfType<HullViewerFull>().Single();

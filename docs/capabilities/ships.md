@@ -356,12 +356,12 @@ turntable, and nothing is fetched — even for a hull whose files are already in
 files themselves stay on disk; the setting only stops them being shown. Offline behaves the same
 way without the setting: nothing new arrives, and the log says why.
 
-**Three sizes, above the picture.** Beside is where it opens: on a pane at least 1000 pixels wide, a
+**Three sizes, above the picture.** Small is where it opens: on a pane at least 1000 pixels wide, a
 column 400 pixels wide sits beside the top of the page, with the picture and, under it, the hull's
-figures, and To buy, the plan and the slot table run the full width below it; on a narrower pane the picture takes half the width with the figures beside it. Wide is at most
-900 pixels wide, with the figures under the picture. The third is the whole window. The size you last chose is the size the next ship opens at.
+figures, and To buy, the plan and the slot table run the full width below it; on a narrower pane the picture takes half the width with the figures beside it. Large is at most
+900 pixels wide, with the figures under the picture. The third is Full screen. The size you last chose is the size the next ship opens at.
 
-**The whole window is a picture you can get into.** The wheel zooms where you are pointing,
+**Full screen is a picture you can get into.** The wheel zooms where you are pointing,
 dragging moves it, a double click fits it again, and Escape puts it back. It stops at one image
 pixel to one screen pixel — on a 4K monitor that is the whole ship, and on a 1080p monitor the
 canopy fills the screen. Clicking the picture does the same thing.

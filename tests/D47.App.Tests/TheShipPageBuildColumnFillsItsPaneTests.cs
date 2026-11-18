@@ -136,7 +136,7 @@ public class TheShipPageBuildColumnFillsItsPaneTests
 
         try
         {
-            Press(panel, "WIDE");
+            Press(panel, "LARGE");
 
             var picture = panel.GetVisualDescendants().OfType<HullPicture>().Single();
 
@@ -145,7 +145,7 @@ public class TheShipPageBuildColumnFillsItsPaneTests
         }
         finally
         {
-            Press(panel, "BESIDE");
+            Press(panel, "SMALL");
         }
 
         window.Close();
