@@ -216,7 +216,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         var headset = host.Headset;
         var note = new CampaignNote();
 
-        _campaignBuild = _ => _campaign = new CampaignPage(sources, host.Prompts, headset, host.ColumnWidths, host.Copy, note);
+        _campaignBuild = _ => _campaign = new CampaignPage(sources, host.Prompts, headset, host.ColumnWidths, host.Copy, note, host.ColumnArrangements);
 
         host.Furnish(
             PanelTab.Commander,

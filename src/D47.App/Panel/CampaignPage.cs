@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -75,80 +76,20 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     /// <summary>The name of the TAKE tile on a front's row.</summary>
     public static string TakeName(Front front) => $"CampaignTake.{front.Kind}.{front.System}";
 
-    private static readonly TableColumn[] DesktopColumns =
-    [
-        new("System", ColumnFit.Fill) { Min = 180 },
-        new("Distance") { Whole = true },
-        new("Influence", ColumnFit.Fixed) { Fixed = 84 },
-        new("Lead", ColumnFit.Fixed) { Fixed = 84 },
-        new("Your work", ColumnFit.Fixed) { Fixed = 190 },
-        new("State", ColumnFit.Fixed) { Fixed = 130 },
-        new("Intent", ColumnFit.Fixed) { Fixed = 300 },
-    ];
-
-    private static readonly TableColumn[] HeadsetColumns =
-    [
-        new("System", ColumnFit.Fill) { Min = 120 },
-        new("Distance") { Whole = true },
-        new("Influence", ColumnFit.Fixed) { Fixed = 70 },
-        new("Lead", ColumnFit.Fixed) { Fixed = 70 },
-        new("State", ColumnFit.Fixed) { Fixed = 110 },
-        new("Intent", ColumnFit.Fixed) { Fixed = 300 },
-    ];
-
     private const double ProseWidth = 900;
-
-    private static readonly TableColumn[] FrontColumns =
-    [
-        new("Rank", ColumnFit.Fixed) { Fixed = 48 },
-        new("Kind", ColumnFit.Fixed) { Fixed = 110 },
-        new("System", ColumnFit.Fill) { Min = 150 },
-        new("Distance") { Whole = true },
-        new("Reason", ColumnFit.Fill) { Min = 190 },
-        new("Data age", ColumnFit.Fixed) { Fixed = 140 },
-        new("Take", ColumnFit.Fixed) { Fixed = 80 },
-    ];
-
-    private static readonly TableColumn[] HeadsetFrontColumns =
-    [
-        new("Rank", ColumnFit.Fixed) { Fixed = 44 },
-        new("Kind", ColumnFit.Fixed) { Fixed = 120 },
-        new("System", ColumnFit.Fill) { Min = 120 },
-        new("Distance") { Whole = true },
-        new("Reason", ColumnFit.Fill) { Min = 140 },
-        new("Data age", ColumnFit.Fixed) { Fixed = 120 },
-        new("Take", ColumnFit.Fixed) { Fixed = 96 },
-    ];
-
-    private static readonly TableColumn[] ChronicleColumns =
-    [
-        new("Ended", ColumnFit.Fixed) { Fixed = 76 },
-        new("Kind", ColumnFit.Fixed) { Fixed = 110 },
-        new("System", ColumnFit.Fixed) { Fixed = 150 },
-        new("Outcome", ColumnFit.Fill) { Min = 200 },
-        new("Ticks", ColumnFit.Fixed) { Fixed = 56 },
-        new("Your work", ColumnFit.Fixed) { Fixed = 190 },
-    ];
-
-    private static readonly TableColumn[] HeadsetChronicleColumns =
-    [
-        new("Ended", ColumnFit.Fixed) { Fixed = 70 },
-        new("Kind", ColumnFit.Fixed) { Fixed = 100 },
-        new("System", ColumnFit.Fixed) { Fixed = 140 },
-        new("Outcome", ColumnFit.Fill) { Min = 120 },
-        new("Ticks", ColumnFit.Fixed) { Fixed = 50 },
-        new("Your work", ColumnFit.Fixed) { Fixed = 180 },
-    ];
 
     private readonly CampaignSources _sources;
     private readonly PanelPrompts? _prompts;
     private readonly bool _headset;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly Func<string, Task<bool>>? _copy;
-    private SortHeader<CampaignSystemRow> _head;
+    private readonly ColumnArrangementMemory? _arrangements;
     private readonly BgsWorkSection _work;
-    private readonly SortHeader<CampaignModel.FrontRow> _frontHead;
-    private readonly SortHeader<CampaignModel.ChronicleRow> _chronicleHead;
+    private ArrangedTable<CampaignSystemRow>? _systemColumns;
+    private ArrangedTable<CampaignModel.FrontRow>? _frontColumns;
+    private ArrangedTable<CampaignModel.ChronicleRow>? _chronicleColumns;
+    private string? _hubSystem;
+    private string? _drawnHere;
     private readonly StackPanel _body = new() { Spacing = 20 };
     private readonly ScrollViewer _scroll;
     private readonly Segment _segment;
@@ -213,7 +154,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         bool headset = false,
         ColumnWidthMemory? columnWidths = null,
         Func<string, Task<bool>>? copy = null,
-        CampaignNote? note = null)
+        CampaignNote? note = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _sources = sources;
         _note = note ?? new CampaignNote();
@@ -221,14 +163,9 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         _headset = headset;
         _columnWidths = columnWidths;
         _copy = headset ? null : copy;
-        _head = new SortHeader<CampaignSystemRow>(HeadName, CampaignModel.Heads(headset), CampaignModel.DefaultOrder);
-        _head.Changed += FillSection;
-        _work = new BgsWorkSection(headset, columnWidths, _copy);
-        _work.Head.Changed += FillSection;
-        _frontHead = new SortHeader<CampaignModel.FrontRow>(FrontHeadName, CampaignModel.FrontHeads(), CampaignModel.FrontOrder);
-        _frontHead.Changed += FillSection;
-        _chronicleHead = new SortHeader<CampaignModel.ChronicleRow>(ChronicleHeadName, CampaignModel.ChronicleHeads(), CampaignModel.ChronicleOrder);
-        _chronicleHead.Changed += FillSection;
+        _arrangements = columnArrangements;
+        _work = new BgsWorkSection(headset, columnWidths, _copy, columnArrangements);
+        _work.Changed += FillSection;
 
         _segment = new Segment
         {
@@ -240,6 +177,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         };
         _segment.SelectionChanged += (_, _) =>
         {
+            StopArranging();
             _section = _segment.SelectedIndex;
             _page = 0;
             FillSection();
@@ -369,7 +307,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             ? held
             : null;
 
-    /// <summary>Rebuilds the Systems header when the tick time becomes known or unknown, keeping the sort chosen.</summary>
+    /// <summary>Rebuilds the Systems table when the tick time becomes known or unknown, keeping the sort chosen.</summary>
     private void UseHead(bool ticked)
     {
         if (ticked == _headTicked)
@@ -378,11 +316,26 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         }
 
         _headTicked = ticked;
-        var order = _head.Order;
 
-        _head = new SortHeader<CampaignSystemRow>(HeadName, CampaignModel.Heads(_headset, ticked), CampaignModel.DefaultOrder);
-        _head.Show(order);
-        _head.Changed += FillSection;
+        if (_systemColumns is not { } old)
+        {
+            return;
+        }
+
+        _systemColumns = null;
+
+        if (old.SortedBy is { } sort)
+        {
+            SystemColumns.ShowSort(sort.Key, sort.Direction);
+        }
+    }
+
+    private void StopArranging()
+    {
+        _systemColumns?.StopArranging();
+        _frontColumns?.StopArranging();
+        _chronicleColumns?.StopArranging();
+        _work.StopArranging();
     }
 
     /// <summary>
@@ -1014,19 +967,28 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         }
 
         var here = _sources.State()?.Location.StarSystem;
-        var sorted = _head.Sort(CampaignModel.Matching(_rows, _query));
-        var order = _head.Order ?? _head.Default ?? CampaignModel.DefaultOrder;
-        var hub = CampaignModel.Hub(sorted, CampaignModel.Heads(headset: false)[order.Column].Label, order.Direction, _headset);
+        var columns = SystemColumns;
+        columns.Refresh();
+
+        var sorted = columns.Sort(CampaignModel.Matching(_rows, _query));
+        var (label, direction) = columns.SortedBy is { } sort
+            ? (sort.Key, sort.Direction)
+            : (CampaignModel.Heads(headset: false)[CampaignModel.DefaultOrder.Column].Label, CampaignModel.DefaultOrder.Direction);
+        var hub = CampaignModel.Hub(sorted, label, direction, _headset);
+
+        _drawnHere = here;
+        _hubSystem = hub.System;
 
         panel.Children.Add(legend);
         panel.Children.Add(HubBlock(hub, here));
 
-        if (_headset)
+        if (_headset && !ShowsWork(columns))
         {
             panel.Children.Add(Typeset.Prose(CampaignModel.WorkUnderNames(_faction!, _sources.Tick()), TypeScale.Description, ThemeManager.GreyKey, wrap: true));
         }
 
-        panel.Children.Add(Table(sorted, hub.System, _now, here, _frontier!));
+        panel.Children.Add(ArrangerAbove(columns));
+        panel.Children.Add(Table(sorted, columns));
 
         if (!_headset)
         {
@@ -1081,17 +1043,16 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return block;
     }
 
-    private Control Table(IReadOnlyList<CampaignSystemRow> sorted, string? hub, DateTimeOffset now, string? here, string frontier)
+    private Control Table(IReadOnlyList<CampaignSystemRow> sorted, ArrangedTable<CampaignSystemRow> columns)
     {
-        var layout = new TableLayout(TableId, _headset ? HeadsetColumns : DesktopColumns, _headset ? null : _columnWidths, _headset ? 14 : 16);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        table.Children.Add(CreditsKit.HeaderRow(_head, layout, i => i is 1 or 2 or 3 || (!_headset && i == 4) ? HorizontalAlignment.Right : HorizontalAlignment.Left));
+        table.Children.Add(HeadOf(columns, new Thickness(15, 0, 12, 0)));
 
         if (sorted.Count == 0)
         {
             table.Children.Add(Grey(CampaignModel.NoSystemText));
-            return table;
+            return Sideways(columns, table);
         }
 
         IReadOnlyList<CampaignSystemRow> shown = sorted;
@@ -1106,7 +1067,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         foreach (var row in shown)
         {
-            table.Children.Add(RowView(row, layout, now, here, frontier, hub is not null && string.Equals(row.System, hub, StringComparison.OrdinalIgnoreCase)));
+            table.Children.Add(RowView(row, columns));
             rank++;
 
             if (rank == CampaignHub.Span && (!_headset || _page == 0) && sorted.Count > CampaignHub.Span)
@@ -1120,7 +1081,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             table.Children.Add(Pager(sorted.Count));
         }
 
-        return table;
+        return Sideways(columns, table);
     }
 
     private static DockPanel FirstTenRule()
@@ -1140,12 +1101,30 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return line;
     }
 
-    private Border RowView(CampaignSystemRow row, TableLayout layout, DateTimeOffset now, string? here, string frontier, bool hub)
+    private static Border RowView(CampaignSystemRow row, ArrangedTable<CampaignSystemRow> columns)
     {
-        var grid = layout.Row([]);
-        var ink = row.Old ? ThemeManager.GreyKey : ThemeManager.WhiteKey;
-        var figures = row.Old ? ThemeManager.GreyKey : ThemeManager.AKey;
-        var current = string.Equals(row.System, here, StringComparison.OrdinalIgnoreCase);
+        var border = new Border
+        {
+            MinHeight = 50,
+            Padding = new Thickness(12, 4, 12, 4),
+            BorderThickness = new Thickness(3, 0, 0, 0),
+            Child = columns.Row(row),
+        };
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
+        ThemeInk.Bind(border, Border.BorderBrushProperty, ThemeManager.AKey);
+
+        return border;
+    }
+
+    private static bool ShowsWork(ArrangedTable<CampaignSystemRow> columns) => columns.Shown.Any(field => field.Key == YourWorkKey);
+
+    private bool IsHub(CampaignSystemRow row) =>
+        _hubSystem is not null && string.Equals(row.System, _hubSystem, StringComparison.OrdinalIgnoreCase);
+
+    private Control SystemCell(CampaignSystemRow row)
+    {
+        var current = string.Equals(row.System, _drawnHere, StringComparison.OrdinalIgnoreCase);
+        var hub = IsHub(row);
 
         var name = Typeset.Chrome(
             row.System,
@@ -1154,34 +1133,39 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             weight: FontWeight.Medium,
             trimming: TextTrimming.CharacterEllipsis);
 
-        Control system;
-
-        if (_headset)
+        if (!_headset)
         {
-            system = name;
-            var under = _systemWork.TryGetValue(row.System, out var held) ? WorkStack(held, left: true) : null;
-
-            if (hub)
-            {
-                var word = Typeset.Chrome(CampaignModel.HubMark, TypeScale.MetaSmall, ThemeManager.WhiteKey, weight: FontWeight.SemiBold, tracking: TypeScale.MetaSmall * Fonts.ChromeTracking);
-                word.VerticalAlignment = VerticalAlignment.Center;
-                word.Margin = new Thickness(8, 0, 0, 0);
-                DockPanel.SetDock(word, Dock.Right);
-                system = new DockPanel { Children = { word, name } };
-            }
-
-            if (under is not null)
-            {
-                system = new StackPanel { Spacing = 2, Children = { system, under } };
-            }
-        }
-        else
-        {
-            system = new StackPanel { Spacing = 2, Children = { CopyGlyph.LinkBeside(name, row.System, _copy), ControlLine(row, now, hub) } };
+            return new StackPanel { Spacing = 2, Children = { CopyGlyph.LinkBeside(name, row.System, _copy), ControlLine(row, _now, hub) } };
         }
 
-        var lead = Typeset.Mono(CampaignModel.LeadText(row.Lead), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right);
-        Control leadCell = row.Frozen
+        Control system = name;
+        var under = !ShowsWork(SystemColumns) && _systemWork.TryGetValue(row.System, out var held) ? WorkStack(held, left: true) : null;
+
+        if (hub)
+        {
+            var word = Typeset.Chrome(CampaignModel.HubMark, TypeScale.MetaSmall, ThemeManager.WhiteKey, weight: FontWeight.SemiBold, tracking: TypeScale.MetaSmall * Fonts.ChromeTracking);
+            word.VerticalAlignment = VerticalAlignment.Center;
+            word.Margin = new Thickness(8, 0, 0, 0);
+            DockPanel.SetDock(word, Dock.Right);
+            system = new DockPanel { Children = { word, name } };
+        }
+
+        if (under is not null)
+        {
+            system = new StackPanel { Spacing = 2, Children = { system, under } };
+        }
+
+        return system;
+    }
+
+    private static Control FigureCell(string text, CampaignSystemRow row) =>
+        Typeset.Mono(text, TypeScale.ControlLarge, row.Old ? ThemeManager.GreyKey : ThemeManager.AKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right);
+
+    private static Control LeadCell(CampaignSystemRow row)
+    {
+        var lead = FigureCell(CampaignModel.LeadText(row.Lead), row);
+
+        return row.Frozen
             ? new StackPanel
             {
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -1189,33 +1173,6 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
                 Children = { lead, Typeset.Prose("frozen", TypeScale.Meta, ThemeManager.GreyKey, horizontal: HorizontalAlignment.Right) },
             }
             : lead;
-
-        CreditsKit.Place(grid, 0, system);
-        CreditsKit.Place(grid, 1, Typeset.Mono(CampaignModel.DistanceText(row.Distance), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
-        CreditsKit.Place(grid, 2, Typeset.Mono(CampaignModel.InfluenceText(row.Influence), TypeScale.ControlLarge, figures, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
-        CreditsKit.Place(grid, 3, leadCell);
-        var next = 4;
-
-        if (!_headset)
-        {
-            var held = _systemWork.TryGetValue(row.System, out var work) ? work : [];
-            CreditsKit.Place(grid, next++, WorkStack(held, left: false));
-        }
-
-        CreditsKit.Place(grid, next++, Typeset.Prose(row.State, TypeScale.ControlLarge, ink, wrap: true));
-        CreditsKit.Place(grid, next, IntentStepper(row, frontier));
-
-        var border = new Border
-        {
-            MinHeight = 50,
-            Padding = new Thickness(12, 4, 12, 4),
-            BorderThickness = new Thickness(3, 0, 0, 0),
-            Child = grid,
-        };
-        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
-        ThemeInk.Bind(border, Border.BorderBrushProperty, ThemeManager.AKey);
-
-        return border;
     }
 
     /// <summary>The work lines of one system: right aligned in the column, left aligned under the name on the headset. Grey <c>none</c> without any.</summary>
@@ -1284,11 +1241,13 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var matching = string.IsNullOrWhiteSpace(_query)
             ? rows
             : [.. rows.Where(row => row.Front.System.Contains(_query.Trim(), StringComparison.OrdinalIgnoreCase))];
-        var sorted = _frontHead.Sort(matching);
-        var layout = new TableLayout(FrontsTableId, _headset ? HeadsetFrontColumns : FrontColumns, _headset ? null : _columnWidths, _headset ? 14 : 16);
+        var columns = FrontColumns;
+        columns.Refresh();
+
+        var sorted = columns.Sort(matching);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        table.Children.Add(CreditsKit.HeaderRow(_frontHead, layout, i => i is 0 or 3 or 5 ? HorizontalAlignment.Right : HorizontalAlignment.Left));
+        table.Children.Add(HeadOf(columns, new Thickness(12, 0)));
 
         if (sorted.Count == 0)
         {
@@ -1305,7 +1264,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         foreach (var row in shown)
         {
-            table.Children.Add(FrontRowView(row, layout));
+            table.Children.Add(RowBorder(columns.Row(row)));
         }
 
         if (_headset && sorted.Count > FactionModel.PageSize)
@@ -1313,7 +1272,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             table.Children.Add(Pager(sorted.Count));
         }
 
-        panel.Children.Add(table);
+        panel.Children.Add(ArrangerAbove(columns));
+        panel.Children.Add(Sideways(columns, table));
 
         if (!_headset)
         {
@@ -1323,20 +1283,54 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return panel;
     }
 
-    private Border FrontRowView(CampaignModel.FrontRow row, TableLayout layout)
+    private IReadOnlyList<TableField<CampaignModel.FrontRow>> FrontFields()
+    {
+        var heads = CampaignModel.FrontHeads();
+
+        return
+        [
+            StarSystemPage.Headed(heads[0], Fixed("Rank", 48, 44), row => FrontMono(row, row.Rank.ToString(CultureInfo.InvariantCulture), ThemeManager.WhiteKey), right: true),
+            StarSystemPage.Headed(heads[1], Fixed("Kind", 110, 120), row => Typeset.Prose(CampaignFronts.Describe(row.Front.Kind), TypeScale.ControlLarge, FrontInk(row), wrap: true)),
+            StarSystemPage.Headed(heads[2], Filled("System", 150, 120), FrontSystemCell),
+            StarSystemPage.Headed(heads[3], new TableColumn("Distance") { Whole = true }, row => FrontMono(row, CampaignModel.DistanceText(row.Distance), ThemeManager.AKey), right: true),
+            StarSystemPage.Headed(heads[4], Filled("Reason", 190, 140), row => Typeset.Prose(row.Front.Reason, TypeScale.ControlLarge, FrontInk(row), wrap: true)),
+            StarSystemPage.Headed(heads[5], Fixed("Data age", 140, 120), AgeCell, right: true),
+            Added<CampaignModel.FrontRow>("Opponent", Filled("Opponent", 140, 120), row => TableCells.Text(row.Front.Opponent)),
+            Added<CampaignModel.FrontRow>("At stake", Filled("At stake", 140, 120), row => TableCells.Text(row.Front.Stake), "At stake"),
+            Added<CampaignModel.FrontRow>(
+                "Lead",
+                Fixed("Lead", 84, 70),
+                row => row.Front.Lead is null ? TableCells.Missing() : Typeset.Mono(CampaignModel.LeadText(row.Front.Lead), TypeScale.Control, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right))
+                with { Alignment = HorizontalAlignment.Right },
+            Added<CampaignModel.FrontRow>("Intent", Fixed("Intent", 130, 130), row => TableCells.Text(CampaignModel.Label(row.Front.Intent))),
+            Added<CampaignModel.FrontRow>("Controls", Fixed("Controls", 96, 96), row => TableCells.Flag(row.Front.Controls)),
+            Added<CampaignModel.FrontRow>("States", Filled("States", 140, 120), row => TableCells.List(row.Front.States)),
+            new TableField<CampaignModel.FrontRow>("Take", Fixed("Take", 80, 96), row => Centred(TakeCell(row))),
+        ];
+    }
+
+    private string FrontInk(CampaignModel.FrontRow row) => CampaignModel.IsOld(row.Front, _now) ? ThemeManager.GreyKey : ThemeManager.WhiteKey;
+
+    private Control FrontMono(CampaignModel.FrontRow row, string text, string ink) =>
+        Typeset.Mono(text, TypeScale.ControlLarge, CampaignModel.IsOld(row.Front, _now) ? ThemeManager.GreyKey : ink, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right);
+
+    private Control FrontSystemCell(CampaignModel.FrontRow row)
     {
         var front = row.Front;
-        var old = CampaignModel.IsOld(front, _now);
-        var grid = layout.Row([]);
-        var ink = old ? ThemeManager.GreyKey : ThemeManager.WhiteKey;
-
         var name = Typeset.Chrome(
             front.System,
             TypeScale.ControlLarge,
-            old ? ThemeManager.GreyKey : row.Chosen ? ThemeManager.CyanKey : ThemeManager.AKey,
+            CampaignModel.IsOld(front, _now) ? ThemeManager.GreyKey : row.Chosen ? ThemeManager.CyanKey : ThemeManager.AKey,
             weight: FontWeight.Medium,
             wrap: true);
 
+        return CopyGlyph.LinkBeside(name, front.System, _copy);
+    }
+
+    private Control AgeCell(CampaignModel.FrontRow row)
+    {
+        var front = row.Front;
+        var old = CampaignModel.IsOld(front, _now);
         var age = new StackPanel { Spacing = 2, HorizontalAlignment = HorizontalAlignment.Right };
         age.Children.Add(Typeset.Prose(
             CampaignModel.AgeText(front, _now, SinceTickOf(front)),
@@ -1351,34 +1345,27 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             age.Children.Add(Typeset.Chrome(CampaignModel.OldLabel, TypeScale.MetaSmall, ThemeManager.WarnKey, horizontal: HorizontalAlignment.Right));
         }
 
-        Control action;
+        return age;
+    }
 
+    private Control TakeCell(CampaignModel.FrontRow row)
+    {
         if (row.Chosen)
         {
-            action = Typeset.Chrome("CHOSEN", TypeScale.Small, ThemeManager.CyanKey, horizontal: HorizontalAlignment.Right, tracking: TypeScale.Small * Fonts.ChromeTracking);
-        }
-        else
-        {
-            var take = new Button { Name = TakeName(front), Content = "TAKE", MinHeight = TypeScale.MinimumTarget, HorizontalAlignment = HorizontalAlignment.Right };
-            take.Click += (_, _) => _ = Call(
-                CampaignCapability.TakeFrontTool,
-                new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal)
-                {
-                    ["system"] = front.System,
-                    ["kind"] = front.Kind.ToString(),
-                }));
-            action = take;
+            return Typeset.Chrome("CHOSEN", TypeScale.Small, ThemeManager.CyanKey, horizontal: HorizontalAlignment.Right, tracking: TypeScale.Small * Fonts.ChromeTracking);
         }
 
-        CreditsKit.Place(grid, 0, Typeset.Mono(row.Rank.ToString(System.Globalization.CultureInfo.InvariantCulture), TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
-        CreditsKit.Place(grid, 1, Typeset.Prose(CampaignFronts.Describe(front.Kind), TypeScale.ControlLarge, ink, wrap: true));
-        CreditsKit.Place(grid, 2, CopyGlyph.LinkBeside(name, front.System, _copy));
-        CreditsKit.Place(grid, 3, Typeset.Mono(CampaignModel.DistanceText(row.Distance), TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.AKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
-        CreditsKit.Place(grid, 4, Typeset.Prose(front.Reason, TypeScale.ControlLarge, old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true));
-        CreditsKit.Place(grid, 5, age);
-        CreditsKit.Place(grid, 6, action);
+        var front = row.Front;
+        var take = new Button { Name = TakeName(front), Content = "TAKE", MinHeight = TypeScale.MinimumTarget, HorizontalAlignment = HorizontalAlignment.Right };
+        take.Click += (_, _) => _ = Call(
+            CampaignCapability.TakeFrontTool,
+            new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["system"] = front.System,
+                ["kind"] = front.Kind.ToString(),
+            }));
 
-        return RowBorder(grid);
+        return take;
     }
 
     private Control ChronicleSection()
@@ -1395,11 +1382,13 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var matching = string.IsNullOrWhiteSpace(_query)
             ? rows
             : [.. rows.Where(row => row.Entry.System.Contains(_query.Trim(), StringComparison.OrdinalIgnoreCase))];
-        var sorted = _chronicleHead.Sort(matching);
-        var layout = new TableLayout(ChronicleTableId, _headset ? HeadsetChronicleColumns : ChronicleColumns, _headset ? null : _columnWidths, _headset ? 14 : 16);
+        var columns = ChronicleColumns;
+        columns.Refresh();
+
+        var sorted = columns.Sort(matching);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        table.Children.Add(CreditsKit.HeaderRow(_chronicleHead, layout, i => i is 4 or 5 ? HorizontalAlignment.Right : HorizontalAlignment.Left));
+        table.Children.Add(HeadOf(columns, new Thickness(12, 0)));
 
         if (sorted.Count == 0)
         {
@@ -1416,7 +1405,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         foreach (var row in shown)
         {
-            table.Children.Add(ChronicleRowView(row, layout));
+            table.Children.Add(ChronicleRowView(row, columns));
         }
 
         if (_headset && sorted.Count > FactionModel.PageSize)
@@ -1424,7 +1413,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             table.Children.Add(Pager(sorted.Count));
         }
 
-        panel.Children.Add(table);
+        panel.Children.Add(ArrangerAbove(columns));
+        panel.Children.Add(Sideways(columns, table));
 
         if (!_headset)
         {
@@ -1434,12 +1424,30 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return panel;
     }
 
-    private Border ChronicleRowView(CampaignModel.ChronicleRow row, TableLayout layout)
+    private IReadOnlyList<TableField<CampaignModel.ChronicleRow>> ChronicleFields()
+    {
+        var heads = CampaignModel.ChronicleHeads();
+
+        return
+        [
+            StarSystemPage.Headed(heads[0], Fixed("Ended", 76, 70), row => Centred(Typeset.Mono(CampaignModel.EndedText(row.Ended), TypeScale.ControlLarge, ThemeManager.WhiteKey))),
+            StarSystemPage.Headed(heads[1], Fixed("Kind", 110, 100), row => Typeset.Prose(row.Entry.Kind, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
+            StarSystemPage.Headed(heads[2], Fixed("System", 150, 140), ChronicleSystemCell),
+            StarSystemPage.Headed(heads[3], Filled("Outcome", 200, 120), row => Typeset.Prose(row.Entry.Outcome, TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true)),
+            StarSystemPage.Headed(
+                heads[4],
+                Fixed("Ticks", 56, 50),
+                row => Typeset.Mono(row.Entry.Ticks.Count.ToString(CultureInfo.InvariantCulture), TypeScale.ControlLarge, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right),
+                right: true),
+            StarSystemPage.Headed(heads[5], Fixed("Your work", 190, 180), ChronicleWorkCell, right: true),
+        ];
+    }
+
+    private Control ChronicleSystemCell(CampaignModel.ChronicleRow row)
     {
         var entry = row.Entry;
-        var grid = layout.Row([]);
 
-        var system = new StackPanel
+        return new StackPanel
         {
             Spacing = 2,
             Children =
@@ -1448,27 +1456,30 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
                 Typeset.Prose(entry.Opponent ?? "No opponent", TypeScale.Meta, ThemeManager.GreyKey, trimming: TextTrimming.CharacterEllipsis),
             },
         };
+    }
 
+    private static Control ChronicleWorkCell(CampaignModel.ChronicleRow row)
+    {
         var work = new StackPanel { Spacing = 2, HorizontalAlignment = HorizontalAlignment.Right };
 
-        foreach (var line in CampaignModel.WorkLines(entry))
+        foreach (var line in CampaignModel.WorkLines(row.Entry))
         {
             work.Children.Add(Typeset.Mono(line, TypeScale.Meta, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
         }
 
-        CreditsKit.Place(grid, 0, Typeset.Mono(CampaignModel.EndedText(row.Ended), TypeScale.ControlLarge, ThemeManager.WhiteKey));
-        CreditsKit.Place(grid, 1, Typeset.Prose(entry.Kind, TypeScale.ControlLarge, ThemeManager.WhiteKey));
-        CreditsKit.Place(grid, 2, system);
-        CreditsKit.Place(grid, 3, Typeset.Prose(entry.Outcome, TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true));
-        CreditsKit.Place(grid, 4, Typeset.Mono(entry.Ticks.Count.ToString(System.Globalization.CultureInfo.InvariantCulture), TypeScale.ControlLarge, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right));
-        CreditsKit.Place(grid, 5, work);
+        return work;
+    }
 
-        if (string.IsNullOrWhiteSpace(entry.Legend))
+    private static Border ChronicleRowView(CampaignModel.ChronicleRow row, ArrangedTable<CampaignModel.ChronicleRow> columns)
+    {
+        var grid = columns.Row(row);
+
+        if (string.IsNullOrWhiteSpace(row.Entry.Legend))
         {
             return RowBorder(grid);
         }
 
-        var legend = Typeset.Prose(entry.Legend, TypeScale.Description, ThemeManager.GreyKey, wrap: true);
+        var legend = Typeset.Prose(row.Entry.Legend, TypeScale.Description, ThemeManager.GreyKey, wrap: true);
 
         legend.Margin = new Thickness(0, 4, 0, 4);
 
@@ -1617,6 +1628,98 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         return grid;
     }
+
+    private const string YourWorkKey = "Your work";
+
+    private TableColumn Fixed(string key, double desktop, double headset) =>
+        new(key, ColumnFit.Fixed) { Fixed = _headset ? headset : desktop };
+
+    private TableColumn Filled(string key, double desktop, double headset) =>
+        new(key, ColumnFit.Fill) { Min = _headset ? headset : desktop };
+
+    private static Control Centred(Control cell)
+    {
+        cell.VerticalAlignment = VerticalAlignment.Center;
+
+        return cell;
+    }
+
+    private static TableField<T> Added<T>(string key, TableColumn column, Func<T, Control> cell, string? label = null) =>
+        new(key, column, row => Centred(cell(row))) { Label = label ?? key, ByDefault = false };
+
+    private ArrangedTable<T> Arranged<T>(string id, IReadOnlyList<TableField<T>> fields, string headName, string sortedByDefault)
+    {
+        var table = new ArrangedTable<T>(id, fields, _arrangements, _headset ? null : _columnWidths, _headset ? 14 : 16, sortedByDefault, headName);
+        table.Changed += FillSection;
+
+        return table;
+    }
+
+    private ArrangedTable<CampaignSystemRow> SystemColumns =>
+        _systemColumns ??= Arranged(TableId, SystemFields(_headTicked), HeadName, CampaignModel.Heads(headset: false)[CampaignModel.DefaultOrder.Column].Label);
+
+    private ArrangedTable<CampaignModel.FrontRow> FrontColumns =>
+        _frontColumns ??= Arranged(FrontsTableId, FrontFields(), FrontHeadName, CampaignModel.FrontHeads()[CampaignModel.FrontOrder.Column].Label);
+
+    private ArrangedTable<CampaignModel.ChronicleRow> ChronicleColumns =>
+        _chronicleColumns ??= Arranged(ChronicleTableId, ChronicleFields(), ChronicleHeadName, CampaignModel.ChronicleHeads()[CampaignModel.ChronicleOrder.Column].Label);
+
+    private IReadOnlyList<TableField<CampaignSystemRow>> SystemFields(bool ticked)
+    {
+        var desktop = CampaignModel.Heads(headset: false, ticked);
+        var heads = _headset ? CampaignModel.Heads(headset: true, ticked) : desktop;
+        var state = _headset ? 4 : 5;
+
+        return
+        [
+            StarSystemPage.Headed(heads[0], Filled("System", 180, 120), SystemCell),
+            StarSystemPage.Headed(heads[1], new TableColumn("Distance") { Whole = true }, row => FigureCell(CampaignModel.DistanceText(row.Distance), row), right: true),
+            StarSystemPage.Headed(heads[2], Fixed("Influence", 84, 70), row => FigureCell(CampaignModel.InfluenceText(row.Influence), row), right: true),
+            StarSystemPage.Headed(heads[3], Fixed("Lead", 84, 70), LeadCell, right: true),
+            StarSystemPage.Headed(desktop[4], Fixed(YourWorkKey, 190, 180), row => WorkStack(_systemWork.TryGetValue(row.System, out var held) ? held : [], left: false), right: true)
+                with { ByDefault = !_headset },
+            StarSystemPage.Headed(heads[state], Fixed("State", 130, 110), row => Typeset.Prose(row.State, TypeScale.ControlLarge, row.Old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true)),
+            StarSystemPage.Headed(heads[state + 1], Fixed("Intent", 300, 300), row => IntentStepper(row, _frontier!)),
+            Added<CampaignSystemRow>(
+                "Updated",
+                Fixed("Updated", 110, 110),
+                row => row.Updated is { } at
+                    ? Typeset.Mono(at.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), TypeScale.Control, ThemeManager.WhiteKey)
+                    : TableCells.Missing()),
+        ];
+    }
+
+    /// <summary>The COLUMNS tile on a line of its own, then the bar while it is open.</summary>
+    private static StackPanel ArrangerAbove<T>(ArrangedTable<T> columns)
+    {
+        var top = new StackPanel();
+
+        if (ColumnArranger.Line(columns) is { } tile)
+        {
+            top.Children.Add(tile);
+        }
+
+        if (ColumnArranger.Bar(columns) is { } bar)
+        {
+            top.Children.Add(bar);
+        }
+
+        return top;
+    }
+
+    /// <summary>The header row; in the headset it is inset to exactly the width of the rows it heads, so both report one width to the table.</summary>
+    private TableGrid HeadOf<T>(ArrangedTable<T> columns, Thickness rowInset)
+    {
+        var header = columns.Header();
+        header.MinHeight = TypeScale.MinimumTarget;
+        header.Margin = _headset ? rowInset : new Thickness(14, 0);
+
+        return header;
+    }
+
+    /// <summary>On the desktop a table wider than the page scrolls sideways, header and rows together.</summary>
+    private Control Sideways<T>(ArrangedTable<T> columns, Control table) =>
+        _headset ? table : new TableScroll(columns.Layout, table);
 
     private static long Hour(DateTimeOffset now) => now.ToUnixTimeSeconds() / 3600;
 

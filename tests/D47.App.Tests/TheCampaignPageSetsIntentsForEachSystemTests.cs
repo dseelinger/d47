@@ -481,6 +481,7 @@ public class TheCampaignPageSetsIntentsForEachSystemTests
         fixture.Store.SetIntent(Frontier, "Ngolo", SystemIntent.Grow);
 
         Assert.True(page.Tick());
+        Dispatcher.UIThread.RunJobs();
         Assert.Equal("Grow", StepperOf(page, "Ngolo").SelectedItem);
 
         window.Close();

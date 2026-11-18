@@ -54,7 +54,6 @@ public static class BgsWorkTable
     public const string TableId = "BgsWork";
 
     internal const string Dash = "—";
-    internal const int InfluenceColumn = 5;
 
     /// <summary>The columns, each sortable from its heading; Influence is drawn only with a tick time.</summary>
     public static readonly IReadOnlyList<SortColumn<BgsWorkRow>> Heads =
@@ -223,33 +222,91 @@ public sealed record BgsWorkInput(
 /// <summary>The WORK section of Commander › BGS: the work grouped around the BGS faction, one table per group.</summary>
 public sealed class BgsWorkSection
 {
+    private const string HeadName = "BgsWorkHead";
+
     private readonly bool _headset;
     private readonly ColumnWidthMemory? _columnWidths;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly ColumnArrangementMemory? _arrangements;
+    private ArrangedTable<BgsWorkRow>? _columns;
+    private bool _withInfluence;
+    private string? _current;
 
-    public BgsWorkSection(bool headset, ColumnWidthMemory? columnWidths, Func<string, Task<bool>>? copy)
+    public BgsWorkSection(bool headset, ColumnWidthMemory? columnWidths, Func<string, Task<bool>>? copy, ColumnArrangementMemory? arrangements = null)
     {
         _headset = headset;
         _columnWidths = columnWidths;
         _copy = copy;
-        Head = new SortHeader<BgsWorkRow>("BgsWorkHead", BgsWorkTable.Heads);
+        _arrangements = arrangements;
     }
 
-    public SortHeader<BgsWorkRow> Head { get; }
+    /// <summary>Raised when the sort or the arrangement changes.</summary>
+    public event Action? Changed;
 
     /// <summary>The rows matching the search, across every group; the pager counts these.</summary>
     public int Count { get; private set; }
+
+    /// <summary>Closes the COLUMNS bar if it is open.</summary>
+    public void StopArranging() => _columns?.StopArranging();
+
+    /// <summary>The table, drawn with Influence only while a tick time is known; a sort chosen is kept across the change.</summary>
+    private ArrangedTable<BgsWorkRow> Columns(bool withInfluence)
+    {
+        if (_columns is not null && _withInfluence == withInfluence)
+        {
+            return _columns;
+        }
+
+        var old = _columns;
+        _withInfluence = withInfluence;
+        _columns = new ArrangedTable<BgsWorkRow>(
+            BgsWorkTable.TableId, Fields(withInfluence), _arrangements, _columnWidths, _headset ? 12 : 16, headName: HeadName);
+        _columns.Changed += () => Changed?.Invoke();
+
+        if (old?.SortedBy is { } sort)
+        {
+            _columns.ShowSort(sort.Key, sort.Direction);
+        }
+
+        return _columns;
+    }
+
+    private IReadOnlyList<TableField<BgsWorkRow>> Fields(bool withInfluence)
+    {
+        var heads = BgsWorkTable.Heads;
+        var columns = BgsWorkTable.ColumnList;
+
+        List<TableField<BgsWorkRow>> fields =
+        [
+            StarSystemPage.Headed(heads[0], columns[0], SystemCell),
+            StarSystemPage.Headed(heads[1], columns[1], row => Values((BgsWorkTable.MarksUpText(row.MarksUp), Key(row.MarksUp)), (BgsWorkTable.MarksDownText(row.MarksDown), row.MarksDown is null ? ThemeManager.Grey2Key : ThemeManager.RedKey)), right: true),
+            StarSystemPage.Headed(heads[2], columns[2], row => Values((BgsWorkTable.Credits(row.Bounties), Key(row.Bounties)), (BgsWorkTable.Credits(row.Bonds), Key(row.Bonds))), right: true),
+            StarSystemPage.Headed(heads[3], columns[3], row => Values((BgsWorkTable.Credits(row.Sold), Key(row.Sold)), (BgsWorkTable.Credits(row.Profit), row.Profit switch { null => ThemeManager.Grey2Key, < 0 => ThemeManager.RedKey, _ => ThemeManager.AKey })), right: true),
+            StarSystemPage.Headed(heads[4], columns[4], row => Values((BgsWorkTable.Credits(row.Cartography), Key(row.Cartography))), right: true),
+        ];
+
+        if (withInfluence)
+        {
+            fields.Add(StarSystemPage.Headed(
+                heads[5],
+                columns[5],
+                row => row.Influence is { } across
+                    ? Values((BgsWorkTable.InfluenceText(across), ThemeManager.AKey), (BgsWorkTable.VisitText(across), ThemeManager.AKey))
+                    : Values((BgsWorkTable.Dash, ThemeManager.Grey2Key)),
+                right: true));
+        }
+
+        return fields;
+    }
 
     /// <summary>Draws the section. On the headset <paramref name="page"/> is clamped to the pages the rows fill.</summary>
     public Control Build(BgsWorkInput input, ref int page)
     {
         var tick = input.Tick;
         var body = new StackPanel();
-
-        if (tick is null && Head.Order?.Column == BgsWorkTable.InfluenceColumn)
-        {
-            Head.Show(null);
-        }
+        var columns = Columns(tick is not null);
+        columns.Refresh();
+        _current = input.Current;
 
         var shown = BgsWorkTable.Matching(input.Rows, input.Query);
         Count = shown.Count;
@@ -284,7 +341,7 @@ public sealed class BgsWorkSection
         }
 
         var groups = BgsWorkTable.Groups(shown, input.Work, input.Faction)
-            .Select(group => new BgsWorkGroup(group.Title, Head.Sort(group.Rows)))
+            .Select(group => new BgsWorkGroup(group.Title, columns.Sort(group.Rows)))
             .ToList();
 
         var onPage = groups;
@@ -311,6 +368,8 @@ public sealed class BgsWorkSection
             onPage = slice;
         }
 
+        body.Children.Add(ArrangerAbove(columns));
+
         for (var i = 0; i < onPage.Count; i++)
         {
             var total = groups.First(group => group.Title == onPage[i].Title).Rows.Count;
@@ -319,10 +378,30 @@ public sealed class BgsWorkSection
             body.Children.Add(i == 0
                 ? StarSystemPage.GroupHead(onPage[i].Title, Description(tick, input.Now), count)
                 : StarSystemPage.GroupHead(onPage[i].Title, string.Empty, count));
-            body.Children.Add(Table(onPage[i].Rows, tick is not null, input.Current));
+
+            // Each group sizes its content columns to its own rows.
+            columns.Refresh();
+            body.Children.Add(Table(onPage[i].Rows, columns));
         }
 
         return body;
+    }
+
+    private static StackPanel ArrangerAbove(ArrangedTable<BgsWorkRow> columns)
+    {
+        var top = new StackPanel();
+
+        if (ColumnArranger.Line(columns) is { } tile)
+        {
+            top.Children.Add(tile);
+        }
+
+        if (ColumnArranger.Bar(columns) is { } bar)
+        {
+            top.Children.Add(bar);
+        }
+
+        return top;
     }
 
     private static TextBlock Description(DateTimeOffset? tick, DateTimeOffset now)
@@ -343,52 +422,30 @@ public sealed class BgsWorkSection
         return note;
     }
 
-    private StackPanel Table(IReadOnlyList<BgsWorkRow> rows, bool withInfluence, string? current)
+    private Control Table(IReadOnlyList<BgsWorkRow> rows, ArrangedTable<BgsWorkRow> columns)
     {
-        var columns = withInfluence ? BgsWorkTable.Heads.Count : BgsWorkTable.Heads.Count - 1;
-        var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
+        var table = new StackPanel { Spacing = Gaps.Tile };
 
-        var layout = new TableLayout(BgsWorkTable.TableId, [.. BgsWorkTable.ColumnList.Take(columns)], _columnWidths, _headset ? 12 : 16);
-
-        table.Children.Add(CreditsKit.HeaderRow(Head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
+        var header = columns.Header();
+        header.MinHeight = TypeScale.MinimumTarget;
+        header.Margin = new Thickness(14, 0);
+        table.Children.Add(header);
 
         foreach (var row in rows)
         {
-            table.Children.Add(RowView(row, withInfluence, current, layout, _copy));
+            table.Children.Add(RowView(row, columns));
         }
 
-        return table;
+        Control outer = _headset ? table : new TableScroll(columns.Layout, table);
+        outer.Margin = new Thickness(0, 10, 0, 0);
+
+        return outer;
     }
 
-    private static Border RowView(BgsWorkRow row, bool withInfluence, string? current, TableLayout layout, Func<string, Task<bool>>? copy)
+    private static Border RowView(BgsWorkRow row, ArrangedTable<BgsWorkRow> columns)
     {
-        var grid = layout.Row([]);
+        var grid = columns.Row(row);
         grid.VerticalAlignment = VerticalAlignment.Center;
-
-        var isCurrent = row.System is not null && string.Equals(row.System, current, StringComparison.OrdinalIgnoreCase);
-        var system = row.System is null
-            ? CreditsKit.Line(BgsWorkTable.UnnamedSystem, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey)
-            : CopyGlyph.LinkBeside(
-                CreditsKit.Line(row.System, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey),
-                row.System,
-                copy);
-        var faction = CreditsKit.Line(row.Faction, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
-
-        Place(grid, 0, new StackPanel { Children = { system, faction } });
-        Place(grid, 1, Values((BgsWorkTable.MarksUpText(row.MarksUp), Key(row.MarksUp)), (BgsWorkTable.MarksDownText(row.MarksDown), row.MarksDown is null ? ThemeManager.Grey2Key : ThemeManager.RedKey)));
-        Place(grid, 2, Values((BgsWorkTable.Credits(row.Bounties), Key(row.Bounties)), (BgsWorkTable.Credits(row.Bonds), Key(row.Bonds))));
-        Place(grid, 3, Values((BgsWorkTable.Credits(row.Sold), Key(row.Sold)), (BgsWorkTable.Credits(row.Profit), row.Profit switch { null => ThemeManager.Grey2Key, < 0 => ThemeManager.RedKey, _ => ThemeManager.AKey })));
-        Place(grid, 4, Values((BgsWorkTable.Credits(row.Cartography), Key(row.Cartography))));
-
-        if (withInfluence)
-        {
-            Place(
-                grid,
-                BgsWorkTable.InfluenceColumn,
-                row.Influence is { } across
-                    ? Values((BgsWorkTable.InfluenceText(across), ThemeManager.AKey), (BgsWorkTable.VisitText(across), ThemeManager.AKey))
-                    : Values((BgsWorkTable.Dash, ThemeManager.Grey2Key)));
-        }
 
         var border = new Border
         {
@@ -401,14 +458,21 @@ public sealed class BgsWorkSection
         return border;
     }
 
-    private static string Key(long? value) => value is null ? ThemeManager.Grey2Key : ThemeManager.AKey;
-
-    private static void Place(Grid grid, int column, Control cell)
+    private Control SystemCell(BgsWorkRow row)
     {
-        cell.VerticalAlignment = VerticalAlignment.Center;
-        Grid.SetColumn(cell, column);
-        grid.Children.Add(cell);
+        var isCurrent = row.System is not null && string.Equals(row.System, _current, StringComparison.OrdinalIgnoreCase);
+        var system = row.System is null
+            ? CreditsKit.Line(BgsWorkTable.UnnamedSystem, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey)
+            : CopyGlyph.LinkBeside(
+                CreditsKit.Line(row.System, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey),
+                row.System,
+                _copy);
+        var faction = CreditsKit.Line(row.Faction, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
+
+        return new StackPanel { Children = { system, faction } };
     }
+
+    private static string Key(long? value) => value is null ? ThemeManager.Grey2Key : ThemeManager.AKey;
 
     private static StackPanel Values(params (string Text, string Key)[] lines)
     {
