@@ -53,7 +53,10 @@ public sealed class SpeechSpend
     /// Which slot was speaking, or null where the caller has no slot to name — the audition path and
     /// every test that is not about the breakdown.
     /// </param>
-    public void Record(string providerId, int characters, VoiceGroup? group = null, TimeSpan audio = default)
+    /// <param name="purpose">
+    /// The row's purpose id; the slot's own when null and a slot is named.
+    /// </param>
+    public void Record(string providerId, int characters, VoiceGroup? group = null, TimeSpan audio = default, string? purpose = null)
     {
         if (characters <= 0)
         {
@@ -88,6 +91,7 @@ public sealed class SpeechSpend
                 Dollars = DollarsFor(settings, one) ?? 0m,
                 Priced = Priced(settings, providerId),
                 Characters = characters,
+                Purpose = purpose ?? (group is { } slot ? Conversation.SpendPurposes.VoiceSlot(slot) : null),
                 AudioSeconds = audio > TimeSpan.Zero ? audio.TotalSeconds : null,
             });
         }
@@ -365,7 +369,12 @@ public sealed class SpeechSpend
 /// <param name="group">
 /// Which slot this decorator counts for, or null where there is no slot to name.
 /// </param>
-public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, VoiceGroup? group = null)
+/// <param name="purpose">The purpose id written on rows where there is no slot, such as a story cast voice.</param>
+public sealed class MeteredTtsProvider(
+    ITtsProvider inner,
+    SpeechSpend spend,
+    VoiceGroup? group = null,
+    string? purpose = null)
     : ITtsProvider, IDisposable
 {
     public string Id => inner.Id;
@@ -399,7 +408,7 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, Vo
 
         // After the await and outside any catch, which is the whole rule: a refused voice, a rejected key and
         // a cancelled turn all leave through the exception and none of them is billed.
-        spend.Record(inner.Id, inner.Billable(text).Length, group, clip.Duration);
+        spend.Record(inner.Id, inner.Billable(text).Length, group, clip.Duration, purpose);
 
         return clip;
     }
@@ -414,7 +423,7 @@ public sealed class MeteredTtsProvider(ITtsProvider inner, SpeechSpend spend, Vo
         var billed = inner.Billable(text).Length;
 
         _ = arriving.Whole.ContinueWith(
-            whole => spend.Record(inner.Id, billed, group, whole.Result.Duration),
+            whole => spend.Record(inner.Id, billed, group, whole.Result.Duration, purpose),
             CancellationToken.None,
             TaskContinuationOptions.OnlyOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);

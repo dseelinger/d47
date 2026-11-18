@@ -109,7 +109,8 @@ D47.Core.Checklists.ChecklistProposalStore.Path
 D47.Core.Checklists.ChecklistService.SelectionChanged
 D47.Core.Checklists.ChecklistStore.Path
 D47.Core.Checklists.PlanBlock.Unlocked
-D47.Core.Conversation.SpendPurposes
+D47.Core.Conversation.SpendPurposes.All
+D47.Core.Conversation.SpendPurposes.NameOf(string)
 D47.Core.Conversation.TurnLoop.Target
 D47.Core.Debrief.DebriefWriteRefused.Attempted
 D47.Core.Debrief.DebriefWriteRefused.Why

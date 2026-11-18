@@ -830,7 +830,7 @@ public sealed class SpeechClients : IDisposable
     {
         if (ClientFor(providerId) is { } shared)
         {
-            return new MeteredTtsProvider(shared, Spend);
+            return new MeteredTtsProvider(shared, Spend, purpose: D47.Core.Conversation.SpendPurposes.VoiceStoryCast);
         }
 
         lock (_castGate)
@@ -845,7 +845,7 @@ public sealed class SpeechClients : IDisposable
                 _castClients[providerId] = built = client;
             }
 
-            return new MeteredTtsProvider(built, Spend);
+            return new MeteredTtsProvider(built, Spend, purpose: D47.Core.Conversation.SpendPurposes.VoiceStoryCast);
         }
     }
 

@@ -180,7 +180,7 @@ fault.
 The charges behind them are kept in `data/spend.jsonl`, one line per charge, written as it happens and read
 back when Directive 47 starts. Both the model and the voices go in it; a total covering only half
 of what you spent would be worse than no total at all. Each model row also records what the call
-was for, such as conversation, story chapters or NPC chatter.
+was for, such as conversation, story chapters or NPC chatter. Each speech row records the voice slot that spoke, or story cast for a story's cast voices.
 
 Each row records the instant it happened, in UTC. "Today", "this week" and "this month" are
 worked out against **your** clock at the moment you ask, which is what keeps them right across a
