@@ -184,6 +184,35 @@ public sealed record ViewState
         return this with { ColumnWidths = Replacing(table, columns) };
     }
 
+    /// <summary>The column keys a table shows, in order, by arrangement id (see <see cref="ColumnArrangement.IdFor"/>); a table with none shows its default columns.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> ColumnArrangements { get; init; } =
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+
+    /// <summary>Stores the shown column keys of an arrangement.</summary>
+    public ViewState WithArrangement(string id, IReadOnlyList<string> keys)
+    {
+        var next = new Dictionary<string, IReadOnlyList<string>>(ColumnArrangements, StringComparer.Ordinal)
+        {
+            [id] = keys.ToArray(),
+        };
+
+        return this with { ColumnArrangements = next };
+    }
+
+    /// <summary>Forgets an arrangement, so its table shows the default columns.</summary>
+    public ViewState WithoutArrangement(string id)
+    {
+        if (!ColumnArrangements.ContainsKey(id))
+        {
+            return this;
+        }
+
+        var next = new Dictionary<string, IReadOnlyList<string>>(ColumnArrangements, StringComparer.Ordinal);
+        next.Remove(id);
+
+        return this with { ColumnArrangements = next };
+    }
+
     private Dictionary<string, IReadOnlyDictionary<string, double>> Replacing(string table, Dictionary<string, double> columns)
     {
         var next = new Dictionary<string, IReadOnlyDictionary<string, double>>(ColumnWidths, StringComparer.Ordinal);
