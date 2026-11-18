@@ -95,16 +95,6 @@ public sealed class EveryTableColumnSortsAndTheSortIsKeptTests
     }
 
     [AvaloniaFact]
-    public void ATableWhoseRowsAreSortedElsewhereMayHaveLabelsThatDoNotSort()
-    {
-        using var look = AppLook.Put();
-
-        var table = new ArrangedTable<Row>("Test.Table", [Field("Size", null, "Size")], null, null, unsortedAllowed: true);
-
-        Assert.Single(table.Shown);
-    }
-
-    [AvaloniaFact]
     public void AControlColumnNeedsNoSort()
     {
         using var look = AppLook.Put();

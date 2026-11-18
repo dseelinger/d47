@@ -46,8 +46,7 @@ public sealed class ArrangedTable<TRow>
         ColumnWidthMemory? widths,
         double spacing = 0,
         string? sortedByDefault = null,
-        string? headName = null,
-        bool unsortedAllowed = false)
+        string? headName = null)
     {
         Id = id;
         _headName = headName ?? id + "Head";
@@ -58,12 +57,9 @@ public sealed class ArrangedTable<TRow>
         _spacing = spacing;
         _sortedByDefault = sortedByDefault;
 
-        if (!unsortedAllowed)
-        {
-            RequireSorts(id, fields);
-        }
+        RequireSorts(id, fields);
 
-        _remembers = !unsortedAllowed && _arrangeable.All(field => field.Sort is { IsRemote: false });
+        _remembers = _arrangeable.All(field => field.Sort is { IsRemote: false });
 
         if (_remembers)
         {

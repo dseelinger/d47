@@ -23,7 +23,7 @@ public class EverySystemNameThePanelDrawsHasACopyGlyphTests
         ["Value", "Chrome", "Sub", "Mono", "Text", "Ellipsed", "CreditsKit.Line", "TitleText.Build"];
 
     private static readonly string[] NotDrawing =
-        ["Equals", "Contains", "StartsWith", "EndsWith", "Compare", "IndexOf", "SortColumn.Text"];
+        ["Equals", "Contains", "StartsWith", "EndsWith", "Compare", "IndexOf", "SortColumn.Text", "LocalSort.Text"];
 
     /// <summary>Calls that put a copy glyph beside a system name; <c>RoutingKit.Row</c> wraps <c>CopyGlyph.Beside</c>.</summary>
     private static bool CallsGlyph(MemberAccessExpressionSyntax call) =>
@@ -143,7 +143,7 @@ public class EverySystemNameThePanelDrawsHasACopyGlyphTests
     /// <summary>The callee as <c>Receiver.Method</c> when the receiver is a plain or generic name, else the method name.</summary>
     private static string Qualified(ExpressionSyntax callee) => callee is MemberAccessExpressionSyntax { Expression: var receiver } m
         && NameOf(receiver) is { Length: > 0 } name
-        && (name is "CreditsKit" or "TitleText" or "SortColumn" or "RoutingKit")
+        && (name is "CreditsKit" or "TitleText" or "SortColumn" or "LocalSort" or "RoutingKit")
             ? $"{name}.{m.Name.Identifier.Text}"
             : NameOf(callee);
 

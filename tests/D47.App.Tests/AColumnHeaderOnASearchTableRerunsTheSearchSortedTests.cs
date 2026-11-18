@@ -198,7 +198,7 @@ public sealed class AColumnHeaderOnASearchTableRerunsTheSearchSortedTests
     }
 
     [AvaloniaFact]
-    public async Task AColumnTheServiceCannotSortIsNotAButton()
+    public async Task AColumnTheServiceCannotSortIsAButtonThatSortsTheRowsShown()
     {
         var (panel, window, _) = Shown(StationSearchPage.RootKey);
 
@@ -207,9 +207,8 @@ public sealed class AColumnHeaderOnASearchTableRerunsTheSearchSortedTests
         var buttons = panel.GetVisualDescendants().OfType<Button>().Select(button => button.Name).ToList();
 
         Assert.Contains("StationHead.LY", buttons);
-        Assert.DoesNotContain("StationHead.Pad", buttons);
-        Assert.DoesNotContain("StationHead.Askedfor", buttons);
-        Assert.Contains(panel.GetVisualDescendants().OfType<Control>(), control => control.Name == "StationHead.Pad");
+        Assert.Contains("StationHead.Pad", buttons);
+        Assert.Contains("StationHead.Askedfor", buttons);
 
         window.Close();
     }

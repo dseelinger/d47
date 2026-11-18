@@ -261,15 +261,15 @@ public sealed class RouteMarketShowsEveryCommodityAtEachStationTests
     }
 
     [AvaloniaFact]
-    public void TheCommodityColumnsAreNotButtons()
+    public void TheCommodityColumnsAreButtonsThatSortTheRowsShown()
     {
         var (panel, window, _) = Furnished();
 
         List<string?> buttons = [.. panel.GetVisualDescendants().OfType<Button>().Select(button => button.Name)];
 
         Assert.Contains("MarketHead.Total", buttons);
-        Assert.DoesNotContain("MarketHead.Painite", buttons);
-        Assert.DoesNotContain("MarketHead.Gold", buttons);
+        Assert.Contains("MarketHead.Painite", buttons);
+        Assert.Contains("MarketHead.Gold", buttons);
 
         window.Close();
     }

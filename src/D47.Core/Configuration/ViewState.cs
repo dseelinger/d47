@@ -455,8 +455,8 @@ public sealed record OverlayPlacement
     public double? Height { get; init; }
 }
 
-/// <summary>The field a table is sorted by and whether the sort runs largest or last first.</summary>
-public sealed record StoredSort(string Key, bool Descending);
+/// <summary>The field a table is sorted by and whether the sort runs largest or last first; <c>OrderBy</c> is the service's name for it where the service sorts.</summary>
+public sealed record StoredSort(string Key, bool Descending, string? OrderBy = null);
 
 /// <summary>The third store, and the one that shrugs hardest.</summary>
 public sealed class ViewStateStore(AppPaths paths, IFileSystem files, ILogger<ViewStateStore> logger)

@@ -543,8 +543,9 @@ A search with no filters is run: it returns the nearest systems, or the top of t
 "the most populous systems near me" is `order_by: population` and asks for the top of the whole
 search. `order` is `asc` or `desc`; left out, it is the field's usual direction, which is `desc`
 for `population` and `updated`. `search_stations` and `find_body` take the same two arguments
-with their own fields, and a column the service cannot sort on has no header to press on the
-Search tab.
+with their own fields. On the Search tab a column the service cannot sort on still sorts: it
+sorts the rows already fetched, the head says only those rows are sorted, and the page
+remembers the sort for its next search.
 
 A `faction` or `controlling_faction` value is matched against the minor factions the Commander's
 journals name, and sent in the journal's spelling when one matches. The service needs the exact

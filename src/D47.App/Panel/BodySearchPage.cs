@@ -79,6 +79,8 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     public override string Tool => "find_body";
 
+    protected override string SortTableId => TableId;
+
     public override GalaxySearchKind Kind => GalaxySearchKind.Bodies;
 
     public override string Summary => "";
@@ -320,7 +322,7 @@ public sealed class BodySearchPage : GalaxySearchPage
             SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((BodySummary)row), "system"),
             SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((BodySummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
             SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(StationSearchPage.Light(((BodySummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), "from_star", right: true),
-            SearchField("Landable", new TableColumn("Landable"), "Landable", row => Centered(Value(((BodySummary)row).IsLandable ? "Yes" : "No"))),
+            SearchField("Landable", new TableColumn("Landable"), "Landable", row => Centered(Value(((BodySummary)row).IsLandable ? "Yes" : "No")), local: LocalSort.Flag<BodySummary>(body => body.IsLandable)),
         ];
 
         if (material is not null)
@@ -351,11 +353,11 @@ public sealed class BodySearchPage : GalaxySearchPage
                 "gravity",
                 right: true,
                 byDefault: !headset),
-            SearchField("Atmosphere", new TableColumn("Atmosphere"), "Atmosphere", row => TableCells.Text(((BodySummary)row).Atmosphere), byDefault: false),
-            SearchField("MappingValue", new TableColumn("MappingValue"), "Mapping value", row => TableCells.Number(((BodySummary)row).MappingValue), right: true, byDefault: false),
-            SearchField("Reserves", new TableColumn("Reserves"), "Reserves", row => TableCells.Text(((BodySummary)row).ReserveLevel), byDefault: false),
-            SearchField("Rings", new TableColumn("Rings", ColumnFit.Fill) { Min = 120 }, "Rings", row => TableCells.List([.. ((BodySummary)row).Rings.Select(ring => ring.Name)]), byDefault: false),
-            SearchField("Signals", new TableColumn("Signals", ColumnFit.Fill) { Min = 120 }, "Signals", row => TableCells.List([.. ((BodySummary)row).Signals.Select(signal => $"{signal.Kind} {signal.Count.ToString(CultureInfo.InvariantCulture)}")]), byDefault: false),
+            SearchField("Atmosphere", new TableColumn("Atmosphere"), "Atmosphere", row => TableCells.Text(((BodySummary)row).Atmosphere), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.Atmosphere)),
+            SearchField("MappingValue", new TableColumn("MappingValue"), "Mapping value", row => TableCells.Number(((BodySummary)row).MappingValue), right: true, byDefault: false, local: LocalSort.Figure<BodySummary>(body => body.MappingValue)),
+            SearchField("Reserves", new TableColumn("Reserves"), "Reserves", row => TableCells.Text(((BodySummary)row).ReserveLevel), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.ReserveLevel)),
+            SearchField("Rings", new TableColumn("Rings", ColumnFit.Fill) { Min = 120 }, "Rings", row => TableCells.List([.. ((BodySummary)row).Rings.Select(ring => ring.Name)]), byDefault: false, local: LocalSort.Text<BodySummary>(body => string.Join(", ", body.Rings.Select(ring => ring.Name)))),
+            SearchField("Signals", new TableColumn("Signals", ColumnFit.Fill) { Min = 120 }, "Signals", row => TableCells.List([.. ((BodySummary)row).Signals.Select(signal => $"{signal.Kind} {signal.Count.ToString(CultureInfo.InvariantCulture)}")]), byDefault: false, local: LocalSort.Text<BodySummary>(body => string.Join(", ", body.Signals.Select(signal => signal.Kind)))),
             SearchField(
                 "SurfaceTemperature",
                 new TableColumn("SurfaceTemperature"),
@@ -365,10 +367,11 @@ public sealed class BodySearchPage : GalaxySearchPage
                     TypeScale.Small,
                     ThemeManager.WhiteKey))),
                 right: true,
-                byDefault: false),
-            SearchField("Terraforming", new TableColumn("Terraforming"), "Terraforming", row => TableCells.Text(((BodySummary)row).TerraformingState), byDefault: false),
-            SearchField("TidallyLocked", new TableColumn("TidallyLocked"), "Tidally locked", row => TableCells.Flag(((BodySummary)row).IsTidallyLocked), byDefault: false),
-            SearchField("Volcanism", new TableColumn("Volcanism"), "Volcanism", row => TableCells.Text(((BodySummary)row).Volcanism), byDefault: false),
+                byDefault: false,
+                local: LocalSort.Figure<BodySummary>(body => body.SurfaceTemperature)),
+            SearchField("Terraforming", new TableColumn("Terraforming"), "Terraforming", row => TableCells.Text(((BodySummary)row).TerraformingState), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.TerraformingState)),
+            SearchField("TidallyLocked", new TableColumn("TidallyLocked"), "Tidally locked", row => TableCells.Flag(((BodySummary)row).IsTidallyLocked), byDefault: false, local: LocalSort.Flag<BodySummary>(body => body.IsTidallyLocked)),
+            SearchField("Volcanism", new TableColumn("Volcanism"), "Volcanism", row => TableCells.Text(((BodySummary)row).Volcanism), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.Volcanism)),
         ]);
 
         return fields;

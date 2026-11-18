@@ -180,7 +180,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _headset = headset;
         _history = new HistoryTile(searches);
 
-        _run.Click += (_, _) => _ = RunAsync(FormArguments());
+        _run.Click += (_, _) => _ = RunAsync(WithKeptSort(FormArguments()));
         _clear.Click += (_, _) =>
         {
             ResetPick();
@@ -231,6 +231,103 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         FillForm(posting.Arguments);
         _showingAnswer = true;
         Draw();
+    }
+
+    /// <summary>The id the page's table sorts are remembered under.</summary>
+    protected abstract string SortTableId { get; }
+
+    private bool _keptRead;
+    private (string Key, SortDirection Direction, string? OrderBy)? _kept;
+    private IReadOnlyDictionary<string, string>? _localFor;
+    private bool _localShown;
+    private TextBlock? _orderChip;
+
+    /// <summary>The table's remembered sort; <c>OrderBy</c> is null for a sort of the rows fetched.</summary>
+    private (string Key, SortDirection Direction, string? OrderBy)? Kept
+    {
+        get
+        {
+            if (!_keptRead)
+            {
+                _keptRead = true;
+
+                if (ColumnArrangements?.Sorts is { } memory && memory.Remembered(SortTableId) is { } stored)
+                {
+                    _kept = (stored.Key, stored.Direction, memory.RememberedOrderBy(SortTableId));
+                }
+            }
+
+            return _kept;
+        }
+    }
+
+    private void Keep((string Key, SortDirection Direction)? sort, string? orderBy)
+    {
+        _keptRead = true;
+        _kept = sort is { } chosen ? (chosen.Key, chosen.Direction, orderBy) : null;
+        ColumnArrangements?.Sorts.Remember(SortTableId, sort, orderBy);
+    }
+
+    /// <summary><paramref name="arguments"/> with the remembered service sort added, unless they already name an order.</summary>
+    private IReadOnlyDictionary<string, string> WithKeptSort(IReadOnlyDictionary<string, string> arguments)
+    {
+        if (Kept is not { OrderBy: { } by } kept
+            || arguments.ContainsKey("order_by")
+            || SearchSorts.For(Kind).All(field => field.Name != by)
+            || (by == SearchSorts.Material && !arguments.ContainsKey("material")))
+        {
+            return arguments;
+        }
+
+        return new Dictionary<string, string>(arguments, StringComparer.Ordinal)
+        {
+            ["order_by"] = by,
+            ["order"] = kept.Direction == SortDirection.Ascending ? "asc" : "desc",
+        };
+    }
+
+    /// <summary>The remembered sort of the rows fetched covers the answer asked with <paramref name="arguments"/>.</summary>
+    private bool LocalCovers(IReadOnlyDictionary<string, string> arguments) =>
+        Kept is { OrderBy: null } && ReferenceEquals(_localFor, arguments);
+
+    private bool LocalShownFor(GalaxySearchPosting posting) => _localShown && ReferenceEquals(_localFor, posting.Arguments);
+
+    /// <summary>The rows of <paramref name="posting"/>, in the order of a sort of the rows fetched while one is shown.</summary>
+    private IReadOnlyList<object> RowsShown(GalaxySearchPosting posting) =>
+        LocalShownFor(posting) && _arranged is { } table ? table.Sort(Rows(posting)) : Rows(posting);
+
+    /// <summary>"these 25 sorted by Volcanism" while the rows fetched are sorted, else null.</summary>
+    private string? LocalWords(GalaxySearchPosting posting)
+    {
+        if (!LocalShownFor(posting) || _arranged is not { SortedBy: { } sort } table)
+        {
+            return null;
+        }
+
+        var field = table.Shown.FirstOrDefault(shown => shown.Key == sort.Key);
+
+        return $"these {Count(posting).ToString(CultureInfo.InvariantCulture)} sorted by {field?.Name ?? field?.Label ?? sort.Key}";
+    }
+
+    private void OnSorted(ArrangedTable<object> table)
+    {
+        var wasLocal = _localShown;
+
+        if (table.SortedBy is { } sort && !SortFields.IsRemote(sort.Key))
+        {
+            _localFor = Posted.Arguments;
+            Keep(sort, null);
+            return;
+        }
+
+        _localFor = null;
+        _localShown = false;
+        Keep(table.SortedBy, table.SortedBy is { } remote ? SortFields.OrderBy(remote.Key) : null);
+
+        if (!wasLocal || table.SortedBy is not null)
+        {
+            _ = RunAsync(SortFields.Sorted(Rerun(Posted), table));
+        }
     }
 
     /// <summary>The search tool this page runs.</summary>
@@ -318,7 +415,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     {
         ResetPick();
         FillForm(arguments);
-        _ = RunAsync(arguments);
+        _ = RunAsync(WithKeptSort(arguments));
     }
 
     /// <summary>Runs <see cref="Tool"/> with <paramref name="arguments"/> as the Commander; the answer arrives through the board.</summary>
@@ -628,9 +725,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             SortFields.Clear();
 
-            var table = new ArrangedTable<object>(id, fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: headName, unsortedAllowed: true);
+            var table = new ArrangedTable<object>(id, fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: headName);
             table.Changed += Draw;
-            table.Sorted += () => _ = RunAsync(SortFields.Sorted(Rerun(Posted), table));
+            table.Sorted += () => OnSorted(table);
             _arranged = table;
             _arrangedShape = shape;
         }
@@ -639,7 +736,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             _arranged.Refresh();
         }
 
-        SortFields.Show(_arranged, posting.Arguments);
+        _localShown = LocalCovers(posting.Arguments) && Kept is { } local && _arranged.ShowSort(local.Key, local.Direction);
+
+        if (!_localShown)
+        {
+            SortFields.Show(_arranged, posting.Arguments);
+        }
 
         return _arranged;
     }
@@ -647,7 +749,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The posting the table is drawn for.</summary>
     protected GalaxySearchPosting Posted { get; private set; } = null!;
 
-    /// <summary>A field of this kind of table; pass <c>sort</c> for the <c>order_by</c> its header sorts on.</summary>
+    /// <summary>A field of this kind of table; pass <c>sort</c> for the <c>order_by</c> its header asks for, else <c>local</c> sorts the rows fetched.</summary>
     protected TableField<object> SearchField(
         string key,
         TableColumn column,
@@ -656,8 +758,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         string? sort = null,
         string? second = null,
         bool right = false,
-        bool byDefault = true) =>
-        SortFields.Field(key, column, label, cell, sort, second, right, byDefault);
+        bool byDefault = true,
+        Func<string, SortColumn<object>>? local = null) =>
+        SortFields.Field(key, column, label, cell, sort, second, right, byDefault, local);
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -697,6 +800,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             return;
         }
 
+        var pageAsked = _running is not null;
+
         Dispatcher.UIThread.Post(() =>
         {
             DropNextPage();
@@ -704,6 +809,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             _fromHistory = null;
             HistoryId = null;
             _showingAnswer = true;
+
+            if (pageAsked && _searches.Board.Last(Kind) is { } posted)
+            {
+                _localFor = posted.Arguments;
+            }
 
             if (!_pickPosting)
             {
@@ -747,9 +857,25 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 return;
             }
 
-            var all = Rows(last);
+            var all = RowsShown(last);
             var at = _rows.Count > 0 && _rows[^1] is PageLoading or PageFailed ? _rows.Count - 1 : _rows.Count;
-            _rows.InsertRange(at, all.Skip(_shownRows));
+
+            if (LocalShownFor(last))
+            {
+                _rows.Clear();
+                _rows.AddRange(all);
+                ShowTail();
+
+                if (_orderChip is not null && LocalWords(last) is { } words)
+                {
+                    _orderChip.Text = $"· {words}".ToUpperInvariant();
+                }
+            }
+            else
+            {
+                _rows.InsertRange(at, all.Skip(_shownRows));
+            }
+
             _shownRows = all.Count;
             _drawn = last;
             _count.Text = CountText(last).ToUpperInvariant();
@@ -1179,7 +1305,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private async Task RunPicked(IReadOnlyDictionary<string, string> arguments)
     {
-        await RunAsync(arguments).ConfigureAwait(true);
+        await RunAsync(WithKeptSort(arguments)).ConfigureAwait(true);
         Dispatcher.UIThread.Post(() => _pickPosting = false);
     }
 
@@ -1206,6 +1332,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _rows = null;
         _scroll = null;
         _count = null;
+        _orderChip = null;
         _drawn = null;
         _shownRows = 0;
 
@@ -1258,7 +1385,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 var paged = Paged(last!, _headset);
                 var arranged = paged is null ? null : _arranged;
 
-                block.Children.Add(Head(CountText(last!), Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last), columns: arranged is null ? null : ColumnArranger.Tile(arranged)));
+                block.Children.Add(Head(CountText(last!), Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: LocalWords(last) ?? Sorted(last), columns: arranged is null ? null : ColumnArranger.Tile(arranged)));
 
                 if (arranged is not null && ColumnArranger.Bar(arranged) is { } bar)
                 {
@@ -1289,7 +1416,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// </summary>
     private Grid RowsBelow(StackPanel head, PagedTable paged, GalaxySearchPosting posting, TableLayout? sideways)
     {
-        var rows = Rows(posting);
+        var rows = RowsShown(posting);
         _rows = [.. rows];
         _shownRows = rows.Count;
         _drawn = posting;
@@ -1424,6 +1551,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             var order = Chrome($"· {sorted}", TypeScale.Small, ThemeManager.AKey);
             order.Name = SortedName;
+            _orderChip = order;
             order.VerticalAlignment = VerticalAlignment.Center;
             left.Children.Add(order);
         }

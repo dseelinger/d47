@@ -84,6 +84,8 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
     public override string Tool => "search_outfitting";
 
+    protected override string SortTableId => TableId;
+
     public override GalaxySearchKind Kind => GalaxySearchKind.Outfitting;
 
     public override string Summary => "";
@@ -226,23 +228,23 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         return new PagedTable(SearchTableFields.Head(table), item => Row((StationSummary)item, table));
     }
 
-    /// <summary>Every field the table can show; none sorts. Updated is not shown by default in the headset.</summary>
+    /// <summary>Every field the table can show; each sorts the rows fetched. Updated is not shown by default in the headset.</summary>
     private IReadOnlyList<TableField<object>> Fields(bool headset) =>
     [
-        SearchField("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, "Station", row => NameCell((StationSummary)row), second: "Type"),
-        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((StationSummary)row)),
-        SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((StationSummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), right: true),
-        SearchField("Pad", new TableColumn("Pad"), "Pad", row => Centered(Value(LargestPad((StationSummary)row))), second: "Largest"),
-        SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(StationSearchPage.Light(((StationSummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), right: true),
-        SearchField("Updated", new TableColumn("Updated"), "Updated", row => Centered(Right(Mono(Day(((StationSummary)row).StockLastSeen), TypeScale.Small, ThemeManager.GreyKey))), right: true, byDefault: !headset),
-        SearchField("ControllingFaction", new TableColumn("ControllingFaction"), "Controlling faction", row => TableCells.Text(((StationSummary)row).ControllingFaction), byDefault: false),
-        SearchField("State", new TableColumn("State"), "State", row => TableCells.Text(((StationSummary)row).State), byDefault: false),
-        SearchField("Pads", new TableColumn("Pads"), "Pads", row => StationSearchPage.PadsCell((StationSummary)row), byDefault: false),
-        SearchField("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, "Services", row => TableCells.List(((StationSummary)row).Services), byDefault: false),
-        SearchField("MaterialTrader", new TableColumn("MaterialTrader"), "Material trader", row => TableCells.Text(((StationSummary)row).TraderType), byDefault: false),
-        SearchField("TechnologyBroker", new TableColumn("TechnologyBroker"), "Technology broker", row => TableCells.Text(((StationSummary)row).TechnologyBroker), byDefault: false),
-        SearchField("Power", new TableColumn("Power"), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false),
-        SearchField("PowerState", new TableColumn("PowerState"), "Power state", row => TableCells.Text(((StationSummary)row).PowerState), byDefault: false),
+        SearchField("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, "Station", row => NameCell((StationSummary)row), second: "Type", local: LocalSort.Text<StationSummary>(station => station.Name)),
+        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((StationSummary)row), local: LocalSort.Text<StationSummary>(station => station.SystemName)),
+        SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((StationSummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), right: true, local: LocalSort.Figure<StationSummary>(station => station.Distance, SortDirection.Ascending)),
+        SearchField("Pad", new TableColumn("Pad"), "Pad", row => Centered(Value(LargestPad((StationSummary)row))), second: "Largest", local: LocalSort.Figure<StationSummary>(station => StationSearchPage.LargestPadRank(station))),
+        SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(StationSearchPage.Light(((StationSummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), right: true, local: LocalSort.Figure<StationSummary>(station => station.DistanceToArrival, SortDirection.Ascending)),
+        SearchField("Updated", new TableColumn("Updated"), "Updated", row => Centered(Right(Mono(Day(((StationSummary)row).StockLastSeen), TypeScale.Small, ThemeManager.GreyKey))), right: true, byDefault: !headset, local: LocalSort.When<StationSummary>(station => station.StockLastSeen)),
+        SearchField("ControllingFaction", new TableColumn("ControllingFaction"), "Controlling faction", row => TableCells.Text(((StationSummary)row).ControllingFaction), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingFaction)),
+        SearchField("State", new TableColumn("State"), "State", row => TableCells.Text(((StationSummary)row).State), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.State)),
+        SearchField("Pads", new TableColumn("Pads"), "Pads", row => StationSearchPage.PadsCell((StationSummary)row), byDefault: false, local: LocalSort.Figure<StationSummary>(station => (station.SmallPads ?? 0) + (station.MediumPads ?? 0) + (station.LargePads ?? 0))),
+        SearchField("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, "Services", row => TableCells.List(((StationSummary)row).Services), byDefault: false, local: LocalSort.Text<StationSummary>(station => string.Join(", ", station.Services))),
+        SearchField("MaterialTrader", new TableColumn("MaterialTrader"), "Material trader", row => TableCells.Text(((StationSummary)row).TraderType), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TraderType)),
+        SearchField("TechnologyBroker", new TableColumn("TechnologyBroker"), "Technology broker", row => TableCells.Text(((StationSummary)row).TechnologyBroker), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TechnologyBroker)),
+        SearchField("Power", new TableColumn("Power"), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingPower)),
+        SearchField("PowerState", new TableColumn("PowerState"), "Power state", row => TableCells.Text(((StationSummary)row).PowerState), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.PowerState)),
     ];
 
     private static Control NameCell(StationSummary station)

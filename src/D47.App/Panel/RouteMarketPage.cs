@@ -129,6 +129,7 @@ public sealed class RouteMarketPage : UserControl
     private string? _shape;
     private CommodityPosting? _posted;
     private CommodityPosting? _shown;
+    private bool _local;
 
     public RouteMarketPage(
         CapabilityRegistry registry,
@@ -472,7 +473,12 @@ public sealed class RouteMarketPage : UserControl
 
             rows.Children.Add(LedgerTables.Head(table, new Thickness(12, 0)));
 
-            foreach (var offer in posting.Answer.Offers)
+            if (LocalLine(table, posting) is { } line)
+            {
+                stack.Children.Insert(2, line);
+            }
+
+            foreach (var offer in Ordered(table, posting))
             {
                 rows.Children.Add(ListRow.Dress(new Border { Child = table.Row(offer) }));
             }
@@ -663,7 +669,7 @@ public sealed class RouteMarketPage : UserControl
         if (_table is null || _shape != shape)
         {
             var table = new ArrangedTable<CommodityOffer>(
-                TableId, Fields(posting), _arrangements, _arrangements?.Headset == true ? null : _columnWidths, 10, headName: HeadName, unsortedAllowed: true);
+                TableId, Fields(posting), _arrangements, _arrangements?.Headset == true ? null : _columnWidths, 10, headName: HeadName);
             table.Changed += DrawResults;
             table.Sorted += SortByHeader;
             _table = table;
@@ -678,6 +684,7 @@ public sealed class RouteMarketPage : UserControl
         if (!ReferenceEquals(_shown, posting))
         {
             _shown = posting;
+            _local = false;
             ShowOrder(_table, posting);
         }
 
@@ -727,7 +734,7 @@ public sealed class RouteMarketPage : UserControl
         List<TableField<CommodityOffer>> fields =
         [
             StarSystemPage.Headed(
-                SortColumn<CommodityOffer>.Plain("Station"),
+                SortColumn<CommodityOffer>.Text("Station", offer => offer.Market.Station, offer => offer.Market.System),
                 new TableColumn("Station", ColumnFit.Fill) { Min = 160 },
                 offer => StationCell(offer.Market.Station, offer.Market.System, offer.Market.IsCarrier)),
         ];
@@ -750,7 +757,7 @@ public sealed class RouteMarketPage : UserControl
             {
                 Label = wants[0].Commodity,
                 Name = Spoken(wants),
-                Sort = SortColumn<CommodityOffer>.Plain(wants[0].Commodity) with { Second = second },
+                Sort = LotSort(wants[0].Commodity, 0, best) with { Second = second },
                 Alignment = HorizontalAlignment.Right,
                 Required = true,
                 More =
@@ -762,7 +769,7 @@ public sealed class RouteMarketPage : UserControl
                         return new TableField<CommodityOffer>(CommoditiesKey + "." + want.Commodity, new TableColumn(want.Commodity), offer => LotCell(offer, at))
                         {
                             Label = want.Commodity,
-                            Sort = SortColumn<CommodityOffer>.Plain(want.Commodity) with { Second = second },
+                            Sort = LotSort(want.Commodity, at, best) with { Second = second },
                             Alignment = HorizontalAlignment.Right,
                         };
                     }),
@@ -786,31 +793,41 @@ public sealed class RouteMarketPage : UserControl
                 offer => Figure(Count(offer.UnitPrice)),
                 right: true));
             fields.Add(StarSystemPage.Headed(
-                SortColumn<CommodityOffer>.Plain(buying ? "Stock" : "Demand"),
+                SortColumn<CommodityOffer>.Figure<long>(buying ? "Stock" : "Demand", offer => StockOf(offer, posting.Query.Commodity, buying), SortDirection.Descending),
                 new TableColumn("Stock"),
-                offer => Figure(Count(StockOf(offer, buying))),
+                offer => Figure(Count(StockOf(offer, posting.Query.Commodity, buying))),
                 right: true));
 
             if (ByTheTonne(posting))
             {
                 fields.Add(StarSystemPage.Headed(
-                    SortColumn<CommodityOffer>.Plain("The load"), new TableColumn("Load"), offer => Figure(Count(offer.Total)), right: true));
+                    SortColumn<CommodityOffer>.Figure<long>("The load", offer => offer.Total, SortDirection.Descending), new TableColumn("Load"), offer => Figure(Count(offer.Total)), right: true));
             }
         }
 
-        fields.Add(StarSystemPage.Headed(SortColumn<CommodityOffer>.Plain("Priced"), new TableColumn("Priced"), PricedCell, right: true));
+        fields.Add(StarSystemPage.Headed(SortColumn<CommodityOffer>.Figure<long>("Priced", offer => offer.Market.UpdatedAt?.ToUnixTimeSeconds(), SortDirection.Descending), new TableColumn("Priced"), PricedCell, right: true));
 
-        fields.Add(Added("FromStar", "From star", offer => LightCell(offer.Market.DistanceToArrival), right: true));
-        fields.Add(Added("LargePad", "Large pad", offer => TableCells.Flag(offer.Market.HasLargePad)));
-        fields.Add(Added("Surface", "Surface", offer => TableCells.Flag(offer.Market.IsSurface)));
-        fields.Add(Added("Power", "Power", offer => TableCells.Text(offer.Market.ControllingPower)));
-        fields.Add(Added("PowerState", "Power state", offer => TableCells.Text(offer.Market.PowerState)));
+        fields.Add(Added("FromStar", "From star", offer => LightCell(offer.Market.DistanceToArrival), SortColumn<CommodityOffer>.Figure<double>("From star", offer => offer.Market.DistanceToArrival, SortDirection.Ascending), right: true));
+        fields.Add(Added("LargePad", "Large pad", offer => TableCells.Flag(offer.Market.HasLargePad), SortColumn<CommodityOffer>.Figure<int>("Large pad", offer => offer.Market.HasLargePad ? 1 : 0, SortDirection.Descending)));
+        fields.Add(Added("Surface", "Surface", offer => TableCells.Flag(offer.Market.IsSurface), SortColumn<CommodityOffer>.Figure<int>("Surface", offer => offer.Market.IsSurface ? 1 : 0, SortDirection.Descending)));
+        fields.Add(Added("Power", "Power", offer => TableCells.Text(offer.Market.ControllingPower), SortColumn<CommodityOffer>.Text("Power", offer => offer.Market.ControllingPower)));
+        fields.Add(Added("PowerState", "Power state", offer => TableCells.Text(offer.Market.PowerState), SortColumn<CommodityOffer>.Text("Power state", offer => offer.Market.PowerState)));
 
         return fields;
     }
 
-    private static TableField<CommodityOffer> Added(string key, string label, Func<CommodityOffer, Control> cell, bool right = false) =>
-        LedgerTables.Added(key, new TableColumn(key), cell, SortColumn<CommodityOffer>.Plain(label)) with
+    private static SortColumn<CommodityOffer> LotSort(string commodity, int at, SortDirection best) =>
+        SortColumn<CommodityOffer>.Figure<long>(commodity, offer => at < offer.Lots.Count ? offer.Lots[at].UnitPrice : null, best);
+
+    private static long StockOf(CommodityOffer offer, string commodity, bool buying)
+    {
+        var quote = offer.Market.Quote(commodity);
+
+        return buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0;
+    }
+
+    private static TableField<CommodityOffer> Added(string key, string label, Func<CommodityOffer, Control> cell, SortColumn<CommodityOffer> sort, bool right = false) =>
+        LedgerTables.Added(key, new TableColumn(key), cell, sort) with
         {
             Alignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
         };
@@ -836,11 +853,53 @@ public sealed class RouteMarketPage : UserControl
     /// <summary>Asks the same question again, ranked by the pressed column; none is the usual order.</summary>
     private void SortByHeader()
     {
-        if (_posted is { } posting && _table is { } table)
+        if (_posted is not { } posting || _table is not { } table)
         {
-            SortBy(posting, table.SortedBy);
+            return;
         }
+
+        var wasLocal = _local;
+        _local = table.SortedBy is { } sort && sort.Key is not (DistanceKey or PriceKey or TotalKey);
+
+        if (_local)
+        {
+            return;
+        }
+
+        if (wasLocal && table.SortedBy is null)
+        {
+            ShowOrder(table, posting);
+
+            return;
+        }
+
+        SortBy(posting, table.SortedBy);
     }
+
+    /// <summary>The offers in the order of the pressed column while that column sorts the rows shown.</summary>
+    private IReadOnlyList<CommodityOffer> Ordered(ArrangedTable<CommodityOffer> table, CommodityPosting posting) =>
+        _local ? table.Sort(posting.Answer.Offers) : posting.Answer.Offers;
+
+    /// <summary>"These 2 sorted by Stock", under the heading while the rows shown are sorted.</summary>
+    private Control? LocalLine(ArrangedTable<CommodityOffer> table, CommodityPosting posting)
+    {
+        if (!_local || table.SortedBy is not { } sort)
+        {
+            return null;
+        }
+
+        var field = table.Shown.FirstOrDefault(shown => shown.Key == sort.Key);
+        var text = $"These {posting.Answer.Offers.Count.ToString(CultureInfo.InvariantCulture)} sorted by {field?.Name ?? field?.Label ?? sort.Key}";
+        var line = Typeset.Chrome(
+            text.ToUpperInvariant(), TypeScale.Small, ThemeManager.AKey,
+            weight: FontWeight.Medium, tracking: TypeScale.Small * Fonts.ChromeTracking);
+        line.Name = LocalOrderName;
+
+        return line;
+    }
+
+    /// <summary>The line saying the rows shown, not the search, are sorted.</summary>
+    public const string LocalOrderName = "LocalOrder";
 
     private void SortBy(CommodityPosting posting, (string Key, SortDirection Direction)? order)
     {
@@ -940,13 +999,6 @@ public sealed class RouteMarketPage : UserControl
             Spacing = 1,
             Children = { Figure(Count(lot.UnitPrice)), Figure(stock, ThemeManager.GreyKey, TypeScale.Caption) },
         };
-    }
-
-    private long StockOf(CommodityOffer offer, bool buying)
-    {
-        var quote = offer.Market.Quote(_posted!.Query.Commodity);
-
-        return buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0;
     }
 
     /// <summary>The Commander's own reading is named as theirs, because it is the one figure here with no caveat on it.</summary>

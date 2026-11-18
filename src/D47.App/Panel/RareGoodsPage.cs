@@ -427,7 +427,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
         if (_table is null)
         {
-            _table = new ArrangedTable<object>(TableId, Fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: HeadName, unsortedAllowed: true);
+            _table = new ArrangedTable<object>(TableId, Fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: HeadName);
             _table.Changed += Draw;
             _table.Sorted += () => _ = RunAsync(_sortFields.Sorted(_posted!.Arguments, _table));
         }
@@ -487,7 +487,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
                 ThemeManager.GreyKey))),
             "reported",
             right: true),
-        _sortFields.Field("SellsFor", new TableColumn("SellsFor") { Min = 96 }, "Sells for", row => Centered(Right(Mono(Figure(((RareListingRow)row).FarPrice), ThemeManager.AKey))), second: "Far away", right: true, byDefault: false),
+        _sortFields.Field("SellsFor", new TableColumn("SellsFor") { Min = 96 }, "Sells for", row => Centered(Right(Mono(Figure(((RareListingRow)row).FarPrice), ThemeManager.AKey))), second: "Far away", right: true, byDefault: false, local: LocalSort.Figure<RareListingRow>(rare => rare.FarPrice)),
         new TableField<object>("RareRun", new TableColumn("RareRun") { Min = 116 }, row => RunCell((RareListingRow)row)),
     ];
 

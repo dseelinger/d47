@@ -85,6 +85,8 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     public override string Tool => "search_systems";
 
+    protected override string SortTableId => TableId;
+
     public override GalaxySearchKind Kind => GalaxySearchKind.Systems;
 
     public override string Summary => "";
@@ -232,9 +234,9 @@ public sealed class SystemSearchPage : GalaxySearchPage
             "updated",
             right: true,
             byDefault: !headset),
-        SearchField("Permit", new TableColumn("Permit"), "Permit", row => ((SystemSummary)row) is { KnownPermit: false } ? TableCells.Missing() : TableCells.Flag(((SystemSummary)row).NeedsPermit), byDefault: false),
-        SearchField("Stations", new TableColumn("Stations"), "Stations", row => TableCells.Number(((SystemSummary)row).StationCount), right: true, byDefault: false),
-        SearchField("AtWar", new TableColumn("AtWar"), "At war", row => TableCells.Flag(((SystemSummary)row).AtWar), byDefault: false),
+        SearchField("Permit", new TableColumn("Permit"), "Permit", row => ((SystemSummary)row) is { KnownPermit: false } ? TableCells.Missing() : TableCells.Flag(((SystemSummary)row).NeedsPermit), byDefault: false, local: LocalSort.Flag<SystemSummary>(system => system.KnownPermit == false ? null : system.NeedsPermit)),
+        SearchField("Stations", new TableColumn("Stations"), "Stations", row => TableCells.Number(((SystemSummary)row).StationCount), right: true, byDefault: false, local: LocalSort.Figure<SystemSummary>(system => system.StationCount)),
+        SearchField("AtWar", new TableColumn("AtWar"), "At war", row => TableCells.Flag(((SystemSummary)row).AtWar), byDefault: false, local: LocalSort.Flag<SystemSummary>(system => system.AtWar)),
     ];
 
     private Control SystemCell(SystemSummary system)

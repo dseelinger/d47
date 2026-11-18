@@ -12,14 +12,18 @@ public sealed class ColumnSortMemory(ViewStateStore store, bool headset = false)
             ? (sort.Key, sort.Descending ? SortDirection.Descending : SortDirection.Ascending)
             : null;
 
-    /// <summary>Stores a table's sort, or forgets it when <paramref name="sort"/> is null.</summary>
-    public void Remember(string table, (string Key, SortDirection Direction)? sort)
+    /// <summary>The <c>order_by</c> name stored with a table's sort; null where the sort is of the rows shown or none is stored.</summary>
+    public string? RememberedOrderBy(string table) =>
+        store.Load().ColumnSorts.TryGetValue(ColumnArrangement.IdFor(table, headset), out var sort) ? sort.OrderBy : null;
+
+    /// <summary>Stores a table's sort, or forgets it when <paramref name="sort"/> is null; <paramref name="orderBy"/> is the service's name for the field.</summary>
+    public void Remember(string table, (string Key, SortDirection Direction)? sort, string? orderBy = null)
     {
         var id = ColumnArrangement.IdFor(table, headset);
         var state = store.Load();
 
         store.Save(sort is { } chosen
-            ? state.WithSort(id, new StoredSort(chosen.Key, chosen.Direction == SortDirection.Descending))
+            ? state.WithSort(id, new StoredSort(chosen.Key, chosen.Direction == SortDirection.Descending, orderBy))
             : state.WithoutSort(id));
     }
 }

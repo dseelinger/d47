@@ -73,6 +73,8 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     public override string Tool => "find_signal";
 
+    protected override string SortTableId => TableId;
+
     public override GalaxySearchKind Kind => GalaxySearchKind.Signals;
 
     public override string Summary => "";
@@ -196,14 +198,14 @@ public sealed class SignalSearchPage : GalaxySearchPage
         return new PagedTable(SearchTableFields.Head(table), item => Row((SignalFinding)item, table));
     }
 
-    /// <summary>Every field the table can show; none sorts.</summary>
+    /// <summary>Every field the table can show; each sorts the rows fetched.</summary>
     private IReadOnlyList<TableField<object>> Fields() =>
     [
-        SearchField("Signal", new TableColumn("Signal", ColumnFit.Fill) { Min = 100 }, "Signal", row => Centered(Value(((SignalFinding)row).Signal))),
-        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((SignalFinding)row)),
-        SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(((SignalFinding)row).Distance.ToString("F2", CultureInfo.InvariantCulture), TypeScale.Small, ThemeManager.AKey))), right: true),
-        SearchField("Seen", new TableColumn("Seen"), "Seen", row => Centered(Value(MissionsPage.Ago(DateTimeOffset.UtcNow - ((SignalFinding)row).LastSeen)))),
-        SearchField("Source", new TableColumn("Source"), "Source", row => SourceCell((SignalFinding)row)),
+        SearchField("Signal", new TableColumn("Signal", ColumnFit.Fill) { Min = 100 }, "Signal", row => Centered(Value(((SignalFinding)row).Signal)), local: LocalSort.Text<SignalFinding>(finding => finding.Signal)),
+        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((SignalFinding)row), local: LocalSort.Text<SignalFinding>(finding => finding.System)),
+        SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(((SignalFinding)row).Distance.ToString("F2", CultureInfo.InvariantCulture), TypeScale.Small, ThemeManager.AKey))), right: true, local: LocalSort.Figure<SignalFinding>(finding => finding.Distance, SortDirection.Ascending)),
+        SearchField("Seen", new TableColumn("Seen"), "Seen", row => Centered(Value(MissionsPage.Ago(DateTimeOffset.UtcNow - ((SignalFinding)row).LastSeen))), local: LocalSort.When<SignalFinding>(finding => finding.LastSeen)),
+        SearchField("Source", new TableColumn("Source"), "Source", row => SourceCell((SignalFinding)row), local: LocalSort.Text<SignalFinding>(finding => finding.OwnScan ? YourScan : FromIndex)),
     ];
 
     private Control SystemCell(SignalFinding finding)

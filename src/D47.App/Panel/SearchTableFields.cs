@@ -7,8 +7,8 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The fields of one kind of search table and the sort the service applies to them. A field whose header sorts is
-/// registered with the <c>order_by</c> name it sends; every other field has a plain label.
+/// The fields of one kind of search table and how each header sorts. A field the service orders by is registered with the
+/// <c>order_by</c> name it sends; every other field sorts the rows already fetched.
 /// </summary>
 internal sealed class SearchTableFields(GalaxySearchKind kind)
 {
@@ -16,7 +16,16 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
 
     public void Clear() => _sortNames.Clear();
 
-    /// <summary>A field; <paramref name="sort"/> is the <c>order_by</c> name its header sorts on, or null for a plain label.</summary>
+    /// <summary>The field's header asks the service to order the search.</summary>
+    public bool IsRemote(string key) => _sortNames.ContainsKey(key);
+
+    /// <summary>The <c>order_by</c> name the field's header sends; null where it sorts the rows fetched.</summary>
+    public string? OrderBy(string key) => _sortNames.GetValueOrDefault(key);
+
+    /// <summary>
+    /// A field; <paramref name="sort"/> is the <c>order_by</c> name its header asks the service for. Without one,
+    /// <paramref name="local"/> sorts the rows fetched.
+    /// </summary>
     public TableField<object> Field(
         string key,
         TableColumn column,
@@ -25,7 +34,8 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
         string? sort = null,
         string? second = null,
         bool right = false,
-        bool byDefault = true)
+        bool byDefault = true,
+        Func<string, SortColumn<object>>? local = null)
     {
         var field = new TableField<object>(key, column, cell)
         {
@@ -37,7 +47,7 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
 
         if (sort is null || SearchSorts.For(kind).FirstOrDefault(known => known.Name == sort) is not { } spec)
         {
-            return field;
+            return local is null ? field : field with { Sort = local(label) };
         }
 
         _sortNames[key] = sort;
@@ -95,4 +105,20 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
 
     private string? KeyOf(string sortName) =>
         _sortNames.Where(pair => pair.Value == sortName).Select(pair => pair.Key).FirstOrDefault();
+}
+
+/// <summary>The sorts of the rows a table has fetched, over one value of each row.</summary>
+internal static class LocalSort
+{
+    public static Func<string, SortColumn<object>> Text<TRow>(Func<TRow, string?> key) =>
+        label => SortColumn<object>.Text(label, row => key((TRow)row));
+
+    public static Func<string, SortColumn<object>> Figure<TRow>(Func<TRow, double?> key, SortDirection first = SortDirection.Descending) =>
+        label => SortColumn<object>.Figure<double>(label, row => key((TRow)row), first);
+
+    public static Func<string, SortColumn<object>> Flag<TRow>(Func<TRow, bool?> key) =>
+        Figure<TRow>(row => key(row) is { } flag ? (flag ? 1 : 0) : null);
+
+    public static Func<string, SortColumn<object>> When<TRow>(Func<TRow, DateTimeOffset?> key) =>
+        Figure<TRow>(row => key(row)?.ToUnixTimeSeconds());
 }

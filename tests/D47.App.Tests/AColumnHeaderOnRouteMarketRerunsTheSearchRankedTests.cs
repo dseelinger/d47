@@ -161,16 +161,24 @@ public sealed class AColumnHeaderOnRouteMarketRerunsTheSearchRankedTests
     }
 
     [AvaloniaFact]
-    public void AColumnThatIsNotRankedIsNotAButton()
+    public void AColumnThatIsNotRankedSortsTheRowsShownAndSaysSo()
     {
-        var (panel, window, _) = Furnished();
+        var (panel, window, trade) = Furnished();
+        var asked = trade.Asked.Count;
 
         var buttons = panel.GetVisualDescendants().OfType<Button>().Select(button => button.Name).ToList();
+        Assert.Contains("MarketHead.Station", buttons);
+        Assert.Contains("MarketHead.Priced", buttons);
 
-        Assert.Contains("MarketHead.Distance", buttons);
-        Assert.DoesNotContain("MarketHead.Station", buttons);
-        Assert.DoesNotContain("MarketHead.Stock", buttons);
-        Assert.DoesNotContain("MarketHead.Priced", buttons);
+        Press(panel, "MarketHead.Stock");
+
+        Assert.Equal(asked, trade.Asked.Count);
+        var line = panel.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Name == RouteMarketPage.LocalOrderName);
+        Assert.Equal("THESE 2 SORTED BY STOCK", line.Text);
+
+        Press(panel, "MarketHead.Distance");
+
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Name == RouteMarketPage.LocalOrderName);
 
         window.Close();
     }
