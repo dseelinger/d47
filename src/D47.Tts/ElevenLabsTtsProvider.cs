@@ -547,7 +547,7 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
     /// The <c>detail.message</c> ElevenLabs puts in an error body, or null when there is not one to
     /// read.
     /// </summary>
-    private static async Task<string?> MessageFromBodyAsync(
+    internal static async Task<string?> MessageFromBodyAsync(
         HttpResponseMessage response,
         CancellationToken cancellationToken)
     {
