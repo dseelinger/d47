@@ -12,7 +12,9 @@ internal static class XrType
     public const int SwapchainCreateInfo = 9;
     public const int FrameEndInfo = 12;
     public const int EventDataSessionStateChanged = 18;
+    public const int ActionStateBoolean = 23;
     public const int ActionStateFloat = 24;
+    public const int ActionStateVector2f = 25;
     public const int ActionSetCreateInfo = 28;
     public const int ActionCreateInfo = 29;
     public const int InstanceProperties = 32;
@@ -46,7 +48,9 @@ internal static class XrConstant
     public const ulong LocationOrientationValid = 0x1;
     public const ulong LocationPositionValid = 0x2;
     public const int SessionStateFocused = 5;
+    public const int ActionTypeBooleanInput = 1;
     public const int ActionTypeFloatInput = 2;
+    public const int ActionTypeVector2fInput = 3;
     public const int ActionTypePoseInput = 4;
     public const int MaxActionSetNameSize = 64;
     public const int MaxLocalizedActionSetNameSize = 128;
@@ -350,6 +354,29 @@ internal unsafe struct XrActionStateFloat
     public int Type;
     public void* Next;
     public float CurrentState;
+    public uint ChangedSinceLastSync;
+    public long LastChangeTime;
+    public uint IsActive;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrActionStateBoolean
+{
+    public int Type;
+    public void* Next;
+    public uint CurrentState;
+    public uint ChangedSinceLastSync;
+    public long LastChangeTime;
+    public uint IsActive;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrActionStateVector2f
+{
+    public int Type;
+    public void* Next;
+    public float CurrentStateX;
+    public float CurrentStateY;
     public uint ChangedSinceLastSync;
     public long LastChangeTime;
     public uint IsActive;

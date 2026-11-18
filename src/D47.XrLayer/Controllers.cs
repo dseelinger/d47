@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace D47.XrLayer;
 
 /// <summary>
@@ -9,7 +11,6 @@ namespace D47.XrLayer;
 internal sealed unsafe class Controllers
 {
     private const int MostActionSets = 64;
-    private const int BindingCount = 8;
 
     private const int Waiting = 0;
     private const int Attaching = 1;
@@ -31,11 +32,8 @@ internal sealed unsafe class Controllers
     private volatile bool eliteSynced;
     private volatile int eliteSyncResult;
     private volatile XrControllerRefusal refusal;
+    private readonly ulong[] actions = new ulong[ControllerProfiles.Actions.Length];
     private ulong actionSet;
-    private ulong aimAction;
-    private ulong gripAction;
-    private ulong triggerAction;
-    private ulong squeezeAction;
 
     public Controllers(ILayerCalls calls, SuggestedBindings suggested, ulong instance, ulong session)
     {
@@ -293,7 +291,7 @@ internal sealed unsafe class Controllers
         return Own;
     }
 
-    /// <summary>Creates the action set and its actions and suggests the Touch bindings, Elite's included. False when any call fails.</summary>
+    /// <summary>Creates the action set and its actions and suggests each profile's bindings, Elite's included. False when any call fails.</summary>
     private bool Prepare()
     {
         if (!Path("/user/hand/left"u8, out hands[0]) || !Path("/user/hand/right"u8, out hands[1]))
@@ -311,15 +309,30 @@ internal sealed unsafe class Controllers
         }
 
         actionSet = set;
-        if (!CreateAction("aim"u8, "Aim"u8, XrConstant.ActionTypePoseInput, out aimAction)
-            || !CreateAction("grip"u8, "Grip"u8, XrConstant.ActionTypePoseInput, out gripAction)
-            || !CreateAction("trigger"u8, "Trigger"u8, XrConstant.ActionTypeFloatInput, out triggerAction)
-            || !CreateAction("squeeze"u8, "Squeeze"u8, XrConstant.ActionTypeFloatInput, out squeezeAction))
+        for (var i = 0; i < actions.Length; i++)
         {
-            return false;
+            var (name, localized, type) = ControllerProfiles.Actions[i];
+            if (!CreateAction(name, localized, type, out actions[i]))
+            {
+                return false;
+            }
         }
 
-        if (!Path("/interaction_profiles/oculus/touch_controller"u8, out var profile))
+        foreach (var profile in ControllerProfiles.All)
+        {
+            if (!Suggest(profile))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Suggests the profile's bindings after Elite's own for it.</summary>
+    private bool Suggest(ControllerProfile table)
+    {
+        if (!Path(table.Path, out var profile))
         {
             return false;
         }
@@ -330,19 +343,17 @@ internal sealed unsafe class Controllers
             return false;
         }
 
-        var bindings = new XrActionSuggestedBinding[elites.Length + BindingCount];
+        var bindings = new XrActionSuggestedBinding[elites.Length + table.Bindings.Length];
         elites.CopyTo(bindings, 0);
         var at = elites.Length;
-        if (!Bind(bindings, ref at, aimAction, "/user/hand/left/input/aim/pose"u8)
-            || !Bind(bindings, ref at, aimAction, "/user/hand/right/input/aim/pose"u8)
-            || !Bind(bindings, ref at, gripAction, "/user/hand/left/input/grip/pose"u8)
-            || !Bind(bindings, ref at, gripAction, "/user/hand/right/input/grip/pose"u8)
-            || !Bind(bindings, ref at, triggerAction, "/user/hand/left/input/trigger/value"u8)
-            || !Bind(bindings, ref at, triggerAction, "/user/hand/right/input/trigger/value"u8)
-            || !Bind(bindings, ref at, squeezeAction, "/user/hand/left/input/squeeze/value"u8)
-            || !Bind(bindings, ref at, squeezeAction, "/user/hand/right/input/squeeze/value"u8))
+        foreach (var (action, binding) in table.Bindings)
         {
-            return false;
+            if (!Path(binding, out var path))
+            {
+                return false;
+            }
+
+            bindings[at++] = new XrActionSuggestedBinding { Action = actions[(int)action], Binding = path };
         }
 
         fixed (XrActionSuggestedBinding* all = bindings)
@@ -358,7 +369,7 @@ internal sealed unsafe class Controllers
         }
     }
 
-    private bool CreateAction(ReadOnlySpan<byte> name, ReadOnlySpan<byte> localized, int type, out ulong action)
+    private bool CreateAction(string name, string localized, int type, out ulong action)
     {
         action = 0;
         var subactions = stackalloc ulong[XrBlock.HandCount];
@@ -374,8 +385,8 @@ internal sealed unsafe class Controllers
             CountSubactionPaths = XrBlock.HandCount,
             SubactionPaths = subactions,
         };
-        Write(info.ActionName, XrConstant.MaxActionNameSize, name);
-        Write(info.LocalizedActionName, XrConstant.MaxLocalizedActionNameSize, localized);
+        Write(info.ActionName, XrConstant.MaxActionNameSize, Encoding.UTF8.GetBytes(name));
+        Write(info.LocalizedActionName, XrConstant.MaxLocalizedActionNameSize, Encoding.UTF8.GetBytes(localized));
         ulong created = 0;
         if (calls.CreateAction(actionSet, &info, &created) < XrResult.Success || created == 0)
         {
@@ -386,16 +397,7 @@ internal sealed unsafe class Controllers
         return true;
     }
 
-    private bool Bind(XrActionSuggestedBinding[] bindings, ref int at, ulong action, ReadOnlySpan<byte> binding)
-    {
-        if (!Path(binding, out var path))
-        {
-            return false;
-        }
-
-        bindings[at++] = new XrActionSuggestedBinding { Action = action, Binding = path };
-        return true;
-    }
+    private bool Path(string text, out ulong path) => Path(Encoding.UTF8.GetBytes(text), out path);
 
     private bool Path(ReadOnlySpan<byte> text, out ulong path)
     {
@@ -415,8 +417,8 @@ internal sealed unsafe class Controllers
     {
         for (var i = 0; i < XrBlock.HandCount; i++)
         {
-            aimSpaces[i] = CreateSpace(aimAction, hands[i]);
-            gripSpaces[i] = CreateSpace(gripAction, hands[i]);
+            aimSpaces[i] = CreateSpace(actions[(int)LayerAction.Aim], hands[i]);
+            gripSpaces[i] = CreateSpace(actions[(int)LayerAction.Grip], hands[i]);
         }
     }
 
@@ -440,13 +442,27 @@ internal sealed unsafe class Controllers
             return default;
         }
 
+        var hand = hands[index];
+        var buttons = XrButtons.None;
+        foreach (var (action, bit) in ControllerProfiles.Buttons)
+        {
+            if (Held(actions[(int)action], hand))
+            {
+                buttons |= bit;
+            }
+        }
+
+        var (x, y) = Stick(actions[(int)LayerAction.Stick], hand);
         return new XrHand
         {
             Aim = aim,
             Grip = grip,
             Valid = 1,
-            TriggerValue = Value(triggerAction, hands[index]),
-            GripValue = Value(squeezeAction, hands[index]),
+            TriggerValue = Value(actions[(int)LayerAction.Trigger], hand),
+            GripValue = Value(actions[(int)LayerAction.Squeeze], hand),
+            Buttons = buttons,
+            StickX = x,
+            StickY = y,
         };
     }
 
@@ -488,6 +504,24 @@ internal sealed unsafe class Controllers
             && value.IsActive != 0 && float.IsFinite(value.CurrentState)
             ? value.CurrentState
             : 0f;
+    }
+
+    private bool Held(ulong action, ulong hand)
+    {
+        var info = new XrActionStateGetInfo { Type = XrType.ActionStateGetInfo, Action = action, SubactionPath = hand };
+        var state = new XrActionStateBoolean { Type = XrType.ActionStateBoolean };
+        return calls.GetActionStateBoolean(session, &info, &state) >= XrResult.Success
+            && state.IsActive != 0 && state.CurrentState != 0;
+    }
+
+    private (float X, float Y) Stick(ulong action, ulong hand)
+    {
+        var info = new XrActionStateGetInfo { Type = XrType.ActionStateGetInfo, Action = action, SubactionPath = hand };
+        var state = new XrActionStateVector2f { Type = XrType.ActionStateVector2f };
+        return calls.GetActionStateVector2f(session, &info, &state) >= XrResult.Success
+            && state.IsActive != 0 && float.IsFinite(state.CurrentStateX) && float.IsFinite(state.CurrentStateY)
+            ? (Math.Clamp(state.CurrentStateX, -1f, 1f), Math.Clamp(state.CurrentStateY, -1f, 1f))
+            : (0f, 0f);
     }
 
     private static void Write(byte* target, int size, ReadOnlySpan<byte> text) =>

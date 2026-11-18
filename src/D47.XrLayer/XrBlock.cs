@@ -15,7 +15,7 @@ internal struct XrBlock
     /// <summary>"D47X" read as a little-endian uint.</summary>
     public const uint MagicValue = 0x58373444;
 
-    public const uint CurrentLayoutVersion = 3;
+    public const uint CurrentLayoutVersion = 4;
 
     public const int SlotCount = 6;
 
@@ -156,6 +156,25 @@ internal struct XrHand
     public uint Valid;
     public float TriggerValue;
     public float GripValue;
+    public XrButtons Buttons;
+
+    /// <summary>The thumbstick, each axis from -1 to 1. 0 when the stick action is inactive.</summary>
+    public float StickX;
+    public float StickY;
+}
+
+/// <summary>
+/// The bits of <see cref="XrHand.Buttons"/>, each at the position of its button in D47.Core's VrButton. Bits 0 and 1
+/// are the trigger and grip, which the layer publishes as values and leaves clear here.
+/// </summary>
+[Flags]
+internal enum XrButtons : uint
+{
+    None = 0,
+    Primary = 1u << 2,
+    Secondary = 1u << 3,
+    Menu = 1u << 4,
+    StickClick = 1u << 5,
 }
 
 [InlineArray(XrBlock.RuntimeNameLength)]

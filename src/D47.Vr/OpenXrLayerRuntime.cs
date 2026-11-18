@@ -42,7 +42,13 @@ public sealed unsafe class OpenXrLayerRuntime(
     internal const int BeamSlot = 3;
     internal const int CursorSlot = 4;
 
+    private const XrButtons Clicks = XrButtons.Primary | XrButtons.Secondary | XrButtons.Menu | XrButtons.StickClick;
+
     private static readonly VrCursor[] CursorKinds = Enum.GetValues<VrCursor>();
+
+    /// <summary>Whether each hand's trigger, then grip, was held at the last <see cref="HandsAndHead"/>. Guarded by <see cref="_half"/>.</summary>
+    private readonly bool[] _triggerBy = new bool[XrBlock.HandCount];
+    private readonly bool[] _gripBy = new bool[XrBlock.HandCount];
 
     /// <summary>Held for every read of <see cref="_block"/> and every write to d47's half.</summary>
     private readonly Lock _half = new();
@@ -365,6 +371,8 @@ public sealed unsafe class OpenXrLayerRuntime(
             _triggerDown = false;
             _backWasDown = false;
             _curved = false;
+            Array.Clear(_triggerBy);
+            Array.Clear(_gripBy);
             Head = null;
         }
     }
@@ -387,6 +395,8 @@ public sealed unsafe class OpenXrLayerRuntime(
 
             if (!_pointing)
             {
+                Array.Clear(_triggerBy);
+                Array.Clear(_gripBy);
                 return ([], head);
             }
 
@@ -396,10 +406,20 @@ public sealed unsafe class OpenXrLayerRuntime(
             {
                 var hand = _layer.Hands[i];
 
-                if (hand.Valid == 1)
+                if (hand.Valid != 1)
                 {
-                    found.Add(new VrHand((uint)i, ToPose(hand.Grip), ToPose(hand.Aim)));
+                    _triggerBy[i] = false;
+                    _gripBy[i] = false;
+                    continue;
                 }
+
+                _triggerBy[i] = hand.TriggerValue >= (_triggerBy[i] ? ReleasedAt : PressedAt);
+                _gripBy[i] = hand.GripValue >= (_gripBy[i] ? ReleasedAt : PressedAt);
+                var held = (uint)(hand.Buttons & Clicks)
+                           | (_triggerBy[i] ? VrHand.Bit(VrButton.Trigger) : 0u)
+                           | (_gripBy[i] ? VrHand.Bit(VrButton.Grip) : 0u);
+
+                found.Add(new VrHand((uint)i, ToPose(hand.Grip), ToPose(hand.Aim), held, StickOf(hand)));
             }
 
             return (found, head);
@@ -908,6 +928,11 @@ public sealed unsafe class OpenXrLayerRuntime(
         var end = bytes.IndexOf((byte)0);
         return Encoding.UTF8.GetString(end < 0 ? bytes : bytes[..end]);
     }
+
+    private static Vector2 StickOf(in XrHand hand) =>
+        float.IsFinite(hand.StickX) && float.IsFinite(hand.StickY)
+            ? new Vector2(Math.Clamp(hand.StickX, -1f, 1f), Math.Clamp(hand.StickY, -1f, 1f))
+            : Vector2.Zero;
 
     private static VrPose ToPose(XrBlockPose pose) => new(
         new Vector3(pose.PositionX, pose.PositionY, pose.PositionZ),

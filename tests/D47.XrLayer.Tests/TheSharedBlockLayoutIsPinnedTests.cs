@@ -5,13 +5,13 @@ namespace D47.XrLayer.Tests;
 
 /// <summary>
 /// d47 and the layer in a running Elite may come from different releases. A change to the block's size or to any
-/// field's offset needs a new <see cref="XrBlock.CurrentLayoutVersion"/> and a new row here.
+/// field's offset, or to the size of a hand, needs a new <see cref="XrBlock.CurrentLayoutVersion"/> and a new row here.
 /// </summary>
 public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
 {
-    private static readonly Dictionary<uint, (int Size, Dictionary<string, int> Offsets)> Layouts = new()
+    private static readonly Dictionary<uint, (int Size, int HandSize, Dictionary<string, int> Offsets)> Layouts = new()
     {
-        [1] = (1552, new()
+        [1] = (1552, 68, new()
         {
             ["Magic"] = 0,
             ["LayoutVersion"] = 4,
@@ -48,7 +48,7 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["Layer.Hands[1].Aim"] = 1352,
             ["Layer.RuntimeName"] = 1420,
         }),
-        [2] = (1552, new()
+        [2] = (1552, 68, new()
         {
             ["Magic"] = 0,
             ["LayoutVersion"] = 4,
@@ -86,7 +86,7 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["Layer.Hands[1].Aim"] = 1356,
             ["Layer.RuntimeName"] = 1424,
         }),
-        [3] = (1608, new()
+        [3] = (1608, 68, new()
         {
             ["Magic"] = 0,
             ["LayoutVersion"] = 4,
@@ -126,6 +126,49 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["Layer.RuntimeName"] = 1472,
             ["Layer.Cylinders"] = 1600,
         }),
+        [4] = (1632, 80, new()
+        {
+            ["Magic"] = 0,
+            ["LayoutVersion"] = 4,
+            ["D47.Sequence"] = 8,
+            ["D47.Pointing"] = 12,
+            ["D47.Heartbeat"] = 16,
+            ["D47.Slots[0].Visible"] = 24,
+            ["D47.Slots[0].Space"] = 28,
+            ["D47.Slots[0].Pose"] = 32,
+            ["D47.Slots[0].WidthMetres"] = 60,
+            ["D47.Slots[0].TextureWidth"] = 64,
+            ["D47.Slots[0].TextureHeight"] = 68,
+            ["D47.Slots[0].TextureGeneration"] = 72,
+            ["D47.Slots[0].RectX"] = 80,
+            ["D47.Slots[0].RectY"] = 84,
+            ["D47.Slots[0].RectWidth"] = 88,
+            ["D47.Slots[0].RectHeight"] = 92,
+            ["D47.Slots[0].TextureName"] = 96,
+            ["D47.Slots[0].Curvature"] = 224,
+            ["D47.Slots[1].Visible"] = 232,
+            ["D47.Slots[5].TextureName"] = 1136,
+            ["Layer.Sequence"] = 1272,
+            ["Layer.Attached"] = 1276,
+            ["Layer.FrameCounter"] = 1280,
+            ["Layer.Refusal"] = 1288,
+            ["Layer.ControllerRefusal"] = 1292,
+            ["Layer.AdapterLuidLow"] = 1296,
+            ["Layer.AdapterLuidHigh"] = 1300,
+            ["Layer.HeadValid"] = 1304,
+            ["Layer.Head"] = 1308,
+            ["Layer.Hands[0].Aim"] = 1336,
+            ["Layer.Hands[0].Grip"] = 1364,
+            ["Layer.Hands[0].Valid"] = 1392,
+            ["Layer.Hands[0].TriggerValue"] = 1396,
+            ["Layer.Hands[0].GripValue"] = 1400,
+            ["Layer.Hands[0].Buttons"] = 1404,
+            ["Layer.Hands[0].StickX"] = 1408,
+            ["Layer.Hands[0].StickY"] = 1412,
+            ["Layer.Hands[1].Aim"] = 1416,
+            ["Layer.RuntimeName"] = 1496,
+            ["Layer.Cylinders"] = 1624,
+        }),
     };
 
     [Fact]
@@ -136,6 +179,7 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             $"Layout version {XrBlock.CurrentLayoutVersion} has no row. Add its size and offsets.");
 
         Assert.Equal(pinned.Size, sizeof(XrBlock));
+        Assert.Equal(pinned.HandSize, sizeof(XrHand));
         Assert.Equal(pinned.Offsets, Offsets());
     }
 
@@ -144,7 +188,6 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
     {
         Assert.Equal(28, sizeof(XrBlockPose));
         Assert.Equal(208, sizeof(XrQuadSlot));
-        Assert.Equal(68, sizeof(XrHand));
         Assert.Equal(XrBlock.TextureNameLength * sizeof(char), sizeof(XrTextureName));
         Assert.Equal(XrBlock.RuntimeNameLength, sizeof(XrRuntimeName));
     }
@@ -197,6 +240,9 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["Layer.Hands[0].Valid"] = Offset(b, &b->Layer.Hands[0].Valid),
             ["Layer.Hands[0].TriggerValue"] = Offset(b, &b->Layer.Hands[0].TriggerValue),
             ["Layer.Hands[0].GripValue"] = Offset(b, &b->Layer.Hands[0].GripValue),
+            ["Layer.Hands[0].Buttons"] = Offset(b, &b->Layer.Hands[0].Buttons),
+            ["Layer.Hands[0].StickX"] = Offset(b, &b->Layer.Hands[0].StickX),
+            ["Layer.Hands[0].StickY"] = Offset(b, &b->Layer.Hands[0].StickY),
             ["Layer.Hands[1].Aim"] = Offset(b, &b->Layer.Hands[1].Aim),
             ["Layer.RuntimeName"] = Offset(b, &b->Layer.RuntimeName),
             ["Layer.Cylinders"] = Offset(b, &b->Layer.Cylinders),

@@ -45,6 +45,10 @@ internal unsafe interface ILayerCalls
 
     int GetActionStateFloat(ulong session, XrActionStateGetInfo* getInfo, XrActionStateFloat* state);
 
+    int GetActionStateBoolean(ulong session, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state);
+
+    int GetActionStateVector2f(ulong session, XrActionStateGetInfo* getInfo, XrActionStateVector2f* state);
+
     /// <summary>The session's Direct3D 11 device, or null when it cannot be used.</summary>
     ITextureDevice? OpenDevice(nint d3d11Device);
 }

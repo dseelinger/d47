@@ -26,6 +26,8 @@ internal sealed unsafe class NativeLayerCalls : ILayerCalls
     private readonly delegate* unmanaged<ulong, XrActionsSyncInfo*, int> syncActions;
     private readonly delegate* unmanaged<ulong, XrActionSpaceCreateInfo*, ulong*, int> createActionSpace;
     private readonly delegate* unmanaged<ulong, XrActionStateGetInfo*, XrActionStateFloat*, int> getActionStateFloat;
+    private readonly delegate* unmanaged<ulong, XrActionStateGetInfo*, XrActionStateBoolean*, int> getActionStateBoolean;
+    private readonly delegate* unmanaged<ulong, XrActionStateGetInfo*, XrActionStateVector2f*, int> getActionStateVector2f;
 
     private NativeLayerCalls(delegate* unmanaged<ulong, byte*, nint*, int> next, ulong instance)
     {
@@ -50,6 +52,8 @@ internal sealed unsafe class NativeLayerCalls : ILayerCalls
         syncActions = (delegate* unmanaged<ulong, XrActionsSyncInfo*, int>)Find(next, instance, "xrSyncActions"u8);
         createActionSpace = (delegate* unmanaged<ulong, XrActionSpaceCreateInfo*, ulong*, int>)Find(next, instance, "xrCreateActionSpace"u8);
         getActionStateFloat = (delegate* unmanaged<ulong, XrActionStateGetInfo*, XrActionStateFloat*, int>)Find(next, instance, "xrGetActionStateFloat"u8);
+        getActionStateBoolean = (delegate* unmanaged<ulong, XrActionStateGetInfo*, XrActionStateBoolean*, int>)Find(next, instance, "xrGetActionStateBoolean"u8);
+        getActionStateVector2f = (delegate* unmanaged<ulong, XrActionStateGetInfo*, XrActionStateVector2f*, int>)Find(next, instance, "xrGetActionStateVector2f"u8);
     }
 
     /// <summary>The next layer's functions, or null when any of them is missing.</summary>
@@ -69,7 +73,7 @@ internal sealed unsafe class NativeLayerCalls : ILayerCalls
             || calls.stringToPath is null || calls.createActionSet is null || calls.destroyActionSet is null
             || calls.createAction is null || calls.suggestInteractionProfileBindings is null
             || calls.attachSessionActionSets is null || calls.syncActions is null || calls.createActionSpace is null
-            || calls.getActionStateFloat is null
+            || calls.getActionStateFloat is null || calls.getActionStateBoolean is null || calls.getActionStateVector2f is null
             ? null
             : calls;
     }
@@ -139,6 +143,12 @@ internal sealed unsafe class NativeLayerCalls : ILayerCalls
 
     public int GetActionStateFloat(ulong session, XrActionStateGetInfo* getInfo, XrActionStateFloat* state) =>
         getActionStateFloat(session, getInfo, state);
+
+    public int GetActionStateBoolean(ulong session, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state) =>
+        getActionStateBoolean(session, getInfo, state);
+
+    public int GetActionStateVector2f(ulong session, XrActionStateGetInfo* getInfo, XrActionStateVector2f* state) =>
+        getActionStateVector2f(session, getInfo, state);
 
     public ITextureDevice? OpenDevice(nint d3d11Device) => D3D11TextureDevice.Open(d3d11Device);
 

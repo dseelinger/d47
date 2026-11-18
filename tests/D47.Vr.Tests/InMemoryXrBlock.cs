@@ -87,7 +87,14 @@ internal sealed unsafe class InMemoryXrBlock : IXrBlockMemory, IDisposable
         Write();
     }
 
-    public void Hand(int index, float trigger, float grip, bool valid = true)
+    public void Hand(
+        int index,
+        float trigger,
+        float grip,
+        bool valid = true,
+        XrButtons buttons = XrButtons.None,
+        float stickX = 0f,
+        float stickY = 0f)
     {
         _layer.Hands[index] = new XrHand
         {
@@ -96,6 +103,9 @@ internal sealed unsafe class InMemoryXrBlock : IXrBlockMemory, IDisposable
             Valid = valid ? 1u : 0u,
             TriggerValue = trigger,
             GripValue = grip,
+            Buttons = buttons,
+            StickX = stickX,
+            StickY = stickY,
         };
         Write();
     }

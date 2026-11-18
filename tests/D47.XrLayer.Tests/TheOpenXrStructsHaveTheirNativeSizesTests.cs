@@ -75,6 +75,8 @@ public sealed unsafe class TheOpenXrStructsHaveTheirNativeSizesTests
         Assert.Equal(64, sizeof(XrActionSpaceCreateInfo));
         Assert.Equal(32, sizeof(XrActionStateGetInfo));
         Assert.Equal(40, sizeof(XrActionStateFloat));
+        Assert.Equal(40, sizeof(XrActionStateBoolean));
+        Assert.Equal(48, sizeof(XrActionStateVector2f));
     }
 
     [Fact]
@@ -96,6 +98,21 @@ public sealed unsafe class TheOpenXrStructsHaveTheirNativeSizesTests
         Assert.Equal(16, (byte*)&state.CurrentState - f);
         Assert.Equal(24, (byte*)&state.LastChangeTime - f);
         Assert.Equal(32, (byte*)&state.IsActive - f);
+
+        var held = default(XrActionStateBoolean);
+        var h = (byte*)&held;
+        Assert.Equal(16, (byte*)&held.CurrentState - h);
+        Assert.Equal(20, (byte*)&held.ChangedSinceLastSync - h);
+        Assert.Equal(24, (byte*)&held.LastChangeTime - h);
+        Assert.Equal(32, (byte*)&held.IsActive - h);
+
+        var stick = default(XrActionStateVector2f);
+        var v = (byte*)&stick;
+        Assert.Equal(16, (byte*)&stick.CurrentStateX - v);
+        Assert.Equal(20, (byte*)&stick.CurrentStateY - v);
+        Assert.Equal(24, (byte*)&stick.ChangedSinceLastSync - v);
+        Assert.Equal(32, (byte*)&stick.LastChangeTime - v);
+        Assert.Equal(40, (byte*)&stick.IsActive - v);
 
         var changed = default(XrEventDataSessionStateChanged);
         var e = (byte*)&changed;

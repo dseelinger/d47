@@ -199,7 +199,8 @@ internal sealed unsafe class FakeNext : ILayerCalls
     [
         nameof(StringToPath), nameof(CreateActionSet), nameof(DestroyActionSet), nameof(CreateAction),
         nameof(SuggestInteractionProfileBindings), nameof(AttachSessionActionSets), nameof(SyncActions),
-        nameof(CreateActionSpace), nameof(GetActionStateFloat), LocateHand, EliteAttachCall, EliteSyncCall,
+        nameof(CreateActionSpace), nameof(GetActionStateFloat), nameof(GetActionStateBoolean), nameof(GetActionStateVector2f),
+        LocateHand, EliteAttachCall, EliteSyncCall,
     ];
 
     private readonly Dictionary<string, ulong> paths = [];
@@ -252,6 +253,15 @@ internal sealed unsafe class FakeNext : ILayerCalls
 
     /// <summary>Float states by action name and hand path.</summary>
     public Dictionary<(string Action, string Hand), float> Values { get; } = [];
+
+    /// <summary>Boolean actions held down, by action name and hand path.</summary>
+    public HashSet<(string Action, string Hand)> Held { get; } = [];
+
+    /// <summary>Vector2f states by action name and hand path.</summary>
+    public Dictionary<(string Action, string Hand), (float X, float Y)> Sticks { get; } = [];
+
+    /// <summary>Actions the runtime reports inactive for a hand, whatever their state.</summary>
+    public HashSet<(string Action, string Hand)> Inactive { get; } = [];
 
     /// <summary>The path's id, as xrStringToPath gives it.</summary>
     public ulong Path(string path)
@@ -470,8 +480,27 @@ internal sealed unsafe class FakeNext : ILayerCalls
     public int GetActionStateFloat(ulong session, XrActionStateGetInfo* getInfo, XrActionStateFloat* state)
     {
         Calls.Add(nameof(GetActionStateFloat));
-        state->CurrentState = Values.GetValueOrDefault((ActionName(getInfo->Action), PathName(getInfo->SubactionPath)));
-        state->IsActive = 1;
+        var key = (ActionName(getInfo->Action), PathName(getInfo->SubactionPath));
+        state->CurrentState = Values.GetValueOrDefault(key);
+        state->IsActive = Inactive.Contains(key) ? 0u : 1u;
+        return XrResult.Success;
+    }
+
+    public int GetActionStateBoolean(ulong session, XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
+    {
+        Calls.Add(nameof(GetActionStateBoolean));
+        var key = (ActionName(getInfo->Action), PathName(getInfo->SubactionPath));
+        state->CurrentState = Held.Contains(key) ? 1u : 0u;
+        state->IsActive = Inactive.Contains(key) ? 0u : 1u;
+        return XrResult.Success;
+    }
+
+    public int GetActionStateVector2f(ulong session, XrActionStateGetInfo* getInfo, XrActionStateVector2f* state)
+    {
+        Calls.Add(nameof(GetActionStateVector2f));
+        var key = (ActionName(getInfo->Action), PathName(getInfo->SubactionPath));
+        (state->CurrentStateX, state->CurrentStateY) = Sticks.GetValueOrDefault(key);
+        state->IsActive = Inactive.Contains(key) ? 0u : 1u;
         return XrResult.Success;
     }
 
