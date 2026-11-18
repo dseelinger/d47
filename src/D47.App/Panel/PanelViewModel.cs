@@ -600,6 +600,9 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// <summary>Supplies the picture name of the Commander flying; read when a turn is written.</summary>
     public Func<string?>? CommanderPictureSource { get; set; }
 
+    /// <summary>Plays the waiting bed while a page waits on a search, or null where nothing plays it.</summary>
+    public D47.App.Voice.WaitSound? WaitSound { get; set; }
+
     /// <summary>Supplies the picture name of the carrier captain or the tower in the voice now set, or null; read when drawn.</summary>
     public Func<D47.Core.Audio.VoiceRole, string?>? CarrierPictureSource { get; set; }
 

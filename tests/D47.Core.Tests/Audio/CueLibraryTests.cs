@@ -46,7 +46,7 @@ public class CueLibraryTests
     {
         var assembly = typeof(CueLibrary).Assembly;
         var shipped = assembly.GetManifestResourceNames()
-            .Where(name => new[] { "D47.Core.Cues.", "D47.Core.Alerts.", "D47.Core.Beds.", "D47.Core.Music." }
+            .Where(name => new[] { "D47.Core.Cues.", "D47.Core.Alerts.", "D47.Core.Beds.", "D47.Core.Waits.", "D47.Core.Music." }
                 .Any(prefix => name.StartsWith(prefix, StringComparison.Ordinal)))
             .ToList();
 
@@ -83,6 +83,37 @@ public class CueLibraryTests
         Assert.True(
             bed.Duration > TimeSpan.FromSeconds(2),
             $"a {bed.Duration.TotalSeconds:0.0}s bed restarts often enough to be heard as a loop");
+    }
+
+    [Fact]
+    public void TheWaitingPulseShipsAndIsNotTheThinkingHum()
+    {
+        var library = CueLibrary.Load();
+
+        var wait = library.Waiting();
+
+        Assert.Equal(CueLibrary.DefaultWait, wait.Name);
+        Assert.Equal(AudioFormat.Standard, wait.Format);
+        Assert.True(wait.Duration > TimeSpan.FromSeconds(2), $"a {wait.Duration.TotalSeconds:0.0}s loop restarts often enough to be heard as a loop");
+        Assert.NotEqual(library.Bed().Name, wait.Name);
+    }
+
+    [Fact]
+    public void AMissingWaitingPulseFailsLoudly()
+    {
+        var error = Assert.Throws<CueSetException>(() => CueLibrary.Load(new EditedCueSource(names =>
+            names.Where(name => !name.StartsWith("D47.Core.Waits.", StringComparison.Ordinal)))));
+
+        Assert.Contains(CueLibrary.DefaultWait, error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OnlyOneWaitingLoopShips()
+    {
+        var error = Assert.Throws<CueSetException>(() => CueLibrary.Load(new EditedCueSource(names =>
+            names.Concat(["D47.Core.Waits.waiting-hum"]))));
+
+        Assert.Contains("waits/waiting-hum", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

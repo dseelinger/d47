@@ -1050,6 +1050,17 @@ the first words arrive rather than when the turn does.
 One is included, `thinking-hum`. Files in `data/audio/beds/` replace it: one of them is picked
 at random when a turn starts — see **Your own sounds** in [Audio mixer](audio.md).
 
+#### Waiting bed {#waiting-bed}
+
+A quiet loop while a page waits on a search or a lookup, such as **Plot** on a planner in Astrometrics › Plan.
+It starts once the wait has lasted a second, so a quick answer makes no sound, and it stops when
+the answer appears or the search is cancelled. It is a slow pulse at a higher pitch than the
+thinking bed, so the two are not confused.
+
+While the thinking bed plays, the waiting bed is silent, and it starts again when the thinking bed
+stops if the page is still waiting. "Stop" silences it until the next search. Its level, mute and
+duck are the **Waiting bed** row in [Audio mixer](audio.md). The one included is `waiting-pulse`.
+
 #### When a turn fails {#retry}
 
 A turn that stalls is answered out loud rather than left as silence, because silence is

@@ -189,25 +189,26 @@ public static class RoutingPages
         PanelNavigator nav,
         PanelPrompts prompts,
         ColumnWidthMemory? columnWidths = null,
-        Action<RoutePlanKind>? showOnGalaxyMap = null)
+        Action<RoutePlanKind>? showOnGalaxyMap = null,
+        D47.App.Voice.WaitSound? waitSound = null)
     {
         if (crumb.Key.StartsWith(ResultPrefix, StringComparison.Ordinal))
         {
-            return Result(crumb, surface, showOnGalaxyMap);
+            return Result(crumb, surface, showOnGalaxyMap, waitSound);
         }
 
         return crumb.Key switch
         {
-            PlanRoot => Plan(surface, nav),
+            PlanRoot => Plan(surface, nav, waitSound),
             ProgressKey => new RouteProgressPage(
                 surface.Route,
                 surface.Here,
                 Copy(surface),
                 surface.OffDuty,
                 () => surface.Commander?.Invoke()?.Location.StarPos),
-            MarketRoot => Market(surface, columnWidths),
+            MarketRoot => Market(surface, columnWidths, waitSound),
             BestCargoRoot => BestCargo(surface, nav, columnWidths),
-            TradeRoot => Trade(surface, nav),
+            TradeRoot => Trade(surface, nav, waitSound),
             BookmarksRoot => Bookmarks(surface, nav),
             BookmarksPage.AddKey => BookmarkForm(surface, nav, null),
             var key when BookmarksPage.EditOf(key) is { } name => BookmarkForm(surface, nav, name),
@@ -215,7 +216,7 @@ public static class RoutingPages
         };
     }
 
-    private static Control Plan(RoutingSurface surface, PanelNavigator nav) =>
+    private static Control Plan(RoutingSurface surface, PanelNavigator nav, D47.App.Voice.WaitSound? waitSound) =>
         surface is { Registry: { } registry, Plans: { } plans }
             ? new RoutePlanPage(
                 registry,
@@ -226,10 +227,11 @@ public static class RoutingPages
                 () => surface.Commander?.Invoke()?.Carrier.StarSystem,
                 surface.CarrierRoute,
                 surface.PrefixNames,
-                surface.SuggestionPause)
+                surface.SuggestionPause,
+                waitSound)
             : Missing("Plotting is not available on this surface.");
 
-    private static Control Market(RoutingSurface surface, ColumnWidthMemory? columnWidths) =>
+    private static Control Market(RoutingSurface surface, ColumnWidthMemory? columnWidths, D47.App.Voice.WaitSound? waitSound) =>
         surface is { Registry: { } registry, Commodities: { } board }
             ? new RouteMarketPage(
                 registry,
@@ -238,7 +240,8 @@ public static class RoutingPages
                 columnWidths,
                 surface.Here,
                 surface.SuggestionPause,
-                surface.BodySearch)
+                surface.BodySearch,
+                waitSound)
             : Missing("Market lookups are not available on this surface.");
 
     private static Control BestCargo(RoutingSurface surface, PanelNavigator nav, ColumnWidthMemory? columnWidths) =>
@@ -259,13 +262,14 @@ public static class RoutingPages
                 Copy(surface))
             : Missing("Best cargo is not available on this surface.");
 
-    private static Control Trade(RoutingSurface surface, PanelNavigator nav) =>
+    private static Control Trade(RoutingSurface surface, PanelNavigator nav, D47.App.Voice.WaitSound? waitSound) =>
         surface is { Registry: { } registry, Plans: { } plans, Settings: { } settings }
             ? new RouteTradePage(
                 registry,
                 plans,
                 nav,
-                settings)
+                settings,
+                waitSound)
             : Missing("The Trade route page is not available on this surface.");
 
     private static Control Bookmarks(RoutingSurface surface, PanelNavigator nav) =>
@@ -291,7 +295,7 @@ public static class RoutingPages
         return existing is null ? Missing("That bookmark is gone.") : new BookmarkFormPage(surface, nav, existing);
     }
 
-    private static Control Result(NavCrumb crumb, RoutingSurface surface, Action<RoutePlanKind>? showOnGalaxyMap)
+    private static Control Result(NavCrumb crumb, RoutingSurface surface, Action<RoutePlanKind>? showOnGalaxyMap, D47.App.Voice.WaitSound? waitSound)
     {
         if (surface.Plans is not { } plans
             || !Enum.TryParse<RoutePlanKind>(crumb.Key[ResultPrefix.Length..], out var kind)
@@ -306,7 +310,7 @@ public static class RoutingPages
             ? new OutfittingPlotter(registry, plans, surface.Here)
             : null;
 
-        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty, showOnGalaxyMap, plotter);
+        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty, showOnGalaxyMap, plotter, waitSound);
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>

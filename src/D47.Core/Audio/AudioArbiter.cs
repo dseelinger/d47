@@ -8,20 +8,23 @@ public enum AudioChannel
     /// <summary>The looping bed under a working turn (Phase 5, #18).</summary>
     Bed = 0,
 
+    /// <summary>The looping sound while a page waits on a search, started with <see cref="AudioArbiter.OpenWait"/>.</summary>
+    Wait = 1,
+
     /// <summary>Situational ambience (Phase 12, "Ambient music"), started with <see cref="AudioArbiter.PlayMusic"/>.</summary>
-    Music = 1,
+    Music = 2,
 
     /// <summary>A short non-speech marker.</summary>
-    Cue = 2,
+    Cue = 3,
 
     /// <summary>Invented radio traffic not addressed to the Commander; yields to an answer and an alert.</summary>
-    Overheard = 3,
+    Overheard = 4,
 
     /// <summary>An answer, spoken.</summary>
-    Speech = 4,
+    Speech = 5,
 
     /// <summary>A journal-triggered danger callout (Phase 8).</summary>
-    Alert = 5,
+    Alert = 6,
 }
 
 /// <summary>One thing to make audible: carries exactly one of <see cref="Clip"/> and <see cref="Arriving"/>.</summary>
@@ -97,6 +100,14 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private long _nextId = 1;
     private Playing? _current;
     private Playing? _bed;
+
+    /// <summary>How many waits are open in <see cref="_waitGeneration"/>.</summary>
+    private int _waits;
+
+    /// <summary>Bumped by <see cref="Silence"/>, so waits opened before it no longer count.</summary>
+    private long _waitGeneration;
+    private AudioClip? _waitClip;
+    private long? _waitLoop;
     private long? _music;
     private MusicTrack? _musicTrack;
     private string? _musicFolder;
@@ -363,6 +374,10 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             {
                 throw new ArgumentException("Music is streamed; start it with PlayMusic.", nameof(request));
             }
+            else if (request.Channel == AudioChannel.Wait)
+            {
+                throw new ArgumentException("The waiting loop is not queued; start it with OpenWait.", nameof(request));
+            }
             else
             {
                 var id = _nextId++;
@@ -450,7 +465,10 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
-    /// <summary>Stops speech, alerts, cues, the bed and everything queued; music is left playing. A playing playback is paused, not ended.</summary>
+    /// <summary>
+    /// Stops speech, alerts, cues, the bed, the waiting loop and everything queued; music is left playing. A
+    /// playing playback is paused, not ended. Waits open now stay silent until they close.
+    /// </summary>
     public void Silence()
     {
         AudioActivity activity;
@@ -459,7 +477,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
         lock (_gate)
         {
-            hadSomething = _current is not null || _bed is not null || _queue.Count > 0;
+            hadSomething = _current is not null || _bed is not null || _waitLoop is not null || _queue.Count > 0;
 
             if (_playbackGroup is not null && !_playbackPaused)
             {
@@ -482,6 +500,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _current = null;
             _bed = null;
             _lastSpokenGroup = null;
+
+            StopWaitLoop();
+            _waits = 0;
+            _waitClip = null;
+            _waitGeneration++;
 
             Relevel();
             activity = Snapshot();
@@ -939,6 +962,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
             sink.Stop(_bed.Id);
             _bed = null;
+            StartWaitLoop();
             activity = Snapshot();
         }
 
@@ -952,9 +976,83 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             sink.Stop(_bed.Id);
         }
 
+        StopWaitLoop();
+
         var id = _nextId++;
         _bed = new Playing(id, request);
         sink.Play(new PlaybackRequest(id, request.Clip, Loop: true, Gain: GainFor(AudioChannel.Bed)));
+    }
+
+    /// <summary>
+    /// Opens one wait: <paramref name="clip"/> loops while at least one wait is open and no thinking bed is
+    /// playing. Disposing the result closes the wait; disposing it twice does nothing.
+    /// </summary>
+    public IDisposable OpenWait(AudioClip clip)
+    {
+        ArgumentNullException.ThrowIfNull(clip);
+
+        lock (_gate)
+        {
+            _waits++;
+            _waitClip ??= clip;
+            StartWaitLoop();
+
+            return new OpenedWait(this, _waitGeneration);
+        }
+    }
+
+    private void CloseWait(long generation)
+    {
+        lock (_gate)
+        {
+            if (generation != _waitGeneration || _waits == 0)
+            {
+                return;
+            }
+
+            _waits--;
+
+            if (_waits == 0)
+            {
+                StopWaitLoop();
+                _waitClip = null;
+            }
+        }
+    }
+
+    /// <summary>Starts the waiting loop when a wait is open, no bed plays and it is not already playing.</summary>
+    private void StartWaitLoop()
+    {
+        if (_waits == 0 || _bed is not null || _waitLoop is not null || _waitClip is not { } clip)
+        {
+            return;
+        }
+
+        var id = _nextId++;
+        _waitLoop = id;
+        sink.Play(new PlaybackRequest(id, clip, Loop: true, Gain: GainFor(AudioChannel.Wait)));
+    }
+
+    private void StopWaitLoop()
+    {
+        if (_waitLoop is { } id)
+        {
+            sink.Stop(id);
+            _waitLoop = null;
+        }
+    }
+
+    private sealed class OpenedWait(AudioArbiter arbiter, long generation) : IDisposable
+    {
+        private int _closed;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _closed, 1) == 0)
+            {
+                arbiter.CloseWait(generation);
+            }
+        }
     }
 
     /// <summary>Start the head of the queue if nothing is playing, and re-level the rest either way.</summary>
@@ -1011,6 +1109,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         if (_bed is { } bed)
         {
             sink.SetGain(bed.Id, GainFor(AudioChannel.Bed));
+        }
+
+        if (_waitLoop is { } wait)
+        {
+            sink.SetGain(wait, GainFor(AudioChannel.Wait));
         }
 
         if (_music is { } music)

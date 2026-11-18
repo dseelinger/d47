@@ -7,6 +7,7 @@ using Avalonia.Reactive;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
+using D47.App.Voice;
 using D47.Core.Capabilities;
 using D47.Core.Interface;
 
@@ -142,9 +143,10 @@ internal static class RoutingKit
     /// <summary>
     /// Wires <paramref name="run"/> and <paramref name="cancel"/> around a tool call: <paramref name="validate"/> gates it,
     /// <paramref name="working"/> is shown while it runs, the result goes to the status line and then to
-    /// <paramref name="done"/>, and <paramref name="budget"/> bounds it.
+    /// <paramref name="done"/>, and <paramref name="budget"/> bounds it. <paramref name="waitSound"/> plays the waiting
+    /// bed while it runs, or nothing plays where it is null.
     /// </summary>
-    public static void RunPlot(Button run, Button cancel, StatusLine status, TimeSpan budget, string working, Func<bool> validate, Func<CancellationToken, Task<ToolResult>> call, Action<ToolResult> done)
+    public static void RunPlot(Button run, Button cancel, StatusLine status, TimeSpan budget, string working, Func<bool> validate, Func<CancellationToken, Task<ToolResult>> call, Action<ToolResult> done, WaitSound? waitSound)
     {
         CancellationTokenSource? inFlight = null;
 
@@ -164,7 +166,14 @@ internal static class RoutingKit
 
             try
             {
-                var result = await call(inFlight.Token).ConfigureAwait(true);
+                var running = call(inFlight.Token);
+
+                if (waitSound is not null)
+                {
+                    _ = waitSound.PlayWhile(running);
+                }
+
+                var result = await running.ConfigureAwait(true);
 
                 Say(status, result.Content, result.IsError);
                 done(result);

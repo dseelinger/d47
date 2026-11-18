@@ -72,13 +72,18 @@ public sealed class CueLibrary
     internal const string AlertPrefix = "D47.Core.Alerts.";
     internal const string BedPrefix = "D47.Core.Beds.";
     internal const string MusicPrefix = "D47.Core.Music.";
+    internal const string WaitPrefix = "D47.Core.Waits.";
 
     /// <summary>The shipped bed, played while a turn runs when <c>beds/</c> is empty.</summary>
     public const string DefaultBed = "thinking-hum";
 
+    /// <summary>The shipped loop played while a page waits on a search.</summary>
+    public const string DefaultWait = "waiting-pulse";
+
     private readonly IReadOnlyDictionary<LoopState, AudioClip> _cues;
     private readonly IReadOnlyDictionary<AlertCue, AudioClip> _alerts;
     private readonly AudioClip _bed;
+    private readonly AudioClip _wait;
     private readonly IReadOnlyDictionary<LoopState, ClipPool> _cuePools;
     private readonly IReadOnlyDictionary<AlertCue, ClipPool> _alertPools;
     private readonly ClipPool? _bedPool;
@@ -88,6 +93,7 @@ public sealed class CueLibrary
         IReadOnlyDictionary<LoopState, AudioClip> cues,
         IReadOnlyDictionary<AlertCue, AudioClip> alerts,
         AudioClip bed,
+        AudioClip wait,
         IReadOnlyDictionary<LoopState, ClipPool> cuePools,
         IReadOnlyDictionary<AlertCue, ClipPool> alertPools,
         ClipPool? bedPool,
@@ -100,6 +106,7 @@ public sealed class CueLibrary
         _cues = cues;
         _alerts = alerts;
         _bed = bed;
+        _wait = wait;
         _cuePools = cuePools;
         _alertPools = alertPools;
         _bedPool = bedPool;
@@ -159,6 +166,7 @@ public sealed class CueLibrary
         var cues = new Dictionary<LoopState, AudioClip>();
         var alerts = new Dictionary<AlertCue, AudioClip>();
         AudioClip? bed = null;
+        AudioClip? wait = null;
         var cuePools = new Dictionary<LoopState, List<AudioClip>>();
         var alertPools = new Dictionary<AlertCue, List<AudioClip>>();
         var bedPool = new List<AudioClip>();
@@ -279,6 +287,19 @@ public sealed class CueLibrary
                         }
                     }
                 }
+                else if (resource.StartsWith(WaitPrefix, StringComparison.Ordinal) && source.Required)
+                {
+                    var stem = resource[WaitPrefix.Length..];
+
+                    if (!stem.Equals(DefaultWait, StringComparison.OrdinalIgnoreCase))
+                    {
+                        unclaimed.Add($"waits/{stem}");
+                    }
+                    else if (TryRead(source, resource, stem, skipped) is { } clip)
+                    {
+                        wait = clip;
+                    }
+                }
                 else if (resource.StartsWith(MusicPrefix, StringComparison.Ordinal))
                 {
                     // "<situation>.<track>".
@@ -367,6 +388,13 @@ public sealed class CueLibrary
             throw new CueSetException($"No bed named {DefaultBed} shipped.");
         }
 
+        if (wait is null)
+        {
+            throw new CueSetException(
+                $"No waiting loop named {DefaultWait} shipped. Add assets/waits/{DefaultWait}.wav and regenerate with "
+                + "tools/gen-cues.py.");
+        }
+
         foreach (var reason in skipped)
         {
             logger?.LogWarning("Skipped a drop-in audio file: {Reason}", reason);
@@ -388,6 +416,7 @@ public sealed class CueLibrary
             cues,
             alerts,
             bed,
+            wait,
             cuePools.ToDictionary(entry => entry.Key, entry => new ClipPool(entry.Value, shuffle)),
             alertPools.ToDictionary(entry => entry.Key, entry => new ClipPool(entry.Value, shuffle)),
             bedPool.Count > 0 ? new ClipPool(bedPool, shuffle) : null,
@@ -431,6 +460,9 @@ public sealed class CueLibrary
 
     /// <summary>The bed for one turn, picked from the Commander's pool on each call.</summary>
     public AudioClip Bed() => _bedPool?.Next() ?? _bed;
+
+    /// <summary>The loop played while a page waits on a search.</summary>
+    public AudioClip Waiting() => _wait;
 
     /// <summary>The member a folder or shipped file names: hyphens ignored, case ignored.</summary>
     private static TKey? Member<TKey>(string name)

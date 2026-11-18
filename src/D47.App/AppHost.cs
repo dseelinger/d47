@@ -200,6 +200,7 @@ public sealed class AppHost : IDisposable
         Panel.AudioPlayer = AudioPlayerReadout.From(Music.State, Settings.Current.Audio.Music.Muted);
         Panel.AudioProgress = Music.Progress;
         _cues = cues;
+        Panel.WaitSound = new WaitSound(audio, () => Cues, () => Settings.Current.Speech.WaitingBedEnabled);
         Voice = voice;
         _binds = binds;
         _gameInput = gameInput;

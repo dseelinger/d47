@@ -181,6 +181,9 @@ So the wait here is longer than a search gets — ninety seconds, against fiftee
 asks for a route across the galaxy has knowingly asked for arithmetic. Past that, the answer says
 so and says what to change: a shorter route, fewer hops, a smaller radius.
 
+A plot from one of these pages that takes longer than a second plays the
+[waiting bed](speech.md#waiting-bed) until the answer appears.
+
 **The trade route is the exception, and it is not a plot at all.** It asks for markets and then
 does the arithmetic here, which is what lets it hold cargo past a station and come home again — see
 [`plot_trade_route`](#plot_trade_route) below.

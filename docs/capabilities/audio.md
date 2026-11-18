@@ -42,7 +42,7 @@ nav_order: 123
  <rect x="20" y="20" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="44" y="53" font-size="17" font-weight="700" fill="var(--text)">Ambient music</text>
  <text x="836" y="53" text-anchor="end" font-size="17" fill="var(--text)">Duck while D47 speaks 0</text>
- <text x="20" y="112" font-size="16" fill="var(--text-muted)">Thinking bed and Sound cues have a Duck value too.</text>
+ <text x="20" y="112" font-size="16" fill="var(--text-muted)">Thinking bed, Waiting bed and Sound cues have a Duck value too.</text>
 </svg>
 </section>
 <section>
@@ -77,23 +77,23 @@ nav_order: 123
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Every sound D47 makes belongs to one of six categories, each with its own level, mute and duck.</p>
+<p class="intro">Every sound D47 makes belongs to one of seven categories, each with its own level, mute and duck.</p>
 <section>
 <h2><span class="num">1</span> Each category has a level and a mute.</h2>
-<svg viewBox="0 0 880 150" role="img" aria-label="Six categories: speech, alerts, overheard chatter, sound cues, thinking bed and ambient music">
+<svg viewBox="0 0 880 150" role="img" aria-label="Seven categories: speech, alerts, overheard chatter, sound cues, thinking bed, waiting bed and ambient music">
  <rect x="20" y="24" width="840" height="46" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="53" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">SPEECH   ALERTS   OVERHEARD CHATTER</text>
  <rect x="20" y="80" width="840" height="46" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="440" y="109" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">SOUND CUES   THINKING BED   AMBIENT MUSIC</text>
+ <text x="440" y="109" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">SOUND CUES   THINKING BED   WAITING BED   AMBIENT MUSIC</text>
 </svg>
 <p class="body">Each has a Level from 0 to 1 and a Mute. Muting keeps the level, so unmuting returns to the loudness you had.</p>
 </section>
 <section>
-<h2><span class="num">2</span> While D47 speaks, three categories drop.</h2>
+<h2><span class="num">2</span> While D47 speaks, four categories drop.</h2>
 <svg viewBox="0 0 880 150" role="img" aria-label="Duck is the fraction of its level a category drops to while D47 speaks">
  <rect x="20" y="24" width="840" height="90" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
  <text x="440" y="65" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">Duck while D47 speaks</text>
- <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">thinking bed, sound cues, ambient music</text>
+ <text x="440" y="91" text-anchor="middle" font-size="15" fill="var(--text-muted)">thinking bed, waiting bed, sound cues, ambient music</text>
 </svg>
 <p class="body">Each of those has a Duck value: the fraction of its level it drops to. 1 never drops. 0 is silent until the sentence ends. The drop also holds while the microphone is open.</p>
 </section>
@@ -144,7 +144,7 @@ nav_order: 123
 How loud each kind of sound is, whether it is muted, and how far it drops out of the way while
 Directive 47 is speaking.
 
-### The six categories
+### The seven categories
 
 Everything audible goes through one queue, and everything on that queue belongs to exactly one
 of these:
@@ -156,6 +156,7 @@ of these:
 | **Overheard chatter** | Invented radio traffic between other pilots and controllers, not meant for you. |
 | **Sound cues** | The short markers for listening, thinking and answering. |
 | **Thinking bed** | The loop that plays underneath a response while D47 works. |
+| **Waiting bed** | The loop that plays while a page waits on a search or a lookup. |
 | **Ambient music** | The background layer that follows what you are doing. |
 
 Each has a **Level** from 0 to 1 and a **Mute**. A level of zero and a mute sound the same, but
@@ -187,13 +188,13 @@ immediately before the sentence it introduces.
 ### Ducking
 
 Speech, alerts and overheard chatter are what everything else ducks under, so the thinking bed,
-the sound cues and ambient music carry a **Duck while D47 speaks** number as well. It is a fraction of that category's level rather than a
+the waiting bed, the sound cues and ambient music carry a **Duck while D47 speaks** number as well. It is a fraction of that category's level rather than a
 level of its own — turn music down and its ducked form goes down with it.
 
 The same drop applies while the microphone is open, whichever key, voice activity or wake word opened it.
 
 `1` does not duck at all. `0` goes silent until the sentence ends, or until the key is released. Out of the box the thinking
-bed sits at `0.35`, the sound cues at `1`, and music at `0.2`.
+bed and the waiting bed sit at `0.35`, the sound cues at `1`, and music at `0.2`.
 
 Speech, alerts and overheard chatter have no duck row. A row that does not apply is absent rather
 than greyed out.
@@ -213,6 +214,7 @@ Ambient music and overheard chatter arrive at half level, and music ducks to `0.
 ```json
 {
   "bed":    { "level": 1,   "muted": false, "duckUnderSpeech": 0.35 },
+  "wait":   { "level": 1,   "muted": false, "duckUnderSpeech": 0.35 },
   "music":  { "level": 0.5, "muted": false, "duckUnderSpeech": 0.2 },
   "cue":    { "level": 1,   "muted": false, "duckUnderSpeech": 1 },
   "overheard": { "level": 0.5, "muted": false, "duckUnderSpeech": 1 },
@@ -222,7 +224,7 @@ Ambient music and overheard chatter arrive at half level, and music ducks to `0.
 ```
 
 That block is the `audio` section of `data/settings.json`. Every level and mute has a row; a duck
-value has a row only for the thinking bed, music and sound cues.
+value has a row only for the thinking bed, the waiting bed, music and sound cues.
 
 ### It takes effect while you are listening to it
 

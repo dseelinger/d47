@@ -253,6 +253,11 @@ def main():
     # 440 carrier cycles and 3 AM cycles over 3.00 s.
     _write("beds/thinking-hum.wav", _bed(440 / 3, 3.00, cycles_am=3), fade_tail=False)
 
+    # The loop while a page waits on a search. It must not be heard as the thinking hum: an
+    # octave and a half higher, and a slow pulse rather than a steady hum. 880 carrier cycles
+    # and 2 AM cycles over 4.00 s.
+    _write("waits/waiting-pulse.wav", _bed(220, 4.00, cycles_am=2, peak=0.07, depth=0.45), fade_tail=False)
+
 
 if __name__ == "__main__":
     main()

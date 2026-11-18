@@ -122,7 +122,7 @@ public sealed class TogglesInAGroupAreTilesInOneGridTests
         var grids = Page(host.View).GetVisualDescendants().OfType<TileGrid>().Where(g => g.IsEffectivelyVisible).ToList();
 
         Assert.Single(grids);
-        Assert.Equal(2, Tiles(grids[0]).Count);
+        Assert.Equal(3, Tiles(grids[0]).Count);
 
         host.Close();
     }

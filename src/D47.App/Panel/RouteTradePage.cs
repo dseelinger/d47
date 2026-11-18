@@ -26,13 +26,16 @@ public sealed class RouteTradePage : UserControl
     private readonly SettingsService _settings;
 
     private readonly StackPanel _cards = new();
+    private readonly D47.App.Voice.WaitSound? _waitSound;
 
     public RouteTradePage(
         CapabilityRegistry registry,
         RoutePlanBook plans,
         PanelNavigator nav,
-        SettingsService settings)
+        SettingsService settings,
+        D47.App.Voice.WaitSound? waitSound = null)
     {
+        _waitSound = waitSound;
         _registry = registry;
         _plans = plans;
         _nav = nav;
@@ -170,7 +173,8 @@ public sealed class RouteTradePage : UserControl
                     Refresh();
                     _nav.Drill(RoutingPages.ResultCrumb(RoutePlanKind.Trade, after.Headline));
                 }
-            });
+            },
+            _waitSound);
 
         return new StackPanel
         {

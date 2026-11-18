@@ -25,6 +25,7 @@ public static class SpeechCapability
     public const string OutputDeviceKey = "speech.outputDevice";
     public const string CuesKey = "speech.cues";
     public const string BedEnabledKey = "speech.thinkingBed";
+    public const string WaitingBedKey = "speech.waitingBed";
     public const string RetryAttemptsKey = "speech.retryAttempts";
     public const string RetryWaitKey = "speech.retryWait";
     public const string RetryBackoffKey = "speech.retryBackoff";
@@ -1451,6 +1452,24 @@ public static class SpeechCapability
                 Binding = SettingBinding.Toggle(
                     s => s.Speech.ThinkingBedEnabled,
                     (s, on) => s with { Speech = s.Speech with { ThinkingBedEnabled = on } }),
+            },
+            new SettingRow
+            {
+                Key = WaitingBedKey,
+                Exercise =
+                    "With Show every setting on, open Settings › Hearing and sound › Sounds and levels, group Cues. "
+                    + "Ticked, open Astrometrics › Plan, press Plot on a planner and expect a quiet loop, different from the "
+                    + "thinking bed, to start after a second and stop when the answer appears; unticked, the wait is "
+                    + "silent.",
+                Advanced = true,
+                Label = "Waiting bed",
+                Help = "A quiet loop while a page waits on a search or a lookup.",
+                Kind = SettingKind.Toggle,
+                DefaultDisplay = "on",
+                DocsAnchor = "waiting-bed",
+                Binding = SettingBinding.Toggle(
+                    s => s.Speech.WaitingBedEnabled,
+                    (s, on) => s with { Speech = s.Speech with { WaitingBedEnabled = on } }),
             },
             new SettingRow
             {

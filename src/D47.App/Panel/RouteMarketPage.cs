@@ -122,6 +122,7 @@ public sealed class RouteMarketPage : UserControl
 
     private readonly StackPanel _results = new() { Spacing = 6 };
     private readonly ColumnWidthMemory? _columnWidths;
+    private readonly D47.App.Voice.WaitSound? _waitSound;
 
     public RouteMarketPage(
         CapabilityRegistry registry,
@@ -130,9 +131,11 @@ public sealed class RouteMarketPage : UserControl
         ColumnWidthMemory? columnWidths = null,
         Func<string?>? here = null,
         TimeSpan? suggestionPause = null,
-        Func<BodySearchLink?>? bodySearch = null)
+        Func<BodySearchLink?>? bodySearch = null,
+        D47.App.Voice.WaitSound? waitSound = null)
     {
         _columnWidths = columnWidths;
+        _waitSound = waitSound;
         _bodySearch = bodySearch;
         _registry = registry;
         _board = board;
@@ -282,7 +285,8 @@ public sealed class RouteMarketPage : UserControl
             "Reading the markets nearby…",
             Chosen,
             token => _registry.InvokeAsync("find_nearest_station", FormArguments(), token),
-            _ => Refresh());
+            _ => Refresh(),
+            _waitSound);
 
         var add = new StackPanel { Spacing = 3 };
         add.Children.Add(FormField.Label("Add a commodity", FieldNeed.Optional));

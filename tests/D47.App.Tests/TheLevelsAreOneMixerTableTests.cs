@@ -81,13 +81,13 @@ public class TheLevelsAreOneMixerTableTests
     }
 
     [AvaloniaFact]
-    public void SixChannelsAreNamedInOrderUnderOneHeader()
+    public void SevenChannelsAreNamedInOrderUnderOneHeader()
     {
         using var look = AppLook.ControlKit();
         var host = Open(out _);
 
         Assert.Equal(
-            ["Thinking bed", "Ambient music", "Sound cues", "Overheard chatter", "Speech", "Alerts"],
+            ["Thinking bed", "Waiting bed", "Ambient music", "Sound cues", "Overheard chatter", "Speech", "Alerts"],
             Channels(host).Select(NameOf));
 
         Assert.Equal(
@@ -107,7 +107,7 @@ public class TheLevelsAreOneMixerTableTests
 
         foreach (var channel in Channels(host))
         {
-            var ducks = NameOf(channel) is "Thinking bed" or "Ambient music" or "Sound cues";
+            var ducks = NameOf(channel) is "Thinking bed" or "Waiting bed" or "Ambient music" or "Sound cues";
 
             Assert.IsType<Level>(Cell(channel, 0));
             Assert.IsType<CheckBox>(Cell(channel, 1));

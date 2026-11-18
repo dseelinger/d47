@@ -76,7 +76,8 @@ public sealed class RoutePlanResultPage : UserControl
         Func<string?>? here = null,
         Func<string, string?>? offDuty = null,
         Action<RoutePlanKind>? showOnGalaxyMap = null,
-        OutfittingPlotter? outfittingPlotter = null)
+        OutfittingPlotter? outfittingPlotter = null,
+        D47.App.Voice.WaitSound? waitSound = null)
     {
         _plotter = outfittingPlotter;
         var actions = RoutingKit.Actions(_search, _stop);
@@ -132,7 +133,8 @@ public sealed class RoutePlanResultPage : UserControl
             "Searching…",
             () => _planSeen?.Outfitting is not null && _plotter is not null,
             token => _plotter!.Replot(_planSeen!.Outfitting!, _planSeen.Bought, _age.Value, token),
-            _ => { });
+            _ => { },
+            waitSound);
 
         Draw(plan);
     }

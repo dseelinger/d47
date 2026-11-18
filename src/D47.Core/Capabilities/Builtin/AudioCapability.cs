@@ -26,6 +26,7 @@ public static class AudioCapability
     private static (string Name, string What) Describe(AudioChannel channel) => channel switch
     {
         AudioChannel.Bed => ("Thinking bed", "The loop that plays underneath a response while D47 works."),
+        AudioChannel.Wait => ("Waiting bed", "The loop that plays while a page waits on a search or a lookup."),
         AudioChannel.Music => (
             "Ambient music",
             "The background layer that follows what you are doing. To hear it instead of Elite's, set Elite's "
@@ -43,6 +44,8 @@ public static class AudioCapability
     {
         AudioChannel.Bed => "the quiet loop that plays while D47 works on a reply: ask a question that takes a "
                             + "while to answer, with Thinking bed ticked in the Cues group",
+        AudioChannel.Wait => "the quiet loop that plays while a page waits: press Plot on a planner in Astrometrics › Plan, "
+                             + "with Waiting bed ticked in the Cues group",
         AudioChannel.Music => "the ambient music: with Elite's own music volume set to zero (Options, Audio) "
                               + "and ambient music playing",
         AudioChannel.Cue => "the short sounds as listening starts, thinking starts and the reply finishes: hold "
@@ -446,7 +449,7 @@ public static class AudioCapability
             Kind = SettingKind.Info,
             Group = MusicGroup,
             GroupHelp = what,
-            DocsAnchor = "the-six-categories",
+            DocsAnchor = "the-seven-categories",
             Binding = new SettingBinding
             {
                 Read = s => NowPlaying(musicState(), s.Audio.For(AudioChannel.Music).Muted),
@@ -471,7 +474,7 @@ public static class AudioCapability
             Kind = SettingKind.Info,
             Group = MusicGroup,
             GroupHelp = what,
-            DocsAnchor = "the-six-categories",
+            DocsAnchor = "the-seven-categories",
             PressLabel = "Next",
             PressEnabled = s => CanStart(musicState(), s),
             Press = () => music(MusicAction.Next),
@@ -492,7 +495,7 @@ public static class AudioCapability
             Kind = SettingKind.Info,
             Group = MusicGroup,
             GroupHelp = what,
-            DocsAnchor = "the-six-categories",
+            DocsAnchor = "the-seven-categories",
             PressLabel = "Previous",
             PressEnabled = s => CanControl(musicState(), s),
             Press = () => music(MusicAction.Previous),
@@ -612,9 +615,9 @@ public static class AudioCapability
             Maximum = 1,
             Group = group,
             GroupHelp = what,
-            // The page explains the six categories together and has no heading per channel, so this points
+            // The page explains the seven categories together and has no heading per channel, so this points
             // at the section rather than at a heading that would have to be written to satisfy a link (#123).
-            DocsAnchor = "the-six-categories",
+            DocsAnchor = "the-seven-categories",
             Binding = Bind(channel, mix => Number(mix.Level), (mix, v) => mix with { Level = Fraction(v, mix.Level) }),
         };
 
@@ -631,7 +634,7 @@ public static class AudioCapability
             Kind = SettingKind.Toggle,
             Group = group,
             GroupHelp = what,
-            DocsAnchor = "the-six-categories",
+            DocsAnchor = "the-seven-categories",
             Binding = Bind(
                 channel,
                 mix => mix.Muted ? "true" : "false",
@@ -651,7 +654,7 @@ public static class AudioCapability
                        + "is playing: it falls silent until the sentence ends, then returns. Hold push-to-talk while "
                        + "it plays and it drops the same way until you release. At 1 it does not "
                        + "drop at all. Between, it drops to that fraction of its Level while D47 speaks or the microphone is open. "
-                       + "The row appears for Thinking bed, Ambient music and Sound cues only.",
+                       + "The row appears for Thinking bed, Waiting bed, Ambient music and Sound cues only.",
             Advanced = true,
             Protected = true,
             Label = "Duck while D47 speaks",

@@ -45,6 +45,9 @@ public sealed record AudioMix
     /// </summary>
     public ChannelMix Bed { get; init; } = new(1.0, Muted: false, DuckUnderSpeech: 0.35);
 
+    /// <summary>The loop while a page waits on a search, mixed as the thinking bed is.</summary>
+    public ChannelMix Wait { get; init; } = new(1.0, Muted: false, DuckUnderSpeech: 0.35);
+
     /// <summary>Music starts quieter than everything else and ducks harder.</summary>
     public ChannelMix Music { get; init; } = new(0.5, Muted: false, DuckUnderSpeech: 0.2);
 
@@ -69,6 +72,7 @@ public sealed record AudioMix
     public ChannelMix For(AudioChannel channel) => channel switch
     {
         AudioChannel.Bed => Bed,
+        AudioChannel.Wait => Wait,
         AudioChannel.Music => Music,
         AudioChannel.Cue => Cue,
         AudioChannel.Overheard => Overheard,
@@ -79,6 +83,7 @@ public sealed record AudioMix
     public AudioMix With(AudioChannel channel, ChannelMix mix) => channel switch
     {
         AudioChannel.Bed => this with { Bed = mix },
+        AudioChannel.Wait => this with { Wait = mix },
         AudioChannel.Music => this with { Music = mix },
         AudioChannel.Cue => this with { Cue = mix },
         AudioChannel.Overheard => this with { Overheard = mix },

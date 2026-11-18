@@ -502,6 +502,7 @@ public static class SettingsLayout
                             [
                                 E("speech.cues"),
                                 E("speech.thinkingBed"),
+                                E("speech.waitingBed"),
                             ]),
                         G(
                             "Ambient music",

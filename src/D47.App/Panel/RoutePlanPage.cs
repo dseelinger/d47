@@ -26,6 +26,7 @@ public sealed class RoutePlanPage : UserControl
     private readonly Func<double?>? _jumpRange;
     private readonly Func<string?>? _carrierHere;
     private readonly CarrierRouteRequest? _carrierRoute;
+    private readonly D47.App.Voice.WaitSound? _waitSound;
 
     /// <summary>The Carrier Route card and its fields, as last built.</summary>
     private FormField? _carrierFrom;
@@ -60,8 +61,10 @@ public sealed class RoutePlanPage : UserControl
         Func<string?>? carrierHere = null,
         CarrierRouteRequest? carrierRoute = null,
         Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? prefixNames = null,
-        TimeSpan? suggestionPause = null)
+        TimeSpan? suggestionPause = null,
+        D47.App.Voice.WaitSound? waitSound = null)
     {
+        _waitSound = waitSound;
         _prefixNames = prefixNames;
         _suggestionPause = suggestionPause;
         _registry = registry;
@@ -414,7 +417,8 @@ public sealed class RoutePlanPage : UserControl
                     Refresh();
                     _nav.Drill(RoutingPages.ResultCrumb(kind, after.Headline));
                 }
-            });
+            },
+            _waitSound);
 
         var body = new StackPanel
         {

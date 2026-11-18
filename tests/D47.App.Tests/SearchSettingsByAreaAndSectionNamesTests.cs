@@ -109,7 +109,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         SettingsPageReading.Open(host.View, "sounds");
 
         Assert.Equal(
-            6,
+            7,
             host.View.GetVisualDescendants().OfType<Grid>()
                 .Count(grid => grid.Classes.Contains(SettingsView.MixerRowClass) && grid.IsEffectivelyVisible));
 
