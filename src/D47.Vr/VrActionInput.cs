@@ -1,17 +1,28 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
 using D47.Core.Storage;
+using D47.Core.Vr;
 using D47.Vr.Binding;
 using Microsoft.Extensions.Logging;
 using Valve.VR;
 
 namespace D47.Vr;
 
-/// <summary>The trigger, read through <c>IVRInput</c>.</summary>
+/// <summary>The controllers' buttons and stick, read through <c>IVRInput</c>.</summary>
 public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
 {
     private ulong _set;
     private ulong _grab;
     private ulong _back;
+    private ulong _primary;
+    private ulong _secondary;
+    private ulong _menu;
+    private ulong _stickClick;
+    private ulong _stick;
+    private readonly ulong[] _source = new ulong[2];
+    private readonly uint[] _lastHeld = new uint[2];
+    private readonly (int X, int Y)[] _lastStick = new (int, int)[2];
+    private readonly Lock _gate = new();
 
     /// <summary>The input interface, held from the moment the handles resolved. Null until then.</summary>
     private IOpenVrInput? _input;
@@ -41,6 +52,14 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
     /// persists writes the manifest files once and logs each distinct reason once.
     /// </summary>
     public void Register(IFileSystem files, string actionFolder)
+    {
+        lock (_gate)
+        {
+            RegisterLocked(files, actionFolder);
+        }
+    }
+
+    private void RegisterLocked(IFileSystem files, string actionFolder)
     {
         if (_input is not null)
         {
@@ -100,10 +119,24 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
             var set = 0ul;
             var grab = 0ul;
             var back = 0ul;
+            var primary = 0ul;
+            var secondary = 0ul;
+            var menu = 0ul;
+            var stickClick = 0ul;
+            var stick = 0ul;
+            var left = 0ul;
+            var right = 0ul;
 
             if (input.GetActionSetHandle(VrActionManifest.ActionSet, ref set) != EVRInputError.None
                 || input.GetActionHandle(VrActionManifest.GrabAction, ref grab) != EVRInputError.None
-                || input.GetActionHandle(VrActionManifest.BackAction, ref back) != EVRInputError.None)
+                || input.GetActionHandle(VrActionManifest.BackAction, ref back) != EVRInputError.None
+                || input.GetActionHandle(VrActionManifest.PrimaryAction, ref primary) != EVRInputError.None
+                || input.GetActionHandle(VrActionManifest.SecondaryAction, ref secondary) != EVRInputError.None
+                || input.GetActionHandle(VrActionManifest.MenuAction, ref menu) != EVRInputError.None
+                || input.GetActionHandle(VrActionManifest.StickClickAction, ref stickClick) != EVRInputError.None
+                || input.GetActionHandle(VrActionManifest.StickAction, ref stick) != EVRInputError.None
+                || input.GetInputSourceHandle("/user/hand/left", ref left) != EVRInputError.None
+                || input.GetInputSourceHandle("/user/hand/right", ref right) != EVRInputError.None)
             {
                 if (_registerRefused.Add("handles"))
                 {
@@ -116,10 +149,17 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
             _set = set;
             _grab = grab;
             _back = back;
+            _primary = primary;
+            _secondary = secondary;
+            _menu = menu;
+            _stickClick = stickClick;
+            _stick = stick;
+            _source[LeftHand] = left;
+            _source[RightHand] = right;
             _input = input;
             _registerRefused.Clear();
 
-            logger.LogInformation("Controller input is on: the trigger carries the panel");
+            logger.LogInformation("Controller input is on: the trigger carries the panel and every button is read");
         }
         catch (Exception ex)
         {
@@ -136,6 +176,14 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
     /// frame.
     /// </summary>
     public bool TriggerHeld(bool wanted)
+    {
+        lock (_gate)
+        {
+            return TriggerHeldLocked(wanted);
+        }
+    }
+
+    private bool TriggerHeldLocked(bool wanted)
     {
         if (_input is not { } input || !wanted)
         {
@@ -180,32 +228,35 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
     /// <summary>Gives the controllers back.</summary>
     public void Release()
     {
-        if (_input is not { } input || !HoldingPriority)
+        lock (_gate)
         {
-            HoldingPriority = false;
-            return;
-        }
-
-        _backWasDown = false;
-        _released ??= [ReleaseSet(_set)];
-
-        var released = input.UpdateActionState(_released, (uint)Marshal.SizeOf<VRActiveActionSet_t>());
-
-        if (released != EVRInputError.None)
-        {
-            if (_releaseRefused != released)
+            if (_input is not { } input || !HoldingPriority)
             {
-                _releaseRefused = released;
-                logger.LogWarning("Could not release the controllers: {Error}; the claim stands and the release is retried", released);
+                HoldingPriority = false;
+                return;
             }
 
-            return;
+            _backWasDown = false;
+            _released ??= [ReleaseSet(_set)];
+
+            var released = input.UpdateActionState(_released, (uint)Marshal.SizeOf<VRActiveActionSet_t>());
+
+            if (released != EVRInputError.None)
+            {
+                if (_releaseRefused != released)
+                {
+                    _releaseRefused = released;
+                    logger.LogWarning("Could not release the controllers: {Error}; the claim stands and the release is retried", released);
+                }
+
+                return;
+            }
+
+            _releaseRefused = null;
+            HoldingPriority = false;
+
+            logger.LogInformation("Gave the controllers back");
         }
-
-        _releaseRefused = null;
-        HoldingPriority = false;
-
-        logger.LogInformation("Gave the controllers back");
     }
 
     /// <summary>
@@ -232,6 +283,14 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
     /// </summary>
     public bool BackPressed()
     {
+        lock (_gate)
+        {
+            return BackPressedLocked();
+        }
+    }
+
+    private bool BackPressedLocked()
+    {
         if (_input is not { } input || !HoldingPriority)
         {
             _backWasDown = false;
@@ -252,5 +311,114 @@ public sealed class VrActionInput(ILogger logger, IOpenVrSession session)
         _backWasDown = down;
 
         return pressed;
+    }
+
+    public const int LeftHand = 0;
+    public const int RightHand = 1;
+
+    /// <summary>
+    /// Refreshes the action state. A held claim stands; otherwise the set is updated at priority zero, which
+    /// reads without taking an input from another application.
+    /// </summary>
+    public bool Refresh()
+    {
+        lock (_gate)
+        {
+            if (_input is not { } input)
+            {
+                return false;
+            }
+
+            var sets = HoldingPriority ? _active ??= [ClaimSet(_set)] : _released ??= [ReleaseSet(_set)];
+
+            return input.UpdateActionState(sets, (uint)Marshal.SizeOf<VRActiveActionSet_t>()) == EVRInputError.None;
+        }
+    }
+
+    /// <summary>One hand's buttons (a bit per <see cref="VrButton"/>) and stick, as of the last <see cref="Refresh"/>.</summary>
+    public (uint Held, Vector2 Stick) ReadHand(int hand)
+    {
+        lock (_gate)
+        {
+            if (_input is not { } input)
+            {
+                return default;
+            }
+
+            var source = _source[hand];
+            var held = 0u;
+
+            (VrButton Button, ulong Action)[] buttons =
+            [
+                (VrButton.Trigger, _grab),
+                (VrButton.Grip, _back),
+                (VrButton.Primary, _primary),
+                (VrButton.Secondary, _secondary),
+                (VrButton.Menu, _menu),
+                (VrButton.StickClick, _stickClick),
+            ];
+
+            foreach (var (button, action) in buttons)
+            {
+                var data = default(InputDigitalActionData_t);
+
+                var read = input.GetDigitalActionData(
+                    action,
+                    ref data,
+                    (uint)Marshal.SizeOf<InputDigitalActionData_t>(),
+                    source);
+
+                if (read == EVRInputError.None && data is { bActive: true, bState: true })
+                {
+                    held |= VrHand.Bit(button);
+                }
+            }
+
+            var analog = default(InputAnalogActionData_t);
+
+            var stick = input.GetAnalogActionData(
+                _stick,
+                ref analog,
+                (uint)Marshal.SizeOf<InputAnalogActionData_t>(),
+                source) == EVRInputError.None
+                && analog.bActive
+                && float.IsFinite(analog.x)
+                && float.IsFinite(analog.y)
+                    ? new Vector2(Math.Clamp(analog.x, -1f, 1f), Math.Clamp(analog.y, -1f, 1f))
+                    : default;
+
+            Say(hand, held, stick);
+
+            return (held, stick);
+        }
+    }
+
+    /// <summary>Logs each button edge, and the stick when it moves to another quarter-step.</summary>
+    private void Say(int hand, uint held, Vector2 stick)
+    {
+        var name = hand == LeftHand ? "left" : "right";
+        var changed = held ^ _lastHeld[hand];
+
+        foreach (var button in Enum.GetValues<VrButton>())
+        {
+            if ((changed & VrHand.Bit(button)) != 0)
+            {
+                logger.LogInformation(
+                    "The {Hand} {Button} was {State}",
+                    name,
+                    button,
+                    (held & VrHand.Bit(button)) != 0 ? "pressed" : "released");
+            }
+        }
+
+        _lastHeld[hand] = held;
+
+        var step = ((int)MathF.Round(stick.X * 4f), (int)MathF.Round(stick.Y * 4f));
+
+        if (step != _lastStick[hand])
+        {
+            _lastStick[hand] = step;
+            logger.LogInformation("The {Hand} stick moved to {X:0.00}, {Y:0.00}", name, stick.X, stick.Y);
+        }
     }
 }

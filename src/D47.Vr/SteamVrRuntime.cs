@@ -401,6 +401,8 @@ public sealed class SteamVrRuntime(
                 0,
                 poses);
 
+            Actions.Refresh();
+
             var found = new List<VrHand>(2);
 
             for (uint device = 0; device < poses.Length; device++)
@@ -415,7 +417,14 @@ public sealed class SteamVrRuntime(
                 if (VrMatrix.Real(poses[device]) is { } grip)
                 {
                     var aim = VrPose.FromMatrix(GripToTip(device) * grip.ToMatrix());
-                    found.Add(new VrHand(device, grip, aim));
+                    var (held, stick) = _system.GetControllerRoleForTrackedDeviceIndex(device) switch
+                    {
+                        ETrackedControllerRole.LeftHand => Actions.ReadHand(VrActionInput.LeftHand),
+                        ETrackedControllerRole.RightHand => Actions.ReadHand(VrActionInput.RightHand),
+                        _ => default,
+                    };
+
+                    found.Add(new VrHand(device, grip, aim, held, stick));
                 }
             }
 

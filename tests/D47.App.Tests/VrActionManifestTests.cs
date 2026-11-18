@@ -53,46 +53,69 @@ public class VrActionManifestTests
             .ToList();
 
         Assert.Equal(
-            new List<string> { VrActionManifest.GrabAction, VrActionManifest.BackAction },
+            new List<string>
+            {
+                VrActionManifest.GrabAction,
+                VrActionManifest.BackAction,
+                VrActionManifest.PrimaryAction,
+                VrActionManifest.SecondaryAction,
+                VrActionManifest.MenuAction,
+                VrActionManifest.StickClickAction,
+                VrActionManifest.StickAction,
+            },
             declared);
 
         foreach (var file in _files.Enumerate(_folder, "binding_*.json"))
         {
-            var sources = Read(file)
-                .GetProperty("bindings")
-                .GetProperty(VrActionManifest.ActionSet)
-                .GetProperty("sources")
-                .EnumerateArray()
-                .ToArray();
+            var outputs = Outputs(Read(file));
 
-            // Both hands, and both actions on each: the panel does not care which hand takes it, and which
-            // one it was is recovered from the ray rather than from the button.
-            Assert.Equal(4, sources.Length);
-
-            // Every source outputs one of the two actions the manifest declares, and nothing else.
-            Assert.All(sources, source => Assert.Contains(
-                source.GetProperty("inputs").GetProperty("click").GetProperty("output").GetString()
-                ?? string.Empty,
-                declared));
-
-            foreach (var hand in new[] { "left", "right" })
-            {
-                Assert.Contains(sources, source =>
-                    source.GetProperty("path").GetString() == $"/user/hand/{hand}/input/trigger"
-                    && source.GetProperty("inputs").GetProperty("click").GetProperty("output").GetString()
-                       == VrActionManifest.GrabAction);
-
-                // The grip rather than a face button, and on every profile: Touch and Index name their face
-                // buttons differently on each hand and the Vive wand has none, so a face button would be a
-                // binding that silently does not exist on somebody's controller — and one missing binding
-                // disables input for that profile entirely.
-                Assert.Contains(sources, source =>
-                    source.GetProperty("path").GetString() == $"/user/hand/{hand}/input/grip"
-                    && source.GetProperty("inputs").GetProperty("click").GetProperty("output").GetString()
-                       == VrActionManifest.BackAction);
-            }
+            Assert.All(outputs, output => Assert.Contains(output, declared));
+            Assert.Contains(VrActionManifest.GrabAction, outputs);
+            Assert.Contains(VrActionManifest.BackAction, outputs);
         }
     }
+
+    /// <summary>Each profile binds every action its controller can supply.</summary>
+    [Theory]
+    [InlineData("oculus_touch", new[] { "primary", "secondary", "menu", "stickclick", "stick" })]
+    [InlineData("rift", new[] { "primary", "secondary", "menu", "stickclick", "stick" })]
+    [InlineData("knuckles", new[] { "primary", "secondary", "stickclick", "stick" })]
+    [InlineData("vive_controller", new[] { "menu", "stickclick", "stick" })]
+    public void EachProfileBindsEveryActionItsControllerCanSupply(string profile, string[] expected)
+    {
+        VrActionManifest.Write(_files, _folder);
+
+        var bound = Outputs(Read(Path.Combine(_folder, $"binding_{profile}.json")));
+        var want = expected.Select(name => $"/actions/panel/in/{name}")
+            .Append(VrActionManifest.GrabAction)
+            .Append(VrActionManifest.BackAction)
+            .Order(StringComparer.Ordinal);
+
+        Assert.Equal(want, bound.Distinct().Order(StringComparer.Ordinal));
+    }
+
+    /// <summary>A Vive controller's trackpad is its stick.</summary>
+    [Fact]
+    public void AViveTrackpadIsBoundAsTheStick()
+    {
+        VrActionManifest.Write(_files, _folder);
+
+        var sources = Read(Path.Combine(_folder, "binding_vive_controller.json"))
+            .GetProperty("bindings").GetProperty(VrActionManifest.ActionSet).GetProperty("sources")
+            .EnumerateArray().ToArray();
+
+        Assert.Contains(sources, source =>
+            source.GetProperty("path").GetString() == "/user/hand/left/input/trackpad"
+            && source.GetProperty("inputs").GetProperty("position").GetProperty("output").GetString()
+               == VrActionManifest.StickAction);
+    }
+
+    private static List<string> Outputs(JsonElement binding) =>
+        binding.GetProperty("bindings").GetProperty(VrActionManifest.ActionSet).GetProperty("sources")
+            .EnumerateArray()
+            .SelectMany(source => source.GetProperty("inputs").EnumerateObject())
+            .Select(input => input.Value.GetProperty("output").GetString() ?? string.Empty)
+            .ToList();
 
     /// <summary>
     /// The application manifest names this process and points back at the action manifest by absolute

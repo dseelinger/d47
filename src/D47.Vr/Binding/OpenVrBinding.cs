@@ -50,6 +50,9 @@ public sealed class OpenVrBinding : IOpenVrSession
         public ETrackedDeviceClass GetTrackedDeviceClass(uint device) =>
             OpenVR.System.GetTrackedDeviceClass(device);
 
+        public ETrackedControllerRole GetControllerRoleForTrackedDeviceIndex(uint device) =>
+            OpenVR.System.GetControllerRoleForTrackedDeviceIndex(device);
+
         public EDeviceActivityLevel GetTrackedDeviceActivityLevel(uint device) =>
             OpenVR.System.GetTrackedDeviceActivityLevel(device);
 
@@ -168,6 +171,16 @@ public sealed class OpenVrBinding : IOpenVrSession
             uint size,
             ulong restrictToDevice) =>
             OpenVR.Input.GetDigitalActionData(action, ref data, size, restrictToDevice);
+
+        public EVRInputError GetAnalogActionData(
+            ulong action,
+            ref InputAnalogActionData_t data,
+            uint size,
+            ulong restrictToDevice) =>
+            OpenVR.Input.GetAnalogActionData(action, ref data, size, restrictToDevice);
+
+        public EVRInputError GetInputSourceHandle(string path, ref ulong handle) =>
+            OpenVR.Input.GetInputSourceHandle(path, ref handle);
     }
 
     private sealed class ApplicationsApi : IOpenVrApplications

@@ -254,6 +254,11 @@ without it the game, Virtual Desktop and the dashboard keep the trigger while Di
 too. With it on, d47 hands the trigger and grip back when the ray leaves, and its log says when the
 controllers are claimed and given back.
 
+At other times, with **Motion controllers** on, d47 still reads A, B, X, Y, the menu button, the
+stick (a Vive controller's trackpad) and its click, and the trigger and grip, from each hand at
+priority zero, which takes nothing from the game. Nothing acts on them yet, and its log says when
+each is pressed or released and when a stick moves.
+
 Nothing turns it to face you while you hold it. A panel forced upright and square cannot be
 tilted to read from below or angled to sit beside you, which is most of what moving one is for.
 

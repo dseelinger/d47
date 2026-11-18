@@ -177,6 +177,15 @@ public sealed class FakeOpenVr :
         return Classes.TryGetValue(device, out var kind) ? kind : ETrackedDeviceClass.Invalid;
     }
 
+    /// <summary>Which hand each controller is.</summary>
+    public Dictionary<uint, ETrackedControllerRole> Roles { get; } = [];
+
+    public ETrackedControllerRole GetControllerRoleForTrackedDeviceIndex(uint device)
+    {
+        Record(nameof(GetControllerRoleForTrackedDeviceIndex), device);
+        return Roles.TryGetValue(device, out var role) ? role : ETrackedControllerRole.Invalid;
+    }
+
     public EDeviceActivityLevel GetTrackedDeviceActivityLevel(uint device)
     {
         Record(nameof(GetTrackedDeviceActivityLevel), device);
@@ -471,12 +480,55 @@ public sealed class FakeOpenVr :
         return EVRInputError.None;
     }
 
+    /// <summary>The handle each action name resolved to.</summary>
+    public Dictionary<string, ulong> ActionHandles { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>The handle each input source path resolved to.</summary>
+    public Dictionary<string, ulong> SourceHandles { get; } = new(StringComparer.Ordinal);
+
     public EVRInputError GetActionHandle(string name, ref ulong handle)
     {
         Record(nameof(GetActionHandle));
         handle = _nextHandle++;
+        ActionHandles[name] = handle;
         return EVRInputError.None;
     }
+
+    public EVRInputError GetInputSourceHandle(string path, ref ulong handle)
+    {
+        Record(nameof(GetInputSourceHandle));
+        handle = _nextHandle++;
+        SourceHandles[path] = handle;
+        return EVRInputError.None;
+    }
+
+    /// <summary>Digital actions held on one hand, as (action name, source path).</summary>
+    public HashSet<(string Action, string Source)> HeldOn { get; } = [];
+
+    /// <summary>Actions that report <c>bActive</c> false.</summary>
+    public HashSet<string> Inactive { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>The stick reading on each hand, by source path.</summary>
+    public Dictionary<string, (float X, float Y)> Sticks { get; } = new(StringComparer.Ordinal);
+
+    public EVRInputError GetAnalogActionData(
+        ulong action,
+        ref InputAnalogActionData_t data,
+        uint size,
+        ulong restrictToDevice)
+    {
+        Record(nameof(GetAnalogActionData), action);
+
+        var name = NameOf(ActionHandles, action);
+        var source = NameOf(SourceHandles, restrictToDevice);
+        var (x, y) = Sticks.TryGetValue(source, out var at) ? at : default;
+
+        data = new InputAnalogActionData_t { bActive = !Inactive.Contains(name), x = x, y = y };
+        return EVRInputError.None;
+    }
+
+    private static string NameOf(Dictionary<string, ulong> handles, ulong handle) =>
+        handles.FirstOrDefault(pair => pair.Value == handle).Key ?? string.Empty;
 
     public EVRInputError UpdateActionState(VRActiveActionSet_t[] sets, uint sizeOfOne)
     {
@@ -494,7 +546,21 @@ public sealed class FakeOpenVr :
         ulong restrictToDevice)
     {
         Record(nameof(GetDigitalActionData), action);
-        data = new InputDigitalActionData_t { bActive = true, bState = ActionHeld };
+
+        if (restrictToDevice == OpenVR.k_ulInvalidInputValueHandle)
+        {
+            data = new InputDigitalActionData_t { bActive = true, bState = ActionHeld };
+            return EVRInputError.None;
+        }
+
+        var name = NameOf(ActionHandles, action);
+
+        data = new InputDigitalActionData_t
+        {
+            bActive = !Inactive.Contains(name),
+            bState = HeldOn.Contains((name, NameOf(SourceHandles, restrictToDevice))),
+        };
+
         return EVRInputError.None;
     }
 

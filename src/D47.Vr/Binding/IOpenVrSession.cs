@@ -48,6 +48,8 @@ public interface IOpenVrSystem
 
     ETrackedDeviceClass GetTrackedDeviceClass(uint device);
 
+    ETrackedControllerRole GetControllerRoleForTrackedDeviceIndex(uint device);
+
     EDeviceActivityLevel GetTrackedDeviceActivityLevel(uint device);
 
     uint GetStringTrackedDeviceProperty(
@@ -139,6 +141,14 @@ public interface IOpenVrInput
         ref InputDigitalActionData_t data,
         uint size,
         ulong restrictToDevice);
+
+    EVRInputError GetAnalogActionData(
+        ulong action,
+        ref InputAnalogActionData_t data,
+        uint size,
+        ulong restrictToDevice);
+
+    EVRInputError GetInputSourceHandle(string path, ref ulong handle);
 }
 
 /// <summary><c>IVRApplications</c>: enough of it to say who this process is, and whose scene is shown.</summary>

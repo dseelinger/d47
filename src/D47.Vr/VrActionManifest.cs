@@ -18,6 +18,14 @@ public static class VrActionManifest
     /// <summary>Back one level (Phase 25, "Drill in, and find your way back").</summary>
     public const string BackAction = "/actions/panel/in/back";
 
+    public const string PrimaryAction = "/actions/panel/in/primary";
+    public const string SecondaryAction = "/actions/panel/in/secondary";
+    public const string MenuAction = "/actions/panel/in/menu";
+    public const string StickClickAction = "/actions/panel/in/stickclick";
+
+    /// <summary>The stick, or the trackpad on a Vive controller.</summary>
+    public const string StickAction = "/actions/panel/in/stick";
+
     /// <summary>Every controller profile that gets a default binding.</summary>
     private static readonly string[] Profiles =
         ["oculus_touch", "rift", "knuckles", "vive_controller"];
@@ -73,12 +81,15 @@ public static class VrActionManifest
     {
         action_sets = new[] { new { name = ActionSet, usage = "leftright" } },
 
-        // Two, and only two, and the count is about the controllers rather than about ambition: the trigger
-        // and the grip are the only inputs that exist identically on all four profiles below.
         actions = new[]
         {
             new { name = GrabAction, requirement = "suggested", type = "boolean" },
             new { name = BackAction, requirement = "suggested", type = "boolean" },
+            new { name = PrimaryAction, requirement = "suggested", type = "boolean" },
+            new { name = SecondaryAction, requirement = "suggested", type = "boolean" },
+            new { name = MenuAction, requirement = "suggested", type = "boolean" },
+            new { name = StickClickAction, requirement = "suggested", type = "boolean" },
+            new { name = StickAction, requirement = "suggested", type = "vector2" },
         },
         default_bindings = Profiles
             .Select(profile => new { controller_type = profile, binding_url = BindingFile(profile) })
@@ -91,11 +102,57 @@ public static class VrActionManifest
                 [ActionSet] = "d47 panel",
                 [GrabAction] = "Carry the panel",
                 [BackAction] = "Go back a level",
+                [PrimaryAction] = "Primary button (A or X)",
+                [SecondaryAction] = "Secondary button (B or Y)",
+                [MenuAction] = "Menu button",
+                [StickClickAction] = "Stick click",
+                [StickAction] = "Stick",
             },
         },
     };
 
-    /// <summary>The trigger on both hands, bound to the one action.</summary>
+    /// <summary>One physical input on one or both hands and the actions its parts output to.</summary>
+    private sealed record Source(string[] Hands, string Input, string Mode, (string Part, string Action)[] Outputs);
+
+    private static readonly string[] BothHands = ["left", "right"];
+
+    private static Source Button(string[] hands, string input, string action) =>
+        new(hands, input, "button", [("click", action)]);
+
+    private static Source Stick(string input, string mode) =>
+        new(BothHands, input, mode, [("position", StickAction), ("click", StickClickAction)]);
+
+    /// <summary>What each profile's controllers have, by the names SteamVR gives their inputs.</summary>
+    private static IEnumerable<Source> Sources(string profile)
+    {
+        yield return Button(BothHands, "trigger", GrabAction);
+        yield return Button(BothHands, "grip", BackAction);
+
+        switch (profile)
+        {
+            case "oculus_touch":
+            case "rift":
+                yield return Button(["left"], "x", PrimaryAction);
+                yield return Button(["left"], "y", SecondaryAction);
+                yield return Button(["left"], "application_menu", MenuAction);
+                yield return Button(["right"], "a", PrimaryAction);
+                yield return Button(["right"], "b", SecondaryAction);
+                yield return Stick("joystick", "joystick");
+                break;
+
+            case "knuckles":
+                yield return Button(BothHands, "a", PrimaryAction);
+                yield return Button(BothHands, "b", SecondaryAction);
+                yield return Stick("thumbstick", "joystick");
+                break;
+
+            case "vive_controller":
+                yield return Button(BothHands, "application_menu", MenuAction);
+                yield return Stick("trackpad", "trackpad");
+                break;
+        }
+    }
+
     private static object Binding(string profile) => new
     {
         action_manifest_version = 0,
@@ -106,24 +163,15 @@ public static class VrActionManifest
         {
             [ActionSet] = new
             {
-                sources = new[] { "left", "right" }
-                    .SelectMany(hand => new object[]
+                sources = Sources(profile)
+                    .SelectMany(source => source.Hands.Select(hand => (object)new
                     {
-                        new
-                        {
-                            path = $"/user/hand/{hand}/input/trigger",
-                            mode = "button",
-                            inputs = new { click = new { output = GrabAction } },
-                        },
-
-                        // The grip, and it is the grip because it is the one input every profile here has.
-                        new
-                        {
-                            path = $"/user/hand/{hand}/input/grip",
-                            mode = "button",
-                            inputs = new { click = new { output = BackAction } },
-                        },
-                    })
+                        path = $"/user/hand/{hand}/input/{source.Input}",
+                        mode = source.Mode,
+                        inputs = source.Outputs.ToDictionary(
+                            output => output.Part,
+                            output => new { output = output.Action }),
+                    }))
                     .ToArray(),
             },
         },

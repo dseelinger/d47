@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: On SteamVR, D47 also reads A, B, X, Y, the menu button, and each stick (a Vive controller's trackpad) and its click on both hands, whenever Motion controllers are on, not only while a ray is on the panel. Nothing acts on them yet; the trigger and grip work as before. D47 still takes the trigger and grip from other applications only while a ray is on the panel. D47's log says when each button is pressed or released and when a stick moves. A SteamVR install that already has D47's bindings saved keeps them until you reset them in SteamVR's controller bindings.
+
 Changed: With Show D47 without SteamVR, the D47 layer in Elite also reads A, B, X, Y, the menu button, and each thumbstick and its click on both Touch controllers. Nothing acts on them yet; the trigger and grip work as before. Restart Elite once after this update: until you do, D47 says Elite loaded an older D47 layer and shows nothing in the headset on this route.
 
 Added: SPEND BREAKDOWN, after Close in the SPEND dialog, closes the dialog and opens a Spend breakdown page on the panel it was over, in the headset too. Choose a window (Today, This week, Last 7 days, This month or Last 30 days; it opens on Last 30 days) to see its range, how many charges it had and what they came to. By purpose lists what each purpose came to, with its kind, its number of charges, its share of the window and its cost, most costly first; press Purpose, Charges or Cost to sort. A purpose with charges that have no rate reads "≥" and how many had none, and charges written before purposes were recorded are listed as Not recorded. EVERY CHARGE is shown but cannot be chosen yet.
