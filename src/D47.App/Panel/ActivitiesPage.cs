@@ -21,18 +21,6 @@ public sealed class ActivitiesPage : UserControl
 
     public const string TableId = "Activities";
 
-    private static readonly TableColumn[] WideColumns =
-    [
-        new("Activity", ColumnFit.Fill),
-        new("LastDone"),
-        new("Age"),
-    ];
-
-    private static readonly TableColumn[] NarrowColumns =
-    [
-        new("Activity", ColumnFit.Fill),
-    ];
-
     /// <summary>The width the title row keeps; the table fills the page.</summary>
     public const double Cap = 900;
 
@@ -41,10 +29,6 @@ public sealed class ActivitiesPage : UserControl
     private readonly Func<string?> _commander;
 
     private readonly Func<DateTimeOffset> _now;
-
-    private readonly ColumnWidthMemory? _columnWidths;
-
-    private TableLayout _layout;
 
     private readonly StackPanel _page = new() { Spacing = 2, HorizontalAlignment = HorizontalAlignment.Stretch };
 
@@ -59,21 +43,33 @@ public sealed class ActivitiesPage : UserControl
         SortColumn<ActivityRow>.Text("Activity · Last done", row => row.Entry.Name),
     ];
 
-    private readonly SortHeader<ActivityRow> _wideHead = new("ActivitiesHead", WideHeadings, new SortOrder(1, SortDirection.Ascending));
+    private readonly ArrangedTable<ActivityRow> _wide;
 
-    private readonly SortHeader<ActivityRow> _narrowHead = new("ActivitiesHead", NarrowHeadings);
+    private readonly ArrangedTable<ActivityRow> _narrowTable;
+
+    private DateTimeOffset? _corpus;
+
+    private DateTimeOffset _today;
 
     private bool _narrow;
 
-    public ActivitiesPage(ActivityLedger ledger, Func<string?> commander, Func<DateTimeOffset>? now = null, ColumnWidthMemory? columnWidths = null, bool embedded = false)
+    public ActivitiesPage(
+        ActivityLedger ledger,
+        Func<string?> commander,
+        Func<DateTimeOffset>? now = null,
+        ColumnWidthMemory? columnWidths = null,
+        bool embedded = false,
+        ColumnArrangementMemory? columnArrangements = null)
     {
-        _columnWidths = columnWidths;
-        _layout = NewLayout();
+        var widths = columnArrangements?.Headset == true ? null : columnWidths;
+
         _ledger = ledger;
         _commander = commander;
         _now = now ?? (() => DateTimeOffset.Now);
-        _wideHead.Changed += Fill;
-        _narrowHead.Changed += Fill;
+        _wide = new ArrangedTable<ActivityRow>(TableId, WideFields(), columnArrangements, widths, 16, sortedByDefault: "LastDone");
+        _narrowTable = new ArrangedTable<ActivityRow>(TableId, NarrowFields(), columnArrangements, widths);
+        _wide.Changed += Fill;
+        _narrowTable.Changed += Fill;
 
         Content = embedded
             ? _page
@@ -90,8 +86,7 @@ public sealed class ActivitiesPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _wideHead.Reset();
-        _narrowHead.Reset();
+        ResetSorts();
         _ledger.Changed += Follow;
         Fill();
     }
@@ -109,12 +104,19 @@ public sealed class ActivitiesPage : UserControl
         if (narrow != _narrow)
         {
             _narrow = narrow;
-            _wideHead.Reset();
-            _narrowHead.Reset();
+            ResetSorts();
             Dispatcher.UIThread.Post(Fill);
         }
 
         return base.ArrangeOverride(finalSize);
+    }
+
+    private ArrangedTable<ActivityRow> Columns => _narrow ? _narrowTable : _wide;
+
+    private void ResetSorts()
+    {
+        _wide.ShowSort(null, SortDirection.Ascending);
+        _narrowTable.ShowSort(null, SortDirection.Ascending);
     }
 
     /// <summary>The ledger raises this from whichever thread folded.</summary>
@@ -123,11 +125,13 @@ public sealed class ActivitiesPage : UserControl
     private void Fill()
     {
         _page.Children.Clear();
-        _layout = NewLayout();
+
+        var columns = Columns;
+        columns.Refresh();
 
         var commander = _commander();
-        var corpus = _ledger.CorpusFrom(commander);
-        var now = _now();
+        var corpus = _corpus = _ledger.CorpusFrom(commander);
+        _today = _now();
 
         var header = new WrapPanel { Margin = new Thickness(0, 0, 0, 10) };
 
@@ -152,46 +156,55 @@ public sealed class ActivitiesPage : UserControl
 
         _page.Children.Add(PageFooter.Capped(header, Cap));
         _page.Children.Add(rule);
-        _page.Children.Add(Head());
+
+        if (LedgerTables.Arranger(columns) is { Children.Count: > 0 } arranger)
+        {
+            _page.Children.Add(arranger);
+        }
+
+        var table = new StackPanel { Spacing = 2 };
+        table.Children.Add(Head(columns));
 
         var rows = ActivityCatalogue.All
             .Select(entry => new ActivityRow(entry, _ledger.LastDone(entry.Key, commander)))
             .OrderBy(row => row.SortKey)
             .ToList();
 
-        foreach (var (entry, at) in (_narrow ? _narrowHead : _wideHead).Sort(rows))
+        foreach (var row in columns.Sort(rows))
         {
-            _page.Children.Add(Row(entry, at, corpus, now));
+            table.Children.Add(Row(row, columns));
         }
+
+        _page.Children.Add(LedgerTables.Sideways(columns, table));
     }
 
-    private Control Head()
+    private static Control Head(ArrangedTable<ActivityRow> columns)
     {
         var head = ListRow.Head(string.Empty);
-        var grid = _layout.Header([]);
-        var sorting = _narrow ? _narrowHead : _wideHead;
 
         head.Padding = new Thickness(13, 0, 1, 0);
-        head.Child = grid;
-        AddCell(grid, sorting.Cell(0, HorizontalAlignment.Left), 0);
-
-        if (!_narrow)
-        {
-            AddCell(grid, sorting.Cell(1, HorizontalAlignment.Left), 1);
-        }
+        head.Child = columns.Header();
 
         return head;
     }
 
-    private TableLayout NewLayout() => _narrow
-        ? new TableLayout(TableId, NarrowColumns, _columnWidths)
-        : new TableLayout(TableId, WideColumns, _columnWidths, 16);
+    private IReadOnlyList<TableField<ActivityRow>> NarrowFields() =>
+    [
+        new("Activity", new TableColumn("Activity", ColumnFit.Fill), NarrowCell) { Label = NarrowHeadings[0].Label, Sort = NarrowHeadings[0] },
+    ];
 
-    private Border Row(
-        ActivityEntry entry,
-        DateTimeOffset? at,
-        DateTimeOffset? corpus,
-        DateTimeOffset now)
+    private IReadOnlyList<TableField<ActivityRow>> WideFields() =>
+    [
+        new("Activity", new TableColumn("Activity", ColumnFit.Fill), row => NameOf(row.Entry)) { Label = WideHeadings[0].Label, Sort = WideHeadings[0] },
+        new("LastDone", new TableColumn("LastDone"), LastDoneCell)
+        {
+            Label = WideHeadings[1].Label,
+            Sort = WideHeadings[1],
+            More = [new("Age", new TableColumn("Age"), AgeCell)],
+        },
+    ];
+
+    private static TextBlock NameOf(ActivityEntry entry)
     {
         var name = ListRow.Name(new TextBlock
         {
@@ -202,6 +215,36 @@ public sealed class ActivitiesPage : UserControl
 
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
+        return name;
+    }
+
+    private Control NarrowCell(ActivityRow row)
+    {
+        var left = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };
+        left.Children.Add(NameOf(row.Entry));
+        left.Children.Add(When(row.At, _corpus, _today));
+
+        return left;
+    }
+
+    private Control LastDoneCell(ActivityRow row)
+    {
+        if (row.At is { } done)
+        {
+            return DateText(done, 14);
+        }
+
+        var none = Plain(NotSince(_corpus), 14);
+        Grid.SetColumnSpan(none, 2);
+
+        return none;
+    }
+
+    private Control AgeCell(ActivityRow row) =>
+        row.At is { } done ? Plain(ActivityAge.Say(done, _today), 14) : new Border();
+
+    private Border Row(ActivityRow source, ArrangedTable<ActivityRow> columns)
+    {
         var row = ListRow.Dress(new Border
         {
             MinHeight = _narrow ? 52 : TypeScale.MinimumTarget,
@@ -210,34 +253,9 @@ public sealed class ActivitiesPage : UserControl
             BorderBrush = Brushes.Transparent,
         });
 
-        var grid = _layout.Row([]);
-        row.Child = grid;
+        row.Child = columns.Row(source);
 
-        if (_narrow)
-        {
-            var left = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6) };
-            left.Children.Add(name);
-            left.Children.Add(When(at, corpus, now));
-            grid.Children.Add(left);
-        }
-        else
-        {
-            grid.Children.Add(name);
-
-            if (at is { } done)
-            {
-                AddCell(grid, DateText(done, 14), 1);
-                AddCell(grid, Plain(ActivityAge.Say(done, now), 14), 2);
-            }
-            else
-            {
-                var none = Plain(NotSince(corpus), 14);
-                Grid.SetColumnSpan(none, 2);
-                AddCell(grid, none, 1);
-            }
-        }
-
-        AutomationProperties.SetName(row, $"{entry.Name}, {(at is { } last ? Date(last) : "not in your journals")}");
+        AutomationProperties.SetName(row, $"{source.Entry.Name}, {(source.At is { } last ? Date(last) : "not in your journals")}");
 
         return row;
     }
@@ -266,13 +284,6 @@ public sealed class ActivitiesPage : UserControl
 
     private static TextBlock Plain(string text, double size) =>
         Typeset.Prose(text, size, ThemeManager.GreyKey, wrap: true, vertical: VerticalAlignment.Center);
-
-    private static void AddCell(Grid grid, Control cell, int column)
-    {
-        Grid.SetColumn(cell, column);
-        grid.Children.Add(cell);
-    }
-
 }
 
 /// <summary>One catalogue activity and when it was last done.</summary>

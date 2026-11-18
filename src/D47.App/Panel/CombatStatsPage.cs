@@ -115,27 +115,13 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
     private const double CreditsWidth = 200;
 
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Name", ColumnFit.Fill),
-        new("Kills"),
-        new("Credits", ColumnFit.Fixed) { Fixed = CreditsWidth },
-    ];
-
-    private static readonly TableColumn[] PaidColumnList =
-    [
-        new("Name", ColumnFit.Fill),
-        new("Credits", ColumnFit.Fixed) { Fixed = CreditsWidth },
-    ];
-
     private readonly Func<CommanderGameState?> _state;
     private readonly Func<HistoryState> _history;
     private readonly Func<DateTimeOffset> _now;
     private readonly bool _headset;
     private readonly Func<string, Task<bool>>? _copy;
-    private readonly ColumnWidthMemory? _columnWidths;
-    private readonly SortHeader<CombatRow>[] _heads;
-    private readonly SortHeader<CombatRow> _paidHead;
+    private readonly ArrangedTable<CombatRow>[] _tables;
+    private readonly ArrangedTable<CombatRow> _paidTable;
     private readonly Segment _period = SortBar.Choice("CombatPeriod", Periods);
     private readonly Segment _grouping = SortBar.Choice("CombatGrouping", Groupings);
     private readonly WrapPanel _controls = new() { ItemSpacing = 16, LineSpacing = Gaps.Tile, Margin = new Thickness(0, 0, 0, 8) };
@@ -146,6 +132,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
     private HistoryState _seenHistory;
     private long? _seenAddress;
     private long _seenMinute;
+    private long? _current;
     private string _query = string.Empty;
 
     public CombatStatsPage(
@@ -154,34 +141,37 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         Func<DateTimeOffset> now,
         bool headset = false,
         ColumnWidthMemory? columnWidths = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _copy = copy;
         _state = state;
         _history = history;
         _now = now;
         _headset = headset;
-        _columnWidths = columnWidths;
 
-        _heads =
+        var widths = headset ? null : columnWidths;
+        var spacing = headset ? 12 : 16;
+
+        _tables =
         [
             .. Enum.GetValues<CombatGrouping>().Select(grouping =>
             {
-                var head = new SortHeader<CombatRow>("CombatStatsHead", Heads(grouping));
-                head.Changed += Draw;
-                return head;
+                var table = new ArrangedTable<CombatRow>(TableId, Fields(Heads(grouping)), columnArrangements, widths, spacing);
+                table.Changed += Draw;
+                return table;
             }),
         ];
 
-        _paidHead = new SortHeader<CombatRow>("CombatStatsPaidHead", PaidHeads());
-        _paidHead.Changed += Draw;
+        _paidTable = new ArrangedTable<CombatRow>(PaidTableId, Fields(PaidHeads()), columnArrangements, widths, spacing);
+        _paidTable.Changed += Draw;
 
         _period.SelectedIndex = (int)CombatPeriod.Week;
         _period.SelectionChanged += (_, _) => Draw();
         _grouping.SelectionChanged += (_, _) =>
         {
-            Head.Show(null);
-            _paidHead.Show(null);
+            Head.ShowSort(null, SortDirection.Ascending);
+            _paidTable.ShowSort(null, SortDirection.Ascending);
             Draw();
         };
 
@@ -211,7 +201,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
     private CombatGrouping Grouping => (CombatGrouping)Math.Clamp(_grouping.SelectedIndex, 0, Groupings.Length - 1);
 
-    private SortHeader<CombatRow> Head => _heads[(int)Grouping];
+    private ArrangedTable<CombatRow> Head => _tables[(int)Grouping];
 
     public void Filter(string? query)
     {
@@ -405,6 +395,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         _seenHistory = _history();
         _seenAddress = state?.Location.SystemAddress;
         _seenMinute = PageKit.Minute(now);
+        _current = state?.Location.SystemAddress;
 
         var view = Build();
         var shown = Matching(view.Rows, _query);
@@ -439,7 +430,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
         if (split)
         {
-            DrawFactions(view, state?.Location.SystemAddress);
+            DrawFactions(view);
             return;
         }
 
@@ -455,7 +446,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
-        _body.Children.Add(Table(shown, state?.Location.SystemAddress, Head, TableId, ColumnList));
+        _body.Children.Add(Table(shown, Head));
     }
 
     private string Counted(int shown, int total) =>
@@ -463,7 +454,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             ? CountText(Grouping, total)
             : $"{shown.ToString("N0", CultureInfo.InvariantCulture)} of {CountText(Grouping, total)}";
 
-    private void DrawFactions(CombatStatsView view, long? current)
+    private void DrawFactions(CombatStatsView view)
     {
         if (view.Kills == 0)
         {
@@ -481,8 +472,8 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
-        Section(AgainstName, AgainstText, view.Rows, against, AgainstEmptyText, Head, TableId, ColumnList, current);
-        Section(PaidByName, PaidByText, paid, paying, PaidByEmptyText, _paidHead, PaidTableId, PaidColumnList, current);
+        Section(AgainstName, AgainstText, view.Rows, against, AgainstEmptyText, Head);
+        Section(PaidByName, PaidByText, paid, paying, PaidByEmptyText, _paidTable);
     }
 
     private void Section(
@@ -491,10 +482,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         IReadOnlyList<CombatRow> all,
         IReadOnlyList<CombatRow> shown,
         string emptyText,
-        SortHeader<CombatRow> head,
-        string tableId,
-        TableColumn[] columns,
-        long? current)
+        ArrangedTable<CombatRow> columns)
     {
         var group = StarSystemPage.GroupHead(name, description, Counted(shown.Count, all.Count));
         group.Margin = new Thickness(0, 26, 0, 0);
@@ -510,7 +498,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         }
         else
         {
-            _body.Children.Add(Table(shown, current, head, tableId, columns));
+            _body.Children.Add(Table(shown, columns));
         }
     }
 
@@ -541,39 +529,44 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         return run;
     }
 
-    private StackPanel Table(
-        IReadOnlyList<CombatRow> rows,
-        long? current,
-        SortHeader<CombatRow> head,
-        string tableId,
-        TableColumn[] columns)
+    private StackPanel Table(IReadOnlyList<CombatRow> rows, ArrangedTable<CombatRow> columns)
     {
+        columns.Refresh();
+
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
+        var list = new StackPanel { Spacing = Gaps.Tile };
 
-        var layout = new TableLayout(tableId, columns, _columnWidths, _headset ? 12 : 16);
+        table.Children.Add(LedgerTables.Arranger(columns));
+        list.Children.Add(LedgerTables.Head(columns, new Thickness(LedgerTables.RowInset, 0)));
 
-        table.Children.Add(CreditsKit.HeaderRow(head, layout, i => i == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right));
-
-        foreach (var row in head.Sort(rows))
+        foreach (var row in columns.Sort(rows))
         {
-            table.Children.Add(RowView(row, current, layout, _copy));
+            list.Children.Add(RowView(row, columns));
         }
+
+        table.Children.Add(LedgerTables.Sideways(columns, list));
 
         return table;
     }
 
-    private static Border RowView(CombatRow row, long? current, TableLayout layout, Func<string, Task<bool>>? copy)
+    private IReadOnlyList<TableField<CombatRow>> Fields(IReadOnlyList<SortColumn<CombatRow>> heads)
     {
-        var grid = layout.Row([]);
+        var name = StarSystemPage.Headed(heads[0], new TableColumn("Name", ColumnFit.Fill), row => NameOf(row, _current, _copy));
+        var credits = StarSystemPage.Headed(
+            heads[^1],
+            new TableColumn("Credits", ColumnFit.Fixed) { Fixed = CreditsWidth },
+            row => Figure(Credits(row.Awarded), row.Awarded),
+            right: true);
+
+        return heads.Count == 3
+            ? [name, StarSystemPage.Headed(heads[1], new TableColumn("Kills"), row => Figure(Number(row.Kills), row.Kills), right: true), credits]
+            : [name, credits];
+    }
+
+    private static Border RowView(CombatRow row, ArrangedTable<CombatRow> columns)
+    {
+        var grid = columns.Row(row);
         grid.VerticalAlignment = VerticalAlignment.Center;
-
-        Place(grid, 0, NameOf(row, current, copy));
-        if (layout.Columns.Count == 3)
-        {
-            Place(grid, 1, Figure(Number(row.Kills), row.Kills));
-        }
-
-        Place(grid, layout.Columns.Count - 1, Figure(Credits(row.Awarded), row.Awarded));
 
         var border = new Border
         {
@@ -632,12 +625,4 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         Typeset.Mono(
             text, TypeScale.Small, value is null ? ThemeManager.Grey2Key : ThemeManager.AKey,
             horizontal: HorizontalAlignment.Right, align: TextAlignment.Right);
-
-    private static void Place(Grid grid, int column, Control cell)
-    {
-        cell.VerticalAlignment = VerticalAlignment.Center;
-        Grid.SetColumn(cell, column);
-        grid.Children.Add(cell);
-    }
-
 }

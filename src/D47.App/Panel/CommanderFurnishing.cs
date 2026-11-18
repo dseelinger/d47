@@ -159,7 +159,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             _statisticsOpening = null;
 
             _statistics = new StatisticsPage(
-                state, clock, () => host.ClearSearch(), activities, host.ColumnWidths, opening, activities is null ? null : NavigateStatistics);
+                state, clock, () => host.ClearSearch(), activities, host.ColumnWidths, opening, activities is null ? null : NavigateStatistics, host.ColumnArrangements);
 
             if (crumb.Key == StatisticsPage.RootKey)
             {
@@ -245,7 +245,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     {
         var headset = host.Headset;
 
-        _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset, host.ColumnWidths, host.Copy);
+        _combatStatsBuild = _ => _combatStats = new CombatStatsPage(state, history, now, headset, host.ColumnWidths, host.Copy, host.ColumnArrangements);
 
         DeclareLedger(CombatStatsPage.PageKey, "Combat stats");
     }

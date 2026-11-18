@@ -45,7 +45,8 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         ActivityLedger? activities = null,
         ColumnWidthMemory? columnWidths = null,
         string? opening = null,
-        Func<string, bool>? navigate = null)
+        Func<string, bool>? navigate = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _state = state;
         _clearSearch = clearSearch;
@@ -54,7 +55,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
 
         if (activities is not null)
         {
-            _activities = new ActivitiesPage(activities, () => state()?.Identity.FrontierId, columnWidths: columnWidths, embedded: true);
+            _activities = new ActivitiesPage(activities, () => state()?.Identity.FrontierId, columnWidths: columnWidths, embedded: true, columnArrangements: columnArrangements);
         }
 
         Content = PageFooter.Shell(_sidebar, _body, Phrase, clock);
