@@ -345,6 +345,7 @@ public sealed class HidControllers : IHotasReader, IDisposable
                 Presses = [.. state.Presses],
                 Hats = state.Hats,
                 AxisCount = Device.Layout.AxisCount,
+                AxisMoves = state.AxisMoves,
             };
         }
 

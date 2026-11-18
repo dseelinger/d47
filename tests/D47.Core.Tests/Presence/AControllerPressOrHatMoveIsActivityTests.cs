@@ -4,7 +4,10 @@ using Xunit;
 
 namespace D47.Core.Tests.Presence;
 
-/// <summary>A rise in any button's press count, or a changed hat value, is activity; nothing else on a controller is.</summary>
+/// <summary>
+/// A rise in any button's press count, a changed hat value or a rise in the axis move count is activity; nothing
+/// else on a controller is.
+/// </summary>
 public class AControllerPressOrHatMoveIsActivityTests
 {
     [Fact]
@@ -65,11 +68,32 @@ public class AControllerPressOrHatMoveIsActivityTests
         Assert.True(activity.Moved([Reading("stick", presses: [3], hats: [0])]));
     }
 
-    private static HotasReading Reading(string id, int[] presses, int[] hats, bool[]? held = null) => new()
+    [Fact]
+    public void ARiseInTheAxisMoveCountIsActivity()
+    {
+        var activity = new ControllerActivity();
+        activity.Moved([Reading("throttle", presses: [0], hats: [], axisMoves: 12)]);
+
+        Assert.True(activity.Moved([Reading("throttle", presses: [0], hats: [], axisMoves: 13)]));
+        Assert.False(activity.Moved([Reading("throttle", presses: [0], hats: [], axisMoves: 13)]));
+    }
+
+    [Fact]
+    public void AnAxisMoveCountThatStartsAgainIsANewBaseline()
+    {
+        var activity = new ControllerActivity();
+        activity.Moved([Reading("throttle", presses: [0], hats: [], axisMoves: 12)]);
+
+        Assert.False(activity.Moved([Reading("throttle", presses: [0], hats: [], axisMoves: 0)]));
+        Assert.True(activity.Moved([Reading("throttle", presses: [0], hats: [], axisMoves: 1)]));
+    }
+
+    private static HotasReading Reading(string id, int[] presses, int[] hats, bool[]? held = null, int axisMoves = 0) => new()
     {
         Id = id,
         Buttons = held ?? new bool[presses.Length],
         Presses = presses,
         Hats = hats,
+        AxisMoves = axisMoves,
     };
 }

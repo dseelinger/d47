@@ -16,6 +16,9 @@ internal sealed record HidState(bool[] Buttons, int[] Hats)
 {
     /// <summary>A running count of up-to-down changes by button index, set by <see cref="HidControllers"/>.</summary>
     public int[] Presses { get; init; } = [];
+
+    /// <summary>The running count of axis moves since the collection was opened; see <see cref="Input.AxisMoves"/>.</summary>
+    public int AxisMoves { get; init; }
 }
 
 /// <summary>The HID collections Windows lists, and reading one.</summary>
@@ -239,7 +242,8 @@ internal sealed class HidDevices : IHidDevices
                 cap.UsageMin,
                 cap.IsRange != 0 ? cap.UsageMax : cap.UsageMin,
                 cap.LogicalMin,
-                cap.LogicalMax)),
+                cap.LogicalMax,
+                cap.BitSize)),
             caps.InputReportByteLength);
 
         return (layout, preparsed);
@@ -258,6 +262,9 @@ internal sealed class HidDevices : IHidDevices
 
         // Never disposed: Dispose can come after the thread has ended.
         private readonly CancellationTokenSource _stopping = new();
+
+        private readonly AxisMoves _moves = new(device.Layout.Axes);
+        private Func<HidAxis, byte[], uint?>? _axisValue;
 
         public void Dispose() => _stopping.Cancel();
 
@@ -421,8 +428,22 @@ internal sealed class HidDevices : IHidDevices
                 }
             }
 
-            return new HidState(buttons, hats);
+            return new HidState(buttons, hats) { AxisMoves = _moves.Read(reports, _axisValue ??= AxisValue) };
         }
+
+        private uint? AxisValue(HidAxis axis, byte[] report) =>
+            HidP_GetUsageValue(
+                HidpInput,
+                HidLayout.GenericDesktop,
+                axis.LinkCollection,
+                axis.Usage,
+                out var value,
+                device.Preparsed,
+                report,
+                (uint)report.Length)
+            == HidpStatusSuccess
+                ? value
+                : null;
     }
 
     private const int HidpInput = 0;
@@ -512,6 +533,9 @@ internal sealed class HidDevices : IHidDevices
 
         [FieldOffset(12)]
         public byte IsRange;
+
+        [FieldOffset(18)]
+        public ushort BitSize;
 
         [FieldOffset(40)]
         public int LogicalMin;

@@ -7,7 +7,7 @@ namespace D47.App.Input;
 
 /// <summary>
 /// Whether paid calls stop because the Commander is away: Windows keyboard and mouse input other than d47's own,
-/// controller presses and hats, presses on the headset panel and the journal events <see cref="PresenceWatch"/>
+/// controller presses, hats and axis moves, presses on the headset panel and the journal events <see cref="PresenceWatch"/>
 /// counts. Worked out on the tick; <see cref="PaidCallsStopped"/> is read from any thread.
 /// </summary>
 /// <param name="lastInput">The tick count of the last keyboard or mouse input, or null when unreadable.</param>

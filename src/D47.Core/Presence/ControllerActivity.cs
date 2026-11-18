@@ -3,13 +3,13 @@ using D47.Core.Hotas;
 namespace D47.Core.Presence;
 
 /// <summary>
-/// Whether any controller was pressed or had a hat moved since the readings before: a rise in a button's running
-/// press count, or a changed hat value. A device's first reading is its baseline, and a device missing from a
-/// reading keeps the last one seen.
+/// Whether any controller was pressed, had a hat moved or had an axis moved since the readings before: a rise in a
+/// button's running press count, a changed hat value, or a rise in the running axis move count. A device's first
+/// reading is its baseline, and a device missing from a reading keeps the last one seen.
 /// </summary>
 public sealed class ControllerActivity
 {
-    private readonly Dictionary<string, (int[] Presses, int[] Hats)> _last = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, (int[] Presses, int[] Hats, int AxisMoves)> _last = new(StringComparer.Ordinal);
 
     public bool Moved(IReadOnlyList<HotasReading> readings)
     {
@@ -22,10 +22,10 @@ public sealed class ControllerActivity
 
             if (_last.TryGetValue(reading.Id, out var last))
             {
-                moved |= Rose(last.Presses, presses) || Changed(last.Hats, hats);
+                moved |= Rose(last.Presses, presses) || Changed(last.Hats, hats) || reading.AxisMoves > last.AxisMoves;
             }
 
-            _last[reading.Id] = (presses, hats);
+            _last[reading.Id] = (presses, hats, reading.AxisMoves);
         }
 
         return moved;

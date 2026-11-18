@@ -378,9 +378,9 @@ public static class PrivacyCapability
                 + "allowed again\". A key D47 presses in Elite does not count. Set it to 0 and the log never says "
                 + "paid calls stopped. The model cannot change the row.",
             Label = "Away after (minutes)",
-            Help = "How long with no keyboard or mouse input, controller press, press on the headset panel, or journal "
-                   + "event only you cause, such as a jump, docking or a trade, before D47 counts you as away. 0 is "
-                   + "never away.",
+            Help = "How long with no keyboard or mouse input, controller press or stick movement, press on the "
+                   + "headset panel, or journal event only you cause, such as a jump, docking or a trade, before D47 "
+                   + "counts you as away. 0 is never away.",
             Kind = SettingKind.Number,
             Minimum = 0,
             Maximum = PresenceSettings.MostAwayMinutes,

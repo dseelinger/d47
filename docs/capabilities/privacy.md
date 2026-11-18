@@ -471,16 +471,16 @@ box, from 0 to 240. 0 means you are never away.
 These count as you being there:
 
 - keyboard or mouse input anywhere in Windows, except keys Directive 47 presses itself;
-- a button press or a hat move on a stick or pad;
+- a button press, a hat move or an axis move on a stick, throttle, pedals or pad;
 - a press on the panel in the headset;
 - a journal event only you cause, such as a jump, entering or leaving supercruise, docking,
   undocking, a trade, a mission accepted or handed in, a scan, or a screenshot, and a touchdown
   or liftoff you fly yourself.
 
-Moving a stick's axes alone does not count, and neither do the events Elite writes with nobody
-acting (a bounty, a message received, damage), a change in the ship's status, anything you say
-hands-free, or anything Directive 47 says. The log says when you become away and when you are
-back.
+An axis counts once it has moved more than a thirty-second of its travel, so a stick or throttle
+left where it is does not. These do not count: the events Elite writes with nobody acting (a
+bounty, a message received, damage), a change in the ship's status, anything you say hands-free,
+and anything Directive 47 says. The log says when you become away and when you are back.
 
 While you are away, Directive 47 sends no model call you did not start to a model that is not on
 this computer: no reworded callout (it is spoken as written), no NPC chatter, no Narrator line, no

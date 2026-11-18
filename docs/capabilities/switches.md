@@ -655,7 +655,7 @@ A headset view is its own `view` field too, `vr` or `desktop`. A key chord is it
 
 ### What it does not do
 
-- **It does not read axes.** A throttle axis is not a switch and is not in scope.
+- **It does not act on axes.** A throttle axis is not a switch and is not in scope.
 - **It does not write your Elite bindings.** Those are read-only, always.
 - **It does not move your switches.** Nothing can; they are lumps of metal.
 - **It does not act on a switch it has just found.** On startup, and after a device reconnects,

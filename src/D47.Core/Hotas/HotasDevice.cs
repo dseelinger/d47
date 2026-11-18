@@ -31,6 +31,12 @@ public sealed record HotasReading
 
     public int AxisCount { get; init; }
 
+    /// <summary>
+    /// A running count of axis moves the reader saw, each a change of more than a small part of the axis's range;
+    /// zero when the reader does not count. Never reset on a read, so each consumer keeps the last count it saw.
+    /// </summary>
+    public int AxisMoves { get; init; }
+
     /// <summary>Whether a button index exists on this device and is currently held.</summary>
     public bool IsHeld(int button) => button >= 0 && button < Buttons.Count && Buttons[button];
 

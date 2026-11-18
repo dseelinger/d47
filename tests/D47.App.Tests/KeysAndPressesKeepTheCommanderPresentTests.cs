@@ -6,7 +6,7 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// The Commander's keyboard, mouse, controllers and headset presses keep paid calls going; a key d47 sent does
+/// The Commander's keyboard, mouse, controller presses, hats and axes and headset presses keep paid calls going; a key d47 sent does
 /// not, and an away time of zero never stops them.
 /// </summary>
 public class KeysAndPressesKeepTheCommanderPresentTests
@@ -101,6 +101,30 @@ public class KeysAndPressesKeepTheCommanderPresentTests
     }
 
     [Fact]
+    public void ARiseInTheAxisMoveCountStirsTheClock()
+    {
+        var presence = Presence();
+        presence.Tick(Start, [], [Reading(presses: 3, hat: 0, axisMoves: 40)], 5);
+
+        presence.Tick(Start.AddMinutes(4), [], [Reading(presses: 3, hat: 0, axisMoves: 41)], 5);
+        presence.Tick(Start.AddMinutes(8), [], [Reading(presses: 3, hat: 0, axisMoves: 41)], 5);
+
+        Assert.False(presence.PaidCallsStopped);
+    }
+
+    [Fact]
+    public void AnUnchangedAxisMoveCountDoesNot()
+    {
+        var presence = Presence();
+        presence.Tick(Start, [], [Reading(presses: 3, hat: 0, axisMoves: 40)], 5);
+
+        presence.Tick(Start.AddMinutes(4), [], [Reading(presses: 3, hat: 0, axisMoves: 40)], 5);
+        presence.Tick(Start.AddMinutes(5), [], [Reading(presses: 3, hat: 0, axisMoves: 40)], 5);
+
+        Assert.True(presence.PaidCallsStopped);
+    }
+
+    [Fact]
     public void APressOnTheHeadsetPanelStirsTheClock()
     {
         var presence = Presence();
@@ -124,11 +148,12 @@ public class KeysAndPressesKeepTheCommanderPresentTests
         Assert.False(presence.PaidCallsStopped);
     }
 
-    private static HotasReading Reading(int presses, int hat) => new()
+    private static HotasReading Reading(int presses, int hat, int axisMoves = 0) => new()
     {
         Id = "stick",
         Buttons = [false],
         Presses = [presses],
         Hats = [hat],
+        AxisMoves = axisMoves,
     };
 }
