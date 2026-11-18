@@ -66,12 +66,122 @@ public sealed record BodySummary
 
     public bool IsTidallyLocked { get; init; }
 
+    /// <summary>The body's id64.</summary>
+    public long? BodyAddress { get; init; }
+
+    /// <summary>"Star" or "Planet".</summary>
+    public string? Type { get; init; }
+
+    public bool IsMainStar { get; init; }
+
+    /// <summary>The whole <c>parents</c> chain, nearest first; kind is Star, Planet or Null as written.</summary>
+    public IReadOnlyList<BodyParent> ParentBodies { get; init; } = [];
+
+    /// <summary>A star's class and subclass, "K7".</summary>
+    public string? SpectralClass { get; init; }
+
+    /// <summary>A star's luminosity class, "V".</summary>
+    public string? Luminosity { get; init; }
+
+    public double? SolarMasses { get; init; }
+
+    public double? SolarRadius { get; init; }
+
+    public double? EarthMasses { get; init; }
+
+    /// <summary>In kilometres.</summary>
+    public double? Radius { get; init; }
+
+    /// <summary>A star's age in millions of years.</summary>
+    public double? Age { get; init; }
+
+    /// <summary>In atmospheres.</summary>
+    public double? SurfacePressure { get; init; }
+
+    /// <summary>Atmosphere gases by percentage share.</summary>
+    public IReadOnlyDictionary<string, double> AtmosphereComposition { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>Rock, metal and ice by percentage share.</summary>
+    public IReadOnlyDictionary<string, double> SolidComposition { get; init; } = new Dictionary<string, double>();
+
+    /// <summary>Biological genera reported on the body.</summary>
+    public IReadOnlyList<string> Genera { get; init; } = [];
+
+    /// <summary>In days.</summary>
+    public double? OrbitalPeriod { get; init; }
+
+    /// <summary>In astronomical units.</summary>
+    public double? SemiMajorAxis { get; init; }
+
+    public double? OrbitalEccentricity { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? OrbitalInclination { get; init; }
+
+    public double? OrbitalSynchronicity { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? ArgOfPeriapsis { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? AscendingNode { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? MeanAnomaly { get; init; }
+
+    /// <summary>In days.</summary>
+    public double? RotationalPeriod { get; init; }
+
+    /// <summary>In degrees.</summary>
+    public double? AxialTilt { get; init; }
+
+    /// <summary>What scanning it is worth, as the service estimates it.</summary>
+    public long? ScanValue { get; init; }
+
+    public int? SignalCount { get; init; }
+
+    /// <summary>When the surface signals were last reported.</summary>
+    public DateTimeOffset? SignalsSeen { get; init; }
+
+    public long? LandmarkValue { get; init; }
+
+    public IReadOnlyList<BodyLandmark> Landmarks { get; init; } = [];
+
+    public IReadOnlyList<SynthesisRecipe> SynthesisRecipes { get; init; } = [];
+
+    public IReadOnlyList<BeltProfile> Belts { get; init; } = [];
+
+    /// <summary>The stations on or around the body, with the body and system named from this row.</summary>
+    public IReadOnlyList<StationSummary> Stations { get; init; } = [];
+
+    /// <summary>The Power controlling the body's system, in the service's spelling.</summary>
+    public string? ControllingPower { get; init; }
+
+    /// <summary>The system's Powerplay state, in the service's spelling.</summary>
+    public string? PowerState { get; init; }
+
+    public string? SystemRegion { get; init; }
+
+    /// <summary>When the service last had a report of this body.</summary>
+    public DateTimeOffset? ReportedAt { get; init; }
+
     /// <summary>The percentage share of <paramref name="material"/>, or null when the body carries none.</summary>
     public double? Share(string material) =>
         Materials.Where(one => string.Equals(one.Name, material, StringComparison.OrdinalIgnoreCase))
             .Select(one => (double?)one.Share)
             .FirstOrDefault();
 }
+
+/// <summary>One body in a body's <c>parents</c> chain.</summary>
+/// <param name="Kind">Star, Planet or Null (a barycentre), as written.</param>
+/// <param name="Address">The parent's id64.</param>
+public sealed record BodyParent(string Kind, long Address, string? Subtype);
+
+/// <summary>One surface feature of a body, with its position.</summary>
+public sealed record BodyLandmark(long? Id, string? Type, string? Subtype, string? Variant, double? Latitude, double? Longitude, long? Value);
+
+/// <summary>One material synthesis recipe a body's surface materials allow.</summary>
+public sealed record SynthesisRecipe(string Name, string? Level);
 
 public sealed record BodySearchResult(string? Reference, int Total, IReadOnlyList<BodySummary> Bodies)
 {

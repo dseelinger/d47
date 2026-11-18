@@ -247,6 +247,9 @@ public sealed record StationShipyard(IReadOnlyList<StationShip> Ships, DateTimeO
 /// <summary>A ring and the signals reported in it.</summary>
 public sealed record RingProfile(string Name, string? Type, IReadOnlyDictionary<string, int> Signals);
 
+/// <summary>An asteroid belt around a star. Radii are in metres, mass in megatons.</summary>
+public sealed record BeltProfile(string Name, string? Type, double? Mass, double? InnerRadius, double? OuterRadius);
+
 /// <summary>One star or planet.</summary>
 public sealed record BodyProfile
 {

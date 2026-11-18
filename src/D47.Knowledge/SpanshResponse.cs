@@ -838,7 +838,111 @@ internal static class SpanshResponse
         Gravity = Number(element, "gravity"),
         SurfaceTemperature = Number(element, "surface_temperature"),
         IsTidallyLocked = Boolean(element, "is_rotational_period_tidally_locked"),
+        BodyAddress = Integer(element, "id64"),
+        Type = String(element, "type"),
+        IsMainStar = Boolean(element, "is_main_star"),
+        ParentBodies = [.. element.Items("parents")
+            .Where(parent => parent.ValueKind == JsonValueKind.Object && Integer(parent, "id64") is not null)
+            .Select(parent => new BodyParent(String(parent, "type") ?? "Null", Integer(parent, "id64")!.Value, String(parent, "subtype")))],
+        SpectralClass = String(element, "spectral_class"),
+        Luminosity = String(element, "luminosity_class"),
+        SolarMasses = Number(element, "solar_masses"),
+        SolarRadius = Number(element, "solar_radius"),
+        EarthMasses = Number(element, "earth_masses"),
+        Radius = Number(element, "radius"),
+        Age = Number(element, "age"),
+        SurfacePressure = Number(element, "surface_pressure"),
+        AtmosphereComposition = Shares(element, "atmosphere_composition"),
+        SolidComposition = Shares(element, "solid_composition"),
+        Genera = [.. element.Items("genuses")
+            .Where(genus => genus.ValueKind == JsonValueKind.Object)
+            .Select(genus => String(genus, "name"))
+            .OfType<string>()
+            .Select(CodexGenus.Name)],
+        OrbitalPeriod = Number(element, "orbital_period"),
+        SemiMajorAxis = Number(element, "semi_major_axis"),
+        OrbitalEccentricity = Number(element, "orbital_eccentricity"),
+        OrbitalInclination = Number(element, "orbital_inclination"),
+        OrbitalSynchronicity = Number(element, "orbital_synchronicity"),
+        ArgOfPeriapsis = Number(element, "arg_of_periapsis"),
+        AscendingNode = Number(element, "ascending_node"),
+        MeanAnomaly = Number(element, "mean_anomaly"),
+        RotationalPeriod = Number(element, "rotational_period"),
+
+        // The search writes the tilt in radians, as the dump does.
+        AxialTilt = Number(element, "axis_tilt") * 180 / Math.PI,
+        ScanValue = Integer(element, "estimated_scan_value"),
+        SignalCount = Count(element, "signal_count"),
+        SignalsSeen = Timestamp(element, "signals_updated_at"),
+        LandmarkValue = Integer(element, "landmark_value"),
+        Landmarks = [.. element.Items("landmarks")
+            .Where(landmark => landmark.ValueKind == JsonValueKind.Object)
+            .Select(landmark => new BodyLandmark(
+                Integer(landmark, "id"),
+                String(landmark, "type"),
+                String(landmark, "subtype"),
+                String(landmark, "variant"),
+                Number(landmark, "latitude"),
+                Number(landmark, "longitude"),
+                Integer(landmark, "value")))],
+        SynthesisRecipes = [.. element.Items("synthesis_recipes")
+            .Where(recipe => recipe.ValueKind == JsonValueKind.Object && String(recipe, "name") is not null)
+            .Select(recipe => new SynthesisRecipe(String(recipe, "name")!, String(recipe, "level")))],
+        Belts = [.. element.Items("belts")
+            .Where(belt => belt.ValueKind == JsonValueKind.Object)
+            .Select(belt => new BeltProfile(
+                String(belt, "name") ?? "an unnamed belt",
+                String(belt, "type"),
+                Number(belt, "mass"),
+                Number(belt, "inner_radius"),
+                Number(belt, "outer_radius")))],
+        Stations = [.. element.Items("stations")
+            .Where(station => station.ValueKind == JsonValueKind.Object)
+            .Select(station => ReadBodyStation(station, element))],
+        ControllingPower = String(element, "system_controlling_power"),
+        PowerState = String(element, "system_power_state"),
+        SystemRegion = String(element, "system_region"),
+        ReportedAt = Timestamp(element, "updated_at"),
     };
+
+    /// <summary>A station row nested in a bodies-search row; the body and system come from the row around it.</summary>
+    private static StationSummary ReadBodyStation(JsonElement station, JsonElement body) => new()
+    {
+        Name = String(station, "name") ?? "an unnamed station",
+        SystemName = String(body, "system_name") ?? "an unnamed system",
+        SystemAddress = Integer(body, "system_id64"),
+        Body = String(body, "name"),
+        BodyAddress = Integer(body, "id64"),
+        MarketId = Integer(station, "market_id"),
+        DistanceToArrival = Number(station, "distance_to_arrival"),
+        Type = String(station, "type"),
+        HasLargePad = Boolean(station, "has_large_pad"),
+        SmallPads = Count(station, "small_pads"),
+        MediumPads = Count(station, "medium_pads"),
+        LargePads = Count(station, "large_pads"),
+        ControllingFaction = String(station, "controlling_minor_faction"),
+        ControllingFactionState = String(station, "controlling_minor_faction_state"),
+        HasMarket = OptionalFlag(station, "has_market"),
+        HasOutfitting = OptionalFlag(station, "has_outfitting"),
+        HasShipyard = OptionalFlag(station, "has_shipyard"),
+        Services = [.. station.Items("services").Where(service => service.ValueKind == JsonValueKind.String).Select(service => service.GetString()!)],
+    };
+
+    /// <summary>The <c>name</c> and <c>share</c> pairs of a composition list.</summary>
+    private static IReadOnlyDictionary<string, double> Shares(JsonElement element, string name)
+    {
+        var shares = new Dictionary<string, double>();
+
+        foreach (var entry in element.Items(name).Where(entry => entry.ValueKind == JsonValueKind.Object))
+        {
+            if (String(entry, "name") is { } part)
+            {
+                shares[part] = Number(entry, "share") ?? 0;
+            }
+        }
+
+        return shares;
+    }
 
     /// <summary>Surface materials and their share.</summary>
     private static IReadOnlyList<(string Name, double Share)> ReadMaterials(JsonElement element)
