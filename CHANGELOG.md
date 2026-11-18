@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Hide comms traffic and Hide invented chatter on Transcript › In Ship are now settings, under a SETTINGS 2 tile on the title line (closed until pressed) in place of the checkboxes above the messages. You can change them by voice, and Settings search finds them. A box you had checked stays on after the update.
+
 Fixed: Idle chatter no longer repeats its sample line word for word. A reply that matches the sample, ignoring case and punctuation, is dropped and nothing is said.
 
 Fixed: Idle chatter while you are on foot inside a station, a hangar or a social space no longer talks about standing on a world, oxygen or exposure to the outside. It is briefed as being inside a station and uses its own ten lines. On foot anywhere else is unchanged.

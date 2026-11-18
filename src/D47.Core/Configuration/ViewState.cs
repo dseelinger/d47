@@ -8,6 +8,10 @@ namespace D47.Core.Configuration;
 /// <summary>How the panel was left, as opposed to how d47 is configured.</summary>
 public sealed record ViewState
 {
+    /// <summary>Keys this build does not read; <see cref="TranscriptFilterMigration"/> takes the old In Ship filters from here.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
     /// <summary>Card ids the Commander collapsed.</summary>
     public IReadOnlyList<string> CollapsedCards { get; init; } = [];
 
@@ -64,12 +68,6 @@ public sealed record ViewState
 
     /// <summary>What the NEXT bar shows when both a story objective and a chosen campaign front exist.</summary>
     public NextBarSource NextBar { get; init; }
-
-    /// <summary>Whether In Ship leaves out relayed comms traffic.</summary>
-    public bool HideComms { get; init; }
-
-    /// <summary>Whether In Ship leaves out chatter d47 invented.</summary>
-    public bool HideInventedChatter { get; init; }
 
     /// <summary>How the Stories page was left filtered, or null for no filter.</summary>
     public D47.Core.Stories.StoryFilter? StoryFilter { get; init; }

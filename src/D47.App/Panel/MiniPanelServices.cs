@@ -166,6 +166,7 @@ public sealed record MiniPanelServices
         view.EnableRawJournal();
 
         view.EnableLog(BuildSettingsStrip is null ? null : () => BuildSettingsStrip(PanelView.LogRoot));
+        view.EnableConversationSettings(BuildSettingsStrip is null ? null : () => BuildSettingsStrip(PanelView.ConversationRoot));
 
         if (Routing is not null)
         {

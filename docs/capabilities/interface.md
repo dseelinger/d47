@@ -636,6 +636,14 @@ desktop window can sit on the log while the headset panel shows the conversation
 transcript underneath, and each surface decides how much of it to show. The mini headset panel
 has no bar at all, being the transcript's tail and the microphone row and nothing else.
 
+#### Hide comms traffic and Hide invented chatter {#in-ship-filters}
+
+Two rows of Transcript › In Ship, under the **SETTINGS 2** tile on its title line. Hide comms traffic
+leaves relayed comms turns out of In Ship, the headset panel and the mini panel's tail. Hide invented
+chatter does the same for chatter d47 made up. Both are off by default, take effect at once, and
+delete nothing: turn a row off and the turns are back. You can also say "hide comms traffic" or
+"hide invented chatter".
+
 #### Scrolling by saying so {#scrolling}
 
 Five kinds of phrase, on **all three surfaces at once** — the window, the headset panel and the flat

@@ -1283,6 +1283,12 @@ public sealed record UiSettings
     /// <summary>Whether d47 fetches stock stories' average ratings and sends the Commander's own stars.</summary>
     public bool StoryRatings { get; init; } = true;
 
+    /// <summary>Whether In Ship leaves out relayed comms traffic.</summary>
+    public bool HideComms { get; init; }
+
+    /// <summary>Whether In Ship leaves out chatter d47 invented.</summary>
+    public bool HideInventedChatter { get; init; }
+
     /// <summary>Where the panel's tabs are drawn, on both the window and the headset: "top" or "left".</summary>
     public string Tabs { get; init; } = Capabilities.Builtin.InterfaceCapability.TabsTop;
 }

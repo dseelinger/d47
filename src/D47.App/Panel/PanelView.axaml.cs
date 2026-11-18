@@ -512,16 +512,11 @@ public partial class PanelView : UserControl, IPanelTabHost
             case nameof(PanelViewModel.HideInventedChatter):
                 if (Dispatcher.UIThread.CheckAccess())
                 {
-                    SyncConversationFilterBoxes();
                     DrawTranscript();
                     return;
                 }
 
-                Dispatcher.UIThread.Post(() =>
-                {
-                    SyncConversationFilterBoxes();
-                    DrawTranscript();
-                });
+                Dispatcher.UIThread.Post(DrawTranscript);
                 return;
 
             case nameof(PanelViewModel.HasAsked):
@@ -1430,11 +1425,19 @@ public partial class PanelView : UserControl, IPanelTabHost
     }
 
     private Func<Control?>? _logSettingsStrip;
+    private Func<Control?>? _conversationSettingsStrip;
 
     /// <summary>The Log file page's own settings — log levels — on the tab they only affect (#283).</summary>
     public void EnableLog(Func<Control?>? settingsStrip)
     {
         _logSettingsStrip = settingsStrip;
+        ShowLogSettingsStrip();
+    }
+
+    /// <summary>In Ship's own settings — hiding comms traffic and invented chatter — on the page they only affect.</summary>
+    public void EnableConversationSettings(Func<Control?>? settingsStrip)
+    {
+        _conversationSettingsStrip = settingsStrip;
         ShowLogSettingsStrip();
     }
 
@@ -4358,13 +4361,15 @@ public partial class PanelView : UserControl, IPanelTabHost
         ShowPageBar();
     }
 
-    /// <summary>Puts the page's own control on the title line: the Log file's settings tile on that page, the shown page's <see cref="IPageChrome.BarTool"/> elsewhere off the Transcript.</summary>
+    /// <summary>Puts the page's own control on the title line: the settings tile of the Log file or In Ship on that page, the shown page's <see cref="IPageChrome.BarTool"/> elsewhere off the Transcript.</summary>
     private void ShowPageTool()
     {
         var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
 
         var tool = transcript
-            ? LogSettingsStrip.IsVisible ? (LogSettingsStrip.Content as IPageChrome)?.BarTool : null
+            ? LogSettingsStrip.IsVisible ? (LogSettingsStrip.Content as IPageChrome)?.BarTool
+            : ConversationSettingsStrip.IsVisible ? (ConversationSettingsStrip.Content as IPageChrome)?.BarTool
+            : null
             : (PagePane.Child as IPageChrome)?.BarTool;
 
         if (!ReferenceEquals(PageTool.Content, tool))
@@ -4472,51 +4477,30 @@ public partial class PanelView : UserControl, IPanelTabHost
         TitleLine.InvalidateMeasure();
     }
 
-    /// <summary>The In Ship filter row, on the Transcript tab's Conversation page at its root.</summary>
-    private void ShowConversationFilterStrip()
+    /// <summary>In Ship's settings strip, on the Transcript tab's Conversation page at its root.</summary>
+    private void ShowConversationSettingsStrip()
     {
         var show = Tab == PanelTab.Transcript && Page == TranscriptPage.Conversation && Mode == PanelMode.Full
                    && Nav.AtRoot && !OutputOnly;
 
-        ConversationFilterStrip.IsVisible = show;
-        SyncConversationFilterBoxes();
+        if (show && ConversationSettingsStrip.Content is null)
+        {
+            var strip = _conversationSettingsStrip?.Invoke();
+            ConversationSettingsStrip.Content = strip;
+
+            if (strip is not null)
+            {
+                ContentPane.CapStripHeight(strip);
+            }
+        }
+
+        ConversationSettingsStrip.IsVisible = show && ConversationSettingsStrip.Content is not null;
     }
 
-    private void SyncConversationFilterBoxes()
-    {
-        if (_bound is null)
-        {
-            return;
-        }
-
-        _settingMode = true;
-
-        try
-        {
-            HideCommsBox.IsChecked = _bound.HideComms;
-            HideChatterBox.IsChecked = _bound.HideInventedChatter;
-        }
-        finally
-        {
-            _settingMode = false;
-        }
-    }
-
-    private void OnConversationFilterToggled(object? sender, RoutedEventArgs e)
-    {
-        if (_settingMode || _bound is null)
-        {
-            return;
-        }
-
-        _bound.HideComms = HideCommsBox.IsChecked == true;
-        _bound.HideInventedChatter = HideChatterBox.IsChecked == true;
-    }
-
-    /// <summary>Built lazily the first time it would show, and never rebuilt after (#283).</summary>
+    /// <summary>Each page strip is built lazily the first time it would show, and never rebuilt after (#283).</summary>
     private void ShowLogSettingsStrip()
     {
-        ShowConversationFilterStrip();
+        ShowConversationSettingsStrip();
 
         var show = Tab == PanelTab.Transcript && Page == TranscriptPage.Log && Mode == PanelMode.Full;
 

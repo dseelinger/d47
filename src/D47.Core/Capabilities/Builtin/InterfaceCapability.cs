@@ -23,6 +23,12 @@ public static class InterfaceCapability
 
     public const string TabsLeft = "left";
 
+    /// <summary>Whether In Ship leaves out relayed comms traffic.</summary>
+    public const string HideCommsKey = "ui.hideComms";
+
+    /// <summary>Whether In Ship leaves out chatter d47 invented.</summary>
+    public const string HideInventedChatterKey = "ui.hideInventedChatter";
+
     public const string OpenSettingsHotkeyKey = "hotkeys.openSettings";
 
     public const string FocusAskHotkeyKey = "hotkeys.focusAsk";
@@ -79,6 +85,50 @@ public static class InterfaceCapability
         Display = new CapabilityDisplay { PanelTitle = "Interface", Order = 40 },
         Settings =
         [
+            new SettingRow
+            {
+                Key = HideCommsKey,
+                Exercise =
+                    "Open Transcript › In Ship and press the SETTINGS 2 tile on the title line: the strip opens with "
+                    + "Hide comms traffic and Hide invented chatter, both off. Turn Hide comms traffic on: relayed "
+                    + "comms turns leave In Ship, the headset panel and the mini panel's tail, and the transcript "
+                    + "itself keeps them. Turn it off and they return. Say \"hide comms traffic\" and the row turns on.",
+                Commands =
+                [
+                    new SettingCommandPhrase("hide comms traffic", "true"),
+                    new SettingCommandPhrase("show comms traffic", "false"),
+                ],
+                Label = "Hide comms traffic",
+                Help = "Leaves relayed comms traffic out of In Ship, the headset panel and the mini panel. "
+                       + "Nothing is deleted: turn it off and those turns are back.",
+                Kind = SettingKind.Toggle,
+                DocsAnchor = "in-ship-filters",
+                Binding = SettingBinding.Toggle(
+                    s => s.Ui.HideComms,
+                    (s, on) => s with { Ui = s.Ui with { HideComms = on } }),
+            },
+            new SettingRow
+            {
+                Key = HideInventedChatterKey,
+                Exercise =
+                    "Open Transcript › In Ship and press the SETTINGS 2 tile on the title line, then turn Hide "
+                    + "invented chatter on: chatter d47 made up leaves In Ship, the headset panel and the mini "
+                    + "panel's tail, and the transcript itself keeps it. Turn it off and it returns. Say \"hide "
+                    + "invented chatter\" and the row turns on.",
+                Commands =
+                [
+                    new SettingCommandPhrase("hide invented chatter", "true"),
+                    new SettingCommandPhrase("show invented chatter", "false"),
+                ],
+                Label = "Hide invented chatter",
+                Help = "Leaves chatter d47 invented out of In Ship, the headset panel and the mini panel. "
+                       + "Nothing is deleted: turn it off and those turns are back.",
+                Kind = SettingKind.Toggle,
+                DocsAnchor = "in-ship-filters",
+                Binding = SettingBinding.Toggle(
+                    s => s.Ui.HideInventedChatter,
+                    (s, on) => s with { Ui = s.Ui with { HideInventedChatter = on } }),
+            },
             new SettingRow
             {
                 Key = ThemeKey,

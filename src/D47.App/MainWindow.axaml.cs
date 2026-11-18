@@ -254,8 +254,8 @@ public partial class MainWindow : Window
             // And it keeps the switch where the Commander left it (#267).
             Panel.RememberJournalReading(new JournalReadingMemory(host.ViewState));
 
-            // And the In Ship filters.
-            _ = new TranscriptFilterMemory(host.ViewState, _model);
+            // And the In Ship filters, which are settings.
+            TranscriptFilterSettings.Bind(host.ViewState, host.Settings, _model, action => Avalonia.Threading.Dispatcher.UIThread.Post(action));
 
             // The sharper half of that same act (#160).
             Panel.EnableDonation(() => _ = ShowDonationAsync(host));
@@ -557,6 +557,9 @@ public partial class MainWindow : Window
 
             // The Log file page's own settings — log levels — on the tab they only affect (#283).
             Panel.EnableLog(() => BuildSettingsStrip(PanelView.LogRoot));
+
+            // And In Ship's own: hide comms traffic and invented chatter.
+            Panel.EnableConversationSettings(() => BuildSettingsStrip(PanelView.ConversationRoot));
 
             // And the same window is the one with a mouse, which is the only thing the ask lets drag a pane
             // (Phase 55).

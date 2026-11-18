@@ -971,6 +971,9 @@ public static class SettingsLayout
         new SettingsTabPlace(
             "log-levels", "transcript.log", true, "Transcript › Log File",
             [E(Capabilities.Builtin.DiagnosticsCapability.DefaultLevelKey), F(IsSubsystemLevelFamily)]),
+        new SettingsTabPlace(
+            "conversation-filters", "transcript.conversation", true, "Transcript › In Ship",
+            [E(Capabilities.Builtin.InterfaceCapability.HideCommsKey), E(Capabilities.Builtin.InterfaceCapability.HideInventedChatterKey)]),
     ];
 
     /// <summary>

@@ -137,8 +137,10 @@ scrolls the page past everything on it, so new turns start on a clear screen. It
 scroll back up and the session is still there, and it works the same on all four readings. In a
 headset it is a tile instead, since the headset has no right-click menu.
 
-**Hide comms traffic** and **Hide invented chatter** are checkboxes that leave those turns out of
-the page; they hide, and delete nothing.
+**Hide comms traffic** and **Hide invented chatter** are the two rows under the **SETTINGS 2** tile
+on the title line, closed until you press it. They leave those turns out of the page, the headset
+panel and the mini panel's tail; they hide, and delete nothing. Because they are settings, you can
+also say "hide comms traffic" or "hide invented chatter".
 
 **SPEND** at the right of the status line opens the receipt for the most recent response, the
 session so far and the totals, with the price of each.

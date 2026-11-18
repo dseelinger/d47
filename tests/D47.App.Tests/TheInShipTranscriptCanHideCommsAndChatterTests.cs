@@ -5,9 +5,14 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using D47.App.Panel;
+using D47.App.Settings;
 using D47.App.Theming;
 using D47.Core;
 using D47.Core.Callouts;
+using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Storage;
@@ -91,39 +96,71 @@ public sealed class TheInShipTranscriptCanHideCommsAndChatterTests
 }
 
 [Trait("Category", "Integration")]
-public sealed class TheInShipFiltersAreKeptAndDrawnTests
+public sealed class TheInShipFiltersAreSettingsAndDrawnTests
 {
     [Fact]
-    public void ViewStateKeepsBothBooleans()
+    public void BothRowsAreTogglesThatStartOff()
     {
-        var store = Store();
+        var settings = TestSurface.Settings();
 
-        store.Save(store.Load() with { HideComms = true, HideInventedChatter = true });
+        foreach (var key in new[] { InterfaceCapability.HideCommsKey, InterfaceCapability.HideInventedChatterKey })
+        {
+            var row = settings.Find(key)!;
 
-        var loaded = store.Load();
+            Assert.Equal(SettingKind.Toggle, row.Kind);
+            Assert.False(string.IsNullOrWhiteSpace(row.Exercise));
+            Assert.Equal("false", settings.Read(key));
+        }
 
-        Assert.True(loaded.HideComms);
-        Assert.True(loaded.HideInventedChatter);
+        Assert.Equal("Hide comms traffic", settings.Find(InterfaceCapability.HideCommsKey)!.Label);
+        Assert.Equal("Hide invented chatter", settings.Find(InterfaceCapability.HideInventedChatterKey)!.Label);
     }
 
     [Fact]
-    public void TheModelStartsWithTheChoiceItWasLeftWith()
+    public void ChangingARowByVoiceMovesTheModelWithoutARestart()
     {
-        var store = Store();
-        var first = new PanelViewModel();
-        _ = new TranscriptFilterMemory(store, first);
+        var (settings, viewState, _) = TestSurface.Create();
+        var model = Talked();
 
-        first.HideInventedChatter = true;
+        TranscriptFilterSettings.Bind(viewState, settings, model, action => action());
 
-        var next = new PanelViewModel();
-        _ = new TranscriptFilterMemory(store, next);
+        Assert.True(settings.Apply(InterfaceCapability.HideCommsKey, "true", SettingsCaller.Model).Ok);
 
-        Assert.False(next.HideComms);
-        Assert.True(next.HideInventedChatter);
+        Assert.True(model.HideComms);
+        Assert.False(model.HideInventedChatter);
+
+        Assert.True(settings.Apply(InterfaceCapability.HideCommsKey, "false", SettingsCaller.Model).Ok);
+        Assert.True(settings.Apply(InterfaceCapability.HideInventedChatterKey, "true", SettingsCaller.Model).Ok);
+
+        Assert.False(model.HideComms);
+        Assert.True(model.HideInventedChatter);
+    }
+
+    [Fact]
+    public void ABoxCheckedInTheViewStateBeforeTheUpdateIsOnAfterIt()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var files = TestSurface.FilesFor(paths);
+        var model = Talked();
+
+        files.WriteText(paths.ViewStateFile, "{\"hideComms\": true, \"hideInventedChatter\": false, \"lastTab\": \"Transcript\"}");
+
+        TranscriptFilterSettings.Bind(viewState, settings, model, action => action());
+
+        Assert.True(settings.Current.Ui.HideComms);
+        Assert.False(settings.Current.Ui.HideInventedChatter);
+        Assert.True(model.HideComms);
+        Assert.False(model.HideInventedChatter);
+
+        var kept = files.ReadText(paths.ViewStateFile)!;
+
+        Assert.DoesNotContain("hideComms", kept, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("hideInventedChatter", kept, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Transcript", viewState.Load().LastTab);
     }
 
     [AvaloniaFact]
-    public void TheRowIsDrawnOnTheWindowAndTheBigPanelAtFortyFourPixels()
+    public void TheTileIsOnTheTitleLineOfTheWindowAndTheBigPanelAndOpensBothRows()
     {
         new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
@@ -134,8 +171,15 @@ public sealed class TheInShipFiltersAreKeptAndDrawnTests
 
         foreach (var headset in new[] { false, true })
         {
+            var (settings, viewState, _) = TestSurface.Create();
             var model = Talked();
+            TranscriptFilterSettings.Bind(viewState, settings, model, action => action());
+
+            var strip = new SettingsView();
+            strip.Attach(settings, viewState, tabPlaceId: "conversation-filters");
+
             var panel = new PanelView { DataContext = model };
+            panel.EnableConversationSettings(() => strip);
 
             if (headset)
             {
@@ -149,19 +193,23 @@ public sealed class TheInShipFiltersAreKeptAndDrawnTests
             panel.Tab = PanelTab.Transcript;
             Dispatcher.UIThread.RunJobs();
 
-            var strip = panel.GetControl<StackPanel>("ConversationFilterStrip");
-            var comms = panel.GetControl<CheckBox>("HideCommsBox");
+            var tool = panel.GetControl<ContentControl>("PageTool");
 
-            Assert.True(strip.IsVisible);
-            Assert.True(comms.Bounds.Height >= 44);
+            Assert.Null(panel.FindControl<Control>("ConversationFilterStrip"));
+            Assert.Same(strip.BarTool, tool.Content);
+            Assert.True(tool.IsVisible);
+            Assert.Contains("SETTINGS 2", ((Button)strip.BarTool!).Content as string, StringComparison.Ordinal);
 
-            comms.IsChecked = true;
+            ((Button)strip.BarTool!).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Dispatcher.UIThread.RunJobs();
 
-            Assert.True(model.HideComms);
+            var texts = strip.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+
+            Assert.Contains("Hide comms traffic", texts);
+            Assert.Contains("Hide invented chatter", texts);
 
             using var frame = window.CaptureRenderedFrame()!;
-            frame.SaveCapture(headset ? "in-ship-filters-panel.png" : "in-ship-filters-window.png");
+            frame.SaveCapture(headset ? "in-ship-settings-panel.png" : "in-ship-settings-window.png");
 
             window.Close();
         }
@@ -177,10 +225,4 @@ public sealed class TheInShipFiltersAreKeptAndDrawnTests
 
         return model;
     }
-
-    private static ViewStateStore Store() =>
-        new(
-            new AppPaths(TempFolders.Create("d47-in-ship-filters-tests")),
-            new DiskFileSystem(),
-            NullLogger<ViewStateStore>.Instance);
 }

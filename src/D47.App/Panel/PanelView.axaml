@@ -713,22 +713,11 @@
                        IsVisible="False"
                        Margin="14,0" />
 
-      <!-- In Ship's filters: comms traffic and invented chatter. -->
-      <StackPanel x:Name="ConversationFilterStrip"
-                  DockPanel.Dock="Top"
-                  Orientation="Horizontal"
-                  Spacing="8"
-                  Margin="0,4,0,0"
-                  IsVisible="False">
-        <CheckBox x:Name="HideCommsBox"
-                  Classes="sentence"
-                  Content="Hide comms traffic"
-                  IsCheckedChanged="OnConversationFilterToggled" />
-        <CheckBox x:Name="HideChatterBox"
-                  Classes="sentence"
-                  Content="Hide invented chatter"
-                  IsCheckedChanged="OnConversationFilterToggled" />
-      </StackPanel>
+      <!-- In Ship's own settings rows: hide comms traffic and invented chatter. The toggle is the tile on the title line. -->
+      <ContentControl x:Name="ConversationSettingsStrip"
+                      DockPanel.Dock="Top"
+                      IsVisible="False"
+                      Margin="14,0" />
 
       <!-- Above the messages while Elite binds one of D47's keys or buttons; the Transcript tab of the full panel only. -->
       <controls:Notice x:Name="BindingConflictsNotice"

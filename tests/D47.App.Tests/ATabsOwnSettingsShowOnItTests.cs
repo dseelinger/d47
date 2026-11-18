@@ -302,7 +302,7 @@ public class ATabsOwnSettingsShowOnItTests
         var known = new[]
         {
             LoadoutPages.FleetRoot, LoadoutPages.CarrierRoot, AdventuresPage.RootKey,
-            "checklist", PanelView.LogRoot,
+            "checklist", PanelView.LogRoot, PanelView.ConversationRoot,
         };
 
         foreach (var tab in SettingsLayout.Tabs)
