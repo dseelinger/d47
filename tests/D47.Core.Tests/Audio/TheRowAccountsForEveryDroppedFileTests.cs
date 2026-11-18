@@ -61,7 +61,7 @@ public class TheRowAccountsForEveryDroppedFileTests : IDisposable
                 "music/combat-dogfight: 12 files",
                 "Ignored: klaxon.wav is directly in alerts; put it in a folder such as alerts/under-fire.",
                 "Ignored: music/notes.txt is not an audio format D47 reads.",
-                "Ignored: playlist/mix.wav is in a folder D47 does not read; folders are cues, alerts, beds and music.",
+                "Ignored: playlist/mix.wav is in a folder D47 does not read; folders are cues, alerts, beds, waits and music.",
                 $"Skipped: broken: {RefusingDecoder.Reason}"),
             library.DescribeDrops());
     }

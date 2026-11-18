@@ -69,6 +69,15 @@ public class TheOwnAudioRowsAreStatusLinesTests
     }
 
     [Fact]
+    public void WaitsSayHowToAddOneAndAreCounted()
+    {
+        Assert.Equal("None of your own.", Report([]).WaitsLine());
+        Assert.Equal("A file in waits/ adds one.", Report([]).WaitsHint());
+        Assert.Equal("3 files", Report([("waits", 3)]).WaitsLine());
+        Assert.Null(Report([("waits", 3)]).WaitsHint());
+    }
+
+    [Fact]
     public void BedsAreCounted()
     {
         Assert.Equal("2 files", Report([("beds", 2)]).BedsLine());

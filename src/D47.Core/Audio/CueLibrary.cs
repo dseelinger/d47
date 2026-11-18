@@ -64,7 +64,7 @@ public sealed class EmbeddedCueSource(Assembly assembly) : ICueSource
 /// <remarks>
 /// Shipped clips are named <c>&lt;prefix&gt;&lt;member&gt;</c>. Pool clips are named
 /// <c>&lt;prefix&gt;&lt;folder&gt;.&lt;file&gt;</c> for cues and alerts, and
-/// <c>&lt;prefix&gt;&lt;file&gt;</c> for beds from a source that is not <see cref="ICueSource.Required"/>.
+/// <c>&lt;prefix&gt;&lt;file&gt;</c> for beds and waits from a source that is not <see cref="ICueSource.Required"/>.
 /// </remarks>
 public sealed class CueLibrary
 {
@@ -87,6 +87,7 @@ public sealed class CueLibrary
     private readonly IReadOnlyDictionary<LoopState, ClipPool> _cuePools;
     private readonly IReadOnlyDictionary<AlertCue, ClipPool> _alertPools;
     private readonly ClipPool? _bedPool;
+    private readonly ClipPool? _waitPool;
     private readonly IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> _music;
 
     private CueLibrary(
@@ -97,6 +98,7 @@ public sealed class CueLibrary
         IReadOnlyDictionary<LoopState, ClipPool> cuePools,
         IReadOnlyDictionary<AlertCue, ClipPool> alertPools,
         ClipPool? bedPool,
+        ClipPool? waitPool,
         IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> music,
         int customCount,
         IReadOnlyList<string> skipped,
@@ -110,6 +112,7 @@ public sealed class CueLibrary
         _cuePools = cuePools;
         _alertPools = alertPools;
         _bedPool = bedPool;
+        _waitPool = waitPool;
         _music = music;
         CustomCount = customCount;
         Skipped = skipped;
@@ -170,6 +173,7 @@ public sealed class CueLibrary
         var cuePools = new Dictionary<LoopState, List<AudioClip>>();
         var alertPools = new Dictionary<AlertCue, List<AudioClip>>();
         var bedPool = new List<AudioClip>();
+        var waitPool = new List<AudioClip>();
         var music = new Dictionary<string, List<MusicTrack>>(StringComparer.OrdinalIgnoreCase);
         var custom = 0;
         var skipped = new List<string>();
@@ -287,17 +291,26 @@ public sealed class CueLibrary
                         }
                     }
                 }
-                else if (resource.StartsWith(WaitPrefix, StringComparison.Ordinal) && source.Required)
+                else if (resource.StartsWith(WaitPrefix, StringComparison.Ordinal))
                 {
                     var stem = resource[WaitPrefix.Length..];
 
-                    if (!stem.Equals(DefaultWait, StringComparison.OrdinalIgnoreCase))
+                    if (source.Required && !stem.Equals(DefaultWait, StringComparison.OrdinalIgnoreCase))
                     {
                         unclaimed.Add($"waits/{stem}");
                     }
                     else if (TryRead(source, resource, stem, skipped) is { } clip)
                     {
-                        wait = clip;
+                        if (source.Required)
+                        {
+                            wait = clip;
+                        }
+                        else
+                        {
+                            waitPool.Add(clip);
+                            custom++;
+                            CountFolder("waits");
+                        }
                     }
                 }
                 else if (resource.StartsWith(MusicPrefix, StringComparison.Ordinal))
@@ -420,6 +433,7 @@ public sealed class CueLibrary
             cuePools.ToDictionary(entry => entry.Key, entry => new ClipPool(entry.Value, shuffle)),
             alertPools.ToDictionary(entry => entry.Key, entry => new ClipPool(entry.Value, shuffle)),
             bedPool.Count > 0 ? new ClipPool(bedPool, shuffle) : null,
+            waitPool.Count > 0 ? new ClipPool(waitPool, shuffle) : null,
             music.ToDictionary(
                 entry => entry.Key,
                 entry => (IReadOnlyList<MusicTrack>)entry.Value,
@@ -461,8 +475,8 @@ public sealed class CueLibrary
     /// <summary>The bed for one turn, picked from the Commander's pool on each call.</summary>
     public AudioClip Bed() => _bedPool?.Next() ?? _bed;
 
-    /// <summary>The loop played while a page waits on a search.</summary>
-    public AudioClip Waiting() => _wait;
+    /// <summary>The loop played while a page waits, picked from the Commander's pool on each call.</summary>
+    public AudioClip Waiting() => _waitPool?.Next() ?? _wait;
 
     /// <summary>The member a folder or shipped file names: hyphens ignored, case ignored.</summary>
     private static TKey? Member<TKey>(string name)

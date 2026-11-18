@@ -208,6 +208,7 @@ public sealed class AppPaths
         }
 
         Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.BedsFolder));
+        Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.WaitsFolder));
         foreach (var situation in Situations.All)
         {
             Directory.CreateDirectory(Path.Combine(Audio, FolderAudioSource.MusicFolder, situation));

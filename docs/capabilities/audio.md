@@ -244,6 +244,7 @@ data/audio/
   alerts/<alert>/      interdiction, piracy, bounty-hunter, under-fire, overheating,
                        rival-territory, timer-elapsed
   beds/                the loop under a working turn
+  waits/               the loop under a page's wait
   music/<situation>/   ambience — see below
 ```
 
@@ -253,16 +254,16 @@ Pack is installed; `.wav` works without it.
 A sound goes in the folder for where it is used, under any file name. A cue or alert folder with
 files in it plays only those, one picked each time the cue plays; an empty one plays the shipped
 sound. `beds/` works the same way, with one file picked when a turn starts and looped for that
-turn. Each folder plays every file once, in shuffled order, before any repeats, and never the same
+turn, and `waits/` the same way, with one file picked when a page's wait starts. Each folder plays every file once, in shuffled order, before any repeats, and never the same
 file twice in a row. A file loose in `cues/`, `alerts/` or `music/`, outside a named folder, is not
 read.
 
 Files are picked up while D47 is running, without a restart, and a reload never cuts a clip that
 is already playing.
 
-The **Your own audio** group is four status rows. **Music** counts the files and the situations and
+The **Your own audio** group is five status rows. **Music** counts the files and the situations and
 names the three `music/` folders with the most files; **Your audio** beside it opens the page.
-**Sound cues** counts what `cues/` and `alerts/` hold, and **Thinking beds** what `beds/` holds; with
+**Sound cues** counts what `cues/` and `alerts/` hold, **Thinking beds** what `beds/` holds, and **Waiting beds** what `waits/` holds; with
 none, each says so in white and, in grey, how to add one. **Audio folder** shows `data\audio` with
 **Open audio folder**, and an amber notice under it counts the files that were ignored or skipped.
 
@@ -270,12 +271,13 @@ none, each says so in white and, in grey, how to add one. **Audio folder** shows
 Music           159 files for 38 situations: main menu 24, docked 23, supercruise 23 and 35 more   [Your audio]
 Sound cues      None of your own. D47 plays its own cues. A file in cues/<state> replaces one.
 Thinking beds   None of your own. A file in beds/ adds one.
+Waiting beds    None of your own. A file in waits/ adds one.
 Audio folder    data\audio                                                    [Open audio folder]
                 1 file skipped
 ```
 
 The page that **Your audio** opens, headed Your own audio, lists every folder with files under
-Music, Sound cues, Alerts and Thinking beds, most files first, and every ignored and skipped file in
+Music, Sound cues, Alerts, Thinking beds and Waiting beds, most files first, and every ignored and skipped file in
 full. `get_setting audio.drops` still returns the whole account, one line per folder and per file:
 
 ```text

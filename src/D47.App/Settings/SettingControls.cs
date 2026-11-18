@@ -127,6 +127,9 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             case SettingKind.Info when row.Key == AudioCapability.OwnBedsKey && services.OwnAudio is not null:
                 return BuildOwnAudioStatus(report => report.BedsLine(), report => report.BedsHint());
 
+            case SettingKind.Info when row.Key == AudioCapability.OwnWaitsKey && services.OwnAudio is not null:
+                return BuildOwnAudioStatus(report => report.WaitsLine(), report => report.WaitsHint());
+
             case SettingKind.Info when row.Key == AudioCapability.OwnFolderKey && services.OwnAudio is not null:
                 return BuildOwnAudioFolder(row);
 

@@ -20,6 +20,7 @@ public sealed class OwnAudioPage : DialogPage
         (OwnAudioReport.Cues, "Sound cues", "No cues of your own."),
         (OwnAudioReport.Alerts, "Alerts", "No alert sounds of your own."),
         (OwnAudioReport.Beds, "Thinking beds", "No thinking beds of your own."),
+        (OwnAudioReport.Waits, "Waiting beds", "No waiting beds of your own."),
     ];
 
     private readonly Func<OwnAudioReport> _report;

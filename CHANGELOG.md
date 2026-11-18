@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Waiting beds of your own. Files in `data\audio\waits` replace the included waiting loop, one picked each time a page waits, every file once in shuffled order before any repeats and never the same file twice in a row. Settings › Hearing and sound › Sounds and levels has a Waiting beds row, and the Your own audio page has a Waiting beds section.
+
 Changed: On the desktop, a Stored modules table whose columns do not fit the window at their narrowest scrolls sideways in its own box, its header and rows together; the page does not scroll sideways. In the headset, which does not scroll sideways, a column that would not fit has its checkbox disabled under ADD A COLUMN, and when none fits ADD A COLUMN is disabled and a NO ROOM notice says to remove a column first. Columns that no longer fit the headset panel, as after choosing a smaller panel size, are left out from the right; the columns you chose are kept.
 
 Added: A COLUMNS tile above the Stored modules table, on the desktop and in the headset. It opens a bar for choosing the table's columns: press a header to choose a column, then MOVE LEFT, MOVE RIGHT or REMOVE it; ADD A COLUMN lists every column as checkboxes, including System, Station, In transit, Hot, Engineering and Grade; DEFAULT COLUMNS returns the four default columns. Headers do not sort while the bar is open. Each change is kept, and the headset keeps its own columns.

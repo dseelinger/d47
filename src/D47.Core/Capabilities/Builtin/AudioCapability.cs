@@ -566,6 +566,8 @@ public static class AudioCapability
 
     public const string OwnBedsKey = "audio.drops.beds";
 
+    public const string OwnWaitsKey = "audio.drops.waits";
+
     private static IEnumerable<SettingRow> OwnAudioRows(Func<OwnAudioReport> report, Action? openFolder)
     {
         SettingRow Status(string key, string label, Func<string> read) => new()
@@ -585,6 +587,7 @@ public static class AudioCapability
         yield return Status(OwnMusicKey, "Music", () => report().MusicLine());
         yield return Status(OwnCuesKey, "Sound cues", () => WithHint(report().CuesLine(), report().CuesHint()));
         yield return Status(OwnBedsKey, "Thinking beds", () => WithHint(report().BedsLine(), report().BedsHint()));
+        yield return Status(OwnWaitsKey, "Waiting beds", () => WithHint(report().WaitsLine(), report().WaitsHint()));
 
         yield return Status(OwnFolderKey, "Audio folder", () => @"data\audio") with
         {

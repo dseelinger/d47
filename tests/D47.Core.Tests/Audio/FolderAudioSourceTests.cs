@@ -135,6 +135,7 @@ public class FolderAudioSourceTests : IDisposable
             .. Enum.GetValues<LoopState>().Select(state => $"{FolderAudioSource.CuesFolder}/{CueLibrary.FolderName(state)}"),
             .. Enum.GetValues<AlertCue>().Select(alert => $"{FolderAudioSource.AlertsFolder}/{CueLibrary.FolderName(alert)}"),
             FolderAudioSource.BedsFolder,
+            FolderAudioSource.WaitsFolder,
             FolderAudioSource.MusicFolder,
         ];
 

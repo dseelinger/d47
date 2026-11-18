@@ -526,6 +526,7 @@ public static class SettingsLayout
                             E(Capabilities.Builtin.AudioCapability.OwnMusicKey),
                             E(Capabilities.Builtin.AudioCapability.OwnCuesKey),
                             E(Capabilities.Builtin.AudioCapability.OwnBedsKey),
+                            E(Capabilities.Builtin.AudioCapability.OwnWaitsKey),
                             E(Capabilities.Builtin.AudioCapability.OwnFolderKey),
                         ]),
                     ]),

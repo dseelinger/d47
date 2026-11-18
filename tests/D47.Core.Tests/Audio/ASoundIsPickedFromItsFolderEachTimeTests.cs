@@ -62,6 +62,25 @@ public class ASoundIsPickedFromItsFolderEachTimeTests
     }
 
     [Fact]
+    public void TheWaitingBedIsDealtFromTheWaitsFolderWithoutARepeat()
+    {
+        foreach (var seed in Enumerable.Range(0, 10))
+        {
+            var library = Load(new Random(seed), "D47.Core.Waits.a", "D47.Core.Waits.b", "D47.Core.Waits.c");
+            var heard = Enumerable.Range(0, 60).Select(_ => library.Waiting().Name).ToList();
+
+            Assert.Equal(["a", "b", "c"], heard.Take(3).Order());
+            Assert.DoesNotContain(heard.Zip(heard.Skip(1)), pair => pair.First == pair.Second);
+        }
+    }
+
+    [Fact]
+    public void AnEmptyWaitsFolderPlaysTheShippedWait()
+    {
+        Assert.Equal(CueLibrary.DefaultWait, Load(new Random(1)).Waiting().Name);
+    }
+
+    [Fact]
     public void AnEmptyBedsFolderPlaysTheShippedBed()
     {
         Assert.Equal(CueLibrary.DefaultBed, Load(new Random(1)).Bed().Name);

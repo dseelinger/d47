@@ -12,6 +12,7 @@ public sealed class OwnAudioReport
     public const string Cues = "cues";
     public const string Alerts = "alerts";
     public const string Beds = "beds";
+    public const string Waits = "waits";
 
     private const int NamedInLine = 3;
 
@@ -72,6 +73,17 @@ public sealed class OwnAudioReport
 
     /// <summary>The grey line that says how to add a bed, or null once there is one.</summary>
     public string? BedsHint() => In(Beds).Count == 0 ? "A file in beds/ adds one." : null;
+
+    /// <summary>What <c>waits/</c> holds.</summary>
+    public string WaitsLine()
+    {
+        var waits = In(Waits);
+
+        return waits.Count == 0 ? "None of your own." : Files(waits.Sum(folder => folder.Count));
+    }
+
+    /// <summary>The grey line that says how to add a waiting bed, or null once there is one.</summary>
+    public string? WaitsHint() => In(Waits).Count == 0 ? "A file in waits/ adds one." : null;
 
     public bool HasWarning => Ignored.Count + Skipped.Count > 0;
 

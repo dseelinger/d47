@@ -12,11 +12,12 @@ public sealed class FolderAudioSource : ICueSource
     public const string CuesFolder = "cues";
     public const string AlertsFolder = "alerts";
     public const string BedsFolder = "beds";
+    public const string WaitsFolder = "waits";
     public const string MusicFolder = "music";
 
     private const string Wav = ".wav";
 
-    private static readonly string[] KnownFolders = [CuesFolder, AlertsFolder, BedsFolder, MusicFolder];
+    private static readonly string[] KnownFolders = [CuesFolder, AlertsFolder, BedsFolder, WaitsFolder, MusicFolder];
 
     private readonly string _root;
     private readonly IFileSystem _disk;
@@ -156,7 +157,7 @@ public sealed class FolderAudioSource : ICueSource
 
             if (!KnownFolders.Contains(parts[0], StringComparer.OrdinalIgnoreCase))
             {
-                _ignored.Add($"{relative} is in a folder D47 does not read; folders are cues, alerts, beds and music.");
+                _ignored.Add($"{relative} is in a folder D47 does not read; folders are cues, alerts, beds, waits and music.");
                 continue;
             }
 
@@ -174,6 +175,12 @@ public sealed class FolderAudioSource : ICueSource
                 // resolve deterministically rather than by whatever order the file system happened to answer
                 // in.
                 files[CueLibrary.BedPrefix + stem] = path;
+                continue;
+            }
+
+            if (parts[0].Equals(WaitsFolder, StringComparison.OrdinalIgnoreCase))
+            {
+                files[CueLibrary.WaitPrefix + stem] = path;
                 continue;
             }
 
@@ -225,7 +232,7 @@ public sealed class FolderAudioSource : ICueSource
             _logger.LogWarning(ex, "Could not read {Folder}", _root);
         }
 
-        // Grouped cues, alerts, beds, music first — the order folder counts are reported in — then
+        // Grouped cues, alerts, beds, waits, music first — the order folder counts are reported in — then
         // anything outside those folders, alphabetically within each group.
         return paths
             .OrderBy(FolderRank)
