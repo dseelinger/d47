@@ -21,6 +21,7 @@ namespace D47.Core.Persona;
 /// <param name="LiveState">What this speaker knows of the game right now, in place of the ship AI's live game state.</param>
 /// <param name="Voice">The speaker's own voice, or null for their role's.</param>
 /// <param name="Picture">The picture name the speaker's replies are shown with, or null to choose one by role.</param>
+/// <param name="InCabin">Whether the speaker is in the ship with the Commander, so the replies are not put through a radio link.</param>
 /// <param name="HeardAs">
 /// The incoming message a comms speaker's replies are voiced as, built by <see cref="Callouts.IncomingMessages.VoicedAs"/>,
 /// or null for any other speaker.
@@ -40,7 +41,8 @@ public sealed record Speaker(
     Characters.CharacterVoice? Voice = null,
     string? Picture = null,
     Callouts.Announcement? HeardAs = null,
-    Func<string, ScreenedReply>? ScreenReply = null);
+    Func<string, ScreenedReply>? ScreenReply = null,
+    bool InCabin = false);
 
 /// <summary>What may be said of a reply, and its English when it is said in another language; Spoken is empty when nothing may be said.</summary>
 public sealed record ScreenedReply(string Spoken, string? Translation = null);

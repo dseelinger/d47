@@ -9,13 +9,16 @@ public static class RadioVoice
     /// <summary>Which roles arrive over a link rather than from the next seat.</summary>
     public static bool IsOverTheAir(VoiceRole role) => role is not (VoiceRole.ShipAi or VoiceRole.Crew or VoiceRole.Narrator);
 
+    /// <summary>Whether a speaker arrives over a link: a speaker in the cabin does not, whatever the role.</summary>
+    public static bool IsOverTheAir(VoiceRole role, bool inCabin) => !inCabin && IsOverTheAir(role);
+
     /// <summary>The treatment for a role, thinner and hissier when the line is <paramref name="overheard"/>.</summary>
-    public static Func<AudioClip, AudioClip>? Colours(VoiceRole role, double strength, bool overheard) =>
-        IsOverTheAir(role) ? clip => Apply(clip, strength, overheard) : null;
+    public static Func<AudioClip, AudioClip>? Colours(VoiceRole role, double strength, bool overheard, bool inCabin = false) =>
+        IsOverTheAir(role, inCabin) ? clip => Apply(clip, strength, overheard) : null;
 
     /// <summary><see cref="Colours(VoiceRole, double, bool)"/> as a running filter factory, null in the same cases.</summary>
-    public static Func<IPcmFilter>? RunningColours(VoiceRole role, double strength, bool overheard) =>
-        IsOverTheAir(role) ? () => Filter(strength, overheard) : null;
+    public static Func<IPcmFilter>? RunningColours(VoiceRole role, double strength, bool overheard, bool inCabin = false) =>
+        IsOverTheAir(role, inCabin) ? () => Filter(strength, overheard) : null;
 
     /// <summary>The link as a running filter on <see cref="AudioFormat.Standard"/> PCM.</summary>
     public static IPcmFilter Filter(double strength, bool overheard) => new Link(AudioFormat.Standard, strength, overheard);

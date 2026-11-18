@@ -68,7 +68,8 @@ public sealed class ShuttleLine(
                 Model: model?.Invoke(),
                 Screen: reply => Screened(reply, name),
                 LiveState: () => Knows(current, currentSystem()),
-                HeardAs: heardAs),
+                HeardAs: heardAs,
+                InCabin: true),
             question);
     }
 

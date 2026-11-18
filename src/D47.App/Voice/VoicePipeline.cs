@@ -183,6 +183,7 @@ public sealed class VoicePipeline(
         SpeechPipeline? speech = null;
         TurnResult? result = null;
         var signal = 1.0;
+        var inCabin = false;
         string? translation = null;
         var addressedSeen = false;
         List<SpokenClip?> kept = [];
@@ -227,6 +228,7 @@ public sealed class VoicePipeline(
 
                         addressedSeen = true;
                         signal = addressed.Signal;
+                        inCabin = addressed.InCabin;
                         break;
 
                     case TurnEvent.Translation english:
@@ -247,7 +249,7 @@ public sealed class VoicePipeline(
                             _spoke = true;
 
                             var role = SpeakingAs;
-                            var colour = Colour(role, signal);
+                            var colour = Colour(role, signal, inCabin: inCabin);
 
                             speech = new SpeechPipeline(
                                 arbiter,
@@ -261,7 +263,7 @@ public sealed class VoicePipeline(
                                 captionSpeaker: CaptionSpeaker,
                                 address: _address,
                                 guardianTreated: IsGuardianTreated(role, colour),
-                                running: Running(role, colour, signal),
+                                running: Running(role, colour, signal, inCabin: inCabin),
                                 voiceRow: SpeechCapability.VoiceRowFor(role),
                                 picture: Picture,
                                 utteranceCaption: translation,
@@ -777,15 +779,15 @@ public sealed class VoicePipeline(
     /// A radio link for an over-the-air role, the ship AI's Guardian treatment where one is switched
     /// on, and no treatment for every other role — Crew included (#225).
     /// </summary>
-    private Func<AudioClip, AudioClip>? Colour(VoiceRole role, double signal = 1, bool overheard = false) =>
-        RadioVoice.Colours(role, signal, overheard) ?? (role == VoiceRole.ShipAi ? (Away && AwayColour is { } away ? away : GuardianColour) : null);
+    private Func<AudioClip, AudioClip>? Colour(VoiceRole role, double signal = 1, bool overheard = false, bool inCabin = false) =>
+        RadioVoice.Colours(role, signal, overheard, inCabin) ?? (role == VoiceRole.ShipAi ? (Away && AwayColour is { } away ? away : GuardianColour) : null);
 
     /// <summary>
     /// <see cref="Colour"/> as a running filter: the radio link for an over-the-air role, and
     /// <see cref="GuardianRunning"/> or <see cref="AwayRunning"/> where the resolved colour is the ship AI's own treatment; otherwise null.
     /// </summary>
-    private Func<IPcmFilter>? Running(VoiceRole role, Func<AudioClip, AudioClip>? colour, double signal = 1, bool overheard = false) =>
-        RadioVoice.RunningColours(role, signal, overheard)
+    private Func<IPcmFilter>? Running(VoiceRole role, Func<AudioClip, AudioClip>? colour, double signal = 1, bool overheard = false, bool inCabin = false) =>
+        RadioVoice.RunningColours(role, signal, overheard, inCabin)
         ?? (role != VoiceRole.ShipAi || colour is null ? null : colour == AwayColour ? AwayRunning : colour == GuardianColour ? GuardianRunning : null);
 
     /// <summary>Whether a resolved colour is the Guardian treatment rather than a radio link, for the log.</summary>
