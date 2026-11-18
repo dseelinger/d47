@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Combat stats under Enemy ship, and the spoken combat answer by enemy, split conflict-zone kills into three rows instead of one: in space ("ship type not recorded"), on foot in ground conflict zones, and from an SRV in ground conflict zones.
+
 Fixed: The head above a Search answer drew its count, "within n ly of" words, system name and copy glyph at three different heights; they now sit on one centre line on all five Search pages.
 
 Fixed: Kills made on foot after a dropship drop, after a relog in a suit, or after leaving an SRV are counted on foot in the combat record and the kill callouts, not as ship kills.

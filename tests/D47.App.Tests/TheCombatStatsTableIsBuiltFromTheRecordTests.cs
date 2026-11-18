@@ -154,6 +154,27 @@ public class TheCombatStatsTableIsBuiltFromTheRecordTests
     }
 
     [Fact]
+    public void BondsAreRowsOfTheirOwnByWhereTheCommanderWasWhenTheyWerePaid()
+    {
+        var record = Fold(
+            Bond("2026-10-10T10:00:00Z", 100, "Holder"),
+            At("2026-10-10T10:01:00Z", "\"event\":\"Disembark\",\"SRV\":false"),
+            Bond("2026-10-10T10:02:00Z", 200, "Holder"),
+            Bond("2026-10-10T10:03:00Z", 300, "Holder"),
+            At("2026-10-10T10:04:00Z", "\"event\":\"Embark\",\"SRV\":true"),
+            Bond("2026-10-10T10:05:00Z", 40, "Holder"));
+
+        var view = View(record);
+
+        Assert.Equal(3, view.Rows.Count);
+        Assert.Equal((2, 500L), (Row(view, CombatStatsPage.OnFootBondText).Kills!.Value, Row(view, CombatStatsPage.OnFootBondText).Awarded!.Value));
+        Assert.Equal(1, Row(view, CombatStatsPage.BondText).Kills);
+        Assert.Equal(1, Row(view, CombatStatsPage.SrvBondText).Kills);
+        Assert.Equal(CombatNameStyle.Unnamed, Row(view, CombatStatsPage.OnFootBondText).Style);
+        Assert.Equal("3 targets", CombatStatsPage.CountText(CombatGrouping.EnemyShip, view.Rows.Count));
+    }
+
+    [Fact]
     public void ABondHasNoShipTypeAndAnOnFootTargetIsMarkedOnFoot()
     {
         var view = View();

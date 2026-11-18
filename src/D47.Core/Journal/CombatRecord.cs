@@ -43,12 +43,16 @@ public readonly record struct OwnVehicle(CombatVehicle Vehicle, int? ShipId);
 /// <summary>Kills and credits awarded for one key.</summary>
 public sealed record CombatGroup<TKey>(TKey Key, int Kills, long Awarded);
 
-/// <summary>The kills since a time, grouped four ways. Each list is ordered by kills, then credits, most first.</summary>
+/// <summary>
+/// The kills since a time, grouped five ways. <c>ByTarget</c> holds bounties and <c>ByBondVehicle</c> holds bonds.
+/// Each list is ordered by kills, then credits, most first.
+/// </summary>
 public sealed record CombatSlice(
     DateTimeOffset? From,
     int Kills,
     long Awarded,
-    IReadOnlyList<CombatGroup<string?>> ByTarget,
+    IReadOnlyList<CombatGroup<string>> ByTarget,
+    IReadOnlyList<CombatGroup<CombatVehicle>> ByBondVehicle,
     IReadOnlyList<CombatGroup<OwnVehicle>> ByVehicle,
     IReadOnlyList<CombatGroup<long?>> BySystem,
     IReadOnlyList<CombatGroup<string?>> ByVictimFaction,
@@ -127,7 +131,8 @@ public sealed partial record CombatRecord
             from,
             kills.Count,
             kills.Sum(kill => kill.Awarded),
-            Grouped(kills.GroupBy(kill => kill.Target, kill => (1, kill.Awarded))),
+            Grouped(kills.Where(kill => kill.Target is not null).GroupBy(kill => kill.Target!, kill => (1, kill.Awarded))),
+            Grouped(kills.Where(kill => kill.Target is null).GroupBy(kill => kill.Vehicle, kill => (1, kill.Awarded))),
             Grouped(kills.GroupBy(kill => new OwnVehicle(kill.Vehicle, kill.ShipId), kill => (1, kill.Awarded))),
             Grouped(kills.GroupBy(kill => kill.SystemAddress, kill => (1, kill.Awarded))),
             Grouped(kills.GroupBy(kill => kill.VictimFaction, kill => (1, kill.Awarded))),

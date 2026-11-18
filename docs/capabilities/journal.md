@@ -501,7 +501,9 @@ The Combat stats ledger (Commander › Ledgers, open Combat stats) lists your ki
 awarded, counted from the journals on this PC. Choose a period (24 hours, 7 days, 30 days or Everything) and a grouping (Enemy ship,
 Own ship, System or Faction). Press a column heading to sort, and the panel search narrows the rows by name.
 
-Kills in conflict zones carry no ship type, so they are grouped as "In conflict zones, ship type not recorded".
+Kills in conflict zones carry no ship type, so under Enemy ship they are grouped by where you were when they were paid:
+"In space conflict zones, ship type not recorded", "On foot in ground conflict zones, enemy not recorded" and
+"From an SRV in ground conflict zones, enemy not recorded".
 Under Faction, two tables replace the one. Against has a row for each faction whose ships you destroyed, with
 those kills and the credits they were awarded. Paid by has a row for each faction that paid you, with the credits
 it paid; a kill that paid several factions counts once under Against and is split under Paid by. Each table sorts

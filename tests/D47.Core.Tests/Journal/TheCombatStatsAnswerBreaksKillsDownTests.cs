@@ -88,6 +88,24 @@ public class TheCombatStatsAnswerBreaksKillsDownTests
     }
 
     [Fact]
+    public async Task ByEnemyNamesBondKillsApartByWhereTheCommanderWas()
+    {
+        var store = Store(
+            Bond("2026-10-17T10:00:00Z", 200),
+            """{"timestamp":"2026-10-17T10:01:00Z","event":"Disembark","SRV":false}""",
+            Bond("2026-10-17T10:02:00Z", 300),
+            Bond("2026-10-17T10:03:00Z", 400),
+            """{"timestamp":"2026-10-17T10:04:00Z","event":"Embark","SRV":true}""",
+            Bond("2026-10-17T10:05:00Z", 50));
+
+        var said = await Ask(store, """{"by":"enemy"}""");
+
+        Assert.Contains("2 on foot in ground conflict zones, 700 credits", said);
+        Assert.Contains("1 in space conflict zones, ship type not recorded, 200 credits", said);
+        Assert.Contains("1 from an SRV in ground conflict zones, 50 credits", said);
+    }
+
+    [Fact]
     public async Task ByEnemyNamesBondKillsAsOneEntry()
     {
         var store = Store(
@@ -97,7 +115,7 @@ public class TheCombatStatsAnswerBreaksKillsDownTests
 
         var said = await Ask(store, """{"by":"enemy"}""");
 
-        Assert.Contains("2 in conflict zones, ship type not recorded, 500 credits", said);
+        Assert.Contains("2 in space conflict zones, ship type not recorded, 500 credits", said);
     }
 
     [Fact]

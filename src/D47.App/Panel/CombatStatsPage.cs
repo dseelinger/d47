@@ -89,7 +89,11 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
     public const string NoMatchText = "Nothing in this period matches that search.";
 
-    public const string BondText = "In conflict zones, ship type not recorded";
+    public const string BondText = "In space conflict zones, ship type not recorded";
+
+    public const string OnFootBondText = "On foot in ground conflict zones, enemy not recorded";
+
+    public const string SrvBondText = "From an SRV in ground conflict zones, enemy not recorded";
 
     public const string UnnamedShip = "A ship not in your journals";
 
@@ -282,7 +286,11 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
         IEnumerable<CombatRow> rows = grouping switch
         {
-            CombatGrouping.EnemyShip => slice.ByTarget.Select(group => EnemyRow(record, group)),
+            CombatGrouping.EnemyShip =>
+            [
+                .. slice.ByTarget.Select(group => EnemyRow(record, group)),
+                .. slice.ByBondVehicle.Select(BondRow),
+            ],
             CombatGrouping.OwnShip => slice.ByVehicle.Select(group => OwnRow(record, group)),
             CombatGrouping.System => slice.BySystem.Select(group => SystemRow(record, group)),
             _ => AgainstRows(slice),
@@ -333,20 +341,26 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
     public static string Number(long? count) =>
         count is { } kills ? kills.ToString("N0", CultureInfo.InvariantCulture) : Dash;
 
-    private static CombatRow EnemyRow(CombatRecord record, CombatGroup<string?> group)
-    {
-        if (group.Key is not { } target)
-        {
-            return new CombatRow(BondText, null, CombatNameStyle.Unnamed, group.Kills, group.Awarded);
-        }
-
-        return new CombatRow(
-            record.TargetName(target),
-            target.Contains("suitai", StringComparison.OrdinalIgnoreCase) ? "on foot" : null,
+    private static CombatRow EnemyRow(CombatRecord record, CombatGroup<string> group) =>
+        new(
+            record.TargetName(group.Key),
+            group.Key.Contains("suitai", StringComparison.OrdinalIgnoreCase) ? "on foot" : null,
             CombatNameStyle.Named,
             group.Kills,
             group.Awarded);
-    }
+
+    private static CombatRow BondRow(CombatGroup<CombatVehicle> group) =>
+        new(
+            group.Key switch
+            {
+                CombatVehicle.OnFoot => OnFootBondText,
+                CombatVehicle.Srv => SrvBondText,
+                _ => BondText,
+            },
+            null,
+            CombatNameStyle.Unnamed,
+            group.Kills,
+            group.Awarded);
 
     private static CombatRow OwnRow(CombatRecord record, CombatGroup<OwnVehicle> group)
     {

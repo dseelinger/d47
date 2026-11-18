@@ -820,8 +820,6 @@ public static class JournalCapability
 
     private const int CombatEntriesNamed = 3;
 
-    private const string ConflictZoneKills = "ships in conflict zones";
-
     private static readonly string[] BgsWorkQuestions =
     [
         "bgs work", "my bgs work", "what have i done for the bgs",
@@ -2325,7 +2323,7 @@ public static class JournalCapability
 
     private const int BgsPairsNamed = 3;
 
-    private readonly record struct CombatEntry(string Label, int Kills, long Awarded);
+    private readonly record struct CombatEntry(string Label, int Kills, long Awarded, bool Bond = false);
 
     private static string DescribeCombatStats(
         GameStateStore gameState, HistoryState history, ToolArguments arguments, DateTimeOffset now)
@@ -2381,7 +2379,22 @@ public static class JournalCapability
             $"{covers}: {slice.Kills.ToString("N0", CultureInfo.InvariantCulture)} {(slice.Kills == 1 ? "kill" : "kills")}, "
             + $"{slice.Awarded.ToString("N0", CultureInfo.InvariantCulture)} credits awarded.");
 
-        var enemies = CombatEntries(slice.ByTarget, key => key is null ? ConflictZoneKills : record.TargetName(key));
+        var enemies = CombatEntries(slice.ByTarget, record.TargetName);
+        enemies =
+        [
+            .. enemies,
+            .. slice.ByBondVehicle.Select(group => new CombatEntry(
+                group.Key switch
+                {
+                    CombatVehicle.OnFoot => "on foot in ground conflict zones",
+                    CombatVehicle.Srv => "from an SRV in ground conflict zones",
+                    _ => "in space conflict zones, ship type not recorded",
+                },
+                group.Kills,
+                group.Awarded,
+                Bond: true)),
+        ];
+        enemies = [.. enemies.OrderByDescending(entry => entry.Kills).ThenByDescending(entry => entry.Awarded)];
         var ships = CombatEntries(slice.ByVehicle, key => key.Vehicle switch
         {
             CombatVehicle.Srv => "in an SRV",
@@ -2398,7 +2411,7 @@ public static class JournalCapability
         switch (by)
         {
             case "enemy":
-                CombatList(report, enemies, name, "ship type", "ship types", bond: true);
+                CombatList(report, enemies, name, "ship type", "ship types");
                 break;
             case "ship":
                 CombatList(report, ships, name, "ship", "ships");
@@ -2462,8 +2475,7 @@ public static class JournalCapability
         string singular,
         string plural,
         string? heading = null,
-        bool credits = false,
-        bool bond = false)
+        bool credits = false)
     {
         var matching = name is null
             ? entries
@@ -2477,7 +2489,7 @@ public static class JournalCapability
         }
 
         var named = name is null ? matching.Take(CombatEntriesNamed).ToList() : matching;
-        var parts = named.Select(entry => CombatEntryText(entry, credits, bond)).ToList();
+        var parts = named.Select(entry => CombatEntryText(entry, credits)).ToList();
         var rest = matching.Count - named.Count;
 
         if (rest > 0)
@@ -2488,7 +2500,7 @@ public static class JournalCapability
         report.AppendLine((heading is null ? string.Empty : heading + ": ") + string.Join("; ", parts) + ".");
     }
 
-    private static string CombatEntryText(CombatEntry entry, bool credits, bool bond)
+    private static string CombatEntryText(CombatEntry entry, bool credits)
     {
         var paid = entry.Awarded.ToString("N0", CultureInfo.InvariantCulture);
         var kills = entry.Kills.ToString("N0", CultureInfo.InvariantCulture);
@@ -2498,8 +2510,8 @@ public static class JournalCapability
             return $"{entry.Label}, {paid} credits";
         }
 
-        return bond && entry.Label == ConflictZoneKills
-            ? $"{kills} in conflict zones, ship type not recorded, {paid} credits"
+        return entry.Bond
+            ? $"{kills} {entry.Label}, {paid} credits"
             : $"{entry.Label}, {kills} {(entry.Kills == 1 ? "kill" : "kills")}, {paid} credits";
     }
 

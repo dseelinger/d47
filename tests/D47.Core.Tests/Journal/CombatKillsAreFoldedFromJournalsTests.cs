@@ -120,20 +120,21 @@ public class CombatKillsAreFoldedFromJournalsTests
         var slice = record.Since(DateTimeOffset.Parse("2026-10-10T10:30:00Z"));
 
         Assert.Equal((1, 500L), (slice.Kills, slice.Awarded));
-        Assert.Equal([new CombatGroup<string?>("anaconda", 1, 500)], slice.ByTarget);
+        Assert.Equal([new CombatGroup<string>("anaconda", 1, 500)], slice.ByTarget);
         Assert.Equal([new CombatGroup<string?>("Zed", 1, 500)], slice.ByVictimFaction);
         Assert.Equal([new CombatGroup<string>("B", 1, 500)], slice.ByPayingFaction);
         Assert.Equal(2, record.Since(null).Kills);
     }
 
     [Fact]
-    public void BondsGroupUnderOneNullTarget()
+    public void BondsGroupByVehicleAndLeaveTheTargetsAlone()
     {
         var bond = At("2026-10-10T10:00:00Z", "\"event\":\"FactionKillBond\",\"Reward\":10,\"AwardingFaction\":\"H\",\"VictimFaction\":\"L\"");
 
         var slice = Fold(bond, bond.Replace("10:00:00", "10:01:00")).Since(null);
 
-        Assert.Equal([new CombatGroup<string?>(null, 2, 20)], slice.ByTarget);
+        Assert.Equal([new CombatGroup<CombatVehicle>(CombatVehicle.Ship, 2, 20)], slice.ByBondVehicle);
+        Assert.Empty(slice.ByTarget);
     }
 
     [Fact]
