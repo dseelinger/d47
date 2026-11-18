@@ -247,7 +247,7 @@ Once you take the first specimen, Directive 47 tracks the run and speaks each on
 ```text
 Stratum Paleas, 1 of 3. 2 to go, 500 metres from here. Worth 1.4 million once analysed. No first footfall bonus.
 Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go, 500 metres from here.
-Stratum Paleas analysed. That run is complete. Worth 1.4 million. No first footfall bonus. 21.4 million unsold.
+Stratum Paleas analysed. That run is complete. Worth 1.4 million. No first footfall bonus. 21.4 million unsold. One species left on this body.
 ```
 
 Ask at any point and it will answer from where you are standing right now, which is the question you
@@ -305,8 +305,16 @@ body disagree, the one that says the body has been walked on is taken, because a
 undone.
 
 ```text
-Cactoida Cortexum analysed. That run is complete. Worth 18.3 million with the first footfall bonus. 138.2 million unsold.
+Cactoida Cortexum analysed. That run is complete. Worth 18.3 million with the first footfall bonus. 138.2 million unsold. Five species left on this body.
 ```
+
+Where Elite has counted the body's biological signals, the line ends with how many species are left to analyse there. The count of what is done is every species you have analysed on that body, sold or not, from any session, each counted once. When the analysis completes the last one, the unsold total is replaced by the body's total:
+
+```text
+Osseus Spiralis analysed. That run is complete. Worth 2.4 million. No first footfall bonus. Every species on this body is done: 6 species, 58.1 million in total.
+```
+
+The body total prices each analysis the way the analysis line does, and says how many it leaves out for want of a value. Nothing is said about species left or the body total while the body's signal count is unknown or lower than the species analysed.
 
 The total goes down when you sell at Vista Genomics: `SellOrganicData` removes every held analysis
 of each species it lists. It goes to zero when you die, since unsold data is lost, and when you say

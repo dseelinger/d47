@@ -112,6 +112,28 @@ public sealed class ExobiologyLedger(string? path, IFileSystem fileSystem, ILogg
         }
     }
 
+    /// <summary>
+    /// Each species <paramref name="commander"/> has analysed on one body, sold or not, priced and in the order
+    /// first analysed; the Commander last seen where null.
+    /// </summary>
+    public IReadOnlyList<HeldAnalysis> AnalysedOn(long systemAddress, int bodyId, string? commander = null)
+    {
+        lock (Gate)
+        {
+            if ((string.IsNullOrEmpty(commander) ? Current : commander) is not { } fid
+                || !_books.TryGetValue(fid, out var book))
+            {
+                return [];
+            }
+
+            return [.. book.Analyses.Values
+                .Where(analysis => analysis.System == systemAddress && analysis.Body == bodyId)
+                .OrderBy(analysis => analysis.At)
+                .Select(Priced)
+                .DistinctBy(held => held.Species, StringComparer.OrdinalIgnoreCase)];
+        }
+    }
+
     /// <summary>The value of the analysis a <c>ScanOrganic</c> Analyse reports, or null for any other event.</summary>
     public HeldAnalysis? Price(JournalEvent journalEvent)
     {

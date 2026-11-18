@@ -366,6 +366,118 @@ public class UnsoldExobiologyIsHeldUntilSoldTests
         Assert.Contains("3.7 million unsold, not counting 1 sample I have no value for.", said, StringComparison.Ordinal);
     }
 
+    // ------------------------------------------------- species left on the body
+
+    private static string Signals(int count, int body = 41) =>
+        $$"""
+          {"timestamp":"2026-09-26T19:10:00Z","event":"FSSBodySignals","BodyName":"Praea Euq BF-A d95 {{body}}",
+           "BodyID":{{body}},"SystemAddress":{{SystemAddress}},
+           "Signals":[{"Type":"$SAA_SignalType_Biological;","Type_Localised":"Biological","Count":{{count}}}]}
+          """;
+
+    /// <summary>The line for <paramref name="analyse"/> on a body with <paramref name="signals"/> biological signals.</summary>
+    private static string SaidOnABodyWith(int signals, ExobiologyLedger ledger, string analyse)
+    {
+        var store = new GameStateStore();
+        store.Apply(Parse(Commander));
+        store.Apply(Parse(Signals(signals)));
+        store.Apply(Parse(analyse));
+
+        var context = new CalloutContext(
+            DateTimeOffset.UnixEpoch, IsPriming: false, State: store.Active, Status: GameStatus.Unknown,
+            Route: NavRoute.None, Events: [Parse(analyse)]);
+
+        return Assert.Single(new SamplingCallout { Ledger = ledger }.Examine(context)).Text;
+    }
+
+    [Fact]
+    public void TheAnalysisSaysHowManySpeciesAreLeftOnTheBody()
+    {
+        var analyse = Cactoida("2026-09-26T22:17:47Z");
+
+        Assert.EndsWith(
+            " 3.7 million unsold. Five species left on this body.",
+            SaidOnABodyWith(6, Ledger(analyse), analyse));
+    }
+
+    [Fact]
+    public void OneSpeciesLeftIsSaidInTheSingular()
+    {
+        var analyse = Frutexa("2026-09-26T22:17:47Z");
+
+        Assert.EndsWith(
+            " One species left on this body.",
+            SaidOnABodyWith(3, Ledger(Cactoida("2026-09-26T21:00:00Z"), analyse), analyse));
+    }
+
+    [Fact]
+    public void TheLastSpeciesSaysTheBodyTotalInPlaceOfTheUnsoldTotal()
+    {
+        var analyse = Frutexa("2026-09-26T22:17:47Z");
+
+        var said = SaidOnABodyWith(2, Ledger(Cactoida("2026-09-26T21:00:00Z"), analyse), analyse);
+
+        Assert.EndsWith(" Every species on this body is done: 2 species, 11.4 million in total.", said);
+        Assert.DoesNotContain("unsold", said);
+    }
+
+    [Fact]
+    public void TheBodyTotalCountsWhatWasSoldAndNamesWhatItCannotPrice()
+    {
+        var analyse = Unpriced("2026-09-26T22:17:47Z");
+        var ledger = Ledger(Cactoida("2026-09-26T21:00:00Z"), Sale("2026-09-26T21:30:00Z", "$Codex_Ent_Cactoid_01_Name;"), analyse);
+
+        Assert.EndsWith(
+            " Every species on this body is done: 2 species, 3.7 million in total, not counting 1 I have no value for.",
+            SaidOnABodyWith(2, ledger, analyse));
+    }
+
+    [Fact]
+    public void ASpeciesAnalysedTwiceOnOneBodyCountsOnce()
+    {
+        var analyse = Cactoida("2026-09-26T22:17:47Z");
+        var ledger = Ledger(Cactoida("2026-09-26T21:00:00Z"), analyse);
+
+        Assert.EndsWith(" Four species left on this body.", SaidOnABodyWith(5, ledger, analyse));
+    }
+
+    [Fact]
+    public void ASpeciesOnAnotherBodyDoesNotCount()
+    {
+        var analyse = Cactoida("2026-09-26T22:17:47Z");
+        var ledger = Ledger(Frutexa("2026-09-26T21:00:00Z", body: 7), analyse);
+
+        Assert.EndsWith(" Five species left on this body.", SaidOnABodyWith(6, ledger, analyse));
+    }
+
+    [Fact]
+    public void TheAnalysisBeingSpokenIsCountedBeforeTheLedgerHasFoldedIt()
+    {
+        var analyse = Frutexa("2026-09-26T22:17:47Z");
+
+        Assert.EndsWith(
+            " Every species on this body is done: 2 species, 11.4 million in total.",
+            SaidOnABodyWith(2, Ledger(Cactoida("2026-09-26T21:00:00Z")), analyse));
+    }
+
+    [Fact]
+    public void MoreSpeciesAnalysedThanSignalsSaysNothingAboutWhatIsLeft()
+    {
+        var analyse = Frutexa("2026-09-26T22:17:47Z");
+        var said = SaidOnABodyWith(1, Ledger(Cactoida("2026-09-26T21:00:00Z"), analyse), analyse);
+
+        Assert.EndsWith(" 11.4 million unsold.", said);
+        Assert.DoesNotContain("species", said);
+    }
+
+    [Fact]
+    public void ABodyWithNoKnownSignalCountSaysNothingAboutWhatIsLeft()
+    {
+        var analyse = Cactoida("2026-09-26T22:17:47Z");
+
+        Assert.DoesNotContain("species", Said(Ledger(analyse), analyse));
+    }
+
     // ---------------------------------------------------------------- the tools
 
     private static Task<ToolResult> Ask(ExobiologyLedger ledger, string tool, ToolCaller caller = ToolCaller.Commander)

@@ -1,3 +1,5 @@
+using System.Globalization;
+using D47.Core.Audio;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -36,14 +38,14 @@ public sealed class SamplingCallout : ICallout
             }
 
             var line = journalEvent.String("ScanType") == "Analyse"
-                ? $"{genus.Species ?? genusName} analysed. That run is complete." + Value(journalEvent, state)
+                ? $"{genus.Species ?? genusName} analysed. That run is complete." + Value(journalEvent, state, systemAddress, bodyId)
                 : Progress(genus, genusName) + RunValue(journalEvent);
 
             yield return new Announcement($"sampling.{journalEvent.Timestamp.Ticks}", line);
         }
     }
 
-    private string Value(JournalEvent journalEvent, CommanderGameState state)
+    private string Value(JournalEvent journalEvent, CommanderGameState state, long systemAddress, int bodyId)
     {
         if (Ledger?.Price(journalEvent) is not { } analysis)
         {
@@ -64,12 +66,39 @@ public sealed class SamplingCallout : ICallout
             return line;
         }
 
+        var done = Ledger.AnalysedOn(systemAddress, bodyId, state.Identity.FrontierId).ToList();
+
+        if (!done.Any(held => string.Equals(held.Species, analysis.Species, StringComparison.OrdinalIgnoreCase)))
+        {
+            done.Add(analysis);
+        }
+
+        var signals = state.Biology.For(systemAddress, bodyId)?.BiologicalCount ?? 0;
+
+        if (signals > 0 && done.Count == signals)
+        {
+            var missing = done.Count(held => held.Worth is null);
+            var total = $" Every species on this body is done: {done.Count} species, "
+                + $"{BiologyCallout.Credits(done.Sum(held => held.Worth ?? 0))} in total";
+
+            return line + (missing == 0 ? total + "." : total + $", not counting {missing} I have no value for.");
+        }
+
         var unsold = Ledger.Unsold(state.Identity.FrontierId);
         var unpriced = unsold.Unpriced.Count;
 
-        return line + (unpriced == 0
+        line += unpriced == 0
             ? $" {BiologyCallout.Credits(unsold.Total)} unsold."
-            : $" {BiologyCallout.Credits(unsold.Total)} unsold, not counting {unpriced} sample{(unpriced == 1 ? "" : "s")} I have no value for.");
+            : $" {BiologyCallout.Credits(unsold.Total)} unsold, not counting {unpriced} sample{(unpriced == 1 ? "" : "s")} I have no value for.";
+
+        return signals > done.Count ? line + Left(signals - done.Count) : line;
+    }
+
+    private static string Left(int count)
+    {
+        var words = SpokenNumbers.Expand(count.ToString(CultureInfo.InvariantCulture));
+
+        return $" {char.ToUpperInvariant(words[0])}{words[1..]} species left on this body.";
     }
 
     private string RunValue(JournalEvent journalEvent)

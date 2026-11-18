@@ -1036,11 +1036,11 @@ Each organic specimen as it lands, with the distance you covered to get it:
 ```text
 Stratum Paleas, 1 of 3. 2 to go, 500 metres from here. Worth 1.4 million once analysed. No first footfall bonus.
 Stratum Paleas, 2 of 3. 556 metres from the last one. 1 to go, 500 metres from here.
-Stratum Paleas analysed. That run is complete.
+Stratum Paleas analysed. That run is complete. Worth 1.4 million. No first footfall bonus. 21.4 million unsold. One species left on this body.
 ```
 
 The first specimen line says what the run will be worth once analysed, as the analysed line does. The analysed line then adds what the species is worth, whether the first footfall bonus applies,
-and your unsold total, where D47 has a value for it.
+and your unsold total, where D47 has a value for it. Where Elite has counted the body's biological signals, it ends with how many species are left on the body; the analysis that completes the last one says the body's total in place of the unsold total.
 
 The distance is what the callout is for — you can see the genus and you can count to three, but nobody can
 judge four hundred metres across a ridge, and getting it wrong wastes the sample. While specimens

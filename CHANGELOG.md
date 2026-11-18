@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: After an organic analysis on a body whose biological signals Elite has counted, D47 ends the line with how many species are left on that body. The analysis that completes the last one says the body's total (every species you have analysed there, sold or not) in place of the unsold total.
+
 Added: SPEND starts with a Your accounts section when ElevenLabs or Deepgram is in use. For ElevenLabs it shows the characters left, how fast they are going and when they reset; for Deepgram the credit left. These are the provider's own figures, read when the dialog opens, and a provider that refuses the key or cannot be reached says so in place of its figures (unreachable offers Retry). The same section shows in the headset's SPEND. The line saying the rest of the dialog is D47's estimate now follows it.
 
 Fixed: On the desktop, a Search answer table — Systems, Stations, Bodies, Outfitting, Signals and Rare goods — whose columns do not fit the window at their narrowest scrolls sideways, its header and rows together, instead of cutting off the columns at the right. The rows still scroll up and down under the header, a table that fits has no sideways scrollbar, and the header's columns now line up with the rows' while the rows have a scrollbar. The headset is unchanged.
