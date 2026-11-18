@@ -209,7 +209,7 @@ Every trigger is a comparison on a structured field rather than on a name:
 |---|---|---|
 | Arrive at a system | the system's id | its name |
 | Dock at a station | the station's market id | its name — a carrier's name is player-chosen |
-| Land on a body | system and body ids | the body's name |
+| Land on a body | system and body ids, in a `Touchdown`, or in a `Docked` at a surface port whose `ApproachSettlement` gave that body | the body's name |
 | Scan a body | system and body ids | the body's name |
 | Reach a rank | career and a number | any rank word |
 | Board a ship | the hull's type | the ship's name |

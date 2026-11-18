@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A story or adventure objective to land on a body is met by docking at a surface port on that body. It used to need a touchdown on open ground, so a pad at a port left the objective waiting.
+
 Fixed: When ElevenLabs, Cartesia or Edge Neural does not answer the voice-list request in time, the voice picker says the provider could not be reached and did not answer in time. It used to say the account has no voices.
 
 Changed: A landable body whose surface temperature is 700 K or more shows that temperature in red, on the Bodies search, the System body page and the system body list; stars and cooler or unlandable bodies are unchanged.

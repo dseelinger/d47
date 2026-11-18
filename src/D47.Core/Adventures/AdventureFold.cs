@@ -14,6 +14,9 @@ public sealed record StepFire(int Beat, int Step, DateTimeOffset At, string By);
 /// <summary>The mission a <see cref="TriggerKind.MissionTaken"/> step bound: its id and where it goes.</summary>
 public sealed record MissionBinding(long MissionId, string? DestinationSystem, string? DestinationStation);
 
+/// <summary>A surface settlement from an <c>ApproachSettlement</c>: its market and the body it is on.</summary>
+public sealed record SurfacePort(long MarketId, int BodyId);
+
 /// <summary>
 /// Where one adventure stands, computed rather than read (Phase 47, "Progress is derived, and an
 /// adventure counts forward only").
@@ -39,6 +42,9 @@ public sealed record AdventureStanding
 
     /// <summary>The market the Commander is docked at, from <c>Docked</c> and <c>Location</c>, or null in flight.</summary>
     public long? MarketId { get; init; }
+
+    /// <summary>The surface settlement the Commander last approached, acceptance or not.</summary>
+    public SurfacePort? Port { get; init; }
 
     /// <summary>The missions the steps taken so far bound, by <see cref="AdventureTrigger.Handle"/>.</summary>
     public IReadOnlyDictionary<string, MissionBinding> Handles { get; init; } = new Dictionary<string, MissionBinding>();
@@ -283,10 +289,14 @@ public static class AdventureFold
                 journalEvent.Kind is "Docked"
                 && raw.Long("MarketID") == trigger.MarketId,
 
+            // Docking at a surface port writes Docked with no BodyID and no Touchdown; the port's ApproachSettlement names the body.
             TriggerKind.Land =>
-                journalEvent.Kind is "Touchdown"
-                && raw.Long("SystemAddress") == trigger.SystemAddress
-                && raw.Int("BodyID") == trigger.BodyId,
+                raw.Long("SystemAddress") == trigger.SystemAddress
+                && (journalEvent.Kind is "Touchdown" && raw.Int("BodyID") == trigger.BodyId
+                    || journalEvent.Kind is "Docked"
+                        && standing?.Port is { } port
+                        && raw.Long("MarketID") == port.MarketId
+                        && port.BodyId == trigger.BodyId),
 
             // A scan beat is satisfied by the scan, or by the Commander going to the body (#77).
             TriggerKind.Scan =>
@@ -658,6 +668,15 @@ public static class AdventureFold
         if (market != standing.MarketId)
         {
             standing = standing with { MarketId = market };
+        }
+
+        if (journalEvent.Kind is "ApproachSettlement"
+            && journalEvent.Raw.Long("MarketID") is { } settlement
+            && journalEvent.Raw.Int("BodyID") is { } body
+            && new SurfacePort(settlement, body) is var port
+            && port != standing.Port)
+        {
+            standing = standing with { Port = port };
         }
 
         if (world is not null && standing.Parts.Any(part => !part.Ended) && journalEvent.Kind is "FSDJump" or "Location" or "CarrierJump" && !journalEvent.IsOperationLocation)

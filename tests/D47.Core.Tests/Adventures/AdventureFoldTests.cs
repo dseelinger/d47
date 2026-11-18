@@ -143,6 +143,63 @@ public class AdventureFoldTests
         Assert.True(standing.IsDone);
     }
 
+    private const long Port = 3537018112;
+
+    private static Adventure DownOnVeyl() => new()
+    {
+        Key = "down-on-veyl",
+        Name = "Down on Veyl",
+        AcceptedAt = Accepted,
+        Beats =
+        [
+            Beat(
+                "Veyl 3 c",
+                "setup",
+                new AdventureTrigger { Kind = TriggerKind.Land, SystemAddress = Veyl, BodyId = 9, System = "Cairn of Veyl", Body = "Veyl 3 c" },
+                "Down."),
+        ],
+    };
+
+    /// <summary>Elite writes <c>Docked</c>, with no <c>BodyID</c>, and no <c>Touchdown</c> for a pad at a surface port.</summary>
+    [Fact]
+    public void DockingAtASurfacePortOnTheBodyIsALanding()
+    {
+        var standing = Run(
+            DownOnVeyl(),
+            [ApproachSettlement(Veyl, 9, Port, Accepted.AddMinutes(4)), Docked(Port, Accepted.AddMinutes(5), Veyl)]);
+
+        Assert.True(standing.IsDone);
+        Assert.Equal(Accepted.AddMinutes(5), standing.LastFiredAt);
+        Assert.Equal("Docked", Assert.Single(standing.FiredBy));
+    }
+
+    [Fact]
+    public void APortApproachedBeforeTheStampStillNamesItsBody()
+    {
+        var standing = Run(
+            DownOnVeyl(),
+            [ApproachSettlement(Veyl, 9, Port, Accepted.AddMinutes(-1)), Docked(Port, Accepted.AddMinutes(1), Veyl)]);
+
+        Assert.True(standing.IsDone);
+    }
+
+    [Fact]
+    public void DockingAnywhereButAPortOnTheBodyIsNotALanding()
+    {
+        // A port on another body of the system.
+        Assert.Empty(Run(
+            DownOnVeyl(),
+            [ApproachSettlement(Veyl, 8, Port, Accepted.AddMinutes(4)), Docked(Port, Accepted.AddMinutes(5), Veyl)]).Fired);
+
+        // A station no ApproachSettlement named, after passing the port on the body.
+        Assert.Empty(Run(
+            DownOnVeyl(),
+            [ApproachSettlement(Veyl, 9, Port, Accepted.AddMinutes(4)), Docked(Anchorage, Accepted.AddMinutes(5), Veyl)]).Fired);
+
+        // Approaching the port without docking.
+        Assert.Empty(Run(DownOnVeyl(), [ApproachSettlement(Veyl, 9, Port, Accepted.AddMinutes(4))]).Fired);
+    }
+
     [Fact]
     public void ARankBeatFiresOnReachingOrPassingTheRank()
     {

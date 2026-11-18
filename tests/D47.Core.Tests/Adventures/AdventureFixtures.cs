@@ -97,8 +97,11 @@ internal static class AdventureFixtures
     public static JournalEvent SupercruiseExit(long systemAddress, int bodyId, DateTimeOffset at) =>
         Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"SupercruiseExit", "Taxi":false, "Multicrew":false, "StarSystem":"Somewhere", "SystemAddress":{{systemAddress}}, "Body":"A body", "BodyID":{{bodyId}}, "BodyType":"Planet" }""");
 
-    public static JournalEvent Docked(long marketId, DateTimeOffset at) =>
-        Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"Docked", "StationName":"Some Station", "StationType":"Outpost", "StarSystem":"Somewhere", "SystemAddress":1, "MarketID":{{marketId}} }""");
+    public static JournalEvent Docked(long marketId, DateTimeOffset at, long systemAddress = 1) =>
+        Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"Docked", "StationName":"Some Station", "StationType":"Outpost", "StarSystem":"Somewhere", "SystemAddress":{{systemAddress}}, "MarketID":{{marketId}} }""");
+
+    public static JournalEvent ApproachSettlement(long systemAddress, int bodyId, long marketId, DateTimeOffset at) =>
+        Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"ApproachSettlement", "Name":"Some Base", "MarketID":{{marketId}}, "SystemAddress":{{systemAddress}}, "BodyID":{{bodyId}}, "BodyName":"A moon", "Latitude":7.9, "Longitude":-147.1 }""");
 
     public static JournalEvent Touchdown(long systemAddress, int bodyId, DateTimeOffset at) =>
         Event($$"""{ "timestamp":"{{Stamp(at)}}", "event":"Touchdown", "PlayerControlled":true, "StarSystem":"Somewhere", "SystemAddress":{{systemAddress}}, "Body":"A moon", "BodyID":{{bodyId}}, "OnPlanet":true }""");
