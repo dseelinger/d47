@@ -144,14 +144,23 @@ public sealed class ArdentCommodityService : IDisposable
             return null;
         }
 
-        return new StationQuote(
+        return ReadQuote(row);
+    }
+
+    /// <summary>One market row, as <see cref="StationQuote"/> reads it.</summary>
+    internal static StationQuote ReadQuote(JsonElement row) =>
+        new(
             Whole(row, "stock"),
             Whole(row, "stockBracket"),
             Whole(row, "buyPrice"),
             Whole(row, "demand"),
             Whole(row, "sellPrice"),
-            Moment(row, "updatedAt"));
-    }
+            Moment(row, "updatedAt"))
+        {
+            MarketId = Integer(row, "marketId"),
+            DemandBracket = Optional(row, "demandBracket"),
+            MeanPrice = Optional(row, "meanPrice"),
+        };
 
     /// <summary>The rows, as <see cref="MarketSnapshot"/> reads them.</summary>
     internal static IReadOnlyList<MarketSnapshot> Read(JsonDocument document, string commodity)
@@ -181,12 +190,19 @@ public sealed class ArdentCommodityService : IDisposable
                 SellPrice = Whole(row, "sellPrice"),
                 Supply = Whole(row, "stock"),
                 Demand = Whole(row, "demand"),
+                StockBracket = Optional(row, "stockBracket"),
+                DemandBracket = Optional(row, "demandBracket"),
+                MeanPrice = Optional(row, "meanPrice"),
             };
 
             markets.Add(new MarketSnapshot
             {
                 Station = station,
                 System = system,
+                MarketId = Integer(row, "marketId"),
+                SystemAddress = Integer(row, "systemAddress"),
+                Body = Text(row, "bodyName"),
+                BodyId = Optional(row, "bodyId"),
 
                 // The reply's own `distance` is rounded to a whole light year — 64 and 63 for the two
                 // stations #350 measured at 63.5 and 63.1 — so it is never read.
@@ -207,6 +223,43 @@ public sealed class ArdentCommodityService : IDisposable
         }
 
         return markets;
+    }
+
+    /// <summary>The rows of the commodity list, as <see cref="ArdentCommodity"/> reads them.</summary>
+    internal static IReadOnlyList<ArdentCommodity> ReadCommodities(JsonDocument document)
+    {
+        var commodities = new List<ArdentCommodity>();
+
+        if (document.RootElement.ValueKind != JsonValueKind.Array)
+        {
+            return commodities;
+        }
+
+        foreach (var row in document.RootElement.EnumerateArray())
+        {
+            if (row.ValueKind != JsonValueKind.Object || Text(row, "commodityName") is not { Length: > 0 } name)
+            {
+                continue;
+            }
+
+            commodities.Add(new ArdentCommodity(name)
+            {
+                Rare = row.TryGetProperty("rare", out var rare) && rare.ValueKind == JsonValueKind.True,
+                RareMarketId = Integer(row, "rareMarketId"),
+                RareMaxCount = Optional(row, "rareMaxCount"),
+                MinBuyPrice = Optional(row, "minBuyPrice"),
+                MaxBuyPrice = Optional(row, "maxBuyPrice"),
+                AvgBuyPrice = Optional(row, "avgBuyPrice"),
+                TotalStock = Integer(row, "totalStock"),
+                MinSellPrice = Optional(row, "minSellPrice"),
+                MaxSellPrice = Optional(row, "maxSellPrice"),
+                AvgSellPrice = Optional(row, "avgSellPrice"),
+                TotalDemand = Integer(row, "totalDemand"),
+                Timestamp = Moment(row, "timestamp"),
+            });
+        }
+
+        return commodities;
     }
 
     /// <summary>Ardent's word for a station in the words <see cref="MarketSnapshot"/>'s own rules speak.</summary>
@@ -323,18 +376,7 @@ public sealed class ArdentCommodityService : IDisposable
 
         using var document = await SendAsync("v2/commodities", cancellationToken).ConfigureAwait(false);
 
-        var names = new List<string>();
-
-        if (document.RootElement.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var row in document.RootElement.EnumerateArray())
-            {
-                if (row.ValueKind == JsonValueKind.Object && Text(row, "commodityName") is { Length: > 0 } name)
-                {
-                    names.Add(name);
-                }
-            }
-        }
+        var names = ReadCommodities(document).Select(commodity => commodity.Name).ToList();
 
         // An empty list is the index failing to answer, not a catalogue without the commodity; it is not kept.
         if (names.Count == 0)
@@ -382,6 +424,14 @@ public sealed class ArdentCommodityService : IDisposable
 
     private static int Whole(JsonElement row, string name) =>
         Number(row, name) is { } number ? (int)Math.Clamp(number, int.MinValue, int.MaxValue) : 0;
+
+    private static int? Optional(JsonElement row, string name) =>
+        Number(row, name) is { } number ? (int)Math.Clamp(number, int.MinValue, int.MaxValue) : null;
+
+    private static long? Integer(JsonElement row, string name) =>
+        row.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var whole)
+            ? whole
+            : null;
 
     private static DateTimeOffset? Moment(JsonElement row, string name) =>
         Text(row, name) is { } when

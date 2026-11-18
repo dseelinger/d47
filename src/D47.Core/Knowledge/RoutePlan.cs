@@ -647,7 +647,16 @@ public sealed record StationQuote(
     int BuyPrice,
     int Demand,
     int SellPrice,
-    DateTimeOffset? UpdatedAt);
+    DateTimeOffset? UpdatedAt)
+{
+    public long? MarketId { get; init; }
+
+    /// <summary>The index's demand bracket, 0 to 3.</summary>
+    public int? DemandBracket { get; init; }
+
+    /// <summary>The galaxy-wide mean price.</summary>
+    public int? MeanPrice { get; init; }
+}
 
 /// <summary>One build's sourcing question (Phase 50).</summary>
 /// <param name="System">Where to search out from.</param>

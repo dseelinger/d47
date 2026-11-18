@@ -33,6 +33,15 @@ public sealed record MarketQuote(string Commodity)
 
     /// <summary>A rare good.</summary>
     public bool IsRare { get; init; }
+
+    /// <summary>The index's stock bracket, 0 to 3.</summary>
+    public int? StockBracket { get; init; }
+
+    /// <summary>The index's demand bracket, 0 to 3.</summary>
+    public int? DemandBracket { get; init; }
+
+    /// <summary>The galaxy-wide mean price.</summary>
+    public int? MeanPrice { get; init; }
 }
 
 /// <summary>One station's whole commodity market at one moment (Phase 36).</summary>
@@ -41,6 +50,18 @@ public sealed record MarketSnapshot
     public required string Station { get; init; }
 
     public required string System { get; init; }
+
+    /// <summary>The station's market id; null from a source that does not send one.</summary>
+    public long? MarketId { get; init; }
+
+    /// <summary>The system's id64, what the journal writes as <c>SystemAddress</c>.</summary>
+    public long? SystemAddress { get; init; }
+
+    /// <summary>The body the station orbits or stands on, where the index names one.</summary>
+    public string? Body { get; init; }
+
+    /// <summary>The journal's <c>BodyID</c> of <see cref="Body"/>.</summary>
+    public int? BodyId { get; init; }
 
     /// <summary>Galactic coordinates of the system, which is what makes a leg measurable.</summary>
     public double X { get; init; }
