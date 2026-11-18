@@ -113,6 +113,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     private readonly bool _headset;
     private readonly Action<string>? _browse;
     private readonly ColumnWidthMemory? _columnWidths;
+    private readonly D47.App.Voice.WaitSound? _waitSound;
 
     private readonly Button _search = new() { Content = SearchLabel };
     private readonly Button _cancel = new() { Content = "Cancel", IsVisible = false };
@@ -124,8 +125,9 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     private object? _seen;
     private string? _plannedKey;
 
-    public ConstructionPage(ConstructionSurface surface, Func<string, Task<bool>>? copy = null, bool headset = false, Action<string>? browse = null, ColumnWidthMemory? columnWidths = null)
+    public ConstructionPage(ConstructionSurface surface, Func<string, Task<bool>>? copy = null, bool headset = false, Action<string>? browse = null, ColumnWidthMemory? columnWidths = null, D47.App.Voice.WaitSound? waitSound = null)
     {
+        _waitSound = waitSound;
         _columnWidths = columnWidths;
         _surface = surface;
         _browse = browse;
@@ -1140,15 +1142,21 @@ public sealed class ConstructionPage : UserControl, IPageSummary
 
         _search.IsEnabled = false;
         _cancel.IsVisible = true;
-        RoutingKit.Say(_status, "Reading the markets nearby…");
 
         try
         {
-            var result = await registry
-                .InvokeAsync(NeedsTool, SearchArguments(site), inFlight.Token, ToolCaller.Commander)
+            ToolResult? result = null;
+
+            await Waiting.While(
+                _status,
+                "Reading the markets nearby…",
+                _waitSound,
+                async () => result = await registry
+                    .InvokeAsync(NeedsTool, SearchArguments(site), inFlight.Token, ToolCaller.Commander)
+                    .ConfigureAwait(true))
                 .ConfigureAwait(true);
 
-            RoutingKit.Say(_status, result.Content, result.IsError);
+            RoutingKit.Say(_status, result!.Content, result.IsError);
         }
         catch (OperationCanceledException)
         {

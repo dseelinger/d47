@@ -770,14 +770,20 @@ public sealed class RouteMarketPage : UserControl
         }
 
         _sorting = true;
-        RoutingKit.Say(_status, "Reading the markets nearby…");
 
         try
         {
             using var inFlight = new CancellationTokenSource(Budget);
-            var result = await _registry.InvokeAsync("find_nearest_station", arguments, inFlight.Token).ConfigureAwait(true);
+            ToolResult? result = null;
 
-            RoutingKit.Say(_status, result.Content, result.IsError);
+            await Waiting.While(
+                _status,
+                "Reading the markets nearby…",
+                _waitSound,
+                async () => result = await _registry.InvokeAsync("find_nearest_station", arguments, inFlight.Token).ConfigureAwait(true))
+                .ConfigureAwait(true);
+
+            RoutingKit.Say(_status, result!.Content, result.IsError);
             Refresh();
         }
         catch (OperationCanceledException)

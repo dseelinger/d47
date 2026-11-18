@@ -70,6 +70,8 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     private readonly Button _run = new() { Name = RunName, Content = "SEARCH", Height = TypeScale.MinimumTarget, VerticalAlignment = VerticalAlignment.Bottom };
     private readonly ContentControl _answer = new();
     private readonly Control _form;
+    private readonly D47.App.Voice.WaitSound? _waitSound;
+    private readonly WaitingState _waiting = new(WaitForm.Body, "Asking for the rare goods…") { IsVisible = false };
 
     private CancellationTokenSource? _inFlight;
     private (string Text, DateTimeOffset At)? _failure;
@@ -82,8 +84,10 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
         Func<string?> pledgedPower,
         Action<RareListingRow> rareRun,
         Func<string, Task<bool>>? copy,
-        bool headset)
+        bool headset,
+        D47.App.Voice.WaitSound? waitSound = null)
     {
+        _waitSound = waitSound;
         _searches = searches;
         _here = here;
         _power = pledgedPower;
@@ -166,15 +170,21 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
         try
         {
-            var result = await _searches.Registry
-                .InvokeAsync(
-                    "list_rares",
-                    new ToolArguments(new Dictionary<string, string>(arguments, StringComparer.Ordinal)),
-                    inFlight.Token,
-                    ToolCaller.Commander)
+            ToolResult? result = null;
+
+            await Waiting.While(
+                _waiting,
+                _waitSound,
+                async () => result = await _searches.Registry
+                    .InvokeAsync(
+                        "list_rares",
+                        new ToolArguments(new Dictionary<string, string>(arguments, StringComparer.Ordinal)),
+                        inFlight.Token,
+                        ToolCaller.Commander)
+                    .ConfigureAwait(true))
                 .ConfigureAwait(true);
 
-            if (result.IsError)
+            if (result!.IsError)
             {
                 _failure = (result.Content, DateTimeOffset.Now);
             }
@@ -288,7 +298,8 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
         switch (View)
         {
             case GalaxySearchView.Running:
-                top.Children.Add(Typeset.Prose("Asking for the rare goods…", TypeScale.Secondary, ThemeManager.GreyKey));
+                (_waiting.Parent as Avalonia.Controls.Panel)?.Children.Remove(_waiting);
+                top.Children.Add(_waiting);
                 _answer.Content = LoadoutPages.Scrolling(top);
                 break;
 

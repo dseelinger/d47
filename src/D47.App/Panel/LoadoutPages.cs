@@ -92,7 +92,10 @@ public static class LoadoutPages
         CarrierHullMemory? carrierHulls = null,
 
         // Where dragged slot-table column widths are kept, or null where the surface has no mouse.
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+
+        // Plays the waiting bed under a search or a plot.
+        D47.App.Voice.WaitSound? waitSound = null)
     {
         if (crumb.Key == ComparePage.Key && compare is not null)
         {
@@ -137,7 +140,7 @@ public static class LoadoutPages
 
             if (crumb.Key.StartsWith(mode.ItemPrefix, StringComparison.Ordinal))
             {
-                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..], prompts, copy, columnWidths);
+                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..], prompts, copy, columnWidths, waitSound);
             }
         }
 
@@ -150,7 +153,7 @@ public static class LoadoutPages
             && gap is not null
             && MaterialCatalogue.Find(crumb.Key[MaterialsPage.DetailPrefix.Length..]) is { } material)
         {
-            return new MaterialDetailPage(gap, nav, material, materialsClock ?? new JournalClock(() => null));
+            return new MaterialDetailPage(gap, nav, material, materialsClock ?? new JournalClock(() => null), waitSound);
         }
 
         if (crumb.Key.StartsWith(MaterialsPage.OnFootPrefix, StringComparison.Ordinal)
@@ -1873,6 +1876,8 @@ public sealed class ItemPage : LoadoutPage
     private readonly string _item;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly ColumnWidthMemory? _columnWidths;
+    private readonly D47.App.Voice.WaitSound? _waitSound;
+    private readonly WaitingState _plotWaiting = new(WaitForm.Line, "Working it out…") { IsVisible = false };
     private Button? _drop;
 
     /// <summary>
@@ -1933,9 +1938,11 @@ public sealed class ItemPage : LoadoutPage
         string item,
         PanelPrompts? prompts,
         Func<string, Task<bool>>? copy = null,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        D47.App.Voice.WaitSound? waitSound = null)
         : base(mode)
     {
+        _waitSound = waitSound;
         _nav = nav;
         _item = item;
         _prompts = prompts;
@@ -2454,7 +2461,8 @@ public sealed class ItemPage : LoadoutPage
 
         if (plotting)
         {
-            block.Children.Add(LoadoutPages.Muted("Working it out…"));
+            (_plotWaiting.Parent as Avalonia.Controls.Panel)?.Children.Remove(_plotWaiting);
+            block.Children.Add(_plotWaiting);
         }
         else if (_plotSaid is { Length: > 0 } said)
         {
@@ -2505,8 +2513,12 @@ public sealed class ItemPage : LoadoutPage
 
         try
         {
-            outcome = await toBuy.Plot(_plotting.Token).ConfigureAwait(true);
-            _plotSaid = outcome.Said;
+            var token = _plotting.Token;
+
+            await Waiting.While(_plotWaiting, _waitSound, async () => outcome = await toBuy.Plot(token).ConfigureAwait(true))
+                .ConfigureAwait(true);
+
+            _plotSaid = outcome!.Said;
             _plotFailed = outcome.IsError;
             _plotOpen = outcome.Open;
         }

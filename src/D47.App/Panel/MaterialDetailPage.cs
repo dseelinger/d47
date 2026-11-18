@@ -47,9 +47,12 @@ public sealed class MaterialDetailPage : UserControl
     private CancellationTokenSource? _search;
     private MaterialPlaces? _places;
     private string? _failure;
+    private WaitingState? _searching;
+    private readonly D47.App.Voice.WaitSound? _waitSound;
 
-    public MaterialDetailPage(GapSource gap, PanelNavigator nav, MaterialEntry material, JournalClock clock)
+    public MaterialDetailPage(GapSource gap, PanelNavigator nav, MaterialEntry material, JournalClock clock, D47.App.Voice.WaitSound? waitSound = null)
     {
+        _waitSound = waitSound;
         _gap = gap;
         _nav = nav;
         _material = material;
@@ -216,38 +219,42 @@ public sealed class MaterialDetailPage : UserControl
 
         var search = _search = new CancellationTokenSource(Budget);
         var symbol = _material.Symbol;
+        var waiting = _searching = new WaitingState(WaitForm.Body, Searching) { IsVisible = false };
 
-        _ = Task.Run(async () =>
+        _ = SearchAsync(search, waiting, symbol, state, galaxy, system);
+    }
+
+    private async Task SearchAsync(CancellationTokenSource search, WaitingState waiting, string symbol, CommanderGameState? state, IGalaxyService galaxy, string? system)
+    {
+        MaterialPlaces? found = null;
+        string? failure = null;
+
+        try
         {
-            MaterialPlaces? found = null;
-            string? failure = null;
+            await Waiting.While(
+                waiting,
+                _waitSound,
+                () => Task.Run(async () =>
+                    found = await MaterialGuide.NearestAsync(symbol, state, galaxy, search.Token, near: system).ConfigureAwait(false)))
+                .ConfigureAwait(true);
+        }
+        catch (GalaxyUnavailableException)
+        {
+            failure = Unanswered;
+        }
+        catch (OperationCanceledException)
+        {
+            failure = Unanswered;
+        }
 
-            try
-            {
-                found = await MaterialGuide.NearestAsync(symbol, state, galaxy, search.Token, near: system)
-                    .ConfigureAwait(false);
-            }
-            catch (GalaxyUnavailableException)
-            {
-                failure = Unanswered;
-            }
-            catch (OperationCanceledException)
-            {
-                failure = Unanswered;
-            }
+        if (!ReferenceEquals(search, _search))
+        {
+            return;
+        }
 
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (!ReferenceEquals(search, _search))
-                {
-                    return;
-                }
-
-                _places = found;
-                _failure = failure;
-                Refresh();
-            });
-        });
+        _places = found;
+        _failure = failure;
+        Refresh();
     }
 
     private void Cancel()
@@ -452,7 +459,11 @@ public sealed class MaterialDetailPage : UserControl
 
         if (_places is not { } places)
         {
-            return Slab(Prose(Searching, ThemeManager.GreyKey));
+            var waiting = _searching ?? new WaitingState(WaitForm.Body, Searching);
+
+            (waiting.Parent as Decorator)?.Child = null;
+
+            return Slab(waiting);
         }
 
         if (places.Places.Count == 0)

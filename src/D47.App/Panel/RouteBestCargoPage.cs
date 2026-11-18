@@ -95,6 +95,7 @@ public sealed class RouteBestCargoPage : UserControl
     private readonly StatusLine _status = RoutingKit.Status();
 
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly D47.App.Voice.WaitSound? _waitSound;
 
     private CancellationTokenSource? _inFlight;
     private object? _seen;
@@ -110,8 +111,10 @@ public sealed class RouteBestCargoPage : UserControl
         TimeSpan? suggestionPause = null,
         Func<string, string?>? offDuty = null,
         ColumnWidthMemory? columnWidths = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        D47.App.Voice.WaitSound? waitSound = null)
     {
+        _waitSound = waitSound;
         _copy = copy;
         _columnWidths = columnWidths;
         _offDuty = offDuty;
@@ -224,19 +227,25 @@ public sealed class RouteBestCargoPage : UserControl
         var inFlight = _inFlight = new CancellationTokenSource(Budget);
 
         _find.IsEnabled = false;
-        RoutingKit.Say(_status, "Looking up prices…");
 
         try
         {
-            var result = await _registry
-                .InvokeAsync(
-                    Tool,
-                    new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = system }),
-                    inFlight.Token,
-                    ToolCaller.Commander)
+            ToolResult? result = null;
+
+            await Waiting.While(
+                _status,
+                "Looking up prices…",
+                _waitSound,
+                async () => result = await _registry
+                    .InvokeAsync(
+                        Tool,
+                        new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal) { ["system"] = system }),
+                        inFlight.Token,
+                        ToolCaller.Commander)
+                    .ConfigureAwait(true))
                 .ConfigureAwait(true);
 
-            if (result.IsError)
+            if (result!.IsError)
             {
                 RoutingKit.Say(_status, result.Content, error: true);
             }

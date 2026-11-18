@@ -415,7 +415,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
         if (view.Running)
         {
-            _body.Children.Add(RoutingKit.Ink(RunningText, TypeScale.ControlLarge, ThemeManager.GreyKey, wrap: true));
+            _body.Children.Add(new WaitingState(WaitForm.Body, RunningText));
             return;
         }
 

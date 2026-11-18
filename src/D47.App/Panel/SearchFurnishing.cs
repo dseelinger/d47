@@ -332,7 +332,8 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 () => rareSearches.PledgedPower?.Invoke(),
                 RunRare,
                 host.Copy,
-                host.Headset)
+                host.Headset,
+                host.Model?.WaitSound)
             {
                 ColumnWidths = host.ColumnWidths,
             };

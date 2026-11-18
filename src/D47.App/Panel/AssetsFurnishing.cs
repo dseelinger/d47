@@ -157,7 +157,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
                 ? new CarrierPictures(pictures, picture, () => host.Model?.CommanderPictureSource?.Invoke() is not null)
                 : null,
             host.CarrierHulls,
-            host.ColumnWidths);
+            host.ColumnWidths,
+            host.Model?.WaitSound);
 
         host.Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
         host.Nav.Declare(LoadoutPages.FleetRoot, ComparePage.Crumb);
@@ -185,7 +186,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
     {
         var headset = host.Headset;
 
-        _constructionBuild = _ => _construction = new ConstructionPage(construction, host.Copy, headset, host.Browse, host.ColumnWidths);
+        _constructionBuild = _ => _construction = new ConstructionPage(construction, host.Copy, headset, host.Browse, host.ColumnWidths, host.Model?.WaitSound);
 
         host.Furnish(
             PanelTab.Assets,

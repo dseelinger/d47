@@ -207,7 +207,7 @@ public static class RoutingPages
                 surface.OffDuty,
                 () => surface.Commander?.Invoke()?.Location.StarPos),
             MarketRoot => Market(surface, columnWidths, waitSound),
-            BestCargoRoot => BestCargo(surface, nav, columnWidths),
+            BestCargoRoot => BestCargo(surface, nav, columnWidths, waitSound),
             TradeRoot => Trade(surface, nav, waitSound),
             BookmarksRoot => Bookmarks(surface, nav),
             BookmarksPage.AddKey => BookmarkForm(surface, nav, null),
@@ -244,7 +244,7 @@ public static class RoutingPages
                 waitSound)
             : Missing("Market lookups are not available on this surface.");
 
-    private static Control BestCargo(RoutingSurface surface, PanelNavigator nav, ColumnWidthMemory? columnWidths) =>
+    private static Control BestCargo(RoutingSurface surface, PanelNavigator nav, ColumnWidthMemory? columnWidths, D47.App.Voice.WaitSound? waitSound) =>
         surface is { Registry: { } registry, Cargo: { } board }
             ? new RouteBestCargoPage(
                 registry,
@@ -259,7 +259,8 @@ public static class RoutingPages
                 surface.SuggestionPause,
                 surface.OffDuty,
                 columnWidths,
-                Copy(surface))
+                Copy(surface),
+                waitSound)
             : Missing("Best cargo is not available on this surface.");
 
     private static Control Trade(RoutingSurface surface, PanelNavigator nav, D47.App.Voice.WaitSound? waitSound) =>
