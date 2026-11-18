@@ -104,6 +104,9 @@ public sealed record D47Settings
     /// <summary>Whether this install is linked to the web app.</summary>
     public WebAppSettings WebApp { get; init; } = new();
 
+    /// <summary>How long without activity counts as away.</summary>
+    public PresenceSettings Presence { get; init; } = new();
+
     /// <summary>
     /// What each Commander has set of the rows that are theirs rather than the installation's (Phase
     /// 44).
@@ -1477,6 +1480,20 @@ public sealed record WebAppSettings
     public Dictionary<string, JsonElement>? Extra { get; init; }
 
     public bool Enabled { get; init; }
+}
+
+/// <summary>How long without activity from the Commander counts as away.</summary>
+public sealed record PresenceSettings
+{
+    /// <summary>The most <see cref="AwayMinutes"/> can be.</summary>
+    public const int MostAwayMinutes = 240;
+
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>Whole minutes; 0 is never away.</summary>
+    public int AwayMinutes { get; init; } = 5;
 }
 
 /// <summary>A provider and voice chosen for one story character, with the names the egress disclosure gives it.</summary>

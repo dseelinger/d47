@@ -463,6 +463,27 @@ There is **no spoken phrase for it and no tool that can call it** — "forget ev
 sentence a transcriber can produce out of a misheard one, and this is the one action in that feature
 that cannot be undone.
 
+### Away after (minutes) {#away-minutes}
+
+How long with nothing from you before Directive 47 counts you as away. Whole minutes, 5 out of the
+box, from 0 to 240. 0 means you are never away.
+
+These count as you being there:
+
+- keyboard or mouse input anywhere in Windows, except keys Directive 47 presses itself;
+- a button press or a hat move on a stick or pad;
+- a press on the panel in the headset;
+- a journal event only you cause, such as a jump, entering or leaving supercruise, docking,
+  undocking, a trade, a mission accepted or handed in, a scan, or a screenshot, and a touchdown
+  or liftoff you fly yourself.
+
+Moving a stick's axes alone does not count, and neither do the events Elite writes with nobody
+acting (a bounty, a message received, damage), a change in the ship's status, anything you say
+hands-free, or anything Directive 47 says. The log says when you become away and when you are
+back.
+
+**The model cannot reach this row.** You change it here.
+
 ## The disclosure rows {#egress-llm}
 
 The settings panel carries one row per destination, saying the same things this page does

@@ -778,6 +778,7 @@ public sealed class VrHost : IDisposable
             {
                 // Let go without ever having moved or dwelt: a press, not a carry.
                 _pressed = null;
+                PanelPressed?.Invoke();
 
                 try
                 {
@@ -1115,6 +1116,9 @@ public sealed class VrHost : IDisposable
 
     /// <summary>Raised after an anchor is set or forgotten, on whichever thread did it.</summary>
     public event Action? AnchorsChanged;
+
+    /// <summary>Raised when a ray presses the panel, before the press is delivered.</summary>
+    public event Action? PanelPressed;
 
     /// <summary>
     /// Puts a surface back where a fresh install puts it: forgets its anchor and sets its lock and

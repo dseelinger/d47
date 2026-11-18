@@ -1,3 +1,4 @@
+using System.Globalization;
 using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Diagnostics.Donation;
@@ -34,6 +35,8 @@ public static class PrivacyCapability
     public const string WebAppKey = "privacy.webApp";
 
     public const string WebAppSignInKey = "privacy.webAppSignIn";
+
+    public const string AwayMinutesKey = "presence.awayMinutes";
 
     /// <summary>Throwing away what d47 worked out about the Commander from their journals (Phase 32).</summary>
 
@@ -361,6 +364,43 @@ public static class PrivacyCapability
                     ? "No donation identifier exists on this installation. One is created the "
                       + "first time you donate, and never before."
                     : DonorToken.Summarise(DonorToken.Read(files!, donorTokenFile)),
+            },
+        });
+
+        rows.Add(new SettingRow
+        {
+            Key = AwayMinutesKey,
+            Exercise =
+                "Open Settings › Privacy and this install › Privacy and egress, group When you are away, and find "
+                + "Away after (minutes) (5 by default). Set it to 1, then touch nothing on the keyboard, mouse, "
+                + "controllers or headset panel for a minute while Elite sits docked: the log says \"No activity "
+                + "from the Commander for 1 minutes: paid calls stopped\". Press a key: the log says \"Paid calls "
+                + "allowed again\". A key D47 presses in Elite does not count. Set it to 0 and the log never says "
+                + "paid calls stopped. The model cannot change the row.",
+            Label = "Away after (minutes)",
+            Help = "How long with no keyboard or mouse input, controller press, press on the headset panel, or journal "
+                   + "event only you cause, such as a jump, docking or a trade, before D47 counts you as away. 0 is "
+                   + "never away.",
+            Kind = SettingKind.Number,
+            Minimum = 0,
+            Maximum = PresenceSettings.MostAwayMinutes,
+            DefaultDisplay = "5",
+            DocsAnchor = "away-minutes",
+
+            // Protected: what text the model read must not decide whether D47 thinks the Commander is there.
+            Protected = true,
+            Binding = new SettingBinding
+            {
+                Read = s => s.Presence.AwayMinutes.ToString(CultureInfo.InvariantCulture),
+                Write = (s, v) => s with
+                {
+                    Presence = s.Presence with
+                    {
+                        AwayMinutes = int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minutes)
+                            ? Math.Clamp(minutes, 0, PresenceSettings.MostAwayMinutes)
+                            : new PresenceSettings().AwayMinutes,
+                    },
+                },
             },
         });
 

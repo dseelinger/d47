@@ -149,6 +149,7 @@ public partial class App(AppHost? host) : Application
                 storyPlayback: () => host.NewStoryPlayback(headset: true),
                 controllerButtons: host.ControllerButtons);
 
+            host.Vr.PanelPressed += host.Presence.PanelPressed;
             host.Speech.Spend.Recorded += host.Vr.RefreshSessionSpend;
             host.Transcription.Recorded += host.Vr.RefreshSessionSpend;
 

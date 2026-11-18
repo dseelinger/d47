@@ -897,6 +897,10 @@ public static class SettingsLayout
                                 E("privacy.webAppSignIn"),
                             ]),
                         G(
+                            "When you are away",
+                            "How long with nothing from you before D47 counts you as away.",
+                            [E("presence.awayMinutes")]),
+                        G(
                             "What leaves this machine",
                             "Read-only, and computed from the settings as they stand right now.",
                             [F(IsEgressFamily)]),

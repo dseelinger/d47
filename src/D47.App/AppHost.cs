@@ -116,6 +116,7 @@ public sealed class AppHost : IDisposable
         Router = router;
         Cancellation = cancellation;
         _logger = loggerFactory.CreateLogger<AppHost>();
+        Presence = new CommanderPresence(NativeInput.LastInput, () => NativeInput.LastSent, loggerFactory.CreateLogger<CommanderPresence>());
         AddressedVoices = new AddressedVoices(settings, speech, voice, gameState, () => SpeakerPictures, () => Stories, () => Writer!);
         Writer = new LineWriter(
             settings,
@@ -373,6 +374,12 @@ public sealed class AppHost : IDisposable
     public PanelRouting PanelRouting { get; }
 
     public Headset.VrHost? Vr { get; set; }
+
+    /// <summary>Whether the Commander is at the controls, worked out on the tick.</summary>
+    public CommanderPresence Presence { get; }
+
+    /// <summary>Whether paid calls stop because the Commander has been away for the away minutes; read from any thread.</summary>
+    public bool PaidCallsStopped => Presence.PaidCallsStopped;
 
     /// <summary>The flat mini panel over the game, once Avalonia has come up (Phase 48).</summary>
     public Windowing.OverlayPanel? Overlay { get; set; }
@@ -4012,6 +4019,10 @@ public sealed class AppHost : IDisposable
             // Where the hands-free gate opens and closes.
             services.Gate.Poll(context.Now);
         });
+
+        // After "journal", for this tick's events.
+        tick.Add("presence", context => host.Presence.Tick(
+            context.Now, feed.Arrived, services.SampledControllers.Poll(), settings.Current.Presence.AwayMinutes));
 
         // Windows moves its own default endpoint silently; nothing else notices while d47 holds a device
         // open, so this asks (#67).
