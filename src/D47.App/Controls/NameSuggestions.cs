@@ -39,16 +39,33 @@ public sealed class NameTiles
     private readonly Func<string, Task> _typed;
     private readonly Action<int> _choose;
 
-    internal NameTiles(Func<string, Task> typed, Action cancel, Action<int> choose, Action<Action<IReadOnlyList<string>>> onAnswered)
+    internal NameTiles(Func<string, Task> typed, Action cancel, Action<int> choose, Action<NameTiles> wire)
     {
         _typed = typed;
         _cancel = cancel;
         _choose = choose;
-        onAnswered(names => Answered?.Invoke(names));
+        wire(this);
     }
 
-    /// <summary>Raised with the names for the latest text, or with none.</summary>
+    /// <summary>Raised when a lookup starts for the latest text.</summary>
+    public event Action? Asking;
+
+    /// <summary>Raised with the names for the latest text, empty when nothing matches.</summary>
     public event Action<IReadOnlyList<string>>? Answered;
+
+    /// <summary>Raised in place of <see cref="Answered"/> when the lookup fails.</summary>
+    public event Action? Failed;
+
+    /// <summary>Raised when the text is too short or suggestions are off.</summary>
+    public event Action? Cleared;
+
+    internal void RaiseAsking() => Asking?.Invoke();
+
+    internal void RaiseAnswered(IReadOnlyList<string> names) => Answered?.Invoke(names);
+
+    internal void RaiseFailed() => Failed?.Invoke();
+
+    internal void RaiseCleared() => Cleared?.Invoke();
 
     public Task Typed(string typed) => _typed(typed);
 

@@ -54,7 +54,10 @@ public sealed class TheHeadsetKeyboardSuggestsSystemNamesTests
         }
     }
 
-    private static Board Open(bool suggest = true, bool enabled = true)
+    private static Board Open(
+        bool suggest = true,
+        bool enabled = true,
+        Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? lookup = null)
     {
         var asked = new List<string>();
         var picked = new List<string>();
@@ -65,7 +68,7 @@ public sealed class TheHeadsetKeyboardSuggestsSystemNamesTests
         {
             _ = new SystemNameSuggestions<SystemNameMatch>(
                 box,
-                (typed, _) =>
+                lookup ?? ((typed, _) =>
                 {
                     lock (asked)
                     {
@@ -76,7 +79,7 @@ public sealed class TheHeadsetKeyboardSuggestsSystemNamesTests
                         [.. Names
                             .Where(n => n.StartsWith(typed, StringComparison.OrdinalIgnoreCase))
                             .Select(n => new SystemNameMatch(n, n.Length, new StarPosition(0, 0, 0)))]);
-                },
+                }),
                 match => match.Name,
                 () => on[0],
                 match =>
@@ -195,5 +198,144 @@ public sealed class TheHeadsetKeyboardSuggestsSystemNamesTests
 
         Assert.Empty(board.Tiles);
         Assert.Empty(board.Asked);
+    }
+
+    private static Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>> Gated(
+        TaskCompletionSource<IReadOnlyList<SystemNameMatch>> gate) => (_, _) => gate.Task;
+
+    // The surface's window is never shown, so IsEffectivelyVisible is false everywhere; walk IsVisible below it instead.
+    private static bool IsShown(Visual visual) =>
+        visual.GetSelfAndVisualAncestors().OfType<Control>().TakeWhile(c => c is not Window).All(c => c.IsVisible);
+
+    private static bool Shows(Board board, string text) =>
+        board.Surface.View.GetVisualDescendants().OfType<TextBlock>().Any(t => IsShown(t) && t.Text == text);
+
+    private static bool MarkShown(Board board) =>
+        board.Surface.View.GetVisualDescendants().OfType<WaitingState>().Any(m => IsShown(m));
+
+    [AvaloniaFact]
+    public void ATooShortTextShowsNoStrip()
+    {
+        var board = Open(lookup: Gated(new()));
+
+        Spell(board, "di");
+
+        Assert.False(MarkShown(board));
+        Assert.False(Shows(board, "Retrieving results…"));
+    }
+
+    [AvaloniaFact]
+    public void TheThirdCharacterShowsTheWaitMarkWithRetrievingResults()
+    {
+        var board = Open(lookup: Gated(new()));
+
+        Spell(board, "dia");
+
+        Assert.True(MarkShown(board));
+        Assert.True(Shows(board, "Retrieving results…"));
+        Assert.Empty(board.Tiles);
+    }
+
+    [AvaloniaFact]
+    public void TheWaitMarkStepsOnTheDrawnKeyboardsTick()
+    {
+        var board = Open(lookup: Gated(new()));
+
+        Spell(board, "dia");
+
+        var moved = false;
+
+        for (var beat = 0; beat < WaitingState.BeatsPerStep * 2 && !moved; beat++)
+        {
+            moved = board.Surface.TickWaiting();
+        }
+
+        Assert.True(moved, "the mark did not step on the keyboard's tick");
+    }
+
+    [AvaloniaFact]
+    public void AStepOfTheWaitMarkMarksTheHeadsetPanelSurfaceDirty()
+    {
+        var (settings, _, _) = TestSurface.Create();
+        var surface = new D47.App.Headset.VrPanelSurface(new PanelViewModel(), settings, _ => null);
+        var box = new TextBox();
+
+        _ = new SystemNameSuggestions<SystemNameMatch>(
+            box, Gated(new()), match => match.Name, () => true, _ => { }, TimeSpan.Zero);
+
+        surface.Board.Type(box);
+
+        foreach (var key in "dia")
+        {
+            surface.Board.View.GetVisualDescendants().OfType<Button>().First(b => Equals(b.Content, key.ToString()))
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        }
+
+        Dispatcher.UIThread.RunJobs();
+
+        var (width, height) = surface.Size;
+        var buffer = System.Runtime.InteropServices.Marshal.AllocHGlobal(width * height * 4);
+
+        try
+        {
+            surface.Draw(buffer, width * 4);
+            Assert.False(surface.IsDirty);
+
+            for (var beat = 0; beat < WaitingState.BeatsPerStep * 2 && !surface.IsDirty; beat++)
+            {
+                surface.TickWaiting();
+            }
+
+            Assert.True(surface.IsDirty, "a step of the mark left the surface clean");
+        }
+        finally
+        {
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(buffer);
+        }
+    }
+
+    [AvaloniaFact]
+    public void NamesReplaceTheWaitMarkWithTiles()
+    {
+        var gate = new TaskCompletionSource<IReadOnlyList<SystemNameMatch>>();
+        var board = Open(lookup: Gated(gate));
+
+        Spell(board, "dia");
+        gate.SetResult([new SystemNameMatch("Dian", 4, new StarPosition(0, 0, 0))]);
+        board.Settle(() => board.Tiles.Length > 0);
+
+        Assert.Equal(["Dian"], board.Tiles);
+        Assert.False(MarkShown(board));
+    }
+
+    [AvaloniaFact]
+    public void AnEmptyAnswerShowsNothingMatchesUntilTheTextChanges()
+    {
+        var board = Open(lookup: (_, _) => Task.FromResult<IReadOnlyList<SystemNameMatch>>([]));
+
+        Spell(board, "zzz");
+        board.Settle(() => Shows(board, "Nothing matches."));
+
+        Assert.Empty(board.Tiles);
+
+        board.Press("delete");
+        board.Press("delete");
+        board.Settle(() => !Shows(board, "Nothing matches."));
+    }
+
+    [AvaloniaFact]
+    public void AFailedLookupShowsTheInlineNoticeUntilTheTextChanges()
+    {
+        var board = Open(lookup: (_, _) => Task.FromException<IReadOnlyList<SystemNameMatch>>(new InvalidOperationException()));
+
+        Spell(board, "dia");
+        board.Settle(() => Shows(board, "Could not retrieve results."));
+
+        Assert.Contains(board.Surface.View.GetVisualDescendants().OfType<Notice>(), n => IsShown(n));
+        Assert.Empty(board.Tiles);
+
+        board.Press("delete");
+        board.Press("delete");
+        board.Settle(() => !Shows(board, "Could not retrieve results."));
     }
 }

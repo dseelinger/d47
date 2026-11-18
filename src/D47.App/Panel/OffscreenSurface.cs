@@ -31,6 +31,8 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
     /// <summary>Where a chooser is drawn, over the view and inside the same visual tree.</summary>
     private readonly Avalonia.Controls.Panel _over = new() { IsVisible = false };
 
+    private readonly Controls.WaitTicker _overWaits;
+
     private RenderTargetBitmap? _target;
     private PixelSize _size;
 
@@ -44,6 +46,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
         _surface = new Avalonia.Controls.Panel();
         _surface.Children.Add(view);
         _surface.Children.Add(_over);
+        _overWaits = new Controls.WaitTicker(_over);
 
         _root = new Window
         {
@@ -56,6 +59,9 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
     /// <summary>Whether something is being chosen from right now.</summary>
     public bool IsChoosing => _over.IsVisible;
+
+    /// <summary>One beat of the wait mark in the drawn keyboard; true when it moved.</summary>
+    public bool TickWaiting() => _overWaits.Tick();
 
     /// <summary>Changes the pixel size the view is laid out at.</summary>
     public void Resize(PixelSize size)
@@ -338,9 +344,40 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
 
         if (suggester is not null)
         {
-            suggester.Answered += names =>
+            void Strip(Control? status)
             {
                 tiles.Children.Clear();
+
+                if (status is not null)
+                {
+                    status.VerticalAlignment = VerticalAlignment.Center;
+                    status.Margin = new Thickness(0, 0, 0, Theming.Gaps.Tile);
+                    tiles.Children.Add(status);
+                }
+
+                tiles.IsVisible = tiles.Children.Count > 0;
+            }
+
+            suggester.Cleared += () => Strip(null);
+            suggester.Asking += () => Strip(new Controls.WaitingState(Controls.WaitForm.Line, Controls.SystemNameSuggestions<string>.Retrieving));
+            suggester.Failed += () => Strip(new Controls.Notice(inline: true) { Text = Controls.SystemNameSuggestions<string>.CouldNotRetrieve });
+
+            suggester.Answered += names =>
+            {
+                if (names.Count == 0)
+                {
+                    var none = new TextBlock
+                    {
+                        Text = Controls.SystemNameSuggestions<string>.NothingMatches,
+                        FontSize = Theming.TypeScale.Body,
+                    };
+
+                    Painted(none, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
+                    Strip(none);
+                    return;
+                }
+
+                Strip(null);
 
                 for (var i = 0; i < names.Count; i++)
                 {
@@ -361,7 +398,7 @@ public sealed class OffscreenSurface : IDisposable, IHearsText
                     tiles.Children.Add(tile);
                 }
 
-                tiles.IsVisible = tiles.Children.Count > 0;
+                tiles.IsVisible = true;
             };
         }
 

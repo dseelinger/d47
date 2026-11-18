@@ -145,21 +145,31 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
         var suggester = NewSuggester();
         IReadOnlyList<T> last = [];
 
-        void Offer(IReadOnlyList<T> matches, Action<IReadOnlyList<string>> raise)
-        {
-            last = [.. matches.Take(NameSuggestions.Most)];
-            raise([.. last.Select(_nameOf)]);
-        }
-
         return new NameTiles(
             suggester.Typed,
             suggester.Cancel,
             index => Choose(last[index]),
-            raise =>
+            tiles =>
             {
-                suggester.Answered += matches => Offer(matches, raise);
-                suggester.Failed += () => Offer([], raise);
-                suggester.Cleared += () => Offer([], raise);
+                suggester.Asking += tiles.RaiseAsking;
+
+                suggester.Answered += matches =>
+                {
+                    last = [.. matches.Take(NameSuggestions.Most)];
+                    tiles.RaiseAnswered([.. last.Select(_nameOf)]);
+                };
+
+                suggester.Failed += () =>
+                {
+                    last = [];
+                    tiles.RaiseFailed();
+                };
+
+                suggester.Cleared += () =>
+                {
+                    last = [];
+                    tiles.RaiseCleared();
+                };
             });
     }
 

@@ -356,7 +356,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     }
 
     /// <summary>One beat of the wait marks on the panel and in its dialogs.</summary>
-    public void TickWaiting() => _dirty |= _view.TickWaiting() | _modalWaits.Tick();
+    public void TickWaiting() => _dirty |= _view.TickWaiting() | _modalWaits.Tick() | _offscreen.TickWaiting();
 
     /// <summary>One frame of the d47 is composing animation (asked for 2026-08-22).</summary>
     public void TickAdventures() => _dirty |= _view.TickAdventures();
