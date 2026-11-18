@@ -124,7 +124,7 @@ public static class KokoroAssets
         10_596_227,
         "10929ae8e27bac10853c88ce39867349be0793ae53e4514e7003626e45bde3e5");
 
-    /// <summary>The English voices, which is all of them d47 offers.</summary>
+    /// <summary>The English voices, which every voice row and the base download offer.</summary>
     public static readonly IReadOnlyList<KokoroAsset> Voices =
     [
         new("voices/af_alloy.bin", ModelRepository, 522240, "c4a6b876047fd7fb472edf4ebd63cfac7c3b958a7cae7c106e8f038ca6308c45"),
@@ -160,6 +160,28 @@ public static class KokoroAssets
     /// <summary>Just the ids, which is what a voice picker and a settings file deal in.</summary>
     public static IReadOnlyList<string> VoiceIds { get; } =
         [.. Voices.Select(voice => System.IO.Path.GetFileNameWithoutExtension(voice.Path))];
+
+    /// <summary>The Japanese voices, offered only for a story character who speaks Japanese and fetched when one is first needed.</summary>
+    public static readonly IReadOnlyList<KokoroAsset> JapaneseVoices =
+    [
+        new("voices/jf_alpha.bin", ModelRepository, 522240, "56b479360aad9f367aeb8cef908f9201cf48b4555e488c5f4590c9dfcd978bb6"),
+        new("voices/jf_gongitsune.bin", ModelRepository, 522240, "0f1181f3772d27b7c12aaf4bcd71e31b186c4146e330d074a3dc64ee392af396"),
+        new("voices/jf_nezumi.bin", ModelRepository, 522240, "13cb71eebb0b48739d444558322aa35a8c9a489b80e1e631f14d2e6aea93026b"),
+        new("voices/jf_tebukuro.bin", ModelRepository, 522240, "29c6c0561b4288d59639677bebe7533c919743d5ea68d0d2ae992644beea6696"),
+        new("voices/jm_kumo.bin", ModelRepository, 522240, "09e959d239724c734d65661f06f14cdabcddfd476bfaaad905a937099ae9e64f"),
+    ];
+
+    public static IReadOnlyList<string> JapaneseVoiceIds { get; } =
+        [.. JapaneseVoices.Select(voice => System.IO.Path.GetFileNameWithoutExtension(voice.Path))];
+
+    /// <summary>The Japanese voice by this id, or null.</summary>
+    public static KokoroAsset? JapaneseVoice(string? voiceId) =>
+        JapaneseVoices.FirstOrDefault(voice =>
+            string.Equals(System.IO.Path.GetFileNameWithoutExtension(voice.Path), voiceId, StringComparison.Ordinal));
+
+    /// <summary>The language a voice speaks, from the first letter of its id: <c>j</c> is Japanese, <c>a</c> and <c>b</c> English.</summary>
+    public static string? LanguageOf(string? voiceId) =>
+        voiceId is { Length: > 0 } && voiceId[0] == 'j' ? Audio.SpokenLanguage.Japanese : Audio.SpokenLanguage.English;
 
     /// <summary>What a voice is called.</summary>
     public static string Name(string voiceId) =>

@@ -330,3 +330,12 @@ Ported code
     src/D47.Tts/EdgeSecurityToken.cs   Ported from rany2/edge-tts, src/edge_tts/drm.py
                                        (the v2 Sec-MS-GEC token). That file is licensed
                                        LGPL-3.0.
+
+    src/D47.Tts/JapanesePhonemiser.cs  Ported from hexgrad/misaki, misaki/cutlet.py at commit
+                                       fba1236595f2d2bf21d414ba6e57d25256afada3
+                                       (https://github.com/hexgrad/misaki/blob/fba1236595f2d2bf21d414ba6e57d25256afada3/misaki/cutlet.py):
+                                       the HEPBURN kana table and the rules of
+                                       Cutlet._get_single_mapping and _romaji_tokens.
+                                       misaki is licensed Apache-2.0. That file is itself
+                                       adapted from polm/cutlet, licensed MIT, Copyright (c)
+                                       2020 Paul O'Leary McCann.

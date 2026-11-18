@@ -28,6 +28,7 @@ public sealed class SpeechClients : IDisposable
     private readonly OwnVoice _ownVoice;
     private readonly CustomVoices _customVoices;
     private readonly IFileSystem _files;
+    private readonly KokoroJapaneseFetch _kokoroJapanese;
 
     internal SpeechClients(
         SettingsService settings,
@@ -52,6 +53,7 @@ public sealed class SpeechClients : IDisposable
         _audio = audio;
         _ownVoice = ownVoice;
         _customVoices = customVoices;
+        _kokoroJapanese = new KokoroJapaneseFetch(files, KokoroFolder(), JapaneseDictionaryFolder(), loggers);
         NameAccents = new NameAccents(files, paths.NameAccentsFile, _logger, paths.GivenNameSexesFile, FirstNames.Shipped);
 
         D47.Core.Speech.LocalVoiceStandIn.Installed = id => string.Equals(id, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
@@ -140,6 +142,21 @@ public sealed class SpeechClients : IDisposable
 
     /// <summary>The folder holding the local voice's model files.</summary>
     internal string KokoroFolder() => Path.Combine(_paths.Data, "models", "kokoro");
+
+    /// <summary>The folder holding the dictionary Kokoro reads Japanese with.</summary>
+    private string JapaneseDictionaryFolder() => Path.Combine(_paths.Data, "models", "ipadic");
+
+    /// <summary>Starts fetching a Kokoro Japanese voice and the dictionary, where either is missing, even after a failed fetch. Never waits.</summary>
+    internal void FetchJapaneseVoice(string voiceId) => _kokoroJapanese.Start(voiceId, retry: true);
+
+    private KokoroTtsProvider Kokoro() =>
+        new(
+            _files,
+            KokoroFolder(),
+            _loggers.CreateLogger<KokoroTtsProvider>(),
+            _paths.PronunciationsFile,
+            JapaneseDictionaryFolder(),
+            voiceId => _kokoroJapanese.Start(voiceId));
 
     /// <summary>Whether the local voice is here, and what it would cost if not.</summary>
     internal string LocalVoiceState() =>
@@ -447,13 +464,7 @@ public sealed class SpeechClients : IDisposable
     private async Task<string?> SpeakLocalVoiceProofAsync(CancellationToken cancellationToken)
     {
         var shared = ClientFor(TtsProviderCatalog.KokoroId);
-        var own = shared is null
-            ? new KokoroTtsProvider(
-                _files,
-                KokoroFolder(),
-                _loggers.CreateLogger<KokoroTtsProvider>(),
-                _paths.PronunciationsFile)
-            : null;
+        var own = shared is null ? Kokoro() : null;
 
         try
         {
@@ -516,11 +527,7 @@ public sealed class SpeechClients : IDisposable
 
         // The local voice (Phase 59).
         TtsProviderCatalog.KokoroId => WithEdgeStandIn(
-            new KokoroTtsProvider(
-                _files,
-                KokoroFolder(),
-                _loggers.CreateLogger<KokoroTtsProvider>(),
-                _paths.PronunciationsFile),
+            Kokoro(),
             () => D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())),
 
         TtsProviderCatalog.ChatterboxId => WithEdgeStandIn(
@@ -851,9 +858,14 @@ public sealed class SpeechClients : IDisposable
     /// <summary>Forgets why <paramref name="key"/>'s chosen voice last failed.</summary>
     internal void ForgetCastVoiceFailure(string key) => _castVoiceFailures.TryRemove(key, out _);
 
-    /// <summary>The voices <paramref name="providerId"/> lists, for a story character's voice picker.</summary>
-    internal async Task<VoiceCatalogue> CastVoicesAsync(string providerId, CancellationToken cancellationToken)
+    /// <summary>The voices <paramref name="providerId"/> lists, for a story character's voice picker; Kokoro's for <paramref name="language"/>.</summary>
+    internal async Task<VoiceCatalogue> CastVoicesAsync(string providerId, string? language, CancellationToken cancellationToken)
     {
+        if (string.Equals(providerId, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase) && !SpokenLanguage.IsEnglish(language))
+        {
+            return KokoroTtsProvider.Catalogue(D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder()), language);
+        }
+
         if (VoicesOf(providerId) is { Count: > 0 } held)
         {
             return held;
@@ -1083,5 +1095,7 @@ public sealed class SpeechClients : IDisposable
         {
             (client as IDisposable)?.Dispose();
         }
+
+        _kokoroJapanese.Dispose();
     }
 }

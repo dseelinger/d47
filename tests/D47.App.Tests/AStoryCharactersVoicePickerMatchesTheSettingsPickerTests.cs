@@ -41,7 +41,7 @@ public sealed class AStoryCharactersVoicePickerMatchesTheSettingsPickerTests
         var surface = new CastVoiceSurface(
             _ => member,
             (_, _, _, _) => { },
-            (_, _) => Task.FromResult(Listed),
+            (_, _, _) => Task.FromResult(Listed),
             (_, _) => { },
             _ => null,
             () => D47Settings.Defaults,

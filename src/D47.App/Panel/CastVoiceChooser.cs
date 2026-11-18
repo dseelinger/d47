@@ -9,12 +9,13 @@ namespace D47.App.Panel;
 
 /// <summary>
 /// What the panel may read and do about a story character's voice. Panel controls only; no tool reaches it.
+/// <see cref="Voices"/> lists a provider's voices for a member's language, null for English.
 /// <see cref="PairStory"/> pairs a story's unpinned cast on the ship's provider by story id, true when a pairing was written.
 /// </summary>
 public sealed record CastVoiceSurface(
     Func<string, StoryCastMember?> Member,
     Action<string, string?, string?, string?> Choose,
-    Func<string, CancellationToken, Task<VoiceCatalogue>> Voices,
+    Func<string, string?, CancellationToken, Task<VoiceCatalogue>> Voices,
     Action<StorySpeakerShown, PinnedVoice> PlaySample,
     Func<string, string?> Failure,
     Func<D47Settings>? Settings = null,
@@ -99,7 +100,7 @@ public static class CastVoiceChooser
 
         try
         {
-            listed = await Task.Run(() => surface.Voices(providerId, CancellationToken.None)).ConfigureAwait(true);
+            listed = await Task.Run(() => surface.Voices(providerId, member.Language, CancellationToken.None)).ConfigureAwait(true);
         }
         catch (Exception ex) when (ex is TtsException or HttpRequestException or IOException)
         {

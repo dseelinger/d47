@@ -22,6 +22,10 @@ internal sealed class LocalVoiceWithEdgeStandIn(
 
     private ITtsProvider Speaker => installed() ? local : edge;
 
+    /// <summary>Whether the local provider takes this line: once installed, and always for a voice that speaks no English, which Edge's stand-in voice cannot replace.</summary>
+    private bool LocalSpeaks(VoiceSelection voice) =>
+        installed() || !TtsProviderCatalog.Selected(local.Id).SpeaksIn(null, voice.VoiceId);
+
     private VoiceSelection Voice(VoiceSelection voice) =>
         installed() ? voice : voice with { VoiceId = LocalVoiceStandIn.EdgeVoice, Rate = edgeRate() };
 
@@ -32,7 +36,7 @@ internal sealed class LocalVoiceWithEdgeStandIn(
         string text,
         VoiceSelection voice,
         CancellationToken cancellationToken = default) =>
-        installed()
+        LocalSpeaks(voice)
             ? local.SynthesizeAsync(text, voice, cancellationToken)
             : edge.SynthesizeAsync(text, Voice(voice), cancellationToken);
 
@@ -40,7 +44,7 @@ internal sealed class LocalVoiceWithEdgeStandIn(
         string text,
         VoiceSelection voice,
         CancellationToken cancellationToken = default) =>
-        installed()
+        LocalSpeaks(voice)
             ? local.StreamAsync(text, voice, cancellationToken)
             : edge.StreamAsync(text, Voice(voice), cancellationToken);
 

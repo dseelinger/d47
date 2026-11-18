@@ -68,7 +68,7 @@ public sealed class AnyCastMembersVoiceCanBeChangedFromItsMessageTests
                     choices[key] = new StoryVoiceChoice(provider, voice) { VoiceName = name };
                 }
             },
-            (_, _) => Task.FromResult(VoiceCatalogue.Silent),
+            (_, _, _) => Task.FromResult(VoiceCatalogue.Silent),
             (_, _) => { },
             _ => null);
 

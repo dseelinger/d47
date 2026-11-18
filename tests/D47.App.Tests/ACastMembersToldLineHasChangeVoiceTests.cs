@@ -23,7 +23,7 @@ public class ACastMembersToldLineHasChangeVoiceTests
             ? new StoryCastMember("story", "Story", new StorySpeakerShown("juno", "Juno", "kokoro", "af_river", key), new PinnedVoice("kokoro", "af_river"), new PinnedVoice("kokoro", "af_river"))
             : null,
         (_, _, _, _) => { },
-        (_, _) => Task.FromResult(VoiceCatalogue.Silent),
+        (_, _, _) => Task.FromResult(VoiceCatalogue.Silent),
         (_, _) => { },
         _ => null);
 

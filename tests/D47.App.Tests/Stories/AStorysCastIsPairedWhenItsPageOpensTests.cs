@@ -59,7 +59,7 @@ public sealed class AStorysCastIsPairedWhenItsPageOpensTests
         var voices = new CastVoiceSurface(
             director.CastMember,
             (_, _, _, _) => { },
-            (_, _) => Task.FromResult(VoiceCatalogue.Silent),
+            (_, _, _) => Task.FromResult(VoiceCatalogue.Silent),
             (_, _) => { },
             _ => null,
             PairStory: (id, _) =>

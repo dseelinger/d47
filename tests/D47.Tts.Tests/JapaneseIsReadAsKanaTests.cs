@@ -49,6 +49,12 @@ public sealed class JapaneseIsReadAsKanaTests : IDisposable
         }
     }
 
+    [Theory]
+    [InlineData("今日は良い天気ですね。", "kʲoː βa joi teŋkʲi desɨ ne.")]
+    [InlineData("宇宙船が到着しました！", "ɯʨɨɯseɴ ɡa toːʨakɯ ɕi maɕi ta!")]
+    public void ALineReadWithTheDictionaryBecomesKokoroPhonemes(string line, string phonemes) =>
+        Assert.Equal(phonemes, new JapanesePhonemiser().ToPhonemes(_reader.Read(JapanesePhonemiser.Normalise(line))));
+
     public void Dispose() => _reader.Dispose();
 
     private void Reads(string line, params (string Surface, string? Pronunciation)[] expected)

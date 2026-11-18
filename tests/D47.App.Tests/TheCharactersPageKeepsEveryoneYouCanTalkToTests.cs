@@ -390,7 +390,7 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
                 keys.Add(key);
                 now = Member(new PinnedVoice("edge", "voice"), null);
             },
-            (_, _) => Task.FromResult(D47.Core.Audio.VoiceCatalogue.Of([])),
+            (_, _, _) => Task.FromResult(D47.Core.Audio.VoiceCatalogue.Of([])),
             (_, _) => { },
             _ => null);
 

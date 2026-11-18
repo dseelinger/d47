@@ -77,24 +77,34 @@ public sealed record TtsProviderInfo
     /// <summary>The primary language subtags this provider speaks; not read where <see cref="LanguageFollowsVoice"/>.</summary>
     public IReadOnlyList<string> Languages { get; init; } = [SpokenLanguage.English];
 
-    /// <summary>Whether each voice speaks the language of the locale its id starts with, and no other.</summary>
-    public bool LanguageFollowsVoice { get; init; }
+    /// <summary>The language one voice speaks, from its id, null meaning English; null where every voice speaks <see cref="Languages"/>.</summary>
+    public Func<string?, string?>? LanguageOfVoice { get; init; }
+
+    /// <summary>The primary language subtags this provider's voices speak between them, where <see cref="LanguageFollowsVoice"/>; null for any.</summary>
+    public IReadOnlyList<string>? VoiceLanguages { get; init; }
+
+    /// <summary>Whether each voice speaks one language, read from its id, and no other.</summary>
+    public bool LanguageFollowsVoice => LanguageOfVoice is not null;
 
     /// <summary>Whether a line in <paramref name="language"/>, null for English, can be spoken in <paramref name="voiceId"/>.</summary>
     public bool SpeaksIn(string? language, string? voiceId)
     {
         var wanted = SpokenLanguage.Primary(language ?? SpokenLanguage.English);
 
-        return LanguageFollowsVoice
+        return LanguageOfVoice is { } languageOf
             ? string.Equals(
-                SpokenLanguage.Primary(SpokenLanguage.LocaleOfVoiceId(voiceId) ?? SpokenLanguage.English),
+                SpokenLanguage.Primary(languageOf(voiceId) ?? SpokenLanguage.English),
                 wanted,
                 StringComparison.OrdinalIgnoreCase)
             : Languages.Contains(wanted, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>Whether any voice of this provider can speak <paramref name="language"/>, null for English.</summary>
-    public bool CanSpeak(string? language) => LanguageFollowsVoice || SpeaksIn(language, null);
+    public bool CanSpeak(string? language) =>
+        LanguageFollowsVoice
+            ? VoiceLanguages is not { } spoken
+              || spoken.Contains(SpokenLanguage.Primary(language ?? SpokenLanguage.English), StringComparer.OrdinalIgnoreCase)
+            : SpeaksIn(language, null);
 
     public bool NeedsKey => KeySecretName is not null;
 
@@ -144,7 +154,7 @@ public static class TtsProviderCatalog
         Label = "Edge Neural",
         Summary = "Microsoft's online voices. No account needed.",
         Destination = "speech.platform.bing.com",
-        LanguageFollowsVoice = true,
+        LanguageOfVoice = SpokenLanguage.LocaleOfVoiceId,
         Egress = "The text of every line D47 speaks is sent to Microsoft's Edge Read Aloud service to "
                  + "be turned into audio. That includes re-voiced in-game messages when you have "
                  + "turned those on, which are written by other players. No game state, no journal "
@@ -285,6 +295,10 @@ public static class TtsProviderCatalog
         // rather than copied. The rule exists because a provider that cannot be told a language FOLLOWS
         // the text's language, so a French message would be read as French in a voice chosen for English.
         LanguageCanBePinned = true,
+
+        // English in every voice but the five Japanese ones, which a story character may be given.
+        LanguageOfVoice = Speech.KokoroAssets.LanguageOf,
+        VoiceLanguages = [SpokenLanguage.English, SpokenLanguage.Japanese],
 
         // The model takes a speed input and the spike measured it moving the audio, unlike Cartesia's.
         RateCanBeSet = true,

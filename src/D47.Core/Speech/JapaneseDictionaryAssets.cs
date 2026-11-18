@@ -32,8 +32,6 @@ public static class JapaneseDictionaryAssets
         All.All(asset => fileSystem.Stat(Destination(folder, asset)) is { } file
                          && file.Length == asset.Bytes);
 
-    public static double TotalMegabytes => All.Sum(asset => asset.Bytes) / 1024.0 / 1024.0;
-
     private static KokoroAsset Asset(string file, long bytes, string sha256) =>
         new(file, Repository, bytes, sha256) { Url = Source + file };
 }

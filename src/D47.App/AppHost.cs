@@ -5711,6 +5711,12 @@ public sealed class AppHost : IDisposable
         {
             StoryVoices = new Dictionary<string, StoryVoiceChoice>(current.StoryVoices, StringComparer.Ordinal) { [key] = choice },
         });
+
+        if (string.Equals(providerId, D47.Core.Audio.TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
+            && D47.Core.Speech.KokoroAssets.JapaneseVoice(voiceId) is not null)
+        {
+            Speech.FetchJapaneseVoice(voiceId);
+        }
     }
 
     private D47.Core.Characters.CharacterStore? _characters;
@@ -5781,18 +5787,30 @@ public sealed class AppHost : IDisposable
     /// <summary>The line a story character's Play sample speaks after its name.</summary>
     internal const string CastSampleSentence = "This is the voice you will hear me speak in.";
 
-    /// <summary>Speaks the character's name and <see cref="CastSampleSentence"/> in <paramref name="voice"/>, with their picture, on the pool.</summary>
+    /// <summary><see cref="CastSampleSentence"/> in Japanese, for a voice that speaks Japanese and no English.</summary>
+    internal const string CastSampleSentenceJapanese = "これが、私の話す声です。";
+
+    /// <summary>
+    /// Speaks the character's name and <see cref="CastSampleSentence"/> in <paramref name="voice"/>, with their picture, on the pool;
+    /// in Japanese, captioned in English, for a voice that speaks no English.
+    /// </summary>
     internal void PlayCastSample(D47.Core.Stories.StorySpeakerShown shown, D47.Core.Stories.PinnedVoice voice) =>
         _ = Task.Run(async () =>
         {
             try
             {
-                await Voice.AnnounceAsync(new Announcement("story-cast-sample", $"{shown.Name}. {CastSampleSentence}")
+                var provider = D47.Core.Audio.TtsProviderCatalog.Selected(voice.ProviderId);
+                var english = $"{shown.Name}. {CastSampleSentence}";
+                var japanese = !provider.SpeaksIn(null, voice.VoiceId) && provider.SpeaksIn(D47.Core.Audio.SpokenLanguage.Japanese, voice.VoiceId);
+
+                await Voice.AnnounceAsync(new Announcement("story-cast-sample", japanese ? $"{shown.Name}。{CastSampleSentenceJapanese}" : english)
                 {
                     Voice = VoiceRole.Crew,
                     Speaker = shown.Name,
                     Pinned = voice,
                     Picture = SpeakerPictures.For(shown),
+                    Language = japanese ? D47.Core.Audio.SpokenLanguage.Japanese : null,
+                    Translation = japanese ? english : null,
                 }).ConfigureAwait(false);
             }
             catch (Exception ex)

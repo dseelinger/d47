@@ -20,14 +20,25 @@ public class EachProviderSaysWhichLanguagesItSpeaksTests
 
     [Theory]
     [InlineData(TtsProviderCatalog.KokoroId, "af_heart")]
+    [InlineData(TtsProviderCatalog.KokoroId, "bm_george")]
     [InlineData(TtsProviderCatalog.ChatterboxId, "0001")]
-    public void ALocalProviderSpeaksEnglishOnly(string id, string voice)
+    public void ALocalProvidersEnglishVoiceSpeaksEnglishOnly(string id, string voice)
     {
         var provider = TtsProviderCatalog.Selected(id);
 
         Assert.True(provider.SpeaksIn(null, voice));
         Assert.True(provider.SpeaksIn("en", voice));
         Assert.False(provider.SpeaksIn("ja", voice));
+    }
+
+    [Theory]
+    [InlineData("jf_alpha", "ja")]
+    [InlineData("jm_kumo", "ja")]
+    [InlineData("af_heart", "en")]
+    [InlineData("bf_emma", "en")]
+    public void AKokoroVoiceSpeaksTheLanguageItsFirstLetterNames(string voice, string language)
+    {
+        Assert.Equal(language, D47.Core.Speech.KokoroAssets.LanguageOf(voice));
     }
 
     [Theory]

@@ -228,11 +228,17 @@ your drive. A download that fails or is interrupted **leaves the build you were 
 working**, and the row goes back to naming it — the setting is written only once the new file has
 landed and been checked against its own pinned checksum.
 
-**It speaks English and only English**, and that is worth understanding rather than working out.
-Every other provider is told which language a line is in; Kokoro is not told, because it has only
-one. A message in French will be read out by an English speaker rather than in French. For the
-slots that carry other people's words that is a fair trade and it is the point: the alternative is
-that those words leave your computer.
+**It speaks English in every slot**, and that is worth understanding rather than working out.
+Every other provider is told which language a line is in; Kokoro is not told, because each of its
+voices speaks one language. A message in French will be read out by an English speaker rather than
+in French. For the slots that carry other people's words that is a fair trade and it is the point:
+the alternative is that those words leave your computer.
+
+**A story character who speaks Japanese can be given one of its five Japanese voices** in
+**Change voice**, and Kokoro then speaks that character's lines in Japanese on this PC. The voice
+and the dictionary Kokoro reads Japanese with, about 51 MB together, are downloaded the first time a
+Japanese voice is chosen or played. A line due before they have arrived is spoken in the story's
+own voice. The Japanese voices are offered for no slot and for no character who speaks English.
 
 **Names it has never seen are worked out rather than guessed.** Kokoro is given sounds rather than
 letters, so Directive 47 turns text into sounds itself: known words come from a pronunciation
