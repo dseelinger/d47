@@ -111,7 +111,7 @@ public class ARavenColonialPlanIsReadByNameAndCountedTests
     }
 
     [Fact]
-    public async Task CommandersAndCarriersAreCountedAndNoNameOrNoteIsKept()
+    public async Task CommandersAreCountedCarriersAreReadByCallsignAndNoPersonOrNoteIsKept()
     {
         var plan = await Service(new Fake(Answer)).SystemAsync("Sys A", CancellationToken.None);
 
@@ -119,13 +119,15 @@ public class ARavenColonialPlanIsReadByNameAndCountedTests
 
         Assert.Equal(2, alpha.Commanders);
         Assert.Equal(2, alpha.LinkedCarriers);
+        Assert.Equal(["AAA-111", "BBB-222"], alpha.Carriers.Select(carrier => carrier.Name));
         Assert.True(alpha.IsPrimaryPort);
         Assert.Equal(DateTimeOffset.Parse("2026-12-01T10:00:00+00:00"), alpha.Due);
 
-        var text = string.Join(' ', plan.Sites.Select(site => site.ToString()))
-            + string.Join(' ', alpha.Needed.Keys.Concat(alpha.OnLinkedCarriers.Keys));
+        var text = System.Text.Json.JsonSerializer.Serialize(plan);
 
-        foreach (var left in new[] { "CMDR One", "CMDR Two", "CMDR Architect", "meet in the bar", "discord", "SECRET CARRIER", "AAA-111" })
+        Assert.Contains("AAA-111", text, StringComparison.Ordinal);
+
+        foreach (var left in new[] { "CMDR One", "CMDR Two", "CMDR Architect", "meet in the bar", "discord", "SECRET CARRIER" })
         {
             Assert.DoesNotContain(left, text, StringComparison.OrdinalIgnoreCase);
         }
