@@ -89,6 +89,44 @@ $lines.Add('')
 $restoreLog = Join-Path $run 'restore.txt'
 dotnet restore $sln --force --nologo 2>&1 | Out-File $restoreLog
 
+# --- Release scan: the latest release's assets, scanned with Defender while the network is still open.
+$scanLines = [System.Collections.Generic.List[string]]::new()
+$scanDir = Join-Path $run 'release-scan'
+try {
+    $tag = (gh release view --json tagName --jq .tagName 2>&1 | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0 -or -not $tag) { throw "gh release view failed: $tag" }
+    $scanLines.Add("Latest release: $tag.")
+    $scanLines.Add('')
+    if (Test-Path $scanDir) { Remove-Item -LiteralPath $scanDir -Recurse -Force }
+    New-Item -ItemType Directory -Path $scanDir | Out-Null
+    $download = (gh release download $tag --pattern d47.zip --pattern 'd47-setup-*.exe' --dir $scanDir 2>&1 | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0) { throw "gh release download failed: $download" }
+    $assets = @(Get-ChildItem -LiteralPath $scanDir -File | ForEach-Object FullName)
+    if ($assets.Count -eq 0) { throw 'the release has no d47.zip or installer to scan' }
+    $scanOutput = @(& (Join-Path $Repo 'tools\scan-release.ps1') @assets *>&1 | ForEach-Object { "$_" })
+    $scanCode = $LASTEXITCODE
+    if ($scanCode -eq 0) {
+        $scanLines.Add('Clean: d47.zip and the installer.')
+    } elseif ($scanCode -eq 1 -or $scanCode -eq 2) {
+        foreach ($l in $scanOutput) {
+            if ($l -match '^DETECTED: (?<file>.+?)  (?<threat>.*)$') {
+                $scanLines.Add((Mark "- DETECTED: $(Split-Path -Leaf $Matches.file)  $($Matches.threat)"))
+            } elseif ($l -match '^NOT SCANNED: (?<text>.*)$') {
+                $scanLines.Add("- Not scanned: $($Matches.text)")
+            }
+        }
+        if ($scanCode -eq 2 -and -not ($scanOutput -match '^NOT SCANNED:')) {
+            $scanLines.Add('- Not scanned: scan-release.ps1 exited 2 and named no file.')
+        }
+    } else {
+        $scanLines.Add("Not scanned: scan-release.ps1 exited $scanCode.")
+    }
+} catch {
+    $scanLines.Add("Not scanned: $($_.Exception.Message -replace '\s+', ' ')")
+} finally {
+    Remove-Item -LiteralPath $scanDir -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 # From here on nothing reaches the internet.
 $env:HTTP_PROXY = 'http://127.0.0.1:9'
 $env:HTTPS_PROXY = 'http://127.0.0.1:9'
@@ -106,6 +144,11 @@ if ($advisories.Count -eq 0) {
 } else {
     foreach ($a in $advisories) { $lines.Add((Mark "- $a")) }
 }
+$lines.Add('')
+
+$lines.Add('## Release scan')
+$lines.Add('')
+foreach ($l in $scanLines) { $lines.Add($l) }
 $lines.Add('')
 
 # --- Build
