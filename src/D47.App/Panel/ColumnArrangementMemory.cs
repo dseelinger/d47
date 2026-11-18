@@ -7,6 +7,9 @@ public sealed class ColumnArrangementMemory(ViewStateStore store, bool headset =
 {
     private ViewState? _cached;
 
+    /// <summary>The arrangements are the headset's.</summary>
+    public bool Headset => headset;
+
     /// <summary>The column keys stored for a table, in order; null when none are.</summary>
     public IReadOnlyList<string>? Remembered(string table)
     {

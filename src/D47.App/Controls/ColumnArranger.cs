@@ -20,6 +20,10 @@ public static class ColumnArranger
 
     public const string PanelLabel = "Every column this table can show";
 
+    public const string NoRoomLabel = "No room";
+
+    public const string NoRoomText = "These columns fill the panel at their narrowest. Remove one to add another.";
+
     private const double Gap = 8;
 
     /// <summary>The control name of a part of the arranger for table <paramref name="id"/>.</summary>
@@ -49,7 +53,10 @@ public static class ColumnArranger
             }
             : null;
 
-    /// <summary>The bar, the grey line under it and the ADD A COLUMN panel when open; null while the bar is closed.</summary>
+    /// <summary>
+    /// The bar, the grey line under it, then the ADD A COLUMN panel when open, or the NO ROOM notice when no column has
+    /// room to be added; null while the bar is closed.
+    /// </summary>
     public static Control? Bar<TRow>(ArrangedTable<TRow> table)
     {
         if (!table.Arranging)
@@ -66,7 +73,7 @@ public static class ColumnArranger
                 Part(table.Id, "MoveLeft", "◄ Move left", () => table.Move(left: true), table.CanMove(left: true)),
                 Part(table.Id, "MoveRight", "Move right ►", () => table.Move(left: false), table.CanMove(left: false)),
                 Part(table.Id, "Remove", "Remove", table.Remove, table.CanRemove),
-                Part(table.Id, "Add", "Add a column ▼", table.ToggleAdding),
+                Part(table.Id, "Add", "Add a column ▼", table.ToggleAdding, !table.NoRoom),
             },
         };
         left.Children[^1].Classes.Set("selected", table.Adding);
@@ -97,7 +104,16 @@ public static class ColumnArranger
             },
         };
 
-        if (table.Adding)
+        if (table.NoRoom)
+        {
+            bar.Children.Add(new Notice(NoticeLevel.Warning)
+            {
+                Name = NameOf(table.Id, "NoRoom"),
+                Label = NoRoomLabel,
+                Text = NoRoomText,
+            });
+        }
+        else if (table.Adding)
         {
             bar.Children.Add(Every(table));
         }
@@ -134,7 +150,7 @@ public static class ColumnArranger
             text.TextWrapping = TextWrapping.Wrap;
             box.Name = NameOf(table.Id, "Show." + key);
             box.IsChecked = shown;
-            box.IsEnabled = !locked;
+            box.IsEnabled = !locked && table.CanAdd(key);
             box.HorizontalAlignment = HorizontalAlignment.Stretch;
             box.VerticalAlignment = VerticalAlignment.Stretch;
             AutomationProperties.SetName(box, label);

@@ -380,10 +380,12 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
             rows.Children.Add(Row(row));
         }
 
+        var table = new StackPanel { Children = { ColumnHeads(), rows } };
+
         return new StackPanel
         {
             Margin = new Thickness(0, 28, 0, 0),
-            Children = { TitleText.GroupRow(head), ColumnHeads(), rows },
+            Children = { TitleText.GroupRow(head), _table.Headset ? table : new TableScroll(_table.Layout, table) },
         };
     }
 

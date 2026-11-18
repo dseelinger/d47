@@ -24,6 +24,7 @@ public sealed class TableLayout
     private readonly Dictionary<string, double> _chosen;
     private readonly double[] _widths;
     private double _available;
+    private double? _sized;
 
     public TableLayout(string id, IReadOnlyList<TableColumn> columns, ColumnWidthMemory? memory = null, double spacing = 0)
     {
@@ -45,6 +46,13 @@ public sealed class TableLayout
 
     /// <summary>The widths currently applied to the columns.</summary>
     public IReadOnlyList<double> Widths => _widths;
+
+    /// <summary>Raised when a header or row is measured at a finite width other than the last one.</summary>
+    internal event Action<double>? Sized;
+
+    /// <summary>How much wider than the last measured width the columns' minimums and the spacing need.</summary>
+    internal double Shortfall =>
+        Math.Max(0, Enumerable.Range(0, Columns.Count).Sum(MinimumOf) + (Spacing * Math.Max(0, Columns.Count - 1)) - _available);
 
     /// <summary>The control name of the grip after column <paramref name="key"/> of table <paramref name="id"/>.</summary>
     public static string GripName(string id, string key) => $"{id}.{key}.Grip";
@@ -71,6 +79,11 @@ public sealed class TableLayout
         if (!double.IsFinite(available))
         {
             available = Enumerable.Range(0, Columns.Count).Sum(NaturalOf) + spacing;
+        }
+        else if (_sized is not { } sized || Math.Abs(sized - available) > 0.5)
+        {
+            _sized = available;
+            Sized?.Invoke(available);
         }
 
         _available = available;

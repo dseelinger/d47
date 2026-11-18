@@ -491,6 +491,13 @@ column the table can show, as checkboxes: tick one to add it at the right, untic
 Headers do not sort while the bar is open; **DONE** closes it. Each change is kept as it is made, and
 the headset keeps its columns apart from the window's.
 
+On the desktop, a table whose columns do not fit the window at their narrowest scrolls sideways in its
+own box, its header and rows together, while the page still scrolls up and down. The headset does not
+scroll sideways, so a column that would not fit has its checkbox disabled, and when none fits **ADD A
+COLUMN** is disabled and a **NO ROOM** notice shows under the bar. When the headset's columns no longer fit, as after a
+smaller panel size is chosen, the columns at the right are left out of the table without changing the
+columns you chose.
+
 #### Drilling in, and finding your way back {#drilling}
 
 Every surface below the transcript is a stack — Ships, then a ship, then a slot, then a

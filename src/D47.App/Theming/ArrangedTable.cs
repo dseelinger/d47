@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using D47.App.Panel;
 using D47.Core.Configuration;
 
@@ -14,9 +15,13 @@ namespace D47.App.Theming;
 /// they are declared at. The sort is kept by field key, so a moved column keeps it and a column left out drops it.
 /// Every header and row built between two calls of <see cref="Refresh"/> shares one <see cref="Layout"/>.
 /// While <see cref="Arranging"/>, a header press chooses a column instead of sorting, and every edit is stored as it is made.
+/// In the headset each column's minimum is its header's width, and the arranged columns that do not fit the table's width
+/// at their minimums are left out from the right.
 /// </summary>
 public sealed class ArrangedTable<TRow>
 {
+    private const double ChooseInset = 6;
+
     private readonly string _headName;
     private readonly IReadOnlyList<TableField<TRow>> _fields;
     private readonly IReadOnlyList<TableField<TRow>> _arrangeable;
@@ -29,6 +34,8 @@ public sealed class ArrangedTable<TRow>
     private IReadOnlyList<TableField<TRow>> _drawn = [];
     private IReadOnlyList<string> _owners = [];
     private SortHeader<TRow> _head;
+    private readonly Dictionary<string, double> _floors = new(StringComparer.Ordinal);
+    private double? _room;
 
     public ArrangedTable(
         string id,
@@ -61,6 +68,9 @@ public sealed class ArrangedTable<TRow>
     /// <summary>Raised after the sort, the arrangement or the arranging state changes.</summary>
     public event Action? Changed;
 
+    /// <summary>The table is drawn in the headset, which does not scroll sideways.</summary>
+    public bool Headset => _arrangement?.Headset == true;
+
     /// <summary>The table has more than one column to arrange.</summary>
     public bool CanArrange => _arrangeable.Count > 1;
 
@@ -82,9 +92,34 @@ public sealed class ArrangedTable<TRow>
     /// <summary>The chosen column can move one place to that side.</summary>
     public bool CanMove(bool left)
     {
-        var at = ShownKeys.IndexOf(Chosen ?? string.Empty);
+        var drawn = Shown.Where(field => field.Label is not null).Select(field => field.Key).ToList();
+        var at = drawn.IndexOf(Chosen ?? string.Empty);
 
-        return at >= 0 && (left ? at > 0 : at < ShownKeys.Count - 1);
+        return at >= 0 && (left ? at > 0 : at < drawn.Count - 1);
+    }
+
+    /// <summary>The column is shown, or there is room to draw it after the drawn columns.</summary>
+    public bool CanAdd(string key) =>
+        !Headset
+        || _room is not { } room
+        || ShownKeys.Contains(key)
+        || _arrangeable.FirstOrDefault(field => field.Key == key) is not { } field
+        || Need([.. Shown, field]) <= room;
+
+    /// <summary>In the headset, no column that is not shown has room to be drawn.</summary>
+    public bool NoRoom
+    {
+        get
+        {
+            if (!Headset || _room is null)
+            {
+                return false;
+            }
+
+            var hidden = Choices.Where(choice => !choice.Shown).ToList();
+
+            return hidden.Count > 0 && hidden.All(choice => !CanAdd(choice.Key));
+        }
     }
 
     /// <summary>The chosen column can be removed: it is not required and not the last shown.</summary>
@@ -123,9 +158,12 @@ public sealed class ArrangedTable<TRow>
     [MemberNotNull(nameof(Shown), nameof(Layout), nameof(_head))]
     public void Refresh()
     {
-        Shown = Arranged();
+        Shown = Fitted(Arranged());
         (_drawn, _owners) = Drawn(Shown);
-        Layout = new TableLayout(Id, [.. _drawn.Select(field => field.Column)], _widths, _spacing);
+
+        var layout = new TableLayout(Id, [.. _drawn.Select(ColumnOf)], _widths, _spacing);
+        layout.Sized += width => Resized(layout, width);
+        Layout = layout;
         _head = NewHead();
     }
 
@@ -205,9 +243,14 @@ public sealed class ArrangedTable<TRow>
         }
     }
 
-    /// <summary>Shows the column at the right and chooses it.</summary>
+    /// <summary>Shows the column at the right and chooses it, when there is room for it.</summary>
     public void Show(string key)
     {
+        if (!CanAdd(key))
+        {
+            return;
+        }
+
         Chosen = key;
         Store(ColumnArrangement.Added(Columns, Stored, key));
     }
@@ -264,15 +307,18 @@ public sealed class ArrangedTable<TRow>
         }
 
         Refresh();
+
+        if (NoRoom)
+        {
+            Adding = false;
+        }
+
         Changed?.Invoke();
     }
 
     private Button ChooseCell(TableField<TRow> field, string owner)
     {
-        const double Inset = 6;
-
-        // Neighbouring cells are a tile gap apart, whatever the column spacing.
-        var bleed = (_spacing - Gaps.Tile) / 2;
+        var bleed = Bleed;
         var chosen = owner == Chosen;
         var ink = chosen ? ThemeManager.KnockKey : ThemeManager.GreyKey;
         var label = SortHeader<TRow>.Line(field.Label!, TypeScale.Meta, FontWeight.Medium, ink);
@@ -294,7 +340,7 @@ public sealed class ArrangedTable<TRow>
             Content = content,
             MinHeight = TypeScale.MinimumTarget,
             Margin = new Thickness(-bleed, 0),
-            Padding = new Thickness(Inset, 0),
+            Padding = new Thickness(ChooseInset, 0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
             HorizontalContentAlignment = field.Alignment,
@@ -305,6 +351,107 @@ public sealed class ArrangedTable<TRow>
         button.Click += (_, _) => Choose(owner);
 
         return button;
+    }
+
+    /// <summary>Neighbouring choose cells are a tile gap apart, whatever the column spacing.</summary>
+    private double Bleed => (_spacing - Gaps.Tile) / 2;
+
+    /// <summary>The field's column; in the headset its minimum is its header's width, the same with the bar open or closed.</summary>
+    private TableColumn ColumnOf(TableField<TRow> field) =>
+        Headset && field.Column.Fit != ColumnFit.Fixed && field.Column.Min is null
+            ? field.Column with { Min = Floor(field) }
+            : field.Column;
+
+    /// <summary>The narrowest the field's column goes: its set width or minimum, else the wider of its header cells, sorting and choosing.</summary>
+    private double Floor(TableField<TRow> field)
+    {
+        if (field.Column.Fit == ColumnFit.Fixed)
+        {
+            return field.Column.Fixed;
+        }
+
+        if (field.Column.Min is { } min)
+        {
+            return min;
+        }
+
+        if (_floors.TryGetValue(field.Key, out var known))
+        {
+            return known;
+        }
+
+        var second = field.Second ?? field.Sort?.Second;
+        var under = second is null ? 0 : Measure(second, TypeScale.MetaSmall, FontWeight.Normal);
+        var width = 0.0;
+
+        if (field.Sort is { } sort)
+        {
+            width = Math.Max(Measure(sort.Label + (sort.Sortable ? " ▲" : string.Empty), TypeScale.Meta, FontWeight.Medium), under);
+        }
+
+        if (field.Label is { } label)
+        {
+            var text = Math.Max(Measure(label, TypeScale.Meta, FontWeight.Medium), under);
+            width = Math.Max(width, Math.Max(text, text + (2 * ChooseInset) - (2 * Bleed)));
+        }
+
+        return _floors[field.Key] = Math.Ceiling(width);
+    }
+
+    private static double Measure(string text, double size, FontWeight weight)
+    {
+        var line = SortHeader<TRow>.Line(text, size, weight, ThemeManager.GreyKey);
+        line.Measure(Size.Infinity);
+
+        return line.DesiredSize.Width;
+    }
+
+    /// <summary>The width the fields' columns need at their minimums, with the spacing between them.</summary>
+    private double Need(IReadOnlyList<TableField<TRow>> fields)
+    {
+        var columns = Drawn(fields).Drawn;
+
+        return columns.Sum(Floor) + (_spacing * Math.Max(0, columns.Count - 1));
+    }
+
+    /// <summary>In the headset, the fields less the arranged ones at the right that do not fit; one arranged field always stays.</summary>
+    private List<TableField<TRow>> Fitted(IReadOnlyList<TableField<TRow>> fields)
+    {
+        var fitted = fields.ToList();
+
+        if (!Headset || _room is not { } room)
+        {
+            return fitted;
+        }
+
+        while (fitted.Count(field => field.Label is not null) > 1 && Need(fitted) > room)
+        {
+            fitted.RemoveAt(fitted.FindLastIndex(field => field.Label is not null));
+        }
+
+        return fitted;
+    }
+
+    /// <summary>In the headset, takes the table's new width, and redraws when that changes the columns drawn or the bar is open.</summary>
+    private void Resized(TableLayout layout, double width)
+    {
+        if (!Headset || layout != Layout || (_room is { } room && Math.Abs(room - width) <= 0.5))
+        {
+            return;
+        }
+
+        _room = width;
+
+        if (Arranging || Fitted(Arranged()).Count != Shown.Count)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (layout == Layout)
+                {
+                    Changed?.Invoke();
+                }
+            });
+        }
     }
 
     private IReadOnlyList<TableField<TRow>> Arranged()
