@@ -11,6 +11,9 @@ namespace D47.App.Tests;
 
 public sealed class ASurfaceMinedBodyShowsItsTonnesTests
 {
+    private static string[] FactTexts(BodyProfile body, SurfaceMiningSite? mined = null) =>
+        [.. StarSystemPage.BodyFacts(body, mined).Select(fact => fact.Text)];
+
     private static readonly DateTimeOffset Start = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
 
     private static BodyProfile Planet() =>
@@ -31,7 +34,7 @@ public sealed class ASurfaceMinedBodyShowsItsTonnesTests
     [Fact]
     public void TwoCommoditiesAreListedLargestFirstAfterTheSignals()
     {
-        var facts = StarSystemPage.BodyFacts(Planet(), Site(("Silver", 3), ("Platinum", 40)));
+        var facts = FactTexts(Planet(), Site(("Silver", 3), ("Platinum", 40)));
 
         Assert.Equal("Surface mined: 40 t Platinum, 3 t Silver", facts[^1]);
     }
@@ -39,7 +42,7 @@ public sealed class ASurfaceMinedBodyShowsItsTonnesTests
     [Fact]
     public void FourCommoditiesShowTheThreeLargestAndCountTheRest()
     {
-        var facts = StarSystemPage.BodyFacts(Planet(), Site(("Gold", 1), ("Platinum", 40), ("Silver", 3), ("Palladium", 9)));
+        var facts = FactTexts(Planet(), Site(("Gold", 1), ("Platinum", 40), ("Silver", 3), ("Palladium", 9)));
 
         Assert.Equal("Surface mined: 40 t Platinum, 9 t Palladium, 3 t Silver and 1 more", facts[^1]);
     }
@@ -50,7 +53,7 @@ public sealed class ASurfaceMinedBodyShowsItsTonnesTests
         var second = Site(("Platinum", 5)).Runs[0] with { OpenedAt = Start.AddDays(1) };
         var site = Site(("Platinum", 40)) with { Runs = [.. Site(("Platinum", 40)).Runs, second] };
 
-        Assert.Equal("Surface mined: 45 t Platinum", StarSystemPage.BodyFacts(Planet(), site)[^1]);
+        Assert.Equal("Surface mined: 45 t Platinum", FactTexts(Planet(), site)[^1]);
     }
 
     [Fact]
@@ -58,7 +61,7 @@ public sealed class ASurfaceMinedBodyShowsItsTonnesTests
     {
         var body = Planet();
 
-        Assert.Equal(StarSystemPage.BodyFacts(body), StarSystemPage.BodyFacts(body, null));
-        Assert.DoesNotContain(StarSystemPage.BodyFacts(body), fact => fact.StartsWith("Surface mined", StringComparison.Ordinal));
+        Assert.Equal(FactTexts(body), FactTexts(body, null));
+        Assert.DoesNotContain(FactTexts(body), fact => fact.StartsWith("Surface mined", StringComparison.Ordinal));
     }
 }

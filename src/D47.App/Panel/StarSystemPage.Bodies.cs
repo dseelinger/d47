@@ -57,10 +57,16 @@ public sealed partial class StarSystemPage
     /// <summary>The most commodities the surface-mined fact names.</summary>
     public const int MostMinedShown = 3;
 
-    /// <summary>The second line of a body's slab, with the Commander's surface mining there when <paramref name="mined"/> is given.</summary>
-    public static IReadOnlyList<string> BodyFacts(BodyProfile body, SurfaceMiningSite? mined = null)
+    /// <summary>One fact on a body's slab, and the ink it overrides the line's with.</summary>
+    public readonly record struct BodyFact(string Text, string? Key = null)
     {
-        var facts = new List<string>();
+        public static implicit operator BodyFact(string text) => new(text);
+    }
+
+    /// <summary>The second line of a body's slab, with the Commander's surface mining there when <paramref name="mined"/> is given and a hostile body's temperature in Red.</summary>
+    public static IReadOnlyList<BodyFact> BodyFacts(BodyProfile body, SurfaceMiningSite? mined = null)
+    {
+        var facts = new List<BodyFact>();
 
         if (body.Type == "Star")
         {
@@ -104,7 +110,9 @@ public sealed partial class StarSystemPage
 
         if (body.SurfaceTemperature is { } kelvin)
         {
-            facts.Add($"{kelvin.ToString("N0", CultureInfo.InvariantCulture)} K");
+            facts.Add(new BodyFact(
+                $"{kelvin.ToString("N0", CultureInfo.InvariantCulture)} K",
+                SurfaceHeat.IsHostile(kelvin, body.IsLandable) ? ThemeManager.RedKey : null));
         }
 
         if (body.SurfacePressure is > 0 and { } atm)
@@ -304,13 +312,16 @@ public sealed partial class StarSystemPage
         return row;
     }
 
-    private static WrapPanel Facts(IReadOnlyList<string> facts, string key)
+    private static WrapPanel Facts(IReadOnlyList<string> facts, string key) =>
+        Facts([.. facts.Select(fact => new BodyFact(fact))], key);
+
+    private static WrapPanel Facts(IReadOnlyList<BodyFact> facts, string key)
     {
         var line = new WrapPanel { ItemSpacing = 16, LineSpacing = 2 };
 
         foreach (var fact in facts)
         {
-            var block = Mono(fact, key);
+            var block = Mono(fact.Text, fact.Key ?? key);
             block.FontSize = TypeScale.Meta;
             block.VerticalAlignment = VerticalAlignment.Center;
             line.Children.Add(block);

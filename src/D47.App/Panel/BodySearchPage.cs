@@ -365,7 +365,7 @@ public sealed class BodySearchPage : GalaxySearchPage
                 row => Centered(Right(Mono(
                     ((BodySummary)row).SurfaceTemperature is { } kelvin ? $"{kelvin.ToString("N0", CultureInfo.InvariantCulture)} K" : Dash,
                     TypeScale.Small,
-                    ThemeManager.WhiteKey))),
+                    SurfaceHeat.IsHostile(((BodySummary)row).SurfaceTemperature, ((BodySummary)row).IsLandable) ? ThemeManager.RedKey : ThemeManager.WhiteKey))),
                 right: true,
                 byDefault: false,
                 local: LocalSort.Figure<BodySummary>(body => body.SurfaceTemperature)),

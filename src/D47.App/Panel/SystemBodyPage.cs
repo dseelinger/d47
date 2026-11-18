@@ -406,6 +406,28 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
         return grid;
     }
 
+    private static Border SurfaceTemperatureTile(BodyProfile body)
+    {
+        var text = Figure(body.SurfaceTemperature, "N0", " K");
+
+        if (!SurfaceHeat.IsHostile(body.SurfaceTemperature, body.IsLandable))
+        {
+            return StatTile.Build("Surface temperature", text, StatInk.Number);
+        }
+
+        var figure = new TextBlock
+        {
+            Text = text,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = StatTile.ValueSize,
+            FontWeight = FontWeight.Medium,
+            TextWrapping = TextWrapping.Wrap,
+        };
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.RedKey);
+
+        return StatTile.Tile("Surface temperature", figure);
+    }
+
     private StackPanel PlanetOverview(StarSystemProfile profile, BodyProfile body)
     {
         var column = new StackPanel { Spacing = 24 };
@@ -416,7 +438,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
             StatTile.Build("Distance", StarSystemPage.BodyDistanceText(body.DistanceToArrival), StatInk.Number),
             StatTile.Build("Landing", body.IsLandable ? "Landable" : "Not landable"),
             StatTile.Build("Gravity", Figure(body.Gravity, "N2", " g"), StatInk.Number),
-            StatTile.Build("Surface temperature", Figure(body.SurfaceTemperature, "N0", " K"), StatInk.Number),
+            SurfaceTemperatureTile(body),
             StatTile.Build("Pressure", Figure(body.SurfacePressure, "N2", " atm"), StatInk.Number),
             StatTile.Build("Radius", Figure(body.Radius, "N0", " km"), StatInk.Number),
             StatTile.Build("Mass", Figure(body.EarthMasses, "N2", " Earth masses"), StatInk.Number),

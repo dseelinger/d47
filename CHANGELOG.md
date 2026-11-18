@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: A landable body whose surface temperature is 700 K or more shows that temperature in red, on the Bodies search, the System body page and the system body list; stars and cooler or unlandable bodies are unchanged.
+
 Changed: On the Search pages and Route market, a column the service cannot sort by now sorts the rows already fetched, and the head says only those rows are sorted ("These 25 sorted by Volcanism"). The Search pages remember each page's sort, whether the service's or the rows', and use it for the next search run from the page; a search asked by voice keeps its own order.
 
 Changed: Every labelled table column sorts, including the columns added with ADD A COLUMN, and a table keeps its sort when its page is left and opened again and when d47 restarts; the headset keeps its own. A third press still returns the table to its default order. Tables whose rows a search service sorts are unchanged.

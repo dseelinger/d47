@@ -16,6 +16,9 @@ namespace D47.App.Tests;
 [Trait("Category", "Integration")]
 public sealed class TheSystemPageDrawsItsBodiesTests
 {
+    private static string[] FactTexts(BodyProfile body, SurfaceMiningSite? mined = null) =>
+        [.. StarSystemPage.BodyFacts(body, mined).Select(fact => fact.Text)];
+
     private static BodyProfile Body(string name) =>
         TheSystemPageListsItsStationsTests.Ltt7786Profile().Bodies.Single(body => body.Name == name);
 
@@ -93,7 +96,7 @@ public sealed class TheSystemPageDrawsItsBodiesTests
 
         Assert.Equal(
             ["5.71 Earth masses", "12,531 km", "1.48 g", "215 K", "1,408.07 atm", "Water Geysers", "Thick Argon-rich", "Not terraformable", "1 Human signal"],
-            StarSystemPage.BodyFacts(world));
+            FactTexts(world));
         Assert.Equal("Rocky Ice world", world.SubType);
         Assert.Equal("288 Ls", StarSystemPage.BodyDistanceText(world.DistanceToArrival));
 
@@ -107,13 +110,13 @@ public sealed class TheSystemPageDrawsItsBodiesTests
     {
         var star = Body("LTT 7786");
 
-        Assert.Equal(["0.78 solar masses", "0.84 solar radius", "Class K7V", "Scoopable"], StarSystemPage.BodyFacts(star));
+        Assert.Equal(["0.78 solar masses", "0.84 solar radius", "Class K7V", "Scoopable"], FactTexts(star));
     }
 
     [AvaloniaFact]
     public void ABodyWithNoAtmosphereOrVolcanismSaysSo()
     {
-        var facts = StarSystemPage.BodyFacts(Body("LTT 7786 4 a"));
+        var facts = FactTexts(Body("LTT 7786 4 a"));
 
         Assert.Contains("No atmosphere", facts);
         Assert.DoesNotContain(facts, fact => fact.EndsWith(" atm", StringComparison.Ordinal));
