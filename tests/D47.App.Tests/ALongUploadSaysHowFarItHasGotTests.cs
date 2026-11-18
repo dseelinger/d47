@@ -256,7 +256,10 @@ public class ALongUploadSaysHowFarItHasGotTests : IDisposable
             StringComparison.Ordinal);
 
         held.SetResult();
-        await SettleAsync();
+
+        // A send that outlasted the wait delay keeps its mark up for the minimum before the outcome shows.
+        await Task.Delay(Waiting.Minimum + TimeSpan.FromMilliseconds(600), TestContext.Current.CancellationToken);
+        Dispatcher.UIThread.RunJobs();
 
         // Gone the moment the bytes stop moving, so a full bar never stands over an outcome.
         Assert.False(bar.IsVisible);

@@ -194,6 +194,7 @@ public static class BindCapture
         var capture = new D47.Core.Hotas.ButtonCapture();
         var opened = editing.Now();
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        var looking = false;
 
         timer.Tick += (_, _) =>
         {
@@ -208,9 +209,16 @@ public static class BindCapture
             // three of six devices on the bench (Phase 21, finding 1).
             if (!editing.Reader.IsSettled)
             {
-                message.Say("Looking for your controllers…");
+                if (!looking)
+                {
+                    message.Wait("Looking for your controllers…");
+                    looking = true;
+                }
+
                 return;
             }
+
+            looking = false;
 
             var result = capture.Poll(editing.Reader.Poll(), editing.Now() - opened);
 

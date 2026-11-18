@@ -382,7 +382,7 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
                 return false;
             }
 
-            await new Controls.LoreDialog(editing).Over(owner);
+            await new Controls.LoreDialog(editing, Panel.PanelView.WaitSoundOf(open)).Over(owner);
 
             return true;
         });

@@ -172,6 +172,9 @@ public sealed class HelpImprovePage : DialogPage
         TextWrapping = TextWrapping.Wrap,
     };
 
+    /// <summary>The wait mark for a read, a write or a send; its sentence is what the work has reached.</summary>
+    private readonly WaitingState _waiting = new(WaitForm.Line) { Name = "SendWaiting", IsVisible = false };
+
     /// <summary>How far the upload has got (#212).</summary>
     private readonly ProgressBar _bar = new()
     {
@@ -618,7 +621,7 @@ public sealed class HelpImprovePage : DialogPage
 
         // The bar under the sentence rather than in place of it (#212): "Nothing else is being sent, and
         // nothing is being kept anywhere else" is doing work about scope that a percentage cannot do.
-        var progress = new StackPanel { Margin = new Thickness(0, 12, 0, 0), Children = { _size, _status, _bar } };
+        var progress = new StackPanel { Margin = new Thickness(0, 12, 0, 0), Children = { _size, _status, _waiting, _bar } };
 
         return (primary, progress);
     }
@@ -713,23 +716,28 @@ public sealed class HelpImprovePage : DialogPage
         var token = _running.Token;
 
         Busy(true);
-        _status.Text = "Reading…";
+        _status.Text = string.Empty;
+        _waiting.SetSentence("Reading…");
 
-        var progress = new Progress<int>(files => _status.Text = $"Reading — {files:N0} journal files so far");
+        var progress = new Progress<int>(files => _waiting.SetSentence($"Reading — {files:N0} journal files so far"));
 
         try
         {
-            _reading = await read(scope, progress, token);
-            _corpusPreview.Text = _reading.Report;
+            CorpusReading? surveyed = null;
+
+            await Waiting.While(_waiting, Panel.PanelView.WaitSoundOf(this), async () => surveyed = await read(scope, progress, token));
+
+            _reading = surveyed!;
+            _corpusPreview.Text = surveyed!.Report;
             _saveCorpus.IsEnabled = true;
             _sendCorpusButton.IsEnabled = true;
 
-            var survey = _reading.Survey;
+            var survey = surveyed.Survey;
 
             _figureEvents.Text = Number(survey.Tally.Events);
             _figureNames.Text = Number(survey.Tally.NamesReplaced);
             _figureFourthValue.Text = Number(survey.Files);
-            _figureChars.Text = Number(_reading.Report.Length);
+            _figureChars.Text = Number(surveyed.Report.Length);
 
             _status.Text =
                 $"{survey.Tally.Events:N0} events across {survey.Files:N0} files, "
@@ -787,12 +795,16 @@ public sealed class HelpImprovePage : DialogPage
         }
 
         _sendButton.IsEnabled = false;
-        _sendButton.Content = "Sending…";
         _size.Text = "Sending. Nothing else is being sent, and nothing is being kept anywhere else.";
+        _waiting.SetSentence("Sending…");
 
         try
         {
-            var sent = await send(_text, _sending.Token);
+            DonationSent? result = null;
+
+            await Waiting.While(_waiting, Panel.PanelView.WaitSoundOf(this), async () => result = await send(_text, _sending.Token));
+
+            var sent = result!;
 
             _sendButton.Content = sent.Outcome.Sent ? "Sent" : SendLabel;
             _sendButton.IsEnabled = !sent.Outcome.Sent;
@@ -900,13 +912,16 @@ public sealed class HelpImprovePage : DialogPage
         _saveCorpus.IsEnabled = false;
         _sendCorpusButton.IsEnabled = false;
 
-        var progress = new Progress<int>(files => _status.Text = $"Writing — {files:N0} journal files so far");
+        _status.Text = string.Empty;
+        _waiting.SetSentence("Writing…");
+
+        var progress = new Progress<int>(files => _waiting.SetSentence($"Writing — {files:N0} journal files so far"));
 
         try
         {
             await using var stream = await file.OpenWriteAsync();
 
-            await write(stream, progress, token);
+            await Waiting.While(_waiting, Panel.PanelView.WaitSoundOf(this), () => write(stream, progress, token));
 
             _status.Text = $"Saved to {file.Name}. It is on your machine and nowhere else.";
         }
@@ -941,8 +956,9 @@ public sealed class HelpImprovePage : DialogPage
 
         Busy(true);
         _sendCorpusButton.IsEnabled = false;
-        _sendCorpusButton.Content = "Sending…";
         _saveCorpus.IsEnabled = false;
+        _status.Text = string.Empty;
+        _waiting.SetSentence("Sending…");
 
         _bar.Value = 0;
         _bar.IsVisible = false;
@@ -961,20 +977,25 @@ public sealed class HelpImprovePage : DialogPage
 
             var which = step.Parts > 1 ? $"Part {step.Part} of {step.Parts} — " : string.Empty;
 
-            _status.Text = which + step switch
+            if (!step.Sending)
             {
-                { Sending: false } =>
-                    $"Preparing what you are sharing — {step.Files:N0} journal files so far",
+                _waiting.SetSentence(which + $"Preparing what you are sharing — {step.Files:N0} journal files so far");
 
-                // **"Compressed" is not decoration.** The report above states the history's own size — 383 MB
-                // — and what goes on the wire is a twelfth of it, so a number counting to 32.5 MB with
-                // nothing to explain it reads as most of it missing.
-                { Total: > 0 } =>
-                    $"Sending — {Size(step.Sent)} of {Size(step.Total)} compressed. Nothing else "
-                    + "is being sent, and nothing is being kept anywhere else.",
+                _bar.IsVisible = false;
+                _bar.Value = 0;
 
-                _ => "Sending. Nothing else is being sent, and nothing is being kept anywhere else.",
-            };
+                return;
+            }
+
+            _waiting.SetSentence(which + "Sending…");
+
+            // **"Compressed" is not decoration.** The report above states the history's own size — 383 MB
+            // — and what goes on the wire is a twelfth of it, so a number counting to 32.5 MB with
+            // nothing to explain it reads as most of it missing.
+            _status.Text = which + (step.Total > 0
+                ? $"Sending — {Size(step.Sent)} of {Size(step.Total)} compressed. Nothing else "
+                    + "is being sent, and nothing is being kept anywhere else."
+                : "Sending. Nothing else is being sent, and nothing is being kept anywhere else.");
 
             // Absent where there is nothing to measure rather than sitting at nought, which is what the
             // preparing step is — it has a rising file count and no denominator.
@@ -986,7 +1007,11 @@ public sealed class HelpImprovePage : DialogPage
 
         try
         {
-            var sent = await send(reading.Report, progress, token);
+            DonationSent? result = null;
+
+            await Waiting.While(_waiting, Panel.PanelView.WaitSoundOf(this), async () => result = await send(reading.Report, progress, token));
+
+            var sent = result!;
 
             landed = sent.Outcome.Sent;
             _sendCorpusButton.Content = landed ? "Sent" : SendLabel;

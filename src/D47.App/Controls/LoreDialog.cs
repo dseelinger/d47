@@ -24,12 +24,16 @@ public sealed class LoreDialog : ModalDialog
     private readonly TextBox _note;
     private readonly TextBlock _status;
     private readonly Button _add;
+    private readonly WaitingState _lookingUp = new(WaitForm.Line) { IsVisible = false };
+    private readonly D47.App.Voice.WaitSound? _waitSound;
 
-    public LoreDialog(LoreEditing editing)
+    /// <param name="waitSound">The waiting bed played under the lookup; null where there is none.</param>
+    public LoreDialog(LoreEditing editing, D47.App.Voice.WaitSound? waitSound = null)
     {
         ArgumentNullException.ThrowIfNull(editing);
 
         _editing = editing;
+        _waitSound = waitSound;
 
         // Read once, as the dialog opens.
         _canSearch = editing.CanSearch();
@@ -92,6 +96,7 @@ public sealed class LoreDialog : ModalDialog
         body.Children.Add(_note);
         body.Children.Add(_add);
         body.Children.Add(_status);
+        body.Children.Add(_lookingUp);
         body.Children.Add(Modal.Section("What you have already said"));
         body.Children.Add(_entries);
 
@@ -119,14 +124,18 @@ public sealed class LoreDialog : ModalDialog
 
         if (_canSearch)
         {
-            _status.Text = $"Looking {place.SystemName} up…";
+            _lookingUp.SetSentence($"Looking {place.SystemName} up…");
 
             using var budget = new CancellationTokenSource(LoreLookup.Budget);
 
             // A lookup that fails, times out or finds nothing all mean the same thing here: the note is
             // stored as the Commander's word.
-            corroborated = LoreLookup.Spoken(
-                await _editing.LookUp(place.SystemName, budget.Token).ConfigureAwait(true)) is not null;
+            await Waiting.While(
+                _lookingUp,
+                _waitSound,
+                async () => corroborated = LoreLookup.Spoken(
+                    await _editing.LookUp(place.SystemName, budget.Token).ConfigureAwait(true)) is not null)
+                .ConfigureAwait(true);
         }
 
         _editing.Book.Add(place.SystemAddress, place.SystemName, note, LoreArrival.Panel, _editing.Now(), place.FrontierId, corroborated);

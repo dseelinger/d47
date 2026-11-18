@@ -30,6 +30,7 @@ public sealed class LogbookPage : DialogPage
     private readonly Button _estimate;
     private readonly Button _write;
     private readonly TextBlock _quote;
+    private readonly WaitingState _reading = new(WaitForm.Line, "Reading your journals…") { IsVisible = false };
     private readonly StackPanel _entries = new() { Spacing = Gaps.Tile };
 
     private const int PageSize = 20;
@@ -116,6 +117,7 @@ public sealed class LogbookPage : DialogPage
                 new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _from, _to } },
                 new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _estimate, _write } },
                 _quote,
+                _reading,
                 Modal.Section("What you have written"),
                 _entries,
             },
@@ -144,29 +146,31 @@ public sealed class LogbookPage : DialogPage
 
     private async Task EstimateAsync()
     {
-        _estimate.IsEnabled = false;
-        _quote.Text = "Reading your journals…";
-
         var (span, from, to) = Window();
 
         // Off the UI thread, because a month of journals is a real read and Core is synchronous by design —
         // the App is what decides where a long fold runs, exactly as habit mining does.
-        var message = await Task.Run(() =>
-        {
-            try
-            {
-                _book.Estimate(span, from, to, out var described);
+        var message = string.Empty;
 
-                return described;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        await Waiting.While(
+            _reading,
+            Panel.PanelView.WaitSoundOf(this),
+            async () => message = await Task.Run(() =>
             {
-                return $"I could not read your journals: {ex.Message}";
-            }
-        });
+                try
+                {
+                    _book.Estimate(span, from, to, out var described);
+
+                    return described;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    return $"I could not read your journals: {ex.Message}";
+                }
+            }),
+            shut: _estimate);
 
         _quote.Text = message;
-        _estimate.IsEnabled = true;
         Refresh();
     }
 

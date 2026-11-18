@@ -401,6 +401,9 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     PanelViewModel? IPanelTabHost.Model => Model;
 
+    /// <summary>The waiting bed of the panel above <paramref name="from"/>, or null where there is none.</summary>
+    internal static WaitSound? WaitSoundOf(Avalonia.Visual from) => from.FindAncestorOfType<PanelView>()?.Model?.WaitSound;
+
     bool IPanelTabHost.Headset => Classes.Contains("headset");
 
     /// <summary>Whether <paramref name="control"/> is drawn on the headset's panel.</summary>

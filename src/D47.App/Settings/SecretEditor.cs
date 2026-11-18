@@ -31,9 +31,11 @@ public sealed class SecretEditor : UserControl
     private readonly TextBlock _verdict;
     private readonly Notice _refused;
     private readonly Notice _message;
+    private readonly WaitingState _checking = new(WaitForm.Line, "Checking…") { IsVisible = false };
 
     private SecretCheck _result = SecretCheck.Untested;
     private bool _replacing;
+    private bool _verifying;
 
     /// <summary>Drawn in place of a stored key: a fixed count, whatever the key's length.</summary>
     public const string Mask = "••••••••";
@@ -132,6 +134,7 @@ public sealed class SecretEditor : UserControl
 
         var stack = new StackPanel { Spacing = 4 };
         stack.Children.Add(controls);
+        stack.Children.Add(_checking);
         stack.Children.Add(_verdict);
         stack.Children.Add(_refused);
         stack.Children.Add(_message);
@@ -254,15 +257,17 @@ public sealed class SecretEditor : UserControl
             return;
         }
 
-        _check.IsEnabled = false;
         _refused.IsVisible = false;
-        _verdict.IsVisible = true;
-        _verdict.Text = "Checking…";
-        ThemeInk.Bind(_verdict, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+        _verdict.IsVisible = false;
+        _verifying = true;
 
         try
         {
-            _result = await verify(CancellationToken.None);
+            await Waiting.While(
+                _checking,
+                Panel.PanelView.WaitSoundOf(this),
+                async () => _result = await verify(CancellationToken.None),
+                shut: _check);
         }
         catch (Exception ex)
         {
@@ -271,6 +276,7 @@ public sealed class SecretEditor : UserControl
         }
         finally
         {
+            _verifying = false;
             Refresh();
         }
     }
@@ -324,7 +330,7 @@ public sealed class SecretEditor : UserControl
     /// <summary>VERIFY checks a stored key as it is, and a typed one once something is typed.</summary>
     private void RefreshCheck()
     {
-        _check.IsEnabled = _row.Verify is not null && (!Entering || !string.IsNullOrWhiteSpace(_box.Text));
+        _check.IsEnabled = !_verifying && _row.Verify is not null && (!Entering || !string.IsNullOrWhiteSpace(_box.Text));
 
         ToolTip.SetTip(_check, _check.IsEnabled ? null : "Paste a key first — there is nothing here to check yet");
     }

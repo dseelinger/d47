@@ -113,6 +113,63 @@ public class SecretRowTests
         window.Close();
     }
 
+    /// <summary>A check that runs past the wait delay shows the mark with its sentence and shuts VERIFY.</summary>
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
+    public async Task ASlowCheckShowsTheWaitMarkAndShutsVerify()
+    {
+        var gate = new TaskCompletionSource();
+        var (settings, _, _, _, _) = TestSurface.CreateFull();
+
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance)
+            .FollowSettings(settings);
+
+        settings.Apply(
+            ConversationCapability.ProviderKey, LlmProviderCatalog.AnthropicId, SettingsCaller.Panel);
+
+        var row = settings.Sections
+            .SelectMany(section => section.Rows)
+            .First(candidate => candidate.Key == "llm.anthropic.apiKey");
+
+        var editor = new SecretEditor(
+            row with
+            {
+                Verify = async _ =>
+                {
+                    await gate.Task;
+                    return SecretCheck.Works("Anthropic answered.");
+                },
+            },
+            settings);
+
+        var window = Showing(editor);
+
+        Box(editor).Text = "sk-ant-api03-not-a-real-key";
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Verify(editor).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Verify(editor).IsEnabled);
+
+        await Task.Delay(D47.App.Controls.Waiting.Delay + TimeSpan.FromMilliseconds(400), TestContext.Current.CancellationToken);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        var mark = editor.GetVisualDescendants().OfType<D47.App.Controls.WaitingState>().Single();
+
+        Assert.True(mark.IsVisible);
+        Assert.Contains(mark.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "Checking…");
+
+        gate.SetResult();
+        await Task.Delay(D47.App.Controls.Waiting.Minimum + TimeSpan.FromMilliseconds(600), TestContext.Current.CancellationToken);
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.False(mark.IsVisible);
+        Assert.Contains(editor.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "Anthropic answered." && block.IsVisible);
+
+        window.Close();
+    }
+
     /// <summary>The real Anthropic key row with a check bolted to it.</summary>
     private static (SettingsService Settings, SecretEditor Editor, SecretStore Secrets) Editor(
         Action? onCheck = null)
