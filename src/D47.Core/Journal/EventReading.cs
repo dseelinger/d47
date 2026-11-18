@@ -45,5 +45,20 @@ public enum ReadingLinkKind { Engineer, Ship }
 /// <summary>Where a value leads: the engineer's <c>EngineerID</c> or the ship's <c>ShipID</c>.</summary>
 public sealed record ReadingLink(ReadingLinkKind Kind, string Key);
 
-/// <summary>A top-level field of the event, as the file wrote it.</summary>
-public sealed record PlumbingField(string Name, string Value);
+public enum PlumbingKind { Plain, Empty, Object, List }
+
+/// <summary>A field of the event, as the file wrote it. A group carries its children in file order.</summary>
+public sealed record PlumbingField(string Name, string Value)
+{
+    public PlumbingKind Kind { get; init; }
+
+    public IReadOnlyList<PlumbingField> Fields { get; init; } = [];
+
+    /// <summary>A list element's first string field, such as a module's Slot.</summary>
+    public string? Tag { get; init; }
+
+    public bool StartsOpen =>
+        Kind is PlumbingKind.Object or PlumbingKind.List
+        && Fields.Count <= 4
+        && Fields.All(child => child.Kind is PlumbingKind.Plain or PlumbingKind.Empty);
+}

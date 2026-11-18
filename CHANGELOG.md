@@ -12,6 +12,8 @@ Added: Waiting beds of your own. Files in `data\audio\waits` replace the include
 
 Added: The COLUMNS tile on the hull picker and on the HOTAS switches page, on the desktop and in the headset. Each picker keeps its own arrangement, and the switch positions table keeps one for all its switches. With nothing stored both draw the columns they drew before; the tile only moves or removes the columns they have, and DEFAULT COLUMNS returns them. A sort chosen on the picker follows its column when the column moves.
 
+Changed: On the Journal page, under Every field, a list of plain values reads as its items separated by commas, such as "dock, autodock, commodities", instead of as JSON.
+
 Changed: On the desktop, a Stored modules table whose columns do not fit the window at their narrowest scrolls sideways in its own box, its header and rows together; the page does not scroll sideways. In the headset, which does not scroll sideways, a column that would not fit has its checkbox disabled under ADD A COLUMN, and when none fits ADD A COLUMN is disabled and a NO ROOM notice says to remove a column first. Columns that no longer fit the headset panel, as after choosing a smaller panel size, are left out from the right; the columns you chose are kept.
 
 Added: A COLUMNS tile above the Stored modules table, on the desktop and in the headset. It opens a bar for choosing the table's columns: press a header to choose a column, then MOVE LEFT, MOVE RIGHT or REMOVE it; ADD A COLUMN lists every column as checkboxes, including System, Station, In transit, Hot, Engineering and Grade; DEFAULT COLUMNS returns the four default columns. Headers do not sort while the bar is open. Each change is kept, and the headset keeps its own columns.

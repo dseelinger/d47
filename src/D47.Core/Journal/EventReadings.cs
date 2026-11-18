@@ -121,12 +121,77 @@ public static partial class EventReadings
 
     private static List<PlumbingField> Plumbing(JsonElement raw) =>
     [
-        .. raw.EnumerateObject().Select(property => new PlumbingField(
-            property.Name,
-            property.Value.ValueKind == JsonValueKind.String
-                ? property.Value.GetString() ?? string.Empty
-                : property.Value.GetRawText())),
+        .. raw.EnumerateObject().Select(property => PlumbingOf(property.Name, property.Value, tag: null)),
     ];
+
+    private static PlumbingField PlumbingOf(string name, JsonElement value, string? tag)
+    {
+        switch (value.ValueKind)
+        {
+            case JsonValueKind.Object:
+                if (!value.EnumerateObject().Any())
+                {
+                    return new PlumbingField(name, "empty object") { Kind = PlumbingKind.Empty };
+                }
+
+                var members = value.EnumerateObject().ToList();
+                return new PlumbingField(name, value.GetRawText())
+                {
+                    Kind = PlumbingKind.Object,
+                    Tag = tag,
+                    Fields = [.. members.Select(member => PlumbingOf(member.Name, member.Value, tag: null))],
+                };
+
+            case JsonValueKind.Array:
+                var items = value.EnumerateArray().ToList();
+                if (items.Count == 0)
+                {
+                    return new PlumbingField(name, "empty list") { Kind = PlumbingKind.Empty };
+                }
+
+                if (items.All(item => item.ValueKind is not (JsonValueKind.Object or JsonValueKind.Array)))
+                {
+                    return new PlumbingField(name, string.Join(", ", items.Select(PlainText)))
+                    {
+                        Kind = PlumbingKind.Plain,
+                    };
+                }
+
+                return new PlumbingField(name, value.GetRawText())
+                {
+                    Kind = PlumbingKind.List,
+                    Fields =
+                    [
+                        .. items.Select((item, index) => PlumbingOf(
+                            index.ToString(System.Globalization.CultureInfo.InvariantCulture), item, FirstString(item))),
+                    ],
+                };
+
+            default:
+                return new PlumbingField(name, PlainText(value)) { Kind = PlumbingKind.Plain };
+        }
+    }
+
+    private static string PlainText(JsonElement value) =>
+        value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : value.GetRawText();
+
+    private static string? FirstString(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        foreach (var member in element.EnumerateObject())
+        {
+            if (member.Value.ValueKind == JsonValueKind.String)
+            {
+                return member.Value.GetString();
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>An <c>X_Localised</c> whose <c>X</c> is also present: drawn with <c>X</c>.</summary>
     private static bool IsPartner(JsonElement raw, string name) =>
