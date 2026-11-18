@@ -385,7 +385,7 @@ take away the one that does not.
 **What the last two actually mean.** The microphone is always open, so the
 pre-roll has something in it, but nothing is *kept* unless the key is held. In the two hands-free
 settings, every stretch of speech in the room is captured and
-transcribed before Directive 47 can decide whether it was meant for it. They are off out of the box.
+transcribed before Directive 47 can decide whether it was meant for it. They are off out of the box. While you are away and a hearing, model or voice provider in use bills, they stop opening the microphone; a key still does.
 
 What does not change: **none of it is written to disk, and with the local speech model none of it
 leaves your machine.** With a [hosted provider](#provider), every one of those stretches is sent to

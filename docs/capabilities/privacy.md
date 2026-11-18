@@ -414,7 +414,7 @@ In push-to-talk that is only what you held the key for; in the two hands-free se
 stretch of speech in the room, and in wake-word mode the ones that were not addressed to Directive
 47 are discarded without reaching the transcript, the panel or the log. Both are off out of the
 box, the row that turns them on is [unreachable by the model](listening.md#mode), and the panel
-shows the microphone's state the whole time it is open — on the desktop and in the headset.
+shows the microphone's state the whole time it is open — on the desktop and in the headset. While you are [away](#away-minutes) and a hearing, model or voice provider in use bills, the two hands-free settings stop opening the microphone and the panel reads idle; a key still opens it.
 
 With the local model, the one thing that crosses the network for listening is the speech model
 file itself, fetched once from `huggingface.co`. It is listed on the settings surface for as long as

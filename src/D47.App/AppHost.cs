@@ -4008,6 +4008,13 @@ public sealed class AppHost : IDisposable
         var reconciler = services.Reconciler;
         var shipPlans = services.ShipPlans;
 
+        // Hands-free listening uploads and bills on a hosted hearing, model or voice, so it stops while away.
+        services.Gate.VoiceOpeningStopped = () =>
+            host.PaidCallsStopped
+            && (SttProviderCatalog.Selected(settings.Current.Listening.Provider).Hosted
+                || host.Turns.Provider is { RunsOnThisMachine: false }
+                || (host.Speech.Speaker(VoiceGroup.Aboard) is { } aboard && TtsProviderCatalog.Selected(aboard.Id).Billed));
+
         // Push-to-talk, sampled here rather than hooked.
         tick.Add("push-to-talk", context =>
         {

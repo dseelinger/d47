@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: While you are away, the two hands-free listening settings stop opening the microphone when the hearing provider is hosted, the model is not on this machine, or the voice aboard charges. The panel reads idle meanwhile, a key still opens the microphone, and a stretch of speech already being captured is finished. Listening resumes when you return.
+
 Changed: While you are away, D47 does not speak a line you did not ask for on a voice that charges, such as ElevenLabs or OpenAI: callouts, chatter, Narrator and story lines, and the words of a timer or alarm (which still chimes and shows its text) are written but not said, and not said later. A free voice, and the answer to anything you ask, are spoken as before.
 
 Added: Away after (minutes), in Settings › Privacy and this install › Privacy and egress, group When you are away: how long with nothing from you before D47 counts you as away, 5 by default, from 0 to 240, where 0 is never away. Keyboard or mouse input (other than keys D47 presses), a controller button press or hat move, a press on the headset panel, and journal events only you cause, such as a jump, docking or a trade, all count as you being there. D47's log says when you become away and when you are back. The model cannot change the row.

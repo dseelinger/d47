@@ -195,9 +195,15 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
                 return MicrophoneState.Off;
             }
 
-            return IsContinuous ? MicrophoneState.Armed : MicrophoneState.Idle;
+            return IsContinuous && !_voiceStopped ? MicrophoneState.Armed : MicrophoneState.Idle;
         }
     }
+
+    /// <summary>
+    /// While true, a voice onset does not open the gate in a hands-free mode; a key still does. Read once per
+    /// <see cref="Poll"/>, so it must return a stored value.
+    /// </summary>
+    public Func<bool> VoiceOpeningStopped { get; set; } = () => false;
 
     /// <summary>Raised when <see cref="State"/> changed.</summary>
     public event Action<MicrophoneState>? StateChanged;
@@ -216,6 +222,9 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
     private bool _capturing;
     private bool _farEnd;
     private bool _modelLoading;
+
+    /// <summary>What <see cref="VoiceOpeningStopped"/> answered at the last <see cref="Poll"/>.</summary>
+    private volatile bool _voiceStopped;
 
     /// <summary>
     /// What the detector decided on the audio thread and the tick thread has not carried out yet.
@@ -338,13 +347,17 @@ public sealed class ListenGate(int sampleRate, ILogger<ListenGate> logger) : ICa
     {
         bool overrun;
 
+        var was = State;
+        _voiceStopped = VoiceOpeningStopped();
+        RaiseState(was);
+
         // The detector's verdicts, carried out here rather than where they were reached.
         var opening = _pendingOpen;
         var closing = _pendingClose;
         _pendingOpen = false;
         _pendingClose = false;
 
-        if (opening && !IsListening && !Suppressed())
+        if (opening && !IsListening && !Suppressed() && !_voiceStopped)
         {
             Open(byVoice: true, now);
         }
