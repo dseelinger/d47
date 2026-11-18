@@ -14,6 +14,7 @@ public class CoreDependencyTests
         "Vortice",       // D3D11 interop
         "NAudio",        // audio hardware
         "Whisper",       // STT
+        "MeCab",         // Japanese reading
         "Anthropic",     // LLM providers
         "OpenAI",
         "ModelContextProtocol", // module hosting

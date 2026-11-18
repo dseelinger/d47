@@ -5,11 +5,18 @@ namespace D47.Core.Tests;
 
 /// <summary>
 /// The third gate: permissive licences only, no copyleft, verified across the transitive package graph
-/// rather than the direct references.
+/// rather than the direct references, except the packages in <see cref="Accepted"/>.
 /// </summary>
 [Trait("Category", "Gate")]
 public class PackageLicenceGateTests
 {
+    /// <summary>Copyleft packages the maintainer accepted, each pinned to its version and its exact licence expression.</summary>
+    private static readonly Dictionary<PackageId, string> Accepted = new()
+    {
+        // Accepted in #2533 (2026-11-17) and used under LGPL-2.1.
+        [new PackageId("MeCab.DotNet", "1.2.0")] = "GPL-2.0-only OR LGPL-2.1-only",
+    };
+
     /// <summary>Every project the solution builds, each with its resolved graph.</summary>
     private static readonly Lazy<IReadOnlyList<ProjectPackages>> Graph = new(Load);
 
@@ -36,7 +43,9 @@ public class PackageLicenceGateTests
         var package = new PackageId(id, version);
         var licence = Resolve(package);
 
-        if (licence.Verdict == LicenceVerdict.Permissive)
+        if (licence.Verdict == LicenceVerdict.Permissive
+            || (Accepted.TryGetValue(package, out var accepted)
+                && string.Equals(licence.Summary, accepted, StringComparison.Ordinal)))
         {
             return;
         }
@@ -58,8 +67,9 @@ public class PackageLicenceGateTests
              Read from: {licence.Source}
 
              Either drop the package that pulls it in, replace it with one that does not, or — if
-             this licence really is acceptable — add its identifier to LicenceGate.Permissive with
-             a comment saying who decided and when. Do not widen it silently.
+             this licence really is acceptable — add the package to Accepted, pinned to its version
+             and licence expression, with a comment saying who decided and when. Do not widen it
+             silently.
              """);
     }
 

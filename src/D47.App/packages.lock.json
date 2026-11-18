@@ -211,6 +211,11 @@
         "resolved": "8.3.1.3",
         "contentHash": "bx8CE8Js+XGX8PUxAHCBDEORt5aaBYtMN4Hr9QFs57Xithh6yjUyYqksizH6eRDhJkwsGI+SXWmPmMm8lZC9Pw=="
       },
+      "MeCab.DotNet": {
+        "type": "Transitive",
+        "resolved": "1.2.0",
+        "contentHash": "krOACK3qOP5mcd224PwHU9aPTICPySrb6c0bGV4+++EwCUUHPIg7vyj1yUtKGZa9TD+bGI29V5Mnuv2iHYTAgQ=="
+      },
       "MicroCom.Runtime": {
         "type": "Transitive",
         "resolved": "0.11.6",
@@ -475,6 +480,7 @@
         "type": "Project",
         "dependencies": {
           "D47.Core": "[0.1.0, )",
+          "MeCab.DotNet": "[1.2.0, )",
           "Microsoft.ML.OnnxRuntime": "[1.32.0, )",
           "NAudio": "[2.2.1, )"
         }

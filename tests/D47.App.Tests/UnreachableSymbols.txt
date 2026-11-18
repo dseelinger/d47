@@ -144,6 +144,7 @@ D47.Core.Persona.ShipCoreStore.Changed
 D47.Core.Reminders.JournalReminderStore.Changed
 D47.Core.Ships.PowerPriorities.Retracted
 D47.Core.Ships.ShipBuildStore.Path
+D47.Core.Speech.JapaneseDictionaryAssets
 D47.Core.Speech.LocalVoiceStandIn.Installed
 D47.Core.Stories.StoryCatalog.Faults()
 D47.Core.Stories.StoryChapterArchive.Changed
@@ -151,5 +152,8 @@ D47.Core.Utilities.AlarmStore.Changed
 D47.Core.Vr.VrLifecycle.Changed
 D47.Core.Watches.WatchStore.Changed
 D47.Knowledge.CanonnBiologyService.SystemRecordAsync(string, System.Threading.CancellationToken)
+D47.Tts.JapaneseDictionaryInstaller
+D47.Tts.JapaneseReader
+D47.Tts.JapaneseWord
 D47.Vr.SteamVrRuntime.Beam
 D47.Vr.SteamVrRuntime.Cursor

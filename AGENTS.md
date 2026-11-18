@@ -69,7 +69,7 @@ the About dialog. The changelog is a changelog: nothing in the release chain par
 - **`D47.App` references all eight** and is the only place they meet.
 
 Enforced by `tests/D47.Core.Tests/CoreDependencyTests.cs`, which reflects over referenced
-assembly names and fails on `Avalonia`, `Vortice`, `NAudio`, `Whisper`, `Anthropic`, `OpenAI`,
+assembly names and fails on `Avalonia`, `Vortice`, `NAudio`, `Whisper`, `MeCab`, `Anthropic`, `OpenAI`,
 `ModelContextProtocol` or `Serilog.Sinks`. The rule is what makes the headless replay harness possible: break it and game
 logic can no longer run against journal fixtures with no game, device or network.
 

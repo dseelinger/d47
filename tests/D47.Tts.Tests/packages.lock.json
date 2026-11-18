@@ -2,6 +2,12 @@
   "version": 1,
   "dependencies": {
     "net10.0-windows7.0": {
+      "MeCab.DotNet": {
+        "type": "Direct",
+        "requested": "[1.2.0, )",
+        "resolved": "1.2.0",
+        "contentHash": "krOACK3qOP5mcd224PwHU9aPTICPySrb6c0bGV4+++EwCUUHPIg7vyj1yUtKGZa9TD+bGI29V5Mnuv2iHYTAgQ=="
+      },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[18.8.1, )",
@@ -271,6 +277,7 @@
         "type": "Project",
         "dependencies": {
           "D47.Core": "[0.1.0, )",
+          "MeCab.DotNet": "[1.2.0, )",
           "Microsoft.ML.OnnxRuntime": "[1.32.0, )",
           "NAudio": "[2.2.1, )"
         }

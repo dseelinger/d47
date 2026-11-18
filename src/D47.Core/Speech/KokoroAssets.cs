@@ -4,7 +4,7 @@ namespace D47.Core.Speech;
 
 /// <summary>One file the local voice needs, and what it should be when it lands.</summary>
 /// <param name="Path">Where it sits under the models folder, and its path in the repository.</param>
-/// <param name="Repository">The Hugging Face repository it comes from.</param>
+/// <param name="Repository">The repository it comes from: Hugging Face, or GitHub where <see cref="Url"/> is set.</param>
 /// <param name="Bytes">Its size, so a Commander is told what they are agreeing to.</param>
 /// <param name="Sha256">
 /// The hash it is expected to have, pinned here rather than taken from whatever the host says on the
@@ -14,7 +14,8 @@ namespace D47.Core.Speech;
 /// </param>
 public sealed record KokoroAsset(string Path, string Repository, long Bytes, string Sha256)
 {
-    public string Url => $"https://huggingface.co/{Repository}/resolve/main/{Path}";
+    /// <summary>Where it is fetched from: the repository's file on Hugging Face unless set.</summary>
+    public string Url { get; init; } = $"https://huggingface.co/{Repository}/resolve/main/{Path}";
 
     public double Megabytes => Bytes / 1024.0 / 1024.0;
 }
