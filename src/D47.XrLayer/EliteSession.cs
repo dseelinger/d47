@@ -1,7 +1,9 @@
+using System.Numerics;
+
 namespace D47.XrLayer;
 
 /// <summary>
-/// The layer's work in one Elite session: appends d47's quads after Elite's layers, reads the motion controllers and
+/// The layer's work in one Elite session: appends d47's quads and cylinders after Elite's layers, reads the motion controllers and
 /// publishes the layer's half of the block. <see cref="EndFrame"/> never throws and never waits on d47.
 /// </summary>
 internal sealed unsafe class EliteSession
@@ -11,6 +13,17 @@ internal sealed unsafe class EliteSession
 
     /// <summary>The longest <see cref="EndFrame"/> waits for a swapchain image, in nanoseconds.</summary>
     public const long SwapchainWait = 1_000_000;
+
+    /// <summary>Below this curvature a slot is drawn flat.</summary>
+    public const float Flat = 1e-3f;
+
+    /// <summary>The panel's slot. It and <see cref="AvatarSlot"/> are the slots that may be drawn as a cylinder.</summary>
+    public const int PanelSlot = 0;
+
+    public const int AvatarSlot = 1;
+
+    /// <summary>Just below 2π, the largest central angle the extension allows.</summary>
+    public static readonly float MostCentralAngle = MathF.BitDecrement(MathF.Tau);
 
     private const int MostSwapchainImages = 16;
     private const int MostSwapchainFormats = 256;
@@ -32,11 +45,13 @@ internal sealed unsafe class EliteSession
     private ulong lastHeartbeat;
     private long lastAdvance;
     private long textureUses;
+    private bool cylinders;
 
-    private EliteSession(ILayerCalls calls, XrBlock* block, SuggestedBindings suggested, ulong instance, ulong handle)
+    private EliteSession(ILayerCalls calls, XrBlock* block, SuggestedBindings suggested, ulong instance, ulong handle, bool cylinders)
     {
         this.calls = calls;
         this.block = block;
+        this.cylinders = cylinders;
         Handle = handle;
         controllers = new Controllers(calls, suggested, instance, handle);
         for (var i = 0; i < slots.Length; i++)
@@ -47,11 +62,20 @@ internal sealed unsafe class EliteSession
 
     public ulong Handle { get; }
 
-    /// <summary>Starts the layer's work in a session Elite has just created. <paramref name="block"/> may be null.</summary>
+    /// <summary>
+    /// Starts the layer's work in a session Elite has just created. <paramref name="block"/> may be null.
+    /// <paramref name="cylinders"/> is whether the instance has XR_KHR_composition_layer_cylinder on.
+    /// </summary>
     public static EliteSession Attach(
-        ILayerCalls calls, XrBlock* block, SuggestedBindings suggested, ulong instance, XrSessionCreateInfo* createInfo, ulong handle)
+        ILayerCalls calls,
+        XrBlock* block,
+        SuggestedBindings suggested,
+        ulong instance,
+        XrSessionCreateInfo* createInfo,
+        ulong handle,
+        bool cylinders)
     {
-        var session = new EliteSession(calls, block, suggested, instance, handle);
+        var session = new EliteSession(calls, block, suggested, instance, handle, cylinders);
         try
         {
             session.Start(instance, createInfo);
@@ -64,16 +88,21 @@ internal sealed unsafe class EliteSession
         return session;
     }
 
-    /// <summary>Ends Elite's frame through the next layer, with d47's quads appended while they can be drawn.</summary>
+    /// <summary>
+    /// Ends Elite's frame through the next layer, with d47's layers appended while they can be drawn. A rejected
+    /// frame that carried a cylinder turns cylinders off for the session; one that carried only quads turns drawing off.
+    /// </summary>
     public int EndFrame(XrFrameEndInfo* frameEndInfo)
     {
         var quads = stackalloc XrCompositionLayerQuad[XrBlock.SlotCount];
+        var curved = stackalloc XrCompositionLayerCylinderKHR[XrBlock.SlotCount];
         var layers = stackalloc nint[XrConstant.MinLayersSupported];
         XrFrameEndInfo withQuads = default;
         int added;
+        var carriedCylinder = false;
         try
         {
-            added = Prepare(frameEndInfo, quads, layers, &withQuads);
+            added = Prepare(frameEndInfo, quads, curved, layers, &withQuads, out carriedCylinder);
         }
         catch (Exception)
         {
@@ -92,7 +121,15 @@ internal sealed unsafe class EliteSession
             return result;
         }
 
-        TurnOff(XrRefusal.FrameRejected);
+        if (carriedCylinder)
+        {
+            TurnOffCylinders();
+        }
+        else
+        {
+            TurnOff(XrRefusal.FrameRejected);
+        }
+
         return calls.EndFrame(Handle, frameEndInfo);
     }
 
@@ -153,6 +190,7 @@ internal sealed unsafe class EliteSession
         block->Magic = XrBlock.MagicValue;
         block->LayoutVersion = XrBlock.CurrentLayoutVersion;
         published.Attached = 1;
+        published.Cylinders = cylinders ? 1u : 0u;
         ReadRuntimeName(instance);
 
         var binding = FindD3D11Binding(createInfo);
@@ -193,8 +231,15 @@ internal sealed unsafe class EliteSession
         Publish();
     }
 
-    private int Prepare(XrFrameEndInfo* frameEndInfo, XrCompositionLayerQuad* quads, nint* layers, XrFrameEndInfo* withQuads)
+    private int Prepare(
+        XrFrameEndInfo* frameEndInfo,
+        XrCompositionLayerQuad* quads,
+        XrCompositionLayerCylinderKHR* curved,
+        nint* layers,
+        XrFrameEndInfo* withQuads,
+        out bool carriedCylinder)
     {
+        carriedCylinder = false;
         if (block is null)
         {
             return 0;
@@ -238,13 +283,27 @@ internal sealed unsafe class EliteSession
         }
 
         var room = XrConstant.MinLayersSupported - (int)eliteCount;
+        var ours = stackalloc nint[XrBlock.SlotCount];
         var added = 0;
         for (var i = 0; i < XrBlock.SlotCount && added < room; i++)
         {
-            if (TryQuad(slots[i], ref lastD47.Slots[i], &quads[added]))
+            if (!TryQuad(slots[i], ref lastD47.Slots[i], &quads[added]))
             {
-                added++;
+                continue;
             }
+
+            if (cylinders && i is PanelSlot or AvatarSlot && IsCurved(lastD47.Slots[i].Curvature))
+            {
+                curved[added] = Cylinder(in quads[added], lastD47.Slots[i].Curvature);
+                ours[added] = (nint)(&curved[added]);
+                carriedCylinder = true;
+            }
+            else
+            {
+                ours[added] = (nint)(&quads[added]);
+            }
+
+            added++;
         }
 
         if (added == 0)
@@ -259,7 +318,7 @@ internal sealed unsafe class EliteSession
 
         for (var i = 0; i < added; i++)
         {
-            layers[eliteCount + i] = (nint)(&quads[i]);
+            layers[eliteCount + i] = ours[i];
         }
 
         *withQuads = *frameEndInfo;
@@ -349,6 +408,41 @@ internal sealed unsafe class EliteSession
         quad->Width = slot.WidthMetres;
         quad->Height = QuadHeight(in slot);
         return true;
+    }
+
+    /// <summary>True when a curvature is at least <see cref="Flat"/> and at most 1.</summary>
+    internal static bool IsCurved(float curvature) => curvature is >= Flat and <= 1f;
+
+    /// <summary>
+    /// The cylinder a curved quad lies on: its arc is the quad's width, the middle of the arc is the quad's centre,
+    /// and the pose is moved the radius along the quad's own +Z, to the cylinder's axis on the viewer's side.
+    /// </summary>
+    internal static XrCompositionLayerCylinderKHR Cylinder(in XrCompositionLayerQuad quad, float curvature)
+    {
+        var arc = curvature * MathF.Tau;
+        var radius = quad.Width / arc;
+        var pose = quad.Pose;
+        var axis = Vector3.Transform(
+            new Vector3(0f, 0f, radius),
+            new Quaternion(pose.OrientationX, pose.OrientationY, pose.OrientationZ, pose.OrientationW));
+
+        return new XrCompositionLayerCylinderKHR
+        {
+            Type = XrType.CompositionLayerCylinder,
+            LayerFlags = quad.LayerFlags,
+            Space = quad.Space,
+            EyeVisibility = quad.EyeVisibility,
+            SubImage = quad.SubImage,
+            Pose = pose with
+            {
+                PositionX = pose.PositionX + axis.X,
+                PositionY = pose.PositionY + axis.Y,
+                PositionZ = pose.PositionZ + axis.Z,
+            },
+            Radius = radius,
+            CentralAngle = MathF.Min(arc, MostCentralAngle),
+            AspectRatio = (float)quad.SubImage.ImageRect.Width / quad.SubImage.ImageRect.Height,
+        };
     }
 
     /// <summary>True when every field of a visible slot is finite, in range and consistent.</summary>
@@ -727,6 +821,14 @@ internal sealed unsafe class EliteSession
         drawing = false;
         published.Refusal = refusal;
         Publish();
+    }
+
+    /// <summary>Draws every slot as a quad for the rest of the session, and tells d47. Never throws.</summary>
+    private void TurnOffCylinders()
+    {
+        cylinders = false;
+        published.Cylinders = 0;
+        TryPublish();
     }
 
     /// <summary>Stops drawing for the rest of the session. Never throws.</summary>

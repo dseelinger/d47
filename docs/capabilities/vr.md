@@ -432,7 +432,7 @@ the right size is Scale.
 | Locking {#panel-lock} | Head-locked follows you; world-locked stays where you put it |
 | Distance {#panel-distance} | How far in front of you, in metres. Head-locked only — a surface you put down is where you put it |
 | Size {#panel-size} | How wide, in metres. Height follows the panel's proportions, so there is nothing else to set |
-| Curvature {#panel-curve} | 0 is flat, 1 is wrapped around you |
+| Curvature {#panel-curve} | 0 is flat, 1 is wrapped around you. It applies through SteamVR and without SteamVR; on an OpenXR runtime that cannot draw a curved layer the panel is flat |
 | Scale {#panel-scale} | How large the content is drawn, on the same steps the desktop window zooms with |
 | Resolution {#panel-resolution} | How many pixels the panel is rendered at, which also sets its shape. The big panel starts at 1024x640, the mini panel at 512x280 |
 

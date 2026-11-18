@@ -15,7 +15,7 @@ internal struct XrBlock
     /// <summary>"D47X" read as a little-endian uint.</summary>
     public const uint MagicValue = 0x58373444;
 
-    public const uint CurrentLayoutVersion = 2;
+    public const uint CurrentLayoutVersion = 3;
 
     public const int SlotCount = 6;
 
@@ -84,6 +84,9 @@ internal struct XrQuadSlot
 
     /// <summary>The shared texture's name, null-terminated.</summary>
     public XrTextureName TextureName;
+
+    /// <summary>0 is flat, 1 wraps the full circle. The layer draws slots 0 and 1 curved while <see cref="XrLayerHalf.Cylinders"/> is 1.</summary>
+    public float Curvature;
 }
 
 [InlineArray(XrBlock.TextureNameLength)]
@@ -131,6 +134,9 @@ internal struct XrLayerHalf
 
     /// <summary>xrGetInstanceProperties' runtimeName, UTF-8, null-terminated.</summary>
     public XrRuntimeName RuntimeName;
+
+    /// <summary>1 while the layer draws a curved slot as a cylinder; 0 draws every slot flat.</summary>
+    public uint Cylinders;
 }
 
 [InlineArray(XrBlock.HandCount)]

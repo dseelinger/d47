@@ -60,6 +60,13 @@ internal sealed unsafe class InMemoryXrBlock : IXrBlockMemory, IDisposable
         Write();
     }
 
+    /// <summary>Whether the layer says it draws curved slots as cylinders.</summary>
+    public void Cylinders(bool on)
+    {
+        _layer.Cylinders = on ? 1u : 0u;
+        Write();
+    }
+
     public void Refuse(XrRefusal refusal)
     {
         _layer.Refusal = refusal;

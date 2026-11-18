@@ -13,6 +13,7 @@ internal static unsafe class Layer
     private const ulong ApiVersion = 1UL << 48;
 
     private static bool inElite;
+    private static bool cylinders;
     private static delegate* unmanaged<ulong, byte*, nint*, int> nextGetInstanceProcAddr;
     private static delegate* unmanaged<ulong, void*, ulong*, int> nextCreateSession;
     private static delegate* unmanaged<ulong, void*, int> nextEndFrame;
@@ -72,7 +73,9 @@ internal static unsafe class Layer
         var forwarded = *layerInfo;
         forwarded.NextInfo = next->Next;
         nextGetInstanceProcAddr = next->NextGetInstanceProcAddr;
-        return next->NextCreateApiLayerInstance(info, &forwarded, instance);
+        var result = CylinderExtension.Create(inElite, next, (XrInstanceCreateInfo*)info, &forwarded, instance, out var enabled);
+        cylinders = enabled;
+        return result;
     }
 
     [UnmanagedCallersOnly]
@@ -158,7 +161,7 @@ internal static unsafe class Layer
                         block = SharedBlock.Map();
                     }
 
-                    current = EliteSession.Attach(calls, block, Suggested, instance, (XrSessionCreateInfo*)createInfo, *session);
+                    current = EliteSession.Attach(calls, block, Suggested, instance, (XrSessionCreateInfo*)createInfo, *session, cylinders);
                 }
             }
         }

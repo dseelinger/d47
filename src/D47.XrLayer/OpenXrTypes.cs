@@ -6,6 +6,8 @@ namespace D47.XrLayer;
 
 internal static class XrType
 {
+    public const int ExtensionProperties = 2;
+    public const int InstanceCreateInfo = 3;
     public const int SessionCreateInfo = 8;
     public const int SwapchainCreateInfo = 9;
     public const int FrameEndInfo = 12;
@@ -26,6 +28,7 @@ internal static class XrType
     public const int ActionStateGetInfo = 58;
     public const int SessionActionSetsAttachInfo = 60;
     public const int ActionsSyncInfo = 61;
+    public const int CompositionLayerCylinder = 1000017000;
     public const int GraphicsBindingVulkan = 1000025000;
     public const int GraphicsBindingD3D11 = 1000027000;
     public const int SwapchainImageD3D11 = 1000027001;
@@ -49,6 +52,9 @@ internal static class XrConstant
     public const int MaxLocalizedActionSetNameSize = 128;
     public const int MaxActionNameSize = 64;
     public const int MaxLocalizedActionNameSize = 128;
+    public const int MaxExtensionNameSize = 128;
+    public const int MaxApplicationNameSize = 128;
+    public const int MaxEngineNameSize = 128;
 
     /// <summary>XR_MIN_COMPOSITION_LAYERS_SUPPORTED: every runtime takes at least this many layers.</summary>
     public const int MinLayersSupported = 16;
@@ -65,6 +71,38 @@ internal unsafe struct XrBaseHeader
 {
     public int Type;
     public void* Next;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrApplicationInfo
+{
+    public fixed byte ApplicationName[XrConstant.MaxApplicationNameSize];
+    public uint ApplicationVersion;
+    public fixed byte EngineName[XrConstant.MaxEngineNameSize];
+    public uint EngineVersion;
+    public ulong ApiVersion;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrInstanceCreateInfo
+{
+    public int Type;
+    public void* Next;
+    public ulong CreateFlags;
+    public XrApplicationInfo ApplicationInfo;
+    public uint EnabledApiLayerCount;
+    public byte** EnabledApiLayerNames;
+    public uint EnabledExtensionCount;
+    public byte** EnabledExtensionNames;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrExtensionProperties
+{
+    public int Type;
+    public void* Next;
+    public fixed byte ExtensionName[XrConstant.MaxExtensionNameSize];
+    public uint ExtensionVersion;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -195,6 +233,22 @@ internal unsafe struct XrCompositionLayerQuad
     public XrPosef Pose;
     public float Width;
     public float Height;
+}
+
+/// <summary>From XR_KHR_composition_layer_cylinder.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrCompositionLayerCylinderKHR
+{
+    public int Type;
+    public void* Next;
+    public ulong LayerFlags;
+    public ulong Space;
+    public int EyeVisibility;
+    public XrSwapchainSubImage SubImage;
+    public XrPosef Pose;
+    public float Radius;
+    public float CentralAngle;
+    public float AspectRatio;
 }
 
 [StructLayout(LayoutKind.Sequential)]

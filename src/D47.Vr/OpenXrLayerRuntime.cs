@@ -72,6 +72,7 @@ public sealed unsafe class OpenXrLayerRuntime(
     private ulong _generation;
     private int _serial;
 
+    private volatile bool _curved;
     private bool _pointing;
     private bool _wanted;
     private bool _triggerDown;
@@ -108,7 +109,8 @@ public sealed unsafe class OpenXrLayerRuntime(
         }
     }
 
-    public bool SupportsCurvature => false;
+    /// <summary>Whether the layer draws a curved panel, as it said at the last serve. Turns false when a curved frame is rejected.</summary>
+    public bool SupportsCurvature => _curved;
 
     public VrPose? Head { get; private set; }
 
@@ -216,6 +218,7 @@ public sealed unsafe class OpenXrLayerRuntime(
             _deviceOpen = true;
             _d47 = default;
             _d47.Pointing = _pointing ? 1u : 0u;
+            _curved = _layer.Cylinders == 1;
             Publish();
         }
 
@@ -247,6 +250,7 @@ public sealed unsafe class OpenXrLayerRuntime(
             }
 
             layer = _layer;
+            _curved = layer.Cylinders == 1;
         }
 
         if (layer.FrameCounter != _counterAtServe || _counterMovedAt is null)
@@ -360,6 +364,7 @@ public sealed unsafe class OpenXrLayerRuntime(
             _wanted = false;
             _triggerDown = false;
             _backWasDown = false;
+            _curved = false;
             Head = null;
         }
     }
@@ -602,6 +607,7 @@ public sealed unsafe class OpenXrLayerRuntime(
             slot.Space = rides ? XrQuadSpace.Head : XrQuadSpace.Cockpit;
             slot.Pose = ToBlock(pose);
             slot.WidthMetres = placement.WidthMetres;
+            slot.Curvature = placement.Curvature;
             slot.TextureWidth = (uint)pair.Width;
             slot.TextureHeight = (uint)pair.Height;
             slot.TextureGeneration = pair.Generation;
@@ -817,6 +823,7 @@ public sealed unsafe class OpenXrLayerRuntime(
         slot.RectY = 0;
         slot.RectWidth = sprite.Width;
         slot.RectHeight = sprite.Height;
+        slot.Curvature = 0f;
         Name(ref slot, sprite.Name);
     }
 

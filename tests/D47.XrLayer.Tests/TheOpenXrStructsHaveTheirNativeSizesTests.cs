@@ -22,7 +22,43 @@ public sealed unsafe class TheOpenXrStructsHaveTheirNativeSizesTests
         Assert.Equal(40, sizeof(XrFrameEndInfo));
         Assert.Equal(32, sizeof(XrSwapchainSubImage));
         Assert.Equal(112, sizeof(XrCompositionLayerQuad));
+        Assert.Equal(112, sizeof(XrCompositionLayerCylinderKHR));
         Assert.Equal(44, sizeof(TextureDescription));
+    }
+
+    [Fact]
+    public void TheInstanceStructsHaveTheirHeaderSizes()
+    {
+        Assert.Equal(272, sizeof(XrApplicationInfo));
+        Assert.Equal(328, sizeof(XrInstanceCreateInfo));
+        Assert.Equal(152, sizeof(XrExtensionProperties));
+
+        var createInfo = default(XrInstanceCreateInfo);
+        var c = (byte*)&createInfo;
+        Assert.Equal(24, (byte*)&createInfo.ApplicationInfo - c);
+        Assert.Equal(296, (byte*)&createInfo.EnabledApiLayerCount - c);
+        Assert.Equal(312, (byte*)&createInfo.EnabledExtensionCount - c);
+        Assert.Equal(320, (byte*)&createInfo.EnabledExtensionNames - c);
+
+        var properties = default(XrExtensionProperties);
+        var p = (byte*)&properties;
+        Assert.Equal(16, properties.ExtensionName - p);
+        Assert.Equal(144, (byte*)&properties.ExtensionVersion - p);
+    }
+
+    [Fact]
+    public void TheCylindersFieldsSitWhereTheRuntimeReadsThem()
+    {
+        var cylinder = default(XrCompositionLayerCylinderKHR);
+        var c = (byte*)&cylinder;
+        Assert.Equal(16, (byte*)&cylinder.LayerFlags - c);
+        Assert.Equal(24, (byte*)&cylinder.Space - c);
+        Assert.Equal(32, (byte*)&cylinder.EyeVisibility - c);
+        Assert.Equal(40, (byte*)&cylinder.SubImage - c);
+        Assert.Equal(72, (byte*)&cylinder.Pose - c);
+        Assert.Equal(100, (byte*)&cylinder.Radius - c);
+        Assert.Equal(104, (byte*)&cylinder.CentralAngle - c);
+        Assert.Equal(108, (byte*)&cylinder.AspectRatio - c);
     }
 
     [Fact]

@@ -16,7 +16,7 @@ internal sealed unsafe class LayerRig : IDisposable
     private readonly XrBaseHeader* eliteLayer;
     private XrD47Half d47;
 
-    public LayerRig(int bindingType = XrType.GraphicsBindingD3D11, long[]? swapchainFormats = null)
+    public LayerRig(int bindingType = XrType.GraphicsBindingD3D11, long[]? swapchainFormats = null, bool cylinders = false)
     {
         if (swapchainFormats is not null)
         {
@@ -29,7 +29,7 @@ internal sealed unsafe class LayerRig : IDisposable
 
         var binding = new XrGraphicsBindingD3D11 { Type = bindingType, Device = 0xD3D };
         var createInfo = new XrSessionCreateInfo { Type = XrType.SessionCreateInfo, Next = &binding };
-        Session = EliteSession.Attach(Next, Block, Bindings, Instance, &createInfo, SessionHandle);
+        Session = EliteSession.Attach(Next, Block, Bindings, Instance, &createInfo, SessionHandle, cylinders);
     }
 
     public XrBlock* Block { get; }
@@ -222,6 +222,9 @@ internal sealed unsafe class FakeNext : ILayerCalls
     /// <summary>Rejects every frame that carries a quad, as a runtime does a malformed one.</summary>
     public bool RejectQuads { get; set; }
 
+    /// <summary>Rejects every frame that carries a cylinder.</summary>
+    public bool RejectCylinders { get; set; }
+
     public nint Original { get; set; }
 
     /// <summary>Elite's own attach info, to tell its call passed on unchanged from one the layer built.</summary>
@@ -369,6 +372,7 @@ internal sealed unsafe class FakeNext : ILayerCalls
     {
         var layers = new List<nint>();
         var quads = new List<XrCompositionLayerQuad>();
+        var cylinders = new List<XrCompositionLayerCylinderKHR>();
         for (var i = 0; i < frameEndInfo->LayerCount; i++)
         {
             var layer = frameEndInfo->Layers[i];
@@ -377,10 +381,16 @@ internal sealed unsafe class FakeNext : ILayerCalls
             {
                 quads.Add(*(XrCompositionLayerQuad*)layer);
             }
+            else if (layer->Type == XrType.CompositionLayerCylinder)
+            {
+                cylinders.Add(*(XrCompositionLayerCylinderKHR*)layer);
+            }
         }
 
-        Frames.Add(new Frame((nint)frameEndInfo == Original, frameEndInfo->DisplayTime, layers, quads));
-        return RejectQuads && quads.Count > 0 ? XrResult.ErrorPoseInvalid : XrResult.Success;
+        Frames.Add(new Frame((nint)frameEndInfo == Original, frameEndInfo->DisplayTime, layers, quads, cylinders));
+        return (RejectQuads && quads.Count > 0) || (RejectCylinders && cylinders.Count > 0)
+            ? XrResult.ErrorPoseInvalid
+            : XrResult.Success;
     }
 
     public int StringToPath(ulong instance, byte* pathString, ulong* path)
@@ -476,7 +486,12 @@ internal sealed unsafe class FakeNext : ILayerCalls
     private string ActionName(ulong action) => Actions.Single(a => a.Value.Handle == action).Key;
 
     /// <summary>One call to the next xrEndFrame.</summary>
-    public sealed record Frame(bool IsElitesOwn, long DisplayTime, IReadOnlyList<nint> Layers, IReadOnlyList<XrCompositionLayerQuad> Quads);
+    public sealed record Frame(
+        bool IsElitesOwn,
+        long DisplayTime,
+        IReadOnlyList<nint> Layers,
+        IReadOnlyList<XrCompositionLayerQuad> Quads,
+        IReadOnlyList<XrCompositionLayerCylinderKHR> Cylinders);
 }
 
 /// <summary>Stands in for the session's Direct3D 11 device. Textures are found by name.</summary>

@@ -86,6 +86,46 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["Layer.Hands[1].Aim"] = 1356,
             ["Layer.RuntimeName"] = 1424,
         }),
+        [3] = (1608, new()
+        {
+            ["Magic"] = 0,
+            ["LayoutVersion"] = 4,
+            ["D47.Sequence"] = 8,
+            ["D47.Pointing"] = 12,
+            ["D47.Heartbeat"] = 16,
+            ["D47.Slots[0].Visible"] = 24,
+            ["D47.Slots[0].Space"] = 28,
+            ["D47.Slots[0].Pose"] = 32,
+            ["D47.Slots[0].WidthMetres"] = 60,
+            ["D47.Slots[0].TextureWidth"] = 64,
+            ["D47.Slots[0].TextureHeight"] = 68,
+            ["D47.Slots[0].TextureGeneration"] = 72,
+            ["D47.Slots[0].RectX"] = 80,
+            ["D47.Slots[0].RectY"] = 84,
+            ["D47.Slots[0].RectWidth"] = 88,
+            ["D47.Slots[0].RectHeight"] = 92,
+            ["D47.Slots[0].TextureName"] = 96,
+            ["D47.Slots[0].Curvature"] = 224,
+            ["D47.Slots[1].Visible"] = 232,
+            ["D47.Slots[5].TextureName"] = 1136,
+            ["Layer.Sequence"] = 1272,
+            ["Layer.Attached"] = 1276,
+            ["Layer.FrameCounter"] = 1280,
+            ["Layer.Refusal"] = 1288,
+            ["Layer.ControllerRefusal"] = 1292,
+            ["Layer.AdapterLuidLow"] = 1296,
+            ["Layer.AdapterLuidHigh"] = 1300,
+            ["Layer.HeadValid"] = 1304,
+            ["Layer.Head"] = 1308,
+            ["Layer.Hands[0].Aim"] = 1336,
+            ["Layer.Hands[0].Grip"] = 1364,
+            ["Layer.Hands[0].Valid"] = 1392,
+            ["Layer.Hands[0].TriggerValue"] = 1396,
+            ["Layer.Hands[0].GripValue"] = 1400,
+            ["Layer.Hands[1].Aim"] = 1404,
+            ["Layer.RuntimeName"] = 1472,
+            ["Layer.Cylinders"] = 1600,
+        }),
     };
 
     [Fact]
@@ -103,7 +143,7 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
     public void ThePoseAndTheNamesHaveTheirWireSizes()
     {
         Assert.Equal(28, sizeof(XrBlockPose));
-        Assert.Equal(200, sizeof(XrQuadSlot));
+        Assert.Equal(208, sizeof(XrQuadSlot));
         Assert.Equal(68, sizeof(XrHand));
         Assert.Equal(XrBlock.TextureNameLength * sizeof(char), sizeof(XrTextureName));
         Assert.Equal(XrBlock.RuntimeNameLength, sizeof(XrRuntimeName));
@@ -140,6 +180,7 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["D47.Slots[0].RectWidth"] = Offset(b, &b->D47.Slots[0].RectWidth),
             ["D47.Slots[0].RectHeight"] = Offset(b, &b->D47.Slots[0].RectHeight),
             ["D47.Slots[0].TextureName"] = Offset(b, &b->D47.Slots[0].TextureName),
+            ["D47.Slots[0].Curvature"] = Offset(b, &b->D47.Slots[0].Curvature),
             ["D47.Slots[1].Visible"] = Offset(b, &b->D47.Slots[1].Visible),
             ["D47.Slots[5].TextureName"] = Offset(b, &b->D47.Slots[5].TextureName),
             ["Layer.Sequence"] = Offset(b, &b->Layer.Sequence),
@@ -158,6 +199,7 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["Layer.Hands[0].GripValue"] = Offset(b, &b->Layer.Hands[0].GripValue),
             ["Layer.Hands[1].Aim"] = Offset(b, &b->Layer.Hands[1].Aim),
             ["Layer.RuntimeName"] = Offset(b, &b->Layer.RuntimeName),
+            ["Layer.Cylinders"] = Offset(b, &b->Layer.Cylinders),
         };
     }
 

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: With Show D47 without SteamVR, the panel and the avatar are curved by the Curvature setting on an OpenXR runtime that can draw a curved layer, such as Virtual Desktop's. Pointing follows the curve. On a runtime that cannot, or one that refuses a curved frame, the panel, the avatar and pointing are flat for the rest of Elite's session, as they were on this route before.
+
 Added: SPEND counts hosted transcription. Each utterance Groq, OpenAI, Deepgram or ElevenLabs Scribe transcribes is a charge in `data\spend.jsonl` with the seconds of audio sent, priced per minute from the model catalog, and the session figure includes it. In the Totals table each of those providers is a row of its own with the minutes it transcribed under each figure. A request that fails or is cancelled is not counted, and Whisper on this computer costs nothing and is not listed.
 
 Changed: Each model charge D47 writes to `data\spend.jsonl` also records what the call was for, such as conversation, story chapters, NPC chatter or the logbook, and a story chapter's charge records the writing step. Charges written before this have no purpose and count in every total as before. SPEND shows the same figures it did.
