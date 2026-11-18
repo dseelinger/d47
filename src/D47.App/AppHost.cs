@@ -2463,6 +2463,10 @@ public sealed class AppHost : IDisposable
                     DownloadChatterbox = () => speech.DownloadChatterbox,
                     ChatterboxInstalled = () => D47.Core.Speech.ChatterboxAssets.IsInstalled(files, speech.ChatterboxFolder()),
                     StoryCastUses = providerId => late.Host?.Stories?.CastUses(providerId) == true,
+                    ChatterboxJapaneseState = speech.ChatterboxJapaneseState,
+                    DownloadChatterboxJapanese = () => speech.DownloadChatterboxJapanese,
+                    ChatterboxJapaneseInstalled = speech.ChatterboxJapaneseInstalled,
+                    StoryCastSpeaksJapaneseOnChatterbox = () => late.Host?.Stories?.CastSpeaksJapaneseOnChatterbox() == true,
                     OutputDevices = () => [.. audioSink.Devices().Select(device => device.Id)],
                     DeviceLabel = id => audioSink.Devices()
                         .FirstOrDefault(device => device.Id == id).Name ?? id,

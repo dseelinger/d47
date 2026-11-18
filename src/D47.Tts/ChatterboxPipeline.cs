@@ -361,7 +361,7 @@ internal sealed class ChatterboxPipeline : IChatterboxEngine
         return best;
     }
 
-    private static long[] Ones(int length)
+    internal static long[] Ones(int length)
     {
         var ones = new long[length];
         Array.Fill(ones, 1L);
@@ -380,10 +380,10 @@ internal sealed class ChatterboxPipeline : IChatterboxEngine
         return positions;
     }
 
-    private static TensorElementType TypeOf(IReadOnlyDictionary<string, NodeMetadata> metadata, string name) =>
+    internal static TensorElementType TypeOf(IReadOnlyDictionary<string, NodeMetadata> metadata, string name) =>
         metadata[name].ElementDataType;
 
-    private static OrtValue Make(float[] data, long[] shape, TensorElementType type)
+    internal static OrtValue Make(float[] data, long[] shape, TensorElementType type)
     {
         if (type == TensorElementType.Float)
         {
@@ -406,7 +406,7 @@ internal sealed class ChatterboxPipeline : IChatterboxEngine
         return value;
     }
 
-    private static float[] ReadFloats(OrtValue value)
+    internal static float[] ReadFloats(OrtValue value)
     {
         var type = value.GetTensorTypeAndShape().ElementDataType;
 
@@ -431,16 +431,16 @@ internal sealed class ChatterboxPipeline : IChatterboxEngine
         return floats;
     }
 
-    private static long[] ReadLongs(OrtValue value) => value.GetTensorDataAsSpan<long>().ToArray();
+    internal static long[] ReadLongs(OrtValue value) => value.GetTensorDataAsSpan<long>().ToArray();
 
     /// <summary>The value itself when it is already <paramref name="type"/>, otherwise a converted copy.</summary>
-    private static OrtValue Cast(OrtValue value, TensorElementType type) =>
+    internal static OrtValue Cast(OrtValue value, TensorElementType type) =>
         value.GetTensorTypeAndShape().ElementDataType == type
             ? value
             : Make(ReadFloats(value), value.GetTensorTypeAndShape().Shape, type);
 
     /// <summary>The reference clip's conditioning joined in front of the text embedding, along the sequence axis.</summary>
-    private static OrtValue Concatenate(OrtValue first, OrtValue second, TensorElementType type)
+    internal static OrtValue Concatenate(OrtValue first, OrtValue second, TensorElementType type)
     {
         var left = first.GetTensorTypeAndShape().Shape;
         var right = second.GetTensorTypeAndShape().Shape;

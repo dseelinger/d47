@@ -182,7 +182,7 @@ and still costing.
 |---|---|
 | `edge` | Edge Neural, the free voices Microsoft Edge's Read Aloud uses. |
 | `kokoro` | Kokoro, **running on this computer**. Free, no key. |
-| `chatterbox` | Chatterbox Turbo, **running on this computer's processor**. Free, no key. |
+| `chatterbox` | Chatterbox Turbo, and Chatterbox Multilingual for Japanese story lines, **running on this computer's processor**. Free, no key. |
 | `elevenlabs` | ElevenLabs. Paid, needs an API key. |
 | `openai` | OpenAI. Paid, needs an API key — **the same key the language model uses**. |
 | `cartesia` | Cartesia. Paid, needs an API key. The largest voice library here. |
@@ -281,6 +281,24 @@ Kokoro stays the default local voice.
 
 It uses as many threads as the processor has performance cores, up to eight. The first line after
 starting D47 also loads the model, so it takes longer than the lines after it.
+
+**A story character who speaks Japanese can be given any Chatterbox voice** in **Change voice**, your
+own and your custom voices included. That character's Japanese lines are spoken by a second model,
+Resemble AI's Chatterbox Multilingual, from the same voice; every other line is still spoken by Turbo.
+
+- **It is a second download of 1,483 MB**, fetched once from
+  `huggingface.co/onnx-community/chatterbox-multilingual-ONNX`, with the dictionary D47 reads Japanese
+  with from `github.com` if Kokoro has not already fetched it. Every file is checked against a pinned
+  size and SHA-256 before it is kept.
+- **A Chatterbox Japanese row** under the Chatterbox voice row is shown while a downloaded story gives a
+  Japanese-speaking character a Chatterbox voice and the model is not downloaded. It says what the
+  download costs and has a **Download it** button. Until then the story asks for the download before it
+  starts, and a Japanese line due before it arrives is spoken in the story's own voice.
+- **A Japanese line performs no bracketed directions** and does not take your pronunciation
+  corrections. Each word written in kanji is replaced by its dictionary reading in hiragana; kana, digits
+  and punctuation are given as written. A kanji word the dictionary does not hold is left out.
+- **The first Japanese line of a session waits several seconds** while the second model opens. It then
+  stays loaded beside Turbo until D47 closes, which takes about 1.8 GB of memory for the two.
 
 **OpenAI is the only one that can be told how to *perform*.** Every other provider assigns a voice
 and that is the whole of the choice; OpenAI takes a direction — accent, tone, intonation, delivery —

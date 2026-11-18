@@ -21,14 +21,21 @@ public class EachProviderSaysWhichLanguagesItSpeaksTests
     [Theory]
     [InlineData(TtsProviderCatalog.KokoroId, "af_heart")]
     [InlineData(TtsProviderCatalog.KokoroId, "bm_george")]
-    [InlineData(TtsProviderCatalog.ChatterboxId, "0001")]
-    public void ALocalProvidersEnglishVoiceSpeaksEnglishOnly(string id, string voice)
+    public void AKokoroEnglishVoiceSpeaksEnglishOnly(string id, string voice)
     {
         var provider = TtsProviderCatalog.Selected(id);
 
         Assert.True(provider.SpeaksIn(null, voice));
         Assert.True(provider.SpeaksIn("en", voice));
         Assert.False(provider.SpeaksIn("ja", voice));
+    }
+
+    [Fact]
+    public void AChatterboxVoiceSpeaksEnglishAndJapanese()
+    {
+        Assert.True(TtsProviderCatalog.Chatterbox.SpeaksIn(null, "0001"));
+        Assert.True(TtsProviderCatalog.Chatterbox.SpeaksIn("en", "0001"));
+        Assert.True(TtsProviderCatalog.Chatterbox.SpeaksIn("ja", "0001"));
     }
 
     [Theory]

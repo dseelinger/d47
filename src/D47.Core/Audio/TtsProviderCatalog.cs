@@ -322,6 +322,9 @@ public static class TtsProviderCatalog
         VoiceIdsAreOpaque = false,
         LanguageCanBePinned = true,
 
+        // Every voice speaks both: Turbo English, and a second model Japanese story lines.
+        Languages = [SpokenLanguage.English, SpokenLanguage.Japanese],
+
         // The model has no speed input.
         RateCanBeSet = false,
     };

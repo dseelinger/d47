@@ -28,7 +28,7 @@ public sealed record PinnedVoice(string ProviderId, string VoiceId)
 
 /// <summary>
 /// A chosen cast voice that speaks a sentence in the story's pinned voice when the chosen provider throws a
-/// <see cref="TtsException"/>, and reports why.
+/// <see cref="TtsException"/>, and reports why; a model that is not downloaded is not reported as a failure.
 /// </summary>
 public sealed class FallingBackTtsProvider(ITtsProvider chosen, ITtsProvider pinned, string pinnedVoice, Action<string> failed)
     : ITtsProvider
@@ -68,7 +68,11 @@ public sealed class FallingBackTtsProvider(ITtsProvider chosen, ITtsProvider pin
         }
         catch (TtsException ex)
         {
-            failed(ex.Message);
+            if (ex.Fault != TtsFault.NotDownloaded)
+            {
+                failed(ex.Message);
+            }
+
             return await pinned.SynthesizeAsync(text, voice with { VoiceId = pinnedVoice, Name = null }, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -88,7 +92,11 @@ public sealed class FallingBackTtsProvider(ITtsProvider chosen, ITtsProvider pin
         }
         catch (TtsException ex)
         {
-            failed(ex.Message);
+            if (ex.Fault != TtsFault.NotDownloaded)
+            {
+                failed(ex.Message);
+            }
+
             return await pinned.StreamAsync(text, voice with { VoiceId = pinnedVoice, Name = null }, cancellationToken).ConfigureAwait(false);
         }
     }

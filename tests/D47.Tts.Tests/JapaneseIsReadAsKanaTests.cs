@@ -36,6 +36,16 @@ public sealed class JapaneseIsReadAsKanaTests : IDisposable
         Reads("XYZZYは？", ("XYZZY", null), ("は", "ワ"), ("？", "？"));
 
     [Fact]
+    public void EachWordAlsoCarriesTheDictionarysReading()
+    {
+        var words = _reader.Read("東京駅はXYZZY");
+
+        Assert.Equal(
+            new (string, string?)[] { ("東京", "トウキョウ"), ("駅", "エキ"), ("は", "ハ"), ("XYZZY", null) },
+            words.Select(word => (word.Surface, word.Reading)));
+    }
+
+    [Fact]
     public void ThePinnedFilesAreThePackagesOwn()
     {
         Assert.True(JapaneseDictionaryAssets.IsInstalled(new DiskFileSystem(), Dictionary));

@@ -14,7 +14,10 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Change voice offers Kokoro's five Japanese voices to a Japanese-speaking character and its English voices to anyone else (#2534).</summary>
+/// <summary>
+/// Change voice offers Kokoro's five Japanese voices to a Japanese-speaking character and its English voices to anyone else
+/// (#2534), and every Chatterbox voice to both (#2539).
+/// </summary>
 [Trait("Category", "Integration")]
 public sealed class AJapaneseCharacterIsOfferedKokorosJapaneseVoicesTests
 {
@@ -31,7 +34,11 @@ public sealed class AJapaneseCharacterIsOfferedKokorosJapaneseVoicesTests
     private static List<string> Choices(PickerPage page) =>
         [.. page.GetVisualDescendants().OfType<ListBox>().Single().Items.Cast<PickerChoice>().Select(choice => choice.Value!)];
 
-    private static async Task<(List<string> Providers, List<string> Voices)> OfferedAsync(string? language)
+    private static readonly VoiceCatalogue Chatterbox = VoiceCatalogue.Of(
+        [new VoiceInfo("marlow", "Marlow", "en"), new VoiceInfo("alder", "Alder", "en"), new VoiceInfo("own", "Your voice", "en") { Custom = true }]);
+
+    private static async Task<(List<string> Providers, List<string> Voices)> OfferedAsync(
+        string? language, string pick = TtsProviderCatalog.KokoroId)
     {
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Transcript, new NavCrumb("transcript", "Transcript"));
@@ -43,7 +50,7 @@ public sealed class AJapaneseCharacterIsOfferedKokorosJapaneseVoicesTests
             (_, _, _, _) => { },
             (provider, spoken, _) => Task.FromResult(provider == TtsProviderCatalog.KokoroId
                 ? KokoroTtsProvider.Catalogue(installed: true, spoken)
-                : VoiceCatalogue.Silent),
+                : provider == TtsProviderCatalog.ChatterboxId ? Chatterbox : VoiceCatalogue.Silent),
             (_, _) => { },
             _ => null);
 
@@ -57,7 +64,7 @@ public sealed class AJapaneseCharacterIsOfferedKokorosJapaneseVoicesTests
 
         var providers = Choices(providerPage);
         var list = providerPage.GetVisualDescendants().OfType<ListBox>().Single();
-        list.SelectedIndex = providers.IndexOf(TtsProviderCatalog.KokoroId);
+        list.SelectedIndex = providers.IndexOf(pick);
         providerPage.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "AcceptButton")
             .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
@@ -83,8 +90,16 @@ public sealed class AJapaneseCharacterIsOfferedKokorosJapaneseVoicesTests
         var (providers, voices) = await OfferedAsync(SpokenLanguage.Japanese);
 
         Assert.Contains(TtsProviderCatalog.KokoroId, providers);
-        Assert.DoesNotContain(TtsProviderCatalog.ChatterboxId, providers);
         Assert.Equal(KokoroAssets.JapaneseVoiceIds.Order(StringComparer.Ordinal), voices.Order(StringComparer.Ordinal));
+    }
+
+    [AvaloniaFact]
+    public async Task AJapaneseSpeakerIsOfferedEveryChatterboxVoice()
+    {
+        var (providers, voices) = await OfferedAsync(SpokenLanguage.Japanese, TtsProviderCatalog.ChatterboxId);
+
+        Assert.Contains(TtsProviderCatalog.ChatterboxId, providers);
+        Assert.Equal(["alder", "marlow", "own"], voices.Order(StringComparer.Ordinal));
     }
 
     [AvaloniaFact]

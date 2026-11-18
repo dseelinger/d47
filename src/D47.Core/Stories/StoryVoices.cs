@@ -62,6 +62,9 @@ public sealed record CastVoicesHere(bool Kokoro, bool Chatterbox, bool OwnRecord
     /// <summary>Whether a key is stored for a provider id; null when every key is.</summary>
     public Func<string, bool>? HasKey { get; init; }
 
+    /// <summary>Whether Chatterbox Multilingual and the dictionary it reads Japanese with are both here.</summary>
+    public bool ChatterboxJapanese { get; init; } = true;
+
     /// <summary>Everything installed and recorded.</summary>
     public static CastVoicesHere All { get; } = new(true, true, true);
 }
@@ -177,6 +180,12 @@ public static class StoryVoices
             missing.Add($"Download Chatterbox, about {ChatterboxAssets.TotalMegabytes:0} MB, under Settings, Providers, Speech synthesis.");
         }
 
+        if (!here.ChatterboxJapanese && SpeaksJapaneseOnChatterbox(secret, gender, choices, ship))
+        {
+            missing.Add(
+                $"Download Chatterbox Japanese, about {ChatterboxMultilingualAssets.TotalMegabytesText} MB, under Settings, Providers, Speech synthesis.");
+        }
+
         if (!here.Kokoro && voices.Any(voice => voice.Provider == StorySpeaker.Kokoro))
         {
             missing.Add($"Download the Kokoro local voice, about {KokoroAssets.TotalMegabytes:0} MB, under Settings, Providers, Speech synthesis.");
@@ -204,6 +213,21 @@ public static class StoryVoices
         ArgumentNullException.ThrowIfNull(secret);
 
         return Voices(secret, gender, choices, ship).Any(voice => string.Equals(voice.Provider, providerId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Whether a member who speaks Japanese speaks in a Chatterbox voice, as a Commander of <paramref name="gender"/> meets the cast.</summary>
+    public static bool SpeaksJapaneseOnChatterbox(
+        StorySecret secret, string? gender, IReadOnlyDictionary<string, StoryVoiceChoice>? choices = null, ShipSpeech? ship = null)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+
+        return secret.Cast.Any(member =>
+            member.Language is { } language
+            && string.Equals(SpokenLanguage.Primary(language), SpokenLanguage.Japanese, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(
+                Voice(member, member.Shown(secret.Id, gender), choices, ship).ProviderId,
+                StorySpeaker.Chatterbox,
+                StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>The provider and voice each member speaks in, as a Commander of <paramref name="gender"/> meets it.</summary>

@@ -15,10 +15,10 @@ public sealed class AJapaneseCastMemberOnlyTakesJapaneseVoicesTests
     private static readonly StorySpeakerShown Shown = new("ren", "Ren", TtsProviderCatalog.EdgeId, "ja-JP-NanamiNeural", "s.ren") { Pinned = true };
 
     [Fact]
-    public void ChatterboxDoesNotSpeakJapaneseAndEveryOtherProviderDoes()
+    public void EveryProviderSpeaksJapanese()
     {
         Assert.True(TtsProviderCatalog.Kokoro.CanSpeak("ja"));
-        Assert.False(TtsProviderCatalog.Chatterbox.CanSpeak("ja"));
+        Assert.True(TtsProviderCatalog.Chatterbox.CanSpeak("ja"));
         Assert.True(TtsProviderCatalog.Edge.CanSpeak("ja"));
         Assert.True(TtsProviderCatalog.ElevenLabs.CanSpeak("ja"));
         Assert.True(TtsProviderCatalog.OpenAi.CanSpeak("ja"));
@@ -46,6 +46,17 @@ public sealed class AJapaneseCastMemberOnlyTakesJapaneseVoicesTests
         Assert.False(TtsProviderCatalog.Kokoro.SpeaksIn("ja", "af_river"));
         Assert.False(TtsProviderCatalog.Kokoro.SpeaksIn(null, "jf_alpha"));
         Assert.False(TtsProviderCatalog.Kokoro.CanSpeak("fr"));
+    }
+
+    [Fact]
+    public void EveryChatterboxVoiceSpeaksJapanese()
+    {
+        Assert.False(TtsProviderCatalog.Chatterbox.LanguageFollowsVoice);
+        Assert.True(TtsProviderCatalog.Chatterbox.SpeaksIn("ja", "marlow"));
+        Assert.True(TtsProviderCatalog.Chatterbox.SpeaksIn("ja", OwnVoice.VoiceId));
+        Assert.True(TtsProviderCatalog.Chatterbox.SpeaksIn("ja", "my-0123abcd"));
+        Assert.True(TtsProviderCatalog.Chatterbox.SpeaksIn(null, "marlow"));
+        Assert.False(TtsProviderCatalog.Chatterbox.CanSpeak("fr"));
     }
 
     [Fact]

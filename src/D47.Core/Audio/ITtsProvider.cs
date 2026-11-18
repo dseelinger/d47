@@ -136,6 +136,9 @@ public enum TtsFault
 
     /// <summary>No voice was chosen, or the provider has none by the id it was given.</summary>
     NoVoice,
+
+    /// <summary>A model the line needs is not downloaded to this PC; the settings row named offers it.</summary>
+    NotDownloaded,
 }
 
 /// <param name="settingKey">The settings row the message tells the Commander to change, or null where it names none.</param>

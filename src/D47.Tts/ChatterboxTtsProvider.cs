@@ -8,7 +8,8 @@ namespace D47.Tts;
 
 /// <summary>
 /// Chatterbox Turbo, run on this machine's CPU from a reference clip: one that ships beside the exe, or one fetched
-/// from the voice release the first time it is picked, previewed or spoken.
+/// from the voice release the first time it is picked, previewed or spoken. A line whose language is Japanese is
+/// spoken by Chatterbox Multilingual from the same clip.
 /// </summary>
 public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
 {
@@ -24,10 +25,13 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly Func<bool> _installed;
     private readonly Lock _gate = new();
     private readonly Lock _load = new();
-    private readonly Dictionary<string, IDisposable> _encoded = new(StringComparer.Ordinal);
     private readonly OwnVoice? _own;
     private readonly CustomVoices? _custom;
-    private readonly Dictionary<string, (int Version, IDisposable Encoded)> _customEncoded = new(StringComparer.Ordinal);
+    private readonly ChatterboxJapaneseSetup? _japanese;
+
+    /// <summary>Turbo and its encoded voices, and Multilingual and its own; each guarded by <c>_gate</c>.</summary>
+    private readonly Loaded _turbo = new("Chatterbox");
+    private readonly Loaded _multilingual = new("Chatterbox Multilingual");
 
     /// <summary>Guards the sets below.</summary>
     private readonly Lock _clips = new();
@@ -43,11 +47,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     private readonly PronunciationOverrides? _overrides;
     private readonly HashSet<string> _ipaLogged = new(StringComparer.OrdinalIgnoreCase);
 
-    private IChatterboxEngine? _engine;
     private ChatterboxTokeniser? _tokeniser;
+    private ChatterboxMultilingualTokeniser? _japaneseTokeniser;
     private IReadOnlyList<ChatterboxVoice>? _voices;
-    private IDisposable? _ownEncoded;
-    private int _ownVersion;
     private bool _disposed;
 
     /// <param name="modelFolder">Where <see cref="ChatterboxInstaller"/> put the graphs and tokenizer.</param>
@@ -56,6 +58,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     /// <param name="own">The Commander's own recording, listed as <see cref="OwnVoice.VoiceId"/> while one is saved.</param>
     /// <param name="custom">The Commander's custom voices, listed after the catalogue.</param>
     /// <param name="pronunciations">The Commander's <c>pronunciations.json</c>, whose respellings are applied before a line is encoded.</param>
+    /// <param name="multilingualFolder">Where Chatterbox Multilingual's graphs and tokenizer are; null where no line is spoken in Japanese.</param>
+    /// <param name="japaneseDictionary">Where the IPAdic files a Japanese line is read with are.</param>
     public ChatterboxTtsProvider(
         IFileSystem files,
         string modelFolder,
@@ -64,7 +68,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         ILogger<ChatterboxTtsProvider> logger,
         OwnVoice? own = null,
         CustomVoices? custom = null,
-        string? pronunciations = null)
+        string? pronunciations = null,
+        string? multilingualFolder = null,
+        string? japaneseDictionary = null)
         : this(
             files,
             modelFolder,
@@ -76,7 +82,10 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             ChatterboxClipDownload.GetAsync,
             own,
             custom,
-            pronunciations)
+            pronunciations,
+            multilingualFolder is null || japaneseDictionary is null
+                ? null
+                : ChatterboxJapaneseSetup.OnThisMachine(files, multilingualFolder, japaneseDictionary))
     {
     }
 
@@ -91,9 +100,11 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         Func<Uri, long, CancellationToken, Task<byte[]>> download,
         OwnVoice? own = null,
         CustomVoices? custom = null,
-        string? pronunciations = null)
+        string? pronunciations = null,
+        ChatterboxJapaneseSetup? japanese = null)
     {
         _files = files;
+        _japanese = japanese;
         _overrides = pronunciations is null
             ? null
             : new PronunciationOverrides(
@@ -184,8 +195,35 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         VoiceSelection voice,
         CancellationToken cancellationToken = default) =>
         Task.Run(
-            async () => Speak(text, await SpokenAsync(voice, cancellationToken).ConfigureAwait(false), cancellationToken),
+            async () =>
+            {
+                var japanese = IsJapanese(voice);
+
+                if (japanese)
+                {
+                    EnsureJapanese();
+                }
+
+                return Speak(text, await SpokenAsync(voice, cancellationToken).ConfigureAwait(false), japanese, cancellationToken);
+            },
             cancellationToken);
+
+    /// <summary>The sentence a Japanese line throws while Chatterbox Multilingual or the dictionary is not on this PC.</summary>
+    public static string JapaneseNotDownloaded =>
+        "Chatterbox Japanese is not downloaded, so this line was spoken in the story's own voice. Download Chatterbox "
+        + $"Japanese, about {ChatterboxMultilingualAssets.TotalMegabytesText} MB, under Settings, Providers, Speech synthesis.";
+
+    private static bool IsJapanese(VoiceSelection voice) =>
+        voice?.Language is { } language
+        && string.Equals(SpokenLanguage.Primary(language), SpokenLanguage.Japanese, StringComparison.OrdinalIgnoreCase);
+
+    private void EnsureJapanese()
+    {
+        if (_japanese?.Installed() != true)
+        {
+            throw new TtsException(JapaneseNotDownloaded, fault: TtsFault.NotDownloaded, settingKey: SpeechCapability.ChatterboxJapaneseKey);
+        }
+    }
 
     /// <summary>
     /// Fetches a voice's clip when it is not on this machine, for a pick or a preview, trying again after a failure.
@@ -297,6 +335,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         {
             throw new TtsException(
                 "Chatterbox is not downloaded yet. Download it in Settings.",
+                fault: TtsFault.NotDownloaded,
                 settingKey: SpeechCapability.ChatterboxVoiceKey);
         }
 
@@ -432,7 +471,9 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     {
         lock (_gate)
         {
-            return _customEncoded.TryGetValue(id, out var cached) && cached.Version == _custom!.Version(id);
+            var version = _custom!.Version(id);
+
+            return _turbo.HasCustom(id, version) || _multilingual.HasCustom(id, version);
         }
     }
 
@@ -447,39 +488,59 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         return true;
     }
 
-    private AudioClip Speak(string text, ChatterboxVoice? chosen, CancellationToken cancellationToken)
+    /// <summary>A line in Turbo, or in Multilingual where it is Japanese; each engine encodes and keeps its own copy of a voice.</summary>
+    private AudioClip Speak(string text, ChatterboxVoice? chosen, bool japanese, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var spoken = Respelled(text);
+        var loaded = japanese ? _multilingual : _turbo;
 
         if (chosen is null)
         {
-            return SpeakOwn(text, spoken, cancellationToken);
+            return SpeakOwn(text, japanese, loaded, cancellationToken);
         }
+
+        var ids = Ids(text, japanese);
 
         if (chosen.Voice.Custom)
         {
-            return SpeakCustom(text, spoken, chosen.Voice.Id, cancellationToken);
+            return SpeakCustom(text, ids, chosen.Voice.Id, loaded, cancellationToken);
         }
 
         // One line at a time: each already takes every performance core.
-        var ids = Tokeniser().Encode(spoken);
-
         lock (_gate)
         {
             ThrowIfDisposed();
 
-            var engine = _engine ??= Open();
+            var engine = Engine(loaded);
 
-            if (!_encoded.TryGetValue(chosen.Voice.Id, out var encoded))
+            if (!loaded.Encoded.TryGetValue(chosen.Voice.Id, out var encoded))
             {
                 encoded = engine.Encode(Reference(_files, chosen.ClipPath));
-                _encoded[chosen.Voice.Id] = encoded;
+                loaded.Encoded[chosen.Voice.Id] = encoded;
             }
 
             return Clip(text, engine.Speak(ids, encoded, cancellationToken));
         }
+    }
+
+    /// <summary>
+    /// Turbo's ids for the line with the Commander's respellings applied; for a Japanese line, Multilingual's ids for the
+    /// line read as kana, with no respellings and no tags.
+    /// </summary>
+    private long[] Ids(string text, bool japanese)
+    {
+        if (!japanese)
+        {
+            return Tokeniser().Encode(Respelled(text));
+        }
+
+        var prepared = ChatterboxJapaneseText.Prepare(
+            text,
+            _japanese!.Read,
+            word => _logger.LogDebug("\"{Word}\" has no reading and is left out", word));
+
+        return JapaneseTokeniser().Encode(prepared);
     }
 
     /// <summary>The line with the Commander's respellings applied; an IPA entry is skipped and named once.</summary>
@@ -517,7 +578,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         ObjectDisposedException.ThrowIf(_disposed, nameof(ChatterboxTtsProvider));
 
     /// <summary>A line in the Commander's recorded voice, encoded from the recording decrypted into memory.</summary>
-    private AudioClip SpeakOwn(string text, string spoken, CancellationToken cancellationToken)
+    private AudioClip SpeakOwn(string text, bool japanese, Loaded loaded, CancellationToken cancellationToken)
     {
         const string none = "No recording of your voice is saved. Record one in Settings, under Custom voices.";
 
@@ -526,26 +587,25 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             throw new TtsException(none, settingKey: SpeechCapability.CustomVoicesKey);
         }
 
-        var ids = Tokeniser().Encode(spoken);
+        var ids = Ids(text, japanese);
 
         lock (_gate)
         {
             ThrowIfDisposed();
 
-            var engine = _engine ??= Open();
+            var engine = Engine(loaded);
             var version = _own.Version;
 
-            if (_ownEncoded is null || _ownVersion != version)
+            if (loaded.Own is null || loaded.OwnVersion != version)
             {
-                _ownEncoded?.Dispose();
-                _ownEncoded = null;
+                loaded.DropOwn();
 
                 var reference = _own.Load() ?? throw new TtsException(none, settingKey: SpeechCapability.CustomVoicesKey);
 
                 try
                 {
-                    _ownEncoded = engine.Encode(reference);
-                    _ownVersion = version;
+                    loaded.Own = engine.Encode(reference);
+                    loaded.OwnVersion = version;
                 }
                 finally
                 {
@@ -553,28 +613,26 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 }
             }
 
-            return Clip(text, engine.Speak(ids, _ownEncoded, cancellationToken));
+            return Clip(text, engine.Speak(ids, loaded.Own, cancellationToken));
         }
     }
 
     /// <summary>A line in a custom voice, encoded from its clip decrypted into memory, once per version.</summary>
-    private AudioClip SpeakCustom(string text, string spoken, string id, CancellationToken cancellationToken)
+    private AudioClip SpeakCustom(string text, long[] ids, string id, Loaded loaded, CancellationToken cancellationToken)
     {
-        var ids = Tokeniser().Encode(spoken);
-
         lock (_gate)
         {
             ThrowIfDisposed();
 
-            var engine = _engine ??= Open();
+            var engine = Engine(loaded);
             var version = _custom!.Version(id);
 
-            if (!_customEncoded.TryGetValue(id, out var cached) || cached.Version != version)
+            if (!loaded.Custom.TryGetValue(id, out var cached) || cached.Version != version)
             {
                 if (cached.Encoded is not null)
                 {
                     cached.Encoded.Dispose();
-                    _customEncoded.Remove(id);
+                    loaded.Custom.Remove(id);
                 }
 
                 var reference = _custom.Load(id)
@@ -583,7 +641,7 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
                 try
                 {
                     cached = (version, engine.Encode(reference));
-                    _customEncoded[id] = cached;
+                    loaded.Custom[id] = cached;
                 }
                 finally
                 {
@@ -601,12 +659,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     {
         lock (_gate)
         {
-            foreach (var cached in _customEncoded.Values)
-            {
-                cached.Encoded.Dispose();
-            }
-
-            _customEncoded.Clear();
+            _turbo.DropCustom();
+            _multilingual.DropCustom();
         }
     }
 
@@ -617,8 +671,8 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
     {
         lock (_gate)
         {
-            _ownEncoded?.Dispose();
-            _ownEncoded = null;
+            _turbo.DropOwn();
+            _multilingual.DropOwn();
         }
     }
 
@@ -627,13 +681,19 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
             ? new AudioClip(text, ReadOnlyMemory<byte>.Empty, AudioFormat.Standard)
             : new AudioClip(text, PcmUpsample.Double(PcmConverter.FloatsToPcm16(samples)), AudioFormat.Standard);
 
-    private IChatterboxEngine Open()
+    /// <summary>The engine of <paramref name="loaded"/>, opened the first time it speaks and kept until disposed. The caller holds <c>_gate</c>.</summary>
+    private IChatterboxEngine Engine(Loaded loaded)
     {
-        var started = System.Diagnostics.Stopwatch.StartNew();
-        var engine = _open();
+        if (loaded.Engine is { } open)
+        {
+            return open;
+        }
 
-        _logger.LogInformation("Chatterbox is loaded ({Milliseconds} ms)", started.ElapsedMilliseconds);
-        return engine;
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        var engine = loaded == _multilingual ? _japanese!.Open() : _open();
+
+        _logger.LogInformation("{Model} is loaded ({Milliseconds} ms)", loaded.Name, started.ElapsedMilliseconds);
+        return loaded.Engine = engine;
     }
 
     /// <summary>Under its own lock, so asking which tags are performed never waits behind a line being spoken.</summary>
@@ -643,6 +703,15 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         {
             return _tokeniser ??= ChatterboxTokeniser.Load(
                 _files, ChatterboxAssets.Destination(_modelFolder, ChatterboxAssets.Tokenizer));
+        }
+    }
+
+    private ChatterboxMultilingualTokeniser JapaneseTokeniser()
+    {
+        lock (_load)
+        {
+            return _japaneseTokeniser ??= ChatterboxMultilingualTokeniser.Load(
+                _files, ChatterboxMultilingualAssets.Destination(_japanese!.Folder, ChatterboxMultilingualAssets.Tokenizer));
         }
     }
 
@@ -803,24 +872,88 @@ public sealed class ChatterboxTtsProvider : ITtsProvider, IDisposable
         lock (_gate)
         {
             _disposed = true;
-            _ownEncoded?.Dispose();
-            _ownEncoded = null;
+            _turbo.Dispose();
+            _multilingual.Dispose();
+        }
 
-            foreach (var cached in _customEncoded.Values)
+        _japanese?.Owned?.Dispose();
+    }
+
+    /// <summary>One engine, once open, and every voice it has encoded.</summary>
+    private sealed class Loaded(string name) : IDisposable
+    {
+        public string Name { get; } = name;
+
+        public IChatterboxEngine? Engine { get; set; }
+
+        public Dictionary<string, IDisposable> Encoded { get; } = new(StringComparer.Ordinal);
+
+        public IDisposable? Own { get; set; }
+
+        public int OwnVersion { get; set; }
+
+        public Dictionary<string, (int Version, IDisposable Encoded)> Custom { get; } = new(StringComparer.Ordinal);
+
+        public bool HasCustom(string id, int version) => Custom.TryGetValue(id, out var cached) && cached.Version == version;
+
+        public void DropOwn()
+        {
+            Own?.Dispose();
+            Own = null;
+        }
+
+        public void DropCustom()
+        {
+            foreach (var cached in Custom.Values)
             {
                 cached.Encoded.Dispose();
             }
 
-            _customEncoded.Clear();
+            Custom.Clear();
+        }
 
-            foreach (var encoded in _encoded.Values)
+        public void Dispose()
+        {
+            DropOwn();
+            DropCustom();
+
+            foreach (var encoded in Encoded.Values)
             {
                 encoded.Dispose();
             }
 
-            _encoded.Clear();
-            _engine?.Dispose();
-            _engine = null;
+            Encoded.Clear();
+            Engine?.Dispose();
+            Engine = null;
         }
+    }
+}
+
+/// <summary>
+/// What a Japanese line needs: where Multilingual's tokenizer is, its engine, whether it and the dictionary are on this
+/// PC, and the reader that splits a line into words.
+/// </summary>
+internal sealed record ChatterboxJapaneseSetup(
+    string Folder,
+    Func<IChatterboxEngine> Open,
+    Func<bool> Installed,
+    Func<string, IReadOnlyList<JapaneseWord>> Read)
+{
+    /// <summary>Disposed with the provider.</summary>
+    public IDisposable? Owned { get; init; }
+
+    /// <summary>Multilingual from <paramref name="folder"/>, read with the IPAdic files in <paramref name="dictionary"/>.</summary>
+    public static ChatterboxJapaneseSetup OnThisMachine(IFileSystem files, string folder, string dictionary)
+    {
+        var reader = new JapaneseReader(files, dictionary);
+
+        return new ChatterboxJapaneseSetup(
+            folder,
+            () => ChatterboxMultilingualPipeline.Open(folder, PerformanceCores.ForThisMachine()),
+            () => ChatterboxMultilingualAssets.IsInstalled(files, folder) && JapaneseDictionaryAssets.IsInstalled(files, dictionary),
+            reader.Read)
+        {
+            Owned = reader,
+        };
     }
 }

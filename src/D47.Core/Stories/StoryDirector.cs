@@ -349,6 +349,14 @@ public sealed class StoryDirector(
         return stories.Cards.Any(card => stories.Secret(card.Id) is { } secret && StoryVoices.Uses(secret, Gender(), providerId, Choices(), Ship()));
     }
 
+    /// <summary>Whether the cast of any story whose hidden layer is on disk gives a character who speaks Japanese a Chatterbox voice.</summary>
+    public bool CastSpeaksJapaneseOnChatterbox()
+    {
+        var stories = catalog();
+
+        return stories.Cards.Any(card => stories.Secret(card.Id) is { } secret && StoryVoices.SpeaksJapaneseOnChatterbox(secret, Gender(), Choices(), Ship()));
+    }
+
     /// <summary>
     /// Who speaks a line by <paramref name="speaker"/> in the current story, decided now, at <paramref name="beat"/> of the
     /// current chapter as <see cref="CastAboard(string?, int?)"/> reads it, those aboard with no seat in the current hull heard

@@ -42,6 +42,16 @@ public class ALocalVoiceNotDownloadedIsSpokenByEdgeTests
     }
 
     [Fact]
+    public async Task AJapaneseLineIsNeverGivenToEdgesEnglishStandIn()
+    {
+        var (provider, voice, _) = await Heard(
+            installed: false, new VoiceSelection("marlow") { Language = "ja" }, new Recorder("chatterbox"), new Recorder("edge"));
+
+        Assert.Equal("chatterbox", provider);
+        Assert.Equal("marlow", voice);
+    }
+
+    [Fact]
     public async Task TheNextLineFollowsTheInstallWithoutARebuild()
     {
         var installed = false;

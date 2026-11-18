@@ -17,6 +17,9 @@ public static class SpeechCapability
     public const string LocalVoiceKey = "speech.localVoice";
     public const string LocalVoiceBuildKey = "speech.localVoiceBuild";
     public const string ChatterboxVoiceKey = "speech.chatterbox";
+
+    /// <summary>The download row for Chatterbox Multilingual, which speaks a story character's Japanese lines.</summary>
+    public const string ChatterboxJapaneseKey = "speech.chatterboxJapanese";
     public const string VoiceKey = "speech.voice";
     public const string RateKey = "speech.rate";
 
@@ -400,6 +403,18 @@ public static class SpeechCapability
         /// <summary>Whether a downloaded story's cast speaks through this local provider, so its download row is offered.</summary>
         public Func<string, bool>? StoryCastUses { get; init; }
 
+        /// <summary>Whether Chatterbox Multilingual and the dictionary it reads Japanese with are here, and what fetching them would cost.</summary>
+        public Func<string>? ChatterboxJapaneseState { get; init; }
+
+        /// <summary>Fetches Chatterbox Multilingual and, where it is missing, the dictionary.</summary>
+        public Func<LongPress?>? DownloadChatterboxJapanese { get; init; }
+
+        /// <summary>Whether Chatterbox Multilingual and the dictionary are both on this machine.</summary>
+        public Func<bool>? ChatterboxJapaneseInstalled { get; init; }
+
+        /// <summary>Whether a downloaded story gives a character who speaks Japanese a Chatterbox voice.</summary>
+        public Func<bool>? StoryCastSpeaksJapaneseOnChatterbox { get; init; }
+
         /// <summary>Stops everything audible, immediately.</summary>
         public required Action Silence { get; init; }
 
@@ -738,6 +753,37 @@ public static class SpeechCapability
                 Binding = new SettingBinding
                 {
                     Read = _ => surface.ChatterboxState?.Invoke() ?? "Not available.",
+                },
+            },
+            new SettingRow
+            {
+                Key = ChatterboxJapaneseKey,
+                Exercise =
+                    "Give a story character who speaks Japanese a Chatterbox voice in Change voice on the Stories page. "
+                    + "The row appears under Settings › Providers › Speech synthesis, group Provider, while Chatterbox "
+                    + "Japanese is not downloaded. Press Download it and expect a progress readout, then the row to "
+                    + "disappear. The character's next Japanese line is spoken in the chosen Chatterbox voice.",
+                Label = "Chatterbox Japanese",
+                Help =
+                    "A second Chatterbox model that speaks a story character's Japanese lines on this computer's "
+                    + "processor, in whichever Chatterbox voice the character was given. It is downloaded once from "
+                    + "huggingface.co, with the dictionary D47 reads Japanese with from github.com where that is not "
+                    + "already here. Until then the character's Japanese lines are spoken in the story's own voice.",
+                Kind = SettingKind.Info,
+                DocsAnchor = "provider",
+                PressLabel = surface.DownloadChatterboxJapanese is null ? null : "Download it",
+                PressVisible = () => surface.ChatterboxJapaneseInstalled?.Invoke() != true,
+                PressAsync = surface.DownloadChatterboxJapanese is null
+                    ? null
+                    : (progress, cancellationToken) =>
+                        surface.DownloadChatterboxJapanese.Invoke() is { } fetch
+                            ? fetch(progress, cancellationToken)
+                            : Task.FromResult<string?>(null),
+                AppliesWhen = _ => surface.StoryCastSpeaksJapaneseOnChatterbox?.Invoke() == true
+                                   && surface.ChatterboxJapaneseInstalled?.Invoke() != true,
+                Binding = new SettingBinding
+                {
+                    Read = _ => surface.ChatterboxJapaneseState?.Invoke() ?? "Not available.",
                 },
             },
             new SettingRow

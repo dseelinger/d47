@@ -22,9 +22,14 @@ internal sealed class LocalVoiceWithEdgeStandIn(
 
     private ITtsProvider Speaker => installed() ? local : edge;
 
-    /// <summary>Whether the local provider takes this line: once installed, and always for a voice that speaks no English, which Edge's stand-in voice cannot replace.</summary>
+    /// <summary>
+    /// Whether the local provider takes this line: once installed, and always for a line not in English or a voice that
+    /// speaks no English, which Edge's English stand-in voice cannot replace.
+    /// </summary>
     private bool LocalSpeaks(VoiceSelection voice) =>
-        installed() || !TtsProviderCatalog.Selected(local.Id).SpeaksIn(null, voice.VoiceId);
+        installed()
+        || !SpokenLanguage.IsEnglish(voice.Language)
+        || !TtsProviderCatalog.Selected(local.Id).SpeaksIn(null, voice.VoiceId);
 
     private VoiceSelection Voice(VoiceSelection voice) =>
         installed() ? voice : voice with { VoiceId = LocalVoiceStandIn.EdgeVoice, Rate = edgeRate() };

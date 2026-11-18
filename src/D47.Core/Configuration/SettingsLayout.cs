@@ -111,9 +111,15 @@ public static class SettingsLayout
     public static bool IsSpeechProviderKeyFamily(string key) =>
         key.StartsWith("speech.", StringComparison.Ordinal) && key.EndsWith(".apiKey", StringComparison.Ordinal);
 
-    /// <summary>The download row of each voice that runs on this computer, each shown while its provider is the Voice provider, or while another slot or a story needs it and it is not downloaded.</summary>
+    /// <summary>
+    /// The download row of each voice that runs on this computer, each shown while its provider is the Voice provider, or
+    /// while another slot or a story needs it and it is not downloaded; and Chatterbox Japanese's, shown while a story
+    /// needs it and it is not downloaded.
+    /// </summary>
     public static bool IsLocalVoiceDownloadFamily(string key) =>
-        key is Capabilities.Builtin.SpeechCapability.LocalVoiceKey or Capabilities.Builtin.SpeechCapability.ChatterboxVoiceKey;
+        key is Capabilities.Builtin.SpeechCapability.LocalVoiceKey
+            or Capabilities.Builtin.SpeechCapability.ChatterboxVoiceKey
+            or Capabilities.Builtin.SpeechCapability.ChatterboxJapaneseKey;
 
     public static bool IsVoiceProviderSlotFamily(string key) =>
         key.StartsWith("speech.provider.", StringComparison.Ordinal);

@@ -252,6 +252,70 @@ public sealed class SpeechClients : IDisposable
             : $"Not downloaded. About {D47.Core.Speech.ChatterboxAssets.TotalMegabytes:0} MB, fetched "
               + "once from huggingface.co. Edge speaks until the download finishes.";
 
+    /// <summary>The folder holding Chatterbox Multilingual, which speaks Japanese story lines.</summary>
+    internal string ChatterboxMultilingualFolder() => Path.Combine(_paths.Data, "models", "chatterbox-multilingual");
+
+    /// <summary>Whether Chatterbox Multilingual and the dictionary it reads Japanese with are both on this PC.</summary>
+    internal bool ChatterboxJapaneseInstalled() =>
+        D47.Core.Speech.ChatterboxMultilingualAssets.IsInstalled(_files, ChatterboxMultilingualFolder())
+        && D47.Core.Speech.JapaneseDictionaryAssets.IsInstalled(_files, JapaneseDictionaryFolder());
+
+    internal string ChatterboxJapaneseState() =>
+        ChatterboxJapaneseInstalled()
+            ? "Installed. A story character's Japanese lines are spoken on this machine."
+            : $"Not downloaded. About {D47.Core.Speech.ChatterboxMultilingualAssets.TotalMegabytesText} MB, fetched once "
+              + "from huggingface.co. Until then a story character's Japanese lines are spoken in the story's own voice.";
+
+    /// <summary>Fetches the dictionary where it is missing, then Chatterbox Multilingual, off the UI thread.</summary>
+    internal async Task<string?> DownloadChatterboxJapanese(
+        IProgress<double> progress,
+        CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref _fetchingVoice, 1) == 1)
+        {
+            return "A download is already running.";
+        }
+
+        try
+        {
+            using var dictionary = new JapaneseDictionaryInstaller(
+                _files, JapaneseDictionaryFolder(), _loggers.CreateLogger<JapaneseDictionaryInstaller>());
+            using var multilingual = new ChatterboxMultilingualInstaller(
+                _files, ChatterboxMultilingualFolder(), _loggers.CreateLogger<ChatterboxMultilingualInstaller>());
+
+            double dictionaryBytes = dictionary.IsInstalled ? 0 : D47.Core.Speech.JapaneseDictionaryAssets.All.Sum(asset => asset.Bytes);
+            double modelBytes = D47.Core.Speech.ChatterboxMultilingualAssets.All.Sum(asset => asset.Bytes);
+            var share = dictionaryBytes / (dictionaryBytes + modelBytes);
+
+            var result = await Task.Run(
+                () => dictionary.InstallAsync(new Progress<KokoroProgress>(step => progress.Report(step.Fraction * share)), cancellationToken),
+                cancellationToken).ConfigureAwait(false);
+
+            if (result.Outcome is KokoroInstall.Installed or KokoroInstall.AlreadyPresent)
+            {
+                result = await Task.Run(
+                    () => multilingual.InstallAsync(
+                        new Progress<KokoroProgress>(step => progress.Report(share + (step.Fraction * (1 - share)))), cancellationToken),
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            _logger.LogInformation("The Chatterbox Japanese download ended as {Outcome}", result.Outcome);
+
+            return result.Outcome is KokoroInstall.Installed or KokoroInstall.AlreadyPresent
+                ? null
+                : result.Detail ?? "Chatterbox Japanese could not be downloaded.";
+        }
+        catch (Exception ex) when (ex is IOException or HttpRequestException)
+        {
+            _logger.LogWarning(ex, "Chatterbox Japanese could not be downloaded");
+            return $"Chatterbox Japanese could not be downloaded: {ex.Message}";
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _fetchingVoice, 0);
+        }
+    }
+
     /// <summary>The download setup offers for a voice provider, or null where it is not local or already installed.</summary>
     internal D47.App.Settings.LocalVoiceDownload? LocalVoiceToFetch(string providerId)
     {
@@ -539,7 +603,9 @@ public sealed class SpeechClients : IDisposable
             _loggers.CreateLogger<ChatterboxTtsProvider>(),
             _ownVoice,
             _customVoices,
-            _paths.PronunciationsFile)),
+            _paths.PronunciationsFile,
+            ChatterboxMultilingualFolder(),
+            JapaneseDictionaryFolder())),
             () => D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder())),
 
         _ => null,
@@ -899,6 +965,7 @@ public sealed class SpeechClients : IDisposable
         D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder()),
         _ownVoice.Exists)
     {
+        ChatterboxJapanese = ChatterboxJapaneseInstalled(),
         HasKey = id => TtsProviderCatalog.Selected(id).KeySecretName is not { } secret || _secrets.Names.Contains(secret),
     };
 
