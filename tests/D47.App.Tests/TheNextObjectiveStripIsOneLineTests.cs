@@ -89,6 +89,23 @@ public class TheNextObjectiveStripIsOneLineTests
         Assert.Null(text.System);
     }
 
+    [AvaloniaFact]
+    public void WhileTheObjectiveIsRewrittenTheStripDrawsTheWaitMarkWithItsSentence()
+    {
+        var strip = new ObjectiveStrip(AdventureFixture.Surface(), () => (_ => Task.FromResult(true)));
+        var text = ObjectiveStrip.Describe(Shown(Arrive("Shinrarta Dezhra")), "Sol", rewriting: true)!;
+
+        var window = new Window { Width = 820, Height = 200, Content = strip.Build(text) };
+        window.Show();
+
+        var mark = Assert.Single(window.GetVisualDescendants().OfType<WaitingState>());
+
+        Assert.Equal("Writing a different objective…", Avalonia.Automation.AutomationProperties.GetName(mark));
+        Assert.Contains(mark.GetVisualDescendants().OfType<TextBlock>(), block => block.Text == "Writing a different objective…");
+
+        window.Close();
+    }
+
     [Fact]
     public void WithNoObjectiveThereIsNoStrip()
     {

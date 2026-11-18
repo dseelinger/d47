@@ -556,8 +556,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (rewriting)
         {
-            page.Children.Add(new AdventureThinking());
-            page.Children.Add(Muted("Writing a different objective…"));
+            page.Children.Add(new WaitingState(WaitForm.Body, StoriesView.WritingObjective) { Margin = new Thickness(0, 6, 0, 0) });
         }
 
         if (next is not null)

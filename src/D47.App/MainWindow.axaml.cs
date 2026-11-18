@@ -376,7 +376,10 @@ public partial class MainWindow : Window
                         ToolCaller.Commander),
                     () => host.ShipPicture,
                     host.RunPlayer,
-                    host.RunVoicing);
+                    host.RunVoicing)
+                {
+                    WaitSound = host.Panel.WaitSound,
+                };
 
                 Panel.EnableAdventures(
                     Adventures, settingsStrip: () => BuildSettingsStrip(AdventuresPage.RootKey), desk: host.AdventureDesk,

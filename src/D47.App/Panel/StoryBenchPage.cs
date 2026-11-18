@@ -844,28 +844,38 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
         }
 
         _acting = true;
-        _status.Say(doing);
         Rebuild();
 
-        _ = Task.Run(async () =>
-        {
-            var refusal = await work().ConfigureAwait(false);
+        _ = Run();
 
-            Dispatcher.UIThread.Post(() =>
+        async Task Run()
+        {
+            string? refusal = null;
+
+            try
+            {
+                await Waiting.While(
+                    _status,
+                    doing,
+                    _surface.WaitSound,
+                    () => Task.Run(async () => refusal = await work().ConfigureAwait(false)))
+                    .ConfigureAwait(true);
+            }
+            finally
             {
                 _acting = false;
+            }
 
-                if (refusal is null)
-                {
-                    _status.Say(done);
-                }
-                else
-                {
-                    _status.Fail(refusal);
-                }
+            if (refusal is null)
+            {
+                _status.Say(done);
+            }
+            else
+            {
+                _status.Fail(refusal);
+            }
 
-                Rebuild();
-            });
-        });
+            Rebuild();
+        }
     }
 }

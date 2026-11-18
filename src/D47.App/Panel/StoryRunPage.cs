@@ -330,34 +330,39 @@ public sealed class StoryRunPage : UserControl, IPageSummary
         }
 
         _deleting = true;
-        _status.Say(doing);
 
-        _ = Task.Run(() =>
+        _ = Run();
+
+        async Task Run()
         {
-            var refusal = work();
+            string? refusal = null;
 
-            Dispatcher.UIThread.Post(() =>
+            try
+            {
+                await Waiting.While(_status, doing, _surface.WaitSound, () => Task.Run(() => refusal = work())).ConfigureAwait(true);
+            }
+            finally
             {
                 _deleting = false;
+            }
 
-                if (refusal is not null)
-                {
-                    _status.Fail(refusal);
-                }
-                else
-                {
-                    _status.Say(done);
-                }
+            if (refusal is not null)
+            {
+                _status.Fail(refusal);
+            }
+            else
+            {
+                _status.Say(done);
+            }
 
-                _drawn = null;
-                Rebuild();
+            _drawn = null;
+            Rebuild();
 
-                if (refusal is null && _run is null)
-                {
-                    _nav?.Back();
-                }
-            });
-        });
+            if (refusal is null && _run is null)
+            {
+                _nav?.Back();
+            }
+        }
     }
 
     // ---- Jump to ---------------------------------------------------------------------------

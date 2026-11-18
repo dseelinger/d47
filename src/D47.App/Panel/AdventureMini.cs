@@ -167,7 +167,7 @@ public sealed class AdventureMini : UserControl
         }
         else if (director?.IsRewriting(commander) == true)
         {
-            _body.Children.Add(AdventuresPage.Text("Writing a different objective…", TypeScale.Secondary, ThemeManager.GreyKey));
+            _body.Children.Add(new D47.App.Controls.WaitingState(D47.App.Controls.WaitForm.Body, StoriesView.WritingObjective));
             return;
         }
 

@@ -26,6 +26,8 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private readonly Func<string, Task<bool>>? _copy;
     private readonly Func<string, Task<bool>> _confirm;
     private readonly Func<BodySearchLink?>? _bodySearch;
+    private readonly D47.App.Voice.WaitSound? _waitSound;
+    private readonly WaitingState _waiting = new(WaitForm.Line) { IsVisible = false };
     private readonly StackPanel _body = new();
 
     private CodexLedger? _seenLedger;
@@ -45,8 +47,10 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         PanelNavigator? nav = null,
         Func<string, Task<bool>>? confirm = null,
         Func<BodySearchLink?>? bodySearch = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        D47.App.Voice.WaitSound? waitSound = null)
     {
+        _waitSound = waitSound;
         _copy = copy;
         _nav = nav;
         _bodySearch = bodySearch;
@@ -303,7 +307,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
             if (own)
             {
-                Tile("CodexPublish", "Publish", () => _ = publisher.Publish(key)).IsEnabled = idle;
+                Tile("CodexPublish", "Publish", () => _ = Wait(() => publisher.Publish(key), CodexPicturePublisher.PublishingText)).IsEnabled = idle;
             }
 
             if (stock)
@@ -314,9 +318,10 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
         column.Children.Add(actions);
 
-        if (publisher?.Doing is { } doing)
+        if (publisher?.Doing is not null || _waiting.IsVisible)
         {
-            column.Children.Add(Hint(doing));
+            (_waiting.Parent as Avalonia.Controls.Panel)?.Children.Remove(_waiting);
+            column.Children.Add(_waiting);
         }
         else if (publisher?.Last is { Failure: { } failed } last && last.Key == key)
         {
@@ -339,8 +344,20 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     {
         if (await _confirm(UnpublishQuestion(entry, key.RegionId)).ConfigureAwait(true))
         {
-            _ = publisher.Unpublish(key);
+            _ = Wait(() => publisher.Unpublish(key), CodexPicturePublisher.UnpublishingText);
         }
+    }
+
+    /// <summary>Starts a publish or unpublish and shows the wait mark here, the only page it was pressed on.</summary>
+    private async Task Wait(Func<Task<CodexPublishResult>?> start, string sentence)
+    {
+        if (start() is not { } running)
+        {
+            return;
+        }
+
+        _waiting.SetSentence(sentence);
+        await Waiting.While(_waiting, _waitSound, () => running).ConfigureAwait(true);
     }
 
     private async Task<bool> AskAsync(string question) =>

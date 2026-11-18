@@ -224,8 +224,18 @@ internal sealed class ObjectiveStrip : UserControl
         var label = Chrome(text.Label, FontWeight.SemiBold, ThemeManager.GreyKey);
         var ink = text.Grey ? ThemeManager.GreyKey : ThemeManager.AKey;
 
-        var sentence = Prose(text.Before, ink);
-        sentence.TextTrimming = TextTrimming.CharacterEllipsis;
+        Control sentence;
+
+        if (text.Grey)
+        {
+            sentence = new WaitingState(WaitForm.Line, text.Before);
+        }
+        else
+        {
+            var prose = Prose(text.Before, ink);
+            prose.TextTrimming = TextTrimming.CharacterEllipsis;
+            sentence = prose;
+        }
 
         Control? system = null;
         Control? glyph = null;
@@ -294,14 +304,14 @@ internal sealed class ObjectiveStrip : UserControl
         public const double ToggleWidth = 232;
 
         private readonly TextBlock _label;
-        private readonly TextBlock _sentence;
+        private readonly Control _sentence;
         private readonly Control? _system;
         private readonly Control? _glyph;
         private readonly Control? _after;
         private readonly TextBlock _name;
         private readonly Control? _toggle;
 
-        public StripPanel(TextBlock label, TextBlock sentence, Control? system, Control? glyph, Control? after, TextBlock name, Control? toggle)
+        public StripPanel(TextBlock label, Control sentence, Control? system, Control? glyph, Control? after, TextBlock name, Control? toggle)
         {
             _toggle = toggle;
             _label = label;

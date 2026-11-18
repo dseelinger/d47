@@ -166,6 +166,8 @@ public sealed class StoriesView : UserControl, IPageSummary
         Rebuild();
     });
 
+    internal const string WritingObjective = "Writing a different objective…";
+
     internal const string CommanderChangedRefusal = "The Commander changed. Nothing was done.";
 
     /// <summary>Runs <paramref name="act"/> if <paramref name="drawnFor"/> is still the shown Commander; otherwise says nothing was done.</summary>
@@ -662,7 +664,7 @@ public sealed class StoriesView : UserControl, IPageSummary
 
         var change = Act("Change objective", () =>
         {
-            if (ChangeObjective(_surface, _prompts, commander, () => _status.Say("Writing a different objective…"), Finish) is { } refusal)
+            if (ChangeObjective(_surface, _prompts, commander, () => _status.Wait(WritingObjective), Finish) is { } refusal)
             {
                 _status.Fail(refusal);
             }
@@ -696,7 +698,7 @@ public sealed class StoriesView : UserControl, IPageSummary
             _surface,
             _prompts,
             commander,
-            () => _status.Say("Writing a different objective…"),
+            () => _status.Wait(WritingObjective),
             refusal =>
             {
                 if (refusal is null)
@@ -1379,30 +1381,40 @@ public sealed class StoriesView : UserControl, IPageSummary
             button.Content = "Downloading";
         }
 
-        status.Say("Downloading…");
+        _ = Fetch();
 
-        _ = Task.Run(async () =>
+        async Task Fetch()
         {
-            var landed = await _downloads!.FetchStory(card.Id).ConfigureAwait(false) && _director.Catalog.Secret(card.Id) is not null;
+            var landed = false;
 
-            Dispatcher.UIThread.Post(() =>
+            try
+            {
+                await Waiting.While(
+                    status,
+                    "Downloading…",
+                    _surface.WaitSound,
+                    () => Task.Run(async () =>
+                        landed = await _downloads!.FetchStory(card.Id).ConfigureAwait(false) && _director.Catalog.Secret(card.Id) is not null))
+                    .ConfigureAwait(true);
+            }
+            finally
             {
                 if (button is not null)
                 {
                     button.Content = label;
                     button.IsEnabled = true;
                 }
+            }
 
-                if (landed)
-                {
-                    then();
-                }
-                else
-                {
-                    status.Fail(DownloadFailed);
-                }
-            });
-        });
+            if (landed)
+            {
+                then();
+            }
+            else
+            {
+                status.Fail(DownloadFailed);
+            }
+        }
     }
 
     internal const string PickingLine =

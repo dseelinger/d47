@@ -282,7 +282,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         var work = new CodexPictureWork();
 
         _codexBuild = crumb => CodexPage.EntryOf(crumb.Key) is { } entry
-            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav, bodySearch: () => host.BodySearch, copy: host.Copy)
+            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav, bodySearch: () => host.BodySearch, copy: host.Copy, waitSound: host.Model?.WaitSound)
             : CodexPage.PictureOf(crumb.Key) is { } picture
             ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
             : CodexPage.IsDiscoveries(crumb.Key)

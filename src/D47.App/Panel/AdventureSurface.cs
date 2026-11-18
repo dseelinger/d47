@@ -40,6 +40,9 @@ public sealed record AdventureSurface(
 {
     /// <summary>The short story being written, shared by the desktop window and the VR big panel.</summary>
     public ShortStoryWriting Writing { get; init; } = new();
+
+    /// <summary>The bed that plays under a wait the Stories tab starts; null plays none.</summary>
+    public D47.App.Voice.WaitSound? WaitSound { get; init; }
 }
 
 /// <summary>Raised when the shown Commander changes, on whichever thread the journal ticks; subscribers post to the UI thread.</summary>

@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Theming;
 using D47.Core.Interface;
@@ -83,7 +84,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         root.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == name);
 
     private static bool Says(Control root, string text) =>
-        root.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == text);
+        root.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == text && block.IsEffectivelyVisible);
 
     private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
@@ -194,7 +195,42 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
     }
 
     [AvaloniaFact]
-    public async Task WhileOneRunsBothButtonsAreDisabledAndThePageSaysSo()
+    public async Task WhileOneRunsBothButtonsAreDisabledAndThePagePressedShowsTheWaitMark()
+    {
+        var gate = new ManualResetEventSlim();
+        var surface = new Surface(read: () =>
+        {
+            gate.Wait(TestContext.Current.CancellationToken);
+            return "t";
+        });
+        surface.OwnPicture();
+        surface.Stock();
+
+        var (window, page) = PageHost.Open(() => surface.Page());
+        Press(Named(page, "CodexPublish")!);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(Named(page, "CodexPublish")!.IsEnabled);
+        Assert.False(Named(page, "CodexUnpublish")!.IsEnabled);
+        Assert.False(Says(page, CodexPicturePublisher.PublishingText));
+
+        await Task.Delay(Waiting.Delay + TimeSpan.FromMilliseconds(400), TestContext.Current.CancellationToken);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Says(page, CodexPicturePublisher.PublishingText));
+
+        gate.Set();
+        await Task.Delay(Waiting.Minimum + TimeSpan.FromMilliseconds(600), TestContext.Current.CancellationToken);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Named(page, "CodexUnpublish")!.IsEnabled);
+        Assert.False(Says(page, CodexPicturePublisher.PublishingText));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task APageThatDidNotPressPublishShowsNoWaitMarkWhileItRuns()
     {
         var gate = new ManualResetEventSlim();
         var surface = new Surface(read: () =>
@@ -207,19 +243,14 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
 
         var (window, page) = PageHost.Open(() => surface.Page());
         var running = surface.Publisher.Publish(Key)!;
+        await Task.Delay(Waiting.Delay + TimeSpan.FromMilliseconds(400), TestContext.Current.CancellationToken);
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(Named(page, "CodexPublish")!.IsEnabled);
-        Assert.False(Named(page, "CodexUnpublish")!.IsEnabled);
-        Assert.True(Says(page, CodexPicturePublisher.PublishingText));
+        Assert.False(Says(page, CodexPicturePublisher.PublishingText));
 
         gate.Set();
         await running;
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.True(Named(page, "CodexUnpublish")!.IsEnabled);
-        Assert.False(Says(page, CodexPicturePublisher.PublishingText));
-
         window.Close();
     }
 }
