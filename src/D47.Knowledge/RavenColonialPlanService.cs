@@ -51,9 +51,8 @@ public sealed class RavenColonialPlanService : IColonisationPlanService, IDispos
             $"api/v2/system/{system}/bodies", "the colonisation planner's bodies", cancellationToken)
             .ConfigureAwait(false);
 
-        var sites = RavenColonialResponse
-            .ReadSites(sitesDocument, RavenColonialResponse.ReadBodies(bodiesDocument!))
-            .ToList();
+        var bodies = RavenColonialResponse.ReadBodies(bodiesDocument!);
+        var sites = RavenColonialResponse.ReadSites(sitesDocument, bodies).ToList();
 
         if (sites.Count == 0)
         {
@@ -68,7 +67,7 @@ public sealed class RavenColonialPlanService : IColonisationPlanService, IDispos
             }
         }
 
-        return new SystemPlan(systemName, sites, _now());
+        return new SystemPlan(systemName, sites, _now()) { Bodies = bodies };
     }
 
     private async Task<PlannedSite> ProjectAsync(PlannedSite site, string buildId, CancellationToken cancellationToken)
