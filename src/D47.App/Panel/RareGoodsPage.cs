@@ -415,9 +415,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
             top.Children.Add(bar);
         }
 
-        top.Children.Add(SearchTableFields.Head(table));
-
-        return LoadoutPages.HeaderAndList(top, list, out _);
+        return LoadoutPages.HeaderAndList(top, SearchTableFields.Head(table), list, _headset ? null : table.Layout, out _);
     }
 
     private static Border Spaced(Control row) => new() { Margin = new Thickness(0, 2, 0, Gaps.Tile - 2), Child = row };

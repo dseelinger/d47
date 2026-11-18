@@ -1547,15 +1547,44 @@ public static class LoadoutPages
     };
 
     /// <summary>A header above a scrolled list; <paramref name="scroll"/> is the scroller around <paramref name="list"/>.</summary>
-    internal static Grid HeaderAndList(StackPanel top, Control list, out ScrollViewer scroll)
-    {
-        scroll = Scrolling(list);
+    internal static Grid HeaderAndList(StackPanel top, Control list, out ScrollViewer scroll) => Stacked(top, scroll = Scrolling(list));
 
+    /// <summary>
+    /// A header above a table whose column <paramref name="head"/> is held above the scrolled <paramref name="list"/>.
+    /// Given <paramref name="sideways"/>, the head and the list sit in a <see cref="TableScroll"/>, so they scroll sideways
+    /// together when the columns do not fit; <paramref name="scroll"/> is still the scroller around <paramref name="list"/>.
+    /// </summary>
+    internal static Grid HeaderAndList(StackPanel top, Control head, Control list, TableLayout? sideways, out ScrollViewer scroll)
+    {
+        if (sideways is null)
+        {
+            top.Children.Add(head);
+
+            return HeaderAndList(top, list, out scroll);
+        }
+
+        var heads = new StackPanel { Children = { head } };
+        var rows = scroll = Scrolling(list);
+
+        // The head is kept as wide as the rows, which lose the vertical bar's width while it shows.
+        rows.ScrollChanged += (_, _) => heads.Margin = new Thickness(0, 0, 14 + rows.Bounds.Width - rows.Viewport.Width, 0);
+
+        var table = new TableScroll(sideways, Stacked(heads, rows))
+        {
+            Margin = new Thickness(0, top.Children.Count > 0 ? top.Spacing : 0, 0, 0),
+        };
+
+        return Stacked(top, table);
+    }
+
+    /// <summary><paramref name="top"/> above <paramref name="below"/>, which takes the rest of the height.</summary>
+    private static Grid Stacked(StackPanel top, Control below)
+    {
         var grid = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
         top.Margin = new Thickness(0, 0, 14, 0);
         grid.Children.Add(top);
-        Grid.SetRow(scroll, 1);
-        grid.Children.Add(scroll);
+        Grid.SetRow(below, 1);
+        grid.Children.Add(below);
 
         return grid;
     }

@@ -1272,8 +1272,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
                 if (paged is not null)
                 {
-                    block.Children.Add(paged.Head);
-                    return RowsBelow(block, paged, last);
+                    return RowsBelow(block, paged, last, _headset ? null : arranged?.Layout);
                 }
 
                 if (Table(last, _headset) is { } table)
@@ -1287,8 +1286,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         return LoadoutPages.Scrolling(block);
     }
 
-    /// <summary>The head above the answer's rows, which the desktop realises only as they scroll into view.</summary>
-    private Grid RowsBelow(StackPanel head, PagedTable paged, GalaxySearchPosting posting)
+    /// <summary>
+    /// The head above the answer's rows, which the desktop realises only as they scroll into view. Given
+    /// <paramref name="sideways"/>, the column head and the rows scroll sideways together when the columns do not fit.
+    /// </summary>
+    private Grid RowsBelow(StackPanel head, PagedTable paged, GalaxySearchPosting posting, TableLayout? sideways)
     {
         var rows = Rows(posting);
         _rows = [.. rows];
@@ -1311,7 +1313,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             ItemsSource = _rows,
         };
 
-        var grid = LoadoutPages.HeaderAndList(head, list, out var scroll);
+        var grid = LoadoutPages.HeaderAndList(head, paged.Head, list, sideways, out var scroll);
         _scroll = scroll;
         scroll.ScrollChanged += (_, _) => CheckSoon();
 
