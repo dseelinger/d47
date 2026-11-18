@@ -19,6 +19,44 @@ public sealed record NotablePlace(
 
     public double? Rating { get; init; }
 
+    public int? Id { get; init; }
+
+    public string? Type2 { get; init; }
+
+    public int? CategoryId { get; init; }
+
+    public int? CategoryId2 { get; init; }
+
+    public string? Region { get; init; }
+
+    public string? Callsign { get; init; }
+
+    public string? Source { get; init; }
+
+    public string? DescriptionMarkdown { get; init; }
+
+    public string? DescriptionHtml { get; init; }
+
+    public string? GalMapUrl { get; init; }
+
+    public string? PoiUrl { get; init; }
+
+    public string? MainImage { get; init; }
+
+    public double? SolDistance { get; init; }
+
+    public double? Curation { get; init; }
+
+    public double? AvgStars { get; init; }
+
+    public int? Votes { get; init; }
+
+    public bool? Rare { get; init; }
+
+    public double? Latitude { get; init; }
+
+    public double? Longitude { get; init; }
+
     public double DistanceFrom(StarPosition from) => from.DistanceTo(Position);
 }
 

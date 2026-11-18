@@ -154,6 +154,25 @@ public sealed class GecNotablePlacesService : INotablePlacesService, IDisposable
             {
                 Summary = Text(entry, "summary"),
                 Rating = JsonNumbers.Number(entry, "rating"),
+                Id = (int?)Long(entry, "id"),
+                Type2 = Text(entry, "type2"),
+                CategoryId = (int?)Long(entry, "categoryId"),
+                CategoryId2 = (int?)Long(entry, "categoryId2"),
+                Region = Text(entry, "region"),
+                Callsign = Text(entry, "callsign"),
+                Source = Text(entry, "source"),
+                DescriptionMarkdown = Text(entry, "descriptionMardown"),
+                DescriptionHtml = Text(entry, "descriptionHtml"),
+                GalMapUrl = Text(entry, "galMapUrl"),
+                PoiUrl = Text(entry, "poiUrl"),
+                MainImage = Text(entry, "mainImage"),
+                SolDistance = JsonNumbers.Number(entry, "solDistance"),
+                Curation = JsonNumbers.Number(entry, "curation"),
+                AvgStars = JsonNumbers.Number(entry, "avgStars"),
+                Votes = (int?)Long(entry, "votes"),
+                Rare = Flag(entry, "rare"),
+                Latitude = JsonNumbers.Number(entry, "latitude"),
+                Longitude = JsonNumbers.Number(entry, "longitude"),
             });
         }
 
@@ -164,6 +183,11 @@ public sealed class GecNotablePlacesService : INotablePlacesService, IDisposable
         entry.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String
         && value.GetString() is { Length: > 0 } text && text != "None"
             ? text.Trim()
+            : null;
+
+    private static bool? Flag(JsonElement entry, string property) =>
+        entry.TryGetProperty(property, out var value) && value.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? value.GetBoolean()
             : null;
 
     private static long? Long(JsonElement entry, string property) =>

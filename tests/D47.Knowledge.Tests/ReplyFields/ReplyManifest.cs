@@ -11,14 +11,9 @@ internal abstract record ReplyMapping
     /// <summary>The reply's field is left out on purpose.</summary>
     public static ReplyMapping Excluded(string reason) => new Exclusion(reason);
 
-    /// <summary>The reader drops the field today.</summary>
-    public static ReplyMapping Pending { get; } = new PendingField();
-
     internal sealed record Property(string Path) : ReplyMapping;
 
     internal sealed record Exclusion(string Reason) : ReplyMapping;
-
-    internal sealed record PendingField : ReplyMapping;
 }
 
 /// <summary>
