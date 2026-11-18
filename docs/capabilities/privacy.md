@@ -217,7 +217,7 @@ nothing from your journal, and the search itself happens on this machine. There 
 ([Galaxy search](galaxy.md#signal-index)).
 
 **Rare index** — `github.com`, which redirects to GitHub's asset storage, from the `rares-1`
-release. When a rare is asked about and the copy in `dataares` is missing or more than 3 hours old,
+release. When a rare is asked about and the copy in `data\rares` is missing or more than 3 hours old,
 D47 downloads the published index of rare goods: one file, a few kilobytes. A download that fails is
 tried again on a later question, no sooner than an hour after. Nothing about you goes with it: no
 position, no key, no Commander name, no identifier and nothing from your journal. There is no setting

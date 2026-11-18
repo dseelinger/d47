@@ -438,7 +438,7 @@ public static class EgressDisclosure
             NameOf(RareIndex),
             "github.com",
             "A request for the published index of rare goods - their source prices, stock and far sell prices - from the "
-            + "rares-1 release, made when a rare is asked about and the copy in data\rares is missing or more than "
+            + "rares-1 release, made when a rare is asked about and the copy in data\\rares is missing or more than "
             + "3 hours old - one file, a few kilobytes, at most once in 3 hours. A request that fails is tried again on a "
             + "later question, no sooner than an hour after. Nothing about you goes with it: no position, no key, no "
             + "Commander name, no identifier and nothing from your journal.",

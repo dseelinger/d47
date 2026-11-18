@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: The Rare index row in Privacy and egress names the folder data\rares; it showed a line break where the backslash and r belong.
+
 Changed: While you are away, the two hands-free listening settings stop opening the microphone when the hearing provider is hosted, the model is not on this machine, or the voice aboard charges. The panel reads idle meanwhile, a key still opens the microphone, and a stretch of speech already being captured is finished. Listening resumes when you return.
 
 Changed: While you are away, D47 does not speak a line you did not ask for on a voice that charges, such as ElevenLabs or OpenAI: callouts, chatter, Narrator and story lines, and the words of a timer or alarm (which still chimes and shows its text) are written but not said, and not said later. A free voice, and the answer to anything you ask, are spoken as before.
