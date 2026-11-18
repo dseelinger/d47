@@ -96,6 +96,7 @@ public sealed class DetourProposer(
             spend,
             prices,
             logger,
+            purpose: SpendPurposes.StoryDetour,
             cancellationToken,
             maxOutputTokens: OutputCeiling,
             effort: ThinkingEffort.Low,

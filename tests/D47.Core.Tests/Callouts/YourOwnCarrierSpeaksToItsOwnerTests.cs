@@ -38,7 +38,7 @@ public class YourOwnCarrierSpeaksToItsOwnerTests
     private static Func<FlavourBrief, string, CancellationToken, Task<FlavourReply>> From(
         ILlmProvider provider) =>
         (brief, ask, token) => FlavourTurn.AskForAsync(
-            provider, null, null, null, ask, null, null, null, NullLogger.Instance, token);
+            provider, null, null, null, ask, null, null, null, NullLogger.Instance, SpendPurposes.NpcChatter, token);
 
     private static Task<Announcement?> Vary(
         Announcement announcement,

@@ -242,7 +242,7 @@ public sealed class StoryProgressTests
             new LlmStreamEvent.TextDelta("Hello there"),
             new LlmStreamEvent.Completed(LlmUsage.None, LlmStopReason.Completed));
 
-        await FlavourTurn.AskForAsync(provider, null, null, null, "Say hi.", null, null, null, null, TestContext.Current.CancellationToken, received: lengths.Add);
+        await FlavourTurn.AskForAsync(provider, null, null, null, "Say hi.", null, null, null, null, SpendPurposes.StoryChapter, TestContext.Current.CancellationToken, received: lengths.Add);
 
         Assert.Equal([4, 11], lengths);
     }

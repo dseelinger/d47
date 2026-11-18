@@ -116,12 +116,14 @@ public class UsageConventionTests
         // Anthropic's signal: a cache write with no sanctioned cause.
         wrote.Record(
             new TurnCost(new LlmUsage(200, 50, 4_000, 0), 0.1m, Priced: true),
+            SpendPurposes.Conversation,
             coldPrefixExpected: false,
             warmth: PrefixWarmth.Cold);
 
         // The inverse signal, which is the only one available on a provider that bills no write.
         readNothing.Record(
             new TurnCost(new LlmUsage(4_200, 50, 0, 0), 0.1m, Priced: true),
+            SpendPurposes.Conversation,
             coldPrefixExpected: false,
             warmth: PrefixWarmth.Cold);
 
@@ -137,11 +139,13 @@ public class UsageConventionTests
 
         tracker.Record(
             TurnCost.Unpriced(LlmUsage.Unreported),
+            SpendPurposes.Conversation,
             coldPrefixExpected: false,
             warmth: PrefixWarmth.Unknown);
 
         tracker.Record(
             new TurnCost(new LlmUsage(200, 50, 0, 4_000), 0.1m, Priced: true),
+            SpendPurposes.Conversation,
             coldPrefixExpected: false,
             warmth: PrefixWarmth.Warm);
 
@@ -158,10 +162,10 @@ public class UsageConventionTests
     {
         var tracker = new SpendTracker();
 
-        tracker.Record(new TurnCost(new LlmUsage(200, 50, 4_000, 0), 0.1m, true), coldPrefixExpected: false);
-        tracker.Record(new TurnCost(new LlmUsage(200, 50, 4_000, 0), 0.1m, true), coldPrefixExpected: true);
-        tracker.Record(new TurnCost(new LlmUsage(200, 50, 0, 4_000), 0.1m, true), coldPrefixExpected: false);
-        tracker.Record(new TurnCost(new LlmUsage(200, 50, 300, 4_000), 0.1m, true), coldPrefixExpected: false);
+        tracker.Record(new TurnCost(new LlmUsage(200, 50, 4_000, 0), 0.1m, true), SpendPurposes.Conversation, coldPrefixExpected: false);
+        tracker.Record(new TurnCost(new LlmUsage(200, 50, 4_000, 0), 0.1m, true), SpendPurposes.Conversation, coldPrefixExpected: true);
+        tracker.Record(new TurnCost(new LlmUsage(200, 50, 0, 4_000), 0.1m, true), SpendPurposes.Conversation, coldPrefixExpected: false);
+        tracker.Record(new TurnCost(new LlmUsage(200, 50, 300, 4_000), 0.1m, true), SpendPurposes.Conversation, coldPrefixExpected: false);
 
         Assert.Equal(1, tracker.UnexplainedColdPrefixes);
         Assert.Equal(0, tracker.UnmeasuredPrefixes);

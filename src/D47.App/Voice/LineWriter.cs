@@ -161,6 +161,7 @@ internal sealed class LineWriter
                     Spend,
                     PriceTable.Default,
                     _logger,
+                    purpose: SpendPurposes.RewordedCallout,
                     token,
                     canBeDirected: directed,
                     humor: FlavourBriefs.HumorGroupOf(announcement, brief) is { } group
@@ -299,6 +300,7 @@ internal sealed class LineWriter
             Spend,
             PriceTable.Default,
             _logger,
+            purpose: SpendPurposes.NpcChatter,
             budget.Token,
             canBeDirected: directed,
             hiddenStory: scene is null ? null : HiddenStory(VoiceRole.Comms),
@@ -340,6 +342,7 @@ internal sealed class LineWriter
                             Spend,
                             PriceTable.Default,
                             _logger,
+                            purpose: SpendPurposes.NpcChatter,
                             budget.Token,
                             canBeDirected: DirectableIn(VoiceGroup.Npcs)).ConfigureAwait(false),
                         line.Role,
@@ -555,6 +558,7 @@ internal sealed class LineWriter
             Spend,
             PriceTable.Default,
             _logger,
+            purpose: SpendPurposes.StoryLines,
             budget.Token,
             canBeDirected: directed,
             scenario: ScenarioFor(brief, voice),
@@ -617,6 +621,7 @@ internal sealed class LineWriter
             Spend,
             PriceTable.Default,
             _logger,
+            purpose: SpendPurposes.StoryLines,
             budget.Token,
             canBeDirected: DirectableIn(VoiceGroups.Of(VoiceRole.Narrator, null))).ConfigureAwait(false);
     }

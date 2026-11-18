@@ -55,6 +55,7 @@ public class ACancelledRequestIsStillBilledTests
             spend,
             PriceTable.Default,
             logger: null,
+            SpendPurposes.RewordedCallout,
             cancellationToken);
 
     [Fact]

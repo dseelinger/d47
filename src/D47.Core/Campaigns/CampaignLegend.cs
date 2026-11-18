@@ -146,6 +146,7 @@ public static partial class CampaignLegend
             spend,
             prices,
             logger,
+            purpose: SpendPurposes.Campaign,
             token,
             maxOutputTokens: PassageTokens);
 

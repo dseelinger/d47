@@ -487,6 +487,7 @@ public static class VoicePairing
             spend,
             prices,
             logger,
+            purpose: SpendPurposes.VoiceCasting,
             cancellationToken,
             maxOutputTokens: CastingTokens,
             sampling: LlmSampling.VoiceCasting).ConfigureAwait(false);
@@ -589,6 +590,7 @@ public static class VoicePairing
             spend,
             prices,
             logger,
+            purpose: SpendPurposes.VoiceCasting,
             cancellationToken,
 
             maxOutputTokens: CastingTokens,

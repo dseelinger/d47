@@ -328,6 +328,7 @@ public class ResettingTheSpendFiguresTests : IDisposable
 
         tracker.Record(
             new TurnCost(new LlmUsage(200, 50, 4_000, 0), 0.25m, Priced: true),
+            SpendPurposes.Conversation,
             coldPrefixExpected: true);
 
         Assert.Equal(1, tracker.TurnCount);

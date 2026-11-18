@@ -21,6 +21,7 @@ public class AFlavourLineKnowsWhoIsFlyingTests
             spend: null,
             prices: null,
             logger: null,
+            purpose: SpendPurposes.NpcChatter,
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal("Quiet out here, Reyes.", line);
@@ -57,6 +58,7 @@ public class AFlavourLineKnowsWhoIsFlyingTests
             spend: null,
             prices: null,
             logger: null,
+            purpose: SpendPurposes.NpcChatter,
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Null(provider.LastRequest!.Prompt.AboutMe);

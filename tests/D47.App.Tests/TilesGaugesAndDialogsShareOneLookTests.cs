@@ -52,7 +52,7 @@ public class TilesGaugesAndDialogsShareOneLookTests
         var ledger = new SpendLedger(
             Path.Combine(TestSurface.MemoryFolder("d47-modal-spend"), "spend.jsonl"), new MemoryFileSystem(), new StoppedClock(), NullLogger.Instance);
         var session = new SpendTracker(ledger);
-        session.Record(new TurnCost(new LlmUsage(1_240, 380, 0, 18_400), 0.0231m, true), true, "anthropic", "claude-opus-5");
+        session.Record(new TurnCost(new LlmUsage(1_240, 380, 0, 18_400), 0.0231m, true), SpendPurposes.Conversation, true, "anthropic", "claude-opus-5");
 
         return new SpendDialog(
             session.Last, session, new SpeechSpend(), ledger, TestSurface.Settings().Current, TimeZoneInfo.Utc);

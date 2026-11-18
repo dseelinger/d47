@@ -41,7 +41,7 @@ public class SpeechCountsInTheSessionTotalTests
     private static SpendTracker OneTurn()
     {
         var session = new SpendTracker();
-        session.Record(new TurnCost(new LlmUsage(1_240, 380, 0, 0), 0.1057m, true), coldPrefixExpected: true);
+        session.Record(new TurnCost(new LlmUsage(1_240, 380, 0, 0), 0.1057m, true), SpendPurposes.Conversation, coldPrefixExpected: true);
         return session;
     }
 

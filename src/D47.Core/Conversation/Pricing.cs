@@ -102,14 +102,17 @@ public sealed class SpendTracker(SpendLedger? ledger = null)
 
     /// <summary>
     /// <paramref name="coldPrefixExpected"/> is true for the first turn of a session and for the turn
-    /// after a model or provider change — the cases where a cold prefix is correct.
+    /// after a model or provider change — the cases where a cold prefix is correct. <paramref name="purpose"/> is an
+    /// id from <see cref="SpendPurposes"/>.
     /// </summary>
     public void Record(
         TurnCost cost,
+        string purpose,
         bool coldPrefixExpected,
         string providerId = "",
         string model = "",
-        PrefixWarmth warmth = PrefixWarmth.Unknown)
+        PrefixWarmth warmth = PrefixWarmth.Unknown,
+        string? step = null)
     {
         _turns.Add(cost);
         RunningTotalDollars += cost.Dollars;
@@ -136,6 +139,8 @@ public sealed class SpendTracker(SpendLedger? ledger = null)
             ProviderId = providerId,
             Model = model,
             Dollars = cost.Dollars,
+            Purpose = purpose,
+            Step = step,
             Priced = cost.Priced,
             InputTokens = cost.Usage.InputTokens,
             CacheWriteTokens = cost.Usage.CacheCreationInputTokens,

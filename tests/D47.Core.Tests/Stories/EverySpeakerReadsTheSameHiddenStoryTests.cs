@@ -33,7 +33,7 @@ public sealed class EverySpeakerReadsTheSameHiddenStoryTests
             Secret);
 
         await FlavourTurn.AskAsync(
-            provider, null, "A persona.", null, "Say something.", null, null, null, null, TestContext.Current.CancellationToken, hiddenStory: brief);
+            provider, null, "A persona.", null, "Say something.", null, null, null, null, SpendPurposes.StoryLines, TestContext.Current.CancellationToken, hiddenStory: brief);
 
         Assert.Contains(brief, provider.Requests[0].Prompt.RenderCachedSystemBlock());
     }

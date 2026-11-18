@@ -18,6 +18,7 @@ public class AThinkingModelStillGetsToAnswerTests
             spend: null,
             prices: null,
             logger: logger,
+            purpose: SpendPurposes.NpcChatter,
             cancellationToken: TestContext.Current.CancellationToken);
 
     /// <summary>
@@ -61,6 +62,7 @@ public class AThinkingModelStillGetsToAnswerTests
             spend: null,
             prices: null,
             logger: null,
+            purpose: SpendPurposes.NpcChatter,
             cancellationToken: TestContext.Current.CancellationToken,
             maxOutputTokens: 9000);
 

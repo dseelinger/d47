@@ -27,6 +27,12 @@ public sealed record SpendEntry
 
     public decimal Dollars { get; init; }
 
+    /// <summary>What a model charge paid for, as an id from <see cref="SpendPurposes"/>; null on rows written before it was recorded.</summary>
+    public string? Purpose { get; init; }
+
+    /// <summary>The step of story writing a charge served, such as "fidelity"; null elsewhere.</summary>
+    public string? Step { get; init; }
+
     public bool Priced { get; init; }
 
     public int InputTokens { get; init; }

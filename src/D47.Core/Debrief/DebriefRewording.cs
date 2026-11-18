@@ -122,6 +122,7 @@ public static class DebriefRewording
             spend,
             prices,
             logger,
+            purpose: SpendPurposes.Debrief,
             token,
             maxOutputTokens: RewordTokens,
             sampling: LlmSampling.Debrief);

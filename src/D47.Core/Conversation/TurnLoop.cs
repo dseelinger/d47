@@ -1031,6 +1031,7 @@ public sealed class TurnLoop(
             spend,
             prices,
             logger,
+            purpose: SpendPurposes.Conversation,
             cancellationToken,
             effort: ThinkingEffort.Low,
             sampling: LlmSampling.CommsRouting,
@@ -2476,7 +2477,7 @@ public sealed class TurnLoop(
 
         // Warmth is read from the first completed round alone; the bill is every round, unfinished ones included.
         var cost = CostOf(Add(usage, unfinished.Usage));
-        spend.Record(cost, coldPrefixExpected, activeProvider.Id, chosenModel, Warmth(firstRound, providerCapabilities));
+        spend.Record(cost, SpendPurposes.Conversation, coldPrefixExpected, activeProvider.Id, chosenModel, Warmth(firstRound, providerCapabilities));
 
         // A refusal is an unsure turn, not an error: the model declined, which is a real answer about what it
         // will do rather than a fault in the pipeline.
@@ -2512,7 +2513,7 @@ public sealed class TurnLoop(
         {
             if (roundsBilled > 0 || unfinished.Count > 0)
             {
-                spend.Record(CostOf(Add(usage, unfinished.Usage)), coldPrefixExpected: true, activeProvider.Id, chosenModel);
+                spend.Record(CostOf(Add(usage, unfinished.Usage)), SpendPurposes.Conversation, coldPrefixExpected: true, activeProvider.Id, chosenModel);
             }
         }
 

@@ -137,6 +137,7 @@ public static class TypedLineWatch
             spend,
             prices,
             logger: null,
+            purpose: SpendPurposes.Checklist,
             token,
             maxOutputTokens: AnswerTokens,
             sampling: LlmSampling.Debrief);

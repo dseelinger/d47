@@ -220,6 +220,7 @@ public sealed class ShipPlanAdvisor(
             spend,
             prices,
             logger,
+            purpose: SpendPurposes.ShipPlan,
             cancellationToken,
             maxOutputTokens: OutputCeiling,
             effort: ThinkingEffort.High,

@@ -321,6 +321,7 @@ public sealed class LogbookBook(
             ProviderId = providerId,
             Model = model,
             Dollars = cost.Dollars,
+            Purpose = SpendPurposes.Logbook,
             Priced = cost.Priced,
             InputTokens = cost.Usage.InputTokens,
             CacheWriteTokens = cost.Usage.CacheCreationInputTokens,

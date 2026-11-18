@@ -46,6 +46,7 @@ public static class FlavourTurn
         SpendTracker? spend,
         PriceTable? prices,
         ILogger? logger,
+        string purpose,
         CancellationToken cancellationToken = default,
         bool webSearch = false,
         int? maxOutputTokens = null,
@@ -55,7 +56,8 @@ public static class FlavourTurn
         string? humor = null,
         string? scenario = null,
         string? hiddenStory = null,
-        string? recentDelivery = null) =>
+        string? recentDelivery = null,
+        string? step = null) =>
         (await AskForAsync(
             provider,
             model,
@@ -66,6 +68,7 @@ public static class FlavourTurn
             spend,
             prices,
             logger,
+            purpose,
             cancellationToken,
             webSearch,
             maxOutputTokens,
@@ -75,7 +78,8 @@ public static class FlavourTurn
             humor,
             scenario,
             hiddenStory,
-            recentDelivery: recentDelivery).ConfigureAwait(false)).Line;
+            recentDelivery: recentDelivery,
+            step: step).ConfigureAwait(false)).Line;
 
     /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
     /// <param name="thinking">Whether the model may think first; see <see cref="LlmRequest.ThinkingAllowed"/>.</param>
@@ -91,6 +95,7 @@ public static class FlavourTurn
         SpendTracker? spend,
         PriceTable? prices,
         ILogger? logger,
+        string purpose,
         CancellationToken cancellationToken = default,
         bool webSearch = false,
         int? maxOutputTokens = null,
@@ -104,7 +109,8 @@ public static class FlavourTurn
         string? recentDelivery = null,
         FlavourLimits? limits = null,
         Action<int>? received = null,
-        LlmResponseSchema? responseSchema = null)
+        LlmResponseSchema? responseSchema = null,
+        string? step = null)
     {
         if (provider is null)
         {
@@ -165,12 +171,14 @@ public static class FlavourTurn
             var price = prices?.For(provider.Id, chosenModel);
             spend.Record(
                 price is null ? TurnCost.Unpriced(usage) : new TurnCost(usage, price.DollarsFor(usage), true),
+                purpose,
 
                 // Its prefix is not the conversation's prefix, so a cold one here is expected rather than the
                 // regression an unexplained cache miss on the turn path is.
                 coldPrefixExpected: true,
                 provider.Id,
-                chosenModel);
+                chosenModel,
+                step: step);
         }
 
         var time = limits?.Time ?? TimeProvider.System;

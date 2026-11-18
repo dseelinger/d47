@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Each model charge D47 writes to `data\spend.jsonl` also records what the call was for, such as conversation, story chapters, NPC chatter or the logbook, and a story chapter's charge records the writing step. Charges written before this have no purpose and count in every total as before. SPEND shows the same figures it did.
+
 Changed: After an organic analysis on a body whose biological signals Elite has counted, D47 ends the line with how many species are left on that body. The analysis that completes the last one says the body's total (every species you have analysed there, sold or not) in place of the unsold total.
 
 Added: Kokoro speaks Japanese story lines. In Change voice, a story character who speaks Japanese is offered Kokoro and its five Japanese voices (Alpha, Gongitsune, Nezumi, Tebukuro and Kumo); every other character and every voice row in Settings is still offered the 28 English voices only. Choosing or playing a Japanese voice downloads it and the dictionary Kokoro reads Japanese with, about 51 MB, once. A line due before they arrive is spoken in the story's own voice. Play in the Voice list says the sample sentence in Japanese, with its English as the caption, for any voice that speaks Japanese and no English.

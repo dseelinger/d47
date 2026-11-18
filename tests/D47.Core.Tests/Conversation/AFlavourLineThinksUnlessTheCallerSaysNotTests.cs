@@ -19,6 +19,7 @@ public class AFlavourLineThinksUnlessTheCallerSaysNotTests
                 spend: null,
                 prices: null,
                 logger: null,
+                purpose: SpendPurposes.NpcChatter,
                 cancellationToken: TestContext.Current.CancellationToken,
                 thinking: allowed)
             : FlavourTurn.AskForAsync(
@@ -31,6 +32,7 @@ public class AFlavourLineThinksUnlessTheCallerSaysNotTests
                 spend: null,
                 prices: null,
                 logger: null,
+                purpose: SpendPurposes.NpcChatter,
                 cancellationToken: TestContext.Current.CancellationToken);
 
     [Fact]

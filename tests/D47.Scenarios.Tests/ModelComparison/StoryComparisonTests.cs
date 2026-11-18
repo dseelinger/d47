@@ -521,7 +521,7 @@ public partial class StoryComparisonTests
         var tokens = int.Parse(Env("D47_COMPARE_OVERFLOW_TOKENS") ?? "140000", CultureInfo.InvariantCulture);
         var filler = string.Join(' ', Enumerable.Range(0, tokens / 15).Select(at => $"The quick brown fox jumps over the lazy dog number {at}."));
         var reply = await FlavourTurn.AskForAsync(
-            provider, model, null, null, filler + " Reply with OK.", null, null, null, null, Token, maxOutputTokens: 100).ConfigureAwait(false);
+            provider, model, null, null, filler + " Reply with OK.", null, null, null, null, SpendPurposes.Conversation, Token, maxOutputTokens: 100).ConfigureAwait(false);
 
         return reply.Line is null ? $"{reply.Miss}: {reply.Message}" : $"answered {reply.Line.Length} characters";
     }

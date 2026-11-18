@@ -3192,6 +3192,7 @@ public sealed class AppHost : IDisposable
                 spend,
                 PriceTable.Default,
                 logger,
+                purpose: SpendPurposes.NpcChatter,
                 cancellationToken);
 
         // A stranger heard in this system: an invented speaker or a real comms NPC.
@@ -5360,6 +5361,7 @@ public sealed class AppHost : IDisposable
                         Spend,
                         PriceTable.Default,
                         _logger,
+                        purpose: SpendPurposes.CoreGreeting,
                         humor: Writer.HumorFor(HumorGroup.Cores, canBeDirected: false),
                         hiddenStory: Writer.HiddenStory(VoiceRole.ShipAi));
 
@@ -5395,6 +5397,7 @@ public sealed class AppHost : IDisposable
                         Spend,
                         PriceTable.Default,
                         _logger,
+                        purpose: SpendPurposes.CoreGreeting,
                         humor: Writer.HumorFor(HumorGroup.Cores, canBeDirected: false),
                         scenario: Writer.ScenarioFor(brief, VoiceRole.ShipAi),
                         hiddenStory: Writer.HiddenStory(VoiceRole.ShipAi));
@@ -5909,6 +5912,7 @@ public sealed class AppHost : IDisposable
             Spend,
             PriceTable.Default,
             _logger,
+            purpose: SpendPurposes.WebLookup,
             cancellationToken,
             webSearch: true,
 

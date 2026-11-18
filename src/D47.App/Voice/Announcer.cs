@@ -342,6 +342,7 @@ public sealed class Announcer : IDisposable
                 Spend,
                 PriceTable.Default,
                 _logger,
+                purpose: SpendPurposes.WebLookup,
                 budget.Token,
                 webSearch: true,
 

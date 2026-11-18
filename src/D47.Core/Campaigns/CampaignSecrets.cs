@@ -265,6 +265,7 @@ public static partial class CampaignSecrets
             spend,
             prices,
             logger,
+            purpose: SpendPurposes.Campaign,
             token,
             maxOutputTokens: SecretTokens);
 

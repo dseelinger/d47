@@ -39,7 +39,7 @@ public class SpendDialogTests
 
         var usage = new LlmUsage(1_240, 380, 0, 18_400);
         session = new SpendTracker(ledger);
-        session.Record(new TurnCost(usage, 0.0231m, true), coldPrefixExpected: true, "anthropic", "claude-opus-5");
+        session.Record(new TurnCost(usage, 0.0231m, true), SpendPurposes.Conversation, coldPrefixExpected: true, "anthropic", "claude-opus-5");
 
         var speech = new SpeechSpend();
 

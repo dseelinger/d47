@@ -88,6 +88,7 @@ public sealed class RecentDeliveryNotesTests
         {
             var said = await FlavourTurn.AskAsync(
                 provider, null, "Persona", null, "Say it.", null, null, null, null,
+                purpose: SpendPurposes.RewordedCallout,
                 cancellationToken: TestContext.Current.CancellationToken,
                 canBeDirected: true,
                 recentDelivery: delivery.Describe("ship"));
@@ -105,6 +106,7 @@ public sealed class RecentDeliveryNotesTests
 
         await FlavourTurn.AskAsync(
             provider, null, "Persona", null, "Say it.", null, null, null, null,
+            purpose: SpendPurposes.RewordedCallout,
             cancellationToken: TestContext.Current.CancellationToken,
             canBeDirected: false,
             recentDelivery: "Notes.");

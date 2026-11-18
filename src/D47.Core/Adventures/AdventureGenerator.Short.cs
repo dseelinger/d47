@@ -139,7 +139,7 @@ public sealed partial class AdventureGenerator
         var home = HomeSystem?.Invoke() is { } set && !string.IsNullOrWhiteSpace(set) ? set.Trim() : null;
         var drawable = Drawable(ask);
         var ships = EliteSpecifications.HullNameList;
-        var asked = await AskJsonAsync(BriefStep, BriefInstruction(ask, facts, home, drawable, ships, revision), HeadingOutputCeiling, ask.Progress, cancellationToken, ThinkingEffort.Low).ConfigureAwait(false);
+        var asked = await AskJsonAsync(BriefStep, BriefInstruction(ask, facts, home, drawable, ships, revision), HeadingOutputCeiling, ask, cancellationToken, ThinkingEffort.Low).ConfigureAwait(false);
 
         if ((asked.Json is null ? null : ReadBrief(asked.Json)) is not { } read)
         {

@@ -158,7 +158,7 @@ public sealed partial class AdventureGenerator
         var away = ShipBases.Exempts(ask) && galaxy() is { } search ? await BaseAsync(search, ask, facts, cancellationToken).ConfigureAwait(false) : null;
 
         Enter(ask, WriteStage.Objectives);
-        var asked = await AskJsonAsync(LinesStep, LinesInstruction(ask, facts, plan, away, repair: null, after, revision), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        var asked = await AskJsonAsync(LinesStep, LinesInstruction(ask, facts, plan, away, repair: null, after, revision), BeatsOutputCeiling, ask, cancellationToken).ConfigureAwait(false);
 
         if (asked.Json is null)
         {
@@ -231,7 +231,7 @@ public sealed partial class AdventureGenerator
 
             var round = ++rounds[kind];
             var repair = new LineRepair(read, name, spine, resolved.Refusals, unplainRaised);
-            var again = await AskJsonAsync(LineRepairStep, LinesInstruction(ask, facts, plan, away, repair, after, revision), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+            var again = await AskJsonAsync(LineRepairStep, LinesInstruction(ask, facts, plan, away, repair, after, revision), BeatsOutputCeiling, ask, cancellationToken).ConfigureAwait(false);
 
             if (cancellationToken.IsCancellationRequested)
             {

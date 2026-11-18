@@ -184,7 +184,7 @@ public sealed class ASlowOrSilentStoryCallIsStoppedTests
         using var caller = new CancellationTokenSource(TimeSpan.FromSeconds(10), time);
 
         var reply = await FlavourTurn.AskForAsync(
-            provider, null, null, null, "Write.", null, null, null, null, caller.Token, limits: new FlavourLimits(TimeSpan.FromSeconds(120), TimeSpan.FromSeconds(30)) { Time = time });
+            provider, null, null, null, "Write.", null, null, null, null, SpendPurposes.StoryChapter, caller.Token, limits: new FlavourLimits(TimeSpan.FromSeconds(120), TimeSpan.FromSeconds(30)) { Time = time });
 
         Assert.Equal(FlavourMiss.Cancelled, reply.Miss);
         Assert.Null(reply.Message);

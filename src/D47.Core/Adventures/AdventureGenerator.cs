@@ -585,7 +585,7 @@ public sealed partial class AdventureGenerator(
     private async Task<IReadOnlyList<Refusal>> FidelityAsync(AdventureAsk ask, Facts facts, AdventureSpine spine, IReadOnlyList<ReadBeat> beats, CancellationToken cancellationToken)
     {
         var heads = Heads(beats);
-        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, ask.Story is not null), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        var asked = await AskJsonAsync(FidelityStep, FidelityInstruction(facts, spine, beats, ask.Story is not null), BeatsOutputCeiling, ask, cancellationToken).ConfigureAwait(false);
 
         if (asked.Json is null)
         {
@@ -790,7 +790,7 @@ public sealed partial class AdventureGenerator(
             return [];
         }
 
-        var asked = await AskJsonAsync(PlainStep, PlainInstruction(parts), BeatsOutputCeiling, ask.Progress, cancellationToken).ConfigureAwait(false);
+        var asked = await AskJsonAsync(PlainStep, PlainInstruction(parts), BeatsOutputCeiling, ask, cancellationToken).ConfigureAwait(false);
 
         if (asked.Json is null)
         {
@@ -1396,7 +1396,7 @@ public sealed partial class AdventureGenerator(
         var home = HomeSystem?.Invoke() is { } set && !string.IsNullOrWhiteSpace(set) ? set.Trim() : null;
         var heads = ChapterPull.MayHead(ask.Story);
         var drawable = Drawable(ask);
-        var asked = await AskJsonAsync(HeadingStep, HeadingInstruction(rewrite, facts, home, heads, drawable), HeadingOutputCeiling, ask.Progress, cancellationToken, ThinkingEffort.Low).ConfigureAwait(false);
+        var asked = await AskJsonAsync(HeadingStep, HeadingInstruction(rewrite, facts, home, heads, drawable), HeadingOutputCeiling, ask, cancellationToken, ThinkingEffort.Low).ConfigureAwait(false);
 
         if ((asked.Json is null ? null : ReadHeading(asked.Json)) is not { } read)
         {
@@ -2586,7 +2586,7 @@ public sealed partial class AdventureGenerator(
                 : $"{Reply.Line.Length} characters came back and could not be read.";
     }
 
-    private async Task<Asked> AskJsonAsync(string step, StoryCall call, int budget, StoryProgress? progress, CancellationToken cancellationToken, ThinkingEffort? effort = null)
+    private async Task<Asked> AskJsonAsync(string step, StoryCall call, int budget, AdventureAsk ask, CancellationToken cancellationToken, ThinkingEffort? effort = null)
     {
         var asking = provider();
         var writing = WritingModel(asking);
@@ -2601,6 +2601,7 @@ public sealed partial class AdventureGenerator(
             spend,
             prices,
             logger,
+            purpose: ask.Story is null ? SpendPurposes.ShortStory : SpendPurposes.StoryChapter,
             cancellationToken,
             maxOutputTokens: budget,
             effort: Effort
@@ -2612,12 +2613,13 @@ public sealed partial class AdventureGenerator(
             sampling: LlmSampling.Adventure,
             // A model on this machine may be on a CPU, so it is never stopped for being slow.
             limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit ?? CallLimitFor(budget), SilenceLimit) { First = FirstReplyLimit, Time = Time },
-            received: progress is null ? null : progress.Received,
-            responseSchema: call.Schema).ConfigureAwait(false);
+            received: ask.Progress is null ? null : ask.Progress.Received,
+            responseSchema: call.Schema,
+            step: step).ConfigureAwait(false);
 
         if (reply.Miss == FlavourMiss.TimedOut)
         {
-            progress?.CallStopped();
+            ask.Progress?.CallStopped();
         }
 
         return new Asked(step, chosen, reply, reply.Line is null ? null : Unfence(reply.Line));

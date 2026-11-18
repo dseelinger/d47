@@ -268,6 +268,7 @@ public sealed partial class ComparisonRunner(
                     null,
                     null,
                     null,
+                    SpendPurposes.NpcChatter,
                     cancellationToken).ConfigureAwait(false);
                 reply = asked.Line ?? string.Empty;
                 failure = asked.Line is null ? $"{asked.Miss}: {asked.Message}" : null;
@@ -294,6 +295,7 @@ public sealed partial class ComparisonRunner(
                     null,
                     null,
                     null,
+                    SpendPurposes.RewordedCallout,
                     cancellationToken).ConfigureAwait(false);
                 reply = asked.Line ?? string.Empty;
                 failure = asked.Line is null ? $"{asked.Miss}: {asked.Message}" : null;
@@ -317,6 +319,7 @@ public sealed partial class ComparisonRunner(
                     null,
                     null,
                     null,
+                    SpendPurposes.StoryLines,
                     cancellationToken).ConfigureAwait(false);
                 reply = asked.Line ?? string.Empty;
                 failure = asked.Line is null ? $"{asked.Miss}: {asked.Message}" : null;
@@ -339,6 +342,7 @@ public sealed partial class ComparisonRunner(
                     null,
                     null,
                     null,
+                    SpendPurposes.WebLookup,
                     cancellationToken,
                     webSearch: true,
                     sampling: LoreLookup.Sampling).ConfigureAwait(false);

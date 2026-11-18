@@ -116,6 +116,7 @@ public class LogbookBookTests
         var row = Assert.Single(SpendFile.Entries(files, ledgerFile));
 
         Assert.Equal(SpendKind.Model, row.Kind);
+        Assert.Equal(SpendPurposes.Logbook, row.Purpose);
         Assert.Equal("claude-opus-5", row.Model);
         Assert.Equal(2000, row.InputTokens);
         Assert.Equal(400, row.OutputTokens);

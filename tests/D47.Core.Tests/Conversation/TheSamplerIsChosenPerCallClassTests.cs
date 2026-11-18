@@ -69,6 +69,7 @@ public class TheSamplerIsChosenPerCallClassTests
             spend: null,
             prices: null,
             logger: null,
+            purpose: SpendPurposes.NpcChatter,
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(LlmSampling.InCharacter, provider.LastRequest!.Sampling);
