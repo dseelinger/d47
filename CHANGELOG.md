@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: On the Journal page, under Every field, each nested object or list is a row with its name and how many fields or items it has, instead of JSON text. Press the row to show its fields on indented lines under it, and press it again to fold them. A group of up to four plain values starts open; the rest start folded, and each new selection starts again from that.
+
 Changed: The Apex and Frontline shuttle pilots are heard as if in the cabin with you, with no radio filter, static or carrier tail. Their voice and the voice slot they use are unchanged.
 
 Changed: With Windows' animation effects off (Accessibility › Visual effects), the waiting mark is drawn still, all five squares in the dim line colour and none lit, and its sentence still says what is being waited for. The setting is read each time a wait appears.

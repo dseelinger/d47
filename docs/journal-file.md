@@ -65,7 +65,7 @@ nav_order: 8
  <text x="645" y="184" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-muted)">THE FIELDS, AS ELITE WROTE THEM</text>
  <text x="440" y="248" text-anchor="middle" font-size="15" fill="var(--text-muted)">The sentence is prose and can be wrong. The fields cannot — they are the file.</text>
 </svg>
-<p class="body">Select a sentence and the right pane shows what it says, and under <strong>EVERY FIELD</strong> the fields exactly as Elite wrote them.</p>
+<p class="body">Select a sentence and the right pane shows what it says, and under <strong>EVERY FIELD</strong> the fields exactly as Elite wrote them, each nested object or list its own group of lines, folded under its name.</p>
 </section>
 <section>
 <h2><span class="num">3</span> The Raw checkbox shows the same events, unread.</h2>
@@ -112,8 +112,9 @@ where the newest line actually is. A control that names a direction has to be ri
 
 The list of sentences is on the left. The right pane reads the chosen event: its sentence, the
 time and how long ago, a row for each thing it says, a paragraph on what the event is, and
-**Every field**, folded, which lists every field exactly as Elite wrote it. **The divider between
-the panes can be dragged.**
+**Every field**, folded, which lists every field exactly as Elite wrote it. Each nested object or
+list is its own group of lines, folded under its name; press the name to open or fold it. **The
+divider between the panes can be dragged.**
 
 A value Directive 47 decoded from one of Frontier's tokens is underlined with dots; hover it to see
 the token. A row label that the reading knows explains its field when hovered. An engineer, or a

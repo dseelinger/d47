@@ -27,7 +27,11 @@ internal sealed class JournalReadingPane : Border
     public const int ValuesShown = 6;
 
     private const double LabelColumn = 148;
-    private const double FieldNameColumn = 212;
+    private const double FieldNameColumn = 236;
+    private const double FieldIndent = 24;
+    private const double TriangleSlot = 14;
+    private const double TriangleGap = 10;
+    private const double ValueGap = 16;
 
     private static readonly FontFamily Chrome = new(Fonts.ChromeFamily);
     private static readonly FontFamily Prose = new(Fonts.ProseFamily);
@@ -647,11 +651,7 @@ internal sealed class JournalReadingPane : Border
     private StackPanel EveryField(IReadOnlyList<PlumbingField> fields)
     {
         var list = new StackPanel { Name = "ReadingFields" };
-
-        foreach (var field in fields)
-        {
-            list.Children.Add(Field(field));
-        }
+        AddFields(list, fields, depth: 0);
 
         var count = Text(fields.Count.ToString(CultureInfo.InvariantCulture), Mono, TypeScale.Meta, FontWeight.Normal, ThemeManager.GreyKey);
         count.VerticalAlignment = VerticalAlignment.Center;
@@ -659,29 +659,173 @@ internal sealed class JournalReadingPane : Border
         return Fold("EVERY FIELD", list, open: false, preview: null, aside: count, "ReadingEveryField");
     }
 
-    private Border Field(PlumbingField field)
+    private void AddFields(StackPanel list, IReadOnlyList<PlumbingField> fields, int depth)
     {
-        var name = Selectable(field.Name, ThemeManager.GreyKey);
-        var value = Selectable(field.Value, ThemeManager.WhiteKey);
-        var grid = new Grid { Children = { name, value } };
-
-        _layouts.Add(narrow =>
+        foreach (var field in fields)
         {
-            grid.ColumnDefinitions = narrow ? [] : new ColumnDefinitions($"{FieldNameColumn},*");
-            grid.RowDefinitions = narrow ? new RowDefinitions("Auto,Auto") : [];
-            Grid.SetColumn(value, narrow ? 0 : 1);
-            Grid.SetRow(value, narrow ? 1 : 0);
-        });
+            list.Children.Add(field.Kind is PlumbingKind.Object or PlumbingKind.List ? Group(field, depth) : Field(field, depth));
+        }
+    }
 
+    /// <summary>Adds a layout and runs it at once, so a line built after <see cref="Show"/> takes the current width.</summary>
+    private void Layout(Action<bool> layout)
+    {
+        _layouts.Add(layout);
+        layout(_narrow);
+    }
+
+    /// <summary>The name column at a depth: the value starts at the same x at every depth.</summary>
+    private static double NameColumn(int depth) => Math.Max(0, FieldNameColumn - (FieldIndent * depth));
+
+    /// <summary>A line's border: a Line2 rule under it, and 24px more left padding per depth.</summary>
+    private static Border FieldLine(Control child, int depth)
+    {
         var line = new Border
         {
-            Padding = new Thickness(2, 5),
+            Padding = new Thickness(2 + (FieldIndent * depth), 5, 2, 5),
             BorderThickness = new Thickness(0, 0, 0, 1),
-            Child = grid,
+            Child = child,
         };
         ThemeInk.Bind(line, BorderBrushProperty, ThemeManager.Line2Key);
 
         return line;
+    }
+
+    private Border Field(PlumbingField field, int depth)
+    {
+        var name = Selectable(field.Name, ThemeManager.GreyKey);
+        var value = Selectable(field.Value, field.Kind == PlumbingKind.Empty ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+        var grid = new Grid { Children = { name, value } };
+
+        Layout(narrow =>
+        {
+            grid.ColumnDefinitions = narrow
+                ? new ColumnDefinitions($"{TriangleSlot},{TriangleGap},*")
+                : new ColumnDefinitions($"{TriangleSlot},{TriangleGap},{NameColumn(depth)},{ValueGap},*");
+            grid.RowDefinitions = narrow ? new RowDefinitions("Auto,Auto") : [];
+            Grid.SetColumn(name, 2);
+            Grid.SetColumn(value, narrow ? 2 : 4);
+            Grid.SetRow(value, narrow ? 1 : 0);
+        });
+
+        return FieldLine(grid, depth);
+    }
+
+    /// <summary>An object or list: a 44px row that opens and folds its fields, built on first open.</summary>
+    private StackPanel Group(PlumbingField field, int depth)
+    {
+        var glyph = Text(string.Empty, Chrome, TypeScale.MetaSmall, FontWeight.Normal, ThemeManager.AKey);
+        glyph.VerticalAlignment = VerticalAlignment.Center;
+        glyph.HorizontalAlignment = HorizontalAlignment.Center;
+
+        var label = Text(string.Empty, Mono, TypeScale.Meta, FontWeight.Normal, ThemeManager.GreyKey);
+        label.LineHeight = 18;
+        label.VerticalAlignment = VerticalAlignment.Center;
+
+        if (field.Tag is { } tag)
+        {
+            var named = new Run(tag);
+            ThemeInk.Bind(named, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+            label.Inlines = [new Run(field.Name), new Run(" · "), named];
+        }
+        else
+        {
+            label.Text = field.Name;
+        }
+
+        var count = Text(Count(field), Mono, TypeScale.Meta, FontWeight.Normal, ThemeManager.GreyKey);
+        count.LineHeight = 18;
+        count.VerticalAlignment = VerticalAlignment.Center;
+
+        var grid = new Grid { Children = { glyph, label, count } };
+        Grid.SetColumn(label, 2);
+
+        Layout(narrow =>
+        {
+            grid.ColumnDefinitions = narrow
+                ? new ColumnDefinitions($"{TriangleSlot},{TriangleGap},*,{ValueGap},Auto")
+                : new ColumnDefinitions($"{TriangleSlot},{TriangleGap},{NameColumn(depth)},{ValueGap},*");
+            Grid.SetColumn(count, 4);
+        });
+
+        var face = FieldLine(grid, depth);
+
+        var button = new Button
+        {
+            Name = "ReadingGroup",
+            Content = face,
+            Background = Brushes.Transparent,
+            Padding = new Thickness(0),
+            MinHeight = TypeScale.MinimumTarget,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Stretch,
+        };
+
+        var group = new StackPanel { Children = { button } };
+        var open = field.StartsOpen;
+        Avalonia.Controls.Panel? host = null;
+
+        void Draw()
+        {
+            glyph.Text = open ? "▼" : "▶";
+
+            if (open && host is null)
+            {
+                var children = new StackPanel();
+                AddFields(children, field.Fields, depth + 1);
+
+                var guide = new Border
+                {
+                    Width = 1,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin = new Thickness(2 + (FieldIndent * depth) + (TriangleSlot / 2), 0, 0, 0),
+                    IsHitTestVisible = false,
+                };
+                ThemeInk.Bind(guide, BackgroundProperty, ThemeManager.Line2Key);
+
+                host = new Avalonia.Controls.Panel { Children = { children, guide } };
+                group.Children.Add(host);
+            }
+
+            if (host is not null)
+            {
+                host.IsVisible = open;
+            }
+        }
+
+        button.Click += (_, _) =>
+        {
+            open = !open;
+            Draw();
+        };
+        button.Classes.CollectionChanged += (_, _) => PaintHover(button, face);
+
+        Draw();
+        PaintHover(button, face);
+
+        return group;
+    }
+
+    private static string Count(PlumbingField field)
+    {
+        var n = field.Fields.Count;
+        var unit = field.Kind == PlumbingKind.List ? "item" : "field";
+
+        return $"{n.ToString(CultureInfo.InvariantCulture)} {unit}{(n == 1 ? string.Empty : "s")}";
+    }
+
+    /// <summary>Tile under a hovered or keyboard-focused row; no fill while pressed.</summary>
+    private static void PaintHover(Button button, Border face)
+    {
+        if (button.Classes.Contains(":pointerover") || button.Classes.Contains(":focus-visible"))
+        {
+            ThemeInk.Bind(face, BackgroundProperty, ThemeManager.TileKey);
+        }
+        else
+        {
+            face.Background = Brushes.Transparent;
+        }
     }
 
     private SelectableTextBlock Selectable(string text, string key)
@@ -759,27 +903,15 @@ internal sealed class JournalReadingPane : Border
             }
         }
 
-        void Paint()
-        {
-            if (button.Classes.Contains(":pointerover") || button.Classes.Contains(":focus-visible"))
-            {
-                ThemeInk.Bind(face, BackgroundProperty, ThemeManager.TileKey);
-            }
-            else
-            {
-                face.Background = Brushes.Transparent;
-            }
-        }
-
         button.Click += (_, _) =>
         {
             open = !open;
             Draw();
         };
-        button.Classes.CollectionChanged += (_, _) => Paint();
+        button.Classes.CollectionChanged += (_, _) => PaintHover(button, face);
 
         Draw();
-        Paint();
+        PaintHover(button, face);
 
         return new StackPanel { Children = { button, body } };
     }
