@@ -405,7 +405,7 @@ want it is a moment the game is filling the screen. It flips the row above, so w
 the key and what Settings says are one thing and survive a restart together.
 
 A stick or throttle button can be bound beside the key, as for Open settings, and it works
-anywhere too.
+anywhere too. So can a motion controller button, in the headset.
 
 #### Move the overlay {#move-overlay}
 

@@ -419,7 +419,8 @@ public sealed unsafe class OpenXrLayerRuntime(
                            | (_triggerBy[i] ? VrHand.Bit(VrButton.Trigger) : 0u)
                            | (_gripBy[i] ? VrHand.Bit(VrButton.Grip) : 0u);
 
-                found.Add(new VrHand((uint)i, ToPose(hand.Grip), ToPose(hand.Aim), held, StickOf(hand)));
+                found.Add(new VrHand(
+                    (uint)i, ToPose(hand.Grip), ToPose(hand.Aim), held, StickOf(hand), i == 0 ? VrSide.Left : VrSide.Right));
             }
 
             return (found, head);

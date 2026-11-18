@@ -198,17 +198,25 @@ public static class BindCapture
 
         timer.Tick += (_, _) =>
         {
+            var motion = editing.MotionControllers();
+            IReadOnlyList<D47.Core.Hotas.HotasReading> readings;
+
             if (editing.Reader.Unavailable is { Length: > 0 } why)
             {
-                message.Fail(why);
-                timer.Stop();
-                return;
-            }
+                // With no stick to read, the motion controllers are read alone.
+                if (motion.Count == 0)
+                {
+                    message.Fail(why);
+                    timer.Stop();
+                    return;
+                }
 
-            // Nothing is read until the device list stops changing: a single enumeration at startup reported
-            // three of six devices on the bench (Phase 21, finding 1).
-            if (!editing.Reader.IsSettled)
+                readings = motion;
+            }
+            else if (!editing.Reader.IsSettled)
             {
+                // Nothing is read until the device list stops changing: a single enumeration at startup reported
+                // three of six devices on the bench (Phase 21, finding 1).
                 if (!looking)
                 {
                     message.Wait("Looking for your controllers…");
@@ -217,10 +225,14 @@ public static class BindCapture
 
                 return;
             }
+            else
+            {
+                readings = [.. editing.Reader.Poll(), .. motion];
+            }
 
             looking = false;
 
-            var result = capture.Poll(editing.Reader.Poll(), editing.Now() - opened);
+            var result = capture.Poll(readings, editing.Now() - opened);
 
             if (notice is not null && result.Stage is not (D47.Core.Hotas.ButtonCaptureStage.Captured or D47.Core.Hotas.ButtonCaptureStage.Declined))
             {

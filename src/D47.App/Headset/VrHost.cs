@@ -49,15 +49,19 @@ public sealed class VrHost : IDisposable
     /// The grab a hand is holding the panel by, and the device holding it, or null when nobody is
     /// (#30).
     /// </param>
+    /// <param name="Resizing">The device holding a resize handle, or null.</param>
     private sealed record AimGeometry(
         VrPose Resting,
         VrExtent Extent,
         float Curvature,
-        (Matrix4x4 Grab, uint Device, VrSurface Surface)? Carrying = null);
+        (Matrix4x4 Grab, uint Device, VrSurface Surface)? Carrying = null,
+        uint? Resizing = null);
 
     private AimGeometry? _aimGeometry;
 
     private readonly VrStickScroll _stickScroll = new();
+
+    private readonly MotionControllerButtons _buttons;
 
     /// <summary>The last hands the aim loop read, for the serve to act on.</summary>
     private IReadOnlyList<VrHand> _aimHands = [];
@@ -91,6 +95,7 @@ public sealed class VrHost : IDisposable
         CaptionLayer layer,
         IVrSession runtime,
         VrLifecycle lifecycle,
+        MotionControllerButtons buttons,
         ILogger<VrHost> logger)
     {
         _settings = settings;
@@ -102,6 +107,7 @@ public sealed class VrHost : IDisposable
         _layer = layer;
         _runtime = runtime;
         _lifecycle = lifecycle;
+        _buttons = buttons;
         _logger = logger;
     }
 
@@ -207,7 +213,10 @@ public sealed class VrHost : IDisposable
         // Which columns each table shows, stored apart from the window's.
         Panel.ColumnArrangementMemory? columnArrangements = null,
         Func<D47.App.Controls.AudioPlayerDialog>? audioPlayer = null,
-        Func<D47.App.Controls.StoryPlaybackDialog>? storyPlayback = null)
+        Func<D47.App.Controls.StoryPlaybackDialog>? storyPlayback = null,
+
+        // The motion controllers' buttons, which the aim loop reads and the stick poll binds.
+        MotionControllerButtons? controllerButtons = null)
     {
         VrHost? self = null;
 
@@ -274,6 +283,7 @@ public sealed class VrHost : IDisposable
 
         var host = self = new VrHost(
             settings, viewState, panel, avatar, captions, layer, runtime, lifecycle,
+            controllerButtons ?? new MotionControllerButtons(),
             loggers.CreateLogger<VrHost>());
 
         host.Configure();
@@ -547,6 +557,8 @@ public sealed class VrHost : IDisposable
 
         if (!wanted)
         {
+            _buttons.Clear();
+
             if (_lifecycle.State == VrState.Active)
             {
                 _logger.LogInformation("The headset overlays are switched off; giving the session back");
@@ -590,6 +602,10 @@ public sealed class VrHost : IDisposable
                     _aimLoop = null;
                     running.Dispose();
                 }
+            }
+            else
+            {
+                _buttons.Clear();
             }
         }
         catch (Exception ex)
@@ -694,7 +710,8 @@ public sealed class VrHost : IDisposable
                 resting,
                 extent,
                 placement.Curvature,
-                _carrying is { } grab ? (grab, _carryingHand, _panel.Surface) : null));
+                _carrying is { } grab ? (grab, _carryingHand, _panel.Surface) : null,
+                _resizing is not null ? _resizingHand : null));
 
         // What the aim loop last saw, rather than a read of our own: the pose read has one owner.
         var hands = Volatile.Read(ref _aimHands);
@@ -703,10 +720,12 @@ public sealed class VrHost : IDisposable
         // Claimed only while a ray is on the panel or a carry is already running — the second because a hand
         // can swing the panel far enough that its own ray leaves it, and dropping the claim there would drop
         // the panel mid-move.
-        var held = _runtime.TriggerHeld(found is not null || _carrying is not null || _resizing is not null);
+        // A trigger or grip that went down with its ray off the panel stays with the action bound to it.
+        var held = _runtime.TriggerHeld(found is not null || _carrying is not null || _resizing is not null)
+                   && !_buttons.KeepsFromThePanel(VrButton.Trigger, _now);
 
         // Back, on the grip (Phase 25), which leaves resize mode instead while the panel is in it.
-        if (_runtime.BackPressed() && _resizing is null)
+        if (_runtime.BackPressed() && !_buttons.KeepsFromThePanel(VrButton.Grip, _now) && _resizing is null)
         {
             if (_resizeMode)
             {
@@ -732,7 +751,9 @@ public sealed class VrHost : IDisposable
         // What the ray is resting on, lit so the Commander can see they have found it.
         _panel.Aim(found?.Hit.U, found?.Hit.V);
 
-        if (_stickScroll.Step(hands, found?.Hand.Device, _carrying is not null || _resizing is not null || _scrolling, _now) is { } stick)
+        var stickBound = found is { } pointer && _buttons.KeepsTheStickFromThePanel(pointer.Hand.Device, _now);
+
+        if (_stickScroll.Step(hands, found?.Hand.Device, _carrying is not null || _resizing is not null || _scrolling || stickBound, _now) is { } stick)
         {
             _panel.Scroll(stick, D47.Core.Interface.PanelScrollSide.Either);
         }
@@ -925,6 +946,7 @@ public sealed class VrHost : IDisposable
         // Withdrawn first, so the aim loop — if this is the tick that raced its shutdown — stops placing a
         // ray against geometry this serve has declined to stand behind.
         Volatile.Write(ref _aimGeometry, null);
+        _buttons.Clear();
 
         // A claim standing from before the row moved would otherwise stand until the session ended.
         _runtime.ReleaseInput();
@@ -958,21 +980,22 @@ public sealed class VrHost : IDisposable
         _panel.Aim(null, null);
     }
 
-    /// <summary>One frame of the aim ray, from <see cref="VrAimLoop"/> and never from the tick (#19).</summary>
+    /// <summary>
+    /// One frame of the hands and the aim ray, from <see cref="VrAimLoop"/> and never from the tick (#19). The
+    /// hands are read with or without a panel to aim at, for the buttons bound to them.
+    /// </summary>
     private void Aim()
     {
-        if (Volatile.Read(ref _aimGeometry) is not { } geometry)
-        {
-            return;
-        }
-
+        var geometry = Volatile.Read(ref _aimGeometry);
         var (hands, head) = _runtime.HandsAndHead();
 
         // Published before the ray is placed, so the next tick's decision sees what this frame saw rather
         // than what the frame before it did.
         Volatile.Write(ref _aimHands, hands);
 
-        if (head is not { } where)
+        _buttons.Observe(hands, hand => geometry is not null && PanelTakes(geometry, hand), DateTimeOffset.Now);
+
+        if (geometry is null || head is not { } where)
         {
             return;
         }
@@ -1041,6 +1064,12 @@ public sealed class VrHost : IDisposable
         _runtime.AimBeam(aim, head, length);
         _runtime.ShowCursor(point, head, _cursorKind);
     }
+
+    /// <summary>Whether the panel takes this hand's trigger, grip and stick: its ray is on the panel, or it is carrying or resizing it.</summary>
+    private static bool PanelTakes(AimGeometry geometry, VrHand hand) =>
+        geometry.Carrying?.Device == hand.Device
+        || geometry.Resizing == hand.Device
+        || VrRay.Hit(geometry.Resting, geometry.Extent, geometry.Curvature, hand.Aim) is not null;
 
     /// <summary>The hand with this device, if it is still being tracked.</summary>
     private static VrHand? Holding(IReadOnlyList<VrHand> hands, uint device)

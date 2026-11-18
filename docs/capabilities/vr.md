@@ -261,8 +261,8 @@ controllers are claimed and given back.
 
 At other times, with **Motion controllers** on, d47 still reads A, B, X, Y, the menu button, the
 stick (a Vive controller's trackpad) and its click, and the trigger and grip, from each hand at
-priority zero, which takes nothing from the game. Nothing acts on them yet, and its log says when
-each is pressed or released and when a stick moves.
+priority zero, which takes nothing from the game. Its log says when each is pressed or released and
+when a stick moves.
 
 Nothing turns it to face you while you hold it. A panel forced upright and square cannot be
 tilted to read from below or angled to sit beside you, which is most of what moving one is for.
@@ -273,6 +273,25 @@ world-locked means. Directive 47 does not then argue with you about the setting.
 If Elite's own recenter moves your cockpit out from under a panel you had placed, put it back by
 switching that panel's lock to **head**, which brings it to your face, and then nudging it — the
 first nudge sets a head-locked panel down in front of you, at knee height, before it moves. 
+
+### Bind a controller button {#controller-buttons}
+
+Every row that takes a stick button also takes a motion controller input: the trigger, the grip, A,
+B, X or Y, the menu button, the stick click, or the stick pushed up, down, left or right, on either
+hand. Click the stick slot, point the controller away from the panel, and press the input. The row
+names it by hand and input, for example "right controller B". Nothing is bound out of the box.
+
+While a controller's ray is on the panel, or it is carrying or resizing the panel, the panel takes
+that controller's trigger, grip and stick, and an action bound to them does not act. Anywhere else
+they reach their action. Which of the two an input goes to is decided when it goes down and stays
+that way until it comes up, so a trigger pulled with the ray off the panel and then swept onto it
+stays with its action and does not press the panel. A, B, X, Y, the menu button and the stick click
+always reach their action.
+
+A controller counts only while there is a headset session and **Motion controllers** is on. Without
+either, a bound input does nothing, and D47 does not report the controller as missing. On SteamVR,
+binding an input does not take it from the game away from the panel: if Elite binds the same input,
+both act.
 
 ### Resizing it
 
@@ -320,6 +339,8 @@ is no transcript to read it from.
 Each of these four headset keys takes a stick or throttle button as well: click the stick slot on the row
 and press the button, and it is bound beside the key rather than in its place. Giving it the same
 kind twice replaces that one, and **Esc** while a slot listens unbinds that slot. The button works anywhere, as the key does.
+A motion controller button can be bound in the stick slot as well; see
+[Bind a controller button](#controller-buttons).
 
 ### Zooming it
 
@@ -735,9 +756,11 @@ The panel is a second instantiation of the same view definition bound to the sam
 rasterised offscreen into a plain pixel buffer and submitted with `SetOverlayRaw`. It is redrawn only when something
 changed.
 
-**The trigger only.** A controller reports its grip and other buttons through the same channel,
-so treating them all as a press means the grip that grabs the panel also clicks whatever the ray
-was over. And the pointer is the only controller input an overlay gets: SteamVR takes the
+**What each input does.** On the panel, the trigger presses and carries, the grip goes back, and
+the stick scrolls; only the trigger presses, because a grip that also pressed would click whatever
+the ray was over as it went back. Off the panel, the trigger, the grip and the stick go to the actions
+bound to them, and A, B, X, Y, the menu button and the stick click go to theirs everywhere. Without
+D47's own input actions, the pointer is the only controller input an overlay gets: SteamVR takes the
 controllers for its own laser and hands back mouse events.
 `IVRSystem.GetControllerState` returns false for controllers that are connected and tracking,
 silently, and an `IVRInput` action manifest was built twice in two separate projects, accepted by

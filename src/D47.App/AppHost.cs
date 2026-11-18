@@ -706,6 +706,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The stick buttons bound to the nine hotkey actions; <c>MainWindow</c> dispatches their presses.</summary>
     public ActionButtons ActionButtons { get; } = new();
 
+    /// <summary>The motion controllers' buttons, read by the headset's aim loop and polled with the stick.</summary>
+    public D47.Core.Vr.MotionControllerButtons ControllerButtons { get; } = new();
+
     /// <summary>The Commander's Elite bindings.</summary>
     public EliteBinds Binds => _binds.Current;
 
@@ -3603,7 +3606,10 @@ public sealed class AppHost : IDisposable
             () => DateTimeOffset.Now,
             Path.Combine(paths.Data, "switch-capture.txt"),
             () => host.PanelRouting.Snapshot.Destinations,
-            settings);
+            settings)
+        {
+            MotionControllers = () => host.ControllerButtons.Poll(DateTimeOffset.Now),
+        };
         // Whether a lookup is possible is asked at the moment the window opens rather than captured now: the
         // Commander can change the setting or the provider between launching d47 and writing a note, and the
         // window's own first sentence depends on the answer.
@@ -3997,7 +4003,7 @@ public sealed class AppHost : IDisposable
             host.Listener.CommsKey.Poll();
 
             // And the stick, on the same tick (Phase 53).
-            Listener.PollTheStick(services.SampledControllers, services.PushToTalkButton, host.Listener.CommsButton, host.Listener.CancelButton, host.ActionButtons, host._logger);
+            Listener.PollTheStick(services.SampledControllers, services.PushToTalkButton, host.Listener.CommsButton, host.Listener.CancelButton, host.ActionButtons, host._logger, host.ControllerButtons.Poll(context.Now));
 
             // Whether the device is actually delivering audio, which only it knows and which is half of what
             // the panel's microphone indicator says.

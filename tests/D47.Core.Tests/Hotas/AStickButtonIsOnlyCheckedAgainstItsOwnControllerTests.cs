@@ -38,6 +38,14 @@ public class AStickButtonIsOnlyCheckedAgainstItsOwnControllerTests
     private static readonly HotasButton ThumbButton = new(Throttle, 8);
 
     [Fact]
+    public void AMotionControllerButtonSharesNoJoystickButton()
+    {
+        var sharing = Binds.SharingButton(new HotasButton("vr:right", 8), [Reading(Throttle, 0xBD65)]);
+
+        Assert.Empty(sharing.Bindings);
+    }
+
+    [Fact]
     public void TheSticksBindingIsNotReportedForTheThrottle()
     {
         var sharing = Binds.SharingButton(ThumbButton, [Reading(Throttle, 0xBD65), Reading("{wgi/nrid/stick}", 0xBEA1)]);

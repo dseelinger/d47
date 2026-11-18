@@ -449,7 +449,8 @@ the headset's big panel only shows the position. Until the length is known, betw
 playing and while the music is muted, the times read –:–– and the bar is empty and greyed out.
 
 Open and close it with the **Audio player** hotkey, which is Ctrl+Shift+P until you change it in Settings ›
-Hearing and sound › Sounds and levels, group Ambient music, or with a stick button. The key works while Elite
+Hearing and sound › Sounds and levels, group Ambient music, or with a stick button, which can be a motion
+controller button in the headset. The key works while Elite
 has the foreground and does not take the foreground. It opens the dialog in the d47 window and on the headset's
 big panel at once. The two mini panels carry no buttons: while the player is open they show the track, whether
 it is playing or paused, the time played and the length either side of a thin bar, and the phrases to say. Esc, the Close button or the same key closes it everywhere.

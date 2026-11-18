@@ -256,7 +256,9 @@ seldom collides with a key you already use.
 
 **One row, and it takes a key, a stick button, or both.** Click the key slot and press a
 key, or click the stick slot and press a button on your stick; Directive 47 works out which button it
-was. A click anywhere else leaves the slot as it was.
+was. A click anywhere else leaves the slot as it was. In the headset, the stick slot also takes a
+motion controller button, such as the right controller's B, as the headset page describes under Bind
+a controller button.
 
 **To have both, bind twice — one gesture each time.** Click the key slot and give it a key; click
 the stick slot and give it a button. The two are stored separately, so the second does not replace the first,

@@ -96,10 +96,16 @@ public sealed record EliteBinds
 
     /// <summary>
     /// What Elite binds to a button of this number on the controller the button is on, found among
-    /// <paramref name="readings"/>. Every device is searched when the controller is not among them.
+    /// <paramref name="readings"/>. Every device is searched when the controller is not among them. A motion
+    /// controller button is not a joystick button, so nothing shares it.
     /// </summary>
     public ButtonSharing SharingButton(HotasButton button, IReadOnlyList<HotasReading> readings)
     {
+        if (Vr.MotionControllerButtons.IsMotionController(button.DeviceId))
+        {
+            return new ButtonSharing([], Interfaces: 0);
+        }
+
         if (readings.FirstOrDefault(reading => reading.Id == button.DeviceId) is not { } controller)
         {
             return new ButtonSharing(UsingJoystickButton(button.Button), Interfaces: 0);

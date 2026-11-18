@@ -152,6 +152,7 @@ public class TheSteamVrRouteReadsEveryControllerInputTests
             Assert.Equal(VrHand.Bit(VrButton.Menu), right.Held);
             Assert.Equal(Vector2.Zero, left.Stick);
             Assert.Equal(new Vector2(0f, 1f), right.Stick);
+            Assert.Equal((VrSide.Left, VrSide.Right), (left.Side, right.Side));
             Assert.False(runtime.Actions.HoldingPriority);
         }
         finally

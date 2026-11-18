@@ -147,7 +147,9 @@ public sealed class ButtonCapture
     }
 
     private static ButtonCaptureResult Captured(HotasButton button) =>
-        new(ButtonCaptureStage.Captured, button, $"Button {button.Button + 1}. Press Save to bind push-to-talk to it.");
+        new(ButtonCaptureStage.Captured, button, $"{Capitalised(button.Describe())}. Press Save to bind push-to-talk to it.");
+
+    private static string Capitalised(string text) => string.Concat(char.ToUpperInvariant(text[0]).ToString(), text[1..]);
 
     private static ButtonCaptureResult Waiting(TimeSpan elapsed) =>
         elapsed > Patience

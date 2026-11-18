@@ -357,7 +357,8 @@ characters and strangers only. To reach a real Commander, send a message, as bel
 
 **Comms channel up**, **Comms channel down**, **Comms sub-channel up** and **Comms sub-channel
 down** each take a key and a stick button. All four are unbound until you bind them, and they
-work while Elite has the foreground.
+work while Elite has the foreground. The stick slot also takes a motion controller button in the
+headset.
 
 ### It needs the keyboard too
 

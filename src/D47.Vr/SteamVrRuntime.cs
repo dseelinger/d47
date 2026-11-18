@@ -417,14 +417,20 @@ public sealed class SteamVrRuntime(
                 if (VrMatrix.Real(poses[device]) is { } grip)
                 {
                     var aim = VrPose.FromMatrix(GripToTip(device) * grip.ToMatrix());
-                    var (held, stick) = _system.GetControllerRoleForTrackedDeviceIndex(device) switch
+                    var side = _system.GetControllerRoleForTrackedDeviceIndex(device) switch
                     {
-                        ETrackedControllerRole.LeftHand => Actions.ReadHand(VrActionInput.LeftHand),
-                        ETrackedControllerRole.RightHand => Actions.ReadHand(VrActionInput.RightHand),
+                        ETrackedControllerRole.LeftHand => VrSide.Left,
+                        ETrackedControllerRole.RightHand => VrSide.Right,
+                        _ => VrSide.Unknown,
+                    };
+                    var (held, stick) = side switch
+                    {
+                        VrSide.Left => Actions.ReadHand(VrActionInput.LeftHand),
+                        VrSide.Right => Actions.ReadHand(VrActionInput.RightHand),
                         _ => default,
                     };
 
-                    found.Add(new VrHand(device, grip, aim, held, stick));
+                    found.Add(new VrHand(device, grip, aim, held, stick, side));
                 }
             }
 

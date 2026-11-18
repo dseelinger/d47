@@ -35,6 +35,36 @@ public readonly record struct HotasButton(string DeviceId, int Button)
             : null;
     }
 
-    /// <summary>How it is said aloud and drawn.</summary>
-    public string Describe() => $"button {Button + 1}";
+    /// <summary>How it is said aloud and drawn: "button 5" on a stick, "right controller B" on a motion controller.</summary>
+    public string Describe()
+    {
+        var side = DeviceId switch
+        {
+            Vr.MotionControllerButtons.LeftId => "left",
+            Vr.MotionControllerButtons.RightId => "right",
+            _ => null,
+        };
+
+        if (side is null || ControllerInput(Button, side == "left") is not { } input)
+        {
+            return $"button {Button + 1}";
+        }
+
+        return $"{side} controller {input}";
+    }
+
+    private static string? ControllerInput(int button, bool left) => button switch
+    {
+        (int)Vr.VrButton.Trigger => "trigger",
+        (int)Vr.VrButton.Grip => "grip",
+        (int)Vr.VrButton.Primary => left ? "X" : "A",
+        (int)Vr.VrButton.Secondary => left ? "Y" : "B",
+        (int)Vr.VrButton.Menu => "menu button",
+        (int)Vr.VrButton.StickClick => "stick click",
+        Vr.MotionControllerButtons.StickUp => "stick up",
+        Vr.MotionControllerButtons.StickDown => "stick down",
+        Vr.MotionControllerButtons.StickLeft => "stick left",
+        Vr.MotionControllerButtons.StickRight => "stick right",
+        _ => null,
+    };
 }

@@ -11,6 +11,7 @@ using D47.Core.Configuration;
 using D47.Core.Hotas;
 using D47.Core.Input;
 using D47.Core.Listening;
+using D47.Core.Vr;
 using D47.Stt;
 using Microsoft.Extensions.Logging;
 
@@ -669,8 +670,8 @@ public sealed class Listener : IDisposable
     }
 
     /// <summary>
-    /// Polls the stick and the buttons bound to it, on settled readings only (#146). An unsettled
-    /// reader returns nothing by construction, and <see cref="BoundButton"/> counts every
+    /// Polls the stick, the motion controllers and the buttons bound to them, on settled readings only (#146).
+    /// An unsettled reader returns nothing by construction, and <see cref="BoundButton"/> counts every
     /// poll it is given toward the threshold its absence notice fires at.
     /// </summary>
     internal static void PollTheStick(
@@ -679,7 +680,8 @@ public sealed class Listener : IDisposable
         BoundButton commsButton,
         BoundButton cancelButton,
         ActionButtons actionButtons,
-        ILogger logger)
+        ILogger logger,
+        IReadOnlyList<HotasReading>? motionControllers = null)
     {
         // A single enumeration at startup reported three of six devices on the bench, which is Phase 21's
         // finding 1.
@@ -688,7 +690,9 @@ public sealed class Listener : IDisposable
             return;
         }
 
-        var buttons = reader.Poll();
+        IReadOnlyList<HotasReading> buttons = motionControllers is { Count: > 0 }
+            ? [.. reader.Poll(), .. motionControllers]
+            : reader.Poll();
 
         pushToTalkButton.Poll(buttons);
         commsButton.Poll(buttons);
@@ -700,10 +704,13 @@ public sealed class Listener : IDisposable
         WarnIfTheStickIsMissing("Comms push-to-talk", commsButton, logger);
     }
 
-    /// <summary>The stick bound to a push-to-talk is not here (Phase 53). Asked on settled polls only.</summary>
+    /// <summary>
+    /// The stick bound to a push-to-talk is not here (Phase 53). Asked on settled polls only; a motion controller
+    /// is absent whenever there is no headset session, so its absence is not reported.
+    /// </summary>
     private static void WarnIfTheStickIsMissing(string control, BoundButton stick, ILogger logger)
     {
-        if (stick.MissingDeviceNotice() is not { } button)
+        if (stick.MissingDeviceNotice() is not { } button || MotionControllerButtons.IsMotionController(button.DeviceId))
         {
             return;
         }

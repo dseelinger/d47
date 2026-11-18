@@ -151,7 +151,7 @@ turn, the quiet loop while it works, and the one command that outranks all of th
 > "shut up"
 > "be quiet"
 
-**Or press Cancel** — `Ctrl+Alt+X` out of the box, and bindable to a stick button. It stops the
+**Or press Cancel** — `Ctrl+Alt+X` out of the box, and bindable to a stick button or a motion controller button. It stops the
 voice *and* abandons the turn Directive 47 is working on, so a long web search you have changed
 your mind about stops costing you money rather than just going quiet. Its row sits directly under
 push-to-talk, on the [Listening](listening.html#cancel) page: they are the two controls you bind

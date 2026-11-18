@@ -45,6 +45,7 @@ public class TheLayersHandsCarryEveryInputTests
             var right = Assert.Single(hands, hand => hand.Device == 1);
             Assert.Equal(VrHand.Bit(VrButton.StickClick), right.Held);
             Assert.Equal(new Vector2(0.75f, -1f), right.Stick);
+            Assert.Equal((VrSide.Left, VrSide.Right), (left.Side, right.Side));
         }
         finally
         {

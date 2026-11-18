@@ -21,4 +21,8 @@ public sealed record SwitchEditing(
     Func<DateTimeOffset> Now,
     string ExportPath,
     Func<IReadOnlyList<PanelDestination>> Destinations,
-    SettingsService Settings);
+    SettingsService Settings)
+{
+    /// <summary>The motion controllers, read by a button capture alongside <see cref="Reader"/> and by nothing else.</summary>
+    public Func<IReadOnlyList<HotasReading>> MotionControllers { get; init; } = () => [];
+}
