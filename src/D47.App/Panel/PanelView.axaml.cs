@@ -267,6 +267,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             // item 12).
             Waiting = () => Model?.ListeningPrompt,
             ColumnArrangements = () => _columnArrangements,
+            ColumnWidths = () => Classes.Contains("headset") ? null : _columnWidths,
         };
 
         // A layer chooser hides the page bar the same way a page chooser does, but nothing else notices
@@ -410,6 +411,10 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Whether <paramref name="control"/> is drawn on the headset's panel.</summary>
     internal static bool OnHeadset(Visual control) =>
         control.FindAncestorOfType<PanelView>()?.Classes.Contains("headset") == true;
+
+    /// <summary>The width memory of the desktop panel above <paramref name="control"/>; null on the headset or off a panel.</summary>
+    internal static ColumnWidthMemory? ColumnWidthsOf(Visual control) =>
+        control.FindAncestorOfType<PanelView>() is { } panel && !panel.Classes.Contains("headset") ? panel._columnWidths : null;
 
     Func<string, Task<bool>>? IPanelTabHost.Copy => _copy;
 

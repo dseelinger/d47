@@ -35,6 +35,7 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
     private int _section = SpendBreakdownModel.ByPurposeSection;
     private bool _drawn;
     private double _barWidth;
+    private ColumnWidthMemory? _widths;
 
     public SpendBreakdownPage(SpendLedger ledger, TimeZoneInfo zone)
     {
@@ -44,6 +45,7 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
         _ledger = ledger;
         _zone = zone;
         Title = "Spend breakdown";
+        Loaded += (_, _) => Refit();
 
         var names = Windows().Select(window => window.Name).ToList();
 
@@ -103,12 +105,19 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        Refit();
+    }
 
+    /// <summary>Draws the page when it has not been drawn, or the panel it sits in now differs in headset or width memory from the last draw.</summary>
+    private void Refit()
+    {
         var headset = PanelView.OnHeadset(this);
+        var widths = PanelView.ColumnWidthsOf(this);
 
-        if (!_drawn || headset != _charges.Headset)
+        if (!_drawn || headset != _charges.Headset || widths != _widths)
         {
             _charges.Headset = headset;
+            _widths = widths;
             Draw();
         }
     }
@@ -158,7 +167,7 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
     {
         top.Children.Add(CreditsKit.Note(SpendBreakdownModel.PressHint, 0, full: true));
 
-        var layout = new TableLayout(TableId, PurposeTable(), spacing: _charges.Headset ? 12 : 16);
+        var layout = new TableLayout(TableId, PurposeTable(), _widths, spacing: _charges.Headset ? 12 : 16);
         var header = CreditsKit.HeaderRow(_head, layout, column => column == 0 ? HorizontalAlignment.Left : HorizontalAlignment.Right);
 
         var list = new StackPanel { Name = "SpendPurposeRows", Spacing = Gaps.Tile };
@@ -178,7 +187,7 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
 
         top.Children.Add(Results(page));
 
-        var layout = new TableLayout(ChargeTableId, ChargeTable(), spacing: _charges.Headset ? 12 : 16);
+        var layout = new TableLayout(ChargeTableId, ChargeTable(), _widths, spacing: _charges.Headset ? 12 : 16);
         var header = CreditsKit.HeaderRow(
             _chargeHead,
             layout,
@@ -202,21 +211,25 @@ public sealed class SpendBreakdownPage : DialogPage, IPageSummary
         FollowRows(header, scroll);
     }
 
+    /// <summary>A column that is a set width in the headset and, on the desktop, takes spare width and has a grip, no narrower than that width.</summary>
+    private TableColumn Sized(string key, double desktop, double headset) =>
+        _charges.Headset ? new TableColumn(key, ColumnFit.Fixed) { Fixed = headset } : new TableColumn(key) { Min = desktop };
+
     private IReadOnlyList<TableColumn> PurposeTable() =>
     [
         new("Purpose", ColumnFit.Fill) { Min = _charges.Headset ? 220 : 260 },
-        new("Charges", ColumnFit.Fixed) { Fixed = _charges.Headset ? 100 : 120 },
-        new("Share", ColumnFit.Fixed) { Fixed = _charges.Headset ? 90 : 110 },
-        new("Cost", ColumnFit.Fixed) { Fixed = _charges.Headset ? 150 : 170 },
+        Sized("Charges", 120, 100),
+        Sized("Share", 110, 90),
+        Sized("Cost", 170, 150),
     ];
 
     private IReadOnlyList<TableColumn> ChargeTable() =>
     [
-        new("Time", ColumnFit.Fixed) { Fixed = _charges.Headset ? 130 : 150 },
+        Sized("Time", 150, 130),
         new("Purpose", ColumnFit.Fill) { Min = _charges.Headset ? 150 : 170 },
-        new("Model", ColumnFit.Fixed) { Fixed = _charges.Headset ? 190 : 220 },
+        Sized("Model", 220, 190),
         new("Used", ColumnFit.Fill) { Min = _charges.Headset ? 250 : 360 },
-        new("Cost", ColumnFit.Fixed) { Fixed = _charges.Headset ? 100 : 110 },
+        Sized("Cost", 110, 100),
     ];
 
     /// <summary>In the headset the header is kept as wide as the rows, so both report one width to the table.</summary>

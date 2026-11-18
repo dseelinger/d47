@@ -1,12 +1,16 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
 using D47.App.Settings;
+using D47.App.Theming;
 using D47.Core.Capabilities;
+using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Modules;
 using Xunit;
@@ -27,7 +31,7 @@ public sealed class AModulePageIsDrawnFromTheComponentSetTests
             {"name":"Kel Ardon","sub":"Python · Giryak","aside":"212,000 CR"},
             {"name":"Sabre Lune","sub":"Viper Mk III · Giryak","aside":"48,300 CR"},
             {"name":"Odo Varn","sub":"Asp Explorer · LHS 3447","aside":"31,900 CR"}]},
-          {"type":"TileButtons","buttons":[{"label":"All open bounties","page":"open"}]},
+          {"type":"TileButtons","buttons":[{"label":"All open bounties","page":"open"},{"label":"Closed bounties","page":"closed"}]},
           {"type":"GroupHead","title":"Callouts","description":"What Bounty ledger says out loud."},
           {"type":"CheckboxTiles","tiles":[
             {"label":"Say each bounty as it lands","checked":true,"tool":"say_each","argument":"on"},
@@ -55,12 +59,21 @@ public sealed class AModulePageIsDrawnFromTheComponentSetTests
         ]}
         """;
 
+    private const string Closed = """
+        {"parts":[
+          {"type":"Table","columns":[{"label":"Target"},{"label":"Ship"},{"label":"System"},{"label":"Bounty","numeric":true}],"rows":[
+            ["Vex Orlan","Viper","Giryak","9,100"],
+            ["Tam Brisk","Cobra Mk III","LHS 3447","41,000"]]}
+        ]}
+        """;
+
     private sealed class Module
     {
         public Dictionary<string, string> Pages { get; } = new(StringComparer.Ordinal)
         {
             ["d47://pages/ledger"] = Ledger,
             ["d47://pages/open"] = Open,
+            ["d47://pages/closed"] = Closed,
         };
 
         public List<(string Name, ToolArguments Arguments, ToolCaller Caller)> Calls { get; } = [];
@@ -80,7 +93,7 @@ public sealed class AModulePageIsDrawnFromTheComponentSetTests
                 "modules\\ledger",
                 new ModuleManifest(
                     1, "ledger", "Bounty ledger", "CMDR Ana Vey", "1.0.0", "ledger.exe", [], 120,
-                    [new ModulePage("ledger", "Bounty ledger"), new ModulePage("open", "Open bounties")],
+                    [new ModulePage("ledger", "Bounty ledger"), new ModulePage("open", "Open bounties"), new ModulePage("closed", "Closed bounties")],
                     new ModuleCharacter("Tally", [])),
                 "ledger.exe");
             var status = new ModuleStatusReport(module.Folder, "ledger", ModuleStatus.Running, DateTimeOffset.UtcNow);
@@ -116,10 +129,11 @@ public sealed class AModulePageIsDrawnFromTheComponentSetTests
         }
     }
 
-    private static SettingsHost Show(Module module, bool headset = false)
+    private static SettingsHost Show(Module module, bool headset = false, Func<ViewStateStore, ColumnWidthMemory>? widths = null)
     {
         var (settings, viewState, paths) = TestSurface.Create();
         var host = SettingsHost.Open(settings, viewState, paths, headset: headset, width: 1280, height: headset ? 1100 : 1640);
+        host.Panel.EnableResizableColumns(widths?.Invoke(viewState) ?? new ColumnWidthMemory(viewState));
         host.Panel.EnableModules(module.Source());
         Dispatcher.UIThread.RunJobs();
 
@@ -220,14 +234,95 @@ public sealed class AModulePageIsDrawnFromTheComponentSetTests
         var host = Show(module);
 
         Press(Named<Button>(host, ModulePageDrawing.ButtonName + ".open"));
-        Settle(host, () => Find<ScrollViewer>(host, ModulePageDrawing.TableName) is not null);
+        Settle(host, () => Find<TableScroll>(host, ModulePageDrawing.TableName) is not null);
 
         host.Window.CaptureRenderedFrame()!.SaveCapture("module-page-second.png");
 
         Assert.Equal(["Installed", "Bounty ledger", "Open bounties"], host.Panel.Nav.TrailOf(PanelTab.Modules).Select(c => c.Word));
-        var table = Named<ScrollViewer>(host, ModulePageDrawing.TableName);
+        var table = Named<TableScroll>(host, ModulePageDrawing.TableName);
         Assert.Contains("Hollis Rane", Texts(table));
         Assert.Contains("LHS 3447 Prison Colony", Texts(table));
+
+        host.Close();
+    }
+
+    private static TableGrid TableHeader(SettingsHost host) =>
+        Named<TableScroll>(host, ModulePageDrawing.TableName).GetVisualDescendants().OfType<TableGrid>().First(grid => grid.IsHeader);
+
+    private static double[] Widths(TableGrid grid) => [.. grid.ColumnDefinitions.Select(definition => definition.ActualWidth)];
+
+    private static void OpenPage(SettingsHost host, string page)
+    {
+        Press(Named<Button>(host, ModulePageDrawing.ButtonName + "." + page));
+        Settle(host, () => Find<TableScroll>(host, ModulePageDrawing.TableName) is not null);
+    }
+
+    [AvaloniaFact]
+    public void AWidthDraggedOnOneModulePageIsNotAppliedToAnother()
+    {
+        using var look = AppLook.Put();
+        ColumnWidthMemory? widths = null;
+        var host = Show(new Module(), widths: store => widths = new ColumnWidthMemory(store));
+
+        OpenPage(host, "closed");
+        var untouched = Widths(TableHeader(host));
+        host.Panel.GoBack();
+        Settle(host, () => Find<TableScroll>(host, ModulePageDrawing.TableName) is null);
+
+        OpenPage(host, "open");
+        var header = TableHeader(host);
+        var grip = header.Children.OfType<ColumnGrip>().First();
+        var before = Widths(header);
+        var start = grip.TranslatePoint(new Point(grip.Bounds.Width / 2, grip.Bounds.Height / 2), host.Window)!.Value;
+
+        host.Window.MouseDown(start, MouseButton.Left);
+        host.Window.MouseMove(start + new Point(30, 0));
+        host.Window.MouseUp(start + new Point(30, 0), MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotEqual(before, Widths(TableHeader(host)));
+        Assert.NotEmpty(widths!.Remembered("ModulePageTable.ledger.open.0"));
+
+        host.Panel.GoBack();
+        Settle(host, () => Find<TableScroll>(host, ModulePageDrawing.TableName) is null);
+        OpenPage(host, "closed");
+
+        Assert.Equal(untouched, Widths(TableHeader(host)));
+        Assert.Empty(widths.Remembered("ModulePageTable.ledger.closed.0"));
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetDrawsNoGripOnAModuleTable()
+    {
+        using var look = AppLook.Put();
+        var host = Show(new Module(), headset: true);
+
+        OpenPage(host, "open");
+
+        Assert.Empty(TableHeader(host).Children.OfType<ColumnGrip>());
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void AModuleTableStillSortsOnEveryHeader()
+    {
+        using var look = AppLook.Put();
+        var host = Show(new Module());
+
+        OpenPage(host, "open");
+
+        string First() => Named<TableScroll>(host, ModulePageDrawing.TableName).GetVisualDescendants().OfType<TextBlock>()
+            .First(text => text.Text is "Kel Ardon" or "Sabre Lune" or "Odo Varn" or "Mira Tolk" or "Hollis Rane").Text!;
+
+        foreach (var (column, expected) in new[] { ("Target", "Hollis Rane"), ("Bounty", "Kel Ardon") })
+        {
+            Named<Button>(host, "ModulePageTable." + column).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Settle(host, () => First() == expected);
+            Assert.Equal(expected, First());
+        }
 
         host.Close();
     }
@@ -256,9 +351,9 @@ public sealed class AModulePageIsDrawnFromTheComponentSetTests
         var host = Show(module);
 
         Press(Named<Button>(host, ModulePageDrawing.ButtonName + ".open"));
-        Settle(host, () => Find<ScrollViewer>(host, ModulePageDrawing.TableName) is not null);
+        Settle(host, () => Find<TableScroll>(host, ModulePageDrawing.TableName) is not null);
         host.Panel.GoBack();
-        Settle(host, () => Find<ScrollViewer>(host, ModulePageDrawing.TableName) is null);
+        Settle(host, () => Find<TableScroll>(host, ModulePageDrawing.TableName) is null);
 
         module.Pages["d47://pages/ledger"] = """{"parts":[{"type":"DataBlock","prose":"Nothing claimed yet."}]}""";
         module.Updated!("ledger", "d47://pages/ledger");
@@ -296,9 +391,9 @@ public sealed class AModulePageIsDrawnFromTheComponentSetTests
         var host = Show(module);
 
         Press(Named<Button>(host, ModulePageDrawing.ButtonName + ".open"));
-        Settle(host, () => Find<ScrollViewer>(host, ModulePageDrawing.TableName) is not null);
+        Settle(host, () => Find<TableScroll>(host, ModulePageDrawing.TableName) is not null);
         host.Panel.GoBack();
-        Settle(host, () => Find<ScrollViewer>(host, ModulePageDrawing.TableName) is null);
+        Settle(host, () => Find<TableScroll>(host, ModulePageDrawing.TableName) is null);
         var reads = module.Reads.Count;
 
         module.Updated!("ledger", "d47://pages/open");

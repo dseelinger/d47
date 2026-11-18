@@ -40,6 +40,9 @@ public sealed class PanelPrompts : IHearsText
     /// <summary>The memory a table picker stores its columns in, read when the picker opens.</summary>
     public Func<ColumnArrangementMemory?>? ColumnArrangements { get; set; }
 
+    /// <summary>The memory a table picker keeps its dragged column widths in; null where columns are not resized.</summary>
+    public Func<ColumnWidthMemory?>? ColumnWidths { get; set; }
+
     /// <summary>What each open prompt is, by the crumb key it was pushed as.</summary>
     private readonly Dictionary<string, Func<Control>> _pages = [];
 
@@ -902,7 +905,7 @@ public sealed class PanelPrompts : IHearsText
                     request.Key,
                     PickTable.Fields(columns, value => Row(value, request)),
                     host.ColumnArrangements?.Invoke(),
-                    null,
+                    host.ColumnWidths?.Invoke(),
                     spacing: 12,
                     sortedByDefault: columns[0].Label,
                     headName: "PickHead");

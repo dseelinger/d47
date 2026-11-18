@@ -15,8 +15,17 @@ namespace D47.App.Panel;
 
 /// <summary>Draws a parsed module page from d47's own components; every press calls the page's module, as the Commander.</summary>
 /// <param name="reload">Reads the page again; called on the UI thread after a press fails, so no control keeps a value the module refused.</param>
-internal sealed class ModulePageDrawing(string moduleId, string moduleName, ModulePageServices services, Action<string> openPage, Action reload)
+internal sealed class ModulePageDrawing(
+    string moduleId,
+    string moduleName,
+    ModulePageServices services,
+    Action<string> openPage,
+    Action reload,
+    string pageId = "",
+    ColumnWidthMemory? columnWidths = null)
 {
+    private int _tables;
+
     public const string PartName = "ModulePart";
     public const string ButtonName = "ModulePageButton";
     public const string CheckboxName = "ModulePageCheckbox";
@@ -32,6 +41,7 @@ internal sealed class ModulePageDrawing(string moduleId, string moduleName, Modu
     public StackPanel Draw(ModulePageContent page)
     {
         var groups = new StackPanel { Spacing = GroupGap };
+        _tables = 0;
         StackPanel? group = null;
         var afterHead = false;
 
@@ -342,14 +352,25 @@ internal sealed class ModulePageDrawing(string moduleId, string moduleName, Modu
             : SortColumn<IReadOnlyList<ModuleCell>>.Text(column.Label, row => row[index].Text)).ToList();
 
         var head = new SortHeader<IReadOnlyList<ModuleCell>>(TableName, columns);
+
+        // One id per table on a page, so a width dragged here is not applied to another page's table.
+        var id = string.Create(CultureInfo.InvariantCulture, $"{TableName}.{moduleId}.{pageId}.{_tables++}");
+
+        var layout = new TableLayout(
+            id,
+            [.. table.Columns.Select((_, i) => i == 0
+                ? new TableColumn("c0", ColumnFit.Fill) { Min = 150 }
+                : new TableColumn("c" + i.ToString(CultureInfo.InvariantCulture)) { Whole = true })],
+            columnWidths,
+            spacing: 16);
+
         var body = new StackPanel { Spacing = 2 };
-        Grid.SetIsSharedSizeScope(body, true);
 
         void Fill()
         {
             body.Children.Clear();
 
-            var header = Line(table, Enumerable.Range(0, columns.Count).Select(i => head.Cell(i, Alignment(table, i))).ToList());
+            var header = layout.Header([.. Enumerable.Range(0, columns.Count).Select(i => head.Cell(i, Alignment(table, i)))]);
             header.MinHeight = TypeScale.MinimumTarget;
             header.Margin = new Thickness(14, 0);
             body.Children.Add(header);
@@ -357,7 +378,14 @@ internal sealed class ModulePageDrawing(string moduleId, string moduleName, Modu
             foreach (var row in head.Sort(table.Rows))
             {
                 var cells = row.Select((cell, i) => (Control)Cell(table.Columns[i], cell, i)).ToList();
-                var border = new Border { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(14, 6), Child = Line(table, cells) };
+                var line = layout.Row(cells);
+
+                foreach (var cell in cells)
+                {
+                    cell.VerticalAlignment = VerticalAlignment.Center;
+                }
+
+                var border = new Border { MinHeight = TypeScale.MinimumTarget, Padding = new Thickness(14, 6), Child = line };
                 ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.SlabKey);
                 body.Children.Add(border);
             }
@@ -366,42 +394,12 @@ internal sealed class ModulePageDrawing(string moduleId, string moduleName, Modu
         head.Changed += Fill;
         Fill();
 
-        var scroll = new ScrollViewer
-        {
-            Name = TableName,
-            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
-            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
-            Content = body,
-        };
-
-        // The table fills the column, and scrolls sideways only when its cells need more than that.
-        scroll.SizeChanged += (_, e) => body.MinWidth = e.NewSize.Width;
-
-        return scroll;
+        // The table fills the column, and scrolls sideways only when its columns need more than that.
+        return new TableScroll(layout, body) { Name = TableName };
     }
 
     private static HorizontalAlignment Alignment(ModuleTable table, int column) =>
         table.Columns[column].Numeric ? HorizontalAlignment.Right : HorizontalAlignment.Left;
-
-    /// <summary>A row of the table: the first column takes the room left, the others share their widths across every row.</summary>
-    private static Grid Line(ModuleTable table, IReadOnlyList<Control> cells)
-    {
-        var grid = new Grid { ColumnSpacing = 16 };
-
-        for (var i = 0; i < table.Columns.Count; i++)
-        {
-            grid.ColumnDefinitions.Add(i == 0
-                ? new ColumnDefinition(GridLength.Star) { MinWidth = 150 }
-                : new ColumnDefinition(GridLength.Auto) { SharedSizeGroup = "c" + i.ToString(CultureInfo.InvariantCulture) });
-
-            var cell = cells[i];
-            cell.VerticalAlignment = VerticalAlignment.Center;
-            Grid.SetColumn(cell, i);
-            grid.Children.Add(cell);
-        }
-
-        return grid;
-    }
 
     private static TextBlock Cell(ModuleColumn column, ModuleCell cell, int index)
     {

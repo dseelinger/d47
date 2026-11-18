@@ -18,6 +18,8 @@ Changed: A name box that suggests as you type, such as the faction, system and h
 
 Changed: While a galaxy search runs, the Search pages and the Faction page show the wait mark with "Retrieving results…" instead of the words "Asking the galaxy search".
 
+Changed: The table in the pickers (such as the hull picker), both Spend breakdown tables and every table on a module page now share spare width evenly and have a boundary you can drag on the desktop, and they keep the widths you drag between sessions. A module page keeps its own widths for each table. The headset draws no boundaries. On the desktop the Spend breakdown figure columns are no longer fixed widths: they take their share of spare width.
+
 Changed: Combat stats under Enemy ship, and the spoken combat answer by enemy, split conflict-zone kills into three rows instead of one: in space ("ship type not recorded"), on foot in ground conflict zones, and from an SRV in ground conflict zones.
 
 Fixed: The Spend breakdown page now says, as SPEND does, that its figures are D47's estimate and not what your account is billed, and that a subscription with bundled credits can make the real cost anything from higher to nothing at all.

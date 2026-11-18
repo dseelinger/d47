@@ -82,7 +82,7 @@ internal sealed class ModulesFurnishing(IPanelTabHost host)
 
         if (ModulesTab.IdOfKey(crumb.Key) is { } id)
         {
-            var view = new ModulePageView(source, id, ModulesTab.PageIdOfKey(crumb.Key), host.OpenSettingsPlace, page => OpenPage(id, page));
+            var view = new ModulePageView(source, id, ModulesTab.PageIdOfKey(crumb.Key), host.OpenSettingsPlace, page => OpenPage(id, page), host.Headset ? null : host.ColumnWidths);
             _pages.Add((crumb.Key, view));
             return view;
         }

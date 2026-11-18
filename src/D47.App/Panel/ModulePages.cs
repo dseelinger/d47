@@ -131,6 +131,7 @@ internal sealed class ModulePageView : UserControl, IPageSummary
     private readonly string _pageId;
     private readonly Action<string> _openSettingsPlace;
     private readonly Action<string> _openPage;
+    private readonly ColumnWidthMemory? _columnWidths;
     private readonly StackPanel _body = new() { Spacing = 20, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Left };
 
     /// <summary>The last page that arrived and parsed.</summary>
@@ -147,8 +148,15 @@ internal sealed class ModulePageView : UserControl, IPageSummary
 
     /// <param name="pageId">The manifest page to draw, or null for the module's first.</param>
     /// <param name="openPage">Opens another of this module's pages by id.</param>
-    public ModulePageView(ModulesSource source, string id, string? pageId, Action<string> openSettingsPlace, Action<string> openPage)
+    public ModulePageView(
+        ModulesSource source,
+        string id,
+        string? pageId,
+        Action<string> openSettingsPlace,
+        Action<string> openPage,
+        ColumnWidthMemory? columnWidths = null)
     {
+        _columnWidths = columnWidths;
         _source = source;
         _id = id;
         _openSettingsPlace = openSettingsPlace;
@@ -370,7 +378,7 @@ internal sealed class ModulePageView : UserControl, IPageSummary
             return;
         }
 
-        var drawn = new ModulePageDrawing(_id, module.Manifest.Name, pages, _openPage, Load).Draw(_content);
+        var drawn = new ModulePageDrawing(_id, module.Manifest.Name, pages, _openPage, Load, _pageId, _columnWidths).Draw(_content);
         drawn.Name = ContentName;
         _body.Children.Add(drawn);
     }
