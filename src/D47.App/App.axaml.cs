@@ -46,6 +46,7 @@ public partial class App(AppHost? host) : Application
             {
                 window.Opened += (_, _) =>
                 {
+                    Windowing.SplashScreen.Current?.Close();
                     host.ReportWindowUp();
                     _ = host.WarmUp();
                 };

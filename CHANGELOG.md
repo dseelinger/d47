@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: d47 shows a splash as soon as it is launched, instead of nothing for the seconds the host takes to start. It shows the Directive 47 card with the version, sits behind other windows rather than over Elite, and closes when the main window appears.
+
 Added: In the headset, pushing a controller's stick up or down while its ray is on the panel scrolls the page under the ray by lines, repeating while the stick stays pushed. Left and right do nothing, and a stick on a controller that is not pointing at the panel scrolls nothing. This works on both routes, SteamVR and Show D47 without SteamVR, whenever Motion controllers are on.
 
 Changed: On SteamVR, D47 also reads A, B, X, Y, the menu button, and each stick (a Vive controller's trackpad) and its click on both hands, whenever Motion controllers are on, not only while a ray is on the panel. Nothing acts on them yet; the trigger and grip work as before. D47 still takes the trigger and grip from other applications only while a ray is on the panel. D47's log says when each button is pressed or released and when a stick moves. A SteamVR install that already has D47's bindings saved keeps them until you reset them in SteamVR's controller bindings.

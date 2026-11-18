@@ -65,6 +65,10 @@ internal static class Program
             return;
         }
 
+        // On a thread of its own, before the host starts; closed when the main window opens.
+        using var splash = Windowing.SplashScreen.Open(
+            args, ownsInstance: true, () => new Windowing.NativeSplash(BuildInfo.Titled(BuildInfo.Semantic)));
+
         // Avalonia makes the first thread to reach a dispatcher the UI thread, and the host's own threads post
         // to it before the window exists. Before AppHost.Start, so that thread is this one.
         Avalonia.Threading.Dispatcher.UIThread.VerifyAccess();

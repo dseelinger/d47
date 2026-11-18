@@ -51,6 +51,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\splash\*.png" LogicalName="D47.Splash.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\assets\fonts\JetBrainsMono-Regular.ttf" LogicalName="D47.Splash.JetBrainsMono-Regular.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\assets\fonts\OFL-*.txt"
           Link="fonts\%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest" />
