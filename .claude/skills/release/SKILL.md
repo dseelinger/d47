@@ -147,18 +147,36 @@ checks, an avatar upload error, a dispatch or sign-in failure, the "Publish the 
 leave the deploy in place and say in the report that an unreleased version is installed, with the
 restore command.
 
-## Run it under Monitor
+## Run it in the background and follow its log
 
-Run the script with Monitor, not a background Bash, so each line it prints reaches you as it is
-printed. Monitor is a deferred tool: load it with `ToolSearch` (`select:Monitor`) first. Substitute
-`-Patch` or `-Minor`:
+A release takes longer than a monitor can live (30 minutes): the suite, the workflow and the
+comparison together run past it, and a monitor that expires kills the command it runs. So the
+script runs as a background Bash writing a log, and Monitor only reads the log.
+
+First clear the last run's log, in the foreground:
 
 ```bash
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools/release.ps1 -Patch 2>&1 | gawk -f .claude/skills/release/progress.awk; echo "release.ps1 exited ${PIPESTATUS[0]}"
+mkdir -p "$LOCALAPPDATA/d47-release-log"; rm -f "$LOCALAPPDATA/d47-release-log/release.log" "$LOCALAPPDATA/d47-release-log/release.log.seen"
+```
+
+Then start the script with Bash `run_in_background: true`. Substitute `-Patch` or `-Minor`:
+
+```bash
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools/release.ps1 -Patch 2>&1 | gawk -f .claude/skills/release/progress.awk > "$LOCALAPPDATA/d47-release-log/release.log"; echo "release.ps1 exited ${PIPESTATUS[0]}" >> "$LOCALAPPDATA/d47-release-log/release.log"
+```
+
+Then follow the log with Monitor. Monitor is a deferred tool: load it with `ToolSearch`
+(`select:Monitor`) first.
+
+```bash
+bash .claude/skills/release/follow.sh "$LOCALAPPDATA/d47-release-log/release.log"
 ```
 
 `timeout_ms: 1800000`, description `release.ps1 -Patch`. `progress.awk` drops the watcher's
 in-place status line and dotnet's build chatter and keeps everything else, failures included.
+`follow.sh` prints each line of the log once and exits after `release.ps1 exited N`. When the
+monitor expires, start the same Monitor command again: it carries on from the first line it has not
+printed. The background Bash's own completion notice repeats what the log says; relay the log.
 
 Relay every event as it arrives: the lines verbatim in a fenced block, so the step names and
 times stay aligned, with nothing added except a one-line note when a step failed and the launch or
@@ -174,9 +192,11 @@ close notice where it falls. The stages, in order:
    d47.zip match a rebuild of the tag`, a red block, or a line saying the comparison did not run.
    Then `release.ps1 exited N`.
 
-The workflow alone takes about fourteen minutes. If the monitor expires while the run is going,
-the dispatch has already happened and the runner carries on. Re-arm it on the watcher, using the
-run id from the `Watching …/runs/<id>` line:
+The workflow alone takes about fourteen minutes. If the background Bash ends and the log has no
+`release.ps1 exited` line, the script was killed. If the log has a `Watching …/runs/<id>` line,
+the dispatch has already happened and the runner carries on: watch it with Monitor, using that
+run id, and run the comparison and the Defender scan from the end of `tools/release.ps1` by hand
+once it succeeds:
 
 ```bash
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools/watch-release.ps1 -RunId <id> 2>&1 | gawk -f .claude/skills/release/progress.awk; echo "watch-release.ps1 exited ${PIPESTATUS[0]}"
@@ -205,7 +225,7 @@ dotnet test tests/<Project> -c Release --filter FullyQualifiedName~<Name>
 
 Send the close notice before starting the fix. Restore the local install before you commit the
 fix. Then commit, push `main`, deploy again, and
-run the script again under Monitor. It recomputes the same version from the newest tag and runs the
+run the script again in the background, following its log. It recomputes the same version from the newest tag and runs the
 whole suite again, which is the check that counts.
 
 A failure in `D47.App.Tests` that appears only in this run, with d47 started again by the deploy,
@@ -285,7 +305,8 @@ also ships any local commits this session did not write; name them in the report
 
 The invocation also authorizes `deploy-local.ps1` to close the installed d47 and to write
 `%LOCALAPPDATA%\Programs\d47`, its `data\`, `%LOCALAPPDATA%\d47-release-build` and
-`%LOCALAPPDATA%\d47-release-backup`. Nothing else outside the checkout.
+`%LOCALAPPDATA%\d47-release-backup`, and the release log in `%LOCALAPPDATA%\d47-release-log`.
+Nothing else outside the checkout.
 
 ## Output
 
@@ -299,7 +320,7 @@ green mark and ❌ the red one:
 ```
 
 The success heading goes out only when the release is published and both checks that follow it
-passed or did not run: `release.ps1` exited 0, or, after a re-arm, the watcher reported `success`
+passed or did not run: `release.ps1` exited 0, or, after the script was killed, the watcher reported `success`
 and the comparison and the Defender scan found nothing. A difference from the rebuild (exit 4) or a
 Defender detection (exit 3) gets the third heading. Every other stop gets the second, naming the
 stage: the local suite, the runner's step, the avatar upload, the dispatch, or the script's own

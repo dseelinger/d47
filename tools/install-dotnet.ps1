@@ -27,8 +27,11 @@ if ($sdk -notmatch '^\d+\.\d+\.\d+$') { throw "$GlobalJson names no exact SDK ve
 
 $dir = Join-Path $Parent "d47-dotnet-$sdk"
 $config = Join-Path $dir "sdk\$sdk\dotnet.runtimeconfig.json"
+$complete = Join-Path $dir '.d47-install-complete'
 
-if (-not (Test-Path -LiteralPath $config)) {
+# A folder without the marker is an install that was interrupted, and is replaced.
+if (-not (Test-Path -LiteralPath $complete)) {
+    if (Test-Path -LiteralPath $dir) { Remove-Item -LiteralPath $dir -Recurse -Force }
     $installer = Join-Path ([IO.Path]::GetTempPath()) "dotnet-install-$([guid]::NewGuid().ToString('N')).ps1"
     Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -OutFile $installer
     try {
@@ -38,6 +41,7 @@ if (-not (Test-Path -LiteralPath $config)) {
         Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
     }
     if (-not (Test-Path -LiteralPath $config)) { throw "dotnet-install did not install SDK $sdk to $dir." }
+    New-Item -ItemType File -Path $complete | Out-Null
 }
 
 $runtime = (Get-Content -Raw -LiteralPath $config | ConvertFrom-Json).runtimeOptions.framework.version
