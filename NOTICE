@@ -177,10 +177,10 @@ Vendored inside a package, and not covered by that package's own licence
                            reach this. Recorded here because a licence file that names one
                            licence is not a statement about everything shipped beside it.
 
-                           ONNX Runtime 1.29.0 pins Eigen by commit, so the commit is what
+                           ONNX Runtime 1.32.0 pins Eigen by commit, so the commit is what
                            identifies what was compiled in:
 
-                             1d8b82b0740839c0de7f1242a3585e3390ff5f33
+                             bc3b39870ecb690a623a3f49149a358b95c5781d
                              https://gitlab.com/libeigen/eigen
 
                            MPL-2.0 is file-scope copyleft and its section 3.3 permits a Larger

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Chatterbox opens its models faster, about 2 seconds instead of 6 to 7 on the same PC in a Debug build, because d47 now runs on ONNX Runtime 1.32.0. Speech sounds and speaks at the same speed.
+
 Changed: On the Journal page, under Every field, each nested object or list is a row with its name and how many fields or items it has, instead of JSON text. Press the row to show its fields on indented lines under it, and press it again to fold them. A group of up to four plain values starts open; the rest start folded, and each new selection starts again from that.
 
 Changed: The Apex and Frontline shuttle pilots are heard as if in the cabin with you, with no radio filter, static or carrier tail. Their voice and the voice slot they use are unchanged.
