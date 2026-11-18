@@ -12,6 +12,8 @@ Changed: The sidebar on Commander > Statistics shows the section names only; the
 
 Changed: Organic data sales are counted as Exobiology, apart from Exploration, in Earnings by source on the This session page, in "how have I done this session", in the Credits page and `get_credit_ledger` (new `exobiology` kind), and in the Quartermaster remark. Chart's exploration remark counts cartographic and organic sales together and names the larger share.
 
+Changed: A name box that suggests as you type, such as the faction, system and home-system fields, opens at the third character with the wait mark and "Retrieving results…", then shows the names, "Nothing matches." or "Could not retrieve results." in its place.
+
 Changed: While a galaxy search runs, the Search pages and the Faction page show the wait mark with "Retrieving results…" instead of the words "Asking the galaxy search".
 
 Changed: Combat stats under Enemy ship, and the spoken combat answer by enemy, split conflict-zone kills into three rows instead of one: in space ("ship type not recorded"), on foot in ground conflict zones, and from an SRV in ground conflict zones.

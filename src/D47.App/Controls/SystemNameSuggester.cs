@@ -13,8 +13,17 @@ public sealed class SystemNameSuggester<T>(
 {
     private CancellationTokenSource? _latest;
 
-    /// <summary>Raised with the names for the latest text, or with none when there is nothing to show.</summary>
+    /// <summary>Raised inside <see cref="Typed"/> when the text qualifies and a request starts.</summary>
+    public event Action? Asking;
+
+    /// <summary>Raised with the lookup's answer for the latest text, empty when nothing matches.</summary>
     public event Action<IReadOnlyList<T>>? Answered;
+
+    /// <summary>Raised in place of <see cref="Answered"/> when the lookup throws.</summary>
+    public event Action? Failed;
+
+    /// <summary>Raised when the text is under the minimum length or suggestions are off.</summary>
+    public event Action? Cleared;
 
     /// <summary>
     /// Drops the request before it and asks for <paramref name="typed"/>; the task ends once its answer has been
@@ -28,11 +37,12 @@ public sealed class SystemNameSuggester<T>(
 
         if (typed.Length < NameSuggestions.MinimumLength || !enabled())
         {
-            Answered?.Invoke([]);
+            Cleared?.Invoke();
             return Task.CompletedTask;
         }
 
         var request = _latest = new CancellationTokenSource();
+        Asking?.Invoke();
 
         return Ask(typed, request);
     }
@@ -48,7 +58,8 @@ public sealed class SystemNameSuggester<T>(
     private async Task Ask(string typed, CancellationTokenSource request)
     {
         var token = request.Token;
-        IReadOnlyList<T> matches;
+        IReadOnlyList<T>? matches = null;
+        var failed = false;
 
         try
         {
@@ -57,7 +68,10 @@ public sealed class SystemNameSuggester<T>(
                 await Task.Delay(pause, token).ConfigureAwait(false);
             }
 
-            matches = enabled() ? await lookup(typed, token).ConfigureAwait(false) : [];
+            if (enabled())
+            {
+                matches = await lookup(typed, token).ConfigureAwait(false);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -65,7 +79,7 @@ public sealed class SystemNameSuggester<T>(
         }
         catch (Exception)
         {
-            matches = [];
+            failed = true;
         }
 
         post(() =>
@@ -77,7 +91,19 @@ public sealed class SystemNameSuggester<T>(
 
             _latest = null;
             request.Dispose();
-            Answered?.Invoke(matches);
+
+            if (failed)
+            {
+                Failed?.Invoke();
+            }
+            else if (matches is null)
+            {
+                Cleared?.Invoke();
+            }
+            else
+            {
+                Answered?.Invoke(matches);
+            }
         });
     }
 }

@@ -14,10 +14,33 @@ namespace D47.App.Controls;
 /// Lists the names that start with what is typed into a field, inline in <see cref="List"/>, which the
 /// host places under the field. Up and Down move through the list, Enter picks the highlighted name, Escape
 /// closes it, and clicking a name picks it. Enter with nothing highlighted is left to the field's own handler.
+/// From the keystroke that starts a lookup the list shows one row: the wait mark, then the names, "Nothing
+/// matches." or a notice that the lookup failed, until the text changes.
 /// The host sets the field's text through <see cref="SetText"/>, so its own text asks for nothing.
 /// </summary>
 public sealed class SystemNameSuggestions<T> : INameSuggestions
 {
+    /// <summary>The sentence beside the wait mark while names are asked for.</summary>
+    public const string Retrieving = "Retrieving results…";
+
+    /// <summary>The row shown when the lookup answers with no names.</summary>
+    public const string NothingMatches = "Nothing matches.";
+
+    /// <summary>The notice shown when the lookup fails.</summary>
+    public const string CouldNotRetrieve = "Could not retrieve results.";
+
+    /// <summary>Names the status row in the list, for a test to find it.</summary>
+    public const string StatusName = "SystemNameSuggestionsStatus";
+
+    private enum ListState
+    {
+        Hidden,
+        Waiting,
+        Names,
+        Empty,
+        Failed,
+    }
+
     private readonly TextBox _field;
     private readonly Func<string, CancellationToken, Task<IReadOnlyList<T>>> _lookup;
     private readonly Func<T, string> _nameOf;
@@ -30,6 +53,7 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
     private readonly List<IDisposable> _inks = [];
 
     private IReadOnlyList<T> _shown = [];
+    private ListState _state = ListState.Hidden;
     private int _highlighted = -1;
     private bool _quiet;
 
@@ -51,7 +75,10 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
         _picked = picked;
 
         _suggester = NewSuggester();
-        _suggester.Answered += Show;
+        _suggester.Asking += () => Enter(ListState.Waiting, []);
+        _suggester.Answered += matches => Enter(matches.Count == 0 ? ListState.Empty : ListState.Names, matches);
+        _suggester.Failed += () => Enter(ListState.Failed, []);
+        _suggester.Cleared += () => Enter(ListState.Hidden, []);
         field.SetValue(NameSuggestions.OfProperty, this);
 
         List = new Border
@@ -118,14 +145,21 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
         var suggester = NewSuggester();
         IReadOnlyList<T> last = [];
 
+        void Offer(IReadOnlyList<T> matches, Action<IReadOnlyList<string>> raise)
+        {
+            last = [.. matches.Take(NameSuggestions.Most)];
+            raise([.. last.Select(_nameOf)]);
+        }
+
         return new NameTiles(
             suggester.Typed,
             suggester.Cancel,
             index => Choose(last[index]),
-            raise => suggester.Answered += matches =>
+            raise =>
             {
-                last = [.. matches.Take(NameSuggestions.Most)];
-                raise([.. last.Select(_nameOf)]);
+                suggester.Answered += matches => Offer(matches, raise);
+                suggester.Failed += () => Offer([], raise);
+                suggester.Cleared += () => Offer([], raise);
             });
     }
 
@@ -133,7 +167,7 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
     public void Close()
     {
         _suggester.Cancel();
-        Show([]);
+        Enter(ListState.Hidden, []);
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
@@ -141,6 +175,13 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
         if (e.Key == Key.Enter && _highlighted < 0)
         {
             Close();
+            return;
+        }
+
+        if (e.Key == Key.Escape && _state != ListState.Hidden)
+        {
+            Close();
+            e.Handled = true;
             return;
         }
 
@@ -163,10 +204,6 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
                 Pick(_shown[_highlighted]);
                 break;
 
-            case Key.Escape:
-                Close();
-                break;
-
             default:
                 return;
         }
@@ -180,13 +217,14 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
         _picked(match);
     }
 
-    private void Show(IReadOnlyList<T> matches)
+    private void Enter(ListState state, IReadOnlyList<T> matches)
     {
-        if (matches.Count == 0 && _shown.Count == 0)
+        if (state == ListState.Hidden && _state == ListState.Hidden)
         {
             return;
         }
 
+        _state = state;
         _shown = [.. matches.Take(NameSuggestions.Most)];
         _highlighted = -1;
         Draw();
@@ -214,8 +252,46 @@ public sealed class SystemNameSuggestions<T> : INameSuggestions
             _rows.Children.Add(Row(_shown[i], i == _highlighted));
         }
 
-        List.IsVisible = _shown.Count > 0;
+        switch (_state)
+        {
+            case ListState.Waiting:
+                _rows.Children.Add(StatusRow(new WaitingState(WaitForm.Line, Retrieving)));
+                break;
+
+            case ListState.Empty:
+                var none = new TextBlock
+                {
+                    Text = NothingMatches,
+                    FontFamily = new FontFamily(Fonts.ChromeFamily),
+                    FontSize = TypeScale.ControlLarge,
+                    FontWeight = FontWeight.Medium,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                _inks.Add(ThemeInk.Bind(none, TextBlock.ForegroundProperty, ThemeManager.GreyKey));
+                _rows.Children.Add(StatusRow(none));
+                break;
+
+            case ListState.Failed:
+                _rows.Children.Add(StatusRow(new Notice(inline: true) { Text = CouldNotRetrieve }));
+                break;
+        }
+
+        List.IsVisible = _state != ListState.Hidden;
         Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static Border StatusRow(Control content)
+    {
+        content.VerticalAlignment = VerticalAlignment.Center;
+
+        return new()
+        {
+            Name = StatusName,
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(12, 0),
+            Child = content,
+            Focusable = false,
+        };
     }
 
     private Button Row(T match, bool highlighted)

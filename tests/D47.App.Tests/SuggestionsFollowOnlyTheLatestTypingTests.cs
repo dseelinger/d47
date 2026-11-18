@@ -32,12 +32,17 @@ public sealed class SuggestionsFollowOnlyTheLatestTypingTests
 
         public List<IReadOnlyList<SystemNameMatch>> Answers { get; } = [];
 
+        public List<string> Events { get; } = [];
+
         public SystemNameSuggester<SystemNameMatch> Suggester { get; }
 
         public Rig()
         {
             Suggester = new SystemNameSuggester<SystemNameMatch>(Lookup.Ask, () => Enabled, action => action(), TimeSpan.Zero);
             Suggester.Answered += Answers.Add;
+            Suggester.Asking += () => Events.Add("asking");
+            Suggester.Failed += () => Events.Add("failed");
+            Suggester.Cleared += () => Events.Add("cleared");
         }
     }
 
@@ -110,7 +115,7 @@ public sealed class SuggestionsFollowOnlyTheLatestTypingTests
     }
 
     [Fact]
-    public async Task AFailedLookupShowsNothing()
+    public async Task AFailedLookupRaisesFailedInPlaceOfAnAnswer()
     {
         var rig = new Rig();
 
@@ -118,7 +123,21 @@ public sealed class SuggestionsFollowOnlyTheLatestTypingTests
         rig.Lookup.Asked.Single().Answer.SetException(new GalaxyUnavailableException("Spansh refused."));
         await asked;
 
-        Assert.Empty(rig.Answers.Single());
+        Assert.Empty(rig.Answers);
+        Assert.Equal(["asking", "failed"], rig.Events);
+    }
+
+    [Fact]
+    public async Task ShortTextAndADisabledSettingRaiseClearedAndAskingIsRaisedOnlyWhenARequestStarts()
+    {
+        var rig = new Rig();
+
+        await rig.Suggester.Typed("Di");
+        Assert.Equal(["cleared"], rig.Events);
+
+        rig.Enabled = false;
+        await rig.Suggester.Typed("Dia");
+        Assert.Equal(["cleared", "cleared"], rig.Events);
     }
 
     [Fact]
