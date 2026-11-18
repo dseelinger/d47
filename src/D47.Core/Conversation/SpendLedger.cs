@@ -88,6 +88,16 @@ public sealed record SpendShare(
     public string Name => string.IsNullOrWhiteSpace(Model) ? Provider : Model;
 }
 
+/// <summary>What one purpose and kind of charge came to inside a window.</summary>
+/// <param name="Purpose">An id from <see cref="SpendPurposes"/>; null on rows written before purposes were recorded.</param>
+/// <param name="Charges">How many rows.</param>
+/// <param name="Dollars">The sum of the priced rows.</param>
+/// <param name="Unpriced">How many rows had no rate behind them.</param>
+public sealed record SpendPurposeShare(string? Purpose, SpendKind Kind, int Charges, decimal Dollars, int Unpriced)
+{
+    public bool Complete => Unpriced == 0;
+}
+
 /// <summary>What a window came to, and whether the figure is the whole of it.</summary>
 /// <param name="Complete">False when any row in the window had no price behind it.</param>
 public sealed record SpendTotals(
@@ -227,14 +237,7 @@ public sealed class SpendLedger
     {
         lock (_lock)
         {
-            var marks = _entries.Where(entry => entry.IsReset).ToList();
-
-            // A mark is not a charge, so it is out of the count and the sum before anything else asks a
-            // question about it — including its own window's.
-            var inside = _entries
-                .Where(entry => !entry.IsReset && window.Holds(entry.At))
-                .Where(entry => !marks.Any(mark => mark.Covers(entry)))
-                .ToList();
+            var inside = Inside(window);
 
             if (inside.Count == 0)
             {
@@ -268,6 +271,42 @@ public sealed class SpendLedger
                     .ThenBy(share => share.Name, StringComparer.OrdinalIgnoreCase)],
             };
         }
+    }
+
+    /// <summary>Every charge inside a window in ledger order, leaving out reset marks, covered charges and free charges.</summary>
+    public IReadOnlyList<SpendEntry> Charges(SpendPeriod window)
+    {
+        lock (_lock)
+        {
+            return [.. Inside(window).Where(entry => !(entry.Priced && entry.Dollars == 0m))];
+        }
+    }
+
+    /// <summary>What each purpose and kind came to inside a window, over the rows <see cref="Charges"/> returns.</summary>
+    public IReadOnlyList<SpendPurposeShare> ByPurpose(SpendPeriod window)
+    {
+        lock (_lock)
+        {
+            return [.. Inside(window)
+                .Where(entry => !(entry.Priced && entry.Dollars == 0m))
+                .GroupBy(entry => (entry.Purpose, entry.Kind))
+                .Select(group => new SpendPurposeShare(
+                    group.Key.Purpose,
+                    group.Key.Kind,
+                    group.Count(),
+                    group.Where(entry => entry.Priced).Sum(entry => entry.Dollars),
+                    group.Count(entry => !entry.Priced)))];
+        }
+    }
+
+    /// <summary>The charges in a window, less reset marks and what they cover. Call under <c>_lock</c>.</summary>
+    private List<SpendEntry> Inside(SpendPeriod window)
+    {
+        var marks = _entries.Where(entry => entry.IsReset).ToList();
+
+        return [.. _entries
+            .Where(entry => !entry.IsReset && window.Holds(entry.At))
+            .Where(entry => !marks.Any(mark => mark.Covers(entry)))];
     }
 
     /// <summary>The windows that read beside the turn and the session — today, and nothing else (#227).</summary>
