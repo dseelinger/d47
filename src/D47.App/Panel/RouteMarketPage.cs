@@ -122,7 +122,13 @@ public sealed class RouteMarketPage : UserControl
 
     private readonly StackPanel _results = new() { Spacing = 6 };
     private readonly ColumnWidthMemory? _columnWidths;
+    private readonly ColumnArrangementMemory? _arrangements;
     private readonly D47.App.Voice.WaitSound? _waitSound;
+
+    private ArrangedTable<CommodityOffer>? _table;
+    private string? _shape;
+    private CommodityPosting? _posted;
+    private CommodityPosting? _shown;
 
     public RouteMarketPage(
         CapabilityRegistry registry,
@@ -132,9 +138,11 @@ public sealed class RouteMarketPage : UserControl
         Func<string?>? here = null,
         TimeSpan? suggestionPause = null,
         Func<BodySearchLink?>? bodySearch = null,
-        D47.App.Voice.WaitSound? waitSound = null)
+        D47.App.Voice.WaitSound? waitSound = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _columnWidths = columnWidths;
+        _arrangements = columnArrangements;
         _waitSound = waitSound;
         _bodySearch = bodySearch;
         _registry = registry;
@@ -459,18 +467,18 @@ public sealed class RouteMarketPage : UserControl
 
         if (found)
         {
-            var heads = Heads(posting);
+            var table = Arrange(posting);
             var rows = new StackPanel { Spacing = 2 };
-            var layout = new TableLayout(TableId, [.. heads.Select(head => head.Column)], _columnWidths, 10);
 
-            rows.Children.Add(HeaderRow(posting, layout, heads));
+            rows.Children.Add(LedgerTables.Head(table, new Thickness(12, 0)));
 
             foreach (var offer in posting.Answer.Offers)
             {
-                rows.Children.Add(OfferRow(offer, posting, layout));
+                rows.Children.Add(ListRow.Dress(new Border { Child = table.Row(offer) }));
             }
 
-            stack.Children.Add(rows);
+            stack.Children.Add(LedgerTables.Arranger(table));
+            stack.Children.Add(LedgerTables.Sideways(table, rows));
         }
 
         // The date on the answer itself, which is a different caveat from the date on each price.
@@ -637,82 +645,204 @@ public sealed class RouteMarketPage : UserControl
         return row;
     }
 
-    /// <summary>One column of the answer table: its layout, its header, and whether its figures sit right.</summary>
-    private sealed record Head(TableColumn Column, SortColumn<object> Sort, bool Right);
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _table?.StopArranging();
+    }
 
-    private static List<Head> Heads(CommodityPosting posting)
+    /// <summary>
+    /// The answer's table, kept across redraws so its COLUMNS bar stays open and built again when the fields
+    /// change shape. The sort shown is the posting's own, once for each posting.
+    /// </summary>
+    private ArrangedTable<CommodityOffer> Arrange(CommodityPosting posting)
+    {
+        _posted = posting;
+        var shape = ShapeOf(posting);
+
+        if (_table is null || _shape != shape)
+        {
+            var table = new ArrangedTable<CommodityOffer>(
+                TableId, Fields(posting), _arrangements, _arrangements?.Headset == true ? null : _columnWidths, 10, headName: HeadName);
+            table.Changed += DrawResults;
+            table.Sorted += SortByHeader;
+            _table = table;
+            _shape = shape;
+            _shown = null;
+        }
+        else
+        {
+            _table.Refresh();
+        }
+
+        if (!ReferenceEquals(_shown, posting))
+        {
+            _shown = posting;
+            ShowOrder(_table, posting);
+        }
+
+        return _table;
+    }
+
+    /// <summary>What decides the fields and their headers.</summary>
+    private static string ShapeOf(CommodityPosting posting) =>
+        string.Join(
+            '|',
+            posting.Answer.OriginKnown,
+            posting.Query.Side,
+            Several(posting),
+            ByTheTonne(posting),
+            posting.Query.Wants.Any(want => want.Tonnes is null),
+            string.Join('/', posting.Query.Wants.Select(want => want.Commodity)));
+
+    /// <summary>Ranked by the usual order until a column is pressed, so a first press reverses it.</summary>
+    private static void ShowOrder(ArrangedTable<CommodityOffer> table, CommodityPosting posting)
+    {
+        var best = posting.Query.Side == TradeSide.Buying ? SortDirection.Ascending : SortDirection.Descending;
+
+        if (posting.Query.OrderBy == CommodityOrder.Distance
+            && table.ShowSort(DistanceKey, posting.Query.Descending == true ? SortDirection.Descending : SortDirection.Ascending))
+        {
+            return;
+        }
+
+        table.ShowSort(
+            Several(posting) ? TotalKey : PriceKey,
+            posting.Query.Descending is { } descending ? descending ? SortDirection.Descending : SortDirection.Ascending : best);
+    }
+
+    private const string DistanceKey = "Distance";
+
+    private const string PriceKey = "Price";
+
+    private const string TotalKey = "Total";
+
+    private const string CommoditiesKey = "Commodities";
+
+    private IReadOnlyList<TableField<CommodityOffer>> Fields(CommodityPosting posting)
     {
         var buying = posting.Query.Side == TradeSide.Buying;
         var best = buying ? SortDirection.Ascending : SortDirection.Descending;
 
-        List<Head> heads = [new(new("Station", ColumnFit.Fill) { Min = 160 }, SortColumn<object>.Plain("Station"), false)];
+        List<TableField<CommodityOffer>> fields =
+        [
+            StarSystemPage.Headed(
+                SortColumn<CommodityOffer>.Plain("Station"),
+                new TableColumn("Station", ColumnFit.Fill) { Min = 160 },
+                offer => StationCell(offer.Market.Station, offer.Market.System, offer.Market.IsCarrier)),
+        ];
 
         if (posting.Answer.OriginKnown)
         {
-            heads.Add(new(new("Distance"), SortColumn<object>.Remote("Distance", SortDirection.Ascending), true));
+            fields.Add(StarSystemPage.Headed(
+                SortColumn<CommodityOffer>.Remote("Distance", SortDirection.Ascending),
+                new TableColumn("Distance"),
+                offer => Figure($"{offer.Distance.ToString("0.#", CultureInfo.InvariantCulture)} ly"),
+                right: true));
         }
 
         if (Several(posting))
         {
             var second = buying ? "Price / stock" : "Pays / demand";
+            var wants = posting.Query.Wants;
 
-            foreach (var want in posting.Query.Wants)
+            fields.Add(new TableField<CommodityOffer>(CommoditiesKey, new TableColumn(wants[0].Commodity), offer => LotCell(offer, 0))
             {
-                heads.Add(new(new(want.Commodity), SortColumn<object>.Plain(want.Commodity) with { Second = second }, true));
-            }
+                Label = wants[0].Commodity,
+                Name = Spoken(wants),
+                Sort = SortColumn<CommodityOffer>.Plain(wants[0].Commodity) with { Second = second },
+                Alignment = HorizontalAlignment.Right,
+                Required = true,
+                More =
+                [
+                    .. wants.Skip(1).Select((want, index) =>
+                    {
+                        var at = index + 1;
 
-            heads.Add(new(
-                new("Total"),
-                SortColumn<object>.Remote("Total", best) with
+                        return new TableField<CommodityOffer>(CommoditiesKey + "." + want.Commodity, new TableColumn(want.Commodity), offer => LotCell(offer, at))
+                        {
+                            Label = want.Commodity,
+                            Sort = SortColumn<CommodityOffer>.Plain(want.Commodity) with { Second = second },
+                            Alignment = HorizontalAlignment.Right,
+                        };
+                    }),
+                ],
+            });
+
+            fields.Add(StarSystemPage.Headed(
+                SortColumn<CommodityOffer>.Remote("Total", best) with
                 {
-                    Second = posting.Query.Wants.Any(want => want.Tonnes is null) ? "1 T where blank" : null,
+                    Second = wants.Any(want => want.Tonnes is null) ? "1 T where blank" : null,
                 },
-                true));
+                new TableColumn("Total"),
+                offer => Figure(Count(offer.Total)),
+                right: true));
         }
         else
         {
-            heads.Add(new(new("Price"), SortColumn<object>.Remote(buying ? "Price" : "Pays", best), true));
-            heads.Add(new(new("Stock"), SortColumn<object>.Plain(buying ? "Stock" : "Demand"), true));
+            fields.Add(StarSystemPage.Headed(
+                SortColumn<CommodityOffer>.Remote(buying ? "Price" : "Pays", best),
+                new TableColumn("Price"),
+                offer => Figure(Count(offer.UnitPrice)),
+                right: true));
+            fields.Add(StarSystemPage.Headed(
+                SortColumn<CommodityOffer>.Plain(buying ? "Stock" : "Demand"),
+                new TableColumn("Stock"),
+                offer => Figure(Count(StockOf(offer, buying))),
+                right: true));
 
             if (ByTheTonne(posting))
             {
-                heads.Add(new(new("Load"), SortColumn<object>.Plain("The load"), true));
+                fields.Add(StarSystemPage.Headed(
+                    SortColumn<CommodityOffer>.Plain("The load"), new TableColumn("Load"), offer => Figure(Count(offer.Total)), right: true));
             }
         }
 
-        heads.Add(new(new("Priced"), SortColumn<object>.Plain("Priced"), true));
+        fields.Add(StarSystemPage.Headed(SortColumn<CommodityOffer>.Plain("Priced"), new TableColumn("Priced"), PricedCell, right: true));
 
-        return heads;
+        fields.Add(Added("FromStar", "From star", offer => LightCell(offer.Market.DistanceToArrival), right: true));
+        fields.Add(Added("LargePad", "Large pad", offer => TableCells.Flag(offer.Market.HasLargePad)));
+        fields.Add(Added("Surface", "Surface", offer => TableCells.Flag(offer.Market.IsSurface)));
+        fields.Add(Added("Power", "Power", offer => TableCells.Text(offer.Market.ControllingPower)));
+        fields.Add(Added("PowerState", "Power state", offer => TableCells.Text(offer.Market.PowerState)));
+
+        return fields;
     }
 
-    /// <summary>The distance and price or total columns sort the whole answer, so a press asks again; the rest are plain labels.</summary>
-    private Control HeaderRow(CommodityPosting posting, TableLayout layout, List<Head> heads)
+    private static TableField<CommodityOffer> Added(string key, string label, Func<CommodityOffer, Control> cell, bool right = false) =>
+        LedgerTables.Added(key, new TableColumn(key), cell, label) with
+        {
+            Alignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
+        };
+
+    private static Control LightCell(double? lightSeconds)
     {
-        var best = posting.Query.Side == TradeSide.Buying ? SortDirection.Ascending : SortDirection.Descending;
+        var text = StationSearchPage.Light(lightSeconds);
 
-        var header = new SortHeader<object>(HeadName, [.. heads.Select(head => head.Sort)]);
-        var distance = heads.FindIndex(head => head.Sort.Label == "Distance");
-        var price = heads.FindIndex(head => head.Sort.Label is "Price" or "Pays" or "Total");
-
-        // Ranked by the usual order until a column is pressed, so a first press reverses it.
-        var current = posting.Query.OrderBy == CommodityOrder.Distance && distance >= 0
-            ? new SortOrder(distance, posting.Query.Descending == true ? SortDirection.Descending : SortDirection.Ascending)
-            : new SortOrder(price, posting.Query.Descending is { } descending
-                ? descending ? SortDirection.Descending : SortDirection.Ascending
-                : best);
-
-        header.Show(current);
-        header.Changed += () => SortBy(posting, header.Order, distance);
-
-        // Inset by a list row's padding, so each header sits over its column.
-        var row = layout.Header(header, [.. heads.Select(head => head.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
-        row.Margin = new Thickness(12, 0);
-
-        return row;
+        return Typeset.Mono(
+            text,
+            TypeScale.Control,
+            lightSeconds is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey,
+            vertical: VerticalAlignment.Center,
+            horizontal: HorizontalAlignment.Right);
     }
 
-    /// <summary>Asks the same question again, ranked by the pressed column; null is the usual order.</summary>
-    private void SortBy(CommodityPosting posting, SortOrder? order, int distance)
+    /// <summary>"Gold", "Gold and Silver", "Gold, Silver and Tin".</summary>
+    private static string Spoken(IReadOnlyList<CommodityWant> wants) =>
+        wants.Count == 1
+            ? wants[0].Commodity
+            : $"{string.Join(", ", wants.Take(wants.Count - 1).Select(want => want.Commodity))} and {wants[^1].Commodity}";
+
+    /// <summary>Asks the same question again, ranked by the pressed column; none is the usual order.</summary>
+    private void SortByHeader()
+    {
+        if (_posted is { } posting && _table is { } table)
+        {
+            SortBy(posting, table.SortedBy);
+        }
+    }
+
+    private void SortBy(CommodityPosting posting, (string Key, SortDirection Direction)? order)
     {
         var query = posting.Query;
 
@@ -755,7 +885,7 @@ public sealed class RouteMarketPage : UserControl
 
         if (order is { } sort)
         {
-            values["order_by"] = sort.Column == distance ? "distance" : "price";
+            values["order_by"] = sort.Key == DistanceKey ? "distance" : "price";
             values["order"] = sort.Direction == SortDirection.Ascending ? "asc" : "desc";
         }
 
@@ -796,48 +926,32 @@ public sealed class RouteMarketPage : UserControl
         }
     }
 
-    private Control OfferRow(CommodityOffer offer, CommodityPosting posting, TableLayout layout)
+    private Control LotCell(CommodityOffer offer, int at)
     {
-        var buying = posting.Query.Side == TradeSide.Buying;
-        List<Control> cells = [StationCell(offer.Market.Station, offer.Market.System, offer.Market.IsCarrier)];
+        var buying = _posted!.Query.Side == TradeSide.Buying;
+        var lot = offer.Lots[at];
+        var held = offer.Market.Quote(lot.Commodity);
+        var stock = held is null ? "?" : Count(buying ? held.Supply : held.Demand);
 
-        if (posting.Answer.OriginKnown)
+        return new StackPanel
         {
-            cells.Add(Figure($"{offer.Distance.ToString("0.#", CultureInfo.InvariantCulture)} ly"));
-        }
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 1,
+            Children = { Figure(Count(lot.UnitPrice)), Figure(stock, ThemeManager.GreyKey, TypeScale.Caption) },
+        };
+    }
 
-        if (Several(posting))
-        {
-            foreach (var lot in offer.Lots)
-            {
-                var held = offer.Market.Quote(lot.Commodity);
-                var stock = held is null ? "?" : Count(buying ? held.Supply : held.Demand);
+    private long StockOf(CommodityOffer offer, bool buying)
+    {
+        var quote = offer.Market.Quote(_posted!.Query.Commodity);
 
-                cells.Add(new StackPanel
-                {
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                    Spacing = 1,
-                    Children = { Figure(Count(lot.UnitPrice)), Figure(stock, ThemeManager.GreyKey, TypeScale.Caption) },
-                });
-            }
+        return buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0;
+    }
 
-            cells.Add(Figure(Count(offer.Total)));
-        }
-        else
-        {
-            var quote = offer.Market.Quote(posting.Query.Commodity);
-
-            cells.Add(Figure(Count(offer.UnitPrice)));
-            cells.Add(Figure(Count(buying ? quote?.Supply ?? 0 : quote?.Demand ?? 0)));
-
-            if (ByTheTonne(posting))
-            {
-                cells.Add(Figure(Count(offer.Total)));
-            }
-        }
-
-        // The Commander's own reading is named as theirs, because it is the one figure here with no caveat on it.
+    /// <summary>The Commander's own reading is named as theirs, because it is the one figure here with no caveat on it.</summary>
+    private static Control PricedCell(CommodityOffer offer)
+    {
         var priced = RoutingKit.Ink(
             offer.Market.UpdatedAt is { } when
                 ? $"{(offer.IsTheirs ? "you saw it " : string.Empty)}{Ago(DateTimeOffset.UtcNow - when)}"
@@ -848,9 +962,8 @@ public sealed class RouteMarketPage : UserControl
         priced.VerticalAlignment = VerticalAlignment.Center;
         priced.HorizontalAlignment = HorizontalAlignment.Right;
         priced.TextAlignment = TextAlignment.Right;
-        cells.Add(priced);
 
-        return ListRow.Dress(new Border { Child = layout.Row(cells) });
+        return priced;
     }
 
     private static string Count(long figure) => figure.ToString("N0", CultureInfo.InvariantCulture);

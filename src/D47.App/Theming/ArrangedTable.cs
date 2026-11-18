@@ -90,7 +90,7 @@ public sealed class ArrangedTable<TRow>
     public bool Adding { get; private set; }
 
     /// <summary>The chosen column's label; null when none is chosen.</summary>
-    public string? ChosenLabel => _arrangeable.FirstOrDefault(f => f.Key == Chosen)?.Label;
+    public string? ChosenLabel => _arrangeable.FirstOrDefault(f => f.Key == Chosen) is { } chosen ? chosen.Name ?? chosen.Label : null;
 
     /// <summary>The table shows its default columns.</summary>
     public bool IsDefault => ColumnArrangement.IsDefault(Columns, Stored);
@@ -144,11 +144,11 @@ public sealed class ArrangedTable<TRow>
 
             return
             [
-                .. shown.Select(key => (key, byKey[key].Label!, true, !CanHide(key))),
+                .. shown.Select(key => (key, byKey[key].Name ?? byKey[key].Label!, true, !CanHide(key))),
                 .. _arrangeable
                     .Where(f => !shown.Contains(f.Key))
-                    .OrderBy(f => f.Label, StringComparer.CurrentCultureIgnoreCase)
-                    .Select(f => (f.Key, f.Label!, false, false)),
+                    .OrderBy(f => f.Name ?? f.Label, StringComparer.CurrentCultureIgnoreCase)
+                    .Select(f => (f.Key, f.Name ?? f.Label!, false, false)),
             ];
         }
     }

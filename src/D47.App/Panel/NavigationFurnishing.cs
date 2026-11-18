@@ -244,7 +244,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                     host.Prompts,
                     host.ColumnWidths,
                     galaxyMap && surface.Travel is not null ? ShowOnGalaxyMap : null,
-                    host.Model?.WaitSound);
+                    host.Model?.WaitSound,
+                    host.ColumnArrangements);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;

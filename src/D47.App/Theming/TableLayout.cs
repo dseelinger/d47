@@ -60,10 +60,6 @@ public sealed class TableLayout
     /// <summary>Builds the header row from ready-made cells, one per column.</summary>
     public TableGrid Header(IReadOnlyList<Control> cells) => Build(cells, header: true);
 
-    /// <summary>Builds the header row from <paramref name="sort"/>'s cells, left-aligned unless <paramref name="alignments"/> says otherwise.</summary>
-    public TableGrid Header<TRow>(SortHeader<TRow> sort, IReadOnlyList<HorizontalAlignment>? alignments = null) =>
-        Header([.. Columns.Select((_, column) => sort.Cell(column, alignments?[column] ?? HorizontalAlignment.Left))]);
-
     /// <summary>Builds a data row from cells, one per column.</summary>
     public TableGrid Row(IReadOnlyList<Control> cells) => Build(cells, header: false);
 

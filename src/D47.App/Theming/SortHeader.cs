@@ -179,18 +179,6 @@ public sealed class SortHeader<TRow>
     /// <summary>Sets <see cref="Order"/> to a sort held elsewhere, without raising <see cref="Changed"/>.</summary>
     public void Show(SortOrder? order) => Order = order;
 
-    /// <summary>Returns the table to its default order.</summary>
-    public void Reset()
-    {
-        if (Order is null)
-        {
-            return;
-        }
-
-        Order = null;
-        Changed?.Invoke();
-    }
-
     /// <summary><paramref name="rows"/>, given in the default order, sorted by <see cref="Order"/>.</summary>
     public IReadOnlyList<TRow> Sort(IReadOnlyList<TRow> rows) => ColumnSort.Sorted(rows, Columns, Order);
 

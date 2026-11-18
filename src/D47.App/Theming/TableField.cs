@@ -12,6 +12,9 @@ public sealed record TableField<TRow>(string Key, TableColumn Column, Func<TRow,
     /// <summary>The header text and the name the arrangement shows; null for a control column.</summary>
     public string? Label { get; init; }
 
+    /// <summary>The name the arrangement shows where it differs from the header <see cref="Label"/>, such as a field drawing several columns.</summary>
+    public string? Name { get; init; }
+
     /// <summary>A line under the header label.</summary>
     public string? Second { get; init; }
 

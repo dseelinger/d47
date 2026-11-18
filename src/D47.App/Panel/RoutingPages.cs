@@ -190,7 +190,8 @@ public static class RoutingPages
         PanelPrompts prompts,
         ColumnWidthMemory? columnWidths = null,
         Action<RoutePlanKind>? showOnGalaxyMap = null,
-        D47.App.Voice.WaitSound? waitSound = null)
+        D47.App.Voice.WaitSound? waitSound = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         if (crumb.Key.StartsWith(ResultPrefix, StringComparison.Ordinal))
         {
@@ -206,8 +207,8 @@ public static class RoutingPages
                 Copy(surface),
                 surface.OffDuty,
                 () => surface.Commander?.Invoke()?.Location.StarPos),
-            MarketRoot => Market(surface, columnWidths, waitSound),
-            BestCargoRoot => BestCargo(surface, nav, columnWidths, waitSound),
+            MarketRoot => Market(surface, columnWidths, columnArrangements, waitSound),
+            BestCargoRoot => BestCargo(surface, nav, columnWidths, columnArrangements, waitSound),
             TradeRoot => Trade(surface, nav, waitSound),
             BookmarksRoot => Bookmarks(surface, nav),
             BookmarksPage.AddKey => BookmarkForm(surface, nav, null),
@@ -231,7 +232,7 @@ public static class RoutingPages
                 waitSound)
             : Missing("Plotting is not available on this surface.");
 
-    private static Control Market(RoutingSurface surface, ColumnWidthMemory? columnWidths, D47.App.Voice.WaitSound? waitSound) =>
+    private static Control Market(RoutingSurface surface, ColumnWidthMemory? columnWidths, ColumnArrangementMemory? columnArrangements, D47.App.Voice.WaitSound? waitSound) =>
         surface is { Registry: { } registry, Commodities: { } board }
             ? new RouteMarketPage(
                 registry,
@@ -241,10 +242,11 @@ public static class RoutingPages
                 surface.Here,
                 surface.SuggestionPause,
                 surface.BodySearch,
-                waitSound)
+                waitSound,
+                columnArrangements)
             : Missing("Market lookups are not available on this surface.");
 
-    private static Control BestCargo(RoutingSurface surface, PanelNavigator nav, ColumnWidthMemory? columnWidths, D47.App.Voice.WaitSound? waitSound) =>
+    private static Control BestCargo(RoutingSurface surface, PanelNavigator nav, ColumnWidthMemory? columnWidths, ColumnArrangementMemory? columnArrangements, D47.App.Voice.WaitSound? waitSound) =>
         surface is { Registry: { } registry, Cargo: { } board }
             ? new RouteBestCargoPage(
                 registry,
@@ -260,7 +262,8 @@ public static class RoutingPages
                 surface.OffDuty,
                 columnWidths,
                 Copy(surface),
-                waitSound)
+                waitSound,
+                columnArrangements)
             : Missing("Best cargo is not available on this surface.");
 
     private static Control Trade(RoutingSurface surface, PanelNavigator nav, D47.App.Voice.WaitSound? waitSound) =>

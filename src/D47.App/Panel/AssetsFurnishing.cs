@@ -187,7 +187,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
     {
         var headset = host.Headset;
 
-        _constructionBuild = _ => _construction = new ConstructionPage(construction, host.Copy, headset, host.Browse, host.ColumnWidths, host.Model?.WaitSound);
+        _constructionBuild = _ => _construction = new ConstructionPage(construction, host.Copy, headset, host.Browse, host.ColumnWidths, host.Model?.WaitSound, host.ColumnArrangements);
 
         host.Furnish(
             PanelTab.Assets,

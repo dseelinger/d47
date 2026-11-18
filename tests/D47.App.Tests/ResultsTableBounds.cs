@@ -53,7 +53,7 @@ internal static class ResultsTableBounds
         {
             if (Clips(walk))
             {
-                return painted.Intersect(Rect(walk, card));
+                painted = painted.Intersect(Rect(walk, card));
             }
         }
 
