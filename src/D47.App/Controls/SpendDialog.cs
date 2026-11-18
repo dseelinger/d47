@@ -528,9 +528,7 @@ public sealed class SpendDialog : ModalDialog
         var line = new TextBlock
         {
             Text =
-                "Everything below is D47's estimate from published rates, not what your account is "
-                + "billed. A subscription with bundled credits can make the real cost anything from "
-                + "higher to nothing at all.",
+                "Everything below is D47's estimate from published rates, " + SpendBreakdownModel.NotTheBill,
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
         };

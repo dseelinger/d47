@@ -198,7 +198,7 @@ have not set a rate for, or a transcription model the catalog has no rate for â€
 window containing one reports **at least** its total rather than presenting a figure that silently
 leaves part of the cost out.
 
-**Every figure in there is an estimate, and the window says so once at the top.** Directive 47
+**Every figure in there is an estimate, and SPEND and the Spend breakdown page each say so once at the top.** Directive 47
 knows each provider's *published* rate, not what your account is actually billed â€” a subscription
 with bundled credits can make the real cost anything from higher than the estimate to nothing at
 all, and no API reports which arrangement you are on. It is said once rather than stamped on each

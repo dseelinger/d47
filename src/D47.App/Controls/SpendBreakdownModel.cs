@@ -11,9 +11,14 @@ public static class SpendBreakdownModel
 {
     public const string Summary = "What D47's estimate went on, one window at a time.";
 
+    /// <summary>Said by the SPEND dialog and this page alike.</summary>
+    public const string NotTheBill =
+        "not what your account is billed. A subscription with bundled credits can make the real cost anything from "
+        + "higher to nothing at all.";
+
     public const string Hint =
-        "D47's estimate from published rates. ≥ means part of it has no rate. Free voices, and charges covered by "
-        + "a reset, are left out, as they are in the totals.";
+        "D47's estimate from published rates, " + NotTheBill + " ≥ means part of it has no rate. Free voices, and "
+        + "charges covered by a reset, are left out, as they are in the totals.";
 
     public const string NothingHint = "Free voices and transcription on this computer are never listed here.";
 

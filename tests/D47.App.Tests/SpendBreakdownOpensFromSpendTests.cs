@@ -402,6 +402,24 @@ public class SpendBreakdownOpensFromSpendTests
     }
 
     [AvaloniaFact]
+    public void ThePageSaysASubscriptionCanMakeTheRealCostDifferent()
+    {
+        var (window, panel, ledger) = Panel(Ledger("d47-spend-breakdown-hedge", Noon));
+        ledger.Append(new SpendEntry { At = Noon.AddMinutes(-5), Kind = SpendKind.Voice, ProviderId = "elevenlabs", Model = "ElevenLabs", Purpose = SpendPurposes.VoiceAboard, Dollars = 0.03m, Priced = true, Characters = 900 });
+
+        _ = panel.Open(new SpendBreakdownPage(ledger, TimeZoneInfo.Utc));
+        Jobs();
+
+        Assert.Contains(SpendBreakdownModel.Hint, Words(panel));
+        Assert.Contains(
+            "not what your account is billed. A subscription with bundled credits can make the real cost anything from higher to nothing at all.",
+            SpendBreakdownModel.Hint,
+            StringComparison.Ordinal);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void AWindowWithNothingChargedSaysSoInPlaceOfTheTable()
     {
         var (window, panel, ledger) = Panel(Ledger("d47-spend-breakdown-empty", Noon));
