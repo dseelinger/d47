@@ -281,7 +281,7 @@ $lines.Add('')
 $folders = @()
 if (Test-Path $Journals) { $folders += $Journals }
 if (Test-Path $Corpus) { $folders += (Get-ChildItem $Corpus -Directory | Sort-Object Name).FullName }
-$replay = Join-Path $src 'tools\D47.Replay\bin\Release\net10.0-windows\d47-replay.dll'
+$replay = Join-Path $src 'tools\D47.Replay\bin\Release\net11.0-windows\d47-replay.dll'
 if ($built -and $folders.Count -gt 0 -and (Test-Path $replay)) {
     $replayReport = Join-Path $run 'replay.md'
     $previousReplay = if ($previous) { Join-Path $Root "runs\$($previous.BaseName)\replay.md" } else { '' }

@@ -2,7 +2,7 @@
 
 Directive 47 — Optimize Inferior Systems
 
-A Guardian-flavoured voice companion for Elite Dangerous. Windows 11, .NET 10. It reads the
+A Guardian-flavoured voice companion for Elite Dangerous. Windows 11, .NET 11. It reads the
 journal the game already writes, answers out loud, and renders one panel to both a desktop window
 and a SteamVR overlay.
 
@@ -32,7 +32,7 @@ dotnet test  d47.slnx -c Debug
 dotnet publish src/D47.App -c Release
 ```
 
-Requires the .NET 10 SDK; `global.json` pins the version. Publish produces a self-contained,
+Requires the .NET 11 SDK; `global.json` pins the version. Publish produces a self-contained,
 single-file `d47.exe` for `win-x64` with its native libraries beside it — the pair ships as
 `d47.zip`, with no runtime prerequisite. There is also a per-user installer that needs no
 elevation.

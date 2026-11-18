@@ -481,7 +481,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         if (arguments.TryGetValue("max_distance", out var typed)
             && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked))
         {
-            distance.Value = (decimal)Math.Clamp(asked, 1, ceiling);
+            distance.Value = D47.Core.Decimals.FromDouble(Math.Clamp(asked, 1, ceiling));
         }
     }
 

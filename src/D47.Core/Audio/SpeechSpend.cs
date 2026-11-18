@@ -313,7 +313,7 @@ public sealed class SpeechSpend
         if (provider.BilledByMinute)
         {
             return MinuteRateFor(settings, charge.ProviderId) is { } perMinute
-                ? perMinute * (decimal)charge.Audio.TotalMinutes
+                ? perMinute * Decimals.FromDouble(charge.Audio.TotalMinutes)
                 : null;
         }
 
@@ -332,7 +332,7 @@ public sealed class SpeechSpend
         var provider = TtsProviderCatalog.Selected(providerId);
 
         return settings.Speech.CharacterPrices.TryGetValue(provider.Id, out var own)
-            ? (decimal)own
+            ? Decimals.FromDouble(own)
             : ListRateFor(settings, provider.Id);
     }
 
@@ -360,7 +360,7 @@ public sealed class SpeechSpend
         var provider = TtsProviderCatalog.Selected(providerId);
 
         return settings.Speech.MinutePrices.TryGetValue(provider.Id, out var own)
-            ? (decimal)own
+            ? Decimals.FromDouble(own)
             : provider.ListDollarsPerMinute;
     }
 }

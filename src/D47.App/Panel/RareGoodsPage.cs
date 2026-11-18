@@ -258,7 +258,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
         _distance.Value = arguments.TryGetValue("max_distance", out var typed)
                           && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked)
-            ? (decimal)Math.Clamp(asked, 1, 99999)
+            ? D47.Core.Decimals.FromDouble(Math.Clamp(asked, 1, 99999))
             : DefaultDistance;
     }
 

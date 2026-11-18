@@ -6,7 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="MeCab.DotNet" Version="1.2.0" ExcludeAssets="build;buildMultitargeting;buildTransitive;contentFiles" />
-    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="NAudio.Core" Version="2.2.1" />
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    <PackageReference Include="NAudio.WinMM" Version="2.2.1" />
   </ItemGroup>
 
   <ItemGroup>

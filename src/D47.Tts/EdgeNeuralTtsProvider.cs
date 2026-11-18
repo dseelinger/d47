@@ -344,7 +344,8 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
     /// <summary>MP3 to 16-bit PCM through the OS codec.</summary>
     internal static byte[] Decode(byte[] mp3)
     {
-        using var reader = new NAudio.Wave.Mp3FileReader(new MemoryStream(mp3));
+        using var reader = new NAudio.Wave.Mp3FileReaderBase(
+            new MemoryStream(mp3), format => new NAudio.Wave.AcmMp3FrameDecompressor(format));
 
         if (reader.WaveFormat.SampleRate != EdgeProtocol.SourceSampleRate
             || reader.WaveFormat.Channels != 1)

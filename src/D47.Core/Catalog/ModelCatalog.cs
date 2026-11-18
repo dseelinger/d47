@@ -70,7 +70,7 @@ public sealed record TranscriptionPrice(decimal DollarsPerMinute)
     public double MinimumSeconds { get; init; }
 
     public decimal DollarsFor(TimeSpan audio) =>
-        DollarsPerMinute * (decimal)Math.Max(audio.TotalSeconds, MinimumSeconds) / 60m;
+        DollarsPerMinute * Decimals.FromDouble(Math.Max(audio.TotalSeconds, MinimumSeconds)) / 60m;
 }
 
 /// <summary>Every model fact d47 needs that a provider's API does not return.</summary>

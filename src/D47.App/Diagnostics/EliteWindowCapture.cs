@@ -90,7 +90,10 @@ public sealed class EliteWindowCapture(
 
             // Both are newer than the capture API itself and both are cosmetic, so a machine that does not
             // have them still gets its still.
-            Quietly(() => session.IsBorderRequired = false);
+            Quietly(() =>
+            {
+                if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 20348)) session.IsBorderRequired = false;
+            });
             Quietly(() => session.IsCursorCaptureEnabled = false);
 
             session.StartCapture();

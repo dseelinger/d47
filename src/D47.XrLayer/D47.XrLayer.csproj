@@ -14,8 +14,6 @@
          publish changes the PDB GUID written into the DLL. -->
     <DebugType>none</DebugType>
     <NativeDebugSymbols>false</NativeDebugSymbols>
-    <!-- 10.0.11, the SDK's default, resolves an ILCompiler with advisory NU1903. -->
-    <RuntimeFrameworkVersion>10.0.15</RuntimeFrameworkVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,20 +28,5 @@
   <ItemGroup>
     <LinkerArg Include="/Brepro" />
   </ItemGroup>
-
-  <!-- The Visual Studio setup scripts that find the MSVC linker call vswhere.exe through PATH. This runs
-       ILCompiler's own lookup with the installer folder on PATH and hands it the result, so publishing
-       needs no change to the caller's environment. -->
-  <Target Name="FindTheMsvcLinker" BeforeTargets="SetupOSSpecificProps">
-    <Exec Command="&quot;$([System.IO.Path]::GetDirectoryName($(ILCompilerTargetsPath)))\findvcvarsall.bat&quot; $(_targetArchitecture)"
-          EnvironmentVariables="$([MSBuild]::Escape('PATH=$(MSBuildProgramFiles32)\Microsoft Visual Studio\Installer;$(PATH)'))"
-          IgnoreExitCode="true" ConsoleToMSBuild="true" StandardOutputImportance="Low">
-      <Output TaskParameter="ConsoleOutput" PropertyName="_FindVCVarsallOutput" />
-      <Output TaskParameter="ExitCode" PropertyName="_VCVarsAllFound" />
-    </Exec>
-    <PropertyGroup>
-      <IlcUseEnvironmentalTools>true</IlcUseEnvironmentalTools>
-    </PropertyGroup>
-  </Target>
 
 </Project>

@@ -95,7 +95,7 @@ public class PackageLicenceGateTests
             Distinct(),
             package => string.Equals(
                 package.Id,
-                "Microsoft.Extensions.DependencyInjection.Abstractions",
+                "Microsoft.Extensions.AI.Abstractions",
                 StringComparison.OrdinalIgnoreCase));
     }
 

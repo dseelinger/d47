@@ -619,11 +619,11 @@ internal sealed partial class SettingControls
         // store is only going to clamp away.
         var amount = new Amount
         {
-            Step = (decimal)row.Step,
+            Step = Decimals.FromDouble(row.Step),
             Format = row.NumberFormat,
             Unit = row.Unit,
-            Minimum = row.Minimum is { } low ? (decimal)low : null,
-            Maximum = row.Maximum is { } high ? (decimal)high : null,
+            Minimum = row.Minimum is { } low ? Decimals.FromDouble(low) : null,
+            Maximum = row.Maximum is { } high ? Decimals.FromDouble(high) : null,
             DisablesAtEnds = row.ScaleEnds is not null,
             HorizontalAlignment = HorizontalAlignment.Right,
         };

@@ -67,8 +67,8 @@ public class ANumberStepsAndTakesTypingTests
     public void AnArrowMovesByTheStepAndClampsToTheRange(
         double from, int direction, double step, double minimum, double maximum, double expected) =>
         Assert.Equal(
-            (decimal)expected,
-            Amount.Stepped((decimal)from, null, (decimal)step, direction, (decimal)minimum, (decimal)maximum));
+            D47.Core.Decimals.FromDouble(expected),
+            Amount.Stepped(D47.Core.Decimals.FromDouble(from), null, D47.Core.Decimals.FromDouble(step), direction, D47.Core.Decimals.FromDouble(minimum), D47.Core.Decimals.FromDouble(maximum)));
 
     [Fact]
     public void FromNothingSetAnArrowStepsFromTheDefault() =>
@@ -80,7 +80,7 @@ public class ANumberStepsAndTakesTypingTests
     [InlineData(80, "0", "%", "80%")]
     [InlineData(1.2, "0.##", null, "1.2")]
     public void TheValueCarriesItsUnitInCapitals(double value, string format, string? unit, string expected) =>
-        Assert.Equal(expected, Amount.Display((decimal)value, format, unit));
+        Assert.Equal(expected, Amount.Display(D47.Core.Decimals.FromDouble(value), format, unit));
 
     [Trait("Category", "Integration")]
     [AvaloniaFact]
