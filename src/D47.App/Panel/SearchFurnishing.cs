@@ -253,7 +253,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             var open = _pendingFactionPage;
             _pendingFactionPage = null;
 
-            return _faction = new FactionPage(factionSearches, host.Headset, open) { ColumnWidths = host.ColumnWidths, Copy = host.Copy };
+            return _faction = new FactionPage(factionSearches, host.Headset, open) { ColumnWidths = host.ColumnWidths, ColumnArrangements = host.ColumnArrangements, Copy = host.Copy };
         }
 
         if (crumb.Key == StationSearchPage.RootKey && surface.Searches is { } stationSearches)

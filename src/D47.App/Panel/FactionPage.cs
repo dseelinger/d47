@@ -100,11 +100,16 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
     private readonly TextBox _find = SystemSearchPage.Field("find a system");
     private readonly TextBlock _count;
     private readonly Border _table = new();
+    private readonly Border _systemsTile = new() { Margin = new Thickness(Gaps.Tile, 0, 0, 0) };
+    private readonly Border _assetsTile = new() { Margin = new Thickness(Gaps.Tile, 0, 0, 0) };
     private readonly Grid _systemsView = new() { RowDefinitions = new RowDefinitions("Auto,*") };
-    private readonly SortHeader<FactionRow> _sortHeader;
     private readonly Func<DateTimeOffset> _now;
-    private readonly SortHeader<FactionConflict> _conflictHead = new(ConflictsHeadName, FactionConflicts.Heads);
-    private readonly SortHeader<FactionStation> _assetHead = new(AssetsHeadName, FactionAssets.Heads, FactionAssets.DefaultOrder);
+    private ArrangedTable<FactionRow>? _systemColumns;
+    private ArrangedTable<FactionConflict>? _conflictColumns;
+    private ArrangedTable<FactionStation>? _assetColumns;
+    private DateTimeOffset _drawnAt;
+    private string? _drawnHere;
+    private double _barWidth;
     private readonly Border _conflictsTable = new();
     private readonly Border _assetsTable = new();
     private readonly Grid _conflictsView = new() { RowDefinitions = new RowDefinitions("*,Auto") };
@@ -142,20 +147,6 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         _searches = searches;
         _headset = headset;
         _now = () => Now();
-
-        _sortHeader = new SortHeader<FactionRow>(HeadName, FactionModel.Heads(() => _now()), FactionModel.DefaultOrder);
-        _sortHeader.Changed += () =>
-        {
-            _page = 0;
-            DrawSystems();
-        };
-
-        _conflictHead.Changed += DrawConflicts;
-        _assetHead.Changed += () =>
-        {
-            _page = 0;
-            DrawAssets();
-        };
 
         _field.Name = FieldName;
         _field.Width = 460;
@@ -211,6 +202,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         };
         _sections.SelectionChanged += (_, _) =>
         {
+            StopArranging();
             _section = _sections.SelectedIndex;
             _page = 0;
             DrawContent();
@@ -231,10 +223,12 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             DrawSystems();
         };
 
-        var toolbar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Margin = new Thickness(0, 0, 0, 6) };
+        var toolbar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(0, 0, 0, 6) };
         Grid.SetColumn(_count, 1);
+        Grid.SetColumn(_systemsTile, 2);
         toolbar.Children.Add(_find);
         toolbar.Children.Add(_count);
+        toolbar.Children.Add(_systemsTile);
         Grid.SetRow(_table, 1);
         _systemsView.Children.Add(toolbar);
         _systemsView.Children.Add(_table);
@@ -262,13 +256,15 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             DrawAssets();
         };
 
-        var assetBar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*"), Margin = new Thickness(0, 0, 0, 6) };
+        var assetBar = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,Auto,*,Auto"), Margin = new Thickness(0, 0, 0, 6) };
         _assetFind.VerticalAlignment = VerticalAlignment.Top;
         Grid.SetColumn(_assetKind, 1);
         Grid.SetColumn(_assetCount, 2);
+        Grid.SetColumn(_assetsTile, 3);
         assetBar.Children.Add(_assetFind);
         assetBar.Children.Add(_assetKind);
         assetBar.Children.Add(_assetCount);
+        assetBar.Children.Add(_assetsTile);
         Grid.SetRow(_assetsTable, 1);
         _assetsView.Children.Add(assetBar);
         _assetsView.Children.Add(_assetsTable);
@@ -339,6 +335,9 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
     }
 
     public ColumnWidthMemory? ColumnWidths { get; init; }
+
+    /// <summary>Which columns the tables show; the headset's memory when the page is drawn there.</summary>
+    public ColumnArrangementMemory? ColumnArrangements { get; init; }
 
     public Func<string, Task<bool>>? Copy { get; init; }
 
@@ -430,7 +429,8 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         if (changed)
         {
             _report = null;
-            _sortHeader.Show(null);
+            StopArranging();
+            _systemColumns?.Reset();
             _find.Text = string.Empty;
             _section = 0;
             _sections.SelectedIndex = 0;
@@ -871,27 +871,156 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         grid.Children.Add(cell);
     }
 
-    private static readonly TableColumn[] DesktopColumns =
-    [
-        new("System", ColumnFit.Fill) { Min = 170 },
-        new("Influence") { Min = 96 },
-        new("Active", ColumnFit.Fill) { Min = 100 },
-        new("Pending", ColumnFit.Fill) { Min = 100 },
-        new("Recovering", ColumnFit.Fill) { Min = 110 },
-        new("Controls") { Min = 84 },
-        new("Updated") { Min = 190 },
-    ];
+    private TableColumn Fill(string key, double desktop, double headset) =>
+        new(key, ColumnFit.Fill) { Min = _headset ? headset : desktop };
 
-    private static readonly TableColumn[] HeadsetColumns =
-    [
-        new("System", ColumnFit.Fill) { Min = 130 },
-        new("Influence") { Min = 76 },
-        new("Active", ColumnFit.Fill) { Min = 90 },
-        new("Pending", ColumnFit.Fill) { Min = 90 },
-        new("Recovering", ColumnFit.Fill) { Min = 90 },
-        new("Controls") { Min = 64 },
-        new("Updated") { Min = 132 },
-    ];
+    private TableColumn Sized(string key, double desktop, double headset) =>
+        new(key) { Min = _headset ? headset : desktop };
+
+    private TableColumn Fixed(string key, double desktop, double headset) =>
+        new(key, ColumnFit.Fixed) { Fixed = _headset ? headset : desktop };
+
+    private ArrangedTable<T> Arranged<T>(string id, IReadOnlyList<TableField<T>> fields, string headName, string? sortedByDefault, Action redraw, Action? sorted = null)
+    {
+        var table = new ArrangedTable<T>(
+            id, fields, ColumnArrangements, _headset ? null : ColumnWidths, _headset ? 12 : 16, sortedByDefault, headName);
+
+        if (sorted is not null)
+        {
+            table.Sorted += sorted;
+        }
+
+        table.Changed += redraw;
+
+        return table;
+    }
+
+    private ArrangedTable<FactionRow> SystemColumns =>
+        _systemColumns ??= Arranged(TableId, SystemFields(), HeadName, "Influence", DrawSystems, () => _page = 0);
+
+    private ArrangedTable<FactionConflict> ConflictColumns =>
+        _conflictColumns ??= Arranged(ConflictsTableId, ConflictFields(), ConflictsHeadName, null, DrawConflicts);
+
+    private ArrangedTable<FactionStation> AssetColumns =>
+        _assetColumns ??= Arranged(AssetsTableId, AssetFields(), AssetsHeadName, "System", DrawAssets, () => _page = 0);
+
+    private void StopArranging()
+    {
+        _systemColumns?.StopArranging();
+        _conflictColumns?.StopArranging();
+        _assetColumns?.StopArranging();
+    }
+
+    /// <summary>The COLUMNS bar, ready for the table's header to follow; with <paramref name="line"/>, the tile on a line of its own above it.</summary>
+    private static StackPanel ArrangerAbove<T>(ArrangedTable<T> columns, bool line = false)
+    {
+        var top = new StackPanel();
+
+        if (line && ColumnArranger.Line(columns) is { } tile)
+        {
+            top.Children.Add(tile);
+        }
+
+        if (ColumnArranger.Bar(columns) is { } bar)
+        {
+            top.Children.Add(bar);
+        }
+
+        return top;
+    }
+
+    private TableGrid HeadOf<T>(ArrangedTable<T> columns)
+    {
+        var header = columns.Header();
+        header.MinHeight = TypeScale.MinimumTarget;
+        header.Margin = new Thickness(14, 0);
+
+        return header;
+    }
+
+    /// <summary>In the headset the header is kept as wide as the rows, so both report one width to the table.</summary>
+    private void FollowRows(TableGrid header, ScrollViewer rows)
+    {
+        if (!_headset)
+        {
+            return;
+        }
+
+        // The headset's rows sit in the scroller's gutter and the stack's own right margin; the header meets the first of them.
+        // The bar is always shown, so its width never changes the rows' width between one draw and the next.
+        rows.VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Visible;
+
+        void Follow()
+        {
+            if (rows.Bounds.Width > 0)
+            {
+                _barWidth = rows.Bounds.Width - rows.Viewport.Width;
+            }
+
+            header.Margin = new Thickness(12, 0, 12 + 14 + _barWidth, 0);
+        }
+
+        Follow();
+        rows.ScrollChanged += (_, _) => Follow();
+    }
+
+    private static TableField<T> Added<T>(string key, TableColumn column, Func<T, Control> cell, string label) =>
+        new(key, column, row =>
+        {
+            var control = cell(row);
+            control.VerticalAlignment = VerticalAlignment.Center;
+
+            return control;
+        })
+        { Label = label, ByDefault = false };
+
+    private IReadOnlyList<TableField<FactionRow>> SystemFields()
+    {
+        var heads = FactionModel.Heads(() => _now());
+
+        return
+        [
+            StarSystemPage.Headed(heads[0], Fill("System", 170, 130), row => CopyGlyph.LinkBeside(SystemName(row.System), row.System, Copy)),
+            StarSystemPage.Headed(heads[1], Sized("Influence", 96, 76), InfluenceCell, right: true),
+            StarSystemPage.Headed(heads[2], Fill("Active", 100, 90), row => States(row.Active, StateInk(row))),
+            StarSystemPage.Headed(heads[3], Fill("Pending", 100, 90), row => States(row.Pending, StateInk(row))),
+            StarSystemPage.Headed(heads[4], Fill("Recovering", 110, 90), row => States(row.Recovering, StateInk(row))),
+            StarSystemPage.Headed(heads[5], Sized("Controls", 84, 64), ControlsCell),
+            StarSystemPage.Headed(
+                heads[6],
+                Sized("Updated", 190, 132),
+                row => Updated(row, _drawnAt, FactionModel.IsOld(row, _drawnAt), row.OwnReading && UnchangedSinceTick(row.System)),
+                right: true),
+            Added<FactionRow>("InConflict", Sized("InConflict", 96, 96), row => TableCells.Flag(row.InConflict), "In conflict"),
+        ];
+    }
+
+    private TextBlock SystemName(string system)
+    {
+        var name = CreditsKit.Line(
+            system,
+            Fonts.ChromeFamily,
+            TypeScale.ControlLarge,
+            string.Equals(system, _drawnHere, StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+        name.FontWeight = FontWeight.Medium;
+
+        return name;
+    }
+
+    private string StateInk(FactionRow row) => FactionModel.IsOld(row, _drawnAt) ? ThemeManager.GreyKey : ThemeManager.WhiteKey;
+
+    private static Control InfluenceCell(FactionRow row) =>
+        row.Influence is { } fraction
+            ? CreditsKit.Mono((fraction * 100).ToString("0.0", CultureInfo.InvariantCulture) + "%", TypeScale.ControlLarge, ThemeManager.AKey, right: true)
+            : CreditsKit.Mono(FactionModel.Dash, TypeScale.ControlLarge, ThemeManager.GreyKey, right: true);
+
+    private static Control ControlsCell(FactionRow row)
+    {
+        var controls = CreditsKit.Line(row.Controls ? "✓" : string.Empty, Fonts.ChromeFamily, 15, ThemeManager.WhiteKey);
+        controls.HorizontalAlignment = HorizontalAlignment.Center;
+
+        return controls;
+    }
 
     private void DrawSystems()
     {
@@ -900,29 +1029,29 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             return;
         }
 
-        var now = _now();
+        var columns = SystemColumns;
+        columns.Refresh();
+
+        _drawnAt = _now();
+        _drawnHere = _searches.GameState?.Invoke()?.Location.StarSystem;
         var all = Rows();
         var matches = FactionModel.Matching(all, _find.Text);
-        var sorted = _sortHeader.Sort(matches);
-        var here = _searches.GameState?.Invoke()?.Location.StarSystem;
+        var sorted = columns.Sort(matches);
 
         _count.Text = FactionModel.CountText(matches.Count, all.Count);
         _page = FactionModel.ClampPage(_page, sorted.Count);
 
-        var layout = new TableLayout(TableId, _headset ? HeadsetColumns : DesktopColumns, _headset ? null : ColumnWidths, _headset ? 12 : 16);
-        var top = new StackPanel
-        {
-            Children =
-            {
-                CreditsKit.HeaderRow(_sortHeader, layout, i => i is 1 or 6 ? HorizontalAlignment.Right : HorizontalAlignment.Left),
-            },
-        };
+        _systemsTile.Child = ColumnArranger.Tile(columns);
+        var top = ArrangerAbove(columns);
+        var header = HeadOf(columns);
 
         if (sorted.Count == 0)
         {
             RowsDrawn = 0;
-            top.Children.Add(CreditsKit.Line(NoSystemText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey));
-            top.Children[1].Margin = new Thickness(0, 12, 0, 0);
+            top.Children.Add(header);
+            var none = CreditsKit.Line(NoSystemText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey);
+            none.Margin = new Thickness(0, 12, 0, 0);
+            top.Children.Add(none);
             _table.Child = top;
             return;
         }
@@ -936,7 +1065,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
             foreach (var row in shown)
             {
-                stack.Children.Add(RowView(row, layout, now, here));
+                stack.Children.Add(RowView(row, columns));
             }
 
             stack.Children.Add(Pager(sorted.Count, DrawSystems));
@@ -949,55 +1078,20 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             list = new ItemsControl
             {
                 ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => new VirtualizingStackPanel { }),
-                ItemTemplate = new FuncDataTemplate<FactionRow>((row, _) => row is null ? null : Spaced(RowView(row, layout, now, here))),
+                ItemTemplate = new FuncDataTemplate<FactionRow>((row, _) => row is null ? null : Spaced(RowView(row, columns))),
                 ItemsSource = sorted,
             };
         }
 
         var offset = _keepScroll ? _systemsScroll?.Offset : null;
-        _table.Child = LoadoutPages.HeaderAndList(top, list, out var scroll);
+        _table.Child = LoadoutPages.HeaderAndList(top, header, list, _headset ? null : columns.Layout, out var scroll);
+        FollowRows(header, scroll);
         _systemsScroll = scroll;
         Restore(scroll, offset);
     }
 
-    private static readonly TableColumn[] ConflictDesktopColumns =
-    [
-        new("System", ColumnFit.Fill) { Min = 160 },
-        new("Conflict", ColumnFit.Fixed) { Fixed = 150 },
-        new("Opponent", ColumnFit.Fill) { Min = 220 },
-        new("Days won", ColumnFit.Fixed) { Fixed = 120 },
-        new("At stake", ColumnFit.Fill) { Min = 220 },
-    ];
-
-    private static readonly TableColumn[] ConflictHeadsetColumns =
-    [
-        new("System", ColumnFit.Fill) { Min = 120 },
-        new("Conflict", ColumnFit.Fixed) { Fixed = 100 },
-        new("Opponent", ColumnFit.Fill) { Min = 170 },
-        new("Days won", ColumnFit.Fixed) { Fixed = 84 },
-        new("At stake", ColumnFit.Fill) { Min = 170 },
-    ];
-
-    private static readonly TableColumn[] AssetDesktopColumns =
-    [
-        new("Station", ColumnFit.Fill) { Min = 240 },
-        new("System", ColumnFit.Fill) { Min = 160 },
-        new("Type", ColumnFit.Fixed) { Fixed = 190 },
-        new("Pad", ColumnFit.Fixed) { Fixed = 80 },
-        new("Distance", ColumnFit.Fixed) { Fixed = 150 },
-    ];
-
-    private static readonly TableColumn[] AssetHeadsetColumns =
-    [
-        new("Station", ColumnFit.Fill) { Min = 170 },
-        new("System", ColumnFit.Fill) { Min = 120 },
-        new("Type", ColumnFit.Fixed) { Fixed = 140 },
-        new("Pad", ColumnFit.Fixed) { Fixed = 56 },
-        new("Distance", ColumnFit.Fixed) { Fixed = 104 },
-    ];
-
-    /// <summary>The header over a list of rows that scroll, with the headset's 25-row pages and the desktop's virtualised list.</summary>
-    private Control Body<T>(StackPanel top, IReadOnlyList<T> sorted, Func<T, Border> row, Action redraw)
+    /// <summary>A list of rows that scroll, with the headset's 25-row pages and the desktop's virtualised list.</summary>
+    private Control Body<T>(IReadOnlyList<T> sorted, Func<T, Border> row, Action redraw)
     {
         _page = FactionModel.ClampPage(_page, sorted.Count);
 
@@ -1030,6 +1124,20 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         };
     }
 
+    private IReadOnlyList<TableField<FactionConflict>> ConflictFields()
+    {
+        var heads = FactionConflicts.Heads;
+
+        return
+        [
+            StarSystemPage.Headed(heads[0], Fill("System", 160, 120), conflict => CopyGlyph.LinkBeside(SystemName(conflict.System), conflict.System, Copy)),
+            StarSystemPage.Headed(heads[1], Fixed("Conflict", 150, 100), KindCell),
+            StarSystemPage.Headed(heads[2], Fill("Opponent", 220, 170), Opponent),
+            StarSystemPage.Headed(heads[3], Fixed("Days won", 120, 84), DaysCell, right: true),
+            StarSystemPage.Headed(heads[4], Fill("At stake", 220, 170), StakeCell),
+        ];
+    }
+
     private void DrawConflicts()
     {
         if (_report is null)
@@ -1037,15 +1145,16 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             return;
         }
 
-        var layout = new TableLayout(ConflictsTableId, _headset ? ConflictHeadsetColumns : ConflictDesktopColumns, _headset ? null : ColumnWidths, _headset ? 12 : 16);
-        var top = new StackPanel
-        {
-            Children = { CreditsKit.HeaderRow(_conflictHead, layout, i => i == 3 ? HorizontalAlignment.Right : HorizontalAlignment.Left) },
-        };
+        var columns = ConflictColumns;
+        columns.Refresh();
+
+        var top = ArrangerAbove(columns, line: true);
+        var header = HeadOf(columns);
 
         if (_conflicts.Count == 0)
         {
             RowsDrawn = 0;
+            top.Children.Add(header);
             var none = CreditsKit.Line(FactionConflicts.NoneText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey);
             none.Margin = new Thickness(0, 12, 0, 0);
             top.Children.Add(none);
@@ -1053,26 +1162,25 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             return;
         }
 
-        var here = _searches.GameState?.Invoke()?.Location.StarSystem;
-        var list = Body(top, _conflicts, conflict => ConflictView(conflict, layout, here), DrawConflicts);
+        _drawnHere = _searches.GameState?.Invoke()?.Location.StarSystem;
+        var list = Body(_conflicts, conflict => ConflictView(conflict, columns), DrawConflicts);
         var offset = _keepScroll ? _conflictsScroll?.Offset : null;
-        _conflictsTable.Child = LoadoutPages.HeaderAndList(top, list, out var scroll);
+        _conflictsTable.Child = LoadoutPages.HeaderAndList(top, header, list, _headset ? null : columns.Layout, out var scroll);
+        FollowRows(header, scroll);
         _conflictsScroll = scroll;
         Restore(scroll, offset);
     }
 
-    private Border ConflictView(FactionConflict conflict, TableLayout layout, string? here)
+    private static Border ConflictView(FactionConflict conflict, ArrangedTable<FactionConflict> columns)
     {
-        var grid = layout.Row([]);
+        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 4), Child = columns.Row(conflict) };
+        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
 
-        var name = CreditsKit.Line(
-            conflict.System,
-            Fonts.ChromeFamily,
-            TypeScale.ControlLarge,
-            string.Equals(conflict.System, here, StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
-        name.FontWeight = FontWeight.Medium;
+        return border;
+    }
 
-        var kind = new StackPanel
+    private static StackPanel KindCell(FactionConflict conflict) =>
+        new()
         {
             Children =
             {
@@ -1081,6 +1189,8 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             },
         };
 
+    private Control DaysCell(FactionConflict conflict)
+    {
         Control days = conflict.Visited
             ? CreditsKit.Mono(conflict.DaysText, TypeScale.ControlLarge, ThemeManager.WhiteKey, right: true)
             : CreditsKit.Mono(FactionModel.Dash, TypeScale.ControlLarge, ThemeManager.GreyKey, right: true);
@@ -1094,24 +1204,16 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             days = new StackPanel { HorizontalAlignment = HorizontalAlignment.Right, Children = { days, note } };
         }
 
-        Control stake = conflict.Visited
+        return days;
+    }
+
+    private static Control StakeCell(FactionConflict conflict) =>
+        conflict.Visited
             ? new StackPanel
             {
                 Children = { Stake("Ours: ", conflict.OurStake), Stake("Theirs: ", conflict.TheirStake) },
             }
             : CreditsKit.Line(FactionModel.Dash, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
-
-        CreditsKit.Place(grid, 0, CopyGlyph.LinkBeside(name, conflict.System, Copy));
-        CreditsKit.Place(grid, 1, kind);
-        CreditsKit.Place(grid, 2, Opponent(conflict));
-        CreditsKit.Place(grid, 3, days);
-        CreditsKit.Place(grid, 4, stake);
-
-        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 4), Child = grid };
-        ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
-
-        return border;
-    }
 
     private static Control Opponent(FactionConflict conflict)
     {
@@ -1148,6 +1250,52 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         return line;
     }
 
+    private IReadOnlyList<TableField<FactionStation>> AssetFields()
+    {
+        var heads = FactionAssets.Heads;
+
+        return
+        [
+            StarSystemPage.Headed(
+                heads[0],
+                Fill("Station", 240, 170),
+                station =>
+                {
+                    var name = CreditsKit.Line(station.Name, Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
+                    name.FontWeight = FontWeight.Medium;
+
+                    return CopyGlyph.Beside(name, station.Name, Copy);
+                }),
+            StarSystemPage.Headed(heads[1], Fill("System", 160, 120), station => CopyGlyph.LinkBeside(SystemName(station.System), station.System, Copy)),
+            StarSystemPage.Headed(
+                heads[2],
+                Fixed("Type", 190, 140),
+                station =>
+                {
+                    var type = FactionAssets.TypeLabel(station);
+
+                    return CreditsKit.Line(type ?? FactionModel.Dash, Fonts.ProseFamily, TypeScale.ControlLarge, type is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
+                }),
+            StarSystemPage.Headed(
+                heads[3],
+                Fixed("Pad", 80, 56),
+                station =>
+                {
+                    var pad = FactionAssets.PadLetter(station.LargestPad);
+
+                    return CreditsKit.Mono(pad ?? FactionModel.Dash, TypeScale.ControlLarge, pad is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, right: true);
+                },
+                right: true),
+            StarSystemPage.Headed(
+                heads[4],
+                Fixed("Distance", 150, 104),
+                station => station.DistanceToArrival is { } distance
+                    ? CreditsKit.Mono(FactionAssets.Distance(distance), TypeScale.ControlLarge, ThemeManager.AKey, right: true)
+                    : CreditsKit.Mono(FactionModel.Dash, TypeScale.ControlLarge, ThemeManager.GreyKey, right: true),
+                right: true),
+        ];
+    }
+
     private void DrawAssets()
     {
         if (_report is null)
@@ -1170,20 +1318,22 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             ThemeManager.WhiteKey,
             " · " + current.Count.ToString("N0", CultureInfo.InvariantCulture));
 
+        var columns = AssetColumns;
+        columns.Refresh();
+
         var matches = FactionAssets.Matching(_stations, _assetFind.Text, _kind);
-        var sorted = _assetHead.Sort(matches);
-        var here = _searches.GameState?.Invoke()?.Location.StarSystem;
+        var sorted = columns.Sort(matches);
+        _drawnHere = _searches.GameState?.Invoke()?.Location.StarSystem;
         _assetCount.Text = FactionAssets.CountText(matches.Count, _stations.Count);
 
-        var layout = new TableLayout(AssetsTableId, _headset ? AssetHeadsetColumns : AssetDesktopColumns, _headset ? null : ColumnWidths, _headset ? 12 : 16);
-        var top = new StackPanel
-        {
-            Children = { CreditsKit.HeaderRow(_assetHead, layout, i => i >= 3 ? HorizontalAlignment.Right : HorizontalAlignment.Left) },
-        };
+        _assetsTile.Child = ColumnArranger.Tile(columns);
+        var top = ArrangerAbove(columns);
+        var header = HeadOf(columns);
 
         if (sorted.Count == 0)
         {
             RowsDrawn = 0;
+            top.Children.Add(header);
             var none = CreditsKit.Line(FactionAssets.NoMatchText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey);
             none.Margin = new Thickness(0, 12, 0, 0);
             top.Children.Add(none);
@@ -1191,41 +1341,17 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             return;
         }
 
-        var list = Body(top, sorted, station => AssetView(station, layout, here), DrawAssets);
+        var list = Body(sorted, station => AssetView(station, columns), DrawAssets);
         var offset = _keepScroll ? _assetsScroll?.Offset : null;
-        _assetsTable.Child = LoadoutPages.HeaderAndList(top, list, out var scroll);
+        _assetsTable.Child = LoadoutPages.HeaderAndList(top, header, list, _headset ? null : columns.Layout, out var scroll);
+        FollowRows(header, scroll);
         _assetsScroll = scroll;
         Restore(scroll, offset);
     }
 
-    private Border AssetView(FactionStation station, TableLayout layout, string? here)
+    private static Border AssetView(FactionStation station, ArrangedTable<FactionStation> columns)
     {
-        var grid = layout.Row([]);
-
-        var name = CreditsKit.Line(station.Name, Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
-        name.FontWeight = FontWeight.Medium;
-        var system = CreditsKit.Line(
-            station.System,
-            Fonts.ChromeFamily,
-            TypeScale.ControlLarge,
-            string.Equals(station.System, here, StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
-        system.FontWeight = FontWeight.Medium;
-
-        var type = FactionAssets.TypeLabel(station);
-        var pad = FactionAssets.PadLetter(station.LargestPad);
-
-        CreditsKit.Place(grid, 0, CopyGlyph.Beside(name, station.Name, Copy));
-        CreditsKit.Place(grid, 1, CopyGlyph.LinkBeside(system, station.System, Copy));
-        CreditsKit.Place(grid, 2, CreditsKit.Line(type ?? FactionModel.Dash, Fonts.ProseFamily, TypeScale.ControlLarge, type is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey));
-        CreditsKit.Place(grid, 3, CreditsKit.Mono(pad ?? FactionModel.Dash, TypeScale.ControlLarge, pad is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, right: true));
-        CreditsKit.Place(
-            grid,
-            4,
-            station.DistanceToArrival is { } distance
-                ? CreditsKit.Mono(FactionAssets.Distance(distance), TypeScale.ControlLarge, ThemeManager.AKey, right: true)
-                : CreditsKit.Mono(FactionModel.Dash, TypeScale.ControlLarge, ThemeManager.GreyKey, right: true));
-
-        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 0), Child = grid };
+        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 0), Child = columns.Row(station) };
         ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
 
         return border;
@@ -1266,33 +1392,9 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         return grid;
     }
 
-    private Border RowView(FactionRow row, TableLayout layout, DateTimeOffset now, string? here)
+    private static Border RowView(FactionRow row, ArrangedTable<FactionRow> columns)
     {
-        var old = FactionModel.IsOld(row, now);
-        var ink = old ? ThemeManager.GreyKey : ThemeManager.WhiteKey;
-        var grid = layout.Row([]);
-
-        var name = CreditsKit.Line(
-            row.System,
-            Fonts.ChromeFamily,
-            TypeScale.ControlLarge,
-            string.Equals(row.System, here, StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
-        name.FontWeight = FontWeight.Medium;
-        var influence = row.Influence is { } fraction
-            ? CreditsKit.Mono((fraction * 100).ToString("0.0", CultureInfo.InvariantCulture) + "%", TypeScale.ControlLarge, ThemeManager.AKey, right: true)
-            : CreditsKit.Mono(FactionModel.Dash, TypeScale.ControlLarge, ThemeManager.GreyKey, right: true);
-        var controls = CreditsKit.Line(row.Controls ? "✓" : string.Empty, Fonts.ChromeFamily, 15, ThemeManager.WhiteKey);
-        controls.HorizontalAlignment = HorizontalAlignment.Center;
-
-        CreditsKit.Place(grid, 0, CopyGlyph.LinkBeside(name, row.System, Copy));
-        CreditsKit.Place(grid, 1, influence);
-        CreditsKit.Place(grid, 2, States(row.Active, ink));
-        CreditsKit.Place(grid, 3, States(row.Pending, ink));
-        CreditsKit.Place(grid, 4, States(row.Recovering, ink));
-        CreditsKit.Place(grid, 5, controls);
-        CreditsKit.Place(grid, 6, Updated(row, now, old, row.OwnReading && UnchangedSinceTick(row.System)));
-
-        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 0), Child = grid };
+        var border = new Border { MinHeight = 50, Padding = new Thickness(12, 0), Child = columns.Row(row) };
         ThemeInk.Bind(border, Border.BackgroundProperty, ThemeManager.TileKey);
 
         return border;
