@@ -23,6 +23,9 @@ public sealed class SpendDialog : ModalDialog
     private readonly D47Settings _settings;
     private readonly TimeZoneInfo _zone;
 
+    /// <summary>The Your accounts section; null when no provider with account figures is in use.</summary>
+    private readonly AccountsSection? _accounts;
+
     /// <summary>
     /// When this process started, so "this session" is a window the ledger can be asked about (#197).
     /// </summary>
@@ -53,7 +56,9 @@ public sealed class SpendDialog : ModalDialog
         SpendLedger ledger,
         D47Settings settings,
         TimeZoneInfo zone,
-        DateTimeOffset? launchedAt = null)
+        DateTimeOffset? launchedAt = null,
+        IReadOnlyList<IAccountReader>? accounts = null,
+        Func<DateTimeOffset>? now = null)
     {
         _turn = turn;
         _session = session;
@@ -62,6 +67,12 @@ public sealed class SpendDialog : ModalDialog
         _settings = settings;
         _zone = zone;
         _launchedAt = launchedAt;
+
+        if (accounts is { Count: > 0 })
+        {
+            _accounts = new AccountsSection(accounts, now ?? (() => DateTimeOffset.Now), zone);
+            Closed += (_, _) => _accounts.Cancel();
+        }
 
         Title = "What this has cost";
 
@@ -81,10 +92,21 @@ public sealed class SpendDialog : ModalDialog
         Modal.Apply(this, "Spend", Title, _body, [_buttons], _figure);
     }
 
+    protected override void OnOpened(EventArgs e)
+    {
+        base.OnOpened(e);
+        _accounts?.Start();
+    }
+
     /// <summary>Every section, from scratch.</summary>
     private void Draw()
     {
         _body.Children.Clear();
+
+        if (_accounts is not null)
+        {
+            _body.Children.Add(_accounts);
+        }
 
         _body.Children.Add(Estimates());
 
@@ -469,9 +491,9 @@ public sealed class SpendDialog : ModalDialog
         var line = new TextBlock
         {
             Text =
-                "Estimates. D47 knows each provider's published rates, not what your account is "
-                + "actually billed — a subscription with bundled credits can make the real cost "
-                + "anything from higher to nothing at all.",
+                "Everything below is D47's estimate from published rates, not what your account is "
+                + "billed. A subscription with bundled credits can make the real cost anything from "
+                + "higher to nothing at all.",
             FontSize = TypeScale.Secondary,
             TextWrapping = TextWrapping.Wrap,
         };

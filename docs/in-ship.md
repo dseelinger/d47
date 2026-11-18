@@ -143,7 +143,7 @@ panel and the mini panel's tail; they hide, and delete nothing. Because they are
 also say "hide comms traffic" or "hide invented chatter".
 
 **SPEND** at the right of the status line opens the receipt for the most recent response, the
-session so far and the totals, with the price of each.
+session so far and the totals, with the price of each, and when ElevenLabs or Deepgram is in use it starts with what that provider reports about your account, which is the provider's figure and not D47's estimate.
 
 It is a note rather than a coin on purpose. These are dollars on a provider account, not your
 in-game balance, and a coin in a cockpit overlay is the thing that gets read as credits.

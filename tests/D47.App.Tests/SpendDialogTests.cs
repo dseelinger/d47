@@ -142,7 +142,7 @@ public class SpendDialogTests
             .Select(block => block.Text ?? string.Empty)
             .ToList();
 
-        var estimates = blocks.FindIndex(text => text.StartsWith("Estimates.", StringComparison.Ordinal));
+        var estimates = blocks.FindIndex(text => text.StartsWith("Everything below is D47's estimate", StringComparison.Ordinal));
         var firstGroup = blocks.FindIndex(text => text == "NOW");
 
         Assert.True(estimates >= 0, "The spend dialog says nothing about the figures being estimates.");

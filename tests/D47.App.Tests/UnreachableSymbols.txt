@@ -109,20 +109,6 @@ D47.Core.Checklists.ChecklistProposalStore.Path
 D47.Core.Checklists.ChecklistService.SelectionChanged
 D47.Core.Checklists.ChecklistStore.Path
 D47.Core.Checklists.PlanBlock.Unlocked
-D47.Core.Conversation.AccountPace
-D47.Core.Conversation.AccountPaceEstimate
-D47.Core.Conversation.AccountProvider
-D47.Core.Conversation.AccountReading
-D47.Core.Conversation.AccountTargets
-D47.Core.Conversation.DeepgramBalance
-D47.Core.Conversation.DeepgramCredit
-D47.Core.Conversation.ElevenLabsFigures
-D47.Core.Conversation.IAccountReader
-D47.Core.Conversation.LimitExtension
-D47.Core.Conversation.Money
-D47.Core.Conversation.NoEstimateReason
-D47.Core.Conversation.PaceOutcome
-D47.Core.Conversation.RefreshPeriod
 D47.Core.Conversation.TurnLoop.Target
 D47.Core.Debrief.DebriefWriteRefused.Attempted
 D47.Core.Debrief.DebriefWriteRefused.Why
@@ -165,7 +151,5 @@ D47.Core.Utilities.AlarmStore.Changed
 D47.Core.Vr.VrLifecycle.Changed
 D47.Core.Watches.WatchStore.Changed
 D47.Knowledge.CanonnBiologyService.SystemRecordAsync(string, System.Threading.CancellationToken)
-D47.Stt.DeepgramBalanceReader
-D47.Tts.ElevenLabsAccountReader
 D47.Vr.SteamVrRuntime.Beam
 D47.Vr.SteamVrRuntime.Cursor

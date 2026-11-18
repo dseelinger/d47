@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: SPEND starts with a Your accounts section when ElevenLabs or Deepgram is in use. For ElevenLabs it shows the characters left, how fast they are going and when they reset; for Deepgram the credit left. These are the provider's own figures, read when the dialog opens, and a provider that refuses the key or cannot be reached says so in place of its figures (unreachable offers Retry). The same section shows in the headset's SPEND. The line saying the rest of the dialog is D47's estimate now follows it.
+
 Changed: Chatterbox opens its models faster, about 2 seconds instead of 6 to 7 on the same PC in a Debug build, because d47 now runs on ONNX Runtime 1.32.0. Speech sounds and speaks at the same speed.
 
 Changed: On the Journal page, under Every field, each nested object or list is a row with its name and how many fields or items it has, instead of JSON text. Press the row to show its fields on indented lines under it, and press it again to fold them. A group of up to four plain values starts open; the rest start folded, and each new selection starts again from that.

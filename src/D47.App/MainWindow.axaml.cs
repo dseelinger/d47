@@ -1851,7 +1851,8 @@ public partial class MainWindow : Window
             TimeZoneInfo.Local,
 
             // What makes the Reset button appear, and what "this session" means to it (#197).
-            host.LaunchedAt).Over(owner),
+            host.LaunchedAt,
+            host.AccountReadersInUse()).Over(owner),
         () => SpendDialog.SessionDollars(host.Spend, host.Speech.Spend, host.Settings.Current),
         () => SpendDialog.SessionDetail(host.Spend, host.Speech.Spend, host.Settings.Current));
 

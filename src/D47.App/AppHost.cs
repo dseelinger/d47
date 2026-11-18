@@ -327,6 +327,26 @@ public sealed class AppHost : IDisposable
 
     public SecretStore Secrets { get; }
 
+    private IReadOnlyList<IAccountReader>? _accountReaders;
+
+    /// <summary>The providers' account readers; each takes its key from <see cref="Secrets"/> at every read.</summary>
+    internal IReadOnlyList<IAccountReader> AccountReaders => _accountReaders ??=
+    [
+        new ElevenLabsAccountReader(KeyOf(TtsProviderCatalog.ElevenLabsKeySecretName)),
+        new DeepgramBalanceReader(KeyOf(SttProviderCatalog.Selected(SttProviderCatalog.DeepgramId).KeySecretName!)),
+    ];
+
+    private Func<string?> KeyOf(string name) => () => Secrets.TryGet(name, out var key) ? key : null;
+
+    /// <summary>The readers for the providers the current settings use, ElevenLabs first.</summary>
+    internal IReadOnlyList<IAccountReader> AccountReadersInUse()
+    {
+        var running = Stories?.RunningVoices(GameState.Active?.Identity.FrontierId) ?? [];
+        var inUse = AccountTargets.InUse(Settings.Current, running);
+
+        return [.. AccountReaders.Where(reader => inUse.Contains(reader.Provider))];
+    }
+
     /// <summary>How the panel was left.</summary>
     public ViewStateStore ViewState { get; }
 
