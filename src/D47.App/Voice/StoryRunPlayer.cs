@@ -523,4 +523,8 @@ public sealed class StoryRunPlayer
     /// <summary>The picture a line is shown and spoken with.</summary>
     public static string? PictureOf(StoryRunLine line) =>
         line.Picture ?? (line.From == MessageStore.Narrator ? SpeakerPictures.Narrator : null);
+
+    /// <summary>The core that spoke a line with no picture, or null when its speaker is not a core.</summary>
+    public static string? CoreOf(StoryRunLine line) =>
+        PictureOf(line) is null && D47.Core.Persona.PersonaCatalog.Knows(line.From) ? line.From : null;
 }

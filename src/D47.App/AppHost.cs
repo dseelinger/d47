@@ -512,7 +512,9 @@ public sealed class AppHost : IDisposable
         () => Audio.SpeechProgress(StoryRunPlayer.Group),
         PlaybackChapter,
         _playbackPortraits ??= new Panel.SpeakerPortraits(SpeakerPictures, Loggers.CreateLogger<Panel.SpeakerPortraits>()),
-        headset ? Controls.StoryPlaybackDialog.PollEveryInHeadset : null);
+        headset ? Controls.StoryPlaybackDialog.PollEveryInHeadset : null,
+        Avatars,
+        stillClips: headset);
 
     /// <summary>The chapter name the playback box shows over <paramref name="playback"/>'s line, or null.</summary>
     private string? PlaybackChapter(StoryRunPlayback playback)

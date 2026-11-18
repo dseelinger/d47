@@ -430,9 +430,10 @@ public sealed class AvatarView : UserControl
         _ring.IsVisible = false;
         _core.IsVisible = false;
 
+        _clipTimer.Interval = TimeSpan.FromSeconds(1 / Math.Max(1, video.FramesPerSecond));
+
         if (!_still)
         {
-            _clipTimer.Interval = TimeSpan.FromSeconds(1 / Math.Max(1, video.FramesPerSecond));
             _clipTimer.Start();
         }
 

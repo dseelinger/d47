@@ -462,7 +462,7 @@ chapter's text as it was told instead.
 **Play from here**, on every line, plays the run's lines in order from that line. **Play all**, at the end of the Jump to row, plays them from
 the chosen chapter or objective. The line playing is marked **▶ Playing** on a cyan
 ground, and a playback box opens over the window, and over the headset's big panel, half the width of the window. Its head says
-**Playing 23 of 142 · Ysolt Garrow** with the chapter's name and the line's time, then the speaker's picture whole on black, a
+**Playing 23 of 142 · Ysolt Garrow** with the chapter's name and the line's time, then the speaker's picture whole on black, or for a line a ship's core spoke that core's speaking clip, which moves while the line is heard and holds still while paused, a
 progress line, the speaker's name with the time played, the line, and **Pause**, **Next** and **Stop**. A single line's Play
 leaves out the count and **Next**. **Stop**, Escape and closing the box end the playback. While it plays, as while a single line's Play does, other speech is silenced: an answer, a callout or radio chatter
 from anywhere else is dropped, not saved for later. Music, ambience and cues play as usual. A danger alert pauses

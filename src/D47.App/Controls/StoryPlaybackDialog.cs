@@ -9,16 +9,21 @@ using D47.App.Panel;
 using D47.App.Theming;
 using D47.App.Voice;
 using D47.Core.Audio;
+using D47.Core.Interface;
 using D47.Core.Messages;
 
 namespace D47.App.Controls;
 
-/// <summary>The story run being played: its line's picture, text and progress, with Play or Pause, Next and Stop. Closing it stops the playback.</summary>
+/// <summary>
+/// The story run being played: its line's picture, or the speaking clip of the core that spoke it, with the text and progress,
+/// and Play or Pause, Next and Stop. Closing it stops the playback.
+/// </summary>
 public sealed class StoryPlaybackDialog : ModalDialog
 {
     public const string LabelName = "StoryPlaybackLabel";
     public const string ChapterName = "StoryPlaybackChapter";
     public const string PictureName = "StoryPlaybackPicture";
+    public const string CoreName = "StoryPlaybackCore";
     public const string PausedChipName = "StoryPlaybackPaused";
     public const string ProgressName = "StoryPlaybackProgress";
     public const string SpeakerName = "StoryPlaybackSpeaker";
@@ -53,6 +58,7 @@ public sealed class StoryPlaybackDialog : ModalDialog
     private readonly Func<TrackProgress?> _progress;
     private readonly Func<StoryRunPlayback, string?> _chapter;
     private readonly SpeakerPortraits? _portraits;
+    private readonly bool _stillClips;
     private readonly DispatcherTimer _poll;
 
     private readonly TextBlock _label = new() { Name = LabelName };
@@ -60,6 +66,8 @@ public sealed class StoryPlaybackDialog : ModalDialog
     private readonly TextBlock _stamp = new();
     private readonly Grid _stage = new() { Background = Brushes.Black };
     private readonly Image _picture = new() { Name = PictureName, Stretch = Stretch.Uniform };
+    private readonly AvatarView _core = new() { Extent = PanelView.HeaderAvatarExtent };
+    private readonly Viewbox _coreBox = new() { Name = CoreName, Stretch = Stretch.Uniform, IsVisible = false };
     private readonly Border _pausedChip = new() { Name = PausedChipName };
     private readonly Grid _rail = new() { Name = ProgressName, Height = 3 };
     private readonly Border _fill = new();
@@ -82,13 +90,22 @@ public sealed class StoryPlaybackDialog : ModalDialog
         Func<TrackProgress?> progress,
         Func<StoryRunPlayback, string?> chapter,
         SpeakerPortraits? portraits,
-        TimeSpan? pollEvery = null)
+        TimeSpan? pollEvery = null,
+        AvatarLibrary? avatars = null,
+        bool stillClips = false)
     {
         _player = player;
         _progress = progress;
         _chapter = chapter;
         _portraits = portraits;
+        _stillClips = stillClips;
         _poll = new DispatcherTimer { Interval = pollEvery ?? PollEvery };
+
+        _core.Still = true;
+        _core.Library = avatars;
+        _core.Show(LoopState.Speaking);
+        RenderOptions.SetBitmapInterpolationMode(_core.Picture, Avalonia.Media.Imaging.BitmapInterpolationMode.HighQuality);
+        _coreBox.Child = _core;
 
         Title = "Story playback";
         HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -238,6 +255,7 @@ public sealed class StoryPlaybackDialog : ModalDialog
 
         _picture.HorizontalAlignment = HorizontalAlignment.Center;
         _stage.Children.Add(_picture);
+        _stage.Children.Add(_coreBox);
         _stage.Children.Add(_pausedChip);
 
         var speakerRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12 };
@@ -365,7 +383,20 @@ public sealed class StoryPlaybackDialog : ModalDialog
         _chapterText.Text = _chapter(playback)?.ToUpperInvariant() ?? string.Empty;
         _stamp.Text = line.Sent.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
 
+        var core = StoryRunPlayer.CoreOf(line);
+
         _picture.Source = _portraits?.For(StoryRunPlayer.PictureOf(line), (int)PictureHeight);
+        _picture.IsVisible = core is null;
+        _coreBox.IsVisible = core is not null;
+
+        if (core is not null && !string.Equals(core, _core.Core, StringComparison.Ordinal))
+        {
+            AvatarClipStore.Want(core);
+            _core.Core = core;
+        }
+
+        // The clip moves only while the core's line is heard.
+        _core.Still = _stillClips || core is null || state != StoryRunLineState.Playing;
         _pausedChip.IsVisible = playback.IsPaused;
         _speaker.Text = speaker;
 

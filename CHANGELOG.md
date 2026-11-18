@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: The story playback box shows a ship's core's speaking clip while a line that core spoke plays. The picture area used to stay black for those lines. The clip holds still while the playback is paused, and the headset's box shows its first frame.
+
 Fixed: A story or adventure objective to land on a body is met by docking at a surface port on that body. It used to need a touchdown on open ground, so a pad at a port left the objective waiting.
 
 Fixed: When ElevenLabs, Cartesia or Edge Neural does not answer the voice-list request in time, the voice picker says the provider could not be reached and did not answer in time. It used to say the account has no voices.
