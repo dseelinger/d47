@@ -958,11 +958,7 @@ public static class EgressDisclosure
     /// </summary>
     private static EgressEntry TextToSpeechEntry(D47Settings settings, IReadOnlyList<RunningStoryVoice> runningStory)
     {
-        var speaking = Audio.VoiceGroups.All
-            .Select(slot => (Slot: slot, Provider: Speech.LocalVoiceStandIn.Live(Audio.TtsProviderCatalog.Selected(
-                Audio.VoiceGroups.ProviderFor(settings.Speech, slot.Group)))))
-            .Where(pair => pair.Provider.Speaks)
-            .ToList();
+        var speaking = SpeakingSlots(settings);
 
         var cast = StoryCast(settings, runningStory);
 
@@ -1035,11 +1031,18 @@ public static class EgressDisclosure
             Summary: headline);
     }
 
+    /// <summary>Each voice slot that speaks, in slot order, with the provider that speaks for it now.</summary>
+    internal static List<(Audio.VoiceGroupInfo Slot, Audio.TtsProviderInfo Provider)> SpeakingSlots(D47Settings settings) =>
+        [.. Audio.VoiceGroups.All
+            .Select(slot => (Slot: slot, Provider: Speech.LocalVoiceStandIn.Live(Audio.TtsProviderCatalog.Selected(
+                Audio.VoiceGroups.ProviderFor(settings.Speech, slot.Group)))))
+            .Where(pair => pair.Provider.Speaks)];
+
     /// <summary>
     /// Each story character on a provider that is not local, in key order: the Commander's choices, then the running
     /// story's pinned voices that no choice replaces.
     /// </summary>
-    private static List<(string Story, string Character, Audio.TtsProviderInfo Provider)> StoryCast(
+    internal static List<(string Story, string Character, Audio.TtsProviderInfo Provider)> StoryCast(
         D47Settings settings, IReadOnlyList<RunningStoryVoice> runningStory) =>
         [.. settings.StoryVoices
             .Select(pair => (pair.Key, Story: pair.Value.Story ?? pair.Key, Character: pair.Value.Character ?? pair.Key, pair.Value.Provider))
