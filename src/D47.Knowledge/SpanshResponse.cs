@@ -619,19 +619,7 @@ internal static class SpanshResponse
             {
                 var system = ReadSystem(result);
 
-                systems.Add(new MissionSystem(
-                    system,
-                    [.. result.Items("stations")
-                        .Where(station => station.ValueKind == JsonValueKind.Object)
-                        .Select(station => ReadStation(station) with
-                        {
-                            SystemName = system.Name,
-                            SystemAddress = system.SystemAddress,
-                            Distance = system.Distance,
-                            ControllingPower = system.ControllingPower,
-                            PowerState = system.PowerState,
-                            Services = ReadServiceNames(station),
-                        })]));
+                systems.Add(new MissionSystem(system, system.Stations));
             }
         }
 
@@ -884,7 +872,10 @@ internal static class SpanshResponse
                 String(landmark, "variant"),
                 Number(landmark, "latitude"),
                 Number(landmark, "longitude"),
-                Integer(landmark, "value")))],
+                Integer(landmark, "value"))
+            {
+                Count = Count(landmark, "count"),
+            })],
         SynthesisRecipes = [.. element.Items("synthesis_recipes")
             .Where(recipe => recipe.ValueKind == JsonValueKind.Object && String(recipe, "name") is not null)
             .Select(recipe => new SynthesisRecipe(String(recipe, "name")!, String(recipe, "level")))],
@@ -1031,12 +1022,7 @@ internal static class SpanshResponse
         // and an outfitting bay seen last week are different kinds of answer.
         StockLastSeen = Timestamp(element, "outfitting_updated_at") ?? Timestamp(element, "shipyard_updated_at"),
 
-        Services = element.TryGetProperty("services", out var services) && services.ValueKind == JsonValueKind.Array
-            ? [.. services.EnumerateArray()
-                .Where(service => service.ValueKind == JsonValueKind.Object)
-                .Select(service => String(service, "name"))
-                .OfType<string>()]
-            : [],
+        Services = ReadServiceNames(element),
         ControllingFaction = String(element, "controlling_minor_faction"),
         State = String(element, "state"),
         ControllingPower = String(element, "system_controlling_power"),
@@ -1143,59 +1129,104 @@ internal static class SpanshResponse
             ? parsed
             : null;
 
-    private static SystemSummary ReadSystem(JsonElement element) => new()
+    private static SystemSummary ReadSystem(JsonElement element)
     {
-        Name = String(element, "name") ?? "an unnamed system",
-        SystemAddress = Integer(element, "id64"),
-        Distance = Number(element, "distance"),
-        Position = Number(element, "x") is { } x && Number(element, "y") is { } y && Number(element, "z") is { } z
-            ? new StarPosition(x, y, z)
-            : null,
-        Allegiance = String(element, "allegiance"),
-        Government = String(element, "government"),
-        PrimaryEconomy = String(element, "primary_economy"),
-        Security = String(element, "security"),
-        Population = Integer(element, "population"),
-        NeedsPermit = Boolean(element, "needs_permit"),
+        var system = new SystemSummary
+        {
+            Name = String(element, "name") ?? "an unnamed system",
+            SystemAddress = Integer(element, "id64"),
+            Distance = Number(element, "distance"),
+            Position = Number(element, "x") is { } x && Number(element, "y") is { } y && Number(element, "z") is { } z
+                ? new StarPosition(x, y, z)
+                : null,
+            Allegiance = String(element, "allegiance"),
+            Government = String(element, "government"),
+            PrimaryEconomy = String(element, "primary_economy"),
+            SecondaryEconomy = String(element, "secondary_economy"),
+            Region = String(element, "region"),
+            Security = String(element, "security"),
+            Population = Integer(element, "population"),
+            NeedsPermit = Boolean(element, "needs_permit"),
+            KnownPermit = OptionalFlag(element, "known_permit"),
+            IsColonised = OptionalFlag(element, "is_colonised"),
+            IsBeingColonised = OptionalFlag(element, "is_being_colonised"),
+            BodyCount = Count(element, "body_count"),
+            ScanValue = Integer(element, "estimated_scan_value"),
+            MappingValue = Integer(element, "estimated_mapping_value"),
+            LandmarkValue = Integer(element, "landmark_value"),
+            NearestPopulatedDistance = Number(element, "nearest_populated_distance"),
+            NearestPopulatedAddress = Integer(element, "nearest_populated_id64"),
+            SynthesisRecipes = [.. element.Items("synthesis_recipes")
+                .Where(recipe => recipe.ValueKind == JsonValueKind.Object && String(recipe, "name") is not null)
+                .Select(recipe => new SynthesisRecipe(String(recipe, "name")!, String(recipe, "level")))],
+            ThargoidWarState = String(element, "thargoid_war_state"),
+            ThargoidWarSuccessState = String(element, "thargoid_war_success_state"),
+            ThargoidWarFailureState = String(element, "thargoid_war_failure_state"),
+            StationCount = element.TryGetProperty("stations", out var stations)
+                           && stations.ValueKind == JsonValueKind.Array
+                ? stations.GetArrayLength()
+                : null,
+            ControllingFaction = String(element, "controlling_minor_faction"),
+            ControllingFactionState = String(element, "controlling_minor_faction_state"),
+            ControllingPower = String(element, "controlling_power"),
+            PowerState = String(element, "power_state"),
+            PowerControlProgress = Number(element, "power_state_control_progress"),
+            Reinforcement = Integer(element, "power_state_reinforcement"),
+            Undermining = Integer(element, "power_state_undermining"),
+            Powers = Strings(element, "power"),
+            Acquiring = element.TryGetProperty("power_conflict_progress", out var conflicts)
+                        && conflicts.ValueKind == JsonValueKind.Array
+                ? [.. conflicts.EnumerateArray()
+                    .Where(conflict => conflict.ValueKind == JsonValueKind.Object && String(conflict, "power") is not null)
+                    .Select(conflict => new PowerConflict(String(conflict, "power")!, Number(conflict, "progress") ?? 0))]
+                : [],
+            Factions = element.TryGetProperty("minor_faction_presences", out var presences)
+                       && presences.ValueKind == JsonValueKind.Array
+                ? [.. presences.EnumerateArray()
+                    .Where(presence => presence.ValueKind == JsonValueKind.Object && String(presence, "name") is not null)
+                    .Select(presence => new FactionPresence(String(presence, "name")!, Number(presence, "influence"))
+                    {
+                        State = String(presence, "state"),
+                        Government = String(presence, "government"),
+                        Allegiance = String(presence, "allegiance"),
+                        ActiveStates = Strings(presence, "active_states"),
+                        PendingStates = Strings(presence, "pending_states"),
+                        RecoveringStates = Strings(presence, "recovering_states"),
+                    })]
+                : [],
+            AtWar = element.TryGetProperty("minor_faction_presences", out var states)
+                    && states.ValueKind == JsonValueKind.Array
+                    && states.EnumerateArray().Any(presence => HasWar(presence, "active_states") || HasWar(presence, "pending_states")),
+            ReportedAt = Timestamp(element, "updated_at"),
+        };
 
-        StationCount = element.TryGetProperty("stations", out var stations)
-                       && stations.ValueKind == JsonValueKind.Array
-            ? stations.GetArrayLength()
-            : null,
-        Stations = stations.ValueKind == JsonValueKind.Array
-            ? [.. stations.EnumerateArray()
+        return system with
+        {
+            Stations = [.. element.Items("stations")
                 .Where(station => station.ValueKind == JsonValueKind.Object && String(station, "name") is not null)
-                .Select(station => new SystemStation(
-                    String(station, "name")!,
-                    String(station, "type"),
-                    Boolean(station, "has_market"),
-                    Number(station, "distance_to_arrival")))]
-            : [],
-
-        ControllingFaction = String(element, "controlling_minor_faction"),
-        ControllingPower = String(element, "controlling_power"),
-        PowerState = String(element, "power_state"),
-        Acquiring = element.TryGetProperty("power_conflict_progress", out var conflicts)
-                    && conflicts.ValueKind == JsonValueKind.Array
-            ? [.. conflicts.EnumerateArray()
-                .Where(conflict => conflict.ValueKind == JsonValueKind.Object && String(conflict, "power") is not null)
-                .Select(conflict => new PowerConflict(String(conflict, "power")!, Number(conflict, "progress") ?? 0))]
-            : [],
-        Factions = element.TryGetProperty("minor_faction_presences", out var presences)
-                   && presences.ValueKind == JsonValueKind.Array
-            ? [.. presences.EnumerateArray()
-                .Where(presence => presence.ValueKind == JsonValueKind.Object && String(presence, "name") is not null)
-                .Select(presence => new FactionPresence(String(presence, "name")!, Number(presence, "influence"))
+                .Select(station => ReadStation(station) with
                 {
-                    State = String(presence, "state"),
-                    Government = String(presence, "government"),
-                })]
-            : [],
-        AtWar = element.TryGetProperty("minor_faction_presences", out var states)
-                && states.ValueKind == JsonValueKind.Array
-                && states.EnumerateArray().Any(presence => HasWar(presence, "active_states") || HasWar(presence, "pending_states")),
-        ReportedAt = Timestamp(element, "updated_at"),
-    };
+                    SystemName = system.Name,
+                    SystemAddress = system.SystemAddress,
+                    Distance = system.Distance,
+                    Position = system.Position,
+                    ControllingPower = system.ControllingPower,
+                    PowerState = system.PowerState,
+                })],
+            Bodies = [.. element.Items("bodies")
+                .Where(body => body.ValueKind == JsonValueKind.Object)
+                .Select(body => ReadBody(body) with
+                {
+                    SystemName = system.Name,
+                    SystemAddress = system.SystemAddress,
+                    Distance = system.Distance,
+                    Position = system.Position,
+                    ControllingPower = system.ControllingPower,
+                    PowerState = system.PowerState,
+                    SystemRegion = system.Region,
+                })],
+        };
+    }
 
     private static bool HasWar(JsonElement presence, string name) =>
         presence.ValueKind == JsonValueKind.Object

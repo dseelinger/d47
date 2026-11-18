@@ -178,7 +178,11 @@ public sealed record BodySummary
 public sealed record BodyParent(string Kind, long Address, string? Subtype);
 
 /// <summary>One surface feature of a body, with its position.</summary>
-public sealed record BodyLandmark(long? Id, string? Type, string? Subtype, string? Variant, double? Latitude, double? Longitude, long? Value);
+public sealed record BodyLandmark(long? Id, string? Type, string? Subtype, string? Variant, double? Latitude, double? Longitude, long? Value)
+{
+    /// <summary>How many of this kind the body has, where the search groups them.</summary>
+    public int? Count { get; init; }
+}
 
 /// <summary>One material synthesis recipe a body's surface materials allow.</summary>
 public sealed record SynthesisRecipe(string Name, string? Level);

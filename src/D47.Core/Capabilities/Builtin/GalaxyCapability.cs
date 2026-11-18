@@ -2199,7 +2199,7 @@ public static class GalaxyCapability
     [
         .. found.Systems
             .SelectMany(system => system.Stations
-                .Where(station => station.HasMarket
+                .Where(station => station.HasMarket == true
                                   && StationQuery.IsFixedType(station.Type)
                                   && !station.Name.Contains("Construction Site:", StringComparison.OrdinalIgnoreCase))
                 .OrderBy(station => station.DistanceToArrival ?? double.MaxValue)

@@ -38,7 +38,7 @@ public class ARareRunSellsWhereThePowerIsAcquiringTests
         System($"{rareSystem} C", 203, 0, Station($"{rareSystem} Base"), Station($"{rareSystem} Spare")),
     ];
 
-    private static SystemSummary System(string name, double distance, double progress, params SystemStation[] stations) =>
+    private static SystemSummary System(string name, double distance, double progress, params StationSummary[] stations) =>
         new()
         {
             Name = name,
@@ -48,8 +48,8 @@ public class ARareRunSellsWhereThePowerIsAcquiringTests
             Stations = stations,
         };
 
-    private static SystemStation Station(string name, string type = "Outpost", bool market = true) =>
-        new(name, type, market, 100);
+    private static StationSummary Station(string name, string type = "Outpost", bool market = true) =>
+        new() { Name = name, SystemName = "Anywhere", Type = type, HasMarket = market, DistanceToArrival = 100 };
 
     private static CommanderGameState Pledged() => JournalScript.Commander(
         "F123",

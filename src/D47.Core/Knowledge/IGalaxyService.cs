@@ -21,27 +21,76 @@ public sealed record SystemSummary
 
     public string? PrimaryEconomy { get; init; }
 
+    public string? SecondaryEconomy { get; init; }
+
+    /// <summary>The codex region by name, in the service's spelling.</summary>
+    public string? Region { get; init; }
+
     public string? Security { get; init; }
 
     public long? Population { get; init; }
 
     public bool NeedsPermit { get; init; }
 
+    /// <summary>Whether the service knows the system's permit; null where it does not say.</summary>
+    public bool? KnownPermit { get; init; }
+
+    public bool? IsColonised { get; init; }
+
+    public bool? IsBeingColonised { get; init; }
+
+    public int? BodyCount { get; init; }
+
+    /// <summary>What scanning every body is worth, as the service estimates it.</summary>
+    public long? ScanValue { get; init; }
+
+    public long? MappingValue { get; init; }
+
+    public long? LandmarkValue { get; init; }
+
+    /// <summary>Light years to the nearest populated system; null where the service gives none.</summary>
+    public double? NearestPopulatedDistance { get; init; }
+
+    public long? NearestPopulatedAddress { get; init; }
+
+    public IReadOnlyList<SynthesisRecipe> SynthesisRecipes { get; init; } = [];
+
+    public string? ThargoidWarState { get; init; }
+
+    public string? ThargoidWarSuccessState { get; init; }
+
+    public string? ThargoidWarFailureState { get; init; }
+
     /// <summary>How many stations the service knows about.</summary>
     public int? StationCount { get; init; }
 
     public string? ControllingFaction { get; init; }
+
+    public string? ControllingFactionState { get; init; }
 
     /// <summary>The Powerplay power controlling the system, as last reported.</summary>
     public string? ControllingPower { get; init; }
 
     public string? PowerState { get; init; }
 
+    /// <summary>Progress towards the next control state, as a fraction of 1.</summary>
+    public double? PowerControlProgress { get; init; }
+
+    public long? Reinforcement { get; init; }
+
+    public long? Undermining { get; init; }
+
+    /// <summary>Every Power present, the controlling one included.</summary>
+    public IReadOnlyList<string> Powers { get; init; } = [];
+
     /// <summary>The Powers acquiring the system and how far each has got, as last reported.</summary>
     public IReadOnlyList<PowerConflict> Acquiring { get; init; } = [];
 
     /// <summary>The system's stations, as last reported; carriers and construction sites included.</summary>
-    public IReadOnlyList<SystemStation> Stations { get; init; } = [];
+    public IReadOnlyList<StationSummary> Stations { get; init; } = [];
+
+    /// <summary>The system's bodies as the search lists them: stars and planets with scan values and landmark counts.</summary>
+    public IReadOnlyList<BodySummary> Bodies { get; init; } = [];
 
     /// <summary>The minor factions present, as last reported.</summary>
     public IReadOnlyList<FactionPresence> Factions { get; init; } = [];
@@ -52,9 +101,6 @@ public sealed record SystemSummary
     /// <summary>When the service last had a report of this system.</summary>
     public DateTimeOffset? ReportedAt { get; init; }
 }
-
-/// <summary>One station a system search lists, with its type and whether it has a market.</summary>
-public sealed record SystemStation(string Name, string? Type, bool HasMarket, double? DistanceToArrival);
 
 /// <summary>A Power acquiring a system, and its progress as a fraction of 1.</summary>
 public sealed record PowerConflict(string Power, double Progress);
@@ -73,6 +119,14 @@ public sealed record FactionPresence(string Name, double? Influence)
     public string? State { get; init; }
 
     public string? Government { get; init; }
+
+    public string? Allegiance { get; init; }
+
+    public IReadOnlyList<string> ActiveStates { get; init; } = [];
+
+    public IReadOnlyList<string> PendingStates { get; init; } = [];
+
+    public IReadOnlyList<string> RecoveringStates { get; init; } = [];
 }
 
 /// <summary>What a galaxy search produced, and how much of it was left behind.</summary>

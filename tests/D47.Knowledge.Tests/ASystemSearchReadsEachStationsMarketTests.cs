@@ -25,7 +25,7 @@ public class ASystemSearchReadsEachStationsMarketTests
         Assert.Equal("Coriolis Starport", system.Stations[0].Type);
         Assert.True(system.Stations[0].HasMarket);
         Assert.Equal(286.1, system.Stations[0].DistanceToArrival);
-        Assert.False(system.Stations[1].HasMarket);
+        Assert.Null(system.Stations[1].HasMarket);
     }
 
     [Fact]
