@@ -56,6 +56,30 @@ public sealed class TheFactionPageDrawsEachStateTests
             return answer.Task;
         }
 
+        /// <summary>The fetch at <paramref name="index"/>, once the page has asked it; the page asks from a pool thread.</summary>
+        public (string Faction, bool Refresh, TaskCompletionSource<FactionReport> Answer) Asking(int index)
+        {
+            Until(() => Count > index, showing: () => $"{Count} fetches");
+
+            lock (Asked)
+            {
+                return Asked[index];
+            }
+        }
+
+        /// <summary>The factions asked for, once the first has been asked and any other fetch started with it has had time to arrive.</summary>
+        public List<string> Factions()
+        {
+            Asking(0);
+            Thread.Sleep(100);
+            Dispatcher.UIThread.RunJobs();
+
+            lock (Asked)
+            {
+                return [.. Asked.Select(asked => asked.Faction)];
+            }
+        }
+
         public int Count
         {
             get
@@ -151,7 +175,7 @@ public sealed class TheFactionPageDrawsEachStateTests
 
     private static async Task Answer(Shown shown, int index, FactionReport report)
     {
-        shown.Fetches.Asked[index].Answer.SetResult(report);
+        shown.Fetches.Asking(index).Answer.SetResult(report);
         Until(() => shown.Page.View == FactionView.Answered);
         await Task.CompletedTask;
     }
@@ -242,7 +266,8 @@ public sealed class TheFactionPageDrawsEachStateTests
         var shown = Open(false, "Kestrel Reach Compact");
 
         Assert.Equal(FactionView.Loading, shown.Page.View);
-        Assert.Equal(("Kestrel Reach Compact", false), (shown.Fetches.Asked[0].Faction, shown.Fetches.Asked[0].Refresh));
+        var first = shown.Fetches.Asking(0);
+        Assert.Equal(("Kestrel Reach Compact", false), (first.Faction, first.Refresh));
         Save(shown.Window, "faction-desktop-loading.png");
 
         await Answer(shown, 0, Report("Kestrel Reach Compact"));
@@ -285,7 +310,7 @@ public sealed class TheFactionPageDrawsEachStateTests
     {
         var shown = Open(false, "Kestrel Reach Compact");
 
-        shown.Fetches.Asked[0].Answer.SetException(new GalaxyUnavailableException("Spansh is not answering."));
+        shown.Fetches.Asking(0).Answer.SetException(new GalaxyUnavailableException("Spansh is not answering."));
         Until(() => shown.Page.View == FactionView.Failed);
 
         Assert.Equal("Spansh is not answering.", shown.Page.FailureText);
@@ -294,8 +319,8 @@ public sealed class TheFactionPageDrawsEachStateTests
         Named<Button>(shown, FactionPage.RetryName).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
+        Assert.True(shown.Fetches.Asking(1).Refresh);
         Assert.Equal(2, shown.Fetches.Count);
-        Assert.True(shown.Fetches.Asked[1].Refresh);
         Assert.Equal(FactionView.Loading, shown.Page.View);
         shown.Window.Close();
     }
@@ -307,9 +332,10 @@ public sealed class TheFactionPageDrawsEachStateTests
 
         shown.Page.Show("Kestrel Partners");
         Dispatcher.UIThread.RunJobs();
+        shown.Fetches.Asking(1);
         Assert.Equal(2, shown.Fetches.Count);
 
-        shown.Fetches.Asked[0].Answer.SetResult(Report("Kestrel Reach Compact", 5));
+        shown.Fetches.Asking(0).Answer.SetResult(Report("Kestrel Reach Compact", 5));
         Thread.Sleep(100);
         Dispatcher.UIThread.RunJobs();
         Assert.Equal(FactionView.Loading, shown.Page.View);
@@ -328,7 +354,7 @@ public sealed class TheFactionPageDrawsEachStateTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(FactionPage.RootKey, shown.Panel.Nav.RootKeyOf(PanelTab.Search));
-        Assert.Equal(["Kestrel Partners"], shown.Fetches.Asked.Select(asked => asked.Faction));
+        Assert.Equal(["Kestrel Partners"], shown.Fetches.Factions());
         shown.Window.Close();
     }
 
@@ -340,7 +366,7 @@ public sealed class TheFactionPageDrawsEachStateTests
         shown.Panel.OpenFound(new PanelFindResult(PanelFindKind.Faction, "Kestrel Partners", "Minor faction", "Kestrel Partners", 2));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Kestrel Partners"], shown.Fetches.Asked.Select(asked => asked.Faction));
+        Assert.Equal(["Kestrel Partners"], shown.Fetches.Factions());
         Assert.Equal("Kestrel Partners", shown.Page.Faction);
         shown.Window.Close();
     }
@@ -413,7 +439,7 @@ public sealed class TheFactionPageDrawsEachStateTests
 
         var loading = Open(true, "Kestrel Reach Compact");
         Save(loading.Window, "faction-headset-loading.png");
-        loading.Fetches.Asked[0].Answer.SetException(new GalaxyUnavailableException("The galaxy search took too long to answer."));
+        loading.Fetches.Asking(0).Answer.SetException(new GalaxyUnavailableException("The galaxy search took too long to answer."));
         Until(() => loading.Page.View == FactionView.Failed);
         Save(loading.Window, "faction-headset-failed.png");
         loading.Window.Close();
