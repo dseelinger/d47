@@ -165,4 +165,22 @@ public sealed class TheChroniclerWritesEachEntryOnceTests
 
         Assert.Empty(Reloaded().For(Id).Crises);
     }
+
+    [Fact]
+    public async Task AnEntryRefusedWhileTheCommanderIsAwayIsWrittenOnTheNextRun()
+    {
+        var store = Store(Entry());
+        var model = D47.Core.Tests.Conversation.FakeLlmProvider.Answering("The Commander held Lave.");
+        var away = true;
+        var ask = CampaignLegend.Asker(D47.Core.Conversation.AwayGate.Wrap(model, () => away), null, null, null, null);
+
+        Assert.Equal(0, await CampaignLegend.RunAsync(store, Id, Us, Squadron, ask, null, CancellationToken.None));
+        Assert.Equal(0, model.CallCount);
+        Assert.Single(CampaignLegend.Pending(store.For(Id).Chronicle));
+
+        away = false;
+
+        Assert.Equal(1, await CampaignLegend.RunAsync(store, Id, Us, Squadron, ask, null, CancellationToken.None));
+        Assert.Equal("The Commander held Lave.", store.For(Id).Chronicle[0].Legend);
+    }
 }

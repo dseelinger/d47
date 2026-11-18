@@ -623,7 +623,8 @@ internal sealed class LineWriter
             _logger,
             purpose: SpendPurposes.StoryLines,
             budget.Token,
-            canBeDirected: DirectableIn(VoiceGroups.Of(VoiceRole.Narrator, null))).ConfigureAwait(false);
+            canBeDirected: DirectableIn(VoiceGroups.Of(VoiceRole.Narrator, null)),
+            underway: true).ConfigureAwait(false);
     }
 
     /// <summary>

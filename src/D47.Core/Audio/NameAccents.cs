@@ -18,7 +18,15 @@ public sealed record NameReading(
 /// <summary>What the model said to one request: accent by full name, sex by given name.</summary>
 public sealed record NameAnswers(
     IReadOnlyDictionary<string, NameReading> Names,
-    IReadOnlyDictionary<string, string> GivenNames);
+    IReadOnlyDictionary<string, string> GivenNames)
+{
+    /// <summary>The request was not sent because the Commander is away; its names are asked again later.</summary>
+    public static readonly NameAnswers Away = new(
+        new Dictionary<string, NameReading>(), new Dictionary<string, string>()) { WasAway = true };
+
+    /// <summary>Whether this is <see cref="Away"/>.</summary>
+    public bool WasAway { get; private init; }
+}
 
 /// <summary>
 /// The accent the language model judged a sender's name to suggest, kept per full name and voice provider, and the
@@ -36,7 +44,10 @@ public sealed class NameAccents
     /// <summary>The longest a line waits for the sex of its sender's given name.</summary>
     public static readonly TimeSpan AnswerCeiling = TimeSpan.FromSeconds(5);
 
-    /// <summary>Asks the model for the accent of full names and the sex of given names; null when no answer could be had.</summary>
+    /// <summary>
+    /// Asks the model for the accent of full names and the sex of given names; null when no answer could be had, and
+    /// <see cref="NameAnswers.Away"/> when the request was not sent because the Commander is away.
+    /// </summary>
     public delegate Task<NameAnswers?> Asker(
         IReadOnlyList<string> names,
         IReadOnlyList<string> givenNames,
@@ -257,7 +268,16 @@ public sealed class NameAccents
 
             lock (_gate)
             {
-                if (answered is not null)
+                if (answered is { WasAway: true })
+                {
+                    foreach (var name in batch)
+                    {
+                        _tried.Remove((provider, name));
+                    }
+
+                    _givenTried.ExceptWith(givenBatch);
+                }
+                else if (answered is not null)
                 {
                     Record(provider, batch, givenBatch, accents, answered);
                 }

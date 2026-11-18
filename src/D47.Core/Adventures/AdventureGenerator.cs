@@ -2615,7 +2615,10 @@ public sealed partial class AdventureGenerator(
             limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit ?? CallLimitFor(budget), SilenceLimit) { First = FirstReplyLimit, Time = Time },
             received: ask.Progress is null ? null : ask.Progress.Received,
             responseSchema: call.Schema,
-            step: step).ConfigureAwait(false);
+            step: step,
+
+            // A chapter is several calls; one that has begun runs to its end.
+            underway: true).ConfigureAwait(false);
 
         if (reply.Miss == FlavourMiss.TimedOut)
         {

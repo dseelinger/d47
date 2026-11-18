@@ -140,5 +140,6 @@ public static class TypedLineWatch
             purpose: SpendPurposes.Checklist,
             token,
             maxOutputTokens: AnswerTokens,
-            sampling: LlmSampling.Debrief);
+            sampling: LlmSampling.Debrief,
+            underway: true);
 }

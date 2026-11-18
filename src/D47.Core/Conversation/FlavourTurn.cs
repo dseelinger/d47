@@ -57,7 +57,8 @@ public static class FlavourTurn
         string? scenario = null,
         string? hiddenStory = null,
         string? recentDelivery = null,
-        string? step = null) =>
+        string? step = null,
+        bool underway = false) =>
         (await AskForAsync(
             provider,
             model,
@@ -79,12 +80,17 @@ public static class FlavourTurn
             scenario,
             hiddenStory,
             recentDelivery: recentDelivery,
-            step: step).ConfigureAwait(false)).Line;
+            step: step,
+            underway: underway).ConfigureAwait(false)).Line;
 
     /// <summary>As <see cref="AskAsync"/>, saying why when no line came back.</summary>
     /// <param name="thinking">Whether the model may think first; see <see cref="LlmRequest.ThinkingAllowed"/>.</param>
     /// <param name="limits">When the call is stopped as <see cref="FlavourMiss.TimedOut"/>; null for no limit.</param>
     /// <param name="received">Called with the length of each text and thinking delta.</param>
+    /// <param name="underway">
+    /// Whether the Commander started this call or it continues work already begun; when false the request is
+    /// <see cref="LlmRequest.Background"/>.
+    /// </param>
     public static async Task<FlavourReply> AskForAsync(
         ILlmProvider? provider,
         string? model,
@@ -110,7 +116,8 @@ public static class FlavourTurn
         FlavourLimits? limits = null,
         Action<int>? received = null,
         LlmResponseSchema? responseSchema = null,
-        string? step = null)
+        string? step = null,
+        bool underway = false)
     {
         if (provider is null)
         {
@@ -137,6 +144,7 @@ public static class FlavourTurn
             WebSearch = webSearch,
             ThinkingAllowed = thinking,
             ResponseSchema = responseSchema,
+            Background = !underway,
             Prompt = new PromptAssembly
             {
                 // No tools.
@@ -249,6 +257,9 @@ public static class FlavourTurn
                         stopReason = completed.StopReason;
                         break;
 
+                    case LlmStreamEvent.Failed { Away: true } away:
+                        return new FlavourReply(null, FlavourMiss.Away, away.Message);
+
                     case LlmStreamEvent.Failed failed:
                         logger?.LogDebug("A flavour line was not generated: {Message}", failed.Message);
                         Record();
@@ -340,6 +351,9 @@ public enum FlavourMiss
 
     /// <summary>A <see cref="FlavourLimits"/> limit stopped the call; the message says which and when.</summary>
     TimedOut,
+
+    /// <summary>Not sent because the Commander is away; a caller treats it as <see cref="NoModel"/>.</summary>
+    Away,
 }
 
 /// <summary>

@@ -3212,7 +3212,10 @@ public sealed class AppHost : IDisposable
                 PriceTable.Default,
                 logger,
                 purpose: SpendPurposes.NpcChatter,
-                cancellationToken);
+                cancellationToken,
+
+                // Written while the Commander talks to the NPC.
+                underway: true);
 
         // A stranger heard in this system: an invented speaker or a real comms NPC.
         turns.Lines.Add(new ChatterLine(
@@ -3322,6 +3325,7 @@ public sealed class AppHost : IDisposable
             },
             Engineers = () => late.Unlocks?.Report(),
             Mine = () => goalBook.Mine,
+            PaidCallsStopped = () => late.Host is { PaidCallsStopped: true } && turns.Provider is { RunsOnThisMachine: false },
             Tools = () =>
                 [.. (late.Registry?.All ?? [])
                     .SelectMany(capability => capability.Descriptor.Tools)
@@ -4956,7 +4960,8 @@ public sealed class AppHost : IDisposable
             current.Llm.Endpoint,
             keyChanged: string.Equals(changedKey, ConversationCapability.KeyRowFor(selected), StringComparison.OrdinalIgnoreCase));
 
-        Turns.Provider = provider;
+        // Unprompted calls stop while the Commander is away.
+        Turns.Provider = provider is null ? null : AwayGate.Wrap(provider, () => PaidCallsStopped);
         Turns.Model = current.Llm.Model;
 
         // Resolved once, here, rather than at each of the eight call sites (Phase 54).
@@ -5943,7 +5948,8 @@ public sealed class AppHost : IDisposable
             webSearch: true,
 
             // Cold, and the reason lives beside the instruction in Core (#98).
-            sampling: LoreLookup.Sampling);
+            sampling: LoreLookup.Sampling,
+            underway: true);
 
     /// <summary>The NPC whose hail was spoken since the last feed, selected once the roster that holds them is pushed.</summary>
     private string? _hailedBy;
@@ -6179,7 +6185,13 @@ public sealed class AppHost : IDisposable
         {
             try
             {
-                await D47.Core.Campaigns.CampaignSecrets.RunAsync(campaigns, fid, faction, seed, places, ask, _logger, CancellationToken.None).ConfigureAwait(false);
+                // A secret refused while the Commander is away is asked for again at the next chance.
+                if (!await D47.Core.Campaigns.CampaignSecrets.RunAsync(campaigns, fid, faction, seed, places, ask, _logger, CancellationToken.None).ConfigureAwait(false)
+                    && PaidCallsStopped
+                    && !provider.RunsOnThisMachine)
+                {
+                    Interlocked.CompareExchange(ref _secretAskedFor, null, key);
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

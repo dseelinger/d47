@@ -482,6 +482,17 @@ acting (a bounty, a message received, damage), a change in the ship's status, an
 hands-free, or anything Directive 47 says. The log says when you become away and when you are
 back.
 
+While you are away, Directive 47 sends no model call you did not start to a model that is not on
+this computer: no reworded callout (it is spoken as written), no NPC chatter, no Narrator line, no
+ambient remark, no lore lookup, and no new story chapter. A chapter that comes due waits and is
+written once you are back, and a name's accent, a Chronicler's passage or a Nemesis secret not
+asked for while you were away is asked for at the next chance. These still go out while you are
+away:
+
+- calls to a model on this computer;
+- a chapter that was already being written when you left;
+- your own turns, the Commander's log, and anything you start from a button.
+
 **The model cannot reach this row.** You change it here.
 
 ## The disclosure rows {#egress-llm}

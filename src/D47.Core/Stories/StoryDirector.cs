@@ -499,6 +499,9 @@ public sealed class StoryDirector(
     /// <summary>The time a replacement beat takes effect: after it is written, so events during the write do not count toward it.</summary>
     public Func<DateTimeOffset> Clock { get; set; } = () => DateTimeOffset.UtcNow;
 
+    /// <summary>While true, <see cref="Tick"/> starts no chapter; a chapter that is due stays due.</summary>
+    public Func<bool> PaidCallsStopped { get; set; } = () => false;
+
     /// <summary>Whether a replacement beat is being written for this Commander.</summary>
     public bool IsRewriting(string? frontierId) => Holds(_rewriting, frontierId);
 
@@ -2619,7 +2622,7 @@ public sealed class StoryDirector(
         {
             return story.State != StoryState.Running || story.IsWithoutOdyssey || WriteFailed(frontierId) || IsWriting(frontierId) || IsRewriting(frontierId)
                 ? null
-                : Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
+                : StartChapter(frontierId, now);
         }
 
         if (story.Detour is { } detour)
@@ -2633,7 +2636,7 @@ public sealed class StoryDirector(
         {
             return story.IsWithoutOdyssey || WriteFailed(frontierId) || IsWriting(frontierId)
                 ? null
-                : Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
+                : StartChapter(frontierId, now);
         }
 
         if (story.State == StoryState.Running && standing is { Adventure.IsActive: true } && LostAVoice(frontierId, story, now))
@@ -2680,8 +2683,12 @@ public sealed class StoryDirector(
             });
         }
 
-        return Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
+        return StartChapter(frontierId, now);
     }
+
+    /// <summary>Starts the chapter on the pool, or null while paid calls are stopped.</summary>
+    private Task<string?>? StartChapter(string? frontierId, DateTimeOffset now) =>
+        PaidCallsStopped() ? null : Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
 
     /// <summary>
     /// <see cref="Tick"/> while a detour is open: writes the interrupted chapter again once the detour is done, and pauses
@@ -2695,7 +2702,7 @@ public sealed class StoryDirector(
         {
             return story.IsWithoutOdyssey || WriteFailed(frontierId) || IsWriting(frontierId)
                 ? null
-                : Task.Run(() => WriteChapterAsync(frontierId, now, CancellationToken.None));
+                : StartChapter(frontierId, now);
         }
 
         if (story.State == StoryState.Running && standing is { Adventure.IsActive: true } && LostAVoice(frontierId, story, now))

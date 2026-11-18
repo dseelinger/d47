@@ -150,6 +150,9 @@ public abstract record LlmStreamEvent
 
         /// <summary>d47's own stall timeout fired; the provider reported nothing.</summary>
         public bool TimedOut { get; init; }
+
+        /// <summary>Not sent: a <see cref="LlmRequest.Background"/> request while the Commander is away.</summary>
+        public bool Away { get; init; }
     }
 }
 
@@ -181,6 +184,9 @@ public sealed record LlmRequest
 
     /// <summary>The JSON shape the reply must match. Only Chat Completions endpoints honour it.</summary>
     public LlmResponseSchema? ResponseSchema { get; init; }
+
+    /// <summary>Whether nobody started this call or waits on it; such a call is not sent while the Commander is away.</summary>
+    public bool Background { get; init; }
 }
 
 /// <summary>A named JSON schema for a reply, as a JSON string.</summary>

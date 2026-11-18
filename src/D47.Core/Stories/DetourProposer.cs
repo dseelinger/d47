@@ -102,7 +102,8 @@ public sealed class DetourProposer(
             effort: ThinkingEffort.Low,
             sampling: LlmSampling.Adventure,
             limits: asking is { RunsOnThisMachine: true } ? null : new FlavourLimits(CallLimit, CallLimit) { Time = Time },
-            responseSchema: new LlmResponseSchema(SchemaName, Schema())).ConfigureAwait(false);
+            responseSchema: new LlmResponseSchema(SchemaName, Schema()),
+            underway: true).ConfigureAwait(false);
 
         var read = reply.Line is { } line && AdventureGenerator.Unfence(line) is { } json ? Read(json) : null;
 

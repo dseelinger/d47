@@ -126,6 +126,7 @@ public sealed class Rewording(RewordChance chance, ILogger? logger)
             FlavourMiss.None => "rejected",
             FlavourMiss.Cancelled => "timed out",
             FlavourMiss.NoModel => "no model",
+            FlavourMiss.Away => "away",
             _ => reply.Message is { Length: > 0 } message ? $"failed: {message}" : "failed",
         };
 

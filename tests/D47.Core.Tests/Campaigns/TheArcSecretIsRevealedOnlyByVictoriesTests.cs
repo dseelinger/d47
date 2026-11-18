@@ -312,4 +312,22 @@ public sealed class TheArcSecretIsRevealedOnlyByVictoriesTests
 
         Assert.False(kept);
     }
+
+    [Fact]
+    public async Task ASecretRefusedWhileTheCommanderIsAwayIsWrittenOnTheNextRun()
+    {
+        var store = Store();
+        var model = D47.Core.Tests.Conversation.FakeLlmProvider.Answering(Answer());
+        var away = true;
+        var ask = CampaignSecrets.Asker(D47.Core.Conversation.AwayGate.Wrap(model, () => away), null, null, null, null);
+
+        Assert.False(await CampaignSecrets.RunAsync(store, Id, Us, Squadron, ["Lave"], ask, null, CancellationToken.None));
+        Assert.Null(store.For(Id).Secret);
+        Assert.Equal(0, model.CallCount);
+
+        away = false;
+
+        Assert.True(await CampaignSecrets.RunAsync(store, Id, Us, Squadron, ["Lave"], ask, null, CancellationToken.None));
+        Assert.Equal(Culprit, store.For(Id).Secret?.Culprit);
+    }
 }

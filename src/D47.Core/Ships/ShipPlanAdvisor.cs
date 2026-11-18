@@ -224,7 +224,8 @@ public sealed class ShipPlanAdvisor(
             cancellationToken,
             maxOutputTokens: OutputCeiling,
             effort: ThinkingEffort.High,
-            sampling: LlmSampling.Lore).ConfigureAwait(false);
+            sampling: LlmSampling.Lore,
+            underway: true).ConfigureAwait(false);
 
         return reply is null ? null : Adventures.AdventureGenerator.Unfence(reply);
     }

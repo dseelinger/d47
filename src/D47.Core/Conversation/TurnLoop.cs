@@ -1037,7 +1037,8 @@ public sealed class TurnLoop(
             sampling: LlmSampling.CommsRouting,
             thinking: false,
             limits: asking.RunsOnThisMachine ? null : new FlavourLimits(AllOnComms.RoutingLimit, AllOnComms.RoutingLimit),
-            responseSchema: AllOnComms.Schema(parties)).ConfigureAwait(false);
+            responseSchema: AllOnComms.Schema(parties),
+            underway: true).ConfigureAwait(false);
 
         var chosen = AllOnComms.Chosen(reply.Line, parties);
 

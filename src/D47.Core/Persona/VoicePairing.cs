@@ -421,7 +421,8 @@ public static class VoicePairing
     /// <summary>
     /// For each full name, the accent from <paramref name="accents"/> the model says it clearly suggests, or "none";
     /// for each given name, whether it reads as male, female or indeterminate. Null when there is no model or no
-    /// answer. Names are quoted as data and only a listed accent is kept.
+    /// answer, and <see cref="NameAnswers.Away"/> when the request was not sent because the Commander is away. Names are
+    /// quoted as data and only a listed accent is kept.
     /// </summary>
     public static async Task<NameAnswers?> AskAccentsAsync(
         IReadOnlyList<string> names,
@@ -477,7 +478,7 @@ public static class VoicePairing
             }
         }
 
-        var answer = await FlavourTurn.AskAsync(
+        var reply = await FlavourTurn.AskForAsync(
             provider,
             model,
             persona: null,
@@ -492,7 +493,12 @@ public static class VoicePairing
             maxOutputTokens: CastingTokens,
             sampling: LlmSampling.VoiceCasting).ConfigureAwait(false);
 
-        if (answer is null)
+        if (reply.Miss == FlavourMiss.Away)
+        {
+            return NameAnswers.Away;
+        }
+
+        if (reply.Line is not { } answer)
         {
             return null;
         }

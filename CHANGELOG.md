@@ -8,7 +8,9 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
-Added: Away after (minutes), in Settings › Privacy and this install › Privacy and egress, group When you are away: how long with nothing from you before D47 counts you as away, 5 by default, from 0 to 240, where 0 is never away. Keyboard or mouse input (other than keys D47 presses), a controller button press or hat move, a press on the headset panel, and journal events only you cause, such as a jump, docking or a trade, all count as you being there. D47's log says when you become away and when you are back. Nothing changes while you are away yet. The model cannot change the row.
+Added: Away after (minutes), in Settings › Privacy and this install › Privacy and egress, group When you are away: how long with nothing from you before D47 counts you as away, 5 by default, from 0 to 240, where 0 is never away. Keyboard or mouse input (other than keys D47 presses), a controller button press or hat move, a press on the headset panel, and journal events only you cause, such as a jump, docking or a trade, all count as you being there. D47's log says when you become away and when you are back. The model cannot change the row.
+
+Changed: While you are away, D47 sends no model call you did not start to a model that is not on this computer, and nothing is charged for one. Reworded callouts are spoken as written, and there is no NPC chatter, Narrator line, ambient remark, lore lookup or new story chapter. A chapter that comes due waits and is written once you are back, and a name's accent, a Chronicler's passage or a Nemesis secret not asked for while you were away is asked for at the next chance. A model on this computer, a chapter already being written, your own turns, the Commander's log and anything you start from a button are not affected.
 
 Added: d47 shows a splash as soon as it is launched, instead of nothing for the seconds the host takes to start. It shows the Directive 47 card with the version, sits behind other windows rather than over Elite, and closes when the main window appears.
 
