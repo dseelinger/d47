@@ -135,6 +135,7 @@ D47.Core.Journal.CommodityLedger.Changed
 D47.Core.Journal.TechBrokerUnlocks.NotKnownToBeUnlocked(string)
 D47.Core.Knowledge.CodexVariants.Of(string)
 D47.Core.Knowledge.CommodityBoard.Posted
+D47.Core.Knowledge.ICommunityBiology.SystemRecordAsync(string, System.Threading.CancellationToken)
 D47.Core.Knowledge.OrbitNode.AxialTilt
 D47.Core.Knowledge.Orrery.Place(D47.Core.Knowledge.OrbitNode, System.DateTimeOffset, int)
 D47.Core.Knowledge.Orrery.Position(D47.Core.Knowledge.OrbitNode, System.DateTimeOffset)
@@ -158,5 +159,6 @@ D47.Core.Stories.StoryChapterArchive.Changed
 D47.Core.Utilities.AlarmStore.Changed
 D47.Core.Vr.VrLifecycle.Changed
 D47.Core.Watches.WatchStore.Changed
+D47.Knowledge.CanonnBiologyService.SystemRecordAsync(string, System.Threading.CancellationToken)
 D47.Vr.SteamVrRuntime.Beam
 D47.Vr.SteamVrRuntime.Cursor
