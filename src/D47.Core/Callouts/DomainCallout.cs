@@ -302,6 +302,7 @@ public sealed class DomainCallout : ICallout
             (session.TradeEarnings, "trade"),
             (session.MissionEarnings, "missions"),
             (session.ExplorationEarnings, "exploration data"),
+            (session.ExobiologyEarnings, "exobiology"),
             (session.BountyEarnings, "bounties"),
             (session.CombatBondEarnings, "combat bonds"),
             (session.VoucherEarnings, "vouchers"),
@@ -329,14 +330,20 @@ public sealed class DomainCallout : ICallout
     }
 
     /// <summary>
-    /// The exploration data remark for this session, or null while it is younger than <paramref name="leastSession"/>
-    /// or has earned nothing from exploration data.
+    /// The exploration remark for this session, counting cartographic and organic data sales, or null while it
+    /// is younger than <paramref name="leastSession"/> or has earned nothing from either.
     /// </summary>
     public static (long Rate, string Text)? Exploration(SessionSummary session, long? previousRate, TimeSpan leastSession)
     {
         ArgumentNullException.ThrowIfNull(session);
 
-        return Rate(session, session.ExplorationEarnings, [], previousRate, leastSession, "from exploration data this session");
+        (long Amount, string Name)[] sources =
+        [
+            (session.ExplorationEarnings, "cartographic data"),
+            (session.ExobiologyEarnings, "exobiology"),
+        ];
+
+        return Rate(session, sources.Sum(source => source.Amount), sources, previousRate, leastSession, "from exploration this session");
     }
 
     /// <summary>The repair spend remark, or null while the session has spent less than <paramref name="leastSpend"/>.</summary>

@@ -22,7 +22,11 @@ public sealed record SessionSummary
 
     public long TradeEarnings { get; init; }
 
+    /// <summary>Cartographic data sold.</summary>
     public long ExplorationEarnings { get; init; }
+
+    /// <summary>Organic data sold.</summary>
+    public long ExobiologyEarnings { get; init; }
 
     public long MissionEarnings { get; init; }
 
@@ -57,7 +61,7 @@ public sealed record SessionSummary
 
     public long TotalEarnings =>
         BountyEarnings + CombatBondEarnings + TradeEarnings +
-        ExplorationEarnings + MissionEarnings + VoucherEarnings;
+        ExplorationEarnings + ExobiologyEarnings + MissionEarnings + VoucherEarnings;
 
     public bool IsKnown => StartedAt is not null;
 
@@ -116,11 +120,9 @@ public sealed record SessionSummary
                 ExplorationEarnings = ExplorationEarnings + (journalEvent.Long("TotalEarnings") ?? 0),
             },
 
-            // Odyssey's biological sampling, which earns separately from cartographic data but is exploration
-            // as far as anyone asking would mean it.
             "SellOrganicData" => updated with
             {
-                ExplorationEarnings = ExplorationEarnings +
+                ExobiologyEarnings = ExobiologyEarnings +
                     journalEvent.Items("BioData").Sum(data => (data.Long("Value") ?? 0) + (data.Long("Bonus") ?? 0)),
             },
 

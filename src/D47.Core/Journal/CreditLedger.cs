@@ -7,6 +7,7 @@ public enum CreditKind
 {
     Trade,
     Exploration,
+    Exobiology,
     Missions,
     Combat,
     Vouchers,
@@ -241,7 +242,7 @@ public sealed record CreditLedger
             case "SellExplorationData" or "MultiSellExplorationData":
                 return [In(CreditKind.Exploration, e.Long("TotalEarnings"))];
             case "SellOrganicData":
-                return [In(CreditKind.Exploration, e.Items("BioData").Sum(data => (data.Long("Value") ?? 0) + (data.Long("Bonus") ?? 0)))];
+                return [In(CreditKind.Exobiology, e.Items("BioData").Sum(data => (data.Long("Value") ?? 0) + (data.Long("Bonus") ?? 0)))];
             case "BuyExplorationData":
                 return [Out(CreditKind.Exploration, e.Long("Cost"))];
 

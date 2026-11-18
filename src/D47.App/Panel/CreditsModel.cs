@@ -88,7 +88,8 @@ public static class CreditsModel
     private static readonly Dictionary<CreditKind, (string Name, string Description)> Words = new()
     {
         [CreditKind.Trade] = ("Trade", "goods and trade data"),
-        [CreditKind.Exploration] = ("Exploration", "data and organics sold"),
+        [CreditKind.Exploration] = ("Exploration", "data sold"),
+        [CreditKind.Exobiology] = ("Exobiology", "organic data sold"),
         [CreditKind.Missions] = ("Missions", "rewards, donations and fines"),
         [CreditKind.Combat] = ("Combat", "bounties and bonds redeemed"),
         [CreditKind.Vouchers] = ("Vouchers", "other vouchers redeemed"),

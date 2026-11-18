@@ -100,6 +100,7 @@ public sealed class SessionPage : UserControl
             ("Combat bonds", session.CombatBondEarnings),
             ("Trade", session.TradeEarnings),
             ("Exploration", session.ExplorationEarnings),
+            ("Exobiology", session.ExobiologyEarnings),
             ("Missions", session.MissionEarnings),
             ("Vouchers", session.VoucherEarnings),
         ];

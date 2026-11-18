@@ -39,6 +39,9 @@ public class ACoreRemarksOnItsOwnSubjectTests
     private static JournalEvent ExplorationSale(DateTimeOffset at, long total) =>
         Event($$"""{ "timestamp":"{{at:yyyy-MM-ddTHH:mm:ssZ}}", "event":"SellExplorationData", "TotalEarnings":{{total}}, "BaseValue":{{total}}, "Bonus":0 }""");
 
+    private static JournalEvent OrganicSale(DateTimeOffset at, long total) =>
+        Event($$"""{ "timestamp":"{{at:yyyy-MM-ddTHH:mm:ssZ}}", "event":"SellOrganicData", "BioData":[{ "Genus":"x", "Species":"y", "Value":{{total}}, "Bonus":0 }] }""");
+
     private static JournalEvent Repair(DateTimeOffset at, long cost) =>
         Event($$"""{ "timestamp":"{{at:yyyy-MM-ddTHH:mm:ssZ}}", "event":"RepairAll", "Cost":{{cost}} }""");
 
@@ -138,7 +141,31 @@ public class ACoreRemarksOnItsOwnSubjectTests
         var said = Assert.Single(session.Tick(at, ExplorationSale(at, 2_000_000)));
 
         Assert.Equal(DomainCallout.ExplorationKey, said.Key);
-        Assert.Equal("4 million credits an hour from exploration data this session.", said.Text);
+        Assert.Equal("4 million credits an hour from exploration this session, the largest share from cartographic data.", said.Text);
+    }
+
+    [Fact]
+    public void ChartSaysTheExplorationRateAfterASaleOfOrganicData()
+    {
+        var session = Started(PersonaCatalog.Cartographer.Domain);
+        var at = Noon.AddMinutes(30);
+
+        var said = Assert.Single(session.Tick(at, OrganicSale(at, 2_000_000)));
+
+        Assert.Equal(DomainCallout.ExplorationKey, said.Key);
+        Assert.Equal("4 million credits an hour from exploration this session, the largest share from exobiology.", said.Text);
+    }
+
+    [Fact]
+    public void ChartNamesTheLargerOfCartographicAndOrganicSales()
+    {
+        var session = Started(PersonaCatalog.Cartographer.Domain);
+        var at = Noon.AddMinutes(30);
+
+        session.Tick(at.AddMinutes(-5), ExplorationSale(at.AddMinutes(-5), 500_000));
+        var said = Assert.Single(session.Tick(at, OrganicSale(at, 1_500_000)));
+
+        Assert.Equal("4 million credits an hour from exploration this session, the largest share from exobiology.", said.Text);
     }
 
     [Fact]

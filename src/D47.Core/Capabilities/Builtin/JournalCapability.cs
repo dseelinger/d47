@@ -792,6 +792,7 @@ public static class JournalCapability
     [
         ("trade", CreditKind.Trade),
         ("exploration", CreditKind.Exploration),
+        ("exobiology", CreditKind.Exobiology),
         ("missions", CreditKind.Missions),
         ("combat", CreditKind.Combat),
         ("vouchers", CreditKind.Vouchers),
@@ -1821,6 +1822,7 @@ public static class JournalCapability
         Add(earnings, "combat bonds", session.CombatBondEarnings);
         Add(earnings, "trade", session.TradeEarnings);
         Add(earnings, "exploration", session.ExplorationEarnings);
+        Add(earnings, "exobiology", session.ExobiologyEarnings);
         Add(earnings, "missions", session.MissionEarnings);
         Add(earnings, "vouchers", session.VoucherEarnings);
 

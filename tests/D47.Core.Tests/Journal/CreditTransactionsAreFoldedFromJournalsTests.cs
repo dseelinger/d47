@@ -33,7 +33,7 @@ public class CreditTransactionsAreFoldedFromJournalsTests
         { "RedeemVoucher", "\"Type\":\"trade\",\"Amount\":70", CreditKind.Trade, 70 },
         { "SellExplorationData", "\"TotalEarnings\":900", CreditKind.Exploration, 900 },
         { "MultiSellExplorationData", "\"TotalEarnings\":901", CreditKind.Exploration, 901 },
-        { "SellOrganicData", "\"BioData\":[{\"Value\":100,\"Bonus\":20},{\"Value\":30,\"Bonus\":0}]", CreditKind.Exploration, 150 },
+        { "SellOrganicData", "\"BioData\":[{\"Value\":100,\"Bonus\":20},{\"Value\":30,\"Bonus\":0}]", CreditKind.Exobiology, 150 },
         { "RedeemVoucher", "\"Type\":\"codex\",\"Amount\":80", CreditKind.Exploration, 80 },
         { "BuyExplorationData", "\"Cost\":40", CreditKind.Exploration, -40 },
         { "MissionCompleted", "\"Reward\":1000", CreditKind.Missions, 1000 },

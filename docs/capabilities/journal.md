@@ -627,7 +627,7 @@ each way with a count of the rest. Bounties and combat bonds count when redeemed
 journal and the game's own balance is spoken only from a million credits.
 
 ```json
-{"type":"object","properties":{"kind":{"type":"string","description":"Report only this kind of transaction.","enum":["trade","exploration","missions","combat","vouchers","rescue","community_goals","colonisation","powerplay","ships","modules","upkeep","rebuy","fines","crew","on_foot","engineers","carrier"]},"period":{"type":"string","description":"The last day, week (7 days) or month (30 days) before now, or all of the record. Default week.","enum":["day","week","month","all"]}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"kind":{"type":"string","description":"Report only this kind of transaction.","enum":["trade","exploration","exobiology","missions","combat","vouchers","rescue","community_goals","colonisation","powerplay","ships","modules","upkeep","rebuy","fines","crew","on_foot","engineers","carrier"]},"period":{"type":"string","description":"The last day, week (7 days) or month (30 days) before now, or all of the record. Default week.","enum":["day","week","month","all"]}},"required":[],"additionalProperties":false}
 ```
 
 `get_codex_ledger` answers how many codex entries the Commander logged, and how many were new to their

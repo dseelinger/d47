@@ -484,6 +484,7 @@ public class GameKnowledgeTests
             """{"timestamp":"3311-01-01T00:10:00Z","event":"Bounty","TotalReward":250000}""",
             """{"timestamp":"3311-01-01T00:20:00Z","event":"MarketSell","TotalSale":1400000}""",
             """{"timestamp":"3311-01-01T00:30:00Z","event":"MultiSellExplorationData","TotalEarnings":880000}""",
+            """{"timestamp":"3311-01-01T00:35:00Z","event":"SellOrganicData","BioData":[{"Value":300000,"Bonus":100000}]}""",
             """{"timestamp":"3311-01-01T00:40:00Z","event":"MissionCompleted","Reward":75000}""",
             """{"timestamp":"3311-01-01T00:50:00Z","event":"FSDJump","StarSystem":"Sol","JumpDist":11.4}""")
             .Session;
@@ -491,8 +492,9 @@ public class GameKnowledgeTests
         Assert.Equal(250000, session.BountyEarnings);
         Assert.Equal(1400000, session.TradeEarnings);
         Assert.Equal(880000, session.ExplorationEarnings);
+        Assert.Equal(400000, session.ExobiologyEarnings);
         Assert.Equal(75000, session.MissionEarnings);
-        Assert.Equal(2605000, session.TotalEarnings);
+        Assert.Equal(3005000, session.TotalEarnings);
         Assert.Equal(1, session.Jumps);
         Assert.Equal(11.4, session.DistanceTravelled);
         Assert.Equal(1000000, session.Balance);
