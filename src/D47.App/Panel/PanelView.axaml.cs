@@ -266,6 +266,7 @@ public partial class PanelView : UserControl, IPanelTabHost
             // value copied here would be the one that was true when the panel was built (remediation.md 10,
             // item 12).
             Waiting = () => Model?.ListeningPrompt,
+            ColumnArrangements = () => _columnArrangements,
         };
 
         // A layer chooser hides the page bar the same way a page chooser does, but nothing else notices

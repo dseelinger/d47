@@ -68,13 +68,16 @@ public sealed class SwitchPage : DialogPage
 
     public const string PositionsTable = "Switch.Positions";
 
-    private static readonly TableColumn[] PositionColumns =
+    /// <summary>The controls of one position's row, built once and placed by the fields the Commander has arranged.</summary>
+    private sealed record PositionRow(Control Mark, Control Button, Control Action, Control State, Control Page, Action<SwitchPosition?> Held);
+
+    private static readonly IReadOnlyList<TableField<PositionRow>> PositionFields =
     [
-        new("Mark", ColumnFit.Fixed) { Fixed = 3 },
-        new("Position"),
-        new("Action", ColumnFit.Fill) { Min = 120 },
-        new("Means"),
-        new("Page", ColumnFit.Fill) { Min = 120 },
+        new("Mark", new TableColumn("Mark", ColumnFit.Fixed) { Fixed = 3 }, row => row.Mark),
+        new("Position", new TableColumn("Position"), row => row.Button) { Label = "Position" },
+        new("Action", new TableColumn("Action", ColumnFit.Fill) { Min = 120 }, row => row.Action) { Label = "Action" },
+        new("Means", new TableColumn("Means"), row => row.State) { Label = "Means" },
+        new("Page", new TableColumn("Page", ColumnFit.Fill) { Min = 120 }, row => row.Page) { Label = "Or opens a D47 page" },
     ];
 
     /// <summary>Only the actions Elite reports the state of, by the name a list shows.</summary>
@@ -111,8 +114,7 @@ public sealed class SwitchPage : DialogPage
 
     private readonly LostDeviceFinder _finder = new();
     private readonly SettingsService? _settings;
-    private readonly Panel.ColumnWidthMemory? _columnWidths;
-    private TableLayout _positions;
+    private readonly ArrangedTable<PositionRow> _positions;
 
     public SwitchPage(
         SwitchStore store,
@@ -122,10 +124,11 @@ public sealed class SwitchPage : DialogPage
         string exportPath,
         IReadOnlyList<PanelDestination> destinations,
         SettingsService? settings = null,
-        Panel.ColumnWidthMemory? columnWidths = null)
+        Panel.ColumnWidthMemory? columnWidths = null,
+        Panel.ColumnArrangementMemory? columnArrangements = null)
     {
-        _columnWidths = columnWidths;
-        _positions = NewPositions();
+        _positions = new ArrangedTable<PositionRow>(PositionsTable, PositionFields, columnArrangements, columnWidths, ColumnGap, headName: "SwitchHead");
+        _positions.Changed += Rebuild;
         _settings = settings;
         _store = store;
         _reader = reader;
@@ -445,12 +448,10 @@ public sealed class SwitchPage : DialogPage
             .Select(position => $"{mapping.Name.Trim()}: {KeyChord.Problem(position.Chord!)}")),
     ];
 
-    private TableLayout NewPositions() => new(PositionsTable, PositionColumns, _columnWidths, ColumnGap);
-
     private void Rebuild()
     {
         _list.Children.Clear();
-        _positions = NewPositions();
+        _positions.Refresh();
 
         if (_switches.Count == 0)
         {
@@ -465,6 +466,16 @@ public sealed class SwitchPage : DialogPage
             ThemeInk.Bind(empty, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
             _list.Children.Add(empty);
             return;
+        }
+
+        if (ColumnArranger.Line(_positions) is { } line)
+        {
+            _list.Children.Add(line);
+        }
+
+        if (ColumnArranger.Bar(_positions) is { } bar)
+        {
+            _list.Children.Add(bar);
         }
 
         foreach (var mapping in _switches)
@@ -504,14 +515,14 @@ public sealed class SwitchPage : DialogPage
 
         var collided = false;
 
-        var positions = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0), Children = { BuildHeads() } };
+        var positions = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0), Children = { _positions.Header() } };
         var holds = new List<Action<SwitchPosition?>>();
 
         foreach (var position in mapping.Positions)
         {
-            var (row, held) = BuildPosition(mapping, position);
-            positions.Children.Add(row);
-            holds.Add(held);
+            var built = BuildPosition(mapping, position);
+            positions.Children.Add(_positions.Row(built));
+            holds.Add(built.Held);
         }
 
         // Ruled rather than a list row: the box and the choices are Tile, and vanish on a Tile row.
@@ -580,33 +591,8 @@ public sealed class SwitchPage : DialogPage
         return card;
     }
 
-    /// <summary>The column heads over a switch's position rows.</summary>
-    private Control BuildHeads()
-    {
-        string[] words = ["", "Position", "Action", "Means", "Or opens a D47 page"];
-        var cells = new List<Control> { new Border() };
-
-        for (var column = 1; column < words.Length; column++)
-        {
-            var head = new TextBlock
-            {
-                Text = words[column].ToUpperInvariant(),
-                FontFamily = new FontFamily(Fonts.ChromeFamily),
-                FontSize = TypeScale.Caption,
-                FontWeight = FontWeight.SemiBold,
-                LetterSpacing = TypeScale.Caption * Fonts.ChromeTracking,
-                TextWrapping = TextWrapping.Wrap,
-            };
-
-            ThemeInk.Bind(head, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            cells.Add(head);
-        }
-
-        return _positions.Header(cells);
-    }
-
     /// <summary>One position: the button, what it means, ON or OFF, or the page it opens.</summary>
-    private (Control Row, Action<SwitchPosition?> Held) BuildPosition(MutableSwitch mapping, MutablePosition position)
+    private PositionRow BuildPosition(MutableSwitch mapping, MutablePosition position)
     {
         var bar = new Border
         {
@@ -866,8 +852,6 @@ public sealed class SwitchPage : DialogPage
 
         Draw();
 
-        var row = _positions.Row([bar, buttonCell, action, stateCell, pageButton]);
-
         bool? wasHeld = null;
 
         void Held(SwitchPosition? at)
@@ -887,7 +871,7 @@ public sealed class SwitchPage : DialogPage
 
         Held(null);
 
-        return (row, Held);
+        return new PositionRow(bar, buttonCell, action, stateCell, pageButton, Held);
     }
 
     private static string PickerWord(MutableSwitch mapping, MutablePosition position) =>

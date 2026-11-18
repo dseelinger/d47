@@ -37,6 +37,9 @@ public sealed class PanelPrompts : IHearsText
 
     public Func<string?>? Waiting { get; set; }
 
+    /// <summary>The memory a table picker stores its columns in, read when the picker opens.</summary>
+    public Func<ColumnArrangementMemory?>? ColumnArrangements { get; set; }
+
     /// <summary>What each open prompt is, by the crumb key it was pushed as.</summary>
     private readonly Dictionary<string, Func<Control>> _pages = [];
 
@@ -872,9 +875,9 @@ public sealed class PanelPrompts : IHearsText
         private readonly TextBlock _empty;
         private readonly Button _commit;
         private readonly TextBlock _state;
-        private readonly SortHeader<string>? _sort;
-        private readonly TableLayout? _table;
+        private readonly ArrangedTable<string>? _table;
         private readonly Border? _header;
+        private readonly StackPanel _arranger = new();
 
         public PickPage(PanelPrompts host, EntryRequest request, Action<string> done)
         {
@@ -895,18 +898,23 @@ public sealed class PanelPrompts : IHearsText
 
             if (request.Columns is { Count: > 0 } columns)
             {
-                _sort = new SortHeader<string>("PickHead", PickTable.SortColumns(columns), new SortOrder(0, SortDirection.Ascending));
-                _table = new TableLayout(
-                    "Pick",
-                    [.. columns.Select((column, i) => new TableColumn(column.Label, i == 0 ? ColumnFit.Fill : ColumnFit.Content) { Whole = i > 0 })],
-                    spacing: 12);
+                _table = new ArrangedTable<string>(
+                    request.Key,
+                    PickTable.Fields(columns, value => Row(value, request)),
+                    host.ColumnArrangements?.Invoke(),
+                    null,
+                    spacing: 12,
+                    sortedByDefault: columns[0].Label,
+                    headName: "PickHead");
                 _header = new Border { Margin = new Thickness(12, 0, 12, 2) };
-                _sort.Changed += () =>
+                _table.Changed += () =>
                 {
                     DrawHeader();
-                    Narrow();
+                    DrawArranger();
+                    Narrow(rebuild: true);
                 };
                 DrawHeader();
+                DrawArranger();
             }
 
             _list = new ListBox
@@ -921,7 +929,7 @@ public sealed class PanelPrompts : IHearsText
                 ItemsPanel = new Avalonia.Controls.Templates.FuncTemplate<Avalonia.Controls.Panel?>(() => new StackPanel()),
 
                 ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((value, _) =>
-                    _table is null ? Row(value, request) : TableRow(value)),
+                    _table is null ? Row(value, request) : _table.Row(value!)),
 
                 // Opens on what was already said or typed, and on nothing otherwise.
                 SelectedItem = _suggestions.FirstOrDefault(value =>
@@ -1002,6 +1010,8 @@ public sealed class PanelPrompts : IHearsText
 
             if (_header is not null)
             {
+                DockPanel.SetDock(_arranger, Dock.Top);
+                body.Children.Add(_arranger);
                 DockPanel.SetDock(_header, Dock.Top);
                 body.Children.Add(_header);
             }
@@ -1076,9 +1086,25 @@ public sealed class PanelPrompts : IHearsText
         /// <summary>The header row, redrawn so the sorted column's arrow follows the sort.</summary>
         private void DrawHeader()
         {
-            var grid = _table!.Header(_sort!, [.. _request.Columns!.Select(column => column.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
+            var grid = _table!.Header();
             grid.MinHeight = TypeScale.MinimumTarget;
             _header!.Child = grid;
+        }
+
+        /// <summary>The COLUMNS tile and, while it is open, its bar.</summary>
+        private void DrawArranger()
+        {
+            _arranger.Children.Clear();
+
+            if (ColumnArranger.Line(_table!) is { } line)
+            {
+                _arranger.Children.Add(line);
+            }
+
+            if (ColumnArranger.Bar(_table!) is { } bar)
+            {
+                _arranger.Children.Add(bar);
+            }
         }
 
         /// <summary>Narrows the header by the list's scroll bar, so its columns stand over the rows' columns.</summary>
@@ -1097,32 +1123,6 @@ public sealed class PanelPrompts : IHearsText
             }
         }
 
-        /// <summary>A suggestion as a table row: the first column drawn as <see cref="Row"/> draws it, the rest one cell each.</summary>
-        private Control TableRow(string? value)
-        {
-            var columns = _request.Columns!;
-            var cells = new List<Control> { Row(value, _request) };
-
-            foreach (var column in columns.Skip(1))
-            {
-                var text = value is null ? string.Empty : column.Text(value);
-
-                cells.Add(column.Right
-                    ? ListRow.NameInk(new TextBlock
-                    {
-                        Text = text,
-                        FontFamily = new FontFamily(Fonts.MonoFamily),
-                        FontSize = TypeScale.Body,
-                        TextAlignment = TextAlignment.Right,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        VerticalAlignment = VerticalAlignment.Center,
-                    })
-                    : ListRow.Aside(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center }));
-            }
-
-            return _table!.Row(cells);
-        }
-
         /// <summary>The suggestions holding the filter's text, in the header's sort.</summary>
         private IReadOnlyList<string> Shown()
         {
@@ -1133,14 +1133,20 @@ public sealed class PanelPrompts : IHearsText
                 ? _suggestions
                 : _suggestions.Where(value => PickTable.Matches(value, query, columns)).ToList();
 
-            return _sort?.Sort(shown) ?? shown;
+            return _table?.Sort(shown) ?? shown;
         }
 
         /// <summary>Shows only the suggestions holding the filter's text, keeping the highlight where it is still shown.</summary>
-        private void Narrow()
+        private void Narrow(bool rebuild = false)
         {
             var kept = _list.SelectedItem as string;
             var shown = Shown();
+
+            // Assigning the list it already has redraws nothing, and the rows must follow a new layout.
+            if (rebuild)
+            {
+                _list.ItemsSource = null;
+            }
 
             _list.ItemsSource = shown;
 
@@ -1201,6 +1207,42 @@ public sealed class PanelPrompts : IHearsText
     /// <summary>The sort and filter of a picker drawn as a table, over its suggestions.</summary>
     internal static class PickTable
     {
+        /// <summary>A table field per entry column, keyed on its label: the first drawn by <paramref name="first"/>, the rest one cell each.</summary>
+        public static IReadOnlyList<TableField<string>> Fields(IReadOnlyList<EntryColumn> columns, Func<string, Control> first)
+        {
+            var sorts = SortColumns(columns);
+
+            return
+            [
+                .. columns.Select((column, i) => new TableField<string>(
+                    column.Label,
+                    new TableColumn(column.Label, i == 0 ? ColumnFit.Fill : ColumnFit.Content) { Whole = i > 0 },
+                    i == 0 ? first : value => Cell(column, value))
+                {
+                    Label = column.Label,
+                    Sort = sorts[i],
+                    Alignment = column.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
+                }),
+            ];
+        }
+
+        private static Control Cell(EntryColumn column, string value)
+        {
+            var text = column.Text(value);
+
+            return column.Right
+                ? ListRow.NameInk(new TextBlock
+                {
+                    Text = text,
+                    FontFamily = new FontFamily(Fonts.MonoFamily),
+                    FontSize = TypeScale.Body,
+                    TextAlignment = TextAlignment.Right,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Center,
+                })
+                : ListRow.Aside(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
+        }
+
         /// <summary>A sort column per entry column: by figure where it has one, smallest first unless the column sets Descending, otherwise A–Z.</summary>
         public static IReadOnlyList<SortColumn<string>> SortColumns(IReadOnlyList<EntryColumn> columns) =>
         [

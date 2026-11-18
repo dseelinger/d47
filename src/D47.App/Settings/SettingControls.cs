@@ -1025,7 +1025,8 @@ internal sealed partial class SettingControls(SettingRowHost host, SettingServic
             editing.ExportPath,
             editing.Destinations(),
             editing.Settings,
-            ((Panel.IPanelTabHost)panel).ColumnWidths));
+            ((Panel.IPanelTabHost)panel).ColumnWidths,
+            ((Panel.IPanelTabHost)panel).ColumnArrangements));
 
         return true;
     }
