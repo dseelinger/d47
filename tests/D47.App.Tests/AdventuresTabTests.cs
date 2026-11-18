@@ -130,8 +130,8 @@ public class AdventuresTabTests
             .Select(Said),
     ];
 
-    private static IReadOnlyList<AdventureThinking> Pulses(PanelView panel) =>
-        [.. panel.GetVisualDescendants().OfType<AdventureThinking>().Where(pulse => pulse.IsEffectivelyVisible)];
+    private static IReadOnlyList<D47.App.Controls.WaitingState> Pulses(PanelView panel) =>
+        [.. panel.GetVisualDescendants().OfType<D47.App.Controls.WaitingState>().Where(pulse => pulse.IsEffectivelyVisible)];
 
     /// <summary>The Commander arriving at the first beat's system.</summary>
     private static void Arrive(AdventureBook book)
@@ -509,15 +509,17 @@ public class AdventuresTabTests
         // Driven by the tick rather than by a timer of its own, and accurate about whether the frame moved —
         // the headset sets its dirty flag from this, and a flag held true every frame is what made the panel
         // flicker the last time something set one unconditionally.
-        Assert.False(panel.TickAdventures());
-        Assert.False(panel.TickAdventures());
-        Assert.True(panel.TickAdventures());
+        Assert.True(panel.TickWaiting());
+        Assert.True(panel.TickWaiting());
+        Assert.False(panel.TickWaiting());
+        Assert.True(panel.TickWaiting());
 
         book.Told("F1", "the-lantern-route", Beat("The lantern is still turning."));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Empty(Pulses(panel));
-        Assert.False(panel.TickAdventures());
+        Assert.True(panel.TickWaiting());
+        Assert.False(panel.TickWaiting());
     }
 
     /// <summary>

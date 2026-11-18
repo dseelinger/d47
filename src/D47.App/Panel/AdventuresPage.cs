@@ -376,7 +376,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
 
         if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
         {
-            body.Children.Add(new AdventureThinking());
+            body.Children.Add(new WaitingState(WaitForm.Body, "Composing…"));
         }
 
         ListRow.Opens(card, () => _nav.Drill(new NavCrumb(ReadPrefix + adventure.Key, adventure.Name) { Whole = true }));
@@ -480,7 +480,7 @@ public sealed class AdventuresPage : UserControl, IPageSummary, IPageChrome
         // The wait, drawn (asked for 2026-08-22).
         if (_surface.Book.IsStirring(_surface.Commander(), adventure.Key))
         {
-            page.Children.Add(new AdventureThinking());
+            page.Children.Add(new WaitingState(WaitForm.Body, "Composing…"));
         }
 
         AddObjective(page, standing);

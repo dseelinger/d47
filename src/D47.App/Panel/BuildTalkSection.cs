@@ -198,7 +198,7 @@ public sealed class BuildTalkSection : UserControl
 
         if (round.Advice is not { } advice)
         {
-            body.Children.Add(Who("D47", ThemeManager.AKey, new AdventureThinking("Working") { Margin = default }));
+            body.Children.Add(Who("D47", ThemeManager.AKey, new D47.App.Controls.WaitingState(D47.App.Controls.WaitForm.Line, "Working…")));
             body.Children.Add(Prose("Checking the proposal against the hull and the blueprints.", ThemeManager.GreyKey));
             return Message(body, ThemeManager.AKey, commander: false);
         }

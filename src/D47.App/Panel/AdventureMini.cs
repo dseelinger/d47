@@ -111,7 +111,7 @@ public sealed class AdventureMini : UserControl
 
         if (_surface.Book.IsStirring(commander, adventure.Key))
         {
-            _body.Children.Add(new AdventureThinking());
+            _body.Children.Add(new D47.App.Controls.WaitingState(D47.App.Controls.WaitForm.Body, "Composing…"));
         }
 
         var entries = new ToldEntries(_surface, _portraits);

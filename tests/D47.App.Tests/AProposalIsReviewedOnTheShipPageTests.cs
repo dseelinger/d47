@@ -245,24 +245,26 @@ public class AProposalIsReviewedOnTheShipPageTests
         Dispatcher.UIThread.RunJobs();
 
         var section = panel.GetVisualDescendants().OfType<BuildTalkSection>().Single();
-        var pulse = Assert.Single(section.GetVisualDescendants().OfType<AdventureThinking>());
+        var pulse = Assert.Single(section.GetVisualDescendants().OfType<D47.App.Controls.WaitingState>());
 
-        Assert.Contains(Texts(pulse), text => text == "Working");
+        Assert.Contains(Texts(pulse), text => text == "Working…");
         Assert.DoesNotContain("working", Texts(section));
         Assert.Contains("Checking the proposal against the hull and the blueprints.", Texts(section));
 
-        Assert.False(panel.TickAdventures());
-        Assert.False(panel.TickAdventures());
-        Assert.True(panel.TickAdventures());
+        Assert.True(panel.TickWaiting());
+        Assert.True(panel.TickWaiting());
+        Assert.False(panel.TickWaiting());
+        Assert.True(panel.TickWaiting());
 
         answer.SetResult(ThreeChanges(bench.Ships.Store.Find(bench.BuildId)!).Result);
         await asking;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Empty(section.GetVisualDescendants().OfType<AdventureThinking>());
+        Assert.Empty(section.GetVisualDescendants().OfType<D47.App.Controls.WaitingState>());
         var answered = new DateTimeOffset(2026, 10, 5, 19, 43, 0, TimeSpan.Zero).ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture);
         Assert.Contains(answered, Texts(section));
-        Assert.False(panel.TickAdventures());
+        Assert.True(panel.TickWaiting());
+        Assert.False(panel.TickWaiting());
 
         window.Close();
     }

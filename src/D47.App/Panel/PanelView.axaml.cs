@@ -924,7 +924,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Beats every wait mark shown on this surface, on any tab, from the host's tick; true when one moved, appeared or went.</summary>
     public bool TickWaiting() => (_waits ??= new Controls.WaitTicker(this)).Tick();
 
-    /// <summary>Beats the working pulses and refreshes the write bars on the Stories and Assets tabs, from the host's tick; true when either drew something new.</summary>
+    /// <summary>Refreshes the write bars on the Stories and Assets tabs, from the host's tick; true when either drew something new.</summary>
     public bool TickAdventures()
     {
         if (Tab is not (PanelTab.Stories or PanelTab.Assets))
@@ -933,14 +933,6 @@ public partial class PanelView : UserControl, IPanelTabHost
         }
 
         var moved = false;
-
-        foreach (var pulse in this.GetVisualDescendants().OfType<AdventureThinking>())
-        {
-            if (pulse.IsEffectivelyVisible)
-            {
-                moved |= pulse.Beat();
-            }
-        }
 
         foreach (var bar in this.GetVisualDescendants().OfType<WriteProgressBar>())
         {
