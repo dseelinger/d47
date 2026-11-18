@@ -55,16 +55,19 @@ public sealed class WaitingState : StackPanel
     private readonly WaitForm _form;
     private readonly Border[] _cells = new Border[Cells];
     private readonly TextBlock _sentence;
+    private readonly Func<bool> _animated;
 
     private IDisposable? _mode;
     private bool _attached;
     private bool _shown;
+    private bool _still;
     private int _step;
     private int _beats;
 
-    public WaitingState(WaitForm form = WaitForm.Inline, string? sentence = null)
+    public WaitingState(WaitForm form = WaitForm.Inline, string? sentence = null, Func<bool>? animated = null)
     {
         _form = form;
+        _animated = animated ?? AnimationEffects.AreOn;
 
         Orientation = form == WaitForm.Body ? Orientation.Vertical : Orientation.Horizontal;
         Spacing = form == WaitForm.Body ? 14 : 10;
@@ -118,7 +121,7 @@ public sealed class WaitingState : StackPanel
     /// <summary>One beat of the panel tick; true when the lit cell stepped.</summary>
     public bool Beat()
     {
-        if (++_beats < BeatsPerStep)
+        if (_still || ++_beats < BeatsPerStep)
         {
             return false;
         }
@@ -229,6 +232,7 @@ public sealed class WaitingState : StackPanel
         {
             _step = 0;
             _beats = 0;
+            _still = !_animated();
             Paint();
         }
     }
@@ -244,6 +248,16 @@ public sealed class WaitingState : StackPanel
 
     private void Paint()
     {
+        if (_still)
+        {
+            foreach (var cell in _cells)
+            {
+                cell.Background = GetValue(TrailProperty);
+            }
+
+            return;
+        }
+
         var trail = (_step + Cells - 1) % Cells;
 
         for (var index = 0; index < Cells; index++)
