@@ -82,6 +82,53 @@ public class TheWholeFleetIsAnswerableNotOnlyTheOneYouAreInTests
         Assert.DoesNotContain("Bold Endeavour", result.Content, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Shield strength is worked out from each ship's own generator, so "which of my ships has the
+    /// strongest shields" is a ranking rather than a guess; a ship with no generator comes last, with no figure.
+    /// </summary>
+    [Fact]
+    public async Task TheShipsAreRankedByTheirShieldStrength()
+    {
+        var gameState = new GameStateStore();
+
+        Apply(gameState, """{"timestamp":"2026-09-05T10:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""");
+        Apply(
+            gameState,
+            """
+            {"timestamp":"2026-09-05T10:01:00Z","event":"Loadout","Ship":"Asp","ShipID":9,"ShipName":"Wanderer","CargoCapacity":32,"MaxJumpRange":41.5,"Modules":[{"Slot":"Slot01_Size5","Item":"int_shieldgenerator_size5_class3_fast","On":true,"Priority":0,"Health":1.0}]}
+            """);
+        Apply(
+            gameState,
+            """
+            {"timestamp":"2026-09-05T10:02:00Z","event":"Loadout","Ship":"Anaconda","ShipID":7,"ShipName":"Bold Endeavour","CargoCapacity":8,"MaxJumpRange":52.31,"Modules":[]}
+            """);
+        Apply(
+            gameState,
+            """
+            {"timestamp":"2026-09-05T10:03:00Z","event":"Loadout","Ship":"Python","ShipID":8,"ShipName":"Mule","CargoCapacity":128,"MaxJumpRange":21.44,"Modules":[{"Slot":"Slot01_Size6","Item":"int_shieldgenerator_size6_class5","On":true,"Priority":0,"Health":1.0}]}
+            """);
+
+        var result = await Ask(gameState, ("order_by", "shields"));
+
+        Assert.False(result.IsError);
+
+        var ranked = result.Content
+            .Split('\n')
+            .Select(line => line.Trim())
+            .Where(line => line.StartsWith("Mule", StringComparison.Ordinal)
+                           || line.StartsWith("Wanderer", StringComparison.Ordinal)
+                           || line.StartsWith("Bold Endeavour", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.Equal(3, ranked.Length);
+        Assert.StartsWith("Mule", ranked[0], StringComparison.Ordinal);
+        Assert.StartsWith("Wanderer", ranked[1], StringComparison.Ordinal);
+        Assert.StartsWith("Bold Endeavour", ranked[2], StringComparison.Ordinal);
+        Assert.Matches(@"shields \d+ MJ", ranked[0]);
+        Assert.Matches(@"shields \d+ MJ", ranked[1]);
+        Assert.DoesNotContain("shields", ranked[2], StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task NothingBigEnoughSaysSoAndNamesTheLargestHold()
     {

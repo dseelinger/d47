@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Asking which of your ships is strongest, fastest or best at something, such as "Which of my ships has the strongest shields?", gets an answer that compares the ships. It used to read out the carrier's position and the list of stored ships. Each ship in a comparison now carries its shield strength in megajoules, and D47 can rank your ships by it.
+
 Fixed: When a story playback ends, the mini panel, on the desktop and in the headset, goes back to what it showed before: on the Stories tab, Your story. It used to stay blank until you changed tab or mode.
 
 Fixed: While the mini panel reads out a story playback, its avatar shows the ship's core that spoke the line, speaking while the line is heard and idle while paused, and the core aboard returns when the playback ends. It used to show the core aboard for every core's line.

@@ -5,6 +5,7 @@ using D47.Core.Configuration;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
+using D47.Core.Ships;
 
 namespace D47.Core.Capabilities.Builtin;
 
@@ -102,8 +103,8 @@ public static class JournalCapability
                 new("my fleet carrier", "get_fleet"),
                 new("my carrier", "get_fleet"),
                 new("what ships do i own", "get_fleet") { Arguments = WithShips },
-                new("my ships", "get_fleet") { Arguments = WithShips },
-                new("my fleet", "get_fleet") { Arguments = WithShips },
+                new("my ships", "get_fleet") { Arguments = WithShips, NotWith = Ranking },
+                new("my fleet", "get_fleet") { Arguments = WithShips, NotWith = Ranking },
                 new("stored modules", "get_stored_modules"),
                 new("module storage", "get_stored_modules"),
                 new("what materials", "get_materials"),
@@ -307,9 +308,9 @@ public static class JournalCapability
                         "Ask D47 which of your ships has the most cargo space. The reply ranks your ships by "
                         + "cargo capacity, including ones you are not aboard.",
                     Description =
-                        "Compare the Commander's ships by what is fitted to each: cargo capacity, maximum "
-                        + "jump range, unladen mass, fuel, value and rebuy. Every ship they have been seen "
-                        + "flying is answerable, not only the one they are aboard. Use it for any question "
+                        "Compare the Commander's ships by what is fitted to each: shield strength, cargo "
+                        + "capacity, maximum jump range, unladen mass, fuel, value and rebuy. Every ship they "
+                        + "have been seen flying is answerable, not only the one they are aboard. Use it for any question "
                         + "that ranks or filters their ships.",
                     Parameters =
                     [
@@ -319,7 +320,7 @@ public static class JournalCapability
                         ToolParameter.OneOf(
                             "order_by",
                             "Rank the ships by this figure, largest first. Listed by name otherwise.",
-                            ["jump_range", "cargo"]),
+                            ["jump_range", "cargo", "shields"]),
                         ToolParameter.Flag(
                             "mining",
                             "List only ships fitted for tritium mining — a mining laser or Volley Repeater, "
@@ -725,6 +726,17 @@ public static class JournalCapability
         "where's my carrier", "where is my fc", "my fleet carrier", "my carrier",
         "where is my fleet carrier right now", "what system is my carrier in",
         "what system is my fleet carrier in",
+    ];
+
+    /// <summary>
+    /// Words that make a sentence about the ships a comparison between them, which the list does not answer:
+    /// "which of my ships has the strongest shields" goes to the model and <c>get_fleet_loadouts</c>.
+    /// </summary>
+    private static readonly string[] Ranking =
+    [
+        "which", "compare", "rank", "most", "least", "best", "worst", "strongest", "weakest", "toughest",
+        "biggest", "largest", "smallest", "fastest", "slowest", "longest", "shortest", "highest", "lowest",
+        "cheapest", "furthest", "farthest",
     ];
 
     /// <summary>Asking for the ships themselves, which is what turns the list on.</summary>
@@ -1528,11 +1540,13 @@ public static class JournalCapability
         }
 
         var order = arguments.TryGetString("order_by", out var asked) ? asked : string.Empty;
+        var shields = wanted.ToDictionary(ship => ship.Key, ship => ShieldStrength(ship.Value.Loadout));
 
         var listed = order switch
         {
             "jump_range" => wanted.OrderByDescending(ship => ship.Value.Loadout.MaxJumpRange ?? double.MinValue),
             "cargo" => wanted.OrderByDescending(ship => (double?)ship.Value.Loadout.CargoCapacity ?? double.MinValue),
+            "shields" => wanted.OrderByDescending(ship => shields[ship.Key] ?? double.MinValue),
             _ => wanted.OrderBy(ship => ship.Value.Loadout.Describe() ?? string.Empty, StringComparer.OrdinalIgnoreCase),
         };
 
@@ -1546,6 +1560,11 @@ public static class JournalCapability
         {
             var loadout = ship.Value.Loadout;
             var figures = new List<string>();
+
+            if (shields[ship.Key] is { } strength)
+            {
+                figures.Add($"shields {strength:0} MJ");
+            }
 
             if (loadout.CargoCapacity is { } cargo)
             {
@@ -1596,6 +1615,12 @@ public static class JournalCapability
         Uncovered(report, active);
         return report.ToString().TrimEnd();
     }
+
+    /// <summary>The fitted shield generator's strength in megajoules, or null where there is none or it cannot be worked out.</summary>
+    private static double? ShieldStrength(ShipLoadout loadout) =>
+        loadout.IsKnown
+            ? ShipGauges.Read(new ShipBuild(string.Empty, string.Empty, loadout.Type!), loadout).Combat?.Shields
+            : null;
 
     /// <summary>
     /// Ships the Commander owns that no loadout has been read for, named so that a ranking is not

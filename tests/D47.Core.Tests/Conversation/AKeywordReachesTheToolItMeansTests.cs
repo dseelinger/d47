@@ -76,6 +76,39 @@ public class AKeywordReachesTheToolItMeansTests
         Assert.Equal(ships, match.Arguments.TryGetBoolean("ships", out var asks) && asks);
     }
 
+    /// <summary>
+    /// A question that compares the ships is not a request for the list, so no keyword answers it and it
+    /// goes to the model.
+    /// </summary>
+    [Theory]
+    [InlineData("Which of my ships has the strongest shields?", InputSource.Typed)]
+    [InlineData("which of my ships has the strongest shields", InputSource.Spoken)]
+    [InlineData("what is the fastest ship in my fleet", InputSource.Typed)]
+    [InlineData("which of my ships jumps furthest", InputSource.Spoken)]
+    public void AQuestionComparingTheShipsIsNotAnsweredWithTheList(string asked, InputSource source)
+    {
+        var install = new MemoryInstall();
+
+        Assert.Null(Router(install).MatchToolCommand(asked));
+        Assert.Null(Router(install).Match(asked, source));
+    }
+
+    /// <summary>The list is still one keyword away.</summary>
+    [Theory]
+    [InlineData("show me my ships")]
+    [InlineData("where are all my ships")]
+    [InlineData("list my fleet please")]
+    public void AskingForTheShipsStillListsThem(string asked)
+    {
+        var install = new MemoryInstall();
+
+        var match = Router(install).Match(asked);
+
+        Assert.NotNull(match);
+        Assert.Equal("get_fleet", match!.ToolName);
+        Assert.True(match.Arguments.TryGetBoolean("ships", out var asks) && asks);
+    }
+
     /// <summary>And the answer it now reaches is the Commander's own carrier, not a squadron's.</summary>
     [Fact]
     public void ASquadronCarrierDoesNotMoveTheCommandersOwn()
