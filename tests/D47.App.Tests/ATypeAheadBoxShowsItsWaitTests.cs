@@ -25,11 +25,17 @@ public sealed class ATypeAheadBoxShowsItsWaitTests
 {
     private sealed class Lookup
     {
+        private int _calls;
+
         public TaskCompletionSource<IReadOnlyList<string>> Answer { get; private set; } = new();
+
+        /// <summary>How many times the suggester has called <see cref="Ask"/>, which it does on a pool thread.</summary>
+        public int Calls => Volatile.Read(ref _calls);
 
         public Task<IReadOnlyList<string>> Ask(string typed, CancellationToken token)
         {
             Answer = new TaskCompletionSource<IReadOnlyList<string>>();
+            Interlocked.Increment(ref _calls);
 
             return Answer.Task;
         }
@@ -62,6 +68,8 @@ public sealed class ATypeAheadBoxShowsItsWaitTests
             Dispatcher.UIThread.RunJobs();
         }
 
+        private int _asked;
+
         public Lookup Lookup { get; } = new();
 
         public TextBox Box { get; }
@@ -79,16 +87,37 @@ public sealed class ATypeAheadBoxShowsItsWaitTests
                     "|",
                     row.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).Where(text => !string.IsNullOrEmpty(text))))];
 
+        private bool Waiting => Suggestions.List.GetVisualDescendants().OfType<WaitingState>().Any();
+
+        // Returns once the lookup this text starts has been called, so Lookup.Answer is the task for this text.
         public void Type(string text)
         {
+            var starts = text != Box.Text && text.Trim().Length >= NameSuggestions.MinimumLength;
+
             Box.Text = text;
             Dispatcher.UIThread.RunJobs();
+
+            if (starts)
+            {
+                _asked++;
+                UiWait.Until(() => Lookup.Calls >= _asked, showing: () => $"{Lookup.Calls} of {_asked} lookups called");
+            }
         }
 
+        // Returns once the answer already given to Lookup.Answer has been drawn. A pending answer has nothing to wait
+        // for; a cancelled one is never posted to the UI.
         public void Settle()
         {
-            Thread.Sleep(50);
-            Dispatcher.UIThread.RunJobs();
+            var answer = Lookup.Answer.Task;
+
+            if (answer.IsCompleted && !answer.IsCanceled)
+            {
+                UiWait.Until(() => !Waiting, showing: () => string.Join("|", Statuses()));
+            }
+            else
+            {
+                Dispatcher.UIThread.RunJobs();
+            }
         }
 
         public KeyEventArgs Press(Key key)
