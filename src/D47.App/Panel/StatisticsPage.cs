@@ -137,8 +137,7 @@ public sealed class StatisticsPage : UserControl, IFilterablePage
         {
             groups.Add(new SidebarGroup(null, [.. sections.Select(name => new SidebarItem(
                 name,
-                CareerStatistics.Label(name),
-                Statistics.Section(name).Count.ToString(System.Globalization.CultureInfo.InvariantCulture)))]));
+                CareerStatistics.Label(name)))]));
         }
 
         if (_activities is not null)

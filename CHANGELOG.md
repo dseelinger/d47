@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: The sidebar on Commander > Statistics shows the section names only; the figure count beside each name read as a career total.
+
 Changed: Organic data sales are counted as Exobiology, apart from Exploration, in Earnings by source on the This session page, in "how have I done this session", in the Credits page and `get_credit_ledger` (new `exobiology` kind), and in the Quartermaster remark. Chart's exploration remark counts cartographic and organic sales together and names the larger share.
 
 Changed: While a galaxy search runs, the Search pages and the Faction page show the wait mark with "Retrieving results…" instead of the words "Asking the galaxy search".

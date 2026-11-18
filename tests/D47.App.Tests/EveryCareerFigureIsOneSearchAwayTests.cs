@@ -116,7 +116,7 @@ public class EveryCareerFigureIsOneSearchAwayTests
     }
 
     [AvaloniaFact]
-    public void TheSidebarListsEverySectionInTheGamesOrderWithItsCount()
+    public void TheSidebarListsEverySectionInTheGamesOrderWithNoCount()
     {
         var (window, panel, _) = Open(Statistics);
 
@@ -129,7 +129,9 @@ public class EveryCareerFigureIsOneSearchAwayTests
         Assert.Equal(
             Sections.Select(name => CareerStatistics.Label(name).ToUpperInvariant()),
             labels.Select(row => row[0]));
-        Assert.Equal("3", labels[1][1]);
+        Assert.All(sidebar.Items, row => Assert.DoesNotContain(
+            row.GetVisualDescendants().OfType<TextBlock>(),
+            block => block.IsVisible && !string.IsNullOrEmpty(block.Text) && block.Text.All(char.IsDigit)));
         Assert.Equal("MATERIAL TRADER", labels[13][0]);
 
         window.Close();
