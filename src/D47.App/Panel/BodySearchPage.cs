@@ -291,62 +291,102 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         var material = Material(posting.Arguments);
-        var shareColumn = material is null ? -1 : 5;
-        var gravityColumn = headset ? -1 : shareColumn < 0 ? 5 : 6;
+        var table = Arrange(TableId, HeadName, material ?? string.Empty, posting, () => Fields(headset, material));
 
-        List<SearchColumn> heads =
-        [
-            new("Body", "Type", "name", false),
-            new("System", null, "system", false),
-            new("LY", null, SearchSorts.Distance, true),
-            new("From star", null, "from_star", true),
-            new("Landable", null, null, false),
-        ];
-
-        if (shareColumn >= 0)
-        {
-            heads.Add(new(material!, "Share", SearchSorts.Material, true));
-        }
-
-        if (gravityColumn >= 0)
-        {
-            heads.Add(new("Gravity", null, "gravity", true));
-        }
-
-        List<TableColumn> shown =
-        [
-            new("Body", ColumnFit.Fill) { Min = 120 },
-            new("System", ColumnFit.Fill) { Min = 100 },
-            new("Distance"),
-            new("FromStar"),
-            new("Landable"),
-        ];
-
-        if (shareColumn >= 0)
-        {
-            shown.Add(new("Share"));
-        }
-
-        if (gravityColumn >= 0)
-        {
-            shown.Add(new("Gravity"));
-        }
-
-        var columns = NewTable(TableId, shown);
-        var rule = SearchHead(posting, HeadName, columns, heads);
-
-        var table = new StackPanel { Spacing = 8 };
+        var head = new StackPanel { Spacing = 8 };
 
         if (RichestIn(posting.Arguments) is { } richest)
         {
-            table.Children.Add(Prose(
+            head.Children.Add(Prose(
                 $"The richest in {richest} among the nearest {BodyQuery.RichestOf} that carry it.",
                 TypeScale.Tip,
                 ThemeManager.GreyKey));
         }
 
-        table.Children.Add(rule);
-        return new PagedTable(table, item => Row((BodySummary)item, material, columns, shareColumn, gravityColumn));
+        head.Children.Add(SearchTableFields.Head(table));
+
+        return new PagedTable(head, item => Row((BodySummary)item, table));
+    }
+
+    /// <summary>
+    /// Every field the table can show. The asked-for material's Share column is required while the material is asked
+    /// for; Gravity is not shown by default in the headset.
+    /// </summary>
+    private IReadOnlyList<TableField<object>> Fields(bool headset, string? material)
+    {
+        List<TableField<object>> fields =
+        [
+            SearchField("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 120 }, "Body", row => NameCell((BodySummary)row), "name", "Type"),
+            SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((BodySummary)row), "system"),
+            SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((BodySummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
+            SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(StationSearchPage.Light(((BodySummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), "from_star", right: true),
+            SearchField("Landable", new TableColumn("Landable"), "Landable", row => Centered(Value(((BodySummary)row).IsLandable ? "Yes" : "No"))),
+        ];
+
+        if (material is not null)
+        {
+            fields.Add(SearchField(
+                "Share",
+                new TableColumn("Share"),
+                material,
+                row => Centered(Right(Mono(
+                    ((BodySummary)row).Share(material) is { } share ? $"{share.ToString("F2", CultureInfo.InvariantCulture)}%" : Dash,
+                    TypeScale.Small,
+                    ThemeManager.AKey))),
+                SearchSorts.Material,
+                "Share",
+                right: true) with { Required = true });
+        }
+
+        fields.AddRange(
+        [
+            SearchField(
+                "Gravity",
+                new TableColumn("Gravity"),
+                "Gravity",
+                row => Centered(Right(Mono(
+                    ((BodySummary)row).Gravity is { } g ? $"{g.ToString("0.00", CultureInfo.InvariantCulture)} g" : Dash,
+                    TypeScale.Small,
+                    ThemeManager.GreyKey))),
+                "gravity",
+                right: true,
+                byDefault: !headset),
+            SearchField("Atmosphere", new TableColumn("Atmosphere"), "Atmosphere", row => TableCells.Text(((BodySummary)row).Atmosphere), byDefault: false),
+            SearchField("MappingValue", new TableColumn("MappingValue"), "Mapping value", row => TableCells.Number(((BodySummary)row).MappingValue), right: true, byDefault: false),
+            SearchField("Reserves", new TableColumn("Reserves"), "Reserves", row => TableCells.Text(((BodySummary)row).ReserveLevel), byDefault: false),
+            SearchField("Rings", new TableColumn("Rings", ColumnFit.Fill) { Min = 120 }, "Rings", row => TableCells.List([.. ((BodySummary)row).Rings.Select(ring => ring.Name)]), byDefault: false),
+            SearchField("Signals", new TableColumn("Signals", ColumnFit.Fill) { Min = 120 }, "Signals", row => TableCells.List([.. ((BodySummary)row).Signals.Select(signal => $"{signal.Kind} {signal.Count.ToString(CultureInfo.InvariantCulture)}")]), byDefault: false),
+            SearchField(
+                "SurfaceTemperature",
+                new TableColumn("SurfaceTemperature"),
+                "Surface temperature",
+                row => Centered(Right(Mono(
+                    ((BodySummary)row).SurfaceTemperature is { } kelvin ? $"{kelvin.ToString("N0", CultureInfo.InvariantCulture)} K" : Dash,
+                    TypeScale.Small,
+                    ThemeManager.WhiteKey))),
+                right: true,
+                byDefault: false),
+            SearchField("Terraforming", new TableColumn("Terraforming"), "Terraforming", row => TableCells.Text(((BodySummary)row).TerraformingState), byDefault: false),
+            SearchField("TidallyLocked", new TableColumn("TidallyLocked"), "Tidally locked", row => TableCells.Flag(((BodySummary)row).IsTidallyLocked), byDefault: false),
+            SearchField("Volcanism", new TableColumn("Volcanism"), "Volcanism", row => TableCells.Text(((BodySummary)row).Volcanism), byDefault: false),
+        ]);
+
+        return fields;
+    }
+
+    private static Control NameCell(BodySummary body)
+    {
+        var name = Chrome(body.Name, TypeScale.Secondary, ThemeManager.AKey);
+
+        return Centered(Pair(name, Sub(body.Subtype)));
+    }
+
+    private Control SystemCell(BodySummary body)
+    {
+        var system = Value(body.SystemName);
+        ThemeInk.Bind(system, TextBlock.ForegroundProperty, string.Equals(body.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+
+        return Centered(CopyGlyph.Beside(SystemLink.Look(system), body.SystemName, Copy));
     }
 
     protected override Control BuildForm()
@@ -396,39 +436,9 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private static readonly string[] Flags = ["landable", "terraformable", "tidally_locked"];
 
-    private Control Row(BodySummary body, string? material, TableLayout columns, int shareColumn, int gravityColumn)
+    private Control Row(BodySummary body, ArrangedTable<object> table)
     {
-        var name = Chrome(body.Name, TypeScale.Secondary, ThemeManager.AKey);
-
-        var system = Value(body.SystemName);
-        ThemeInk.Bind(system, TextBlock.ForegroundProperty, string.Equals(body.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
-
-        List<Control> cells =
-        [
-                Cell(Pair(name, Sub(body.Subtype)), 0),
-                Cell(CopyGlyph.Beside(SystemLink.Look(system), body.SystemName, Copy), 1),
-                Cell(Right(Mono(body.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
-                Cell(Right(Mono(body.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 3),
-                Cell(Value(body.IsLandable ? "Yes" : "No"), 4),
-        ];
-
-        if (shareColumn >= 0)
-        {
-            cells.Add(Cell(Right(Mono(
-                body.Share(material!) is { } share ? $"{share.ToString("F2", CultureInfo.InvariantCulture)}%" : Dash,
-                TypeScale.Small,
-                ThemeManager.AKey)), shareColumn));
-        }
-
-        if (gravityColumn >= 0)
-        {
-            cells.Add(Cell(Right(Mono(
-                body.Gravity is { } g ? $"{g.ToString("0.00", CultureInfo.InvariantCulture)} g" : Dash,
-                TypeScale.Small,
-                ThemeManager.GreyKey)), gravityColumn));
-        }
-
-        var grid = columns.Row(cells);
+        var grid = table.Row(body);
 
         if (body.SystemAddress is null || _open is null)
         {

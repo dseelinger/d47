@@ -21,17 +21,6 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     public const string TableId = "Search.Systems";
 
-    private static readonly TableColumn[] Columns =
-    [
-        new("System", ColumnFit.Fill) { Min = 120 },
-        new("Distance"),
-        new("Allegiance"),
-        new("Economy"),
-        new("Population"),
-        new("Power"),
-        new("Reported"),
-    ];
-
     private const string Dash = "—";
 
     private readonly Func<string?> _here;
@@ -215,29 +204,52 @@ public sealed class SystemSearchPage : GalaxySearchPage
             return null;
         }
 
-        var columns = NewTable(TableId, headset ? Columns[..^1] : Columns);
+        var table = Arrange(TableId, HeadName, string.Empty, posting, () => Fields(headset));
 
-        List<SearchColumn> heads =
-        [
-            new("System", "Controlled by", "name", false),
-            new("LY", null, SearchSorts.Distance, true),
-            new("Allegiance", "Government", "allegiance", false),
-            new("Economy", "Security", "economy", false),
-            new("Population", null, "population", true),
-            new("Power", "State", "power", false),
-        ];
+        return new PagedTable(SearchTableFields.Head(table), item => Row((SystemSummary)item, table));
+    }
 
-        if (!headset)
-        {
-            heads.Add(new("Reported", null, "updated", true));
-        }
+    /// <summary>Every field the table can show; Reported is not shown by default in the headset.</summary>
+    private IReadOnlyList<TableField<object>> Fields(bool headset) =>
+    [
+        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 120 }, "System", row => SystemCell((SystemSummary)row), "name", "Controlled by"),
+        SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((SystemSummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
+        SearchField("Allegiance", new TableColumn("Allegiance"), "Allegiance", row => Centered(Pair(Value(((SystemSummary)row).Allegiance), Sub(((SystemSummary)row).Government))), "allegiance", "Government"),
+        SearchField("Economy", new TableColumn("Economy"), "Economy", row => Centered(Pair(Value(((SystemSummary)row).PrimaryEconomy), Sub(((SystemSummary)row).Security))), "economy", "Security"),
+        SearchField(
+            "Population",
+            new TableColumn("Population"),
+            "Population",
+            row => Centered(Right(Mono(((SystemSummary)row).Population is { } people ? people.ToString("N0", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.WhiteKey))),
+            "population",
+            right: true),
+        SearchField("Power", new TableColumn("Power"), "Power", row => Centered(PowerCell((SystemSummary)row)), "power", "State"),
+        SearchField(
+            "Reported",
+            new TableColumn("Reported"),
+            "Reported",
+            row => Centered(Right(Mono(Day(((SystemSummary)row).ReportedAt), TypeScale.Small, ThemeManager.GreyKey))),
+            "updated",
+            right: true,
+            byDefault: !headset),
+        SearchField("Permit", new TableColumn("Permit"), "Permit", row => ((SystemSummary)row) is { KnownPermit: false } ? TableCells.Missing() : TableCells.Flag(((SystemSummary)row).NeedsPermit), byDefault: false),
+        SearchField("Stations", new TableColumn("Stations"), "Stations", row => TableCells.Number(((SystemSummary)row).StationCount), right: true, byDefault: false),
+        SearchField("AtWar", new TableColumn("AtWar"), "At war", row => TableCells.Flag(((SystemSummary)row).AtWar), byDefault: false),
+    ];
 
-        var rule = SearchHead(posting, HeadName, columns, heads);
-        var here = _here();
+    private Control SystemCell(SystemSummary system)
+    {
+        var here = string.Equals(system.Name, _here(), StringComparison.OrdinalIgnoreCase);
+        var name = Chrome(system.Name, TypeScale.Secondary, here ? ThemeManager.CyanKey : ThemeManager.AKey);
+        name.Text = system.Name;
 
-        return new PagedTable(
-            rule,
-            item => Row((SystemSummary)item, columns, headset, string.Equals(((SystemSummary)item).Name, here, StringComparison.OrdinalIgnoreCase)));
+        var faction = system.ControllingFaction is { } controlling
+            ? system.Factions.FirstOrDefault(f => string.Equals(f.Name, controlling, StringComparison.OrdinalIgnoreCase))?.State is { } state
+                ? $"{controlling} · {state}"
+                : controlling
+            : Dash;
+
+        return Centered(Pair(CopyGlyph.Beside(SystemLink.Look(name), system.Name, Copy), Sub(faction)));
     }
 
     protected override Control BuildForm()
@@ -295,36 +307,9 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private string Reference() =>
         _near.Text is { } near && near.Trim().Length > 0 ? near.Trim() : _here() ?? "your system";
 
-    private Control Row(SystemSummary system, TableLayout columns, bool headset, bool here)
+    private Control Row(SystemSummary system, ArrangedTable<object> table)
     {
-        var name = Chrome(system.Name, TypeScale.Secondary, here ? ThemeManager.CyanKey : ThemeManager.AKey);
-        name.Text = system.Name;
-
-        var faction = system.ControllingFaction is { } controlling
-            ? system.Factions.FirstOrDefault(f => string.Equals(f.Name, controlling, StringComparison.OrdinalIgnoreCase))?.State is { } state
-                ? $"{controlling} · {state}"
-                : controlling
-            : Dash;
-
-        List<Control> cells =
-        [
-                Cell(Pair(CopyGlyph.Beside(SystemLink.Look(name), system.Name, Copy), Sub(faction)), 0),
-                Cell(Right(Mono(system.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 1),
-                Cell(Pair(Value(system.Allegiance), Sub(system.Government)), 2),
-                Cell(Pair(Value(system.PrimaryEconomy), Sub(system.Security)), 3),
-                Cell(Right(Mono(system.Population is { } people ? people.ToString("N0", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 4),
-                Cell(PowerCell(system), 5),
-        ];
-
-        if (!headset)
-        {
-            cells.Add(Cell(Right(Mono(
-                system.ReportedAt is { } at ? at.ToLocalTime().ToString("MM-dd", CultureInfo.InvariantCulture) : Dash,
-                TypeScale.Small,
-                ThemeManager.GreyKey)), 6));
-        }
-
-        var grid = columns.Row(cells);
+        var grid = table.Row(system);
 
         if (system.SystemAddress is null || _open is null)
         {
@@ -504,13 +489,18 @@ public sealed class SystemSearchPage : GalaxySearchPage
         return block;
     }
 
-    internal static T Cell<T>(T control, int column)
+    internal static T Centered<T>(T control)
         where T : Control
     {
         control.VerticalAlignment = VerticalAlignment.Center;
-        Grid.SetColumn(control, column);
         return control;
     }
+
+    /// <summary>Light years to two places, or a dash.</summary>
+    internal static string Fixed(double? ly) => ly is { } value ? value.ToString("F2", CultureInfo.InvariantCulture) : Dash;
+
+    /// <summary>The day as MM-dd in local time, or a dash.</summary>
+    internal static string Day(DateTimeOffset? at) => at is { } value ? value.ToLocalTime().ToString("MM-dd", CultureInfo.InvariantCulture) : Dash;
 
     internal static TextBlock Right(TextBlock block)
     {

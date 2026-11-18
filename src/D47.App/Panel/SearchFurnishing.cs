@@ -241,6 +241,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             {
                 PaneWidths = host.PaneWidths,
                 ColumnWidths = host.ColumnWidths,
+                ColumnArrangements = host.ColumnArrangements,
             };
             ApplyPending();
 
@@ -267,6 +268,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             {
                 PaneWidths = host.PaneWidths,
                 ColumnWidths = host.ColumnWidths,
+                ColumnArrangements = host.ColumnArrangements,
             };
             ApplyPending();
 
@@ -284,6 +286,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             {
                 PaneWidths = host.PaneWidths,
                 ColumnWidths = host.ColumnWidths,
+                ColumnArrangements = host.ColumnArrangements,
             };
             ApplyPending();
 
@@ -301,6 +304,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             {
                 PaneWidths = host.PaneWidths,
                 ColumnWidths = host.ColumnWidths,
+                ColumnArrangements = host.ColumnArrangements,
             };
             ApplyPending();
 
@@ -318,6 +322,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             {
                 PaneWidths = host.PaneWidths,
                 ColumnWidths = host.ColumnWidths,
+                ColumnArrangements = host.ColumnArrangements,
             };
             ApplyPending();
 
@@ -336,6 +341,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 host.Model?.WaitSound)
             {
                 ColumnWidths = host.ColumnWidths,
+                ColumnArrangements = host.ColumnArrangements,
             };
 
             return _rares;

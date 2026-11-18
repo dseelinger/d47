@@ -23,7 +23,8 @@ public static class SearchPanelHosting
         string? rootKey,
         bool headset = false,
         PanelRouting? routing = null,
-        IClipboard? copy = null)
+        IClipboard? copy = null,
+        ColumnArrangementMemory? arrangements = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
@@ -35,6 +36,11 @@ public static class SearchPanelHosting
         if (copy is not null)
         {
             panel.EnableCopy(copy);
+        }
+
+        if (arrangements is not null)
+        {
+            panel.EnableColumnArrangements(arrangements);
         }
 
         panel.EnableStarSystem(surface);
@@ -60,7 +66,9 @@ public static class SearchPanelHosting
         IGalaxyService galaxy,
         GalaxySearchBoard board,
         IStarSystemService systems,
-        string root)
+        string root,
+        ColumnArrangementMemory? arrangements = null,
+        bool headset = false)
     {
         var history = new SearchHistory("search-history.json", new MemoryFileSystem(), NullLogger<SearchHistory>.Instance);
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(galaxy, () => "LTT 7786", settings, searches: board, history: history)]);
@@ -78,6 +86,6 @@ public static class SearchPanelHosting
             },
         };
 
-        return Show(surface, root);
+        return Show(surface, root, headset, arrangements: arrangements);
     }
 }

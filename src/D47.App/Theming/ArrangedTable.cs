@@ -68,6 +68,12 @@ public sealed class ArrangedTable<TRow>
     /// <summary>Raised after the sort, the arrangement or the arranging state changes.</summary>
     public event Action? Changed;
 
+    /// <summary>Raised when a header press changes the sort, before <see cref="Changed"/>; not raised by <see cref="ShowSort"/>.</summary>
+    public event Action? Sorted;
+
+    /// <summary>The key of the sorted field and its direction; null in the table's default order.</summary>
+    public (string Key, SortDirection Direction)? SortedBy => _sort;
+
     /// <summary>The table is drawn in the headset, which does not scroll sideways.</summary>
     public bool Headset => _arrangement?.Headset == true;
 
@@ -177,6 +183,26 @@ public sealed class ArrangedTable<TRow>
 
     /// <summary><paramref name="rows"/>, given in the default order, sorted by the chosen sort.</summary>
     public IReadOnlyList<TRow> Sort(IReadOnlyList<TRow> rows) => _head.Sort(rows);
+
+    /// <summary>
+    /// Shows a sort held elsewhere, such as a service's, without raising any event. Returns false, and shows no sort,
+    /// when the field is not drawn or does not sort.
+    /// </summary>
+    public bool ShowSort(string? key, SortDirection direction)
+    {
+        if (SortedAt(key) is not { } column)
+        {
+            _sort = null;
+            _head.Show(null);
+
+            return false;
+        }
+
+        _sort = (key!, direction);
+        _head.Show(new SortOrder(column, direction));
+
+        return true;
+    }
 
     /// <summary>Returns the table to its default order.</summary>
     public void Reset()
@@ -491,6 +517,7 @@ public sealed class ArrangedTable<TRow>
         head.Changed += () =>
         {
             _sort = head.Order is { } order ? (drawn[order.Column].Key, order.Direction) : null;
+            Sorted?.Invoke();
             Changed?.Invoke();
         };
 

@@ -80,7 +80,6 @@ D47.App.Theming.ListRow.GetNameBrush(Avalonia.Controls.Control)
 D47.App.Theming.ListRow.GetSecondaryBrush(Avalonia.Controls.Control)
 D47.App.Theming.ListRow.SetNameBrush(Avalonia.Controls.Control, Avalonia.Media.IBrush)
 D47.App.Theming.ListRow.SetSecondaryBrush(Avalonia.Controls.Control, Avalonia.Media.IBrush)
-D47.App.Theming.TableCells.List(System.Collections.Generic.IReadOnlyList<string>)
 D47.App.Voice.VoicePipeline.GameRunning
 D47.App.Voice.VoicePipeline.Held
 D47.Audio.FadeSampleProvider.Level

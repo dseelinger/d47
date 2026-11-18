@@ -26,15 +26,6 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     public const string TableId = "Search.Signals";
 
-    private static readonly TableColumn[] Columns =
-    [
-        new("Signal", ColumnFit.Fill) { Min = 100 },
-        new("System", ColumnFit.Fill) { Min = 100 },
-        new("Distance"),
-        new("Seen"),
-        new("Source"),
-    ];
-
     private const string YourScan = "YOUR SCAN";
 
     private const string FromIndex = "INDEX";
@@ -202,22 +193,33 @@ public sealed class SignalSearchPage : GalaxySearchPage
             return null;
         }
 
-        var columns = NewTable(TableId, Columns);
+        var table = Arrange(TableId, HeadName, string.Empty, posting, Fields);
 
-        List<SearchColumn> heads =
-        [
-            new("Signal", null, null, false),
-            new("System", null, null, false),
-            new("LY", null, null, true),
-            new("Seen", null, null, false),
-            new("Source", null, null, false),
-        ];
-
-        var rule = SearchHead(posting, HeadName, columns, heads);
-        var now = DateTimeOffset.UtcNow;
-
-        return new PagedTable(rule, item => Row((SignalFinding)item, columns, now));
+        return new PagedTable(SearchTableFields.Head(table), item => Row((SignalFinding)item, table));
     }
+
+    /// <summary>Every field the table can show; none sorts.</summary>
+    private IReadOnlyList<TableField<object>> Fields() =>
+    [
+        SearchField("Signal", new TableColumn("Signal", ColumnFit.Fill) { Min = 100 }, "Signal", row => Centered(Value(((SignalFinding)row).Signal))),
+        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((SignalFinding)row)),
+        SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(((SignalFinding)row).Distance.ToString("F2", CultureInfo.InvariantCulture), TypeScale.Small, ThemeManager.AKey))), right: true),
+        SearchField("Seen", new TableColumn("Seen"), "Seen", row => Centered(Value(MissionsPage.Ago(DateTimeOffset.UtcNow - ((SignalFinding)row).LastSeen)))),
+        SearchField("Source", new TableColumn("Source"), "Source", row => SourceCell((SignalFinding)row)),
+    ];
+
+    private Control SystemCell(SignalFinding finding)
+    {
+        var here = string.Equals(finding.System, _here(), StringComparison.OrdinalIgnoreCase);
+        var system = Value(finding.System);
+        system.VerticalAlignment = VerticalAlignment.Center;
+        ThemeInk.Bind(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
+
+        return CopyGlyph.Beside(SystemLink.Look(system), finding.System, Copy);
+    }
+
+    private static Control SourceCell(SignalFinding finding) =>
+        Centered(Chrome(finding.OwnScan ? YourScan : FromIndex, TypeScale.Small, finding.OwnScan ? ThemeManager.CyanKey : ThemeManager.GreyKey));
 
     protected override Control BuildForm()
     {
@@ -243,23 +245,9 @@ public sealed class SignalSearchPage : GalaxySearchPage
     protected override void Follow() =>
         ShowHere(_near, _here());
 
-    private Control Row(SignalFinding finding, TableLayout columns, DateTimeOffset now)
+    private Control Row(SignalFinding finding, ArrangedTable<object> table)
     {
-        var here = string.Equals(finding.System, _here(), StringComparison.OrdinalIgnoreCase);
-        var system = Value(finding.System);
-        system.VerticalAlignment = VerticalAlignment.Center;
-        ThemeInk.Bind(system, TextBlock.ForegroundProperty, here ? ThemeManager.CyanKey : ThemeManager.AKey);
-
-        var systemCell = CopyGlyph.Beside(SystemLink.Look(system), finding.System, Copy);
-
-        var grid = columns.Row(
-            [
-                Cell(Value(finding.Signal), 0),
-                Cell(systemCell, 1),
-                Cell(Right(Mono(finding.Distance.ToString("F2", CultureInfo.InvariantCulture), TypeScale.Small, ThemeManager.AKey)), 2),
-                Cell(Value(MissionsPage.Ago(now - finding.LastSeen)), 3),
-                Cell(Chrome(finding.OwnScan ? YourScan : FromIndex, TypeScale.Small, finding.OwnScan ? ThemeManager.CyanKey : ThemeManager.GreyKey), 4),
-            ]);
+        var grid = table.Row(finding);
 
         var row = new Button
         {

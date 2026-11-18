@@ -246,9 +246,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     public ColumnWidthMemory? ColumnWidths { get; init; }
 
-    /// <summary>A table layout for an answer; the headset draws it with no drag handles.</summary>
-    protected TableLayout NewTable(string id, IReadOnlyList<TableColumn> columns) =>
-        new(id, columns, _headset ? null : ColumnWidths, 12);
+    /// <summary>Where the columns each table shows are remembered; null keeps the table's own.</summary>
+    public ColumnArrangementMemory? ColumnArrangements { get; init; }
+
+    private SearchTableFields? _sortFields;
+    private ArrangedTable<object>? _arranged;
+    private string? _arrangedShape;
+
+    private SearchTableFields SortFields => _sortFields ??= new SearchTableFields(Kind);
 
     /// <summary>What is drawn where the answer goes.</summary>
     public GalaxySearchView View { get; private set; }
@@ -613,68 +618,54 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         return sent;
     }
 
-    /// <summary>One column of an answer table: its labels, the <c>order_by</c> name the service sorts it on (null for none), and which side its figures sit on.</summary>
-    protected sealed record SearchColumn(string Label, string? Second, string? Sort, bool Right);
-
     /// <summary>
-    /// The header row of an answer table. A column the service sorts on is pressed to re-run the search
-    /// sorted by it; the sort is carried as <c>order_by</c> and <c>order</c> in the search's arguments.
+    /// The answer's table, built once and kept across redraws so its COLUMNS bar stays open. A new <paramref name="shape"/>
+    /// builds it again from <paramref name="fields"/>, which registers the sorts of <see cref="SortFields"/>. The sort shown
+    /// is the one in <paramref name="posting"/>'s arguments.
     /// </summary>
-    protected Control SearchHead(GalaxySearchPosting posting, string name, TableLayout layout, IReadOnlyList<SearchColumn> columns)
+    protected ArrangedTable<object> Arrange(string id, string headName, string shape, GalaxySearchPosting posting, Func<IReadOnlyList<TableField<object>>> fields)
     {
-        var fields = SearchSorts.For(Kind);
+        Posted = posting;
 
-        var specs = columns
-            .Select(column => fields.FirstOrDefault(field => field.Name == column.Sort) is { } field
-                ? SortColumn<object>.Remote(column.Label, field.FirstDescending ? SortDirection.Descending : SortDirection.Ascending)
-                  with { Second = column.Second, OneWay = field.OneWay }
-                : SortColumn<object>.Plain(column.Label) with { Second = column.Second })
-            .ToList();
-
-        var nearest = columns.ToList().FindIndex(column => column.Sort == SearchSorts.Distance);
-        var head = new SortHeader<object>(name, specs);
-
-        // A search with no sort is nearest first, so the first press of the distance column reverses it.
-        var current = nearest < 0 ? (SortOrder?)null : new SortOrder(nearest, SortDirection.Ascending);
-
-        if (SearchSorts.Read(Kind, posting.Arguments) is { } asked
-            && columns.ToList().FindIndex(column => column.Sort == asked.Field.Name) is var shown and >= 0)
+        if (_arranged is null || _arrangedShape != shape)
         {
-            current = new SortOrder(shown, asked.Descending ? SortDirection.Descending : SortDirection.Ascending);
+            SortFields.Clear();
+
+            var table = new ArrangedTable<object>(id, fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: headName);
+            table.Changed += Draw;
+            table.Sorted += () => _ = RunAsync(SortFields.Sorted(Rerun(Posted), table));
+            _arranged = table;
+            _arrangedShape = shape;
+        }
+        else
+        {
+            _arranged.Refresh();
         }
 
-        head.Show(current);
+        SortFields.Show(_arranged, posting.Arguments);
 
-        head.Changed += () => SortBy(posting, columns, head.Order);
-
-        var grid = layout.Header(head, [.. columns.Select(column => column.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
-        grid.Margin = new Thickness(12, 0, 12, 6);
-
-        var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = grid };
-        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
-
-        return rule;
+        return _arranged;
     }
 
-    /// <summary>Runs <paramref name="posting"/>'s search again sorted by <paramref name="order"/>; null is nearest first.</summary>
-    private void SortBy(GalaxySearchPosting posting, IReadOnlyList<SearchColumn> columns, SortOrder? order)
-    {
-        var arguments = new Dictionary<string, string>(Rerun(posting), StringComparer.Ordinal);
-        arguments.Remove("order_by");
-        arguments.Remove("order");
+    /// <summary>The posting the table is drawn for.</summary>
+    protected GalaxySearchPosting Posted { get; private set; } = null!;
 
-        if (order is { } sort && columns[sort.Column].Sort is { } field)
-        {
-            arguments["order_by"] = field;
-            arguments["order"] = sort.Direction == SortDirection.Ascending ? "asc" : "desc";
-        }
-
-        _ = RunAsync(arguments);
-    }
+    /// <summary>A field of this kind of table; pass <c>sort</c> for the <c>order_by</c> its header sorts on.</summary>
+    protected TableField<object> SearchField(
+        string key,
+        TableColumn column,
+        string label,
+        Func<object, Control> cell,
+        string? sort = null,
+        string? second = null,
+        bool right = false,
+        bool byDefault = true) =>
+        SortFields.Field(key, column, label, cell, sort, second, right, byDefault);
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _arranged?.StopArranging();
         _searches.Board.Posted += OnPosted;
         _searches.Board.Extended += OnExtended;
         _history.Attach();
@@ -1267,10 +1258,19 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 break;
 
             case GalaxySearchView.Answer:
-                block.Children.Add(Head(CountText(last!), Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last)));
+                var paged = Paged(last!, _headset);
+                var arranged = paged is null ? null : _arranged;
+
+                block.Children.Add(Head(CountText(last!), Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: Sorted(last), columns: arranged is null ? null : ColumnArranger.Tile(arranged)));
+
+                if (arranged is not null && ColumnArranger.Bar(arranged) is { } bar)
+                {
+                    block.Children.Add(bar);
+                }
+
                 AddNotes(block, last);
 
-                if (Paged(last, _headset) is { } paged)
+                if (paged is not null)
                 {
                     block.Children.Add(paged.Head);
                     return RowsBelow(block, paged, last);
@@ -1391,7 +1391,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         bool disabled = false,
         string? asked = null,
         IReadOnlyDictionary<string, string>? saved = null,
-        string? sorted = null)
+        string? sorted = null,
+        Control? columns = null)
     {
         var name = Chrome(count, TypeScale.Section, ThemeManager.AKey);
         _count = name;
@@ -1478,6 +1479,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 }
             };
             tiles.Children.Add(button);
+        }
+
+        if (columns is not null)
+        {
+            tiles.Children.Add(columns);
         }
 
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12, Children = { left, tiles } };

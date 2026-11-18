@@ -29,17 +29,6 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public const string TableId = "Search.Stations";
 
-    private static readonly TableColumn[] Columns =
-    [
-        new("Station", ColumnFit.Fill) { Min = 120 },
-        new("System", ColumnFit.Fill) { Min = 100 },
-        new("Distance"),
-        new("Pad"),
-        new("FromStar"),
-        new("AskedFor", ColumnFit.Fill) { Min = 100 },
-        new("Updated"),
-    ];
-
     private readonly Func<string?> _here;
     private readonly Action<StationSummary>? _open;
     private readonly Action<IReadOnlyList<string>, Action<IReadOnlyList<string>>> _chooseServices;
@@ -305,28 +294,71 @@ public sealed class StationSearchPage : GalaxySearchPage
             return null;
         }
 
-        var columns = NewTable(TableId, headset ? Columns[..^1] : Columns);
+        var table = Arrange(TableId, HeadName, string.Empty, posting, () => Fields(headset));
 
-        List<SearchColumn> heads =
-        [
-            new("Station", "Type", "name", false),
-            new("System", "Controlled by", "system", false),
-            new("LY", null, SearchSorts.Distance, true),
-            new("Pad", "Largest", null, false),
-            new("From star", null, "from_star", true),
-            new("Asked for", null, null, false),
-        ];
-
-        if (!headset)
-        {
-            heads.Add(new("Updated", null, "updated", true));
-        }
-
-        var rule = SearchHead(posting, HeadName, columns, heads);
-        var asked = posting.Arguments;
-
-        return new PagedTable(rule, item => Row((StationSummary)item, AskedFor((StationSummary)item, asked), columns, headset));
+        return new PagedTable(SearchTableFields.Head(table), item => Row((StationSummary)item, table));
     }
+
+    /// <summary>Every field the table can show; Updated is not shown by default in the headset.</summary>
+    private IReadOnlyList<TableField<object>> Fields(bool headset) =>
+    [
+        SearchField("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, "Station", row => NameCell((StationSummary)row), "name", "Type"),
+        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((StationSummary)row), "system", "Controlled by"),
+        SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((StationSummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
+        SearchField("Pad", new TableColumn("Pad"), "Pad", row => Centered(Value(LargestPad((StationSummary)row))), second: "Largest"),
+        SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(Light(((StationSummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), "from_star", right: true),
+        SearchField("AskedFor", new TableColumn("AskedFor", ColumnFit.Fill) { Min = 100 }, "Asked for", row => Centered(Wrapped(string.Join(", ", Asked((StationSummary)row))))),
+        SearchField("Updated", new TableColumn("Updated"), "Updated", row => Centered(Right(Mono(Day(((StationSummary)row).UpdatedAt), TypeScale.Small, ThemeManager.GreyKey))), "updated", right: true, byDefault: !headset),
+        SearchField("Pads", new TableColumn("Pads"), "Pads", row => PadsCell((StationSummary)row), byDefault: false),
+        SearchField("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, "Services", row => TableCells.List(((StationSummary)row).Services), byDefault: false),
+        SearchField("MaterialTrader", new TableColumn("MaterialTrader"), "Material trader", row => TableCells.Text(((StationSummary)row).TraderType), byDefault: false),
+        SearchField("TechnologyBroker", new TableColumn("TechnologyBroker"), "Technology broker", row => TableCells.Text(((StationSummary)row).TechnologyBroker), byDefault: false),
+        SearchField("StockSeen", new TableColumn("StockSeen"), "Stock seen", row => Centered(Right(Mono(Day(((StationSummary)row).StockLastSeen), TypeScale.Small, ThemeManager.GreyKey))), right: true, byDefault: false),
+        SearchField("Power", new TableColumn("Power"), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false),
+        SearchField("PowerState", new TableColumn("PowerState"), "Power state", row => TableCells.Text(((StationSummary)row).PowerState), byDefault: false),
+    ];
+
+    private IReadOnlyList<string> Asked(StationSummary station)
+    {
+        var asked = AskedFor(station, Posted.Arguments);
+
+        return asked.Count == 0 ? [Dash] : asked;
+    }
+
+    private static Control NameCell(StationSummary station)
+    {
+        var name = Chrome(station.Name, TypeScale.Secondary, ThemeManager.AKey);
+        name.Text = station.Name;
+
+        return Centered(Pair(name, Sub(station.Type)));
+    }
+
+    private Control SystemCell(StationSummary station)
+    {
+        var systemName = Value(station.SystemName);
+        ThemeInk.Bind(systemName, TextBlock.ForegroundProperty, string.Equals(station.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
+
+        var system = station.IsStrongholdCarrier && station.ControllingPower is { Length: > 0 } carrierPower
+            ? carrierPower
+            : station.ControllingFaction is { } controlling
+            ? station.ReportedState is { } state ? $"{controlling} · {state}" : controlling
+            : Dash;
+
+        return Centered(Pair(CopyGlyph.Beside(SystemLink.Look(systemName), station.SystemName, Copy), Sub(system)));
+    }
+
+    /// <summary>"S 2 · M 3 · L 1" for the sizes the service counts; a dash where it counts none.</summary>
+    internal static Control PadsCell(StationSummary station)
+    {
+        var sizes = new[] { ("S", station.SmallPads), ("M", station.MediumPads), ("L", station.LargePads) }
+            .Where(size => size.Item2 is not null)
+            .Select(size => $"{size.Item1} {size.Item2!.Value.ToString(CultureInfo.InvariantCulture)}");
+
+        return TableCells.Text(string.Join(" · ", sizes));
+    }
+
+    /// <summary>Light seconds with thousands separators, or a dash.</summary>
+    internal static string Light(double? ls) => ls is { } value ? $"{value.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash;
 
     protected override Control BuildForm()
     {
@@ -423,39 +455,9 @@ public sealed class StationSearchPage : GalaxySearchPage
         }
     }
 
-    private Control Row(StationSummary station, IReadOnlyList<string> asked, TableLayout columns, bool headset)
+    private Control Row(StationSummary station, ArrangedTable<object> table)
     {
-        var name = Chrome(station.Name, TypeScale.Secondary, ThemeManager.AKey);
-        name.Text = station.Name;
-
-        var systemName = Value(station.SystemName);
-        ThemeInk.Bind(systemName, TextBlock.ForegroundProperty, string.Equals(station.SystemName, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey);
-
-        var system = station.IsStrongholdCarrier && station.ControllingPower is { Length: > 0 } carrierPower
-            ? carrierPower
-            : station.ControllingFaction is { } controlling
-            ? station.ReportedState is { } state ? $"{controlling} · {state}" : controlling
-            : Dash;
-
-        List<Control> cells =
-        [
-                Cell(Pair(name, Sub(station.Type)), 0),
-                Cell(Pair(CopyGlyph.Beside(SystemLink.Look(systemName), station.SystemName, Copy), Sub(system)), 1),
-                Cell(Right(Mono(station.Distance is { } ly ? ly.ToString("F2", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.AKey)), 2),
-                Cell(Value(LargestPad(station)), 3),
-                Cell(Right(Mono(station.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} LS" : Dash, TypeScale.Small, ThemeManager.WhiteKey)), 4),
-                Cell(Wrapped(asked.Count == 0 ? Dash : string.Join(", ", asked)), 5),
-        ];
-
-        if (!headset)
-        {
-            cells.Add(Cell(Right(Mono(
-                station.UpdatedAt is { } at ? at.ToLocalTime().ToString("MM-dd", CultureInfo.InvariantCulture) : Dash,
-                TypeScale.Small,
-                ThemeManager.GreyKey)), 6));
-        }
-
-        var grid = columns.Row(cells);
+        var grid = table.Row(station);
 
         if (station.SystemAddress is null || _open is null)
         {

@@ -43,20 +43,6 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
     private const string Dash = "—";
 
-    private static readonly TableColumn[] Columns =
-    [
-        new("Name", ColumnFit.Fill) { Min = 140 },
-        new("Station", ColumnFit.Fill) { Min = 190 },
-        new("FromStar") { Min = 118 },
-        new("Distance") { Min = 60 },
-        new("Supply") { Min = 56 },
-        new("Price") { Min = 64 },
-        new("Profit") { Min = 96 },
-        new("Total") { Min = 96 },
-        new("Reported") { Min = 100 },
-        new("RareRun") { Min = 116 },
-    ];
-
     private readonly GalaxySearchSurface _searches;
     private readonly Func<string?> _here;
     private readonly Func<string?> _power;
@@ -77,6 +63,9 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     private (string Text, DateTimeOffset At)? _failure;
     private object? _seen;
     private bool _asked;
+    private readonly SearchTableFields _sortFields = new(GalaxySearchKind.Rares);
+    private ArrangedTable<object>? _table;
+    private GalaxySearchPosting? _posted;
 
     public RareGoodsPage(
         GalaxySearchSurface searches,
@@ -119,6 +108,9 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     public string Summary => SummaryText;
 
     public ColumnWidthMemory? ColumnWidths { get; init; }
+
+    /// <summary>Where the columns the table shows are remembered; null keeps the table's own.</summary>
+    public ColumnArrangementMemory? ColumnArrangements { get; init; }
 
     /// <summary>What is drawn where the rares go.</summary>
     public GalaxySearchView View { get; private set; }
@@ -216,6 +208,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _table?.StopArranging();
         _searches.Board.Posted += OnPosted;
 
         if (_searches.Board.Last(GalaxySearchKind.Rares) is { } last)
@@ -404,94 +397,114 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
     private Control Table(StackPanel top, GalaxySearchPosting last, RareSearchResult result)
     {
-        var layout = new TableLayout(TableId, Columns, _headset ? null : ColumnWidths, 12);
-        var now = DateTimeOffset.UtcNow;
+        var table = Arranged(last);
 
         var list = new ItemsControl
         {
             Name = RowsName,
-            ItemsSource = result.Rows.Select(row => Spaced(Row(row, layout, now))).ToArray(),
+            ItemsSource = result.Rows.Select(row => Spaced(Row(row, table))).ToArray(),
         };
 
-        top.Children.Add(Head(last, layout));
+        if (ColumnArranger.Line(table) is { } line)
+        {
+            top.Children.Add(line);
+        }
+
+        if (ColumnArranger.Bar(table) is { } bar)
+        {
+            top.Children.Add(bar);
+        }
+
+        top.Children.Add(SearchTableFields.Head(table));
 
         return LoadoutPages.HeaderAndList(top, list, out _);
     }
 
     private static Border Spaced(Control row) => new() { Margin = new Thickness(0, 2, 0, Gaps.Tile - 2), Child = row };
 
-    /// <summary>One column of the header: its label, a second line, the <c>order_by</c> it sorts on, and which side its figures sit on.</summary>
-    private sealed record HeadColumn(string Label, string? Second, string? Sort, bool Right);
+    /// <summary>The table, built once so its COLUMNS bar stays open across redraws, showing the sort <paramref name="last"/> was asked in.</summary>
+    private ArrangedTable<object> Arranged(GalaxySearchPosting last)
+    {
+        _posted = last;
 
-    private static readonly HeadColumn[] Heads =
+        if (_table is null)
+        {
+            _table = new ArrangedTable<object>(TableId, Fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: HeadName);
+            _table.Changed += Draw;
+            _table.Sorted += () => _ = RunAsync(_sortFields.Sorted(_posted!.Arguments, _table));
+        }
+        else
+        {
+            _table.Refresh();
+        }
+
+        _sortFields.Show(_table, last.Arguments);
+
+        return _table;
+    }
+
+    /// <summary>Every field the table can show; RARE RUN is a control column at the right.</summary>
+    private IReadOnlyList<TableField<object>> Fields() =>
     [
-        new("Name", null, "name", false),
-        new("Station", "(System)", "station", false),
-        new("From star", null, "from_star", true),
-        new("LY", null, SearchSorts.Distance, true),
-        new("Supply", null, "supply", true),
-        new("Price", "Buy", "price", true),
-        new("Profit", "Est. per tonne", "profit", true),
-        new("Total", "Supply sold", "total", true),
-        new("Reported", null, "reported", true),
-        new(string.Empty, null, null, false),
+        _sortFields.Field("Name", new TableColumn("Name", ColumnFit.Fill) { Min = 140 }, "Name", row => NameCell((RareListingRow)row), "name"),
+        _sortFields.Field("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 190 }, "Station", row => StationCell((RareListingRow)row), "station", "(System)"),
+        _sortFields.Field(
+            "FromStar",
+            new TableColumn("FromStar") { Min = 118 },
+            "From star",
+            row => Centered(Right(Mono(((RareListingRow)row).Rare.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} ls" : Dash, ThemeManager.AKey))),
+            "from_star",
+            right: true),
+        _sortFields.Field(
+            "Distance",
+            new TableColumn("Distance") { Min = 60 },
+            "LY",
+            row => Centered(Right(Mono(((RareListingRow)row).Distance.ToString("0.0", CultureInfo.InvariantCulture), ThemeManager.AKey))),
+            SearchSorts.Distance,
+            right: true),
+        _sortFields.Field(
+            "Supply",
+            new TableColumn("Supply") { Min = 56 },
+            "Supply",
+            row => Centered(Right(Mono(((RareListingRow)row).Supply is { } supply ? supply.ToString("N0", CultureInfo.InvariantCulture) : Dash, StockInk((RareListingRow)row)))),
+            "supply",
+            right: true),
+        _sortFields.Field("Price", new TableColumn("Price") { Min = 64 }, "Price", row => Centered(Right(Mono(Figure(((RareListingRow)row).Price), ThemeManager.AKey))), "price", "Buy", right: true),
+        _sortFields.Field("Profit", new TableColumn("Profit") { Min = 96 }, "Profit", row => Centered(Right(Mono(Figure(((RareListingRow)row).Profit), ThemeManager.AKey))), "profit", "Est. per tonne", right: true),
+        _sortFields.Field(
+            "Total",
+            new TableColumn("Total") { Min = 96 },
+            "Total",
+            row => Centered(Right(Mono(((RareListingRow)row).Total is { } total ? total.ToString("N0", CultureInfo.InvariantCulture) : Dash, StockInk((RareListingRow)row)))),
+            "total",
+            "Supply sold",
+            right: true),
+        _sortFields.Field(
+            "Reported",
+            new TableColumn("Reported") { Min = 100 },
+            "Reported",
+            row => Centered(Right(Typeset.Prose(
+                ((RareListingRow)row).ReportedAt is { } at ? MissionsPage.Ago(DateTimeOffset.UtcNow - at) : Dash,
+                TypeScale.Small,
+                ThemeManager.GreyKey))),
+            "reported",
+            right: true),
+        _sortFields.Field("SellsFor", new TableColumn("SellsFor") { Min = 96 }, "Sells for", row => Centered(Right(Mono(Figure(((RareListingRow)row).FarPrice), ThemeManager.AKey))), second: "Far away", right: true, byDefault: false),
+        new TableField<object>("RareRun", new TableColumn("RareRun") { Min = 116 }, row => RunCell((RareListingRow)row)),
     ];
 
-    private Control Head(GalaxySearchPosting last, TableLayout layout)
-    {
-        var fields = SearchSorts.For(GalaxySearchKind.Rares);
+    private static string StockInk(RareListingRow rare) => rare.Supply is > 0 ? ThemeManager.AKey : ThemeManager.GreyKey;
 
-        var specs = Heads
-            .Select(column => fields.FirstOrDefault(field => field.Name == column.Sort) is { } field
-                ? SortColumn<object>.Remote(column.Label, field.FirstDescending ? SortDirection.Descending : SortDirection.Ascending)
-                  with { Second = column.Second }
-                : SortColumn<object>.Plain(column.Label) with { Second = column.Second })
-            .ToList();
-
-        var head = new SortHeader<object>(HeadName, specs);
-        var nearest = Array.FindIndex(Heads, column => column.Sort == SearchSorts.Distance);
-
-        var current = new SortOrder(nearest, SortDirection.Ascending);
-
-        if (SearchSorts.Read(GalaxySearchKind.Rares, last.Arguments) is { } asked
-            && Array.FindIndex(Heads, column => column.Sort == asked.Field.Name) is var shown and >= 0)
-        {
-            current = new SortOrder(shown, asked.Descending ? SortDirection.Descending : SortDirection.Ascending);
-        }
-
-        head.Show(current);
-        head.Changed += () => SortBy(last, head.Order);
-
-        var grid = layout.Header(head, [.. Heads.Select(column => column.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left)]);
-        grid.Margin = new Thickness(12, 0, 12, 6);
-
-        var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = grid };
-        ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
-
-        return rule;
-    }
-
-    /// <summary>Asks again sorted by <paramref name="order"/>; null is nearest first.</summary>
-    private void SortBy(GalaxySearchPosting last, SortOrder? order)
-    {
-        var arguments = new Dictionary<string, string>(last.Arguments, StringComparer.Ordinal);
-        arguments.Remove("order_by");
-        arguments.Remove("order");
-
-        if (order is { } sort && Heads[sort.Column].Sort is { } field)
-        {
-            arguments["order_by"] = field;
-            arguments["order"] = sort.Direction == SortDirection.Ascending ? "asc" : "desc";
-        }
-
-        _ = RunAsync(arguments);
-    }
-
-    private Control Row(RareListingRow rare, TableLayout layout, DateTimeOffset now)
+    private static TextBlock NameCell(RareListingRow rare)
     {
         var name = Value(rare.Rare.Name);
         name.FontSize = TypeScale.Secondary;
 
+        return Centered(name);
+    }
+
+    private Control StationCell(RareListingRow rare)
+    {
         var system = Typeset.Prose(
             rare.Rare.System,
             TypeScale.Tip,
@@ -511,9 +524,11 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
             },
         };
 
-        var supplied = rare.Supply is > 0;
-        var stockInk = supplied ? ThemeManager.AKey : ThemeManager.GreyKey;
+        return Centered(new Border { ClipToBounds = true, Child = station });
+    }
 
+    private Button RunCell(RareListingRow rare)
+    {
         var tile = new Button
         {
             Name = RareRunName,
@@ -525,22 +540,12 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
         Avalonia.Automation.AutomationProperties.SetName(tile, $"Rare run for {rare.Rare.Name}");
         tile.Click += (_, _) => _rareRun(rare);
 
-        var grid = layout.Row(
-            [
-                Cell(name, 0),
-                Cell(new Border { ClipToBounds = true, Child = station }, 1),
-                Cell(Right(Mono(rare.Rare.DistanceToArrival is { } ls ? $"{ls.ToString("N0", CultureInfo.InvariantCulture)} ls" : Dash, ThemeManager.AKey)), 2),
-                Cell(Right(Mono(rare.Distance.ToString("0.0", CultureInfo.InvariantCulture), ThemeManager.AKey)), 3),
-                Cell(Right(Mono(rare.Supply is { } supply ? supply.ToString("N0", CultureInfo.InvariantCulture) : Dash, stockInk)), 4),
-                Cell(Right(Mono(Figure(rare.Price), ThemeManager.AKey)), 5),
-                Cell(Right(Mono(Figure(rare.Profit), ThemeManager.AKey)), 6),
-                Cell(Right(Mono(rare.Total is { } total ? total.ToString("N0", CultureInfo.InvariantCulture) : Dash, stockInk)), 7),
-                Cell(Right(Typeset.Prose(
-                    rare.ReportedAt is { } at ? MissionsPage.Ago(now - at) : Dash,
-                    TypeScale.Small,
-                    ThemeManager.GreyKey)), 8),
-                Cell(tile, 9),
-            ]);
+        return Centered(tile);
+    }
+
+    private static Control Row(RareListingRow rare, ArrangedTable<object> table)
+    {
+        var grid = table.Row(rare);
 
         return ListRow.Dress(new Border { MinHeight = 54, Padding = new Thickness(12, 6), Child = grid, Classes = { GalaxySearchPage.RowClass } });
     }
