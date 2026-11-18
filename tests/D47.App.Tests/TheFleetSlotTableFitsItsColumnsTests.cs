@@ -27,7 +27,7 @@ public class TheFleetSlotTableFitsItsColumnsTests
     private static readonly LoadoutSide Beam = new("4A Beam Laser, gimballed", null, "Efficient Weapon", 5, null, Effects);
 
     private static (Window Window, TableGrid Header, List<TableGrid> Rows) Draw(
-        TableLayout table, params LoadoutRow[] rows)
+        ArrangedTable<LoadoutPages.SlotLine> table, params LoadoutRow[] rows)
     {
         var header = (TableGrid)LoadoutPages.SlotHeader(table);
 
@@ -65,7 +65,7 @@ public class TheFleetSlotTableFitsItsColumnsTests
     [AvaloniaFact]
     public void AnEmptyCurrentColumnIsNoWiderThanItsLabelAndThePlanKeepsItsEffects()
     {
-        var (window, header, rows) = Draw(LoadoutPages.SlotLayout(), Row(Empty, Beam), Row(Empty, Beam));
+        var (window, header, rows) = Draw(LoadoutPages.NewSlotTable(), Row(Empty, Beam), Row(Empty, Beam));
 
         var label = header.Children.OfType<TextBlock>().Single(text => text.Text == "CURRENT");
         var empty = rows[0].Children.OfType<TextBlock>().Single(text => text.Text == "empty");
@@ -83,7 +83,7 @@ public class TheFleetSlotTableFitsItsColumnsTests
     [AvaloniaFact]
     public void HeaderAndRowsShareTheirColumnEdges()
     {
-        var (window, header, rows) = Draw(LoadoutPages.SlotLayout(), Row(Beam, Beam), Row(Empty, Beam));
+        var (window, header, rows) = Draw(LoadoutPages.NewSlotTable(), Row(Beam, Beam), Row(Empty, Beam));
 
         foreach (var row in rows)
         {
@@ -98,7 +98,7 @@ public class TheFleetSlotTableFitsItsColumnsTests
     [AvaloniaFact]
     public void ACellTrimmedToFitStillReportsItsFullWidth()
     {
-        var (window, _, rows) = Draw(LoadoutPages.SlotLayout(), Row(Beam, Beam));
+        var (window, _, rows) = Draw(LoadoutPages.NewSlotTable(), Row(Beam, Beam));
 
         var current = rows[0].Children.OfType<TextBlock>().First(text => Said(text).Contains("Beam Laser", StringComparison.Ordinal));
 
@@ -116,7 +116,7 @@ public class TheFleetSlotTableFitsItsColumnsTests
 
         memory.Remember(LoadoutPages.SlotTable, "Plan", 420);
 
-        var (window, _, rows) = Draw(LoadoutPages.SlotLayout(memory), Row(Empty, Beam));
+        var (window, _, rows) = Draw(LoadoutPages.NewSlotTable(memory), Row(Empty, Beam));
 
         Assert.Equal(420, Width(rows[0], 3), 0.5);
 
@@ -126,7 +126,7 @@ public class TheFleetSlotTableFitsItsColumnsTests
     [AvaloniaFact]
     public void TheHeadsetTableHasNoGrips()
     {
-        var (window, header, _) = Draw(LoadoutPages.SlotLayout(), Row(Empty, Beam));
+        var (window, header, _) = Draw(LoadoutPages.NewSlotTable(), Row(Empty, Beam));
 
         Assert.Empty(header.Children.OfType<ColumnGrip>());
 

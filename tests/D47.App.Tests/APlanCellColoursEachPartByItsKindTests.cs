@@ -18,7 +18,7 @@ public sealed class APlanCellColoursEachPartByItsKindTests
     private static TextBlock PlanCell(LoadoutParts parts, bool showing = false)
     {
         var row = new LoadoutRow("k", "Slot", "Slot", null, true) { Parts = parts };
-        var layout = LoadoutPages.SlotLayout();
+        var layout = LoadoutPages.NewSlotTable();
         var button = Assert.IsType<Button>(LoadoutPages.SlotRow(row, () => { }, layout, showing));
 
         // Slot, current, mark, plan, draw.

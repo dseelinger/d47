@@ -95,7 +95,10 @@ public static class LoadoutPages
         ColumnWidthMemory? columnWidths = null,
 
         // Plays the waiting bed under a search or a plot.
-        D47.App.Voice.WaitSound? waitSound = null)
+        D47.App.Voice.WaitSound? waitSound = null,
+
+        // Where the column arrangements are kept.
+        ColumnArrangementMemory? columnArrangements = null)
     {
         if (crumb.Key == ComparePage.Key && compare is not null)
         {
@@ -140,13 +143,13 @@ public static class LoadoutPages
 
             if (crumb.Key.StartsWith(mode.ItemPrefix, StringComparison.Ordinal))
             {
-                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..], prompts, copy, columnWidths, waitSound);
+                return new ItemPage(mode, nav, crumb.Key[mode.ItemPrefix.Length..], prompts, copy, columnWidths, waitSound, columnArrangements);
             }
         }
 
         if (crumb.Key == GapRoot && gap is not null)
         {
-            return new MaterialsPage(gap, materialsClock ?? new JournalClock(() => null), engineers, nav, copy, columnWidths);
+            return new MaterialsPage(gap, materialsClock ?? new JournalClock(() => null), engineers, nav, copy, columnWidths, columnArrangements);
         }
 
         if (crumb.Key.StartsWith(MaterialsPage.DetailPrefix, StringComparison.Ordinal)
@@ -1018,47 +1021,79 @@ public static class LoadoutPages
         return track;
     }
 
-    /// <summary>The slot table's columns; the table id is shared by every ship.</summary>
-    internal static IReadOnlyList<TableColumn> SlotColumns { get; } =
-    [
-        new("Slot"),
-        new("Current", ColumnFit.Fill),
-        new("Mark", ColumnFit.Fixed) { Fixed = 22 },
-        new("Plan", ColumnFit.Fill),
-        new("Draw", ColumnFit.Fixed) { Fixed = 60 },
-    ];
-
     internal const string SlotTable = "Fleet.Slots";
 
-    /// <summary>The slot table's column model, with grips where <paramref name="widths"/> is given.</summary>
-    internal static TableLayout SlotLayout(ColumnWidthMemory? widths = null) => new(SlotTable, SlotColumns, widths);
+    /// <summary>A slot row and whether the page is showing its slot, which the Plan cell inks by.</summary>
+    internal readonly record struct SlotLine(LoadoutRow Row, bool Showing);
+
+    /// <summary>The slot table; its id is shared by every ship. Size is offered and not shown until added.</summary>
+    internal static ArrangedTable<SlotLine> NewSlotTable(ColumnWidthMemory? widths = null, ColumnArrangementMemory? arrangements = null) =>
+        new(SlotTable, SlotFields(), arrangements, widths);
+
+    private static IReadOnlyList<TableField<SlotLine>> SlotFields() =>
+    [
+        new("Slot", new TableColumn("Slot"), SlotCell) { Label = "Slot" },
+        new("Current", new TableColumn("Current", ColumnFit.Fill), line => Cell(line.Row.Parts!.Current, line.Row.Parts.Vacant, line.Row.Engineered, bold: true))
+        {
+            Label = "Current",
+            More = [new TableField<SlotLine>("Mark", new TableColumn("Mark", ColumnFit.Fixed) { Fixed = 22 }, MarkCell)],
+        },
+        new("Plan", new TableColumn("Plan", ColumnFit.Fill), line => Planned(line.Row.Parts!, line.Showing)) { Label = "Plan" },
+        new("Draw", new TableColumn("Draw", ColumnFit.Fixed) { Fixed = 60 }, line => DrawCell(line.Row.Parts!.Draw))
+        {
+            Label = "Draw",
+            Sort = SortColumn<SlotLine>.Plain("MW"),
+            Alignment = HorizontalAlignment.Right,
+        },
+        new("Size", new TableColumn("Size"), line => SizeCell(line.Row.Parts!.Size))
+        {
+            Label = "Size",
+            Alignment = HorizontalAlignment.Right,
+            ByDefault = false,
+        },
+    ];
+
+    private static Control SlotCell(SlotLine line)
+    {
+        // The slot, muted: it is what the row is *about* rather than what the row says, and the heading above
+        // already names the block it belongs to.
+        var slot = ListRow.SecondaryInk(new TextBlock
+        {
+            Text = line.Row.Parts!.Slot,
+            FontSize = TypeScale.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Margin = new Thickness(0, 0, 10, 0),
+        });
+
+        TruncationTip.Watch(slot, () => line.Row.Word);
+
+        return slot;
+    }
+
+    /// <summary>The arrow: there is work left in this slot, between what is fitted and what is planned.</summary>
+    private static Control MarkCell(SlotLine line) => ListRow.SecondaryInk(new TextBlock
+    {
+        Text = line.Row.Marked ? "►" : string.Empty,
+        FontSize = TypeScale.Secondary,
+        VerticalAlignment = VerticalAlignment.Center,
+    });
+
+    private static Control SizeCell(int? size)
+    {
+        var cell = TableCells.Number(size);
+        cell.FontSize = TypeScale.Body;
+
+        return cell;
+    }
 
     /// <summary>
     /// The one header above a ship's slot list, because two columns that are not labelled are two
     /// columns a Commander has to work out (docs/plans/change-requests.md 38).
     /// </summary>
-    internal static Control SlotHeader(TableLayout table)
+    internal static TableGrid SlotHeader(ArrangedTable<SlotLine> table)
     {
-        var cells = new List<Control>();
-
-        foreach (var word in new[] { "SLOT", "CURRENT", string.Empty, "PLAN", "MW" })
-        {
-            var said = new TextBlock
-            {
-                Text = word,
-                FontFamily = Fonts.ChromeFamily,
-                FontSize = TypeScale.Meta,
-                FontWeight = FontWeight.Medium,
-                LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = word == "MW" ? HorizontalAlignment.Right : HorizontalAlignment.Left,
-            };
-
-            ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
-            cells.Add(said);
-        }
-
-        var line = table.Header(cells);
+        var line = table.Header();
 
         line.Margin = new Thickness(12, 6, 12, 2);
 
@@ -1069,40 +1104,9 @@ public static class LoadoutPages
     /// A slot row: what the slot is, what is in it, and what the plan asks for
     /// (docs/plans/change-requests.md 38).
     /// </summary>
-    internal static Control SlotRow(LoadoutRow row, Action pressed, TableLayout table, bool showing = false)
+    internal static Control SlotRow(LoadoutRow row, Action pressed, ArrangedTable<SlotLine> table, bool showing = false)
     {
-        var parts = row.Parts!;
-
-        // The arrow: there is work left in this slot, between what is fitted and what is planned.
-        var mark = ListRow.SecondaryInk(new TextBlock
-        {
-            Text = row.Marked ? "►" : string.Empty,
-            FontSize = TypeScale.Secondary,
-            VerticalAlignment = VerticalAlignment.Center,
-        });
-
-
-        // The slot, muted: it is what the row is *about* rather than what the row says, and the heading above
-        // already names the block it belongs to.
-        var slot = ListRow.SecondaryInk(new TextBlock
-        {
-            Text = parts.Slot,
-            FontSize = TypeScale.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            Margin = new Thickness(0, 0, 10, 0),
-        });
-
-
-        var current = Cell(parts.Current, parts.Vacant, row.Engineered, bold: true);
-
-
-        var plan = Planned(parts, showing);
-
-
-        var draw = DrawCell(parts.Draw);
-
-        var line = table.Row([slot, current, mark, plan, draw]);
+        var line = table.Row(new SlotLine(row, showing));
 
         line.VerticalAlignment = VerticalAlignment.Center;
 
@@ -1112,10 +1116,8 @@ public static class LoadoutPages
 
         button.Classes.Set(ShowingClass, showing);
 
-        // The slot's name in full, for anything that cannot see the row — and now for the eye as well, since
-        // the column is the short form.
+        // The slot's name in full, for anything that cannot see the row.
         AutomationProperties.SetName(button, row.Word);
-        TruncationTip.Watch(slot, () => row.Word);
 
         button.Click += (_, _) => pressed();
 
@@ -1904,7 +1906,7 @@ public sealed class ItemPage : LoadoutPage
     private readonly PanelPrompts? _prompts;
     private readonly string _item;
     private readonly Func<string, Task<bool>>? _copy;
-    private readonly ColumnWidthMemory? _columnWidths;
+    private readonly ArrangedTable<LoadoutPages.SlotLine> _slots;
     private readonly D47.App.Voice.WaitSound? _waitSound;
     private readonly WaitingState _plotWaiting = new(WaitForm.Line, "Working it out…") { IsVisible = false };
     private Button? _drop;
@@ -1921,7 +1923,9 @@ public sealed class ItemPage : LoadoutPage
     /// <summary>To buy, the Plan section and the slot table; full width under the side column when there is one.</summary>
     private readonly StackPanel _below = new() { Spacing = IndexPage.ListGap, Margin = new Thickness(0, IndexPage.ListGap, 0, 0) };
 
-    private IEnumerable<Control> Rows => _list.Children.Concat(_below.Children);
+    private StackPanel? _slotRows;
+
+    private IEnumerable<Control> Rows => _list.Children.Concat(_below.Children).Concat(_slotRows?.Children ?? []);
 
     /// <summary>Holds the talk section outside <see cref="_list"/>, so a redraw keeps its field and its focus.</summary>
     private readonly Border _talkSlot = new();
@@ -1968,7 +1972,8 @@ public sealed class ItemPage : LoadoutPage
         PanelPrompts? prompts,
         Func<string, Task<bool>>? copy = null,
         ColumnWidthMemory? columnWidths = null,
-        D47.App.Voice.WaitSound? waitSound = null)
+        D47.App.Voice.WaitSound? waitSound = null,
+        ColumnArrangementMemory? columnArrangements = null)
         : base(mode)
     {
         _waitSound = waitSound;
@@ -1976,7 +1981,8 @@ public sealed class ItemPage : LoadoutPage
         _item = item;
         _prompts = prompts;
         _copy = copy;
-        _columnWidths = columnWidths;
+        _slots = LoadoutPages.NewSlotTable(columnWidths, columnArrangements);
+        _slots.Changed += Refresh;
 
         ThemeInk.Bind(_summary, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
@@ -2025,6 +2031,7 @@ public sealed class ItemPage : LoadoutPage
 
         HullPicture.SizeChosen += OnSizeChosen;
         ShipArtStore.Arrived += ArtArrived;
+        _slots.StopArranging();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -2268,6 +2275,7 @@ public sealed class ItemPage : LoadoutPage
     {
         _list.Children.Clear();
         _below.Children.Clear();
+        _slotRows = null;
 
         var title = Mode.Title(_item);
         var summary = Mode.Summary(_item);
@@ -2388,12 +2396,17 @@ public sealed class ItemPage : LoadoutPage
 
         // The header, once, above the first slot row — and only where there are slot rows to head
         // (docs/plans/change-requests.md 38).
-        var table = LoadoutPages.SlotLayout(_columnWidths);
+        _slots.Refresh();
+
+        var table = _slotRows = new StackPanel { Spacing = IndexPage.ListGap };
 
         if (slots.Any(row => row.Parts is not null))
         {
-            _below.Children.Add(LoadoutPages.SlotHeader(table));
+            _below.Children.Add(LedgerTables.Arranger(_slots));
+            table.Children.Add(LoadoutPages.SlotHeader(_slots));
         }
+
+        _below.Children.Add(LedgerTables.Sideways(_slots, table));
 
         // A heading wherever the group changes, so a ship's slots read as the four blocks of the outfitting
         // screen rather than as thirty-odd names in journal order (remediation.md 12, item 1).
@@ -2404,7 +2417,7 @@ public sealed class ItemPage : LoadoutPage
             if (row.Group is { Length: > 0 } heading && heading != group)
             {
                 group = heading;
-                _below.Children.Add(ListRow.Head(heading));
+                table.Children.Add(ListRow.Head(heading));
             }
 
             // Read off the trail rather than kept as a second piece of state (#110): the last crumb is what
@@ -2417,7 +2430,7 @@ public sealed class ItemPage : LoadoutPage
 
             // A slot row draws as the loadout; anything else is still a line with a note.
             var control = row.Parts is not null
-                ? LoadoutPages.SlotRow(row, () => _nav.Drill(crumb), table, showing)
+                ? LoadoutPages.SlotRow(row, () => _nav.Drill(crumb), _slots, showing)
                 : LoadoutPages.Row(
                     row.Text,
                     row.Aside,
@@ -2431,7 +2444,7 @@ public sealed class ItemPage : LoadoutPage
             Draggable(control, row);
             PlansOnDoubleClick(control, row, crumb);
 
-            _below.Children.Add(control);
+            table.Children.Add(control);
         }
     }
 

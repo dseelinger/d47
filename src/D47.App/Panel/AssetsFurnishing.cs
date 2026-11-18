@@ -149,7 +149,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         // _engineers is read when the first draw opens Materials, not here (#477); Copy and Portraits likewise.
         _loadoutBuild = crumb => LoadoutPages.Build(
             crumb, modes, gap, _carrier, host.Nav, host.Prompts, host.Copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
-            () => _comparePage = new ComparePage(state, host.ColumnWidths, host.Copy),
+            () => _comparePage = new ComparePage(state, host.ColumnWidths, host.Copy, host.ColumnArrangements),
             () => _storedModulesPage = new StoredModulesPage(state, host.ColumnWidths, host.Copy, host.ColumnArrangements),
             () => _crewPage = new CrewPage(state, host.Portraits?.Pictures, host.ColumnWidths),
             planCarrierRoute,
@@ -158,7 +158,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
                 : null,
             host.CarrierHulls,
             host.ColumnWidths,
-            host.Model?.WaitSound);
+            host.Model?.WaitSound,
+            host.ColumnArrangements);
 
         host.Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
         host.Nav.Declare(LoadoutPages.FleetRoot, ComparePage.Crumb);
@@ -237,7 +238,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         _engineerStamp = D47.Core.Engineers.UnlockPlanner.Stamp(state());
         _engineerState = state;
 
-        _engineerBuild = crumb => EngineersPages.Build(crumb, source, host.Nav, memory, host.Copy, host.Headset, host.ColumnWidths);
+        _engineerBuild = crumb => EngineersPages.Build(crumb, source, host.Nav, memory, host.Copy, host.Headset, host.ColumnWidths, host.ColumnArrangements);
 
         host.Furnish(
             PanelTab.Assets,

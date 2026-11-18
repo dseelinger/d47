@@ -48,7 +48,8 @@ public static class EngineersPages
         EngineerDirectoryMemory? memory = null,
         Func<string, Task<bool>>? copy = null,
         bool headset = false,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         if (crumb.Key.StartsWith(WhoPrefix, StringComparison.Ordinal))
         {
@@ -57,7 +58,7 @@ public static class EngineersPages
 
         return crumb.Key == RouteKey
             ? new EngineerRoutePage(source, nav, memory)
-            : new EngineerDirectoryPage(source, nav, memory, headset, columnWidths);
+            : new EngineerDirectoryPage(source, nav, memory, headset, columnWidths, columnArrangements, copy);
     }
 
     /// <summary>Whether the two checkbox filters leave this engineer on the list (#132).</summary>
@@ -326,28 +327,11 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
     /// <summary>The name prefix of a row's face; the engineer's id follows.</summary>
     public const string PortraitPrefix = "EngineerPortrait.";
 
-    private const int PortraitColumn = 0;
-    private const int EngineerColumn = 1;
     private const int StatusColumn = 2;
-    private const int ModulesColumn = 3;
-    private const int PlannedColumn = 4;
-    private const int OpensColumn = 5;
-    private const int DistanceColumn = 6;
-
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Portrait", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget },
-        new("Engineer"),
-        new("Status"),
-        new("Modules", ColumnFit.Fill) { Min = 160 },
-        new("Planned"),
-        new("Opens"),
-        new("Distance"),
-    ];
 
     private readonly PanelNavigator _nav;
     private readonly bool _headset;
-    private readonly ColumnWidthMemory? _columnWidths;
+    private readonly Func<string, Task<bool>>? _copy;
 
     private readonly StackPanel _list = new() { Spacing = Gaps.Tile };
     private readonly EngineerDirectoryMemory? _memory;
@@ -355,7 +339,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
     private readonly CheckBox _colonia;
     private readonly CheckBox _onFoot;
 
-    private readonly SortHeader<EngineerEntry> _head = new(HeadName, Heads(), DefaultOrder);
+    private readonly ArrangedTable<EngineerEntry> _table;
 
     private string? _query;
     private int _page;
@@ -365,13 +349,17 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         PanelNavigator nav,
         EngineerDirectoryMemory? memory = null,
         bool headset = false,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        ColumnArrangementMemory? columnArrangements = null,
+        Func<string, Task<bool>>? copy = null)
         : base(source)
     {
+        _copy = copy;
         _nav = nav;
         _memory = memory;
         _headset = headset;
-        _columnWidths = headset ? null : columnWidths;
+        _table = new ArrangedTable<EngineerEntry>(
+            TableId, Fields(), columnArrangements, headset ? null : columnWidths, headset ? 12 : 16, "Status", HeadName);
 
         _colonia = LabeledCheckBox.Caps("Hide the Colonia eight");
         _onFoot = LabeledCheckBox.Caps("Hide on-foot engineers");
@@ -403,11 +391,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             Children = { _colonia, _onFoot, LoadoutPages.Press("Route", () => nav.Drill(EngineersPages.RouteCrumb)) },
         };
 
-        _head.Changed += () =>
-        {
-            _page = 0;
-            Refresh();
-        };
+        _table.Sorted += () => _page = 0;
+        _table.Changed += Refresh;
 
         var root = new DockPanel { Margin = new Thickness(14) };
         var say = LoadoutPages.SayLine("who should I unlock next");
@@ -470,7 +455,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
     /// <summary>The panel keeps a drilled page; opening it again returns the table to its default order.</summary>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        _head.Reset();
+        _table.StopArranging();
+        _table.Reset();
         base.OnAttachedToVisualTree(e);
     }
 
@@ -494,17 +480,17 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         Summarise(report.Summary());
         _list.Children.Clear();
 
-        var layout = new TableLayout(TableId, ColumnList, _columnWidths, _headset ? 12 : 16);
+        _table.Refresh();
+        _list.Children.Add(LedgerTables.Arranger(_table));
 
-        _list.Children.Add(CreditsKit.HeaderRow(
-            _head,
-            layout,
-            column => column is PlannedColumn or DistanceColumn ? HorizontalAlignment.Right : HorizontalAlignment.Left));
+        var table = new StackPanel { Spacing = Gaps.Tile };
+        table.Children.Add(LedgerTables.Head(_table, new Thickness(14, 0)));
 
-        var sorted = _head.Sort([.. report.Directory.Where(Matches).Where(NotHidden)]);
+        var sorted = _table.Sort([.. report.Directory.Where(Matches).Where(NotHidden)]);
 
         if (sorted.Count == 0)
         {
+            _list.Children.Add(LedgerTables.Sideways(_table, table));
             _list.Children.Add(LoadoutPages.Muted(_query is null
                 ? "No engineers on record, which should not be possible."
                 : $"Nothing matches “{_query}”."));
@@ -522,8 +508,10 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
 
         foreach (var entry in shown)
         {
-            _list.Children.Add(RowView(entry, layout));
+            table.Children.Add(RowView(entry));
         }
+
+        _list.Children.Add(LedgerTables.Sideways(_table, table));
 
         if (_headset && sorted.Count > FactionModel.PageSize)
         {
@@ -531,17 +519,32 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         }
     }
 
-    private Button RowView(EngineerEntry entry, TableLayout layout)
+    /// <summary>The portrait is a control column at the left; System, Station and Referred by are offered and not shown until added.</summary>
+    private IReadOnlyList<TableField<EngineerEntry>> Fields()
     {
-        // Which row the right pane is drawing, and it is one comparison rather than a second piece of
-        // state to keep in step (#110).
-        var crumb = EngineersPages.Crumb(entry.Engineer);
-        var showing = _nav.Trail.Count > 0
-                      && string.Equals(_nav.Trail[^1].Key, crumb.Key, StringComparison.Ordinal);
+        var heads = Heads();
 
-        var grid = layout.Row([]);
-        grid.VerticalAlignment = VerticalAlignment.Center;
+        return
+        [
+            LedgerTables.Control<EngineerEntry>(new TableColumn("Portrait", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, PortraitCell),
+            StarSystemPage.Headed(heads[1], new TableColumn("Engineer"), NameCell),
+            StarSystemPage.Headed(heads[2], new TableColumn("Status"), entry => StatusCell(entry, Showing(entry))),
+            StarSystemPage.Headed(heads[3], new TableColumn("Modules", ColumnFit.Fill) { Min = 160 }, entry => ModulesCell(entry, Showing(entry))),
+            StarSystemPage.Headed(heads[4], new TableColumn("Planned"), entry => PlannedCell(entry, Showing(entry)), right: true),
+            StarSystemPage.Headed(heads[5], new TableColumn("Opens"), entry => OpensCell(entry, Showing(entry))),
+            StarSystemPage.Headed(heads[6], new TableColumn("Distance"), entry => DistanceCell(entry, Showing(entry)), right: true),
+            LedgerTables.Added<EngineerEntry>("System", new TableColumn("System"), entry => CopyGlyph.LinkBeside(TableCells.Text(entry.Engineer.System), entry.Engineer.System, _copy), "System"),
+            LedgerTables.Added<EngineerEntry>("Station", new TableColumn("Station"), entry => TableCells.Text(entry.Engineer.Station), "Station"),
+            LedgerTables.Added<EngineerEntry>("ReferredBy", new TableColumn("ReferredBy", ColumnFit.Fill) { Min = 140 }, entry => TableCells.List(entry.Engineer.ReferredBy), "Referred by"),
+        ];
+    }
 
+    private bool Showing(EngineerEntry entry) =>
+        _nav.Trail.Count > 0
+        && string.Equals(_nav.Trail[^1].Key, EngineersPages.Crumb(entry.Engineer).Key, StringComparison.Ordinal);
+
+    private static Border PortraitCell(EngineerEntry entry)
+    {
         var portrait = new Border { Width = TypeScale.MinimumTarget, Height = TypeScale.MinimumTarget };
         ThemeInk.Bind(portrait, Border.BackgroundProperty, ThemeManager.SlabKey);
         var engineerId = entry.Engineer.Id;
@@ -561,12 +564,19 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             portrait.Child = face;
         }
 
-        CreditsKit.Place(grid, PortraitColumn, portrait);
+        return portrait;
+    }
 
+    private TextBlock NameCell(EngineerEntry entry)
+    {
         var name = ListRow.Name(new TextBlock { Text = entry.Engineer.Name, TextTrimming = TextTrimming.CharacterEllipsis });
         Watched(name, entry.Engineer.Name);
-        CreditsKit.Place(grid, EngineerColumn, name);
 
+        return name;
+    }
+
+    private TextBlock StatusCell(EngineerEntry entry, bool showing)
+    {
         var status = StatusText(entry).ToUpperInvariant();
         var statusKey = entry.Reach switch
         {
@@ -583,13 +593,13 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             tracking: TypeScale.Meta * Fonts.ChromeTracking,
             trimming: TextTrimming.CharacterEllipsis);
         Watched(statusCell, status);
-        CreditsKit.Place(grid, StatusColumn, Followed(statusCell, showing, secondary: false));
 
-        CreditsKit.Place(grid, ModulesColumn, ModulesCell(entry, showing));
+        return Followed(statusCell, showing, secondary: false);
+    }
 
-        if (entry.Wanted > 0)
-        {
-            CreditsKit.Place(grid, PlannedColumn, Followed(
+    private static Control PlannedCell(EngineerEntry entry, bool showing) =>
+        entry.Wanted > 0
+            ? Followed(
                 Typeset.Mono(
                     entry.Wanted.ToString(CultureInfo.InvariantCulture),
                     TypeScale.Small,
@@ -597,17 +607,31 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
                     horizontal: HorizontalAlignment.Right,
                     align: TextAlignment.Right),
                 showing,
-                secondary: false));
-        }
+                secondary: false)
+            : new Border();
 
-        if (OpensText(entry) is { } opens)
+    private Control OpensCell(EngineerEntry entry, bool showing)
+    {
+        if (OpensText(entry) is not { } opens)
         {
-            var cell = Typeset.Prose(opens, TypeScale.Small, ThemeManager.WhiteKey, trimming: TextTrimming.CharacterEllipsis);
-            Watched(cell, opens);
-            CreditsKit.Place(grid, OpensColumn, Followed(cell, showing, secondary: false));
+            return new Border();
         }
 
-        CreditsKit.Place(grid, DistanceColumn, DistanceCell(entry, showing));
+        var cell = Typeset.Prose(opens, TypeScale.Small, ThemeManager.WhiteKey, trimming: TextTrimming.CharacterEllipsis);
+        Watched(cell, opens);
+
+        return Followed(cell, showing, secondary: false);
+    }
+
+    private Button RowView(EngineerEntry entry)
+    {
+        // Which row the right pane is drawing, and it is one comparison rather than a second piece of
+        // state to keep in step (#110).
+        var crumb = EngineersPages.Crumb(entry.Engineer);
+        var showing = Showing(entry);
+
+        var grid = _table.Row(entry);
+        grid.VerticalAlignment = VerticalAlignment.Center;
 
         var button = ListRow.Dress(
             new Button

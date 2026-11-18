@@ -74,15 +74,6 @@ public sealed class MaterialsPage : UserControl
 
     private const double GaugeColumn = 200;
 
-    private static readonly TableColumn[] NeededColumns =
-    [
-        new("Material", ColumnFit.Fill),
-        new("Ledger"),
-        new("HeldNeed"),
-        new("Short"),
-        new("Gauge", ColumnFit.Fixed) { Fixed = GaugeColumn },
-    ];
-
     /// <summary>The order a Guardian or Thargoid ledger lists its journal categories in.</summary>
     private static readonly string[] Categories = ["Raw", "Manufactured", "Encoded"];
 
@@ -95,13 +86,11 @@ public sealed class MaterialsPage : UserControl
         SortColumn<GapBuildLine>.Figure("Short", line => (int?)line.Short, SortDirection.Descending),
     ];
 
-    private readonly SortHeader<GapBuildLine> _head = new("MaterialsHead", ColumnHeadings);
+    private readonly ArrangedTable<GapBuildLine> _needed;
     private readonly GapSource _gap;
     private readonly EngineerSource? _engineers;
     private readonly PanelNavigator? _nav;
     private readonly Func<string, Task<bool>>? _copy;
-    private readonly ColumnWidthMemory? _columnWidths;
-    private TableLayout _needed;
     private readonly ContentControl _sidebar = new();
     private readonly StackPanel _body = new();
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
@@ -115,15 +104,15 @@ public sealed class MaterialsPage : UserControl
         EngineerSource? engineers = null,
         PanelNavigator? nav = null,
         Func<string, Task<bool>>? copy = null,
-        ColumnWidthMemory? columnWidths = null)
+        ColumnWidthMemory? columnWidths = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
-        _columnWidths = columnWidths;
-        _needed = new TableLayout(NeededTable, NeededColumns, columnWidths);
+        _needed = new ArrangedTable<GapBuildLine>(NeededTable, Fields(), columnArrangements, columnWidths, headName: "MaterialsHead");
         _gap = gap;
         _engineers = engineers;
         _nav = nav;
         _copy = copy;
-        _head.Changed += Refresh;
+        _needed.Changed += Refresh;
 
         var root = PageFooter.Shell(_sidebar, _body, Phrase, clock);
 
@@ -139,7 +128,7 @@ public sealed class MaterialsPage : UserControl
     public void Refresh()
     {
         CloseDetail();
-        _needed = new TableLayout(NeededTable, NeededColumns, _columnWidths);
+        _needed.Refresh();
 
         var report = _gap.Report();
         var ledgers = _gap.Tracker(report).Ship;
@@ -193,6 +182,8 @@ public sealed class MaterialsPage : UserControl
             _body.Children.Add(Hint(NoPlans, new Thickness(0, 18, 0, 0)));
             return;
         }
+
+        _body.Children.Add(LedgerTables.Arranger(_needed));
 
         foreach (var build in report.Builds)
         {
@@ -322,7 +313,8 @@ public sealed class MaterialsPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _head.Reset();
+        _needed.StopArranging();
+        _needed.Reset();
         _gap.Changed -= OnChanged;
         _gap.Changed += OnChanged;
         Refresh();
@@ -852,7 +844,7 @@ public sealed class MaterialsPage : UserControl
 
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
-        foreach (var line in _head.Sort(build.Lines))
+        foreach (var line in _needed.Sort(build.Lines))
         {
             rows.Children.Add(Row(line, open, _needed));
         }
@@ -860,51 +852,60 @@ public sealed class MaterialsPage : UserControl
         return new StackPanel
         {
             Margin = new Thickness(0, 28, 0, 0),
-            Children = { TitleText.GroupRow(head), ColumnHeads(), rows },
+            Children = { TitleText.GroupRow(head), LedgerTables.Sideways(_needed, new StackPanel { Children = { ColumnHeads(), rows } }) },
         };
     }
 
-    private Control ColumnHeads()
-    {
-        var grid = _needed.Header(
-        [
-            .. Enumerable.Range(0, ColumnHeadings.Count)
-                .Select(column => _head.Cell(column, column >= 2 ? HorizontalAlignment.Right : HorizontalAlignment.Left)),
-            new Border(),
-        ]);
-        grid.MinHeight = TypeScale.MinimumTarget;
+    private Control ColumnHeads() =>
+        new Border { Padding = new Thickness(14, 0), Child = LedgerTables.Head(_needed, default) };
 
-        return new Border { Padding = new Thickness(14, 0), Child = grid };
-    }
+    /// <summary>Grade and Found at are offered and not shown until added; the gauge is a control column at the right.</summary>
+    private static IReadOnlyList<TableField<GapBuildLine>> Fields() =>
+    [
+        StarSystemPage.Headed(ColumnHeadings[0], new TableColumn("Material", ColumnFit.Fill), line => NameCell(line.Material)),
+        StarSystemPage.Headed(ColumnHeadings[1], new TableColumn("Ledger"), line => Chrome(LedgerOf(line.Material), ThemeManager.GreyKey)),
+        StarSystemPage.Headed(
+            ColumnHeadings[2], new TableColumn("HeldNeed"), line => Mono($"{Count(line.Held)} / {Count(line.Needed)}", ThemeManager.WhiteKey), right: true),
+        StarSystemPage.Headed(
+            ColumnHeadings[3],
+            new TableColumn("Short"),
+            line => line.Short > 0 ? Mono(Count(line.Short), ThemeManager.AKey) : Mono(Met, ThemeManager.BlueKey),
+            right: true),
+        LedgerTables.Added<GapBuildLine>("Grade", new TableColumn("Grade"), line => TableCells.Number(line.Material.Grade), "Grade") with { Alignment = HorizontalAlignment.Right },
+        LedgerTables.Added<GapBuildLine>("FoundAt", new TableColumn("FoundAt", ColumnFit.Fill) { Min = 140 }, line => TableCells.List(line.Material.Origins), "Found at"),
+        LedgerTables.Control<GapBuildLine>(new TableColumn("Gauge", ColumnFit.Fixed) { Fixed = GaugeColumn }, GaugeCell),
+    ];
 
-    private static Border Row(GapBuildLine line, Action<MaterialEntry> open, TableLayout table)
+    private static TextBlock NameCell(MaterialEntry material)
     {
         var name = new TextBlock
         {
-            Text = line.Material.Name,
+            Text = material.Name,
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
-        var ledger = Chrome(LedgerOf(line.Material), ThemeManager.GreyKey);
+        return name;
+    }
 
-        var amounts = Mono($"{Count(line.Held)} / {Count(line.Needed)}", ThemeManager.WhiteKey);
-
-        var shortfall = line.Short > 0
-            ? Mono(Count(line.Short), ThemeManager.AKey)
-            : Mono(Met, ThemeManager.BlueKey);
-
+    private static Control GaugeCell(GapBuildLine line)
+    {
         var gauge = Gauge.Track(line.Needed > 0 ? (double)line.Held / line.Needed : 1, ThemeManager.AKey);
         gauge.VerticalAlignment = VerticalAlignment.Center;
         gauge.Margin = new Thickness(16, 0, 0, 0);
 
+        return gauge;
+    }
+
+    private static Border Row(GapBuildLine line, Action<MaterialEntry> open, ArrangedTable<GapBuildLine> table)
+    {
         var row = new Border
         {
             Height = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
-            Child = table.Row([name, ledger, amounts, shortfall, gauge]),
+            Child = table.Row(line),
         };
         Hover(row);
 

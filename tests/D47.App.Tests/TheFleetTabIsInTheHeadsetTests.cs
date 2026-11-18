@@ -9,7 +9,9 @@ using Avalonia.VisualTree;
 using D47.App.Headset;
 using D47.App.Panel;
 using D47.App.Theming;
+using D47.Core;
 using D47.Core.Checklists;
+using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Loadout;
@@ -90,7 +92,9 @@ public class TheFleetTabIsInTheHeadsetTests
             gameState: state,
             onFoot: onFoot,
             modulePower: () => ModulePower.None,
-            hullArt: () => settings.Current.Ui.HullArt);
+            hullArt: () => settings.Current.Ui.HullArt,
+            columnArrangements: new ColumnArrangementMemory(
+                new ViewStateStore(new AppPaths("memory"), new MemoryFileSystem(), NullLogger<ViewStateStore>.Instance), headset: true));
 
         Dispatcher.UIThread.RunJobs();
 

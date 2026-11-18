@@ -34,18 +34,6 @@ public sealed class ComparePage : UserControl
 
     public const string TableId = "Compare";
 
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Ship", ColumnFit.Fill),
-        new("Cargo"),
-        new("Jump"),
-        new("Unladen"),
-        new("Fuel"),
-        new("Value"),
-        new("Rebuy"),
-        new("Where", ColumnFit.Fill),
-    ];
-
     /// <summary>One ship's row. A figure is null where no loadout has been read for it.</summary>
     public sealed record Ship(
         string Name,
@@ -85,21 +73,19 @@ public sealed class ComparePage : UserControl
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
     private readonly StackPanel _table = new() { Spacing = IndexPage.ListGap };
-    private readonly SortHeader<Ship> _head = new("CompareHead", Heads, ByJump);
+    private readonly ArrangedTable<Ship> _head;
     private readonly Stepper _minimum;
-    private readonly ColumnWidthMemory? _columnWidths;
     private readonly Func<string, Task<bool>>? _copy;
-    private TableLayout _layout;
     private object? _seen;
 
     public ComparePage(
         Func<CommanderGameState?> state,
         ColumnWidthMemory? columnWidths = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
-        _columnWidths = columnWidths;
         _copy = copy;
-        _layout = new TableLayout(TableId, ColumnList, columnWidths, 14);
+        _head = new ArrangedTable<Ship>(TableId, Fields(), columnArrangements, columnWidths, 14, "Jump");
         _state = state;
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
 
@@ -124,6 +110,7 @@ public sealed class ComparePage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _head.StopArranging();
         _head.Reset();
     }
 
@@ -242,10 +229,10 @@ public sealed class ComparePage : UserControl
     private void Draw()
     {
         _seen = Stamp();
-        _layout = new TableLayout(TableId, ColumnList, _columnWidths, 14);
+        _head.Refresh();
 
         var all = Ships(_state());
-        var listed = Listed(all, _head.Order, Tonnes[Math.Max(0, _minimum.SelectedIndex)]);
+        var listed = _head.Sort(Listed(all, null, Tonnes[Math.Max(0, _minimum.SelectedIndex)]));
 
         _body.Children.Clear();
         _body.Children.Add(TitleText.Block(
@@ -264,18 +251,23 @@ public sealed class ComparePage : UserControl
             return;
         }
 
-        _table.Children.Add(Head());
+        _table.Children.Add(LedgerTables.Arranger(_head));
 
         if (listed.Count == 0)
         {
+            _table.Children.Add(LedgerTables.Sideways(_head, new StackPanel { Children = { Head() } }));
             _table.Children.Add(Message(Filtered));
             return;
         }
 
+        var list = new StackPanel { Spacing = IndexPage.ListGap, Children = { Head() } };
+
         foreach (var ship in listed)
         {
-            _table.Children.Add(Row(ship));
+            list.Children.Add(Row(ship));
         }
+
+        _table.Children.Add(LedgerTables.Sideways(_head, list));
 
         _body.Children.Add(Message(Hint));
     }
@@ -305,25 +297,31 @@ public sealed class ComparePage : UserControl
 
     private Control Head()
     {
-        var grid = _layout.Header(
-            _head,
-            [.. Enumerable.Range(0, Heads.Count).Select(column => column is 0 or 7 ? HorizontalAlignment.Left : HorizontalAlignment.Right)]);
-        grid.Margin = new Thickness(14, 0);
-
         var head = new Border
         {
             BorderThickness = new Thickness(0, 0, 0, 1),
             Margin = new Thickness(0, 0, 0, 2),
-            Child = grid,
+            Child = LedgerTables.Head(_head, new Thickness(14, 0)),
         };
         ThemeInk.Bind(head, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return head;
     }
 
-    private Control Row(Ship ship)
-    {
+    private IReadOnlyList<TableField<Ship>> Fields() =>
+    [
+        StarSystemPage.Headed(Heads[0], new TableColumn("Ship", ColumnFit.Fill), ShipCell),
+        StarSystemPage.Headed(Heads[1], new TableColumn("Cargo"), ship => Figure(ship.Cargo is { } cargo ? $"{cargo.ToString(CultureInfo.InvariantCulture)} T" : null, ThemeManager.YellowKey), right: true),
+        StarSystemPage.Headed(Heads[2], new TableColumn("Jump"), ship => Figure(ship.Jump?.ToString("0.00' LY'", CultureInfo.InvariantCulture), ThemeManager.AKey), right: true),
+        StarSystemPage.Headed(Heads[3], new TableColumn("Unladen"), ship => Figure(ship.Unladen?.ToString("0.0' T'", CultureInfo.InvariantCulture), ThemeManager.WhiteKey), right: true),
+        StarSystemPage.Headed(Heads[4], new TableColumn("Fuel"), ship => Figure(ship.Fuel?.ToString("0.#' T'", CultureInfo.InvariantCulture), ThemeManager.WhiteKey), right: true),
+        StarSystemPage.Headed(Heads[5], new TableColumn("Value"), ship => Figure(ship.Value?.ToString("N0", CultureInfo.InvariantCulture), ThemeManager.AKey), right: true),
+        StarSystemPage.Headed(Heads[6], new TableColumn("Rebuy"), ship => Figure(ship.Rebuy?.ToString("N0", CultureInfo.InvariantCulture), ThemeManager.AKey), right: true),
+        StarSystemPage.Headed(Heads[7], new TableColumn("Where", ColumnFit.Fill), WhereCell),
+    ];
 
+    private static Control ShipCell(Ship ship)
+    {
         var name = TitleText.Build(ship.Name, TypeScale.ControlLarge, TitleRank.Subgroup);
         name.FontFamily = Fonts.ChromeFamily;
         name.FontWeight = FontWeight.SemiBold;
@@ -335,25 +333,26 @@ public sealed class ComparePage : UserControl
         hull.TextTrimming = TextTrimming.CharacterEllipsis;
         ThemeInk.Bind(hull, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
-        var cells = new List<Control>
-        {
-            Cell(new StackPanel { Children = { name, hull } }, left: true),
-            Cell(Number(ship.Cargo is { } cargo ? $"{cargo.ToString(CultureInfo.InvariantCulture)} T" : null, ThemeManager.YellowKey)),
-            Cell(Number(ship.Jump?.ToString("0.00' LY'", CultureInfo.InvariantCulture), ThemeManager.AKey)),
-            Cell(Number(ship.Unladen?.ToString("0.0' T'", CultureInfo.InvariantCulture), ThemeManager.WhiteKey)),
-            Cell(Number(ship.Fuel?.ToString("0.#' T'", CultureInfo.InvariantCulture), ThemeManager.WhiteKey)),
-            Cell(Number(ship.Value?.ToString("N0", CultureInfo.InvariantCulture), ThemeManager.AKey)),
-            Cell(Number(ship.Rebuy?.ToString("N0", CultureInfo.InvariantCulture), ThemeManager.AKey)),
-        };
+        return new StackPanel { Children = { name, hull }, HorizontalAlignment = HorizontalAlignment.Left };
+    }
 
+    private Control WhereCell(Ship ship)
+    {
         var where = TitleText.Build(ship.Where, TypeScale.Control, TitleRank.Subgroup);
         where.FontFamily = Fonts.ChromeFamily;
         where.FontWeight = FontWeight.Medium;
         where.TextTrimming = TextTrimming.CharacterEllipsis;
         ThemeInk.Bind(where, TextBlock.ForegroundProperty, ship.InCurrentSystem ? ThemeManager.CyanKey : ThemeManager.AKey);
-        cells.Add(Cell(CopyGlyph.LinkBeside(where, ship.System, _copy), left: true));
 
-        var grid = _layout.Row(cells);
+        var cell = CopyGlyph.LinkBeside(where, ship.System, _copy);
+        cell.HorizontalAlignment = HorizontalAlignment.Left;
+
+        return cell;
+    }
+
+    private Control Row(Ship ship)
+    {
+        var grid = _head.Row(ship);
         grid.Margin = new Thickness(14, 0);
 
         var row = new Border { Height = TypeScale.MinimumTarget, Child = grid };
@@ -362,13 +361,11 @@ public sealed class ComparePage : UserControl
         return row;
     }
 
-    private static TextBlock Number(string? text, string key) =>
-        Typeset.Mono(text ?? "—", TypeScale.Control, text is null ? ThemeManager.GreyKey : key);
-
-    private static Control Cell(Control cell, bool left = false)
+    private static Control Figure(string? text, string key)
     {
-        cell.VerticalAlignment = VerticalAlignment.Center;
-        cell.HorizontalAlignment = left ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+        var cell = Typeset.Mono(text ?? "—", TypeScale.Control, text is null ? ThemeManager.GreyKey : key);
+        cell.HorizontalAlignment = HorizontalAlignment.Right;
+
         return cell;
     }
 
