@@ -257,14 +257,16 @@ public sealed class ATypeAheadBoxShowsItsWaitTests
         var rig = new Rig();
         var tiles = rig.Suggestions.NewTiles();
         var answers = new List<string[]>();
+        var cleared = 0;
         tiles.Answered += names => answers.Add([.. names]);
+        tiles.Cleared += () => cleared++;
 
         _ = tiles.Typed("Mot");
         Assert.Empty(answers);
 
         _ = tiles.Typed("Mo");
-        Assert.Single(answers);
-        Assert.Empty(answers[0]);
+        Assert.Empty(answers);
+        Assert.Equal(1, cleared);
     }
 
     [AvaloniaFact]
