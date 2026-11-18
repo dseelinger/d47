@@ -150,7 +150,7 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         _loadoutBuild = crumb => LoadoutPages.Build(
             crumb, modes, gap, _carrier, host.Nav, host.Prompts, host.Copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
             () => _comparePage = new ComparePage(state, host.ColumnWidths, host.Copy),
-            () => _storedModulesPage = new StoredModulesPage(state, host.ColumnWidths, host.Copy),
+            () => _storedModulesPage = new StoredModulesPage(state, host.ColumnWidths, host.Copy, host.ColumnArrangements),
             () => _crewPage = new CrewPage(state, host.Portraits?.Pictures, host.ColumnWidths),
             planCarrierRoute,
             host.Portraits?.Pictures is { } pictures && host.Model?.CarrierPictureSource is { } picture

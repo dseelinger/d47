@@ -138,6 +138,7 @@ public partial class App(AppHost? host) : Application
                 nextBar: host.NextBar,
                 modules: window?.ModulesSource,
                 paneWidths: new Panel.PaneWidthMemory(host.ViewState, headset: true),
+                columnArrangements: new Panel.ColumnArrangementMemory(host.ViewState, headset: true),
                 audioPlayer: () => new Controls.AudioPlayerDialog(
                     host.Panel,
                     host.Settings,

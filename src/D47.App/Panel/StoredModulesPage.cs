@@ -29,14 +29,6 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
     public const string TableId = "StoredModules";
 
-    private static readonly TableColumn[] ColumnList =
-    [
-        new("Module", ColumnFit.Fill),
-        new("Class"),
-        new("TransferCost"),
-        new("TransferTime"),
-    ];
-
     /// <summary>The modules held in one system. <see cref="Here"/> is the system the snapshot was taken in.</summary>
     public sealed record Group(
         string System,
@@ -65,8 +57,72 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
             SortDirection.Ascending),
     ];
 
-    /// <summary>The default order: by module name.</summary>
-    public static readonly SortOrder ByName = new(0, SortDirection.Ascending);
+    /// <summary>
+    /// Every field the table can show: Module, Class, Transfer cost and Transfer time by default, then the rest of
+    /// what the journal says about a stored module. A System cell copies its name through <paramref name="copy"/>.
+    /// </summary>
+    public static IReadOnlyList<TableField<Held>> Fields(Func<string, Task<bool>>? copy) =>
+    [
+        new("Module", new TableColumn("Module", ColumnFit.Fill), row => NameCell(row.Module))
+        {
+            Label = "Module",
+            Sort = ColumnHeadings[0],
+        },
+        new("Class", new TableColumn("Class"), row => ClassCell(row.Module))
+        {
+            Label = "Class",
+            Sort = ColumnHeadings[1],
+        },
+        new("TransferCost", new TableColumn("TransferCost"), row => CostCell(row.Module, row.Here))
+        {
+            Label = "Transfer cost",
+            Sort = ColumnHeadings[2],
+            Alignment = HorizontalAlignment.Right,
+        },
+        new("TransferTime", new TableColumn("TransferTime"), row => MaterialsPage.Mono(Time(row.Module), ThemeManager.WhiteKey))
+        {
+            Label = "Transfer time",
+            Sort = ColumnHeadings[3],
+            Alignment = HorizontalAlignment.Right,
+        },
+        new("System", new TableColumn("System"), row => CopyGlyph.LinkBeside(TableCells.Text(row.Module.StarSystem), row.Module.StarSystem, copy))
+        {
+            Label = "System",
+            Sort = SortColumn<Held>.Text("System", row => row.Module.StarSystem),
+            ByDefault = false,
+        },
+        new("Station", new TableColumn("Station"), row => TableCells.Text(row.Module.StationName))
+        {
+            Label = "Station",
+            Sort = SortColumn<Held>.Text("Station", row => row.Module.StationName),
+            ByDefault = false,
+        },
+        new("InTransit", new TableColumn("InTransit"), row => TableCells.Flag(row.Module.InTransit))
+        {
+            Label = InTransit,
+            Sort = SortColumn<Held>.Figure(InTransit, row => (int?)(row.Module.InTransit ? 1 : 0), SortDirection.Descending),
+            ByDefault = false,
+        },
+        new("Hot", new TableColumn("Hot"), row => TableCells.Flag(row.Module.Hot))
+        {
+            Label = "Hot",
+            Sort = SortColumn<Held>.Figure("Hot", row => (int?)(row.Module.Hot ? 1 : 0), SortDirection.Descending),
+            ByDefault = false,
+        },
+        new("Engineering", new TableColumn("Engineering"), row => TableCells.Text(row.Module.Engineering))
+        {
+            Label = "Engineering",
+            Sort = SortColumn<Held>.Text("Engineering", row => row.Module.Engineering),
+            ByDefault = false,
+        },
+        new("Grade", new TableColumn("Grade"), row => TableCells.Number(row.Module.EngineeringGrade))
+        {
+            Label = "Grade",
+            Sort = SortColumn<Held>.Figure("Grade", row => row.Module.EngineeringGrade, SortDirection.Descending),
+            Alignment = HorizontalAlignment.Right,
+            ByDefault = false,
+        },
+    ];
 
     /// <summary>Size and rating as one number, so 5A outranks 5B and 6E outranks 5A; null where there is no class.</summary>
     public static int? ClassRank(string? moduleClass)
@@ -87,24 +143,22 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
     private readonly JournalClock _clock;
     private readonly StackPanel _body = new();
-    private readonly SortHeader<Held> _head = new("StoredHead", ColumnHeadings, ByName);
-    private readonly ColumnWidthMemory? _columnWidths;
+    private readonly ArrangedTable<Held> _table;
     private readonly Func<string, Task<bool>>? _copy;
-    private TableLayout _table;
     private object? _seen;
     private string _query = string.Empty;
 
     public StoredModulesPage(
         Func<CommanderGameState?> state,
         ColumnWidthMemory? columnWidths = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        ColumnArrangementMemory? columnArrangements = null)
     {
         _state = state;
         _copy = copy;
-        _columnWidths = columnWidths;
-        _table = new TableLayout(TableId, ColumnList, columnWidths);
+        _table = new ArrangedTable<Held>(TableId, Fields(copy), columnArrangements, columnWidths, sortedByDefault: "Module", headName: "StoredHead");
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
-        _head.Changed += Draw;
+        _table.Changed += Draw;
 
         Content = PageFooter.Shell(_body, Phrase, _clock);
         Draw();
@@ -113,7 +167,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _head.Reset();
+        _table.Reset();
     }
 
     public bool Filters => Store is { IsKnown: true, Modules.Count: > 0 };
@@ -255,7 +309,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         var groups = Groups(state, _query);
         var count = groups.Sum(group => group.Modules.Count);
 
-        _table = new TableLayout(TableId, ColumnList, _columnWidths);
+        _table.Refresh();
         _body.Children.Clear();
         _body.Children.Add(PageFooter.Capped(TitleText.Block(
             TitleText.Build("Stored modules", TypeScale.Title, TitleRank.Screen),
@@ -309,9 +363,9 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
-        foreach (var row in _head.Sort([.. group.Modules.Select(module => new Held(module, group.Here))]))
+        foreach (var row in _table.Sort([.. group.Modules.Select(module => new Held(module, group.Here))]))
         {
-            rows.Children.Add(Row(row.Module, row.Here, _table));
+            rows.Children.Add(Row(row));
         }
 
         return new StackPanel
@@ -323,15 +377,13 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
     private Control ColumnHeads()
     {
-        var grid = _table.Header(
-            _head,
-            [HorizontalAlignment.Left, HorizontalAlignment.Left, HorizontalAlignment.Right, HorizontalAlignment.Right]);
+        var grid = _table.Header();
         grid.MinHeight = TypeScale.MinimumTarget;
 
         return new Border { Padding = new Thickness(14, 0), Child = grid };
     }
 
-    private static Border Row(StoredModule module, bool here, TableLayout table)
+    private static TextBlock NameCell(StoredModule module)
     {
         var name = new TextBlock
         {
@@ -342,19 +394,31 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
+        return name;
+    }
+
+    private static TextBlock ClassCell(StoredModule module)
+    {
         var rating = MaterialsPage.Mono(module.Class ?? "—", module.Class is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
         rating.HorizontalAlignment = HorizontalAlignment.Left;
 
-        var costText = Cost(module, here);
-        var cost = MaterialsPage.Mono(costText, costText == "—" ? ThemeManager.GreyKey : ThemeManager.AKey);
+        return rating;
+    }
 
-        var time = MaterialsPage.Mono(Time(module), ThemeManager.WhiteKey);
+    private static TextBlock CostCell(StoredModule module, bool here)
+    {
+        var cost = Cost(module, here);
 
+        return MaterialsPage.Mono(cost, cost == "—" ? ThemeManager.GreyKey : ThemeManager.AKey);
+    }
+
+    private Border Row(Held held)
+    {
         var row = new Border
         {
             Height = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
-            Child = table.Row([name, rating, cost, time]),
+            Child = _table.Row(held),
         };
         ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 

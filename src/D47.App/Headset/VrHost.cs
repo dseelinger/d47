@@ -201,6 +201,9 @@ public sealed class VrHost : IDisposable
 
         // Where the ray left the rules between panes, stored apart from the window's.
         Panel.PaneWidthMemory? paneWidths = null,
+
+        // Which columns each table shows, stored apart from the window's.
+        Panel.ColumnArrangementMemory? columnArrangements = null,
         Func<D47.App.Controls.AudioPlayerDialog>? audioPlayer = null,
         Func<D47.App.Controls.StoryPlaybackDialog>? storyPlayback = null)
     {
@@ -232,6 +235,7 @@ public sealed class VrHost : IDisposable
             nextBar: nextBar,
             modules: modules,
             paneWidths: paneWidths,
+            columnArrangements: columnArrangements,
             audioPlayer: audioPlayer,
             storyPlayback: storyPlayback,
             portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(files, paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),

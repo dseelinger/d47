@@ -565,6 +565,7 @@ public partial class MainWindow : Window
             // (Phase 55).
             Panel.EnableDraggablePanes(new PaneWidthMemory(host.ViewState));
             Panel.EnableResizableColumns(new ColumnWidthMemory(host.ViewState));
+            Panel.EnableColumnArrangements(new ColumnArrangementMemory(host.ViewState));
             Panel.EnableCarrierHulls(new CarrierHullMemory(host.ViewState));
 
             var spend = SpendDeskFor(host);

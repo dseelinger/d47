@@ -150,6 +150,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // Where the ray left the rules between panes; a headset memory, stored apart from the window's.
         Panel.PaneWidthMemory? paneWidths = null,
 
+        // Which columns each table shows; a headset memory, stored apart from the window's.
+        Panel.ColumnArrangementMemory? columnArrangements = null,
+
         // Builds this surface's own copy of the audio player, which opens while the model says it is open.
         Func<Controls.AudioPlayerDialog>? audioPlayer = null,
 
@@ -169,6 +172,11 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // Read by PanelView's own style and by its resize mark — this copy is the headset's, whichever
         // mode it is currently drawing (#190).
         _view.Classes.Add("headset");
+
+        if (columnArrangements is not null)
+        {
+            _view.EnableColumnArrangements(columnArrangements);
+        }
 
         if (enterResize is not null)
         {
