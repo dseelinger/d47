@@ -71,12 +71,12 @@ public sealed class EdgeNeuralTtsProvider(ILogger<EdgeNeuralTtsProvider> logger,
             logger.LogInformation("Edge Neural offers {Count} voices", _voices.Count);
             return _voices;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (VoiceListFailure.IsFailure(ex, cancellationToken))
         {
             // An empty list is a supported answer: the picker still lets the Commander keep the current value
             // or type one (Phase 4).
             logger.LogWarning(ex, "Could not list Edge Neural voices");
-            return VoiceCatalogue.Unreachable(ex.Message);
+            return VoiceListFailure.From(ex);
         }
     }
 

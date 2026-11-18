@@ -155,10 +155,10 @@ public sealed class CartesiaTtsProvider : ITtsProvider, IDisposable
             _logger.LogInformation("Cartesia offers {Count} voices", _voices.Count);
             return _voices;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (VoiceListFailure.IsFailure(ex, cancellationToken))
         {
             _logger.LogWarning(ex, "Could not list Cartesia voices");
-            return VoiceCatalogue.Unreachable(ex.Message);
+            return VoiceListFailure.From(ex);
         }
     }
 

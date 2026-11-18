@@ -158,10 +158,10 @@ public sealed class ElevenLabsTtsProvider : ITtsProvider, IDisposable
             _logger.LogInformation("ElevenLabs offers {Count} voices", _voices.Count);
             return _voices;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (VoiceListFailure.IsFailure(ex, cancellationToken))
         {
             _logger.LogWarning(ex, "Could not list ElevenLabs voices");
-            return VoiceCatalogue.Unreachable(ex.Message);
+            return VoiceListFailure.From(ex);
         }
     }
 
