@@ -5,6 +5,11 @@ using Xunit;
 
 namespace D47.Core.Tests.Persona;
 
+[CollectionDefinition(nameof(PersonaCatalogOwnCollection), DisableParallelization = true)]
+public sealed class PersonaCatalogOwnCollection;
+
+/// <summary>Runs alone: it sets the static <see cref="PersonaCatalog.Own"/>, which every test reading the catalogue sees.</summary>
+[Collection(nameof(PersonaCatalogOwnCollection))]
 public class ACoreYouWroteYourselfTests : IDisposable
 {
     private readonly MemoryInstall _install = new();
