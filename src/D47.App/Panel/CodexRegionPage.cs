@@ -36,6 +36,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     private string? _seenSystem;
     private string _query = string.Empty;
     private readonly RegionFirstBook? _regionFirsts;
+    private readonly CodexCatalogueChoice? _catalogue;
     private long _seenFirsts;
 
     public CodexRegionPage(
@@ -50,8 +51,10 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         ColumnWidthMemory? columnWidths = null,
         Func<string, Task<bool>>? copy = null,
         ColumnArrangementMemory? columnArrangements = null,
-        RegionFirstBook? regionFirsts = null)
+        RegionFirstBook? regionFirsts = null,
+        CodexCatalogueChoice? catalogue = null)
     {
+        _catalogue = catalogue;
         _regionFirsts = regionFirsts;
         _copy = copy;
         _state = state;
@@ -251,9 +254,36 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
             IsEnabled = named,
         });
         Avalonia.Automation.AutomationProperties.SetName(button, "Discoveries");
-        button.Click += (_, _) => _nav?.Drill(CodexPage.DiscoveriesCrumb(_regionId));
+        button.Click += (_, _) => OpenMissing();
 
         return button;
+    }
+
+    /// <summary>Opens the Codex catalogue set to the kinds missing in this region.</summary>
+    private void OpenMissing()
+    {
+        if (_regionId is not { } id)
+        {
+            return;
+        }
+
+        if (_catalogue is not null)
+        {
+            var here = _state()?.Location.StarPos is { } position && GalacticRegions.Find(position) is { } name ? GalacticRegions.IdOf(name) : null;
+
+            _catalogue.Status = CodexKindStatus.Missing;
+
+            if (id == here)
+            {
+                _catalogue.Here = true;
+            }
+            else
+            {
+                _catalogue.Other = id;
+            }
+        }
+
+        _nav?.GoTo(LedgersPage.Ledger(CodexPage.PageKey, "Codex"));
     }
 
     /// <summary>Shows <paramref name="items"/>, leaving the list and its scroll position alone when they are the items already shown.</summary>

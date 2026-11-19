@@ -190,16 +190,6 @@ public class TheCommanderTabTablesFitTheirColumnsTests
     }
 
     [AvaloniaFact]
-    public void TheCodexDiscoveriesFitTheirColumns()
-    {
-        var state = State(CodexLines);
-        var window = Show(new CodexDiscoveriesPage(() => state, () => HistoryState.Done, 18, Table));
-
-        Fits(window, CodexDiscoveriesPage.TableId);
-        window.Close();
-    }
-
-    [AvaloniaFact]
     public void TheCombatStatsFitTheirColumns()
     {
         var state = State(CombatLines);

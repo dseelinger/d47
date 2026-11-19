@@ -12,7 +12,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>A star or planet kind's Search tile on Discoveries runs the body search on the kind's fields and the region (#2587).</summary>
+/// <summary>A star or planet kind's Search tile on the Codex catalogue runs the body search on the kind's fields and the region (#2587).</summary>
 [Trait("Category", "Integration")]
 public sealed class ASearchTileOnAKindRowRunsTheKindsBodySearchTests
 {
@@ -43,11 +43,13 @@ public sealed class ASearchTileOnAKindRowRunsTheKindsBodySearchTests
         }
     }
 
-    private static (Window Window, CodexDiscoveriesPage Page, List<IReadOnlyDictionary<string, string>> Asked) Shown()
+    private static (Window Window, CodexCataloguePage Page, List<IReadOnlyDictionary<string, string>> Asked) Shown(string key)
     {
         var asked = new List<IReadOnlyDictionary<string, string>>();
         var state = new CommanderGameState(new CommanderIdentity("F735466", "Test Commander"));
-        var page = new CodexDiscoveriesPage(() => state, () => HistoryState.Done, Region, Table, bodySearch: () => new BodySearchLink(asked.Add));
+        var tree = CodexTree.Of(Table);
+        var page = new CodexCataloguePage(
+            () => state, () => HistoryState.Done, new CodexCatalogueChoice { Other = Region }, tree.Node(key)!.Parent!, tree: tree, bodySearch: () => new BodySearchLink(asked.Add));
         var window = new Window { Content = page, Width = 1280, Height = 900 };
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -73,7 +75,7 @@ public sealed class ASearchTileOnAKindRowRunsTheKindsBodySearchTests
 
     private static async Task<(IReadOnlyDictionary<string, string> Sent, BodyQuery Query)> Press(string key)
     {
-        var (window, page, asked) = Shown();
+        var (window, page, asked) = Shown(key);
 
         Assert.IsType<Button>(Find(page, "CodexSearch." + key)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         window.Close();
@@ -140,7 +142,7 @@ public sealed class ASearchTileOnAKindRowRunsTheKindsBodySearchTests
     [AvaloniaFact]
     public void AGreenGasGiantTheServiceDoesNotRecordHasNoTile()
     {
-        var (window, page, _) = Shown();
+        var (window, page, _) = Shown("1200502");
 
         Assert.NotNull(Find(page, "CodexSearch.1200502"));
         Assert.Null(Find(page, "CodexSearch.1200902"));

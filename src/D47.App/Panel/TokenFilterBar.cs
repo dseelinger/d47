@@ -49,8 +49,6 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
         set => _clear!.IsVisible = value;
     }
 
-    protected IReadOnlyDictionary<TKind, Button> Tokens => _tokens;
-
     protected abstract void Clear();
 
     /// <summary>Sets token visibility, closes a panel that no longer applies and writes each token's value.</summary>

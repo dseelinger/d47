@@ -47,15 +47,23 @@ public sealed class AStarOrPlanetKindIsSearchedAndOpenedAsItsOwnKindTests
     private static CommanderGameState State() => new(new CommanderIdentity("F735466", "Test Commander"));
 
     [AvaloniaFact]
-    public void ADiscoveriesRowForAStarHasASearchTile()
+    public void ACatalogueRowForAStarHasASearchTile()
     {
         var link = new BodySearchLink(_ => { });
-        var page = new CodexDiscoveriesPage(State, () => HistoryState.Done, 18, Table, bodySearch: () => link);
+        var tree = CodexTree.Of(Table);
+        var choice = new CodexCatalogueChoice { Other = 18 };
+        var page = new CodexCataloguePage(State, () => HistoryState.Done, choice, tree.Node("star.neutron_star")!.Parent!, tree: tree, bodySearch: () => link);
         var window = Shown(page);
 
-        Assert.NotNull(Find(page, "CodexMissing.star.neutron_star"));
+        Assert.NotNull(Find(page, "CodexKind.star.neutron_star"));
         Assert.NotNull(Find(page, "CodexSearch.star.neutron_star"));
-        Assert.NotNull(Find(page, "CodexSearch.2"));
+
+        window.Close();
+
+        var trees = new CodexCataloguePage(State, () => HistoryState.Done, choice, tree.Node("2")!.Parent!, tree: tree, bodySearch: () => link);
+        window = Shown(trees);
+
+        Assert.NotNull(Find(trees, "CodexSearch.2"));
 
         window.Close();
     }

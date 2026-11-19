@@ -10,17 +10,20 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Each Discoveries row has a Search tile that runs the entry's body search, beside the row that still opens the entry page (#1823).</summary>
-public sealed class ASearchTileOnADiscoveriesRowRunsTheBodySearchTests
+/// <summary>Each Codex catalogue kind row has a Search tile that runs the entry's body search, beside the row that still opens the entry page (#1823).</summary>
+public sealed class ASearchTileOnACatalogueKindRowRunsTheBodySearchTests
 {
     private static readonly CodexTable Table = CodexTable.Parse(
         "1\tAlpha tree\tBiological and Geological\tOrganic structures\t18:50\n"
         + "2\tBeta tree\tBiological and Geological\tOrganic structures\t18:30\n");
 
-    private static (Window Window, CodexDiscoveriesPage Page) Shown(BodySearchLink? link, int? regionId = 18, CodexTable? table = null)
+    private static (Window Window, CodexCataloguePage Page) Shown(BodySearchLink? link, int? regionId = 18, CodexTable? table = null)
     {
         var state = new CommanderGameState(new CommanderIdentity("F735466", "Test Commander"));
-        var page = new CodexDiscoveriesPage(() => state, () => HistoryState.Done, regionId, table ?? Table, bodySearch: () => link);
+        var tree = CodexTree.Of(table ?? Table);
+        var node = tree.Node(table is null ? "1" : "2")!.Parent!;
+        var page = new CodexCataloguePage(
+            () => state, () => HistoryState.Done, new CodexCatalogueChoice { Other = regionId }, node, tree: tree, bodySearch: () => link);
         var window = new Window { Content = page, Width = 1280, Height = 900 };
         window.Show();
         Dispatcher.UIThread.RunJobs();
@@ -46,7 +49,7 @@ public sealed class ASearchTileOnADiscoveriesRowRunsTheBodySearchTests
         Assert.Equal("Beta tree", sent["codex_entry"]);
         Assert.Equal(GalacticRegions.NameOf(18), sent["region"]);
         Assert.False(sent.ContainsKey("max_distance"));
-        Assert.NotNull(Find(page, "CodexMissing.2"));
+        Assert.NotNull(Find(page, "CodexKind.2"));
 
         window.Close();
     }
@@ -74,7 +77,7 @@ public sealed class ASearchTileOnADiscoveriesRowRunsTheBodySearchTests
         var (window, page) = Shown(null);
 
         Assert.Null(Find(page, "CodexSearch.1"));
-        Assert.NotNull(Find(page, "CodexMissing.1"));
+        Assert.NotNull(Find(page, "CodexKind.1"));
 
         window.Close();
     }

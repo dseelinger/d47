@@ -92,15 +92,6 @@ public sealed class TheCreditsAndCodexTablesAreArrangedTests
             null,
             (memory, headset) => new CodexRegionPage(
                 () => Codexed(), () => HistoryState.Done, () => Now, Everything(), 18, headset, null, Table, null, null, memory)),
-        new(
-            CodexDiscoveriesPage.TableId,
-            "CodexMissingHead",
-            ["Mark", "Entry", "Category", "SubCategory", "ReportedIn", "Status"],
-            "Category",
-            "Status",
-            null,
-            (memory, headset) => new CodexDiscoveriesPage(
-                () => Codexed(), () => HistoryState.Done, 18, Table, headset, null, null, null, null, memory)),
     ];
 
     public static TheoryData<string, bool> EveryTable()

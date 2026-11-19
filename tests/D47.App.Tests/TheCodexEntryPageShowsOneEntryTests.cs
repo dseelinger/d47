@@ -374,20 +374,20 @@ public class TheCodexEntryPageShowsOneEntryTests
     }
 
     [AvaloniaFact]
-    public void PressingAMissingRowOnTheDiscoveriesPageDrillsToItsPage()
+    public void PressingAKindRowOnTheCatalogueDrillsToItsPage()
     {
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Commander, new NavCrumb(CodexPage.PageKey, "Codex"));
         nav.Select(PanelTab.Commander);
-        nav.Drill(CodexPage.RegionCrumb(18));
-        nav.Drill(CodexPage.DiscoveriesCrumb(18));
 
         var state = State(Lines);
         var table = D47.Core.Knowledge.CodexTable.Parse(new StringReader(
             "# test\n101\tEntry 101\tBiological and Geological\tOrganic structures\t18:3\n205\tAlpha tree\tBiological and Geological\tOrganic structures\t18:9\n"));
-        var (window, page) = PageHost.Open(() => new CodexDiscoveriesPage(() => state, () => HistoryState.Done, 18, table, nav: nav));
+        var tree = D47.Core.Knowledge.CodexTree.Of(table);
+        var (window, page) = PageHost.Open(() => new CodexCataloguePage(
+            () => state, () => HistoryState.Done, new CodexCatalogueChoice { Other = 18 }, tree.Node("205")!.Parent!, nav: nav, tree: tree));
 
-        In<Button>(page).First(button => button.Name == "CodexMissing.205").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        In<Button>(page).First(button => button.Name == "CodexKind.205").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         Assert.Equal("codex-entry-18-205", nav.Trail[^1].Key);
         Assert.Equal("Alpha tree", nav.Trail[^1].Word);
