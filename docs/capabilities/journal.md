@@ -643,8 +643,9 @@ codex vouchers, which the journal values only when they are redeemed.
 
 `get_codex_discoveries` answers which codex entries are known in a region and which the Commander has not
 logged. `region` is a codex region by name, or `here` (the default) for the region the Commander is in. The
-first line gives how many entries are known, logged and missing; then the missing count by subcategory and the
-three most-reported missing entries by name, with a count of the rest. Logged means the entry was logged in
+first line gives how many entries are known, logged and missing; then the missing count by subcategory, and for
+each category with missing entries, in A–Z order, the three most-reported missing entries in it by name, with a
+count of the rest. Logged means the entry was logged in
 that region anywhere in the record, not in a period. The answer says when the record starts, because an entry
 logged before the oldest journal reads as missing, and ends with the coverage line:
 "Stars, Thargoid sites and planets other than the green gas giants are not covered."

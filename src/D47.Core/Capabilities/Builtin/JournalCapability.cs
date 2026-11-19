@@ -2190,13 +2190,10 @@ public static class JournalCapability
             text.Append(CodexTop("Missing by kind", bySubcategory, string.Empty));
         }
 
-        if (discoveries.Missing.Count > 0)
+        foreach (var line in CodexMissingByCategory(discoveries))
         {
             text.AppendLine();
-            text.Append(CodexTop(
-                "Most reported missing",
-                [.. discoveries.Missing.Select(item => item.Entry.Name)],
-                string.Empty));
+            text.Append(line);
         }
 
         text.AppendLine();
@@ -2301,6 +2298,17 @@ public static class JournalCapability
         ledger.OnRecordSince is { } since
             ? $"on record since {since.UtcDateTime.ToString("d MMMM yyyy", CultureInfo.InvariantCulture)}"
             : "on record";
+
+    /// <summary>One line per category with missing entries, in the order of <see cref="CodexDiscoveries.Missing"/>, naming its three most reported.</summary>
+    internal static IReadOnlyList<string> CodexMissingByCategory(CodexDiscoveries discoveries) =>
+    [
+        .. discoveries.Missing
+            .GroupBy(item => item.Entry.Category, StringComparer.OrdinalIgnoreCase)
+            .Select(group => CodexTop(
+                $"Most reported missing in {group.Key.ToLowerInvariant()}",
+                [.. group.Select(item => item.Entry.Name)],
+                string.Empty)),
+    ];
 
     private static string CodexTop(string heading, IReadOnlyList<string> groups, string none)
     {

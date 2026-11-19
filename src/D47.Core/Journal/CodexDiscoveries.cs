@@ -17,8 +17,9 @@ public sealed record CodexDiscoveries(
 
     /// <summary>
     /// Compares the region's catalogue entries with the whole ledger. An entry is logged when its (entry, region)
-    /// pair is anywhere in the ledger. Missing entries are ordered by reported systems, most first. Uncovered are
-    /// the first entries logged in the region that the catalogue does not list there.
+    /// pair is anywhere in the ledger. Known, logged and missing entries are ordered by category A–Z, then reported
+    /// systems, most first, then name. Uncovered are the first entries logged in the region that the catalogue does
+    /// not list there.
     /// </summary>
     public static CodexDiscoveries For(CodexLedger ledger, CodexTable catalogue, int regionId)
     {
@@ -31,6 +32,9 @@ public sealed record CodexDiscoveries(
             .ToDictionary(group => group.Key, group => group.First());
 
         var known = catalogue.InRegion(regionId)
+            .OrderBy(found => found.Entry.Category, StringComparer.OrdinalIgnoreCase)
+            .ThenByDescending(found => found.Systems)
+            .ThenBy(found => found.Entry.Name, StringComparer.OrdinalIgnoreCase)
             .Select(found => new CodexDiscoveryItem(found.Entry, found.Systems, first.GetValueOrDefault(found.Entry.EntryId)))
             .ToList();
         var listed = known.Select(item => item.Entry.EntryId).ToHashSet();

@@ -161,9 +161,9 @@ public static class CodexModel
 
     public static string DiscoveriesGroupLine(CodexStatusFilter status) => status switch
     {
-        CodexStatusFilter.Missing => "Known in this region and not on your record, most reported first.",
-        CodexStatusFilter.OnRecord => "Known in this region and on your record, most reported first.",
-        _ => "Every entry known in this region, most reported first.",
+        CodexStatusFilter.Missing => "Known in this region and not on your record, most reported first within each category.",
+        CodexStatusFilter.OnRecord => "Known in this region and on your record, most reported first within each category.",
+        _ => "Every entry known in this region, most reported first within each category.",
     };
 
     public const string NoMissingMatchText = "No codex entry in this region matches those filters and that search.";
@@ -510,7 +510,7 @@ public static class CodexModel
         + CodexDiscoveries.Coverage
         + (uncovered > 0 ? $" You logged {Number(uncovered)} more here that the codex table does not list." : string.Empty);
 
-    /// <summary>The region's entries from <paramref name="table"/> that <paramref name="filter"/> and the search keep, most reported first.</summary>
+    /// <summary>The region's entries from <paramref name="table"/> that <paramref name="filter"/> and the search keep, by category, most reported first within each.</summary>
     public static CodexDiscoveriesView Discoveries(
         CodexLedger ledger, CodexTable table, int regionId, HistoryState history, CodexDiscoveryFilter? filter = null, string? query = null)
     {
@@ -542,8 +542,6 @@ public static class CodexModel
             .Where(item => filter.Category is null || string.Equals(item.Entry.Category, filter.Category, StringComparison.OrdinalIgnoreCase))
             .Where(item => filter.SubCategory is null || string.Equals(item.Entry.SubCategory, filter.SubCategory, StringComparison.OrdinalIgnoreCase))
             .Where(item => string.IsNullOrEmpty(text) || item.Entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(item => item.Systems)
-            .ThenBy(item => item.Entry.Name, StringComparer.OrdinalIgnoreCase)
             .Select(item => new CodexMissingRow(
                 item.Entry.EntryId,
                 item.Entry.Name,
@@ -573,14 +571,14 @@ public static class CodexModel
                 : found.Missing.Count == 0 && filter.Status == CodexStatusFilter.Missing ? "Every entry the codex table lists for this region is on your record." : null);
     }
 
-    /// <summary>The Discoveries table's columns; the default order is most reported first.</summary>
+    /// <summary>The Discoveries table's columns; the default order is by category, most reported first within each.</summary>
     public static IReadOnlyList<SortColumn<CodexMissingRow>> MissingHeads() =>
     [
         SortColumn<CodexMissingRow>.Plain(string.Empty),
         SortColumn<CodexMissingRow>.Text("Entry", row => row.Name) with { Second = "Codex name" },
         SortColumn<CodexMissingRow>.Text("Category", row => row.Category, row => row.SubCategory) with { Second = "Then sub-category" },
         SortColumn<CodexMissingRow>.Text("Sub-category", row => row.Category, row => row.SubCategory) with { Second = "Within category" },
-        SortColumn<CodexMissingRow>.Figure("Reported in", row => (long?)row.Systems, SortDirection.Descending) with { Second = "Systems" },
+        SortColumn<CodexMissingRow>.Figure("Reported in", row => (long?)row.Systems, SortDirection.Descending) with { Second = "Systems", Within = row => row.Category },
         SortColumn<CodexMissingRow>.Figure<int>("Status", row => row.OnRecord ? 1 : 0, SortDirection.Ascending) with { Second = "Whole record" },
     ];
 

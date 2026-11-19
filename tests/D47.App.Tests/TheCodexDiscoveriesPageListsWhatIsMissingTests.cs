@@ -39,6 +39,14 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
         + "5\tOther region\tBiological and Geological\tGeology\t35:99\n"
         + "6\tEpsilon cloud\tTourist\tPlanetary\t18:5\n");
 
+    // Two categories; the second's top count is larger than the first's.
+    private static readonly CodexTable TwoCategories = CodexTable.Parse(
+        "1\tAlpha tree\tBiological and Geological\tOrganic structures\t18:50\n"
+        + "2\tBeta tree\tBiological and Geological\tOrganic structures\t18:30\n"
+        + "3\tGamma vent\tBiological and Geological\tGeology\t18:10\n"
+        + "4\tDelta cloud\tTourist\tPlanetary\t18:90\n"
+        + "5\tEpsilon cloud\tTourist\tPlanetary\t18:5\n");
+
     private static string Codex(string time, long id, int region, string sub, bool isNew) =>
         "{\"timestamp\":\"" + time + "\",\"event\":\"CodexEntry\",\"EntryID\":" + id + ",\"Name\":\"$Codex_Ent_" + id
         + ";\",\"Name_Localised\":\"Entry " + id + "\",\"Category\":\"$Codex_Category_X;\",\"Category_Localised\":\"Biological and Geological\""
@@ -264,6 +272,34 @@ public class TheCodexDiscoveriesPageListsWhatIsMissingTests
             using var frame = window.CaptureRenderedFrame()!;
             frame.SaveCapture(headset ? "codex-discoveries-all-headset.png" : "codex-discoveries-all.png");
         }
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReportedInSortsWithinEachCategoryAndTheCategoriesKeepTheirOrder(bool headset)
+    {
+        var (window, page) = PageHost.Open(() => Discoveries(State(Lines), table: TwoCategories, headset: headset));
+
+        Pick(page, "Status", 2);
+
+        string[] mostFirst = ["Alpha tree", "Beta tree", "Gamma vent", "Delta cloud", "Epsilon cloud"];
+        string[] fewestFirst = ["Gamma vent", "Beta tree", "Alpha tree", "Epsilon cloud", "Delta cloud"];
+
+        Assert.Equal(mostFirst, Names(page));
+
+        Press(page, "Reportedin");
+        Assert.Equal(mostFirst, Names(page));
+        Assert.True(Shows(Head(page, "Reportedin"), "Reported in ▼"));
+
+        Press(page, "Reportedin");
+        Assert.Equal(fewestFirst, Names(page));
+        Assert.True(Shows(Head(page, "Reportedin"), "Reported in ▲"));
+
+        Press(page, "Reportedin");
+        Assert.Equal(mostFirst, Names(page));
 
         window.Close();
     }

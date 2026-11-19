@@ -21,6 +21,16 @@ public class TheCodexDiscoveriesSayWhatIsMissingTests
         + "4\tDelta Tube\tBiology\tTubers\t18:1\n"
         + "5\tEpsilon Vent\tGeology\tVents\t18:7\n";
 
+    // Two categories; the second's top count is larger than the first's, and two of its entries tie.
+    private const string TwoCategories =
+        "1\tAlpha Tube\tBiology\tTubers\t18:5\n"
+        + "2\tBeta Tube\tBiology\tTubers\t18:50\n"
+        + "3\tGamma Tube\tBiology\tTubers\t18:20\n"
+        + "4\tDelta Tube\tBiology\tTubers\t18:1\n"
+        + "5\tEpsilon Vent\tGeology\tVents\t18:70\n"
+        + "6\tZeta Vent\tGeology\tVents\t18:7\n"
+        + "7\tEta Vent\tGeology\tVents\t18:7\n";
+
     private static string Line(string time, string kind, string rest) =>
         "{\"timestamp\":\"" + time + "\",\"event\":\"" + kind + "\"," + rest + "}";
 
@@ -80,6 +90,40 @@ public class TheCodexDiscoveriesSayWhatIsMissingTests
     }
 
     [Fact]
+    public void EntriesAreOrderedByCategoryThenReportedSystemsThenName()
+    {
+        var discoveries = CodexDiscoveries.For(Ledger(Entry(3, 18), Entry(6, 18, "Vents")), CodexTable.Parse(TwoCategories), 18);
+
+        Assert.Equal([2L, 3L, 1L, 4L, 5L, 7L, 6L], discoveries.Known.Select(item => item.Entry.EntryId));
+        Assert.Equal([2L, 1L, 4L, 5L, 7L], discoveries.Missing.Select(item => item.Entry.EntryId));
+        Assert.Equal([3L, 6L], discoveries.Logged.Select(item => item.Entry.EntryId));
+    }
+
+    [Fact]
+    public void TheAnswerNamesTheMissingEntriesOfEachCategoryOnItsOwnLine()
+    {
+        var discoveries = CodexDiscoveries.For(Ledger(Entry(3, 18)), CodexTable.Parse(TwoCategories), 18);
+
+        Assert.Equal(
+            [
+                "Most reported missing in biology: Beta Tube, Alpha Tube, Delta Tube.",
+                "Most reported missing in geology: Epsilon Vent, Eta Vent, Zeta Vent.",
+            ],
+            JournalCapability.CodexMissingByCategory(discoveries));
+    }
+
+    [Fact]
+    public void ACategoryWithNothingMissingHasNoLine()
+    {
+        var discoveries = CodexDiscoveries.For(
+            Ledger(Entry(5, 18, "Vents"), Entry(6, 18, "Vents"), Entry(7, 18, "Vents")), CodexTable.Parse(TwoCategories), 18);
+
+        Assert.Equal(
+            ["Most reported missing in biology: Beta Tube, Gamma Tube, Alpha Tube, and 1 more."],
+            JournalCapability.CodexMissingByCategory(discoveries));
+    }
+
+    [Fact]
     public void AnEntryTheTableDoesNotListIsUncoveredNotMissing()
     {
         var discoveries = CodexDiscoveries.For(Ledger(Entry(900, 18, "Stars")), CodexTable.Parse(Table), 18);
@@ -89,16 +133,37 @@ public class TheCodexDiscoveriesSayWhatIsMissingTests
     }
 
     [Fact]
-    public async Task TheAnswerNamesTheThreeMostReportedMissingEntries()
+    public async Task TheAnswerNamesTheThreeMostReportedMissingEntriesInEachCategory()
     {
         var shipped = CodexCatalogue.InRegion(18);
         var logged = shipped[0].Entry.EntryId;
-        var expected = string.Join(", ", shipped.Skip(1).Take(3).Select(found => found.Entry.Name));
+        var categories = shipped
+            .Where(found => found.Entry.EntryId != logged)
+            .GroupBy(found => found.Entry.Category)
+            .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         var said = await Ask(
             Store(Entry(logged, 18), Position(0, 0)), "{\"region\":\"" + GalacticRegions.NameOf(18) + "\"}");
+        var lines = said.Split(Environment.NewLine).Where(line => line.StartsWith("Most reported missing in ", StringComparison.Ordinal)).ToList();
 
-        Assert.Contains($"Most reported missing: {expected}, and {shipped.Count - 4} more.", said);
+        Assert.True(categories.Count > 1);
+        Assert.Equal(categories.Count, lines.Count);
+
+        foreach (var (group, line) in categories.Zip(lines))
+        {
+            var top = group
+                .OrderByDescending(found => found.Systems)
+                .ThenBy(found => found.Entry.Name, StringComparer.OrdinalIgnoreCase)
+                .Take(3)
+                .Select(found => found.Entry.Name);
+            var rest = group.Count() - 3;
+
+            Assert.Equal(
+                $"Most reported missing in {group.Key.ToLowerInvariant()}: {string.Join(", ", top)}{(rest > 0 ? $", and {rest} more" : string.Empty)}.",
+                line);
+        }
+
         Assert.Contains($"{shipped.Count - 1:N0} missing.", said);
     }
 

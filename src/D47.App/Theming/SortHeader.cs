@@ -45,6 +45,9 @@ public sealed record SortColumn<TRow>
     /// <summary>The rows are sorted elsewhere (<see cref="Remote"/>), so the sort is not kept by the table.</summary>
     public bool IsRemote { get; init; }
 
+    /// <summary>Rows group by this key A–Z, ignoring case, in either direction; the column's own order applies within each group.</summary>
+    public Func<TRow, string?>? Within { get; init; }
+
     internal Func<TRow, bool>? Present { get; }
 
     internal Comparison<TRow>? Compare { get; }
@@ -129,9 +132,13 @@ public static class ColumnSort
 
         var comparer = Comparer<TRow>.Create(compare);
         var known = rows.Where(present);
-        var ordered = sort.Direction == SortDirection.Ascending
-            ? known.OrderBy(row => row, comparer)
-            : known.OrderByDescending(row => row, comparer);
+        var ordered = columns[sort.Column].Within is { } within
+            ? sort.Direction == SortDirection.Ascending
+                ? known.OrderBy(within, StringComparer.OrdinalIgnoreCase).ThenBy(row => row, comparer)
+                : known.OrderBy(within, StringComparer.OrdinalIgnoreCase).ThenByDescending(row => row, comparer)
+            : sort.Direction == SortDirection.Ascending
+                ? known.OrderBy(row => row, comparer)
+                : known.OrderByDescending(row => row, comparer);
 
         return [.. ordered, .. rows.Where(row => !present(row))];
     }
