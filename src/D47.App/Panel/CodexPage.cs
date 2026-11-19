@@ -149,6 +149,13 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
             ? LedgersPage.Ledger(PageKey, "Codex")
             : new(NodePrefix + node.Key, CodexCatalogueModel.Display(node.ShortName)) { Whole = true };
 
+    /// <summary>The crumbs to a genus's catalogue page: the Codex root, its family, the genus; the root alone where the tree has no such group.</summary>
+    public static IReadOnlyList<NavCrumb> GenusTrail(CodexTree tree, string genus) =>
+    [
+        NodeCrumb(tree.Root),
+        .. CodexCatalogueModel.GenusNode(tree, genus) is { } node ? CodexCatalogueModel.PathTo(node).Select(NodeCrumb) : [],
+    ];
+
     /// <summary>Whether the key is the Codex root, the catalogue, or a node's page under it.</summary>
     public static bool IsCatalogue(string key) => key == PageKey || key.StartsWith(NodePrefix, StringComparison.Ordinal);
 

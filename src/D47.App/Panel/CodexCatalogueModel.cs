@@ -125,6 +125,10 @@ public static class CodexCatalogueModel
 
     public const string NoMatchText = "No kind here matches these filters.";
 
+    public const string NoKindMatchText = "No kind in the Codex matches that search.";
+
+    public const string SearchPlaceholder = "Search every kind";
+
     public const string YourPicture = "Your picture";
 
     public const string StockPicture = "Stock picture";
@@ -248,6 +252,73 @@ public static class CodexCatalogueModel
         return new CodexCatalogueView(
             node, regionId, found.Counted, found.OnRecord, found.Missing, shown, groups, KindRows(tree, found), [], -1);
     }
+
+    /// <summary>
+    /// The root's page for a search: every kind under <paramref name="node"/> whose full name contains
+    /// <paramref name="text"/>, from every family, with no group rows. <c>Counted</c> is the kinds that match the text
+    /// and <c>Shown</c> those that also pass the status.
+    /// </summary>
+    public static CodexCatalogueView Search(
+        CodexLedger ledger, CodexNode node, int? regionId, CodexKindStatus status, string text)
+    {
+        ArgumentNullException.ThrowIfNull(ledger);
+        ArgumentNullException.ThrowIfNull(node);
+
+        var matching = AllKinds(CodexNodeDiscoveries.For(ledger, node, regionId))
+            .Where(kind => kind.Entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var rows = matching
+            .Where(kind => status switch
+            {
+                CodexKindStatus.Missing => !kind.IsOnRecord,
+                CodexKindStatus.OnRecord => kind.IsOnRecord,
+                _ => true,
+            })
+            .OrderByDescending(kind => kind.Systems)
+            .ThenBy(kind => kind.Entry.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(kind => new CodexKindRow(
+                kind.Entry,
+                kind.Entry.Name,
+                kind.Systems,
+                kind.SystemsAllRegions,
+                kind.FirstFind,
+                CodexFamilies.FileOfTableName(kind.Entry.SubCategory)))
+            .ToList();
+        var onRecord = matching.Count(kind => kind.IsOnRecord);
+
+        return new CodexCatalogueView(node, regionId, matching.Count, onRecord, matching.Count - onRecord, rows.Count, [], rows, [], -1);
+    }
+
+    /// <summary>The group of the Organic structures family named <paramref name="genus"/>; null when the tree has none.</summary>
+    public static CodexNode? GenusNode(CodexTree tree, string genus)
+    {
+        ArgumentNullException.ThrowIfNull(tree);
+        ArgumentNullException.ThrowIfNull(genus);
+
+        var organic = tree.Root.Children.FirstOrDefault(family => family.Name == "Organic structures");
+        var name = genus.Trim();
+
+        return organic is null ? null : Descendants(organic).FirstOrDefault(node => node.Children.Count > 0 && string.Equals(node.Name, name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The nodes from the family down to <paramref name="node"/>, the node last.</summary>
+    public static IReadOnlyList<CodexNode> PathTo(CodexNode node)
+    {
+        var path = new List<CodexNode>();
+
+        for (var at = node; at.Parent is not null; at = at.Parent)
+        {
+            path.Insert(0, at);
+        }
+
+        return path;
+    }
+
+    private static IEnumerable<CodexNode> Descendants(CodexNode node) =>
+        node.Children.SelectMany(child => new[] { child }.Concat(Descendants(child)));
+
+    private static IEnumerable<CodexKindDiscovery> AllKinds(CodexNodeDiscoveries found) =>
+        found.Kinds.Concat(found.Groups.SelectMany(AllKinds));
 
     /// <summary>The Kinds table's columns; Systems, most first, is the default order.</summary>
     public static IReadOnlyList<SortColumn<CodexKindRow>> KindHeads(string? region) =>

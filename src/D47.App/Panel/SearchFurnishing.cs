@@ -589,16 +589,9 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             CodexPage.RegionCrumb(null),
             CodexPage.EntryCrumb(null, entry.Key, entry.Name)]);
 
-    /// <summary>Opens Commander › Codex › Regions with its search set to the genus.</summary>
-    private void OpenGenus(string genus)
-    {
-        PageTrail.Open(host.Nav, LedgersPage.RootKey, [LedgersPage.Ledger(CodexPage.PageKey, "Codex"), CodexPage.RegionsCrumb()]);
-
-        if (host.Nav.Trail is { Count: > 0 } trail && trail[^1].Key == CodexPage.RegionsKey)
-        {
-            host.Seek(genus);
-        }
-    }
+    /// <summary>Opens the genus's page in the Codex catalogue; the Codex root where the catalogue has no group of that name.</summary>
+    private void OpenGenus(string genus) =>
+        PageTrail.Open(host.Nav, LedgersPage.RootKey, CodexPage.GenusTrail(CodexCatalogue.Tree, genus));
 
     /// <summary>Drills a body's page under the page it was pressed on, keeping the record already read.</summary>
     private void OpenBody(StarSystemProfile profile, BodyProfile body)

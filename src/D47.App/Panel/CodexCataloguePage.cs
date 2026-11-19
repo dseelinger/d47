@@ -15,7 +15,7 @@ namespace D47.App.Panel;
 /// Commander › Ledgers › Codex and every level under it: one node of the codex tree, its child groups as rows
 /// or as a segmented control over one kinds list, and its kinds, under the shared status and region filter.
 /// </summary>
-public sealed class CodexCataloguePage : UserControl, IPageSummary
+public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterablePage
 {
     public const string GroupsTableId = "Codex.Catalogue.Groups";
 
@@ -64,6 +64,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
     private long _seenFirsts;
     private int _seenPeriod = -1;
     private string _summary = string.Empty;
+    private string _query = string.Empty;
 
     public CodexCataloguePage(
         Func<CommanderGameState?> state,
@@ -145,6 +146,21 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
 
     public event EventHandler? SummaryChanged;
 
+    /// <summary>The root takes the title-line search on the desktop; the headset has no field.</summary>
+    public bool Filters => !_headset && _node.Parent is null;
+
+    public string FilterPlaceholder => CodexCatalogueModel.SearchPlaceholder;
+
+    /// <summary>On the root, lists every kind whose name contains the text in place of the family rows.</summary>
+    public void Filter(string? query)
+    {
+        if (PageKit.Retarget(query, ref _query))
+        {
+            _kindPage = 0;
+            Draw();
+        }
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
@@ -220,6 +236,8 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
     /// <summary>Whether this is the Codex root, which carries the Possible firsts and Regions rows under its tables.</summary>
     private bool AtRoot => _node.Parent is null && _period is not null && _now is not null;
 
+    private bool Searching => Filters && _query.Length > 0;
+
     private bool HasSearch() => _bodySearch?.Invoke() is not null;
 
     private void Draw()
@@ -249,9 +267,10 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
 
         var ledger = state?.CodexLedger ?? CodexLedger.None;
         var scope = _filters.Scope;
-        var view = CodexCatalogueModel.View(ledger, _tree, _node, scope, _choice.Status, _choice.Segment(_node.Key));
+        var whole = CodexCatalogueModel.View(ledger, _tree, _node, scope, _choice.Status, _choice.Segment(_node.Key));
+        var view = Searching ? CodexCatalogueModel.Search(ledger, _node, scope, _choice.Status, _query) : whole;
 
-        SetSummary(CodexCatalogueModel.Summary(view, _headset));
+        SetSummary(CodexCatalogueModel.Summary(whole, _headset));
         Columns(scope);
 
         _filters.Show(view.Shown, view.Counted);
@@ -284,7 +303,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
 
         if (!any)
         {
-            _body.Children.Add(CreditsKit.Message(CodexCatalogueModel.NoMatchText));
+            _body.Children.Add(CreditsKit.Message(Searching ? CodexCatalogueModel.NoKindMatchText : CodexCatalogueModel.NoMatchText));
         }
 
         if (AtRoot)
