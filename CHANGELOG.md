@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Search › Bodies shows the body type in a Type column beside Body, sortable, instead of a grey line under the body's name. A table whose columns you have arranged before keeps that arrangement; add Type from Columns.
+
 Changed: A region's Discoveries row opens Commander › Ledgers › Codex set to "Show MISSING kinds in" that region, with that region's counts, in place of a separate Discoveries page. The row keeps its figures, and the row for the region D47 cannot name still has no ›. The catalogue's search and sort take over from the Discoveries page's own filters.
 
 Added: The Codex root has a search field in the title line, "Search every kind". While it has text, the family rows give way to every kind whose name contains it, from every family, each under its full name such as "Rocky body, not terraformable, Thin Carbon dioxide". The Show sentence still applies, so Missing leaves the kinds you have not found, and the results line counts the kinds shown. Nothing matching reads "No kind in the Codex matches that search." Clearing the field brings the families back. A row opens the kind's entry page and Back returns to the results. The headset has no field. A genus on a body page now opens that genus's page in the Codex, under Organic structures, instead of Regions with a search.

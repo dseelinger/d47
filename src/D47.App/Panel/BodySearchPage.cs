@@ -364,7 +364,8 @@ public sealed class BodySearchPage : GalaxySearchPage
     {
         List<TableField<object>> fields =
         [
-            SearchField("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 120 }, "Body", row => NameCell((BodySummary)row), "name", "Type"),
+            SearchField("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 120 }, "Body", row => Centered(Chrome(((BodySummary)row).Name, TypeScale.Secondary, ThemeManager.AKey)), "name"),
+            SearchField("Type", new TableColumn("Type", ColumnFit.Fill) { Min = 120 }, "Type", row => TableCells.Text(((BodySummary)row).Subtype), local: LocalSort.Text<BodySummary>(body => body.Subtype)),
             SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((BodySummary)row), "system"),
             SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((BodySummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
             SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(StationSearchPage.Light(((BodySummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), "from_star", right: true),
@@ -421,13 +422,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         ]);
 
         return fields;
-    }
-
-    private static Control NameCell(BodySummary body)
-    {
-        var name = Chrome(body.Name, TypeScale.Secondary, ThemeManager.AKey);
-
-        return Centered(Pair(name, Sub(body.Subtype)));
     }
 
     private Control SystemCell(BodySummary body)

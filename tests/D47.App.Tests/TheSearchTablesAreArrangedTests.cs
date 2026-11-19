@@ -30,7 +30,7 @@ public sealed class TheSearchTablesAreArrangedTests
 
     private static readonly string[] StationColumns = ["Station", "System", "Distance", "Pad", "FromStar", "AskedFor", "Updated"];
 
-    private static readonly string[] BodyColumns = ["Body", "System", "Distance", "FromStar", "Landable", "Gravity"];
+    private static readonly string[] BodyColumns = ["Body", "Type", "System", "Distance", "FromStar", "Landable", "Gravity"];
 
     private static readonly string[] OutfittingColumns = ["Station", "System", "Distance", "Pad", "FromStar", "Updated"];
 
