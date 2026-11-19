@@ -366,6 +366,20 @@ and the fuel-reach warning still speak, because they are about your fuel. Leavin
 out needs a loadout Directive 47 can see, and it remembers what every ship of yours was last carrying, so joining a
 session already in flight still counts. A ship it has never watched you fly hears all three.
 
+#### Landing hazards {#approach-hazard}
+
+On the approach to a body you have scanned, D47 warns when its surface gravity is over 1 g, its
+surface temperature is 700 K or more, or both:
+
+```text
+High gravity on Col 285 Sector AB-C d1-2 3 a: 1.42 g.
+Hot surface on Col 285 Sector AB-C d1-2 3 a: 812 K.
+High gravity and a hot surface on Col 285 Sector AB-C d1-2 3 a: 1.42 g, 812 K.
+```
+
+It reads your scans, so a body you have not scanned says nothing. It is said on every approach, not
+once per body, and nothing is said for a body below both limits.
+
 #### Rebuy cover {#rebuy}
 
 When your balance drops below the rebuy on the ship you are flying, your core says so once, with

@@ -14,6 +14,7 @@ public class EveryRowReachesItsSubsystemTests
     [InlineData("speech.rate", SettingsSubsystem.Speech)]
     [InlineData("audio.music", SettingsSubsystem.Audio)]
     [InlineData("callouts.fuel", SettingsSubsystem.Callouts)]
+    [InlineData("callouts.approachHazard", SettingsSubsystem.Callouts)]
     [InlineData("listening.mode", SettingsSubsystem.Listening)]
     [InlineData("persona.id", SettingsSubsystem.Persona)]
     public void AKeyReachesTheSubsystemItIsDownstreamOf(string key, SettingsSubsystem expected)

@@ -277,6 +277,7 @@ public static class SettingsLayout
                             [
                                 E("callouts.danger"),
                                 E("callouts.fuel"),
+                                E("callouts.approachHazard"),
                                 E("callouts.rebuy"),
                                 E("callouts.fighterCrew"),
                                 E("callouts.carrierFuel"),

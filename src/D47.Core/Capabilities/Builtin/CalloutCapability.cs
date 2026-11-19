@@ -16,6 +16,7 @@ public static class CalloutCapability
     public const string EnabledKey = "callouts.enabled";
     public const string DangerKey = "callouts.danger";
     public const string FuelKey = "callouts.fuel";
+    public const string ApproachHazardKey = "callouts.approachHazard";
     public const string RebuyKey = "callouts.rebuy";
     public const string FighterCrewKey = "callouts.fighterCrew";
     public const string RouteKey = "callouts.routeProgress";
@@ -244,6 +245,22 @@ public static class CalloutCapability
                 "fuel",
                 s => s.Callouts.Fuel,
                 (s, v) => s with { Callouts = s.Callouts with { Fuel = v } }),
+
+            Toggle(
+                ApproachHazardKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › In flight, group Flight callouts, and find Landing hazards (on by "
+                + "default). Approach a body you have scanned whose surface gravity is over 1 g or whose surface "
+                + "temperature is 700 K or more: D47 says so on every approach. With the row off nothing is said. "
+                + "Say \"stop calling out landing hazards\": the row shows off and that is no longer said. Say "
+                + "\"start calling out landing hazards\" and the row shows on. The row is absent while Speak "
+                + "without being asked is off.",
+                "Landing hazards",
+                "On every approach to a scanned body with a surface gravity over 1 g or a surface temperature of 700 K or more.",
+                "approach-hazard",
+                "landing hazards",
+                s => s.Callouts.ApproachHazard,
+                (s, v) => s with { Callouts = s.Callouts with { ApproachHazard = v } }),
 
             Toggle(
                 RebuyKey,

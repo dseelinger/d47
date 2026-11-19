@@ -214,6 +214,7 @@ public static class ShippedCallouts
             .Add(new DiscoveryCallout())
             .Add(new FootfallCallout())
             .Add(new FootfallApproachCallout())
+            .Add(new ApproachHazardCallout())
             .Add(new MappingCallout { Ledger = sources.Cartography })
             .Add(new NotableBodyCallout())
             .Add(new BodyValueCallout { Ledger = sources.Cartography })
@@ -516,6 +517,7 @@ public static class ShippedCallouts
         engine.Enabled = callouts.Enabled;
         engine.SetEnabled("danger", callouts.Danger, now);
         engine.SetEnabled("fuel", callouts.Fuel, now);
+        engine.SetEnabled("approach-hazard", callouts.ApproachHazard, now);
         engine.SetEnabled("route", callouts.Route, now);
         engine.SetEnabled("hyperspace-tunnel-delay", callouts.LongJump, now);
         engine.SetEnabled("arrival", callouts.Arrival, now);
