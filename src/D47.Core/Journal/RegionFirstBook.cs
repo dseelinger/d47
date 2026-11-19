@@ -186,6 +186,15 @@ public sealed class RegionFirstBook
         }
     }
 
+    /// <summary>The Commander's records, newest first.</summary>
+    public IReadOnlyList<RegionFirstRecord> For(string frontierId)
+    {
+        lock (_gate)
+        {
+            return _records.TryGetValue(frontierId, out var held) ? [.. held.OrderByDescending(record => record.At)] : [];
+        }
+    }
+
     /// <summary>The Commander's newest record not yet reported that holds its journal line and position, or null.</summary>
     public RegionFirstRecord? NewestUnreported(string frontierId)
     {

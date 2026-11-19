@@ -19,6 +19,9 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     private const string EntryPrefix = "codex-entry-";
 
+    /// <summary>The key of the Possible firsts page; it shares no prefix with the others.</summary>
+    public const string PossibleFirstsKey = "codex-possible-firsts";
+
     private const string ChoosePrefix = "codex-choose-";
 
     private const string CropPrefix = "codex-crop-";
@@ -37,6 +40,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     private readonly CodexChoice _choice;
     private readonly PanelNavigator _nav;
     private readonly bool _headset;
+    private readonly RegionFirstBook? _regionFirsts;
     private readonly ArrangedTable<CodexRegionRow> _columns;
     private readonly Segment _period = CodexKit.PeriodSegment();
     private readonly Grid _row;
@@ -45,6 +49,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     private CodexLedger? _seenLedger;
     private HistoryState _seenHistory;
     private long _seenMinute;
+    private long _seenFirsts;
     private string _query = string.Empty;
 
     public CodexPage(
@@ -55,8 +60,10 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         PanelNavigator nav,
         bool headset = false,
         ColumnWidthMemory? columnWidths = null,
-        ColumnArrangementMemory? columnArrangements = null)
+        ColumnArrangementMemory? columnArrangements = null,
+        RegionFirstBook? regionFirsts = null)
     {
+        _regionFirsts = regionFirsts;
         _state = state;
         _history = history;
         _now = now;
@@ -123,6 +130,11 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         int.TryParse(key[DiscoveriesPrefix.Length..], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id)
             ? id
             : null;
+
+    /// <summary>The crumb of the Possible firsts page.</summary>
+    public static NavCrumb PossibleFirstsCrumb() => new(PossibleFirstsKey, CodexModel.PossibleFirstsCrumbWord) { Whole = true };
+
+    public static bool IsPossibleFirsts(string key) => key == PossibleFirstsKey;
 
     /// <summary>The crumb of one entry's page in a region, named for the entry.</summary>
     public static NavCrumb EntryCrumb(int? regionId, long entryId, string name) =>
@@ -199,6 +211,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         if (ReferenceEquals(_state()?.CodexLedger, _seenLedger)
             && _history() == _seenHistory
             && PageKit.Minute(_now()) == _seenMinute
+            && (_regionFirsts?.Version ?? 0) == _seenFirsts
             && _choice.Period == _period.SelectedIndex)
         {
             return false;
@@ -221,6 +234,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         _seenLedger = _state()?.CodexLedger;
         _seenHistory = _history();
         _seenMinute = PageKit.Minute(_now());
+        _seenFirsts = _regionFirsts?.Version ?? 0;
 
         var view = Build();
 
@@ -239,6 +253,11 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         if (view.Failed)
         {
             _body.Children.Add(CodexKit.Warning(view.OnRecordSince));
+        }
+
+        if (FirstsRow() is { } firsts)
+        {
+            _body.Children.Add(firsts);
         }
 
         var shown = view.Rows.Count;
@@ -287,6 +306,43 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         {
             _body.Children.Add(CreditsKit.Message(CodexModel.NoRegionMatchText));
         }
+    }
+
+    /// <summary>The Possible firsts row; null with no record in the store.</summary>
+    private Control? FirstsRow()
+    {
+        var records = _regionFirsts is not null && _state()?.Identity.FrontierId is { Length: > 0 } id ? _regionFirsts.For(id) : [];
+
+        if (records.Count == 0)
+        {
+            return null;
+        }
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 16 };
+
+        var label = CreditsKit.Label(CodexModel.PossibleFirstsCrumbWord);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+
+        CreditsKit.Place(grid, 0, new StackPanel
+        {
+            Children = { label, RoutingKit.Ink(CodexModel.PossibleFirstsRowLine, TypeScale.Small, ThemeManager.GreyKey, wrap: true) },
+        });
+        CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexModel.PossibleFirstsFigures(records), TypeScale.Small, ThemeManager.AKey, right: true));
+        CreditsKit.Place(grid, 2, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
+
+        var button = ListRow.Dress(new Button
+        {
+            Name = "CodexPossibleFirsts",
+            Content = grid,
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(14, 6),
+            Margin = new Thickness(0, 0, 0, 8),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        });
+        Avalonia.Automation.AutomationProperties.SetName(button, CodexModel.PossibleFirstsCrumbWord);
+        button.Click += (_, _) => _nav.Drill(PossibleFirstsCrumb());
+
+        return button;
     }
 
     private StackPanel Table(IReadOnlyList<CodexRegionRow> rows, bool header = true)

@@ -192,4 +192,19 @@ public class ARegionFirstIsKeptOnceJudgedTests
         Assert.Null(CodexTable.Parse("# Source: something, 2026-10-19.\n1\tA\tB\tC\t1:1\n").Date);
         Assert.NotNull(CodexCatalogue.Table.Date);
     }
+
+    [Fact]
+    public void TheCommandersRecordsAreListedNewestFirst()
+    {
+        var ledger = Whole(
+            Jump("2026-10-10T09:00:00Z", 10477373803),
+            Codex("2026-10-10T10:00:00Z", Organic, "$Codex_SubCategory_Organic_Structures;"),
+            Codex("2026-10-12T10:00:00Z", 999, "$Codex_SubCategory_Organic_Structures;"));
+
+        var book = Book();
+        book.Observe("F1", ledger, WithoutRegion);
+
+        Assert.Equal([999L, Organic], book.For("F1").Select(record => record.EntryId));
+        Assert.Empty(book.For("F2"));
+    }
 }

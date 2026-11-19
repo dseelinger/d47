@@ -155,6 +155,14 @@ public static class CodexModel
 
     public const string DiscoveriesCrumbWord = "Discoveries";
 
+    public const string PossibleFirstsCrumbWord = "Possible firsts";
+
+    public const string PossibleFirstsPlaceholder = "Search entry, region or system";
+
+    public const string PossibleFirstsRowLine = "Entries you logged that the codex table did not list for their region, kept as they were judged. Whole record, not this trip.";
+
+    public const string PossibleFirstsNoMatchText = "No possible first matches that search.";
+
     public const string DiscoveriesRowLine = "The entries known in this region that are not on your record. Whole record, not this trip.";
 
     public const string DiscoveriesNoRegionLine = "D47 has no region number for these entries, so it cannot list what is left to discover.";
@@ -278,6 +286,36 @@ public static class CodexModel
 
     public static string RegionFirstWord(CodexFirst first) =>
         first == CodexFirst.Galaxy ? "POSSIBLE FIRST IN THE GALAXY" : "POSSIBLE REGION FIRST";
+
+    /// <summary>"3 region · 1 galaxy · 2 not reported": the figures on the Possible firsts row.</summary>
+    public static string PossibleFirstsFigures(IReadOnlyList<RegionFirstRecord> records) =>
+        $"{Number(records.Count(record => record.First == CodexFirst.Region))} region · "
+        + $"{Number(records.Count(record => record.First == CodexFirst.Galaxy))} galaxy · "
+        + $"{Number(records.Count(record => record.Reported is null))} not reported";
+
+    /// <summary>The Possible firsts page's grey line.</summary>
+    public static string PossibleFirstsLine(IReadOnlyList<RegionFirstRecord> records) =>
+        "Each was judged once, against the codex table D47 had when it was recorded. The table may list some of them by now. "
+        + $"{Number(records.Count)} possible {(records.Count == 1 ? "first" : "firsts")} · {Number(records.Count(record => record.Reported is null))} not reported.";
+
+    /// <summary>The records the search keeps: it matches the entry, the region and the system.</summary>
+    public static IReadOnlyList<RegionFirstRecord> PossibleFirstsMatching(IReadOnlyList<RegionFirstRecord> records, string? query) =>
+        string.IsNullOrWhiteSpace(query)
+            ? records
+            : [.. records.Where(record => new[] { record.Name, record.Region ?? NoRegionName, record.System }
+                .Any(text => text?.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase) == true))];
+
+    /// <summary>The Possible firsts table's columns; Logged is the default order, newest first, and Report sorts not reported first.</summary>
+    public static IReadOnlyList<SortColumn<RegionFirstRecord>> PossibleFirstHeads() =>
+    [
+        SortColumn<RegionFirstRecord>.Text("Entry", record => record.Name) with { Second = "Region or galaxy first" },
+        SortColumn<RegionFirstRecord>.Text("Region", record => record.Region ?? NoRegionName),
+        SortColumn<RegionFirstRecord>.Text("System", record => record.System) with { Second = "Body · lat, lon" },
+        SortColumn<RegionFirstRecord>.Figure("Logged", record => (long?)record.At.UtcTicks, SortDirection.Descending) with { Second = "UTC" },
+        SortColumn<RegionFirstRecord>.Figure("Report", record => (long?)(record.Reported is null ? 0L : 1L), SortDirection.Ascending) with { Second = "Not reported first" },
+        SortColumn<RegionFirstRecord>.Plain(string.Empty),
+        SortColumn<RegionFirstRecord>.Plain(string.Empty),
+    ];
 
     /// <summary>The band's sentence: "You may be the first Commander to log Entry in Region." or "… anywhere in the galaxy."</summary>
     public static string RegionFirstSentence(RegionFirstRecord record, string entry) =>

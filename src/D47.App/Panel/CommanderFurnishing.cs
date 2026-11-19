@@ -30,6 +30,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
     private CodexPage? _codex;
     private CodexRegionPage? _codexRegion;
     private CodexDiscoveriesPage? _codexDiscoveries;
+    private CodexPossibleFirstsPage? _codexPossibleFirsts;
     private CodexEntryPage? _codexEntry;
     private CommandersPage? _commanders;
     private Func<NavCrumb, Control>? _watchesBuild;
@@ -286,11 +287,13 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav, bodySearch: () => host.BodySearch, copy: host.Copy, waitSound: host.Model?.WaitSound, regionFirsts: regionFirsts)
             : CodexPage.PictureOf(crumb.Key) is { } picture
             ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
+            : CodexPage.IsPossibleFirsts(crumb.Key)
+            ? _codexPossibleFirsts = new CodexPossibleFirstsPage(state, regionFirsts, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements, host.Copy)
             : CodexPage.IsDiscoveries(crumb.Key)
             ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav, pictures: pictures, columnWidths: host.ColumnWidths, bodySearch: () => host.BodySearch, columnArrangements: host.ColumnArrangements)
             : CodexPage.IsRegion(crumb.Key)
             ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav, columnWidths: host.ColumnWidths, copy: host.Copy, columnArrangements: host.ColumnArrangements, regionFirsts: regionFirsts)
-            : _codex = new CodexPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements);
+            : _codex = new CodexPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements, regionFirsts);
 
         DeclareLedger(CodexPage.PageKey, "Codex");
     }
@@ -386,12 +389,13 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= _creditTransactions?.Tick() ?? false;
         }
 
-        if (leaf == CodexPage.PageKey || CodexPage.IsRegion(leaf) || CodexPage.IsDiscoveries(leaf) || CodexPage.IsEntry(leaf))
+        if (leaf == CodexPage.PageKey || CodexPage.IsRegion(leaf) || CodexPage.IsDiscoveries(leaf) || CodexPage.IsPossibleFirsts(leaf) || CodexPage.IsEntry(leaf))
         {
             changed |= _codexEntry?.Tick() ?? false;
             changed |= _codex?.Tick() ?? false;
             changed |= _codexRegion?.Tick() ?? false;
             changed |= _codexDiscoveries?.Tick() ?? false;
+            changed |= _codexPossibleFirsts?.Tick() ?? false;
         }
 
         if (_commanders is { } commanders && root == CommandersPage.RootKey)
@@ -420,7 +424,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav, Page)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
-        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
+        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsPossibleFirsts(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
         : (crumb.Key == ScreenshotsPage.PageKey || ScreenshotsPage.IsView(crumb.Key)) && _screenshotsBuild is { } screenshots ? screenshots(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)
