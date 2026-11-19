@@ -145,12 +145,15 @@ public class SpanshRequestTests
     }
 
     [Fact]
-    public void ARingTypeIsAPlainChoiceRatherThanAGroup()
+    public void ARingTypeIsATypeMemberBecauseTheServiceIgnoresAValueList()
     {
-        // The group spelling that works for modules and signals is a 500 here.
+        // The service ignores {"value":[...]} here and returns any ringed body.
         var body = Bodies(new() { RingType = "Icy" });
 
-        Assert.Equal("Icy", body.GetProperty("filters").GetProperty("rings").GetProperty("value")[0].GetString());
+        var rings = body.GetProperty("filters").GetProperty("rings");
+
+        Assert.Equal("Icy", rings.GetProperty("type").GetString());
+        Assert.False(rings.TryGetProperty("value", out _));
     }
 
     [Fact]

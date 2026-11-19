@@ -323,7 +323,7 @@ internal static class SpanshRequest
             }
 
             WriteChoice(writer, "subtype", query.Subtype);
-            WriteChoice(writer, "rings", query.RingType);
+            WriteRingType(writer, query.RingType);
             WriteChoice(writer, "reserve_level", query.ReserveLevel);
 
             if (query.Landable is true)
@@ -589,6 +589,18 @@ internal static class SpanshRequest
         writer.WriteEndObject();
         writer.WriteEndObject();
         writer.WriteEndArray();
+    }
+
+    private static void WriteRingType(Utf8JsonWriter writer, string? type)
+    {
+        if (type is null)
+        {
+            return;
+        }
+
+        writer.WriteStartObject("rings");
+        writer.WriteString("type", type);
+        writer.WriteEndObject();
     }
 
     private static void WriteChoice(Utf8JsonWriter writer, string name, string? value)
