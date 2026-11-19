@@ -652,7 +652,8 @@ logged. `region` is a codex region by name, or `here` (the default) for the regi
 first line gives how many entries are known, logged and missing; then the missing count by subcategory, and for
 each category with missing entries, in A–Z order, the three most-reported missing entries in it by name, with a
 count of the rest. Logged means the entry was logged in
-that region anywhere in the record, not in a period. The answer says when the record starts, because an entry
+that region anywhere in the record, not in a period; a star or planet kind counts as logged once the Commander has
+scanned a body of that kind there, with any scan, the arrival star's automatic scan included. The answer says when the record starts, because an entry
 logged before the oldest journal reads as missing, and ends with the coverage line:
 "Star and planet counts are the known systems that have one; the rest are systems where a Commander reported the
 entry." The stars and planets are d47's own kinds, taken from the body types in Spansh's galaxy dump: a star by its

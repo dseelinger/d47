@@ -2177,7 +2177,7 @@ public static class JournalCapability
 
         var bySubcategory = discoveries.Known
             .GroupBy(item => item.Entry.SubCategory)
-            .Select(group => (Name: group.Key.ToLowerInvariant(), Missing: group.Count(item => item.Logged is null), Total: group.Count()))
+            .Select(group => (Name: group.Key.ToLowerInvariant(), Missing: group.Count(item => !item.IsOnRecord), Total: group.Count()))
             .Where(group => group.Missing > 0)
             .OrderByDescending(group => group.Missing)
             .ThenBy(group => group.Name, StringComparer.Ordinal)

@@ -10,8 +10,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// A star or planet kind from <c>CodexBodies.tsv</c> has no Search tile, since the body search finds landmarks only,
-/// and a body's Codex tile does not open a kind or its group, even where the body's sub-type is the row's name.
+/// A star or planet kind from <c>CodexBodies.tsv</c> has no Search tile, since the body search finds landmarks only, and
+/// a body's Codex tile opens the body's own kind, never the group row named like its sub-type.
 /// </summary>
 public sealed class AStarOrPlanetKindOpensNoSearchTests
 {
@@ -78,14 +78,42 @@ public sealed class AStarOrPlanetKindOpensNoSearchTests
     }
 
     [Theory]
-    [InlineData("Planet", "Rocky body")]
-    [InlineData("Star", "Neutron Star")]
-    [InlineData("Star", "Black Hole")]
-    public void ABodyNamedLikeATypeEntryOpensNothing(string type, string subType)
+    [InlineData("Planet", "Rocky body", "planet.rocky_body.not_terraformable.no_atmosphere")]
+    [InlineData("Star", "Neutron Star", "star.neutron_star")]
+    [InlineData("Star", "Black Hole", "star.black_hole")]
+    public void ABodyNamedLikeAGroupRowOpensItsOwnKind(string type, string subType, string key)
     {
         var body = new BodyProfile { BodyId = 1, Name = "Fixture 1", Type = type, SubType = subType };
 
-        Assert.Null(new BodyCodex(Table).EntryOf(body));
-        Assert.Null(new BodyCodex(CodexCatalogue.Table).EntryOf(body));
+        Assert.Equal(key, new BodyCodex(Table).EntryOf(body)?.Key);
+        Assert.Equal(key, new BodyCodex(CodexCatalogue.Table).EntryOf(body)?.Key);
     }
+
+    [Fact]
+    public void ATerraformableRockyBodyWithAThinCarbonDioxideAtmosphereOpensThatKind()
+    {
+        var body = new BodyProfile
+        {
+            BodyId = 1,
+            Name = "Fixture 1",
+            Type = "Planet",
+            SubType = "Rocky body",
+            TerraformingState = "Candidate for terraforming",
+            Atmosphere = "Thin Carbon dioxide",
+        };
+
+        Assert.Equal("planet.rocky_body.terraformable.atmosphere.thin_carbon_dioxide", new BodyCodex(CodexCatalogue.Table).EntryOf(body)?.Key);
+    }
+
+    [Fact]
+    public void AKGiantOpensTheKGiantKindNotTheKDwarfKind()
+    {
+        var body = new BodyProfile { BodyId = 1, Name = "Fixture 1", Type = "Star", SubType = "K (Yellow-Orange giant) Star", Luminosity = "III" };
+
+        Assert.Equal("star.k_yellow_orange_giant_star.giant", new BodyCodex(CodexCatalogue.Table).EntryOf(body)?.Key);
+    }
+
+    [Fact]
+    public void ABodyWithNoSubTypeOpensNothing() =>
+        Assert.Null(new BodyCodex(CodexCatalogue.Table).EntryOf(new BodyProfile { BodyId = 1, Name = "Fixture 1", Type = "Planet" }));
 }

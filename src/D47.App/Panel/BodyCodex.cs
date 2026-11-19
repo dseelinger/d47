@@ -11,8 +11,8 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The Codex tiles beside a body or a genus: a square picture with CODEX under it. A body's tile opens the Codex
-/// entry its sub-type names; a body type with no entry shows its family placeholder and opens nothing.
+/// The Codex tiles beside a body or a genus: a square picture with CODEX under it. A body's tile opens its star or
+/// planet kind; a body with no kind shows its family placeholder and opens nothing.
 /// </summary>
 public sealed class BodyCodex(
     CodexTable table,
@@ -35,14 +35,8 @@ public sealed class BodyCodex(
 
     private readonly Dictionary<(string Species, long? EntryId, int? RegionId), (Bitmap Bitmap, bool IsBodysOwnVariant)> _species = [];
 
-    /// <summary>The Astronomical Bodies entry named the same as the body's sub-type, or null; never a star or planet kind.</summary>
-    public CodexEntry? EntryOf(BodyProfile body) =>
-        body.SubType is not { Length: > 0 } subType
-            ? null
-            : table.All.FirstOrDefault(entry =>
-                entry.Kind is null
-                && string.Equals(entry.Category, "Astronomical Bodies", StringComparison.OrdinalIgnoreCase)
-                && string.Equals(entry.Name, subType, StringComparison.OrdinalIgnoreCase));
+    /// <summary>The body's star or planet kind, or null for a body with no kind or a kind the table has no row for.</summary>
+    public CodexEntry? EntryOf(BodyProfile body) => CodexKinds.OfSpansh(body, table) is { } key ? table.Entry(key) : null;
 
     /// <summary>The title block's picture side.</summary>
     public const double TitleSide = 88;

@@ -26,5 +26,6 @@ public static class CodexLedgerBackfill
             Reads,
             markOperations: true,
             line => line.Contains("\"PlanetClass\"", StringComparison.Ordinal)
+                || line.Contains("\"StarType\"", StringComparison.Ordinal)
                 || !line.Contains("\"event\":\"Scan\"", StringComparison.Ordinal));
 }

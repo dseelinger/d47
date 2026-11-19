@@ -267,17 +267,18 @@ public sealed class ABodyOpensItsOwnPageUnderItsSystemTests
     }
 
     [AvaloniaFact]
-    public void ABodyTypeWithNoCodexEntryShowsItsFamilyPlaceholderAndOpensNothing()
+    public void ABodyWithNoKindShowsItsFamilyPlaceholderAndOpensNothing()
     {
         var files = new MemoryFileSystem();
         files.WriteBytes(Path.Combine(Placeholders, "terrestrial-planets.jpg"), Png(8));
         var store = new CodexPictureStore(files, @"C:\d47\data", () => true, NullLogger.Instance, new HttpClientHandlerStub(), commander: () => Fid);
         var opened = new List<CodexEntry>();
         var codex = new BodyCodex(CodexCatalogue.Table, new CodexPictureSet(store, () => true, files, Placeholders), opened.Add);
+        var profile = Profile with { Bodies = [Profile.Bodies[0], Profile.Bodies[1] with { SubType = null }, Profile.Bodies[2]] };
 
-        Assert.Null(codex.EntryOf(Profile.Bodies[1]));
+        Assert.Null(codex.EntryOf(profile.Bodies[1]));
 
-        var page = new SystemBodyPage(Surface(), Address, 5, "LTT 7786 3", Profile, codex);
+        var page = new SystemBodyPage(Surface(), Address, 5, "LTT 7786 3", profile, codex);
         var window = new Window { Content = page, Width = 1280, Height = 960 };
         window.Show();
         Dispatcher.UIThread.RunJobs();

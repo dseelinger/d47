@@ -25,6 +25,9 @@ public sealed record CodexLogEntry(
     string? Journal = null,
     StarPosition? StarPos = null);
 
+/// <summary>The first scan of a star or planet kind in one codex region.</summary>
+public sealed record CodexFoundKind(string Key, int RegionId, DateTimeOffset At, string? System, long? SystemAddress, string Body);
+
 /// <summary>Entries logged in one region.</summary>
 public sealed record CodexRegionTotal(int? RegionId, int Count);
 
@@ -78,10 +81,16 @@ public sealed record CodexLedger
 
     private ImmutableList<ScannedBody> Recent { get; init; } = [];
 
+    private ImmutableDictionary<(string Key, int RegionId), CodexFoundKind> Kinds { get; init; } =
+        ImmutableDictionary<(string Key, int RegionId), CodexFoundKind>.Empty;
+
     private bool Legacy { get; init; }
 
-    /// <summary>The system the last arrival named, and its position.</summary>
-    private (long? Address, StarPosition? Position) Arrived { get; init; }
+    /// <summary>The system the last arrival named, its position, and the codex region of that position.</summary>
+    private (long? Address, StarPosition? Position, int? RegionId) Arrived { get; init; }
+
+    /// <summary>The first scan of the star or planet kind <paramref name="key"/> in the region, or null when none is on record.</summary>
+    public CodexFoundKind? Found(string key, int regionId) => Kinds.GetValueOrDefault((key, regionId));
 
     /// <summary>The codex region number in a <c>Region</c> value such as <c>$Codex_RegionName_18;</c>, or null.</summary>
     public static int? RegionIdOf(string? region)
@@ -153,7 +162,7 @@ public sealed record CodexLedger
             "LoadGame" when journalEvent.StartsSession => result with { SessionStart = journalEvent.Timestamp },
             "SellExplorationData" or "MultiSellExplorationData" => result with { TripStart = journalEvent.Timestamp },
             "Location" or "FSDJump" or "CarrierJump" when journalEvent.String("StarSystem") is not null =>
-                result with { Arrived = (journalEvent.Long("SystemAddress"), StarPosition.Read(journalEvent.Raw)) },
+                result with { Arrived = Arrival(journalEvent) },
             "CodexEntry" when journalEvent.Long("EntryID") is { } id => result with { Held = Held.Add(Settled(Entry(journalEvent, id, Arrived), result.Recent)) },
             _ => result,
         };
@@ -185,11 +194,41 @@ public sealed record CodexLedger
             IsWhole = true,
             Legacy = live.Legacy,
             Recent = live.Recent,
+            Kinds = live.Kinds.Aggregate(Kinds, (kinds, pair) => kinds.ContainsKey(pair.Key) ? kinds : kinds.Add(pair.Key, pair.Value)),
             Arrived = live.Arrived.Address is null ? Arrived : live.Arrived,
         };
     }
 
-    private CodexLedger WithScan(JournalEvent journalEvent)
+    private static (long? Address, StarPosition? Position, int? RegionId) Arrival(JournalEvent arrival)
+    {
+        var position = StarPosition.Read(arrival.Raw);
+        var region = position is { } at && GalacticRegions.Find(at) is { } name ? GalacticRegions.IdOf(name) : null;
+
+        return (arrival.Long("SystemAddress"), position, region);
+    }
+
+    private CodexLedger WithScan(JournalEvent journalEvent) => WithKind(journalEvent).WithPlanet(journalEvent);
+
+    /// <summary>Records the scanned body's kind in the arrival's region, unless the scan names another system or the pair is already found.</summary>
+    private CodexLedger WithKind(JournalEvent scan)
+    {
+        var address = scan.Long("SystemAddress");
+
+        if (Arrived.RegionId is not { } region
+            || address is { } scanned && Arrived.Address is { } arrived && scanned != arrived
+            || scan.String("BodyName") is not { Length: > 0 } body
+            || CodexKinds.OfScan(scan) is not { } key
+            || Kinds.ContainsKey((key, region)))
+        {
+            return this;
+        }
+
+        var found = new CodexFoundKind(key, region, scan.Timestamp, scan.String("StarSystem"), address ?? Arrived.Address, body);
+
+        return this with { Kinds = Kinds.Add((key, region), found) };
+    }
+
+    private CodexLedger WithPlanet(JournalEvent journalEvent)
     {
         if (journalEvent.String("PlanetClass") is not { Length: > 0 } planetClass
             || journalEvent.String("BodyName") is not { Length: > 0 } name
@@ -240,7 +279,7 @@ public sealed record CodexLedger
     private static DateTimeOffset? Later(DateTimeOffset? a, DateTimeOffset? b) =>
         a is { } x && b is { } y ? (x > y ? x : y) : a ?? b;
 
-    private static CodexLogEntry Entry(JournalEvent e, long id, (long? Address, StarPosition? Position) arrived) => new(
+    private static CodexLogEntry Entry(JournalEvent e, long id, (long? Address, StarPosition? Position, int? RegionId) arrived) => new(
         e.Timestamp,
         id,
         CodexBodyName.Of(e.String("Name")) ?? e.Named("Name"),

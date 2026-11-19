@@ -421,7 +421,9 @@ public static class CodexModel
             }
 
             var found = CodexDiscoveries.For(ledger, table, id);
-            var last = ledger.Entries.Where(entry => entry.RegionId == id).Select(entry => (DateTimeOffset?)entry.At).Max();
+            var last = ledger.Entries.Where(entry => entry.RegionId == id).Select(entry => (DateTimeOffset?)entry.At)
+                .Concat(found.Logged.Select(item => item.Found?.At))
+                .Max();
 
             others.Add(new CodexRegionRow(
                 id,
@@ -597,8 +599,8 @@ public static class CodexModel
         var rows = found.Known
             .Where(item => filter.Status switch
             {
-                CodexStatusFilter.Missing => item.Logged is null,
-                CodexStatusFilter.OnRecord => item.Logged is not null,
+                CodexStatusFilter.Missing => !item.IsOnRecord,
+                CodexStatusFilter.OnRecord => item.IsOnRecord,
                 _ => true,
             })
             .Where(item => filter.Category is null || string.Equals(item.Entry.Category, filter.Category, StringComparison.OrdinalIgnoreCase))
@@ -610,7 +612,7 @@ public static class CodexModel
                 item.Entry.Category,
                 item.Entry.SubCategory,
                 item.Systems,
-                item.Logged is not null,
+                item.IsOnRecord,
                 item.Logged is { } logged
                     ? CodexFamilies.FileOfSymbol(logged.SubCategorySymbol)
                     : CodexFamilies.FileOfTableName(item.Entry.SubCategory)))

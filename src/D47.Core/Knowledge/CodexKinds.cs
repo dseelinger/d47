@@ -1,11 +1,14 @@
+using System.Collections.Frozen;
 using System.Text.RegularExpressions;
+using D47.Core.Journal;
 
 namespace D47.Core.Knowledge;
 
 /// <summary>
-/// d47's star and planet kinds from <c>CodexBodies.tsv</c>: the kind a Spansh body belongs to, and the kind tree. The
-/// rules are those of <c>kind_of</c> in <c>tools/gen-codex-bodies.py</c>, which writes the table; both are checked
-/// against <c>tests/fixtures/codex/kinds.tsv</c>.
+/// d47's star and planet kinds from <c>CodexBodies.tsv</c>: the kind a Spansh body or a journal scan belongs to, and the
+/// kind tree. The rules are those of <c>kind_of</c> in <c>tools/gen-codex-bodies.py</c>, which writes the table; both
+/// are checked against <c>tests/fixtures/codex/kinds.tsv</c>, and the scan's fields against
+/// <c>tests/fixtures/codex/journal-kinds.tsv</c>.
 /// </summary>
 public static partial class CodexKinds
 {
@@ -14,6 +17,102 @@ public static partial class CodexKinds
     private static readonly string[] RingOrder = ["Icy", "Rocky", "Metal Rich", "Metallic"];
 
     private static readonly string[] Unbanded = ["Neutron Star", "Black Hole", "Supermassive Black Hole"];
+
+    /// <summary>The Spansh subType of each journal <c>StarType</c> other than a white dwarf's D code.</summary>
+    internal static readonly FrozenDictionary<string, string> StarTypes = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["O"] = "O (Blue-White) Star",
+        ["B"] = "B (Blue-White) Star",
+        ["A"] = "A (Blue-White) Star",
+        ["F"] = "F (White) Star",
+        ["G"] = "G (White-Yellow) Star",
+        ["K"] = "K (Yellow-Orange) Star",
+        ["M"] = "M (Red dwarf) Star",
+        ["K_OrangeGiant"] = "K (Yellow-Orange giant) Star",
+        ["M_RedGiant"] = "M (Red giant) Star",
+        ["M_RedSuperGiant"] = "M (Red super giant) Star",
+        ["A_BlueWhiteSuperGiant"] = "A (Blue-White super giant) Star",
+        ["B_BlueWhiteSuperGiant"] = "B (Blue-White super giant) Star",
+        ["F_WhiteSuperGiant"] = "F (White super giant) Star",
+        ["G_WhiteSuperGiant"] = "G (White-Yellow super giant) Star",
+        ["L"] = "L (Brown dwarf) Star",
+        ["T"] = "T (Brown dwarf) Star",
+        ["Y"] = "Y (Brown dwarf) Star",
+        ["TTS"] = "T Tauri Star",
+        ["AeBe"] = "Herbig Ae/Be Star",
+        ["W"] = "Wolf-Rayet Star",
+        ["WN"] = "Wolf-Rayet N Star",
+        ["WNC"] = "Wolf-Rayet NC Star",
+        ["WC"] = "Wolf-Rayet C Star",
+        ["WO"] = "Wolf-Rayet O Star",
+        ["C"] = "C Star",
+        ["CN"] = "CN Star",
+        ["CJ"] = "CJ Star",
+        ["MS"] = "MS-type Star",
+        ["S"] = "S-type Star",
+        ["N"] = "Neutron Star",
+        ["H"] = "Black Hole",
+        ["SupermassiveBlackHole"] = "Supermassive Black Hole",
+    }.ToFrozenDictionary(StringComparer.Ordinal);
+
+    /// <summary>The Spansh subType of each journal <c>PlanetClass</c>.</summary>
+    internal static readonly FrozenDictionary<string, string> PlanetClasses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Metal rich body"] = "Metal-rich body",
+        ["High metal content body"] = "High metal content world",
+        ["Rocky body"] = "Rocky body",
+        ["Icy body"] = "Icy body",
+        ["Rocky ice body"] = "Rocky Ice world",
+        ["Earthlike body"] = "Earth-like world",
+        ["Water world"] = "Water world",
+        ["Ammonia world"] = "Ammonia world",
+        ["Water giant"] = "Water giant",
+        ["Gas giant with water based life"] = "Gas giant with water-based life",
+        ["Gas giant with ammonia based life"] = "Gas giant with ammonia-based life",
+        ["Sudarsky class I gas giant"] = "Class I gas giant",
+        ["Sudarsky class II gas giant"] = "Class II gas giant",
+        ["Sudarsky class III gas giant"] = "Class III gas giant",
+        ["Sudarsky class IV gas giant"] = "Class IV gas giant",
+        ["Sudarsky class V gas giant"] = "Class V gas giant",
+        ["Helium rich gas giant"] = "Helium-rich gas giant",
+        ["Helium gas giant"] = "Helium gas giant",
+    }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The gas in Spansh's atmosphere name for each journal <c>AtmosphereType</c>.</summary>
+    internal static readonly FrozenDictionary<string, string> AtmosphereTypes = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["Ammonia"] = "Ammonia",
+        ["AmmoniaRich"] = "Ammonia-rich",
+        ["AmmoniaOxygen"] = "Ammonia and Oxygen",
+        ["Argon"] = "Argon",
+        ["ArgonRich"] = "Argon-rich",
+        ["CarbonDioxide"] = "Carbon dioxide",
+        ["CarbonDioxideRich"] = "Carbon dioxide-rich",
+        ["EarthLike"] = "Suitable for water-based life",
+        ["Helium"] = "Helium",
+        ["MetallicVapour"] = "Metallic vapour",
+        ["Methane"] = "Methane",
+        ["MethaneRich"] = "Methane-rich",
+        ["Neon"] = "Neon",
+        ["NeonRich"] = "Neon-rich",
+        ["Nitrogen"] = "Nitrogen",
+        ["Oxygen"] = "Oxygen",
+        ["SilicateVapour"] = "Silicate vapour",
+        ["SulphurDioxide"] = "Sulphur dioxide",
+        ["Water"] = "Water",
+        ["WaterRich"] = "Water-rich",
+    }.ToFrozenDictionary(StringComparer.Ordinal);
+
+    /// <summary>Spansh's ring type for each journal <c>RingClass</c>.</summary>
+    internal static readonly FrozenDictionary<string, string> RingClasses = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["eRingClass_Icy"] = "Icy",
+        ["eRingClass_Rocky"] = "Rocky",
+        ["eRingClass_MetalRich"] = "Metal Rich",
+        ["eRingClass_Metalic"] = "Metallic",
+    }.ToFrozenDictionary(StringComparer.Ordinal);
+
+    private static readonly string[] DensityWords = ["hot", "thin", "thick"];
 
     /// <summary>The kind key of a Spansh star or planet in the shipped table's tree; null for a body with no kind.</summary>
     public static string? OfSpansh(BodyProfile body) => OfSpansh(body, CodexCatalogue.Table);
@@ -62,6 +161,94 @@ public static partial class CodexKinds
         var level = "planet." + Slug(subType) + (terraformable ? ".terraformable" : ".not_terraformable");
 
         return atmosphere == NoAtmosphere ? level + ".no_atmosphere" : level + ".atmosphere." + Slug(atmosphere);
+    }
+
+    /// <summary>The kind key of a star or planet in a journal <c>Scan</c>, in the shipped table's tree; null for a body with no kind.</summary>
+    public static string? OfScan(JournalEvent scan) => OfScan(scan, CodexCatalogue.Table);
+
+    /// <summary>
+    /// The kind key of a star or planet in a journal <c>Scan</c>: its fields in Spansh's words, classified as
+    /// <see cref="OfSpansh(BodyProfile, CodexTable)"/> does. Null for a scan with neither <c>StarType</c> nor
+    /// <c>PlanetClass</c>, a star type with no kind, a planet with no <c>TerraformState</c>, or a value not mapped here.
+    /// </summary>
+    public static string? OfScan(JournalEvent scan, CodexTable table)
+    {
+        ArgumentNullException.ThrowIfNull(scan);
+        ArgumentNullException.ThrowIfNull(table);
+
+        var name = scan.String("BodyName") ?? string.Empty;
+
+        if (scan.String("StarType") is { Length: > 0 } starType)
+        {
+            return SubTypeOfStar(starType) is { } star
+                ? OfSpansh(new BodyProfile { BodyId = 0, Name = name, Type = "Star", SubType = star, Luminosity = scan.String("Luminosity") }, table)
+                : null;
+        }
+
+        if (scan.String("PlanetClass") is not { Length: > 0 } planetClass
+            || !PlanetClasses.TryGetValue(planetClass, out var subType)
+            || scan.String("TerraformState") is not { } terraformState)
+        {
+            return null;
+        }
+
+        if (IsGasGiant(subType))
+        {
+            var rings = new List<RingProfile>();
+
+            foreach (var ring in scan.Items("Rings"))
+            {
+                if (ring.String("RingClass") is not { } ringClass || !RingClasses.TryGetValue(ringClass, out var type))
+                {
+                    return null;
+                }
+
+                rings.Add(new RingProfile(ring.String("Name") ?? string.Empty, type, new Dictionary<string, int>()));
+            }
+
+            return OfSpansh(new BodyProfile { BodyId = 0, Name = name, Type = "Planet", SubType = subType, Rings = rings }, table);
+        }
+
+        if (AtmosphereOf(scan.String("Atmosphere"), scan.String("AtmosphereType")) is not { } atmosphere)
+        {
+            return null;
+        }
+
+        var planet = new BodyProfile
+        {
+            BodyId = 0,
+            Name = name,
+            Type = "Planet",
+            SubType = subType,
+            TerraformingState = terraformState.Length == 0 ? "Not terraformable" : terraformState,
+            Atmosphere = atmosphere,
+        };
+
+        return OfSpansh(planet, table);
+    }
+
+    /// <summary>
+    /// The Spansh atmosphere of a journal <c>Atmosphere</c> text and <c>AtmosphereType</c>: the text's density words, the
+    /// first capitalised, then the type's gas. "No atmosphere" for type None or a text with no gas word; null for a gas
+    /// whose type is missing or not mapped here.
+    /// </summary>
+    internal static string? AtmosphereOf(string? text, string? type)
+    {
+        var words = (text ?? string.Empty).ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (type == "None" || words.All(word => word == "atmosphere" || DensityWords.Contains(word)))
+        {
+            return NoAtmosphere;
+        }
+
+        if (type is null || !AtmosphereTypes.TryGetValue(type, out var gas))
+        {
+            return null;
+        }
+
+        var density = string.Join(' ', words.Where(DensityWords.Contains));
+
+        return density.Length == 0 ? gas : char.ToUpperInvariant(density[0]) + density[1..] + " " + gas;
     }
 
     /// <summary>
@@ -123,6 +310,11 @@ public static partial class CodexKinds
 
         return table.Entry(key) is { Kind: not null } entry ? CodexFamilies.FileOfTableName(entry.SubCategory) : null;
     }
+
+    private static string? SubTypeOfStar(string starType) =>
+        starType[0] == 'D' && starType.All(char.IsAsciiLetterUpper)
+            ? "White Dwarf (" + starType + ") Star"
+            : StarTypes.GetValueOrDefault(starType);
 
     private static bool IsUnbanded(string subType) =>
         subType.StartsWith("White Dwarf (", StringComparison.Ordinal) || Unbanded.Contains(subType, StringComparer.Ordinal);

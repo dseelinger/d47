@@ -1,0 +1,7 @@
+{ "timestamp":"2026-11-01T09:00:00Z", "event":"Fileheader", "part":1, "language":"English/UK", "Odyssey":true, "gameversion":"4.1.0.0", "build":"r0/0 " }
+{ "timestamp":"2026-11-01T09:00:10Z", "event":"Commander", "FID":"F1", "Name":"Fixture Commander" }
+{ "timestamp":"2026-11-01T09:00:20Z", "event":"LoadGame", "FID":"F1", "Commander":"Fixture Commander", "Credits":1 }
+{ "timestamp":"2026-11-01T09:05:00Z", "event":"FSDJump", "StarSystem":"Fixture Sol", "SystemAddress":1, "StarPos":[0.00000,0.00000,0.00000] }
+{ "timestamp":"2026-11-01T09:05:10Z", "event":"Scan", "ScanType":"AutoScan", "BodyName":"Fixture Sol A", "BodyID":1, "StarSystem":"Fixture Sol", "SystemAddress":1, "DistanceFromArrivalLS":0.0, "StarType":"K_OrangeGiant", "Subclass":3, "StellarMass":1.2, "Luminosity":"III" }
+{ "timestamp":"2026-11-01T09:06:00Z", "event":"Scan", "ScanType":"Detailed", "BodyName":"Fixture Sol A 1", "BodyID":2, "StarSystem":"Fixture Sol", "SystemAddress":1, "DistanceFromArrivalLS":300.0, "TerraformState":"Terraformable", "PlanetClass":"Rocky body", "Atmosphere":"thin carbon dioxide atmosphere", "AtmosphereType":"CarbonDioxide", "Landable":false }
+{ "timestamp":"2026-11-01T09:07:00Z", "event":"Scan", "ScanType":"Detailed", "BodyName":"Fixture Sol A Belt Cluster 1", "BodyID":3, "StarSystem":"Fixture Sol", "SystemAddress":1, "DistanceFromArrivalLS":10.0 }

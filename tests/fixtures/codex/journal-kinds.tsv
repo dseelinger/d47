@@ -1,0 +1,82 @@
+# Journal Scan fields and the d47 codex kind key each gives. Read by AScanHasTheKindTheFixtureGivesTests, which checks
+# CodexKinds.OfScan against every row, and checks that a key this file shares with kinds.tsv comes from OfSpansh too.
+# Body names are invented. A blank cell is a field the scan does not have; "" is a field written as an empty string.
+# Columns: BodyName, StarType, Luminosity, PlanetClass, TerraformState, Atmosphere, AtmosphereType, ring classes
+# (comma-separated), the usual band of the star's subType (read only for a star with no luminosity), the key (blank for
+# no kind).
+Fixture Prime 1	O	V							star.o_blue_white_star.dwarf
+Fixture Prime 2	B	Va							star.b_blue_white_star.dwarf
+Fixture Prime 3	A	IVb							star.a_blue_white_star.dwarf
+Fixture Prime 4	F	Vab							star.f_white_star.dwarf
+Fixture Prime 5	G	V							star.g_white_yellow_star.dwarf
+Fixture Prime 6	K	Vb							star.k_yellow_orange_star.dwarf
+Fixture Prime 7	M	Va							star.m_red_dwarf_star.dwarf
+Fixture Prime 8	K_OrangeGiant	III							star.k_yellow_orange_giant_star.giant
+Fixture Prime 9	M_RedGiant	IIIab							star.m_red_giant_star.giant
+Fixture Prime 10	M_RedSuperGiant	Iab							star.m_red_super_giant_star.supergiant
+Fixture Prime 11	A_BlueWhiteSuperGiant	Iab							star.a_blue_white_super_giant_star.supergiant
+Fixture Prime 12	B_BlueWhiteSuperGiant	Ia0							star.b_blue_white_super_giant_star.hypergiant
+Fixture Prime 13	F_WhiteSuperGiant	Ib							star.f_white_super_giant_star.supergiant
+Fixture Prime 14	G_WhiteSuperGiant	II							star.g_white_yellow_super_giant_star.supergiant
+Fixture Prime 15	L	V							star.l_brown_dwarf_star.dwarf
+Fixture Prime 16	T	V							star.t_brown_dwarf_star.dwarf
+Fixture Prime 17	Y	V							star.y_brown_dwarf_star.dwarf
+Fixture Prime 18	TTS	VI							star.t_tauri_star.dwarf
+Fixture Prime 19	AeBe	Vz							star.herbig_ae_be_star.dwarf
+Fixture Prime 20	W	I							star.wolf_rayet_star.supergiant
+Fixture Prime 21	WN	II							star.wolf_rayet_n_star.supergiant
+Fixture Prime 22	WNC	VI							star.wolf_rayet_nc_star.dwarf
+Fixture Prime 23	WC	I							star.wolf_rayet_c_star.supergiant
+Fixture Prime 24	WO	I							star.wolf_rayet_o_star.supergiant
+Fixture Prime 25	C	O							star.c_star.hypergiant
+Fixture Prime 26	CN	III							star.cn_star.giant
+Fixture Prime 27	CJ	III							star.cj_star.giant
+Fixture Prime 28	MS	III							star.ms_type_star.giant
+Fixture Prime 29	S	III							star.s_type_star.giant
+Fixture Prime 30	DA	O							star.white_dwarf_da_star
+Fixture Prime 31	D	VII							star.white_dwarf_d_star
+Fixture Prime 32	DAB	VII							star.white_dwarf_dab_star
+Fixture Prime 33	DAV	VII							star.white_dwarf_dav_star
+Fixture Prime 34	DAZ	VII							star.white_dwarf_daz_star
+Fixture Prime 35	DB	VII							star.white_dwarf_db_star
+Fixture Prime 36	DBV	VII							star.white_dwarf_dbv_star
+Fixture Prime 37	DBZ	VII							star.white_dwarf_dbz_star
+Fixture Prime 38	DC	VII							star.white_dwarf_dc_star
+Fixture Prime 39	DCV	VII							star.white_dwarf_dcv_star
+Fixture Prime 40	DQ	VII							star.white_dwarf_dq_star
+Fixture Prime 41	N	V							star.neutron_star
+Fixture Prime 42	H	VII							star.black_hole
+Fixture Prime 43	SupermassiveBlackHole								star.supermassive_black_hole
+Fixture Prime 44	CS	III							
+Fixture Prime 45	CH	III							
+Fixture Prime 46	CHd	III							
+Fixture Prime 47	X								
+Fixture Prime 48	RoguePlanet								
+Fixture Prime 49	Nebula								
+Fixture Prime 50	StellarRemnantNebula								
+Fixture Prime 90	O							dwarf	star.o_blue_white_star.dwarf
+Fixture Prime 1 a			Sudarsky class I gas giant	""	""		eRingClass_Icy,eRingClass_Rocky		gas.class_i_gas_giant.icy_rocky
+Fixture Prime 2 a			Sudarsky class I gas giant	""	""				gas.class_i_gas_giant.no_rings
+Fixture Prime 3 a			Sudarsky class II gas giant	""	""		eRingClass_Rocky,eRingClass_Icy,eRingClass_Rocky		gas.class_ii_gas_giant.icy_rocky
+Fixture Prime 4 a			Sudarsky class III gas giant	""	""		eRingClass_Metalic		gas.class_iii_gas_giant.metallic
+Fixture Prime 5 a			Sudarsky class IV gas giant	""	""				gas.class_iv_gas_giant.no_rings
+Fixture Prime 6 a			Sudarsky class V gas giant	""	""				gas.class_v_gas_giant.no_rings
+Fixture Prime 7 a			Gas giant with water based life	""	""		eRingClass_Metalic,eRingClass_MetalRich		gas.gas_giant_with_water_based_life.metal_rich_metallic
+Fixture Prime 8 a			Gas giant with ammonia based life	""	""		eRingClass_MetalRich		gas.gas_giant_with_ammonia_based_life.metal_rich
+Fixture Prime 9 a			Helium rich gas giant	""	""				gas.helium_rich_gas_giant.no_rings
+Fixture Prime 10 a			Helium gas giant	""	""		eRingClass_Icy		gas.helium_gas_giant.icy
+Fixture Prime 11 a			Water giant	""	""		eRingClass_Icy		gas.water_giant.icy
+Fixture Prime 12 a			Rocky body	Terraforming	thin carbon dioxide atmosphere	CarbonDioxide			planet.rocky_body.terraformable.atmosphere.thin_carbon_dioxide
+Fixture Prime 13 a			Rocky body	""	""	None			planet.rocky_body.not_terraformable.no_atmosphere
+Fixture Prime 14 a			High metal content body	Terraformable	""	None			planet.high_metal_content_world.terraformable.no_atmosphere
+Fixture Prime 15 a			Earthlike body	Terraformed	""	EarthLike			planet.earth_like_world.terraformable.no_atmosphere
+Fixture Prime 16 a			Icy body	""	hot thick carbon dioxide rich atmosphere	CarbonDioxideRich			planet.icy_body.not_terraformable.atmosphere.hot_thick_carbon_dioxide_rich
+Fixture Prime 17 a			Ammonia world	""	thick  atmosphere	AmmoniaOxygen			planet.ammonia_world.not_terraformable.no_atmosphere
+Fixture Prime 18 a			Water world	""	""	SulphurDioxide			planet.water_world.not_terraformable.no_atmosphere
+Fixture Prime 19 a			Water world	Terraformable	thin water atmosphere	Water			planet.water_world.terraformable.atmosphere.thin_water
+Fixture Prime 20 a			Metal rich body	""	hot thin silicate vapour atmosphere	SilicateVapour			planet.metal_rich_body.not_terraformable.atmosphere.hot_thin_silicate_vapour
+Fixture Prime 21 a			Rocky ice body	""	thin sulfur dioxide atmosphere	SulphurDioxide			planet.rocky_ice_world.not_terraformable.atmosphere.thin_sulphur_dioxide
+Fixture Prime 22 a			Icy body	""	thin neon rich atmosphere	NeonRich			planet.icy_body.not_terraformable.atmosphere.thin_neon_rich
+Fixture Prime 23 a			High metal content body	""	thick ammonia and oxygen atmosphere	AmmoniaOxygen			planet.high_metal_content_world.not_terraformable.atmosphere.thick_ammonia_and_oxygen
+Fixture Prime 24 a			Rocky body						
+Fixture Prime A Belt Cluster 1									

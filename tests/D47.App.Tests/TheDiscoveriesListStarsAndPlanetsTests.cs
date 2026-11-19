@@ -19,8 +19,8 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// Discoveries for Inner Orion Spur lists the shipped star and planet kinds under Astronomical Bodies with a
-/// "Reported in" count and their family placeholder, and a star the Commander logged there in the codex is not counted
-/// as an entry the table lacks.
+/// "Reported in" count and their family placeholder; a star the Commander logged there in the codex is not counted as an
+/// entry the table lacks, and a star kind the Commander scanned there reads ON RECORD.
 /// </summary>
 [Trait("Category", "Integration")]
 public class TheDiscoveriesListStarsAndPlanetsTests
@@ -70,7 +70,7 @@ public class TheDiscoveriesListStarsAndPlanetsTests
     }
 
     [AvaloniaFact]
-    public void InnerOrionSpurListsStarAndPlanetKindsAndALoggedStarIsNotUnlisted()
+    public void InnerOrionSpurListsStarAndPlanetKindsAndAScannedStarIsOnRecord()
     {
         var look = AppLook.Put();
         var state = JournalScript.Commander(
@@ -78,7 +78,10 @@ public class TheDiscoveriesListStarsAndPlanetsTests
             "Test Commander",
             "{\"timestamp\":\"2026-10-01T09:00:00Z\",\"event\":\"LoadGame\"}",
             Codex(NeutronStar, "Stars"),
-            Codex(GTypeStar, "Stars"));
+            Codex(GTypeStar, "Stars"),
+            "{\"timestamp\":\"2026-10-02T10:01:00Z\",\"event\":\"FSDJump\",\"StarSystem\":\"Sol\",\"SystemAddress\":1,\"StarPos\":[0.0,0.0,0.0]}",
+            "{\"timestamp\":\"2026-10-02T10:02:00Z\",\"event\":\"Scan\",\"ScanType\":\"AutoScan\",\"BodyName\":\"Sol A\",\"StarSystem\":\"Sol\""
+            + ",\"SystemAddress\":1,\"StarType\":\"N\",\"Luminosity\":\"VII\"}");
         var page = new CodexDiscoveriesPage(() => state, () => HistoryState.Done, 18, pictures: Pictures());
         var window = new Window
         {
@@ -95,6 +98,7 @@ public class TheDiscoveriesListStarsAndPlanetsTests
 
         Assert.All(new[] { NeutronStar, GTypeStar }, id => Assert.Null(Row(page, id.ToString(System.Globalization.CultureInfo.InvariantCulture))));
         Assert.DoesNotContain(In<TextBlock>(page), block => block.Text?.Contains("that the codex table does not list", StringComparison.Ordinal) == true);
+        Assert.Contains(In<TextBlock>(Row(page, "star.neutron_star")!), block => block.Text == "ON RECORD");
 
         PickStatus(page, 2);
 
