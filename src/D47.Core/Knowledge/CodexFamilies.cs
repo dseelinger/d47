@@ -11,6 +11,7 @@ public static class CodexFamilies
         ["$Codex_SubCategory_Geology_and_Anomalies;"] = "geology-and-anomalies.jpg",
         ["$Codex_SubCategory_Organic_Structures;"] = "organic-structures.jpg",
         ["$Codex_SubCategory_Guardian;"] = "guardian-objects.jpg",
+        ["$Codex_SubCategory_Thargoid;"] = "thargoid-objects.jpg",
     };
 
     private static readonly Dictionary<string, string> ByTableName = new(StringComparer.OrdinalIgnoreCase)
@@ -21,6 +22,7 @@ public static class CodexFamilies
         ["Geology and anomalies"] = "geology-and-anomalies.jpg",
         ["Organic structures"] = "organic-structures.jpg",
         ["Guardian objects"] = "guardian-objects.jpg",
+        ["Thargoid objects"] = "thargoid-objects.jpg",
     };
 
     /// <summary>The placeholder file for a journal <c>SubCategory</c> symbol; null for a symbol outside the families.</summary>

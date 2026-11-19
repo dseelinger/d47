@@ -25,6 +25,7 @@ public class ACodexFamilyComesFromTheRawSubCategoryTests
     [InlineData("$Codex_SubCategory_Geology_and_Anomalies;", "geology-and-anomalies.jpg")]
     [InlineData("$Codex_SubCategory_Organic_Structures;", "organic-structures.jpg")]
     [InlineData("$Codex_SubCategory_Guardian;", "guardian-objects.jpg")]
+    [InlineData("$Codex_SubCategory_Thargoid;", "thargoid-objects.jpg")]
     public void EachFamilyHasItsPlaceholder(string symbol, string file) =>
         Assert.Equal(file, CodexFamilies.FileOfSymbol(symbol));
 
@@ -53,6 +54,7 @@ public class ACodexFamilyComesFromTheRawSubCategoryTests
     [InlineData("Geology and anomalies", "geology-and-anomalies.jpg")]
     [InlineData("Organic structures", "organic-structures.jpg")]
     [InlineData("Guardian objects", "guardian-objects.jpg")]
+    [InlineData("Thargoid objects", "thargoid-objects.jpg")]
     public void AnEntryOnlyTheCodexTableKnowsFindsItsFamilyByTheTablesName(string name, string file) =>
         Assert.Equal(file, CodexFamilies.FileOfTableName(name));
 

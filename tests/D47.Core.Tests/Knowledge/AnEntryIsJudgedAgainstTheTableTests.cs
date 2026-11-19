@@ -32,6 +32,8 @@ public class AnEntryIsJudgedAgainstTheTableTests
     [Theory]
     [InlineData("$Codex_SubCategory_Guardian;", 3L, CodexFirst.Region)]
     [InlineData("$Codex_SubCategory_Gas_Giants;", 3L, CodexFirst.Region)]
+    [InlineData("$Codex_SubCategory_Thargoid;", 3L, CodexFirst.None)]
+    [InlineData("$Codex_SubCategory_Thargoid;", 9L, CodexFirst.None)]
     [InlineData("$Codex_SubCategory_Stars;", 3L, CodexFirst.None)]
     [InlineData("$Codex_SubCategory_Terrestrials;", 3L, CodexFirst.None)]
     [InlineData("$Codex_SubCategory_Stars;", 9L, CodexFirst.None)]

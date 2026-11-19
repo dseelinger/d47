@@ -12,7 +12,7 @@ with the URL of that entry's CSV. Each CSV has no header and one row per reporte
 system name, x, y, z, EntryID, system address, coordRegion, boxelRegion. boxelRegion is the
 region the game wrote in that CodexEntry.
 
-Entries whose hud_category is Thargoid or None are left out.
+Entries whose hud_category is None are left out: they are Thargoid ships, not places.
 """
 
 import csv
@@ -30,7 +30,7 @@ REFERENCE_URL = "https://us-central1-canonn-api-236217.cloudfunctions.net/query/
 
 OUTPUT = Path(__file__).resolve().parent.parent / "src" / "D47.Core" / "Knowledge" / "Codex.tsv"
 
-EXCLUDED_HUD_CATEGORIES = {"Thargoid", "None"}
+EXCLUDED_HUD_CATEGORIES = {"None"}
 
 CATEGORIES = {
     "$Codex_Category_Biology;": "Biological and Geological",
@@ -43,6 +43,7 @@ SUB_CATEGORIES = {
     "$Codex_SubCategory_Geology_and_Anomalies;": "Geology and anomalies",
     "$Codex_SubCategory_Gas_Giants;": "Gas giant planets",
     "$Codex_SubCategory_Guardian;": "Guardian objects",
+    "$Codex_SubCategory_Thargoid;": "Thargoid objects",
 }
 
 COLUMNS = 8
@@ -125,7 +126,7 @@ def main() -> int:
         f"# Table date: {today}",
         "# Columns: EntryID, English name, category, subcategory, regions as id:systems pairs.",
         "# A region is listed when the game recorded the entry there at least once (boxelRegion);",
-        "# systems is the number of distinct system addresses reported with it. Thargoid entries are left out.",
+        "# systems is the number of distinct system addresses reported with it. Ships are left out.",
         "# Names and categories are Frontier's own game data; see NOTICE.",
         f"# Entries: {len(chosen)}.",
     ]

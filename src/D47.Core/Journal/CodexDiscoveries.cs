@@ -14,7 +14,7 @@ public sealed record CodexDiscoveries(
     IReadOnlyList<CodexLogEntry> Uncovered)
 {
     public const string Coverage =
-        "Thargoid sites are not covered, nor are star and planet types without a confirmed codex number. "
+        "Star and planet types without a confirmed codex number are not covered. "
         + "Star and planet counts are the known systems that have one; "
         + "the rest are systems where a Commander reported the entry.";
 
