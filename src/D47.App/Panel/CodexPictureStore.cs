@@ -2,7 +2,9 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using D47.Core.Interface;
+using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -12,7 +14,7 @@ namespace D47.App.Panel;
 /// Stock codex pictures fetched from the codex pictures repository's releases into <c>stock\</c>, and each
 /// Commander's own pictures kept in <c>local\&lt;Frontier ID&gt;\</c>. Every fetch runs on the pool.
 /// </summary>
-public sealed class CodexPictureStore
+public sealed partial class CodexPictureStore
 {
     public const string StockFolder = "stock";
 
@@ -31,6 +33,7 @@ public sealed class CodexPictureStore
     private IReadOnlyList<CodexPictureRow>? _rows;
     private int _indexAsked;
     private bool _adopted;
+    private bool _rekeyed;
 
     /// <param name="folder"><c>AppPaths.CodexPictures</c>.</param>
     /// <param name="allowed">Read at each fetch and each read of a stock row, so turning the setting off stops both.</param>
@@ -347,10 +350,77 @@ public sealed class CodexPictureStore
                 }
 
                 _adopted = true;
+                _rekeyed = false;
+            }
+
+            if (!_rekeyed)
+            {
+                RekeyLocked();
             }
         }
 
         return own;
+    }
+
+    /// <summary>The name an old star or planet EntryID's picture, source or crop file takes under its kind key; null for any other name.</summary>
+    private static string? RekeyedName(string fileName)
+    {
+        ArgumentNullException.ThrowIfNull(fileName);
+
+        var match = EntryIdFile().Match(fileName);
+
+        return match.Success
+               && CodexKeys.EntryIdOf(match.Groups["id"].Value) is { } entryId
+               && CodexEntryKinds.Of(entryId) is { } kind
+            ? kind + match.Groups["rest"].Value
+            : null;
+    }
+
+    private void Rekey()
+    {
+        lock (_gate)
+        {
+            if (!_rekeyed)
+            {
+                RekeyLocked();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Renames each file in a Commander's folder that is named with an old star or planet EntryID to its kind key. A file
+    /// whose new name is taken is left as it is. Files directly in <c>local\</c> wait for adoption.
+    /// </summary>
+    private void RekeyLocked()
+    {
+        _rekeyed = true;
+
+        var root = Path.Combine(_folder, LocalFolder);
+
+        foreach (var path in _files.Enumerate(root, "*", recursive: true))
+        {
+            if (Path.GetDirectoryName(path) is not { } folder
+                || string.Equals(folder, root, StringComparison.OrdinalIgnoreCase)
+                || RekeyedName(Path.GetFileName(path)) is not { } name)
+            {
+                continue;
+            }
+
+            var target = Path.Combine(folder, name);
+
+            try
+            {
+                if (_files.Stat(target) is null)
+                {
+                    _files.Copy(path, target);
+                    _files.Delete(path);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogInformation("Codex picture file {File} could not be renamed to {Name} ({Error}).", Path.GetFileName(path), name, ex.GetType().Name);
+            }
+        }
     }
 
     private string? ScreenshotPath(string name) =>
@@ -358,6 +428,8 @@ public sealed class CodexPictureStore
 
     private IEnumerable<(CodexPictureKey Key, string Path)> CropFiles()
     {
+        Rekey();
+
         foreach (var path in _files.Enumerate(Path.Combine(_folder, LocalFolder), "*.crop.json", recursive: true))
         {
             var picture = Path.GetFileName(path).Replace(".crop.json", ".jpg", StringComparison.Ordinal);
@@ -376,6 +448,9 @@ public sealed class CodexPictureStore
         string.Equals(Path.GetDirectoryName(path), folder, StringComparison.OrdinalIgnoreCase);
 
     private string StockPath(string name) => Path.Combine(_folder, StockFolder, name);
+
+    [GeneratedRegex(@"^(?<id>[0-9]+)(?<rest>-[0-9]+(\.jpg|\.source\.jpg|\.crop\.json))\z")]
+    private static partial Regex EntryIdFile();
 
     private static string Url(string tag, string file) =>
         $"https://github.com/{CodexPictureIndex.Repository}/releases/download/{tag}/{Uri.EscapeDataString(file)}";

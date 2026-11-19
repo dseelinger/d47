@@ -298,20 +298,50 @@ public sealed record CodexPictureChoice(CodexPictureSource Source, CodexPictureK
 
 public static class CodexPictures
 {
+    /// <summary>The picture to show for an entry, walking the shipped table's kind tree.</summary>
+    public static CodexPictureChoice? Find(
+        string entryKey,
+        int? regionId,
+        IReadOnlySet<CodexPictureKey> local,
+        IReadOnlyList<CodexPictureRow> stock) =>
+        Find(entryKey, regionId, local, stock, CodexCatalogue.Table);
+
     /// <summary>
     /// The picture to show for an entry: the Commander's for the region, then stock for the region, then the
-    /// Commander's from the lowest other region, then stock from the lowest other region; null for none.
-    /// With no region only the other-region steps apply. Another key's picture is never used.
+    /// Commander's from the lowest other region, then stock from the lowest other region. A kind with none runs the
+    /// same steps for its parent, then the parent's parent, up to the top of its family. Null for none, where the
+    /// caller shows the family placeholder. With no region only the other-region steps apply.
     /// </summary>
     public static CodexPictureChoice? Find(
         string entryKey,
         int? regionId,
         IReadOnlySet<CodexPictureKey> local,
-        IReadOnlyList<CodexPictureRow> stock)
+        IReadOnlyList<CodexPictureRow> stock,
+        CodexTable table)
     {
         ArgumentNullException.ThrowIfNull(local);
         ArgumentNullException.ThrowIfNull(stock);
+        ArgumentNullException.ThrowIfNull(table);
 
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        for (var key = entryKey; key is not null && seen.Add(key); key = CodexKinds.Parent(table, key))
+        {
+            if (FindOwn(key, regionId, local, stock) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
+
+    private static CodexPictureChoice? FindOwn(
+        string entryKey,
+        int? regionId,
+        IReadOnlySet<CodexPictureKey> local,
+        IReadOnlyList<CodexPictureRow> stock)
+    {
         if (regionId is { } here)
         {
             var key = new CodexPictureKey(entryKey, here);
