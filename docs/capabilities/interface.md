@@ -517,7 +517,8 @@ cannot glance at a second monitor. Every crumb but the last can be pressed — *
 
 Two kinds of Back. The breadcrumb and Escape go up: Escape closes what is open or goes up one level, and clears a search first.
 The mouse Back button, Alt+Left, the **grip button** on either controller and the phrase "back" go back through the session's moves,
-tab by tab and level by level, and close an open chooser first. With no moves to go back through they go up one level instead. Say the name of the tab you are already on and you go back to its top, exactly as
+tab by tab and level by level, and close an open chooser first. With no moves to go back through they go up one level instead.
+Forward retraces them: the mouse Forward button, Alt+Right and the phrase "forward" return to the place Back left, and any move you make after going back clears what Forward would have returned to. Nothing on the controllers goes forward. Say the name of the tab you are already on and you go back to its top, exactly as
 pressing it does. A tab answers to its bare name, to "show", "open", "go to", "switch to" or
 "select" in front of it, and to "tab" or "page" after it — and to nothing looser, because a phrase that
 merely mentions a tab is not a request for it. The Stories tab also answers to "story", so

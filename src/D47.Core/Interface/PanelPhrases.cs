@@ -22,6 +22,9 @@ public static class PanelPhrases
     public static readonly IReadOnlyList<string> Back =
         ["back", "go back", "take me back", "go up", "up a level"];
 
+    /// <summary>Going forward again after going back.</summary>
+    public static readonly IReadOnlyList<string> Forward = ["forward", "go forward"];
+
     /// <summary>The openers a destination may be named after.</summary>
     private static readonly IReadOnlyList<string> Openers =
     [
@@ -73,6 +76,11 @@ public static class PanelPhrases
         if (Back.Any(phrase => input == phrase))
         {
             return nav.Previous() || nav.Back() ? $"Back to {nav.Trail[^1].Word}." : null;
+        }
+
+        if (Forward.Any(phrase => input == phrase))
+        {
+            return nav.Next() ? $"Forward to {nav.Trail[^1].Word}." : null;
         }
 
         // Help for wherever they are standing, before any of the destinations below: it is about the page

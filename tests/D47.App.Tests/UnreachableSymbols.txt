@@ -115,6 +115,7 @@ D47.Core.Debrief.StandingDirection.Tier
 D47.Core.Debrief.StandingDirectionsStore.Changed
 D47.Core.Diagnostics.Donation.CorpusCensus.Count
 D47.Core.Hulls.HullMesh.Parts
+D47.Core.Interface.PanelNavigator.CanGoNext
 D47.Core.Interface.PanelNavigator.CanGoPrevious
 D47.Core.Interface.SpeciesPicture.Choose(string, long?, int?, System.Collections.Generic.IReadOnlySet<D47.Core.Interface.CodexPictureKey>, System.Collections.Generic.IReadOnlyList<D47.Core.Interface.CodexPictureRow>)
 D47.Core.Interface.Spelling.Characters

@@ -139,6 +139,9 @@ public sealed class PanelNavigator
     /// <summary>The places before this one, oldest first; where the panel is now is not among them.</summary>
     private readonly List<Visit> _back = [];
 
+    /// <summary>The places <see cref="Previous"/> left, newest last; any recorded move clears it.</summary>
+    private readonly List<Visit> _forward = [];
+
     /// <summary>The most places <see cref="Previous"/> can go back through.</summary>
     private const int MostRemembered = 100;
 
@@ -148,7 +151,7 @@ public sealed class PanelNavigator
     /// <summary>Raised whenever the tab, the root or any trail changes.</summary>
     public event EventHandler? Changed;
 
-    /// <summary>Raised after <see cref="Previous"/> returns to a place inside a tab, with that tab and the place's id.</summary>
+    /// <summary>Raised after <see cref="Previous"/> or <see cref="Next"/> returns to a place inside a tab, with that tab and the place's id.</summary>
     public event Action<PanelTab, string>? PlaceRestored;
 
     /// <summary>Which tab is showing.</summary>
@@ -601,10 +604,52 @@ public sealed class PanelNavigator
         }
 
         var visit = _back[at];
+        var left = Here();
 
         _back.RemoveRange(at, _back.Count - at);
 
-        // The trail, root and tab are all set before the one Raise, so no place in between is drawn.
+        if (left is not null)
+        {
+            _forward.Add(left);
+        }
+
+        Restore(visit);
+        Settle();
+        Raise();
+        RaisePlace(visit);
+        return true;
+    }
+
+    /// <summary>
+    /// Forward again through the places <see cref="Previous"/> left, skipping any that can no longer be opened; false
+    /// when there is none or a chooser is holding the panel.
+    /// </summary>
+    public bool Next()
+    {
+        if (Modal || Newer() is not { } at)
+        {
+            return false;
+        }
+
+        var visit = _forward[at];
+        var left = Here();
+
+        _forward.RemoveRange(at, _forward.Count - at);
+
+        if (left is not null && !(_back.Count > 0 && _back[^1].Same(left)))
+        {
+            _back.Add(left);
+        }
+
+        Restore(visit);
+        Raise();
+        RaisePlace(visit);
+        return true;
+    }
+
+    /// <summary>Sets the trail, root, tab and place before the one Raise, so no place in between is drawn.</summary>
+    private void Restore(Visit visit)
+    {
         var trail = _trails[visit.RootKey];
 
         trail.Clear();
@@ -616,16 +661,14 @@ public sealed class PanelNavigator
         {
             _places[visit.Tab] = place;
         }
+    }
 
-        Settle();
-        Raise();
-
+    private void RaisePlace(Visit visit)
+    {
         if (visit.Place is { } restored)
         {
             PlaceRestored?.Invoke(visit.Tab, restored);
         }
-
-        return true;
     }
 
     /// <summary>
@@ -649,6 +692,25 @@ public sealed class PanelNavigator
 
     /// <summary>Whether <see cref="Previous"/> has a place to go back to.</summary>
     public bool CanGoPrevious => !Modal && Older() is not null;
+
+    /// <summary>Whether <see cref="Next"/> has a place to go forward to.</summary>
+    public bool CanGoNext => !Modal && Newer() is not null;
+
+    /// <summary>The newest place <see cref="Previous"/> left that differs from this one and can still be opened, or null.</summary>
+    private int? Newer()
+    {
+        var here = Here();
+
+        for (var at = _forward.Count - 1; at >= 0; at--)
+        {
+            if (!_forward[at].Same(here) && CanRestore(_forward[at]))
+            {
+                return at;
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>The newest remembered place that differs from this one and can still be opened, or null.</summary>
     private int? Older()
@@ -687,6 +749,7 @@ public sealed class PanelNavigator
         }
 
         _back.Add(before);
+        _forward.Clear();
 
         if (_back.Count > MostRemembered)
         {
@@ -707,6 +770,7 @@ public sealed class PanelNavigator
     private void Forget(Func<Visit, bool> match)
     {
         _back.RemoveAll(visit => match(visit));
+        _forward.RemoveAll(visit => match(visit));
 
         for (var at = _back.Count - 1; at > 0; at--)
         {

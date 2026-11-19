@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The mouse Forward button, Alt+Right and saying "forward" retrace the places Back left, one at a time. Making a move after going back clears them. The controllers have no Forward.
+
 Changed: The mouse Back button, Alt+Left, the grip button and saying "back" now go back through the places you have been this session, across tabs and levels, instead of only up one level. Settings places count too: after opening Audio, then Voices, then Keys, Back returns to Voices and then to Audio. Typing in the Settings search box adds no step. Escape and the breadcrumb still go up one level, and an open chooser closes first. With nowhere earlier to go they behave as before.
 
 Changed: Search › Bodies shows the body type in a Type column beside Body, sortable, instead of a grey line under the body's name. A table whose columns you have arranged before keeps that arrangement; add Type from Columns.

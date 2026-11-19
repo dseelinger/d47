@@ -250,4 +250,60 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
 
         host.Close();
     }
+
+    private static void MouseForward(SettingsHost host)
+    {
+        host.Window.MouseDown(new Avalonia.Point(640, 400), Avalonia.Input.MouseButton.XButton2);
+        host.Window.MouseUp(new Avalonia.Point(640, 400), Avalonia.Input.MouseButton.XButton2);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void TheMouseForwardButtonAndAltRightRetraceTheMovesBackLeft()
+    {
+        var host = Open();
+
+        MakeThreeMoves(host);
+        MouseBack(host);
+        MouseBack(host);
+        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
+
+        MouseForward(host);
+        Assert.Equal(PanelTab.Stories, host.Panel.Tab);
+        Assert.True(host.Panel.Nav.AtRoot);
+
+        Press(host, Key.Right, KeyModifiers.Alt, PhysicalKey.ArrowRight);
+        Assert.Equal(PanelTab.Stories, host.Panel.Tab);
+        Assert.False(host.Panel.Nav.AtRoot);
+
+        MouseForward(host);
+        Assert.False(host.Panel.Nav.AtRoot);
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void AltRightOnAStepperGoesForwardAndLeavesTheStepper()
+    {
+        var host = Open();
+
+        Press(host, Key.D7, KeyModifiers.Control, PhysicalKey.Digit7);
+        host.ShowPlaceOf(D47.Core.Capabilities.Builtin.ListeningCapability.ProviderKey);
+        Dispatcher.UIThread.RunJobs();
+        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
+        MouseBack(host);
+        Assert.Equal(PanelTab.Settings, host.Panel.Tab);
+
+        var control = host.ControlFor(D47.Core.Capabilities.Builtin.ListeningCapability.ProviderKey);
+        var stepper = control as Stepper ?? control!.GetVisualDescendants().OfType<Stepper>().First();
+        stepper.Focus();
+        var before = stepper.SelectedIndex;
+
+        Press(host, Key.Right, KeyModifiers.Alt, PhysicalKey.ArrowRight);
+
+        Assert.Equal(before, stepper.SelectedIndex);
+        Assert.Equal(PanelTab.Stories, host.Panel.Tab);
+
+        host.Close();
+    }
 }

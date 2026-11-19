@@ -1360,6 +1360,9 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// </summary>
     public bool GoPrevious() => Nav.Previous() || GoBack();
 
+    /// <summary>The Forward controls: the place <see cref="GoPrevious"/> left, if any.</summary>
+    public bool GoNext() => Nav.Next();
+
     /// <summary>Moves the page this surface is showing, by however much was asked for (#34).</summary>
     public PanelScrollOutcome Scroll(PanelScrollStep step, PanelScrollSide side = PanelScrollSide.Either)
     {
@@ -2367,7 +2370,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     /// <summary>
     /// Ctrl+1 to Ctrl+8 show the Nth registered tab (the one already showing goes to its top), Ctrl+Tab and
-    /// Ctrl+Shift+Tab step along the bar, and Alt+Left goes back through the session's moves. Matched here so a focused control never sees them.
+    /// Ctrl+Shift+Tab step along the bar, Alt+Left goes back through the session's moves and Alt+Right forward again. Matched here so a focused control never sees them.
     /// </summary>
     private bool TabKey(KeyEventArgs e)
     {
@@ -2375,6 +2378,13 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             e.Handled = true;
             GoPrevious();
+            return true;
+        }
+
+        if (e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Right)
+        {
+            e.Handled = true;
+            GoNext();
             return true;
         }
 
@@ -2428,10 +2438,13 @@ public partial class PanelView : UserControl, IPanelTabHost
     }
 
     /// <summary>The mouse's Back button goes back through the session's moves, as <see cref="GoPrevious"/> does
-    /// (#342). Forward does nothing.</summary>
+    /// (#342). Forward goes forward again through them.</summary>
     private void OnSurfacePointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.GetCurrentPoint(this).Properties.PointerUpdateKind == PointerUpdateKind.XButton1Pressed && GoPrevious())
+        var kind = e.GetCurrentPoint(this).Properties.PointerUpdateKind;
+
+        if ((kind == PointerUpdateKind.XButton1Pressed && GoPrevious())
+            || (kind == PointerUpdateKind.XButton2Pressed && GoNext()))
         {
             e.Handled = true;
         }

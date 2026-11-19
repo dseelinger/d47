@@ -163,6 +163,25 @@ public class PanelPhrasesTests
         Assert.Equal(["Ships"], nav.Trail.Select(crumb => crumb.Word));
     }
 
+    [Theory]
+    [InlineData("forward")]
+    [InlineData("go forward")]
+    public void ForwardReturnsToThePlaceBackLeft(string spoken)
+    {
+        var nav = Furnished();
+
+        nav.Select(PanelTab.Assets);
+        nav.GoTo(new NavCrumb("ship:12", "Corsair"));
+        Assert.Equal("Back to Ships.", PanelPhrases.Apply("back", nav));
+
+        Assert.Equal("Forward to Corsair.", PanelPhrases.Apply(spoken, nav));
+        Assert.Equal(["Ships", "Corsair"], nav.Trail.Select(crumb => crumb.Word));
+    }
+
+    [Fact]
+    public void ForwardWithNothingToReturnToMeansNothing() =>
+        Assert.Null(PanelPhrases.Apply("forward", Furnished()));
+
     /// <summary>At a root there is nothing to go back from, and the phrase falls through.</summary>
     [Fact]
     public void BackAtARootMeansNothing()
