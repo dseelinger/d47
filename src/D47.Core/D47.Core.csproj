@@ -26,6 +26,7 @@
     <EmbeddedResource Include="Knowledge\Exobiology.tsv" LogicalName="D47.Core.Exobiology" />
     <EmbeddedResource Include="Knowledge\Regions.tsv" LogicalName="D47.Core.Regions" />
     <EmbeddedResource Include="Knowledge\Codex.tsv" LogicalName="D47.Core.Codex" />
+    <EmbeddedResource Include="Knowledge\CodexBodies.tsv" LogicalName="D47.Core.CodexBodies" />
     <EmbeddedResource Include="Knowledge\Geology.tsv" LogicalName="D47.Core.Geology" />
     <EmbeddedResource Include="Knowledge\GuardianSites.tsv" LogicalName="D47.Core.GuardianSites" />
     <EmbeddedResource Include="Knowledge\PermitSystems.tsv" LogicalName="D47.Core.PermitSystems" />

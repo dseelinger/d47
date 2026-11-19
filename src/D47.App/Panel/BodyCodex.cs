@@ -35,12 +35,13 @@ public sealed class BodyCodex(
 
     private readonly Dictionary<(string Species, long? EntryId, int? RegionId), (Bitmap Bitmap, bool IsBodysOwnVariant)> _species = [];
 
-    /// <summary>The Astronomical Bodies entry named the same as the body's sub-type, or null.</summary>
+    /// <summary>The Astronomical Bodies entry named the same as the body's sub-type, or null; never a star or planet type entry.</summary>
     public CodexEntry? EntryOf(BodyProfile body) =>
         body.SubType is not { Length: > 0 } subType
             ? null
             : table.All.FirstOrDefault(entry =>
-                string.Equals(entry.Category, "Astronomical Bodies", StringComparison.OrdinalIgnoreCase)
+                entry.Body is null
+                && string.Equals(entry.Category, "Astronomical Bodies", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(entry.Name, subType, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The title block's picture side.</summary>

@@ -15,6 +15,8 @@ public static class CodexFamilies
 
     private static readonly Dictionary<string, string> ByTableName = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["Stars"] = "stars.jpg",
+        ["Terrestrial planets"] = "terrestrial-planets.jpg",
         ["Gas giant planets"] = "gas-giant-planets.jpg",
         ["Geology and anomalies"] = "geology-and-anomalies.jpg",
         ["Organic structures"] = "organic-structures.jpg",

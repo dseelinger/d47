@@ -219,10 +219,10 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         return column;
     }
 
-    /// <summary>The Search tile: shown for an entry the codex table lists, on the main window and the headset.</summary>
+    /// <summary>The Search tile: shown for an entry the codex table lists, other than a star or planet type, on the main window and the headset.</summary>
     private void AddSearch(StackPanel column)
     {
-        if (_bodySearch?.Invoke() is not { } link || _table.Entry(_entryId) is not { } entry)
+        if (_bodySearch?.Invoke() is not { } link || _table.Entry(_entryId) is not { Body: null } entry)
         {
             return;
         }

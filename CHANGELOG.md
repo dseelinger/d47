@@ -24,6 +24,8 @@ Fixed: When ElevenLabs, Cartesia or Edge Neural does not answer the voice-list r
 
 Changed: The Codex Discoveries page lists a region's entries by category, in the order the category filter lists them, with the most reported first in each category; "Reported in" sorts within each category in either direction. Asking which codex entries you are missing names the three most reported missing entries in each category, one category to a line.
 
+Changed: The Codex Discoveries page lists stars, terrestrial planets and the standard gas giants under Astronomical Bodies, each with the number of known systems in the region that have one. A star or planet you have logged in the codex reads "on record", and is no longer counted among the entries the codex table does not list. These rows have no Search tile. Asking which codex entries you are missing counts them too.
+
 Changed: A landable body whose surface temperature is 700 K or more shows that temperature in red, on the Bodies search, the System body page and the system body list; stars and cooler or unlandable bodies are unchanged.
 
 Changed: On the Search pages and Route market, a column the service cannot sort by now sorts the rows already fetched, and the head says only those rows are sorted ("These 25 sorted by Volcanism"). The Search pages remember each page's sort, whether the service's or the rows', and use it for the next search run from the page; a search asked by voice keeps its own order.
