@@ -35,6 +35,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     private long _seenMinute;
     private string? _seenSystem;
     private string _query = string.Empty;
+    private readonly RegionFirstBook? _regionFirsts;
+    private long _seenFirsts;
 
     public CodexRegionPage(
         Func<CommanderGameState?> state,
@@ -47,8 +49,10 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         CodexTable? table = null,
         ColumnWidthMemory? columnWidths = null,
         Func<string, Task<bool>>? copy = null,
-        ColumnArrangementMemory? columnArrangements = null)
+        ColumnArrangementMemory? columnArrangements = null,
+        RegionFirstBook? regionFirsts = null)
     {
+        _regionFirsts = regionFirsts;
         _copy = copy;
         _state = state;
         _history = history;
@@ -115,6 +119,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
             && _history() == _seenHistory
             && PageKit.Minute(_now()) == _seenMinute
             && _state()?.Location.StarSystem == _seenSystem
+            && (_regionFirsts?.Version ?? 0) == _seenFirsts
             && _choice.Period == _period.SelectedIndex)
         {
             return false;
@@ -141,7 +146,8 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
             _history(),
             state?.Location.StarSystem,
             (address, body) => state?.Scans.For(address, body)?.BodyName,
-            _query);
+            _query,
+            CodexModel.RegionFirstLookup(_regionFirsts, state));
     }
 
     private void Draw()
@@ -150,6 +156,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         _seenHistory = _history();
         _seenMinute = PageKit.Minute(_now());
         _seenSystem = _state()?.Location.StarSystem;
+        _seenFirsts = _regionFirsts?.Version ?? 0;
 
         var view = Build();
 
@@ -337,10 +344,10 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     private static StackPanel StatusCell(CodexEntryRow row)
     {
         var status = CreditsKit.Line(
-            row.IsNew ? "NEW" : "ALREADY LOGGED",
+            CodexEntryPage.StatusWord(row),
             Fonts.ChromeFamily,
             TypeScale.Meta,
-            row.IsNew ? ThemeManager.BlueKey : ThemeManager.GreyKey);
+            CodexEntryPage.StatusInk(row));
         status.FontWeight = Avalonia.Media.FontWeight.SemiBold;
 
         var cell = new StackPanel { Children = { status } };

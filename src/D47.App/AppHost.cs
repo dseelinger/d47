@@ -810,6 +810,8 @@ public sealed class AppHost : IDisposable
 
     public CodexPictureSet? CodexPictureSet { get; private set; }
 
+    public D47.Core.Journal.RegionFirstBook? RegionFirsts { get; private set; }
+
     public ScreenshotSet? Screenshots { get; private set; }
 
     /// <summary>Fetches stock stories' average ratings and sends the Commander's votes.</summary>
@@ -3672,6 +3674,7 @@ public sealed class AppHost : IDisposable
         stores.Campaigns.ArcOpened += _ => host.WriteArcSecret();
         host.CampaignFocus = stores.CampaignFocus;
         host.Activities = stores.Activities;
+        host.RegionFirsts = stores.RegionFirsts;
         host.Adventures = (stores.AdventureBook, crew.AdventureGenerator);
         host.Stories = storyDirector;
         host.StoryStore = stores.StoryStore;

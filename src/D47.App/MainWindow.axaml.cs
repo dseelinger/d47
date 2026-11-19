@@ -308,7 +308,7 @@ public partial class MainWindow : Window
             FollowServerStatus(host.ServerStatus);
             Panel.EnableCombatStats(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
             Panel.EnableCredits(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow);
-            Panel.EnableCodex(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow, host.CodexPictureSet);
+            Panel.EnableCodex(() => host.GameState.Active, () => host.History.State, () => DateTimeOffset.UtcNow, host.CodexPictureSet, host.RegionFirsts);
 
             if (host.Screenshots is { } screenshots)
             {

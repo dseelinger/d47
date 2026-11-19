@@ -163,6 +163,18 @@ public sealed class RegionFirstBook
         _offTick(() => Save(snapshot));
     }
 
+    /// <summary>Changes each time a record is added or marked reported.</summary>
+    public long Version
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _version;
+            }
+        }
+    }
+
     /// <summary>The Commander's record for the entry in the region, or null.</summary>
     public RegionFirstRecord? Find(string frontierId, long entryId, int regionId)
     {

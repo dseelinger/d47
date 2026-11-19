@@ -10,6 +10,8 @@
 
 Added: The codex table now lists the Thargoid sites and barnacles: the spires, coral, roots, shipwrecks, uplink and caustic devices and the three barnacles. A region's Discoveries page lists them when Commanders have reported them there, with a Thargoid placeholder picture for the sites, and their Search tile finds the nearest one. The Thargoid ships are still left out. The Codex Discoveries answer no longer says Thargoid sites are not covered.
 
+Added: A codex entry page now shows a band above the picture when its entry is recorded as a possible region first or a possible first in the galaxy. The band says which, gives the sentence, and shows the date of the codex table the entry was judged against and whether it has been reported. The logging on the entry page and the Status cell on the region page read the same words in cyan in place of NEW. The headset big panel shows them too.
+
 Added: A possible region or galaxy first is now announced with a short rising fanfare just ahead of the line. The Sound cues setting does not turn it off. Replace it with files in `data\audio\alerts\region-first\`.
 
 Added: A possible region or galaxy first now ends with "Say 'report it to Canonn' and I'll send it." Saying "report it to Canonn" sends the newest find you have not reported to Canonn's codex record: its journal line, the system, position and body, and your Commander name, so the find is credited to you. Each find is sent once, and nothing is sent unless you ask. Settings lists it under Privacy and egress as Region first reports. The local voices say Canonn as "cannon".

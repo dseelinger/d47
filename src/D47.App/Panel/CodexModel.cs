@@ -55,7 +55,8 @@ public sealed record CodexEntryRow(
     DateTimeOffset At,
     bool IsNew,
     DateTimeOffset? First,
-    string? Origin)
+    string? Origin,
+    CodexFirst Possible = CodexFirst.None)
 {
     /// <summary>The body and the position as one line: "A 4 c · 12.4512, −108.2231".</summary>
     public string Place => string.Join(" · ", new[] { Body, Position }.Where(part => !string.IsNullOrWhiteSpace(part)));
@@ -128,7 +129,8 @@ public sealed record CodexEntryView(
     string? Category,
     string? SubCategory,
     string? PlaceholderFile,
-    IReadOnlyList<CodexEntryRow> Loggings);
+    IReadOnlyList<CodexEntryRow> Loggings,
+    RegionFirstRecord? Record = null);
 
 /// <summary>The rows behind Commander › Ledgers › Codex, built from a <see cref="CodexLedger"/> (#1290).</summary>
 public static class CodexModel
@@ -270,6 +272,24 @@ public static class CodexModel
 
     public static string Number(long count) => count.ToString("N0", CultureInfo.InvariantCulture);
 
+    /// <summary>The record lookup for the active Commander, or null when there is no book.</summary>
+    public static Func<long, int, RegionFirstRecord?>? RegionFirstLookup(RegionFirstBook? book, CommanderGameState? state) =>
+        book is null || state?.Identity.FrontierId is not { Length: > 0 } id ? null : (entry, region) => book.Find(id, entry, region);
+
+    public static string RegionFirstWord(CodexFirst first) =>
+        first == CodexFirst.Galaxy ? "POSSIBLE FIRST IN THE GALAXY" : "POSSIBLE REGION FIRST";
+
+    /// <summary>The band's sentence: "You may be the first Commander to log Entry in Region." or "… anywhere in the galaxy."</summary>
+    public static string RegionFirstSentence(RegionFirstRecord record, string entry) =>
+        record.First == CodexFirst.Galaxy
+            ? $"You may be the first Commander to log {entry} anywhere in the galaxy."
+            : $"You may be the first Commander to log {entry} in {record.Region ?? NoRegionName}.";
+
+    /// <summary>The band's grey line: the table the record was judged against and whether it has been reported.</summary>
+    public static string RegionFirstMeta(RegionFirstRecord record) =>
+        (record.TableDate is { Length: > 0 } table ? $"table {table} · " : string.Empty)
+        + (record.Reported is { } reported ? $"reported {DateTime(reported)} UTC" : "not reported");
+
     public static string Date(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     /// <summary>"2026-10-17 18:21".</summary>
@@ -406,7 +426,8 @@ public static class CodexModel
         HistoryState history,
         string? currentSystem,
         Func<long, int, string?> bodyName,
-        string? query = null)
+        string? query = null,
+        Func<long, int, RegionFirstRecord?>? regionFirst = null)
     {
         var from = Start(ledger, period);
         var slice = ledger.Since(from, regionId);
@@ -435,7 +456,7 @@ public static class CodexModel
             .GroupBy(item => Label(item.Entry))
             .Select(group => new CodexGroup(
                 group.Key,
-                [.. group.Select(item => Row(item.Entry, item.Index, all, firsts, currentSystem, bodyName, ledger.IsWhole))]))
+                [.. group.Select(item => Row(item.Entry, item.Index, all, firsts, currentSystem, bodyName, ledger.IsWhole, regionFirst))]))
             .OrderByDescending(group => group.Count)
             .ThenBy(group => group.Label, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -468,7 +489,8 @@ public static class CodexModel
         int? regionId,
         string fallbackName,
         string? currentSystem,
-        Func<long, int, string?> bodyName)
+        Func<long, int, string?> bodyName,
+        Func<long, int, RegionFirstRecord?>? regionFirst = null)
     {
         var all = ledger.Entries;
         var firsts = new Dictionary<(long, int?), int>();
@@ -483,7 +505,7 @@ public static class CodexModel
             .Where(item => item.Entry.EntryId == entryId && item.Entry.RegionId == regionId)
             .Reverse()
             .OrderByDescending(item => item.Entry.At)
-            .Select(item => Row(item.Entry, item.Index, all, firsts, currentSystem, bodyName, ledger.IsWhole))
+            .Select(item => Row(item.Entry, item.Index, all, firsts, currentSystem, bodyName, ledger.IsWhole, regionFirst))
             .ToList();
 
         var logged = all.LastOrDefault(entry => entry.EntryId == entryId);
@@ -497,7 +519,8 @@ public static class CodexModel
             logged is not null
                 ? CodexFamilies.FileOfSymbol(logged.SubCategorySymbol)
                 : CodexFamilies.FileOfTableName(known?.SubCategory),
-            here);
+            here,
+            regionId is { } id ? regionFirst?.Invoke(entryId, id) : null);
     }
 
     /// <summary>"708 missing · 38 of 746 on record": the figures on the region page's Discoveries row.</summary>
@@ -615,12 +638,14 @@ public static class CodexModel
         Dictionary<(long, int?), int> firsts,
         string? currentSystem,
         Func<long, int, string?> bodyName,
-        bool whole)
+        bool whole,
+        Func<long, int, RegionFirstRecord?>? regionFirst)
     {
         var body = entry.SubCategorySymbol is "$Codex_SubCategory_Terrestrials;" or "$Codex_SubCategory_Gas_Giants;"
             ? entry.Body
             : entry.SystemAddress is { } address && entry.BodyId is { } id ? bodyName(address, id) : null;
         var first = firsts[(entry.EntryId, entry.RegionId)];
+        var record = entry.RegionId is { } region ? regionFirst?.Invoke(entry.EntryId, region) : null;
 
         return new CodexEntryRow(
             entry.EntryId,
@@ -632,7 +657,8 @@ public static class CodexModel
             entry.At,
             entry.IsNew,
             !entry.IsNew && first < index ? all[first].At : null,
-            entry.IsNew ? null : first < index ? null : whole ? "before your journals" : "before D47 started");
+            entry.IsNew ? null : first < index ? null : whole ? "before your journals" : "before D47 started",
+            record is not null && record.At == entry.At ? record.First : CodexFirst.None);
     }
 
     private static bool Matches(CodexLogEntry entry, string text) =>

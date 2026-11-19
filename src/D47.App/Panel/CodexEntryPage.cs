@@ -35,6 +35,8 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private CodexPictureKey? _pending;
     private string? _failure;
     private bool _seenSearch;
+    private readonly RegionFirstBook? _regionFirsts;
+    private long _seenFirsts;
 
     public CodexEntryPage(
         Func<CommanderGameState?> state,
@@ -48,8 +50,10 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         Func<string, Task<bool>>? confirm = null,
         Func<BodySearchLink?>? bodySearch = null,
         Func<string, Task<bool>>? copy = null,
-        D47.App.Voice.WaitSound? waitSound = null)
+        D47.App.Voice.WaitSound? waitSound = null,
+        RegionFirstBook? regionFirsts = null)
     {
+        _regionFirsts = regionFirsts;
         _waitSound = waitSound;
         _copy = copy;
         _nav = nav;
@@ -81,7 +85,8 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     {
         if (ReferenceEquals(_state()?.CodexLedger, _seenLedger)
             && _state()?.Location.StarSystem == _seenSystem
-            && (_bodySearch?.Invoke() is not null) == _seenSearch)
+            && (_bodySearch?.Invoke() is not null) == _seenSearch
+            && (_regionFirsts?.Version ?? 0) == _seenFirsts)
         {
             return false;
         }
@@ -141,6 +146,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         _seenLedger = state?.CodexLedger;
         _seenSystem = state?.Location.StarSystem;
         _seenSearch = _bodySearch?.Invoke() is not null;
+        _seenFirsts = _regionFirsts?.Version ?? 0;
 
         var view = CodexModel.EntryPage(
             state?.CodexLedger ?? CodexLedger.None,
@@ -149,7 +155,8 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
             _regionId,
             _fallbackName,
             state?.Location.StarSystem,
-            (address, body) => state?.Scans.For(address, body)?.BodyName);
+            (address, body) => state?.Scans.For(address, body)?.BodyName,
+            CodexModel.RegionFirstLookup(_regionFirsts, state));
 
         var grid = new Grid
         {
@@ -164,8 +171,54 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         grid.Children.Add(facts);
 
         _body.Children.Clear();
+
+        if (view.Record is { } record)
+        {
+            _body.Children.Add(RegionFirstBand(record, view.Name));
+        }
+
         _body.Children.Add(grid);
     }
+
+    /// <summary>The band above the picture and facts for an entry with a region-first record.</summary>
+    private Border RegionFirstBand(RegionFirstRecord record, string entry)
+    {
+        var word = CreditsKit.Line(CodexModel.RegionFirstWord(record.First), Fonts.ChromeFamily, TypeScale.Meta, ThemeManager.CyanKey);
+        word.FontWeight = FontWeight.SemiBold;
+
+        var text = new StackPanel
+        {
+            Spacing = 4,
+            Margin = new Thickness(12, 10, 14, 10),
+            Children =
+            {
+                word,
+                RoutingKit.Ink(CodexModel.RegionFirstSentence(record, entry), TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true),
+                CreditsKit.Mono(CodexModel.RegionFirstMeta(record), TypeScale.Small, ThemeManager.GreyKey, right: false),
+            },
+        };
+
+        var band = new Border
+        {
+            Name = "CodexRegionFirst",
+            MaxWidth = 900,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 0, 0, _headset ? 14 : 20),
+            BorderThickness = new Thickness(3, 0, 0, 0),
+            Child = text,
+        };
+        ThemeInk.Bind(band, Border.BorderBrushProperty, ThemeManager.CyanKey);
+        ThemeInk.Bind(band, Border.BackgroundProperty, ThemeManager.CyanGroundKey);
+
+        return band;
+    }
+
+    /// <summary>NEW, ALREADY LOGGED, or the kind of a recorded first.</summary>
+    internal static string StatusWord(CodexEntryRow row) =>
+        row.Possible != CodexFirst.None ? CodexModel.RegionFirstWord(row.Possible) : row.IsNew ? "NEW" : "ALREADY LOGGED";
+
+    internal static string StatusInk(CodexEntryRow row) =>
+        row.Possible != CodexFirst.None ? ThemeManager.CyanKey : row.IsNew ? ThemeManager.BlueKey : ThemeManager.GreyKey;
 
     private StackPanel PictureColumn(CodexEntryView view)
     {
@@ -451,9 +504,9 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
         CreditsKit.Place(grid, 0, CodexRegionPage.SystemCell(row, copy));
 
-        if (row.IsNew)
+        if (row.IsNew || row.Possible != CodexFirst.None)
         {
-            var status = CreditsKit.Line("NEW", Fonts.ChromeFamily, TypeScale.Meta, ThemeManager.BlueKey);
+            var status = CreditsKit.Line(StatusWord(row), Fonts.ChromeFamily, TypeScale.Meta, StatusInk(row));
             status.FontWeight = FontWeight.SemiBold;
             CreditsKit.Place(grid, 1, status);
         }

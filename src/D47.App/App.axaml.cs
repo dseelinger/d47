@@ -126,6 +126,7 @@ public partial class App(AppHost? host) : Application
                 commanders: host.Commanders,
                 watches: host.WatchesDesk,
                 codexPictures: host.CodexPictureSet,
+                regionFirsts: host.RegionFirsts,
                 screenshots: host.Screenshots,
                 learnedPhrases: host.LearnedPhrases,
                 adventureDesk: host.AdventureDesk,
