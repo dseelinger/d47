@@ -586,7 +586,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         PageTrail.Open(host.Nav, LedgersPage.RootKey, [
             LedgersPage.Ledger(CodexPage.PageKey, "Codex"),
             CodexPage.RegionCrumb(null),
-            CodexPage.EntryCrumb(null, entry.EntryId, entry.Name)]);
+            CodexPage.EntryCrumb(null, entry.Key, entry.Name)]);
 
     /// <summary>Opens Commander › Codex with its search set to the genus.</summary>
     private void OpenGenus(string genus)

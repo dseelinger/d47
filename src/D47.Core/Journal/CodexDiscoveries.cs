@@ -31,22 +31,22 @@ public sealed record CodexDiscoveries(
 
         var inRegion = ledger.Entries.Where(entry => entry.RegionId == regionId).ToList();
         var first = inRegion
-            .GroupBy(entry => entry.EntryId)
-            .ToDictionary(group => group.Key, group => group.First());
+            .GroupBy(entry => CodexKeys.Of(entry.EntryId))
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
 
         var known = catalogue.InRegion(regionId)
             .OrderBy(found => found.Entry.Category, StringComparer.OrdinalIgnoreCase)
             .ThenByDescending(found => found.Systems)
             .ThenBy(found => found.Entry.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(found => new CodexDiscoveryItem(found.Entry, found.Systems, first.GetValueOrDefault(found.Entry.EntryId)))
+            .Select(found => new CodexDiscoveryItem(found.Entry, found.Systems, first.GetValueOrDefault(found.Entry.Key)))
             .ToList();
-        var listed = known.Select(item => item.Entry.EntryId).ToHashSet();
+        var listed = known.Select(item => item.Entry.Key).ToHashSet(StringComparer.Ordinal);
 
         return new CodexDiscoveries(
             regionId,
             known,
             [.. known.Where(item => item.Logged is not null)],
             [.. known.Where(item => item.Logged is null)],
-            [.. first.Values.Where(entry => !listed.Contains(entry.EntryId))]);
+            [.. first.Where(pair => !listed.Contains(pair.Key)).Select(pair => pair.Value)]);
     }
 }

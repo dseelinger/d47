@@ -31,7 +31,7 @@ public class TheShippedCodexTableHoldsThargoidSitesButNoShipsTests
         var barnacle = Table.All.Single(entry => entry.Name == "Common Thargoid Barnacle");
         var organic = "$Codex_SubCategory_Organic_Structures;";
 
-        Assert.Equal(CodexFirst.None, CodexFirsts.Judge(Table, barnacle.EntryId, 18, organic));
-        Assert.Equal(CodexFirst.Region, CodexFirsts.Judge(Table, barnacle.EntryId, 3, organic));
+        Assert.Equal(CodexFirst.None, CodexFirsts.Judge(Table, barnacle.EntryId!.Value, 18, organic));
+        Assert.Equal(CodexFirst.Region, CodexFirsts.Judge(Table, barnacle.EntryId!.Value, 3, organic));
     }
 }

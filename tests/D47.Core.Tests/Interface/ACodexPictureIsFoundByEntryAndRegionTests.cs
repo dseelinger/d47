@@ -1,4 +1,5 @@
 using D47.Core.Interface;
+using D47.Core.Knowledge;
 using Xunit;
 
 namespace D47.Core.Tests.Interface;
@@ -7,18 +8,19 @@ namespace D47.Core.Tests.Interface;
 public class ACodexPictureIsFoundByEntryAndRegionTests
 {
     private const long Entry = 2420101;
+    private const string EntryKey = "2420101";
     private const string Sha = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
     private static CodexPictureRow Row(long entryId, int regionId) =>
-        new(entryId, regionId, CodexPictureIndex.FirstTag, CodexPictureIndex.AssetName(entryId, regionId, Sha), Sha, 1000);
+        new(CodexKeys.Of(entryId), regionId, CodexPictureIndex.FirstTag, CodexPictureIndex.AssetName(new CodexPictureKey(CodexKeys.Of(entryId), regionId), Sha), Sha, 1000);
 
     private static HashSet<CodexPictureKey> Local(params (long Entry, int Region)[] keys) =>
-        [.. keys.Select(key => new CodexPictureKey(key.Entry, key.Region))];
+        [.. keys.Select(key => new CodexPictureKey(CodexKeys.Of(key.Entry), key.Region))];
 
     [Fact]
     public void ALocalPictureForTheRegionBeatsAStockOne()
     {
-        var found = CodexPictures.Find(Entry, 18, Local((Entry, 18)), [Row(Entry, 18)]);
+        var found = CodexPictures.Find(EntryKey, 18, Local((Entry, 18)), [Row(Entry, 18)]);
 
         Assert.NotNull(found);
         Assert.Equal(CodexPictureSource.Local, found.Source);
@@ -29,7 +31,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     [Fact]
     public void AStockPictureForTheRegionBeatsALocalOneFromAnotherRegion()
     {
-        var found = CodexPictures.Find(Entry, 18, Local((Entry, 3)), [Row(Entry, 18)]);
+        var found = CodexPictures.Find(EntryKey, 18, Local((Entry, 3)), [Row(Entry, 18)]);
 
         Assert.NotNull(found);
         Assert.Equal(CodexPictureSource.Stock, found.Source);
@@ -41,7 +43,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     [Fact]
     public void ALocalPictureFromAnotherRegionBeatsAStockOneFromAnotherRegion()
     {
-        var found = CodexPictures.Find(Entry, 18, Local((Entry, 5)), [Row(Entry, 3)]);
+        var found = CodexPictures.Find(EntryKey, 18, Local((Entry, 5)), [Row(Entry, 3)]);
 
         Assert.NotNull(found);
         Assert.Equal(CodexPictureSource.Local, found.Source);
@@ -52,7 +54,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     [Fact]
     public void AStockPictureFromAnotherRegionIsTheLastResort()
     {
-        var found = CodexPictures.Find(Entry, 18, Local(), [Row(Entry, 5), Row(Entry, 3)]);
+        var found = CodexPictures.Find(EntryKey, 18, Local(), [Row(Entry, 5), Row(Entry, 3)]);
 
         Assert.NotNull(found);
         Assert.Equal(CodexPictureSource.Stock, found.Source);
@@ -63,7 +65,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     [Fact]
     public void TheLowestOtherRegionIsChosen()
     {
-        var found = CodexPictures.Find(Entry, 18, Local((Entry, 7), (Entry, 4), (Entry, 9)), []);
+        var found = CodexPictures.Find(EntryKey, 18, Local((Entry, 7), (Entry, 4), (Entry, 9)), []);
 
         Assert.NotNull(found);
         Assert.Equal(4, found.RegionId);
@@ -72,7 +74,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     [Fact]
     public void ANullRegionGoesStraightToTheOtherRegionSteps()
     {
-        var found = CodexPictures.Find(Entry, null, Local(), [Row(Entry, 18), Row(Entry, 3)]);
+        var found = CodexPictures.Find(EntryKey, null, Local(), [Row(Entry, 18), Row(Entry, 3)]);
 
         Assert.NotNull(found);
         Assert.Equal(3, found.RegionId);
@@ -82,13 +84,13 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     [Fact]
     public void NothingForTheEntryGivesNull()
     {
-        Assert.Null(CodexPictures.Find(Entry, 18, Local(), []));
+        Assert.Null(CodexPictures.Find(EntryKey, 18, Local(), []));
     }
 
     [Fact]
     public void AnotherEntrysPictureIsNeverUsed()
     {
-        var found = CodexPictures.Find(Entry, 18, Local((Entry + 1, 18)), [Row(Entry + 1, 18), Row(Entry - 1, 3)]);
+        var found = CodexPictures.Find(EntryKey, 18, Local((Entry + 1, 18)), [Row(Entry + 1, 18), Row(Entry - 1, 3)]);
 
         Assert.Null(found);
     }
@@ -96,7 +98,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     [Fact]
     public void AKeyReadsBackFromItsFileName()
     {
-        var key = new CodexPictureKey(Entry, 18);
+        var key = new CodexPictureKey(EntryKey, 18);
 
         Assert.Equal("2420101-18.jpg", key.FileName);
         Assert.True(CodexPictureKey.TryParse(key.FileName, out var parsed));
@@ -128,7 +130,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     [Fact]
     public void TheAssetNameCarriesTheFirstTwelveHashDigits()
     {
-        Assert.Equal("2420101-18-0123456789ab.jpg", CodexPictureIndex.AssetName(Entry, 18, Sha));
+        Assert.Equal("2420101-18-0123456789ab.jpg", CodexPictureIndex.AssetName(new CodexPictureKey(EntryKey, 18), Sha));
     }
 
     [Fact]
@@ -180,7 +182,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
     {
         var rows = new[] { Row(10, 3), Row(10, 5), Row(11, 3) };
 
-        var left = CodexPictureIndex.Remove(rows, new CodexPictureKey(10, 3));
+        var left = CodexPictureIndex.Remove(rows, new CodexPictureKey("10", 3));
 
         Assert.Equal([Row(10, 5), Row(11, 3)], left);
     }
@@ -218,7 +220,7 @@ public class ACodexPictureIsFoundByEntryAndRegionTests
         var parsed = CodexPictureIndex.Parse($"[{json}, {RowJson(null, null, 2420102)}]");
 
         Assert.Single(parsed.Rows);
-        Assert.Equal(2420102, parsed.Rows[0].EntryId);
+        Assert.Equal("2420102", parsed.Rows[0].EntryKey);
         Assert.Single(parsed.Reasons);
         Assert.StartsWith("Row 1:", parsed.Reasons[0], StringComparison.Ordinal);
     }

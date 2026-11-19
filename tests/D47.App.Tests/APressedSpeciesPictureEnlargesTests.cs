@@ -116,7 +116,7 @@ public sealed class APressedSpeciesPictureEnlargesTests
 
         foreach (var entry in pictured)
         {
-            files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, new CodexPictureKey(entry, region).FileName), Png(300, 200));
+            files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, new CodexPictureKey(CodexKeys.Of(entry), region).FileName), Png(300, 200));
         }
 
         var store = new CodexPictureStore(files, Folder, () => true, NullLogger.Instance, new NotFound(), commander: () => "F1");

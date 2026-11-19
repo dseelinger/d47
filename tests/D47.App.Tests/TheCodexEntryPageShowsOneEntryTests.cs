@@ -78,13 +78,13 @@ public class TheCodexEntryPageShowsOneEntryTests
         }
 
         public void OwnPicture(long entry, int region, int side = Local) =>
-            Files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, new CodexPictureKey(entry, region).FileName), Png(side));
+            Files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, new CodexPictureKey(D47.Core.Knowledge.CodexKeys.Of(entry), region).FileName), Png(side));
 
         public CodexPictureRow StockRow(long entry, int region, bool onDisk, int side = Stock)
         {
             var bytes = Png(side);
             var sha = Convert.ToHexStringLower(SHA256.HashData(bytes));
-            var row = new CodexPictureRow(entry, region, "codex-pictures-1", CodexPictureIndex.AssetName(entry, region, sha), sha, bytes.Length);
+            var row = new CodexPictureRow(D47.Core.Knowledge.CodexKeys.Of(entry), region, "codex-pictures-1", CodexPictureIndex.AssetName(new CodexPictureKey(D47.Core.Knowledge.CodexKeys.Of(entry), region), sha), sha, bytes.Length);
             Files.WriteText(Path.Combine(Folder, CodexPictureStore.StockFolder, CodexPictureIndex.IndexName), CodexPictureIndex.Write(Rows.Append(row)));
             Rows.Add(row);
 
@@ -121,7 +121,7 @@ public class TheCodexEntryPageShowsOneEntryTests
     }
 
     private static CodexEntryPage Entry(Surface surface, long entryId = 101, int? region = 18, params string[] lines) =>
-        new(() => State(lines.Length == 0 ? Lines : lines), entryId, region, "Entry " + entryId, surface.Pictures);
+        new(() => State(lines.Length == 0 ? Lines : lines), D47.Core.Knowledge.CodexKeys.Of(entryId), region, "Entry " + entryId, surface.Pictures);
 
     private static IEnumerable<T> In<T>(Control root) where T : Visual => root.GetVisualDescendants().OfType<T>();
 
@@ -366,8 +366,8 @@ public class TheCodexEntryPageShowsOneEntryTests
         Assert.Equal("Entry 101", nav.Trail[^1].Word);
         Assert.True(CodexPage.IsEntry(nav.Trail[^1].Key));
         Assert.False(CodexPage.IsRegion(nav.Trail[^1].Key));
-        Assert.Equal((18, 101L), CodexPage.EntryOf(nav.Trail[^1].Key));
-        Assert.Equal((null, 7L), CodexPage.EntryOf(CodexPage.EntryCrumb(null, 7, "x").Key));
+        Assert.Equal((18, "101"), CodexPage.EntryOf(nav.Trail[^1].Key));
+        Assert.Equal((null, "7"), CodexPage.EntryOf(CodexPage.EntryCrumb(null, "7", "x").Key));
         Assert.Equal(["Inner Orion Spur", "Entry 101"], nav.Trail.Select(crumb => crumb.Word).TakeLast(2));
 
         window.Close();

@@ -32,20 +32,19 @@ public static class SpeciesPicture
         ArgumentNullException.ThrowIfNull(stock);
         ArgumentNullException.ThrowIfNull(table);
 
-        if (knownEntryId is { } known && CodexPictures.Find(known, regionId, local, stock) is { } own)
+        if (knownEntryId is { } known && CodexPictures.Find(CodexKeys.Of(known), regionId, local, stock) is { } own)
         {
             return new SpeciesPictureChoice(own, true);
         }
 
         var ordered = CodexVariants.Of(species, table)
-            .OrderByDescending(entry => regionId is { } region && entry.Regions.TryGetValue(region, out var systems) ? systems : 0)
-            .ThenBy(entry => entry.EntryId);
+            .OrderByDescending(entry => regionId is { } region && entry.Regions.TryGetValue(region, out var systems) ? systems : 0);
 
         foreach (var entry in ordered)
         {
-            if (CodexPictures.Find(entry.EntryId, regionId, local, stock) is { } found)
+            if (CodexPictures.Find(entry.Key, regionId, local, stock) is { } found)
             {
-                return new SpeciesPictureChoice(found, entry.EntryId == knownEntryId);
+                return new SpeciesPictureChoice(found, knownEntryId is not null && entry.EntryId == knownEntryId);
             }
         }
 

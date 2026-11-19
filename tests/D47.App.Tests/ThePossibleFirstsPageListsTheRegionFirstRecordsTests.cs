@@ -168,7 +168,7 @@ public class ThePossibleFirstsPageListsTheRegionFirstRecordsTests
         var (window, page) = PageHost.Open(() => new CodexPossibleFirstsPage(() => state, book, nav));
         Press(Named(page, "CodexPossibleFirst.Open.103.18"));
 
-        Assert.Equal(CodexPage.EntryCrumb(18, 103, "Entry 103").Key, nav.Trail[^1].Key);
+        Assert.Equal(CodexPage.EntryCrumb(18, "103", "Entry 103").Key, nav.Trail[^1].Key);
         window.Close();
     }
 

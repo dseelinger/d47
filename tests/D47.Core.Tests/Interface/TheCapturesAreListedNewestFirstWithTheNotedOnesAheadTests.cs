@@ -36,7 +36,7 @@ public class TheCapturesAreListedNewestFirstWithTheNotedOnesAheadTests
         Capture(files, "2026-10-18 19-00-00 Sol B 3", "2026-10-18T19:00:00Z", (102, 18));
         files.WriteBytes(Path.Combine(Folder, "Taken by hand.jpg"), [1]);
 
-        var listed = CodexCaptures.List(files, Folder, new CodexPictureKey(101, 18));
+        var listed = CodexCaptures.List(files, Folder, new CodexPictureKey("101", 18));
 
         Assert.Equal(
             ["2026-10-18 21-09-00 Sol B 3", "2026-10-18 21-08-00 Sol B 3", "2026-10-18 22-00-00 Sol B 3", "2026-10-18 19-00-00 Sol B 3", "Taken by hand"],
@@ -50,6 +50,6 @@ public class TheCapturesAreListedNewestFirstWithTheNotedOnesAheadTests
     [Fact]
     public void AnEmptyFolderListsNothing()
     {
-        Assert.Empty(CodexCaptures.List(new MemoryFileSystem(), Folder, new CodexPictureKey(101, 18)));
+        Assert.Empty(CodexCaptures.List(new MemoryFileSystem(), Folder, new CodexPictureKey("101", 18)));
     }
 }

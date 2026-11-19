@@ -203,7 +203,7 @@ public class TheCommanderTabCopiesEverySystemNameTests
     {
         var state = State(CodexLines);
         var (copy, written) = Clipboard();
-        var window = Show(new CodexEntryPage(() => state, 1, 18, "Entry 1", null, copy: copy));
+        var window = Show(new CodexEntryPage(() => state, "1", 18, "Entry 1", null, copy: copy));
 
         Assert.Equal(["Sol"], Copied(window));
         window.Close();

@@ -3932,9 +3932,14 @@ public sealed class AppHost : IDisposable
         checklists.LineAdded += scope => RecordForStories(D47.Core.Adventures.D47Event.LineAdded(scope, DateTimeOffset.Now));
         host.CodexPictureSet.PictureSaved += key =>
         {
-            var onRecord = gameState.Active?.CodexLedger.Logged.Contains((key.EntryId, key.RegionId)) == true;
+            if (key.EntryId is not { } entryId)
+            {
+                return;
+            }
 
-            RecordForStories(D47.Core.Adventures.D47Event.PictureSaved(key.EntryId, key.RegionId, onRecord, DateTimeOffset.Now));
+            var onRecord = gameState.Active?.CodexLedger.Logged.Contains((entryId, key.RegionId)) == true;
+
+            RecordForStories(D47.Core.Adventures.D47Event.PictureSaved(entryId, key.RegionId, onRecord, DateTimeOffset.Now));
         };
 
         host.AudioRecorder = services.Recording;

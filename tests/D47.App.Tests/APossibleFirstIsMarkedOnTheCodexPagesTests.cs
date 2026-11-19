@@ -55,7 +55,7 @@ public class APossibleFirstIsMarkedOnTheCodexPagesTests
         var state = State();
         var book = Book(state);
 
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => state, 101, 18, "Entry 101", null, regionFirsts: book));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => state, "101", 18, "Entry 101", null, regionFirsts: book));
         var texts = Texts(page);
 
         Assert.NotNull(page.GetVisualDescendants().OfType<Border>().FirstOrDefault(border => border.Name == "CodexRegionFirst"));
@@ -73,7 +73,7 @@ public class APossibleFirstIsMarkedOnTheCodexPagesTests
         var state = State();
         var book = Book(state);
 
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => state, 103, 18, "Entry 103", null, regionFirsts: book));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => state, "103", 18, "Entry 103", null, regionFirsts: book));
         var texts = Texts(page);
 
         Assert.Contains("POSSIBLE FIRST IN THE GALAXY", texts);
@@ -89,12 +89,12 @@ public class APossibleFirstIsMarkedOnTheCodexPagesTests
         var book = Book(state);
         book.MarkReported("F735466", 101, 18, DateTimeOffset.Parse("2026-10-20T08:30:00Z", CultureInfo.InvariantCulture));
 
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => state, 101, 18, "Entry 101", null, regionFirsts: book));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => state, "101", 18, "Entry 101", null, regionFirsts: book));
         Assert.Contains("table 2026-10-19 · reported 2026-10-20 08:30 UTC", Texts(page));
         window.Close();
 
         var none = new RegionFirstBook("none.json", new MemoryFileSystem(), NullLogger.Instance, work => work());
-        var (bare, barePage) = PageHost.Open(() => new CodexEntryPage(() => state, 101, 18, "Entry 101", null, regionFirsts: none));
+        var (bare, barePage) = PageHost.Open(() => new CodexEntryPage(() => state, "101", 18, "Entry 101", null, regionFirsts: none));
 
         Assert.Null(barePage.GetVisualDescendants().OfType<Border>().FirstOrDefault(border => border.Name == "CodexRegionFirst"));
         Assert.Contains("NEW", Texts(barePage));
@@ -107,7 +107,7 @@ public class APossibleFirstIsMarkedOnTheCodexPagesTests
         var state = State();
         var book = Book(state);
 
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => state, 101, 18, "Entry 101", null, headset: true, regionFirsts: book));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => state, "101", 18, "Entry 101", null, headset: true, regionFirsts: book));
 
         Assert.Contains("POSSIBLE REGION FIRST", Texts(page));
         window.Close();

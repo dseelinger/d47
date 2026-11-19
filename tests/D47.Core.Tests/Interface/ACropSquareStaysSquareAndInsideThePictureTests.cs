@@ -93,7 +93,7 @@ public class ACropSquareStaysSquareAndInsideThePictureTests
     [Fact]
     public void TheKeptFilesAreNamedBesideThePicture()
     {
-        var key = new CodexPictureKey(2420101, 18);
+        var key = new CodexPictureKey("2420101", 18);
 
         Assert.Equal("2420101-18.source.jpg", key.SourceFileName);
         Assert.Equal("2420101-18.crop.json", key.CropFileName);

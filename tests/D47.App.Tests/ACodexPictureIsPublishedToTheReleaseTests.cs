@@ -21,7 +21,7 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
 
     private const string ApiRepo = "/repos/" + CodexPictureIndex.Repository;
 
-    private static readonly CodexPictureKey Key = new(101, 18);
+    private static readonly CodexPictureKey Key = new("101", 18);
 
     private static readonly byte[] Mine = Encoding.ASCII.GetBytes("the commander's picture");
 
@@ -30,7 +30,7 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
     private static string Sha(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
 
     private static CodexPictureRow RowOf(CodexPictureKey key, byte[] bytes, string tag = CodexPictureIndex.FirstTag) =>
-        new(key.EntryId, key.RegionId, tag, CodexPictureIndex.AssetName(key.EntryId, key.RegionId, Sha(bytes)), Sha(bytes), bytes.Length);
+        new(key.Key, key.RegionId, tag, CodexPictureIndex.AssetName(key, Sha(bytes)), Sha(bytes), bytes.Length);
 
     /// <summary>The release endpoints the publisher calls, kept in memory.</summary>
     private sealed class FakeGitHub : HttpMessageHandler
@@ -271,7 +271,7 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
         var surface = new Surface();
         surface.OwnPicture();
         var old = RowOf(Key, OldPicture);
-        var other = RowOf(new CodexPictureKey(202, 3), Encoding.ASCII.GetBytes("another"));
+        var other = RowOf(new CodexPictureKey("202", 3), Encoding.ASCII.GetBytes("another"));
         var first = surface.Published((old, OldPicture), (other, Encoding.ASCII.GetBytes("another")));
         var oldId = first.Assets.Single(asset => asset.Name == old.Asset).Id;
         surface.StockOnDisk(old, OldPicture);
@@ -390,7 +390,7 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
         var surface = new Surface();
         surface.OwnPicture();
         var old = RowOf(Key, OldPicture);
-        var other = RowOf(new CodexPictureKey(202, 3), Encoding.ASCII.GetBytes("another"));
+        var other = RowOf(new CodexPictureKey("202", 3), Encoding.ASCII.GetBytes("another"));
         surface.Published((old, OldPicture), (other, Encoding.ASCII.GetBytes("another")));
         surface.GitHub.Failure = (
             request => request.RequestUri!.Query.Contains("index.next.json", StringComparison.Ordinal),
@@ -409,7 +409,7 @@ public sealed class ACodexPictureIsPublishedToTheReleaseTests
         var surface = new Surface();
         surface.OwnPicture();
         var first = surface.GitHub.Release(1);
-        surface.GitHub.Asset(first, RowOf(new CodexPictureKey(202, 3), OldPicture).Asset, OldPicture);
+        surface.GitHub.Asset(first, RowOf(new CodexPictureKey("202", 3), OldPicture).Asset, OldPicture);
 
         var result = await surface.Publisher.Publish(Key)!;
 

@@ -22,7 +22,7 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
     private static CodexPictureRow Row(long entry = 1, int region = 1)
     {
         var sha = Convert.ToHexStringLower(SHA256.HashData(Bytes));
-        return new CodexPictureRow(entry, region, "codex-pictures-1", CodexPictureIndex.AssetName(entry, region, sha), sha, Bytes.Length);
+        return new CodexPictureRow(D47.Core.Knowledge.CodexKeys.Of(entry), region, "codex-pictures-1", CodexPictureIndex.AssetName(new CodexPictureKey(D47.Core.Knowledge.CodexKeys.Of(entry), region), sha), sha, Bytes.Length);
     }
 
     private sealed class Release : HttpMessageHandler
@@ -221,7 +221,7 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
         var (store, files) = Open(release, allowed: () => false);
         files.WriteText(Stock(CodexPictureIndex.IndexName), CodexPictureIndex.Write([row]));
         files.WriteBytes(Stock(row.Asset), Bytes);
-        var own = new CodexPictureKey(5, 1);
+        var own = new CodexPictureKey("5", 1);
         files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, own.FileName), Bytes);
 
         Assert.Empty(store.StockRows());
@@ -237,7 +237,7 @@ public sealed class TheCodexPictureStoreFetchesStockPicturesTests
     public void TheLocalKeysAreTheParseableNamesInTheLocalFolder()
     {
         var (store, files) = Open(new Release());
-        var own = new CodexPictureKey(7, 2);
+        var own = new CodexPictureKey("7", 2);
         files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, own.FileName), Bytes);
         files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, "notes.txt"), Bytes);
         files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, "x-y.jpg"), Bytes);

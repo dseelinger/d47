@@ -68,7 +68,7 @@ public sealed class TheScreenshotViewerRenamesAndDeletesTests
         var renamed = new List<(string, string)>();
         var removed = new List<CodexPictureKey>();
         var links = new CodexLinks(
-            name => cut && name == Names[0] ? [new CodexPictureKey(101, 1)] : [],
+            name => cut && name == Names[0] ? [new CodexPictureKey("101", 1)] : [],
             (from, to) =>
             {
                 renamed.Add((from, to));
@@ -201,7 +201,7 @@ public sealed class TheScreenshotViewerRenamesAndDeletesTests
 
         Assert.Equal([Path.Combine(Elite, "Screenshot_0001.bmp"), Path.Combine(Folder, Names[0])], rig.Recycled);
         Assert.Null(rig.Files.Stat(Path.Combine(Folder, Path.ChangeExtension(Names[0], ".json"))));
-        Assert.Equal(new CodexPictureKey(101, 1), rig.Removed[0]);
+        Assert.Equal(new CodexPictureKey("101", 1), rig.Removed[0]);
     }
 
     [Fact]

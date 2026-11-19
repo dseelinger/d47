@@ -12,7 +12,7 @@ public sealed class EachCommanderKeepsTheirOwnCodexPicturesTests
     private const string Folder = @"C:\d47\data\codex-pictures";
     private const string Shots = @"C:\d47\data\captures";
 
-    private static readonly CodexPictureKey Key = new(101, 18);
+    private static readonly CodexPictureKey Key = new("101", 18);
 
     private static byte[] Bytes(string text) => Encoding.ASCII.GetBytes(text);
 

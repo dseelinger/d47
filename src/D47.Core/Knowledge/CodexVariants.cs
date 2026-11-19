@@ -16,7 +16,8 @@ public static class CodexVariants
 
         return [.. table.All
             .Where(entry => string.Equals(CodexSpecies.Of(entry.Name), wanted, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(entry => entry.EntryId)];
+            .OrderBy(entry => entry.EntryId ?? long.MaxValue)
+            .ThenBy(entry => entry.Key, StringComparer.Ordinal)];
     }
 
     /// <summary>The EntryID of a localised variant name such as "Clypeus Lacrimam - Mauve"; null when none matches.</summary>
@@ -34,9 +35,8 @@ public static class CodexVariants
         var name = variant.Trim();
 
         return table.All
-            .Where(entry => string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(entry => entry.EntryId)
-            .Select(entry => (long?)entry.EntryId)
-            .FirstOrDefault();
+            .Where(entry => entry.EntryId is not null && string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase))
+            .Select(entry => entry.EntryId)
+            .Min();
     }
 }

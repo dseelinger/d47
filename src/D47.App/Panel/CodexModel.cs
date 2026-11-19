@@ -46,7 +46,7 @@ public sealed record CodexRootView(
 
 /// <summary>One entry of a region's table. <c>Origin</c> says why no earlier entry is shown for an entry already logged.</summary>
 public sealed record CodexEntryRow(
-    long EntryId,
+    string Key,
     string Name,
     string? System,
     bool IsHere,
@@ -88,7 +88,7 @@ public sealed record CodexRegionView(
     string? Empty);
 
 /// <summary>One codex entry the table lists for the region, with the systems that reported it there.</summary>
-public sealed record CodexMissingRow(long EntryId, string Name, string Category, string SubCategory, int Systems, bool OnRecord, string? PlaceholderFile = null);
+public sealed record CodexMissingRow(string Key, string Name, string Category, string SubCategory, int Systems, bool OnRecord, string? PlaceholderFile = null);
 
 /// <summary>Which of a region's known entries the Discoveries page lists.</summary>
 public enum CodexStatusFilter
@@ -124,7 +124,7 @@ public sealed record CodexDiscoveriesView(
 
 /// <summary>What one entry's page draws: the entry's facts and each time it was logged in the region, newest first.</summary>
 public sealed record CodexEntryView(
-    long EntryId,
+    string Key,
     string Name,
     string? Category,
     string? SubCategory,
@@ -523,7 +523,7 @@ public static class CodexModel
     public static CodexEntryView EntryPage(
         CodexLedger ledger,
         CodexTable table,
-        long entryId,
+        string key,
         int? regionId,
         string fallbackName,
         string? currentSystem,
@@ -532,6 +532,7 @@ public static class CodexModel
     {
         var all = ledger.Entries;
         var firsts = new Dictionary<(long, int?), int>();
+        var entryId = CodexKeys.EntryIdOf(key);
 
         for (var i = 0; i < all.Count; i++)
         {
@@ -547,10 +548,10 @@ public static class CodexModel
             .ToList();
 
         var logged = all.LastOrDefault(entry => entry.EntryId == entryId);
-        var known = table.Entry(entryId);
+        var known = table.Entry(key);
 
         return new CodexEntryView(
-            entryId,
+            key,
             logged?.Name ?? known?.Name ?? fallbackName,
             logged?.Category ?? known?.Category,
             logged?.SubCategory ?? known?.SubCategory,
@@ -558,7 +559,7 @@ public static class CodexModel
                 ? CodexFamilies.FileOfSymbol(logged.SubCategorySymbol)
                 : CodexFamilies.FileOfTableName(known?.SubCategory),
             here,
-            regionId is { } id ? regionFirst?.Invoke(entryId, id) : null);
+            regionId is { } id && entryId is { } logId ? regionFirst?.Invoke(logId, id) : null);
     }
 
     /// <summary>"708 missing · 38 of 746 on record": the figures on the region page's Discoveries row.</summary>
@@ -604,7 +605,7 @@ public static class CodexModel
             .Where(item => filter.SubCategory is null || string.Equals(item.Entry.SubCategory, filter.SubCategory, StringComparison.OrdinalIgnoreCase))
             .Where(item => string.IsNullOrEmpty(text) || item.Entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
             .Select(item => new CodexMissingRow(
-                item.Entry.EntryId,
+                item.Entry.Key,
                 item.Entry.Name,
                 item.Entry.Category,
                 item.Entry.SubCategory,
@@ -686,7 +687,7 @@ public static class CodexModel
         var record = entry.RegionId is { } region ? regionFirst?.Invoke(entry.EntryId, region) : null;
 
         return new CodexEntryRow(
-            entry.EntryId,
+            CodexKeys.Of(entry.EntryId),
             entry.Name ?? $"Entry {entry.EntryId}",
             entry.System,
             currentSystem is not null && string.Equals(entry.System, currentSystem, StringComparison.OrdinalIgnoreCase),

@@ -260,7 +260,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
         var button = HullMarks.Glyph("›", "Open " + EntryName(record));
         button.Name = "CodexPossibleFirst.Open." + record.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture)
             + "." + record.RegionId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(record.RegionId, record.EntryId, EntryName(record)));
+        button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(record.RegionId, CodexKeys.Of(record.EntryId), EntryName(record)));
 
         return button;
     }

@@ -113,7 +113,7 @@ public class AGeologicalFeatureIsPredictedFromItsBodysConditionsTests
 
         Assert.Equal(23, geology.Count);
         Assert.Equal(
-            geology.Select(entry => (entry.EntryId, entry.Name)).Order(),
+            geology.Select(entry => (entry.EntryId!.Value, entry.Name)).Order(),
             ShippedRows().Order());
     }
 

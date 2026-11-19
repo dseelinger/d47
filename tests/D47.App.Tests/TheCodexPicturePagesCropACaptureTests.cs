@@ -31,7 +31,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
     private const string Local = @"C:\d47\data\codex-pictures\local\F1";
 
-    private static readonly CodexPictureKey Key = new(101, 18);
+    private static readonly CodexPictureKey Key = new("101", 18);
 
     private static readonly string[] Lines =
     [
@@ -59,7 +59,7 @@ public class TheCodexPicturePagesCropACaptureTests
             Pictures = new CodexPictureSet(Store, () => false, Files, @"C:\d47\placeholders", Captures);
             Nav.Register(PanelTab.Commander, new NavCrumb("ledgers", "Ledgers"));
             Nav.Select(PanelTab.Commander);
-            Nav.Drill(CodexPage.EntryCrumb(18, 101, "Entry 101"));
+            Nav.Drill(CodexPage.EntryCrumb(18, "101", "Entry 101"));
         }
 
         public void Capture(string stem, string at, int width = 1000, int height = 600, params (long Entry, int? Region)[] entries)
@@ -94,7 +94,7 @@ public class TheCodexPicturePagesCropACaptureTests
         {
             var bytes = Png(16);
             var sha = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes));
-            var row = new CodexPictureRow(key.EntryId, key.RegionId, CodexPictureIndex.FirstTag, CodexPictureIndex.AssetName(key.EntryId, key.RegionId, sha), sha, bytes.Length);
+            var row = new CodexPictureRow(key.Key, key.RegionId, CodexPictureIndex.FirstTag, CodexPictureIndex.AssetName(key, sha), sha, bytes.Length);
             Files.WriteText(Path.Combine(Folder, CodexPictureStore.StockFolder, CodexPictureIndex.IndexName), CodexPictureIndex.Write([row]));
             Files.WriteBytes(Path.Combine(Folder, CodexPictureStore.StockFolder, row.Asset), bytes);
         }
@@ -137,7 +137,7 @@ public class TheCodexPicturePagesCropACaptureTests
     }
 
     private static CodexEntryPage Entry(Surface surface, int? region = 18, bool headset = false) =>
-        new(State, 101, region, "Entry 101", surface.Pictures, headset, nav: surface.Nav);
+        new(State, "101", region, "Entry 101", surface.Pictures, headset, nav: surface.Nav);
 
     private static Button? Named(Control root, string name) =>
         root.GetVisualDescendants().OfType<Button>().FirstOrDefault(button => button.Name == name);
@@ -163,7 +163,7 @@ public class TheCodexPicturePagesCropACaptureTests
     public void AnotherRegionsPictureOfTheirOwnStillOffersOnlyChoose()
     {
         var surface = new Surface();
-        surface.OwnPicture(new CodexPictureKey(101, 3));
+        surface.OwnPicture(new CodexPictureKey("101", 3));
 
         var (window, page) = PageHost.Open(() => Entry(surface));
 
@@ -181,7 +181,7 @@ public class TheCodexPicturePagesCropACaptureTests
 
         var stockOn = new CodexPictureSet(
             new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1", screenshots: Captures), () => true, surface.Files, @"C:\d47\placeholders", Captures);
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(State, "101", 18, "Entry 101", stockOn, false, null, surface.Nav));
 
         Assert.Equal(["CodexReplace", "CodexUseStock"], Actions(page));
         Assert.Equal("Use the stock picture", Named(page, "CodexUseStock")!.Content);
@@ -189,14 +189,14 @@ public class TheCodexPicturePagesCropACaptureTests
         window.Close();
 
         surface.OwnPictureWithSource(Key, new CropSquare(0, 0, 600));
-        var (kept, withSource) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
+        var (kept, withSource) = PageHost.Open(() => new CodexEntryPage(State, "101", 18, "Entry 101", stockOn, false, null, surface.Nav));
 
         Assert.Equal(["CodexRecrop", "CodexReplace", "CodexUseStock"], Actions(withSource));
 
         kept.Close();
 
         surface.Files.Delete(Path.Combine(Captures, "kept.jpg"));
-        var (gone, withoutSource) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
+        var (gone, withoutSource) = PageHost.Open(() => new CodexEntryPage(State, "101", 18, "Entry 101", stockOn, false, null, surface.Nav));
 
         Assert.Equal(["CodexReplace", "CodexUseStock"], Actions(withoutSource));
 
@@ -212,7 +212,7 @@ public class TheCodexPicturePagesCropACaptureTests
         var stockOn = new CodexPictureSet(
             new CodexPictureStore(surface.Files, Folder, () => true, NullLogger.Instance, commander: () => "F1", screenshots: Captures), () => true, surface.Files, @"C:\d47\placeholders", Captures);
 
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(State, 101, 18, "Entry 101", stockOn, false, null, surface.Nav));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(State, "101", 18, "Entry 101", stockOn, false, null, surface.Nav));
         Press(Named(page, "CodexUseStock")!);
         Dispatcher.UIThread.RunJobs();
 

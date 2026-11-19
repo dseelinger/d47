@@ -320,7 +320,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         Assert.True(PageTrail.Open(view.Nav, LedgersPage.RootKey, [
             LedgersPage.Ledger(CodexPage.PageKey, "Codex"),
             CodexPage.RegionCrumb(null),
-            CodexPage.EntryCrumb(null, 1, "Entry")]));
+            CodexPage.EntryCrumb(null, "1", "Entry")]));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Ledgers", "Codex"], view.Nav.Trail.Take(2).Select(crumb => crumb.Word));

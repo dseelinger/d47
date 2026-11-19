@@ -3,14 +3,17 @@ using System.Reflection;
 
 namespace D47.Core.Knowledge;
 
-/// <summary>One codex entry and the regions it has been reported in, each with its count of distinct systems.</summary>
+/// <summary>One codex entry, by its <see cref="CodexKeys">key</see>, and the regions it has been reported in, each with its count of distinct systems.</summary>
 public sealed record CodexEntry(
-    long EntryId,
+    string Key,
     string Name,
     string Category,
     string SubCategory,
     IReadOnlyDictionary<int, int> Regions)
 {
+    /// <summary>The journal EntryID of a Canonn entry; null for a d47 kind.</summary>
+    public long? EntryId => CodexKeys.EntryIdOf(Key);
+
     /// <summary>The Spansh body fields that select a star or planet entry from <c>CodexBodies.tsv</c>; null for a <c>Codex.tsv</c> entry.</summary>
     public CodexBodyType? Body { get; init; }
 }
@@ -28,12 +31,12 @@ public readonly record struct CodexRegionEntry(CodexEntry Entry, int Systems);
 /// <summary>Codex entries parsed from a <c>Codex.tsv</c> or <c>CodexBodies.tsv</c> table.</summary>
 public sealed class CodexTable
 {
-    private readonly Dictionary<long, CodexEntry> _entries;
+    private readonly Dictionary<string, CodexEntry> _entries;
     private readonly Dictionary<int, List<CodexRegionEntry>> _byRegion;
 
     private const string DatePrefix = "# Table date: ";
 
-    private CodexTable(Dictionary<long, CodexEntry> entries, string? date)
+    private CodexTable(Dictionary<string, CodexEntry> entries, string? date)
     {
         _entries = entries;
         Date = date;
@@ -55,7 +58,7 @@ public sealed class CodexTable
 
     public static CodexTable Parse(TextReader reader)
     {
-        var entries = new Dictionary<long, CodexEntry>();
+        var entries = new Dictionary<string, CodexEntry>(StringComparer.Ordinal);
         string? date = null;
 
         while (reader.ReadLine() is { } line)
@@ -80,13 +83,15 @@ public sealed class CodexTable
                 continue;
             }
 
+            var key = CodexKeys.Of(id);
+
             if (cells.Length == 5)
             {
-                entries[id] = new CodexEntry(id, cells[1], cells[2], cells[3], ParseRegions(cells[4]));
+                entries[key] = new CodexEntry(key, cells[1], cells[2], cells[3], ParseRegions(cells[4]));
             }
             else if (cells.Length == 9)
             {
-                entries[id] = new CodexEntry(id, cells[1], cells[2], cells[3], ParseRegions(cells[8]))
+                entries[key] = new CodexEntry(key, cells[1], cells[2], cells[3], ParseRegions(cells[8]))
                 {
                     Body = new CodexBodyType(cells[4], cells[5], cells[6], cells[7]),
                 };
@@ -110,12 +115,19 @@ public sealed class CodexTable
     /// <summary>The numbers of the regions with at least one entry.</summary>
     public IReadOnlyCollection<int> Regions => _byRegion.Keys;
 
-    public CodexEntry? Entry(long entryId) => _entries.GetValueOrDefault(entryId);
+    /// <summary>The entry of a journal EntryID.</summary>
+    public CodexEntry? Entry(long entryId) => Entry(CodexKeys.Of(entryId));
 
-    /// <summary>The entries reported in the region, most systems first.</summary>
+    public CodexEntry? Entry(string key) => _entries.GetValueOrDefault(key);
+
+    /// <summary>The entries reported in the region, most systems first, then Canonn entries by EntryID, then kinds by key.</summary>
     public IReadOnlyList<CodexRegionEntry> InRegion(int regionId) =>
         _byRegion.TryGetValue(regionId, out var list)
-            ? list.OrderByDescending(found => found.Systems).ThenBy(found => found.Entry.EntryId).ToList()
+            ? list
+                .OrderByDescending(found => found.Systems)
+                .ThenBy(found => found.Entry.EntryId ?? long.MaxValue)
+                .ThenBy(found => found.Entry.Key, StringComparer.Ordinal)
+                .ToList()
             : [];
 
     private static Dictionary<int, int> ParseRegions(string cell)

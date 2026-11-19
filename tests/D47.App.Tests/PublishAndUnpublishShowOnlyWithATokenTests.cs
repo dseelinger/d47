@@ -26,7 +26,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
 {
     private const string Folder = @"C:\d47\data\codex-pictures";
 
-    private static readonly CodexPictureKey Key = new(101, 18);
+    private static readonly CodexPictureKey Key = new("101", 18);
 
     private static readonly byte[] Picture = [0xFF, 0xD8, 0xFF, 0xD9];
 
@@ -63,7 +63,7 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
             Pictures = new CodexPictureSet(Store, () => true, Files, @"C:\d47\placeholders", null, Publisher);
             Nav.Register(PanelTab.Commander, new NavCrumb("ledgers", "Ledgers"));
             Nav.Select(PanelTab.Commander);
-            Nav.Drill(CodexPage.EntryCrumb(18, 101, "Entry 101"));
+            Nav.Drill(CodexPage.EntryCrumb(18, "101", "Entry 101"));
         }
 
         public void OwnPicture() => Files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, Key.FileName), Picture);
@@ -71,13 +71,13 @@ public class PublishAndUnpublishShowOnlyWithATokenTests
         public void Stock()
         {
             var sha = Convert.ToHexStringLower(SHA256.HashData(Picture));
-            var row = new CodexPictureRow(Key.EntryId, Key.RegionId, CodexPictureIndex.FirstTag, CodexPictureIndex.AssetName(Key.EntryId, Key.RegionId, sha), sha, Picture.Length);
+            var row = new CodexPictureRow(Key.Key, Key.RegionId, CodexPictureIndex.FirstTag, CodexPictureIndex.AssetName(Key, sha), sha, Picture.Length);
             Files.WriteText(Path.Combine(Folder, CodexPictureStore.StockFolder, CodexPictureIndex.IndexName), CodexPictureIndex.Write([row]));
             Files.WriteBytes(Path.Combine(Folder, CodexPictureStore.StockFolder, row.Asset), Picture);
         }
 
         public CodexEntryPage Page(bool headset = false, Func<string, Task<bool>>? confirm = null) =>
-            new(() => JournalScript.Commander("F1", "Test"), 101, 18, "Entry 101", Pictures, headset, null, Nav, confirm);
+            new(() => JournalScript.Commander("F1", "Test"), "101", 18, "Entry 101", Pictures, headset, null, Nav, confirm);
     }
 
     private static Button? Named(Control root, string name) =>

@@ -14,7 +14,7 @@ public enum PageKind
 }
 
 /// <summary>What a tool's answer is about, for the panel to open; the App decides how it is drawn.</summary>
-public sealed record PageRef(PageKind Kind, long Id, int? Region = null, string? Name = null)
+public sealed record PageRef(PageKind Kind, long Id, int? Region = null, string? Name = null, string? Key = null)
 {
     /// <summary>One engineer, by the id the journal writes.</summary>
     public static PageRef Engineer(int id) => new(PageKind.Engineer, id);
@@ -28,8 +28,8 @@ public sealed record PageRef(PageKind Kind, long Id, int? Region = null, string?
     /// <summary>The search page of one kind, which draws that kind's last answer.</summary>
     public static PageRef Search(GalaxySearchKind kind) => new(PageKind.Search, (long)kind);
 
-    /// <summary>One codex entry, by its id and region number; <paramref name="name"/> words its crumb.</summary>
-    public static PageRef CodexEntry(long entryId, int? regionId, string name) => new(PageKind.CodexEntry, entryId, regionId, name);
+    /// <summary>One codex entry, by its <see cref="CodexKeys">codex key</see> and region number; <paramref name="name"/> words its crumb.</summary>
+    public static PageRef CodexEntry(string key, int? regionId, string name) => new(PageKind.CodexEntry, 0, regionId, name, key);
 
     /// <summary>The stored plan of one kind; <paramref name="headline"/> words its crumb.</summary>
     public static PageRef Plan(RoutePlanKind kind, string headline) => new(PageKind.Plan, (long)kind, null, headline);

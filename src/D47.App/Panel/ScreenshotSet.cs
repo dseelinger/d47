@@ -268,7 +268,7 @@ public sealed class ScreenshotSet
     private static string Named(ScreenshotItem item, CodexPictureKey key) =>
         item.Shot.Note?.CodexEntries.FirstOrDefault(entry => entry.EntryId == key.EntryId)?.Name is { Length: > 0 } name
             ? name
-            : string.Create(CultureInfo.InvariantCulture, $"entry {key.EntryId}");
+            : string.Create(CultureInfo.InvariantCulture, $"entry {key.Key}");
 
     private static (string System, string Body) Place(KeptScreenshot shot)
     {

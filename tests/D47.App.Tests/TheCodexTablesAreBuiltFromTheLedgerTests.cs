@@ -289,7 +289,7 @@ public class TheCodexTablesAreBuiltFromTheLedgerTests
 
     /// <summary>The body and position line of a row with these fields, as the model builds it.</summary>
     private static string Place(string? system, string? body, double? latitude, double? longitude) =>
-        new CodexEntryRow(0, string.Empty, system, false, CodexModel.BodyOf(system, body), CodexModel.PositionOf(latitude, longitude), default, false, null, null).Place;
+        new CodexEntryRow("0", string.Empty, system, false, CodexModel.BodyOf(system, body), CodexModel.PositionOf(latitude, longitude), default, false, null, null).Place;
 
     [Fact]
     public void TheBodyAndPositionLineHandlesANameNoNameAndNeither()

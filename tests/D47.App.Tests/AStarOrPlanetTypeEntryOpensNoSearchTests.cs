@@ -53,13 +53,13 @@ public sealed class AStarOrPlanetTypeEntryOpensNoSearchTests
     public void TheEntryPageForAStarHasNoSearchTile()
     {
         var link = new BodySearchLink(_ => { });
-        var star = new CodexEntryPage(State, 1102300, 18, "Neutron Star", null, table: Table, bodySearch: () => link);
+        var star = new CodexEntryPage(State, "1102300", 18, "Neutron Star", null, table: Table, bodySearch: () => link);
         var window = Shown(star);
 
         Assert.Null(Find(star, "CodexSearch"));
         window.Close();
 
-        var tree = new CodexEntryPage(State, 2, 18, "Beta tree", null, table: Table, bodySearch: () => link);
+        var tree = new CodexEntryPage(State, "2", 18, "Beta tree", null, table: Table, bodySearch: () => link);
         window = Shown(tree);
 
         Assert.NotNull(Find(tree, "CodexSearch"));

@@ -16,7 +16,7 @@ namespace D47.App.Panel;
 public sealed class CodexEntryPage : UserControl, IPageSummary
 {
     private readonly Func<CommanderGameState?> _state;
-    private readonly long _entryId;
+    private readonly string _key;
     private readonly int? _regionId;
     private readonly string _fallbackName;
     private readonly CodexPictureSet? _pictures;
@@ -42,7 +42,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
     public CodexEntryPage(
         Func<CommanderGameState?> state,
-        long entryId,
+        string key,
         int? regionId,
         string name,
         CodexPictureSet? pictures,
@@ -64,7 +64,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         _bodySearch = bodySearch;
         _confirm = confirm ?? AskAsync;
         _state = state;
-        _entryId = entryId;
+        _key = key;
         _regionId = regionId;
         _fallbackName = name;
         _pictures = pictures;
@@ -157,7 +157,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         var view = CodexModel.EntryPage(
             state?.CodexLedger ?? CodexLedger.None,
             _table,
-            _entryId,
+            _key,
             _regionId,
             _fallbackName,
             state?.Location.StarSystem,
@@ -262,7 +262,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
 
         var choice = _pictures is null
             ? null
-            : CodexPictures.Find(_entryId, _regionId, _pictures.Store.LocalKeys(), _pictures.Store.StockRows());
+            : CodexPictures.Find(_key, _regionId, _pictures.Store.LocalKeys(), _pictures.Store.StockRows());
 
         _pending = null;
 
@@ -299,7 +299,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     /// <summary>The Search tile: shown for an entry the codex table lists, other than a star or planet type, on the main window and the headset.</summary>
     private void AddSearch(StackPanel column)
     {
-        if (_bodySearch?.Invoke() is not { } link || _table.Entry(_entryId) is not { Body: null } entry)
+        if (_bodySearch?.Invoke() is not { } link || _table.Entry(_key) is not { Body: null } entry)
         {
             return;
         }
@@ -324,7 +324,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
             return;
         }
 
-        var key = new CodexPictureKey(_entryId, region);
+        var key = new CodexPictureKey(_key, region);
         var store = pictures.Store;
         var own = store.HasLocal(key);
         var actions = new WrapPanel { Orientation = Orientation.Horizontal };

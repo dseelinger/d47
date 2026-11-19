@@ -58,7 +58,7 @@ public sealed class BodyCodex(
     {
         var side = framed ? RowSide : TitleSide;
         var entry = EntryOf(body);
-        var picture = entry is null ? null : EntryPicture(entry.EntryId);
+        var picture = entry is null ? null : EntryPicture(entry.Key);
         var image = picture is not null
             ? Picture(PictureName, picture, side)
             : Placeholder(CodexFamilies.FileOfBody(body.Type, body.SubType), side);
@@ -115,7 +115,7 @@ public sealed class BodyCodex(
         var entry = species
             .Select(line => line.EntryId)
             .OfType<long>()
-            .Select(id => table.All.FirstOrDefault(row => row.EntryId == id))
+            .Select(id => table.Entry(id))
             .FirstOrDefault(row => row is not null);
 
         return (entry, openEntry, openGenus) switch
@@ -135,7 +135,7 @@ public sealed class BodyCodex(
         var entry = species
             .Select(line => line.EntryId)
             .OfType<long>()
-            .Select(id => table.All.FirstOrDefault(row => row.EntryId == id))
+            .Select(id => table.Entry(id))
             .FirstOrDefault(row => row is not null);
 
         if (OpenerFor(genus, species) is not { } open)
@@ -160,14 +160,14 @@ public sealed class BodyCodex(
         return link;
     }
 
-    private Bitmap? EntryPicture(long entryId)
+    private Bitmap? EntryPicture(string key)
     {
         if (pictures is null)
         {
             return null;
         }
 
-        var choice = CodexPictures.Find(entryId, null, pictures.Store.LocalKeys(), pictures.Store.StockRows());
+        var choice = CodexPictures.Find(key, null, pictures.Store.LocalKeys(), pictures.Store.StockRows());
 
         return choice switch
         {

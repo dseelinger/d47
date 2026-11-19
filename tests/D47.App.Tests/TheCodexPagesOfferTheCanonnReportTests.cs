@@ -89,7 +89,7 @@ public class TheCodexPagesOfferTheCanonnReportTests
     {
         var desk = new Desk(reachable: true);
 
-        var (entry, entryPage) = PageHost.Open(() => new CodexEntryPage(() => desk.State, 101, 18, "Entry 101", null, regionFirsts: desk.Book, press: desk.Press));
+        var (entry, entryPage) = PageHost.Open(() => new CodexEntryPage(() => desk.State, "101", 18, "Entry 101", null, regionFirsts: desk.Book, press: desk.Press));
         Assert.Equal("Report to Canonn", Tile(entryPage)?.Content);
         Assert.Equal(D47.App.Theming.TypeScale.MinimumTarget, Tile(entryPage)!.MinHeight);
         entry.Close();
@@ -105,13 +105,13 @@ public class TheCodexPagesOfferTheCanonnReportTests
     {
         var desk = new Desk(reachable: true);
 
-        var (bare, barePage) = PageHost.Open(() => new CodexEntryPage(() => desk.State, 101, 18, "Entry 101", null, regionFirsts: desk.Book));
+        var (bare, barePage) = PageHost.Open(() => new CodexEntryPage(() => desk.State, "101", 18, "Entry 101", null, regionFirsts: desk.Book));
         Assert.Null(Tile(barePage));
         bare.Close();
 
         desk.Book.MarkReported("F735466", 101, 18, Now);
 
-        var (entry, entryPage) = PageHost.Open(() => new CodexEntryPage(() => desk.State, 101, 18, "Entry 101", null, regionFirsts: desk.Book, press: desk.Press));
+        var (entry, entryPage) = PageHost.Open(() => new CodexEntryPage(() => desk.State, "101", 18, "Entry 101", null, regionFirsts: desk.Book, press: desk.Press));
         Assert.Null(Tile(entryPage));
         entry.Close();
 
@@ -125,7 +125,7 @@ public class TheCodexPagesOfferTheCanonnReportTests
     public async Task APressCallsTheToolWithTheRecordAndReadsSentFromTheStore()
     {
         var desk = new Desk(reachable: true);
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => desk.State, 101, 18, "Entry 101", null, regionFirsts: desk.Book, press: desk.Press));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => desk.State, "101", 18, "Entry 101", null, regionFirsts: desk.Book, press: desk.Press));
 
         await Press(desk.Press, desk.Record, page);
 
@@ -141,7 +141,7 @@ public class TheCodexPagesOfferTheCanonnReportTests
     public async Task AFailedPressDrawsTheNoticeAndRetryPressesAgain()
     {
         var desk = new Desk(reachable: false);
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => desk.State, 101, 18, "Entry 101", null, regionFirsts: desk.Book, press: desk.Press));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => desk.State, "101", 18, "Entry 101", null, regionFirsts: desk.Book, press: desk.Press));
 
         await Press(desk.Press, desk.Record, page);
 
@@ -188,7 +188,7 @@ public class TheCodexPagesOfferTheCanonnReportTests
             },
             desk.Book,
             () => desk.State);
-        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => desk.State, 101, 18, "Entry 101", null, regionFirsts: desk.Book, press: press));
+        var (window, page) = PageHost.Open(() => new CodexEntryPage(() => desk.State, "101", 18, "Entry 101", null, regionFirsts: desk.Book, press: press));
 
         var running = press.PressAsync(desk.Record);
         page.Tick();

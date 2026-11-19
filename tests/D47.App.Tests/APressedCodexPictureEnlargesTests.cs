@@ -48,7 +48,7 @@ public sealed class APressedCodexPictureEnlargesTests
 
         if (ownSide is { } side)
         {
-            files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, new CodexPictureKey(101, 18).FileName), Png(side));
+            files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, new CodexPictureKey("101", 18).FileName), Png(side));
         }
 
         if (placeholderSide is { } family)
@@ -64,7 +64,7 @@ public sealed class APressedCodexPictureEnlargesTests
         state.Apply(parsed!);
 
         var look = AppLook.Put();
-        var page = new CodexEntryPage(() => state, 101, 18, "Entry 101", pictures);
+        var page = new CodexEntryPage(() => state, "101", 18, "Entry 101", pictures);
         var window = new Window
         {
             Content = page,

@@ -171,7 +171,7 @@ public sealed class PanelRouting(
 
         if (newestFirst is { } found)
         {
-            Open(PageRef.CodexEntry(found.EntryId, found.RegionId, found.Name));
+            Open(PageRef.CodexEntry(D47.Core.Knowledge.CodexKeys.Of(found.EntryId), found.RegionId, found.Name));
             return;
         }
 
@@ -182,7 +182,7 @@ public sealed class PanelRouting(
 
         if (arrived.Select(CodexDiscovery.Of).LastOrDefault(found => found is not null) is { } discovery)
         {
-            Open(PageRef.CodexEntry(discovery.EntryId, discovery.RegionId, discovery.Name));
+            Open(PageRef.CodexEntry(D47.Core.Knowledge.CodexKeys.Of(discovery.EntryId), discovery.RegionId, discovery.Name));
         }
     }
 

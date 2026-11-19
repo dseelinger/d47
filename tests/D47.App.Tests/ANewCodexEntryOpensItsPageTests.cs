@@ -51,12 +51,12 @@ public class ANewCodexEntryOpensItsPageTests
     [Fact]
     public void ACodexEntryIsResolvedToItsTrail()
     {
-        var target = PageTrail.For(PageRef.CodexEntry(Entry, 18, "Anemone"), () => []);
+        var target = PageTrail.For(PageRef.CodexEntry(D47.Core.Knowledge.CodexKeys.Of(Entry), 18, "Anemone"), () => []);
 
         Assert.NotNull(target);
         Assert.Equal(LedgersPage.RootKey, target.Value.Root);
         Assert.Equal(
-            [CodexPage.PageKey, CodexPage.RegionCrumb(18).Key, CodexPage.EntryCrumb(18, Entry, "Anemone").Key],
+            [CodexPage.PageKey, CodexPage.RegionCrumb(18).Key, CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry), "Anemone").Key],
             target.Value.Crumbs.Select(crumb => crumb.Key));
         Assert.Equal("Anemone", target.Value.Crumbs[^1].Word);
     }
@@ -72,7 +72,7 @@ public class ANewCodexEntryOpensItsPageTests
         Assert.All([first, second], nav =>
         {
             Assert.Equal(PanelTab.Commander, nav.Tab);
-            Assert.Equal(CodexPage.EntryCrumb(18, Entry, "Anemone").Key, nav.Trail[^1].Key);
+            Assert.Equal(CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry), "Anemone").Key, nav.Trail[^1].Key);
         });
     }
 
@@ -83,7 +83,7 @@ public class ANewCodexEntryOpensItsPageTests
 
         Route((nav, null)).OpenDiscovered([Discovery(Entry, "Anemone"), Discovery(Entry + 1, "Bark Mound")], first: false, enabled: true);
 
-        Assert.Equal(CodexPage.EntryCrumb(18, Entry + 1, "Bark Mound").Key, nav.Trail[^1].Key);
+        Assert.Equal(CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry + 1), "Bark Mound").Key, nav.Trail[^1].Key);
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class ANewCodexEntryOpensItsPageTests
 
         Route((nav, null)).OpenDiscovered([Discovery(Entry, "Anemone")], first: false, enabled: false, First(Entry, "Anemone"));
 
-        Assert.Equal(CodexPage.EntryCrumb(18, Entry, "Anemone").Key, nav.Trail[^1].Key);
+        Assert.Equal(CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry), "Anemone").Key, nav.Trail[^1].Key);
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class ANewCodexEntryOpensItsPageTests
             enabled: true,
             First(Entry, "Anemone"));
 
-        Assert.Equal(CodexPage.EntryCrumb(18, Entry, "Anemone").Key, nav.Trail[^1].Key);
+        Assert.Equal(CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry), "Anemone").Key, nav.Trail[^1].Key);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class ANewCodexEntryOpensItsPageTests
         Route((held, null), (free, null)).OpenDiscovered([Discovery(Entry, "Anemone")], first: false, enabled: true);
 
         Assert.Equal("chooser", held.Trail[^1].Key);
-        Assert.Equal(CodexPage.EntryCrumb(18, Entry, "Anemone").Key, free.Trail[^1].Key);
+        Assert.Equal(CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry), "Anemone").Key, free.Trail[^1].Key);
     }
 
     [AvaloniaFact]
@@ -180,6 +180,6 @@ public class ANewCodexEntryOpensItsPageTests
         Route((asking, prompts), (free, null)).OpenDiscovered([Discovery(Entry, "Anemone")], first: false, enabled: true);
 
         Assert.Equal(PanelTab.Transcript, asking.Tab);
-        Assert.Equal(CodexPage.EntryCrumb(18, Entry, "Anemone").Key, free.Trail[^1].Key);
+        Assert.Equal(CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry), "Anemone").Key, free.Trail[^1].Key);
     }
 }

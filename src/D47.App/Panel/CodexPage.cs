@@ -5,6 +5,7 @@ using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
@@ -136,11 +137,10 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     public static bool IsPossibleFirsts(string key) => key == PossibleFirstsKey;
 
-    /// <summary>The crumb of one entry's page in a region, named for the entry.</summary>
-    public static NavCrumb EntryCrumb(int? regionId, long entryId, string name) =>
+    /// <summary>The crumb of one entry's page in a region, by its codex key, named for the entry.</summary>
+    public static NavCrumb EntryCrumb(int? regionId, string key, string name) =>
         new(
-            EntryPrefix + (regionId?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none") + "-"
-            + entryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            EntryPrefix + (regionId?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none") + "-" + key,
             name)
         {
             Whole = true,
@@ -173,28 +173,26 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
         if (prefix is null || key[prefix.Length..].Split('-') is not [var region, var entry]
             || !int.TryParse(region, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var regionId)
-            || !long.TryParse(entry, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var entryId))
+            || !CodexKeys.IsValid(entry))
         {
             return null;
         }
 
-        return new CodexPictureKey(entryId, regionId);
+        return new CodexPictureKey(entry, regionId);
     }
 
     private static string Tail(CodexPictureKey key) =>
-        key.RegionId.ToString(System.Globalization.CultureInfo.InvariantCulture) + "-"
-        + key.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        key.RegionId.ToString(System.Globalization.CultureInfo.InvariantCulture) + "-" + key.Key;
 
-    /// <summary>The region number and EntryID an entry crumb is for; null when the key is not one.</summary>
-    public static (int? RegionId, long EntryId)? EntryOf(string key)
+    /// <summary>The region number and codex key an entry crumb is for; null when the key is not one.</summary>
+    public static (int? RegionId, string Key)? EntryOf(string key)
     {
-        if (!IsEntry(key) || key[EntryPrefix.Length..].Split('-') is not [var region, var entry]
-            || !long.TryParse(entry, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var entryId))
+        if (!IsEntry(key) || key[EntryPrefix.Length..].Split('-') is not [var region, var entry] || !CodexKeys.IsValid(entry))
         {
             return null;
         }
 
-        return (int.TryParse(region, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id) ? id : null, entryId);
+        return (int.TryParse(region, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id) ? id : null, entry);
     }
 
     public void Filter(string? query)

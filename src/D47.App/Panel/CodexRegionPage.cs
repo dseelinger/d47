@@ -292,7 +292,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 
         var button = ListRow.Dress(new Button
         {
-            Name = "CodexEntry." + row.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Name = "CodexEntry." + row.Key,
             Content = grid,
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 6),
@@ -300,7 +300,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
             HorizontalAlignment = HorizontalAlignment.Stretch,
         });
         Avalonia.Automation.AutomationProperties.SetName(button, row.Name);
-        button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(_regionId, row.EntryId, row.Name));
+        button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(_regionId, row.Key, row.Name));
 
         return button;
     }

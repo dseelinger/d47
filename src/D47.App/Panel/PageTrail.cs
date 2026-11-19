@@ -16,7 +16,7 @@ public static class PageTrail
                 ? (LedgersPage.RootKey, [
                     LedgersPage.Ledger(CodexPage.PageKey, "Codex"),
                     CodexPage.RegionCrumb(page.Region),
-                    CodexPage.EntryCrumb(page.Region, page.Id, page.Name ?? "Entry")])
+                    CodexPage.EntryCrumb(page.Region, page.Key ?? string.Empty, page.Name ?? "Entry")])
                 : null;
 
     private static (string Root, NavCrumb Crumb)? Single(PageRef page, Func<IReadOnlyList<FleetEntry>> fleet) =>

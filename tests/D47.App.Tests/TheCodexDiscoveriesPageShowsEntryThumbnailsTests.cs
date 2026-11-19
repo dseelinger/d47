@@ -53,13 +53,13 @@ public class TheCodexDiscoveriesPageShowsEntryThumbnailsTests
         public CodexPictureSet Pictures => new(Store, () => StockOn, Files, Placeholders);
 
         public void OwnPicture(long entry, int side) =>
-            Files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, new CodexPictureKey(entry, Region).FileName), Png(side));
+            Files.WriteBytes(Path.Combine(Folder, CodexPictureStore.LocalFolder, new CodexPictureKey(CodexKeys.Of(entry), Region).FileName), Png(side));
 
         public CodexPictureRow StockRow(long entry, bool onDisk, int side)
         {
             var bytes = Png(side);
             var sha = Convert.ToHexStringLower(SHA256.HashData(bytes));
-            var row = new CodexPictureRow(entry, Region, "codex-pictures-1", CodexPictureIndex.AssetName(entry, Region, sha), sha, bytes.Length);
+            var row = new CodexPictureRow(CodexKeys.Of(entry), Region, "codex-pictures-1", CodexPictureIndex.AssetName(new CodexPictureKey(CodexKeys.Of(entry), Region), sha), sha, bytes.Length);
             _rows.Add(row);
             Files.WriteText(Path.Combine(Folder, CodexPictureStore.StockFolder, CodexPictureIndex.IndexName), CodexPictureIndex.Write(_rows));
 

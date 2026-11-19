@@ -6,39 +6,43 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Interface;
 
-/// <summary>A codex picture's identity: the journal EntryID and the codex region number.</summary>
-public readonly partial record struct CodexPictureKey(long EntryId, int RegionId)
+/// <summary>A codex picture's identity: the <see cref="CodexKeys">codex key</see> and the codex region number.</summary>
+public readonly record struct CodexPictureKey(string Key, int RegionId)
 {
-    /// <summary>The stored file name, <c>&lt;entryId&gt;-&lt;regionId&gt;.jpg</c>.</summary>
-    public string FileName => string.Create(CultureInfo.InvariantCulture, $"{EntryId}-{RegionId}.jpg");
+    /// <summary>The journal EntryID of a Canonn entry's key; null for a d47 kind.</summary>
+    public long? EntryId => CodexKeys.EntryIdOf(Key);
 
-    /// <summary>The kept capture the picture was cropped from, <c>&lt;entryId&gt;-&lt;regionId&gt;.source.jpg</c>.</summary>
-    public string SourceFileName => string.Create(CultureInfo.InvariantCulture, $"{EntryId}-{RegionId}.source.jpg");
+    /// <summary>The stored file name, <c>&lt;key&gt;-&lt;regionId&gt;.jpg</c>.</summary>
+    public string FileName => string.Create(CultureInfo.InvariantCulture, $"{Key}-{RegionId}.jpg");
 
-    /// <summary>The square cut from the source, <c>&lt;entryId&gt;-&lt;regionId&gt;.crop.json</c>.</summary>
-    public string CropFileName => string.Create(CultureInfo.InvariantCulture, $"{EntryId}-{RegionId}.crop.json");
+    /// <summary>The kept capture the picture was cropped from, <c>&lt;key&gt;-&lt;regionId&gt;.source.jpg</c>.</summary>
+    public string SourceFileName => string.Create(CultureInfo.InvariantCulture, $"{Key}-{RegionId}.source.jpg");
 
-    /// <summary>Reads back a name <see cref="FileName"/> wrote; false for any other name.</summary>
+    /// <summary>The square cut from the source, <c>&lt;key&gt;-&lt;regionId&gt;.crop.json</c>.</summary>
+    public string CropFileName => string.Create(CultureInfo.InvariantCulture, $"{Key}-{RegionId}.crop.json");
+
+    /// <summary>Reads back a name <see cref="FileName"/> wrote, the region after the last <c>-</c>; false for any other name.</summary>
     public static bool TryParse(string? fileName, out CodexPictureKey key)
     {
         key = default;
 
-        if (fileName is null || !NameShape().IsMatch(fileName))
+        if (fileName is null || !fileName.EndsWith(".jpg", StringComparison.Ordinal))
         {
             return false;
         }
 
-        var parts = fileName[..^4].Split('-');
+        var stem = fileName[..^4];
+        var dash = stem.LastIndexOf('-');
 
-        if (!long.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var entryId)
-            || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var regionId)
-            || entryId <= 0
+        if (dash < 0
+            || !CodexKeys.IsValid(stem[..dash])
+            || !int.TryParse(stem[(dash + 1)..], NumberStyles.None, CultureInfo.InvariantCulture, out var regionId)
             || GalacticRegions.NameOf(regionId) is null)
         {
             return false;
         }
 
-        var candidate = new CodexPictureKey(entryId, regionId);
+        var candidate = new CodexPictureKey(stem[..dash], regionId);
 
         if (!string.Equals(candidate.FileName, fileName, StringComparison.Ordinal))
         {
@@ -48,15 +52,12 @@ public readonly partial record struct CodexPictureKey(long EntryId, int RegionId
         key = candidate;
         return true;
     }
-
-    [GeneratedRegex(@"^[0-9]+-[0-9]+\.jpg$")]
-    private static partial Regex NameShape();
 }
 
-/// <summary>One stock picture as <c>index.json</c> lists it.</summary>
-public sealed record CodexPictureRow(long EntryId, int RegionId, string Tag, string Asset, string Sha256, long Bytes)
+/// <summary>One stock picture as <c>index.json</c> lists it, by its <see cref="CodexKeys">codex key</see> and region.</summary>
+public sealed record CodexPictureRow(string EntryKey, int RegionId, string Tag, string Asset, string Sha256, long Bytes)
 {
-    public CodexPictureKey Key => new(EntryId, RegionId);
+    public CodexPictureKey Key => new(EntryKey, RegionId);
 }
 
 /// <summary>The rows <see cref="CodexPictureIndex.Parse"/> kept and a reason for each one it left out.</summary>
@@ -79,6 +80,7 @@ public static partial class CodexPictureIndex
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
     };
 
     /// <summary>Reads an index; a row that fails a check is left out with the reason.</summary>
@@ -107,7 +109,7 @@ public static partial class CodexPictureIndex
 
                 if (reason is null && !seen.Add(row!.Key))
                 {
-                    reason = $"the entry {row.EntryId} in region {row.RegionId} is listed twice.";
+                    reason = $"the entry {row.EntryKey} in region {row.RegionId} is listed twice.";
                 }
 
                 if (reason is null)
@@ -128,15 +130,28 @@ public static partial class CodexPictureIndex
         return new CodexPictureIndexParse(rows, reasons);
     }
 
-    /// <summary>The index text for <paramref name="rows"/>, sorted by EntryID then region.</summary>
+    /// <summary>
+    /// The index text for <paramref name="rows"/>: <c>entryId</c> for a numeric key and <c>kind</c> otherwise, sorted by
+    /// EntryID, then kind key, then region.
+    /// </summary>
     public static string Write(IEnumerable<CodexPictureRow> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
 
         var ordered = rows
-            .OrderBy(row => row.EntryId)
-            .ThenBy(row => row.RegionId)
-            .Select(row => new Dto(row.EntryId, row.RegionId, row.Tag, row.Asset, row.Sha256, row.Bytes));
+            .Select(row => (Row: row, EntryId: CodexKeys.EntryIdOf(row.EntryKey)))
+            .OrderBy(item => item.EntryId is null)
+            .ThenBy(item => item.EntryId)
+            .ThenBy(item => item.Row.EntryKey, StringComparer.Ordinal)
+            .ThenBy(item => item.Row.RegionId)
+            .Select(item => new Dto(
+                item.EntryId,
+                item.EntryId is null ? item.Row.EntryKey : null,
+                item.Row.RegionId,
+                item.Row.Tag,
+                item.Row.Asset,
+                item.Row.Sha256,
+                item.Row.Bytes));
 
         return JsonSerializer.Serialize(ordered, WriteOptions);
     }
@@ -159,12 +174,15 @@ public static partial class CodexPictureIndex
     }
 
     /// <summary>The release asset name: the key and the first 12 hex digits of the SHA-256.</summary>
-    public static string AssetName(long entryId, int regionId, string sha256)
+    public static string AssetName(CodexPictureKey key, string sha256)
     {
         ArgumentNullException.ThrowIfNull(sha256);
 
-        return string.Create(CultureInfo.InvariantCulture, $"{entryId}-{regionId}-{sha256[..Math.Min(12, sha256.Length)]}.jpg");
+        return string.Create(CultureInfo.InvariantCulture, $"{key.Key}-{key.RegionId}-{sha256[..Math.Min(12, sha256.Length)]}.jpg");
     }
+
+    /// <summary>Whether <paramref name="asset"/> is a release asset name a row may give: a key's characters and <c>-</c>, up to 128 before <c>.jpg</c>, no <c>..</c>.</summary>
+    public static bool IsSafeAsset([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] string? asset) => asset is not null && SafeAsset().IsMatch(asset);
 
     /// <summary>Whether <paramref name="picture"/> is the size and SHA-256 the row gives.</summary>
     public static bool Matches(CodexPictureRow row, ReadOnlySpan<byte> picture)
@@ -185,7 +203,22 @@ public static partial class CodexPictureIndex
             return "it is not an object.";
         }
 
-        if (!TryGetInt64(element, "entryId", out var entryId) || entryId <= 0)
+        string entry;
+
+        if (element.TryGetProperty("kind", out _))
+        {
+            if (GetString(element, "kind") is not { } kind || !CodexKeys.IsKind(kind))
+            {
+                return "the kind is not a d47 kind key.";
+            }
+
+            entry = kind;
+        }
+        else if (TryGetInt64(element, "entryId", out var entryId) && entryId > 0)
+        {
+            entry = CodexKeys.Of(entryId);
+        }
+        else
         {
             return "the entryId is not a positive whole number.";
         }
@@ -194,36 +227,36 @@ public static partial class CodexPictureIndex
             || regionId is < int.MinValue or > int.MaxValue
             || GalacticRegions.NameOf((int)regionId) is null)
         {
-            return $"the region of entry {entryId} is not a known region number.";
+            return $"the region of entry {entry} is not a known region number.";
         }
 
         var tag = GetString(element, "tag");
 
         if (tag is null || !tag.StartsWith(TagPrefix, StringComparison.Ordinal))
         {
-            return $"the tag of entry {entryId} does not start with \"{TagPrefix}\".";
+            return $"the tag of entry {entry} does not start with \"{TagPrefix}\".";
         }
 
         var asset = GetString(element, "asset");
 
-        if (asset is null || !SafeAsset().IsMatch(asset))
+        if (!IsSafeAsset(asset))
         {
-            return $"the asset of entry {entryId} is not a safe .jpg name.";
+            return $"the asset of entry {entry} is not a safe .jpg name.";
         }
 
         var sha256 = GetString(element, "sha256");
 
         if (sha256 is null || !Sha256Hex().IsMatch(sha256))
         {
-            return $"the sha256 of entry {entryId} is not 64 lower-case hex digits.";
+            return $"the sha256 of entry {entry} is not 64 lower-case hex digits.";
         }
 
         if (!TryGetInt64(element, "bytes", out var bytes) || bytes is < 1 or > MaxBytes)
         {
-            return $"the size of entry {entryId} is not a whole number of bytes from 1 to {MaxBytes}.";
+            return $"the size of entry {entry} is not a whole number of bytes from 1 to {MaxBytes}.";
         }
 
-        row = new CodexPictureRow(entryId, (int)regionId, tag, asset, sha256, bytes);
+        row = new CodexPictureRow(entry, (int)regionId, tag, asset, sha256, bytes);
         return null;
     }
 
@@ -241,9 +274,9 @@ public static partial class CodexPictureIndex
             ? property.GetString()
             : null;
 
-    private sealed record Dto(long EntryId, int RegionId, string Tag, string Asset, string Sha256, long Bytes);
+    private sealed record Dto(long? EntryId, string? Kind, int RegionId, string Tag, string Asset, string Sha256, long Bytes);
 
-    [GeneratedRegex(@"^[a-z0-9][a-z0-9-]{0,63}\.jpg$")]
+    [GeneratedRegex(@"^(?!.*\.\.)[a-z0-9][a-z0-9_.-]{0,127}\.jpg\z")]
     private static partial Regex SafeAsset();
 
     [GeneratedRegex("^[0-9a-f]{64}$")]
@@ -268,10 +301,10 @@ public static class CodexPictures
     /// <summary>
     /// The picture to show for an entry: the Commander's for the region, then stock for the region, then the
     /// Commander's from the lowest other region, then stock from the lowest other region; null for none.
-    /// With no region only the other-region steps apply. Another EntryID's picture is never used.
+    /// With no region only the other-region steps apply. Another key's picture is never used.
     /// </summary>
     public static CodexPictureChoice? Find(
-        long entryId,
+        string entryKey,
         int? regionId,
         IReadOnlySet<CodexPictureKey> local,
         IReadOnlyList<CodexPictureRow> stock)
@@ -281,7 +314,7 @@ public static class CodexPictures
 
         if (regionId is { } here)
         {
-            var key = new CodexPictureKey(entryId, here);
+            var key = new CodexPictureKey(entryKey, here);
 
             if (local.Contains(key))
             {
@@ -295,7 +328,7 @@ public static class CodexPictures
         }
 
         var otherLocal = local
-            .Where(key => key.EntryId == entryId && key.RegionId != regionId)
+            .Where(key => key.Key == entryKey && key.RegionId != regionId)
             .OrderBy(key => key.RegionId)
             .Select(key => (CodexPictureKey?)key)
             .FirstOrDefault();
@@ -306,7 +339,7 @@ public static class CodexPictures
         }
 
         var otherStock = stock
-            .Where(row => row.EntryId == entryId && row.RegionId != regionId)
+            .Where(row => row.EntryKey == entryKey && row.RegionId != regionId)
             .OrderBy(row => row.RegionId)
             .FirstOrDefault();
 

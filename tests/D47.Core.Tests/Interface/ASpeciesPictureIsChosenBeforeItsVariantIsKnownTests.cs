@@ -17,7 +17,7 @@ public sealed class ASpeciesPictureIsChosenBeforeItsVariantIsKnownTests
     private static readonly IReadOnlySet<CodexPictureKey> NoLocal = new HashSet<CodexPictureKey>();
 
     private static CodexPictureRow Row(long entryId) =>
-        new(entryId, 3, "codex-pictures-1", $"{entryId}-3-abc.jpg", new string('a', 64), 10);
+        new(CodexKeys.Of(entryId), 3, "codex-pictures-1", $"{entryId}-3-abc.jpg", new string('a', 64), 10);
 
     [Fact]
     public void AKnownEntryIdWithAPictureWins()
@@ -55,7 +55,7 @@ public sealed class ASpeciesPictureIsChosenBeforeItsVariantIsKnownTests
     [Fact]
     public void ALocalPictureCountsAsAPicture()
     {
-        var local = new HashSet<CodexPictureKey> { new(100, 3) };
+        var local = new HashSet<CodexPictureKey> { new("100", 3) };
 
         var chosen = SpeciesPicture.Choose(Species, null, 3, local, [], Table);
 

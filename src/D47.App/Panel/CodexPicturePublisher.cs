@@ -99,12 +99,12 @@ public sealed class CodexPicturePublisher
             }
             catch (PublishFailure ex)
             {
-                _logger.LogInformation("Codex picture {Entry}-{Region}: {Failure}", key.EntryId, key.RegionId, ex.Message);
+                _logger.LogInformation("Codex picture {Entry}-{Region}: {Failure}", key.Key, key.RegionId, ex.Message);
                 result = new CodexPublishResult(key, ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("Codex picture {Entry}-{Region} stopped on {Error}", key.EntryId, key.RegionId, ex.GetType().Name);
+                _logger.LogWarning("Codex picture {Entry}-{Region} stopped on {Error}", key.Key, key.RegionId, ex.GetType().Name);
                 result = new CodexPublishResult(key, $"It stopped on an error ({ex.GetType().Name}).");
             }
 
@@ -149,7 +149,7 @@ public sealed class CodexPicturePublisher
 
         var sha256 = Convert.ToHexStringLower(SHA256.HashData(picture));
         var row = new CodexPictureRow(
-            key.EntryId, key.RegionId, target.Tag, CodexPictureIndex.AssetName(key.EntryId, key.RegionId, sha256), sha256, picture.Length);
+            key.Key, key.RegionId, target.Tag, CodexPictureIndex.AssetName(key, sha256), sha256, picture.Length);
         var old = rows.FirstOrDefault(existing => existing.Key == key);
 
         if (!target.Assets.Any(asset => asset.Name == row.Asset))

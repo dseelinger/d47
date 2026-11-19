@@ -29,9 +29,9 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private readonly PanelNavigator? _nav;
     private readonly Func<BodySearchLink?>? _bodySearch;
     private readonly CodexPictureSet? _pictures;
-    private readonly Dictionary<long, (Bitmap Bitmap, string Name)> _thumbs = [];
+    private readonly Dictionary<string, (Bitmap Bitmap, string Name)> _thumbs = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Bitmap?> _families = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<long, (CodexMissingRow Row, Border Square)> _squares = [];
+    private readonly Dictionary<string, (CodexMissingRow Row, Border Square)> _squares = new(StringComparer.Ordinal);
     private readonly ArrangedTable<CodexMissingRow> _columns;
     private readonly ArrangedList _list;
     private readonly CodexDiscoveryFilters _filters = new();
@@ -259,14 +259,14 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 
         var button = ListRow.Dress(new Button
         {
-            Name = "CodexMissing." + row.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Name = "CodexMissing." + row.Key,
             Content = grid,
             MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
             HorizontalAlignment = HorizontalAlignment.Stretch,
         });
         Avalonia.Automation.AutomationProperties.SetName(button, row.Name);
-        button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(_regionId, row.EntryId, row.Name));
+        button.Click += (_, _) => _nav?.Drill(CodexPage.EntryCrumb(_regionId, row.Key, row.Name));
 
         var line = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 0, 0, Gaps.Tile) };
         line.Children.Add(button);
@@ -283,14 +283,14 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     /// <summary>The row's Search tile: for an entry the codex table lists, other than a star or planet type.</summary>
     private Button? SearchTile(CodexMissingRow row)
     {
-        if (_bodySearch?.Invoke() is not { } link || _table.Entry(row.EntryId) is not { Body: null } entry)
+        if (_bodySearch?.Invoke() is not { } link || _table.Entry(row.Key) is not { Body: null } entry)
         {
             return null;
         }
 
         var tile = new Button
         {
-            Name = "CodexSearch." + row.EntryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            Name = "CodexSearch." + row.Key,
             Content = "Search",
             Width = SearchWidth,
             MinHeight = TypeScale.MinimumTarget,
@@ -318,7 +318,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
 
         if (_pictures is not null)
         {
-            _squares[row.EntryId] = (row, square);
+            _squares[row.Key] = (row, square);
             Fill(square, row);
         }
 
@@ -329,7 +329,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private void Fill(Border square, CodexMissingRow row)
     {
         var side = TypeScale.MinimumTarget;
-        var picture = PictureOf(row.EntryId);
+        var picture = PictureOf(row.Key);
         var bitmap = picture?.Bitmap ?? Family(row.PlaceholderFile);
 
         square.Child = bitmap is null
@@ -357,15 +357,15 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         _stock = _pictures.Store.StockRows();
     }
 
-    private (Bitmap Bitmap, string Name)? PictureOf(long entryId)
+    private (Bitmap Bitmap, string Name)? PictureOf(string key)
     {
-        if (_thumbs.TryGetValue(entryId, out var cached))
+        if (_thumbs.TryGetValue(key, out var cached))
         {
             return cached;
         }
 
         var store = _pictures!.Store;
-        var choice = CodexPictures.Find(entryId, _regionId, _local, _stock);
+        var choice = CodexPictures.Find(key, _regionId, _local, _stock);
         var bytes = choice is null
             ? null
             : choice.Source == CodexPictureSource.Local ? store.Local(choice.Key) : store.StockOnDisk(choice.Row!);
@@ -376,7 +376,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         }
 
         var shown = (bitmap, choice!.Source == CodexPictureSource.Local ? "CodexThumbLocal" : "CodexThumbStock");
-        _thumbs[entryId] = shown;
+        _thumbs[key] = shown;
 
         return shown;
     }
