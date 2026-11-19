@@ -15,6 +15,7 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
 
     private readonly MemoryFileSystem _files = new();
     private readonly TaskCompletionSource<AdventureOutcome> _write = new();
+    private readonly TaskCompletionSource _asked = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly StoryStore _stories;
     private readonly AdventureStore _adventures;
     private readonly StoryChapterArchive _archive;
@@ -33,7 +34,11 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
         var book = new AdventureBook(_adventures, NullLogger<AdventureBook>.Instance);
 
         book.CatchUp([]);
-        _director = new StoryDirector(_stories, book, () => StoryFixtures.Catalog, (_, _, _) => _write.Task, () => null, _ => { }, NullLogger.Instance)
+        _director = new StoryDirector(_stories, book, () => StoryFixtures.Catalog, (_, _, _) =>
+        {
+            _asked.TrySetResult();
+            return _write.Task;
+        }, () => null, _ => { }, NullLogger.Instance)
         {
             Archive = _archive,
             Clock = () => _clock,
@@ -130,11 +135,14 @@ public sealed class ARewoundStoryIsPausedAtItsCheckpointTests
 
         var writing = _director.Tick("F1", Now.AddHours(3));
 
-        Assert.True(SpinWait.SpinUntil(() => _director.IsWriting("F1"), TimeSpan.FromSeconds(5)));
+        Assert.NotNull(writing);
+
+        await _asked.Task.WaitAsync(TimeSpan.FromSeconds(60), TestContext.Current.CancellationToken);
+
         Assert.True(_director.IsWriting("F1"));
 
         _write.SetResult(new AdventureOutcome(null, null, "No.", []));
-        await writing!;
+        await writing;
     }
 
     private async Task BeaconChapter(AdventureTrigger trigger)
