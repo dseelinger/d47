@@ -139,7 +139,7 @@ public static class CalloutCapability
     public const string NarratorSecondsKey = "callouts.narratorSeconds";
     public const string NarratorMaxSecondsKey = "callouts.narratorMaxSeconds";
 
-    public static CapabilityDescriptor Create(Func<string> describe) => new()
+    public static CapabilityDescriptor Create(Func<string> describe, RegionFirstReporting? regionFirsts = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -156,13 +156,13 @@ public static class CalloutCapability
         // containing the word, which is the rule JournalCapability documents.
         Keywords =
         [
-            "what are you watching",
-            "what do you warn about",
-            "stop calling things out",
-            "start calling things out",
-            "stop the callouts",
-            "enable callouts",
-            "disable callouts",
+            new("what are you watching", "get_callouts"),
+            new("what do you warn about", "get_callouts"),
+            new("stop calling things out", "get_callouts"),
+            new("start calling things out", "get_callouts"),
+            new("stop the callouts", "get_callouts"),
+            new("enable callouts", "get_callouts"),
+            new("disable callouts", "get_callouts"),
         ],
         Display = new CapabilityDisplay { PanelTitle = "Callouts", Order = 35 },
         Tools =
@@ -177,6 +177,7 @@ public static class CalloutCapability
                     "List the things D47 announces without being asked, and whether each one is currently on.",
                 Handler = (_, _) => Task.FromResult(ToolResult.Ok(describe())),
             },
+            RegionFirstReporting.Definition(regionFirsts),
         ],
         Settings = Rows(),
     };

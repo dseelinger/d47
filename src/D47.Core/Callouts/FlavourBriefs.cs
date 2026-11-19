@@ -1,4 +1,5 @@
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Conversation;
 using D47.Core.Journal;
 using D47.Core.Persona;
@@ -360,8 +361,9 @@ public static class FlavourBriefs
                 Instruction =
                     "The Commander has just logged a codex entry that may be a first. Say this in your own "
                     + $"voice, as a big moment: \"{announcement.Text}\" Keep the entry name, the region and "
-                    + "the words \"may be\" exactly as given. Add no facts: nothing about what the entry is, "
-                    + "what it is worth or what to do next. One or two sentences. Do not ask a question.",
+                    + "the words \"may be\" exactly as given. Add no facts: nothing about what the entry is "
+                    + "or what it is worth. End with this sentence, word for word: "
+                    + $"\"{RegionFirstReporting.Offer}\" Two or three sentences in all. Do not ask a question.",
                 NeedsPersona = true,
                 NeedsGameState = false,
                 NeedsAboutMe = true,

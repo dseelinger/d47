@@ -1211,7 +1211,7 @@ When you log a new organic, geology and anomaly, Guardian or gas giant codex ent
 shipped in this build does not list for the region you are in:
 
 ```text
-No Commander has reported Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region.
+No Commander has reported Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region. Say 'report it to Canonn' and I'll send it.
 ```
 
 For an organic entry the table has no report of in any region, it says "anywhere" and "a first in the galaxy"
@@ -1219,9 +1219,10 @@ instead. Geology and anomaly, Guardian and gas giant entries get the region line
 table has a report of the entry in another region. It says nothing when the region is listed, for stars and
 other planets, for an entry you had already logged in that region, or for a repeat in the same session.
 The line cuts in ahead of other callouts and is said in your core's own words, keeping the entry, the
-region and the "may be". It waits until your codex history has
-loaded. The table is only as current as the build, so the line says "may be". Nothing leaves your
-machine.
+region and the "may be", and ending with the offer word for word. It waits until your codex history has
+loaded. The table is only as current as the build, so the line says "may be". The line itself sends
+nothing; a find leaves your machine only when you ask for it to be
+[reported to Canonn](#report-region-first).
 
 Each possible first is also kept, per Commander, in `data\region-firsts.json`, whether or not this
 callout is on. It is judged once, when the entry is first seen, against the table shipped in that
@@ -1229,6 +1230,40 @@ build, and the record keeps the table's date. A later build whose table lists th
 remove it. On the first start with this record, every earlier entry the current table does not list
 is recorded too. A [Commander's log](logbook.md) says "Logged a possible region first" or "Logged a
 possible first in the galaxy" for the entry, in place of "Logged a codex entry".
+
+#### Reporting a region first to Canonn {#report-region-first}
+
+Say "report it to Canonn", "report that to Canonn" or "report my region first" and D47 sends the newest
+possible first you have not reported to [Canonn](https://canonn.science), so the find is in their codex
+record under your name. Speech-to-text writes the name as "cannon", and that works too. Only you can ask
+for this: the language model is refused if it tries.
+
+What is sent, in one request to `us-central1-canonn-api-236217.cloudfunctions.net`, the host the
+[earlier biology finds](galaxy.md#earlier-biology-finds-from-canonn) are read from:
+
+- the `CodexEntry` line from your journal, as Elite wrote it;
+- the system's name and its position, the body, and the latitude and longitude;
+- your Commander name as the game gives it now, so Canonn credits the find to you;
+- the D47 version, that the game is on PC, and whether it is Odyssey.
+
+The replies:
+
+```text
+Sent to Canonn.
+I could not reach Canonn just now.
+There is no region first waiting to be reported.
+That region first was already sent to Canonn.
+I need your Commander name from the game first.
+I have no region first for that entry in that region.
+That region first has no journal line or position to send.
+A region first is being sent to Canonn now.
+```
+
+"Sent to Canonn." means Canonn answered; it does not confirm that Canonn recorded the find. A find is
+marked as sent in `data\region-firsts.json` and is never sent twice. When the request fails, the find
+stays waiting and can be asked for again. A find from a journal that never said where its system is
+cannot be sent, because Canonn needs the position. Nothing is sent for a find you do not ask to
+report. The **Privacy and egress** section of the panel lists it as Region first reports.
 
 #### Surveyed biology on arrival {#surveyed-biology}
 
@@ -2061,6 +2096,18 @@ Read-only. Takes no arguments.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
+#### `report_region_first`
+
+Protected: the keyword router, the panel and a hotkey reach it, and the model is refused. With no arguments it
+sends the newest record in `RegionFirstBook` that is not yet reported and holds its journal line and position;
+with `entry_id` and `region_id`, that record. It posts once to Canonn's `postEvent` through
+`IRegionFirstReport`, which `CanonnBiologyService` implements, off the tick, and marks the record reported only
+on a 200. See [Reporting a region first to Canonn](#report-region-first).
+
+```json
+{"type":"object","properties":{"entry_id":{"type":"integer","description":"The EntryID of the codex entry; with region_id, reports that record."},"region_id":{"type":"integer","description":"The number of the galactic region, 1 to 42; with entry_id, reports that record."}},"required":[],"additionalProperties":false}
 ```
 
 Two sources feed the warnings, deliberately. The journal reports **transitions** — shields went

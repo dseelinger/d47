@@ -1,16 +1,23 @@
 using System.Globalization;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using D47.Core.Knowledge;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Knowledge;
 
-/// <summary><see cref="ICommunityBiology"/> against Canonn's per-system codex record.</summary>
-public sealed class CanonnBiologyService : ICommunityBiology, IDisposable
+/// <summary>
+/// <see cref="ICommunityBiology"/> against Canonn's per-system codex record, and <see cref="IRegionFirstReport"/>
+/// to Canonn's event intake.
+/// </summary>
+public sealed class CanonnBiologyService : ICommunityBiology, IRegionFirstReport, IDisposable
 {
     public const string Host = "us-central1-canonn-api-236217.cloudfunctions.net";
 
     public const string Path = "query/getSystemPoi";
+
+    public const string ReportPath = "postEvent";
 
     private readonly HttpClient _http;
     private readonly ILogger<CanonnBiologyService> _logger;
@@ -73,6 +80,121 @@ public sealed class CanonnBiologyService : ICommunityBiology, IDisposable
         {
             _logger.LogWarning(ex, "Canonn answered with something that was not JSON");
             return null;
+        }
+    }
+
+    public async Task<bool> SendAsync(RegionFirstReport report, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+
+        if (ReportBody(report) is not { } body)
+        {
+            _logger.LogWarning("A region first had no journal line or position to send");
+            return false;
+        }
+
+        try
+        {
+            using var content = new ByteArrayContent(body);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+            using var response = await _http.PostAsync(ReportPath, content, cancellationToken).ConfigureAwait(false);
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return true;
+            }
+
+            _logger.LogWarning("Canonn answered {Status} to a region first report", (int)response.StatusCode);
+            return false;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Canonn took too long to answer a region first report");
+            return false;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Canonn could not be reached to report a region first");
+            return false;
+        }
+    }
+
+    /// <summary>The postEvent body for <paramref name="report"/>, or null when its journal line is not a JSON object or it has no position.</summary>
+    internal static byte[]? ReportBody(RegionFirstReport report)
+    {
+        var record = report.Record;
+
+        if (record is not { Journal: { Length: > 0 } line, StarPos: { } position })
+        {
+            return null;
+        }
+
+        JsonDocument raw;
+
+        try
+        {
+            raw = JsonDocument.Parse(line);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        using (raw)
+        {
+            if (raw.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            using var buffer = new MemoryStream();
+
+            using (var json = new Utf8JsonWriter(buffer))
+            {
+                json.WriteStartObject();
+
+                json.WriteStartObject("gameState");
+                json.WriteString("systemName", record.System);
+                json.WriteStartArray("systemCoordinates");
+                json.WriteNumberValue(position.X);
+                json.WriteNumberValue(position.Y);
+                json.WriteNumberValue(position.Z);
+                json.WriteEndArray();
+                json.WriteString("bodyName", record.Body);
+                WriteNumber(json, "latitude", record.Latitude);
+                WriteNumber(json, "longitude", record.Longitude);
+                json.WriteString("clientVersion", report.ClientVersion);
+                json.WriteBoolean("isBeta", false);
+                json.WriteString("platform", "PC");
+                json.WriteBoolean("odyssey", report.Odyssey);
+                json.WriteEndObject();
+
+                json.WritePropertyName("rawEvent");
+                raw.RootElement.WriteTo(json);
+                json.WriteString("eventType", "CodexEntry");
+                json.WriteString("cmdrName", report.CommanderName);
+
+                json.WriteEndObject();
+            }
+
+            return buffer.ToArray();
+        }
+    }
+
+    private static void WriteNumber(Utf8JsonWriter json, string name, double? value)
+    {
+        if (value is { } number)
+        {
+            json.WriteNumber(name, number);
+        }
+        else
+        {
+            json.WriteNull(name);
         }
     }
 

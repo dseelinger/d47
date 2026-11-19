@@ -105,6 +105,9 @@ public static class EgressDisclosure
     /// <summary>Asking Canonn for the biology logged in the system you map a body in.</summary>
     public const string CommunityBiology = "communitybiology";
 
+    /// <summary>Sending a region first to Canonn when the Commander asks.</summary>
+    public const string RegionFirstReport = "regionfirstreport";
+
     /// <summary>
     /// Two hosts, because there are two transfers: the check asks api.github.com for a tag, and
     /// accepting an update fetches the build from github.com — which redirects to GitHub's asset
@@ -195,6 +198,7 @@ public static class EgressDisclosure
         OwnVoice,
         CustomVoices,
         CaptainsLog,
+        RegionFirstReport,
         Donation,
     ];
 
@@ -211,6 +215,7 @@ public static class EgressDisclosure
         ColonisationProgress => "Colonisation progress",
         NotablePlaces => "Notable places",
         CommunityBiology => "Earlier biology finds",
+        RegionFirstReport => "Region first reports",
         BgsTick => "BGS tick",
         GalNet => "GalNet news",
         ServerStatus => "Server status",
@@ -356,6 +361,16 @@ public static class EgressDisclosure
             + "No commander name, key or identifier goes with it. Each system is asked at most once a session.",
             Active: true,
             Summary: "The name of the system you map a biology body in. Nothing else about you goes with it."),
+        RegionFirstReport => new EgressEntry(
+            RegionFirstReport,
+            NameOf(RegionFirstReport),
+            CanonnHost,
+            "Only when you say \"report it to Canonn\" after a possible region first, one request with the find: "
+            + "its CodexEntry journal line, the system's name and position, the body and the latitude and longitude, "
+            + "and your Commander name, so Canonn credits the find to you. The version of D47 goes with it. "
+            + "Nothing is sent for a find you do not ask to report, and a find already sent is not sent again.",
+            Active: true,
+            Summary: "Only when you ask: the region first's journal line, system, position and body, and your Commander name."),
 
         BgsTick => new EgressEntry(
             BgsTick,

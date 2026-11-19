@@ -1,3 +1,4 @@
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -5,7 +6,7 @@ namespace D47.Core.Callouts;
 
 /// <summary>
 /// A new codex entry that the shipped Canonn table does not list for the region, said once per entry and
-/// region. Always reworded, and said ahead of the discovery line.
+/// region, ending with the offer to report it to Canonn. Always reworded, and said ahead of the discovery line.
 /// </summary>
 public sealed class RegionFirstCallout : ICallout
 {
@@ -48,10 +49,10 @@ public sealed class RegionFirstCallout : ICallout
             switch (CodexFirsts.Judge(Table(), entryId, regionId, journalEvent.String("SubCategory")))
             {
                 case CodexFirst.Galaxy:
-                    line = $"No Commander has reported {name} anywhere. It may be a first in the galaxy.";
+                    line = $"No Commander has reported {name} anywhere. It may be a first in the galaxy. {RegionFirstReporting.Offer}";
                     break;
                 case CodexFirst.Region when region is { Length: > 0 }:
-                    line = $"No Commander has reported {name} in the {region}. It may be a first for the region.";
+                    line = $"No Commander has reported {name} in the {region}. It may be a first for the region. {RegionFirstReporting.Offer}";
                     break;
                 default:
                     continue;

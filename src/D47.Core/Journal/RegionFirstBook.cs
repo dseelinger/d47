@@ -174,6 +174,45 @@ public sealed class RegionFirstBook
         }
     }
 
+    /// <summary>The Commander's newest record not yet reported that holds its journal line and position, or null.</summary>
+    public RegionFirstRecord? NewestUnreported(string frontierId)
+    {
+        lock (_gate)
+        {
+            return _records.TryGetValue(frontierId, out var held)
+                ? held
+                    .Where(record => record is { Reported: null, Journal.Length: > 0, StarPos: not null })
+                    .MaxBy(record => record.At)
+                : null;
+        }
+    }
+
+    /// <summary>Marks the Commander's record for the entry in the region reported at <paramref name="at"/>; the file is written off the caller's thread.</summary>
+    public void MarkReported(string frontierId, long entryId, int regionId, DateTimeOffset at)
+    {
+        Snapshot snapshot;
+
+        lock (_gate)
+        {
+            if (!_records.TryGetValue(frontierId, out var held))
+            {
+                return;
+            }
+
+            var index = held.FindIndex(record => record.EntryId == entryId && record.RegionId == regionId);
+
+            if (index < 0)
+            {
+                return;
+            }
+
+            held[index] = held[index] with { Reported = at };
+            snapshot = new Snapshot(Copy(), ++_version);
+        }
+
+        _offTick(() => Save(snapshot));
+    }
+
     private sealed record Snapshot(Dictionary<string, List<RegionFirstRecord>> Records, long Version);
 
     /// <summary>Called under <see cref="_gate"/>.</summary>

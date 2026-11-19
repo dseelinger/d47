@@ -2337,11 +2337,12 @@ public sealed class AppHost : IDisposable
         var storyChoice = new AdventureCapability.StoryChoice();
         var objectiveCourse = new AdventureCapability.ObjectiveCourse();
         var adventureDesk = new AdventureCapability.AdventureDesk();
+        var canonn = new D47.Knowledge.CanonnBiologyService(loggerFactory.CreateLogger<D47.Knowledge.CanonnBiologyService>());
 
         return new ServiceParts
         {
-            CommunityBiology = new D47.Knowledge.CanonnBiologyService(
-                loggerFactory.CreateLogger<D47.Knowledge.CanonnBiologyService>()),
+            CommunityBiology = canonn,
+            RegionFirstReport = canonn,
             EarlierFinds = new D47.Core.Knowledge.EarlierFinds(),
             SurveyedBiology = new D47.Core.Knowledge.SurveyedBiology(),
             AdventureDesk = adventureDesk,
@@ -2950,6 +2951,8 @@ public sealed class AppHost : IDisposable
                 campaignFocus: stores.CampaignFocus,
                 travelLog: stores.TravelLog,
                 webApp: webApp,
+                regionFirsts: stores.RegionFirsts,
+                regionFirstReport: services.RegionFirstReport,
                 neutronOffer: stores.NeutronOffer,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
@@ -4753,6 +4756,8 @@ public sealed class AppHost : IDisposable
     private sealed record ServiceParts
     {
         public required D47.Core.Knowledge.ICommunityBiology CommunityBiology { get; init; }
+
+        public required D47.Core.Knowledge.IRegionFirstReport RegionFirstReport { get; init; }
 
         public required D47.Core.Knowledge.EarlierFinds EarlierFinds { get; init; }
 

@@ -72,6 +72,12 @@ public sealed partial class NoTextNamesAThirdPartyServiceGateTests
             return true;
         }
 
+        // Reporting a region first names Canonn on purpose (#2591): the offer, the tool's phrases and its replies.
+        if (relative == "D47.Core/Capabilities/Builtin/RegionFirstReporting.cs")
+        {
+            return true;
+        }
+
         // The refusal lines a watch's save puts on its form fields.
         if (relative == "D47.Core/Watches/WatchSetup.cs")
         {
@@ -112,6 +118,10 @@ public sealed partial class NoTextNamesAThirdPartyServiceGateTests
 
                 // The two lines on the next-system watch form that say where Galaxy search sends.
                 case VariableDeclaratorSyntax { Identifier.Text: "GalaxyOffText" or "NextEgress" } when relative == "D47.App/Panel/WatchFormPage.cs":
+                    return true;
+
+                // The words the local voices are taught to say, which are matched, not shown.
+                case VariableDeclaratorSyntax { Identifier.Text: "Shipped" } when relative == "D47.Core/Speech/PronunciationOverrides.cs":
                     return true;
 
                 // The two browser tooltips.

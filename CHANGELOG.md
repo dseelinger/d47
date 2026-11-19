@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: A possible region or galaxy first now ends with "Say 'report it to Canonn' and I'll send it." Saying "report it to Canonn" sends the newest find you have not reported to Canonn's codex record: its journal line, the system, position and body, and your Commander name, so the find is credited to you. Each find is sent once, and nothing is sent unless you ask. Settings lists it under Privacy and egress as Region first reports. The local voices say Canonn as "cannon".
+
 Fixed: Asking for bodies with a given ring type, such as metallic rings, returns only bodies with that ring type. It used to return any ringed body.
 
 Added: On the approach to a scanned body, D47 warns out loud when its surface gravity is over 1 g, its surface temperature is 700 K or more, or both, on every approach. A body you have not scanned is read from the galaxy record, and says nothing if the record does not have it. The Landing hazards row in Settings › Your core › In flight turns it off, and so does "stop calling out landing hazards".

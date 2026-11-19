@@ -68,7 +68,7 @@ public class PossibleRegionFirstsAreSaidOnANewCodexEntryTests
         var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
 
         Assert.Equal(
-            "No Commander has reported Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region.",
+            "No Commander has reported Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region. Say 'report it to Canonn' and I'll send it.",
             said.Text);
     }
 
@@ -81,7 +81,7 @@ public class PossibleRegionFirstsAreSaidOnANewCodexEntryTests
         var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
 
         Assert.Equal(
-            "No Commander has reported Fonticulua Fluctus - Yellow anywhere. It may be a first in the galaxy.",
+            "No Commander has reported Fonticulua Fluctus - Yellow anywhere. It may be a first in the galaxy. Say 'report it to Canonn' and I'll send it.",
             said.Text);
     }
 
@@ -107,7 +107,7 @@ public class PossibleRegionFirstsAreSaidOnANewCodexEntryTests
         var line = Entry(2100202, sub: Geology);
         var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
 
-        Assert.EndsWith("It may be a first for the region.", said.Text);
+        Assert.EndsWith("It may be a first for the region. Say 'report it to Canonn' and I'll send it.", said.Text);
     }
 
     [Theory]

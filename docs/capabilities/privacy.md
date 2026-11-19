@@ -504,7 +504,7 @@ the answer to anything you ask.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-colonisationprogress} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-rareindex} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-colonisationprogress} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-rareindex} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology} {#egress-regionfirstreport}
 {#egress-hullart} {#egress-codexpictures} {#egress-codexpublish} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-usagecounts} {#egress-webapp} {#egress-pictures} {#egress-codexcaptures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

@@ -14,7 +14,7 @@ public sealed record Pronunciation(string Key, string Value, bool IsIpa);
 
 /// <summary>
 /// The Commander's own pronunciations, read from a file in <c>data\</c> and re-read when they change it
-/// (#150).
+/// (#150), over the respellings d47 ships. An entry in the file replaces a shipped one with the same key.
 /// </summary>
 public sealed class PronunciationOverrides
 {
@@ -24,16 +24,21 @@ public sealed class PronunciationOverrides
     /// <summary>What marks a value as IPA rather than a respelling.</summary>
     public const string IpaMarker = "ipa:";
 
+    /// <summary>Respellings for names d47 itself says, each a single word.</summary>
+    private static readonly Pronunciation[] Shipped =
+    [
+        new("Canonn", "cannon", IsIpa: false),
+    ];
+
     private readonly IFileSystem _fileSystem;
     private readonly string _path;
     private readonly IReadOnlySet<char>? _speakable;
     private readonly Action<string>? _complain;
     private readonly Lock _gate = new();
 
-    private Dictionary<string, Pronunciation> _entries =
-        new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, Pronunciation> _entries = ShippedEntries();
 
-    private int _longest;
+    private int _longest = 1;
     private (bool Exists, long Length, DateTime Written) _read = (false, -1, DateTime.MinValue);
 
     /// <param name="path">The file, which does not have to exist.</param>
@@ -74,8 +79,8 @@ public sealed class PronunciationOverrides
             if (!stamp.Item1)
             {
                 // Deleted.
-                _entries = new Dictionary<string, Pronunciation>(StringComparer.OrdinalIgnoreCase);
-                _longest = 0;
+                _entries = ShippedEntries();
+                _longest = 1;
                 return;
             }
 
@@ -112,8 +117,8 @@ public sealed class PronunciationOverrides
     /// <summary>The file, parsed.</summary>
     private void Reread()
     {
-        var entries = new Dictionary<string, Pronunciation>(StringComparer.OrdinalIgnoreCase);
-        var longest = 0;
+        var entries = ShippedEntries();
+        var longest = 1;
 
         try
         {
@@ -151,6 +156,9 @@ public sealed class PronunciationOverrides
         _entries = entries;
         _longest = longest;
     }
+
+    private static Dictionary<string, Pronunciation> ShippedEntries() =>
+        Shipped.ToDictionary(entry => entry.Key, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>One entry, or null where it is not usable.</summary>
     private Pronunciation? Accept(JsonProperty entry)

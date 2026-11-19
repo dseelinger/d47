@@ -375,7 +375,11 @@ public static class BuiltinCapabilities
         Journal.TravelLog? travelLog = null,
 
         // The web app sign-in and its snapshot deletes, for the Privacy rows.
-        Web.WebAppLink? webApp = null) =>
+        Web.WebAppLink? webApp = null,
+
+        // Each Commander's possible region firsts, and where one is sent when the Commander asks.
+        Journal.RegionFirstBook? regionFirsts = null,
+        Knowledge.IRegionFirstReport? regionFirstReport = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -484,7 +488,14 @@ public static class BuiltinCapabilities
             learnedPhrases,
             () => gameState.Active?.Identity.FrontierId ?? string.Empty,
             phraseBook ?? (() => PhraseBook.From(registry(), []))),
-        CalloutCapability.Create(() => CalloutCapability.Describe(callouts, settings.Current)),
+        CalloutCapability.Create(
+            () => CalloutCapability.Describe(callouts, settings.Current),
+            new RegionFirstReporting(
+                () => gameState.Active,
+                regionFirsts,
+                regionFirstReport,
+                $"Directive 47 {Updates.ReleaseVersion.Semantic(about?.Build ?? version)}",
+                now ?? (() => DateTimeOffset.UtcNow))),
         InterfaceCapability.Create(),
         VrCapability.Create(settings, headset),
         FocusCapability.Create(raiseGame),
