@@ -133,8 +133,8 @@ an integration test does either. Every integration test carries `[Trait("Categor
 command, filtered by the area with both categories excluded, when the diff touches the App:
 
 ```bash
-dotnet test tests/D47.Core.Tests --filter "Category!=Integration"
-dotnet test tests/D47.App.Tests --filter "FullyQualifiedName~<Area>&Category!=Integration&Category!=Gate"
+dotnet test tests/D47.Core.Tests --filter "Category!=Integration" --logger "trx;LogFileName=core-<n>.trx" --results-directory <scratchpad>/test-results
+dotnet test tests/D47.App.Tests --filter "FullyQualifiedName~<Area>&Category!=Integration&Category!=Gate" --logger "trx;LogFileName=app-<n>.trx" --results-directory <scratchpad>/test-results
 ```
 
 Core is not filtered by area because its whole-tree checks carry no trait, and its unit tests
@@ -159,6 +159,44 @@ script, or amending a commit, needs another run:
 ```bash
 python tools/check-commit.py
 ```
+
+### When a test fails once
+
+Keep the output of every test run. Each `dotnet test` takes the `--logger trx` and
+`--results-directory` arguments shown above, with `<n>` counting up so that no run overwrites an
+earlier one, and console output piped through `grep` or `tail` is first written to a file with
+`tee`. A failure whose assertion message and stack trace were not kept cannot be judged, so it is
+handled as a failure that repeats.
+
+When a test fails, run the exact command that failed three more times: the same project and filter,
+not the test alone, because a smaller run hides ordering and shared state.
+
+- **It fails again on any rerun:** it is a failure. Fix it, or stop where this skill says to stop.
+- **Stop as for a failure** when a different test fails on a rerun, when the first run failed more
+  than one test, when a frame of the stack trace is in a file the diff changed, or when the failing
+  test is one the diff added or changed. Before the commit, a flaky test the change added is fixed
+  in this session; in step 2 of **Merging into main** it stops the lane like any failure.
+- **Otherwise, all three reruns pass:** the failure is flaky and outside this change. Carry on to
+  the commit and the merge, and file it. Look for an open issue first:
+
+  ```bash
+  gh issue list --state open --label bug --search "\"<test method name>\" in:body" --json number,title
+  ```
+
+  If one names the test, add a comment with this occurrence. Otherwise open one with
+  `gh issue create --label bug --label needs-repro`, titled `<ClassName> fails once in a filtered run`.
+  The body gives the full test name, the assertion message, the stack frames under `src/` or
+  `tests/` with paths relative to the repository, the command, the commit or branch, whether other
+  lanes were running, and that three reruns passed. Nothing from a temp folder, a user folder or a
+  journal goes in it.
+
+Filing the issue or its comment is a standing instruction from the maintainer, as the push is, so
+AGENTS.md's stop before a GitHub write does not apply to it. The report names the issue. A test that
+fails inside `python tools/check-commit.py` follows the same rule, with the script as the command
+that is run again.
+
+The release gate, `/pre-release` and `tools/release.ps1`, has no such exception: there a failure is
+a failure.
 
 A new App test
 that reads shipped files (src, docs, assets, tools) against a rule carries `[Trait("Category", "Gate")]`, on the
@@ -471,8 +509,10 @@ never be followed by a merge in the same command.
 
 2. Run the checks again on the rebased tree — the build, the unit-test commands, the affected
    integration tests and both gate filters — because other lanes' work is now under
-   the change. If any fails, stop. Do not fix it in this session: the failure comes from the
-   combination with another lane's work, which is the maintainer's to judge.
+   the change. If any fails, stop, unless **When a test fails once** finds the failure flaky and
+   outside this change: then file it as that section says and go on to step 3. Do not fix a failure
+   in this session: it comes from the combination with another lane's work, which is the
+   maintainer's to judge.
 
 3. Merge:
 
