@@ -61,6 +61,23 @@ public class CodexEntriesAreFoldedFromJournalsTests
     }
 
     [Fact]
+    public void AnEntryFromOlderJournalsKeepsItsLineAndTheSystemsPosition()
+    {
+        var codex = Codex("2026-10-10T10:00:00Z", 1201, 18, isNew: true);
+        var ledger = Walk(
+        [
+            Login("2026-10-10T09:00:00Z"),
+            Line("2026-10-10T09:10:00Z", "FSDJump", "\"StarSystem\":\"Sol\",\"SystemAddress\":10477373803,\"StarPos\":[0.0,0.0,0.0]"),
+            codex,
+            Line("2026-10-10T11:00:00Z", "FSDJump", "\"StarSystem\":\"Elsewhere\",\"SystemAddress\":1,\"StarPos\":[5.0,6.0,7.0]"),
+            Codex("2026-10-10T12:00:00Z", 1202, 18, isNew: true),
+        ])["F1"];
+
+        Assert.Equal((codex, StarPosition.Origin), (ledger.Entries[0].Journal, ledger.Entries[0].StarPos));
+        Assert.Null(ledger.Entries[1].StarPos);
+    }
+
+    [Fact]
     public void RegionEighteenIsInnerOrionSpur()
     {
         Assert.Equal("Inner Orion Spur", GalacticRegions.NameOf(18));

@@ -1291,6 +1291,9 @@ public sealed class AppHost : IDisposable
         // Mail Elite also sends and d47 has not said, with its read watermark (#618).
         var mail = new D47.Core.Journal.MailLedger(foundations.Data(D47.Core.Journal.MailLedger.FileName), files, foundations.Log<D47.Core.Journal.MailLedger>());
 
+        // Each Commander's possible region firsts, judged once and kept (#2590).
+        var regionFirsts = new D47.Core.Journal.RegionFirstBook(foundations.Data(D47.Core.Journal.RegionFirstBook.FileName), files, foundations.Log<D47.Core.Journal.RegionFirstBook>());
+
         // The signals the Commander scans, rebuilt by the same walk and extended live.
         var signalSightings = new D47.Core.Journal.SignalSightings(
             files,
@@ -1777,6 +1780,7 @@ public sealed class AppHost : IDisposable
             Lore = lore,
             LoreVisits = loreVisits,
             Mail = mail,
+            RegionFirsts = regionFirsts,
             MarketBook = marketBook,
             Markets = markets,
             Memories = memories,
@@ -1879,6 +1883,7 @@ public sealed class AppHost : IDisposable
             Kit = stores.Kit,
             Lore = stores.Lore,
             LoreVisits = stores.LoreVisits,
+            RegionFirsts = stores.RegionFirsts,
         });
 
         // History is adopted directly after the fold, so every subscriber registered after it reads the adopted
@@ -2043,7 +2048,7 @@ public sealed class AppHost : IDisposable
         var logbook = new D47.Core.Logbook.LogbookBook(
             new D47.Core.Logbook.LogFolder(foundations.Data(D47.Core.Logbook.LogFolder.FolderName), files, foundations.Log<D47.Core.Logbook.LogFolder>(),
                 () => gameState.Active?.Identity.FrontierId),
-            new D47.Core.Logbook.LogDigestBuilder(files, loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>()),
+            new D47.Core.Logbook.LogDigestBuilder(files, loggerFactory.CreateLogger<D47.Core.Logbook.LogDigestBuilder>(), stores.RegionFirsts),
             new D47.Core.Logbook.LogWriter(loggerFactory.CreateLogger<D47.Core.Logbook.LogWriter>()),
             () => settings.Current.Logbook,
 
@@ -4667,6 +4672,8 @@ public sealed class AppHost : IDisposable
         public required LoreVisits LoreVisits { get; init; }
 
         public required MailLedger Mail { get; init; }
+
+        public required D47.Core.Journal.RegionFirstBook RegionFirsts { get; init; }
 
         public required D47.Core.Journal.SignalSightings SignalSightings { get; init; }
 

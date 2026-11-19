@@ -1223,6 +1223,13 @@ region and the "may be". It waits until your codex history has
 loaded. The table is only as current as the build, so the line says "may be". Nothing leaves your
 machine.
 
+Each possible first is also kept, per Commander, in `data\region-firsts.json`, whether or not this
+callout is on. It is judged once, when the entry is first seen, against the table shipped in that
+build, and the record keeps the table's date. A later build whose table lists the region does not
+remove it. On the first start with this record, every earlier entry the current table does not list
+is recorded too. A [Commander's log](logbook.md) says "Logged a possible region first" or "Logged a
+possible first in the galaxy" for the entry, in place of "Logged a codex entry".
+
 #### Surveyed biology on arrival {#surveyed-biology}
 
 When you arrive in a system, from the [galaxy search](galaxy.md):

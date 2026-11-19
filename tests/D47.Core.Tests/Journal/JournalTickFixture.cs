@@ -31,6 +31,7 @@ internal sealed class JournalTickFixture
         var status = new GameStatusReader(Root, Files, NullLogger.Instance);
 
         History = new HistoryBackfill { Directory = Root, FileSystem = Files, Loggers = loggers };
+        RegionFirsts = new RegionFirstBook(Path.Combine(Data, RegionFirstBook.FileName), Files, NullLogger.Instance, OffTick.Add);
 
         Tick = new JournalTick(new JournalTick.Sources
         {
@@ -68,6 +69,7 @@ internal sealed class JournalTickFixture
             Kit = new KitStore(Path.Combine(Data, "kit.json"), Files, NullLogger<KitStore>.Instance),
             Lore = new LoreBook(new LoreStore(Path.Combine(Data, "lore.json"), Files, NullLogger<LoreStore>.Instance)),
             LoreVisits = new LoreVisits(Path.Combine(Data, "lore-visits.json"), Files, NullLogger<LoreVisits>.Instance),
+            RegionFirsts = RegionFirsts,
         });
     }
 
@@ -76,6 +78,11 @@ internal sealed class JournalTickFixture
     public GameStateStore GameState { get; }
 
     public HistoryBackfill History { get; }
+
+    public RegionFirstBook RegionFirsts { get; }
+
+    /// <summary>The work the region-first book handed off the tick, not yet run.</summary>
+    public List<Action> OffTick { get; } = [];
 
     public CommodityLedger CommodityLedger { get; } = new();
 

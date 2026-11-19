@@ -1,14 +1,18 @@
 using System.Globalization;
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Ships;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Logbook;
 
-/// <summary>Folds a window of journals into a <see cref="LogDigest"/> (Phase 33, item 2).</summary>
-public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
+/// <summary>
+/// Folds a window of journals into a <see cref="LogDigest"/> (Phase 33, item 2). A codex entry recorded in
+/// <paramref name="regionFirsts"/> is written as a possible first.
+/// </summary>
+public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger, RegionFirstBook? regionFirsts = null)
 {
     /// <summary>The most facts a digest carries.</summary>
     public const int MaxFacts = 150;
@@ -47,7 +51,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(range);
 
-        var fold = new Fold();
+        var fold = new Fold(regionFirsts);
         var journals = 0;
         var events = 0L;
 
@@ -264,7 +268,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
     }
 
     /// <summary>The accumulators.</summary>
-    private sealed class Fold
+    private sealed class Fold(RegionFirstBook? regionFirsts)
     {
         private readonly List<LogFact> _moments = [];
 
@@ -320,6 +324,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
         private bool _loadedOnFoot;
         private string? _suit;
         private LogSource? _lastPlace;
+        private string? _speaking;
 
         public string? Commander { get; private set; }
 
@@ -341,6 +346,29 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
 
             Commander ??= journalEvent.String("Name");
             FrontierId ??= journalEvent.String("FID");
+            _speaking = journalEvent.String("FID") ?? _speaking;
+        }
+
+        /// <summary>The codex line, naming a possible first when the event is the one a record was made from.</summary>
+        private string Codex(JournalEvent journalEvent)
+        {
+            var name = journalEvent.Named("Name");
+            var system = journalEvent.String("System");
+
+            if (_speaking is not { } frontierId
+                || journalEvent.Long("EntryID") is not { } entryId
+                || CodexLedger.RegionIdOf(journalEvent.String("Region")) is not { } regionId
+                || regionFirsts?.Find(frontierId, entryId, regionId) is not { } record
+                || record.At != journalEvent.Timestamp)
+            {
+                return $"Logged a codex entry: {name} in {system}.";
+            }
+
+            return record.First == CodexFirst.Galaxy
+                ? $"Logged a possible first in the galaxy: {name}, in {system}."
+                : record.Region is { } region
+                    ? $"Logged a possible region first: {name} in the {region}, in {system}."
+                    : $"Logged a possible region first: {name}, in {system}.";
         }
 
         public void Apply(JournalEvent journalEvent)
@@ -437,7 +465,7 @@ public sealed class LogDigestBuilder(IFileSystem fileSystem, ILogger logger)
                     Moment(
                         journalEvent,
                         LogFactKind.Exploration,
-                        $"Logged a codex entry: {journalEvent.Named("Name")} in {journalEvent.String("System")}.");
+                        Codex(journalEvent));
                     break;
 
                 case "SellExplorationData":

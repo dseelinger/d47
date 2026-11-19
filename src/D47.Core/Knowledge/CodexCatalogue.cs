@@ -31,9 +31,12 @@ public sealed class CodexTable
     private readonly Dictionary<long, CodexEntry> _entries;
     private readonly Dictionary<int, List<CodexRegionEntry>> _byRegion;
 
-    private CodexTable(Dictionary<long, CodexEntry> entries)
+    private const string DatePrefix = "# Table date: ";
+
+    private CodexTable(Dictionary<long, CodexEntry> entries, string? date)
     {
         _entries = entries;
+        Date = date;
         _byRegion = [];
 
         foreach (var entry in entries.Values)
@@ -53,9 +56,18 @@ public sealed class CodexTable
     public static CodexTable Parse(TextReader reader)
     {
         var entries = new Dictionary<long, CodexEntry>();
+        string? date = null;
 
         while (reader.ReadLine() is { } line)
         {
+            if (line.StartsWith(DatePrefix, StringComparison.Ordinal))
+            {
+                date ??= DateOnly.TryParseExact(line.AsSpan(DatePrefix.Length).Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
+                    ? parsed.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                    : null;
+                continue;
+            }
+
             if (line.Length == 0 || line[0] == '#')
             {
                 continue;
@@ -81,7 +93,7 @@ public sealed class CodexTable
             }
         }
 
-        return new CodexTable(entries);
+        return new CodexTable(entries, date);
     }
 
     public static CodexTable Parse(string tsv)
@@ -91,6 +103,9 @@ public sealed class CodexTable
     }
 
     public IReadOnlyCollection<CodexEntry> All => _entries.Values;
+
+    /// <summary>The first <c># Table date: yyyy-MM-dd</c> line, as written; null when there is none.</summary>
+    public string? Date { get; }
 
     /// <summary>The numbers of the regions with at least one entry.</summary>
     public IReadOnlyCollection<int> Regions => _byRegion.Keys;

@@ -12,6 +12,8 @@ Fixed: Asking for bodies with a given ring type, such as metallic rings, returns
 
 Added: On the approach to a scanned body, D47 warns out loud when its surface gravity is over 1 g, its surface temperature is 700 K or more, or both, on every approach. A body you have not scanned is read from the galaxy record, and says nothing if the record does not have it. The Landing hazards row in Settings › Your core › In flight turns it off, and so does "stop calling out landing hazards".
 
+Added: Each possible region or galaxy first is kept as a record, per Commander, in `data\region-firsts.json`, with where and when you logged it and the date of the table it was judged against. A later build whose table lists the region keeps it. On the first start, every earlier find the current table does not list is recorded. A Commander's log calls the entry a possible region first, or a possible first in the galaxy. The shipped codex table is refreshed from Canonn's reports.
+
 Changed: A codex entry the shipped table does not list for your region is a bigger moment. D47 now says the "may be a first" line for geology and anomaly, Guardian and gas giant entries as well as organics, says it ahead of the "Discovered" line, and says it in your core's own words. Stars and other planets still get no such line.
 
 Fixed: Asking which of your ships is strongest, fastest or best at something, such as "Which of my ships has the strongest shields?", gets an answer that compares the ships. It used to read out the carrier's position and the list of stored ships. Each ship in a comparison now carries its shield strength in megajoules, and D47 can rank your ships by it.

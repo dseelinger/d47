@@ -81,6 +81,8 @@ public sealed class JournalTick(JournalTick.Sources sources)
         public required LoreBook Lore { get; init; }
 
         public required LoreVisits LoreVisits { get; init; }
+
+        public required RegionFirstBook RegionFirsts { get; init; }
     }
 
     /// <summary>This tick's journal events, whichever Commander they are for.</summary>
@@ -229,6 +231,8 @@ public sealed class JournalTick(JournalTick.Sources sources)
         {
             sources.LoreVisits.Save();
         }
+
+        JudgeRegionFirsts();
     }
 
     /// <summary>
@@ -244,6 +248,16 @@ public sealed class JournalTick(JournalTick.Sources sources)
 
         _adopted = true;
         sources.GameState.RestoreLate();
+        JudgeRegionFirsts();
+    }
+
+    /// <summary>Records each Commander's new possible region firsts once their codex ledger is whole.</summary>
+    private void JudgeRegionFirsts()
+    {
+        foreach (var commander in sources.GameState.All)
+        {
+            sources.RegionFirsts.Observe(commander.Identity.FrontierId, commander.CodexLedger, CodexCatalogue.Table);
+        }
     }
 
     /// <summary>Shows each Commander queued on <see cref="Picks"/>; game state is written on the tick thread.</summary>

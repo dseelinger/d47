@@ -5,7 +5,7 @@ using D47.Core.Knowledge;
 
 namespace D47.Core.Journal;
 
-/// <summary>One <c>CodexEntry</c> event. <c>RegionId</c> is the codex region number, null when <c>Region</c> does not parse. <c>SubCategorySymbol</c> is the raw symbol, which does not change with the game's language. <c>Body</c> is the scanned body of a planet or gas giant entry, null when no single scan matches.</summary>
+/// <summary>One <c>CodexEntry</c> event. <c>RegionId</c> is the codex region number, null when <c>Region</c> does not parse. <c>SubCategorySymbol</c> is the raw symbol, which does not change with the game's language. <c>Body</c> is the scanned body of a planet or gas giant entry, null when no single scan matches. <c>Journal</c> is the event's journal line; <c>StarPos</c> is the system's position from the last arrival in it, null when that arrival was not folded.</summary>
 public sealed record CodexLogEntry(
     DateTimeOffset At,
     long EntryId,
@@ -21,7 +21,9 @@ public sealed record CodexLogEntry(
     bool IsNew,
     string? SubCategorySymbol = null,
     string? NameSymbol = null,
-    string? Body = null);
+    string? Body = null,
+    string? Journal = null,
+    StarPosition? StarPos = null);
 
 /// <summary>Entries logged in one region.</summary>
 public sealed record CodexRegionTotal(int? RegionId, int Count);
@@ -47,8 +49,8 @@ public sealed record CodexLedger
     /// <summary>The event names <see cref="Apply"/> reads, for callers that filter lines before parsing.</summary>
     public static readonly FrozenSet<string> Reads = FrozenSet.ToFrozenSet<string>(
     [
-        "CodexEntry", "Commander", "Fileheader", "LoadGame", "MultiSellExplorationData", "NewCommander",
-        "Scan", "SellExplorationData",
+        "CarrierJump", "CodexEntry", "Commander", "Fileheader", "FSDJump", "LoadGame", "Location",
+        "MultiSellExplorationData", "NewCommander", "Scan", "SellExplorationData",
     ], StringComparer.Ordinal);
 
     private const string RegionPrefix = "$Codex_RegionName_";
@@ -77,6 +79,9 @@ public sealed record CodexLedger
     private ImmutableList<ScannedBody> Recent { get; init; } = [];
 
     private bool Legacy { get; init; }
+
+    /// <summary>The system the last arrival named, and its position.</summary>
+    private (long? Address, StarPosition? Position) Arrived { get; init; }
 
     /// <summary>The codex region number in a <c>Region</c> value such as <c>$Codex_RegionName_18;</c>, or null.</summary>
     public static int? RegionIdOf(string? region)
@@ -147,7 +152,9 @@ public sealed record CodexLedger
             "Scan" => result.WithScan(journalEvent),
             "LoadGame" when journalEvent.StartsSession => result with { SessionStart = journalEvent.Timestamp },
             "SellExplorationData" or "MultiSellExplorationData" => result with { TripStart = journalEvent.Timestamp },
-            "CodexEntry" when journalEvent.Long("EntryID") is { } id => result with { Held = Held.Add(Settled(Entry(journalEvent, id), result.Recent)) },
+            "Location" or "FSDJump" or "CarrierJump" when journalEvent.String("StarSystem") is not null =>
+                result with { Arrived = (journalEvent.Long("SystemAddress"), StarPosition.Read(journalEvent.Raw)) },
+            "CodexEntry" when journalEvent.Long("EntryID") is { } id => result with { Held = Held.Add(Settled(Entry(journalEvent, id, Arrived), result.Recent)) },
             _ => result,
         };
     }
@@ -178,6 +185,7 @@ public sealed record CodexLedger
             IsWhole = true,
             Legacy = live.Legacy,
             Recent = live.Recent,
+            Arrived = live.Arrived.Address is null ? Arrived : live.Arrived,
         };
     }
 
@@ -232,7 +240,7 @@ public sealed record CodexLedger
     private static DateTimeOffset? Later(DateTimeOffset? a, DateTimeOffset? b) =>
         a is { } x && b is { } y ? (x > y ? x : y) : a ?? b;
 
-    private static CodexLogEntry Entry(JournalEvent e, long id) => new(
+    private static CodexLogEntry Entry(JournalEvent e, long id, (long? Address, StarPosition? Position) arrived) => new(
         e.Timestamp,
         id,
         CodexBodyName.Of(e.String("Name")) ?? e.Named("Name"),
@@ -246,5 +254,7 @@ public sealed record CodexLedger
         e.Double("Longitude"),
         e.Bool("IsNewEntry"),
         e.String("SubCategory"),
-        CodexBodyName.Of(e.String("Name")) is null ? null : e.String("Name"));
+        CodexBodyName.Of(e.String("Name")) is null ? null : e.String("Name"),
+        Journal: e.Raw.GetRawText(),
+        StarPos: arrived.Address is { } address && address == e.Long("SystemAddress") ? arrived.Position : null);
 }
