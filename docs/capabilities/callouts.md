@@ -1218,7 +1218,8 @@ For an organic entry the table has no report of in any region, it says "anywhere
 instead. Geology and anomaly, Guardian and gas giant entries get the region line only, and only when the
 table has a report of the entry in another region. It says nothing when the region is listed, for stars and
 other planets, for an entry you had already logged in that region, or for a repeat in the same session.
-The line cuts in ahead of other callouts and is said in your core's own words, keeping the entry, the
+A short rising fanfare plays just ahead of the line, whatever the Sound cues setting says; replace it with files in
+`data\audio\alerts\region-first\`. The line cuts in ahead of other callouts and is said in your core's own words, keeping the entry, the
 region and the "may be", and ending with the offer word for word. It waits until your codex history has
 loaded. The table is only as current as the build, so the line says "may be". The line itself sends
 nothing; a find leaves your machine only when you ask for it to be

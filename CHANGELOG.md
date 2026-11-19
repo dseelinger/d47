@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: A possible region or galaxy first is now announced with a short rising fanfare just ahead of the line. The Sound cues setting does not turn it off. Replace it with files in `data\audio\alerts\region-first\`.
+
 Added: A possible region or galaxy first now ends with "Say 'report it to Canonn' and I'll send it." Saying "report it to Canonn" sends the newest find you have not reported to Canonn's codex record: its journal line, the system, position and body, and your Commander name, so the find is credited to you. Each find is sent once, and nothing is sent unless you ask. Settings lists it under Privacy and egress as Region first reports. The local voices say Canonn as "cannon".
 
 Fixed: Asking for bodies with a given ring type, such as metallic rings, returns only bodies with that ring type. It used to return any ringed body.

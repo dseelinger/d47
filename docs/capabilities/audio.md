@@ -242,7 +242,7 @@ the **Audio folder** row, and at the foot of the **Your own audio** page, opens 
 data/audio/
   cues/<state>/        idle, listening, transcribing, thinking, speaking, answered, unsure, failed
   alerts/<alert>/      interdiction, piracy, bounty-hunter, under-fire, overheating,
-                       rival-territory, timer-elapsed
+                       rival-territory, timer-elapsed, region-first
   beds/                the loop under a working turn
   waits/               the loop under a page's wait
   music/<situation>/   ambience — see below

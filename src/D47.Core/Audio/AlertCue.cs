@@ -32,6 +32,9 @@ public enum AlertCue
 
     /// <summary>A timer or an alarm has gone off (Phase 24, "A timer says its own name").</summary>
     TimerElapsed,
+
+    /// <summary>A possible first for the region or the galaxy.</summary>
+    RegionFirst,
 }
 
 /// <summary>What each cue is called when it is written down rather than heard (#201).</summary>
@@ -47,6 +50,7 @@ public static class AlertCues
         AlertCue.Overheating => "[heat alarm]",
         AlertCue.RivalTerritory => "[territory alert]",
         AlertCue.TimerElapsed => "[timer chime]",
+        AlertCue.RegionFirst => "[region first fanfare]",
         _ => "[alert]",
     };
 }

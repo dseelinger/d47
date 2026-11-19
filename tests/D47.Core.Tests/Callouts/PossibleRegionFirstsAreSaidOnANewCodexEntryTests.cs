@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -83,6 +84,17 @@ public class PossibleRegionFirstsAreSaidOnANewCodexEntryTests
         Assert.Equal(
             "No Commander has reported Fonticulua Fluctus - Yellow anywhere. It may be a first in the galaxy. Say 'report it to Canonn' and I'll send it.",
             said.Text);
+    }
+
+    [Theory]
+    [InlineData(Unlisted)]
+    [InlineData(Unknown)]
+    public void AFanfarePlaysAheadOfTheRegionAndGalaxyLines(long id)
+    {
+        var line = Entry(id);
+        var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
+
+        Assert.Equal(AlertCue.RegionFirst, said.Cue);
     }
 
     [Fact]

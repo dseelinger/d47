@@ -1,3 +1,4 @@
+using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
@@ -59,7 +60,10 @@ public sealed class RegionFirstCallout : ICallout
             }
 
             yield return new Announcement(
-                $"{KeyPrefix}{entryId}.{regionId}", line, CalloutUrgency.Urgent);
+                $"{KeyPrefix}{entryId}.{regionId}", line, CalloutUrgency.Urgent)
+            {
+                Cue = AlertCue.RegionFirst,
+            };
         }
     }
 }

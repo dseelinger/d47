@@ -33,7 +33,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets")
 NOTES = {
     "A2": 110.00, "D3": 146.83, "E4": 329.63, "F#4": 369.99, "G4": 392.00,
     "A4": 440.00, "C5": 523.25, "D4": 293.66, "G5": 783.99, "E5": 659.26,
-    "D5": 587.33, "A5": 880.00,
+    "D5": 587.33, "A5": 880.00, "C6": 1046.50,
 }
 
 
@@ -248,6 +248,10 @@ def main():
     # It says "something finished" and nothing more. d47 speaks the name straight after, which is
     # why there is one clip here rather than a synthesised tone per timer.
     _write("alerts/timerelapsed.wav", _sequence([("A4", 0.10), ("D5", 0.10), ("A5", 0.26)], 0.52, peak=0.38))
+
+    # A possible region first. Rising like the timer chime, but four notes (C5, E5, G5, C6) ending
+    # on a ringing octave, louder and longer, at 0.90 s.
+    _write("alerts/regionfirst.wav", _sequence([("C5", 0.12), ("E5", 0.12), ("G5", 0.14), ("C6", 0.30)], 0.90, peak=0.55))
 
     # Beds loop for as long as the state lasts, so they are quiet, low, and seamless.
     # 440 carrier cycles and 3 AM cycles over 3.00 s.
