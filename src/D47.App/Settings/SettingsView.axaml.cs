@@ -395,7 +395,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         if (FirstExisting() is var opening and >= 0)
         {
-            ShowPlace(opening);
+            ShowPlace(opening, record: false);
         }
     }
 
@@ -985,8 +985,30 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         return strip;
     }
 
+    /// <summary>Raised with the id of the place the page is on after a place is shown, and whether the Commander moved there.</summary>
+    internal event Action<string, bool>? PlaceShown;
+
+    /// <summary>The id of the open place, or null before one is open.</summary>
+    internal string? OpenPlaceId =>
+        _tabPlaceId is null && ActiveSection >= 0 && ActiveSection < _sections.Count
+            ? _sections[ActiveSection].PlaceId
+            : null;
+
+    /// <summary>Shows a place the history returned to, without recording the move again.</summary>
+    internal void RestorePlace(string placeId)
+    {
+        var index = _sections.FindIndex(section => string.Equals(section.PlaceId, placeId, StringComparison.Ordinal));
+
+        if (index >= 0 && _sift.Places[index].Exists)
+        {
+            ShowPlace(index, record: false);
+        }
+    }
+
     /// <summary>Replaces the page with one place, filtered by the current query.</summary>
-    internal void ShowPlace(int index)
+    internal void ShowPlace(int index) => ShowPlace(index, record: true);
+
+    private void ShowPlace(int index, bool record)
     {
         if (_nav is not { } nav || index < 0 || index >= _sections.Count)
         {
@@ -1003,6 +1025,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         {
             Scroller.Offset = default;
         }
+
+        PlaceShown?.Invoke(_sections[index].PlaceId, record);
     }
 
     /// <summary>Opens the place the page was left on (#268).</summary>
@@ -1017,7 +1041,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
 
         if (index >= 0 && _sift.Places[index].Exists)
         {
-            ShowPlace(index);
+            ShowPlace(index, record: false);
         }
 
         _rememberingSection = true;

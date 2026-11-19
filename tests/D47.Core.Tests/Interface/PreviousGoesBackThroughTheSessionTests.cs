@@ -360,4 +360,44 @@ public class PreviousGoesBackThroughTheSessionTests
         Assert.Equal(100, steps);
         Assert.Equal("Assets:fleet>ship:1", Place(nav));
     }
+
+    /// <summary>A place inside Settings is a step: going back raises the place left, and the first place is only a baseline.</summary>
+    [Fact]
+    public void APlaceInsideATabComesBackAsAStep()
+    {
+        var nav = new PanelNavigator();
+        nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
+        nav.Register(PanelTab.Settings, new NavCrumb("settings", "Settings"));
+        nav.Select(PanelTab.Settings);
+
+        var restored = new List<(PanelTab Tab, string Place)>();
+        nav.PlaceRestored += (tab, place) => restored.Add((tab, place));
+
+        nav.SetPlace(PanelTab.Settings, "audio");
+        nav.SetPlace(PanelTab.Settings, "voices");
+        nav.SetPlace(PanelTab.Settings, "keys");
+
+        Assert.True(nav.Previous());
+        Assert.True(nav.Previous());
+        Assert.Equal([(PanelTab.Settings, "voices"), (PanelTab.Settings, "audio")], restored);
+
+        Assert.True(nav.Previous());
+        Assert.Equal(PanelTab.Transcript, nav.Tab);
+        Assert.Equal(2, restored.Count);
+    }
+
+    /// <summary>A place noted without recording, or set to what is showing, adds no step.</summary>
+    [Fact]
+    public void ANotedPlaceAddsNoStep()
+    {
+        var nav = new PanelNavigator();
+        nav.Register(PanelTab.Settings, new NavCrumb("settings", "Settings"));
+        nav.Select(PanelTab.Settings);
+
+        nav.SetPlace(PanelTab.Settings, "audio");
+        nav.SetPlace(PanelTab.Settings, "voices", record: false);
+        nav.SetPlace(PanelTab.Settings, "voices");
+
+        Assert.False(nav.CanGoPrevious);
+    }
 }

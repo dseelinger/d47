@@ -142,8 +142,14 @@ public sealed class PanelNavigator
     /// <summary>The most places <see cref="Previous"/> can go back through.</summary>
     private const int MostRemembered = 100;
 
+    /// <summary>Which place each tab is showing, for the tabs that have places inside them.</summary>
+    private readonly Dictionary<PanelTab, string> _places = [];
+
     /// <summary>Raised whenever the tab, the root or any trail changes.</summary>
     public event EventHandler? Changed;
+
+    /// <summary>Raised after <see cref="Previous"/> returns to a place inside a tab, with that tab and the place's id.</summary>
+    public event Action<PanelTab, string>? PlaceRestored;
 
     /// <summary>Which tab is showing.</summary>
     public PanelTab Tab { get; private set; } = PanelTab.Transcript;
@@ -606,8 +612,38 @@ public sealed class PanelNavigator
         _current[visit.Tab] = visit.RootKey;
         Tab = visit.Tab;
 
+        if (visit.Place is { } place)
+        {
+            _places[visit.Tab] = place;
+        }
+
         Settle();
         Raise();
+
+        if (visit.Place is { } restored)
+        {
+            PlaceRestored?.Invoke(visit.Tab, restored);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Says which place inside a tab is showing. A change from a place already showing is a move
+    /// <see cref="Previous"/> can reverse; the first place, or <paramref name="record"/> false, only notes where
+    /// the tab is.
+    /// </summary>
+    public bool SetPlace(PanelTab tab, string placeId, bool record = true)
+    {
+        if (_places.TryGetValue(tab, out var showing) && showing == placeId)
+        {
+            return false;
+        }
+
+        var before = record && showing is not null ? Here() : null;
+
+        _places[tab] = placeId;
+        Remember(before);
         return true;
     }
 
@@ -638,7 +674,9 @@ public sealed class PanelNavigator
 
     /// <summary>Where the panel is now, without a chooser, or null when the showing tab has no root.</summary>
     private Visit? Here() =>
-        Mutable() is { } trail ? new Visit(Tab, trail[0].Key, [.. trail.Where(crumb => !crumb.Modal)]) : null;
+        Mutable() is { } trail
+            ? new Visit(Tab, trail[0].Key, [.. trail.Where(crumb => !crumb.Modal)], _places.GetValueOrDefault(Tab))
+            : null;
 
     /// <summary>Records a move away from <paramref name="before"/>; a move that left the place as it was records nothing.</summary>
     private void Remember(Visit? before)
@@ -760,14 +798,15 @@ public sealed class PanelNavigator
 
     private sealed record SubPage(NavCrumb Page, Func<bool>? CanOpen);
 
-    /// <summary>One place the panel was: a tab, its root and that root's trail.</summary>
-    private sealed record Visit(PanelTab Tab, string RootKey, IReadOnlyList<NavCrumb> Trail)
+    /// <summary>One place the panel was: a tab, its root, that root's trail and the place inside the tab, if it has one.</summary>
+    private sealed record Visit(PanelTab Tab, string RootKey, IReadOnlyList<NavCrumb> Trail, string? Place = null)
     {
         /// <summary>The same place by keys, whatever the crumbs' words.</summary>
         public bool Same(Visit? other) =>
             other is not null
             && other.Tab == Tab
             && other.RootKey == RootKey
+            && other.Place == Place
             && other.Trail.Select(crumb => crumb.Key).SequenceEqual(Trail.Select(crumb => crumb.Key), StringComparer.Ordinal);
     }
 }

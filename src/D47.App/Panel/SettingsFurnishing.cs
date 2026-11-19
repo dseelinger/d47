@@ -26,6 +26,14 @@ internal sealed class SettingsFurnishing(IPanelTabHost host)
         Reveal = reveal;
         _build = build;
 
+        host.Nav.PlaceRestored += (tab, placeId) =>
+        {
+            if (tab == PanelTab.Settings && Page is D47.App.Settings.SettingsView view)
+            {
+                view.RestorePlace(placeId);
+            }
+        };
+
         var roots = new List<NavCrumb>
         {
             new(Root, "Settings")
@@ -48,13 +56,33 @@ internal sealed class SettingsFurnishing(IPanelTabHost host)
             crumb => crumb.Key switch
             {
                 PhrasesPage.RootKey when phrases is not null => _phrases ??= phrases(),
-                _ => Page = Take(build),
+                _ => Adopt(Page = Take(build)),
             },
             [.. roots]);
     }
 
     /// <summary>The settings page, built now if the tab has not drawn it yet; null where the surface has none.</summary>
-    public Control? Built() => Page ??= _unplaced = _build?.Invoke();
+    public Control? Built() => Page ??= _build is null ? null : Adopt(_unplaced = _build());
+
+    private Control? _adopted;
+
+    /// <summary>Tells the navigator which place the settings page is on, now and as the Commander moves it.</summary>
+    private Control Adopt(Control page)
+    {
+        if (page is D47.App.Settings.SettingsView view && !ReferenceEquals(page, _adopted))
+        {
+            _adopted = page;
+
+            if (view.OpenPlaceId is { } open)
+            {
+                host.Nav.SetPlace(PanelTab.Settings, open, record: false);
+            }
+
+            view.PlaceShown += (placeId, record) => host.Nav.SetPlace(PanelTab.Settings, placeId, record);
+        }
+
+        return page;
+    }
 
     private Control Take(Func<Control> build)
     {
