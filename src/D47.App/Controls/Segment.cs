@@ -33,6 +33,9 @@ public sealed class Segment : RovingChoice
     /// <summary>Presents a label built in code as it is, instead of through the theme's uppercase text template.</summary>
     private static readonly Avalonia.Controls.Templates.FuncDataTemplate<Control> Itself = new((control, _) => control);
 
+    /// <summary>Raised with the option's index when the option already chosen is pressed again.</summary>
+    public event EventHandler<int>? Reselected;
+
     private readonly List<(TextBlock Line, ChoiceTone Tone)?> _statusLines = [];
     private readonly List<IDisposable> _statusInk = [];
     public IReadOnlyList<ChoiceStatus?> Statuses
@@ -91,12 +94,26 @@ public sealed class Segment : RovingChoice
 
             _statusLines.Add(line is null ? null : (line, status!.Tone));
 
+            var changed = false;
+
+            button.Click += (_, _) =>
+            {
+                if (!changed && index == SelectedIndex)
+                {
+                    Reselected?.Invoke(this, index);
+                }
+
+                changed = false;
+            };
+
             button.IsCheckedChanged += (_, _) =>
             {
                 if (Syncing || button.IsChecked != true)
                 {
                     return;
                 }
+
+                changed = true;
 
                 // A press that reaches a disabled option, as the headset's can, puts the choice back.
                 if (!button.IsEnabled)

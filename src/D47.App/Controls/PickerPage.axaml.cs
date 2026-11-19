@@ -100,6 +100,18 @@ public sealed record PickerRequest
 
     /// <summary>What the accept button says.</summary>
     public string AcceptText { get; init; } = "Use this";
+
+    /// <summary>A mono figure at the right of a row, or null for none.</summary>
+    public Func<string, string?>? AsideOf { get; init; }
+
+    /// <summary>Whether a row's name and second line are drawn in Cyan.</summary>
+    public Func<string, bool>? IsMarked { get; init; }
+
+    /// <summary>The whole text of the default button, in place of "Use the default (<see cref="DefaultDisplay"/>)".</summary>
+    public string? DefaultText { get; init; }
+
+    /// <summary>Rows listed at a time with Previous and Next beneath, or null to list every row.</summary>
+    public int? PageSize { get; init; }
 }
 
 /// <summary>An ordering of a picker's choices, A–Z by <paramref name="Key"/>.</summary>
@@ -195,6 +207,12 @@ public sealed class PickerChoice : INotifyPropertyChanged
 
     /// <summary>The second line under the label, or null.</summary>
     public string? Detail { get; init; }
+
+    /// <summary>The mono figure at the right of the row, or null.</summary>
+    public string? Aside { get; init; }
+
+    /// <summary>Whether the name and second line are drawn in Cyan.</summary>
+    public bool Marked { get; init; }
 
     /// <summary>Whether the row belongs to the row above it.</summary>
     public bool Nested { get; init; }
@@ -381,6 +399,13 @@ public partial class PickerPage : UserControl
     /// <summary>The rows currently listed, in the order they are drawn.</summary>
     private IReadOnlyList<PickerChoice> _visible = [];
 
+    /// <summary>How many rows match before the page is cut, and the page shown when <see cref="PickerRequest.PageSize"/> is set.</summary>
+    private int _matched;
+
+    private PickerChoice[] _filtered = [];
+
+    private int _page;
+
     /// <summary>Whether the page has answered, so it answers once.</summary>
     private bool _answered;
 
@@ -448,9 +473,10 @@ public partial class PickerPage : UserControl
         AcceptButton.Content = _request.AcceptText;
 
         // Bracketed here because the row hands over the bare phrase (SettingRow.BareDefaultFor).
-        var useDefault = _request.Several
-            ? _request.DefaultDisplay
-            : $"Use the default ({_request.DefaultDisplay})";
+        var useDefault = _request.DefaultText
+            ?? (_request.Several
+                ? _request.DefaultDisplay
+                : $"Use the default ({_request.DefaultDisplay})");
 
         DefaultButtonText.Text = useDefault;
         ToolTip.SetTip(DefaultButton, useDefault);
@@ -475,6 +501,8 @@ public partial class PickerPage : UserControl
                 StatusText = _request.Status?.Invoke(value)?.Text.ToUpperInvariant(),
                 StatusTone = _request.Status?.Invoke(value)?.Tone ?? ChoiceTone.Grey,
                 Detail = _request.Clips?.Detail?.Invoke(value) ?? _request.DetailOf?.Invoke(value),
+                Aside = _request.AsideOf?.Invoke(value),
+                Marked = _request.IsMarked?.Invoke(value) == true,
                 Nested = _request.IsNested?.Invoke(value) == true,
                 Clip = _request.Clips?.Clip(value),
                 InUse = !_request.Several && string.Equals(value, _request.Current, StringComparison.OrdinalIgnoreCase),
@@ -507,6 +535,15 @@ public partial class PickerPage : UserControl
         }
 
         ApplyFilter();
+
+        // A paged list opens on the page holding the current value.
+        if (_request.PageSize is { } size && !_request.Several && _request.Current is { } current
+            && Array.FindIndex(_filtered, choice => string.Equals(choice.Value, current, StringComparison.OrdinalIgnoreCase)) is >= 0 and var at
+            && at / size != _page)
+        {
+            _page = at / size;
+            ApplyFilter();
+        }
 
         // The current value is highlighted, so Enter with no typing keeps it.
         Choices.SelectedIndex = _request.Several || _request.Current is null
@@ -804,6 +841,15 @@ public partial class PickerPage : UserControl
         }
 
         matches = Grouped(matches);
+        _matched = matches.Length;
+        _filtered = matches;
+
+        if (_request.PageSize is { } size && !_request.Several)
+        {
+            _page = D47.App.Panel.FactionModel.ClampPage(_page, matches.Length, size);
+            matches = [.. matches.Skip(_page * size).Take(size)];
+        }
+
         _visible = matches;
 
         // The same row objects, filtered — never new ones.
@@ -813,10 +859,12 @@ public partial class PickerPage : UserControl
         EmptyHint.IsVisible = matches.Length == 0 && !_grid;
 
         MatchCount.Inlines!.Clear();
-        var number = new Run(matches.Length.ToString());
+        var number = new Run(_matched.ToString());
         number.Bind(TextElement.ForegroundProperty, this.GetResourceObservable("D47.White"));
         MatchCount.Inlines.Add(number);
         MatchCount.Inlines.Add(new Run($" OF {_all.Count} {_request.ChoiceNoun.ToUpperInvariant()}"));
+
+        ShowPager();
 
         EmptyHint.Text = _request.Choices.Count == 0
             ? _request.WhyEmpty
@@ -981,6 +1029,7 @@ public partial class PickerPage : UserControl
     /// <summary>Typing re-filters and then puts the highlight back on something visible (#190).</summary>
     private void OnFilterChanged(object? sender, TextChangedEventArgs e)
     {
+        _page = 0;
         ApplyFilter();
 
         if (!string.IsNullOrEmpty(FilterBox.Text))
@@ -991,7 +1040,31 @@ public partial class PickerPage : UserControl
 
     private void OnFacetChanged(object? sender, EventArgs e)
     {
+        _page = 0;
         ApplyFilter();
+        HighlightSomethingVisible();
+    }
+
+    /// <summary>Shows the page readout and Previous and Next when the request pages its rows and more than one page matches.</summary>
+    private void ShowPager()
+    {
+        var paged = _request.PageSize is { } size && !_request.Several && _matched > size;
+
+        Pager.IsVisible = paged;
+
+        if (paged)
+        {
+            PagerReadout.Text = D47.App.Panel.FactionModel.PageReadout(_page, _matched, _request.PageSize!.Value);
+            PagerPrevious.IsEnabled = _page > 0;
+            PagerNext.IsEnabled = D47.App.Panel.FactionModel.ClampPage(_page + 1, _matched, _request.PageSize.Value) > _page;
+        }
+    }
+
+    private void OnPagerClick(object? sender, RoutedEventArgs e)
+    {
+        _page += ReferenceEquals(sender, PagerNext) ? 1 : -1;
+        ApplyFilter();
+        Choices.SelectedIndex = -1;
         HighlightSomethingVisible();
     }
 

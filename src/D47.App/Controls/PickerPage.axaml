@@ -86,6 +86,25 @@
       </Button>
     </DockPanel>
 
+    <DockPanel x:Name="Pager" DockPanel.Dock="Bottom" Margin="0,8,0,0" IsVisible="False">
+      <Button x:Name="PagerNext"
+              DockPanel.Dock="Right"
+              Content="NEXT ►"
+              Margin="2,0,0,0"
+              MinHeight="44"
+              Click="OnPagerClick" />
+      <Button x:Name="PagerPrevious"
+              DockPanel.Dock="Right"
+              Content="◄ PREVIOUS"
+              MinHeight="44"
+              Click="OnPagerClick" />
+      <TextBlock x:Name="PagerReadout"
+                 VerticalAlignment="Center"
+                 FontFamily="{StaticResource D47.Font.Mono}"
+                 FontSize="{StaticResource D47.Type.MetaSmall}"
+                 Foreground="{DynamicResource D47.Grey}" />
+    </DockPanel>
+
     <!-- Under a Chatterbox list, what choosing the highlighted voice fetches and who speaks meanwhile. -->
     <TextBlock x:Name="ChoosingLine"
                DockPanel.Dock="Bottom"
@@ -147,8 +166,14 @@
         <Style Selector="TextBlock.detail">
           <Setter Property="Foreground" Value="{DynamicResource D47.Grey}" />
         </Style>
+        <Style Selector="TextBlock.aside">
+          <Setter Property="Foreground" Value="{DynamicResource D47.A}" />
+        </Style>
+        <Style Selector="TextBlock.marked, TextBlock.detail.marked">
+          <Setter Property="Foreground" Value="{DynamicResource D47.Cyan}" />
+        </Style>
         <!-- On the accent fill of the chosen row, its state word, size, tags and detail are Brown. -->
-        <Style Selector="ListBoxItem:selected TextBlock.status, ListBoxItem:selected TextBlock.tag, ListBoxItem:selected TextBlock.detail, ListBoxItem:selected TextBlock.head">
+        <Style Selector="ListBoxItem:selected TextBlock.status, ListBoxItem:selected TextBlock.aside, ListBoxItem:selected TextBlock.marked, ListBoxItem:selected TextBlock.tag, ListBoxItem:selected TextBlock.detail, ListBoxItem:selected TextBlock.head">
           <Setter Property="Foreground" Value="{DynamicResource D47.Brown}" />
         </Style>
       </ListBox.Styles>
@@ -209,6 +234,14 @@
                        FontFamily="{StaticResource D47.Font.Mono}"
                        FontSize="{StaticResource D47.Type.MetaSmall}" />
             <TextBlock DockPanel.Dock="Right"
+                       Classes="aside"
+                       Text="{Binding Aside}"
+                       IsVisible="{Binding Aside, Converter={x:Static ObjectConverters.IsNotNull}}"
+                       Margin="12,0,0,0"
+                       VerticalAlignment="Center"
+                       FontFamily="{StaticResource D47.Font.Mono}"
+                       FontSize="{StaticResource D47.Type.MetaSmall}" />
+            <TextBlock DockPanel.Dock="Right"
                        Classes="status"
                        Classes.yellow="{Binding StatusIsYellow}"
                        Classes.white="{Binding StatusIsWhite}"
@@ -242,6 +275,7 @@
                            IsVisible="{Binding Nested}"
                            VerticalAlignment="Center" />
                 <TextBlock Text="{Binding Text}"
+                           Classes.marked="{Binding Marked}"
                            VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" />
                 <TextBlock Classes="tag"
@@ -260,6 +294,7 @@
                            LetterSpacing="0.55" />
               </StackPanel>
               <TextBlock Classes="detail"
+                         Classes.marked="{Binding Marked}"
                          Margin="{Binding Indent}"
                          Text="{Binding Detail}"
                          IsVisible="{Binding Detail, Converter={x:Static ObjectConverters.IsNotNull}}"

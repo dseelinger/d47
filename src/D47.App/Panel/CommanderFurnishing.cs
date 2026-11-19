@@ -303,7 +303,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             : CodexPage.PictureOf(crumb.Key) is { } picture
             ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
             : CodexPage.CatalogueNodeOf(crumb.Key) is { } node
-            ? _codexCatalogue = new CodexCataloguePage(state, history, catalogue, D47.Core.Knowledge.CodexCatalogue.Tree.Node(node) ?? D47.Core.Knowledge.CodexCatalogue.Tree.Root, headset, host.Nav, pictures, host.ColumnWidths, host.ColumnArrangements, () => host.BodySearch, host.Copy, period: choice, now: now, regionFirsts: regionFirsts)
+            ? _codexCatalogue = new CodexCataloguePage(state, history, catalogue, D47.Core.Knowledge.CodexCatalogue.Tree.Node(node) ?? D47.Core.Knowledge.CodexCatalogue.Tree.Root, headset, host.Nav, pictures, host.ColumnWidths, host.ColumnArrangements, () => host.BodySearch, host.Copy, period: choice, now: now, regionFirsts: regionFirsts, prompts: host.Prompts)
             : CodexPage.IsPossibleFirsts(crumb.Key)
             ? _codexPossibleFirsts = new CodexPossibleFirstsPage(state, regionFirsts, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements, host.Copy, press)
             : CodexPage.IsDiscoveries(crumb.Key)

@@ -10,6 +10,7 @@ public sealed class CodexCatalogueChoice
     private readonly Dictionary<string, int> _segments = new(StringComparer.Ordinal);
     private CodexKindStatus _status = CodexKindStatus.All;
     private bool _here;
+    private int? _other;
 
     public CodexKindStatus Status
     {
@@ -21,10 +22,33 @@ public sealed class CodexCatalogueChoice
     public bool Here
     {
         get => _here;
-        set => Set(ref _here, value);
+        set
+        {
+            Set(ref _here, value);
+
+            if (value)
+            {
+                Set(ref _other, null);
+            }
+        }
     }
 
-    public bool IsDefault => _status == CodexKindStatus.All && !_here;
+    /// <summary>A region chosen from the picker that is not the Commander's; null for none.</summary>
+    public int? Other
+    {
+        get => _other;
+        set
+        {
+            Set(ref _other, value);
+
+            if (value is not null)
+            {
+                Set(ref _here, false);
+            }
+        }
+    }
+
+    public bool IsDefault => _status == CodexKindStatus.All && !_here && _other is null;
 
     /// <summary>Changes whenever a value does, so a page can tell another page changed it.</summary>
     public long Version { get; private set; }
@@ -42,6 +66,7 @@ public sealed class CodexCatalogueChoice
     {
         _status = CodexKindStatus.All;
         _here = false;
+        _other = null;
         Version++;
     }
 

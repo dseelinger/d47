@@ -132,13 +132,19 @@ public static class FactionModel
         (shown == all ? $"{all} systems" : $"{shown} of {all} systems").ToUpperInvariant();
 
     /// <summary>The page index kept within the pages <paramref name="total"/> rows fill.</summary>
-    public static int ClampPage(int page, int total) => Math.Clamp(page, 0, Math.Max(0, (total - 1) / PageSize));
+    public static int ClampPage(int page, int total) => ClampPage(page, total, PageSize);
+
+    /// <summary>The page index kept within the pages <paramref name="total"/> rows fill at <paramref name="size"/> to a page.</summary>
+    public static int ClampPage(int page, int total, int size) => Math.Clamp(page, 0, Math.Max(0, (total - 1) / size));
 
     /// <summary>"1–25 of 590".</summary>
-    public static string PageReadout(int page, int total) =>
+    public static string PageReadout(int page, int total) => PageReadout(page, total, PageSize);
+
+    /// <summary>"1–25 of 590" at <paramref name="size"/> to a page.</summary>
+    public static string PageReadout(int page, int total, int size) =>
         total == 0
             ? string.Empty
-            : $"{page * PageSize + 1}–{Math.Min(total, (page + 1) * PageSize)} of {total}";
+            : $"{page * size + 1}–{Math.Min(total, (page + 1) * size)} of {total}";
 
     private static string Plural(long count, string unit) => $"{count} {unit}{(count == 1 ? string.Empty : "s")}";
 }

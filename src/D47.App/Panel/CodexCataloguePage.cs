@@ -41,6 +41,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
     private readonly CodexChoice? _period;
     private readonly Func<DateTimeOffset>? _now;
     private readonly RegionFirstBook? _regionFirsts;
+    private readonly PanelPrompts? _prompts;
     private readonly CodexThumbnails? _thumbs;
     private readonly CodexCatalogueFilters _filters;
     private readonly IReadOnlyList<CodexNode> _segmentNodes;
@@ -79,8 +80,10 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
         CodexTree? tree = null,
         CodexChoice? period = null,
         Func<DateTimeOffset>? now = null,
-        RegionFirstBook? regionFirsts = null)
+        RegionFirstBook? regionFirsts = null,
+        PanelPrompts? prompts = null)
     {
+        _prompts = prompts;
         _period = period;
         _now = now;
         _regionFirsts = regionFirsts;
@@ -98,7 +101,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
         _thumbs = pictures is null ? null : new CodexThumbnails(pictures);
         _thumbs?.Refresh();
 
-        _filters = new CodexCatalogueFilters(choice, Here);
+        _filters = new CodexCatalogueFilters(choice, Here, prompts is null ? null : ChooseRegion);
         _filters.Changed += (_, _) =>
         {
             _groupPage = 0;
@@ -179,6 +182,40 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
     /// <summary>The codex region of the Commander's position; null when it is not known.</summary>
     private int? Here() =>
         _state()?.Location.StarPos is { } position && GalacticRegions.Find(position) is { } name ? GalacticRegions.IdOf(name) : null;
+
+    /// <summary>Opens the Region page over this one; Use this counts in the region chosen and Back changes nothing.</summary>
+    private void ChooseRegion()
+    {
+        var here = Here();
+        var request = CodexRegionPicker.Request(_state()?.CodexLedger ?? CodexLedger.None, _tree, here, _filters.Scope, _headset);
+
+        _prompts!.Pick(
+            CodexRegionPicker.Key,
+            CodexRegionPicker.Word,
+            request,
+            result =>
+            {
+                if (result.Value is null)
+                {
+                    _choice.Here = true;
+                }
+                else if (int.TryParse(result.Value, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var id))
+                {
+                    if (id == here)
+                    {
+                        _choice.Here = true;
+                    }
+                    else
+                    {
+                        _choice.Other = id;
+                    }
+                }
+
+                _groupPage = 0;
+                _kindPage = 0;
+                Draw();
+            });
+    }
 
     /// <summary>Whether this is the Codex root, which carries the Possible firsts and Regions rows under its tables.</summary>
     private bool AtRoot => _node.Parent is null && _period is not null && _now is not null;
