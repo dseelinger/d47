@@ -968,6 +968,9 @@
 
   </DockPanel>
 
+  <!-- A live possible first, over mini's whole text area for its 60 seconds; the indicator and trail stay on top. -->
+  <panel:RegionFirstReadout x:Name="RegionFirstReadout" IsVisible="False" />
+
   <!-- Mini's indicator: 3px in from the top-left of the text area, outside the frame's margins. -->
   <controls:CommsIndicator x:Name="CommsMini"
                            Compact="True"

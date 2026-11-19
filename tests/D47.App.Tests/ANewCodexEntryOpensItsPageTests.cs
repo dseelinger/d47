@@ -116,6 +116,43 @@ public class ANewCodexEntryOpensItsPageTests
         Assert.Equal(PanelTab.Transcript, nav.Tab);
     }
 
+    private static CodexFirstSeen First(long entryId, string name) =>
+        new(entryId, 18, name, "Inner Orion Spur", D47.Core.Knowledge.CodexFirst.Region, "Wregoe AA-A d1", 7, 5, DateTimeOffset.Parse("2026-10-27T09:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
+
+    [Fact]
+    public void APossibleFirstOpensItsPageWithTheSettingOff()
+    {
+        var nav = Surface();
+
+        Route((nav, null)).OpenDiscovered([Discovery(Entry, "Anemone")], first: false, enabled: false, First(Entry, "Anemone"));
+
+        Assert.Equal(CodexPage.EntryCrumb(18, Entry, "Anemone").Key, nav.Trail[^1].Key);
+    }
+
+    [Fact]
+    public void ThePossibleFirstOpensRatherThanALaterPlainEntry()
+    {
+        var nav = Surface();
+
+        Route((nav, null)).OpenDiscovered(
+            [Discovery(Entry, "Anemone"), Discovery(Entry + 1, "Bark Mound")],
+            first: false,
+            enabled: true,
+            First(Entry, "Anemone"));
+
+        Assert.Equal(CodexPage.EntryCrumb(18, Entry, "Anemone").Key, nav.Trail[^1].Key);
+    }
+
+    [Fact]
+    public void APossibleFirstInTheReplayedBacklogMovesNothing()
+    {
+        var nav = Surface();
+
+        Route((nav, null)).OpenDiscovered([Discovery(Entry, "Anemone")], first: true, enabled: false, First(Entry, "Anemone"));
+
+        Assert.Equal(PanelTab.Transcript, nav.Tab);
+    }
+
     [Fact]
     public void ASurfaceHoldingAModalPageStaysAndTheOtherMoves()
     {

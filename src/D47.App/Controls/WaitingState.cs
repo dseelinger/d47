@@ -64,7 +64,8 @@ public sealed class WaitingState : StackPanel
     private int _step;
     private int _beats;
 
-    public WaitingState(WaitForm form = WaitForm.Inline, string? sentence = null, Func<bool>? animated = null)
+    /// <summary>A mark in <paramref name="form"/>; <paramref name="cellSize"/>, when given, is the cells' side in pixels in place of the form's own.</summary>
+    public WaitingState(WaitForm form = WaitForm.Inline, string? sentence = null, Func<bool>? animated = null, double? cellSize = null)
     {
         _form = form;
         _animated = animated ?? AnimationEffects.AreOn;
@@ -105,7 +106,7 @@ public sealed class WaitingState : StackPanel
         ThemeInk.Bind(this, TrailProperty, ThemeManager.LineKey);
         ThemeInk.Bind(this, RestProperty, ThemeManager.TileKey);
 
-        SizeCells(form == WaitForm.Body ? 12 : 6);
+        SizeCells(cellSize ?? (form == WaitForm.Body ? 12 : 6));
         SetSentence(sentence);
         Paint();
     }

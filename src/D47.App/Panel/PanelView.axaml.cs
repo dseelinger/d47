@@ -356,6 +356,7 @@ public partial class PanelView : UserControl, IPanelTabHost
                 ApplyMicrophone();
                 ApplyAskHint();
                 ApplyAudioReadout();
+                ApplyRegionFirst();
                 ApplyStoryReadout();
                 ApplyBindingConflicts();
             }
@@ -494,6 +495,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
             // The read-out only hides the panes, so the chrome puts them back when the playback ends.
             case nameof(PanelViewModel.StoryPlayback):
+            case nameof(PanelViewModel.RegionFirst):
                 Dispatcher.UIThread.Post(ApplyChrome);
                 return;
 
@@ -810,10 +812,50 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Whether mini is showing the story playback read-out.</summary>
     private bool StoryReadoutShowing => Mode == PanelMode.Mini && _bound?.StoryPlayback == true && _bound.StoryPlayer is not null;
 
-    /// <summary>Shows the story playback read-out and its progress line on a mini surface while a run plays.</summary>
+    /// <summary>Whether mini is showing a live possible first: one has appeared and its time has not run out.</summary>
+    private bool RegionFirstShowing =>
+        Mode == PanelMode.Mini && _bound?.RegionFirst is { } moment && _bound.Clock.GetUtcNow() < moment.Until;
+
+    /// <summary>Shows the possible first's read-out over mini's text area while its time runs.</summary>
+    private void ApplyRegionFirst()
+    {
+        var show = RegionFirstShowing;
+
+        RegionFirstReadout.IsVisible = show;
+
+        if (show)
+        {
+            DrawRegionFirst();
+        }
+        else
+        {
+            RegionFirstReadout.Clear();
+        }
+    }
+
+    private bool DrawRegionFirst() =>
+        _bound?.RegionFirst is { } moment
+        && RegionFirstReadout.Draw(moment, _bound.Clock.GetUtcNow(), _commander.Press, Classes.Contains("headset"), _currentSystem?.Invoke());
+
+    /// <summary>
+    /// Shows or takes down the possible first's read-out, and redraws its line and press, from the host's tick; true
+    /// when anything drawn changed, which is once a second while it shows.
+    /// </summary>
+    public bool TickRegionFirst()
+    {
+        if (RegionFirstShowing != RegionFirstReadout.IsVisible)
+        {
+            ApplyChrome();
+            return true;
+        }
+
+        return RegionFirstReadout.IsVisible && DrawRegionFirst();
+    }
+
+    /// <summary>Shows the story playback read-out and its progress line on a mini surface while a run plays, unless a possible first is over it.</summary>
     private void ApplyStoryReadout()
     {
-        var show = StoryReadoutShowing;
+        var show = StoryReadoutShowing && !RegionFirstReadout.IsVisible;
 
         StoryReadout.IsVisible = show;
         StoryReadoutProgress.IsVisible = show;
@@ -2576,6 +2618,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         TranscriptPane.IsVisible = transcript && !modal && !miniStory;
         PagePane.IsVisible = !transcript && !modal && !miniStory;
 
+        ApplyRegionFirst();
         ApplyStoryReadout();
         ApplyBindingConflicts();
 

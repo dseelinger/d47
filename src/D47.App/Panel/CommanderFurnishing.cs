@@ -272,6 +272,9 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         DeclareLedger(CreditsPage.PageKey, "Credits");
     }
 
+    /// <summary>This surface's report press, once <see cref="EnableCodex"/> has been given the book and the tools.</summary>
+    public RegionFirstPress? Press { get; private set; }
+
     public void EnableCodex(
         Func<D47.Core.Journal.CommanderGameState?> state,
         Func<D47.Core.Journal.HistoryState> history,
@@ -290,6 +293,8 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
                 state,
                 host.Model?.WaitSound)
             : null;
+
+        Press = press;
 
         _codexBuild = crumb => CodexPage.EntryOf(crumb.Key) is { } entry
             ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav, bodySearch: () => host.BodySearch, copy: host.Copy, waitSound: host.Model?.WaitSound, regionFirsts: regionFirsts, press: press)

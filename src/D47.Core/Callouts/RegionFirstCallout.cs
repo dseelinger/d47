@@ -35,9 +35,7 @@ public sealed class RegionFirstCallout : ICallout
             }
 
             if (context.IsPriming
-                || context.State?.CodexLedger is not { IsWhole: true } ledger
-                || ledger.Entries.Any(entry =>
-                    entry.EntryId == entryId && entry.RegionId == regionId && entry.At < journalEvent.Timestamp)
+                || CodexFirstSeen.Of(journalEvent, context.State?.CodexLedger, Table()) is not { } seen
                 || journalEvent.String("Name_Localised") is not { Length: > 0 } name)
             {
                 continue;
@@ -47,7 +45,7 @@ public sealed class RegionFirstCallout : ICallout
 
             string? line;
 
-            switch (CodexFirsts.Judge(Table(), entryId, regionId, journalEvent.String("SubCategory")))
+            switch (seen.First)
             {
                 case CodexFirst.Galaxy:
                     line = $"No Commander has reported {name} anywhere. It may be a first in the galaxy. {RegionFirstReporting.Offer}";

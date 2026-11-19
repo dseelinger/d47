@@ -4154,9 +4154,21 @@ public sealed class AppHost : IDisposable
         // The cores the Commander wrote, on the tick like every other store.
         tick.Add("own cores", _ => services.OwnPersonas.Poll());
 
-        // After "journal"; the move is posted to each surface's own thread, so the tick does not wait.
+        // After "journal"; the move and a possible first's read-out are posted to the UI thread, so the tick does not wait.
         tick.Add("codex entry page", context =>
-            host.PanelRouting.OpenDiscovered(feed.Arrived, context.IsFirst, settings.Current.Ui.OpenNewCodexEntries));
+        {
+            var commander = gameState.Active;
+            var seen = context.IsFirst ? null : D47.Core.Journal.CodexFirstSeen.Newest(feed.Arrived, commander?.CodexLedger, D47.Core.Knowledge.CodexCatalogue.Table);
+
+            host.PanelRouting.OpenDiscovered(feed.Arrived, context.IsFirst, settings.Current.Ui.OpenNewCodexEntries, seen);
+
+            if (seen is not null)
+            {
+                var body = seen is { SystemAddress: { } address, BodyId: { } bodyId } ? commander?.Scans.For(address, bodyId)?.BodyName : null;
+
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => host.Panel.ShowRegionFirst(seen, body));
+            }
+        });
 
         tick.Add("core absences", context => host.Absences.Observe(feed.Arrived, context.IsFirst, host.Personas.Current.Id));
 

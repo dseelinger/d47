@@ -158,12 +158,24 @@ public sealed class PanelRouting(
     public void Open(PageRef page) => PageTrail.OpenEverywhere(page, _surfaces, fleet, PromptHolds);
 
     /// <summary>
-    /// Opens the page of the last new codex entry among <paramref name="arrived"/> on every surface. The first
-    /// tick replays the backlog and moves nothing.
+    /// Opens on every surface the page of <paramref name="newestFirst"/>, the last possible first among
+    /// <paramref name="arrived"/>, whether or not <paramref name="enabled"/>; with none, the page of the last new codex
+    /// entry while <paramref name="enabled"/>. The first tick replays the backlog and moves nothing.
     /// </summary>
-    public void OpenDiscovered(IEnumerable<JournalEvent> arrived, bool first, bool enabled)
+    public void OpenDiscovered(IEnumerable<JournalEvent> arrived, bool first, bool enabled, CodexFirstSeen? newestFirst = null)
     {
-        if (first || !enabled)
+        if (first)
+        {
+            return;
+        }
+
+        if (newestFirst is { } found)
+        {
+            Open(PageRef.CodexEntry(found.EntryId, found.RegionId, found.Name));
+            return;
+        }
+
+        if (!enabled)
         {
             return;
         }

@@ -561,7 +561,13 @@ headset panel, under Commander › Ledgers, with Codex open, in the region and t
 dialog page or a keyboard entry stays where it is, and the others still move. When several entries are
 logged at once, the last one's page is shown. Entries replayed from the journal when D47 starts open nothing.
 
-**Open new codex entries** in the settings turns it off.
+**Open new codex entries** in the settings turns it off. A possible region first or possible first in the galaxy
+opens its page even with the setting off, and when it is logged with other entries at once, its page is shown
+rather than a later plain entry's.
+
+The mini panel shows a possible first for 60 seconds in place of its text, on the desktop overlay and in the
+headset, over a story playback, which returns when it ends. A newer first replaces it. On the overlay it ends in
+the phrase that sends the report, "report my region first"; in the headset a tile beside the phrase sends it.
 
 ### Codex publish token {#codex-publish-token}
 

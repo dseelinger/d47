@@ -167,6 +167,7 @@ public sealed class OverlayPanel : Window
         _view.TickLoadout();
         _view.TickCommander();
         _view.TickConstruction();
+        _view.TickRegionFirst();
     }
 
     /// <summary>

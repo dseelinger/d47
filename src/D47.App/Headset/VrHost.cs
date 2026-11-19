@@ -544,6 +544,9 @@ public sealed class VrHost : IDisposable
             // And Commander › Progress, which a Reputation or Progress event moves on (#552).
             _panel.TickCommander();
 
+            // And a possible first's read-out on the mini panel, whose line shortens once a second (#2598).
+            _panel.TickRegionFirst();
+
             Serve(context.Now);
         });
     }

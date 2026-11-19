@@ -224,6 +224,7 @@ public partial class App(AppHost? host) : Application
                     Watches = host.WatchesDesk,
                     Modules = window?.ModulesSource,
                     Portraits = new Panel.SpeakerPortraits(host.SpeakerPictures, host.Loggers.CreateLogger<Panel.SpeakerPortraits>()),
+                    RegionFirsts = host.RegionFirsts,
                 });
 
             // Through the same route as the other two (Phase 45).

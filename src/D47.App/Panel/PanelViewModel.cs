@@ -395,6 +395,22 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _storyPlayback, value);
     }
 
+    private RegionFirstMoment? _regionFirst;
+
+    /// <summary>The newest live possible first; each mini surface shows it until <see cref="RegionFirstMoment.Until"/>. Set on the UI thread.</summary>
+    public RegionFirstMoment? RegionFirst
+    {
+        get => _regionFirst;
+        private set => Set(ref _regionFirst, value);
+    }
+
+    /// <summary>The clock the mini read-outs are timed by.</summary>
+    public TimeProvider Clock { get; set; } = TimeProvider.System;
+
+    /// <summary>Shows <paramref name="seen"/> on the mini surfaces from now, in place of any first already showing.</summary>
+    public void ShowRegionFirst(D47.Core.Journal.CodexFirstSeen seen, string? body) =>
+        RegionFirst = new RegionFirstMoment(seen, body, Clock.GetUtcNow());
+
     /// <summary>What the audio player says about the music, kept current while the music changes.</summary>
     public D47.Core.Audio.AudioPlayerReadout AudioPlayer
     {

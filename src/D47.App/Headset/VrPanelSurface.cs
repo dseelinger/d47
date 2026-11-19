@@ -360,6 +360,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>One beat of the wait marks on the panel and in its dialogs.</summary>
     public void TickWaiting() => _dirty |= _view.TickWaiting() | _modalWaits.Tick() | _offscreen.TickWaiting();
 
+    /// <summary>Shows, redraws once a second and takes down a possible first's read-out on the mini panel.</summary>
+    public void TickRegionFirst() => _dirty |= _view.TickRegionFirst();
+
     /// <summary>One frame of the d47 is composing animation (asked for 2026-08-22).</summary>
     public void TickAdventures() => _dirty |= _view.TickAdventures();
 

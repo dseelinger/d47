@@ -11,6 +11,15 @@ using D47.Core.Journal;
 
 namespace D47.App.Panel;
 
+/// <summary>Where a record's press stands on this surface.</summary>
+public enum RegionFirstPressState
+{
+    Ready,
+    Sending,
+    Sent,
+    Failed,
+}
+
 /// <summary>The REPORT TO CANONN press on the codex pages: calls <c>report_region_first</c> as the Commander and keeps each record's report state.</summary>
 public sealed class RegionFirstPress(
     Func<string, ToolArguments, CancellationToken, Task<ToolResult>> invoke,
@@ -26,6 +35,18 @@ public sealed class RegionFirstPress(
 
     public const string FailedLabel = "Report not sent";
 
+    /// <summary>The mini panel read-out's hint on the desktop overlay, which nothing can press.</summary>
+    public const string SayHint = "Say “report my region first” to send the report.";
+
+    /// <summary>The mini panel read-out's hint in the headset, beside the tile face.</summary>
+    public const string PressHint = "Say “report my region first” or press it.";
+
+    /// <summary>The mini panel read-out's line while a press runs.</summary>
+    public const string SendingText = "Sending the report…";
+
+    /// <summary>The mini panel read-out's failure, with the phrase that asks again.</summary>
+    public const string RetryText = RegionFirstReporting.Unreachable + " Say “report my region first” to try again.";
+
     private readonly HashSet<(long Entry, int Region)> _sending = [];
     private readonly HashSet<(long Entry, int Region)> _failed = [];
     private readonly HashSet<(long Entry, int Region)> _sent = [];
@@ -39,6 +60,21 @@ public sealed class RegionFirstPress(
     /// <summary>Whether the record can be offered: unreported, with its journal line and position.</summary>
     public static bool Offers(RegionFirstRecord record) =>
         record is { Reported: null, Journal.Length: > 0, StarPos: not null };
+
+    /// <summary>Whether a press for the record is running, was sent, failed, or none has been made.</summary>
+    public RegionFirstPressState StateOf(RegionFirstRecord record)
+    {
+        var key = KeyOf(record);
+
+        return _sending.Contains(key) ? RegionFirstPressState.Sending
+            : _sent.Contains(key) ? RegionFirstPressState.Sent
+            : _failed.Contains(key) ? RegionFirstPressState.Failed
+            : RegionFirstPressState.Ready;
+    }
+
+    /// <summary>The active Commander's record for the entry in the region, or null.</summary>
+    public RegionFirstRecord? Find(long entryId, int regionId) =>
+        state()?.Identity.FrontierId is { Length: > 0 } frontierId ? book.Find(frontierId, entryId, regionId) : null;
 
     /// <summary>The band's tile slot: the tile, the disabled tile with the wait mark, or the sent line. Null when nothing is offered.</summary>
     public Control? Slot(RegionFirstRecord record)
