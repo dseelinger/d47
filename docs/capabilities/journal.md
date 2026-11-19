@@ -654,9 +654,10 @@ each category with missing entries, in A–Z order, the three most-reported miss
 count of the rest. Logged means the entry was logged in
 that region anywhere in the record, not in a period. The answer says when the record starts, because an entry
 logged before the oldest journal reads as missing, and ends with the coverage line:
-"Star and planet types without a confirmed codex number are not covered. Star and planet
-counts are the known systems that have one; the rest are systems where a Commander reported the entry." The star
-and planet counts come from Spansh's galaxy dump; the rest come from Canonn's codex reports.
+"Star and planet counts are the known systems that have one; the rest are systems where a Commander reported the
+entry." The stars and planets are d47's own kinds, taken from the body types in Spansh's galaxy dump: a star by its
+type and luminosity band, a gas giant by its type and ring types, and any other planet by its type, whether it is
+terraformable, and its atmosphere. Their counts come from the same dump; the rest come from Canonn's codex reports.
 
 ```json
 {"type":"object","properties":{"region":{"type":"string","description":"The codex region, by name, or here for the region the Commander is in. Default here."}},"required":[],"additionalProperties":false}

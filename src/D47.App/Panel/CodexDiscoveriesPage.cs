@@ -280,10 +280,10 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         return line;
     }
 
-    /// <summary>The row's Search tile: for an entry the codex table lists, other than a star or planet type.</summary>
+    /// <summary>The row's Search tile: for an entry the codex table lists, other than a star or planet kind.</summary>
     private Button? SearchTile(CodexMissingRow row)
     {
-        if (_bodySearch?.Invoke() is not { } link || _table.Entry(row.Key) is not { Body: null } entry)
+        if (_bodySearch?.Invoke() is not { } link || _table.Entry(row.Key) is not { Kind: null } entry)
         {
             return null;
         }

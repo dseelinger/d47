@@ -14,15 +14,21 @@ public sealed record CodexDiscoveries(
     IReadOnlyList<CodexLogEntry> Uncovered)
 {
     public const string Coverage =
-        "Star and planet types without a confirmed codex number are not covered. "
-        + "Star and planet counts are the known systems that have one; "
+        "Star and planet counts are the known systems that have one; "
         + "the rest are systems where a Commander reported the entry.";
+
+    private static readonly HashSet<string> KindFamilies = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "$Codex_SubCategory_Stars;",
+        "$Codex_SubCategory_Gas_Giants;",
+        "$Codex_SubCategory_Terrestrials;",
+    };
 
     /// <summary>
     /// Compares the region's catalogue entries with the whole ledger. An entry is logged when its (entry, region)
     /// pair is anywhere in the ledger. Known, logged and missing entries are ordered by category A–Z, then reported
     /// systems, most first, then name. Uncovered are the first entries logged in the region that the catalogue does
-    /// not list there.
+    /// not list there, leaving out stars and planets with no row in the catalogue, which its kinds cover.
     /// </summary>
     public static CodexDiscoveries For(CodexLedger ledger, CodexTable catalogue, int regionId)
     {
@@ -47,6 +53,13 @@ public sealed record CodexDiscoveries(
             known,
             [.. known.Where(item => item.Logged is not null)],
             [.. known.Where(item => item.Logged is null)],
-            [.. first.Where(pair => !listed.Contains(pair.Key)).Select(pair => pair.Value)]);
+            [.. first
+                .Where(pair => !listed.Contains(pair.Key) && !IsKindFamily(pair.Value, catalogue))
+                .Select(pair => pair.Value)]);
     }
+
+    private static bool IsKindFamily(CodexLogEntry logged, CodexTable catalogue) =>
+        logged.SubCategorySymbol is { } symbol
+        && KindFamilies.Contains(symbol.Trim())
+        && catalogue.Entry(logged.EntryId) is null;
 }

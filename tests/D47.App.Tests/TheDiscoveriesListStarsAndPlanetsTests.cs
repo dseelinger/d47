@@ -18,8 +18,8 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// Discoveries for Inner Orion Spur lists the shipped star and planet types under Astronomical Bodies with a
-/// "Reported in" count and their family placeholder, and a star the Commander logged there reads ON RECORD rather than
+/// Discoveries for Inner Orion Spur lists the shipped star and planet kinds under Astronomical Bodies with a
+/// "Reported in" count and their family placeholder, and a star the Commander logged there in the codex is not counted
 /// as an entry the table lacks.
 /// </summary>
 [Trait("Category", "Integration")]
@@ -51,8 +51,8 @@ public class TheDiscoveriesListStarsAndPlanetsTests
         Dispatch();
     }
 
-    private static Button? Row(Control page, long id) =>
-        In<Button>(page).SingleOrDefault(button => button.Name == "CodexMissing." + id);
+    private static Button? Row(Control page, string key) =>
+        In<Button>(page).SingleOrDefault(button => button.Name == "CodexMissing." + key);
 
     private static CodexPictureSet Pictures()
     {
@@ -70,7 +70,7 @@ public class TheDiscoveriesListStarsAndPlanetsTests
     }
 
     [AvaloniaFact]
-    public void InnerOrionSpurListsStarsAndPlanetsAndALoggedStarIsOnRecord()
+    public void InnerOrionSpurListsStarAndPlanetKindsAndALoggedStarIsNotUnlisted()
     {
         var look = AppLook.Put();
         var state = JournalScript.Commander(
@@ -93,17 +93,16 @@ public class TheDiscoveriesListStarsAndPlanetsTests
 
         PickStatus(page, 1);
 
-        Assert.All(new[] { NeutronStar, GTypeStar }, id =>
-            Assert.Contains(In<TextBlock>(Row(page, id)!), block => block.Text == "ON RECORD"));
+        Assert.All(new[] { NeutronStar, GTypeStar }, id => Assert.Null(Row(page, id.ToString(System.Globalization.CultureInfo.InvariantCulture))));
         Assert.DoesNotContain(In<TextBlock>(page), block => block.Text?.Contains("that the codex table does not list", StringComparison.Ordinal) == true);
 
         PickStatus(page, 2);
 
         var first = In<Button>(page).First(button => button.Name?.StartsWith("CodexMissing.", StringComparison.Ordinal) == true);
-        var entry = CodexCatalogue.Table.Entry(long.Parse(first.Name!["CodexMissing.".Length..], System.Globalization.CultureInfo.InvariantCulture));
+        var entry = CodexCatalogue.Table.Entry(first.Name!["CodexMissing.".Length..]);
 
         Assert.Equal("Astronomical Bodies", entry!.Category);
-        Assert.NotNull(entry.Body);
+        Assert.NotNull(entry.Kind);
         Assert.Equal(
             CodexCatalogue.Table.InRegion(18).Where(found => found.Entry.Category == "Astronomical Bodies").Max(found => found.Systems),
             entry.Regions[18]);

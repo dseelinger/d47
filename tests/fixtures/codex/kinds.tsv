@@ -1,0 +1,30 @@
+# Spansh body fields and the d47 codex kind key each gives. Read by tools/gen-codex-bodies.py, which checks its
+# classifier against every row before it reads the dump, and by ASpanshBodyHasTheKindTheFixtureGivesTests, which
+# checks CodexKinds.OfSpansh. A blank cell is a field the body does not have.
+# Columns: type, subType, luminosity, terraformingState, atmosphereType, ring types (comma-separated), the usual band
+# of the subType (read only for a star with no luminosity), the key.
+Star	White Dwarf (DA) Star	0					star.white_dwarf_da_star
+Star	Neutron Star	V					star.neutron_star
+Star	Black Hole	VII					star.black_hole
+Star	Supermassive Black Hole						star.supermassive_black_hole
+Star	M (Red giant) Star	IV					star.m_red_giant_star.dwarf
+Star	M (Red giant) Star	IIIab					star.m_red_giant_star.giant
+Star	K (Yellow-Orange giant) Star	II					star.k_yellow_orange_giant_star.supergiant
+Star	B (Blue-White super giant) Star	Ia0					star.b_blue_white_super_giant_star.hypergiant
+Star	C Star	O					star.c_star.hypergiant
+Star	A (Blue-White super giant) Star	Iab					star.a_blue_white_super_giant_star.supergiant
+Star	M (Red dwarf) Star	Vz					star.m_red_dwarf_star.dwarf
+Star	Wolf-Rayet NC Star	VI					star.wolf_rayet_nc_star.dwarf
+Star	K (Yellow-Orange) Star	VII					star.k_yellow_orange_star.white_dwarf
+Star	O (Blue-White) Star					dwarf	star.o_blue_white_star.dwarf
+Planet	Class I gas giant				Icy,Rocky		gas.class_i_gas_giant.icy_rocky
+Planet	Class I gas giant				Rocky,Icy,Rocky		gas.class_i_gas_giant.icy_rocky
+Planet	Class I gas giant						gas.class_i_gas_giant.no_rings
+Planet	Gas giant with water-based life		Not terraformable		Metallic,Metal Rich		gas.gas_giant_with_water_based_life.metal_rich_metallic
+Planet	Water giant				Icy		gas.water_giant.icy
+Planet	Rocky body		Terraforming	Thin Carbon dioxide			planet.rocky_body.terraformable.atmosphere.thin_carbon_dioxide
+Planet	Rocky body		Not terraformable	No atmosphere			planet.rocky_body.not_terraformable.no_atmosphere
+Planet	Rocky body						planet.rocky_body.not_terraformable.no_atmosphere
+Planet	High metal content world		Terraformable				planet.high_metal_content_world.terraformable.no_atmosphere
+Planet	Earth-like world		Terraformed	Suitable for water-based life			planet.earth_like_world.terraformable.atmosphere.suitable_for_water_based_life
+Planet	Icy body		Not terraformable	Hot thick Carbon dioxide-rich			planet.icy_body.not_terraformable.atmosphere.hot_thick_carbon_dioxide_rich

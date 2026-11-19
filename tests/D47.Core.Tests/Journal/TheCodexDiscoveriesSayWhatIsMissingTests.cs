@@ -136,7 +136,7 @@ public class TheCodexDiscoveriesSayWhatIsMissingTests
     public async Task TheAnswerNamesTheThreeMostReportedMissingEntriesInEachCategory()
     {
         var shipped = CodexCatalogue.InRegion(18);
-        var logged = shipped[0].Entry.EntryId!.Value;
+        var logged = shipped.First(found => found.Entry.EntryId is not null).Entry.EntryId!.Value;
         var categories = shipped
             .Where(found => found.Entry.EntryId != logged)
             .GroupBy(found => found.Entry.Category)

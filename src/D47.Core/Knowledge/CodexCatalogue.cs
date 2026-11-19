@@ -14,16 +14,24 @@ public sealed record CodexEntry(
     /// <summary>The journal EntryID of a Canonn entry; null for a d47 kind.</summary>
     public long? EntryId => CodexKeys.EntryIdOf(Key);
 
-    /// <summary>The Spansh body fields that select a star or planet entry from <c>CodexBodies.tsv</c>; null for a <c>Codex.tsv</c> entry.</summary>
-    public CodexBodyType? Body { get; init; }
+    /// <summary>A d47 star or planet kind's place in the kind tree and its Spansh body fields; null for a Canonn entry.</summary>
+    public CodexKind? Kind { get; init; }
 }
 
 /// <summary>
-/// The Spansh body fields a <c>CodexBodies.tsv</c> entry is counted from: the sub-type, the luminosity classes as Roman
-/// numerals ("IV,V,VI"; "0" is a hypergiant), and whether it is terraformable and has an atmosphere ("yes" or "no").
-/// A blank field matches any value.
+/// A <c>CodexBodies.tsv</c> row: its parent's key (null at the top of a family) and the Spansh body fields of the row —
+/// subType, luminosity band ("dwarf", "giant", "supergiant", "hypergiant", "white dwarf"), terraformable ("yes" or "no"),
+/// atmosphere, ring types ("Icy,Rocky", or "None") — and, on a banded star's subType row, the band most of its bodies
+/// have. A field the row does not fix is null.
 /// </summary>
-public sealed record CodexBodyType(string SubType, string Luminosity, string Terraformable, string Atmosphere);
+public sealed record CodexKind(
+    string? ParentKey,
+    string SubType,
+    string? Band,
+    string? Terraformable,
+    string? Atmosphere,
+    string? Rings,
+    string? UsualBand);
 
 /// <summary>An entry reported in a region and how many systems reported it there.</summary>
 public readonly record struct CodexRegionEntry(CodexEntry Entry, int Systems);
@@ -35,6 +43,9 @@ public sealed class CodexTable
     private readonly Dictionary<int, List<CodexRegionEntry>> _byRegion;
 
     private const string DatePrefix = "# Table date: ";
+
+    /// <summary>The category of every d47 kind.</summary>
+    public const string AstronomicalBodies = "Astronomical Bodies";
 
     private CodexTable(Dictionary<string, CodexEntry> entries, string? date)
     {
@@ -78,23 +89,19 @@ public sealed class CodexTable
 
             var cells = line.Split('\t');
 
-            if (!long.TryParse(cells[0], CultureInfo.InvariantCulture, out var id))
+            if (cells.Length == 11 && CodexKeys.IsKind(cells[0]))
             {
+                entries[cells[0]] = new CodexEntry(cells[0], cells[1], AstronomicalBodies, cells[2], ParseRegions(cells[10]))
+                {
+                    Kind = new CodexKind(Cell(cells[3]), cells[4], Cell(cells[5]), Cell(cells[6]), Cell(cells[7]), Cell(cells[8]), Cell(cells[9])),
+                };
                 continue;
             }
 
-            var key = CodexKeys.Of(id);
-
-            if (cells.Length == 5)
+            if (cells.Length == 5 && long.TryParse(cells[0], CultureInfo.InvariantCulture, out var id))
             {
+                var key = CodexKeys.Of(id);
                 entries[key] = new CodexEntry(key, cells[1], cells[2], cells[3], ParseRegions(cells[4]));
-            }
-            else if (cells.Length == 9)
-            {
-                entries[key] = new CodexEntry(key, cells[1], cells[2], cells[3], ParseRegions(cells[8]))
-                {
-                    Body = new CodexBodyType(cells[4], cells[5], cells[6], cells[7]),
-                };
             }
         }
 
@@ -129,6 +136,8 @@ public sealed class CodexTable
                 .ThenBy(found => found.Entry.Key, StringComparer.Ordinal)
                 .ToList()
             : [];
+
+    private static string? Cell(string cell) => cell.Length == 0 ? null : cell;
 
     private static Dictionary<int, int> ParseRegions(string cell)
     {

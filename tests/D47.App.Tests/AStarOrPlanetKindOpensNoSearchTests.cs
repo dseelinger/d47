@@ -10,16 +10,27 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// A star or planet type entry from <c>CodexBodies.tsv</c> has no Search tile, since the body search finds landmarks
-/// only, and a body's Codex tile does not open it, even where the body's sub-type is the entry's name.
+/// A star or planet kind from <c>CodexBodies.tsv</c> has no Search tile, since the body search finds landmarks only,
+/// and a body's Codex tile does not open a kind or its group, even where the body's sub-type is the row's name.
 /// </summary>
-public sealed class AStarOrPlanetTypeEntryOpensNoSearchTests
+public sealed class AStarOrPlanetKindOpensNoSearchTests
 {
+    private static string Kind(string key, string name, string family, string parent, string subType, string regions) =>
+        string.Join('\t', key, name, family, parent, subType, "", "", "", "", "", regions) + "\n";
+
     private static readonly CodexTable Table = CodexTable.Parse(
         "2\tBeta tree\tBiological and Geological\tOrganic structures\t18:30\n"
-        + "1102300\tNeutron Star\tAstronomical Bodies\tStars\tNeutron Star\tVII\t\t\t18:900\n"
-        + "1102400\tBlack Hole\tAstronomical Bodies\tStars\tBlack Hole\tVII\t\t\t18:800\n"
-        + "1300601\tRocky Body\tAstronomical Bodies\tTerrestrial planets\tRocky body\t\tno\tno\t18:700\n");
+        + Kind("star.neutron_star", "Neutron Star", "Stars", "", "Neutron Star", "18:900")
+        + Kind("star.black_hole", "Black Hole", "Stars", "", "Black Hole", "18:800")
+        + Kind("planet.rocky_body", "Rocky body", "Terrestrial planets", "", "Rocky body", "")
+        + Kind("planet.rocky_body.not_terraformable", "Rocky body, not terraformable", "Terrestrial planets", "planet.rocky_body", "Rocky body", "")
+        + Kind(
+            "planet.rocky_body.not_terraformable.no_atmosphere",
+            "Rocky body, not terraformable, No atmosphere",
+            "Terrestrial planets",
+            "planet.rocky_body.not_terraformable",
+            "Rocky body",
+            "18:700"));
 
     private static Button? Find(Control root, string name) =>
         root.GetVisualDescendants().OfType<Button>().SingleOrDefault(button => button.Name == name);
@@ -42,8 +53,8 @@ public sealed class AStarOrPlanetTypeEntryOpensNoSearchTests
         var page = new CodexDiscoveriesPage(State, () => HistoryState.Done, 18, Table, bodySearch: () => link);
         var window = Shown(page);
 
-        Assert.NotNull(Find(page, "CodexMissing.1102300"));
-        Assert.Null(Find(page, "CodexSearch.1102300"));
+        Assert.NotNull(Find(page, "CodexMissing.star.neutron_star"));
+        Assert.Null(Find(page, "CodexSearch.star.neutron_star"));
         Assert.NotNull(Find(page, "CodexSearch.2"));
 
         window.Close();
@@ -53,7 +64,7 @@ public sealed class AStarOrPlanetTypeEntryOpensNoSearchTests
     public void TheEntryPageForAStarHasNoSearchTile()
     {
         var link = new BodySearchLink(_ => { });
-        var star = new CodexEntryPage(State, "1102300", 18, "Neutron Star", null, table: Table, bodySearch: () => link);
+        var star = new CodexEntryPage(State, "star.neutron_star", 18, "Neutron Star", null, table: Table, bodySearch: () => link);
         var window = Shown(star);
 
         Assert.Null(Find(star, "CodexSearch"));
