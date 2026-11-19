@@ -72,7 +72,7 @@ public static class PanelPhrases
 
         if (Back.Any(phrase => input == phrase))
         {
-            return nav.Back() ? $"Back to {nav.Trail[^1].Word}." : null;
+            return nav.Previous() || nav.Back() ? $"Back to {nav.Trail[^1].Word}." : null;
         }
 
         // Help for wherever they are standing, before any of the destinations below: it is about the page

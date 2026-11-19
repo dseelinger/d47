@@ -153,4 +153,101 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
 
         host.Close();
     }
+
+    private static void MouseBack(SettingsHost host)
+    {
+        host.Window.MouseDown(new Avalonia.Point(640, 400), Avalonia.Input.MouseButton.XButton1);
+        host.Window.MouseUp(new Avalonia.Point(640, 400), Avalonia.Input.MouseButton.XButton1);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    private static void MakeThreeMoves(SettingsHost host)
+    {
+        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
+        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
+        Assert.True(host.Panel.Nav.Drill(new NavCrumb("story:test", "Test")));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void TheMouseBackButtonWalksBackThroughEachPlaceVisited()
+    {
+        var host = Open();
+        var start = host.Panel.Tab;
+
+        MakeThreeMoves(host);
+        Assert.Equal(PanelTab.Stories, host.Panel.Tab);
+        Assert.False(host.Panel.Nav.AtRoot);
+
+        MouseBack(host);
+        Assert.Equal(PanelTab.Stories, host.Panel.Tab);
+        Assert.True(host.Panel.Nav.AtRoot);
+
+        MouseBack(host);
+        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
+
+        MouseBack(host);
+        Assert.Equal(start, host.Panel.Tab);
+
+        MouseBack(host);
+        Assert.Equal(PanelTab.Transcript, host.Panel.Tab);
+
+        MouseBack(host);
+        Assert.Equal(PanelTab.Transcript, host.Panel.Tab);
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void AltLeftWalksBackThroughEachPlaceVisited()
+    {
+        var host = Open();
+        var start = host.Panel.Tab;
+
+        MakeThreeMoves(host);
+
+        Press(host, Key.Left, KeyModifiers.Alt, PhysicalKey.ArrowLeft);
+        Assert.Equal(PanelTab.Stories, host.Panel.Tab);
+        Assert.True(host.Panel.Nav.AtRoot);
+
+        Press(host, Key.Left, KeyModifiers.Alt, PhysicalKey.ArrowLeft);
+        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
+
+        Press(host, Key.Left, KeyModifiers.Alt, PhysicalKey.ArrowLeft);
+        Assert.Equal(start, host.Panel.Tab);
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void EscapeGoesUpOneLevelAndDoesNotFollowHistory()
+    {
+        var host = Open();
+
+        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
+        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
+
+        Press(host, Key.Escape, KeyModifiers.None, PhysicalKey.Escape);
+
+        Assert.Equal(PanelTab.Stories, host.Panel.Tab);
+
+        host.Close();
+    }
+
+    [AvaloniaFact]
+    public void SayingBackAfterATabSwitchReturnsToThePreviousTab()
+    {
+        var host = Open();
+        var start = host.Panel.Tab;
+
+        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
+
+        var said = PanelPhrases.Apply("back", host.Panel.Nav);
+
+        Assert.NotNull(said);
+        Assert.StartsWith("Back to ", said);
+        Assert.Equal(start, host.Panel.Tab);
+
+        host.Close();
+    }
 }

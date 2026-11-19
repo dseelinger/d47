@@ -298,7 +298,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     public Panel.OffscreenSurface Board => _offscreen;
 
     /// <summary>
-    /// Closes the top modal, or goes back one level on this surface, and says whether there was anything to
+    /// Closes the top modal, or goes back through the session's moves on this surface, and says whether there was anything to
     /// do — so the controller button stays available to whatever else wants it at a root (Phase 25).
     /// </summary>
     /// <summary>Reads the SPEND row's session figure again; safe from any thread.</summary>
@@ -312,7 +312,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             return true;
         }
 
-        return _view.GoBack();
+        return _view.GoPrevious();
     }
 
     /// <summary>The modal on top of this surface, if one is open.</summary>

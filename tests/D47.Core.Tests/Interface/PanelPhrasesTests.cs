@@ -152,15 +152,15 @@ public class PanelPhrasesTests
     [InlineData("go back")]
     [InlineData("take me back")]
     [InlineData("up a level")]
-    public void BackGoesBackOneLevel(string spoken)
+    public void BackGoesBackToThePlaceBeforeAVoiceJump(string spoken)
     {
         var nav = Furnished();
 
         nav.Select(PanelTab.Assets);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
 
-        Assert.NotNull(PanelPhrases.Apply(spoken, nav));
-        Assert.Equal(["Ships", "Corsair"], nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal("Back to Ships.", PanelPhrases.Apply(spoken, nav));
+        Assert.Equal(["Ships"], nav.Trail.Select(crumb => crumb.Word));
     }
 
     /// <summary>At a root there is nothing to go back from, and the phrase falls through.</summary>

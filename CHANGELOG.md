@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: The mouse Back button, Alt+Left, the grip button and saying "back" now go back through the places you have been this session, across tabs and levels, instead of only up one level. Escape and the breadcrumb still go up one level, and an open chooser closes first. With nowhere earlier to go they behave as before.
+
 Changed: Search › Bodies shows the body type in a Type column beside Body, sortable, instead of a grey line under the body's name. A table whose columns you have arranged before keeps that arrangement; add Type from Columns.
 
 Changed: A region's Discoveries row opens Commander › Ledgers › Codex set to "Show MISSING kinds in" that region, with that region's counts, in place of a separate Discoveries page. The row keeps its figures, and the row for the region D47 cannot name still has no ›. The catalogue's search and sort take over from the Discoveries page's own filters.

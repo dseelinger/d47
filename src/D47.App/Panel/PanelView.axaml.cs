@@ -1354,6 +1354,12 @@ public partial class PanelView : UserControl, IPanelTabHost
         return true;
     }
 
+    /// <summary>
+    /// The Back controls that walk the session's history: the previous place, or <see cref="GoBack"/> when
+    /// there is none or a chooser is open.
+    /// </summary>
+    public bool GoPrevious() => Nav.Previous() || GoBack();
+
     /// <summary>Moves the page this surface is showing, by however much was asked for (#34).</summary>
     public PanelScrollOutcome Scroll(PanelScrollStep step, PanelScrollSide side = PanelScrollSide.Either)
     {
@@ -2361,14 +2367,14 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     /// <summary>
     /// Ctrl+1 to Ctrl+8 show the Nth registered tab (the one already showing goes to its top), Ctrl+Tab and
-    /// Ctrl+Shift+Tab step along the bar, and Alt+Left goes back. Matched here so a focused control never sees them.
+    /// Ctrl+Shift+Tab step along the bar, and Alt+Left goes back through the session's moves. Matched here so a focused control never sees them.
     /// </summary>
     private bool TabKey(KeyEventArgs e)
     {
         if (e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Left)
         {
             e.Handled = true;
-            GoBack();
+            GoPrevious();
             return true;
         }
 
@@ -2421,11 +2427,11 @@ public partial class PanelView : UserControl, IPanelTabHost
         return true;
     }
 
-    /// <summary>The mouse's Back button goes back, the same as the breadcrumb (#342). Forward does nothing —
-    /// there is no forward level to go to.</summary>
+    /// <summary>The mouse's Back button goes back through the session's moves, as <see cref="GoPrevious"/> does
+    /// (#342). Forward does nothing.</summary>
     private void OnSurfacePointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.GetCurrentPoint(this).Properties.PointerUpdateKind == PointerUpdateKind.XButton1Pressed && GoBack())
+        if (e.GetCurrentPoint(this).Properties.PointerUpdateKind == PointerUpdateKind.XButton1Pressed && GoPrevious())
         {
             e.Handled = true;
         }
