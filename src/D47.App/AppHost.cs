@@ -3431,6 +3431,7 @@ public sealed class AppHost : IDisposable
             Settings = settings,
             Galaxy = galaxy,
             Trade = services.TradePlanner,
+            StarSystems = () => services.StarSystems,
             CommunityBiology = () => services.CommunityBiology,
             EarlierFinds = services.EarlierFinds,
             SurveyedBiology = services.SurveyedBiology,

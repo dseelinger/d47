@@ -1,6 +1,7 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
 using D47.Core.Tests.Journal;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -33,7 +34,7 @@ public class AHeavyOrHotBodyIsWarnedOnApproachTests
             DateTimeOffset.UnixEpoch, priming, state, GameStatus.Unknown, NavRoute.None, [JournalScript.Parse(Approach)]))];
 
     private static List<string> Said(string gravity, string kelvin) =>
-        [.. Said(new ApproachHazardCallout(), Commander(Scan(gravity, kelvin), Approach)).Select(a => a.Text)];
+        [.. Said(new ApproachHazardCallout(NullLogger<ApproachHazardCallout>.Instance), Commander(Scan(gravity, kelvin), Approach)).Select(a => a.Text)];
 
     [Fact]
     public void HighGravityIsSaid() =>
@@ -59,7 +60,7 @@ public class AHeavyOrHotBodyIsWarnedOnApproachTests
     public void EveryApproachIsSaid()
     {
         var state = Commander(Scan("11.2", "300"), Approach);
-        var callout = new ApproachHazardCallout();
+        var callout = new ApproachHazardCallout(NullLogger<ApproachHazardCallout>.Instance);
 
         Assert.Single(Said(callout, state));
         var again = Said(callout, state);
@@ -69,9 +70,9 @@ public class AHeavyOrHotBodyIsWarnedOnApproachTests
 
     [Fact]
     public void ABodyWithoutAScanIsNotSaid() =>
-        Assert.Empty(Said(new ApproachHazardCallout(), Commander(Approach)));
+        Assert.Empty(Said(new ApproachHazardCallout(NullLogger<ApproachHazardCallout>.Instance), Commander(Approach)));
 
     [Fact]
     public void NothingIsSaidFromTheBacklog() =>
-        Assert.Empty(Said(new ApproachHazardCallout(), Commander(Scan("11.2", "300"), Approach), priming: true));
+        Assert.Empty(Said(new ApproachHazardCallout(NullLogger<ApproachHazardCallout>.Instance), Commander(Scan("11.2", "300"), Approach), priming: true));
 }

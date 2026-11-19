@@ -91,6 +91,9 @@ public static class ShippedCallouts
 
         public required ITradePlanService Trade { get; init; }
 
+        /// <summary>The galaxy record, or null while there is none.</summary>
+        public Func<IStarSystemService?> StarSystems { get; init; } = () => null;
+
         /// <summary>The service for earlier biology finds, or null while that setting is off.</summary>
         public Func<ICommunityBiology?> CommunityBiology { get; init; } = () => null;
 
@@ -214,7 +217,7 @@ public static class ShippedCallouts
             .Add(new DiscoveryCallout())
             .Add(new FootfallCallout())
             .Add(new FootfallApproachCallout())
-            .Add(new ApproachHazardCallout())
+            .Add(new ApproachHazardCallout(loggers.CreateLogger<ApproachHazardCallout>()))
             .Add(new MappingCallout { Ledger = sources.Cartography })
             .Add(new NotableBodyCallout())
             .Add(new BodyValueCallout { Ledger = sources.Cartography })
@@ -443,6 +446,10 @@ public static class ShippedCallouts
                 case SurveyedBiologyCallout surveyed:
                     surveyed.Galaxy = () => galaxy;
                     surveyed.Store = services.SurveyedBiology;
+                    break;
+
+                case ApproachHazardCallout hazards:
+                    hazards.StarSystems = services.StarSystems;
                     break;
 
                 case EarlierFindsCallout earlier:

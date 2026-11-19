@@ -377,7 +377,9 @@ Hot surface on Col 285 Sector AB-C d1-2 3 a: 812 K.
 High gravity and a hot surface on Col 285 Sector AB-C d1-2 3 a: 1.42 g, 812 K.
 ```
 
-It reads your scans, so a body you have not scanned says nothing. It is said on every approach, not
+It reads your scans. A body you have not scanned is read from the galaxy record instead, and the
+warning is said once the record answers; it says nothing when the record does not have the body, or
+when you have landed or left the system by then. It is said on every approach, not
 once per body, and nothing is said for a body below both limits.
 
 #### Rebuy cover {#rebuy}

@@ -10,7 +10,7 @@
 
 Fixed: Asking for bodies with a given ring type, such as metallic rings, returns only bodies with that ring type. It used to return any ringed body.
 
-Added: On the approach to a scanned body, D47 warns out loud when its surface gravity is over 1 g, its surface temperature is 700 K or more, or both, on every approach. A body you have not scanned says nothing. The Landing hazards row in Settings › Your core › In flight turns it off, and so does "stop calling out landing hazards".
+Added: On the approach to a scanned body, D47 warns out loud when its surface gravity is over 1 g, its surface temperature is 700 K or more, or both, on every approach. A body you have not scanned is read from the galaxy record, and says nothing if the record does not have it. The Landing hazards row in Settings › Your core › In flight turns it off, and so does "stop calling out landing hazards".
 
 Changed: A codex entry the shipped table does not list for your region is a bigger moment. D47 now says the "may be a first" line for geology and anomaly, Guardian and gas giant entries as well as organics, says it ahead of the "Discovered" line, and says it in your core's own words. Stars and other planets still get no such line.
 
