@@ -825,13 +825,13 @@ public static class CalloutCapability
                 RegionFirstKey,
                 "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
                 + "open Settings › Your core › Exploring, group Exploration callouts, and find Possible region "
-                + "firsts (on by default). Log a new organic codex entry that the shipped Canonn table has no "
-                + "report of: D47 says it may be a region first. Say \"stop calling out region firsts\": the row "
+                + "firsts (on by default). Log a new organic, geology and anomaly, Guardian or gas giant codex entry that the shipped Canonn table "
+                + "does not list for your region: D47 says it may be a region first. Say \"stop calling out region firsts\": the row "
                 + "shows off and that is no longer said. Say \"start calling out region firsts\" and the row shows "
                 + "on. The row is absent while Speak without being asked is off.",
                 "Possible region firsts",
-                "A new organic codex entry the Canonn table in this build has no report of, in this region or "
-                + "anywhere, said when you log it.",
+                "A new organic, geology and anomaly, Guardian or gas giant codex entry the Canonn table in this build "
+                + "does not list for this region, said when you log it.",
                 "region-first",
                 "region firsts",
                 s => s.Callouts.RegionFirst,

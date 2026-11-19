@@ -6,6 +6,7 @@ namespace D47.App.Voice;
 /// <summary>
 /// Writes and speaks each tick's drained callouts. Quick lines are spoken in the order drained; urgent lines take
 /// no place in the order, and a composed line or a named NPC's first line takes its place only once it is ready.
+/// A region first is urgent and also holds a place ahead of the batch's ordered lines until it is spoken.
 /// </summary>
 internal sealed class CalloutDispatch : IDisposable
 {
@@ -83,6 +84,17 @@ internal sealed class CalloutDispatch : IDisposable
 
         var (urgentLines, composed, ordered) = Split(ready);
 
+        var leading = urgentLines.Where(IsLeading).ToList();
+
+        if (leading.Count > 0)
+        {
+            urgentLines = [.. urgentLines.Except(leading)];
+
+            var ahead = _order.Take();
+            Interlocked.Add(ref _urgentUnspoken, leading.Count);
+            started.Add(Task.Run(() => CountedAsync(() => LeadingAsync(leading, ahead), leading.Count)));
+        }
+
         if (ordered.Count > 0)
         {
             var place = _order.Take();
@@ -142,6 +154,18 @@ internal sealed class CalloutDispatch : IDisposable
         if (lines.Count > 0)
         {
             await _speak(lines).ConfigureAwait(false);
+        }
+    }
+
+    private static bool IsLeading(Announcement announcement) =>
+        announcement.Key.StartsWith(RegionFirstCallout.KeyPrefix, StringComparison.Ordinal);
+
+    /// <summary>Speaks urgent lines at once, and holds a place so the ordered lines taken after it wait for them.</summary>
+    private async Task LeadingAsync(IReadOnlyList<Announcement> pending, CalloutOrder.Place place)
+    {
+        using (place)
+        {
+            await UnorderedAsync(pending).ConfigureAwait(false);
         }
     }
 

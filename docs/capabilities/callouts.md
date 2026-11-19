@@ -1200,21 +1200,24 @@ Discovered T Tauri Star and Q09-Type Anomaly.
 
 Entries logged in the same moment make one line. It says nothing for an entry you had already logged,
 for an entry with no name, or while the journal is being read on start. It is separate from
-[possible region firsts](#region-first), so either can be turned off alone; when both apply, this
-line comes first. Nothing leaves your machine.
+[possible region firsts](#region-first), so either can be turned off alone; when both apply, the
+region-first line comes first. Nothing leaves your machine.
 
 #### Possible region firsts {#region-first}
 
-When you log a new organic codex entry that the Canonn table shipped in this build does not list for
-the region you are in:
+When you log a new organic, geology and anomaly, Guardian or gas giant codex entry that the Canonn table
+shipped in this build does not list for the region you are in:
 
 ```text
 No Commander has reported Fonticulua Fluctus - Yellow in the Inner Orion Spur. It may be a first for the region.
 ```
 
-If the table has no report of the entry in any region, it says "anywhere" and "a first in the galaxy"
-instead. It says nothing when the region is listed, for geology entries, for an entry you had already
-logged in that region, or for a repeat in the same session. It waits until your codex history has
+For an organic entry the table has no report of in any region, it says "anywhere" and "a first in the galaxy"
+instead. Geology and anomaly, Guardian and gas giant entries get the region line only, and only when the
+table has a report of the entry in another region. It says nothing when the region is listed, for stars and
+other planets, for an entry you had already logged in that region, or for a repeat in the same session.
+The line cuts in ahead of other callouts and is said in your core's own words, keeping the entry, the
+region and the "may be". It waits until your codex history has
 loaded. The table is only as current as the build, so the line says "may be". Nothing leaves your
 machine.
 

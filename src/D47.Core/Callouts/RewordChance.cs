@@ -9,7 +9,7 @@ public sealed class RewordChance(Random? choice = null)
     private readonly Random _choice = choice ?? Random.Shared;
 
     /// <summary>
-    /// True if this announcement should be reworded. An ambient remark, a narration, a promotion, a domain remark, a recap, a line
+    /// True if this announcement should be reworded. An ambient remark, a narration, a promotion, a region first, a domain remark, a recap, a line
     /// carrying a story aside and a canned line from the Commander's own carrier and a speaker's remark on repeating itself always are; every other line is decided
     /// independently against <paramref name="rewordPercent"/> (0-100, clamped).
     /// </summary>
@@ -20,6 +20,7 @@ public sealed class RewordChance(Random? choice = null)
         return announcement.Key.StartsWith(AmbientCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(NarratorCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(PromotionCallout.KeyPrefix, StringComparison.Ordinal)
+            || announcement.Key.StartsWith(RegionFirstCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(DomainCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(NotableShipCallout.KeyPrefix, StringComparison.Ordinal)
             || announcement.Key.StartsWith(RecapCallout.KeyPrefix, StringComparison.Ordinal)

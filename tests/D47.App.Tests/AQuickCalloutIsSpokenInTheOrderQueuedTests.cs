@@ -177,6 +177,32 @@ public sealed class AQuickCalloutIsSpokenInTheOrderQueuedTests
     }
 
     [Fact]
+    public async Task ARegionFirstIsSpokenBeforeTheDiscoveryLineEvenWhileItIsBeingWritten()
+    {
+        var written = new TaskCompletionSource<IReadOnlyList<Announcement>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var regionFirst = new Announcement(RegionFirstCallout.KeyPrefix + "1.18", "May be a first.", CalloutUrgency.Urgent);
+        var discovered = new Announcement("codex-discovered.1", "Discovered a plant.");
+        var (dispatch, spoken, turn) = Dispatch(announcement =>
+            announcement == regionFirst ? written.Task : Task.FromResult<IReadOnlyList<Announcement>>([announcement]));
+
+        using (turn)
+        using (dispatch)
+        {
+            var batch = dispatch.Dispatch([discovered, regionFirst]);
+
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+            Assert.Empty(Spoken(spoken));
+            Assert.True(dispatch.UrgentUnspoken);
+
+            written.SetResult([regionFirst with { Text = "A first, Commander." }]);
+            await batch.WaitAsync(Patience, TestContext.Current.CancellationToken);
+
+            Assert.Equal(["A first, Commander.", "Discovered a plant."], Spoken(spoken));
+            Assert.False(dispatch.UrgentUnspoken);
+        }
+    }
+
+    [Fact]
     public async Task AChatterBeatIsAbandonedWhenAnUrgentLineIsWaitingForTheTurn()
     {
         var (dispatch, _, turn) = Dispatch(announcement => Task.FromResult<IReadOnlyList<Announcement>>([announcement]));

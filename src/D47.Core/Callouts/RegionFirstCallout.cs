@@ -4,12 +4,13 @@ using D47.Core.Knowledge;
 namespace D47.Core.Callouts;
 
 /// <summary>
-/// A new organic codex entry that the shipped Canonn table does not list for the region, said once per
-/// entry and region.
+/// A new codex entry that the shipped Canonn table does not list for the region, said once per entry and
+/// region. Always reworded, and said ahead of the discovery line.
 /// </summary>
 public sealed class RegionFirstCallout : ICallout
 {
-    private const string Organic = "$Codex_SubCategory_Organic_Structures;";
+    /// <summary>Every region-first key starts with this; <see cref="RewordChance"/> always rewords them.</summary>
+    public const string KeyPrefix = "region-first.";
 
     private readonly HashSet<(long EntryId, int RegionId)> _said = [];
 
@@ -23,7 +24,6 @@ public sealed class RegionFirstCallout : ICallout
         foreach (var journalEvent in context.Events)
         {
             if (journalEvent.Kind != "CodexEntry"
-                || journalEvent.String("SubCategory") != Organic
                 || !journalEvent.Bool("IsNewEntry")
                 || journalEvent.Long("EntryID") is not { } entryId
                 || CodexLedger.RegionIdOf(journalEvent.String("Region")) is not { } regionId
@@ -41,25 +41,24 @@ public sealed class RegionFirstCallout : ICallout
                 continue;
             }
 
-            var regions = Table().Entry(entryId)?.Regions;
             var region = journalEvent.String("Region_Localised");
 
             string? line;
 
-            if (regions is not { Count: > 0 })
+            switch (CodexFirsts.Judge(Table(), entryId, regionId, journalEvent.String("SubCategory")))
             {
-                line = $"No Commander has reported {name} anywhere. It may be a first in the galaxy.";
-            }
-            else if (!regions.ContainsKey(regionId) && region is { Length: > 0 })
-            {
-                line = $"No Commander has reported {name} in the {region}. It may be a first for the region.";
-            }
-            else
-            {
-                continue;
+                case CodexFirst.Galaxy:
+                    line = $"No Commander has reported {name} anywhere. It may be a first in the galaxy.";
+                    break;
+                case CodexFirst.Region when region is { Length: > 0 }:
+                    line = $"No Commander has reported {name} in the {region}. It may be a first for the region.";
+                    break;
+                default:
+                    continue;
             }
 
-            yield return new Announcement($"region-first.{entryId}.{regionId}", line);
+            yield return new Announcement(
+                $"{KeyPrefix}{entryId}.{regionId}", line, CalloutUrgency.Urgent);
         }
     }
 }

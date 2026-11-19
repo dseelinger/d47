@@ -6,8 +6,8 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
-/// <summary>A new organic codex entry the Canonn table does not list for the region is said once.</summary>
-public class PossibleRegionFirstsAreSaidOnANewOrganicEntryTests
+/// <summary>A new codex entry the Canonn table does not list for the region is said once, urgently and in the core's words.</summary>
+public class PossibleRegionFirstsAreSaidOnANewCodexEntryTests
 {
     private const long Listed = 2100101;
     private const long Unlisted = 2100102;
@@ -16,7 +16,12 @@ public class PossibleRegionFirstsAreSaidOnANewOrganicEntryTests
     private static readonly CodexTable Table = CodexTable.Parse(
         "2100101\tFonticulua Fluctus - Yellow\tBiology\tOrganic\t18:5\n"
         + "2100102\tFonticulua Fluctus - Lime\tBiology\tOrganic\t3:2\n"
-        + "2100104\tNo Regions\tBiology\tOrganic\t\n");
+        + "2100104\tNo Regions\tBiology\tOrganic\t\n"
+        + "2100201\tGeology Listed\tGeology\tGeology\t18:5\n"
+        + "2100202\tGeology Elsewhere\tGeology\tGeology\t3:2\n"
+        + "2100301\tStar Elsewhere\tStars\tStars\t3:2\n");
+
+    private const string Geology = "$Codex_SubCategory_Geology_and_Anomalies;";
 
     private static string Entry(
         long id,
@@ -97,11 +102,52 @@ public class PossibleRegionFirstsAreSaidOnANewOrganicEntryTests
     }
 
     [Fact]
-    public void AGeologyEntrySaysNothing()
+    public void AGeologyEntryTheTableListsElsewhereGivesTheRegionLine()
     {
-        var line = Entry(Unknown, sub: "$Codex_SubCategory_Geology_Structures;");
+        var line = Entry(2100202, sub: Geology);
+        var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
+
+        Assert.EndsWith("It may be a first for the region.", said.Text);
+    }
+
+    [Theory]
+    [InlineData(2100201, "$Codex_SubCategory_Geology_and_Anomalies;")]
+    [InlineData(Unknown, "$Codex_SubCategory_Geology_and_Anomalies;")]
+    [InlineData(Unknown, "$Codex_SubCategory_Guardian;")]
+    [InlineData(Unknown, "$Codex_SubCategory_Gas_Giants;")]
+    [InlineData(2100301, "$Codex_SubCategory_Stars;")]
+    [InlineData(Unknown, "$Codex_SubCategory_Stars;")]
+    [InlineData(Unknown, "$Codex_SubCategory_Terrestrials;")]
+    [InlineData(Unknown, "$Codex_SubCategory_Geology_Structures;")]
+    public void AnEntryTheRuleJudgesNoFirstSaysNothing(long id, string sub)
+    {
+        var line = Entry(id, sub: sub);
 
         Assert.Empty(Say(Callout(), Commander(true, line), false, line));
+    }
+
+    [Fact]
+    public void TheAnnouncementIsUrgentAndAlwaysReworded()
+    {
+        var line = Entry(Unlisted);
+        var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
+
+        Assert.Equal(CalloutUrgency.Urgent, said.Urgency);
+        Assert.True(new RewordChance(new Random(1)).ShouldReword(said, 0));
+    }
+
+    [Fact]
+    public void TheBriefQuotesTheLineAndForbidsAddedFacts()
+    {
+        var line = Entry(Unlisted);
+        var said = Assert.Single(Say(Callout(), Commander(true, line), false, line));
+
+        var brief = FlavourBriefs.For(said, personalityEnabled: true);
+
+        Assert.NotNull(brief);
+        Assert.Contains(said.Text, brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("Add no facts", brief.Instruction, StringComparison.Ordinal);
+        Assert.Contains("may be", brief.Instruction, StringComparison.Ordinal);
     }
 
     [Fact]

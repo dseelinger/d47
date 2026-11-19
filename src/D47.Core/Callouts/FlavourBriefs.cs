@@ -352,6 +352,23 @@ public static class FlavourBriefs
             };
         }
 
+        // A codex entry the table does not list for the region (#2588).
+        if (announcement.Key.StartsWith(RegionFirstCallout.KeyPrefix, StringComparison.Ordinal))
+        {
+            return new FlavourBrief
+            {
+                Instruction =
+                    "The Commander has just logged a codex entry that may be a first. Say this in your own "
+                    + $"voice, as a big moment: \"{announcement.Text}\" Keep the entry name, the region and "
+                    + "the words \"may be\" exactly as given. Add no facts: nothing about what the entry is, "
+                    + "what it is worth or what to do next. One or two sentences. Do not ask a question.",
+                NeedsPersona = true,
+                NeedsGameState = false,
+                NeedsAboutMe = true,
+                NeedsScenario = true,
+            };
+        }
+
         // A notable ship has hailed nearby (#1444). The kind and the authored line are all it carries.
         if (announcement.Key.StartsWith(NotableShipCallout.KeyPrefix, StringComparison.Ordinal)
             && NotableShipCallout.KindOf(announcement.Text) is { } kind)

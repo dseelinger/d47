@@ -12,6 +12,8 @@ Fixed: Asking for bodies with a given ring type, such as metallic rings, returns
 
 Added: On the approach to a scanned body, D47 warns out loud when its surface gravity is over 1 g, its surface temperature is 700 K or more, or both, on every approach. A body you have not scanned says nothing. The Landing hazards row in Settings › Your core › In flight turns it off, and so does "stop calling out landing hazards".
 
+Changed: A codex entry the shipped table does not list for your region is a bigger moment. D47 now says the "may be a first" line for geology and anomaly, Guardian and gas giant entries as well as organics, says it ahead of the "Discovered" line, and says it in your core's own words. Stars and other planets still get no such line.
+
 Fixed: Asking which of your ships is strongest, fastest or best at something, such as "Which of my ships has the strongest shields?", gets an answer that compares the ships. It used to read out the carrier's position and the list of stored ships. Each ship in a comparison now carries its shield strength in megajoules, and D47 can rank your ships by it.
 
 Fixed: When a story playback ends, the mini panel, on the desktop and in the headset, goes back to what it showed before: on the Stories tab, Your story. It used to stay blank until you changed tab or mode.
