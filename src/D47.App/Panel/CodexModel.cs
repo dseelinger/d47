@@ -552,6 +552,22 @@ public static class CodexModel
         var logged = all.LastOrDefault(entry => entry.EntryId == entryId);
         var known = table.Entry(key);
 
+        if (known?.Kind is { } kind)
+        {
+            if (regionId is { } kindRegion && ledger.Found(key, kindRegion) is { } found)
+            {
+                here.Add(KindRow(found, known.Name, currentSystem));
+            }
+
+            return new CodexEntryView(
+                key,
+                known.Name,
+                known.SubCategory,
+                kind.ParentKey is { } parent ? table.Entry(parent)?.Name : null,
+                CodexFamilies.FileOfTableName(known.SubCategory),
+                here);
+        }
+
         return new CodexEntryView(
             key,
             logged?.Name ?? known?.Name ?? fallbackName,
@@ -671,6 +687,19 @@ public static class CodexModel
         SortColumn<CodexEntryRow>.Figure("Time", row => (long?)row.At.UtcTicks, SortDirection.Descending) with { Second = "UTC" },
         SortColumn<CodexEntryRow>.Figure("Status", row => (long?)(row.IsNew ? 1L : 0L), SortDirection.Descending) with { Second = "New or logged" },
     ];
+
+    private static CodexEntryRow KindRow(CodexFoundKind found, string name, string? currentSystem) =>
+        new(
+            found.Key,
+            name,
+            found.System,
+            currentSystem is not null && string.Equals(found.System, currentSystem, StringComparison.OrdinalIgnoreCase),
+            BodyOf(found.System, found.Body),
+            null,
+            found.At,
+            false,
+            null,
+            null);
 
     private static CodexEntryRow Row(
         CodexLogEntry entry,

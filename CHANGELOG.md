@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The entry page of a star or planet kind lists your first scan of it in the region under Logged in this region: the system, the body and the time. A kind you have not scanned there reads Not on your record in this region. The Category and Subcategory tiles read the kind's family and its parent's name.
+
 Added: A kind of star or planet on a region's Codex Discoveries page and on its entry page has a Search tile. It opens Search › Bodies and finds the nearest bodies of that kind in the region, wherever you are: the body type, and for a star its luminosity band, for a planet whether it is terraformable and its atmosphere, and for a gas giant exactly its ring types, or no rings. The Bodies search has a Luminosity choice and an Only these ring types box, its Ring type choice offers None, and asking for terraformable bodies now includes those being or already terraformed. Green Gas Giant with Water Life and Green Class V Gas Giant have no Search tile, because the body search records neither.
 
 Changed: A kind of star or planet with no picture of its own shows the picture of the nearest group above it, such as a high metal content world with an atmosphere for one with a thin sulphur dioxide atmosphere, and the family placeholder only when no group has one. Pictures you saved for a star or planet before kinds replaced the old codex entries are renamed to the kind or group that entry covered the first time the codex reads them, so they show again; one whose new name is already taken is left as it is.
