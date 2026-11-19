@@ -4,14 +4,21 @@
 Not part of the build. Its output is committed as `src/D47.Core/Knowledge/CodexBodies.tsv` and
 shipped as an embedded resource beside `Codex.tsv`; the app never runs this and never reaches Spansh.
 
-    python tools/gen-codex-bodies.py
+    python tools/gen-codex-bodies.py                                           # the local mirror when there is one, else the dump
+    python tools/gen-codex-bodies.py --stream                                  # stream the dump even when the mirror is there
+    python tools/gen-codex-bodies.py --db <file>                               # read the mirror at another path
     python tools/gen-codex-bodies.py --limit-bytes 400000000 --output <file>   # a trial on the dump's head
     python tools/gen-codex-bodies.py --counts <file>                           # also save the counts
     python tools/gen-codex-bodies.py --from-counts <file>                      # write the table from saved counts
 
-Source: Spansh's galaxy dump (downloads.spansh.co.uk/galaxy.json.gz), about 119 GB compressed. It
-is streamed once and never saved. The dump is a JSON array with one system per line; each system has
-`coords` and `bodies`. Each system is placed in a codex region by a port of `GalacticRegions.Find`
+Source: Spansh's galaxy dump (downloads.spansh.co.uk/galaxy.json.gz), about 119 GB compressed, either
+streamed once and never saved or read from the local SQLite mirror at MIRROR when that file has a full
+import. The dump is a JSON array with one system per line; each system has `coords` and `bodies`.
+The mirror is written by a tool outside this repository and has three tables: `systems(id64, updated,
+built, record)`, where `record` is a system's dump line, zlib-compressed and without its trailing
+comma; `applied(kind, lastModified, appliedAt, systems, added, replaced)`, one row per Spansh file
+applied, `kind` being `all` for the full dump; and `meta(key, value)`, whose `completeAsOf` row is the
+time up to which every system is current. `--limit-bytes` always streams. Each system is placed in a codex region by a port of `GalacticRegions.Find`
 over the committed `Regions.tsv`, and each star and planet with a `subType` is put in one kind by
 `kind_of`, the rules `CodexKinds.OfSpansh` follows in Core. A region's count for a kind is the number
 of systems in it with at least one body of that kind.
@@ -26,6 +33,7 @@ import http.client
 import json
 import queue
 import re
+import sqlite3
 import sys
 import threading
 import time
@@ -39,6 +47,7 @@ from pathlib import Path
 
 DUMP_URL = "https://downloads.spansh.co.uk/galaxy.json.gz"
 AGENT = "d47-gen"
+MIRROR = Path(r"C:\d47-data\spansh\galaxy.db")
 
 ROOT = Path(__file__).resolve().parent.parent
 KNOWLEDGE = ROOT / "src" / "D47.Core" / "Knowledge"
@@ -397,6 +406,61 @@ def batches(chunks: queue.Queue, whole: bool):
         yield pending
 
 
+def open_mirror(path: Path) -> sqlite3.Connection:
+    return sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
+
+
+def mirror_date(path: Path) -> str | None:
+    """The date the mirror is complete up to, or None when it has no full import."""
+    db = open_mirror(path)
+
+    try:
+        modified = [row[0] for row in db.execute("SELECT lastModified FROM applied WHERE kind = 'all'")]
+
+        if not modified:
+            return None
+
+        row = db.execute("SELECT value FROM meta WHERE key = 'completeAsOf'").fetchone()
+    finally:
+        db.close()
+
+    return (row[0] if row and row[0] else max(modified))[:10]
+
+
+def mirror_batches(path: Path):
+    """Yields the mirror's system lines in id64 order in batches of about BATCH_BYTES."""
+    db = open_mirror(path)
+
+    try:
+        lines: list[bytes] = []
+        size = 0
+
+        for (record,) in db.execute("SELECT record FROM systems ORDER BY id64"):
+            line = zlib.decompress(record)
+            lines.append(line)
+            size += len(line) + 1
+
+            if size >= BATCH_BYTES:
+                yield b"\n".join(lines)
+                lines, size = [], 0
+
+        if lines:
+            yield b"\n".join(lines)
+    finally:
+        db.close()
+
+
+def usable_mirror(path: Path) -> str | None:
+    """The mirror's date when the file is a readable mirror with a full import, else None."""
+    if not path.is_file():
+        return None
+
+    try:
+        return mirror_date(path)
+    except sqlite3.Error:
+        return None
+
+
 def check_fixture(regions: RegionMap) -> None:
     rows = 0
 
@@ -538,7 +602,37 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--counts", type=Path, help="also save the counts to this file")
     parser.add_argument("--from-counts", type=Path, help="write the table from counts saved by --counts; read no dump")
+    parser.add_argument("--stream", action="store_true", help="stream the dump even when the local mirror is there")
+    parser.add_argument("--db", type=Path, help="read the mirror at this path; it must have a full import")
     arguments = parser.parse_args()
+
+    if arguments.db and arguments.stream:
+        parser.error("--db and --stream cannot be used together")
+
+    if (arguments.db or arguments.stream) and (arguments.limit_bytes or arguments.from_counts):
+        parser.error("--db and --stream cannot be used with --limit-bytes or --from-counts")
+
+    mirror, mirrored = None, None
+
+    if arguments.db:
+        if not arguments.db.is_file():
+            parser.error(f"no mirror at {arguments.db}")
+
+        try:
+            mirrored = mirror_date(arguments.db)
+        except sqlite3.Error as error:
+            parser.error(f"{arguments.db} is not a readable mirror: {error}")
+
+        if mirrored is None:
+            parser.error(f"{arguments.db} has no full import (no applied row with kind 'all')")
+
+        mirror = arguments.db
+    elif not (arguments.stream or arguments.limit_bytes or arguments.from_counts):
+        mirrored = usable_mirror(MIRROR)
+        mirror = MIRROR if mirrored else None
+
+    if not arguments.from_counts:
+        print(f"Source: local mirror {mirror} of {mirrored}" if mirror else f"Source: {DUMP_URL}", flush=True)
 
     started = time.time()
     check_kinds()
@@ -550,11 +644,17 @@ def main() -> int:
         check_fixture(regions)
 
         counts = {"found": Counter(), "bodies": Counter(), "pending": Counter(), "left_out": Counter(), "systems": 0, "outside": 0}
-        dump = describe(arguments.limit_bytes)
-        chunks: queue.Queue = queue.Queue(maxsize=QUEUED_CHUNKS)
-        threading.Thread(target=download, args=(dump, chunks), daemon=True).start()
 
-        for batch in batches(chunks, whole=not arguments.limit_bytes):
+        if mirror:
+            dump = {"modified": mirrored}
+            source = mirror_batches(mirror)
+        else:
+            dump = describe(arguments.limit_bytes)
+            chunks: queue.Queue = queue.Queue(maxsize=QUEUED_CHUNKS)
+            threading.Thread(target=download, args=(dump, chunks), daemon=True).start()
+            source = batches(chunks, whole=not arguments.limit_bytes)
+
+        for batch in source:
             merge(counts, count_batch(batch, regions))
 
         if arguments.counts:
