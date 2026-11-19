@@ -29,6 +29,11 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     private const string RecropPrefix = "codex-recrop-";
 
+    /// <summary>The key of the Catalogue page, the codex tree's root.</summary>
+    public const string CatalogueKey = "codex-catalogue";
+
+    private const string NodePrefix = "codex-catalogue-";
+
     public const string SummaryText = "The codex entries you have logged, from your journals.";
 
     public const string HeadsetSummaryText = "The codex entries you have logged.";
@@ -136,6 +141,22 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     public static NavCrumb PossibleFirstsCrumb() => new(PossibleFirstsKey, CodexModel.PossibleFirstsCrumbWord) { Whole = true };
 
     public static bool IsPossibleFirsts(string key) => key == PossibleFirstsKey;
+
+    /// <summary>The crumb of the Catalogue page.</summary>
+    public static NavCrumb CatalogueCrumb() => new(CatalogueKey, CodexCatalogueModel.CatalogueWord) { Whole = true };
+
+    /// <summary>The crumb of a codex tree node's catalogue page, named for the node; the root's is the Catalogue crumb.</summary>
+    public static NavCrumb NodeCrumb(CodexNode node) =>
+        node.Parent is null
+            ? CatalogueCrumb()
+            : new(NodePrefix + node.Key, CodexCatalogueModel.Display(node.ShortName)) { Whole = true };
+
+    /// <summary>Whether the key is the Catalogue page or a node's page under it.</summary>
+    public static bool IsCatalogue(string key) => key == CatalogueKey || key.StartsWith(NodePrefix, StringComparison.Ordinal);
+
+    /// <summary>The tree key of the node a catalogue crumb is for; null when the key is not one.</summary>
+    public static string? CatalogueNodeOf(string key) =>
+        key == CatalogueKey ? CodexTree.RootKey : key.StartsWith(NodePrefix, StringComparison.Ordinal) ? key[NodePrefix.Length..] : null;
 
     /// <summary>The crumb of one entry's page in a region, by its codex key, named for the entry.</summary>
     public static NavCrumb EntryCrumb(int? regionId, string key, string name) =>
@@ -245,6 +266,7 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
+        _body.Children.Add(CatalogueRow());
         CodexKit.ShowSince(_row, view.OnRecordSince, view.Failed);
         _body.Children.Add(_row);
 
@@ -304,6 +326,38 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         {
             _body.Children.Add(CreditsKit.Message(CodexModel.NoRegionMatchText));
         }
+    }
+
+    /// <summary>The Catalogue row: every kind in every region, and how many are on the record.</summary>
+    private Button CatalogueRow()
+    {
+        var found = CodexNodeDiscoveries.For(_state()?.CodexLedger ?? CodexLedger.None, CodexCatalogue.Tree.Root, null);
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 16 };
+
+        CreditsKit.Place(grid, 0, new StackPanel
+        {
+            Children =
+            {
+                CreditsKit.Label(CodexCatalogueModel.CatalogueWord),
+                RoutingKit.Ink(CodexCatalogueModel.CatalogueRowLine, TypeScale.Small, ThemeManager.GreyKey, wrap: true),
+            },
+        });
+        CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexCatalogueModel.OnRecordFigure(found), TypeScale.Small, ThemeManager.AKey, right: true));
+        CreditsKit.Place(grid, 2, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
+
+        var button = ListRow.Dress(new Button
+        {
+            Name = "CodexCatalogue",
+            Content = grid,
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(14, 6),
+            Margin = new Thickness(0, 0, 0, 8),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        });
+        Avalonia.Automation.AutomationProperties.SetName(button, CodexCatalogueModel.CatalogueWord);
+        button.Click += (_, _) => _nav.Drill(CatalogueCrumb());
+
+        return button;
     }
 
     /// <summary>The Possible firsts row; null with no record in the store.</summary>

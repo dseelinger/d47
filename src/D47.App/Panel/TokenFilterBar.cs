@@ -27,6 +27,7 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
     private Border? _panelHost;
     private TextBlock? _count;
     private Button? _clear;
+    private DockPanel? _results;
 
     protected TokenFilterBar(string? tokenNamePrefix)
     {
@@ -73,7 +74,7 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
         _clear = new Button { Name = clearName, Content = "Clear filters", Height = TypeScale.MinimumTarget, MinHeight = TypeScale.MinimumTarget, IsVisible = false };
         _clear.Click += (_, _) => Clear();
 
-        var results = new DockPanel { Margin = new Thickness(0, 10, 0, 6) };
+        var results = _results = new DockPanel { Margin = new Thickness(0, 10, 0, 6) };
         DockPanel.SetDock(_clear, Dock.Right);
         results.Children.Add(_clear);
         results.Children.Add(_count);
@@ -82,6 +83,16 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
         Children.Add(hint);
         Children.Add(_panelHost);
         Children.Add(results);
+    }
+
+    /// <summary>Takes the results line out of the bar, for a page that draws it in a row of its own controls.</summary>
+    public Control TakeResults()
+    {
+        Children.Remove(_results!);
+        _results!.Margin = default;
+        _results.VerticalAlignment = VerticalAlignment.Center;
+
+        return _results;
     }
 
     /// <summary>Draws "N of M" followed by <paramref name="noun"/>.</summary>

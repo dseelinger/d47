@@ -294,6 +294,9 @@ public enum CodexPictureSource
 public sealed record CodexPictureChoice(CodexPictureSource Source, CodexPictureKey Key, bool FromOtherRegion, CodexPictureRow? Row)
 {
     public int RegionId => Key.RegionId;
+
+    /// <summary>The picture is an ancestor's in the kind tree, not the entry's own.</summary>
+    public bool FromGroup { get; init; }
 }
 
 public static class CodexPictures
@@ -329,7 +332,7 @@ public static class CodexPictures
         {
             if (FindOwn(key, regionId, local, stock) is { } found)
             {
-                return found;
+                return found with { FromGroup = !string.Equals(key, entryKey, StringComparison.Ordinal) };
             }
         }
 

@@ -24,8 +24,8 @@ public sealed record CodexKindDiscovery(CodexEntry Entry, int Systems, int Syste
 
 /// <summary>
 /// A tree node with the kinds that count under it. <c>Counted</c>, <c>OnRecord</c> and <c>Missing</c> cover every
-/// kind in the subtree whatever the status filter; <c>Kinds</c> are the node's own entry and its leaf entries, and
-/// <c>Groups</c> its other children, both after the filter.
+/// kind in the subtree whatever the status filter; <c>Kinds</c> are the node's leaf entries (the node's own entry when
+/// it is a leaf), and <c>Groups</c> its other children, both after the filter. A row with children is a group, never a kind.
 /// </summary>
 public sealed record CodexNodeDiscoveries(
     CodexNode Node,
@@ -53,8 +53,13 @@ public sealed record CodexNodeDiscoveries(
                 group => group.Key,
                 group => group.MinBy(entry => entry.At)!,
                 StringComparer.Ordinal);
+        var firstKind = regionId is null
+            ? ledger.FoundKinds
+                .GroupBy(kind => kind.Key, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.MinBy(kind => kind.At)!, StringComparer.Ordinal)
+            : null;
 
-        return Build(ledger, node, regionId, filter, firstCanonn);
+        return Build(ledger, node, regionId, filter, firstCanonn, firstKind);
     }
 
     private static CodexNodeDiscoveries Build(
@@ -62,7 +67,8 @@ public sealed record CodexNodeDiscoveries(
         CodexNode node,
         int? regionId,
         CodexKindStatus filter,
-        Dictionary<string, CodexLogEntry> firstCanonn)
+        Dictionary<string, CodexLogEntry> firstCanonn,
+        Dictionary<string, CodexFoundKind>? firstKind)
     {
         var shown = new List<CodexKindDiscovery>();
         var groups = new List<CodexNodeDiscoveries>();
@@ -71,7 +77,7 @@ public sealed record CodexNodeDiscoveries(
 
         void Own(CodexNode entryNode)
         {
-            if (Discover(ledger, entryNode.Entry!, regionId, firstCanonn) is not { } kind)
+            if (Discover(ledger, entryNode.Entry!, regionId, firstCanonn, firstKind) is not { } kind)
             {
                 return;
             }
@@ -85,7 +91,7 @@ public sealed record CodexNodeDiscoveries(
             }
         }
 
-        if (node.Entry is not null)
+        if (node.Entry is not null && node.Children.Count == 0)
         {
             Own(node);
         }
@@ -102,7 +108,7 @@ public sealed record CodexNodeDiscoveries(
                 continue;
             }
 
-            var group = Build(ledger, child, regionId, filter, firstCanonn);
+            var group = Build(ledger, child, regionId, filter, firstCanonn, firstKind);
             counted += group.Counted;
             onRecord += group.OnRecord;
 
@@ -124,7 +130,11 @@ public sealed record CodexNodeDiscoveries(
         };
 
     private static CodexKindDiscovery? Discover(
-        CodexLedger ledger, CodexEntry entry, int? regionId, Dictionary<string, CodexLogEntry> firstCanonn)
+        CodexLedger ledger,
+        CodexEntry entry,
+        int? regionId,
+        Dictionary<string, CodexLogEntry> firstCanonn,
+        Dictionary<string, CodexFoundKind>? firstKind)
     {
         var allRegions = entry.Regions.Values.Sum();
         CodexFirstFind? first;
@@ -139,7 +149,7 @@ public sealed record CodexNodeDiscoveries(
         {
             var found = regionId is { } region
                 ? ledger.Found(entry.Key, region)
-                : ledger.FoundKinds.Where(kind => kind.Key == entry.Key).MinBy(kind => kind.At);
+                : firstKind!.GetValueOrDefault(entry.Key);
             first = found is null ? null : new CodexFirstFind(found.At, found.System, found.Body, found.RegionId);
         }
 

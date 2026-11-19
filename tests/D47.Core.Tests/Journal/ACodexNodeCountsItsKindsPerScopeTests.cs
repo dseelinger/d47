@@ -74,9 +74,24 @@ public class ACodexNodeCountsItsKindsPerScopeTests
 
         Assert.Equal(["101", "102", Giant], AllKinds(inEighteen).Select(kind => kind.Entry.Key).Order(StringComparer.Ordinal));
         Assert.Equal(["101", "103", Giant, Dwarf], AllKinds(inThree).Select(kind => kind.Entry.Key).Order(StringComparer.Ordinal));
-        Assert.Equal(6, everywhere.Counted);
+        Assert.Equal(["101", "102", "103", Giant, Dwarf], AllKinds(everywhere).Select(kind => kind.Entry.Key).Order(StringComparer.Ordinal));
+        Assert.Equal(5, everywhere.Counted);
         Assert.Equal(3, inEighteen.Counted);
         Assert.Equal(4, inThree.Counted);
+    }
+
+    [Fact]
+    public void ARowWithChildrenIsAGroupAndNeverAKindInEitherScope()
+    {
+        var parent = Tree.Node(Parent)!;
+
+        foreach (int? scope in new int?[] { null, 18, 3 })
+        {
+            var node = CodexNodeDiscoveries.For(CodexLedger.None, Tree.Root, scope);
+
+            Assert.DoesNotContain(AllKinds(node), kind => kind.Entry.Key == Parent);
+            Assert.DoesNotContain(CodexNodeDiscoveries.For(CodexLedger.None, parent, scope).Kinds, kind => kind.Entry.Key == Parent);
+        }
     }
 
     [Fact]

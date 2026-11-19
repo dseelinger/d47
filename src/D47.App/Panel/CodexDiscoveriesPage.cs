@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
-using Avalonia.Media.Imaging;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Interface;
@@ -15,8 +14,6 @@ namespace D47.App.Panel;
 /// <summary>Commander › Ledgers › Codex › a region › Discoveries: the entries the codex table lists for the region, missing or on the record, under a status, category and sub-category filter.</summary>
 public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterablePage
 {
-    private const int ThumbnailPixels = 88;
-
     private const double SearchWidth = 96;
 
     public const string TableId = "Codex.Discoveries";
@@ -28,16 +25,12 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private readonly bool _headset;
     private readonly PanelNavigator? _nav;
     private readonly Func<BodySearchLink?>? _bodySearch;
-    private readonly CodexPictureSet? _pictures;
-    private readonly Dictionary<string, (Bitmap Bitmap, string Name)> _thumbs = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, Bitmap?> _families = new(StringComparer.OrdinalIgnoreCase);
+    private readonly CodexThumbnails? _thumbs;
     private readonly Dictionary<string, (CodexMissingRow Row, Border Square)> _squares = new(StringComparer.Ordinal);
     private readonly ArrangedTable<CodexMissingRow> _columns;
     private readonly ArrangedList _list;
     private readonly CodexDiscoveryFilters _filters = new();
 
-    private IReadOnlySet<CodexPictureKey> _local = new HashSet<CodexPictureKey>();
-    private IReadOnlyList<CodexPictureRow> _stock = [];
     private CodexLedger? _seenLedger;
     private HistoryState _seenHistory;
     private string _query = string.Empty;
@@ -57,8 +50,8 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     {
         _nav = nav;
         _bodySearch = bodySearch;
-        _pictures = pictures;
-        Refresh();
+        _thumbs = pictures is null ? null : new CodexThumbnails(pictures);
+        _thumbs?.Refresh();
         _state = state;
         _history = history;
         _regionId = regionId;
@@ -93,7 +86,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        Refresh();
+        _thumbs?.Refresh();
 
         foreach (var (row, square) in _squares.Values)
         {
@@ -311,7 +304,7 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         var square = new Border { Width = side, Height = side };
         ThemeInk.Bind(square, Border.BackgroundProperty, ThemeManager.SlabKey);
 
-        if (_pictures is not null)
+        if (_thumbs is not null)
         {
             _squares[row.Key] = (row, square);
             Fill(square, row);
@@ -324,89 +317,20 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
     private void Fill(Border square, CodexMissingRow row)
     {
         var side = TypeScale.MinimumTarget;
-        var picture = PictureOf(row.Key);
-        var bitmap = picture?.Bitmap ?? Family(row.PlaceholderFile);
+        var picture = _thumbs!.Picture(row.Key, _regionId);
+        var bitmap = picture?.Bitmap ?? _thumbs.Family(row.PlaceholderFile);
 
         square.Child = bitmap is null
             ? null
             : new Image
             {
-                Name = picture?.Name ?? "CodexThumbPlaceholder",
+                Name = picture is not { } shown
+                    ? "CodexThumbPlaceholder"
+                    : shown.Choice.Source == CodexPictureSource.Local ? "CodexThumbLocal" : "CodexThumbStock",
                 Source = bitmap,
                 Stretch = Avalonia.Media.Stretch.Uniform,
                 Width = side,
                 Height = side,
             };
-    }
-
-    /// <summary>Re-reads which pictures exist and drops the thumbnails decoded before.</summary>
-    private void Refresh()
-    {
-        if (_pictures is null)
-        {
-            return;
-        }
-
-        _thumbs.Clear();
-        _local = _pictures.Store.LocalKeys();
-        _stock = _pictures.Store.StockRows();
-    }
-
-    private (Bitmap Bitmap, string Name)? PictureOf(string key)
-    {
-        if (_thumbs.TryGetValue(key, out var cached))
-        {
-            return cached;
-        }
-
-        var store = _pictures!.Store;
-        var choice = CodexPictures.Find(key, _regionId, _local, _stock);
-        var bytes = choice is null
-            ? null
-            : choice.Source == CodexPictureSource.Local ? store.Local(choice.Key) : store.StockOnDisk(choice.Row!);
-
-        if (Decode(bytes) is not { } bitmap)
-        {
-            return null;
-        }
-
-        var shown = (bitmap, choice!.Source == CodexPictureSource.Local ? "CodexThumbLocal" : "CodexThumbStock");
-        _thumbs[key] = shown;
-
-        return shown;
-    }
-
-    private Bitmap? Family(string? file)
-    {
-        if (file is null)
-        {
-            return null;
-        }
-
-        if (!_families.TryGetValue(file, out var bitmap))
-        {
-            _families[file] = bitmap = Decode(_pictures!.Placeholder(file));
-        }
-
-        return bitmap;
-    }
-
-    private static Bitmap? Decode(byte[]? bytes)
-    {
-        if (bytes is null)
-        {
-            return null;
-        }
-
-        try
-        {
-            using var stream = new MemoryStream(bytes);
-
-            return Bitmap.DecodeToWidth(stream, ThumbnailPixels);
-        }
-        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or IOException or NotSupportedException)
-        {
-            return null;
-        }
     }
 }

@@ -35,6 +35,7 @@ public class AKindWithoutAPictureShowsItsGroupsTests
         Assert.NotNull(found);
         Assert.Equal(new CodexPictureKey(Kind, 18), found.Key);
         Assert.Equal(CodexPictureSource.Stock, found.Source);
+        Assert.False(found.FromGroup);
     }
 
     [Fact]
@@ -45,6 +46,7 @@ public class AKindWithoutAPictureShowsItsGroupsTests
         Assert.NotNull(found);
         Assert.Equal(new CodexPictureKey(Terraformability, 18), found.Key);
         Assert.Equal(Row(Terraformability, 18), found.Row);
+        Assert.True(found.FromGroup);
     }
 
     [Fact]
@@ -55,6 +57,7 @@ public class AKindWithoutAPictureShowsItsGroupsTests
         Assert.NotNull(found);
         Assert.Equal(new CodexPictureKey(Kind, 3), found.Key);
         Assert.True(found.FromOtherRegion);
+        Assert.False(found.FromGroup);
     }
 
     [Fact]
