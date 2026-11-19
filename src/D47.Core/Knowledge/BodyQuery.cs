@@ -208,13 +208,20 @@ public sealed record BodyRequest
 
     public int? RingSignalCount { get; init; }
 
+    /// <summary>One ring type, several separated by commas, or <see cref="BodyCatalogue.NoRings"/>.</summary>
     public string? RingType { get; init; }
+
+    /// <summary>True keeps only bodies whose ring types are exactly <see cref="RingType"/>.</summary>
+    public bool? RingsExactly { get; init; }
 
     public string? ReserveLevel { get; init; }
 
     public bool? Landable { get; init; }
 
     public bool? Terraformable { get; init; }
+
+    /// <summary>A star's luminosity band; see <see cref="BodyCatalogue.Luminosities"/>.</summary>
+    public string? Luminosity { get; init; }
 
     public string? Volcanism { get; init; }
 
@@ -271,7 +278,7 @@ public sealed record BodyQuery
     /// <summary>Maximum light years from the reference; unused where <see cref="NoDistanceLimit"/>.</summary>
     public double MaxDistance { get; init; } = 50;
 
-    /// <summary>True for a codex entry search that gave no distance: the nearest anywhere, with no radius.</summary>
+    /// <summary>True for a codex entry search, or a body type in a region, that gave no distance: the nearest anywhere, with no radius.</summary>
     public bool NoDistanceLimit { get; init; }
 
     /// <summary>The map's spelling of the codex region to search in.</summary>
@@ -301,15 +308,22 @@ public sealed record BodyQuery
     /// <summary>Named systems to confine the search to, as the index spells them.</summary>
     public IReadOnlyList<string> SystemNames { get; init; } = [];
 
-    public string? RingType { get; init; }
+    /// <summary>Ring types every one of which a body must have.</summary>
+    public IReadOnlyList<string> RingTypes { get; init; } = [];
+
+    /// <summary>The exact set of ring types a body's rings must have, empty for no rings; null keeps any.</summary>
+    public IReadOnlySet<string>? ExactRings { get; init; }
 
     public string? ReserveLevel { get; init; }
 
     /// <summary>True or null; the service reads any value of this filter as true.</summary>
     public bool? Landable { get; init; }
 
-    /// <summary>Null means "either".</summary>
+    /// <summary>True for a terraforming candidate, being terraformed or terraformed; false for not terraformable; null for either.</summary>
     public bool? Terraformable { get; init; }
+
+    /// <summary>The luminosity classes a star must have one of; empty for any.</summary>
+    public IReadOnlyList<string> LuminosityClasses { get; init; } = [];
 
     public string? Volcanism { get; init; }
 
@@ -353,26 +367,55 @@ public sealed record BodyQuery
     /// <summary>How many of the nearest bodies an order by material chooses from.</summary>
     public const int RichestOf = 50;
 
+    /// <summary>How many of the nearest bodies a search for exact ring types chooses from.</summary>
+    public const int ExactRingsOf = GalaxyQuery.MaxSize;
+
     /// <summary>The furthest, in light years, a body search goes.</summary>
     public const double MaxDistanceCeiling = 1000;
 
     /// <summary>Whether this asks about rings at all, which decides how the answer reads.</summary>
-    public bool IsAboutRings => RingSignal is not null || RingType is not null || ReserveLevel is not null;
+    public bool IsAboutRings => RingSignal is not null || RingTypes.Count > 0 || ReserveLevel is not null;
 
-    /// <summary>The bodies the answer gives: as returned, or the <see cref="Limit"/> richest in the material.</summary>
+    /// <summary>
+    /// The bodies the answer gives: as returned, or those with exactly <see cref="ExactRings"/>, or the
+    /// <see cref="Limit"/> richest in the material, or both.
+    /// </summary>
     public BodySearchResult Keep(BodySearchResult result)
     {
-        if (!OrderByMaterial || Material is not { } material)
+        ArgumentNullException.ThrowIfNull(result);
+
+        var ordered = OrderByMaterial && Material is not null;
+
+        if (!ordered && ExactRings is null)
         {
             return result;
         }
 
+        IEnumerable<BodySummary> bodies = result.Bodies;
+
+        if (ExactRings is { } exact)
+        {
+            bodies = bodies.Where(body => HasExactly(body, exact));
+        }
+
+        if (ordered)
+        {
+            bodies = bodies.OrderByDescending(body => body.Share(Material!) ?? 0);
+        }
+
+        List<BodySummary> kept = [.. bodies.Take(Limit)];
+
         return result with
         {
-            Bodies = [.. result.Bodies.OrderByDescending(body => body.Share(material) ?? 0).Take(Limit)],
+            Total = ExactRings is null ? result.Total : kept.Count,
+            Bodies = kept,
             More = false,
         };
     }
+
+    private static bool HasExactly(BodySummary body, IReadOnlySet<string> types) =>
+        body.Rings.All(ring => ring.Type is { } type && types.Contains(type))
+        && types.All(type => body.Rings.Any(ring => string.Equals(ring.Type, type, StringComparison.Ordinal)));
 
     public static bool TryParse(BodyRequest request, out BodyQuery query, out string failure)
     {
@@ -384,8 +427,9 @@ public sealed record BodyQuery
         if (!TryMatch("body type", request.Subtype, BodyCatalogue.Subtypes, BodyCatalogue.MatchSubtype, out var matchedSubtype, out failure)
             || !TryMatch("surface signal", request.Signal, BodyCatalogue.Signals, BodyCatalogue.MatchSignal, out var matchedSignal, out failure)
             || !TryMatch("hotspot material", request.RingSignal, BodyCatalogue.RingSignals, BodyCatalogue.MatchRingSignal, out var matchedRingSignal, out failure)
-            || !TryMatch("ring type", request.RingType, BodyCatalogue.RingTypes, BodyCatalogue.MatchRingType, out var matchedRingType, out failure)
+            || !TryRingTypes(request.RingType, out var ringTypes, out var noRings, out failure)
             || !TryMatch("reserve level", request.ReserveLevel, BodyCatalogue.ReserveLevels, BodyCatalogue.MatchReserveLevel, out var matchedReserve, out failure)
+            || !TryMatch("luminosity", request.Luminosity, BodyCatalogue.Luminosities, BodyCatalogue.MatchLuminosity, out var matchedLuminosity, out failure)
             || !TryMatch("volcanism", request.Volcanism, BodyCatalogue.Volcanism, BodyCatalogue.MatchVolcanism, out var matchedVolcanism, out failure)
             || !TryMatch("atmosphere", request.Atmosphere, BodyCatalogue.Atmospheres, BodyCatalogue.MatchAtmosphere, out var matchedAtmosphere, out failure)
             || !TryMatch("surface material", request.Material, BodyCatalogue.SurfaceMaterials, BodyCatalogue.MatchSurfaceMaterial, out var matchedMaterial, out failure)
@@ -433,6 +477,23 @@ public sealed record BodyQuery
             return false;
         }
 
+        if (request.RingsExactly is true && ringTypes.Count == 0 && !noRings)
+        {
+            failure = "Say which ring types the rings must be exactly — for example Icy, or Icy and Rocky.";
+            return false;
+        }
+
+        IReadOnlySet<string>? exactRings = noRings
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : request.RingsExactly is true ? ringTypes.ToHashSet(StringComparer.Ordinal) : null;
+
+        if (exactRings is not null && page > 1)
+        {
+            failure =
+                $"A search for exact ring types is one answer, chosen from the nearest {ExactRingsOf} bodies, so it has no page {page}.";
+            return false;
+        }
+
         var codexEntry = CodexSpecies.Of(request.CodexEntry);
         string? region = null;
 
@@ -452,8 +513,9 @@ public sealed record BodyQuery
         if (matchedSubtype is null
             && matchedSignal is null
             && matchedRingSignal is null
-            && matchedRingType is null
+            && ringTypes.Count == 0
             && matchedReserve is null
+            && matchedLuminosity is null
             && landable is null
             && request.Terraformable is null
             && matchedVolcanism is null
@@ -483,10 +545,12 @@ public sealed record BodyQuery
             SignalCount = Bounded(request.SignalCount),
             RingSignal = matchedRingSignal,
             RingSignalCount = Bounded(request.RingSignalCount),
-            RingType = matchedRingType,
+            RingTypes = ringTypes,
+            ExactRings = exactRings,
             ReserveLevel = matchedReserve,
             Landable = landable,
             Terraformable = request.Terraformable,
+            LuminosityClasses = matchedLuminosity is null ? [] : BodyCatalogue.LuminosityClasses(matchedLuminosity),
             Volcanism = matchedVolcanism,
             Atmosphere = matchedAtmosphere,
             TidallyLocked = tidallyLocked,
@@ -498,7 +562,7 @@ public sealed record BodyQuery
             Material = matchedMaterial,
             CodexEntry = codexEntry,
             Region = region,
-            NoDistanceLimit = codexEntry is not null && request.MaxDistance is not > 0,
+            NoDistanceLimit = (codexEntry is not null || (region is not null && matchedSubtype is not null)) && request.MaxDistance is not > 0,
             Criteria = criteria,
             OrderByMaterial = orderByMaterial,
             Sort = orderByMaterial ? null : sort,
@@ -507,7 +571,7 @@ public sealed record BodyQuery
             // from deep space where the nearest anything is a long way off, and still bounded because
             // unbounded is the galaxy.
             MaxDistance = Math.Clamp(request.MaxDistance is > 0 ? request.MaxDistance.Value : 50, 1, MaxDistanceCeiling),
-            Size = orderByMaterial ? RichestOf : limit,
+            Size = exactRings is not null ? ExactRingsOf : orderByMaterial ? RichestOf : limit,
             Limit = limit,
             Page = page,
         };
@@ -583,6 +647,53 @@ public sealed record BodyQuery
             MaxDistance = Math.Clamp(maxDistance, 1, MaxDistanceCeiling),
             Size = 500,
         };
+
+    /// <summary>
+    /// Reads <paramref name="spoken"/> as one ring type, several separated by commas, or <see cref="BodyCatalogue.NoRings"/>.
+    /// </summary>
+    private static bool TryRingTypes(string? spoken, out IReadOnlyList<string> types, out bool none, out string failure)
+    {
+        types = [];
+        none = false;
+        failure = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(spoken))
+        {
+            return true;
+        }
+
+        var parts = spoken.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Any(part => string.Equals(part, BodyCatalogue.NoRings, StringComparison.OrdinalIgnoreCase)))
+        {
+            if (parts.Length > 1)
+            {
+                failure = $"'{spoken.Trim()}' asks for no rings and for a ring type at once.";
+                return false;
+            }
+
+            none = true;
+            return true;
+        }
+
+        var matched = new List<string>();
+
+        foreach (var part in parts)
+        {
+            if (!TryMatch("ring type", part, BodyCatalogue.RingTypes, BodyCatalogue.MatchRingType, out var type, out failure))
+            {
+                return false;
+            }
+
+            if (!matched.Contains(type!, StringComparer.Ordinal))
+            {
+                matched.Add(type!);
+            }
+        }
+
+        types = matched;
+        return true;
+    }
 
     /// <summary>Counts the service will answer at all.</summary>
     private static int? Bounded(int? count) => count is null ? null : Math.Clamp(count.Value, 1, 63);

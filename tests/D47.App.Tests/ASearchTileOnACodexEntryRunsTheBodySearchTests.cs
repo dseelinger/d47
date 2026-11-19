@@ -54,7 +54,10 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
 
     }
 
-    private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(long entry, string name, bool headset = false, int? region = 1)
+    private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(long entry, string name, bool headset = false, int? region = 1) =>
+        Shown(CodexKeys.Of(entry), name, headset, region);
+
+    private static (PanelView Panel, Window Window, Galaxy Galaxy) Shown(string key, string name, bool headset = false, int? region = 1)
     {
         var settings = TestSurface.Settings();
         var board = new GalaxySearchBoard();
@@ -93,7 +96,7 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
             LedgersPage.Root,
             new NavCrumb(CodexPage.PageKey, "Codex"),
             CodexPage.RegionCrumb(region),
-            CodexPage.EntryCrumb(region, CodexKeys.Of(entry), name)));
+            CodexPage.EntryCrumb(region, key, name)));
         Dispatcher.UIThread.RunJobs();
 
         return (panel, window, galaxy);
@@ -145,6 +148,64 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
 
         var form = panel.GetVisualDescendants().OfType<BodySearchPage>().Single().FormArguments();
         Assert.False(form.ContainsKey("region"));
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PressingSearchOnAKindRunsTheBodySearchOnItsFields(bool headset)
+    {
+        var (panel, window, galaxy) = Shown("gas.class_i_gas_giant.icy_rocky", "Class I gas giant, Icy and Rocky rings", headset);
+
+        Assert.IsType<Button>(Tile(panel)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var asked = Assert.Single(galaxy.Asked);
+        Assert.Null(asked.CodexEntry);
+        Assert.Equal("Class I gas giant", asked.Subtype);
+        Assert.Equal(["Icy", "Rocky"], asked.RingTypes);
+        Assert.Equal(["Icy", "Rocky"], asked.ExactRings!.Order(StringComparer.Ordinal));
+        Assert.Equal(GalacticRegions.NameOf(1), asked.Region);
+        Assert.True(asked.NoDistanceLimit);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PressingSearchOnAStarKindSendsItsLuminosityBand()
+    {
+        var (panel, window, galaxy) = Shown("star.k_yellow_orange_giant_star.giant", "K (Yellow-Orange giant) Star, giant");
+
+        Assert.IsType<Button>(Tile(panel)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        var asked = Assert.Single(galaxy.Asked);
+        Assert.Equal("K (Yellow-Orange giant) Star", asked.Subtype);
+        Assert.Equal(["III", "IIIa", "IIIab", "IIIb"], asked.LuminosityClasses);
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData(1200402, "Green Gas Giant with Water Life")]
+    [InlineData(1200902, "Green Class V Gas Giant")]
+    public void AGreenGasGiantTheServiceDoesNotRecordHasNoSearchTile(long entry, string name)
+    {
+        var (panel, window, _) = Shown(entry, name);
+
+        Assert.Null(Tile(panel));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AKindGroupHasNoSearchTile()
+    {
+        var (panel, window, _) = Shown("gas.class_i_gas_giant", "Class I gas giant");
+
+        Assert.Null(Tile(panel));
 
         window.Close();
     }

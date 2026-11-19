@@ -296,22 +296,17 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         return column;
     }
 
-    /// <summary>The Search tile: shown for an entry the codex table lists, other than a star or planet kind, on the main window and the headset.</summary>
+    /// <summary>The Search tile: shown for an entry the codex table lists that has a search, on the main window and the headset.</summary>
     private void AddSearch(StackPanel column)
     {
-        if (_bodySearch?.Invoke() is not { } link || _table.Entry(_key) is not { Kind: null } entry)
+        if (_bodySearch?.Invoke() is not { } link
+            || _table.Entry(_key) is not { } entry
+            || CodexSearch.Arguments(entry, _regionId) is not { } arguments)
         {
             return;
         }
 
         var button = new Button { Name = "CodexSearch", Content = "Search" };
-        var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name };
-
-        if (_regionId is { } region && GalacticRegions.NameOf(region) is { } regionName)
-        {
-            arguments["region"] = regionName;
-        }
-
         button.Click += (_, _) => link.Run(arguments);
         column.Children.Add(button);
     }

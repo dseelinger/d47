@@ -53,6 +53,23 @@ public static class BodyCatalogue
     /// <summary>Ring compositions.</summary>
     public static IReadOnlyList<string> RingTypes { get; } = ["Icy", "Metal Rich", "Metallic", "Rocky"];
 
+    /// <summary>The <c>ring_type</c> value for a body with no rings.</summary>
+    public const string NoRings = "None";
+
+    /// <summary>A star's luminosity bands, as <see cref="CodexKinds.Band"/> names them.</summary>
+    public static IReadOnlyList<string> Luminosities { get; } = ["Dwarf", "Giant", "Supergiant", "Hypergiant", "White dwarf"];
+
+    /// <summary>The luminosity classes a band covers, in the service's spelling; empty for a name that is not a band.</summary>
+    public static IReadOnlyList<string> LuminosityClasses(string band) => band.ToLowerInvariant() switch
+    {
+        "dwarf" => ["IV", "IVa", "IVab", "IVb", "V", "Va", "Vab", "Vb", "Vz", "VI"],
+        "giant" => ["III", "IIIa", "IIIab", "IIIb"],
+        "supergiant" => ["I", "Ia", "Iab", "Ib", "II", "IIa", "IIab", "IIb"],
+        "hypergiant" => ["O", "Ia0"],
+        "white dwarf" => ["VII"],
+        _ => [],
+    };
+
     /// <summary>How rich a ring's reserves are.</summary>
     public static IReadOnlyList<string> ReserveLevels { get; } =
         ["Common", "Depleted", "Low", "Major", "Pristine"];
@@ -113,6 +130,8 @@ public static class BodyCatalogue
     public static string? MatchRingSignal(string spoken) => Catalogue.Match(RingSignals, spoken);
 
     public static string? MatchRingType(string spoken) => Catalogue.Match(RingTypes, spoken);
+
+    public static string? MatchLuminosity(string spoken) => Catalogue.Match(Luminosities, spoken);
 
     public static string? MatchReserveLevel(string spoken) => Catalogue.Match(ReserveLevels, spoken);
 }

@@ -323,8 +323,9 @@ internal static class SpanshRequest
             }
 
             WriteChoice(writer, "subtype", query.Subtype);
-            WriteRingType(writer, query.RingType);
+            WriteRingTypes(writer, query.RingTypes);
             WriteChoice(writer, "reserve_level", query.ReserveLevel);
+            WriteChoices(writer, "luminosity_class", query.LuminosityClasses);
 
             if (query.Landable is true)
             {
@@ -335,7 +336,7 @@ internal static class SpanshRequest
             {
                 // Not a boolean of its own: the service models this as a state, and "not terraformable" is
                 // one of its four values rather than the absence of the filter.
-                WriteChoice(writer, "terraforming_state", terraformable ? "Terraformable" : "Not terraformable");
+                WriteChoices(writer, "terraforming_state", terraformable ? TerraformableStates : [NotTerraformable]);
             }
 
             WriteSignals(writer, "signals", query.Signal, query.SignalCount);
@@ -591,15 +592,47 @@ internal static class SpanshRequest
         writer.WriteEndArray();
     }
 
-    private static void WriteRingType(Utf8JsonWriter writer, string? type)
+    /// <summary>One type as a <c>type</c> member; several as a list of them, which requires every one.</summary>
+    private static void WriteRingTypes(Utf8JsonWriter writer, IReadOnlyList<string> types)
     {
-        if (type is null)
+        if (types.Count == 1)
+        {
+            writer.WriteStartObject("rings");
+            writer.WriteString("type", types[0]);
+            writer.WriteEndObject();
+        }
+        else if (types.Count > 1)
+        {
+            writer.WriteStartArray("rings");
+
+            foreach (var type in types)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("type", type);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+    }
+
+    /// <summary>A choice of any of <paramref name="values"/>; nothing when there are none.</summary>
+    private static void WriteChoices(Utf8JsonWriter writer, string name, IReadOnlyList<string> values)
+    {
+        if (values.Count == 0)
         {
             return;
         }
 
-        writer.WriteStartObject("rings");
-        writer.WriteString("type", type);
+        writer.WriteStartObject(name);
+        writer.WriteStartArray("value");
+
+        foreach (var value in values)
+        {
+            writer.WriteStringValue(value);
+        }
+
+        writer.WriteEndArray();
         writer.WriteEndObject();
     }
 
@@ -746,6 +779,11 @@ internal static class SpanshRequest
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
+
+    /// <summary>The terraforming states of a terraformable body: a candidate, in progress or done.</summary>
+    private static readonly string[] TerraformableStates = ["Terraformable", "Terraforming", "Terraformed"];
+
+    private const string NotTerraformable = "Not terraformable";
 
     /// <summary>
     /// Every station type the live index reports, confirmed against

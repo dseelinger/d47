@@ -280,10 +280,12 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
         return line;
     }
 
-    /// <summary>The row's Search tile: for an entry the codex table lists, other than a star or planet kind.</summary>
+    /// <summary>The row's Search tile: for an entry the codex table lists that has a search.</summary>
     private Button? SearchTile(CodexMissingRow row)
     {
-        if (_bodySearch?.Invoke() is not { } link || _table.Entry(row.Key) is not { Kind: null } entry)
+        if (_bodySearch?.Invoke() is not { } link
+            || _table.Entry(row.Key) is not { } entry
+            || CodexSearch.Arguments(entry, _regionId) is not { } arguments)
         {
             return null;
         }
@@ -298,13 +300,6 @@ public sealed class CodexDiscoveriesPage : UserControl, IPageSummary, IFilterabl
             VerticalAlignment = VerticalAlignment.Stretch,
         };
         Avalonia.Automation.AutomationProperties.SetName(tile, "Search " + row.Name);
-        var arguments = new Dictionary<string, string>(StringComparer.Ordinal) { ["codex_entry"] = entry.Name };
-
-        if (_regionId is { } region && GalacticRegions.NameOf(region) is { } regionName)
-        {
-            arguments["region"] = regionName;
-        }
-
         tile.Click += (_, _) => link.Run(arguments);
 
         return tile;

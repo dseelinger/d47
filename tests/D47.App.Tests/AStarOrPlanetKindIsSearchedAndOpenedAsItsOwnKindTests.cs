@@ -10,10 +10,10 @@ using Xunit;
 namespace D47.App.Tests;
 
 /// <summary>
-/// A star or planet kind from <c>CodexBodies.tsv</c> has no Search tile, since the body search finds landmarks only, and
-/// a body's Codex tile opens the body's own kind, never the group row named like its sub-type.
+/// A star or planet kind from <c>CodexBodies.tsv</c> has a Search tile and a group row has none (#2587), and a body's
+/// Codex tile opens the body's own kind, never the group row named like its sub-type.
 /// </summary>
-public sealed class AStarOrPlanetKindOpensNoSearchTests
+public sealed class AStarOrPlanetKindIsSearchedAndOpenedAsItsOwnKindTests
 {
     private static string Kind(string key, string name, string family, string parent, string subType, string regions) =>
         string.Join('\t', key, name, family, parent, subType, "", "", "", "", "", regions) + "\n";
@@ -47,27 +47,33 @@ public sealed class AStarOrPlanetKindOpensNoSearchTests
     private static CommanderGameState State() => new(new CommanderIdentity("F735466", "Test Commander"));
 
     [AvaloniaFact]
-    public void ADiscoveriesRowForAStarHasNoSearchTile()
+    public void ADiscoveriesRowForAStarHasASearchTile()
     {
         var link = new BodySearchLink(_ => { });
         var page = new CodexDiscoveriesPage(State, () => HistoryState.Done, 18, Table, bodySearch: () => link);
         var window = Shown(page);
 
         Assert.NotNull(Find(page, "CodexMissing.star.neutron_star"));
-        Assert.Null(Find(page, "CodexSearch.star.neutron_star"));
+        Assert.NotNull(Find(page, "CodexSearch.star.neutron_star"));
         Assert.NotNull(Find(page, "CodexSearch.2"));
 
         window.Close();
     }
 
     [AvaloniaFact]
-    public void TheEntryPageForAStarHasNoSearchTile()
+    public void TheEntryPageForAStarHasASearchTileAndAGroupHasNone()
     {
         var link = new BodySearchLink(_ => { });
         var star = new CodexEntryPage(State, "star.neutron_star", 18, "Neutron Star", null, table: Table, bodySearch: () => link);
         var window = Shown(star);
 
-        Assert.Null(Find(star, "CodexSearch"));
+        Assert.NotNull(Find(star, "CodexSearch"));
+        window.Close();
+
+        var group = new CodexEntryPage(State, "planet.rocky_body", 18, "Rocky body", null, table: Table, bodySearch: () => link);
+        window = Shown(group);
+
+        Assert.Null(Find(group, "CodexSearch"));
         window.Close();
 
         var tree = new CodexEntryPage(State, "2", 18, "Beta tree", null, table: Table, bodySearch: () => link);

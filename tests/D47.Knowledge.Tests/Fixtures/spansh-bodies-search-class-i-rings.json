@@ -1,0 +1,7 @@
+{"count":5,"from":0,"reference":{"id64":10477373803,"name":"Sol","x":0.0,"y":0.0,"z":0.0},"results":[
+{"name":"Gas Giant Alpha 1","system_name":"Alpha","subtype":"Class I gas giant","type":"Planet","distance":4.1,"distance_to_arrival":310.5,"rings":[{"name":"Gas Giant Alpha 1 A Ring","type":"Icy"}]},
+{"name":"Gas Giant Bravo 2","system_name":"Bravo","subtype":"Class I gas giant","type":"Planet","distance":6.2,"distance_to_arrival":95.0,"rings":[{"name":"Gas Giant Bravo 2 A Ring","type":"Icy"},{"name":"Gas Giant Bravo 2 B Ring","type":"Rocky"}]},
+{"name":"Gas Giant Charlie 3","system_name":"Charlie","subtype":"Class I gas giant","type":"Planet","distance":7.8,"distance_to_arrival":1420.0,"rings":[{"name":"Gas Giant Charlie 3 A Ring","type":"Icy"},{"name":"Gas Giant Charlie 3 B Ring","type":"Rocky"},{"name":"Gas Giant Charlie 3 C Ring","type":"Metal Rich"}]},
+{"name":"Gas Giant Delta 4","system_name":"Delta","subtype":"Class I gas giant","type":"Planet","distance":9.0,"distance_to_arrival":12.0},
+{"name":"Gas Giant Echo 5","system_name":"Echo","subtype":"Class I gas giant","type":"Planet","distance":11.3,"distance_to_arrival":540.0,"rings":[{"name":"Gas Giant Echo 5 A Ring","type":"Rocky"},{"name":"Gas Giant Echo 5 B Ring","type":"Icy"},{"name":"Gas Giant Echo 5 C Ring","type":"Rocky"}]}
+],"search":{},"search_reference":"0","size":100}

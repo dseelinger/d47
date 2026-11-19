@@ -73,6 +73,7 @@ internal static class SearchPageView
             "landable" => "LANDABLE",
             "terraformable" => "TERRAFORMING CANDIDATE",
             "tidally_locked" => "TIDALLY LOCKED",
+            "rings_exactly" => "ONLY THESE RING TYPES",
             _ => throw new ArgumentOutOfRangeException(nameof(name), name, "No such flag."),
         }).IsChecked = ticked;
     }

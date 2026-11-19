@@ -304,6 +304,41 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         window.Close();
     }
 
+    [AvaloniaTheory]
+    [InlineData("Class I gas giant", "ring_type", "Icy, Rocky")]
+    [InlineData("Rocky body", "terraformable", "false")]
+    public void AKindSearchTheFormHasNoFieldForIsKeptUntilAFieldChanges(string bodyType, string name, string value)
+    {
+        var world = new World();
+        var (panel, window) = Shown(world);
+        var page = Page(panel);
+        var region = GalacticRegions.NameOf(18)!;
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["body_type"] = bodyType,
+            ["region"] = region,
+            [name] = value,
+        };
+
+        if (name == "ring_type")
+        {
+            arguments["rings_exactly"] = "true";
+        }
+
+        page.Run(arguments);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(arguments.OrderBy(pair => pair.Key, StringComparer.Ordinal), page.FormArguments().OrderBy(pair => pair.Key, StringComparer.Ordinal));
+        Assert.True(world.Galaxy.Asked[^1].NoDistanceLimit);
+        Assert.Contains(VisibleText(panel), text => text == "ANY");
+
+        page.Type("volcanism", "Water Geysers");
+
+        Assert.False(page.FormArguments().ContainsKey(name));
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void TheBodiesPageDrawsNoSavedSearchSectionWhenThereAreNone()
     {
@@ -333,17 +368,18 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         page.Type("gravity from", "0.1");
         page.Type("temperature to", "300");
 
-        foreach (var name in (string[])["landable", "terraformable", "tidally_locked"])
+        foreach (var name in (string[])["landable", "terraformable", "tidally_locked", "rings_exactly"])
         {
             page.TickFlag(name, true);
         }
 
-        foreach (var name in (string[])["region", "body_type", "material", "signal", "hotspot", "ring_type", "reserve_level", "power", "power_state"])
+        foreach (var name in (string[])["region", "body_type", "luminosity", "material", "signal", "hotspot", "ring_type", "reserve_level", "power", "power_state"])
         {
             page.Pick(name, name switch
             {
                 "region" => GalacticRegions.Names[0],
                 "body_type" => BodyCatalogue.Subtypes[0],
+                "luminosity" => BodyCatalogue.Luminosities[0],
                 "material" => BodyCatalogue.SurfaceMaterials[0],
                 "signal" => BodyCatalogue.Signals[0],
                 "hotspot" => BodyCatalogue.RingSignals[0],

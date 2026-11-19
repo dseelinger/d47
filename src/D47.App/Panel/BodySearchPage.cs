@@ -31,6 +31,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     private readonly CheckBox _landable = Tile("Landable");
     private readonly CheckBox _terraformable = Tile("Terraforming candidate");
     private readonly CheckBox _tidallyLocked = Tile("Tidally locked");
+    private readonly CheckBox _ringsExactly = Tile("Only these ring types");
     private readonly TextBox _codexEntry = Field("codex entry");
     private readonly TextBox _volcanism = Field("volcanism");
     private readonly TextBox _atmosphere = Field("atmosphere");
@@ -46,6 +47,9 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private readonly Dictionary<string, (InlinePicker Picker, IReadOnlyList<string> Choices)> _pickers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _picked = new(StringComparer.Ordinal);
+
+    private Dictionary<string, string> _carried = new(StringComparer.Ordinal);
+    private Dictionary<string, string>? _carriedWith;
 
     public BodySearchPage(
         GalaxySearchSurface searches,
@@ -75,6 +79,9 @@ public sealed class BodySearchPage : GalaxySearchPage
         {
             AddPicker(_pickers, _picked, name, choices, several: false);
         }
+
+        _pickers["region"].Picker.Picked += (_, _) => ShowDistanceDefault();
+        _pickers["body_type"].Picker.Picked += (_, _) => ShowDistanceDefault();
     }
 
     public override string Tool => "find_body";
@@ -92,10 +99,11 @@ public sealed class BodySearchPage : GalaxySearchPage
     [
         ("region", GalacticRegions.Names),
         ("body_type", BodyCatalogue.Subtypes),
+        ("luminosity", BodyCatalogue.Luminosities),
         ("material", BodyCatalogue.SurfaceMaterials),
         ("signal", BodyCatalogue.Signals),
         ("hotspot", BodyCatalogue.RingSignals),
-        ("ring_type", BodyCatalogue.RingTypes),
+        ("ring_type", [.. BodyCatalogue.RingTypes, BodyCatalogue.NoRings]),
         ("reserve_level", BodyCatalogue.ReserveLevels),
         ("power", Choices("power")),
         ("power_state", Choices("power_state")),
@@ -108,7 +116,29 @@ public sealed class BodySearchPage : GalaxySearchPage
         ShowDistanceDefault();
     }
 
+    /// <summary>
+    /// The form's fields, and the arguments it has no field for — a ring set, or terraformable false — from the search
+    /// that filled it, until a field is changed.
+    /// </summary>
     public override IReadOnlyDictionary<string, string> FormArguments()
+    {
+        var arguments = Shown();
+
+        if (_carriedWith is { } filled && Same(arguments, filled))
+        {
+            foreach (var (name, value) in _carried)
+            {
+                arguments.TryAdd(name, value);
+            }
+        }
+
+        return arguments;
+    }
+
+    private static bool Same(IReadOnlyDictionary<string, string> one, IReadOnlyDictionary<string, string> other) =>
+        one.Count == other.Count && one.All(pair => other.TryGetValue(pair.Key, out var value) && value == pair.Value);
+
+    private Dictionary<string, string> Shown()
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
@@ -157,9 +187,11 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         _distance.Value = null;
-        ShowDistanceDefault();
+        _carried = new(StringComparer.Ordinal);
+        _carriedWith = null;
 
         ResetPickers(_pickers, _picked, null, several: false);
+        ShowDistanceDefault();
     }
 
     protected override void FillForm(IReadOnlyDictionary<string, string> arguments)
@@ -184,7 +216,6 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         FillDistance(arguments, _distance, BodyQuery.MaxDistanceCeiling);
-        ShowDistanceDefault();
 
         var shown = new Dictionary<string, string>(arguments, StringComparer.Ordinal);
 
@@ -194,7 +225,17 @@ public sealed class BodySearchPage : GalaxySearchPage
         }
 
         ResetPickers(_pickers, _picked, shown, several: false);
+        ShowDistanceDefault();
+
+        var fields = Shown();
+        _carried = Carried
+            .Where(name => !string.IsNullOrWhiteSpace(Get(name)) && !fields.ContainsKey(name))
+            .ToDictionary(name => name, name => Get(name)!, StringComparer.Ordinal);
+        _carriedWith = _carried.Count > 0 ? fields : null;
     }
+
+    /// <summary>The arguments a search can hold in a value the form has no field for.</summary>
+    private static readonly string[] Carried = ["ring_type", "terraformable"];
 
     protected override bool Refusal(IReadOnlyDictionary<string, string> arguments)
     {
@@ -215,9 +256,11 @@ public sealed class BodySearchPage : GalaxySearchPage
             RingSignal = Get("hotspot"),
             RingSignalCount = Whole("hotspot_count"),
             RingType = Get("ring_type"),
+            RingsExactly = Flag("rings_exactly"),
             ReserveLevel = Get("reserve_level"),
             Landable = Flag("landable"),
             Terraformable = Flag("terraformable"),
+            Luminosity = Get("luminosity"),
             CodexEntry = Get("codex_entry"),
             Region = Get("region"),
             Volcanism = Get("volcanism"),
@@ -237,7 +280,8 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     protected override (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference)
     {
-        if (!arguments.ContainsKey("max_distance") && Text(arguments, "codex_entry") is not null)
+        if (!arguments.ContainsKey("max_distance")
+            && (Text(arguments, "codex_entry") is not null || (Text(arguments, "region") is not null && Text(arguments, "body_type") is not null)))
         {
             return ("NEAREST TO ", AsideFrom(arguments, reference));
         }
@@ -248,9 +292,11 @@ public sealed class BodySearchPage : GalaxySearchPage
     private static string? Text(IReadOnlyDictionary<string, string> arguments, string key) =>
         arguments.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : null;
 
-    /// <summary>With no distance typed, the box shows what the search will use: Any for a codex entry, else 50.</summary>
+    /// <summary>With no distance typed, the box shows what the search will use: Any for a codex entry or a body type in a region, else 50.</summary>
     private void ShowDistanceDefault() =>
-        _distance.Placeholder = string.IsNullOrWhiteSpace(_codexEntry.Text) ? DefaultDistance.ToString(CultureInfo.InvariantCulture) : Any.ToUpperInvariant();
+        _distance.Placeholder = string.IsNullOrWhiteSpace(_codexEntry.Text) && !(_picked.ContainsKey("region") && _picked.ContainsKey("body_type"))
+            ? DefaultDistance.ToString(CultureInfo.InvariantCulture)
+            : Any.ToUpperInvariant();
 
     protected override int Count(GalaxySearchPosting posting) =>
         posting.Result is BodySearchResult result ? result.Bodies.Count : 0;
@@ -407,6 +453,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "The body",
             Labelled("Type", _pickers["body_type"].Picker),
+            Labelled("Luminosity", _pickers["luminosity"].Picker),
             Labelled("Surface material", _pickers["material"].Picker),
             flags,
             Labelled("Codex entry", _codexEntry),
@@ -422,6 +469,7 @@ public sealed class BodySearchPage : GalaxySearchPage
             Labelled("Ring hotspot", _pickers["hotspot"].Picker),
             Labelled("Exactly how many", _hotspotCount),
             Labelled("Ring type", _pickers["ring_type"].Picker),
+            _ringsExactly,
             Labelled("Reserves", _pickers["reserve_level"].Picker)));
 
         form.Children.Add(Group(
@@ -437,7 +485,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     protected override void Follow() =>
         ShowHere(_near, _here());
 
-    private static readonly string[] Flags = ["landable", "terraformable", "tidally_locked"];
+    private static readonly string[] Flags = ["landable", "terraformable", "tidally_locked", "rings_exactly"];
 
     private Control Row(BodySummary body, ArrangedTable<object> table)
     {
@@ -489,6 +537,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         "landable" => _landable,
         "terraformable" => _terraformable,
         "tidally_locked" => _tidallyLocked,
+        "rings_exactly" => _ringsExactly,
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "No such flag."),
     };
 

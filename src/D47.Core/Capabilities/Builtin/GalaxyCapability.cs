@@ -593,10 +593,13 @@ public static class GalaxyCapability
                     ToolParameter.Integer(
                         "hotspot_count",
                         "Exactly how many overlapping hotspots — not a minimum. A triple is 3."),
-                    ToolParameter.OneOf(
+                    ToolParameter.Text(
                         "ring_type",
-                        "Ring composition.",
-                        BodyCatalogue.RingTypes),
+                        "Ring composition: Icy, Rocky, Metal Rich or Metallic. Several, separated by commas, "
+                            + "need a ring of each. None is a body with no rings."),
+                    ToolParameter.Flag(
+                        "rings_exactly",
+                        "With ring_type, only bodies whose rings are of those types and no other."),
                     ToolParameter.OneOf(
                         "reserve_level",
                         "How rich the rings are.",
@@ -606,7 +609,12 @@ public static class GalaxyCapability
                         "Only bodies that can be landed on."),
                     ToolParameter.Flag(
                         "terraformable",
-                        "Only terraforming candidates, which are worth far more to map."),
+                        "True for terraforming candidates, which are worth far more to map, and bodies being "
+                            + "or already terraformed. False for bodies that cannot be terraformed."),
+                    ToolParameter.OneOf(
+                        "luminosity",
+                        "A star's luminosity band.",
+                        BodyCatalogue.Luminosities),
                     ToolParameter.Text(
                         "codex_entry",
                         "A species or geological feature to find, by its codex name — \"Bacterium Cerbrus\", "
@@ -640,8 +648,8 @@ public static class GalaxyCapability
                     NearParameter,
                     ToolParameter.Number(
                         "max_distance",
-                        "How far to look, in light years. Default 50, at most 1,000. A codex_entry search "
-                            + "with no max_distance has no limit."),
+                        "How far to look, in light years. Default 50, at most 1,000. A codex_entry search, or a "
+                            + "body_type in a region, with no max_distance has no limit."),
                     LimitParameter,
                     PageParameter,
                 ],
@@ -3364,9 +3372,11 @@ public static class GalaxyCapability
             RingSignal = Text(arguments, "hotspot"),
             RingSignalCount = Count(arguments, "hotspot_count"),
             RingType = Text(arguments, "ring_type"),
+            RingsExactly = arguments.Boolean("rings_exactly"),
             ReserveLevel = Text(arguments, "reserve_level"),
             Landable = arguments.Boolean("landable"),
             Terraformable = arguments.Boolean("terraformable"),
+            Luminosity = Text(arguments, "luminosity"),
             CodexEntry = Text(arguments, "codex_entry"),
             Region = Text(arguments, "region"),
             Volcanism = Text(arguments, "volcanism"),
