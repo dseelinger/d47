@@ -136,6 +136,12 @@ public sealed class PanelNavigator
     /// <summary>Which root each tab was last on, so a tab switch returns to the mode it left.</summary>
     private readonly Dictionary<PanelTab, string> _current = [];
 
+    /// <summary>The places before this one, oldest first; where the panel is now is not among them.</summary>
+    private readonly List<Visit> _back = [];
+
+    /// <summary>The most places <see cref="Previous"/> can go back through.</summary>
+    private const int MostRemembered = 100;
+
     /// <summary>Raised whenever the tab, the root or any trail changes.</summary>
     public event EventHandler? Changed;
 
@@ -213,6 +219,8 @@ public sealed class PanelNavigator
                     _current.Remove(tab);
                 }
             }
+
+            Forget(visit => visit.RootKey == rootKey);
         }
 
         Raise();
@@ -314,6 +322,8 @@ public sealed class PanelNavigator
             return false;
         }
 
+        var before = Here();
+
         // The trail is set before the root and the tab are selected, so the root's old trail is never drawn.
         var drilled = trail.Count != 2 || trail[1].Key != page.Page.Key;
 
@@ -328,6 +338,7 @@ public sealed class PanelNavigator
 
         if (drilled && !moved && !selected)
         {
+            Remember(before);
             Raise();
         }
 
@@ -383,7 +394,10 @@ public sealed class PanelNavigator
             return false;
         }
 
+        var before = Here();
+
         Tab = tab;
+        Remember(before);
         Raise();
         return true;
     }
@@ -423,7 +437,10 @@ public sealed class PanelNavigator
             return false;
         }
 
+        var before = Here();
+
         _current[tab] = rootKey;
+        Remember(before);
         Raise();
         return true;
     }
@@ -433,14 +450,14 @@ public sealed class PanelNavigator
         _current.TryGetValue(tab, out var root) ? root : string.Empty;
 
     /// <summary>One level deeper.</summary>
-    public bool Drill(NavCrumb crumb) => !Modal && Push(crumb);
+    public bool Drill(NavCrumb crumb) => !Modal && Push(Mutable(), crumb, remember: true);
 
     /// <summary>One level deeper on a tab's current root, whether or not that tab is showing.</summary>
     public bool Drill(PanelTab tab, NavCrumb crumb) =>
-        Mutable(tab) is { } trail && !trail[^1].Modal && Push(trail, crumb);
+        Mutable(tab) is { } trail && !trail[^1].Modal && Push(trail, crumb, remember: true);
 
     /// <summary>Pushes a level that holds the panel until it is dismissed - a chooser.</summary>
-    public bool Take(NavCrumb crumb) => Push(crumb with { Modal = true });
+    public bool Take(NavCrumb crumb) => Push(Mutable(), crumb with { Modal = true }, remember: false);
 
     /// <summary>
     /// Back one level, and the answer to all three routes that must agree - the breadcrumb, the
@@ -456,6 +473,7 @@ public sealed class PanelNavigator
         }
 
         trail.RemoveAt(trail.Count - 1);
+        Settle();
         Raise();
         return true;
     }
@@ -473,21 +491,43 @@ public sealed class PanelNavigator
         }
 
         trail.RemoveRange(1, trail.Count - 1);
+        Settle();
         Raise();
         return true;
     }
 
-    /// <summary>Cuts a tab's trail back to its root when any level below the root matches, unless the tab is waiting on a chooser.</summary>
+    /// <summary>
+    /// Cuts a tab's trail back to its root when any level below the root matches, unless the tab is waiting on a
+    /// chooser, and forgets every remembered place on the tab with a matching level or on the root with a level it cut.
+    /// </summary>
     public bool ToRootIfAny(PanelTab tab, Func<NavCrumb, bool> match)
     {
         var trail = Mutable(tab);
 
-        if (trail is null || trail[^1].Modal || trail.FindIndex(1, crumb => match(crumb)) < 0)
+        if (trail is null || trail[^1].Modal)
         {
             return false;
         }
 
-        trail.RemoveRange(1, trail.Count - 1);
+        var root = trail[0].Key;
+        HashSet<string> removed = trail.FindIndex(1, crumb => match(crumb)) < 0
+            ? []
+            : new(trail.Skip(1).Select(crumb => crumb.Key), StringComparer.Ordinal);
+
+        if (removed.Count > 0)
+        {
+            trail.RemoveRange(1, trail.Count - 1);
+        }
+
+        Forget(visit =>
+            (visit.Tab == tab && visit.Trail.Skip(1).Any(match))
+            || (visit.RootKey == root && visit.Trail.Any(crumb => removed.Contains(crumb.Key))));
+
+        if (removed.Count == 0)
+        {
+            return false;
+        }
+
         Raise();
         return true;
     }
@@ -503,6 +543,7 @@ public sealed class PanelNavigator
         }
 
         trail.RemoveRange(index + 1, trail.Count - index - 1);
+        Settle();
         Raise();
         return true;
     }
@@ -529,6 +570,7 @@ public sealed class PanelNavigator
         }
 
         var root = trail[0];
+        var before = Here();
 
         trail.Clear();
         trail.Add(root);
@@ -536,18 +578,117 @@ public sealed class PanelNavigator
         // A caller that supplies the root anyway is not given it twice.
         trail.AddRange(crumbs.Count > 0 && crumbs[0].Key == root.Key ? crumbs.Skip(1) : crumbs);
 
+        Remember(before);
         Raise();
         return true;
     }
 
-    private bool Push(NavCrumb crumb) => Push(Mutable(), crumb);
+    /// <summary>
+    /// Back through the places this navigator has shown, skipping any that can no longer be opened; false when
+    /// there is none to go back to or a chooser is holding the panel.
+    /// </summary>
+    public bool Previous()
+    {
+        if (Modal || Older() is not { } at)
+        {
+            return false;
+        }
 
-    private bool Push(List<NavCrumb>? trail, NavCrumb crumb)
+        var visit = _back[at];
+
+        _back.RemoveRange(at, _back.Count - at);
+
+        // The trail, root and tab are all set before the one Raise, so no place in between is drawn.
+        var trail = _trails[visit.RootKey];
+
+        trail.Clear();
+        trail.AddRange(visit.Trail);
+        _current[visit.Tab] = visit.RootKey;
+        Tab = visit.Tab;
+
+        Settle();
+        Raise();
+        return true;
+    }
+
+    /// <summary>Whether <see cref="Previous"/> has a place to go back to.</summary>
+    public bool CanGoPrevious => !Modal && Older() is not null;
+
+    /// <summary>The newest remembered place that differs from this one and can still be opened, or null.</summary>
+    private int? Older()
+    {
+        var here = Here();
+
+        for (var at = _back.Count - 1; at >= 0; at--)
+        {
+            if (!_back[at].Same(here) && CanRestore(_back[at]))
+            {
+                return at;
+            }
+        }
+
+        return null;
+    }
+
+    private bool CanRestore(Visit visit) =>
+        Roots(visit.Tab).Any(root => root.Key == visit.RootKey)
+        && visit.Trail.Skip(1).All(crumb =>
+            SubPagesOf(visit.RootKey).FirstOrDefault(sub => sub.Page.Key == crumb.Key) is not { CanOpen: { } canOpen }
+            || canOpen());
+
+    /// <summary>Where the panel is now, without a chooser, or null when the showing tab has no root.</summary>
+    private Visit? Here() =>
+        Mutable() is { } trail ? new Visit(Tab, trail[0].Key, [.. trail.Where(crumb => !crumb.Modal)]) : null;
+
+    /// <summary>Records a move away from <paramref name="before"/>; a move that left the place as it was records nothing.</summary>
+    private void Remember(Visit? before)
+    {
+        if (before is null || before.Same(Here()) || (_back.Count > 0 && _back[^1].Same(before)))
+        {
+            return;
+        }
+
+        _back.Add(before);
+
+        if (_back.Count > MostRemembered)
+        {
+            _back.RemoveAt(0);
+        }
+    }
+
+    /// <summary>Treats the move as replacing the place before it: drops the last remembered place when it is where the panel is now.</summary>
+    private void Settle()
+    {
+        if (_back.Count > 0 && _back[^1].Same(Here()))
+        {
+            _back.RemoveAt(_back.Count - 1);
+        }
+    }
+
+    /// <summary>Drops the remembered places that match, then joins neighbours left equal.</summary>
+    private void Forget(Func<Visit, bool> match)
+    {
+        _back.RemoveAll(visit => match(visit));
+
+        for (var at = _back.Count - 1; at > 0; at--)
+        {
+            if (_back[at].Same(_back[at - 1]))
+            {
+                _back.RemoveAt(at);
+            }
+        }
+
+        Settle();
+    }
+
+    private bool Push(List<NavCrumb>? trail, NavCrumb crumb, bool remember)
     {
         if (trail is null)
         {
             return false;
         }
+
+        var before = remember ? Here() : null;
 
         // The level already on top is this one again — a second plot of the same kind, say (#212). Refusing
         // outright would leave the breadcrumb reading the plan that was replaced, so the crumb is swapped in
@@ -560,6 +701,12 @@ public sealed class PanelNavigator
             }
 
             trail[^1] = crumb;
+
+            if (remember)
+            {
+                Settle();
+            }
+
             Raise();
             return true;
         }
@@ -572,6 +719,12 @@ public sealed class PanelNavigator
         {
             trail.RemoveRange(earlier + 1, trail.Count - earlier - 1);
             trail[earlier] = crumb;
+
+            if (remember)
+            {
+                Settle();
+            }
+
             Raise();
             return true;
         }
@@ -591,6 +744,7 @@ public sealed class PanelNavigator
         }
 
         trail.Add(crumb);
+        Remember(before);
         Raise();
         return true;
     }
@@ -605,4 +759,15 @@ public sealed class PanelNavigator
     private void Raise() => Changed?.Invoke(this, EventArgs.Empty);
 
     private sealed record SubPage(NavCrumb Page, Func<bool>? CanOpen);
+
+    /// <summary>One place the panel was: a tab, its root and that root's trail.</summary>
+    private sealed record Visit(PanelTab Tab, string RootKey, IReadOnlyList<NavCrumb> Trail)
+    {
+        /// <summary>The same place by keys, whatever the crumbs' words.</summary>
+        public bool Same(Visit? other) =>
+            other is not null
+            && other.Tab == Tab
+            && other.RootKey == RootKey
+            && other.Trail.Select(crumb => crumb.Key).SequenceEqual(Trail.Select(crumb => crumb.Key), StringComparer.Ordinal);
+    }
 }
