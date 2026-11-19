@@ -296,7 +296,7 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Ledgers", "Codex"], view.Nav.Trail.Select(crumb => crumb.Word));
-        Assert.Single(In<CodexPage>(view));
+        Assert.Single(In<CodexCataloguePage>(view));
 
         if (TestSurface.CapturesWanted)
         {
@@ -304,10 +304,17 @@ public class TheCodexPageShowsTheLedgerOnTheCommanderTabTests
             frame.SaveCapture("codex-big-panel.png");
         }
 
+        In<Button>(view).First(button => button.Name == "CodexRegions").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(["Ledgers", "Codex", "Regions"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Single(In<CodexPage>(view));
+        Assert.Empty(In<CodexCataloguePage>(view));
+
         In<Button>(view).First(button => button.Name == "CodexRegion.18").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Ledgers", "Codex", "Inner Orion Spur"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["Ledgers", "Codex", "Regions", "Inner Orion Spur"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Single(In<CodexRegionPage>(view));
         Assert.Empty(In<CodexPage>(view));
 

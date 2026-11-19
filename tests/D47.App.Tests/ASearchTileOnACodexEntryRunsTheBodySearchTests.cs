@@ -95,6 +95,7 @@ public sealed class ASearchTileOnACodexEntryRunsTheBodySearchTests
             PanelTab.Commander,
             LedgersPage.Root,
             new NavCrumb(CodexPage.PageKey, "Codex"),
+            CodexPage.RegionsCrumb(),
             CodexPage.RegionCrumb(region),
             CodexPage.EntryCrumb(region, key, name)));
         Dispatcher.UIThread.RunJobs();

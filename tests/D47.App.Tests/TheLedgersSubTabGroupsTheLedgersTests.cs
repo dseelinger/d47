@@ -82,7 +82,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
             [
                 "Your kills and the credits they were awarded.",
                 "Where your credits came from and where they went.",
-                "The codex entries you have logged, by region.",
+                "Every kind of object in the Codex, and the ones you have found.",
             ],
             rows.Select(row => row.Description));
         Assert.Equal([CombatStatsPage.PageKey, CreditsPage.PageKey, CodexPage.PageKey], rows.Select(row => row.Crumb.Key));
@@ -246,7 +246,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         {
             ("Ledger.combat-stats", "Combat stats", typeof(CombatStatsPage)),
             ("Ledger.credits", "Credits", typeof(CreditsPage)),
-            ("Ledger.codex", "Codex", typeof(CodexPage)),
+            ("Ledger.codex", "Codex", typeof(CodexCataloguePage)),
             ("Ledger.session", "This session", typeof(SessionPage)),
         })
         {
@@ -276,7 +276,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         Press(In<Button>(view).Single(button => button.Name == "Ledger.codex"));
 
         Assert.Equal(["Ledgers", "Codex"], view.Nav.Trail.Select(crumb => crumb.Word));
-        Assert.Single(In<CodexPage>(view));
+        Assert.Single(In<CodexCataloguePage>(view));
         Assert.DoesNotContain(In<Control>(view), control => control is CreditsPage);
 
         window.Close();
@@ -305,7 +305,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
 
         Assert.Equal(["Ledgers", "Codex"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Single(In<LedgersPage>(view));
-        Assert.Single(In<CodexPage>(view));
+        Assert.Single(In<CodexCataloguePage>(view));
 
         window.Close();
     }
@@ -319,6 +319,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
 
         Assert.True(PageTrail.Open(view.Nav, LedgersPage.RootKey, [
             LedgersPage.Ledger(CodexPage.PageKey, "Codex"),
+            CodexPage.RegionsCrumb(),
             CodexPage.RegionCrumb(null),
             CodexPage.EntryCrumb(null, "1", "Entry")]));
         Dispatcher.UIThread.RunJobs();
@@ -327,16 +328,17 @@ public class TheLedgersSubTabGroupsTheLedgersTests
 
         Assert.True(view.Nav.Back());
         Assert.True(view.Nav.Back());
+        Assert.True(view.Nav.Back());
         Dispatcher.UIThread.RunJobs();
 
         Assert.Single(In<LedgersPage>(view));
-        Assert.Single(In<CodexPage>(view));
+        Assert.Single(In<CodexCataloguePage>(view));
 
         Press(In<Button>(view).Single(button => button.Name == "Ledger.credits"));
 
         Assert.Equal(["Ledgers", "Credits"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Single(In<CreditsPage>(view));
-        Assert.DoesNotContain(In<Control>(view), control => control is CodexPage);
+        Assert.DoesNotContain(In<Control>(view), control => control is CodexCataloguePage);
 
         window.Close();
     }

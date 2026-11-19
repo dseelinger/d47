@@ -82,8 +82,16 @@ public class ThePossibleFirstsPageListsTheRegionFirstRecordsTests
     private static string Runs(TextBlock block) =>
         string.Concat(block.Inlines?.OfType<Run>().Select(run => run.Text) ?? []).Trim();
 
-    private static CodexPage Codex(CommanderGameState state, RegionFirstBook? book, PanelNavigator nav) =>
-        new(() => state, () => HistoryState.Done, () => Now, new CodexChoice { Period = (int)CodexPeriod.Everything }, nav, regionFirsts: book);
+    private static CodexCataloguePage Codex(CommanderGameState state, RegionFirstBook? book, PanelNavigator nav) =>
+        new(
+            () => state,
+            () => HistoryState.Done,
+            new CodexCatalogueChoice(),
+            D47.Core.Knowledge.CodexCatalogue.Tree.Root,
+            nav: nav,
+            period: new CodexChoice { Period = (int)CodexPeriod.Everything },
+            now: () => Now,
+            regionFirsts: book);
 
     [AvaloniaFact]
     public void CodexShowsTheRowWithTheThreeCountsAndOpensThePage()

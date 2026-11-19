@@ -15,6 +15,7 @@ public static class PageTrail
             : page.Kind == PageKind.CodexEntry
                 ? (LedgersPage.RootKey, [
                     LedgersPage.Ledger(CodexPage.PageKey, "Codex"),
+                    CodexPage.RegionsCrumb(),
                     CodexPage.RegionCrumb(page.Region),
                     CodexPage.EntryCrumb(page.Region, page.Key ?? string.Empty, page.Name ?? "Entry")])
                 : null;

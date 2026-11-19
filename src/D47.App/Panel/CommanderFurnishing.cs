@@ -303,14 +303,14 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             : CodexPage.PictureOf(crumb.Key) is { } picture
             ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
             : CodexPage.CatalogueNodeOf(crumb.Key) is { } node
-            ? _codexCatalogue = new CodexCataloguePage(state, history, catalogue, D47.Core.Knowledge.CodexCatalogue.Tree.Node(node) ?? D47.Core.Knowledge.CodexCatalogue.Tree.Root, headset, host.Nav, pictures, host.ColumnWidths, host.ColumnArrangements, () => host.BodySearch, host.Copy)
+            ? _codexCatalogue = new CodexCataloguePage(state, history, catalogue, D47.Core.Knowledge.CodexCatalogue.Tree.Node(node) ?? D47.Core.Knowledge.CodexCatalogue.Tree.Root, headset, host.Nav, pictures, host.ColumnWidths, host.ColumnArrangements, () => host.BodySearch, host.Copy, period: choice, now: now, regionFirsts: regionFirsts)
             : CodexPage.IsPossibleFirsts(crumb.Key)
             ? _codexPossibleFirsts = new CodexPossibleFirstsPage(state, regionFirsts, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements, host.Copy, press)
             : CodexPage.IsDiscoveries(crumb.Key)
             ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav, pictures: pictures, columnWidths: host.ColumnWidths, bodySearch: () => host.BodySearch, columnArrangements: host.ColumnArrangements)
             : CodexPage.IsRegion(crumb.Key)
             ? _codexRegion = new CodexRegionPage(state, history, now, choice, CodexPage.RegionOf(crumb.Key), headset, host.Nav, columnWidths: host.ColumnWidths, copy: host.Copy, columnArrangements: host.ColumnArrangements, regionFirsts: regionFirsts)
-            : _codex = new CodexPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements, regionFirsts);
+            : _codex = new CodexPage(state, history, now, choice, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements);
 
         DeclareLedger(CodexPage.PageKey, "Codex");
     }
@@ -406,7 +406,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= _creditTransactions?.Tick() ?? false;
         }
 
-        if (leaf == CodexPage.PageKey || CodexPage.IsRegion(leaf) || CodexPage.IsDiscoveries(leaf) || CodexPage.IsPossibleFirsts(leaf) || CodexPage.IsEntry(leaf) || CodexPage.IsCatalogue(leaf))
+        if (leaf == CodexPage.PageKey || CodexPage.IsRegions(leaf) || CodexPage.IsRegion(leaf) || CodexPage.IsDiscoveries(leaf) || CodexPage.IsPossibleFirsts(leaf) || CodexPage.IsEntry(leaf) || CodexPage.IsCatalogue(leaf))
         {
             changed |= _codexCatalogue?.Tick() ?? false;
             changed |= _codexEntry?.Tick() ?? false;
@@ -442,7 +442,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav, Page)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
-        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsPossibleFirsts(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key) || CodexPage.IsCatalogue(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
+        : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegions(crumb.Key) || CodexPage.IsRegion(crumb.Key) || CodexPage.IsDiscoveries(crumb.Key) || CodexPage.IsPossibleFirsts(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key) || CodexPage.IsCatalogue(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)
         : (crumb.Key == ScreenshotsPage.PageKey || ScreenshotsPage.IsView(crumb.Key)) && _screenshotsBuild is { } screenshots ? screenshots(crumb)
         : crumb.Key == CommandersPage.RootKey && _commandersBuild is { } commanders ? commanders(crumb)
         : _checklistBuild is { } checklist ? checklist(crumb)

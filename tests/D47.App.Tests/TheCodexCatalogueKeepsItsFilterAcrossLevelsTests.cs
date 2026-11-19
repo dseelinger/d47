@@ -39,7 +39,7 @@ public class TheCodexCatalogueKeepsItsFilterAcrossLevelsTests
         Dispatcher.UIThread.RunJobs();
 
         panel.Tab = PanelTab.Commander;
-        Assert.True(panel.Nav.GoTo(PanelTab.Commander, LedgersPage.Root, new NavCrumb(CodexPage.PageKey, "Codex"), CodexPage.CatalogueCrumb()));
+        Assert.True(panel.Nav.GoTo(PanelTab.Commander, LedgersPage.Root, new NavCrumb(CodexPage.PageKey, "Codex")));
         Dispatcher.UIThread.RunJobs();
 
         return (panel, window);
@@ -76,13 +76,13 @@ public class TheCodexCatalogueKeepsItsFilterAcrossLevelsTests
         Press(Showing(panel), "CodexGroup.planet.rocky_body");
 
         Assert.Equal("The kinds under Rocky body.", Showing(panel).Summary);
-        Assert.Equal(["Codex", "Catalogue", "Terrestrial planets", "Rocky body"], panel.Nav.Trail.Skip(1).Select(crumb => crumb.Word));
+        Assert.Equal(["Codex", "Terrestrial planets", "Rocky body"], panel.Nav.Trail.Skip(1).Select(crumb => crumb.Word));
 
         Assert.True(panel.Nav.Back());
         Dispatcher.UIThread.RunJobs();
         Assert.Equal("The kinds under Terrestrial planets.", Showing(panel).Summary);
 
-        Assert.True(panel.Nav.JumpTo(2));
+        Assert.True(panel.Nav.JumpTo(1));
         Dispatcher.UIThread.RunJobs();
         Assert.StartsWith("Every kind of object in the Codex.", Showing(panel).Summary, StringComparison.Ordinal);
 

@@ -12,7 +12,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Commander › Ledgers › Codex › Catalogue and every level under it: one node of the codex tree, its child groups as rows
+/// Commander › Ledgers › Codex and every level under it: one node of the codex tree, its child groups as rows
 /// or as a segmented control over one kinds list, and its kinds, under the shared status and region filter.
 /// </summary>
 public sealed class CodexCataloguePage : UserControl, IPageSummary
@@ -38,6 +38,9 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
     private readonly ColumnArrangementMemory? _columnArrangements;
     private readonly Func<BodySearchLink?>? _bodySearch;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly CodexChoice? _period;
+    private readonly Func<DateTimeOffset>? _now;
+    private readonly RegionFirstBook? _regionFirsts;
     private readonly CodexThumbnails? _thumbs;
     private readonly CodexCatalogueFilters _filters;
     private readonly IReadOnlyList<CodexNode> _segmentNodes;
@@ -56,6 +59,9 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
     private int? _seenHere;
     private long _seenChoice = -1;
     private bool _seenSearch;
+    private long _seenMinute;
+    private long _seenFirsts;
+    private int _seenPeriod = -1;
     private string _summary = string.Empty;
 
     public CodexCataloguePage(
@@ -70,8 +76,14 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
         ColumnArrangementMemory? columnArrangements = null,
         Func<BodySearchLink?>? bodySearch = null,
         Func<string, Task<bool>>? copy = null,
-        CodexTree? tree = null)
+        CodexTree? tree = null,
+        CodexChoice? period = null,
+        Func<DateTimeOffset>? now = null,
+        RegionFirstBook? regionFirsts = null)
     {
+        _period = period;
+        _now = now;
+        _regionFirsts = regionFirsts;
         _state = state;
         _history = history;
         _choice = choice;
@@ -153,7 +165,8 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
             && _state()?.Location.StarSystem == _seenSystem
             && Here() == _seenHere
             && _choice.Version == _seenChoice
-            && HasSearch() == _seenSearch)
+            && HasSearch() == _seenSearch
+            && (!AtRoot || (PageKit.Minute(_now!()) == _seenMinute && (_regionFirsts?.Version ?? 0) == _seenFirsts && _period!.Period == _seenPeriod)))
         {
             return false;
         }
@@ -167,6 +180,9 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
     private int? Here() =>
         _state()?.Location.StarPos is { } position && GalacticRegions.Find(position) is { } name ? GalacticRegions.IdOf(name) : null;
 
+    /// <summary>Whether this is the Codex root, which carries the Possible firsts and Regions rows under its tables.</summary>
+    private bool AtRoot => _node.Parent is null && _period is not null && _now is not null;
+
     private bool HasSearch() => _bodySearch?.Invoke() is not null;
 
     private void Draw()
@@ -178,6 +194,13 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
         _seenHere = Here();
         _seenChoice = _choice.Version;
         _seenSearch = HasSearch();
+
+        if (AtRoot)
+        {
+            _seenMinute = PageKit.Minute(_now!());
+            _seenFirsts = _regionFirsts?.Version ?? 0;
+            _seenPeriod = _period!.Period;
+        }
 
         _body.Children.Clear();
 
@@ -191,7 +214,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
         var scope = _filters.Scope;
         var view = CodexCatalogueModel.View(ledger, _tree, _node, scope, _choice.Status, _choice.Segment(_node.Key));
 
-        SetSummary(CodexCatalogueModel.Summary(view));
+        SetSummary(CodexCatalogueModel.Summary(view, _headset));
         Columns(scope);
 
         _filters.Show(view.Shown, view.Counted);
@@ -226,6 +249,93 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary
         {
             _body.Children.Add(CreditsKit.Message(CodexCatalogueModel.NoMatchText));
         }
+
+        if (AtRoot)
+        {
+            _body.Children.Add(RootRows(state, ledger));
+        }
+    }
+
+    /// <summary>The Possible firsts row, where there is a record, directly above the Regions row; neither follows the filter.</summary>
+    private StackPanel RootRows(CommanderGameState? state, CodexLedger ledger)
+    {
+        var rows = new StackPanel { Spacing = 2 };
+
+        if (FirstsRow(state) is { } firsts)
+        {
+            rows.Children.Add(firsts);
+        }
+
+        rows.Children.Add(RegionsRow(ledger));
+
+        return rows;
+    }
+
+    private Button RegionsRow(CodexLedger ledger)
+    {
+        var period = (CodexPeriod)Math.Clamp(_period!.Period, 0, 2);
+        var view = CodexModel.Regions(ledger, period, _now!(), _history());
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 16 };
+
+        CreditsKit.Place(grid, 0, new StackPanel
+        {
+            Children =
+            {
+                CreditsKit.Label(CodexModel.RegionsCrumbWord),
+                RoutingKit.Ink(CodexModel.RegionsRowLine, TypeScale.Small, ThemeManager.GreyKey, wrap: true),
+            },
+        });
+        CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexModel.RegionsFigure(view, period), TypeScale.Small, ThemeManager.AKey, right: true));
+        CreditsKit.Place(grid, 2, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
+
+        var button = ListRow.Dress(new Button
+        {
+            Name = "CodexRegions",
+            Content = grid,
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(14, 6),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        });
+        Avalonia.Automation.AutomationProperties.SetName(button, CodexModel.RegionsCrumbWord);
+        button.Click += (_, _) => _nav?.Drill(CodexPage.RegionsCrumb());
+
+        return button;
+    }
+
+    /// <summary>The Possible firsts row; null with no record in the store.</summary>
+    private Control? FirstsRow(CommanderGameState? state)
+    {
+        var records = _regionFirsts is not null && state?.Identity.FrontierId is { Length: > 0 } id ? _regionFirsts.For(id) : [];
+
+        if (records.Count == 0)
+        {
+            return null;
+        }
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 16 };
+
+        var label = CreditsKit.Label(CodexModel.PossibleFirstsCrumbWord);
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
+
+        CreditsKit.Place(grid, 0, new StackPanel
+        {
+            Children = { label, RoutingKit.Ink(CodexModel.PossibleFirstsRowLine, TypeScale.Small, ThemeManager.GreyKey, wrap: true) },
+        });
+        CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexModel.PossibleFirstsFigures(records), TypeScale.Small, ThemeManager.AKey, right: true));
+        CreditsKit.Place(grid, 2, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
+
+        var button = ListRow.Dress(new Button
+        {
+            Name = "CodexPossibleFirsts",
+            Content = grid,
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(14, 6),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        });
+        Avalonia.Automation.AutomationProperties.SetName(button, CodexModel.PossibleFirstsCrumbWord);
+        button.Click += (_, _) => _nav?.Drill(CodexPage.PossibleFirstsCrumb());
+
+        return button;
     }
 
     private void SetSummary(string summary)

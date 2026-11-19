@@ -16,7 +16,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Commander › Ledgers › Codex › Catalogue: one page for any node of the codex tree, under a shared filter (#2608).</summary>
+/// <summary>Commander › Ledgers › Codex and the pages under it: one page for any node of the codex tree, under a shared filter (#2608).</summary>
 public class TheCodexCataloguePagesListEveryKindTests
 {
     private const string RockyBody = "planet.rocky_body";
@@ -91,29 +91,77 @@ public class TheCodexCataloguePagesListEveryKindTests
         CommanderGameState state, CodexNode node, CodexCatalogueChoice? choice = null, PanelNavigator? nav = null, bool headset = false, CodexTree? tree = null) =>
         new(() => state, () => HistoryState.Done, choice ?? new CodexCatalogueChoice(), node, headset, nav, tree: tree);
 
+    private static CodexCataloguePage Root(CommanderGameState state, PanelNavigator nav, CodexChoice choice, bool headset = false) =>
+        new(() => state, () => HistoryState.Done, new CodexCatalogueChoice(), Tree.Root, headset, nav, period: choice, now: () => Now);
+
     [AvaloniaFact]
-    public void CodexShowsTheCatalogueRowWithTheOnRecordFigureAndItOpensTheCatalogue()
+    public void CodexOpensOnTheFamilyRowsWithTheFilterAboveAndTheRegionsRowBeneath()
     {
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Commander, new NavCrumb(CodexPage.PageKey, "Codex"));
         nav.Select(PanelTab.Commander);
         var state = State(Arrive(18), RockyScan);
-        var kinds = Tree.Root.Children.Sum(Leaves);
 
-        var (window, page) = PageHost.Open(() => new CodexPage(() => state, () => HistoryState.Done, () => Now, new CodexChoice(), nav));
+        var (window, page) = PageHost.Open(() => Root(state, nav, new CodexChoice { Period = (int)CodexPeriod.Everything }));
 
-        var row = Named(page, "CodexCatalogue");
-        Assert.True(Shows(row, "Catalogue"));
-        Assert.True(Shows(row, CodexCatalogueModel.CatalogueRowLine));
-        Assert.True(Shows(row, $"1 of {CodexModel.Number(kinds)} on record"));
+        Assert.Equal(Tree.Root.Children.Select(family => family.Key), GroupKeys(page));
+        Assert.DoesNotContain(In<Button>(page), button => button.Name == "CodexCatalogue");
+        Assert.DoesNotContain(Texts(page), text => text.Equals("Catalogue", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(In<Button>(page), button => button.Name == "CodexPossibleFirsts");
+
+        var all = In<Control>(page).ToList();
+        var filter = all.IndexOf(In<CodexCatalogueFilters>(page).Single());
+        var firstFamily = all.IndexOf(Named(page, "CodexGroup." + Tree.Root.Children[0].Key));
+        var regions = all.IndexOf(Named(page, "CodexRegions"));
+        Assert.True(filter < firstFamily && firstFamily < regions);
+
+        var row = Named(page, "CodexRegions");
+        Assert.True(Shows(row, "Regions"));
+        Assert.True(Shows(row, CodexModel.RegionsRowLine));
+        Assert.Contains("0 regions · 0 entries on record", Texts(row));
 
         Press(row);
 
-        Assert.Equal(CodexPage.CatalogueKey, nav.Trail[^1].Key);
-        Assert.Equal("Catalogue", nav.Trail[^1].Word);
-        Assert.Equal(CodexTree.RootKey, CodexPage.CatalogueNodeOf(nav.Trail[^1].Key));
-
+        Assert.Equal(CodexPage.RegionsKey, nav.Trail[^1].Key);
+        Assert.Equal("Regions", nav.Trail[^1].Word);
         window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheRegionsRowFigureFollowsThePeriodChosenOnTheRegionsPage()
+    {
+        var nav = new PanelNavigator();
+        var choice = new CodexChoice { Period = (int)CodexPeriod.Everything };
+        var state = State(Arrive(18), Codex(101, 18));
+
+        var (window, page) = PageHost.Open(() => Root(state, nav, choice));
+
+        Assert.Contains("1 region · 1 entry on record", Texts(Named(page, "CodexRegions")));
+
+        choice.Period = (int)CodexPeriod.Session;
+        Assert.True(page.Tick());
+        Dispatch();
+
+        Assert.Contains(Texts(Named(page, "CodexRegions")), text => text.EndsWith("this session", StringComparison.Ordinal));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetRootSummaryDropsTheCounts()
+    {
+        var nav = new PanelNavigator();
+        var state = State(Arrive(18));
+
+        var (window, page) = PageHost.Open(() => Root(state, nav, new CodexChoice(), headset: true));
+
+        Assert.Equal("Every kind of object in the Codex.", ((IPageSummary)page).Summary);
+        window.Close();
+
+        var (desk, deskPage) = PageHost.Open(() => Root(state, nav, new CodexChoice()));
+
+        Assert.StartsWith("Every kind of object in the Codex. ", ((IPageSummary)deskPage).Summary);
+        Assert.EndsWith(" are on your record.", ((IPageSummary)deskPage).Summary);
+        desk.Close();
     }
 
     private static int Leaves(CodexNode node) =>

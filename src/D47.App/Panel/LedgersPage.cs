@@ -28,7 +28,7 @@ public sealed class LedgersPage : UserControl, IPageSummary
     [
         (CombatStatsPage.PageKey, "Your kills and the credits they were awarded."),
         (CreditsPage.PageKey, "Where your credits came from and where they went."),
-        (CodexPage.PageKey, "The codex entries you have logged, by region."),
+        (CodexPage.PageKey, "Every kind of object in the Codex, and the ones you have found."),
         (ScreenshotsPage.PageKey, ScreenshotsPage.SummaryText),
         (SessionPage.RootKey, "What you have earned and done since the game started."),
     ];

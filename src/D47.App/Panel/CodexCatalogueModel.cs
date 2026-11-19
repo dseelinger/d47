@@ -86,9 +86,7 @@ public sealed record CodexCatalogueView(
 /// <summary>The rows behind Commander › Ledgers › Codex › Catalogue, built from the codex tree and the ledger.</summary>
 public static class CodexCatalogueModel
 {
-    public const string CatalogueWord = "Catalogue";
-
-    public const string CatalogueRowLine = "Every kind of object in the Codex, in every region, and the ones you have found.";
+    public const string HeadsetRootSummary = "Every kind of object in the Codex.";
 
     public const string EveryRegion = "Every region";
 
@@ -123,14 +121,12 @@ public static class CodexCatalogueModel
         ["Thargoid objects"] = "By type, then variant",
     };
 
-    /// <summary>"38 of 1,604 on record": the figure on the Codex page's Catalogue row.</summary>
-    public static string OnRecordFigure(CodexNodeDiscoveries root) =>
-        $"{CodexModel.Number(root.OnRecord)} of {CodexModel.Number(root.Counted)} on record";
-
     /// <summary>The page's summary: on the root, how many kinds are on record.</summary>
-    public static string Summary(CodexCatalogueView view) =>
+    public static string Summary(CodexCatalogueView view, bool headset = false) =>
         view.Node.Parent is null
-            ? $"Every kind of object in the Codex. {CodexModel.Number(view.OnRecord)} of {CodexModel.Number(view.Counted)} are on your record."
+            ? headset
+            ? HeadsetRootSummary
+            : $"Every kind of object in the Codex. {CodexModel.Number(view.OnRecord)} of {CodexModel.Number(view.Counted)} are on your record."
             : $"The kinds under {view.Node.Name}.";
 
     /// <summary>A name as a row or crumb shows it, its first letter capitalised: "Not terraformable".</summary>

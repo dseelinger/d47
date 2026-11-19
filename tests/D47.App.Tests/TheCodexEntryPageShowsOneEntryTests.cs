@@ -429,12 +429,14 @@ public class TheCodexEntryPageShowsOneEntryTests
         window.Show();
         Dispatcher.UIThread.RunJobs();
 
+        In<Button>(view).First(button => button.Name == "CodexRegions").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
         In<Button>(view).First(button => button.Name == "CodexRegion.18").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
         In<Button>(view).First(button => button.Name == "CodexEntry.101").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Ledgers", "Codex", "Inner Orion Spur", "Entry 101"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["Ledgers", "Codex", "Regions", "Inner Orion Spur", "Entry 101"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Single(In<CodexEntryPage>(view));
         Assert.Empty(In<CodexRegionPage>(view));
         Assert.Equal(Local, Side(view, "CodexPicture"));

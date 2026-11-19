@@ -56,7 +56,7 @@ public class ANewCodexEntryOpensItsPageTests
         Assert.NotNull(target);
         Assert.Equal(LedgersPage.RootKey, target.Value.Root);
         Assert.Equal(
-            [CodexPage.PageKey, CodexPage.RegionCrumb(18).Key, CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry), "Anemone").Key],
+            [CodexPage.PageKey, CodexPage.RegionsKey, CodexPage.RegionCrumb(18).Key, CodexPage.EntryCrumb(18, D47.Core.Knowledge.CodexKeys.Of(Entry), "Anemone").Key],
             target.Value.Crumbs.Select(crumb => crumb.Key));
         Assert.Equal("Anemone", target.Value.Crumbs[^1].Word);
     }

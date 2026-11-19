@@ -9,7 +9,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>Commander › Ledgers › Codex: the codex entries in the journals on this PC, by region (#1290).</summary>
+/// <summary>Commander › Ledgers › Codex › Regions: the codex entries in the journals on this PC, by region (#1290).</summary>
 public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 {
     public const string PageKey = "codex";
@@ -20,6 +20,9 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     private const string EntryPrefix = "codex-entry-";
 
+    /// <summary>The key of the Regions page.</summary>
+    public const string RegionsKey = "codex-regions";
+
     /// <summary>The key of the Possible firsts page; it shares no prefix with the others.</summary>
     public const string PossibleFirstsKey = "codex-possible-firsts";
 
@@ -28,9 +31,6 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     private const string CropPrefix = "codex-crop-";
 
     private const string RecropPrefix = "codex-recrop-";
-
-    /// <summary>The key of the Catalogue page, the codex tree's root.</summary>
-    public const string CatalogueKey = "codex-catalogue";
 
     private const string NodePrefix = "codex-catalogue-";
 
@@ -46,7 +46,6 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     private readonly CodexChoice _choice;
     private readonly PanelNavigator _nav;
     private readonly bool _headset;
-    private readonly RegionFirstBook? _regionFirsts;
     private readonly ArrangedTable<CodexRegionRow> _columns;
     private readonly Segment _period = CodexKit.PeriodSegment();
     private readonly Grid _row;
@@ -55,7 +54,6 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
     private CodexLedger? _seenLedger;
     private HistoryState _seenHistory;
     private long _seenMinute;
-    private long _seenFirsts;
     private string _query = string.Empty;
 
     public CodexPage(
@@ -66,10 +64,8 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         PanelNavigator nav,
         bool headset = false,
         ColumnWidthMemory? columnWidths = null,
-        ColumnArrangementMemory? columnArrangements = null,
-        RegionFirstBook? regionFirsts = null)
+        ColumnArrangementMemory? columnArrangements = null)
     {
-        _regionFirsts = regionFirsts;
         _state = state;
         _history = history;
         _now = now;
@@ -142,21 +138,23 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
     public static bool IsPossibleFirsts(string key) => key == PossibleFirstsKey;
 
-    /// <summary>The crumb of the Catalogue page.</summary>
-    public static NavCrumb CatalogueCrumb() => new(CatalogueKey, CodexCatalogueModel.CatalogueWord) { Whole = true };
+    /// <summary>The crumb of the Regions page.</summary>
+    public static NavCrumb RegionsCrumb() => new(RegionsKey, CodexModel.RegionsCrumbWord) { Whole = true };
 
-    /// <summary>The crumb of a codex tree node's catalogue page, named for the node; the root's is the Catalogue crumb.</summary>
+    public static bool IsRegions(string key) => key == RegionsKey;
+
+    /// <summary>The crumb of a codex tree node's catalogue page, named for the node; the root's is the Codex ledger.</summary>
     public static NavCrumb NodeCrumb(CodexNode node) =>
         node.Parent is null
-            ? CatalogueCrumb()
+            ? LedgersPage.Ledger(PageKey, "Codex")
             : new(NodePrefix + node.Key, CodexCatalogueModel.Display(node.ShortName)) { Whole = true };
 
-    /// <summary>Whether the key is the Catalogue page or a node's page under it.</summary>
-    public static bool IsCatalogue(string key) => key == CatalogueKey || key.StartsWith(NodePrefix, StringComparison.Ordinal);
+    /// <summary>Whether the key is the Codex root, the catalogue, or a node's page under it.</summary>
+    public static bool IsCatalogue(string key) => key == PageKey || key.StartsWith(NodePrefix, StringComparison.Ordinal);
 
     /// <summary>The tree key of the node a catalogue crumb is for; null when the key is not one.</summary>
     public static string? CatalogueNodeOf(string key) =>
-        key == CatalogueKey ? CodexTree.RootKey : key.StartsWith(NodePrefix, StringComparison.Ordinal) ? key[NodePrefix.Length..] : null;
+        key == PageKey ? CodexTree.RootKey : key.StartsWith(NodePrefix, StringComparison.Ordinal) ? key[NodePrefix.Length..] : null;
 
     /// <summary>The crumb of one entry's page in a region, by its codex key, named for the entry.</summary>
     public static NavCrumb EntryCrumb(int? regionId, string key, string name) =>
@@ -230,7 +228,6 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         if (ReferenceEquals(_state()?.CodexLedger, _seenLedger)
             && _history() == _seenHistory
             && PageKit.Minute(_now()) == _seenMinute
-            && (_regionFirsts?.Version ?? 0) == _seenFirsts
             && _choice.Period == _period.SelectedIndex)
         {
             return false;
@@ -253,7 +250,6 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         _seenLedger = _state()?.CodexLedger;
         _seenHistory = _history();
         _seenMinute = PageKit.Minute(_now());
-        _seenFirsts = _regionFirsts?.Version ?? 0;
 
         var view = Build();
 
@@ -266,18 +262,12 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
-        _body.Children.Add(CatalogueRow());
         CodexKit.ShowSince(_row, view.OnRecordSince, view.Failed);
         _body.Children.Add(_row);
 
         if (view.Failed)
         {
             _body.Children.Add(CodexKit.Warning(view.OnRecordSince));
-        }
-
-        if (FirstsRow() is { } firsts)
-        {
-            _body.Children.Add(firsts);
         }
 
         var shown = view.Rows.Count;
@@ -326,75 +316,6 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         {
             _body.Children.Add(CreditsKit.Message(CodexModel.NoRegionMatchText));
         }
-    }
-
-    /// <summary>The Catalogue row: every kind in every region, and how many are on the record.</summary>
-    private Button CatalogueRow()
-    {
-        var found = CodexNodeDiscoveries.For(_state()?.CodexLedger ?? CodexLedger.None, CodexCatalogue.Tree.Root, null);
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 16 };
-
-        CreditsKit.Place(grid, 0, new StackPanel
-        {
-            Children =
-            {
-                CreditsKit.Label(CodexCatalogueModel.CatalogueWord),
-                RoutingKit.Ink(CodexCatalogueModel.CatalogueRowLine, TypeScale.Small, ThemeManager.GreyKey, wrap: true),
-            },
-        });
-        CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexCatalogueModel.OnRecordFigure(found), TypeScale.Small, ThemeManager.AKey, right: true));
-        CreditsKit.Place(grid, 2, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
-
-        var button = ListRow.Dress(new Button
-        {
-            Name = "CodexCatalogue",
-            Content = grid,
-            MinHeight = TypeScale.MinimumTarget,
-            Padding = new Thickness(14, 6),
-            Margin = new Thickness(0, 0, 0, 8),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        });
-        Avalonia.Automation.AutomationProperties.SetName(button, CodexCatalogueModel.CatalogueWord);
-        button.Click += (_, _) => _nav.Drill(CatalogueCrumb());
-
-        return button;
-    }
-
-    /// <summary>The Possible firsts row; null with no record in the store.</summary>
-    private Control? FirstsRow()
-    {
-        var records = _regionFirsts is not null && _state()?.Identity.FrontierId is { Length: > 0 } id ? _regionFirsts.For(id) : [];
-
-        if (records.Count == 0)
-        {
-            return null;
-        }
-
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 16 };
-
-        var label = CreditsKit.Label(CodexModel.PossibleFirstsCrumbWord);
-        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
-
-        CreditsKit.Place(grid, 0, new StackPanel
-        {
-            Children = { label, RoutingKit.Ink(CodexModel.PossibleFirstsRowLine, TypeScale.Small, ThemeManager.GreyKey, wrap: true) },
-        });
-        CreditsKit.Place(grid, 1, CreditsKit.Mono(CodexModel.PossibleFirstsFigures(records), TypeScale.Small, ThemeManager.AKey, right: true));
-        CreditsKit.Place(grid, 2, CreditsKit.Line("›", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.AKey));
-
-        var button = ListRow.Dress(new Button
-        {
-            Name = "CodexPossibleFirsts",
-            Content = grid,
-            MinHeight = TypeScale.MinimumTarget,
-            Padding = new Thickness(14, 6),
-            Margin = new Thickness(0, 0, 0, 8),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        });
-        Avalonia.Automation.AutomationProperties.SetName(button, CodexModel.PossibleFirstsCrumbWord);
-        button.Click += (_, _) => _nav.Drill(PossibleFirstsCrumb());
-
-        return button;
     }
 
     private StackPanel Table(IReadOnlyList<CodexRegionRow> rows, bool header = true)

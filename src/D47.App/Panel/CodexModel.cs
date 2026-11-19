@@ -157,6 +157,10 @@ public static class CodexModel
 
     public const string PossibleFirstsCrumbWord = "Possible firsts";
 
+    public const string RegionsCrumbWord = "Regions";
+
+    public const string RegionsRowLine = "What you logged in each region: this trip, this session, or your whole record.";
+
     public const string PossibleFirstsPlaceholder = "Search entry, region or system";
 
     public const string PossibleFirstsRowLine = "Entries you logged that the codex table did not list for their region, kept as they were judged. Whole record, not this trip.";
@@ -274,6 +278,15 @@ public static class CodexModel
 
     /// <summary>"3 regions", "1 region".</summary>
     public static string RegionCount(int count) => $"{Number(count)} {(count == 1 ? "region" : "regions")}";
+
+    /// <summary>"12 regions · 34 entries this trip": the figure on the Codex root's Regions row.</summary>
+    public static string RegionsFigure(CodexRootView view, CodexPeriod period) =>
+        $"{RegionCount(view.Regions)} · {EntryCount(view.Entries)} " + period switch
+        {
+            CodexPeriod.Trip => "this trip",
+            CodexPeriod.Session => "this session",
+            _ => "on record",
+        };
 
     /// <summary>"142 entries", "1 entry".</summary>
     public static string EntryCount(int count) => $"{Number(count)} {(count == 1 ? "entry" : "entries")}";
