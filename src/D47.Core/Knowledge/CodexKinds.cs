@@ -323,7 +323,7 @@ public static partial class CodexKinds
         subType.Contains("gas giant", StringComparison.OrdinalIgnoreCase) || subType.Contains("water giant", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The field lowercased, each run of other characters made <c>_</c>, with none at either end.</summary>
-    private static string Slug(string field) => OtherCharacters().Replace(field.ToLowerInvariant(), "_").Trim('_');
+    internal static string Slug(string field) => OtherCharacters().Replace(field.ToLowerInvariant(), "_").Trim('_');
 
     [GeneratedRegex("[^a-z0-9]+")]
     private static partial Regex OtherCharacters();

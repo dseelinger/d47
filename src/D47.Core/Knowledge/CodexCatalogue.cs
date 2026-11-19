@@ -16,6 +16,9 @@ public sealed record CodexEntry(
 
     /// <summary>A d47 star or planet kind's place in the kind tree and its Spansh body fields; null for a Canonn entry.</summary>
     public CodexKind? Kind { get; init; }
+
+    /// <summary>A Canonn entry's group within its family (Canonn's <c>sub_class</c>); null for a d47 kind or a row without one.</summary>
+    public string? Group { get; init; }
 }
 
 /// <summary>
@@ -98,10 +101,13 @@ public sealed class CodexTable
                 continue;
             }
 
-            if (cells.Length == 5 && long.TryParse(cells[0], CultureInfo.InvariantCulture, out var id))
+            if (cells.Length is 5 or 6 && long.TryParse(cells[0], CultureInfo.InvariantCulture, out var id))
             {
                 var key = CodexKeys.Of(id);
-                entries[key] = new CodexEntry(key, cells[1], cells[2], cells[3], ParseRegions(cells[4]));
+                entries[key] = new CodexEntry(key, cells[1], cells[2], cells[3], ParseRegions(cells[^1]))
+                {
+                    Group = cells.Length == 6 ? Cell(cells[4].Trim()) : null,
+                };
             }
         }
 
@@ -172,7 +178,13 @@ public static class CodexCatalogue
     private static readonly Lazy<CodexTable> Loaded =
         new(Load, LazyThreadSafetyMode.ExecutionAndPublication);
 
+    private static readonly Lazy<CodexTree> LoadedTree =
+        new(() => CodexTree.Of(Table), LazyThreadSafetyMode.ExecutionAndPublication);
+
     public static CodexTable Table => Loaded.Value;
+
+    /// <summary>The shipped tables as one <see cref="CodexTree"/>.</summary>
+    public static CodexTree Tree => LoadedTree.Value;
 
     /// <summary>The text of one embedded table, or empty when it is not embedded.</summary>
     public static string Text(string resourceName)
