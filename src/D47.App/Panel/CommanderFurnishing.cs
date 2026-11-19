@@ -277,18 +277,26 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         Func<D47.Core.Journal.HistoryState> history,
         Func<DateTimeOffset> now,
         CodexPictureSet? pictures = null,
-        D47.Core.Journal.RegionFirstBook? regionFirsts = null)
+        D47.Core.Journal.RegionFirstBook? regionFirsts = null,
+        D47.Core.Capabilities.CapabilityRegistry? tools = null)
     {
         var headset = host.Headset;
         var choice = new CodexChoice();
         var work = new CodexPictureWork();
+        var press = tools is not null && regionFirsts is not null
+            ? new RegionFirstPress(
+                (name, arguments, cancellation) => tools.InvokeAsync(name, arguments, cancellation, D47.Core.Capabilities.ToolCaller.Commander),
+                regionFirsts,
+                state,
+                host.Model?.WaitSound)
+            : null;
 
         _codexBuild = crumb => CodexPage.EntryOf(crumb.Key) is { } entry
-            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav, bodySearch: () => host.BodySearch, copy: host.Copy, waitSound: host.Model?.WaitSound, regionFirsts: regionFirsts)
+            ? _codexEntry = new CodexEntryPage(state, entry.EntryId, entry.RegionId, crumb.Word, pictures, headset, nav: host.Nav, bodySearch: () => host.BodySearch, copy: host.Copy, waitSound: host.Model?.WaitSound, regionFirsts: regionFirsts, press: press)
             : CodexPage.PictureOf(crumb.Key) is { } picture
             ? pictures is not null && !headset ? PicturePage(crumb.Key, picture, pictures, work) : new Border()
             : CodexPage.IsPossibleFirsts(crumb.Key)
-            ? _codexPossibleFirsts = new CodexPossibleFirstsPage(state, regionFirsts, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements, host.Copy)
+            ? _codexPossibleFirsts = new CodexPossibleFirstsPage(state, regionFirsts, host.Nav, headset, host.ColumnWidths, host.ColumnArrangements, host.Copy, press)
             : CodexPage.IsDiscoveries(crumb.Key)
             ? _codexDiscoveries = new CodexDiscoveriesPage(state, history, CodexPage.DiscoveriesOf(crumb.Key), headset: headset, nav: host.Nav, pictures: pictures, columnWidths: host.ColumnWidths, bodySearch: () => host.BodySearch, columnArrangements: host.ColumnArrangements)
             : CodexPage.IsRegion(crumb.Key)

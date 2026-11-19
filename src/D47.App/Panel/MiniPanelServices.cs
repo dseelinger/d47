@@ -145,7 +145,7 @@ public sealed record MiniPanelServices
 
             view.EnableCombatStats(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
             view.EnableCredits(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow);
-            view.EnableCodex(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow, CodexPictures, RegionFirsts);
+            view.EnableCodex(gameState, HistoryState ?? (() => D47.Core.Journal.HistoryState.Done), () => DateTimeOffset.UtcNow, CodexPictures, RegionFirsts, Capabilities);
 
             if (Screenshots is not null)
             {

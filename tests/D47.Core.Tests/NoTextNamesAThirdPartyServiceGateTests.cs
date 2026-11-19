@@ -72,8 +72,8 @@ public sealed partial class NoTextNamesAThirdPartyServiceGateTests
             return true;
         }
 
-        // Reporting a region first names Canonn on purpose (#2591): the offer, the tool's phrases and its replies.
-        if (relative == "D47.Core/Capabilities/Builtin/RegionFirstReporting.cs")
+        // Reporting a region first names Canonn on purpose (#2591): the offer, the tool's phrases and its replies, and the panel's tile and sent line (#2597).
+        if (relative is "D47.Core/Capabilities/Builtin/RegionFirstReporting.cs" or "D47.App/Panel/RegionFirstPress.cs")
         {
             return true;
         }

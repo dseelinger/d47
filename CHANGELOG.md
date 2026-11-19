@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: A possible region first that has not been reported shows a Report to Canonn tile, at the right of the band on its codex entry page and in the Possible firsts table, on the desktop and the headset big panel. It sends the find as saying "report it to Canonn" does. The tile is disabled with the wait mark while it sends, then reads "✓ Sent to Canonn." and the record reads reported; if Canonn cannot be reached a red notice says so and the tile is offered again as Retry.
+
 Added: The codex table now lists the Thargoid sites and barnacles: the spires, coral, roots, shipwrecks, uplink and caustic devices and the three barnacles. A region's Discoveries page lists them when Commanders have reported them there, with a Thargoid placeholder picture for the sites, and their Search tile finds the nearest one. The Thargoid ships are still left out. The Codex Discoveries answer no longer says Thargoid sites are not covered.
 
 Added: Commander › Ledgers › Codex has a Possible firsts row when you have any recorded possible first, with the counts of region firsts, galaxy firsts and finds not yet reported. It opens a Possible firsts page listing every one, newest first: the entry and its kind, the region, the system with its body and position, when it was logged, and whether it was reported. Each column sorts, Report puts the unreported first, and the search matches the entry, region and system. › on a row opens the entry in its region. The headset big panel shows the same, 25 rows to a page.

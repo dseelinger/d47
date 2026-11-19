@@ -37,6 +37,8 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
     private bool _seenSearch;
     private readonly RegionFirstBook? _regionFirsts;
     private long _seenFirsts;
+    private readonly RegionFirstPress? _press;
+    private long _seenPress;
 
     public CodexEntryPage(
         Func<CommanderGameState?> state,
@@ -51,8 +53,10 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         Func<BodySearchLink?>? bodySearch = null,
         Func<string, Task<bool>>? copy = null,
         D47.App.Voice.WaitSound? waitSound = null,
-        RegionFirstBook? regionFirsts = null)
+        RegionFirstBook? regionFirsts = null,
+        RegionFirstPress? press = null)
     {
+        _press = press;
         _regionFirsts = regionFirsts;
         _waitSound = waitSound;
         _copy = copy;
@@ -86,7 +90,8 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         if (ReferenceEquals(_state()?.CodexLedger, _seenLedger)
             && _state()?.Location.StarSystem == _seenSystem
             && (_bodySearch?.Invoke() is not null) == _seenSearch
-            && (_regionFirsts?.Version ?? 0) == _seenFirsts)
+            && (_regionFirsts?.Version ?? 0) == _seenFirsts
+            && (_press?.Version ?? 0) == _seenPress)
         {
             return false;
         }
@@ -147,6 +152,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         _seenSystem = state?.Location.StarSystem;
         _seenSearch = _bodySearch?.Invoke() is not null;
         _seenFirsts = _regionFirsts?.Version ?? 0;
+        _seenPress = _press?.Version ?? 0;
 
         var view = CodexModel.EntryPage(
             state?.CodexLedger ?? CodexLedger.None,
@@ -175,6 +181,14 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
         if (view.Record is { } record)
         {
             _body.Children.Add(RegionFirstBand(record, view.Name));
+
+            if (_press?.Failure(record, inline: false) is { } failed)
+            {
+                failed.Margin = new Thickness(0, -(_headset ? 6 : 12), 0, _headset ? 14 : 20);
+                failed.MaxWidth = 900;
+                failed.HorizontalAlignment = HorizontalAlignment.Left;
+                _body.Children.Add(failed);
+            }
         }
 
         _body.Children.Add(grid);
@@ -198,6 +212,16 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
             },
         };
 
+        var inside = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { text } };
+
+        if (_press?.Slot(record) is { } slot)
+        {
+            slot.Margin = new Thickness(0, 0, 12, 0);
+            slot.VerticalAlignment = VerticalAlignment.Center;
+            Grid.SetColumn(slot, 1);
+            inside.Children.Add(slot);
+        }
+
         var band = new Border
         {
             Name = "CodexRegionFirst",
@@ -205,7 +229,7 @@ public sealed class CodexEntryPage : UserControl, IPageSummary
             HorizontalAlignment = HorizontalAlignment.Left,
             Margin = new Thickness(0, 0, 0, _headset ? 14 : 20),
             BorderThickness = new Thickness(3, 0, 0, 0),
-            Child = text,
+            Child = inside,
         };
         ThemeInk.Bind(band, Border.BorderBrushProperty, ThemeManager.CyanKey);
         ThemeInk.Bind(band, Border.BackgroundProperty, ThemeManager.CyanGroundKey);

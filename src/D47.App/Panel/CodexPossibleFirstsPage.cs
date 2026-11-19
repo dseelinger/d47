@@ -32,6 +32,8 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
     private readonly ArrangedTable<RegionFirstRecord> _columns;
     private readonly StackPanel _body = new();
 
+    private readonly RegionFirstPress? _press;
+    private long _seenPress;
     private long _seenVersion;
     private string? _seenSystem;
     private string? _seenCommander;
@@ -45,8 +47,10 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
         bool headset = false,
         ColumnWidthMemory? columnWidths = null,
         ColumnArrangementMemory? columnArrangements = null,
-        Func<string, Task<bool>>? copy = null)
+        Func<string, Task<bool>>? copy = null,
+        RegionFirstPress? press = null)
     {
+        _press = press;
         _state = state;
         _book = book;
         _nav = nav;
@@ -88,6 +92,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
     public bool Tick()
     {
         if ((_book?.Version ?? 0) == _seenVersion
+            && (_press?.Version ?? 0) == _seenPress
             && _state()?.Location.StarSystem == _seenSystem
             && _state()?.Identity.FrontierId == _seenCommander)
         {
@@ -105,6 +110,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
     private void Draw()
     {
         _seenVersion = _book?.Version ?? 0;
+        _seenPress = _press?.Version ?? 0;
         _seenSystem = _state()?.Location.StarSystem;
         _seenCommander = _state()?.Identity.FrontierId;
 
@@ -162,7 +168,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
             StarSystemPage.Headed(heads[3], new TableColumn(LoggedKey), record =>
                 CreditsKit.Mono(CodexModel.DateTime(record.At), TypeScale.Small, ThemeManager.WhiteKey, right: true), right: true),
             StarSystemPage.Headed(heads[4], new TableColumn("Report"), ReportCell),
-            LedgerTables.Control(new TableColumn("ReportTile", ColumnFit.Fixed) { Fixed = 190 }, _ => new Border(), heads[5]),
+            LedgerTables.Control(new TableColumn("ReportTile", ColumnFit.Fixed) { Fixed = 190 }, TileCell, heads[5]),
             LedgerTables.Control(new TableColumn("Open", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, OpenCell, heads[6], right: true),
         ];
     }
@@ -225,8 +231,16 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
         return cell;
     }
 
-    private static Control ReportCell(RegionFirstRecord record)
+    private Control TileCell(RegionFirstRecord record) =>
+        _press is not null && RegionFirstPress.Offers(record) ? _press.Tile(record) : new Border();
+
+    private Control ReportCell(RegionFirstRecord record)
     {
+        if (_press?.Failure(record, inline: true) is { } failed)
+        {
+            return failed;
+        }
+
         if (record.Reported is not { } reported)
         {
             return CreditsKit.Line("NOT REPORTED", Fonts.ChromeFamily, TypeScale.Meta, ThemeManager.GreyKey);

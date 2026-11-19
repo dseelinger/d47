@@ -711,9 +711,10 @@ public partial class PanelView : UserControl, IPanelTabHost
         Func<D47.Core.Journal.HistoryState> history,
         Func<DateTimeOffset> now,
         CodexPictureSet? pictures = null,
-        D47.Core.Journal.RegionFirstBook? regionFirsts = null)
+        D47.Core.Journal.RegionFirstBook? regionFirsts = null,
+        D47.Core.Capabilities.CapabilityRegistry? tools = null)
     {
-        _commander.EnableCodex(state, history, now, pictures, regionFirsts);
+        _commander.EnableCodex(state, history, now, pictures, regionFirsts, tools);
         _searchFurnishing.CodexPictures = pictures;
     }
 
