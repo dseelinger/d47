@@ -89,6 +89,9 @@ public sealed record CodexLedger
     /// <summary>The system the last arrival named, its position, and the codex region of that position.</summary>
     private (long? Address, StarPosition? Position, int? RegionId) Arrived { get; init; }
 
+    /// <summary>The first scan of every star and planet kind in each region it was found.</summary>
+    public IReadOnlyCollection<CodexFoundKind> FoundKinds => [.. Kinds.Values];
+
     /// <summary>The first scan of the star or planet kind <paramref name="key"/> in the region, or null when none is on record.</summary>
     public CodexFoundKind? Found(string key, int regionId) => Kinds.GetValueOrDefault((key, regionId));
 

@@ -119,6 +119,11 @@ D47.Core.Interface.SpeciesPicture.Choose(string, long?, int?, System.Collections
 D47.Core.Interface.Spelling.Characters
 D47.Core.Interface.ZoomLadder.Maximum
 D47.Core.Journal.BiologyBodies.All
+D47.Core.Journal.CodexFirstFind
+D47.Core.Journal.CodexKindDiscovery
+D47.Core.Journal.CodexKindStatus
+D47.Core.Journal.CodexLedger.FoundKinds
+D47.Core.Journal.CodexNodeDiscoveries
 D47.Core.Journal.ColonisationBackfill.FromHistory(D47.Core.Storage.IFileSystem, string, Microsoft.Extensions.Logging.ILogger, System.Threading.CancellationToken)
 D47.Core.Journal.CommodityLedger.Changed
 D47.Core.Journal.TechBrokerUnlocks.NotKnownToBeUnlocked(string)
