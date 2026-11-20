@@ -278,7 +278,7 @@ Audio folder    data\audio                                                    [O
 
 The page that **Your audio** opens, headed Your own audio, lists every folder with files under
 Music, Sound cues, Alerts, Thinking beds and Waiting beds, most files first, and every ignored and skipped file in
-full. `get_setting audio.drops` still returns the whole account, one line per folder and per file:
+full. A music file that will not play is listed a short while after startup, once its header has been checked, rather than at once. `get_setting audio.drops` still returns the whole account, one line per folder and per file:
 
 ```text
 cues/listening: 5 files

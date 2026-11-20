@@ -1,4 +1,4 @@
-using D47.Core.Storage;
+﻿using D47.Core.Storage;
 using System.Buffers.Binary;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -127,6 +127,8 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
         Write("music/general/broken.m4a", [1, 2, 3]);
 
         var library = LoadWith(new FakeDecoder { Refuse = true });
+
+        library.CheckMusic();
 
         Assert.Equal(CueLibrary.DefaultBed, library.Bed().Name);
         Assert.Empty(library.Music(Situations.General));

@@ -10,6 +10,8 @@
 
 Changed: The startup splash is taller and shows a subtitle, "OPTIMIZE INFERIOR SYSTEMS", and the description "Elite Dangerous companion app" under the name, with the version line lower and an empty bar along the bottom edge.
 
+Fixed: Startup no longer waits on every music file. D47 used to open each file in the music library and in your own audio folder before the splash and the window could continue, which took up to 20 seconds when the files were not in the disk cache. The files are now checked in the background after startup; one that will not play is listed under Your own audio a short while later. Startup also logs a timed step for the cue library and for the stores loaded before audio opens.
+
 Changed: The fighter bay crew reminder is not said for a ship whose hangar holds only the Nomad, which needs no pilot. D47 learns what a hangar holds when it is restocked in outfitting, from every journal on disk. A hangar that also holds a fighter, or whose contents D47 has not seen since it was fitted, is checked as before. Buying, selling, storing, retrieving or moving a hangar makes its contents unknown again.
 
 Changed: A region's codex entry list and the Possible firsts page show each entry's picture in a square at the left of its row, as the Codex catalogue does: your own picture, else the stock picture once downloaded, else the family placeholder.

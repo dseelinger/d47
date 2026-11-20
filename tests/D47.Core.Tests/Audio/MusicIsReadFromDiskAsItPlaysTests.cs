@@ -1,4 +1,4 @@
-using D47.Core.Storage;
+﻿using D47.Core.Storage;
 using D47.Core.Audio;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -55,7 +55,7 @@ public class MusicIsReadFromDiskAsItPlaysTests : IDisposable
         Assert.Equal(0, stream.Read(buffer));
     }
 
-    /// <summary>The header is still checked at load, so a bad drop-in is reported rather than tried.</summary>
+    /// <summary>The header is checked after load, so a bad drop-in is reported rather than tried.</summary>
     [Fact]
     public void AMusicFileThatIsNotAWavIsSkipped()
     {
@@ -64,6 +64,8 @@ public class MusicIsReadFromDiskAsItPlaysTests : IDisposable
         File.WriteAllText(path, "not audio");
 
         var library = Load();
+
+        library.CheckMusic();
 
         Assert.Empty(library.Music(Situations.General));
         Assert.Contains(library.Skipped, reason => reason.StartsWith("noise:", StringComparison.Ordinal));

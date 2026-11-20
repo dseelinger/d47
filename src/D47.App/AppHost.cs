@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Reflection;
 using D47.App.Diagnostics;
@@ -1038,7 +1038,14 @@ public sealed class AppHost : IDisposable
     /// <summary>Set when settings could not be loaded.</summary>
     public string? StartupError { get; }
 
-    public static AppHost Start() => Start(startTicking: true);
+    public static AppHost Start()
+    {
+        var host = Start(startTicking: true);
+
+        host.CheckMusic(host.Cues);
+
+        return host;
+    }
 
     /// <summary><see cref="Start"/> without starting the catalog refresh, the controller sampler or the tick driver (#79).</summary>
     internal static AppHost Compose() => Start(startTicking: false);
@@ -1993,11 +2000,13 @@ public sealed class AppHost : IDisposable
         var llmAvailability = new LlmAvailabilityState(providerConfigured: false);
 
         // The history behind the running totals.
-        var spendLedger = new SpendLedger(
-            paths.SpendFile,
-            files,
-            SystemWallClock.Instance,
-            loggerFactory.CreateLogger<SpendLedger>());
+        var spendLedger = StartupTimer.Time(
+            "spend ledger",
+            () => new SpendLedger(
+                paths.SpendFile,
+                files,
+                SystemWallClock.Instance,
+                loggerFactory.CreateLogger<SpendLedger>()));
 
         var spend = new SpendTracker(spendLedger);
 
@@ -2008,16 +2017,26 @@ public sealed class AppHost : IDisposable
         var shipPlans = new ShipPlanService(stores.ShipBuilds, checklists, () => gameState.Active);
 
         // Which core flies which ship (Phase 35).
-        var shipCoreStore = new ShipCoreStore(foundations.Data("ship-cores.json"), files, foundations.Log<ShipCoreStore>());
-
-        shipCoreStore.Poll();
+        var shipCoreStore = StartupTimer.Time(
+            "ship cores",
+            () =>
+            {
+                var store = new ShipCoreStore(foundations.Data("ship-cores.json"), files, foundations.Log<ShipCoreStore>());
+                store.Poll();
+                return store;
+            });
 
         var shipCores = new ShipCoreService(shipCoreStore, () => gameState.Active);
 
         // And the same arrangement on foot (Phase 27).
-        var onFootBuilds = new D47.Core.Loadout.OnFootBuildStore(foundations.Data("on-foot.json"), files, foundations.Log<D47.Core.Loadout.OnFootBuildStore>());
-
-        onFootBuilds.Poll();
+        var onFootBuilds = StartupTimer.Time(
+            "on-foot builds",
+            () =>
+            {
+                var store = new D47.Core.Loadout.OnFootBuildStore(foundations.Data("on-foot.json"), files, foundations.Log<D47.Core.Loadout.OnFootBuildStore>());
+                store.Poll();
+                return store;
+            });
 
         var onFootPlans = new D47.Core.Loadout.OnFootPlanService(
             onFootBuilds, checklists, () => gameState.Active, () => stores.Kit.All);
@@ -2098,7 +2117,8 @@ public sealed class AppHost : IDisposable
         // and the device list from it.
         var dropsLogger = loggerFactory.CreateLogger<FolderAudioSource>();
         var cueLogger = loggerFactory.CreateLogger<CueLibrary>();
-        var cues = LoadCues(paths, files, settings.Current.Ui.MusicLibrary, dropsLogger, cueLogger);
+        var cues = StartupTimer.Time(
+            "cue library", () => LoadCues(paths, files, settings.Current.Ui.MusicLibrary, dropsLogger, cueLogger));
 
         var audioSink = new WasapiAudioSink(loggerFactory.CreateLogger<WasapiAudioSink>());
         var audio = new AudioArbiter(audioSink, loggerFactory.CreateLogger<AudioArbiter>()).Start();
@@ -5532,7 +5552,9 @@ public sealed class AppHost : IDisposable
     {
         var cues = LoadCues(paths, Files, Settings.Current.Ui.MusicLibrary, dropsLogger, logger);
 
-        _cues = cues;
+        var replaced = Interlocked.Exchange(ref _cues, cues);
+
+        replaced.Retire();
 
         _logger.LogInformation(
             "Reloaded the audio folder: {Count} file(s) picked up, {Skipped} skipped",
@@ -5541,7 +5563,25 @@ public sealed class AppHost : IDisposable
 
         // The row saying what was found has no other way to know.
         AudioReloaded?.Invoke();
+
+        CheckMusic(cues);
     }
+
+    /// <summary>Checks the music headers of <paramref name="cues"/> on the thread pool, then refreshes the audio rows if any file was dropped.</summary>
+    private void CheckMusic(CueLibrary cues) => _ = Task.Run(() =>
+    {
+        try
+        {
+            if (cues.CheckMusic() > 0 && ReferenceEquals(_cues, cues))
+            {
+                AudioReloaded?.Invoke();
+            }
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Checking the music files failed");
+        }
+    });
 
     /// <summary>The shipped cues, the music library while it is on, then the Commander's own files.</summary>
     private static CueLibrary LoadCues(

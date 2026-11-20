@@ -88,7 +88,19 @@ public sealed class CueLibrary
     private readonly IReadOnlyDictionary<AlertCue, ClipPool> _alertPools;
     private readonly ClipPool? _bedPool;
     private readonly ClipPool? _waitPool;
-    private readonly IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> _music;
+    private readonly Lock _gate = new();
+    private readonly ILogger? _logger;
+    private volatile Snapshot _state;
+    private IReadOnlyList<PendingMusic> _pending;
+    private volatile bool _retired;
+
+    private sealed record Snapshot(
+        IReadOnlyDictionary<string, IReadOnlyList<MusicTrack>> Music,
+        int CustomCount,
+        IReadOnlyList<string> Skipped,
+        IReadOnlyList<KeyValuePair<string, int>> FolderCounts);
+
+    private sealed record PendingMusic(ICueSource Source, string Resource, string Situation, MusicTrack Track, bool Counted);
 
     private CueLibrary(
         IReadOnlyDictionary<LoopState, AudioClip> cues,
@@ -103,7 +115,9 @@ public sealed class CueLibrary
         int customCount,
         IReadOnlyList<string> skipped,
         IReadOnlyList<string> ignored,
-        IReadOnlyList<KeyValuePair<string, int>> folderCounts)
+        IReadOnlyList<KeyValuePair<string, int>> folderCounts,
+        IReadOnlyList<PendingMusic> pending,
+        ILogger? logger)
     {
         _cues = cues;
         _alerts = alerts;
@@ -113,18 +127,17 @@ public sealed class CueLibrary
         _alertPools = alertPools;
         _bedPool = bedPool;
         _waitPool = waitPool;
-        _music = music;
-        CustomCount = customCount;
-        Skipped = skipped;
+        _state = new Snapshot(music, customCount, skipped, folderCounts);
+        _pending = pending;
+        _logger = logger;
         Ignored = ignored;
-        FolderCounts = folderCounts;
     }
 
     /// <summary>
     /// Drop-in files that were tried and would not load, each with the reason, in words a Commander can
-    /// act on.
+    /// act on. Music files join it as <see cref="CheckMusic"/> reaches them. Safe to read from any thread.
     /// </summary>
-    public IReadOnlyList<string> Skipped { get; }
+    public IReadOnlyList<string> Skipped => _state.Skipped;
 
     /// <summary>
     /// Drop-in files that were never tried, because they are not where D47 looks, with where they should
@@ -133,10 +146,10 @@ public sealed class CueLibrary
     public IReadOnlyList<string> Ignored { get; }
 
     /// <summary>How many files were picked up under each folder, or folder/subfolder, in folder order.</summary>
-    public IReadOnlyList<KeyValuePair<string, int>> FolderCounts { get; }
+    public IReadOnlyList<KeyValuePair<string, int>> FolderCounts => _state.FolderCounts;
 
     /// <summary>How many clips came from the Commander's folder rather than from the build.</summary>
-    public int CustomCount { get; }
+    public int CustomCount => _state.CustomCount;
 
     /// <summary>The folder under <c>cues/</c> or <c>alerts/</c> that holds one member's files: lower kebab case.</summary>
     public static string FolderName<TKey>(TKey member)
@@ -178,7 +191,7 @@ public sealed class CueLibrary
         var custom = 0;
         var skipped = new List<string>();
         var ignored = new List<string>();
-        var packSkipped = new List<string>();
+        var pending = new List<PendingMusic>();
         var unclaimed = new List<string>();
         var folderOrder = new List<string>();
         var folderCounts = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -202,7 +215,6 @@ public sealed class CueLibrary
 
             // A later source's tracks in a folder are added to what earlier sources read for it.
             var sourceMusic = new Dictionary<string, List<MusicTrack>>(StringComparer.OrdinalIgnoreCase);
-            var sourceSkipped = source.IsPack ? packSkipped : skipped;
 
             // Loop states and alerts are both keyed by an enum, with the same rule binding a name to a member.
             void ReadInto<TKey>(
@@ -339,20 +351,22 @@ public sealed class CueLibrary
                         continue;
                     }
 
-                    if (TryReference(source, resource, situation, stem, sourceSkipped) is { } track)
+                    var track = NewTrack(source, resource, situation, stem);
+
+                    if (!sourceMusic.TryGetValue(situation, out var tracks))
                     {
-                        if (!sourceMusic.TryGetValue(situation, out var tracks))
-                        {
-                            sourceMusic[situation] = tracks = [];
-                        }
+                        sourceMusic[situation] = tracks = [];
+                    }
 
-                        tracks.Add(track);
+                    tracks.Add(track);
 
-                        if (!source.Required && !source.IsPack)
-                        {
-                            custom++;
-                            CountFolder($"music/{situation}");
-                        }
+                    var counted = !source.Required && !source.IsPack;
+                    pending.Add(new PendingMusic(source, resource, situation, track, counted));
+
+                    if (counted)
+                    {
+                        custom++;
+                        CountFolder($"music/{situation}");
                     }
                 }
             }
@@ -413,11 +427,6 @@ public sealed class CueLibrary
             logger?.LogWarning("Skipped a drop-in audio file: {Reason}", reason);
         }
 
-        foreach (var reason in packSkipped)
-        {
-            logger?.LogWarning("Skipped a music pack file: {Reason}", reason);
-        }
-
         foreach (var reason in ignored)
         {
             logger?.LogWarning("Ignored a drop-in audio file: {Reason}", reason);
@@ -441,7 +450,105 @@ public sealed class CueLibrary
             custom,
             skipped,
             ignored,
-            folderOrder.Select(label => new KeyValuePair<string, int>(label, folderCounts[label])).ToList());
+            folderOrder.Select(label => new KeyValuePair<string, int>(label, folderCounts[label])).ToList(),
+            pending,
+            logger);
+    }
+
+    /// <summary>
+    /// Opens each music file once to check its header, taking one that will not open out of the situation's
+    /// tracks and reporting it. Returns how many were taken out. Runs once; call it off the tick thread.
+    /// </summary>
+    public int CheckMusic()
+    {
+        IReadOnlyList<PendingMusic> work;
+
+        lock (_gate)
+        {
+            work = _pending;
+            _pending = [];
+        }
+
+        var rejected = 0;
+
+        foreach (var item in work)
+        {
+            if (_retired)
+            {
+                break;
+            }
+
+            try
+            {
+                item.Source.Stream(item.Resource, item.Track.Name).Dispose();
+            }
+            catch (Exception ex) when (IsSkippable(ex))
+            {
+                if (Reject(item, ex.Message))
+                {
+                    rejected++;
+                }
+            }
+        }
+
+        return rejected;
+    }
+
+    /// <summary>Stops a running <see cref="CheckMusic"/> and keeps it from changing this library again.</summary>
+    public void Retire()
+    {
+        lock (_gate)
+        {
+            _retired = true;
+        }
+    }
+
+    private bool Reject(PendingMusic item, string reason)
+    {
+        lock (_gate)
+        {
+            if (_retired)
+            {
+                return false;
+            }
+
+            var state = _state;
+            var music = new Dictionary<string, IReadOnlyList<MusicTrack>>(state.Music, StringComparer.OrdinalIgnoreCase);
+
+            if (music.TryGetValue(item.Situation, out var tracks))
+            {
+                var rest = tracks.Where(track => !ReferenceEquals(track, item.Track)).ToList();
+
+                if (rest.Count > 0)
+                {
+                    music[item.Situation] = rest;
+                }
+                else
+                {
+                    music.Remove(item.Situation);
+                }
+            }
+
+            var skipped = item.Source.IsPack ? state.Skipped : [.. state.Skipped, $"{item.Track.Name}: {reason}"];
+            var counts = state.FolderCounts;
+            var custom = state.CustomCount;
+
+            if (item.Counted)
+            {
+                var label = $"music/{item.Situation}";
+                counts = [.. counts.Select(entry => entry.Key == label ? new KeyValuePair<string, int>(label, entry.Value - 1) : entry).Where(entry => entry.Value > 0)];
+                custom--;
+            }
+
+            _state = new Snapshot(music, custom, skipped, counts);
+        }
+
+        if (item.Source.IsPack)
+        {
+            _logger?.LogWarning("Skipped a music pack file: {Reason}", $"{item.Track.Name}: {reason}");
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -470,7 +577,7 @@ public sealed class CueLibrary
 
     /// <summary>The ambience tracks for one situation, in the order the folder was read.</summary>
     public IReadOnlyList<MusicTrack> Music(string situation) =>
-        _music.TryGetValue(situation, out var tracks) ? tracks : [];
+        _state.Music.TryGetValue(situation, out var tracks) ? tracks : [];
 
     /// <summary>The bed for one turn, picked from the Commander's pool on each call.</summary>
     public AudioClip Bed() => _bedPool?.Next() ?? _bed;
@@ -514,26 +621,11 @@ public sealed class CueLibrary
         }
     }
 
-    /// <summary>
-    /// A track whose header was checked and whose samples are left on disk, or null with the reason
-    /// recorded.
-    /// </summary>
-    private static MusicTrack? TryReference(ICueSource source, string resource, string situation, string name, List<string> skipped)
-    {
-        try
-        {
-            source.Stream(resource, name).Dispose();
-        }
-        catch (Exception ex) when (!source.Required && IsSkippable(ex))
-        {
-            skipped.Add($"{name}: {ex.Message}");
-            return null;
-        }
-
-        return source.IsPack && source.FileName(resource) is { } file
+    /// <summary>A track whose samples stay on disk until it plays; its header is checked by <see cref="CheckMusic"/>.</summary>
+    private static MusicTrack NewTrack(ICueSource source, string resource, string situation, string name) =>
+        source.IsPack && source.FileName(resource) is { } file
             ? new MusicTrack(name, () => source.Stream(resource, name), situation, file)
             : new MusicTrack(name, () => source.Stream(resource, name), OwnPath: source.FilePath(resource));
-    }
 
     private static bool IsSkippable(Exception ex) =>
         ex is CueSetException or WavFormatException or AudioDecodeException or IOException or UnauthorizedAccessException;
