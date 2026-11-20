@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: A region's codex entry list and the Possible firsts page show each entry's picture in a square at the left of its row, as the Codex catalogue does: your own picture, else the stock picture once downloaded, else the family placeholder.
+
 Added: A ship's To buy block shows what the list costs at list price, under its route hint: the hull with its stock fitting, and each planned module at its own price, with nothing back for the modules they replace. Your balance sits beside it, and a third tile says what is left after buying or how far short you are, in warning colour. Items D47 has no price for are named in a notice and left out of the figure. "Talk through this build" answers "what will this cost" and "can I afford this" from the same figure.
 
 Added: On arrival at an undiscovered F or G star, D47 says "Class F star. Worth a full scan for organics." (or Class G), once per system. F and G systems have a body with four or more organic signals about twice as often as K systems; undiscovered does not prove no organics were logged. It is said whether or not Undiscovered systems is on. Settings › Your core › Exploring has an F and G stars row, on by default; say "stop calling out F and G stars" to turn it off.

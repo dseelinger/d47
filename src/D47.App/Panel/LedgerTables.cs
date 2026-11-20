@@ -86,6 +86,9 @@ internal sealed class ArrangedList(bool headset, string listName, Func<object, C
 
     public Border View { get; } = new();
 
+    /// <summary>Makes the next <see cref="Show"/> draw its rows again even when the items are the ones shown.</summary>
+    public void Forget() => _shown = [];
+
     /// <summary>Shows <paramref name="items"/> under <see cref="Top"/>; with none, shows the list empty and no header.</summary>
     public void Show<TRow>(ArrangedTable<TRow> columns, IReadOnlyList<object> items, Thickness margin)
     {

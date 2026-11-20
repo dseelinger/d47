@@ -86,7 +86,7 @@ public sealed class TheCreditsAndCodexTablesAreArrangedTests
         new(
             CodexRegionPage.TableId,
             "CodexEntryHead",
-            ["Entry", "System", "Time", "Status"],
+            ["Picture", "Entry", "System", "Time", "Status"],
             "System",
             "Status",
             null,

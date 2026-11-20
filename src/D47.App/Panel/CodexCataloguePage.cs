@@ -574,7 +574,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
 
         return
         [
-            LedgerTables.Control<CodexGroupRow>(new TableColumn("Picture", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, GroupSquare),
+            CodexThumbnails.Column<CodexGroupRow>(GroupSquare),
             StarSystemPage.Headed(heads[0], new TableColumn("Name", ColumnFit.Fill), GroupName),
             StarSystemPage.Headed(heads[1], new TableColumn("Kinds"), row => Figure(row.Kinds, ThemeManager.AKey), right: true),
             StarSystemPage.Headed(heads[2], new TableColumn("OnRecord"), row => Figure(row.OnRecord, ThemeManager.BlueKey), right: true),
@@ -593,7 +593,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
 
         return
         [
-            LedgerTables.Control<CodexKindRow>(new TableColumn("Picture", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, KindSquare),
+            CodexThumbnails.Column<CodexKindRow>(KindSquare),
             StarSystemPage.Headed(heads[0], new TableColumn("Kind", ColumnFit.Fill), KindName),
             StarSystemPage.Headed(heads[1], new TableColumn(CodexCatalogueModel.SystemsKey), row => SystemsCell(row, region), right: true),
             _headset
@@ -826,29 +826,8 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
         return (line, shown.Bitmap);
     }
 
-    private Border KindSquare(CodexKindRow row) => Square(Picture(row).Bitmap);
+    private Border KindSquare(CodexKindRow row) => CodexThumbnails.Square(Picture(row).Bitmap);
 
     private Border GroupSquare(CodexGroupRow row) =>
-        Square(_thumbs?.Picture(row.Node.Key, _filters.Scope)?.Bitmap ?? _thumbs?.Family(row.PlaceholderFile));
-
-    private static Border Square(Avalonia.Media.Imaging.Bitmap? bitmap)
-    {
-        var side = TypeScale.MinimumTarget;
-        var square = new Border { Width = side, Height = side };
-        ThemeInk.Bind(square, Border.BackgroundProperty, ThemeManager.SlabKey);
-
-        if (bitmap is not null)
-        {
-            square.Child = new Image
-            {
-                Name = "CodexThumb",
-                Source = bitmap,
-                Stretch = Avalonia.Media.Stretch.Uniform,
-                Width = side,
-                Height = side,
-            };
-        }
-
-        return square;
-    }
+        CodexThumbnails.Square(_thumbs?.Picture(row.Node.Key, _filters.Scope)?.Bitmap ?? _thumbs?.Family(row.PlaceholderFile));
 }

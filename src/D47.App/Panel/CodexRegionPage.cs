@@ -38,6 +38,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     private readonly RegionFirstBook? _regionFirsts;
     private readonly CodexCatalogueChoice? _catalogue;
     private long _seenFirsts;
+    private readonly CodexThumbnails? _thumbs;
 
     public CodexRegionPage(
         Func<CommanderGameState?> state,
@@ -52,9 +53,12 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         Func<string, Task<bool>>? copy = null,
         ColumnArrangementMemory? columnArrangements = null,
         RegionFirstBook? regionFirsts = null,
-        CodexCatalogueChoice? catalogue = null)
+        CodexCatalogueChoice? catalogue = null,
+        CodexPictureSet? pictures = null)
     {
         _catalogue = catalogue;
+        _thumbs = pictures is null ? null : new CodexThumbnails(pictures);
+        _thumbs?.Refresh();
         _regionFirsts = regionFirsts;
         _copy = copy;
         _state = state;
@@ -134,6 +138,18 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         return true;
     }
 
+
+    /// <summary>Redraws every row when the pictures on disk have changed since the last draw.</summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        if (_thumbs?.Refresh() == true)
+        {
+            _list.Forget();
+            Draw();
+        }
+    }
 
     private CodexPeriod Period => CodexKit.PeriodOf(_period);
 
@@ -296,6 +312,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
 
         return
         [
+            CodexThumbnails.Column<CodexEntryRow>(row => CodexThumbnails.Square(_thumbs?.Entry(row.Key, _regionId, row.PlaceholderFile))),
             StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), row => CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
             StarSystemPage.Headed(heads[1], new TableColumn("System", ColumnFit.Fill), row => SystemCell(row, _copy)),
             StarSystemPage.Headed(heads[2], new TableColumn("Time"), row => CreditsKit.Mono(CodexModel.DateTime(row.At), TypeScale.Small, ThemeManager.GreyKey, right: false)),

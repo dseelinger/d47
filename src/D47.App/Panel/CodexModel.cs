@@ -56,7 +56,8 @@ public sealed record CodexEntryRow(
     bool IsNew,
     DateTimeOffset? First,
     string? Origin,
-    CodexFirst Possible = CodexFirst.None)
+    CodexFirst Possible = CodexFirst.None,
+    string? PlaceholderFile = null)
 {
     /// <summary>The body and the position as one line: "A 4 c · 12.4512, −108.2231".</summary>
     public string Place => string.Join(" · ", new[] { Body, Position }.Where(part => !string.IsNullOrWhiteSpace(part)));
@@ -613,7 +614,8 @@ public static class CodexModel
             entry.IsNew,
             !entry.IsNew && first < index ? all[first].At : null,
             entry.IsNew ? null : first < index ? null : whole ? "before your journals" : "before D47 started",
-            record is not null && record.At == entry.At ? record.First : CodexFirst.None);
+            record is not null && record.At == entry.At ? record.First : CodexFirst.None,
+            CodexFamilies.FileOfSymbol(entry.SubCategorySymbol) ?? CodexFamilies.FileOfTableName(entry.SubCategory));
     }
 
     private static bool Matches(CodexLogEntry entry, string text) =>

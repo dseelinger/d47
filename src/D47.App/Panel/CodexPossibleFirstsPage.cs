@@ -39,6 +39,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
     private string? _seenCommander;
     private string _query = string.Empty;
     private int _page;
+    private readonly CodexThumbnails? _thumbs;
 
     public CodexPossibleFirstsPage(
         Func<CommanderGameState?> state,
@@ -48,9 +49,12 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
         ColumnWidthMemory? columnWidths = null,
         ColumnArrangementMemory? columnArrangements = null,
         Func<string, Task<bool>>? copy = null,
-        RegionFirstPress? press = null)
+        RegionFirstPress? press = null,
+        CodexPictureSet? pictures = null)
     {
         _press = press;
+        _thumbs = pictures is null ? null : new CodexThumbnails(pictures);
+        _thumbs?.Refresh();
         _state = state;
         _book = book;
         _nav = nav;
@@ -107,6 +111,17 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
     private IReadOnlyList<RegionFirstRecord> Records() =>
         _book is not null && _state()?.Identity.FrontierId is { Length: > 0 } id ? _book.For(id) : [];
 
+    /// <summary>Redraws when the pictures on disk have changed since the last draw.</summary>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        if (_thumbs?.Refresh() == true)
+        {
+            Draw();
+        }
+    }
+
     private void Draw()
     {
         _seenVersion = _book?.Version ?? 0;
@@ -161,6 +176,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
 
         return
         [
+            CodexThumbnails.Column<RegionFirstRecord>(Square),
             StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), EntryCell),
             StarSystemPage.Headed(heads[1], new TableColumn("Region", ColumnFit.Fill), record =>
                 CreditsKit.Line(record.Region ?? CodexModel.NoRegionName, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
@@ -171,6 +187,14 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
             LedgerTables.Control(new TableColumn("ReportTile", ColumnFit.Fixed) { Fixed = 190 }, TileCell, heads[5]),
             LedgerTables.Control(new TableColumn("Open", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, OpenCell, heads[6], right: true),
         ];
+    }
+
+    private Border Square(RegionFirstRecord record)
+    {
+        var key = CodexKeys.Of(record.EntryId);
+
+        return CodexThumbnails.Square(
+            _thumbs?.Entry(key, record.RegionId, CodexFamilies.FileOfTableName(CodexCatalogue.Table.Entry(key)?.SubCategory)));
     }
 
     private static StackPanel EntryCell(RegionFirstRecord record)

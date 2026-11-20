@@ -1,4 +1,6 @@
+using Avalonia.Controls;
 using Avalonia.Media.Imaging;
+using D47.App.Theming;
 using D47.Core.Interface;
 
 namespace D47.App.Panel;
@@ -16,13 +18,49 @@ internal sealed class CodexThumbnails(CodexPictureSet pictures)
     private IReadOnlySet<CodexPictureKey> _local = new HashSet<CodexPictureKey>();
     private IReadOnlyList<CodexPictureRow> _stock = [];
 
-    /// <summary>Re-reads which pictures exist and drops the pictures decoded before.</summary>
-    public void Refresh()
+    /// <summary>Re-reads which pictures exist and drops the pictures decoded before; true when the pictures on disk are not the ones read last.</summary>
+    public bool Refresh()
     {
+        var local = pictures.Store.LocalKeys();
+        var stock = pictures.Store.StockRows();
+        var changed = !local.SetEquals(_local) || !stock.SequenceEqual(_stock);
+
         _decoded.Clear();
-        _local = pictures.Store.LocalKeys();
-        _stock = pictures.Store.StockRows();
+        _local = local;
+        _stock = stock;
+
+        return changed;
     }
+
+    /// <summary>The entry's picture in the region, else its family placeholder; null when there is neither.</summary>
+    public Bitmap? Entry(string key, int? regionId, string? placeholderFile) =>
+        Picture(key, regionId)?.Bitmap ?? Family(placeholderFile);
+
+    /// <summary>A list row's square: the bitmap on the Slab ground, or the ground alone.</summary>
+    public static Border Square(Bitmap? bitmap)
+    {
+        var side = TypeScale.MinimumTarget;
+        var square = new Border { Width = side, Height = side };
+        ThemeInk.Bind(square, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        if (bitmap is not null)
+        {
+            square.Child = new Image
+            {
+                Name = "CodexThumb",
+                Source = bitmap,
+                Stretch = Avalonia.Media.Stretch.Uniform,
+                Width = side,
+                Height = side,
+            };
+        }
+
+        return square;
+    }
+
+    /// <summary>The leading Picture column of a codex list.</summary>
+    public static TableField<TRow> Column<TRow>(Func<TRow, Control> square) =>
+        LedgerTables.Control(new TableColumn("Picture", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, square);
 
     /// <summary>The picture chosen for the entry in the region and its bitmap; null when there is none on disk.</summary>
     public (CodexPictureChoice Choice, Bitmap Bitmap)? Picture(string key, int? regionId)
