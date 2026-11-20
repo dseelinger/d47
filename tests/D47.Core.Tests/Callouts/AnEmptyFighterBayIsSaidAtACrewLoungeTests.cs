@@ -1,6 +1,8 @@
 using D47.Core.Callouts;
 using D47.Core.Journal;
+using D47.Core.Storage;
 using D47.Core.Tests.Journal;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace D47.Core.Tests.Callouts;
@@ -174,6 +176,200 @@ public class AnEmptyFighterBayIsSaidAtACrewLoungeTests
 
         Assert.Empty(Said(callout, State(Loadout(5)), false, Docked(lounge: false)));
         Assert.Empty(Said(callout, State(Loadout(5)), false, Loadout(5)));
+    }
+
+    private static string Restock(string type) =>
+        $$"""{"timestamp":"3311-01-01T00:00:07Z","event":"RestockVehicle","Type":"{{type}}","Loadout":"starter","ID":0,"Cost":1030,"Count":1}""";
+
+    private const string Lander = "lander01";
+
+    private const string Fighter = "independent_fighter";
+
+    private const string FirstLogin = """{"timestamp":"3311-01-01T00:00:00Z","event":"LoadGame","FID":"F1","Commander":"Jameson","Ship":"python","ShipID":5}""";
+
+    private const string SecondLogin = """{"timestamp":"3311-01-02T00:00:00Z","event":"LoadGame","FID":"F2","Commander":"Vance","Ship":"python","ShipID":5}""";
+
+    /// <summary>Module events as Elite writes them when hull 5's hangar is refitted.</summary>
+    private static readonly string[] RefitLines =
+    [
+        """{"timestamp":"3311-01-01T00:00:08Z","event":"ModuleBuy","Slot":"Slot04_Size5","BuyItem":"$int_fighterbaymk2_size5_class1_free_name;","BuyItem_Localised":"Fighter Hangar","MarketID":128771628,"BuyPrice":0,"Ship":"python","ShipID":5}""",
+        """{"timestamp":"3311-01-01T00:00:08Z","event":"ModuleBuy","Slot":"Slot04_Size5","BuyItem":"$int_cargorack_size5_class1_name;","SellItem":"$int_fighterbay_size5_class1_name;","MarketID":128771628,"BuyPrice":100,"Ship":"python","ShipID":5}""",
+        """{"timestamp":"3311-01-01T00:00:08Z","event":"ModuleSell","MarketID":4213021187,"Slot":"Slot05_Size5","SellItem":"$int_fighterbay_size5_class1_name;","SellItem_Localised":"Fighter Hangar","SellPrice":576141,"Ship":"python","ShipID":5}""",
+        """{"timestamp":"3311-01-01T00:00:08Z","event":"ModuleStore","MarketID":128734402,"Slot":"Slot02_Size7","StoredItem":"$int_fighterbaymk2_size7_class1_free_name;","Ship":"python","ShipID":5,"Hot":false}""",
+        """{"timestamp":"3311-01-01T00:00:08Z","event":"ModuleSwap","MarketID":128771628,"FromSlot":"Slot04_Size5","ToSlot":"FighterBay01","FromItem":"$int_fighterbaymk2_size5_class1_free_name;","ToItem":"Null","Ship":"python","ShipID":5}""",
+    ];
+
+    public static TheoryData<string> Refits() => new(RefitLines);
+
+    [Fact]
+    public void AHangarHoldingOnlyTheNomadIsSilent()
+    {
+        Assert.Empty(Said(new FighterBayCrewCallout(), State(Loadout(5), Restock(Lander)), false, Docked()));
+    }
+
+    [Fact]
+    public void AHangarHoldingTheNomadAndAFighterIsStillSaid()
+    {
+        var state = State(Loadout(5), Restock(Lander), Restock(Fighter));
+
+        var said = Assert.Single(Said(new FighterBayCrewCallout(), state, false, Docked()));
+
+        Assert.Equal("No pilot for this ship's fighter bay. The crew lounge here can hire one.", said);
+    }
+
+    [Fact]
+    public void AFighterStockedBeforeTheNomadStillCounts()
+    {
+        var state = State(Loadout(5), Restock("empire_fighter"), Restock(Lander));
+
+        Assert.Single(Said(new FighterBayCrewCallout(), state, false, Docked()));
+    }
+
+    [Fact]
+    public void AHangarHoldingOnlyAFighterIsStillSaid()
+    {
+        Assert.Single(Said(new FighterBayCrewCallout(), State(Loadout(5), Restock(Fighter)), false, Docked()));
+    }
+
+    [Fact]
+    public void AHangarWithNoRestockSeenIsStillSaid()
+    {
+        var state = State(Loadout(5));
+
+        Assert.Null(state.Hangars.For(5));
+        Assert.Single(Said(new FighterBayCrewCallout(), state, false, Docked()));
+    }
+
+    [Theory]
+    [InlineData("testbuggy")]
+    [InlineData("combat_multicrew_srv_01")]
+    [InlineData("mev_rhino")]
+    public void AnSrvRestockLeavesTheHangarAsItWas(string srv)
+    {
+        Assert.Empty(Said(new FighterBayCrewCallout(), State(Loadout(5), Restock(Lander), Restock(srv)), false, Docked()));
+        Assert.Null(State(Loadout(5), Restock(srv)).Hangars.For(5));
+    }
+
+    [Fact]
+    public void AVehicleD47DoesNotKnowKeepsTheReminder()
+    {
+        Assert.Single(Said(new FighterBayCrewCallout(), State(Loadout(5), Restock(Lander), Restock("lander02")), false, Docked()));
+        Assert.Single(Said(new FighterBayCrewCallout(), State(Loadout(5), Restock("lander02"), Restock(Lander)), false, Docked()));
+    }
+
+    [Fact]
+    public void AFighterInTheWalkedHistoryOutlastsALiveNomadRestock()
+    {
+        ShipHangars? walked = null;
+        var store = new GameStateStore { RestoreHangars = _ => walked };
+
+        foreach (var line in new[] { Commander, Loadout(5), Restock(Lander) })
+        {
+            store.Apply(JournalScript.Parse(line), null, priming: false);
+        }
+
+        walked = ShipHangars.Empty
+            .Apply(JournalScript.Parse(Restock(Lander)), 5)
+            .Apply(JournalScript.Parse(Restock(Fighter)), 5);
+        store.RestoreLate();
+
+        Assert.Equal(new HangarHolds(Nomad: true, Fighter: true), store.Active!.Hangars.For(5));
+        Assert.Single(Said(new FighterBayCrewCallout(), store.Active!, false, Docked()));
+    }
+
+    [Theory]
+    [MemberData(nameof(Refits))]
+    public void RefittingTheHangarMakesItNotKnown(string refit)
+    {
+        var state = State(Loadout(5), Restock(Lander), refit);
+
+        Assert.Equal(HangarHolds.NotKnown, state.Hangars.For(5));
+        Assert.Single(Said(new FighterBayCrewCallout(), state, false, Docked()));
+    }
+
+    [Fact]
+    public void RefittingAnotherHullLeavesThisOneKnown()
+    {
+        var refit = RefitLines[0].Replace("\"ShipID\":5", "\"ShipID\":6", StringComparison.Ordinal);
+
+        Assert.Empty(Said(new FighterBayCrewCallout(), State(Loadout(5), Restock(Lander), refit), false, Docked()));
+    }
+
+    [Fact]
+    public void TheRestockGoesToTheHullFlownThen()
+    {
+        var state = State(Loadout(5), Restock(Lander), Swap(6), Loadout(6), Restock(Fighter));
+
+        Assert.Equal(new HangarHolds(Nomad: true, Fighter: false), state.Hangars.For(5));
+        Assert.Equal(new HangarHolds(Nomad: false, Fighter: true), state.Hangars.For(6));
+    }
+
+    [Fact]
+    public void ARestockThatChangesNothingReportsNoHangarChange()
+    {
+        var store = JournalScript.Store(Commander, Loadout(5), Restock(Lander));
+
+        var receipt = store.Apply(JournalScript.Parse(Restock(Lander)), null, priming: false);
+
+        Assert.DoesNotContain(receipt.Changes, change => change.Part == nameof(CommanderGameState.Hangars));
+    }
+
+    [Fact]
+    public void ALiveRefitOutlastsARestoreThatFinishesLate()
+    {
+        ShipHangars? walked = null;
+        var store = new GameStateStore { RestoreHangars = _ => walked };
+
+        foreach (var line in new[] { Commander, Loadout(5), RefitLines[0] })
+        {
+            store.Apply(JournalScript.Parse(line), null, priming: false);
+        }
+
+        walked = ShipHangars.Empty.Apply(JournalScript.Parse(Restock(Lander)), 5);
+        store.RestoreLate();
+
+        Assert.Equal(HangarHolds.NotKnown, store.Active!.Hangars.For(5));
+        Assert.Single(Said(new FighterBayCrewCallout(), store.Active!, false, Docked()));
+    }
+
+    [Fact]
+    public void TwoCommandersWhoseHullsShareAShipIdAreKeptApart()
+    {
+        var files = new MemoryFileSystem();
+        files.WriteText("a.log", string.Join('\n', FirstLogin, Loadout(5), Restock(Lander)));
+        files.WriteText("b.log", string.Join('\n', SecondLogin, Loadout(5), Restock(Fighter)));
+
+        var walked = HangarBackfill.FromHistory(files, ["a.log", "b.log"], NullLogger.Instance, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new HangarHolds(Nomad: true, Fighter: false), walked["F1"].For(5));
+        Assert.Equal(new HangarHolds(Nomad: false, Fighter: true), walked["F2"].For(5));
+
+        var store = new GameStateStore { RestoreHangars = walked.GetValueOrDefault };
+
+        store.Apply(JournalScript.Parse(FirstLogin), null, priming: false);
+        store.Apply(JournalScript.Parse(Loadout(5)), null, priming: false);
+        Assert.Empty(Said(new FighterBayCrewCallout(), store.Active!, false, Docked()));
+
+        store.Apply(JournalScript.Parse(SecondLogin), null, priming: false);
+        store.Apply(JournalScript.Parse(Loadout(5)), null, priming: false);
+        Assert.Single(Said(new FighterBayCrewCallout(), store.Active!, false, Docked()));
+    }
+
+    [Fact]
+    public void TheBackfillFollowsTheHullThroughASwap()
+    {
+        var files = new MemoryFileSystem();
+        files.WriteText("a.log", string.Join('\n', FirstLogin, Restock(Lander), Swap(6), Loadout(6), Restock(Fighter), Swap(5), Loadout(5)));
+        files.WriteText("b.log", string.Join('\n', FirstLogin, Restock(Fighter)));
+
+        var first = HangarBackfill.FromHistory(files, ["a.log"], NullLogger.Instance, TestContext.Current.CancellationToken)["F1"];
+
+        Assert.Equal(new HangarHolds(Nomad: true, Fighter: false), first.For(5));
+        Assert.Equal(new HangarHolds(Nomad: false, Fighter: true), first.For(6));
+
+        var both = HangarBackfill.FromHistory(files, ["a.log", "b.log"], NullLogger.Instance, TestContext.Current.CancellationToken)["F1"];
+
+        Assert.Equal(new HangarHolds(Nomad: true, Fighter: true), both.For(5));
     }
 
     [Fact]

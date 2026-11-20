@@ -171,6 +171,9 @@ public sealed class HistoryBackfill
     /// <summary>Each Commander's hired pilots, folded over every journal.</summary>
     public IReadOnlyDictionary<string, ShipCrew>? Crews { get; private set; }
 
+    /// <summary>Each Commander's fighter hangar contents per hull, folded over every journal.</summary>
+    public IReadOnlyDictionary<string, ShipHangars>? Hangars { get; private set; }
+
     /// <summary>The credits each Commander's newest LoadGame reported.</summary>
     public IReadOnlyDictionary<string, long>? Credits { get; private set; }
 
@@ -380,6 +383,14 @@ public sealed class HistoryBackfill
                     FileSystem,
                     Files(),
                     Loggers.CreateLogger(nameof(CrewBackfill)),
+                    cancellation));
+
+            Hangars = Timed(
+                "hangar backfill",
+                () => HangarBackfill.FromHistory(
+                    FileSystem,
+                    Files(),
+                    Loggers.CreateLogger(nameof(HangarBackfill)),
                     cancellation));
 
             Credits = Timed(

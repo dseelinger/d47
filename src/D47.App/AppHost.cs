@@ -1391,6 +1391,7 @@ public sealed class AppHost : IDisposable
             RestoreEngineers = fid => history.Engineers?.GetValueOrDefault(fid),
             RestoreTechBroker = fid => history.TechBroker?.GetValueOrDefault(fid),
             RestoreCrew = fid => history.Crews?.GetValueOrDefault(fid),
+            RestoreHangars = fid => history.Hangars?.GetValueOrDefault(fid),
             RestoreSquadronFactions = fid => history.SquadronFactions?.GetValueOrDefault(fid),
 
             // And the merits earned for the Commander's Power earlier this cycle.

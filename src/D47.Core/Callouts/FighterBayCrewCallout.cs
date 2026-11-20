@@ -5,7 +5,7 @@ namespace D47.Core.Callouts;
 
 /// <summary>
 /// At a crew lounge, says when the ship's fighter bay has no pilot posted to this hull, or when the pilot
-/// posted here was left behind by a swap.
+/// posted here was left behind by a swap. A hangar known to hold the Nomad and no fighter is not checked.
 /// </summary>
 public sealed class FighterBayCrewCallout(ILogger? logger = null) : ICallout
 {
@@ -72,7 +72,8 @@ public sealed class FighterBayCrewCallout(ILogger? logger = null) : ICallout
         if (context.State is not { } state
             || context.Status.Has2(StatusFlags2.InMulticrew)
             || state.Ship.ShipId is not { } shipId
-            || state.Fitted(Bay, "a fighter bay crew reminder", logger) is not true)
+            || state.Fitted(Bay, "a fighter bay crew reminder", logger) is not true
+            || state.Hangars.For(shipId) is { NomadOnly: true })
         {
             return null;
         }

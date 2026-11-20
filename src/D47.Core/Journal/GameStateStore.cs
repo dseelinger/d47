@@ -147,6 +147,9 @@ public sealed class GameStateStore
     /// <summary>The hired pilots this Commander's journals show; live crew events win by crew id.</summary>
     public Func<string, ShipCrew?>? RestoreCrew { get; init; }
 
+    /// <summary>What this Commander's journals show each hull's fighter hangar stocked with; live entries win by hull.</summary>
+    public Func<string, ShipHangars?>? RestoreHangars { get; init; }
+
     /// <summary>The tech broker unlocks this Commander's older journals show, merged into what is known.</summary>
     public Func<string, TechBrokerUnlocks?>? RestoreTechBroker { get; init; }
 
@@ -427,6 +430,7 @@ public sealed class GameStateStore
         Part<TechBrokerUnlocks>(s => s.RestoreTechBroker, v => v.IsKnown, (c, v) => c.TechBroker = v, (c, v) => c.TechBroker = c.TechBroker.With(v)),
         Part<SquadronFactionSightings>(s => s.RestoreSquadronFactions, v => v.IsKnown, (c, v) => c.SquadronFactions = v, (c, v) => c.SquadronFactions = c.SquadronFactions.With(v)),
         Part<ShipCrew>(s => s.RestoreCrew, v => v.Any, (c, v) => c.Crew = v, (c, v) => c.Crew = v.With(c.Crew)),
+        Part<ShipHangars>(s => s.RestoreHangars, v => v.Any, (c, v) => c.Hangars = v, (c, v) => c.Hangars = v.With(c.Hangars)),
         new Restorer(Credits, Credits),
     ];
 }

@@ -402,7 +402,8 @@ always the ones Elite wrote.
 When you dock at a station with a crew lounge, or at a fleet carrier that lists one, in a ship with a
 fighter bay, your core checks that a hired pilot is posted to that hull. It checks the same way after
 you swap into or buy a ship with a fighter bay while docked. It is said at most once per hull per
-docking, and not while you crew another Commander's ship. It is on by default.
+docking, and not while you crew another Commander's ship. A hangar that holds only the Nomad is not
+checked. It is on by default.
 
 ```text
 No pilot for this ship's fighter bay. The crew lounge here can hire one.

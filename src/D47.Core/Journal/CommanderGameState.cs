@@ -157,6 +157,9 @@ public sealed class CommanderGameState(CommanderIdentity identity)
     /// <summary>The hired NPC pilots on the books (Phase 11, "Ship Crew").</summary>
     public ShipCrew Crew { get; internal set; } = ShipCrew.Empty;
 
+    /// <summary>What each hull's fighter hangar has been stocked with.</summary>
+    public ShipHangars Hangars { get; internal set; } = ShipHangars.Empty;
+
     /// <summary>The ship currently targeted, or null when none is.</summary>
     public TargetedShip? Target { get; private set; }
 
@@ -250,6 +253,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         new(nameof(Session), "this session's totals", state => state.Session),
         new(nameof(Colonisation), "construction sites", state => state.Colonisation),
         new(nameof(Crew), "your crew", state => state.Crew),
+        new(nameof(Hangars), "your fighter hangars", state => state.Hangars),
         new(nameof(Target), "your target", state => state.Target),
         new(nameof(Fighter), "your fighter", state => state.Fighter),
         new(nameof(InOperationSince), "whether you are in an Operation", state => state.InOperationSince),
@@ -321,6 +325,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
             TechBroker = TechBrokerUnlocks.Empty;
             SquadronFactions = SquadronFactionSightings.Empty;
             Crew = ShipCrew.Empty;
+            Hangars = ShipHangars.Empty;
             CycleMerits = PowerplayCycleMerits.None;
             return;
         }
@@ -389,6 +394,7 @@ public sealed class CommanderGameState(CommanderIdentity identity)
         // After Ship, so an assignment is tied to the hull the Commander is actually in rather than the one
         // they were in a moment ago.
         Crew = Crew.Apply(journalEvent, Ship.Name ?? Ship.TypeSaid, Ship.ShipId);
+        Hangars = Hangars.Apply(journalEvent, Ship.ShipId);
 
         InOperationSince = journalEvent.Kind switch
         {
