@@ -83,9 +83,9 @@ public sealed record ShipSlot(
             ? utility.ToString(System.Globalization.CultureInfo.InvariantCulture) + Placed()
             : Spaced(Name),
 
-        _ when Ordinal(Trim(Name)) is { } compartment => Restrict.Count > 0
-            ? $"{Spaced(Letters(Trim(Name)))} {compartment} ({Size})"
-            : $"{compartment} ({Size})",
+        _ when Ordinal(Trim(Name)) is not null => Restrict.Count > 0
+            ? $"{Spaced(Letters(Trim(Name)))} Size {Size}"
+            : $"Size {Size}",
 
         _ => Spaced(Name),
     };

@@ -248,4 +248,14 @@ public class SlotLayoutTests
         Assert.Equal("Thrusters", EliteSpecifications.Slot("anaconda", "MainEngines")?.Short());
         Assert.Equal("Armour", EliteSpecifications.Slot("anaconda", "Armour")?.Short());
     }
+
+    [Fact]
+    public void ACompartmentSaysItsSizeInWordsInTheSlotColumn()
+    {
+        Assert.Equal("Size 5", EliteSpecifications.Slot("dolphin", "Slot01_Size5")?.Short());
+        Assert.Equal("Size 7", EliteSpecifications.Slot("anaconda", "Slot01_Size7")?.Short());
+        Assert.Equal("Military Size 5", EliteSpecifications.Slot("anaconda", "Military01")?.Short());
+        Assert.Equal(
+            "Limpet Controller Size 5", EliteSpecifications.Slot("lakonminer", "LimpetController01")?.Short());
+    }
 }

@@ -253,7 +253,7 @@ public sealed record LoadoutSide(
 /// </param>
 /// <param name="Slot">
 /// The slot itself, short enough for a column: the heading above already says which block this is, so
-/// what is left is the ordinal, the size, or a core internal's name.
+/// what is left is the size, or a core internal's name.
 /// </param>
 /// <param name="Current">What the journal says is in the slot.</param>
 /// <param name="Plan">What <c>ships.json</c> says is wanted there, or null where nothing is.</param>
