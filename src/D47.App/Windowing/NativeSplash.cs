@@ -12,9 +12,9 @@ internal sealed class NativeSplash : ISplashSurface
 {
     private const string ClassName = "D47Splash";
     private const string FontFace = "JetBrains Mono";
-    private const int DesignWidth = 480;
-    private const int DesignHeight = 300;
-    private const int VersionTop = 220;
+    internal const int DesignWidth = 480;
+    internal const int DesignHeight = 360;
+    internal const int VersionTop = 278;
     private const int VersionLine = 16;
     private const int VersionSize = 12;
     private const uint VersionColour = 0x00949BA0;
