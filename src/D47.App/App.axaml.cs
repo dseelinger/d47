@@ -29,6 +29,7 @@ public partial class App(AppHost? host) : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = window = new MainWindow(host);
+            Windowing.SplashScreen.Current?.Reached(Windowing.BootStage.Window);
 
             // Closing the window is how d47 is quit — there is no tray icon — and that has been true
             // only by accident: the default is to shut down when the last window closes, and d47 had

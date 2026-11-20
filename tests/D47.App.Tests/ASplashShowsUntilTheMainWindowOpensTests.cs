@@ -18,6 +18,10 @@ public class ASplashShowsUntilTheMainWindowOpensTests
 
         public void Close() => Closed++;
 
+        public List<double> Fractions { get; } = [];
+
+        public void Progress(double fraction) => Fractions.Add(fraction);
+
         public void Dispose() => Disposed++;
     }
 
@@ -81,5 +85,44 @@ public class ASplashShowsUntilTheMainWindowOpensTests
 
         Assert.Equal(1, surface.Closed);
         Assert.Null(SplashScreen.Current);
+    }
+
+    [Fact]
+    public void TheNineStagesInOrderReportOneNinthToNineNinths()
+    {
+        var surface = new FakeSurface();
+        using var splash = SplashScreen.Open([], ownsInstance: true, () => surface);
+
+        foreach (var stage in Enum.GetValues<BootStage>())
+        {
+            splash!.Reached(stage);
+        }
+
+        Assert.Equal(Enumerable.Range(1, 9).Select(n => n / 9.0), surface.Fractions);
+    }
+
+    [Fact]
+    public void ARepeatedOrEarlierStageReportsNothing()
+    {
+        var surface = new FakeSurface();
+        using var splash = SplashScreen.Open([], ownsInstance: true, () => surface);
+
+        splash!.Reached(BootStage.Services);
+        splash.Reached(BootStage.Services);
+        splash.Reached(BootStage.Stores);
+
+        Assert.Equal([4 / 9.0], surface.Fractions);
+    }
+
+    [Fact]
+    public void AStageReachedAfterCloseReportsNothing()
+    {
+        var surface = new FakeSurface();
+        using var splash = SplashScreen.Open([], ownsInstance: true, () => surface);
+
+        splash!.Close();
+        splash.Reached(BootStage.Foundations);
+
+        Assert.Empty(surface.Fractions);
     }
 }

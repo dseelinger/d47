@@ -1054,15 +1054,25 @@ public sealed class AppHost : IDisposable
     {
         var late = new LateBound();
 
+        var splash = Windowing.SplashScreen.Current;
+
         var foundations = ComposeFoundations();
+        splash?.Reached(Windowing.BootStage.Foundations);
         var stores = ComposeStores(foundations, late);
+        splash?.Reached(Windowing.BootStage.Stores);
         var loop = PrimeGameLoop(foundations, stores);
+        splash?.Reached(Windowing.BootStage.GameLoop);
         var services = ComposeServices(foundations, stores, loop, late);
+        splash?.Reached(Windowing.BootStage.Services);
         var registry = ComposeCapabilities(foundations, stores, loop, services, late);
+        splash?.Reached(Windowing.BootStage.Capabilities);
         var crew = ComposeCrew(foundations, stores, services, registry, late);
+        splash?.Reached(Windowing.BootStage.Crew);
         var host = ComposeHost(foundations, stores, loop, services, registry, crew, late);
+        splash?.Reached(Windowing.BootStage.Host);
         RegisterHostTicks(host, foundations, stores, loop, services, registry, crew, late);
         StartRunning(host, foundations, loop, services, startTicking);
+        splash?.Reached(Windowing.BootStage.Running);
 
         return host;
     }

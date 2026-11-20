@@ -13,6 +13,7 @@ internal static class SplashInterop
     public const uint WmPaint = 0x000F;
     public const uint WmClose = 0x0010;
     public const uint WmEraseBkgnd = 0x0014;
+    public const uint WmApp = 0x8000;
     public const int Halftone = 4;
     public const int Transparent = 1;
     public const uint SrcCopy = 0x00CC0020;
@@ -148,6 +149,13 @@ internal static class SplashInterop
     public static extern nint LoadCursorW(nint instance, nint name);
 
     [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool InvalidateRect(nint hwnd, nint rect, [MarshalAs(UnmanagedType.Bool)] bool erase);
+
+    [DllImport("user32.dll")]
+    public static extern int FillRect(nint hdc, ref Rect rect, nint brush);
+
+    [DllImport("user32.dll")]
     public static extern nint BeginPaint(nint hwnd, out PaintStruct paint);
 
     [DllImport("user32.dll")]
@@ -208,6 +216,9 @@ internal static class SplashInterop
     [DllImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool BitBlt(nint dest, int x, int y, int width, int height, nint source, int sx, int sy, uint rop);
+
+    [DllImport("gdi32.dll")]
+    public static extern nint CreateSolidBrush(uint colour);
 
     [DllImport("gdi32.dll")]
     public static extern int SetBkMode(nint hdc, int mode);

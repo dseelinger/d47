@@ -18,6 +18,10 @@ internal sealed class NativeSplash : ISplashSurface
     private const int VersionLine = 16;
     private const int VersionSize = 12;
     private const uint VersionColour = 0x00949BA0;
+    private const uint FillColour = 0x001A7AFF;
+    private const uint FillScanlineColour = 0x001668D9;
+    private const int TrackHeight = 4;
+    private const int ScanlinePeriod = 3;
 
     private readonly string _version;
     private readonly object _gate = new();
@@ -31,6 +35,7 @@ internal sealed class NativeSplash : ISplashSurface
     private int _width;
     private int _height;
     private double _scale = 1;
+    private double _fraction;
 
     public NativeSplash(string version)
     {
@@ -52,6 +57,19 @@ internal sealed class NativeSplash : ISplashSurface
             if (_hwnd != 0)
             {
                 PostMessageW(_hwnd, WmClose, 0, 0);
+            }
+        }
+    }
+
+    public void Progress(double fraction)
+    {
+        lock (_gate)
+        {
+            _fraction = Math.Clamp(fraction, 0, 1);
+
+            if (_hwnd != 0 && !_closed)
+            {
+                PostMessageW(_hwnd, WmApp, 0, 0);
             }
         }
     }
@@ -298,6 +316,61 @@ internal sealed class NativeSplash : ISplashSurface
         }
     }
 
+    private void DrawFill(nint hdc)
+    {
+        double fraction;
+
+        lock (_gate)
+        {
+            fraction = _fraction;
+        }
+
+        var edge = Math.Max(1, (int)Math.Round(_scale));
+        var trackWidth = _width - (2 * edge);
+        var filled = (int)Math.Round(trackWidth * fraction);
+
+        if (filled <= 0)
+        {
+            return;
+        }
+
+        var bottom = _height - edge;
+        var top = bottom - (int)Math.Round(TrackHeight * _scale);
+        var thickness = Math.Max(1, (int)Math.Round(_scale));
+        var body = CreateSolidBrush(FillColour);
+        var lines = CreateSolidBrush(FillScanlineColour);
+
+        try
+        {
+            var area = new Rect { Left = edge, Top = top, Right = edge + filled, Bottom = bottom };
+            FillRect(hdc, ref area, body);
+
+            for (var k = 0; ; k++)
+            {
+                var row = (int)Math.Round(k * ScanlinePeriod * _scale);
+
+                if (row >= bottom)
+                {
+                    break;
+                }
+
+                var rowTop = Math.Max(row, top);
+                var rowBottom = Math.Min(row + thickness, bottom);
+
+                if (rowTop < rowBottom)
+                {
+                    var line = new Rect { Left = edge, Top = rowTop, Right = edge + filled, Bottom = rowBottom };
+                    FillRect(hdc, ref line, lines);
+                }
+            }
+        }
+        finally
+        {
+            DeleteObject(body);
+            DeleteObject(lines);
+        }
+    }
+
     private nint Handle(nint hwnd, uint message, nint wParam, nint lParam)
     {
         switch (message)
@@ -315,9 +388,15 @@ internal sealed class NativeSplash : ISplashSurface
                     BitBlt(hdc, 0, 0, _width, _height, memory, 0, 0, SrcCopy);
                     SelectObject(memory, old);
                     DeleteDC(memory);
+                    DrawFill(hdc);
                 }
 
                 EndPaint(hwnd, ref paint);
+
+                return 0;
+
+            case WmApp:
+                InvalidateRect(hwnd, 0, false);
 
                 return 0;
 

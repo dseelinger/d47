@@ -84,19 +84,46 @@ public sealed class TheCompositionKeepsItsOrderTests
     private static List<ObjectCreationExpressionSyntax> Creations(SyntaxNode scope, string type) =>
         [.. scope.DescendantNodes().OfType<ObjectCreationExpressionSyntax>().Where(creation => creation.Type.ToString() == type)];
 
+    private static bool IsSplashReport(SyntaxNode node) =>
+        node is InvocationExpressionSyntax { Expression: MemberBindingExpressionSyntax { Name.Identifier.ValueText: "Reached" } };
+
     [Fact]
     public void StartCallsTheNineStagesInOrderAndNothingElse()
     {
         var start = Start();
-        var calls = start.DescendantNodes().OfType<InvocationExpressionSyntax>().Select(MemberName).ToList();
+        var calls = start.DescendantNodes().OfType<InvocationExpressionSyntax>()
+            .Where(call => !IsSplashReport(call))
+            .Select(MemberName)
+            .ToList();
 
         Assert.True(Stages.SequenceEqual(calls), "Start() calls:\n" + string.Join(", ", calls));
 
-        var statements = start.Body!.Statements;
+        var statements = start.Body!.Statements
+            .Where(statement => !statement.DescendantNodes().Any(IsSplashReport))
+            .ToList();
 
-        Assert.Equal(Stages.Length + 2, statements.Count);
+        Assert.Equal(Stages.Length + 3, statements.Count);
         Assert.Single(Creations(statements[0], "LateBound"));
         Assert.IsType<ReturnStatementSyntax>(statements[^1]);
+    }
+
+    [Fact]
+    public void StartReportsEachOfTheFirstEightStagesToTheSplashAfterItsCall()
+    {
+        var reports = Start().Body!.Statements
+            .Where(statement => statement.DescendantNodes().Any(IsSplashReport))
+            .ToList();
+        string[] after = ["ComposeFoundations", "ComposeStores", "PrimeGameLoop", "ComposeServices", "ComposeCapabilities", "ComposeCrew", "ComposeHost", "StartRunning"];
+        string[] named = ["Foundations", "Stores", "GameLoop", "Services", "Capabilities", "Crew", "Host", "Running"];
+
+        Assert.Equal(named.Length, reports.Count);
+
+        for (var i = 0; i < named.Length; i++)
+        {
+            Assert.EndsWith("BootStage." + named[i] + ");", reports[i].ToString(), StringComparison.Ordinal);
+            Assert.True(reports[i].SpanStart > StageCall(after[i]), $"{named[i]} is reported before {after[i]}.");
+            Assert.True(i + 1 == named.Length || reports[i].SpanStart < StageCall(after[i + 1]), $"{named[i]} is reported after the next stage.");
+        }
     }
 
     [Fact]

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The startup splash's bar fills as d47 starts, in nine equal steps: one after each of eight startup stages and one when the window is built. It never moves back, and it stands still through a slow stage.
+
 Changed: The startup splash is taller and shows a subtitle, "OPTIMIZE INFERIOR SYSTEMS", and the description "Elite Dangerous companion app" under the name, with the version line lower and an empty bar along the bottom edge.
 
 Fixed: Startup no longer waits on every music file. D47 used to open each file in the music library and in your own audio folder before the splash and the window could continue, which took up to 20 seconds when the files were not in the disk cache. The files are now checked in the background after startup; one that will not play is listed under Your own audio a short while later. Startup also logs a timed step for the cue library and for the stores loaded before audio opens.
