@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: On arrival at an undiscovered F or G star, D47 says "Class F star. Worth a full scan for organics." (or Class G), once per system. F and G systems have a body with four or more organic signals about twice as often as K systems; undiscovered does not prove no organics were logged. It is said whether or not Undiscovered systems is on. Settings › Your core › Exploring has an F and G stars row, on by default; say "stop calling out F and G stars" to turn it off.
+
 Added: The mouse Forward button, Alt+Right and saying "forward" retrace the places Back left, one at a time. Making a move after going back clears them. The controllers have no Forward.
 
 Changed: The mouse Back button, Alt+Left, the grip button and saying "back" now go back through the places you have been this session, across tabs and levels, instead of only up one level. Settings places count too: after opening Audio, then Voices, then Keys, Back returns to Voices and then to Audio. Typing in the Settings search box adds no step. Escape and the breadcrumb still go up one level, and an open chooser closes first. With nowhere earlier to go they behave as before.

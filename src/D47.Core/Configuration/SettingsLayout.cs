@@ -312,6 +312,7 @@ public static class SettingsLayout
                                 E("callouts.lore"),
                                 E("callouts.loreCooldownDays", under: true),
                                 E("callouts.discovery"),
+                                E("callouts.organicsStars"),
                                 E("callouts.footfall"),
                                 E("callouts.footfallApproach"),
                                 E("callouts.mapping"),

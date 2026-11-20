@@ -215,6 +215,7 @@ public static class ShippedCallouts
             .Add(new SamplingRangeCallout())
             .Add(new AbandonedSamplesCallout())
             .Add(new DiscoveryCallout())
+            .Add(new OrganicsStarCallout())
             .Add(new FootfallCallout())
             .Add(new FootfallApproachCallout())
             .Add(new ApproachHazardCallout(loggers.CreateLogger<ApproachHazardCallout>()))
@@ -558,6 +559,7 @@ public static class ShippedCallouts
         engine.SetEnabled("footfall", callouts.Footfall, now);
         engine.SetEnabled("footfall-approach", callouts.FootfallApproach, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);
+        engine.SetEnabled("organicsStars", callouts.OrganicsStars, now);
         engine.SetEnabled("mapping", callouts.Mapping, now);
         engine.SetEnabled("notable-bodies", callouts.NotableBodies, now);
         engine.SetEnabled("body-value", callouts.BodyValue, now);

@@ -727,6 +727,9 @@ public sealed record CalloutSettings
     /// <summary>Whether the arrival star's autoscan shows up as undiscovered (#201).</summary>
     public bool Discovery { get; init; } = true;
 
+    /// <summary>An undiscovered F or G arrival star is worth a full scan for organics.</summary>
+    public bool OrganicsStars { get; init; } = true;
+
     /// <summary>The first footfall on a body (#203).</summary>
     public bool Footfall { get; init; } = true;
 

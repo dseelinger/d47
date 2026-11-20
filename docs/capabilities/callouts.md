@@ -1340,6 +1340,20 @@ nobody has been there. The callout fires on the arrival star's own autoscan only
 scan can carry the same flag in a populated system, and a scan of any other body in the system is not
 the arrival.
 
+#### F and G stars {#organics-stars}
+
+On arrival at an undiscovered F or G star (including the white supergiant forms), the game's autoscan
+of the arrival star triggers:
+
+```text
+Class F star. Worth a full scan for organics.
+```
+
+In a sample of 322,892 fully scanned systems, F and G systems had a body with four or more organic
+signals about twice as often as K systems. Undiscovered means nobody has sold data on the star, which
+does not prove that no organics were logged there. It is said once per system, whether or not
+**Undiscovered systems** is on, and reads only the journal.
+
 #### Picking up where you left off {#continuity}
 
 One line at the start of a session — a greeting on your own clock, and a readiness:

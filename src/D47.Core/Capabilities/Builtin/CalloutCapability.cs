@@ -41,6 +41,7 @@ public static class CalloutCapability
     public const string SamplingRangeKey = "callouts.samplingRange";
     public const string SamplingAbandonedKey = "callouts.samplingAbandoned";
     public const string DiscoveryKey = "callouts.discovery";
+    public const string OrganicsStarsKey = "callouts.organicsStars";
     public const string FootfallKey = "callouts.footfall";
     public const string FootfallApproachKey = "callouts.footfallApproach";
     public const string MappingKey = "callouts.mapping";
@@ -567,6 +568,21 @@ public static class CalloutCapability
                 "undiscovered systems",
                 s => s.Callouts.Discovery,
                 (s, v) => s with { Callouts = s.Callouts with { Discovery = v } }),
+
+            Toggle(
+                OrganicsStarsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find F and G stars "
+                + "(on by default). Arrive at an undiscovered F or G star: D47 says the system is worth a full "
+                + "scan for organics. Say \"stop calling out F and G stars\": the row shows off and that is no "
+                + "longer said. Say \"start calling out F and G stars\" and the row shows on. The row is "
+                + "absent while Speak without being asked is off.",
+                "F and G stars",
+                "On arrival at an undiscovered F or G star, says the system is worth a full scan for organics.",
+                "organics-stars",
+                "F and G stars",
+                s => s.Callouts.OrganicsStars,
+                (s, v) => s with { Callouts = s.Callouts with { OrganicsStars = v } }),
 
             Toggle(
                 FootfallKey,
