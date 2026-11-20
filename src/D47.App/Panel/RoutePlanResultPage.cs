@@ -10,13 +10,14 @@ using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Capabilities;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
 /// <summary>A plan that was made, drawn whole (Phase 37, "Plan").</summary>
-public sealed class RoutePlanResultPage : UserControl
+public sealed class RoutePlanResultPage : UserControl, IPageSummary
 {
     private readonly Func<string, Task<bool>>? _copy;
     private readonly RoutePlanBook? _plans;
@@ -69,6 +70,46 @@ public sealed class RoutePlanResultPage : UserControl
     private DateTimeOffset? _ageShownFor;
     private string? _offDutySeen;
 
+    private readonly PanelNavigator? _nav;
+    private readonly SavedRouteBook? _saved;
+    private readonly SavedRoute? _opened;
+    private readonly bool _headset;
+
+    private readonly Button _saveTile = new() { Content = "Save this route", Name = SaveTileName };
+    private readonly Button _savedTile = new() { Content = "Saved routes", Name = SavedTileName };
+    private readonly FormField _name = new("Name", string.Empty, width: 360);
+    private readonly Button _saveGo = new() { Content = "Save", Name = SaveGoName };
+    private readonly Button _saveCancel = new() { Content = "Cancel", Name = SaveCancelName };
+    private readonly StackPanel _nameForm = new() { Spacing = 8, IsVisible = false };
+    private readonly StackPanel _saveStatus = new() { Orientation = Orientation.Horizontal, Spacing = 8, IsVisible = false };
+    private readonly StackPanel _saveRow = new() { Spacing = 8, Margin = new Thickness(0, 0, 0, 10) };
+    private readonly Border _deleteArea = new() { Margin = new Thickness(0, 0, 0, 10) };
+    private bool _asking;
+    private DateTimeOffset? _saveStatusFor;
+
+    public const string SaveTileName = "SaveThisRoute";
+    public const string SavedTileName = "SavedRoutesTile";
+    public const string SaveGoName = "SaveRouteName";
+    public const string SaveCancelName = "SaveRouteCancel";
+    public const string DeleteSavedName = "DeleteThisSavedRoute";
+    public const string ConfirmDeleteName = "ConfirmDeleteSavedRoute";
+    public const string KeepSavedName = "KeepSavedRoute";
+
+    public const string EmptyNameText = "Give the route a name.";
+
+    /// <summary>Whether this page draws a saved route, which no arrival, purchase or plot changes.</summary>
+    public bool ViewOnly => _opened is not null;
+
+    public const string SavedSummary = "A saved route, as it was plotted.";
+
+    public string Summary => ViewOnly ? SavedSummary : string.Empty;
+
+    public event EventHandler? SummaryChanged
+    {
+        add { }
+        remove { }
+    }
+
     public RoutePlanResultPage(
         StoredRoutePlan plan,
         Func<string, Task<bool>>? copy = null,
@@ -77,8 +118,22 @@ public sealed class RoutePlanResultPage : UserControl
         Func<string, string?>? offDuty = null,
         Action<RoutePlanKind>? showOnGalaxyMap = null,
         OutfittingPlotter? outfittingPlotter = null,
-        D47.App.Voice.WaitSound? waitSound = null)
+        D47.App.Voice.WaitSound? waitSound = null,
+        PanelNavigator? nav = null,
+        SavedRouteBook? saved = null,
+        SavedRoute? opened = null,
+        bool headset = false)
     {
+        _nav = nav;
+        _saved = saved;
+        _opened = opened;
+        _headset = headset;
+
+        if (opened is not null)
+        {
+            plan = plan with { Reached = null, Bought = [] };
+        }
+
         _plotter = outfittingPlotter;
         var actions = RoutingKit.Actions(_search, _stop);
         actions.Margin = default;
@@ -124,6 +179,8 @@ public sealed class RoutePlanResultPage : UserControl
         body.Children.Add(left);
         body.Children.Add(list);
         Content = body;
+
+        BuildSaveRow();
 
         RoutingKit.RunPlot(
             _search,
@@ -178,7 +235,7 @@ public sealed class RoutePlanResultPage : UserControl
         {
             _map.Show(stops, RouteMapStop.ReachedIndex(plan), null, null);
             _map.IsVisible = true;
-            _mapPress.IsVisible = true;
+            _mapPress.IsVisible = !ViewOnly;
             _mapPress.IsHitTestVisible = _showOnGalaxyMap is not null;
             _mapPress.Focusable = _showOnGalaxyMap is not null;
             _showTile.IsVisible = _showOnGalaxyMap is not null;
@@ -207,9 +264,26 @@ public sealed class RoutePlanResultPage : UserControl
             _stack.Children.Add(note);
         }
 
+        if (_opened is not null)
+        {
+            _stack.Children.Add(ViewOnlySlab(plan));
+            _stack.Children.Add(DeleteControl());
+        }
+        else if (_saved is not null)
+        {
+            if (_saveStatusFor != plan.PlottedAt)
+            {
+                _saveStatusFor = plan.PlottedAt;
+                CloseNameForm();
+                _saveStatus.IsVisible = false;
+            }
+
+            _stack.Children.Add(_saveRow);
+        }
+
         if (plan.Outfitting is { } figured)
         {
-            _stack.Children.Add(Figures(figured, plan));
+            _stack.Children.Add(Figures(figured, plan, ViewOnly));
         }
 
         if (plan.Outfitting is { } searched && _plotter is not null)
@@ -246,6 +320,235 @@ public sealed class RoutePlanResultPage : UserControl
         {
             _stack.Children.Add(NotFound(outfitting));
         }
+    }
+
+    /// <summary>The Save this route and Saved routes tiles, the name field, and what the last save said.</summary>
+    private void BuildSaveRow()
+    {
+        if (_saved is null || _opened is not null)
+        {
+            return;
+        }
+
+        _saveTile.Click += (_, _) => OnSaveTile();
+        _savedTile.Click += (_, _) => OpenSavedRoutes();
+        _saveGo.Click += (_, _) => SaveNamed();
+        _saveCancel.Click += (_, _) => CloseNameForm();
+        _name.Box.TextChanged += (_, _) => CheckName();
+        _name.Box.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter && _saveGo.IsEnabled)
+            {
+                SaveNamed();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                CloseNameForm();
+                e.Handled = true;
+            }
+        };
+
+        var tiles = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _saveTile } };
+
+        if (_nav is not null)
+        {
+            tiles.Children.Add(_savedTile);
+        }
+
+        var fieldRow = new WrapPanel { ItemSpacing = 10, LineSpacing = 8 };
+        var actions = RoutingKit.Actions(_saveGo, _saveCancel);
+        actions.Margin = default;
+        actions.VerticalAlignment = VerticalAlignment.Bottom;
+        fieldRow.Children.Add(_name.Control);
+        fieldRow.Children.Add(actions);
+
+        _nameForm.Children.Add(fieldRow);
+        _nameForm.Children.Add(RoutingKit.Prose(KeepsText(_kind)));
+
+        _saveRow.Children.Add(tiles);
+        _saveRow.Children.Add(_nameForm);
+        _saveRow.Children.Add(_saveStatus);
+    }
+
+    /// <summary>Opens Saved routes under Plan, whichever root this result was drilled from.</summary>
+    private void OpenSavedRoutes()
+    {
+        if (_nav is not null && !PageTrail.Open(_nav, RoutingPages.PlanRoot, [RoutingPages.SavedRoutesCrumb]))
+        {
+            _nav.Drill(RoutingPages.SavedRoutesCrumb);
+        }
+    }
+
+    /// <summary>The grey line under the name field.</summary>
+    public static string KeepsText(RoutePlanKind kind) =>
+        $"D47 keeps this route as it is now. Plotting {SavedRoutesPage.KindName(kind)} again won't change it.";
+
+    private void OnSaveTile()
+    {
+        if (_nameForm.IsVisible)
+        {
+            CloseNameForm();
+
+            return;
+        }
+
+        if (_planSeen is not { } plan)
+        {
+            return;
+        }
+
+        if (_headset)
+        {
+            Keep(plan.Headline);
+
+            return;
+        }
+
+        _saveStatus.IsVisible = false;
+        _name.SetText(plan.Headline);
+        _nameForm.IsVisible = true;
+        ShowSelected(_saveTile, true);
+        CheckName();
+        _name.Box.Focus();
+        _name.Box.SelectAll();
+    }
+
+    private void CloseNameForm()
+    {
+        _nameForm.IsVisible = false;
+        ShowSelected(_saveTile, false);
+        FieldMessage.Clear(_name.Box);
+    }
+
+    private void CheckName()
+    {
+        var empty = string.IsNullOrWhiteSpace(_name.Text);
+
+        _saveGo.IsEnabled = !empty;
+
+        if (empty)
+        {
+            FieldMessage.ShowError(_name.Box, EmptyNameText);
+        }
+        else
+        {
+            FieldMessage.Clear(_name.Box);
+        }
+    }
+
+    private void SaveNamed()
+    {
+        if (!string.IsNullOrWhiteSpace(_name.Text))
+        {
+            Keep(_name.Text);
+        }
+    }
+
+    private void Keep(string name)
+    {
+        if (_planSeen is not { } plan || _saved is null)
+        {
+            return;
+        }
+
+        var kept = _saved.Save(plan, name, DateTimeOffset.Now);
+
+        CloseNameForm();
+        _saveStatus.Children.Clear();
+        _saveStatus.Children.Add(RoutingKit.Tag("✓ Saved", ThemeManager.BlueKey));
+        _saveStatus.Children.Add(RoutingKit.Ink($"As {kept.Name}, in Saved routes.", TypeScale.Secondary, ThemeManager.GreyKey, wrap: true));
+        _saveStatus.IsVisible = true;
+    }
+
+    private static void ShowSelected(Button tile, bool selected)
+    {
+        if (selected)
+        {
+            ThemeInk.Bind(tile, BackgroundProperty, "D47.A");
+            ThemeInk.Bind(tile, ForegroundProperty, "D47.Knock");
+        }
+        else
+        {
+            tile.ClearValue(BackgroundProperty);
+            tile.ClearValue(ForegroundProperty);
+        }
+    }
+
+    /// <summary>The slab that says this page is a saved route and what does not change it.</summary>
+    private static Control ViewOnlySlab(StoredRoutePlan plan)
+    {
+        var body = new StackPanel
+        {
+            Spacing = 4,
+            Children =
+            {
+                RoutingKit.Tag("Saved route · View only", ThemeManager.AKey),
+                RoutingKit.Prose(
+                    "Kept as it was plotted. Arrivals and new plots don't change it, and your live "
+                    + $"{SavedRoutesPage.KindName(plan.Kind)} plan carries on as before.",
+                    TypeScale.Body),
+            },
+        };
+
+        var slab = new Border { Padding = new Thickness(12, 8), Margin = new Thickness(0, 0, 0, 10), Child = body };
+        ThemeInk.Bind(slab, Border.BackgroundProperty, ThemeManager.SlabKey);
+
+        return slab;
+    }
+
+    /// <summary>DELETE THIS SAVED ROUTE, which asks in place and then returns to the list.</summary>
+    private Border DeleteControl()
+    {
+        if (!_asking)
+        {
+            var delete = new Button
+            {
+                Name = DeleteSavedName,
+                Content = "Delete this saved route",
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Classes = { D47.App.Settings.SettingsView.DestructiveClass },
+            };
+            delete.Click += (_, _) => Ask(true);
+            _deleteArea.Child = delete;
+
+            return _deleteArea;
+        }
+
+        var confirm = new Button
+        {
+            Name = ConfirmDeleteName,
+            Content = "Delete",
+            Classes = { D47.App.Settings.SettingsView.DestructiveClass },
+        };
+        confirm.Click += (_, _) =>
+        {
+            if (_saved!.Delete(_opened!.Id))
+            {
+                _nav?.Back();
+            }
+        };
+
+        var keep = new Button { Name = KeepSavedName, Content = "Keep" };
+        keep.Click += (_, _) => Ask(false);
+
+        _deleteArea.Child = new StackPanel
+        {
+            Spacing = 6,
+            Children =
+            {
+                RoutingKit.Ink(SavedRoutesPage.ConfirmText, TypeScale.Body, ThemeManager.WhiteKey),
+                new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Children = { confirm, keep } },
+            },
+        };
+
+        return _deleteArea;
+    }
+
+    private void Ask(bool asking)
+    {
+        _asking = asking;
+        DeleteControl();
     }
 
     private Control NotFound(OutfittingRoute route)
@@ -372,9 +675,12 @@ public sealed class RoutePlanResultPage : UserControl
     /// </summary>
     private readonly record struct RowState(bool Reached, bool Next);
 
-    private static RowState State(int index, int? reached) => new(
-        Reached: reached is { } r && index <= r,
-        Next: index == (reached is { } r2 ? r2 + 1 : 0));
+    private RowState State(int index, int? reached) =>
+        ViewOnly
+            ? default
+            : new(
+                Reached: reached is { } r && index <= r,
+                Next: index == (reached is { } r2 ? r2 + 1 : 0));
 
     private Control Waypoint(RouteWaypoint waypoint, RowState state, string? here)
     {
@@ -540,7 +846,7 @@ public sealed class RoutePlanResultPage : UserControl
         });
     }
 
-    private static Control Figures(OutfittingRoute route, StoredRoutePlan plan)
+    private static Control Figures(OutfittingRoute route, StoredRoutePlan plan, bool viewOnly)
     {
         var flags = OutfittingBought.Flags(route, plan.Bought);
         var bought = flags.Sum(stop => stop.Count(flag => flag));
@@ -556,7 +862,9 @@ public sealed class RoutePlanResultPage : UserControl
                 StatTile.Tile("Stops", Figure(route.Stops.Count.ToString("N0"), ThemeManager.WhiteKey)),
                 StatTile.Tile("Items", Figure(route.Wanted.ToString("N0"), ThemeManager.WhiteKey)),
                 StatTile.Tile("Route", Figure($"{route.TotalDistance:N1} ly", ThemeManager.WhiteKey)),
-                StatTile.Tile("Bought", Figure($"{bought} of {total}", bought > 0 ? ThemeManager.BlueKey : ThemeManager.GreyKey)),
+                .. viewOnly
+                    ? (Control[])[]
+                    : [StatTile.Tile("Bought", Figure($"{bought} of {total}", bought > 0 ? ThemeManager.BlueKey : ThemeManager.GreyKey))],
             ]),
         };
     }

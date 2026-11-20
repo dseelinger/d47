@@ -245,13 +245,14 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                     host.ColumnWidths,
                     galaxyMap && surface.Travel is not null ? ShowOnGalaxyMap : null,
                     host.Model?.WaitSound,
-                    host.ColumnArrangements);
+                    host.ColumnArrangements,
+                    host.Headset);
 
                 // Held onto so the tick can redraw Progress and a plot made elsewhere can redraw Plan.
                 _routeProgress = page as RouteProgressPage ?? _routeProgress;
                 _routePlan = page as RoutePlanPage ?? _routePlan;
                 _routeTrade = page as RouteTradePage ?? _routeTrade;
-                _routeResult = page as RoutePlanResultPage ?? _routeResult;
+                _routeResult = page is RoutePlanResultPage { ViewOnly: false } live ? live : _routeResult;
                 _bestCargo = page as RouteBestCargoPage ?? _bestCargo;
 
                 if (page is RouteMarketPage marketPage)
@@ -269,6 +270,11 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         if (plan && progress)
         {
             host.Nav.Declare(RoutingPages.PlanRoot, RoutingPages.ProgressCrumb);
+        }
+
+        if (plan && surface.SavedRoutes is not null)
+        {
+            host.Nav.Declare(RoutingPages.PlanRoot, RoutingPages.SavedRoutesCrumb);
         }
 
         // Each launch opens Plan with Progress beside it; once the Commander leaves it, Plan stays alone.

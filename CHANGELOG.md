@@ -12,6 +12,8 @@ Added: On arrival at an undiscovered F or G star, D47 says "Class F star. Worth 
 
 Changed: A ship's slot list names an optional internal compartment by its size, "Size 5", instead of "1 (5)". A restricted compartment keeps its restriction, as in "Military Size 5".
 
+Added: A plotted route can be saved. Press Save this route on any result (Neutron Plotter, Road to Riches, Exobiology, Carrier Route, Trade or Outfitting), edit the name, which starts as the plan's headline, and press Save. On the headset the tile saves at once under the headline. Plan has a Saved routes tile beside Progress, which lists your saved routes by kind, name and plot date, sortable, with Open and Delete (the headset pages at 25 rows). A saved route opens view only, below Saved routes: it keeps the route as it was plotted, with no reached ticks, NEXT or bought marks, no Show on galaxy map and no Search, and a new plot, an arrival or a purchase does not change it or your live plan. Saved routes belong to the Commander who saved them and are kept in saved-routes.json.
+
 Added: The mouse Forward button, Alt+Right and saying "forward" retrace the places Back left, one at a time. Making a move after going back clears them. The controllers have no Forward.
 
 Changed: The mouse Back button, Alt+Left, the grip button and saying "back" now go back through the places you have been this session, across tabs and levels, instead of only up one level. Settings places count too: after opening Audio, then Voices, then Keys, Back returns to Voices and then to Audio. Typing in the Settings search box adds no step. Escape and the breadcrumb still go up one level, and an open chooser closes first. With nowhere earlier to go they behave as before.

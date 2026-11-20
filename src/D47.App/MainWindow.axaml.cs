@@ -489,6 +489,9 @@ public partial class MainWindow : Window
                 PrefixNames = host.StarSystems is { } names ? names.PrefixNamesAsync : null,
                 StarSystems = host.StarSystems,
 
+                // Plotted routes kept under a name.
+                SavedRoutes = host.SavedRoutes,
+
                 // The Galaxy map's travels (#1406).
                 Travel = () => host.TravelLog,
 

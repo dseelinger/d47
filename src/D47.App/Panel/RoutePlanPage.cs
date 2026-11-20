@@ -27,6 +27,7 @@ public sealed class RoutePlanPage : UserControl
     private readonly Func<string?>? _carrierHere;
     private readonly CarrierRouteRequest? _carrierRoute;
     private readonly D47.App.Voice.WaitSound? _waitSound;
+    private readonly SavedRouteBook? _saved;
 
     /// <summary>The Carrier Route card and its fields, as last built.</summary>
     private FormField? _carrierFrom;
@@ -42,11 +43,18 @@ public sealed class RoutePlanPage : UserControl
     private readonly StackPanel _cards = new();
 
     /// <summary>Opens Progress beside this page, drawn selected while Progress is open.</summary>
-    private readonly Button _progress = new()
+    private readonly Button _progress = new() { Content = "Progress" };
+
+    /// <summary>Opens Saved routes beside this page, drawn selected while that level is open.</summary>
+    private readonly Button _savedRoutes = new() { Content = "Saved routes" };
+
+    /// <summary>Progress and Saved routes, side by side at the top of the page.</summary>
+    private readonly WrapPanel _tiles = new()
     {
-        Content = "Progress",
-        HorizontalAlignment = HorizontalAlignment.Left,
+        ItemSpacing = Gaps.Tile,
+        LineSpacing = Gaps.Tile,
         Margin = new Thickness(0, 0, 0, 12),
+        HorizontalAlignment = HorizontalAlignment.Left,
     };
 
     /// <summary>The narrowest a planner is laid out before the two stack.</summary>
@@ -62,8 +70,17 @@ public sealed class RoutePlanPage : UserControl
         CarrierRouteRequest? carrierRoute = null,
         Func<string, CancellationToken, Task<IReadOnlyList<SystemNameMatch>>>? prefixNames = null,
         TimeSpan? suggestionPause = null,
-        D47.App.Voice.WaitSound? waitSound = null)
+        D47.App.Voice.WaitSound? waitSound = null,
+        SavedRouteBook? saved = null)
     {
+        _saved = saved;
+        _tiles.Children.Add(_progress);
+
+        if (saved is not null)
+        {
+            _tiles.Children.Add(_savedRoutes);
+        }
+
         _waitSound = waitSound;
         _prefixNames = prefixNames;
         _suggestionPause = suggestionPause;
@@ -76,6 +93,7 @@ public sealed class RoutePlanPage : UserControl
         _carrierRoute = carrierRoute;
 
         _progress.Click += (_, _) => _nav.Drill(RoutingPages.ProgressCrumb);
+        _savedRoutes.Click += (_, _) => _nav.Drill(RoutingPages.SavedRoutesCrumb);
         ShowProgressOpen();
 
         Content = new ScrollViewer
@@ -134,17 +152,27 @@ public sealed class RoutePlanPage : UserControl
     public bool ProgressOpen =>
         _nav.TrailOf(PanelTab.Astrometrics).Any(crumb => crumb.Key == RoutingPages.ProgressKey);
 
+    /// <summary>Whether Saved routes has the level beside Plan.</summary>
+    public bool SavedRoutesOpen =>
+        _nav.TrailOf(PanelTab.Astrometrics).Any(crumb => crumb.Key == RoutingPages.SavedRoutesKey);
+
     private void ShowProgressOpen()
     {
-        if (ProgressOpen)
+        Select(_progress, ProgressOpen);
+        Select(_savedRoutes, SavedRoutesOpen);
+    }
+
+    private static void Select(Button tile, bool open)
+    {
+        if (open)
         {
-            ThemeInk.Bind(_progress, BackgroundProperty, "D47.A");
-            ThemeInk.Bind(_progress, ForegroundProperty, "D47.Knock");
+            ThemeInk.Bind(tile, BackgroundProperty, "D47.A");
+            ThemeInk.Bind(tile, ForegroundProperty, "D47.Knock");
         }
         else
         {
-            _progress.ClearValue(BackgroundProperty);
-            _progress.ClearValue(ForegroundProperty);
+            tile.ClearValue(BackgroundProperty);
+            tile.ClearValue(ForegroundProperty);
         }
     }
 
@@ -152,7 +180,7 @@ public sealed class RoutePlanPage : UserControl
     {
         _cards.Children.Clear();
 
-        _cards.Children.Add(_progress);
+        _cards.Children.Add(_tiles);
 
         // Cleared with the cards, or a rebuild leaves the previous set of fields in here to be refreshed
         // forever after they stopped being on screen.

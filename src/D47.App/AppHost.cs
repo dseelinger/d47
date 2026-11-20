@@ -927,6 +927,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The last plan each planner produced (Phase 37).</summary>
     public D47.Core.Knowledge.RoutePlanBook? Plans { get; private set; }
 
+    /// <summary>The routes each Commander saved from a plan's result.</summary>
+    public D47.Core.Knowledge.SavedRouteBook? SavedRoutes { get; private set; }
+
     /// <summary>
     /// The last commodity answer (Phase 49), so the spoken one and the drawn one are one answer.
     /// </summary>
@@ -1445,6 +1448,11 @@ public sealed class AppHost : IDisposable
 
         planBook.Load();
 
+        var savedRoutes = new D47.Core.Knowledge.SavedRouteBook(foundations.Data("saved-routes.json"), files, foundations.Log<D47.Core.Knowledge.SavedRouteBook>(),
+            () => gameState.Active?.Identity.FrontierId);
+
+        savedRoutes.Load();
+
         // In memory rather than loaded, unlike the plan book above: a commodity price is the thing here that
         // ages fastest, so one restored from disk would look current because it was saved rather than because
         // it is true (Phase 49).
@@ -1799,6 +1807,7 @@ public sealed class AppHost : IDisposable
             MiningTargets = miningTargets,
             ModulePower = modulePower,
             PlanBook = planBook,
+            SavedRoutes = savedRoutes,
             Route = route,
             Sampling = sampling,
             Scenes = scenes,
@@ -3856,6 +3865,7 @@ public sealed class AppHost : IDisposable
             : BookmarksCapability.TakenPhrases(late.Router.Book);
 
         host.Plans = stores.PlanBook;
+        host.SavedRoutes = stores.SavedRoutes;
 
         // Every system name d47 already holds, for the finder that picks them out of text (#156).
         var systemsInPlay = new D47.Core.Knowledge.SystemsInPlay();
@@ -4729,6 +4739,8 @@ public sealed class AppHost : IDisposable
         public required ModulePowerReader ModulePower { get; init; }
 
         public required D47.Core.Knowledge.RoutePlanBook PlanBook { get; init; }
+
+        public required D47.Core.Knowledge.SavedRouteBook SavedRoutes { get; init; }
 
         public required NavRouteReader Route { get; init; }
 

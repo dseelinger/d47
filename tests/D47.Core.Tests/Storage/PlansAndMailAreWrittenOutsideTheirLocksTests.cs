@@ -77,6 +77,33 @@ public sealed class PlansAndMailAreWrittenOutsideTheirLocksTests : IDisposable
     }
 
     [Fact]
+    public async Task ASavedRouteIsReadableWhileItsFileIsBeingWritten()
+    {
+        var path = Path.Combine(_folder, "saved-routes.json");
+        var book = new SavedRouteBook(path, new DiskFileSystem(), NullLogger<SavedRouteBook>.Instance, () => "F1");
+        var gate = WriteGate(book);
+        var plan = new StoredRoutePlan { Kind = RoutePlanKind.Jump, FrontierId = "F1", PlottedAt = At, Headline = "Sol to Colonia", Jump = Jump() };
+        Task keeping;
+
+        gate.Enter();
+
+        try
+        {
+            keeping = Dedicated(() => book.Save(plan, "Run", At));
+
+            Assert.True(Eventually(() => book.For().Count == 1));
+            Assert.False(File.Exists(path));
+        }
+        finally
+        {
+            gate.Exit();
+        }
+
+        await keeping.WaitAsync(Patience, TestContext.Current.CancellationToken);
+        Assert.True(File.Exists(path));
+    }
+
+    [Fact]
     public async Task AnOlderPlanWrittenLastDoesNotReplaceANewerOne()
     {
         var path = Path.Combine(_folder, "route-plans.json");

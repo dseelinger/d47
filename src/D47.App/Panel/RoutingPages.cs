@@ -97,6 +97,9 @@ public sealed record RoutingSurface(
 
     /// <summary>The last answer of each galaxy search, which the Galaxy map's search layers draw.</summary>
     public GalaxySearchBoard? Searches { get; init; }
+
+    /// <summary>The routes each Commander saved; no saving or Saved routes page without it.</summary>
+    public SavedRouteBook? SavedRoutes { get; init; }
 }
 
 /// <summary>A start system for the Carrier Route card, asked for from Fleet › Carrier and taken once.</summary>
@@ -167,12 +170,32 @@ public static class RoutingPages
     /// <summary>How a plan that was made is keyed when it is opened as a level.</summary>
     public const string ResultPrefix = "routing.result:";
 
-    /// <summary>The level right of a root, which Progress and a plan result take in turn.</summary>
+    /// <summary>The level right of a root, which Progress, Saved routes and a plan result take in turn.</summary>
     public const string BesideLevel = "routing.beside";
+
+    /// <summary>The routes the shown Commander saved: a level beside Plan.</summary>
+    public const string SavedRoutesKey = "routing.savedRoutes";
+
+    /// <summary>How a saved route is keyed when it is opened, followed by its id.</summary>
+    public const string SavedPrefix = "routing.savedRoute:";
 
     /// <summary>The crumb for a plan that was made.</summary>
     public static NavCrumb ResultCrumb(RoutePlanKind kind, string headline) =>
         new($"{ResultPrefix}{kind}", headline) { Level = BesideLevel };
+
+    /// <summary>The crumb for the list of saved routes.</summary>
+    public static NavCrumb SavedRoutesCrumb { get; } = new(SavedRoutesKey, "Saved routes")
+    {
+        Level = BesideLevel,
+        Help = D47.Core.Capabilities.Builtin.RouteCapability.Id,
+    };
+
+    /// <summary>The crumb for one saved route, below Saved routes.</summary>
+    public static NavCrumb SavedRouteCrumb(string id, string name) => new($"{SavedPrefix}{id}", name);
+
+    /// <summary>The id of the saved route a crumb key names, or null.</summary>
+    public static string? SavedRouteOf(string key) =>
+        key.StartsWith(SavedPrefix, StringComparison.Ordinal) ? key[SavedPrefix.Length..] : null;
 
     /// <summary>The crumb for the route being flown.</summary>
     public static NavCrumb ProgressCrumb { get; } = new(ProgressKey, "Progress")
@@ -191,16 +214,25 @@ public static class RoutingPages
         ColumnWidthMemory? columnWidths = null,
         Action<RoutePlanKind>? showOnGalaxyMap = null,
         D47.App.Voice.WaitSound? waitSound = null,
-        ColumnArrangementMemory? columnArrangements = null)
+        ColumnArrangementMemory? columnArrangements = null,
+        bool headset = false)
     {
         if (crumb.Key.StartsWith(ResultPrefix, StringComparison.Ordinal))
         {
-            return Result(crumb, surface, showOnGalaxyMap, waitSound);
+            return Result(crumb, surface, nav, showOnGalaxyMap, waitSound, headset);
+        }
+
+        if (SavedRouteOf(crumb.Key) is { } savedId)
+        {
+            return Saved(savedId, surface, nav);
         }
 
         return crumb.Key switch
         {
             PlanRoot => Plan(surface, nav, waitSound),
+            SavedRoutesKey => surface.SavedRoutes is { } book
+                ? new SavedRoutesPage(book, nav, headset, columnWidths, columnArrangements)
+                : Missing("Saved routes are not available on this surface."),
             ProgressKey => new RouteProgressPage(
                 surface.Route,
                 surface.Here,
@@ -229,7 +261,8 @@ public static class RoutingPages
                 surface.CarrierRoute,
                 surface.PrefixNames,
                 surface.SuggestionPause,
-                waitSound)
+                waitSound,
+                surface.SavedRoutes)
             : Missing("Plotting is not available on this surface.");
 
     private static Control Market(RoutingSurface surface, ColumnWidthMemory? columnWidths, ColumnArrangementMemory? columnArrangements, D47.App.Voice.WaitSound? waitSound) =>
@@ -299,7 +332,17 @@ public static class RoutingPages
         return existing is null ? Missing("That bookmark is gone.") : new BookmarkFormPage(surface, nav, existing);
     }
 
-    private static Control Result(NavCrumb crumb, RoutingSurface surface, Action<RoutePlanKind>? showOnGalaxyMap, D47.App.Voice.WaitSound? waitSound)
+    private static Control Saved(string id, RoutingSurface surface, PanelNavigator nav)
+    {
+        if (surface.SavedRoutes is not { } book || book.Get(id) is not { } saved)
+        {
+            return Missing("That saved route is gone.");
+        }
+
+        return new RoutePlanResultPage(saved.Plan, Copy(surface), nav: nav, saved: book, opened: saved);
+    }
+
+    private static Control Result(NavCrumb crumb, RoutingSurface surface, PanelNavigator nav, Action<RoutePlanKind>? showOnGalaxyMap, D47.App.Voice.WaitSound? waitSound, bool headset)
     {
         if (surface.Plans is not { } plans
             || !Enum.TryParse<RoutePlanKind>(crumb.Key[ResultPrefix.Length..], out var kind)
@@ -314,7 +357,7 @@ public static class RoutingPages
             ? new OutfittingPlotter(registry, plans, surface.Here)
             : null;
 
-        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty, showOnGalaxyMap, plotter, waitSound);
+        return new RoutePlanResultPage(plan, Copy(surface), plans, surface.Here, surface.OffDuty, showOnGalaxyMap, plotter, waitSound, nav, surface.SavedRoutes, headset: headset);
     }
 
     /// <summary>Copying a system name, wherever one is drawn on this tab.</summary>
