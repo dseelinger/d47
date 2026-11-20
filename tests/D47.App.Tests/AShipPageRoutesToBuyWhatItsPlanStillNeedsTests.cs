@@ -52,7 +52,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
     private sealed record Bench(
         ItemPage Page, PanelNavigator Nav, Outfitters Galaxy, RoutePlanBook Plans, string BuildId, ShipsMode Mode, OutfittingPlotter Plotter);
 
-    private static Bench Set(bool twoScoops = false, bool located = true)
+    private static Bench Set(bool twoScoops = false, bool located = true, long? balance = null, bool unpricedModule = false, string hull = "Python")
     {
         var folder = TempFolders.Create("d47-ship-to-buy");
         var settings = TestSurface.Settings();
@@ -63,7 +63,9 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
                  [
                      """{"timestamp":"2026-10-28T10:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""",
                      """{"timestamp":"2026-10-28T10:00:01Z","event":"FSDJump","StarSystem":"LHS 3447","StarPos":[0,0,0]}""",
-                 ]).Take(located ? 2 : 1))
+                 ]).Take(located ? 2 : 1).Concat(balance is { } credits
+                     ? [$$"""{"timestamp":"2026-10-28T10:00:02Z","event":"LoadGame","FID":"F1","Commander":"Fixture","Credits":{{credits}}}"""]
+                     : []))
         {
             Assert.True(JournalEvent.TryParse(json, NullLogger.Instance, out var parsed));
             game.Apply(parsed!);
@@ -79,8 +81,17 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
 
         var ships = TestSurface.ShipPlans(checklists, folder, () => game.Active);
 
-        var build = ships.Intend("Python")!;
-        ships.Plan(build.Id, new SlotPlan("Slot01_Size6", Module: "Fuel Scoop") { Variant = "int_fuelscoop_size6_class5" });
+        var build = ships.Intend(hull)!;
+
+        if (hull == "Python")
+        {
+            ships.Plan(build.Id, new SlotPlan("Slot01_Size6", Module: "Fuel Scoop") { Variant = "int_fuelscoop_size6_class5" });
+        }
+
+        if (unpricedModule)
+        {
+            ships.Plan(build.Id, new SlotPlan("Slot03_Size5", Module: "Shield Generator"));
+        }
 
         if (twoScoops)
         {
@@ -116,6 +127,109 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         Dispatcher.UIThread.RunJobs();
 
         return window;
+    }
+
+    private static long ListPrice(bool scoop = true)
+    {
+        var python = EliteSpecifications.Ship("python")!;
+
+        return python.Cost!.Value
+            + python.Stock.Sum(symbol => EliteSpecifications.Module(symbol)!.Cost!.Value)
+            + (scoop ? EliteSpecifications.Module("int_fuelscoop_size6_class5")!.Cost!.Value : 0);
+    }
+
+    private static string Cr(long amount) => amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " CR";
+
+    private static TextBlock Value(Control root, string text) =>
+        root.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == text);
+
+    private static Avalonia.Media.Color InkOf(TextBlock block) => ((Avalonia.Media.ISolidColorBrush)block.Foreground!).Color;
+
+    private static Avalonia.Media.Color Theme(string key) => ((Avalonia.Media.ISolidColorBrush)Avalonia.Application.Current!.Resources[key]!).Color;
+
+    [AvaloniaFact]
+    public void ABalanceShortOfTheListPriceShowsHowFarShortInWarn()
+    {
+        using var kit = AppLook.ControlKit();
+        var cost = ListPrice();
+        var bench = Set(balance: cost - 1_000);
+        var window = Show(bench.Page);
+        var texts = Texts(bench.Page);
+
+        Assert.Contains("COSTS AT MOST", texts);
+        Assert.Contains(Cr(cost), texts);
+        Assert.Contains("YOUR BALANCE", texts);
+        Assert.Contains("SHORT BY", texts);
+        Assert.Contains("At list price, before selling the modules they replace.", texts);
+        Assert.NotEqual(Theme(ThemeManager.WarnKey), Theme(ThemeManager.AKey));
+        Assert.Equal(Theme(ThemeManager.WarnKey), InkOf(Value(bench.Page, "1,000 CR")));
+        Assert.Equal(Theme(ThemeManager.AKey), InkOf(Value(bench.Page, Cr(cost))));
+        Assert.Equal(Theme(ThemeManager.AKey), InkOf(Value(bench.Page, Cr(cost - 1_000))));
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("ship-to-buy-short-by.png");
+    }
+
+    [AvaloniaFact]
+    public void ABalanceThatCoversTheListPriceShowsWhatIsLeftInA()
+    {
+        using var kit = AppLook.ControlKit();
+        var cost = ListPrice();
+        var bench = Set(balance: cost + 2_500);
+        Show(bench.Page);
+        var texts = Texts(bench.Page);
+
+        Assert.Contains("LEFT AFTER BUYING", texts);
+        Assert.DoesNotContain("SHORT BY", texts);
+        Assert.Equal(Theme(ThemeManager.AKey), InkOf(Value(bench.Page, "2,500 CR")));
+    }
+
+    [AvaloniaFact]
+    public void WithNoBalanceYetOnlyTheCostTileIsShown()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set();
+        Show(bench.Page);
+        var texts = Texts(bench.Page);
+
+        Assert.Contains("COSTS AT MOST", texts);
+        Assert.Contains(Cr(ListPrice()), texts);
+        Assert.DoesNotContain("YOUR BALANCE", texts);
+        Assert.DoesNotContain("LEFT AFTER BUYING", texts);
+        Assert.DoesNotContain("SHORT BY", texts);
+    }
+
+    [AvaloniaFact]
+    public void AnItemWithNoPriceIsCountedNamedAndKeepsTheComparisonOut()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(balance: 5_000_000_000, unpricedModule: true);
+        Show(bench.Page);
+        var texts = Texts(bench.Page);
+
+        Assert.Contains("2 OF 3 ITEMS COST AT MOST", texts);
+        Assert.Contains(Cr(ListPrice()), texts);
+        Assert.Contains("YOUR BALANCE", texts);
+        Assert.DoesNotContain("LEFT AFTER BUYING", texts);
+        Assert.DoesNotContain("SHORT BY", texts);
+        Assert.Contains("1 ITEM NOT PRICED", texts);
+        Assert.Contains("D47 has no price for Shield Generator. It is not in the figure.", texts);
+    }
+
+    [AvaloniaFact]
+    public void AListWithNoPricedItemHasNoTilesAndOnlyTheNotice()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set(balance: 5_000_000_000, hull: "Anaconda Mk II");
+        Show(bench.Page);
+        var texts = Texts(bench.Page);
+
+        Assert.DoesNotContain("COSTS AT MOST", texts);
+        Assert.DoesNotContain("YOUR BALANCE", texts);
+        Assert.DoesNotContain("At list price, before selling the modules they replace.", texts);
+        Assert.Contains("NOT PRICED", texts);
+        Assert.Contains("D47 has no price for Anaconda Mk II, so this list has no figure.", texts);
+        Assert.DoesNotContain(bench.Page.GetVisualDescendants().OfType<Grid>(), grid => grid.Name == "ToBuyCost");
     }
 
     [AvaloniaFact]

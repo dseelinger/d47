@@ -23,6 +23,9 @@ public enum StatInk
 
     /// <summary>A figure read from a setting — money, a count — in White mono.</summary>
     Figure,
+
+    /// <summary>A number that warns, such as a shortfall, in Warn mono.</summary>
+    Shortfall,
 }
 
 /// <summary>A read-only label and value on Slab, and the grid that holds a row of them.</summary>
@@ -42,7 +45,7 @@ public static class StatTile
         var figure = new TextBlock
         {
             Text = value,
-            FontFamily = new FontFamily(ink is StatInk.Figure or StatInk.Number ? Fonts.MonoFamily : Fonts.ChromeFamily),
+            FontFamily = new FontFamily(ink is StatInk.Figure or StatInk.Number or StatInk.Shortfall ? Fonts.MonoFamily : Fonts.ChromeFamily),
             FontSize = ValueSize,
             FontWeight = FontWeight.Medium,
             TextWrapping = TextWrapping.Wrap,
@@ -103,6 +106,7 @@ public static class StatTile
     {
         StatInk.Name or StatInk.Figure => ThemeManager.WhiteKey,
         StatInk.Here => ThemeManager.CyanKey,
+        StatInk.Shortfall => ThemeManager.WarnKey,
         _ => ThemeManager.AKey,
     };
 

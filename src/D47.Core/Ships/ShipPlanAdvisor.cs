@@ -278,6 +278,7 @@ public sealed class ShipPlanAdvisor(
 
         Hull(text, build, state);
         Costing(text, Cost(build, state));
+        ToBuyCost(text, build, state);
         Figures(text, build, state);
 
         if (Held(exchange) is { } held)
@@ -615,6 +616,52 @@ public sealed class ShipPlanAdvisor(
         }
 
         return lines;
+    }
+
+    /// <summary>What the To buy list costs at list price, the items with no price, and the balance where it is known.</summary>
+    private static void ToBuyCost(StringBuilder text, ShipBuild build, CommanderGameState? state)
+    {
+        var purchases = ShipPlanService.ToBuy(build, state);
+        var price = ShipPurchasePrice.Of(purchases);
+        var count = purchases.Items.Count;
+
+        text.AppendLine("What the To buy list costs (computed by d47; answers \"what will this cost\" and \"can I afford this\"):");
+
+        if (count == 0)
+        {
+            text.AppendLine("Nothing is left to buy.");
+            text.AppendLine();
+            return;
+        }
+
+        var line = new StringBuilder();
+        const string Basis = "at list price, before selling the modules they replace.";
+
+        if (price.Priced == 0)
+        {
+            line.Append(CultureInfo.InvariantCulture, $"None of the {count} items on the To buy list has a price in d47, so there is no figure.");
+        }
+        else if (price.AllPriced)
+        {
+            line.Append(CultureInfo.InvariantCulture, $"The To buy list costs at most {ShipPurchasePrice.Credits(price.Total)} cr {Basis}");
+        }
+        else
+        {
+            line.Append(CultureInfo.InvariantCulture, $"{price.Priced} of the {count} items on the To buy list cost at most {ShipPurchasePrice.Credits(price.Total)} cr {Basis}");
+        }
+
+        if (!price.AllPriced)
+        {
+            line.Append(" Not priced: ").Append(string.Join(", ", price.Unpriced)).Append('.');
+        }
+
+        if (state?.Session.Balance is { } balance)
+        {
+            line.Append(" The Commander's balance is ").Append(ShipPurchasePrice.Credits(balance)).Append(" cr.");
+        }
+
+        text.AppendLine(line.ToString());
+        text.AppendLine();
     }
 
     private static void Costing(StringBuilder text, PlanCosting costing)

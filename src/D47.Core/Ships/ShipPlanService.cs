@@ -682,11 +682,14 @@ public sealed class ShipPlanService(
     /// What a build still needs bought: the hull where the ship is not owned, and each planned module
     /// neither fitted in its slot nor in module storage. A stored copy covers one slot.
     /// </summary>
-    public ShipPurchases ToBuy(ShipBuild build)
+    public ShipPurchases ToBuy(ShipBuild build) => ToBuy(build, state());
+
+    /// <summary>The same list, read from a game state.</summary>
+    public static ShipPurchases ToBuy(ShipBuild build, CommanderGameState? game)
     {
-        var storage = state()?.Modules ?? ModuleStore.Empty;
+        var storage = game?.Modules ?? ModuleStore.Empty;
         var unclaimed = storage.Modules.ToList();
-        var fitted = build.ShipId is { } shipId ? FittedModules(shipId) : [];
+        var fitted = build.ShipId is { } shipId ? FittedModules(shipId, game) : [];
         var items = new List<ShipPurchase>();
 
         if (!build.IsOwned && OutfittingItem.TryParse(build.HullName, out var hull, out _))
@@ -746,10 +749,10 @@ public sealed class ShipPlanService(
 
     /// <summary>What is fitted on a ship right now, live where it is the one the Commander is aboard and
     /// remembered otherwise.</summary>
-    private IReadOnlyList<ShipModule> FittedModules(int shipId)
-    {
-        var live = state();
+    private IReadOnlyList<ShipModule> FittedModules(int shipId) => FittedModules(shipId, state());
 
+    private static IReadOnlyList<ShipModule> FittedModules(int shipId, CommanderGameState? live)
+    {
         if (live?.Ship is { IsKnown: true } loadout && loadout.ShipId == shipId)
         {
             return loadout.Modules;

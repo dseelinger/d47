@@ -1,5 +1,6 @@
 using D47.Core.Checklists;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 using D47.Core.Ships;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -86,6 +87,65 @@ public class WhatAShipPlanStillNeedsToBuyTests
 
     private static string StoredItem(string symbol, string localised) =>
         $$"""{"Name":"${{symbol}}_name;","Name_Localised":"{{localised}}","StarSystem":"Fixture Point","TransferCost":100}""";
+
+    [Fact]
+    public void AnUnownedHullIsPricedWithItsStockFittingAndThePlannedModules()
+    {
+        var bench = new Bench(fitted: false);
+        var build = bench.Intended(new SlotPlan("Slot01_Size6", Module: "Fuel Scoop") { Variant = Scoop });
+
+        var price = ShipPurchasePrice.Of(bench.Ships.ToBuy(build));
+        var python = EliteSpecifications.Ship("python")!;
+        var stock = python.Stock.Sum(symbol => EliteSpecifications.Module(symbol)!.Cost!.Value);
+
+        Assert.NotEmpty(python.Stock);
+        Assert.Equal(python.Cost!.Value + stock + EliteSpecifications.Module(Scoop)!.Cost!.Value, price.Total);
+        Assert.Equal(2, price.Priced);
+        Assert.True(price.AllPriced);
+    }
+
+    [Fact]
+    public void AnOwnedShipIsPricedWithoutAHull()
+    {
+        var bench = new Bench();
+        var build = bench.Owned(new SlotPlan("Slot02_Size5", Module: "Fuel Scoop") { Variant = Scoop });
+
+        var price = ShipPurchasePrice.Of(bench.Ships.ToBuy(build));
+
+        Assert.Equal(EliteSpecifications.Module(Scoop)!.Cost!.Value, price.Total);
+        Assert.Equal(1, price.Priced);
+    }
+
+    [Fact]
+    public void APlanItemWithOnlyAModuleNameIsNamedAndLeftOutOfTheTotal()
+    {
+        var bench = new Bench();
+        var build = bench.Owned(
+            new SlotPlan("Slot02_Size5", Module: "Fuel Scoop") { Variant = Scoop },
+            new SlotPlan("Slot03_Size5", Module: "Shield Generator"));
+
+        var price = ShipPurchasePrice.Of(bench.Ships.ToBuy(build));
+
+        Assert.Equal(EliteSpecifications.Module(Scoop)!.Cost!.Value, price.Total);
+        Assert.Equal(1, price.Priced);
+        Assert.Single(price.Unpriced);
+        Assert.Contains("Shield Generator", price.Unpriced[0], StringComparison.Ordinal);
+        Assert.False(price.AllPriced);
+    }
+
+    [Fact]
+    public void AStoredModuleComesOffTheTotalWithTheList()
+    {
+        var bench = new Bench(stored: StoredItem(Scoop, "Fuel Scoop"));
+        var build = bench.Owned(
+            new SlotPlan("Slot02_Size5", Module: "Fuel Scoop") { Variant = Scoop },
+            new SlotPlan("Slot03_Size5", Module: "Frame Shift Drive") { Variant = Drive });
+
+        var price = ShipPurchasePrice.Of(bench.Ships.ToBuy(build));
+
+        Assert.Equal(EliteSpecifications.Module(Drive)!.Cost!.Value, price.Total);
+        Assert.Equal(1, price.Priced);
+    }
 
     [Fact]
     public void ASlotWithNoModuleInThePlanContributesNothing()

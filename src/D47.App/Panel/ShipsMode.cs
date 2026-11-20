@@ -317,7 +317,7 @@ public sealed class ShipsMode(
     }
 
     public LoadoutToBuy? ToBuy(string item) =>
-        outfitting is not null && Resolve(item) is { } build ? outfitting.For(build, ships.ToBuy(build)) : null;
+        outfitting is not null && Resolve(item) is { } build ? outfitting.For(build, ships.ToBuy(build), state()?.Session.Balance) : null;
 
     public BuildTalkView? Talk(string item) =>
         talk is not null && Resolve(item) is { } build

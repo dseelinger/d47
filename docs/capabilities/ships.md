@@ -326,7 +326,10 @@ A ship's page has a **To buy** block between the ship's figures and **Plan** whi
 something bought: the hull, if you do not own it yet, and each planned module that is neither fitted in
 its slot nor in module storage. It names three items and counts the rest. **Plot a route to buy them**
 plots a route from your system and opens it on Astrometrics › Plan. The page then says how many stops there
-are, which one is first and how far it is, with **Open the route** to open it again. Opening module storage takes what you have stored off the
+are, which one is first and how far it is, with **Open the route** to open it again. The block also gives what the list costs at list price: the hull with its stock fitting, and each planned
+module at its own price, with nothing back for the modules they replace. Your balance sits beside the cost, and a third tile says what is
+left after buying, or how far short you are. Items D47 has no price for are named in a notice and left out of the figure, and with one
+unpriced the comparison is left out. Opening module storage takes what you have stored off the
 list, and until D47 has seen your storage the block says **STORAGE NOT CHECKED**. The mini panel does not
 show the block.
 
@@ -426,7 +429,7 @@ A ship's own page opens with **Talk through this build**. It is answered by the 
 - a goal, such as "make it jump further";
 - which ship is best for these roles with this much, such as "which ship is best for exploring and hauling with fifty million".
 
-A question or a critique gets an answer from the figures d47 computes for the plan: jump range, power, shields, hull, damage and cargo. A goal gets a **proposal** that d47 found for the goal the model read from your remark: the model reads
+A question or a critique gets an answer from the figures d47 computes for the plan: jump range, power, shields, hull, damage and cargo, and what the To buy list costs. A goal gets a **proposal** that d47 found for the goal the model read from your remark: the model reads
 the goal, d47 searches for the modules, and the model explains the result. Where the remark does not say
 how far to take it, d47 asks whether you mean to maximise it at the expense of everything else, to maximise
 it without giving up the rest, or any improvement at all; your answer is your next remark. The proposal has one row per slot that would

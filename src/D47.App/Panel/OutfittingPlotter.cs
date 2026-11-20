@@ -21,7 +21,7 @@ public sealed record OutfittingPlotter(
     public const int FirstPlotReportAgeHours = 72;
 
     /// <summary>The to-buy block for a build, or null when it needs nothing bought.</summary>
-    public LoadoutToBuy? For(ShipBuild build, ShipPurchases purchases)
+    public LoadoutToBuy? For(ShipBuild build, ShipPurchases purchases, long? balance = null)
     {
         if (purchases.Items.Count == 0)
         {
@@ -43,6 +43,8 @@ public sealed record OutfittingPlotter(
             Summary(names),
             $"Plots from {from}, within {Radius} ly, and opens the route on Astrometrics › Plan.",
             purchases.StorageChecked,
+            ShipPurchasePrice.Of(purchases),
+            balance,
             Plot: async cancellationToken =>
             {
                 var before = Plans.Last(RoutePlanKind.Outfitting);
@@ -161,12 +163,16 @@ public sealed record OutfittingPlotter(
 /// <param name="Summary">The items, three named and the rest counted.</param>
 /// <param name="Hint">Where the route starts and what pressing the button does.</param>
 /// <param name="StorageChecked">False until module storage has been seen.</param>
+/// <param name="Price">What the items cost at list price.</param>
+/// <param name="Balance">The Commander's balance; null until the journal has given one.</param>
 /// <param name="Plot">Plots the route and says what happened.</param>
 public sealed record LoadoutToBuy(
     string Subhead,
     string Summary,
     string Hint,
     bool StorageChecked,
+    ShipPurchasePrice Price,
+    long? Balance,
     Func<CancellationToken, Task<LoadoutToBuyOutcome>> Plot);
 
 /// <summary>What a plot said (a short line when it stored a new plan), and the result page to open then.</summary>

@@ -2527,6 +2527,11 @@ public sealed class ItemPage : LoadoutPage
         block.Children.Add(row);
         block.Children.Add(LoadoutPages.Muted(toBuy.Hint));
 
+        foreach (var control in ToBuyCost(toBuy))
+        {
+            block.Children.Add(control);
+        }
+
         if (!toBuy.StorageChecked)
         {
             block.Children.Add(new Notice(NoticeLevel.Warning, inline: true)
@@ -2571,6 +2576,69 @@ public sealed class ItemPage : LoadoutPage
         }
 
         return block;
+    }
+
+    /// <summary>The cost tiles, the list-price line and the not-priced notice for a To buy block.</summary>
+    private static List<Control> ToBuyCost(LoadoutToBuy toBuy)
+    {
+        var controls = new List<Control>();
+        var price = toBuy.Price;
+
+        if (price.Priced > 0)
+        {
+            var tiles = new List<Control>
+            {
+                StatTile.Build(
+                    price.AllPriced ? "Costs at most" : $"{price.Priced} of {price.Priced + price.Unpriced.Count} items cost at most",
+                    D47.Core.Ships.ShipPurchasePrice.Credits(price.Total) + " CR",
+                    StatInk.Number),
+            };
+
+            if (toBuy.Balance is { } balance)
+            {
+                tiles.Add(StatTile.Build("Your balance", D47.Core.Ships.ShipPurchasePrice.Credits(balance) + " CR", StatInk.Number));
+
+                if (price.AllPriced)
+                {
+                    var covered = balance >= price.Total;
+
+                    tiles.Add(StatTile.Build(
+                        covered ? "Left after buying" : "Short by",
+                        D47.Core.Ships.ShipPurchasePrice.Credits(Math.Abs(balance - price.Total)) + " CR",
+                        covered ? StatInk.Number : StatInk.Shortfall));
+                }
+            }
+
+            var grid = StatTile.Grid(tiles, maxColumns: 3);
+            grid.Name = "ToBuyCost";
+            controls.Add(grid);
+            controls.Add(LoadoutPages.Muted("At list price, before selling the modules they replace."));
+        }
+
+        if (!price.AllPriced)
+        {
+            var count = price.Unpriced.Count;
+            var names = price.Unpriced.Distinct(StringComparer.Ordinal).ToList();
+            var shown = names.Take(3).ToList();
+            var rest = names.Count - shown.Count;
+
+            var listed = rest > 0
+                ? $"{string.Join(", ", shown)} and {rest} more"
+                : shown.Count == 1
+                    ? shown[0]
+                    : $"{string.Join(", ", shown.Take(shown.Count - 1))} and {shown[^1]}";
+
+            controls.Add(new Notice(NoticeLevel.Warning, inline: true)
+            {
+                Name = "ToBuyNotPriced",
+                Label = price.Priced == 0 ? "NOT PRICED" : count == 1 ? "1 ITEM NOT PRICED" : $"{count} ITEMS NOT PRICED",
+                Text = price.Priced == 0
+                    ? $"D47 has no price for {listed}, so this list has no figure."
+                    : $"D47 has no price for {listed}. {(count == 1 ? "It is" : "They are")} not in the figure.",
+            });
+        }
+
+        return controls;
     }
 
     /// <summary>Plots, then opens the stored plan on Astrometrics › Plan when the plot stored a new one.</summary>
