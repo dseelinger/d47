@@ -214,6 +214,7 @@ public static class ShippedCallouts
             .Add(new SamplingCallout { Ledger = sources.Exobiology })
             .Add(new SamplingRangeCallout())
             .Add(new AbandonedSamplesCallout())
+            .Add(new UnfinishedSamplesCallout())
             .Add(new DiscoveryCallout())
             .Add(new OrganicsStarCallout())
             .Add(new FootfallCallout())
@@ -556,6 +557,7 @@ public static class ShippedCallouts
         engine.SetEnabled("sampling", callouts.Sampling, now);
         engine.SetEnabled("sampling-range", callouts.SamplingRange, now);
         engine.SetEnabled("sampling-abandoned", callouts.SamplingAbandoned, now);
+        engine.SetEnabled("sampling-unfinished", callouts.SamplingUnfinished, now);
         engine.SetEnabled("footfall", callouts.Footfall, now);
         engine.SetEnabled("footfall-approach", callouts.FootfallApproach, now);
         engine.SetEnabled("discovery", callouts.Discovery, now);

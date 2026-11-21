@@ -40,6 +40,7 @@ public static class CalloutCapability
     public const string SamplingKey = "callouts.sampling";
     public const string SamplingRangeKey = "callouts.samplingRange";
     public const string SamplingAbandonedKey = "callouts.samplingAbandoned";
+    public const string SamplingUnfinishedKey = "callouts.samplingUnfinished";
     public const string DiscoveryKey = "callouts.discovery";
     public const string OrganicsStarsKey = "callouts.organicsStars";
     public const string FootfallKey = "callouts.footfall";
@@ -553,6 +554,22 @@ public static class CalloutCapability
                 "abandoned samples",
                 s => s.Callouts.SamplingAbandoned,
                 (s, v) => s with { Callouts = s.Callouts with { SamplingAbandoned = v } }),
+
+            Toggle(
+                SamplingUnfinishedKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Unfinished samples "
+                + "(on by default). Take one or two samples on a planet, then fly up out of orbital cruise: D47 "
+                + "names the body and the species and says how many samples you have. Say \"stop calling out "
+                + "unfinished samples\": the row shows off and that is no longer said. Say \"start calling out "
+                + "unfinished samples\" and the row shows on. The row is absent while Speak without being asked "
+                + "is off.",
+                "Unfinished samples",
+                "When you leave a body, or jump away from it, with one or two samples of a set taken there.",
+                "sampling-unfinished",
+                "unfinished samples",
+                s => s.Callouts.SamplingUnfinished,
+                (s, v) => s with { Callouts = s.Callouts with { SamplingUnfinished = v } }),
 
             Toggle(
                 DiscoveryKey,

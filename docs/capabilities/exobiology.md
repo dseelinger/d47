@@ -270,11 +270,14 @@ lists. A genus with no value is answered without a distance.
 position, Directive 47 keeps the position of every specimen in the set and, after each of the first two
 specimens, says once as you cross the distance from all of them, "Far enough for the next Stratum Paleas sample." Logging a different
 species while a set holds one or two specimens loses that set, and it says so as the scan lands:
-"That abandoned your 2 Stratum Paleas samples." Approaching a body with biological signals that
+"That abandoned your 2 Stratum Paleas samples." When you leave a body, or jump away from it, while a set
+taken there holds one or two specimens, it says "Leaving Smojue EB-O d6-37 AB 1 b with Stratum Paleas
+at 2 of 3." Leaving keeps the set; the next species logged elsewhere loses it. Approaching a body with biological signals that
 nobody has walked, it says "Nobody has set foot on Smojue EB-O d6-37 AB 1 b. First footfall bonus is
 there." Each has its own switch:
 [Far enough to sample](callouts.md#sampling-range),
-[Abandoned samples](callouts.md#sampling-abandoned) and
+[Abandoned samples](callouts.md#sampling-abandoned),
+[Unfinished samples](callouts.md#sampling-unfinished) and
 [First footfall on approach](callouts.md#footfall-approach).
 
 **Where there is no value, it learns.** A specimen the game accepted is proof that the distance you

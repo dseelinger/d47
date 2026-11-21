@@ -724,6 +724,9 @@ public sealed record CalloutSettings
     /// <summary>A set of samples lost to a specimen of a different species (#581).</summary>
     public bool SamplingAbandoned { get; init; } = true;
 
+    /// <summary>A set of one or two samples on the body being left.</summary>
+    public bool SamplingUnfinished { get; init; } = true;
+
     /// <summary>Whether the arrival star's autoscan shows up as undiscovered (#201).</summary>
     public bool Discovery { get; init; } = true;
 

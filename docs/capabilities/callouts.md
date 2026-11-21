@@ -1087,6 +1087,20 @@ That abandoned your 2 Stratum Paleas samples.
 
 Directive 47 cannot see the new scan coming, so this comes after the loss, not before it.
 
+#### Unfinished samples {#sampling-unfinished}
+
+When you leave a body while a set taken there holds one or two specimens:
+
+```text
+Leaving Smojue EB-O d6-37 AB 1 b with Stratum Paleas at 2 of 3.
+```
+
+It is said as you climb out of orbital cruise (`LeaveBody`), and when a hyperspace jump starts while
+you are still near the body, since a jump from orbital cruise writes no `LeaveBody`. The jump line
+comes during the countdown, while the jump can still be cancelled. Leaving does not lose the set:
+the sampler keeps it until you log a different species. Lifting off and entering supercruise between
+specimens on the same body say nothing.
+
 #### First footfall {#footfall}
 
 The first time you step onto a body whose scan has not yet recorded a footfall there:
