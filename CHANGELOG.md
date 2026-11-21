@@ -10,6 +10,8 @@
 
 Fixed: In the Market results, the station name, its brackets and the system link are on one line. The system link used to sit higher than the station name beside it.
 
+Fixed: A system link inside a line of text sits on the same line as the words around it: a mission's destination, the Best Cargo "What to carry to" heading, and the sentences on the ship, outfitting and Plan progress pages that name a system. The link used to make its line much taller and sit above the text, and its hover fill now reaches above and below the line rather than pushing the line apart.
+
 Changed: The Exobiology card on the Plan page no longer has a "Most credits per scan" checkbox; "Least a species is worth (cr)" is the one way to choose what the route shows, and left empty it is no minimum. The route lists only species at or above the minimum, and leaves out a body or stop with none. A body's figure is the total of its listed species, the most valuable body at each stop comes first, and the stop and route totals add up those figures. The "species under the minimum" line is gone, on the page and in the spoken answer.
 
 Added: The startup splash's bar fills as d47 starts, in nine equal steps: one after each of eight startup stages and one when the window is built. It never moves back, and it stands still through a slow stage.

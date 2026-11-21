@@ -582,11 +582,7 @@ public sealed class MissionsPage : UserControl, IPageSummary, IFilterablePage
             var name = new TextBlock { Text = system, FontSize = TypeScale.Small };
             ThemeInk.Bind(name, TextBlock.ForegroundProperty, Here(mission, location) ? ThemeManager.CyanKey : ThemeManager.AKey);
 
-            block.Inlines.Add(new InlineUIContainer
-            {
-                BaselineAlignment = BaselineAlignment.Center,
-                Child = SystemLink.Of(name, system, flush: false),
-            });
+            block.Inlines.Add(SystemLink.Inline(name, system));
         }
 
         if (block.Inlines!.Count == 0)

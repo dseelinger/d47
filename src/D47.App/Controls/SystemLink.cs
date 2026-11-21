@@ -151,6 +151,13 @@ public static class SystemLink
     }
 
     /// <summary>
+    /// The link for a place in running text. It takes only the name's ascent in the line, so its text sits on the
+    /// line's baseline and the line keeps its height; the 44px face reaches above and below the line.
+    /// </summary>
+    public static InlineUIContainer Inline(TextBlock name, string system, bool keepFont = false) =>
+        new() { Child = new OnBaseline(name, Of(name, system, keepFont, flush: false)) };
+
+    /// <summary>
     /// Puts a link on the first whole occurrence of <paramref name="system"/> in the text of <paramref name="line"/>,
     /// leaving the rest of the sentence in the block; false, with the block unchanged, where it does not name it.
     /// <paramref name="name"/> makes the block the name is drawn in, in the sentence's ink.
@@ -178,7 +185,7 @@ public static class SystemLink
             inlines.Add(new Run(text[..at]));
         }
 
-        inlines.Add(new InlineUIContainer { BaselineAlignment = BaselineAlignment.Center, Child = Of(shown, system, keepFont: true, flush: false) });
+        inlines.Add(Inline(shown, system, keepFont: true));
 
         if (end < text.Length)
         {
@@ -301,6 +308,49 @@ public static class SystemLink
         {
             ((IPseudoClasses)row.Classes).Set(RowHeld, held);
         }
+    }
+
+    /// <summary>
+    /// Takes the name's ascent in its line and draws the link so the name's baseline is its bottom edge. The text
+    /// block it sits in stops clipping, so the face is drawn and pressed beyond the line.
+    /// </summary>
+    private sealed class OnBaseline : Decorator
+    {
+        private readonly TextBlock _name;
+
+        public OnBaseline(TextBlock name, Control link)
+        {
+            _name = name;
+            Child = link;
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+
+            if (this.GetVisualParent() is TextBlock line)
+            {
+                line.ClipToBounds = false;
+            }
+        }
+
+        protected override Size MeasureOverride(Size availableSize)
+        {
+            Child!.Measure(availableSize);
+            return new Size(Child.DesiredSize.Width, Ascent());
+        }
+
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            var height = Child!.DesiredSize.Height;
+            var top = finalSize.Height - Ascent() - ((height - _name.DesiredSize.Height) / 2);
+
+            Child.Arrange(new Rect(0, top, finalSize.Width, height));
+            return finalSize;
+        }
+
+        private double Ascent() =>
+            _name.TextLayout.TextLines.Count > 0 ? _name.TextLayout.TextLines[0].Baseline : _name.DesiredSize.Height;
     }
 
     internal sealed class Observer<T>(Action<T> next) : IObserver<T>

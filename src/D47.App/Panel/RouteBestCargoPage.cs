@@ -529,11 +529,7 @@ public sealed class RouteBestCargoPage : UserControl
             var name = new TextBlock { Text = destination.ToUpperInvariant(), FontSize = TypeScale.Secondary };
             ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
-            head.Inlines.Add(new InlineUIContainer
-            {
-                BaselineAlignment = BaselineAlignment.Center,
-                Child = SystemLink.Of(name, destination, flush: false),
-            });
+            head.Inlines.Add(SystemLink.Inline(name, destination));
         }
         else
         {

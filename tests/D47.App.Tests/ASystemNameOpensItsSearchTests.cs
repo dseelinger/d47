@@ -210,6 +210,36 @@ public class ASystemNameOpensItsSearchTests
         Assert.False(SystemLink.InSentence(new TextBlock { Text = "Nowhere to go." }, "Deciat", part => new TextBlock { Text = part }));
     }
 
+    /// <summary>
+    /// A link in a sentence shares the sentence's baseline and leaves the line its own height; its 44px face
+    /// reaches above and below the line, and is drawn and pressed there.
+    /// </summary>
+    [AvaloniaFact]
+    public void ALinkInASentenceSitsOnTheSentencesBaseline()
+    {
+        var prose = new FontFamily(Fonts.ProseFamily);
+        var plain = new TextBlock { Text = "Meet them in Deciat before dawn.", FontFamily = prose, FontSize = TypeScale.Secondary };
+        var line = new TextBlock { Text = "Meet them in Deciat before dawn.", FontFamily = prose, FontSize = TypeScale.Secondary };
+        SystemLink.InSentence(line, "Deciat", part => new TextBlock { Text = part, FontFamily = prose, FontSize = TypeScale.Secondary });
+
+        var (window, _, link, _) = Shown(() => new StackPanel { Spacing = 20, Margin = new Thickness(0, 40), Children = { plain, line } });
+
+        var name = (TextBlock)Face(link).Child!;
+        var nameBaseline = name.TranslatePoint(new Point(0, name.TextLayout.TextLines[0].Baseline), line)!.Value.Y;
+
+        Assert.Equal(line.TextLayout.TextLines[0].Baseline, nameBaseline, 0.5);
+        Assert.Equal(plain.Bounds.Height, line.Bounds.Height, 0.5);
+        Assert.Equal(TypeScale.MinimumTarget, Face(link).Bounds.Height);
+
+        var aboveTheLine = link.TranslatePoint(new Point(4, 2), window)!.Value;
+        Assert.True(aboveTheLine.Y < line.TranslatePoint(default, window)!.Value.Y);
+
+        var hit = Avalonia.Input.InputExtensions.InputHitTest(window, aboveTheLine) as Visual;
+        Assert.True(hit == link || (hit?.GetVisualAncestors().Contains(link) ?? false));
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void ThePanelOpensSystemsThroughSearchSystem()
     {
