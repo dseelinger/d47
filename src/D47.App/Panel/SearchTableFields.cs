@@ -24,7 +24,8 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
 
     /// <summary>
     /// A field; <paramref name="sort"/> is the <c>order_by</c> name its header asks the service for. Without one,
-    /// <paramref name="local"/> sorts the rows fetched.
+    /// <paramref name="local"/> sorts the rows fetched. <paramref name="filters"/> are the value lists the filter bar
+    /// offers for it; none for a number, distance, time or date.
     /// </summary>
     public TableField<object> Field(
         string key,
@@ -35,7 +36,8 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
         string? second = null,
         bool right = false,
         bool byDefault = true,
-        Func<string, SortColumn<object>>? local = null)
+        Func<string, SortColumn<object>>? local = null,
+        IReadOnlyList<ValueList<object>>? filters = null)
     {
         var field = new TableField<object>(key, column, cell)
         {
@@ -43,6 +45,7 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
             Second = second,
             Alignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
             ByDefault = byDefault,
+            Filters = filters ?? [],
         };
 
         if (sort is null || SearchSorts.For(kind).FirstOrDefault(known => known.Name == sort) is not { } spec)
@@ -92,7 +95,7 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
     }
 
     /// <summary>The table's header on a rule, the form every search table's head takes.</summary>
-    public static Control Head(ArrangedTable<object> table)
+    public static Border Head(ArrangedTable<object> table)
     {
         var grid = table.Header();
         grid.Margin = new Thickness(12, 0, 12, 6);
@@ -105,6 +108,25 @@ internal sealed class SearchTableFields(GalaxySearchKind kind)
 
     private string? KeyOf(string sortName) =>
         _sortNames.Where(pair => pair.Value == sortName).Select(pair => pair.Key).FirstOrDefault();
+}
+
+/// <summary>The value lists of a search table's fields, over one row's values; a missing or blank value counts as none.</summary>
+internal static class SearchValues
+{
+    /// <summary>One value per row.</summary>
+    public static ValueList<object> One<TRow>(string label, Func<TRow, string?> value, string noValue) =>
+        new(label, row => value((TRow)row) is { } text && !string.IsNullOrWhiteSpace(text) ? [text.Trim()] : [], noValue);
+
+    /// <summary>The items of a list cell.</summary>
+    public static ValueList<object> Many<TRow>(string label, Func<TRow, IEnumerable<string?>> values, string noValue) =>
+        new(
+            label,
+            row => [.. values((TRow)row).Where(text => !string.IsNullOrWhiteSpace(text)).Select(text => text!.Trim()).Distinct(StringComparer.Ordinal)],
+            noValue);
+
+    /// <summary>"Yes" or "No"; a row whose flag is not known counts as none.</summary>
+    public static ValueList<object> Flag<TRow>(string label, Func<TRow, bool?> flag, string noValue) =>
+        One<TRow>(label, row => flag(row) is { } on ? (on ? "Yes" : "No") : null, noValue);
 }
 
 /// <summary>The sorts of the rows a table has fetched, over one value of each row.</summary>

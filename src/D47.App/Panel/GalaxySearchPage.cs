@@ -108,12 +108,21 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     public const string RetryPageName = "RetryPage";
 
+    /// <summary>The tile that fetches the next page while the filter hides rows.</summary>
+    public const string FetchNextName = "FetchNextPage";
+
+    /// <summary>The line that ends the rows while the filter hides some of them.</summary>
+    public const string FilterEndName = "FilterEnd";
+
     /// <summary>The answer's rows, drawn a screen at a time.</summary>
     public const string RowsName = "SearchRows";
 
     public const string AskedName = "AskedAgo";
 
     public const string SortedName = "SortedBy";
+
+    /// <summary>The line under the head that says how many rows the filter shows.</summary>
+    public const string FilterWordsName = "FilterWords";
 
     public const string ForgetName = "ForgetSearch";
 
@@ -160,6 +169,10 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private GalaxySearchPosting? _drawn;
     private CancellationTokenSource? _nextPage;
     private PageFailed? _pageFailed;
+    private IReadOnlyDictionary<string, string>? _filterFor;
+    private TextBlock? _filterWords;
+    private Control? _filterLine;
+    private Border? _columnHead;
 
     /// <summary>The last item of the rows while the next page loads.</summary>
     private sealed record PageLoading;
@@ -168,6 +181,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private sealed record PageFailed(string Text, DateTimeOffset At, int Page);
 
     private static readonly PageLoading Loading = new();
+
+    /// <summary>The last item of the rows while the filter hides some of the rows fetched.</summary>
+    private sealed record FilterEnd(int Fetched, int Hidden, bool More);
 
     /// <summary>Copies a system name to the clipboard; null draws no copy glyphs.</summary>
     protected Func<string, Task<bool>>? Copy { get; set; }
@@ -292,12 +308,17 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
     private bool LocalShownFor(GalaxySearchPosting posting) => _localShown && ReferenceEquals(_localFor, posting.Arguments);
 
-    /// <summary>The rows of <paramref name="posting"/>, in the order of a sort of the rows fetched while one is shown.</summary>
+    /// <summary>
+    /// The rows of <paramref name="posting"/> the filter lets through, in the order of a sort of the rows fetched while one
+    /// is shown.
+    /// </summary>
     private IReadOnlyList<object> RowsShown(GalaxySearchPosting posting) =>
-        LocalShownFor(posting) && _arranged is { } table ? table.Sort(Rows(posting)) : Rows(posting);
+        _arranged is not { } table ? Rows(posting)
+        : LocalShownFor(posting) ? table.Shown(Rows(posting))
+        : table.Filter(Rows(posting));
 
-    /// <summary>"these 25 sorted by Volcanism" while the rows fetched are sorted, else null.</summary>
-    private string? LocalWords(GalaxySearchPosting posting)
+    /// <summary>The name of the sort of the rows fetched while one is shown, else null.</summary>
+    private string? LocalSortName(GalaxySearchPosting posting)
     {
         if (!LocalShownFor(posting) || _arranged is not { SortedBy: { } sort } table)
         {
@@ -306,8 +327,19 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         var field = table.ShownFields.FirstOrDefault(shown => shown.Key == sort.Key);
 
-        return $"these {Count(posting).ToString(CultureInfo.InvariantCulture)} sorted by {field?.Name ?? field?.Label ?? sort.Key}";
+        return field?.Name ?? field?.Label ?? sort.Key;
     }
+
+    /// <summary>"these 25 sorted by Volcanism" while the rows fetched are sorted, else null.</summary>
+    private string? LocalWords(GalaxySearchPosting posting) =>
+        LocalSortName(posting) is { } name ? $"these {Count(posting).ToString(CultureInfo.InvariantCulture)} sorted by {name}" : null;
+
+    /// <summary>"these 18 of 25, filtered by Economy and Power", with the sort of the rows fetched when one is shown; null while the filter hides nothing.</summary>
+    private string? FilterWords(GalaxySearchPosting posting) =>
+        _arranged is { } table ? ColumnFilter.Words(table, Rows(posting), LocalSortName(posting)) : null;
+
+    /// <summary>The filter hides some of the rows of <paramref name="posting"/>.</summary>
+    private bool Hides(GalaxySearchPosting posting) => _arranged is { } table && table.Hidden(Rows(posting)) > 0;
 
     private void OnSorted(ArrangedTable<object> table)
     {
@@ -736,6 +768,14 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             _arranged.Refresh();
         }
 
+        if (!ReferenceEquals(_filterFor, posting.Arguments))
+        {
+            _arranged.ClearFilters();
+            _filterFor = posting.Arguments;
+        }
+
+        _arranged.Observe(Rows(posting));
+
         _localShown = LocalCovers(posting.Arguments) && Kept is { } local && _arranged.ShowSort(local.Key, local.Direction);
 
         if (!_localShown)
@@ -746,10 +786,16 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         return _arranged;
     }
 
+    /// <summary>The table's column head on its rule; a later page redraws its filtered counts.</summary>
+    protected Control ColumnHead(ArrangedTable<object> table) => _columnHead = SearchTableFields.Head(table);
+
     /// <summary>The posting the table is drawn for.</summary>
     protected GalaxySearchPosting Posted { get; private set; } = null!;
 
-    /// <summary>A field of this kind of table; pass <c>sort</c> for the <c>order_by</c> its header asks for, else <c>local</c> sorts the rows fetched.</summary>
+    /// <summary>
+    /// A field of this kind of table; pass <c>sort</c> for the <c>order_by</c> its header asks for, else <c>local</c> sorts
+    /// the rows fetched. <c>filters</c> are the value lists the filter bar offers.
+    /// </summary>
     protected TableField<object> SearchField(
         string key,
         TableColumn column,
@@ -759,13 +805,21 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         string? second = null,
         bool right = false,
         bool byDefault = true,
-        Func<string, SortColumn<object>>? local = null) =>
-        SortFields.Field(key, column, label, cell, sort, second, right, byDefault, local);
+        Func<string, SortColumn<object>>? local = null,
+        IReadOnlyList<ValueList<object>>? filters = null) =>
+        SortFields.Field(key, column, label, cell, sort, second, right, byDefault, local, filters);
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _filterFor = null;
         _arranged?.StopArranging();
+
+        if (_arranged is { Filtering: true } filtering)
+        {
+            filtering.ToggleFiltering();
+        }
+
         _searches.Board.Posted += OnPosted;
         _searches.Board.Extended += OnExtended;
         _history.Attach();
@@ -857,19 +911,25 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 return;
             }
 
-            var all = RowsShown(last);
-            var at = _rows.Count > 0 && _rows[^1] is PageLoading or PageFailed ? _rows.Count - 1 : _rows.Count;
+            var table = _arranged;
+            table?.Observe(Rows(last));
 
-            if (LocalShownFor(last))
+            if (table is { Filtering: true })
+            {
+                Draw();
+                return;
+            }
+
+            var all = RowsShown(last);
+            var at = _rows.Count > 0 && _rows[^1] is PageLoading or PageFailed or FilterEnd ? _rows.Count - 1 : _rows.Count;
+            _drawn = last;
+
+            if (LocalShownFor(last) || table is { FilteredLabels.Count: > 0 })
             {
                 _rows.Clear();
                 _rows.AddRange(all);
                 ShowTail();
-
-                if (_orderChip is not null && LocalWords(last) is { } words)
-                {
-                    _orderChip.Text = $"· {words}".ToUpperInvariant();
-                }
+                ShowHeadWords(last);
             }
             else
             {
@@ -877,7 +937,6 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             }
 
             _shownRows = all.Count;
-            _drawn = last;
             _count.Text = CountText(last).ToUpperInvariant();
             _seen = Stamp();
             CheckSoon();
@@ -908,7 +967,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             return;
         }
 
-        if (_rows.Count > 0 && _rows[^1] is PageLoading or PageFailed)
+        if (_rows.Count > 0 && _rows[^1] is PageLoading or PageFailed or FilterEnd)
         {
             _rows.RemoveAt(_rows.Count - 1);
         }
@@ -921,11 +980,68 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             _rows.Add(failed);
         }
+        else if (_drawn is { } drawn && _arranged is { } table && table.Hidden(Rows(drawn)) is > 0 and var hidden)
+        {
+            _rows.Add(new FilterEnd(Count(drawn), hidden, CanFetchNext()));
+        }
+    }
+
+    /// <summary>The next page of the answer drawn can be fetched now: the service has more and no fetch is under way.</summary>
+    private bool CanFetchNext() =>
+        _nextPage is null
+        && _pageFailed is null
+        && _running is null
+        && _fromHistory is null
+        && _searches.Board.Last(Kind) is { More: true } last
+        && _drawn is not null
+        && ReferenceEquals(last.Arguments, _drawn.Arguments);
+
+    /// <summary>Fetches the next page of the answer drawn, when it can be fetched.</summary>
+    private void FetchNext()
+    {
+        if (CanFetchNext() && _searches.Board.Last(Kind) is { } last)
+        {
+            _ = NextPageAsync(last.Arguments, last.Pages + 1);
+        }
+    }
+
+    /// <summary>The words for the order of the rows shown; the filter's line names a sort of the rows fetched instead.</summary>
+    private string? OrderWords(GalaxySearchPosting posting, string? filter) =>
+        filter is null ? LocalWords(posting) ?? Sorted(posting) : LocalShownFor(posting) ? null : Sorted(posting);
+
+    /// <summary>Brings the head's words, the filter's line and the column head's filtered counts up to date with the rows held.</summary>
+    private void ShowHeadWords(GalaxySearchPosting posting)
+    {
+        var filter = FilterWords(posting);
+        var words = OrderWords(posting, filter);
+
+        if (_orderChip is not null)
+        {
+            _orderChip.Text = words is null ? null : $"· {words}".ToUpperInvariant();
+            _orderChip.IsVisible = words is not null;
+        }
+
+        if (_filterWords is not null && _filterLine is not null)
+        {
+            _filterWords.Text = filter?.ToUpperInvariant();
+            _filterLine.IsVisible = filter is not null;
+        }
+
+        if (_columnHead is { Child: Control old } rule && _arranged is { } table)
+        {
+            var grid = table.Header();
+            grid.Margin = old.Margin;
+            rule.Child = grid;
+        }
     }
 
     private void CheckSoon() => Dispatcher.UIThread.Post(MoreIfAtEnd, DispatcherPriority.Background);
 
-    /// <summary>Fetches the next page when the answer's scroller is within one row of its end and the service has more.</summary>
+    /// <summary>
+    /// Fetches the next page when the answer's scroller is within one row of its end and the service has more. While the
+    /// filter hides rows, only once the rows fill the scroller and it has been scrolled to their end. Never while the filter
+    /// bar is open.
+    /// </summary>
     private void MoreIfAtEnd()
     {
         if (_nextPage is not null
@@ -940,6 +1056,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             || _searches.Board.Last(Kind) is not { More: true } last
             || _drawn is null
             || !ReferenceEquals(last.Arguments, _drawn.Arguments))
+        {
+            return;
+        }
+
+        if (_arranged is { Filtering: true }
+            || (Hides(last) && (scroll.Offset.Y <= 0 || scroll.Extent.Height <= scroll.Viewport.Height)))
         {
             return;
         }
@@ -1333,6 +1455,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _scroll = null;
         _count = null;
         _orderChip = null;
+        _filterWords = null;
+        _filterLine = null;
         _drawn = null;
         _shownRows = 0;
 
@@ -1385,11 +1509,29 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
                 var paged = Paged(last!, _headset);
                 var arranged = paged is null ? null : _arranged;
 
-                block.Children.Add(Head(CountText(last!), Aside(last!.Arguments, last.Reference), Rerun(last), save: true, asked: Asked(last), saved: last.Arguments, sorted: LocalWords(last) ?? Sorted(last), columns: arranged is null ? null : ColumnArranger.Tile(arranged)));
+                var filtered = arranged is null ? null : FilterWords(last!);
+
+                block.Children.Add(Head(
+                    CountText(last!),
+                    Aside(last!.Arguments, last.Reference),
+                    Rerun(last),
+                    save: true,
+                    asked: Asked(last),
+                    saved: last.Arguments,
+                    sorted: OrderWords(last, filtered),
+                    columns: arranged is null ? null : ColumnArranger.Tile(arranged),
+                    filter: arranged is null ? null : ColumnFilter.Tile(arranged),
+                    clear: arranged is null ? null : ColumnFilter.HeadClear(arranged),
+                    filtered: filtered));
 
                 if (arranged is not null && ColumnArranger.Bar(arranged) is { } bar)
                 {
                     block.Children.Add(bar);
+                }
+
+                if (arranged is not null && ColumnFilter.Bar(arranged, Rows(last), search: true) is { } filterBar)
+                {
+                    block.Children.Add(filterBar);
                 }
 
                 AddNotes(block, last);
@@ -1431,10 +1573,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             {
                 PageLoading => Spaced(LoadingMark()),
                 PageFailed failed => Spaced(PageNotice(failed)),
+                FilterEnd end => Spaced(FilterEndRow(end)),
                 null => null,
                 _ => Spaced(paged.Row(item)),
             }),
             ItemsSource = _rows,
+            IsVisible = _arranged is not { } table || !ColumnFilter.HidesRows(table),
         };
 
         var grid = LoadoutPages.HeaderAndList(head, paged.Head, list, sideways, out var scroll);
@@ -1443,6 +1587,57 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
 
         return grid;
     }
+
+    /// <summary>
+    /// "Rows 1–25 fetched · 20 hidden by the filter", or in the headset "5 shown · 25 fetched", with FETCH THE NEXT 25
+    /// while the service has more; when every row is hidden, the line naming the filtered fields with CLEAR FILTERS.
+    /// </summary>
+    private Control FilterEndRow(FilterEnd end)
+    {
+        Button? fetch = null;
+
+        if (end.More)
+        {
+            fetch = new Button
+            {
+                Name = FetchNextName,
+                Content = $"FETCH THE NEXT {PageSize(_drawn).ToString(CultureInfo.InvariantCulture)}",
+                Height = TypeScale.MinimumTarget,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            fetch.Click += (_, _) => FetchNext();
+        }
+
+        if (end.Hidden >= end.Fetched && _arranged is { } table && _drawn is { } drawn
+            && ColumnFilter.Empty(table, Rows(drawn), search: true, beside: fetch) is { } empty)
+        {
+            return empty;
+        }
+
+        var text = _headset
+            ? $"{(end.Fetched - end.Hidden).ToString(CultureInfo.InvariantCulture)} shown · {end.Fetched.ToString(CultureInfo.InvariantCulture)} fetched"
+            : $"Rows 1–{end.Fetched.ToString(CultureInfo.InvariantCulture)} fetched · {end.Hidden.ToString(CultureInfo.InvariantCulture)} hidden by the filter";
+        var line = Typeset.Mono(text, TypeScale.Small, ThemeManager.GreyKey, vertical: VerticalAlignment.Center);
+        line.Name = FilterEndName;
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12, MinHeight = TypeScale.MinimumTarget, Children = { line } };
+
+        if (fetch is not null)
+        {
+            Grid.SetColumn(fetch, 1);
+            grid.Children.Add(fetch);
+        }
+
+        return grid;
+    }
+
+    /// <summary>How many rows a page of the answer holds: its <c>limit</c>, else the service's default.</summary>
+    private static int PageSize(GalaxySearchPosting? posting) =>
+        posting?.Arguments.TryGetValue("limit", out var typed) == true
+        && int.TryParse(typed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var limit)
+        && limit is >= 1 and <= GalaxyQuery.MaxSize
+            ? limit
+            : GalaxyQuery.DefaultSize;
 
     /// <summary>A row with the gap the table keeps between rows.</summary>
     private static Border Spaced(Control row) => new() { Margin = new Thickness(0, 2, 0, Gaps.Tile - 2), Child = row };
@@ -1516,7 +1711,10 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         string? asked = null,
         IReadOnlyDictionary<string, string>? saved = null,
         string? sorted = null,
-        Control? columns = null)
+        Control? columns = null,
+        Control? filter = null,
+        Button? clear = null,
+        string? filtered = null)
     {
         var name = Chrome(count, TypeScale.Section, ThemeManager.AKey);
         name.VerticalAlignment = VerticalAlignment.Center;
@@ -1547,14 +1745,23 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             left.Children.Add(line);
         }
 
-        if (sorted is not null)
+        if (sorted is not null || clear is not null)
         {
+            // Kept, hidden, while the answer has a table, so a later page can show the words.
             var order = Chrome($"· {sorted}", TypeScale.Small, ThemeManager.AKey);
             order.Name = SortedName;
             _orderChip = order;
             order.VerticalAlignment = VerticalAlignment.Center;
+
+            if (sorted is null)
+            {
+                order.Text = null;
+                order.IsVisible = false;
+            }
+
             left.Children.Add(order);
         }
+
 
         if (asked is not null)
         {
@@ -1607,6 +1814,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             tiles.Children.Add(button);
         }
 
+        if (filter is not null)
+        {
+            tiles.Children.Add(filter);
+        }
+
         if (columns is not null)
         {
             tiles.Children.Add(columns);
@@ -1615,7 +1827,33 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12, Children = { left, tiles } };
         Grid.SetColumn(tiles, 1);
 
-        var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(0, 0, 0, 6), Child = row };
+        Control lines = row;
+
+        if (clear is not null)
+        {
+            var shown = Typeset.Chrome(
+                filtered?.ToUpperInvariant() ?? string.Empty, TypeScale.Small, ThemeManager.AKey,
+                weight: FontWeight.Medium, tracking: TypeScale.Small * Fonts.ChromeTracking,
+                wrap: true, vertical: VerticalAlignment.Center);
+            shown.Name = FilterWordsName;
+            clear.VerticalAlignment = VerticalAlignment.Center;
+
+            var line = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 12,
+                MinHeight = TypeScale.MinimumTarget,
+                Margin = new Thickness(0, 6, 0, 0),
+                IsVisible = filtered is not null,
+                Children = { shown, clear },
+            };
+
+            _filterWords = shown;
+            _filterLine = line;
+            lines = new StackPanel { Children = { row, line } };
+        }
+
+        var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(0, 0, 0, 6), Child = lines };
         ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.AKey);
 
         return rule;

@@ -66,6 +66,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     private readonly SearchTableFields _sortFields = new(GalaxySearchKind.Rares);
     private ArrangedTable<object>? _table;
     private GalaxySearchPosting? _posted;
+    private IReadOnlyDictionary<string, string>? _filterFor;
 
     public RareGoodsPage(
         GalaxySearchSurface searches,
@@ -208,7 +209,13 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _filterFor = null;
         _table?.StopArranging();
+
+        if (_table is { Filtering: true } filtering)
+        {
+            filtering.ToggleFiltering();
+        }
         _searches.Board.Posted += OnPosted;
 
         if (_searches.Board.Last(GalaxySearchKind.Rares) is { } last)
@@ -398,16 +405,25 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     private Control Table(StackPanel top, GalaxySearchPosting last, RareSearchResult result)
     {
         var table = Arranged(last);
+        IReadOnlyList<object> rows = [.. result.Rows];
 
         var list = new ItemsControl
         {
             Name = RowsName,
-            ItemsSource = result.Rows.Select(row => Spaced(Row(row, table))).ToArray(),
+            ItemsSource = ColumnFilter.Empty(table, rows) is { } empty
+                ? new Control[] { empty }
+                : table.Filter(rows).Select(row => Spaced(Row((RareListingRow)row, table))).ToArray(),
+            IsVisible = !ColumnFilter.HidesRows(table),
         };
 
-        if (ColumnArranger.Line(table) is { } line)
+        if (ColumnArranger.Line(table, rows) is { } line)
         {
             top.Children.Add(line);
+        }
+
+        if (ColumnFilter.Bar(table, rows) is { } filter)
+        {
+            top.Children.Add(filter);
         }
 
         if (ColumnArranger.Bar(table) is { } bar)
@@ -420,7 +436,10 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
     private static Border Spaced(Control row) => new() { Margin = new Thickness(0, 2, 0, Gaps.Tile - 2), Child = row };
 
-    /// <summary>The table, built once so its COLUMNS bar stays open across redraws, showing the sort <paramref name="last"/> was asked in.</summary>
+    /// <summary>
+    /// The table, built once so its COLUMNS and FILTER bars stay open across redraws, showing the sort <paramref name="last"/>
+    /// was asked in. A new answer clears the filter.
+    /// </summary>
     private ArrangedTable<object> Arranged(GalaxySearchPosting last)
     {
         _posted = last;
@@ -436,6 +455,12 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
             _table.Refresh();
         }
 
+        if (!ReferenceEquals(_filterFor, last.Arguments))
+        {
+            _table.ClearFilters();
+            _filterFor = last.Arguments;
+        }
+
         _sortFields.Show(_table, last.Arguments);
 
         return _table;
@@ -445,7 +470,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     private IReadOnlyList<TableField<object>> Fields() =>
     [
         _sortFields.Field("Name", new TableColumn("Name", ColumnFit.Fill) { Min = 140 }, "Name", row => NameCell((RareListingRow)row), "name"),
-        _sortFields.Field("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 190 }, "Station", row => StationCell((RareListingRow)row), "station", "(System)"),
+        _sortFields.Field("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 190 }, "Station", row => StationCell((RareListingRow)row), "station", "(System)", filters: [SearchValues.One<RareListingRow>("Station", rare => rare.Rare.Station, "No station reported"), SearchValues.One<RareListingRow>("System", rare => rare.Rare.System, "No system reported")]),
         _sortFields.Field(
             "FromStar",
             new TableColumn("FromStar") { Min = 118 },

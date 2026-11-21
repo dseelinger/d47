@@ -225,26 +225,26 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
 
         var table = Arrange(TableId, HeadName, string.Empty, posting, () => Fields(headset));
 
-        return new PagedTable(SearchTableFields.Head(table), item => Row((StationSummary)item, table));
+        return new PagedTable(ColumnHead(table), item => Row((StationSummary)item, table));
     }
 
     /// <summary>Every field the table can show; each sorts the rows fetched. Updated is not shown by default in the headset.</summary>
     private IReadOnlyList<TableField<object>> Fields(bool headset) =>
     [
-        SearchField("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, "Station", row => NameCell((StationSummary)row), second: "Type", local: LocalSort.Text<StationSummary>(station => station.Name)),
-        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((StationSummary)row), local: LocalSort.Text<StationSummary>(station => station.SystemName)),
+        SearchField("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, "Station", row => NameCell((StationSummary)row), second: "Type", local: LocalSort.Text<StationSummary>(station => station.Name), filters: [SearchValues.One<StationSummary>("Type", station => station.Type, "No type reported")]),
+        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((StationSummary)row), local: LocalSort.Text<StationSummary>(station => station.SystemName), filters: [SearchValues.One<StationSummary>("System", station => station.SystemName, "No system reported")]),
         SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((StationSummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), right: true, local: LocalSort.Figure<StationSummary>(station => station.Distance, SortDirection.Ascending)),
-        SearchField("Pad", new TableColumn("Pad"), "Pad", row => Centered(Value(LargestPad((StationSummary)row))), second: "Largest", local: LocalSort.Figure<StationSummary>(station => StationSearchPage.LargestPadRank(station))),
+        SearchField("Pad", new TableColumn("Pad"), "Pad", row => Centered(Value(LargestPad((StationSummary)row))), second: "Largest", local: LocalSort.Figure<StationSummary>(station => StationSearchPage.LargestPadRank(station)), filters: [SearchValues.One<StationSummary>("Largest pad", StationSearchPage.PadValue, "No pad reported")]),
         SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(StationSearchPage.Light(((StationSummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), right: true, local: LocalSort.Figure<StationSummary>(station => station.DistanceToArrival, SortDirection.Ascending)),
         SearchField("Updated", new TableColumn("Updated"), "Updated", row => Centered(Right(Mono(Day(((StationSummary)row).StockLastSeen), TypeScale.Small, ThemeManager.GreyKey))), right: true, byDefault: !headset, local: LocalSort.When<StationSummary>(station => station.StockLastSeen)),
-        SearchField("ControllingFaction", new TableColumn("ControllingFaction"), "Controlling faction", row => TableCells.Text(((StationSummary)row).ControllingFaction), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingFaction)),
-        SearchField("State", new TableColumn("State"), "State", row => TableCells.Text(((StationSummary)row).State), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.State)),
+        SearchField("ControllingFaction", new TableColumn("ControllingFaction"), "Controlling faction", row => TableCells.Text(((StationSummary)row).ControllingFaction), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingFaction), filters: [SearchValues.One<StationSummary>("Controlling faction", station => station.ControllingFaction, "No faction reported")]),
+        SearchField("State", new TableColumn("State"), "State", row => TableCells.Text(((StationSummary)row).State), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.State), filters: [SearchValues.One<StationSummary>("State", station => station.State, "No state reported")]),
         SearchField("Pads", new TableColumn("Pads"), "Pads", row => StationSearchPage.PadsCell((StationSummary)row), byDefault: false, local: LocalSort.Figure<StationSummary>(station => (station.SmallPads ?? 0) + (station.MediumPads ?? 0) + (station.LargePads ?? 0))),
-        SearchField("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, "Services", row => TableCells.List(((StationSummary)row).Services), byDefault: false, local: LocalSort.Text<StationSummary>(station => string.Join(", ", station.Services))),
-        SearchField("MaterialTrader", new TableColumn("MaterialTrader"), "Material trader", row => TableCells.Text(((StationSummary)row).TraderType), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TraderType)),
-        SearchField("TechnologyBroker", new TableColumn("TechnologyBroker"), "Technology broker", row => TableCells.Text(((StationSummary)row).TechnologyBroker), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TechnologyBroker)),
-        SearchField("Power", new TableColumn("Power"), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingPower)),
-        SearchField("PowerState", new TableColumn("PowerState"), "Power state", row => TableCells.Text(((StationSummary)row).PowerState), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.PowerState)),
+        SearchField("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, "Services", row => TableCells.List(((StationSummary)row).Services), byDefault: false, local: LocalSort.Text<StationSummary>(station => string.Join(", ", station.Services)), filters: [SearchValues.Many<StationSummary>("Services", station => station.Services, "No services reported")]),
+        SearchField("MaterialTrader", new TableColumn("MaterialTrader"), "Material trader", row => TableCells.Text(((StationSummary)row).TraderType), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TraderType), filters: [SearchValues.One<StationSummary>("Material trader", station => station.TraderType, "No material trader")]),
+        SearchField("TechnologyBroker", new TableColumn("TechnologyBroker"), "Technology broker", row => TableCells.Text(((StationSummary)row).TechnologyBroker), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TechnologyBroker), filters: [SearchValues.One<StationSummary>("Technology broker", station => station.TechnologyBroker, "No technology broker")]),
+        SearchField("Power", new TableColumn("Power"), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingPower), filters: [SearchValues.One<StationSummary>("Power", station => station.ControllingPower, "No Power reported")]),
+        SearchField("PowerState", new TableColumn("PowerState"), "Power state", row => TableCells.Text(((StationSummary)row).PowerState), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.PowerState), filters: [SearchValues.One<StationSummary>("Power state", station => station.PowerState, "No state reported")]),
     ];
 
     private static Control NameCell(StationSummary station)
@@ -375,9 +375,5 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         return ListRow.Dress(row);
     }
 
-    private static string LargestPad(StationSummary station) =>
-        station.LargePads > 0 || station.HasLargePad ? "Large"
-        : station.MediumPads > 0 ? "Medium"
-        : station.SmallPads > 0 ? "Small"
-        : Dash;
+    private static string LargestPad(StationSummary station) => StationSearchPage.PadValue(station) ?? Dash;
 }

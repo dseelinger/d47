@@ -5,8 +5,6 @@ D47.App.Controls.AudioPlayerDialog.Polling
 D47.App.Controls.AudioReadout.Polling
 D47.App.Controls.ChordPicker.Chord
 D47.App.Controls.ClampedText.FullText
-D47.App.Controls.ColumnFilter.Empty<TRow>(D47.App.Theming.ArrangedTable<TRow>, System.Collections.Generic.IReadOnlyList<TRow>, bool)
-D47.App.Controls.ColumnFilter.EmptyWords(System.Collections.Generic.IReadOnlyList<string>, bool)
 D47.App.Controls.CommsIndicator.Compact
 D47.App.Controls.CopyGlyph.GetCopies(Avalonia.Controls.Button)
 D47.App.Controls.FindDialog.Shown
@@ -76,8 +74,6 @@ D47.App.Panel.SystemSearchPage.Type(string, string)
 D47.App.Panel.TabGlyph.GetData(Avalonia.Controls.RadioButton)
 D47.App.Settings.SetupWizard.Started
 D47.App.Theming.ArrangedTable<TRow>.CanFilter
-D47.App.Theming.ArrangedTable<TRow>.ClearFilters()
-D47.App.Theming.ArrangedTable<TRow>.Shown(System.Collections.Generic.IReadOnlyList<TRow>)
 D47.App.Theming.ArrangedTable<TRow>.TickAll(string, int)
 D47.App.Theming.ArrangedTable<TRow>.UntickAll(string, int)
 D47.App.Theming.FieldMessage.GetText(Avalonia.Controls.TextBox)
@@ -87,10 +83,7 @@ D47.App.Theming.ListRow.GetSecondaryBrush(Avalonia.Controls.Control)
 D47.App.Theming.ListRow.SetNameBrush(Avalonia.Controls.Control, Avalonia.Media.IBrush)
 D47.App.Theming.ListRow.SetSecondaryBrush(Avalonia.Controls.Control, Avalonia.Media.IBrush)
 D47.App.Theming.RowFilter<TRow>.Any
-D47.App.Theming.RowFilter<TRow>.Block.Forget()
-D47.App.Theming.RowFilter<TRow>.Clear()
 D47.App.Theming.RowFilter<TRow>.SetAll(string, int, bool)
-D47.App.Theming.ValueList<TRow>.ValueList(string, System.Func<TRow, System.Collections.Generic.IReadOnlyList<string>>, string)
 D47.App.Voice.VoicePipeline.GameRunning
 D47.App.Voice.VoicePipeline.Held
 D47.Audio.FadeSampleProvider.Level

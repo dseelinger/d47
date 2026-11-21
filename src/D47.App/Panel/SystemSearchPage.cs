@@ -208,16 +208,16 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         var table = Arrange(TableId, HeadName, string.Empty, posting, () => Fields(headset));
 
-        return new PagedTable(SearchTableFields.Head(table), item => Row((SystemSummary)item, table));
+        return new PagedTable(ColumnHead(table), item => Row((SystemSummary)item, table));
     }
 
     /// <summary>Every field the table can show; Reported is not shown by default in the headset.</summary>
     private IReadOnlyList<TableField<object>> Fields(bool headset) =>
     [
-        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 120 }, "System", row => SystemCell((SystemSummary)row), "name", "Controlled by"),
+        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 120 }, "System", row => SystemCell((SystemSummary)row), "name", "Controlled by", filters: [SearchValues.One<SystemSummary>("Controlled by", system => system.ControllingFaction, "No faction reported")]),
         SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((SystemSummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
-        SearchField("Allegiance", new TableColumn("Allegiance"), "Allegiance", row => Centered(Pair(Value(((SystemSummary)row).Allegiance), Sub(((SystemSummary)row).Government))), "allegiance", "Government"),
-        SearchField("Economy", new TableColumn("Economy"), "Economy", row => Centered(Pair(Value(((SystemSummary)row).PrimaryEconomy), Sub(((SystemSummary)row).Security))), "economy", "Security"),
+        SearchField("Allegiance", new TableColumn("Allegiance"), "Allegiance", row => Centered(Pair(Value(((SystemSummary)row).Allegiance), Sub(((SystemSummary)row).Government))), "allegiance", "Government", filters: [SearchValues.One<SystemSummary>("Allegiance", system => system.Allegiance, "No allegiance reported"), SearchValues.One<SystemSummary>("Government", system => system.Government, "No government reported")]),
+        SearchField("Economy", new TableColumn("Economy"), "Economy", row => Centered(Pair(Value(((SystemSummary)row).PrimaryEconomy), Sub(((SystemSummary)row).Security))), "economy", "Security", filters: [SearchValues.One<SystemSummary>("Economy", system => system.PrimaryEconomy, "No economy reported"), SearchValues.One<SystemSummary>("Security", system => system.Security, "No security reported")]),
         SearchField(
             "Population",
             new TableColumn("Population"),
@@ -225,7 +225,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             row => Centered(Right(Mono(((SystemSummary)row).Population is { } people ? people.ToString("N0", CultureInfo.InvariantCulture) : Dash, TypeScale.Small, ThemeManager.WhiteKey))),
             "population",
             right: true),
-        SearchField("Power", new TableColumn("Power"), "Power", row => Centered(PowerCell((SystemSummary)row)), "power", "State"),
+        SearchField("Power", new TableColumn("Power"), "Power", row => Centered(PowerCell((SystemSummary)row)), "power", "State", filters: [SearchValues.Many<SystemSummary>("Power", PowersDrawn, "No Power reported"), SearchValues.One<SystemSummary>("State", system => system.PowerState, "No state reported")]),
         SearchField(
             "Reported",
             new TableColumn("Reported"),
@@ -234,9 +234,9 @@ public sealed class SystemSearchPage : GalaxySearchPage
             "updated",
             right: true,
             byDefault: !headset),
-        SearchField("Permit", new TableColumn("Permit"), "Permit", row => ((SystemSummary)row) is { KnownPermit: false } ? TableCells.Missing() : TableCells.Flag(((SystemSummary)row).NeedsPermit), byDefault: false, local: LocalSort.Flag<SystemSummary>(system => system.KnownPermit == false ? null : system.NeedsPermit)),
+        SearchField("Permit", new TableColumn("Permit"), "Permit", row => ((SystemSummary)row) is { KnownPermit: false } ? TableCells.Missing() : TableCells.Flag(((SystemSummary)row).NeedsPermit), byDefault: false, local: LocalSort.Flag<SystemSummary>(system => system.KnownPermit == false ? null : system.NeedsPermit), filters: [SearchValues.Flag<SystemSummary>("Permit", system => system.KnownPermit == false ? null : system.NeedsPermit, "Permit not known")]),
         SearchField("Stations", new TableColumn("Stations"), "Stations", row => TableCells.Number(((SystemSummary)row).StationCount), right: true, byDefault: false, local: LocalSort.Figure<SystemSummary>(system => system.StationCount)),
-        SearchField("AtWar", new TableColumn("AtWar"), "At war", row => TableCells.Flag(((SystemSummary)row).AtWar), byDefault: false, local: LocalSort.Flag<SystemSummary>(system => system.AtWar)),
+        SearchField("AtWar", new TableColumn("AtWar"), "At war", row => TableCells.Flag(((SystemSummary)row).AtWar), byDefault: false, local: LocalSort.Flag<SystemSummary>(system => system.AtWar), filters: [SearchValues.Flag<SystemSummary>("At war", system => system.AtWar, "Not known")]),
     ];
 
     private Control SystemCell(SystemSummary system)
@@ -337,6 +337,10 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
         return ListRow.Dress(row);
     }
+
+    /// <summary>The Powers the Power cell names: the controlling one, else those acquiring the system.</summary>
+    private static IEnumerable<string?> PowersDrawn(SystemSummary system) =>
+        system.ControllingPower is { } controlling ? [controlling] : system.Acquiring.Select(conflict => conflict.Power);
 
     private static StackPanel PowerCell(SystemSummary system)
     {

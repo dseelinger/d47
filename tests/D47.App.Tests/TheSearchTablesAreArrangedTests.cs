@@ -208,6 +208,25 @@ public sealed class TheSearchTablesAreArrangedTests
     }
 
     [AvaloniaTheory]
+    [MemberData(nameof(EveryTable))]
+    public void EachTableOffersAFilterWhoseDistanceColumnIsDisabled(string root, bool headset)
+    {
+        var table = Tables(headset).First(known => known.Root == root);
+        var world = new World();
+        world.Board.Post(table.Posting);
+
+        var (panel, window) = Shown(world, root, new ColumnArrangementMemory(Views(), headset), headset);
+
+        Press(panel, ColumnFilter.NameOf(table.Id, "Tile"));
+
+        var cells = panel.GetVisualDescendants().OfType<Button>().Where(button => button.Name?.Contains("Head.Filter.", StringComparison.Ordinal) == true).ToList();
+        Assert.False(cells.Single(cell => cell.Name!.EndsWith(".Filter.Distance", StringComparison.Ordinal)).IsEnabled);
+        Assert.Contains(cells, cell => cell.IsEnabled);
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
     [InlineData(false)]
     [InlineData(true)]
     public void AnAddedMovedAndRemovedColumnIsKeptWhenThePageOpensAgain(bool headset)

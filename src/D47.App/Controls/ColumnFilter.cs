@@ -230,10 +230,10 @@ public static class ColumnFilter
     public static Button HeadClear<TRow>(ArrangedTable<TRow> table) => Part(table.Id, "HeadClear", ClearText, table.TickEveryValue);
 
     /// <summary>
-    /// When the filter hides every row, one White line naming the filtered fields and a CLEAR FILTERS tile, drawn in place
-    /// of the rows; null otherwise.
+    /// When the filter hides every row, one White line naming the filtered fields and a CLEAR FILTERS tile, followed by
+    /// <paramref name="beside"/> when given, drawn in place of the rows; null otherwise.
     /// </summary>
-    public static Control? Empty<TRow>(ArrangedTable<TRow> table, IReadOnlyList<TRow> rows, bool search = false)
+    public static Control? Empty<TRow>(ArrangedTable<TRow> table, IReadOnlyList<TRow> rows, bool search = false, Control? beside = null)
     {
         if (rows.Count == 0 || table.Filter(rows).Count > 0)
         {
@@ -243,15 +243,18 @@ public static class ColumnFilter
         var line = Typeset.Text(EmptyWords(table.FilteredLabels, search), TypeScale.Body, ThemeManager.WhiteKey, wrap: true);
         line.Name = NameOf(table.Id, "Empty");
 
+        var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Children = { Part(table.Id, "EmptyClear", ClearText, table.TickEveryValue) } };
+
+        if (beside is not null)
+        {
+            tiles.Children.Add(beside);
+        }
+
         return new StackPanel
         {
             Spacing = Gap,
             Margin = new Thickness(0, Gap, 0, 0),
-            Children =
-            {
-                line,
-                new StackPanel { Orientation = Orientation.Horizontal, Children = { Part(table.Id, "EmptyClear", ClearText, table.TickEveryValue) } },
-            },
+            Children = { line, tiles },
         };
     }
 

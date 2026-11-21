@@ -298,26 +298,26 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         var table = Arrange(TableId, HeadName, string.Empty, posting, () => Fields(headset));
 
-        return new PagedTable(SearchTableFields.Head(table), item => Row((StationSummary)item, table));
+        return new PagedTable(ColumnHead(table), item => Row((StationSummary)item, table));
     }
 
     /// <summary>Every field the table can show; Updated is not shown by default in the headset.</summary>
     private IReadOnlyList<TableField<object>> Fields(bool headset) =>
     [
-        SearchField("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, "Station", row => NameCell((StationSummary)row), "name", "Type"),
-        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((StationSummary)row), "system", "Controlled by"),
+        SearchField("Station", new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, "Station", row => NameCell((StationSummary)row), "name", "Type", filters: [SearchValues.One<StationSummary>("Type", station => station.Type, "No type reported")]),
+        SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((StationSummary)row), "system", "Controlled by", filters: [SearchValues.One<StationSummary>("System", station => station.SystemName, "No system reported"), SearchValues.One<StationSummary>("Controlled by", ControlledBy, "No faction reported")]),
         SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((StationSummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
-        SearchField("Pad", new TableColumn("Pad"), "Pad", row => Centered(Value(LargestPad((StationSummary)row))), second: "Largest", local: LocalSort.Figure<StationSummary>(station => LargestPadRank(station))),
+        SearchField("Pad", new TableColumn("Pad"), "Pad", row => Centered(Value(LargestPad((StationSummary)row))), second: "Largest", local: LocalSort.Figure<StationSummary>(station => LargestPadRank(station)), filters: [SearchValues.One<StationSummary>("Largest pad", PadValue, "No pad reported")]),
         SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(Light(((StationSummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), "from_star", right: true),
-        SearchField("AskedFor", new TableColumn("AskedFor", ColumnFit.Fill) { Min = 100 }, "Asked for", row => Centered(Wrapped(string.Join(", ", Asked((StationSummary)row)))), local: LocalSort.Text<StationSummary>(station => string.Join(", ", Asked(station)))),
+        SearchField("AskedFor", new TableColumn("AskedFor", ColumnFit.Fill) { Min = 100 }, "Asked for", row => Centered(Wrapped(string.Join(", ", Asked((StationSummary)row)))), local: LocalSort.Text<StationSummary>(station => string.Join(", ", Asked(station))), filters: [SearchValues.Many<StationSummary>("Asked for", station => AskedFor(station, Posted.Arguments), "None asked for")]),
         SearchField("Updated", new TableColumn("Updated"), "Updated", row => Centered(Right(Mono(Day(((StationSummary)row).UpdatedAt), TypeScale.Small, ThemeManager.GreyKey))), "updated", right: true, byDefault: !headset),
         SearchField("Pads", new TableColumn("Pads"), "Pads", row => PadsCell((StationSummary)row), byDefault: false, local: LocalSort.Figure<StationSummary>(station => (station.SmallPads ?? 0) + (station.MediumPads ?? 0) + (station.LargePads ?? 0))),
-        SearchField("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, "Services", row => TableCells.List(((StationSummary)row).Services), byDefault: false, local: LocalSort.Text<StationSummary>(station => string.Join(", ", station.Services))),
-        SearchField("MaterialTrader", new TableColumn("MaterialTrader"), "Material trader", row => TableCells.Text(((StationSummary)row).TraderType), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TraderType)),
-        SearchField("TechnologyBroker", new TableColumn("TechnologyBroker"), "Technology broker", row => TableCells.Text(((StationSummary)row).TechnologyBroker), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TechnologyBroker)),
+        SearchField("Services", new TableColumn("Services", ColumnFit.Fill) { Min = 140 }, "Services", row => TableCells.List(((StationSummary)row).Services), byDefault: false, local: LocalSort.Text<StationSummary>(station => string.Join(", ", station.Services)), filters: [SearchValues.Many<StationSummary>("Services", station => station.Services, "No services reported")]),
+        SearchField("MaterialTrader", new TableColumn("MaterialTrader"), "Material trader", row => TableCells.Text(((StationSummary)row).TraderType), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TraderType), filters: [SearchValues.One<StationSummary>("Material trader", station => station.TraderType, "No material trader")]),
+        SearchField("TechnologyBroker", new TableColumn("TechnologyBroker"), "Technology broker", row => TableCells.Text(((StationSummary)row).TechnologyBroker), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TechnologyBroker), filters: [SearchValues.One<StationSummary>("Technology broker", station => station.TechnologyBroker, "No technology broker")]),
         SearchField("StockSeen", new TableColumn("StockSeen"), "Stock seen", row => Centered(Right(Mono(Day(((StationSummary)row).StockLastSeen), TypeScale.Small, ThemeManager.GreyKey))), right: true, byDefault: false, local: LocalSort.When<StationSummary>(station => station.StockLastSeen)),
-        SearchField("Power", new TableColumn("Power"), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingPower)),
-        SearchField("PowerState", new TableColumn("PowerState"), "Power state", row => TableCells.Text(((StationSummary)row).PowerState), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.PowerState)),
+        SearchField("Power", new TableColumn("Power"), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingPower), filters: [SearchValues.One<StationSummary>("Power", station => station.ControllingPower, "No Power reported")]),
+        SearchField("PowerState", new TableColumn("PowerState"), "Power state", row => TableCells.Text(((StationSummary)row).PowerState), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.PowerState), filters: [SearchValues.One<StationSummary>("Power state", station => station.PowerState, "No state reported")]),
     ];
 
     private IReadOnlyList<string> Asked(StationSummary station)
@@ -334,6 +334,10 @@ public sealed class StationSearchPage : GalaxySearchPage
 
         return Centered(Pair(name, Sub(station.Type)));
     }
+
+    /// <summary>Who the System cell's second line names: a stronghold carrier's Power, else the controlling faction.</summary>
+    internal static string? ControlledBy(StationSummary station) =>
+        station.IsStrongholdCarrier && station.ControllingPower is { Length: > 0 } carrierPower ? carrierPower : station.ControllingFaction;
 
     private Control SystemCell(StationSummary station)
     {
@@ -492,11 +496,14 @@ public sealed class StationSearchPage : GalaxySearchPage
         : station.SmallPads > 0 ? 1
         : null;
 
-    private static string LargestPad(StationSummary station) =>
+    /// <summary>"Large", "Medium" or "Small", the largest pad the station is known to have; null for none known.</summary>
+    internal static string? PadValue(StationSummary station) =>
         station.LargePads > 0 || station.HasLargePad ? "Large"
         : station.MediumPads > 0 ? "Medium"
         : station.SmallPads > 0 ? "Small"
-        : Dash;
+        : null;
+
+    private static string LargestPad(StationSummary station) => PadValue(station) ?? Dash;
 
     private static TextBlock Wrapped(string text)
     {

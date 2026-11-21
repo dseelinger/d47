@@ -351,7 +351,7 @@ public sealed class BodySearchPage : GalaxySearchPage
                 ThemeManager.GreyKey));
         }
 
-        head.Children.Add(SearchTableFields.Head(table));
+        head.Children.Add(ColumnHead(table));
 
         return new PagedTable(head, item => Row((BodySummary)item, table));
     }
@@ -365,11 +365,11 @@ public sealed class BodySearchPage : GalaxySearchPage
         List<TableField<object>> fields =
         [
             SearchField("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 120 }, "Body", row => Centered(Chrome(((BodySummary)row).Name, TypeScale.Secondary, ThemeManager.AKey)), "name"),
-            SearchField("Type", new TableColumn("Type", ColumnFit.Fill) { Min = 120 }, "Type", row => TableCells.Text(((BodySummary)row).Subtype), local: LocalSort.Text<BodySummary>(body => body.Subtype)),
-            SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((BodySummary)row), "system"),
+            SearchField("Type", new TableColumn("Type", ColumnFit.Fill) { Min = 120 }, "Type", row => TableCells.Text(((BodySummary)row).Subtype), local: LocalSort.Text<BodySummary>(body => body.Subtype), filters: [SearchValues.One<BodySummary>("Type", body => body.Subtype, "No type reported")]),
+            SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((BodySummary)row), "system", filters: [SearchValues.One<BodySummary>("System", body => body.SystemName, "No system reported")]),
             SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((BodySummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
             SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(StationSearchPage.Light(((BodySummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), "from_star", right: true),
-            SearchField("Landable", new TableColumn("Landable"), "Landable", row => Centered(Value(((BodySummary)row).IsLandable ? "Yes" : "No")), local: LocalSort.Flag<BodySummary>(body => body.IsLandable)),
+            SearchField("Landable", new TableColumn("Landable"), "Landable", row => Centered(Value(((BodySummary)row).IsLandable ? "Yes" : "No")), local: LocalSort.Flag<BodySummary>(body => body.IsLandable), filters: [SearchValues.Flag<BodySummary>("Landable", body => body.IsLandable, "Not known")]),
         ];
 
         if (material is not null)
@@ -400,11 +400,11 @@ public sealed class BodySearchPage : GalaxySearchPage
                 "gravity",
                 right: true,
                 byDefault: !headset),
-            SearchField("Atmosphere", new TableColumn("Atmosphere"), "Atmosphere", row => TableCells.Text(((BodySummary)row).Atmosphere), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.Atmosphere)),
+            SearchField("Atmosphere", new TableColumn("Atmosphere"), "Atmosphere", row => TableCells.Text(((BodySummary)row).Atmosphere), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.Atmosphere), filters: [SearchValues.One<BodySummary>("Atmosphere", body => body.Atmosphere, "No atmosphere reported")]),
             SearchField("MappingValue", new TableColumn("MappingValue"), "Mapping value", row => TableCells.Number(((BodySummary)row).MappingValue), right: true, byDefault: false, local: LocalSort.Figure<BodySummary>(body => body.MappingValue)),
-            SearchField("Reserves", new TableColumn("Reserves"), "Reserves", row => TableCells.Text(((BodySummary)row).ReserveLevel), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.ReserveLevel)),
-            SearchField("Rings", new TableColumn("Rings", ColumnFit.Fill) { Min = 120 }, "Rings", row => TableCells.List([.. ((BodySummary)row).Rings.Select(ring => ring.Name)]), byDefault: false, local: LocalSort.Text<BodySummary>(body => string.Join(", ", body.Rings.Select(ring => ring.Name)))),
-            SearchField("Signals", new TableColumn("Signals", ColumnFit.Fill) { Min = 120 }, "Signals", row => TableCells.List([.. ((BodySummary)row).Signals.Select(signal => $"{signal.Kind} {signal.Count.ToString(CultureInfo.InvariantCulture)}")]), byDefault: false, local: LocalSort.Text<BodySummary>(body => string.Join(", ", body.Signals.Select(signal => signal.Kind)))),
+            SearchField("Reserves", new TableColumn("Reserves"), "Reserves", row => TableCells.Text(((BodySummary)row).ReserveLevel), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.ReserveLevel), filters: [SearchValues.One<BodySummary>("Reserves", body => body.ReserveLevel, "No reserves reported")]),
+            SearchField("Rings", new TableColumn("Rings", ColumnFit.Fill) { Min = 120 }, "Rings", row => TableCells.List([.. ((BodySummary)row).Rings.Select(ring => ring.Name)]), byDefault: false, local: LocalSort.Text<BodySummary>(body => string.Join(", ", body.Rings.Select(ring => ring.Name))), filters: [SearchValues.Many<BodySummary>("Rings", body => body.Rings.Select(ring => ring.Type ?? RingTypeNotKnown), "No rings")]),
+            SearchField("Signals", new TableColumn("Signals", ColumnFit.Fill) { Min = 120 }, "Signals", row => TableCells.List([.. ((BodySummary)row).Signals.Select(signal => $"{signal.Kind} {signal.Count.ToString(CultureInfo.InvariantCulture)}")]), byDefault: false, local: LocalSort.Text<BodySummary>(body => string.Join(", ", body.Signals.Select(signal => signal.Kind))), filters: [SearchValues.Many<BodySummary>("Signals", body => body.Signals.Select(signal => signal.Kind), "No signals")]),
             SearchField(
                 "SurfaceTemperature",
                 new TableColumn("SurfaceTemperature"),
@@ -416,13 +416,16 @@ public sealed class BodySearchPage : GalaxySearchPage
                 right: true,
                 byDefault: false,
                 local: LocalSort.Figure<BodySummary>(body => body.SurfaceTemperature)),
-            SearchField("Terraforming", new TableColumn("Terraforming"), "Terraforming", row => TableCells.Text(((BodySummary)row).TerraformingState), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.TerraformingState)),
-            SearchField("TidallyLocked", new TableColumn("TidallyLocked"), "Tidally locked", row => TableCells.Flag(((BodySummary)row).IsTidallyLocked), byDefault: false, local: LocalSort.Flag<BodySummary>(body => body.IsTidallyLocked)),
-            SearchField("Volcanism", new TableColumn("Volcanism"), "Volcanism", row => TableCells.Text(((BodySummary)row).Volcanism), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.Volcanism)),
+            SearchField("Terraforming", new TableColumn("Terraforming"), "Terraforming", row => TableCells.Text(((BodySummary)row).TerraformingState), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.TerraformingState), filters: [SearchValues.One<BodySummary>("Terraforming", body => body.TerraformingState, "No terraforming reported")]),
+            SearchField("TidallyLocked", new TableColumn("TidallyLocked"), "Tidally locked", row => TableCells.Flag(((BodySummary)row).IsTidallyLocked), byDefault: false, local: LocalSort.Flag<BodySummary>(body => body.IsTidallyLocked), filters: [SearchValues.Flag<BodySummary>("Tidally locked", body => body.IsTidallyLocked, "Not known")]),
+            SearchField("Volcanism", new TableColumn("Volcanism"), "Volcanism", row => TableCells.Text(((BodySummary)row).Volcanism), byDefault: false, local: LocalSort.Text<BodySummary>(body => body.Volcanism), filters: [SearchValues.One<BodySummary>("Volcanism", body => body.Volcanism, "No volcanism reported")]),
         ]);
 
         return fields;
     }
+
+    /// <summary>The Rings filter's entry for a ring whose type is not reported.</summary>
+    private const string RingTypeNotKnown = "Type not known";
 
     private Control SystemCell(BodySummary body)
     {

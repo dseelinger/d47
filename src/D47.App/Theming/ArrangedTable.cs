@@ -293,8 +293,11 @@ public sealed class ArrangedTable<TRow>
 
     public void UntickAll(string key, int block) => Filtered(_filter.SetAll(key, block, false));
 
-    /// <summary>Ticks every value of every block and forgets the values seen, for a new answer.</summary>
-    public void ClearFilters() => Filtered(_filter.Clear());
+    /// <summary>
+    /// Ticks every value of every block and forgets the values seen, for a new answer. Raises no change: the caller is
+    /// drawing the new answer.
+    /// </summary>
+    public void ClearFilters() => _filter.Clear();
 
     /// <summary>Opens the filter bar, or closes it with nothing chosen. Opening it closes the COLUMNS bar.</summary>
     public void ToggleFiltering()

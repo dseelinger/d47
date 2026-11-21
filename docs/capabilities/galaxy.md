@@ -545,7 +545,9 @@ search. `order` is `asc` or `desc`; left out, it is the field's usual direction,
 for `population` and `updated`. `search_stations` and `find_body` take the same two arguments
 with their own fields. On the Search tab a column the service cannot sort on still sorts: it
 sorts the rows already fetched, the head says only those rows are sorted, and the page
-remembers the sort for its next search.
+remembers the sort for its next search. FILTER on the Search tab hides rows already fetched by
+the values of a column, applies to each later page as it arrives, sends nothing to the service,
+and leaves the spoken answer unchanged. A new search clears it.
 
 A `faction` or `controlling_faction` value is matched against the minor factions the Commander's
 journals name, and sent in the journal's spelling when one matches. The service needs the exact
