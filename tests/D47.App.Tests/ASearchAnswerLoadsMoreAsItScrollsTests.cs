@@ -350,7 +350,7 @@ public sealed class ASearchAnswerLoadsMoreAsItScrollsTests
     }
 
     [AvaloniaFact]
-    public unsafe void TheHeadsetAnswerPagesTheSameWay()
+    public unsafe void TheHeadsetAnswerFetchesAPageOnlyWhenFetchNextIsPressed()
     {
         var world = new World { PageSize = 3, Total = 6 };
         world.Settings.Apply(VrCapability.ModeKey, "full", SettingsCaller.Panel);
@@ -374,6 +374,22 @@ public sealed class ASearchAnswerLoadsMoreAsItScrollsTests
                 headset.Draw((IntPtr)pixels, width * 4);
                 Settle();
                 Page(view).Tick();
+                Settle();
+            }
+        }
+
+        Assert.Empty(world.Asked);
+        Assert.Equal(3, DrawnRows(view).Count);
+
+        view.GetVisualDescendants().OfType<Button>().Single(button => button.Name == GalaxySearchPage.FetchNextName)
+            .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle();
+
+        fixed (byte* pixels = buffer)
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                headset.Draw((IntPtr)pixels, width * 4);
                 Settle();
             }
         }

@@ -443,6 +443,9 @@ form. Picking one fills the form and runs it. The button reads "Choose a saved s
 one, then shows the search you picked until you change a field, press CLEAR, or another search
 arrives. While one of your own searches is shown, **FORGET THIS SEARCH** sits under the dropdown.
 
+The desktop scrolls every row of a search answer; the headset shows 25 to a page with **PREVIOUS** and
+**NEXT**, and **FETCH THE NEXT 25** asks the service for more.
+
 ### The Faction search page {#faction-page}
 
 **Faction** sits between Systems and Stations on the Search tab. It shows where one minor faction is

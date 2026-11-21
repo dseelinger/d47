@@ -394,7 +394,7 @@ public sealed class ASearchAnswerHidesRowsByTheValuesTickedTests
 
         var shown = 25 - Economy(1, 25).Count;
         Assert.Equal(shown, Names(panel).Count);
-        Assert.Equal($"{shown} shown · 25 fetched", Text(panel, GalaxySearchPage.FilterEndName));
+        Assert.Equal($"1–{shown} of {shown} shown · 25 fetched", Text(panel, GalaxySearchPage.FilterEndName));
 
         window.Width = 1024;
         window.Height = 640;

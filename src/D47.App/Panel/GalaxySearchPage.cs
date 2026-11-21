@@ -114,6 +114,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>The line that ends the rows while the filter hides some of them.</summary>
     public const string FilterEndName = "FilterEnd";
 
+    /// <summary>The headset pager's tile that shows the page before.</summary>
+    public const string PreviousPageName = "SearchPreviousPage";
+
+    /// <summary>The headset pager's tile that shows the page after.</summary>
+    public const string NextPageName = "SearchNextPage";
+
     /// <summary>The answer's rows, drawn a screen at a time.</summary>
     public const string RowsName = "SearchRows";
 
@@ -164,6 +170,8 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private GalaxySearchPosting? _fromHistory;
     private AvaloniaList<object>? _rows;
     private int _shownRows;
+    private int _page;
+    private IReadOnlyDictionary<string, string>? _pageFor;
     private ScrollViewer? _scroll;
     private TextBlock? _count;
     private GalaxySearchPosting? _drawn;
@@ -344,6 +352,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private void OnSorted(ArrangedTable<object> table)
     {
         var wasLocal = _localShown;
+        _page = 0;
 
         if (table.SortedBy is { } sort && !SortFields.IsRemote(sort.Key))
         {
@@ -758,7 +767,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             SortFields.Clear();
 
             var table = new ArrangedTable<object>(id, fields(), ColumnArrangements, _headset ? null : ColumnWidths, 12, headName: headName);
-            table.Changed += Draw;
+            table.Changed += () =>
+            {
+                _page = 0;
+                Draw();
+            };
             table.Sorted += () => OnSorted(table);
             _arranged = table;
             _arrangedShape = shape;
@@ -914,6 +927,11 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             var table = _arranged;
             table?.Observe(Rows(last));
 
+            if (_headset && RowsShown(last).Count is var arrived && arrived > _shownRows)
+            {
+                _page = _shownRows / FactionModel.PageSize;
+            }
+
             if (table is { Filtering: true })
             {
                 Draw();
@@ -924,10 +942,10 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             var at = _rows.Count > 0 && _rows[^1] is PageLoading or PageFailed or FilterEnd ? _rows.Count - 1 : _rows.Count;
             _drawn = last;
 
-            if (LocalShownFor(last) || table is { FilteredLabels.Count: > 0 })
+            if (_headset || LocalShownFor(last) || table is { FilteredLabels.Count: > 0 })
             {
                 _rows.Clear();
-                _rows.AddRange(all);
+                _rows.AddRange(Slice(all));
                 ShowTail();
                 ShowHeadWords(last);
             }
@@ -967,7 +985,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             return;
         }
 
-        if (_rows.Count > 0 && _rows[^1] is PageLoading or PageFailed or FilterEnd)
+        while (_rows.Count > 0 && _rows[^1] is PageLoading or PageFailed or FilterEnd)
         {
             _rows.RemoveAt(_rows.Count - 1);
         }
@@ -980,10 +998,55 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         {
             _rows.Add(failed);
         }
-        else if (_drawn is { } drawn && _arranged is { } table && table.Hidden(Rows(drawn)) is > 0 and var hidden)
+
+        if (_drawn is not { } drawn)
+        {
+            return;
+        }
+
+        var hidden = _arranged is { } arranged ? arranged.Hidden(Rows(drawn)) : 0;
+
+        if (_headset)
+        {
+            var shown = RowsShown(drawn).Count;
+
+            if (hidden > 0 || shown > FactionModel.PageSize || CanFetchNext())
+            {
+                _rows.Add(new FilterEnd(Count(drawn), hidden, CanFetchNext()));
+            }
+        }
+        else if (_nextPage is null && _pageFailed is null && hidden > 0)
         {
             _rows.Add(new FilterEnd(Count(drawn), hidden, CanFetchNext()));
         }
+    }
+
+    /// <summary>The rows of the page the headset shows, within the pages <paramref name="all"/> fill; every row on the desktop.</summary>
+    private IReadOnlyList<object> Slice(IReadOnlyList<object> all)
+    {
+        if (!_headset)
+        {
+            return all;
+        }
+
+        _page = FactionModel.ClampPage(_page, all.Count);
+
+        return [.. all.Skip(_page * FactionModel.PageSize).Take(FactionModel.PageSize)];
+    }
+
+    /// <summary>Shows the page <see cref="_page"/> of the rows fetched, fetching nothing.</summary>
+    private void ShowPage(int page)
+    {
+        if (_rows is null || _drawn is not { } drawn)
+        {
+            return;
+        }
+
+        _page = page;
+        _rows.Clear();
+        _rows.AddRange(Slice(RowsShown(drawn)));
+        ShowTail();
+        _scroll?.ScrollToHome();
     }
 
     /// <summary>The next page of the answer drawn can be fetched now: the service has more and no fetch is under way.</summary>
@@ -1048,6 +1111,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             || _pageFailed is not null
             || _running is not null
             || _fromHistory is not null
+            || _headset
             || View != GalaxySearchView.Answer
             || _rows is not { Count: > 0 } rows
             || _showingAnswer is not true
@@ -1460,6 +1524,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         _drawn = null;
         _shownRows = 0;
 
+        if (last is not null && !ReferenceEquals(_pageFor, last.Arguments))
+        {
+            _page = 0;
+            _pageFor = last.Arguments;
+        }
+
         var block = new StackPanel { Spacing = 14 };
 
         switch (View)
@@ -1559,7 +1629,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     private Grid RowsBelow(StackPanel head, PagedTable paged, GalaxySearchPosting posting, TableLayout? sideways)
     {
         var rows = RowsShown(posting);
-        _rows = [.. rows];
+        _rows = [.. Slice(rows)];
         _shownRows = rows.Count;
         _drawn = posting;
         ShowTail();
@@ -1589,7 +1659,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     }
 
     /// <summary>
-    /// "Rows 1–25 fetched · 20 hidden by the filter", or in the headset "5 shown · 25 fetched", with FETCH THE NEXT 25
+    /// "Rows 1–25 fetched · 20 hidden by the filter", or in the headset the pager row, with FETCH THE NEXT 25
     /// while the service has more; when every row is hidden, the line naming the filtered fields with CLEAR FILTERS.
     /// </summary>
     private Control FilterEndRow(FilterEnd end)
@@ -1614,9 +1684,12 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             return empty;
         }
 
-        var text = _headset
-            ? $"{(end.Fetched - end.Hidden).ToString(CultureInfo.InvariantCulture)} shown · {end.Fetched.ToString(CultureInfo.InvariantCulture)} fetched"
-            : $"Rows 1–{end.Fetched.ToString(CultureInfo.InvariantCulture)} fetched · {end.Hidden.ToString(CultureInfo.InvariantCulture)} hidden by the filter";
+        if (_headset)
+        {
+            return PagerRow(end, fetch);
+        }
+
+        var text = $"Rows 1–{end.Fetched.ToString(CultureInfo.InvariantCulture)} fetched · {end.Hidden.ToString(CultureInfo.InvariantCulture)} hidden by the filter";
         var line = Typeset.Mono(text, TypeScale.Small, ThemeManager.GreyKey, vertical: VerticalAlignment.Center);
         line.Name = FilterEndName;
 
@@ -1627,6 +1700,48 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             Grid.SetColumn(fetch, 1);
             grid.Children.Add(fetch);
         }
+
+        return grid;
+    }
+
+    /// <summary>The headset's pager: the readout, FETCH THE NEXT 25 while the service has more, then PREVIOUS and NEXT.</summary>
+    private Grid PagerRow(FilterEnd end, Button? fetch)
+    {
+        var shown = end.Fetched - end.Hidden;
+        var readout = FactionModel.PageReadout(_page, shown);
+
+        if (end.Hidden > 0)
+        {
+            readout += $" shown · {end.Fetched.ToString(CultureInfo.InvariantCulture)} fetched";
+        }
+
+        var line = Typeset.Mono(readout, TypeScale.Small, ThemeManager.GreyKey, vertical: VerticalAlignment.Center);
+        line.Name = FilterEndName;
+
+        var previous = new Button { Name = PreviousPageName, Content = "◄ PREVIOUS", Height = TypeScale.MinimumTarget, IsEnabled = _page > 0 };
+        var next = new Button
+        {
+            Name = NextPageName,
+            Content = "NEXT ►",
+            Height = TypeScale.MinimumTarget,
+            IsEnabled = FactionModel.ClampPage(_page + 1, shown) > _page,
+        };
+        previous.Click += (_, _) => ShowPage(_page - 1);
+        next.Click += (_, _) => ShowPage(_page + 1);
+
+        var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
+
+        if (fetch is not null)
+        {
+            tiles.Children.Add(fetch);
+        }
+
+        tiles.Children.Add(previous);
+        tiles.Children.Add(next);
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 12, MinHeight = TypeScale.MinimumTarget, Children = { line } };
+        Grid.SetColumn(tiles, 1);
+        grid.Children.Add(tiles);
 
         return grid;
     }
