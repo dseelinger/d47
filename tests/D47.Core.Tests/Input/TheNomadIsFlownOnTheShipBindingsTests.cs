@@ -71,6 +71,49 @@ public class TheNomadIsFlownOnTheShipBindingsTests
         Assert.Equal(ControlContext.Srv, After(reader, "\"event\":\"Embark\",\"SRV\":true,\"ID\":9"));
     }
 
+    [Fact]
+    public void ANomadBoardedAfterLoadingIsKnownByItsFirstLiftoff()
+    {
+        var reader = Reader();
+        After(reader, "\"event\":\"LoadGame\",\"Ship\":\"ExplorationSuit_Class1\"");
+
+        Assert.Equal(ControlContext.Srv, After(reader, "\"event\":\"Embark\",\"SRV\":true,\"ID\":1"));
+        Assert.Equal(ControlContext.Nomad, After(reader, "\"event\":\"Liftoff\",\"PlayerControlled\":true"));
+        Assert.Equal(ControlContext.OnFoot, After(reader, "\"event\":\"Disembark\",\"SRV\":true,\"ID\":1", onFoot: true));
+        Assert.Equal(ControlContext.Nomad, After(reader, "\"event\":\"Embark\",\"SRV\":true,\"ID\":1"));
+    }
+
+    [Fact]
+    public void ANomadFoundByTouchdownIsKnownToo()
+    {
+        var reader = Reader();
+        After(reader, "\"event\":\"LoadGame\"");
+        After(reader, "\"event\":\"Embark\",\"SRV\":true,\"ID\":1");
+
+        Assert.Equal(ControlContext.Nomad, After(reader, "\"event\":\"Touchdown\",\"PlayerControlled\":true"));
+    }
+
+    [Theory]
+    [InlineData("Liftoff")]
+    [InlineData("Touchdown")]
+    public void TheShipLandingOrLeavingDoesNotMakeAnSrvTheNomad(string kind)
+    {
+        var reader = Reader();
+        After(reader, "\"event\":\"LaunchSRV\",\"SRVType\":\"testbuggy\",\"ID\":3,\"PlayerControlled\":true");
+
+        Assert.Equal(ControlContext.Srv, After(reader, "\"event\":\"" + kind + "\",\"PlayerControlled\":false"));
+    }
+
+    [Fact]
+    public void AFlightInTheShipDoesNotMakeTheNextSrvTheNomad()
+    {
+        var reader = Reader();
+        After(reader, "\"event\":\"LoadGame\"");
+        After(reader, "\"event\":\"Liftoff\",\"PlayerControlled\":true");
+
+        Assert.Equal(ControlContext.Srv, After(reader, "\"event\":\"LaunchSRV\",\"SRVType\":\"testbuggy\",\"ID\":3,\"PlayerControlled\":true"));
+    }
+
     [Theory]
     [InlineData("LoadGame")]
     [InlineData("Died")]

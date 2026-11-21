@@ -18,6 +18,8 @@ Added: The Codex catalogue, region and Possible firsts tables, Combat stats, Cre
 
 Added: Each Search answer, System, Station, Body, Outfitting, Signal and Rare goods, has a FILTER tile beside COLUMNS. It opens a bar that lists the values each column holds in the rows fetched, with a count for each; untick a value to hide the rows that have it. A list column such as Services, Rings or Signals lists its items, and number, distance and date columns are not filtered. The head says "these 18 of 25, filtered by Economy and Power" with CLEAR FILTERS, and a later page is filtered as it arrives. While rows are hidden, the next page is fetched only when you press FETCH THE NEXT 25 or scroll to the end of a list that fills the panel. The filter sends nothing to the service, leaves the spoken answer unchanged, and is cleared by a new search.
 
+Fixed: D47 knows you are in the Nomad when you board one that was already out, such as after loading the game beside it. It used to take it for an SRV until you launched the Nomad again, so a HOTAS switch for the landing gear pressed nothing. D47 now knows from the Nomad's first liftoff or touchdown.
+
 Fixed: In the headset, a Search answer shows 25 rows to a page, with a readout such as "1–25 of 50", PREVIOUS and NEXT, and FETCH THE NEXT 25 while the service has more. Scrolling no longer fetches a page there. A new search, sort or filter returns to the first page. The desktop still scrolls every row.
 
 Fixed: In the Market results, the station name, its brackets and the system link are on one line. The system link used to sit higher than the station name beside it.
