@@ -189,5 +189,5 @@ public class TheHeadsetAddsOnlyColumnsThatFitTests
         window.Close();
     }
 
-    private static string[] Keys(ArrangedTable<string> table) => [.. table.Shown.Select(field => field.Key)];
+    private static string[] Keys(ArrangedTable<string> table) => [.. table.ShownFields.Select(field => field.Key)];
 }

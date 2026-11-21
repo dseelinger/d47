@@ -250,7 +250,7 @@ public class TablesAreBuiltFromOneListOfFieldsTests
         var table = new ArrangedTable<Line>("Lines", LineFields, memory, null);
 
         Assert.Equal(["Pick", "Market", "Gold", "Silver", "Name", "Go"], Keys(table.Header()));
-        Assert.Equal(["Pick", "Market", "Name", "Go"], table.Shown.Select(field => field.Key));
+        Assert.Equal(["Pick", "Market", "Name", "Go"], table.ShownFields.Select(field => field.Key));
 
         memory.Remember("Lines", ["Name", "Size", "Market"]);
         table.Refresh();

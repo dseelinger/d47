@@ -105,7 +105,7 @@ public sealed class EveryTableColumnSortsAndTheSortIsKeptTests
             null,
             null);
 
-        Assert.Equal(2, table.Shown.Count);
+        Assert.Equal(2, table.ShownFields.Count);
     }
 
     [AvaloniaFact]

@@ -73,12 +73,54 @@ D47.App.Panel.SystemSearchPage.TextField(string)
 D47.App.Panel.SystemSearchPage.Type(string, string)
 D47.App.Panel.TabGlyph.GetData(Avalonia.Controls.RadioButton)
 D47.App.Settings.SetupWizard.Started
+D47.App.Theming.ArrangedTable<TRow>.CanFilter
+D47.App.Theming.ArrangedTable<TRow>.ChooseFilter(string)
+D47.App.Theming.ArrangedTable<TRow>.ClearFilters()
+D47.App.Theming.ArrangedTable<TRow>.Filter(System.Collections.Generic.IReadOnlyList<TRow>)
+D47.App.Theming.ArrangedTable<TRow>.FilterBlocks
+D47.App.Theming.ArrangedTable<TRow>.FilterChosen
+D47.App.Theming.ArrangedTable<TRow>.Filtered(bool)
+D47.App.Theming.ArrangedTable<TRow>.FilteredLabels
+D47.App.Theming.ArrangedTable<TRow>.Filtering
+D47.App.Theming.ArrangedTable<TRow>.Hidden(System.Collections.Generic.IReadOnlyList<TRow>)
+D47.App.Theming.ArrangedTable<TRow>.Many(string)
+D47.App.Theming.ArrangedTable<TRow>.Observe(System.Collections.Generic.IReadOnlyList<TRow>)
+D47.App.Theming.ArrangedTable<TRow>.Shown(System.Collections.Generic.IReadOnlyList<TRow>)
+D47.App.Theming.ArrangedTable<TRow>.Tick(string, int, string)
+D47.App.Theming.ArrangedTable<TRow>.TickAll(string, int)
+D47.App.Theming.ArrangedTable<TRow>.ToggleFiltering()
+D47.App.Theming.ArrangedTable<TRow>.Untick(string, int, string)
+D47.App.Theming.ArrangedTable<TRow>.UntickAll(string, int)
 D47.App.Theming.FieldMessage.GetText(Avalonia.Controls.TextBox)
+D47.App.Theming.FilterBlock
+D47.App.Theming.FilterValue
 D47.App.Theming.GlyphLabel.SetFollows(Avalonia.Controls.Button, bool)
 D47.App.Theming.ListRow.GetNameBrush(Avalonia.Controls.Control)
 D47.App.Theming.ListRow.GetSecondaryBrush(Avalonia.Controls.Control)
 D47.App.Theming.ListRow.SetNameBrush(Avalonia.Controls.Control, Avalonia.Media.IBrush)
 D47.App.Theming.ListRow.SetSecondaryBrush(Avalonia.Controls.Control, Avalonia.Media.IBrush)
+D47.App.Theming.RowFilter<TRow>.Any
+D47.App.Theming.RowFilter<TRow>.Block.FieldKey
+D47.App.Theming.RowFilter<TRow>.Block.FieldLabel
+D47.App.Theming.RowFilter<TRow>.Block.Forget()
+D47.App.Theming.RowFilter<TRow>.Block.Index
+D47.App.Theming.RowFilter<TRow>.Block.Lets(TRow)
+D47.App.Theming.RowFilter<TRow>.Block.Listed
+D47.App.Theming.RowFilter<TRow>.Block.Observe(System.Collections.Generic.IReadOnlyList<TRow>)
+D47.App.Theming.RowFilter<TRow>.Block.Set(string, bool)
+D47.App.Theming.RowFilter<TRow>.Block.SetAll(bool)
+D47.App.Theming.RowFilter<TRow>.Block.Unticked
+D47.App.Theming.RowFilter<TRow>.Block.View()
+D47.App.Theming.RowFilter<TRow>.Blocks
+D47.App.Theming.RowFilter<TRow>.Clear()
+D47.App.Theming.RowFilter<TRow>.Filter(System.Collections.Generic.IReadOnlyList<TRow>)
+D47.App.Theming.RowFilter<TRow>.FilteredLabels
+D47.App.Theming.RowFilter<TRow>.Find(string, int)
+D47.App.Theming.RowFilter<TRow>.Many(string)
+D47.App.Theming.RowFilter<TRow>.Observe(System.Collections.Generic.IReadOnlyList<TRow>)
+D47.App.Theming.RowFilter<TRow>.Set(string, int, string, bool)
+D47.App.Theming.RowFilter<TRow>.SetAll(string, int, bool)
+D47.App.Theming.ValueList<TRow>.ValueList(string, System.Func<TRow, System.Collections.Generic.IReadOnlyList<string>>, string)
 D47.App.Voice.VoicePipeline.GameRunning
 D47.App.Voice.VoicePipeline.Held
 D47.Audio.FadeSampleProvider.Level

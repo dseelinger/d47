@@ -38,6 +38,7 @@ public sealed class ArrangedTable<TRow>
     private SortHeader<TRow> _head;
     private readonly Dictionary<string, double> _floors = new(StringComparer.Ordinal);
     private double? _room;
+    private readonly RowFilter<TRow> _filter;
 
     public ArrangedTable(
         string id,
@@ -59,6 +60,11 @@ public sealed class ArrangedTable<TRow>
 
         RequireSorts(id, fields);
 
+        _filter = new RowFilter<TRow>(fields
+            .SelectMany(field => field.More.Prepend(field).Select(part => (Owner: field, Part: part)))
+            .Where(pair => pair.Part.Filters is { Count: > 0 })
+            .Select(pair => (pair.Part.Key, pair.Owner.Label ?? pair.Part.Label ?? pair.Part.Key, pair.Part.Filters!)));
+
         _remembers = _arrangeable.All(field => field.Sort is { IsRemote: false });
 
         if (_remembers)
@@ -72,7 +78,7 @@ public sealed class ArrangedTable<TRow>
     public string Id { get; }
 
     /// <summary>The fields drawn, in order: leading control columns, the arranged fields, trailing control columns.</summary>
-    public IReadOnlyList<TableField<TRow>> Shown { get; private set; }
+    public IReadOnlyList<TableField<TRow>> ShownFields { get; private set; }
 
     public TableLayout Layout { get; private set; }
 
@@ -97,6 +103,15 @@ public sealed class ArrangedTable<TRow>
     /// <summary>The key of the column chosen in the bar; null when none is.</summary>
     public string? Chosen { get; private set; }
 
+    /// <summary>The filter bar is open. Opening it closes the COLUMNS bar and the reverse.</summary>
+    public bool Filtering { get; private set; }
+
+    /// <summary>The key of the field whose values are listed; null when none is.</summary>
+    public string? FilterChosen { get; private set; }
+
+    /// <summary>Some field declares a value list.</summary>
+    public bool CanFilter => _filter.Any;
+
     /// <summary>The ADD A COLUMN panel is open.</summary>
     public bool Adding { get; private set; }
 
@@ -109,7 +124,7 @@ public sealed class ArrangedTable<TRow>
     /// <summary>The chosen column can move one place to that side.</summary>
     public bool CanMove(bool left)
     {
-        var drawn = Shown.Where(field => field.Label is not null).Select(field => field.Key).ToList();
+        var drawn = ShownFields.Where(field => field.Label is not null).Select(field => field.Key).ToList();
         var at = drawn.IndexOf(Chosen ?? string.Empty);
 
         return at >= 0 && (left ? at > 0 : at < drawn.Count - 1);
@@ -121,7 +136,7 @@ public sealed class ArrangedTable<TRow>
         || _room is not { } room
         || ShownKeys.Contains(key)
         || _arrangeable.FirstOrDefault(field => field.Key == key) is not { } field
-        || Need([.. Shown, field]) <= room;
+        || Need([.. ShownFields, field]) <= room;
 
     /// <summary>In the headset, no column that is not shown has room to be drawn.</summary>
     public bool NoRoom
@@ -172,11 +187,11 @@ public sealed class ArrangedTable<TRow>
     private List<string> ShownKeys => [.. ColumnArrangement.Shown(Columns, Stored)];
 
     /// <summary>Re-reads the arrangement and starts a new layout.</summary>
-    [MemberNotNull(nameof(Shown), nameof(Layout), nameof(_head))]
+    [MemberNotNull(nameof(ShownFields), nameof(Layout), nameof(_head))]
     public void Refresh()
     {
-        Shown = Fitted(Arranged());
-        (_drawn, _owners) = Drawn(Shown);
+        ShownFields = Fitted(Arranged());
+        (_drawn, _owners) = Drawn(ShownFields);
 
         var layout = new TableLayout(Id, [.. _drawn.Select(ColumnOf)], _widths, _spacing);
         layout.Sized += width => Resized(layout, width);
@@ -194,6 +209,72 @@ public sealed class ArrangedTable<TRow>
 
     /// <summary><paramref name="rows"/>, given in the default order, sorted by the chosen sort.</summary>
     public IReadOnlyList<TRow> Sort(IReadOnlyList<TRow> rows) => _head.Sort(rows);
+
+    /// <summary>The rows no unticked value hides, in the order given.</summary>
+    public IReadOnlyList<TRow> Filter(IReadOnlyList<TRow> rows) => _filter.Filter(rows);
+
+    /// <summary>The rows the filter lets through, sorted by the chosen sort.</summary>
+    public IReadOnlyList<TRow> Shown(IReadOnlyList<TRow> rows) => Sort(Filter(rows));
+
+    /// <summary>How many of <paramref name="rows"/> the filter hides.</summary>
+    public int Hidden(IReadOnlyList<TRow> rows) => rows.Count - Filter(rows).Count;
+
+    /// <summary>
+    /// Records the values the rows carry and how many rows carry each. A value listed once keeps its place; a new one goes
+    /// at the end of its block, ticked.
+    /// </summary>
+    public void Observe(IReadOnlyList<TRow> rows) => _filter.Observe(rows);
+
+    /// <summary>Every block of the declared value lists, in table order.</summary>
+    public IReadOnlyList<FilterBlock> FilterBlocks => _filter.Blocks;
+
+    /// <summary>The labels of the fields with at least one unticked value.</summary>
+    public IReadOnlyList<string> FilteredLabels => _filter.FilteredLabels;
+
+    /// <summary>A block of the field lists more than 20 values.</summary>
+    public bool Many(string key) => _filter.Many(key);
+
+    public void Tick(string key, int block, string value) => Filtered(_filter.Set(key, block, value, true));
+
+    public void Untick(string key, int block, string value) => Filtered(_filter.Set(key, block, value, false));
+
+    public void TickAll(string key, int block) => Filtered(_filter.SetAll(key, block, true));
+
+    public void UntickAll(string key, int block) => Filtered(_filter.SetAll(key, block, false));
+
+    /// <summary>Ticks every value of every block and forgets the values seen, for a new answer.</summary>
+    public void ClearFilters() => Filtered(_filter.Clear());
+
+    /// <summary>Opens the filter bar, or closes it with nothing chosen. Opening it closes the COLUMNS bar.</summary>
+    public void ToggleFiltering()
+    {
+        Filtering = !Filtering;
+        FilterChosen = null;
+
+        if (Filtering)
+        {
+            Arranging = false;
+            Chosen = null;
+            Adding = false;
+        }
+
+        Changed?.Invoke();
+    }
+
+    /// <summary>Chooses the field whose values are listed, or clears the choice when it is already chosen.</summary>
+    public void ChooseFilter(string key)
+    {
+        FilterChosen = FilterChosen == key ? null : key;
+        Changed?.Invoke();
+    }
+
+    private void Filtered(bool changed)
+    {
+        if (changed)
+        {
+            Changed?.Invoke();
+        }
+    }
 
     /// <summary>
     /// Shows a sort held elsewhere, such as a service's, without raising any event. Returns false, and shows no sort,
@@ -224,6 +305,13 @@ public sealed class ArrangedTable<TRow>
         Arranging = !Arranging;
         Chosen = null;
         Adding = false;
+
+        if (Arranging)
+        {
+            Filtering = false;
+            FilterChosen = null;
+        }
+
         Changed?.Invoke();
     }
 
@@ -466,7 +554,7 @@ public sealed class ArrangedTable<TRow>
 
         _room = width;
 
-        if (Arranging || Fitted(Arranged()).Count != Shown.Count)
+        if (Arranging || Fitted(Arranged()).Count != ShownFields.Count)
         {
             Dispatcher.UIThread.Post(() =>
             {

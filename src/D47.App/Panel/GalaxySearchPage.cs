@@ -304,7 +304,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
             return null;
         }
 
-        var field = table.Shown.FirstOrDefault(shown => shown.Key == sort.Key);
+        var field = table.ShownFields.FirstOrDefault(shown => shown.Key == sort.Key);
 
         return $"these {Count(posting).ToString(CultureInfo.InvariantCulture)} sorted by {field?.Name ?? field?.Label ?? sort.Key}";
     }

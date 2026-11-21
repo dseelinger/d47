@@ -888,7 +888,7 @@ public sealed class RouteMarketPage : UserControl
             return null;
         }
 
-        var field = table.Shown.FirstOrDefault(shown => shown.Key == sort.Key);
+        var field = table.ShownFields.FirstOrDefault(shown => shown.Key == sort.Key);
         var text = $"These {posting.Answer.Offers.Count.ToString(CultureInfo.InvariantCulture)} sorted by {field?.Name ?? field?.Label ?? sort.Key}";
         var line = Typeset.Chrome(
             text.ToUpperInvariant(), TypeScale.Small, ThemeManager.AKey,

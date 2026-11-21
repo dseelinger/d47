@@ -1116,7 +1116,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return border;
     }
 
-    private static bool ShowsWork(ArrangedTable<CampaignSystemRow> columns) => columns.Shown.Any(field => field.Key == YourWorkKey);
+    private static bool ShowsWork(ArrangedTable<CampaignSystemRow> columns) => columns.ShownFields.Any(field => field.Key == YourWorkKey);
 
     private bool IsHub(CampaignSystemRow row) =>
         _hubSystem is not null && string.Equals(row.System, _hubSystem, StringComparison.OrdinalIgnoreCase);
