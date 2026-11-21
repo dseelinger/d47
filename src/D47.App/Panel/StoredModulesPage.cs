@@ -67,6 +67,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         {
             Label = "Module",
             Sort = ColumnHeadings[0],
+            Filters = [],
         },
         new("Class", new TableColumn("Class"), row => ClassCell(row.Module))
         {
@@ -78,12 +79,14 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         {
             Label = "Transfer cost",
             Sort = ColumnHeadings[2],
+            Filters = [],
             Alignment = HorizontalAlignment.Right,
         },
         new("TransferTime", new TableColumn("TransferTime"), row => MaterialsPage.Mono(Time(row.Module), ThemeManager.WhiteKey))
         {
             Label = "Transfer time",
             Sort = ColumnHeadings[3],
+            Filters = [],
             Alignment = HorizontalAlignment.Right,
         },
         new("System", new TableColumn("System"), row => CopyGlyph.LinkBeside(TableCells.Text(row.Module.StarSystem), row.Module.StarSystem, copy))
@@ -125,6 +128,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         {
             Label = "Grade",
             Sort = SortColumn<Held>.Figure("Grade", row => row.Module.EngineeringGrade, SortDirection.Descending),
+            Filters = [],
             Alignment = HorizontalAlignment.Right,
             ByDefault = false,
         },

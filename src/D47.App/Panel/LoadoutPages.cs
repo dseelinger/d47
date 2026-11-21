@@ -1032,7 +1032,7 @@ public static class LoadoutPages
 
     private static IReadOnlyList<TableField<SlotLine>> SlotFields() =>
     [
-        new("Slot", new TableColumn("Slot"), SlotCell) { Label = "Slot", Sort = SortColumn<SlotLine>.Text("Slot", line => line.Row.Parts?.Slot) },
+        new("Slot", new TableColumn("Slot"), SlotCell) { Label = "Slot", Sort = SortColumn<SlotLine>.Text("Slot", line => line.Row.Parts?.Slot), Filters = [] },
         new("Current", new TableColumn("Current", ColumnFit.Fill), line => Cell(line.Row.Parts!.Current, line.Row.Parts.Vacant, line.Row.Engineered, bold: true))
         {
             Label = "Current",
@@ -1050,12 +1050,14 @@ public static class LoadoutPages
         {
             Label = "Draw",
             Sort = SortColumn<SlotLine>.Figure<double>("MW", line => DrawAmount(line.Row.Parts?.Draw), SortDirection.Descending),
+            Filters = [],
             Alignment = HorizontalAlignment.Right,
         },
         new("Size", new TableColumn("Size"), line => SizeCell(line.Row.Parts!.Size))
         {
             Label = "Size",
             Sort = SortColumn<SlotLine>.Figure<int>("Size", line => line.Row.Parts?.Size, SortDirection.Descending),
+            Filters = [],
             Alignment = HorizontalAlignment.Right,
             ByDefault = false,
         },

@@ -1224,6 +1224,7 @@ public sealed class PanelPrompts : IHearsText
                 {
                     Label = column.Label,
                     Sort = sorts[i],
+                    Filters = [],
                     Alignment = column.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
                 }),
             ];

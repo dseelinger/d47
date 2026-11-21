@@ -62,6 +62,7 @@ public sealed class ArrangedTable<TRow>
         _sortedByDefault = sortedByDefault;
 
         RequireSorts(id, fields);
+        RequireFilters(id, fields);
 
         _filter = new RowFilter<TRow>(fields
             .SelectMany(field => field.More.Prepend(field).Select(part => (Owner: field, Part: part)))
@@ -762,6 +763,17 @@ public sealed class ArrangedTable<TRow>
             if (field.Label is not null && field.Sort is not { Sortable: true })
             {
                 throw new ArgumentException($"Table {table}: the labelled field {field.Key} has no sort that presses.", nameof(fields));
+            }
+        }
+    }
+
+    private static void RequireFilters(string table, IReadOnlyList<TableField<TRow>> fields)
+    {
+        foreach (var field in fields.SelectMany(field => field.More.Prepend(field)))
+        {
+            if (field.Label is not null && field.Filters is null)
+            {
+                throw new ArgumentException($"Table {table}: the labelled field {field.Key} sets no Filters; use an empty list for none.", nameof(fields));
             }
         }
     }

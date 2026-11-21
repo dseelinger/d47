@@ -23,7 +23,7 @@ public sealed record TableField<TRow>(string Key, TableColumn Column, Func<TRow,
     /// <summary>How the header sorts the rows; the header shows its label. Null where the header does not press.</summary>
     public SortColumn<TRow>? Sort { get; init; }
 
-    /// <summary>The value lists the row filter offers for this field; null: not declared yet, empty: no value list.</summary>
+    /// <summary>The value lists the row filter offers for this field; a labelled field sets it; empty: no value list.</summary>
     public IReadOnlyList<ValueList<TRow>>? Filters { get; init; }
 
     public bool ByDefault { get; init; } = true;

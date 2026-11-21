@@ -600,7 +600,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         IReadOnlyList<SortColumn<CombatRow>> heads, IReadOnlyList<ValueList<CombatRow>>? nameValues = null)
     {
         var name = StarSystemPage.Headed(heads[0], new TableColumn("Name", ColumnFit.Fill), row => NameOf(row, _current, _copy))
-            with { Filters = nameValues };
+            with { Filters = nameValues ?? [] };
         var credits = StarSystemPage.Headed(
             heads[^1],
             new TableColumn("Credits", ColumnFit.Fixed) { Fixed = CreditsWidth },

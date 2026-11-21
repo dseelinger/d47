@@ -1019,7 +1019,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
             return control;
         })
-        { Label = sort.Label, Sort = sort, ByDefault = false };
+        { Label = sort.Label, Sort = sort, Filters = [], ByDefault = false };
 
     private IReadOnlyList<TableField<FactionRow>> SystemFields()
     {

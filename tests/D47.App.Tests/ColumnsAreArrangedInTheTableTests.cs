@@ -331,8 +331,8 @@ public class ColumnsAreArrangedInTheTableTests
     {
         IReadOnlyList<TableField<string>> fields =
         [
-            new("Name", new TableColumn("Name"), row => new TextBlock { Text = row }) { Label = "Name", Sort = SortColumn<string>.Text("Name", row => row), Required = true },
-            new("Size", new TableColumn("Size"), row => new TextBlock { Text = row }) { Label = "Size", Sort = SortColumn<string>.Text("Size", row => row) },
+            new("Name", new TableColumn("Name"), row => new TextBlock { Text = row }) { Label = "Name", Filters = [], Sort = SortColumn<string>.Text("Name", row => row), Required = true },
+            new("Size", new TableColumn("Size"), row => new TextBlock { Text = row }) { Label = "Size", Filters = [], Sort = SortColumn<string>.Text("Size", row => row) },
         ];
         var table = new ArrangedTable<string>("Lines", fields, null, null);
 
@@ -349,7 +349,7 @@ public class ColumnsAreArrangedInTheTableTests
     {
         IReadOnlyList<TableField<string>> fields =
         [
-            new("Name", new TableColumn("Name"), row => new TextBlock { Text = row }) { Label = "Name", Sort = SortColumn<string>.Text("Name", row => row) },
+            new("Name", new TableColumn("Name"), row => new TextBlock { Text = row }) { Label = "Name", Filters = [], Sort = SortColumn<string>.Text("Name", row => row) },
             new("Go", new TableColumn("Go"), row => new TextBlock { Text = row }),
         ];
 

@@ -221,7 +221,7 @@ public class TablesAreBuiltFromOneListOfFieldsTests
     private static readonly Line[] Lines = [new("Bravo", 2), new("Alpha", 3), new("Charlie", 1)];
 
     private static TableField<Line> Field(string key, string? label, Func<Line, string> text, SortColumn<Line>? sort = null) =>
-        new(key, new TableColumn(key), row => new TextBlock { Text = text(row) }) { Label = label, Sort = sort };
+        new(key, new TableColumn(key), row => new TextBlock { Text = text(row) }) { Label = label, Sort = sort, Filters = [] };
 
     private static IReadOnlyList<TableField<Line>> LineFields =>
     [

@@ -31,6 +31,7 @@ public class ARowFilterHidesRowsByUntickedValuesTests
                 {
                     Label = "Name",
                     Sort = SortColumn<Place>.Text("Name", place => place.Name),
+                    Filters = [],
                 },
                 new TableField<Place>("Economy", new TableColumn("Economy"), _ => new Border())
                 {
@@ -229,7 +230,7 @@ public class ARowFilterHidesRowsByUntickedValuesTests
         using var look = AppLook.Put();
         var table = new ArrangedTable<Place>(
             "NoFilters",
-            [new TableField<Place>("Name", new TableColumn("Name"), _ => new Border()) { Label = "Name", Sort = SortColumn<Place>.Text("Name", place => place.Name) }],
+            [new TableField<Place>("Name", new TableColumn("Name"), _ => new Border()) { Label = "Name", Filters = [], Sort = SortColumn<Place>.Text("Name", place => place.Name) }],
             null,
             null);
 

@@ -78,6 +78,7 @@ public sealed class SwitchPage : DialogPage
         {
             Label = "Position",
             Sort = SortColumn<PositionRow>.Figure<int>("Position", row => row.Source.Button, SortDirection.Ascending),
+            Filters = [],
         },
         new("Action", new TableColumn("Action", ColumnFit.Fill) { Min = 120 }, row => row.Action)
         {

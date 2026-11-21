@@ -139,9 +139,9 @@ public class TheHeadsetAddsOnlyColumnsThatFitTests
     {
         IReadOnlyList<TableField<string>> fields =
         [
-            new("Name", new TableColumn("Name") { Min = 100 }, row => new TextBlock { Text = row }) { Label = "Name", Sort = SortColumn<string>.Text("Name", row => row) },
-            new("Wide", new TableColumn("Wide") { Min = 450 }, row => new TextBlock { Text = row }) { Label = "Wide", Sort = SortColumn<string>.Text("Wide", row => row), ByDefault = false },
-            new("Narrow", new TableColumn("Narrow") { Min = 50 }, row => new TextBlock { Text = row }) { Label = "Narrow", Sort = SortColumn<string>.Text("Narrow", row => row), ByDefault = false },
+            new("Name", new TableColumn("Name") { Min = 100 }, row => new TextBlock { Text = row }) { Label = "Name", Filters = [], Sort = SortColumn<string>.Text("Name", row => row) },
+            new("Wide", new TableColumn("Wide") { Min = 450 }, row => new TextBlock { Text = row }) { Label = "Wide", Filters = [], Sort = SortColumn<string>.Text("Wide", row => row), ByDefault = false },
+            new("Narrow", new TableColumn("Narrow") { Min = 50 }, row => new TextBlock { Text = row }) { Label = "Narrow", Filters = [], Sort = SortColumn<string>.Text("Narrow", row => row), ByDefault = false },
         ];
         var table = new ArrangedTable<string>("Lines", fields, new ColumnArrangementMemory(ATableWiderThanItsPageScrollsInItsOwnBoxTests.ViewState(), headset: true), null);
         var body = new StackPanel();

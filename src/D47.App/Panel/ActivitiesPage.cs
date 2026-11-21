@@ -182,16 +182,17 @@ public sealed class ActivitiesPage : UserControl
 
     private IReadOnlyList<TableField<ActivityRow>> NarrowFields() =>
     [
-        new("Activity", new TableColumn("Activity", ColumnFit.Fill), NarrowCell) { Label = NarrowHeadings[0].Label, Sort = NarrowHeadings[0] },
+        new("Activity", new TableColumn("Activity", ColumnFit.Fill), NarrowCell) { Label = NarrowHeadings[0].Label, Sort = NarrowHeadings[0], Filters = [] },
     ];
 
     private IReadOnlyList<TableField<ActivityRow>> WideFields() =>
     [
-        new("Activity", new TableColumn("Activity", ColumnFit.Fill), row => NameOf(row.Entry)) { Label = WideHeadings[0].Label, Sort = WideHeadings[0] },
+        new("Activity", new TableColumn("Activity", ColumnFit.Fill), row => NameOf(row.Entry)) { Label = WideHeadings[0].Label, Sort = WideHeadings[0], Filters = [] },
         new("LastDone", new TableColumn("LastDone"), LastDoneCell)
         {
             Label = WideHeadings[1].Label,
             Sort = WideHeadings[1],
+            Filters = [],
             More = [new("Age", new TableColumn("Age"), AgeCell)],
         },
     ];

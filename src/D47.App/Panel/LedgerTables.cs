@@ -23,7 +23,7 @@ internal static class LedgerTables
 
     /// <summary>A field the Commander can add; it is not shown until they do.</summary>
     public static TableField<TRow> Added<TRow>(string key, TableColumn column, Func<TRow, Control> cell, SortColumn<TRow> sort) =>
-        new(key, column, row => Centred(cell(row))) { Label = sort.Label, Sort = sort, ByDefault = false };
+        new(key, column, row => Centred(cell(row))) { Label = sort.Label, Sort = sort, Filters = [], ByDefault = false };
 
     /// <summary>The table's header, as tall as a press target and inset to the rows' padding.</summary>
     public static TableGrid Head<TRow>(ArrangedTable<TRow> columns, Thickness margin)

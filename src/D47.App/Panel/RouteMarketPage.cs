@@ -774,6 +774,7 @@ public sealed class RouteMarketPage : UserControl
                 Label = wants[0].Commodity,
                 Name = Spoken(wants),
                 Sort = LotSort(wants[0].Commodity, 0, best) with { Second = second },
+                Filters = [],
                 Alignment = HorizontalAlignment.Right,
                 Required = true,
                 More =
@@ -786,6 +787,7 @@ public sealed class RouteMarketPage : UserControl
                         {
                             Label = want.Commodity,
                             Sort = LotSort(want.Commodity, at, best) with { Second = second },
+                            Filters = [],
                             Alignment = HorizontalAlignment.Right,
                         };
                     }),

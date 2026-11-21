@@ -29,7 +29,7 @@ public sealed class EveryTableColumnSortsAndTheSortIsKeptTests
         new(new AppPaths("memory"), new MemoryFileSystem(), NullLogger<ViewStateStore>.Instance);
 
     private static TableField<Row> Field(string key, SortColumn<Row>? sort, string? label = "Label") =>
-        new(key, new TableColumn(key), _ => new Border()) { Label = label, Sort = sort };
+        new(key, new TableColumn(key), _ => new Border()) { Label = label, Sort = sort, Filters = [] };
 
     [Fact]
     public void ASortStoredOnAStoreIsReadBackByANewMemoryOnTheSameStore()

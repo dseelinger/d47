@@ -452,12 +452,13 @@ public sealed partial class StarSystemPage
         {
             Label = head.Label,
             Sort = head,
+            Filters = [],
             Alignment = right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
         };
 
     /// <summary>A field the Commander can add; it is not shown until they do.</summary>
     private static TableField<TRow> Added<TRow>(string key, TableColumn column, Func<TRow, Control> cell, SortColumn<TRow> sort) =>
-        new(key, column, row => Centred(cell(row))) { Label = sort.Label, Sort = sort, ByDefault = false };
+        new(key, column, row => Centred(cell(row))) { Label = sort.Label, Sort = sort, Filters = [], ByDefault = false };
 
     private Control MoreCell(StationProfile station) =>
         OpenStation is not null && station.MarketId is not null

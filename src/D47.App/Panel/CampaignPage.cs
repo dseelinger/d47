@@ -1689,7 +1689,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     }
 
     private static TableField<T> Added<T>(string key, TableColumn column, Func<T, Control> cell, SortColumn<T> sort) =>
-        new(key, column, row => Centred(cell(row))) { Label = sort.Label, Sort = sort, ByDefault = false };
+        new(key, column, row => Centred(cell(row))) { Label = sort.Label, Sort = sort, Filters = [], ByDefault = false };
 
     private ArrangedTable<T> Arranged<T>(string id, IReadOnlyList<TableField<T>> fields, string headName, string sortedByDefault)
     {
