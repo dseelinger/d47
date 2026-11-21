@@ -292,21 +292,24 @@ public sealed partial class StarSystemPage
     [
         Headed(NeighbourHeads[0], new TableColumn("System", ColumnFit.Fill) { Min = 120 }, system => CopyGlyph.LinkBeside(Ellipsed(system.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.AKey), system.Name, _copy)),
         Headed(NeighbourHeads[1], new TableColumn("Distance"), system => Mono(DistanceText(system.Distance), ThemeManager.AKey)),
-        Headed(NeighbourHeads[2], new TableColumn("State"), system => Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)),
-        Headed(NeighbourHeads[3], new TableColumn("Power", ColumnFit.Fill) { Min = 100 }, system => Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)),
+        Headed(NeighbourHeads[2], new TableColumn("State"), system => Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey))
+            with { Filters = [ValueLists.One<PowerplayNeighbour>("State", system => system.State, "No state")] },
+        Headed(NeighbourHeads[3], new TableColumn("Power", ColumnFit.Fill) { Min = 100 }, system => Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey))
+            with { Filters = [ValueLists.One<PowerplayNeighbour>("Power", system => system.ControllingPower, "No Power")] },
         Headed(NeighbourHeads[4], new TableColumn("Progress"), system => Influence(system.ControlProgress)),
         Added(
             "Powers",
             new TableColumn("Powers", ColumnFit.Fill) { Min = 140 },
             system => TableCells.List(system.Powers),
-            SortColumn<PowerplayNeighbour>.Figure<int>("Powers", system => system.Powers.Count, SortDirection.Descending)),
+            SortColumn<PowerplayNeighbour>.Figure<int>("Powers", system => system.Powers.Count, SortDirection.Descending))
+            with { Filters = [ValueLists.Many<PowerplayNeighbour>("Powers", system => system.Powers, "No Powers")] },
     ];
 
     private void CloseColumnBars()
     {
-        _factionColumns?.StopArranging();
-        _stationColumns?.StopArranging();
-        _neighbourColumns?.StopArranging();
+        _factionColumns?.Reopen();
+        _stationColumns?.Reopen();
+        _neighbourColumns?.Reopen();
     }
 
     internal StackPanel NeighbourTable(PowerplayNeighbourhood near)
@@ -314,18 +317,11 @@ public sealed partial class StarSystemPage
         var columns = NeighbourColumns;
         columns.Refresh();
 
-        var shown = columns.Sort([.. near.Systems.Where(PowerplayStateFilter.All[_stateFilter].Holds)]);
+        IReadOnlyList<PowerplayNeighbour> listed = [.. near.Systems.Where(PowerplayStateFilter.All[_stateFilter].Holds)];
+        var shown = columns.Shown(listed);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
-        if (ColumnArranger.Line(columns) is { } line)
-        {
-            table.Children.Add(line);
-        }
-
-        if (ColumnArranger.Bar(columns) is { } bar)
-        {
-            table.Children.Add(bar);
-        }
+        table.Children.Add(LedgerTables.Arranger(columns, listed));
 
         var header = columns.Header();
         header.MinHeight = TypeScale.MinimumTarget;
@@ -333,14 +329,21 @@ public sealed partial class StarSystemPage
 
         var rows = new StackPanel { Spacing = Gaps.Tile, Children = { header } };
 
+        if (ColumnFilter.Empty(columns, listed) is { } hidden)
+        {
+            rows.Children.Add(hidden);
+        }
+
         foreach (var system in shown)
         {
-            rows.Children.Add(NeighbourRow(system, columns));
+            var row = NeighbourRow(system, columns);
+            row.IsVisible = !ColumnFilter.HidesRows(columns);
+            rows.Children.Add(row);
         }
 
         table.Children.Add(columns.Headset ? rows : new TableScroll(columns.Layout, rows));
 
-        if (shown.Count == 0)
+        if (listed.Count == 0)
         {
             var none = Sentence(NoNeighbours, ThemeManager.WhiteKey);
             none.Margin = new Thickness(0, 10, 0, 0);

@@ -336,7 +336,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _needs.StopArranging();
+        _needs.Reopen();
 
         if (_surface.Sourcing is { } board)
         {
@@ -888,13 +888,18 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         _carrierOwned = carrier.Owned;
         _needs.Refresh();
 
-        var arranger = LedgerTables.Arranger(_needs);
+        var arranger = LedgerTables.Arranger(_needs, needs);
         arranger.Margin = new Thickness(0, 0, 0, 8);
         section.Children.Add(arranger);
 
-        var rows = new StackPanel { Spacing = Gaps.Tile };
+        var rows = new StackPanel { Spacing = Gaps.Tile, IsVisible = !ColumnFilter.HidesRows(_needs) };
 
-        foreach (var need in _needs.Sort(needs))
+        if (ColumnFilter.Empty(_needs, needs) is { } empty)
+        {
+            rows.Children.Add(empty);
+        }
+
+        foreach (var need in _needs.Shown(needs))
         {
             rows.Children.Add(NeedRow(need));
         }
@@ -929,7 +934,8 @@ public sealed class ConstructionPage : UserControl, IPageSummary
         StarSystemPage.Headed(NeedHeadings[2], new TableColumn("InHold"), need => Held(need.InHold), right: true),
         StarSystemPage.Headed(NeedHeadings[3], new TableColumn("OnCarrier"), OnCarrierCell, right: true),
         StarSystemPage.Headed(NeedHeadings[4], new TableColumn("ToBuy"), ToBuyCell, right: true),
-        StarSystemPage.Headed(NeedHeadings[5], new TableColumn("Order"), OrderCell),
+        StarSystemPage.Headed(NeedHeadings[5], new TableColumn("Order"), OrderCell)
+            with { Filters = [ValueLists.One<ConstructionNeeds>("Order", need => need.OrderOpen ? OrderOpen : null, "No order open")] },
         LedgerTables.Added<ConstructionNeeds>(
             "Required",
             new TableColumn("Required"),

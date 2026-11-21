@@ -897,11 +897,15 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     private IReadOnlyList<TableField<FactionStanding>> FactionFields() =>
     [
         Headed(FactionHeads[0], new TableColumn("Faction", ColumnFit.Fill) { Min = 120 }, FactionNameCell),
-        Headed(FactionHeads[1], new TableColumn("Government"), faction => Word(faction.Government ?? Dash)),
-        Headed(FactionHeads[2], new TableColumn("Allegiance"), faction => Word(faction.Allegiance ?? Dash)),
+        Headed(FactionHeads[1], new TableColumn("Government"), faction => Word(faction.Government ?? Dash))
+            with { Filters = [ValueLists.One<FactionStanding>("Government", faction => faction.Government, "No government")] },
+        Headed(FactionHeads[2], new TableColumn("Allegiance"), faction => Word(faction.Allegiance ?? Dash))
+            with { Filters = [ValueLists.One<FactionStanding>("Allegiance", faction => faction.Allegiance, "No allegiance")] },
         Headed(FactionHeads[3], new TableColumn("Influence"), faction => Influence(faction.Influence)),
-        Headed(FactionHeads[4], new TableColumn("Active"), faction => States(faction.ActiveStates, ThemeManager.AKey)),
-        Headed(FactionHeads[5], new TableColumn("Pending"), faction => States(faction.PendingStates, ThemeManager.GreyKey)),
+        Headed(FactionHeads[4], new TableColumn("Active"), faction => States(faction.ActiveStates, ThemeManager.AKey))
+            with { Filters = [ValueLists.Many<FactionStanding>("Active states", faction => faction.ActiveStates, "No active states")] },
+        Headed(FactionHeads[5], new TableColumn("Pending"), faction => States(faction.PendingStates, ThemeManager.GreyKey))
+            with { Filters = [ValueLists.Many<FactionStanding>("Pending states", faction => faction.PendingStates, "No pending states")] },
     ];
 
     private bool ControlsSystem(FactionStanding faction) =>
@@ -955,20 +959,19 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
 
         body.Children.Add(header);
 
-        foreach (var faction in columns.Sort(profile.Factions))
+        if (ColumnFilter.Empty(columns, profile.Factions) is { } empty)
         {
-            body.Children.Add(FactionRow(faction, columns));
+            body.Children.Add(empty);
         }
 
-        if (ColumnArranger.Line(columns) is { } line)
+        foreach (var faction in columns.Shown(profile.Factions))
         {
-            rows.Children.Add(line);
+            var row = FactionRow(faction, columns);
+            row.IsVisible = !ColumnFilter.HidesRows(columns);
+            body.Children.Add(row);
         }
 
-        if (ColumnArranger.Bar(columns) is { } bar)
-        {
-            rows.Children.Add(bar);
-        }
+        rows.Children.Add(LedgerTables.Arranger(columns, profile.Factions));
 
         rows.Children.Add(columns.Headset ? body : new TableScroll(columns.Layout, body));
 

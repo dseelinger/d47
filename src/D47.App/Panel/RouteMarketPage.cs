@@ -469,6 +469,7 @@ public sealed class RouteMarketPage : UserControl
         if (found)
         {
             var table = Arrange(posting);
+            table.Observe(posting.Answer.Offers);
             var rows = new StackPanel { Spacing = 2 };
 
             rows.Children.Add(LedgerTables.Head(table, new Thickness(12, 0)));
@@ -478,12 +479,19 @@ public sealed class RouteMarketPage : UserControl
                 stack.Children.Insert(2, line);
             }
 
-            foreach (var offer in Ordered(table, posting))
+            if (ColumnFilter.Empty(table, posting.Answer.Offers) is { } empty)
             {
-                rows.Children.Add(ListRow.Dress(new Border { Child = table.Row(offer) }));
+                rows.Children.Add(empty);
             }
 
-            stack.Children.Add(LedgerTables.Arranger(table));
+            foreach (var offer in Ordered(table, posting))
+            {
+                var row = ListRow.Dress(new Border { Child = table.Row(offer) });
+                row.IsVisible = !ColumnFilter.HidesRows(table);
+                rows.Children.Add(row);
+            }
+
+            stack.Children.Add(LedgerTables.Arranger(table, posting.Answer.Offers, LocalSort(table)));
             stack.Children.Add(LedgerTables.Sideways(table, rows));
         }
 
@@ -654,7 +662,7 @@ public sealed class RouteMarketPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _table?.StopArranging();
+        _table?.Reopen();
     }
 
     /// <summary>
@@ -736,7 +744,15 @@ public sealed class RouteMarketPage : UserControl
             StarSystemPage.Headed(
                 SortColumn<CommodityOffer>.Text("Station", offer => offer.Market.Station, offer => offer.Market.System),
                 new TableColumn("Station", ColumnFit.Fill) { Min = 160 },
-                offer => StationCell(offer.Market.Station, offer.Market.System, offer.Market.IsCarrier)),
+                offer => StationCell(offer.Market.Station, offer.Market.System, offer.Market.IsCarrier))
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<CommodityOffer>("System", offer => offer.Market.System, "No system"),
+                        ValueLists.Flag<CommodityOffer>("Fleet carrier", offer => offer.Market.IsCarrier, "Not known"),
+                    ],
+                },
         ];
 
         if (posting.Answer.OriginKnown)
@@ -808,10 +824,14 @@ public sealed class RouteMarketPage : UserControl
         fields.Add(StarSystemPage.Headed(SortColumn<CommodityOffer>.Figure<long>("Priced", offer => offer.Market.UpdatedAt?.ToUnixTimeSeconds(), SortDirection.Descending), new TableColumn("Priced"), PricedCell, right: true));
 
         fields.Add(Added("FromStar", "From star", offer => LightCell(offer.Market.DistanceToArrival), SortColumn<CommodityOffer>.Figure<double>("From star", offer => offer.Market.DistanceToArrival, SortDirection.Ascending), right: true));
-        fields.Add(Added("LargePad", "Large pad", offer => TableCells.Flag(offer.Market.HasLargePad), SortColumn<CommodityOffer>.Figure<int>("Large pad", offer => offer.Market.HasLargePad ? 1 : 0, SortDirection.Descending)));
-        fields.Add(Added("Surface", "Surface", offer => TableCells.Flag(offer.Market.IsSurface), SortColumn<CommodityOffer>.Figure<int>("Surface", offer => offer.Market.IsSurface ? 1 : 0, SortDirection.Descending)));
-        fields.Add(Added("Power", "Power", offer => TableCells.Text(offer.Market.ControllingPower), SortColumn<CommodityOffer>.Text("Power", offer => offer.Market.ControllingPower)));
-        fields.Add(Added("PowerState", "Power state", offer => TableCells.Text(offer.Market.PowerState), SortColumn<CommodityOffer>.Text("Power state", offer => offer.Market.PowerState)));
+        fields.Add(Added("LargePad", "Large pad", offer => TableCells.Flag(offer.Market.HasLargePad), SortColumn<CommodityOffer>.Figure<int>("Large pad", offer => offer.Market.HasLargePad ? 1 : 0, SortDirection.Descending))
+            with { Filters = [ValueLists.Flag<CommodityOffer>("Large pad", offer => offer.Market.HasLargePad, "Not known")] });
+        fields.Add(Added("Surface", "Surface", offer => TableCells.Flag(offer.Market.IsSurface), SortColumn<CommodityOffer>.Figure<int>("Surface", offer => offer.Market.IsSurface ? 1 : 0, SortDirection.Descending))
+            with { Filters = [ValueLists.Flag<CommodityOffer>("Surface", offer => offer.Market.IsSurface, "Not known")] });
+        fields.Add(Added("Power", "Power", offer => TableCells.Text(offer.Market.ControllingPower), SortColumn<CommodityOffer>.Text("Power", offer => offer.Market.ControllingPower))
+            with { Filters = [ValueLists.One<CommodityOffer>("Power", offer => offer.Market.ControllingPower, "No Power")] });
+        fields.Add(Added("PowerState", "Power state", offer => TableCells.Text(offer.Market.PowerState), SortColumn<CommodityOffer>.Text("Power state", offer => offer.Market.PowerState))
+            with { Filters = [ValueLists.One<CommodityOffer>("Power state", offer => offer.Market.PowerState, "No Power state")] });
 
         return fields;
     }
@@ -878,10 +898,10 @@ public sealed class RouteMarketPage : UserControl
 
     /// <summary>The offers in the order of the pressed column while that column sorts the rows shown.</summary>
     private IReadOnlyList<CommodityOffer> Ordered(ArrangedTable<CommodityOffer> table, CommodityPosting posting) =>
-        _local ? table.Sort(posting.Answer.Offers) : posting.Answer.Offers;
+        _local ? table.Shown(posting.Answer.Offers) : table.Filter(posting.Answer.Offers);
 
-    /// <summary>"These 2 sorted by Stock", under the heading while the rows shown are sorted.</summary>
-    private Control? LocalLine(ArrangedTable<CommodityOffer> table, CommodityPosting posting)
+    /// <summary>The name of the field the rows shown are sorted by while that sort is done here; null while the service orders them.</summary>
+    private string? LocalSort(ArrangedTable<CommodityOffer> table)
     {
         if (!_local || table.SortedBy is not { } sort)
         {
@@ -889,7 +909,19 @@ public sealed class RouteMarketPage : UserControl
         }
 
         var field = table.ShownFields.FirstOrDefault(shown => shown.Key == sort.Key);
-        var text = $"These {posting.Answer.Offers.Count.ToString(CultureInfo.InvariantCulture)} sorted by {field?.Name ?? field?.Label ?? sort.Key}";
+
+        return field?.Name ?? field?.Label ?? sort.Key;
+    }
+
+    /// <summary>"These 2 sorted by Stock", under the heading while the rows shown are sorted.</summary>
+    private Control? LocalLine(ArrangedTable<CommodityOffer> table, CommodityPosting posting)
+    {
+        if (LocalSort(table) is not { } by || table.Hidden(posting.Answer.Offers) > 0)
+        {
+            return null;
+        }
+
+        var text = $"These {posting.Answer.Offers.Count.ToString(CultureInfo.InvariantCulture)} sorted by {by}";
         var line = Typeset.Chrome(
             text.ToUpperInvariant(), TypeScale.Small, ThemeManager.AKey,
             weight: FontWeight.Medium, tracking: TypeScale.Small * Fonts.ChromeTracking);

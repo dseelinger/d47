@@ -83,16 +83,19 @@ public sealed class SwitchPage : DialogPage
         {
             Label = "Action",
             Sort = SortColumn<PositionRow>.Text("Action", row => ActionWord(row.Source)),
+            Filters = [ValueLists.One<PositionRow>("Action", row => ActionWord(row.Source), "No action")],
         },
         new("Means", new TableColumn("Means"), row => row.State)
         {
             Label = "Means",
             Sort = SortColumn<PositionRow>.Text("Means", row => row.Source.View?.ToString() ?? row.Source.State),
+            Filters = [ValueLists.One<PositionRow>("Means", row => row.Source.View?.ToString() ?? row.Source.State, "No meaning")],
         },
         new("Page", new TableColumn("Page", ColumnFit.Fill) { Min = 120 }, row => row.Page)
         {
             Label = "Or opens a D47 page",
             Sort = SortColumn<PositionRow>.Text("Or opens a D47 page", row => _pageWords.GetValueOrDefault(row.Source.Destination, row.Source.Destination)),
+            Filters = [ValueLists.One<PositionRow>("Page", row => _pageWords.GetValueOrDefault(row.Source.Destination, row.Source.Destination), "No page")],
         },
     ];
 
@@ -243,6 +246,8 @@ public sealed class SwitchPage : DialogPage
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
+        _positions.Reopen();
+        Rebuild();
         _timer.Start();
     }
 
@@ -490,23 +495,23 @@ public sealed class SwitchPage : DialogPage
             return;
         }
 
-        if (ColumnArranger.Line(_positions) is { } line)
-        {
-            _list.Children.Add(line);
-        }
+        var built = _switches.ToDictionary(mapping => mapping, mapping => mapping.Positions.Select(position => BuildPosition(mapping, position)).ToList());
+        IReadOnlyList<PositionRow> every = [.. built.Values.SelectMany(rows => rows)];
 
-        if (ColumnArranger.Bar(_positions) is { } bar)
+        _list.Children.Add(Panel.LedgerTables.Arranger(_positions, every));
+
+        if (ColumnFilter.Empty(_positions, every) is { } hidden)
         {
-            _list.Children.Add(bar);
+            _list.Children.Add(hidden);
         }
 
         foreach (var mapping in _switches)
         {
-            _list.Children.Add(BuildSwitch(mapping));
+            _list.Children.Add(BuildSwitch(mapping, built[mapping]));
         }
     }
 
-    private Control BuildSwitch(MutableSwitch mapping)
+    private Control BuildSwitch(MutableSwitch mapping, IReadOnlyList<PositionRow> rows)
     {
         var name = new TextBox { Text = mapping.Name, Width = 260 };
         name.TextChanged += (_, _) => mapping.Name = name.Text ?? string.Empty;
@@ -540,9 +545,7 @@ public sealed class SwitchPage : DialogPage
         var positions = new StackPanel { Spacing = 6, Margin = new Thickness(0, 8, 0, 0), Children = { _positions.Header() } };
         var holds = new List<Action<SwitchPosition?>>();
 
-        var rows = mapping.Positions.Select(position => BuildPosition(mapping, position)).ToList();
-
-        foreach (var built in _positions.Sort(rows))
+        foreach (var built in ColumnFilter.HidesRows(_positions) ? [] : _positions.Shown(rows))
         {
             positions.Children.Add(_positions.Row(built));
             holds.Add(built.Held);

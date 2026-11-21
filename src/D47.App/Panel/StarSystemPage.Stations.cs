@@ -381,15 +381,23 @@ public sealed partial class StarSystemPage
     private IReadOnlyList<TableField<StationProfile>> StationFields() =>
     [
         StationHead(0, new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, station => Ellipsed(station.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.WhiteKey)),
-        StationHead(1, new TableColumn("Type"), station => Ellipsed(StationType(station), TypeScale.Control, FontWeight.Medium, station.Kind == StationKind.Other && station.Type is null ? ThemeManager.GreyKey : ThemeManager.AKey)),
-        StationHead(2, new TableColumn("Faction", ColumnFit.Fill) { Min = 100 }, station => Ellipsed(Faction(station), TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)),
-        StationHead(3, new TableColumn("Government"), station => Ellipsed(station.Government ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)),
-        StationHead(4, new TableColumn("Economy"), station => Ellipsed(station.PrimaryEconomy ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey)),
-        StationHead(5, new TableColumn("Pad"), station => Mono(PadText(station.LargestPad), ThemeManager.WhiteKey)),
+        StationHead(1, new TableColumn("Type"), station => Ellipsed(StationType(station), TypeScale.Control, FontWeight.Medium, station.Kind == StationKind.Other && station.Type is null ? ThemeManager.GreyKey : ThemeManager.AKey))
+            with { Filters = [ValueLists.One<StationProfile>("Type", StationType, "No type")] },
+        StationHead(2, new TableColumn("Faction", ColumnFit.Fill) { Min = 100 }, station => Ellipsed(Faction(station), TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey))
+            with { Filters = [ValueLists.One<StationProfile>("Faction", station => station.ControllingFaction is null ? null : Faction(station), "No faction")] },
+        StationHead(3, new TableColumn("Government"), station => Ellipsed(station.Government ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey))
+            with { Filters = [ValueLists.One<StationProfile>("Government", station => station.Government, "No government")] },
+        StationHead(4, new TableColumn("Economy"), station => Ellipsed(station.PrimaryEconomy ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey))
+            with { Filters = [ValueLists.One<StationProfile>("Economy", station => station.PrimaryEconomy, "No economy")] },
+        StationHead(5, new TableColumn("Pad"), station => Mono(PadText(station.LargestPad), ThemeManager.WhiteKey))
+            with { Filters = [ValueLists.One<StationProfile>("Pad", station => station.LargestPad is null ? null : PadText(station.LargestPad), "No pad")] },
         StationHead(6, new TableColumn("Arrival"), station => RightAligned(Mono(ArrivalText(station.DistanceToArrival), ThemeManager.AKey)), right: true),
-        Added("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 100 }, station => TableCells.Text(station.Body), SortColumn<StationProfile>.Text("Body", station => station.Body)),
-        Added("Allegiance", new TableColumn("Allegiance"), station => TableCells.Text(station.Allegiance), SortColumn<StationProfile>.Text("Allegiance", station => station.Allegiance)),
-        Added("FactionState", new TableColumn("FactionState"), station => TableCells.Text(station.ControllingFactionState), SortColumn<StationProfile>.Text("Faction state", station => station.ControllingFactionState)),
+        Added("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 100 }, station => TableCells.Text(station.Body), SortColumn<StationProfile>.Text("Body", station => station.Body))
+            with { Filters = [ValueLists.One<StationProfile>("Body", station => station.Body, "No body")] },
+        Added("Allegiance", new TableColumn("Allegiance"), station => TableCells.Text(station.Allegiance), SortColumn<StationProfile>.Text("Allegiance", station => station.Allegiance))
+            with { Filters = [ValueLists.One<StationProfile>("Allegiance", station => station.Allegiance, "No allegiance")] },
+        Added("FactionState", new TableColumn("FactionState"), station => TableCells.Text(station.ControllingFactionState), SortColumn<StationProfile>.Text("Faction state", station => station.ControllingFactionState))
+            with { Filters = [ValueLists.One<StationProfile>("Faction state", station => station.ControllingFactionState, "No state")] },
         Added(
             "Updated",
             new TableColumn("Updated"),
@@ -404,28 +412,34 @@ public sealed partial class StarSystemPage
             "Economies",
             new TableColumn("Economies", ColumnFit.Fill) { Min = 120 },
             station => TableCells.List([.. station.Economies.Select(economy => economy.Name)]),
-            SortColumn<StationProfile>.Figure<int>("Economies", station => station.Economies.Count, SortDirection.Descending)),
+            SortColumn<StationProfile>.Figure<int>("Economies", station => station.Economies.Count, SortDirection.Descending))
+            with { Filters = [ValueLists.Many<StationProfile>("Economies", station => station.Economies.Select(economy => economy.Name), "No economies")] },
         Added(
             "Services",
             new TableColumn("Services", ColumnFit.Fill) { Min = 140 },
             station => TableCells.List([.. station.Services.Select(SystemStationPage.ServiceLabel)]),
-            SortColumn<StationProfile>.Figure<int>("Services", station => station.Services.Count, SortDirection.Descending)),
-        Added("DockingAccess", new TableColumn("DockingAccess"), station => TableCells.Text(station.CarrierDockingAccess), SortColumn<StationProfile>.Text("Docking access", station => station.CarrierDockingAccess)),
+            SortColumn<StationProfile>.Figure<int>("Services", station => station.Services.Count, SortDirection.Descending))
+            with { Filters = [ValueLists.Many<StationProfile>("Services", station => station.Services.Select(SystemStationPage.ServiceLabel), "No services")] },
+        Added("DockingAccess", new TableColumn("DockingAccess"), station => TableCells.Text(station.CarrierDockingAccess), SortColumn<StationProfile>.Text("Docking access", station => station.CarrierDockingAccess))
+            with { Filters = [ValueLists.One<StationProfile>("Docking access", station => station.CarrierDockingAccess, "No docking access")] },
         Added(
             "Market",
             new TableColumn("Market"),
             station => TableCells.Flag(station.Market is { Commodities.Count: > 0 }),
-            SortColumn<StationProfile>.Figure<int>("Market", station => station.Market is { Commodities.Count: > 0 } ? 1 : 0, SortDirection.Descending)),
+            SortColumn<StationProfile>.Figure<int>("Market", station => station.Market is { Commodities.Count: > 0 } ? 1 : 0, SortDirection.Descending))
+            with { Filters = [ValueLists.Flag<StationProfile>("Market", station => station.Market is { Commodities.Count: > 0 }, "Not known")] },
         Added(
             "Outfitting",
             new TableColumn("Outfitting"),
             station => TableCells.Flag(station.Outfitting is { Modules.Count: > 0 }),
-            SortColumn<StationProfile>.Figure<int>("Outfitting", station => station.Outfitting is { Modules.Count: > 0 } ? 1 : 0, SortDirection.Descending)),
+            SortColumn<StationProfile>.Figure<int>("Outfitting", station => station.Outfitting is { Modules.Count: > 0 } ? 1 : 0, SortDirection.Descending))
+            with { Filters = [ValueLists.Flag<StationProfile>("Outfitting", station => station.Outfitting is { Modules.Count: > 0 }, "Not known")] },
         Added(
             "Shipyard",
             new TableColumn("Shipyard"),
             station => TableCells.Flag(station.Shipyard is { Ships.Count: > 0 }),
-            SortColumn<StationProfile>.Figure<int>("Shipyard", station => station.Shipyard is { Ships.Count: > 0 } ? 1 : 0, SortDirection.Descending)),
+            SortColumn<StationProfile>.Figure<int>("Shipyard", station => station.Shipyard is { Ships.Count: > 0 } ? 1 : 0, SortDirection.Descending))
+            with { Filters = [ValueLists.Flag<StationProfile>("Shipyard", station => station.Shipyard is { Ships.Count: > 0 }, "Not known")] },
         new TableField<StationProfile>("More", new TableColumn("More", ColumnFit.Fixed) { Fixed = MoreWidth - StationSpacing }, MoreCell),
     ];
 
@@ -468,7 +482,8 @@ public sealed partial class StarSystemPage
         var columns = StationColumns;
         columns.Refresh();
 
-        var shown = columns.Sort(_stationFilter.Apply(profile.Stations));
+        var listed = _stationFilter.Apply(profile.Stations);
+        var shown = columns.Shown(listed);
 
         var table = new StackPanel { Spacing = Gaps.Tile };
 
@@ -489,14 +504,21 @@ public sealed partial class StarSystemPage
 
         var line = new DockPanel { MinHeight = TypeScale.MinimumTarget, Margin = new Thickness(0, 0, 0, 8) };
 
-        if (ColumnArranger.Tile(columns) is { } tile)
+        showing.Margin = new Thickness(0, 0, 16, 0);
+        DockPanel.SetDock(showing, Dock.Left);
+        line.Children.Add(showing);
+
+        if (ColumnArranger.Line(columns, listed) is { } tiles)
         {
-            DockPanel.SetDock(tile, Dock.Right);
-            line.Children.Add(tile);
+            line.Children.Add(tiles);
         }
 
-        line.Children.Add(showing);
         table.Children.Add(line);
+
+        if (ColumnFilter.Bar(columns, listed) is { } filterBar)
+        {
+            table.Children.Add(filterBar);
+        }
 
         if (ColumnArranger.Bar(columns) is { } bar)
         {
@@ -509,14 +531,21 @@ public sealed partial class StarSystemPage
 
         var rows = new StackPanel { Spacing = Gaps.Tile, Children = { header } };
 
+        if (ColumnFilter.Empty(columns, listed) is { } hidden)
+        {
+            rows.Children.Add(hidden);
+        }
+
         foreach (var station in shown)
         {
-            rows.Children.Add(StationRow(profile, station));
+            var row = StationRow(profile, station);
+            row.IsVisible = !ColumnFilter.HidesRows(columns);
+            rows.Children.Add(row);
         }
 
         table.Children.Add(columns.Headset ? rows : new TableScroll(columns.Layout, rows));
 
-        if (shown.Count == 0)
+        if (listed.Count == 0)
         {
             var none = Sentence(NoStationMatches, ThemeManager.WhiteKey);
             none.Margin = new Thickness(0, 10, 0, 0);

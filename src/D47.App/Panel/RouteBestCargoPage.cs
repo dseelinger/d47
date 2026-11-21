@@ -63,6 +63,7 @@ public sealed class RouteBestCargoPage : UserControl
     ];
 
     private readonly ArrangedTable<CargoPick> _table;
+    private IReadOnlyList<CargoPick> _picks = [];
     private Dictionary<CargoPick, int> _ranks = new(ReferenceEqualityComparer.Instance);
     private long _best = 1;
 
@@ -267,7 +268,7 @@ public sealed class RouteBestCargoPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _table.StopArranging();
+        _table.Reopen();
         _board.Posted += OnPosted;
     }
 
@@ -312,7 +313,8 @@ public sealed class RouteBestCargoPage : UserControl
             : posting.Answer.Picks.Count == 0 ? BestCargoView.NoProfit
             : BestCargoView.Picks;
 
-        Rows = View == BestCargoView.Picks ? _table.Sort(posting!.Answer!.Picks) : [];
+        _picks = View == BestCargoView.Picks ? posting!.Answer!.Picks : [];
+        Rows = View == BestCargoView.Picks ? _table.Shown(_picks) : [];
         _ranks = new Dictionary<CargoPick, int>(ReferenceEqualityComparer.Instance);
 
         for (var index = 0; index < Rows.Count; index++)
@@ -377,7 +379,7 @@ public sealed class RouteBestCargoPage : UserControl
 
             case BestCargoView.Picks:
                 body.Children.Add(GroupHead(posting!.Search.Destination, plot: true));
-                body.Children.Add(Table(Rows));
+                body.Children.Add(Table(Rows, _picks));
                 break;
         }
 
@@ -579,7 +581,7 @@ public sealed class RouteBestCargoPage : UserControl
         return new StackPanel { Margin = new Thickness(0, 24, 0, 6), Children = { row, rule } };
     }
 
-    private Control Table(IReadOnlyList<CargoPick> picks)
+    private Control Table(IReadOnlyList<CargoPick> picks, IReadOnlyList<CargoPick> all)
     {
         _table.Refresh();
 
@@ -587,14 +589,19 @@ public sealed class RouteBestCargoPage : UserControl
         var rule = new Border { BorderThickness = new Thickness(0, 0, 0, 1), Child = heads, Margin = new Thickness(0, 0, 0, 6) };
         ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.LineKey);
 
-        var rows = new StackPanel { Spacing = Gaps.Tile };
+        var rows = new StackPanel { Spacing = Gaps.Tile, IsVisible = !ColumnFilter.HidesRows(_table) };
+
+        if (ColumnFilter.Empty(_table, all) is { } empty)
+        {
+            rows.Children.Add(empty);
+        }
 
         foreach (var pick in picks)
         {
             rows.Children.Add(Row(pick));
         }
 
-        var arranger = LedgerTables.Arranger(_table);
+        var arranger = LedgerTables.Arranger(_table, all);
         arranger.Margin = new Thickness(0, 0, 0, 8);
 
         return new StackPanel { Children = { arranger, LedgerTables.Sideways(_table, new StackPanel { Children = { rule, rows } }) } };
@@ -607,10 +614,12 @@ public sealed class RouteBestCargoPage : UserControl
             new TableColumn("Rank", ColumnFit.Fixed) { Fixed = 22 },
             pick => Mono(_ranks.GetValueOrDefault(pick).ToString(CultureInfo.InvariantCulture), TypeScale.Meta, ThemeManager.GreyKey)),
         StarSystemPage.Headed(Headings[1], new TableColumn("Commodity", ColumnFit.Fill) { Min = 100 }, CommodityCell),
-        StarSystemPage.Headed(Headings[2], new TableColumn("SellAt", ColumnFit.Fill) { Min = 100 }, StationCell),
+        StarSystemPage.Headed(Headings[2], new TableColumn("SellAt", ColumnFit.Fill) { Min = 100 }, StationCell)
+            with { Filters = [ValueLists.One<CargoPick>("Station", pick => pick.Station, "No station")] },
         StarSystemPage.Headed(
             Headings[3], new TableColumn("Profit"), pick => Right(Mono(Number(pick.ProfitPerTonne), TypeScale.Small, ThemeManager.AKey)), right: true),
-        StarSystemPage.Headed(Headings[4], new TableColumn("Tonnes"), TonnesCell, right: true),
+        StarSystemPage.Headed(Headings[4], new TableColumn("Tonnes"), TonnesCell, right: true)
+            with { Filters = [ValueLists.One<CargoPick>("Limit", pick => Limit(pick.Limit), "No limit")] },
         StarSystemPage.Headed(
             Headings[5], new TableColumn("Total"), pick => Right(Mono(Number(pick.Total), TypeScale.Tip, ThemeManager.AKey)), right: true),
         LedgerTables.Control<CargoPick>(

@@ -72,6 +72,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         {
             Label = "Class",
             Sort = ColumnHeadings[1],
+            Filters = [ValueLists.One<Held>("Class", row => row.Module.Class, "No class")],
         },
         new("TransferCost", new TableColumn("TransferCost"), row => CostCell(row.Module, row.Here))
         {
@@ -89,30 +90,35 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
         {
             Label = "System",
             Sort = SortColumn<Held>.Text("System", row => row.Module.StarSystem),
+            Filters = [ValueLists.One<Held>("System", row => row.Module.StarSystem, "No system")],
             ByDefault = false,
         },
         new("Station", new TableColumn("Station"), row => TableCells.Text(row.Module.StationName))
         {
             Label = "Station",
             Sort = SortColumn<Held>.Text("Station", row => row.Module.StationName),
+            Filters = [ValueLists.One<Held>("Station", row => row.Module.StationName, "No station")],
             ByDefault = false,
         },
         new("InTransit", new TableColumn("InTransit"), row => TableCells.Flag(row.Module.InTransit))
         {
             Label = InTransit,
             Sort = SortColumn<Held>.Figure(InTransit, row => (int?)(row.Module.InTransit ? 1 : 0), SortDirection.Descending),
+            Filters = [ValueLists.Flag<Held>(InTransit, row => row.Module.InTransit, "Not known")],
             ByDefault = false,
         },
         new("Hot", new TableColumn("Hot"), row => TableCells.Flag(row.Module.Hot))
         {
             Label = "Hot",
             Sort = SortColumn<Held>.Figure("Hot", row => (int?)(row.Module.Hot ? 1 : 0), SortDirection.Descending),
+            Filters = [ValueLists.Flag<Held>("Hot", row => row.Module.Hot, "Not known")],
             ByDefault = false,
         },
         new("Engineering", new TableColumn("Engineering"), row => TableCells.Text(row.Module.Engineering))
         {
             Label = "Engineering",
             Sort = SortColumn<Held>.Text("Engineering", row => row.Module.Engineering),
+            Filters = [ValueLists.One<Held>("Engineering", row => row.Module.Engineering, "Not engineered")],
             ByDefault = false,
         },
         new("Grade", new TableColumn("Grade"), row => TableCells.Number(row.Module.EngineeringGrade))
@@ -167,7 +173,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _table.StopArranging();
+        _table.Reopen();
     }
 
     public bool Filters => Store is { IsKnown: true, Modules.Count: > 0 };
@@ -334,25 +340,40 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
             return;
         }
 
-        if (ColumnArranger.Line(_table) is { } line)
+        IReadOnlyList<Held> held = [.. groups.SelectMany(group => group.Modules.Select(module => new Held(module, group.Here)))];
+
+        var arranger = LedgerTables.Arranger(_table, held);
+        arranger.Margin = new Thickness(0, 18, 0, 0);
+        _body.Children.Add(arranger);
+
+        if (ColumnFilter.Empty(_table, held) is { } empty)
         {
-            line.Margin = new Thickness(0, 18, 0, 0);
-            _body.Children.Add(line);
+            _body.Children.Add(empty);
         }
 
-        if (ColumnArranger.Bar(_table) is { } bar)
+        if (ColumnFilter.HidesRows(_table))
         {
-            _body.Children.Add(bar);
+            return;
         }
 
         foreach (var group in groups)
         {
-            _body.Children.Add(Section(group));
+            if (Section(group) is { } section)
+            {
+                _body.Children.Add(section);
+            }
         }
     }
 
-    private Control Section(Group group)
+    private Control? Section(Group group)
     {
+        var shown = _table.Shown([.. group.Modules.Select(module => new Held(module, group.Here))]);
+
+        if (shown.Count == 0)
+        {
+            return null;
+        }
+
         var name = TitleText.Build(group.System, TypeScale.Section, TitleRank.Group);
         name.VerticalAlignment = VerticalAlignment.Center;
         ThemeInk.Bind(
@@ -374,7 +395,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
 
         var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
-        foreach (var row in _table.Sort([.. group.Modules.Select(module => new Held(module, group.Here))]))
+        foreach (var row in shown)
         {
             rows.Children.Add(Row(row));
         }

@@ -58,7 +58,7 @@ public sealed class ComparePage : UserControl
         SortColumn<Ship>.Figure("Fuel", ship => ship.Fuel, SortDirection.Descending),
         SortColumn<Ship>.Figure("Value", ship => ship.Value, SortDirection.Descending),
         SortColumn<Ship>.Figure("Rebuy", ship => ship.Rebuy, SortDirection.Ascending),
-        SortColumn<Ship>.Text("Where", ship => ship.Where == Nowhere ? null : ship.Where),
+        SortColumn<Ship>.Text("Location", ship => ship.Where == Nowhere ? null : ship.Where),
     ];
 
     /// <summary>The default order: furthest jump first.</summary>
@@ -110,7 +110,7 @@ public sealed class ComparePage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _head.StopArranging();
+        _head.Reopen();
     }
 
     /// <summary>Filters the list by <see cref="Tonnes"/>[<paramref name="index"/>].</summary>
@@ -231,7 +231,8 @@ public sealed class ComparePage : UserControl
         _head.Refresh();
 
         var all = Ships(_state());
-        var listed = _head.Sort(Listed(all, null, Tonnes[Math.Max(0, _minimum.SelectedIndex)]));
+        var rows = Listed(all, null, Tonnes[Math.Max(0, _minimum.SelectedIndex)]);
+        var listed = _head.Shown(rows);
 
         _body.Children.Clear();
         _body.Children.Add(TitleText.Block(
@@ -250,9 +251,9 @@ public sealed class ComparePage : UserControl
             return;
         }
 
-        _table.Children.Add(LedgerTables.Arranger(_head));
+        _table.Children.Add(LedgerTables.Arranger(_head, rows));
 
-        if (listed.Count == 0)
+        if (rows.Count == 0)
         {
             _table.Children.Add(LedgerTables.Sideways(_head, new StackPanel { Children = { Head() } }));
             _table.Children.Add(Message(Filtered));
@@ -261,9 +262,16 @@ public sealed class ComparePage : UserControl
 
         var list = new StackPanel { Spacing = IndexPage.ListGap, Children = { Head() } };
 
+        if (ColumnFilter.Empty(_head, rows) is { } empty)
+        {
+            list.Children.Add(empty);
+        }
+
         foreach (var ship in listed)
         {
-            list.Children.Add(Row(ship));
+            var row = Row(ship);
+            row.IsVisible = !ColumnFilter.HidesRows(_head);
+            list.Children.Add(row);
         }
 
         _table.Children.Add(LedgerTables.Sideways(_head, list));
@@ -309,14 +317,16 @@ public sealed class ComparePage : UserControl
 
     private IReadOnlyList<TableField<Ship>> Fields() =>
     [
-        StarSystemPage.Headed(Heads[0], new TableColumn("Ship", ColumnFit.Fill), ShipCell),
+        StarSystemPage.Headed(Heads[0], new TableColumn("Ship", ColumnFit.Fill), ShipCell)
+            with { Filters = [ValueLists.One<Ship>("Hull", ship => ship.Hull.Split(" · ")[0], "No hull")] },
         StarSystemPage.Headed(Heads[1], new TableColumn("Cargo"), ship => Figure(ship.Cargo is { } cargo ? $"{cargo.ToString(CultureInfo.InvariantCulture)} T" : null, ThemeManager.YellowKey), right: true),
         StarSystemPage.Headed(Heads[2], new TableColumn("Jump"), ship => Figure(ship.Jump?.ToString("0.00' LY'", CultureInfo.InvariantCulture), ThemeManager.AKey), right: true),
         StarSystemPage.Headed(Heads[3], new TableColumn("Unladen"), ship => Figure(ship.Unladen?.ToString("0.0' T'", CultureInfo.InvariantCulture), ThemeManager.WhiteKey), right: true),
         StarSystemPage.Headed(Heads[4], new TableColumn("Fuel"), ship => Figure(ship.Fuel?.ToString("0.#' T'", CultureInfo.InvariantCulture), ThemeManager.WhiteKey), right: true),
         StarSystemPage.Headed(Heads[5], new TableColumn("Value"), ship => Figure(ship.Value?.ToString("N0", CultureInfo.InvariantCulture), ThemeManager.AKey), right: true),
         StarSystemPage.Headed(Heads[6], new TableColumn("Rebuy"), ship => Figure(ship.Rebuy?.ToString("N0", CultureInfo.InvariantCulture), ThemeManager.AKey), right: true),
-        StarSystemPage.Headed(Heads[7], new TableColumn("Where", ColumnFit.Fill), WhereCell),
+        StarSystemPage.Headed(Heads[7], new TableColumn("Where", ColumnFit.Fill), WhereCell)
+            with { Filters = [ValueLists.One<Ship>("Location", ship => ship.Where == Nowhere ? null : ship.Where, "Location not known")] },
     ];
 
     private static Control ShipCell(Ship ship)

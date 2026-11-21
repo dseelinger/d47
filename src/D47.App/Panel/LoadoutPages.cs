@@ -1037,12 +1037,14 @@ public static class LoadoutPages
         {
             Label = "Current",
             Sort = SortColumn<SlotLine>.Text("Current", line => line.Row.Parts?.Current.Module),
+            Filters = SideValues(line => line.Row.Parts?.Current, "Nothing fitted"),
             More = [new TableField<SlotLine>("Mark", new TableColumn("Mark", ColumnFit.Fixed) { Fixed = 22 }, MarkCell)],
         },
         new("Plan", new TableColumn("Plan", ColumnFit.Fill), line => Planned(line.Row.Parts!, line.Showing))
         {
             Label = "Plan",
             Sort = SortColumn<SlotLine>.Text("Plan", line => line.Row.Parts?.Plan?.Module),
+            Filters = SideValues(line => line.Row.Parts?.Plan, "Nothing planned"),
         },
         new("Draw", new TableColumn("Draw", ColumnFit.Fixed) { Fixed = 60 }, line => DrawCell(line.Row.Parts!.Draw))
         {
@@ -1057,6 +1059,14 @@ public static class LoadoutPages
             Alignment = HorizontalAlignment.Right,
             ByDefault = false,
         },
+    ];
+
+    /// <summary>The module, roll and experimental effect one side of a slot names.</summary>
+    private static IReadOnlyList<ValueList<SlotLine>> SideValues(Func<SlotLine, LoadoutSide?> side, string none) =>
+    [
+        ValueLists.One<SlotLine>("Module", line => side(line)?.Module, none),
+        ValueLists.One<SlotLine>("Blueprint", line => side(line)?.Blueprint, "No blueprint"),
+        ValueLists.One<SlotLine>("Experimental", line => side(line)?.Experimental, "No experimental"),
     ];
 
     private static double? DrawAmount(LoadoutDraw? draw) =>
@@ -2040,7 +2050,7 @@ public sealed class ItemPage : LoadoutPage
 
         HullPicture.SizeChosen += OnSizeChosen;
         ShipArtStore.Arrived += ArtArrived;
-        _slots.StopArranging();
+        _slots.Reopen();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -2409,13 +2419,29 @@ public sealed class ItemPage : LoadoutPage
 
         var table = _slotRows = new StackPanel { Spacing = IndexPage.ListGap };
 
-        if (slots.Any(row => row.Parts is not null))
+        IReadOnlyList<LoadoutPages.SlotLine> lines = [.. slots.Where(row => row.Parts is not null).Select(row => new LoadoutPages.SlotLine(row, false))];
+        var hidden = new HashSet<LoadoutRow>(ReferenceEqualityComparer.Instance);
+
+        if (lines.Count > 0)
         {
-            _below.Children.Add(LedgerTables.Arranger(_slots));
+            _below.Children.Add(LedgerTables.Arranger(_slots, lines));
             table.Children.Add(LoadoutPages.SlotHeader(_slots));
+            hidden.UnionWith(lines.Except(_slots.Filter(lines)).Select(line => line.Row));
+
+            if (ColumnFilter.Empty(_slots, lines) is { } empty)
+            {
+                table.Children.Add(empty);
+            }
         }
 
         _below.Children.Add(LedgerTables.Sideways(_slots, table));
+
+        if (ColumnFilter.HidesRows(_slots))
+        {
+            return;
+        }
+
+        slots = [.. slots.Where(row => !hidden.Contains(row))];
 
         // A heading wherever the group changes, so a ship's slots read as the four blocks of the outfitting
         // screen rather than as thirty-odd names in journal order (remediation.md 12, item 1).

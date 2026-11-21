@@ -180,7 +180,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
     /// <summary>Shows one section.</summary>
     public void Show(Section section)
     {
-        _marketColumns?.StopArranging();
+        _marketColumns?.Reopen();
         _section = section;
         Draw();
     }
@@ -325,7 +325,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
         {
             if (segment.SelectedIndex >= 0 && (Section)segment.SelectedIndex != _section)
             {
-                _marketColumns?.StopArranging();
+                _marketColumns?.Reopen();
                 _section = (Section)segment.SelectedIndex;
                 Draw();
             }
@@ -519,15 +519,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
         var columns = MarketColumns;
         columns.Refresh();
 
-        if (ColumnArranger.Line(columns) is { } line)
-        {
-            column.Children.Add(line);
-        }
-
-        if (ColumnArranger.Bar(columns) is { } bar)
-        {
-            column.Children.Add(bar);
-        }
+        column.Children.Add(LedgerTables.Arranger(columns, market.Commodities));
 
         var header = columns.Header();
         header.MinHeight = TypeScale.MinimumTarget;
@@ -540,9 +532,16 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
         rows.Children.Add(header);
         rows.Children.Add(rule);
 
-        foreach (var commodity in columns.Sort(market.Commodities))
+        if (ColumnFilter.Empty(columns, market.Commodities) is { } empty)
         {
-            rows.Children.Add(CommodityRow(commodity, columns));
+            rows.Children.Add(empty);
+        }
+
+        foreach (var commodity in columns.Shown(market.Commodities))
+        {
+            var row = CommodityRow(commodity, columns);
+            row.IsVisible = !ColumnFilter.HidesRows(columns);
+            rows.Children.Add(row);
         }
 
         column.Children.Add(columns.Headset ? rows : new TableScroll(columns.Layout, rows));
@@ -575,7 +574,8 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
     private static IReadOnlyList<TableField<MarketCommodity>> MarketFields() =>
     [
         StarSystemPage.Headed(MarketHeads[0], new TableColumn("Commodity", ColumnFit.Fill) { Min = 140 }, commodity => Typeset.Chrome(commodity.Name, TypeScale.Control, ThemeManager.WhiteKey, weight: FontWeight.SemiBold, trimming: TextTrimming.CharacterEllipsis)),
-        StarSystemPage.Headed(MarketHeads[1], new TableColumn("Category", ColumnFit.Fill) { Min = 100 }, commodity => Typeset.Chrome(commodity.Category ?? Dash, TypeScale.Secondary, ThemeManager.AKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis)),
+        StarSystemPage.Headed(MarketHeads[1], new TableColumn("Category", ColumnFit.Fill) { Min = 100 }, commodity => Typeset.Chrome(commodity.Category ?? Dash, TypeScale.Secondary, ThemeManager.AKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis))
+            with { Filters = [ValueLists.One<MarketCommodity>("Category", commodity => commodity.Category, "No category")] },
         StarSystemPage.Headed(MarketHeads[2], new TableColumn("Buy"), commodity => Figure(Amount(commodity.BuyPrice), ThemeManager.AKey), right: true),
         StarSystemPage.Headed(MarketHeads[3], new TableColumn("Sell"), commodity => Figure(Amount(commodity.SellPrice), ThemeManager.AKey), right: true),
         StarSystemPage.Headed(MarketHeads[4], new TableColumn("Supply"), commodity => Figure(Amount(commodity.Supply), ThemeManager.WhiteKey), right: true),
