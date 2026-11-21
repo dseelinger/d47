@@ -23,6 +23,9 @@ public sealed class ArrangedTable<TRow>
 {
     private const double ChooseInset = 6;
 
+    /// <summary>Text as wide as a filtered header's counts, measured into a filterable column's minimum.</summary>
+    private const string MarkRoom = " 00/00";
+
     private readonly string _headName;
     private readonly IReadOnlyList<TableField<TRow>> _fields;
     private readonly IReadOnlyList<TableField<TRow>> _arrangeable;
@@ -199,11 +202,16 @@ public sealed class ArrangedTable<TRow>
         _head = NewHead();
     }
 
+    /// <summary>
+    /// The header: sorting cells, or choose cells while either bar is open. While <see cref="Filtering"/>, a field with
+    /// no value list draws a disabled cell. A filtered field's label is in A with its shown and listed counts.
+    /// </summary>
     public TableGrid Header() =>
         Layout.Header([.. _drawn.Select((field, column) =>
             Arranging && field.Label is not null ? ChooseCell(field, _owners[column])
+            : Filtering && (field.Label is not null || field.Sort is not null) ? FilterCell(field)
             : field.Label is null && field.Sort is null ? new Border()
-            : _head.Cell(column, field.Alignment))]);
+            : _head.Cell(column, field.Alignment, Mark(field.Key), field.Label))]);
 
     public TableGrid Row(TRow row) => Layout.Row([.. _drawn.Select(field => field.Cell(row))]);
 
@@ -233,6 +241,49 @@ public sealed class ArrangedTable<TRow>
 
     /// <summary>A block of the field lists more than 20 values.</summary>
     public bool Many(string key) => _filter.Many(key);
+
+    /// <summary>The field declares a value list.</summary>
+    public bool HasValues(string key) => _filter.Has(key);
+
+    /// <summary>
+    /// The values ticked over the values listed in the field's blocks that have an unticked value; null when none has.
+    /// </summary>
+    public (int Shown, int Listed)? Mark(string key)
+    {
+        var filtered = FilterBlocks.Where(block => block.FieldKey == key && block.Filtered).ToList();
+
+        return filtered.Count == 0
+            ? null
+            : (filtered.Sum(block => block.Values.Count(value => value.Ticked)), filtered.Sum(block => block.Values.Count));
+    }
+
+    /// <summary>
+    /// Opens the values of a field with more than 20 in a block on a page of their own; while set,
+    /// <see cref="ChooseFilter"/> calls it for such a field instead of choosing it.
+    /// </summary>
+    public Action<string>? PickMany { get; set; }
+
+    /// <summary>The control name of the filter bar's header cell for the drawn field <paramref name="key"/>.</summary>
+    public string FilterName(string key) => $"{_headName}.Filter.{key}";
+
+    /// <summary>Ticks every value of every block, keeping each value's place in its block.</summary>
+    public void TickEveryValue() => Filtered(_filter.TickEvery());
+
+    /// <summary>Sets every value of the field's blocks to <paramref name="ticked"/>'s answer, raising one change.</summary>
+    public void SetTicked(string key, Func<int, string, bool> ticked)
+    {
+        var changed = false;
+
+        foreach (var block in FilterBlocks.Where(block => block.FieldKey == key))
+        {
+            foreach (var value in block.Values)
+            {
+                changed |= _filter.Set(key, block.Index, value.Value, ticked(block.Index, value.Value));
+            }
+        }
+
+        Filtered(changed);
+    }
 
     public void Tick(string key, int block, string value) => Filtered(_filter.Set(key, block, value, true));
 
@@ -264,6 +315,13 @@ public sealed class ArrangedTable<TRow>
     /// <summary>Chooses the field whose values are listed, or clears the choice when it is already chosen.</summary>
     public void ChooseFilter(string key)
     {
+        if (FilterChosen != key && Many(key) && PickMany is { } pick)
+        {
+            pick(key);
+
+            return;
+        }
+
         FilterChosen = FilterChosen == key ? null : key;
         Changed?.Invoke();
     }
@@ -465,6 +523,65 @@ public sealed class ArrangedTable<TRow>
         return button;
     }
 
+    private Button FilterCell(TableField<TRow> field)
+    {
+        var name = field.Label ?? field.Sort!.Label;
+        var values = HasValues(field.Key);
+        var chosen = values && FilterChosen == field.Key;
+        var mark = values ? Mark(field.Key) : null;
+        var ink = !values ? ThemeManager.Grey2Key : chosen ? ThemeManager.KnockKey : mark is null ? ThemeManager.GreyKey : ThemeManager.AKey;
+        var label = SortHeader<TRow>.Line(name, TypeScale.Meta, FontWeight.Medium, ink);
+        label.HorizontalAlignment = field.Alignment;
+
+        if (mark is { } counts)
+        {
+            SortHeader<TRow>.AddMark(label, counts);
+        }
+
+        Control content = label;
+
+        if ((field.Second ?? field.Sort?.Second) is { } second)
+        {
+            var under = SortHeader<TRow>.Line(
+                second, TypeScale.MetaSmall, FontWeight.Normal,
+                !values ? ThemeManager.Grey2Key : chosen ? ThemeManager.KnockKey : ThemeManager.GreyKey);
+            under.HorizontalAlignment = field.Alignment;
+            content = new StackPanel { Children = { label, under } };
+        }
+
+        var bleed = Bleed;
+        var button = new Button
+        {
+            Name = FilterName(field.Key),
+            Theme = Application.Current?.FindResource("D47.SortHeader") as ControlTheme,
+            Content = content,
+            MinHeight = TypeScale.MinimumTarget,
+            Margin = new Thickness(-bleed, 0),
+            Padding = new Thickness(ChooseInset, 0),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            HorizontalContentAlignment = field.Alignment,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            IsEnabled = values,
+        };
+
+        if (values)
+        {
+            ThemeInk.Bind(button, Button.BackgroundProperty, chosen ? ThemeManager.AKey : ThemeManager.TileKey);
+            button.Click += (_, _) => ChooseFilter(field.Key);
+        }
+
+        var shown = mark is { } marked ? SortHeader<TRow>.MarkWords(marked) : null;
+
+        Avalonia.Automation.AutomationProperties.SetName(
+            button,
+            !values ? $"{name}: not filtered"
+            : chosen ? shown is null ? $"{name}, chosen" : $"{name}, chosen, {shown}"
+            : shown is null ? $"Filter by {name}" : $"{name}, filtered: {shown}");
+
+        return button;
+    }
+
     /// <summary>Neighbouring choose cells are a tile gap apart, whatever the column spacing.</summary>
     private double Bleed => (_spacing - Gaps.Tile) / 2;
 
@@ -498,12 +615,12 @@ public sealed class ArrangedTable<TRow>
 
         if (field.Sort is { } sort)
         {
-            width = Math.Max(Measure(sort.Label + (sort.Sortable ? " ▲" : string.Empty), TypeScale.Meta, FontWeight.Medium), under);
+            width = Math.Max(Measure(sort.Label + (sort.Sortable ? " ▲" : string.Empty) + (HasValues(field.Key) ? MarkRoom : string.Empty), TypeScale.Meta, FontWeight.Medium), under);
         }
 
         if (field.Label is { } label)
         {
-            var text = Math.Max(Measure(label, TypeScale.Meta, FontWeight.Medium), under);
+            var text = Math.Max(Measure(label + (HasValues(field.Key) ? MarkRoom : string.Empty), TypeScale.Meta, FontWeight.Medium), under);
             width = Math.Max(width, Math.Max(text, text + (2 * ChooseInset) - (2 * Bleed)));
         }
 

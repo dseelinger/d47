@@ -491,6 +491,29 @@ column the table can show, as checkboxes: tick one to add it at the right, untic
 Headers do not sort while the bar is open; **DONE** closes it. Each change is kept as it is made, and
 the headset keeps its columns apart from the window's.
 
+**FILTER**, immediately before **COLUMNS**, hides rows by the values in their columns. It shows on a
+table that has a column whose values repeat, and reads **FILTER · 2** while two columns are filtered.
+Opening it closes the COLUMNS bar, and opening COLUMNS closes it. Press a header to choose that
+column: the bar lists each value the rows carry as a checkbox with the number of rows that have it,
+and a header that draws two values, such as Economy over Security, lists both. Untick a value to hide
+the rows that have it; tick it again to show them. Rows with no value in the column are one entry of
+their own, last, such as "No security reported", and unticking it hides those rows. A column whose
+cells list several items, such as a station's services, lists the items: a row shows while at least
+one of its items is ticked. **TICK ALL** and **UNTICK ALL** act on the chosen column, **CLEAR FILTERS**
+ticks every value, and **DONE** closes the bar with the rows still filtered. A number, distance or time
+column has no values to list, and its header is disabled while the bar is open. A column with more
+than 20 values opens them on a page of their own, with a box to type in; there **TICK ALL** and
+**UNTICK ALL** act on the values that match what is typed, **USE THESE** applies the ticks and **BACK**
+leaves the column as it was.
+
+While rows are hidden, a filtered column's header is in the accent colour with the values shown over
+the values listed, such as ECONOMY 5/7, and the line above the table says so, as in "These 18 of 25,
+filtered by Economy and Power", with **CLEAR FILTERS** beside it. When every row is hidden, the table
+says which columns hid them, as in "No row has a ticked Location.", in place of the rows. The filter
+only hides rows Directive 47 already has: nothing is sent anywhere and nothing spoken changes. It is
+not kept: leaving the page and opening it again shows every row. In the headset the rows are hidden
+while the bar is open and come back on **DONE**.
+
 On the desktop, a table whose columns do not fit the window at their narrowest scrolls sideways in its
 own box, its header and rows together, while the page still scrolls up and down. The headset does not
 scroll sideways, so a column that would not fit has its checkbox disabled, and when none fits **ADD A

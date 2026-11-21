@@ -10,7 +10,14 @@ public sealed record ValueList<TRow>(string Label, Func<TRow, IReadOnlyList<stri
 public sealed record FilterValue(string Value, int Count, bool Ticked);
 
 /// <summary>One block of a field as the filter lists it.</summary>
-public sealed record FilterBlock(string FieldKey, int Index, string FieldLabel, string Label, IReadOnlyList<FilterValue> Values);
+public sealed record FilterBlock(string FieldKey, int Index, string FieldLabel, string Label, IReadOnlyList<FilterValue> Values)
+{
+    /// <summary>Some row observed carries more than one of the block's values: a list cell.</summary>
+    public bool Several { get; init; }
+
+    /// <summary>Some value of the block is unticked.</summary>
+    public bool Filtered => Values.Any(value => !value.Ticked);
+}
 
 /// <summary>The unticked values of a table's blocks, and the rows they hide. Holds no controls.</summary>
 internal sealed class RowFilter<TRow>
@@ -37,6 +44,8 @@ internal sealed class RowFilter<TRow>
     public IReadOnlyList<string> FilteredLabels =>
         [.. _blocks.Where(block => block.Unticked.Count > 0).Select(block => block.FieldLabel).Distinct(StringComparer.Ordinal)];
 
+    public bool Has(string key) => _blocks.Any(block => block.FieldKey == key);
+
     public bool Many(string key) => _blocks.Any(block => block.FieldKey == key && block.Listed.Count > ManyValues);
 
     public IReadOnlyList<TRow> Filter(IReadOnlyList<TRow> rows)
@@ -59,6 +68,8 @@ internal sealed class RowFilter<TRow>
 
     public bool SetAll(string key, int index, bool ticked) =>
         Find(key, index)?.SetAll(ticked) == true;
+
+    public bool TickEvery() => _blocks.Count(block => block.SetAll(true)) > 0;
 
     public bool Clear()
     {
@@ -89,12 +100,17 @@ internal sealed class RowFilter<TRow>
 
         public HashSet<string> Unticked { get; } = new(StringComparer.Ordinal);
 
+        private bool _several;
+
         public FilterBlock View() => new(
             FieldKey,
             Index,
             FieldLabel,
             list.Label,
-            [.. Listed.Select(value => new FilterValue(value, _counts.GetValueOrDefault(value), !Unticked.Contains(value)))]);
+            [.. Listed.Select(value => new FilterValue(value, _counts.GetValueOrDefault(value), !Unticked.Contains(value)))])
+        {
+            Several = _several,
+        };
 
         public bool Lets(TRow row)
         {
@@ -106,10 +122,12 @@ internal sealed class RowFilter<TRow>
         public void Observe(IReadOnlyList<TRow> rows)
         {
             var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+            _several = false;
 
             foreach (var row in rows)
             {
                 var values = list.Values(row);
+                _several |= values.Distinct(StringComparer.Ordinal).Skip(1).Any();
 
                 foreach (var value in values.Count == 0 ? [list.NoValue] : values.Distinct(StringComparer.Ordinal))
                 {
@@ -155,6 +173,7 @@ internal sealed class RowFilter<TRow>
             Listed.Clear();
             Unticked.Clear();
             _counts.Clear();
+            _several = false;
         }
     }
 }

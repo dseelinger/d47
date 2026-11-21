@@ -76,6 +76,18 @@
               Content="Back"
               Margin="0,0,8,0"
               Click="OnCancelClick" />
+      <Button x:Name="TickAllButton"
+              DockPanel.Dock="Left"
+              Content="Tick all"
+              Margin="0,0,2,0"
+              IsVisible="False"
+              Click="OnTickAllClick" />
+      <Button x:Name="UntickAllButton"
+              DockPanel.Dock="Left"
+              Content="Untick all"
+              Margin="0,0,12,0"
+              IsVisible="False"
+              Click="OnTickAllClick" />
       <Button x:Name="DefaultButton"
               HorizontalAlignment="Left"
               HorizontalContentAlignment="Left"
@@ -104,6 +116,15 @@
                  FontSize="{StaticResource D47.Type.MetaSmall}"
                  Foreground="{DynamicResource D47.Grey}" />
     </DockPanel>
+
+    <!-- How many of the choices are ticked, where TICK ALL and UNTICK ALL are offered. -->
+    <TextBlock x:Name="TickedLine"
+               DockPanel.Dock="Bottom"
+               IsVisible="False"
+               Margin="0,8,0,0"
+               FontSize="{StaticResource D47.Type.Secondary}"
+               TextWrapping="Wrap"
+               Foreground="{DynamicResource D47.Grey}" />
 
     <!-- Under a Chatterbox list, what choosing the highlighted voice fetches and who speaks meanwhile. -->
     <TextBlock x:Name="ChoosingLine"

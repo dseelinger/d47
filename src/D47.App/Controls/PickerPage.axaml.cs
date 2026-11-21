@@ -64,6 +64,12 @@ public sealed record PickerRequest
     /// <summary>The values ticked when a <see cref="Several"/> picker opens.</summary>
     public IReadOnlyCollection<string>? CurrentSeveral { get; init; }
 
+    /// <summary>
+    /// With <see cref="Several"/>: TICK ALL and UNTICK ALL act on the choices that match the filter, a grey line counts
+    /// the choices ticked, a grid of groups keeps the filter, and each cell ends in its <see cref="AsideOf"/>.
+    /// </summary>
+    public bool TicksAll { get; init; }
+
     /// <summary>The status line shown beside a choice, or null for none.</summary>
     public Func<string, ChoiceStatus?>? Status { get; init; }
 
@@ -526,13 +532,13 @@ public partial class PickerPage : UserControl
         }
 
         _grid = _request.Several && _request.GroupOf is not null && _request.Clips is null;
-        FilterLine.IsVisible = !_grid;
+        FilterLine.IsVisible = !_grid || _request.TicksAll;
         GroupGrid.IsVisible = _grid;
 
-        if (_grid)
-        {
-            BindGrid();
-        }
+        var ticks = _request.Several && _request.TicksAll;
+        TickAllButton.IsVisible = ticks;
+        UntickAllButton.IsVisible = ticks;
+        TickedLine.IsVisible = ticks;
 
         ApplyFilter();
 
@@ -636,12 +642,12 @@ public partial class PickerPage : UserControl
     /// One block per group in the order the groups first appear: the name in a 104 px column, then the choices
     /// in four columns.
     /// </summary>
-    private void BindGrid()
+    private void BindGrid(IReadOnlyList<PickerChoice> listed)
     {
         var groupOf = _request.GroupOf!;
         var blocks = new StackPanel { Spacing = 8 };
 
-        foreach (var group in _all.GroupBy(row => groupOf(row.Value) ?? string.Empty))
+        foreach (var group in listed.GroupBy(row => groupOf(row.Value) ?? string.Empty))
         {
             var rows = group.ToArray();
             var cells = new Grid
@@ -704,6 +710,24 @@ public partial class PickerPage : UserControl
         box.IsChecked = row.Ticked;
         box.IsCheckedChanged += (_, _) => row.Ticked = box.IsChecked == true;
         AutomationProperties.SetName(box, row.Text);
+
+        if (_request.TicksAll && row.Aside is { } aside)
+        {
+            var count = Grey(new TextBlock
+            {
+                Text = aside,
+                FontFamily = new FontFamily(Fonts.MonoFamily),
+                FontSize = TypeScale.Small,
+                Margin = new Thickness(12, 0, 0, 0),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            });
+
+            label.TextWrapping = TextWrapping.Wrap;
+            DockPanel.SetDock(count, Dock.Right);
+            box.Content = null;
+            box.HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
+            box.Content = new DockPanel { Children = { count, label } };
+        }
 
         if (_request.SwatchOf?.Invoke(row.Value) is { } draw)
         {
@@ -852,6 +876,11 @@ public partial class PickerPage : UserControl
 
         _visible = matches;
 
+        if (_grid)
+        {
+            BindGrid(matches);
+        }
+
         // The same row objects, filtered — never new ones.
         Choices.ItemsSource = matches;
         Choices.IsVisible = matches.Length > 0 && !_grid;
@@ -986,8 +1015,10 @@ public partial class PickerPage : UserControl
     {
         if (_request.Several)
         {
-            AcceptButton.Content = $"Use these · {_all.Count(choice => choice.Ticked)}";
+            var ticked = _all.Count(choice => choice.Ticked);
+            AcceptButton.Content = $"Use these · {ticked}";
             AcceptButton.IsEnabled = true;
+            TickedLine.Text = $"{ticked} of {_all.Count} ticked.";
             return;
         }
 
@@ -1168,6 +1199,19 @@ public partial class PickerPage : UserControl
     }
 
     private void OnAcceptClick(object? sender, RoutedEventArgs e) => Accept();
+
+    /// <summary>Ticks or unticks every choice that matches the filter, and leaves the rest as they are.</summary>
+    private void OnTickAllClick(object? sender, RoutedEventArgs e)
+    {
+        var ticked = ReferenceEquals(sender, TickAllButton);
+
+        foreach (var choice in _filtered)
+        {
+            choice.Ticked = ticked;
+        }
+
+        ApplyFilter();
+    }
 
     private void OnChoiceDoubleTapped(object? sender, TappedEventArgs e)
     {

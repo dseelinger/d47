@@ -120,6 +120,10 @@ public sealed partial class NoTextNamesAThirdPartyServiceGateTests
                 case VariableDeclaratorSyntax { Identifier.Text: "GalaxyOffText" or "NextEgress" } when relative == "D47.App/Panel/WatchFormPage.cs":
                     return true;
 
+                // The line under a search's filter values that says the filter sends nothing to Galaxy search's service.
+                case VariableDeclaratorSyntax { Identifier.Text: "KeptSearch" } when relative == "D47.App/Controls/ColumnFilter.cs":
+                    return true;
+
                 // The words the local voices are taught to say, which are matched, not shown.
                 case VariableDeclaratorSyntax { Identifier.Text: "Shipped" } when relative == "D47.Core/Speech/PronunciationOverrides.cs":
                     return true;

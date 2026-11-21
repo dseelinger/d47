@@ -1,5 +1,7 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
@@ -195,8 +197,12 @@ public sealed class SortHeader<TRow>
     /// <summary>The control name of column <paramref name="column"/>'s cell: the header's name, a dot, the label without spaces.</summary>
     public string CellName(int column) => $"{_name}.{Columns[column].Label.Replace(" ", string.Empty, StringComparison.Ordinal)}";
 
-    /// <summary>A new cell for column <paramref name="column"/>, its label set to <paramref name="alignment"/>.</summary>
-    public Control Cell(int column, HorizontalAlignment alignment)
+    /// <summary>
+    /// A new cell for column <paramref name="column"/>, its label set to <paramref name="alignment"/>. With
+    /// <paramref name="mark"/> the label is in A followed by the values shown over the values listed, and the cell's
+    /// name says so with <paramref name="name"/>.
+    /// </summary>
+    public Control Cell(int column, HorizontalAlignment alignment, (int Shown, int Listed)? mark = null, string? name = null)
     {
         var spec = Columns[column];
         var shown = Order ?? Default;
@@ -204,8 +210,13 @@ public sealed class SortHeader<TRow>
             ? sorted.Direction == SortDirection.Ascending ? " ▲" : " ▼"
             : null;
 
-        var label = Line(spec.Label + arrow, TypeScale.Meta, FontWeight.Medium, arrow is null ? ThemeManager.GreyKey : ThemeManager.AKey);
+        var label = Line(spec.Label + arrow, TypeScale.Meta, FontWeight.Medium, arrow is null && mark is null ? ThemeManager.GreyKey : ThemeManager.AKey);
         label.HorizontalAlignment = alignment;
+
+        if (mark is { } counts)
+        {
+            AddMark(label, counts);
+        }
 
         Control content = label;
 
@@ -237,11 +248,26 @@ public sealed class SortHeader<TRow>
             HorizontalContentAlignment = alignment,
             VerticalContentAlignment = VerticalAlignment.Center,
         };
-        Avalonia.Automation.AutomationProperties.SetName(button, $"Sort by {spec.Label}");
+        Avalonia.Automation.AutomationProperties.SetName(
+            button, mark is { } marked ? $"{name ?? spec.Label}, filtered: {MarkWords(marked)}" : $"Sort by {spec.Label}");
         button.Click += (_, _) => Press(column);
 
         return button;
     }
+
+    /// <summary>Follows a header label with the values shown over the values listed, in mono.</summary>
+    internal static void AddMark(TextBlock label, (int Shown, int Listed) mark)
+    {
+        var text = label.Text ?? string.Empty;
+        var counts = Fonts.Mono(" " + mark.Shown.ToString(CultureInfo.InvariantCulture) + "/" + mark.Listed.ToString(CultureInfo.InvariantCulture));
+        counts.FontWeight = FontWeight.Normal;
+        label.Text = null;
+        label.Inlines = [new Run(text), counts];
+    }
+
+    /// <summary>"5 of 7 values shown".</summary>
+    internal static string MarkWords((int Shown, int Listed) mark) =>
+        $"{mark.Shown.ToString(CultureInfo.InvariantCulture)} of {mark.Listed.ToString(CultureInfo.InvariantCulture)} values shown";
 
     /// <summary>A header label line in the chrome font, inked from <paramref name="key"/>.</summary>
     internal static TextBlock Line(string text, double size, FontWeight weight, string key)

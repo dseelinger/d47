@@ -43,15 +43,53 @@ public static class ColumnArranger
         return tile;
     }
 
-    /// <summary>The COLUMNS tile on a 44px line of its own, at the right; null for a table with one column.</summary>
-    public static Control? Line<TRow>(ArrangedTable<TRow> table) =>
-        Tile(table) is { } tile
-            ? new Border
-            {
-                MinHeight = TypeScale.MinimumTarget,
-                Child = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Children = { tile } },
-            }
-            : null;
+    /// <summary>
+    /// The COLUMNS tile on a 44px line of its own, at the right. Given the table's <paramref name="rows"/>, before the
+    /// filter, the line also has <see cref="ColumnFilter.Head"/> at the left, and CLEAR FILTERS while rows are hidden and
+    /// FILTER immediately before COLUMNS at the right. Null when the line would be empty.
+    /// </summary>
+    public static Control? Line<TRow>(ArrangedTable<TRow> table, IReadOnlyList<TRow>? rows = null, string? sortedBy = null)
+    {
+        if (rows is not null)
+        {
+            table.Observe(rows);
+        }
+
+        var head = rows is null ? null : ColumnFilter.Head(table, rows, sortedBy);
+        var tiles = new[]
+        {
+            head is null ? null : ColumnFilter.HeadClear(table),
+            rows is null ? null : ColumnFilter.Tile(table),
+            Tile(table),
+        }.OfType<Button>().ToList();
+
+        if (tiles.Count == 0 && head is null)
+        {
+            return null;
+        }
+
+        var right = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = Gaps.Tile };
+
+        foreach (var tile in tiles)
+        {
+            right.Children.Add(tile);
+        }
+
+        if (head is null)
+        {
+            return new Border { MinHeight = TypeScale.MinimumTarget, Child = right };
+        }
+
+        right.Margin = Gaps.TileBefore;
+        right.VerticalAlignment = VerticalAlignment.Top;
+        Grid.SetColumn(right, 1);
+
+        return new Border
+        {
+            MinHeight = TypeScale.MinimumTarget,
+            Child = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { head, right } },
+        };
+    }
 
     /// <summary>
     /// The bar, the grey line under it, then the ADD A COLUMN panel when open, or the NO ROOM notice when no column has

@@ -35,14 +35,23 @@ internal static class LedgerTables
         return header;
     }
 
-    /// <summary>The COLUMNS tile on a line of its own, then its bar when open.</summary>
-    public static StackPanel Arranger<TRow>(ArrangedTable<TRow> columns)
+    /// <summary>
+    /// The COLUMNS tile on a line of its own, then its bar when open. Given the table's <paramref name="rows"/>, before
+    /// the filter, the line also carries the filter's head line and FILTER, and the filter bar shows when open.
+    /// </summary>
+    public static StackPanel Arranger<TRow>(
+        ArrangedTable<TRow> columns, IReadOnlyList<TRow>? rows = null, string? sortedBy = null, PanelPrompts? prompts = null)
     {
         var top = new StackPanel { Spacing = Gaps.Tile };
 
-        if (ColumnArranger.Line(columns) is { } tile)
+        if (ColumnArranger.Line(columns, rows, sortedBy) is { } tile)
         {
             top.Children.Add(tile);
+        }
+
+        if (rows is not null && ColumnFilter.Bar(columns, rows, prompts: prompts) is { } filter)
+        {
+            top.Children.Add(filter);
         }
 
         if (ColumnArranger.Bar(columns) is { } bar)
@@ -112,7 +121,7 @@ internal sealed class ArrangedList(bool headset, string listName, Func<object, C
         }
 
         _grid!.Children[1].IsVisible = any;
-        _scroll!.IsVisible = any;
+        _scroll!.IsVisible = any && !ColumnFilter.HidesRows(columns);
 
         if (any && _shown.SequenceEqual(items))
         {
