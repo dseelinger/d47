@@ -1044,37 +1044,26 @@ public sealed class RouteMarketPage : UserControl
             cells.Children.Add(glyph);
         }
 
-        var name = new Run(station);
-        ThemeInk.Bind(name, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
-
-        var sentence = new TextBlock
-        {
-            FontSize = TypeScale.Secondary,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
         if (_copy is null)
         {
+            var name = new Run(station);
+            ThemeInk.Bind(name, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
+
             var place = new Run($" ({system})");
             ThemeInk.Bind(place, TextElement.ForegroundProperty, RoutingKit.SystemKey(system, _here()));
-            sentence.Inlines = [name, place];
+
+            cells.Children.Add(new TextBlock
+            {
+                FontSize = TypeScale.Secondary,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                VerticalAlignment = VerticalAlignment.Center,
+                Inlines = [name, place],
+            });
         }
         else
         {
-            var link = new TextBlock { Text = system, FontSize = TypeScale.Secondary };
-            ThemeInk.Bind(link, TextBlock.ForegroundProperty, RoutingKit.SystemKey(system, _here()));
-
-            sentence.Inlines =
-            [
-                name,
-                new Run(" ("),
-                new InlineUIContainer { BaselineAlignment = BaselineAlignment.Center, Child = SystemLink.Of(link, system, flush: false) },
-                new Run(")"),
-            ];
+            cells.Children.Add(Placed(station, system));
         }
-
-        cells.Children.Add(sentence);
 
         if (!carrier)
         {
@@ -1087,6 +1076,37 @@ public sealed class RouteMarketPage : UserControl
         mark.Name = CarrierMarkName;
 
         return new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center, Children = { cells, mark } };
+    }
+
+    /// <summary>
+    /// The station, then its system as a link in brackets, each a block of its own centred on the row:
+    /// the link's press target is taller than a line of text, so it cannot sit inside one. The station trims first.
+    /// </summary>
+    private DockPanel Placed(string station, string system)
+    {
+        TextBlock Piece(string text, string key)
+        {
+            var piece = new TextBlock { Text = text, FontSize = TypeScale.Secondary, VerticalAlignment = VerticalAlignment.Center };
+            ThemeInk.Bind(piece, TextBlock.ForegroundProperty, key);
+            return piece;
+        }
+
+        var link = new TextBlock { Text = system, FontSize = TypeScale.Secondary };
+        ThemeInk.Bind(link, TextBlock.ForegroundProperty, RoutingKit.SystemKey(system, _here()));
+
+        var name = Piece(station, ThemeManager.WhiteKey);
+        name.TextTrimming = TextTrimming.CharacterEllipsis;
+
+        var placed = new DockPanel { HorizontalAlignment = HorizontalAlignment.Left };
+
+        foreach (var right in new Control[] { Piece(")", ThemeManager.WhiteKey), SystemLink.Of(link, system, flush: false), Piece(" (", ThemeManager.WhiteKey) })
+        {
+            DockPanel.SetDock(right, Dock.Right);
+            placed.Children.Add(right);
+        }
+
+        placed.Children.Add(name);
+        return placed;
     }
 
     /// <summary>Whether the answer is for several commodities at one station.</summary>

@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -134,9 +133,6 @@ public sealed class RouteMarketShowsEveryCommodityAtEachStationTests
     private static Color SystemInk(PanelView panel, string system) =>
         ((ISolidColorBrush)panel.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == system).Foreground!).Color;
 
-    private static Color InkOf(List<Run> runs, string text) =>
-        ((ISolidColorBrush)runs.Single(run => run.Text == text).Foreground!).Color;
-
     private static void Press(PanelView panel, string name)
     {
         panel.GetVisualDescendants().OfType<Button>().Single(button => button.Name == name)
@@ -221,14 +217,34 @@ public sealed class RouteMarketShowsEveryCommodityAtEachStationTests
 
         var (panel, window, _) = Furnished();
 
-        List<Run> runs =
-        [
-            .. panel.GetVisualDescendants().OfType<TextBlock>().SelectMany(block => block.Inlines?.OfType<Run>() ?? []),
-        ];
-
         Assert.Equal(Ink(ThemeManager.CyanKey), SystemInk(panel, "Sol"));
         Assert.Equal(Ink(ThemeManager.AKey), SystemInk(panel, "Ohm"));
-        Assert.Equal(Ink(ThemeManager.WhiteKey), InkOf(runs, "Galileo"));
+        Assert.Equal(Ink(ThemeManager.WhiteKey), SystemInk(panel, "Galileo"));
+
+        window.Close();
+    }
+
+    /// <summary>The system link's press target is taller than a line of text; the station, the brackets and the system still share one centre line.</summary>
+    [AvaloniaFact]
+    public void TheStationAndItsSystemLinkAreCentredOnOneLine()
+    {
+        using var look = AppLook.Put();
+
+        var (panel, window, _) = Furnished();
+        window.Height = 1400;
+        Dispatcher.UIThread.RunJobs();
+
+        TextBlock Block(string text) => panel.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Text == text);
+
+        double Middle(TextBlock block) => Avalonia.VisualExtensions.TranslatePoint(block, new Avalonia.Point(0, block.Bounds.Height / 2), panel)!.Value.Y;
+
+        var station = Middle(Block("Ohm Port"));
+
+        Assert.Contains(panel.GetVisualDescendants().OfType<Button>(), button => button.Classes.Contains(Controls.SystemLink.ButtonClass) && button.Bounds.Height > Block("Ohm Port").Bounds.Height * 2);
+        Assert.Equal(station, Middle(Block("Ohm")), 1.0);
+
+        using var frame = window.CaptureRenderedFrame()!;
+        frame.SaveCapture("route-market-station-cell.png");
 
         window.Close();
     }
