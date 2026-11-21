@@ -4,9 +4,12 @@
   with-lyrics.py --until 05:00          also stop at that local wall-clock time
   with-lyrics.py --count 1 --out DIR    one song into DIR/<folder>/, for a test
   with-lyrics.py --folders a,b          only those folders
+  with-lyrics.py --theme christmas      only that theme; every theme in sung.THEMES order by default
 
-Each folder's quota is its count in catalogue.BRIEFS. A song counts while its file is still in the folder, so a
-deleted song is written again. The ledger is with-lyrics.tsv in the data folder; with-lyrics.log is the log.
+Each theme gives every folder its count in catalogue.BRIEFS. A song counts while its file is in the folder or in its
+theme's sung-off folder, so a deleted song is written again. A new song goes where its theme is: the folder when
+the theme is on, sung-off\\<theme>\\ when it is off (see sung.py). The ledger is with-lyrics.tsv in the data
+folder; with-lyrics.log is the log.
 Nothing here touches tracks\\ or generated.txt, so the weekly publish never sees these songs.
 Shares generate.lock with the library generator, stops after the current song when STOP exists, and waits while
 Elite Dangerous is running. A usage or rate limit from Claude ends the run.
@@ -32,15 +35,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import catalogue  # noqa: E402
 import generate  # noqa: E402
+import sung  # noqa: E402
 
 DATA = generate.DATA
 LEDGER = os.path.join(DATA, "with-lyrics.tsv")
 LOG = os.path.join(DATA, "with-lyrics.log")
 TMP = os.path.join(DATA, "_with-lyrics_tmp")
 EXPERIMENT = os.path.join(DATA, "experiments", "lyrics")
-OWN = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "d47", "data", "audio", "music")
-SUNG_OFF = os.path.join(DATA, "sung-off")
-FIELDS = ["folder", "file", "title", "chorus", "vocal", "mood", "seed", "lyrics"]
+OWN = sung.OWN
+FIELDS = ["theme", "folder", "file", "title", "chorus", "vocal", "mood", "seed", "lyrics"]
 MODEL = "opus"
 
 CUES = {"arrival-from-supercruise", "arrival-from-hyperspace", "interdiction"}
@@ -65,13 +68,64 @@ ANGLES = ["a pilot talking to the ship", "a letter home that will arrive late", 
           "what the pilot will tell no one", "a lighthouse of a star", "someone waiting at the other end",
           "a superstition kept for luck", "the quiet after the noise"]
 
+# theme: (brief for the lyric writer, angles, caption words outside combat, caption words in combat folders)
+THEMES = {
+    "general": ("", ANGLES, "", ""),
+    "christmas": (
+        "A Christmas song, kept by people living out among the stars. Draw on the season's warmth and joy and on "
+        "the nativity itself: the birth of Christ in Bethlehem, the star, the shepherds, peace on earth. The chorus "
+        "makes it plainly a Christmas song.",
+        ["a Christmas Eve watch on a quiet carrier", "lights strung through the hangar",
+         "a gift sent home across forty jumps", "the nativity told to the youngest of the crew",
+         "a star followed across the black, as the magi followed theirs", "snow seen falling on a world from orbit",
+         "a station's Christmas market", "Christmas dinner made from ration packs", "a carol sung over open comms",
+         "the one who cannot make it home this year", "a child's drawing taped to the console",
+         "midnight on Christmas, far from any sun", "a ceasefire kept on Christmas day",
+         "an old pilot's Christmas tradition", "bells rung in a station chapel",
+         "a Christmas message from home, arriving late"],
+        "Christmas song, sleigh bells", "Christmas song"),
+    "love": (
+        "A love song for Valentine's Day: the pilot and the one they love, apart across the black or together for "
+        "a night on a station. Tender, warm and faithful. Nothing explicit, and the song is never about cheating.",
+        ["the first message after a long silence", "a ring carried in the flight suit",
+         "docking at the station where they wait", "the photo clipped above the throttle",
+         "two pilots flying wing for life", "counting the jumps until home", "a dance in an empty hangar",
+         "an anniversary kept a thousand light years apart", "the voice that talks them in to land",
+         "a carrier jump timed to be home by morning", "growing old together on a quiet outpost",
+         "the night they met in a starport bar", "a promise made under a gas giant's rings",
+         "a letter that may arrive late", "holding each other in the quiet after the fight",
+         "a name painted on the hull"],
+        "romantic love song", "love song"),
+    "christian": (
+        "A Christian song in the Reformed faith, as a Presbyterian Church in America congregation confesses it in "
+        "the Westminster Standards. God is the subject, not the pilot's feelings: the triune God, sovereign over "
+        "every star, every jump and every outcome; salvation by grace alone, through faith alone, in Christ alone, "
+        "by his finished work on the cross and his resurrection; providence, covenant faithfulness, the assurance "
+        "and perseverance of the saints, the Lord's Day, the hope of the resurrection and the new creation. Lament "
+        "and trust belong together, as in the Psalms. Speak of God with reverence. Never make salvation the "
+        "pilot's own work, never promise wealth or safety as a reward for faith, never use God's name casually, "
+        "and never make God a co-pilot or a charm for luck.",
+        ["the heavens declaring the glory of God", "fleeing to the far side of the sea, and God already there",
+         "a prayer before a jump into the unknown", "the Lord's Day kept aboard a carrier",
+         "grace for a pilot who has failed", "providence in a narrow escape",
+         "the God who numbers the stars and calls them by name", "Christ's finished work, with nothing to add",
+         "lament after losing a wingmate, and trust", "the covenant kept from parent to child",
+         "the resurrection hope at a burial in space", "a doxology at journey's end",
+         "the Lord's Supper shared by a small crew", "assurance when the hull is breached",
+         "waiting on the Lord through a long transit", "the new creation, when the black is made new"],
+        "reverent worship song, hymn-like melody", "solemn worship song"),
+}
+assert set(THEMES) == set(sung.THEMES)
+
 RULES = """You write song lyrics for a sung track that plays in the game Elite Dangerous.
 
 Rules:
 - The song is about the situation given, from the point of view of a pilot or a station crew, in the game's
   setting: Federation, Empire, Alliance, Thargoids, Guardians, carriers, the Bubble and the deep black.
+- When a theme is given, the song belongs to that theme as much as to the situation.
 - Invent any person you need. Never name a real player, and never mention any app, tool or website.
-- Write every line fresh. Do not quote or adapt lyrics from existing songs.
+- Write every line fresh. Do not quote or adapt lyrics from existing songs, carols, hymns or worship songs.
+  Allude to Scripture in your own words rather than quoting any translation.
 - One central image for the whole song.
 - Section tags on their own line in square brackets, a blank line between sections. Allowed tags: [Intro],
   [Verse 1], [Verse 2], [Chorus], [Bridge], [Outro], and one instrumental break such as [Instrumental] or
@@ -98,10 +152,26 @@ generate.log = log  # should_stop, wait_for_game and load_models log here, not i
 
 
 def read_ledger():
+    """The ledger's rows. A ledger without a theme column is rewritten with one, every row general, after a copy
+    is kept beside it as with-lyrics.before-themes.tsv."""
     if not os.path.exists(LEDGER):
         return []
     with open(LEDGER, encoding="utf-8", newline="") as f:
-        return list(csv.DictReader(f, delimiter="\t"))
+        reader = csv.DictReader(f, delimiter="\t")
+        rows = list(reader)
+        columns = reader.fieldnames or []
+    if "theme" not in columns:
+        shutil.copy2(LEDGER, os.path.join(os.path.dirname(LEDGER), "with-lyrics.before-themes.tsv"))
+        for r in rows:
+            r["theme"] = "general"
+        tmp = LEDGER + ".tmp"
+        with open(tmp, "w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=FIELDS, delimiter="\t")
+            w.writeheader()
+            w.writerows(rows)
+        os.replace(tmp, LEDGER)
+        log(f"ledger given a theme column: {len(rows)} songs are general")
+    return rows
 
 
 def append_ledger(row):
@@ -144,45 +214,66 @@ def import_experiment(out):
         lyrics = open(lyrics_path, encoding="utf-8").read().strip()
         caption = open(os.path.join(EXPERIMENT, f"{folder}.txt"), encoding="utf-8").readline()
         vocal = next((p.strip() for p in caption.split(",") if "vocal" in p), "")
-        append_ledger({"folder": folder, "file": match, "title": os.path.splitext(match)[0],
+        append_ledger({"theme": "general", "folder": folder, "file": match, "title": os.path.splitext(match)[0],
                        "chorus": chorus_of(lyrics), "vocal": vocal, "mood": "", "seed": "", "lyrics": lyrics})
     log(f"ledger started with {len(read_ledger())} experiment songs")
 
 
+def is_own(out):
+    return os.path.normcase(os.path.abspath(out)) == os.path.normcase(os.path.abspath(OWN))
+
+
+def roots(theme, out):
+    """Where a theme's songs may be: the installed app's folders or the theme's sung-off folder, else out alone."""
+    return [OWN, sung.off_root(theme)] if is_own(out) else [out]
+
+
+def home(theme, out):
+    """Where a new song of the theme goes: out when it is not the installed app's folders, else where the theme is."""
+    if not is_own(out):
+        return out
+    return OWN if theme in sung.themes_on() else sung.off_root(theme)
+
+
 def present(rows, out):
-    """The ledger rows whose file is still in the folder."""
-    return [r for r in rows if os.path.exists(os.path.join(out, r["folder"], r["file"]))]
+    """The ledger rows whose file is still in the folder or in its theme's sung-off folder."""
+    return [r for r in rows
+            if any(os.path.exists(os.path.join(root, r["folder"], r["file"])) for root in roots(sung.theme_of(r), out))]
 
 
-def plan(rows, out, folders, count):
-    """(folder, attempt) pairs to make, round-robin across the folders furthest from their quota."""
-    have = {f: 0 for f in catalogue.BRIEFS}
-    for r in present(rows, out):
-        have[r["folder"]] = have.get(r["folder"], 0) + 1
-    made = {f: sum(1 for r in rows if r["folder"] == f) for f in catalogue.BRIEFS}
-    need = {f: max(catalogue.BRIEFS[f][0] - have[f], 0) for f in catalogue.BRIEFS if not folders or f in folders}
+def plan(rows, out, folders, count, themes=sung.THEMES):
+    """(theme, folder, attempt) triples to make: theme by theme in order, and within a theme round-robin across
+    the folders furthest from their quota."""
+    kept = present(rows, out)
     order = []
-    for i in range(max(need.values(), default=0)):
-        for f, n in need.items():
-            if i < n:
-                order.append((f, made[f] + i))
+    for theme in themes:
+        have = {f: sum(1 for r in kept if r["folder"] == f and sung.theme_of(r) == theme) for f in catalogue.BRIEFS}
+        made = {f: sum(1 for r in rows if r["folder"] == f and sung.theme_of(r) == theme) for f in catalogue.BRIEFS}
+        need = {f: max(catalogue.BRIEFS[f][0] - have[f], 0) for f in catalogue.BRIEFS if not folders or f in folders}
+        for i in range(max(need.values(), default=0)):
+            for f, n in need.items():
+                if i < n:
+                    order.append((theme, f, made[f] + i))
     return order[:count] if count else order
 
 
-def spec(folder, attempt, rows):
+def spec(theme, folder, attempt, rows):
     """The song's arrangement, drawn from the folder's brief with a seed of its own."""
     count, dur, bpm_range, style, moods, voicings, shapes = catalogue.BRIEFS[folder]
-    seed = catalogue.seed_of(f"song-{folder}-{attempt}")
+    seed = catalogue.seed_of(f"song-{folder}-{attempt}" if theme == "general" else f"song-{theme}-{folder}-{attempt}")
     rng = random.Random(seed)
     combat = folder in catalogue.COMBAT
+    _, angles, calm_words, combat_words = THEMES[theme]
+    words = combat_words if combat else calm_words
     used = [r["vocal"] for r in rows if r["folder"] == folder][-3:]
     pool = [v for v in (COMBAT_VOCALS if combat else VOCALS) if v not in used]
     lead, second, accompaniment = rng.choice(voicings)
     vocal = rng.choice(pool)
     mood = rng.choice(moods)
     production = catalogue.COMBAT_PRODUCTION if combat else catalogue.PRODUCTION
-    return {"folder": folder, "seed": seed, "mood": mood, "vocal": vocal, "angle": rng.choice(ANGLES),
-            "caption": f"{style}, {vocal}, {lead}, {second}, {accompaniment}, {mood}, {production}",
+    return {"theme": theme, "folder": folder, "seed": seed, "mood": mood, "vocal": vocal, "angle": rng.choice(angles),
+            "caption": f"{style}, {words + ', ' if words else ''}{vocal}, {lead}, {second}, {accompaniment}, {mood}, "
+                       f"{production}",
             "arrangement": f"{lead}, {second}, {accompaniment}",
             "bpm": rng.randint(*bpm_range), "key": rng.choice(catalogue.MINOR if combat else catalogue.KEYS),
             "duration": 75 if folder in CUES else rng.randrange(150, 181, 5)}
@@ -193,9 +284,12 @@ def prompt(s, rows, problems=None):
     shape = ("A short cue of about 75 seconds: [Intro], one verse, one chorus, [Outro]." if s["folder"] in CUES else
              "About 2 to 3 minutes: [Intro], two verses, a chorus sung two or three times, a bridge, "
              "one instrumental break, [Outro].")
-    earlier = [f'"{r["title"]}" (chorus: {r["chorus"]})' for r in rows if r["folder"] == s["folder"]]
+    earlier = [f'"{r["title"]}" (chorus: {r["chorus"]})' for r in rows
+               if r["folder"] == s["folder"] and sung.theme_of(r) == s["theme"]]
+    brief = THEMES[s["theme"]][0]
     text = (f"Situation: the music folder \"{s['folder']}\" ({style}).\n"
-            f"Mood: {s['mood']}.\nSinger: {s['vocal']}.\nArrangement: {s['arrangement']}.\n"
+            + (f"Theme: {brief}\n" if brief else "")
+            + f"Mood: {s['mood']}.\nSinger: {s['vocal']}.\nArrangement: {s['arrangement']}.\n"
             f"Angle for this song: {s['angle']}.\nShape: {shape}\n")
     if earlier:
         text += ("\nSongs already written for this folder. Use a different title, central image and chorus from "
@@ -290,10 +384,12 @@ def write(s, rows):
     return None
 
 
-def file_name(title, folder_path):
+def file_name(title, folder_path, taken):
+    """A file name free in folder_path and not in taken, the names the ledger already uses in this folder for any
+    theme, so a theme turned on never collides with another."""
     base = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "", title).strip(" .") or "Untitled"
     name, n = f"{base}.mp3", 2
-    while os.path.exists(os.path.join(folder_path, name)):
+    while name.lower() in taken or os.path.exists(os.path.join(folder_path, name)):
         name, n = f"{base} {n}.mp3", n + 1
     return name
 
@@ -322,31 +418,41 @@ def render(dit, s, lyrics):
 
 
 def place(dit, s, song, out, rows):
-    """Renders a written song, moves it into its folder under out and adds it to the ledger. True on success."""
+    """Renders a written song, moves it into its folder where its theme is and adds it to the ledger. True on
+    success."""
     t0 = time.time()
     path = render(dit, s, song["lyrics"])
     if path is None:
         return False
-    target = os.path.join(out, s["folder"])
+    target = os.path.join(home(s["theme"], out), s["folder"])
     os.makedirs(target, exist_ok=True)
-    name = file_name(song["title"], target)
+    name = file_name(song["title"], target, {r["file"].lower() for r in rows if r["folder"] == s["folder"]})
     shutil.move(path, os.path.join(TMP, name))
     os.replace(os.path.join(TMP, name), os.path.join(target, name))
-    row = {"folder": s["folder"], "file": name, "title": song["title"].strip(),
+    row = {"theme": s["theme"], "folder": s["folder"], "file": name, "title": song["title"].strip(),
            "chorus": chorus_of(song["lyrics"]), "vocal": s["vocal"], "mood": s["mood"],
            "seed": s["seed"], "lyrics": song["lyrics"]}
     append_ledger(row)
     rows.append(row)
-    log(f"{s['folder']}: {name} {s['duration']}s in {time.time() - t0:.0f}s")
+    log(f"{s['theme']} {s['folder']}: {name} {s['duration']}s in {time.time() - t0:.0f}s")
     return True
 
 
-def next_spec(folder, rows, out):
-    """The next song's arrangement for a folder, or None when the folder has its quota."""
-    have = sum(1 for r in present(rows, out) if r["folder"] == folder)
+def next_spec(theme, folder, rows, out):
+    """The next song's arrangement for a theme's folder, or None when the folder has the theme's quota."""
+    have = sum(1 for r in present(rows, out) if r["folder"] == folder and sung.theme_of(r) == theme)
     if have >= catalogue.BRIEFS[folder][0]:
         return None
-    return spec(folder, sum(1 for r in rows if r["folder"] == folder), rows)
+    return spec(theme, folder, sum(1 for r in rows if r["folder"] == folder and sung.theme_of(r) == theme), rows)
+
+
+def theme_arg(value):
+    """The themes a --theme value names, in sung.THEMES order."""
+    if value == "all":
+        return sung.THEMES
+    if value not in sung.THEMES:
+        raise argparse.ArgumentTypeError(f"not a theme: {value}; themes are {', '.join(sung.THEMES)} or all")
+    return (value,)
 
 
 def main():
@@ -354,16 +460,14 @@ def main():
     ap.add_argument("--until")
     ap.add_argument("--count", type=int, default=0)
     ap.add_argument("--folders", default="")
+    ap.add_argument("--theme", type=theme_arg, default=sung.THEMES)
     ap.add_argument("--out", default=OWN, help="the music folders to fill; the installed app's by default")
     ap.add_argument("--after-library", action="store_true",
                     help="run.cmd's call: keep a STOP the library generator's run left, rather than clearing it")
     args, _ = ap.parse_known_args()
-    if os.path.normcase(os.path.abspath(args.out)) != os.path.normcase(OWN):
+    if not is_own(args.out):
         global LEDGER
         LEDGER = os.path.join(args.out, "with-lyrics.tsv")
-    elif os.path.isdir(SUNG_OFF) and any(f.endswith(".mp3") for _, _, files in os.walk(SUNG_OFF) for f in files):
-        print(f"The sung songs are off, in {SUNG_OFF}; run sung.py on first, or every one would be written again.")
-        return
 
     if not generate.take_lock():
         print("The library generator or another song run holds the lock.")
@@ -374,8 +478,9 @@ def main():
         deadline = generate.deadline_of(args.until)
         import_experiment(args.out)
         rows = read_ledger()
-        todo = plan(rows, args.out, set(filter(None, args.folders.split(","))), args.count)
-        log(f"start: {len(todo)} songs to make" + (f", until {deadline:%Y-%m-%d %H:%M}" if deadline else ""))
+        todo = plan(rows, args.out, set(filter(None, args.folders.split(","))), args.count, args.theme)
+        log(f"start: {len(todo)} songs to make ({', '.join(args.theme)})"
+            + (f", until {deadline:%Y-%m-%d %H:%M}" if deadline else ""))
         if not todo or generate.should_stop(deadline) or not generate.wait_for_game(deadline):
             return
 
@@ -385,7 +490,7 @@ def main():
 
         done = 0
         with ThreadPoolExecutor(max_workers=1) as pool:
-            specs = [spec(f, a, rows) for f, a in todo]
+            specs = [spec(t, f, a, rows) for t, f, a in todo]
             pending = pool.submit(write, specs[0], rows)
             for i, s in enumerate(specs):
                 try:

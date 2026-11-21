@@ -5,6 +5,7 @@
   both.py --count 1               stop after that many library tracks
   both.py --folders a,b           only those folders
   both.py --out DIR               put the sung songs under DIR instead of the installed app's music folders
+  both.py --theme christmas       sung songs of that theme only; every theme in order by default
 
 The library track goes to tracks\\ and generated.txt for the weekly publish, as generate.py does. The sung song
 is drawn from its folder's brief with its own arrangement and goes to the own-music folder, as with-lyrics.py
@@ -34,15 +35,15 @@ _spec.loader.exec_module(lyrics)
 generate.log = library_log  # library tracks, stops and waits log to generate.log; sung songs to with-lyrics.log
 
 
-def next_song(rows, out, folders, pool):
+def next_song(rows, out, folders, themes, pool):
     """A future for the next written song in the folder furthest from its quota, or None when all are done."""
-    order = lyrics.plan(rows, out, folders, 1)
-    return song_for(order[0][0], rows, out, pool) if order else None
+    order = lyrics.plan(rows, out, folders, 1, themes)
+    return song_for(order[0][0], order[0][1], rows, out, pool) if order else None
 
 
-def song_for(folder, rows, out, pool):
-    """A future for the folder's next written song, or None when its sung songs are done."""
-    s = lyrics.next_spec(folder, rows, out)
+def song_for(theme, folder, rows, out, pool):
+    """A future for the folder's next written song of the theme, or None when those are done."""
+    s = lyrics.next_spec(theme, folder, rows, out)
     return (s, pool.submit(lyrics.write, s, rows)) if s else None
 
 
@@ -67,9 +68,10 @@ def main():
     ap.add_argument("--until")
     ap.add_argument("--count", type=int, default=0)
     ap.add_argument("--folders", default="")
+    ap.add_argument("--theme", type=lyrics.theme_arg, default=lyrics.sung.THEMES)
     ap.add_argument("--out", default=lyrics.OWN)
     args = ap.parse_args()
-    if os.path.normcase(os.path.abspath(args.out)) != os.path.normcase(lyrics.OWN):
+    if not lyrics.is_own(args.out):
         lyrics.LEDGER = os.path.join(args.out, "with-lyrics.tsv")
 
     if not generate.take_lock():
@@ -86,7 +88,7 @@ def main():
         todo = list(generate.queue(0, folders))
         if args.count:
             todo = todo[:args.count]
-        sung = len(lyrics.plan(rows, args.out, folders, 0))
+        sung = len(lyrics.plan(rows, args.out, folders, 0, args.theme))
         generate.log(f"both: {len(todo)} library tracks and {sung} sung songs to make"
                      + (f", until {deadline:%Y-%m-%d %H:%M}" if deadline else ""))
         if not (todo or sung) or generate.should_stop(deadline) or not generate.wait_for_game(deadline):
@@ -106,7 +108,7 @@ def main():
                 if not go():
                     stopped = True
                     break
-                pending = next_song(rows, args.out, folders, pool) if singing else None
+                pending = next_song(rows, args.out, folders, args.theme, pool) if singing else None
                 tracks += generate.make(dit, row, added)
                 if pending is None:
                     continue
@@ -118,14 +120,15 @@ def main():
                 songs += len(rows) > before
 
             while singing and not stopped and not args.count:
-                order = lyrics.plan(rows, args.out, folders, 1)
+                order = lyrics.plan(rows, args.out, folders, 1, args.theme)
                 if not order or not go():
                     break
+                theme, folder, _ = order[0]
                 before = len(rows)
-                singing = finish_song(dit, song_for(order[0][0], rows, args.out, pool), rows, args.out)
+                singing = finish_song(dit, song_for(theme, folder, rows, args.out, pool), rows, args.out)
                 if len(rows) == before:
                     # The plan would offer the same folder again; end rather than loop on it.
-                    lyrics.log(f"{order[0][0]}: no song made; ending the sung-only part of the run")
+                    lyrics.log(f"{theme} {folder}: no song made; ending the sung-only part of the run")
                     break
                 songs += 1
         generate.log(f"both finished: {tracks} library tracks, {songs} sung songs this run")
