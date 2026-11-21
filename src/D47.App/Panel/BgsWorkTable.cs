@@ -240,14 +240,17 @@ public sealed class BgsWorkSection
         _arrangements = arrangements;
     }
 
-    /// <summary>Raised when the sort or the arrangement changes.</summary>
+    /// <summary>Raised when the sort, the arrangement or the filter changes.</summary>
     public event Action? Changed;
 
-    /// <summary>The rows matching the search, across every group; the pager counts these.</summary>
+    /// <summary>Raised when a tick changes which rows the filter shows, before <see cref="Changed"/>.</summary>
+    public event Action? FilterChanged;
+
+    /// <summary>The rows matching the search and the filter, across every group; the pager counts these.</summary>
     public int Count { get; private set; }
 
-    /// <summary>Closes the COLUMNS bar if it is open.</summary>
-    public void StopArranging() => _columns?.StopArranging();
+    /// <summary>Closes the COLUMNS and FILTER bars and forgets the filter; the columns and sort stay.</summary>
+    public void Reopen() => _columns?.Reopen();
 
     /// <summary>The table, drawn with Influence only while a tick time is known; a sort chosen is kept across the change.</summary>
     private ArrangedTable<BgsWorkRow> Columns(bool withInfluence)
@@ -262,6 +265,7 @@ public sealed class BgsWorkSection
         _columns = new ArrangedTable<BgsWorkRow>(
             BgsWorkTable.TableId, Fields(withInfluence), _arrangements, _columnWidths, _headset ? 12 : 16, headName: HeadName);
         _columns.Changed += () => Changed?.Invoke();
+        _columns.FilterChanged += () => FilterChanged?.Invoke();
 
         if (old?.SortedBy is { } sort)
         {
@@ -278,7 +282,15 @@ public sealed class BgsWorkSection
 
         List<TableField<BgsWorkRow>> fields =
         [
-            StarSystemPage.Headed(heads[0], columns[0], SystemCell),
+            StarSystemPage.Headed(heads[0], columns[0], SystemCell)
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<BgsWorkRow>("System", row => row.System, "System not named"),
+                        ValueLists.One<BgsWorkRow>("Faction", row => row.Faction, "No faction"),
+                    ],
+                },
             StarSystemPage.Headed(heads[1], columns[1], row => Values((BgsWorkTable.MarksUpText(row.MarksUp), Key(row.MarksUp)), (BgsWorkTable.MarksDownText(row.MarksDown), row.MarksDown is null ? ThemeManager.Grey2Key : ThemeManager.RedKey)), right: true),
             StarSystemPage.Headed(heads[2], columns[2], row => Values((BgsWorkTable.Credits(row.Bounties), Key(row.Bounties)), (BgsWorkTable.Credits(row.Bonds), Key(row.Bonds))), right: true),
             StarSystemPage.Headed(heads[3], columns[3], row => Values((BgsWorkTable.Credits(row.Sold), Key(row.Sold)), (BgsWorkTable.Credits(row.Profit), row.Profit switch { null => ThemeManager.Grey2Key, < 0 => ThemeManager.RedKey, _ => ThemeManager.AKey })), right: true),
@@ -308,7 +320,9 @@ public sealed class BgsWorkSection
         columns.Refresh();
         _current = input.Current;
 
-        var shown = BgsWorkTable.Matching(input.Rows, input.Query);
+        var matching = BgsWorkTable.Matching(input.Rows, input.Query);
+        columns.Observe(input.Rows);
+        var shown = columns.Filter(matching);
         Count = shown.Count;
 
         if (tick is null)
@@ -334,9 +348,22 @@ public sealed class BgsWorkSection
             return body;
         }
 
-        if (shown.Count == 0)
+        if (matching.Count == 0)
         {
             body.Children.Add(CreditsKit.Message(BgsWorkTable.NoMatchText(tick)));
+            return body;
+        }
+
+        body.Children.Add(LedgerTables.Arranger(columns, input.Rows));
+
+        if (ColumnFilter.Empty(columns, input.Rows) is { } hidden)
+        {
+            body.Children.Add(hidden);
+            return body;
+        }
+
+        if (ColumnFilter.HidesRows(columns))
+        {
             return body;
         }
 
@@ -368,8 +395,6 @@ public sealed class BgsWorkSection
             onPage = slice;
         }
 
-        body.Children.Add(ArrangerAbove(columns));
-
         for (var i = 0; i < onPage.Count; i++)
         {
             var total = groups.First(group => group.Title == onPage[i].Title).Rows.Count;
@@ -385,23 +410,6 @@ public sealed class BgsWorkSection
         }
 
         return body;
-    }
-
-    private static StackPanel ArrangerAbove(ArrangedTable<BgsWorkRow> columns)
-    {
-        var top = new StackPanel();
-
-        if (ColumnArranger.Line(columns) is { } tile)
-        {
-            top.Children.Add(tile);
-        }
-
-        if (ColumnArranger.Bar(columns) is { } bar)
-        {
-            top.Children.Add(bar);
-        }
-
-        return top;
     }
 
     private static TextBlock Description(DateTimeOffset? tick, DateTimeOffset now)

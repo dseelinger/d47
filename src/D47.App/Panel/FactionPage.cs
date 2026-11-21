@@ -895,6 +895,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         }
 
         table.Changed += redraw;
+        table.FilterChanged += () => _page = 0;
 
         return table;
     }
@@ -910,19 +911,37 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
     private void StopArranging()
     {
-        _systemColumns?.StopArranging();
-        _conflictColumns?.StopArranging();
-        _assetColumns?.StopArranging();
+        _systemColumns?.Reopen();
+        _conflictColumns?.Reopen();
+        _assetColumns?.Reopen();
     }
 
-    /// <summary>The COLUMNS bar, ready for the table's header to follow; with <paramref name="line"/>, the tile on a line of its own above it.</summary>
-    private static StackPanel ArrangerAbove<T>(ArrangedTable<T> columns, bool line = false)
+    /// <summary>
+    /// The FILTER and COLUMNS bars, ready for the table's header to follow; with <paramref name="line"/>, the tiles on a line of
+    /// their own above them, otherwise the filter's head line. <paramref name="rows"/> are every row the table has.
+    /// </summary>
+    private static StackPanel ArrangerAbove<T>(ArrangedTable<T> columns, IReadOnlyList<T> rows, bool line = false)
     {
         var top = new StackPanel();
 
-        if (line && ColumnArranger.Line(columns) is { } tile)
+        if (line)
         {
-            top.Children.Add(tile);
+            top.Children.Add(LedgerTables.Arranger(columns, rows));
+
+            return top;
+        }
+
+        columns.Observe(rows);
+
+        if (ColumnFilter.Head(columns, rows, null) is { } words)
+        {
+            words.Margin = new Thickness(0, 0, 0, 6);
+            top.Children.Add(words);
+        }
+
+        if (ColumnFilter.Bar(columns, rows) is { } filter)
+        {
+            top.Children.Add(filter);
         }
 
         if (ColumnArranger.Bar(columns) is { } bar)
@@ -931,6 +950,30 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         }
 
         return top;
+    }
+
+    /// <summary>CLEAR FILTERS while rows are hidden, then FILTER and COLUMNS, for the toolbar.</summary>
+    private static StackPanel Tiles<T>(ArrangedTable<T> columns, IReadOnlyList<T> rows)
+    {
+        columns.Observe(rows);
+        var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile };
+
+        if (columns.Hidden(rows) > 0)
+        {
+            tiles.Children.Add(ColumnFilter.HeadClear(columns));
+        }
+
+        if (ColumnFilter.Tile(columns) is { } filter)
+        {
+            tiles.Children.Add(filter);
+        }
+
+        if (ColumnArranger.Tile(columns) is { } tile)
+        {
+            tiles.Children.Add(tile);
+        }
+
+        return tiles;
     }
 
     private TableGrid HeadOf<T>(ArrangedTable<T> columns)
@@ -984,12 +1027,17 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
         return
         [
-            StarSystemPage.Headed(heads[0], Fill("System", 170, 130), row => CopyGlyph.LinkBeside(SystemName(row.System), row.System, Copy)),
+            StarSystemPage.Headed(heads[0], Fill("System", 170, 130), row => CopyGlyph.LinkBeside(SystemName(row.System), row.System, Copy))
+                with { Filters = [ValueLists.One<FactionRow>("System", row => row.System, "No system")] },
             StarSystemPage.Headed(heads[1], Sized("Influence", 96, 76), InfluenceCell, right: true),
-            StarSystemPage.Headed(heads[2], Fill("Active", 100, 90), row => States(row.Active, StateInk(row))),
-            StarSystemPage.Headed(heads[3], Fill("Pending", 100, 90), row => States(row.Pending, StateInk(row))),
-            StarSystemPage.Headed(heads[4], Fill("Recovering", 110, 90), row => States(row.Recovering, StateInk(row))),
-            StarSystemPage.Headed(heads[5], Sized("Controls", 84, 64), ControlsCell),
+            StarSystemPage.Headed(heads[2], Fill("Active", 100, 90), row => States(row.Active, StateInk(row)))
+                with { Filters = [ValueLists.Many<FactionRow>("Active", row => row.Active, "No state")] },
+            StarSystemPage.Headed(heads[3], Fill("Pending", 100, 90), row => States(row.Pending, StateInk(row)))
+                with { Filters = [ValueLists.Many<FactionRow>("Pending", row => row.Pending, "No state")] },
+            StarSystemPage.Headed(heads[4], Fill("Recovering", 110, 90), row => States(row.Recovering, StateInk(row)))
+                with { Filters = [ValueLists.Many<FactionRow>("Recovering", row => row.Recovering, "No state")] },
+            StarSystemPage.Headed(heads[5], Sized("Controls", 84, 64), ControlsCell)
+                with { Filters = [ValueLists.Flag<FactionRow>("Controls", row => row.Controls, "Not known")] },
             StarSystemPage.Headed(
                 heads[6],
                 Sized("Updated", 190, 132),
@@ -999,7 +1047,8 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
                 "InConflict",
                 Sized("InConflict", 96, 96),
                 row => TableCells.Flag(row.InConflict),
-                SortColumn<FactionRow>.Figure<int>("In conflict", row => row.InConflict ? 1 : 0, SortDirection.Descending)),
+                SortColumn<FactionRow>.Figure<int>("In conflict", row => row.InConflict ? 1 : 0, SortDirection.Descending))
+                with { Filters = [ValueLists.Flag<FactionRow>("In conflict", row => row.InConflict, "Not known")] },
         ];
     }
 
@@ -1044,19 +1093,28 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         _drawnHere = _searches.GameState?.Invoke()?.Location.StarSystem;
         var all = Rows();
         var matches = FactionModel.Matching(all, _find.Text);
-        var sorted = columns.Sort(matches);
+        columns.Observe(all);
+        var sorted = columns.Shown(matches);
 
-        _count.Text = FactionModel.CountText(matches.Count, all.Count);
+        _count.Text = FactionModel.CountText(sorted.Count, all.Count);
         _page = FactionModel.ClampPage(_page, sorted.Count);
 
-        _systemsTile.Child = ColumnArranger.Tile(columns);
-        var top = ArrangerAbove(columns);
+        _systemsTile.Child = Tiles(columns, all);
+        var top = ArrangerAbove(columns, all);
         var header = HeadOf(columns);
 
         if (sorted.Count == 0)
         {
             RowsDrawn = 0;
             top.Children.Add(header);
+
+            if (ColumnFilter.Empty(columns, all) is { } hidden)
+            {
+                top.Children.Add(hidden);
+                _table.Child = top;
+                return;
+            }
+
             var none = CreditsKit.Line(NoSystemText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey);
             none.Margin = new Thickness(0, 12, 0, 0);
             top.Children.Add(none);
@@ -1069,7 +1127,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         if (_headset)
         {
             var shown = sorted.Skip(_page * FactionModel.PageSize).Take(FactionModel.PageSize).ToList();
-            var stack = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 0, 14, 0) };
+            var stack = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 0, 14, 0), IsVisible = !ColumnFilter.HidesRows(columns) };
 
             foreach (var row in shown)
             {
@@ -1099,14 +1157,14 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
     }
 
     /// <summary>A list of rows that scroll, with the headset's 25-row pages and the desktop's virtualised list.</summary>
-    private Control Body<T>(IReadOnlyList<T> sorted, Func<T, Border> row, Action redraw)
+    private Control Body<T>(IReadOnlyList<T> sorted, Func<T, Border> row, Action redraw, bool hidden = false)
     {
         _page = FactionModel.ClampPage(_page, sorted.Count);
 
         if (_headset)
         {
             var shown = sorted.Skip(_page * FactionModel.PageSize).Take(FactionModel.PageSize).ToList();
-            var stack = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 0, 14, 0) };
+            var stack = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 0, 14, 0), IsVisible = !hidden };
 
             foreach (var item in shown)
             {
@@ -1138,13 +1196,38 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
         return
         [
-            StarSystemPage.Headed(heads[0], Fill("System", 160, 120), conflict => CopyGlyph.LinkBeside(SystemName(conflict.System), conflict.System, Copy)),
-            StarSystemPage.Headed(heads[1], Fixed("Conflict", 150, 100), KindCell),
-            StarSystemPage.Headed(heads[2], Fill("Opponent", 220, 170), Opponent),
+            StarSystemPage.Headed(heads[0], Fill("System", 160, 120), conflict => CopyGlyph.LinkBeside(SystemName(conflict.System), conflict.System, Copy))
+                with { Filters = [ValueLists.One<FactionConflict>("System", conflict => conflict.System, "No system")] },
+            StarSystemPage.Headed(heads[1], Fixed("Conflict", 150, 100), KindCell)
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<FactionConflict>("Type", conflict => conflict.Type, "No type"),
+                        ValueLists.One<FactionConflict>("Status", conflict => conflict.Status, "No status"),
+                    ],
+                },
+            StarSystemPage.Headed(heads[2], Fill("Opponent", 220, 170), Opponent)
+                with { Filters = [ValueLists.Many<FactionConflict>("Opponent", OpponentNames, "Opponent not known")] },
             StarSystemPage.Headed(heads[3], Fixed("Days won", 120, 84), DaysCell, right: true),
-            StarSystemPage.Headed(heads[4], Fill("At stake", 220, 170), StakeCell),
+            StarSystemPage.Headed(heads[4], Fill("At stake", 220, 170), StakeCell)
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<FactionConflict>("Ours", conflict => conflict.Visited ? conflict.OurStake : null, "No stake read"),
+                        ValueLists.One<FactionConflict>("Theirs", conflict => conflict.Visited ? conflict.TheirStake : null, "No stake read"),
+                    ],
+                },
         ];
     }
+
+    private static IEnumerable<string?> OpponentNames(FactionConflict conflict) => conflict.Kind switch
+    {
+        OpponentKind.Named => [conflict.Opponent],
+        OpponentKind.OneOf => conflict.Candidates,
+        _ => [],
+    };
 
     private void DrawConflicts()
     {
@@ -1156,7 +1239,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         var columns = ConflictColumns;
         columns.Refresh();
 
-        var top = ArrangerAbove(columns, line: true);
+        var top = ArrangerAbove(columns, _conflicts, line: true);
         var header = HeadOf(columns);
 
         if (_conflicts.Count == 0)
@@ -1171,7 +1254,16 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         }
 
         _drawnHere = _searches.GameState?.Invoke()?.Location.StarSystem;
-        var list = Body(_conflicts, conflict => ConflictView(conflict, columns), DrawConflicts);
+        if (ColumnFilter.Empty(columns, _conflicts) is { } hidden)
+        {
+            RowsDrawn = 0;
+            top.Children.Add(header);
+            top.Children.Add(hidden);
+            _conflictsTable.Child = top;
+            return;
+        }
+
+        var list = Body(columns.Shown(_conflicts), conflict => ConflictView(conflict, columns), DrawConflicts, ColumnFilter.HidesRows(columns));
         var offset = _keepScroll ? _conflictsScroll?.Offset : null;
         _conflictsTable.Child = LoadoutPages.HeaderAndList(top, header, list, _headset ? null : columns.Layout, out var scroll);
         FollowRows(header, scroll);
@@ -1274,7 +1366,8 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
                     return CopyGlyph.Beside(name, station.Name, Copy);
                 }),
-            StarSystemPage.Headed(heads[1], Fill("System", 160, 120), station => CopyGlyph.LinkBeside(SystemName(station.System), station.System, Copy)),
+            StarSystemPage.Headed(heads[1], Fill("System", 160, 120), station => CopyGlyph.LinkBeside(SystemName(station.System), station.System, Copy))
+                with { Filters = [ValueLists.One<FactionStation>("System", station => station.System, "No system")] },
             StarSystemPage.Headed(
                 heads[2],
                 Fixed("Type", 190, 140),
@@ -1283,7 +1376,8 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
                     var type = FactionAssets.TypeLabel(station);
 
                     return CreditsKit.Line(type ?? FactionModel.Dash, Fonts.ProseFamily, TypeScale.ControlLarge, type is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
-                }),
+                })
+                with { Filters = [ValueLists.One<FactionStation>("Type", FactionAssets.TypeLabel, "No type")] },
             StarSystemPage.Headed(
                 heads[3],
                 Fixed("Pad", 80, 56),
@@ -1293,7 +1387,8 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
                     return CreditsKit.Mono(pad ?? FactionModel.Dash, TypeScale.ControlLarge, pad is null ? ThemeManager.GreyKey : ThemeManager.WhiteKey, right: true);
                 },
-                right: true),
+                right: true)
+                with { Filters = [ValueLists.One<FactionStation>("Pad", station => FactionAssets.PadLetter(station.LargestPad), "No pad")] },
             StarSystemPage.Headed(
                 heads[4],
                 Fixed("Distance", 150, 104),
@@ -1330,18 +1425,27 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         columns.Refresh();
 
         var matches = FactionAssets.Matching(_stations, _assetFind.Text, _kind);
-        var sorted = columns.Sort(matches);
+        columns.Observe(_stations);
+        var sorted = columns.Shown(matches);
         _drawnHere = _searches.GameState?.Invoke()?.Location.StarSystem;
-        _assetCount.Text = FactionAssets.CountText(matches.Count, _stations.Count);
+        _assetCount.Text = FactionAssets.CountText(sorted.Count, _stations.Count);
 
-        _assetsTile.Child = ColumnArranger.Tile(columns);
-        var top = ArrangerAbove(columns);
+        _assetsTile.Child = Tiles(columns, _stations);
+        var top = ArrangerAbove(columns, _stations);
         var header = HeadOf(columns);
 
         if (sorted.Count == 0)
         {
             RowsDrawn = 0;
             top.Children.Add(header);
+
+            if (ColumnFilter.Empty(columns, _stations) is { } hidden)
+            {
+                top.Children.Add(hidden);
+                _assetsTable.Child = top;
+                return;
+            }
+
             var none = CreditsKit.Line(FactionAssets.NoMatchText, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey);
             none.Margin = new Thickness(0, 12, 0, 0);
             top.Children.Add(none);
@@ -1349,7 +1453,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             return;
         }
 
-        var list = Body(sorted, station => AssetView(station, columns), DrawAssets);
+        var list = Body(sorted, station => AssetView(station, columns), DrawAssets, ColumnFilter.HidesRows(columns));
         var offset = _keepScroll ? _assetsScroll?.Offset : null;
         _assetsTable.Child = LoadoutPages.HeaderAndList(top, header, list, _headset ? null : columns.Layout, out var scroll);
         FollowRows(header, scroll);

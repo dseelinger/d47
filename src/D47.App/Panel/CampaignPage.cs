@@ -166,6 +166,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         _arrangements = columnArrangements;
         _work = new BgsWorkSection(headset, columnWidths, _copy, columnArrangements);
         _work.Changed += FillSection;
+        _work.FilterChanged += () => _page = 0;
 
         _segment = new Segment
         {
@@ -332,10 +333,10 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
     private void StopArranging()
     {
-        _systemColumns?.StopArranging();
-        _frontColumns?.StopArranging();
-        _chronicleColumns?.StopArranging();
-        _work.StopArranging();
+        _systemColumns?.Reopen();
+        _frontColumns?.Reopen();
+        _chronicleColumns?.Reopen();
+        _work.Reopen();
     }
 
     /// <summary>
@@ -970,7 +971,9 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var columns = SystemColumns;
         columns.Refresh();
 
-        var sorted = columns.Sort(CampaignModel.Matching(_rows, _query));
+        var matching = CampaignModel.Matching(_rows, _query);
+        columns.Observe(_rows);
+        var sorted = columns.Sort(matching);
         var (label, direction) = columns.SortedBy is { } sort
             ? (sort.Key, sort.Direction)
             : (CampaignModel.Heads(headset: false)[CampaignModel.DefaultOrder.Column].Label, CampaignModel.DefaultOrder.Direction);
@@ -987,8 +990,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             panel.Children.Add(Typeset.Prose(CampaignModel.WorkUnderNames(_faction!, _sources.Tick()), TypeScale.Description, ThemeManager.GreyKey, wrap: true));
         }
 
-        panel.Children.Add(ArrangerAbove(columns));
-        panel.Children.Add(Table(sorted, columns));
+        panel.Children.Add(LedgerTables.Arranger(columns, _rows));
+        panel.Children.Add(Table(columns.Filter(sorted), columns, _rows));
 
         if (!_headset)
         {
@@ -1043,7 +1046,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return block;
     }
 
-    private Control Table(IReadOnlyList<CampaignSystemRow> sorted, ArrangedTable<CampaignSystemRow> columns)
+    private Control Table(IReadOnlyList<CampaignSystemRow> sorted, ArrangedTable<CampaignSystemRow> columns, IReadOnlyList<CampaignSystemRow> all)
     {
         var table = new StackPanel { Spacing = Gaps.Tile };
 
@@ -1051,7 +1054,12 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         if (sorted.Count == 0)
         {
-            table.Children.Add(Grey(CampaignModel.NoSystemText));
+            table.Children.Add(ColumnFilter.Empty(columns, all) ?? Grey(CampaignModel.NoSystemText));
+            return Sideways(columns, table);
+        }
+
+        if (ColumnFilter.HidesRows(columns))
+        {
             return Sideways(columns, table);
         }
 
@@ -1244,14 +1252,15 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var columns = FrontColumns;
         columns.Refresh();
 
-        var sorted = columns.Sort(matching);
+        columns.Observe(rows);
+        var sorted = columns.Shown(matching);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
         table.Children.Add(HeadOf(columns, new Thickness(12, 0)));
 
         if (sorted.Count == 0)
         {
-            table.Children.Add(Grey(CampaignModel.NoMatchingFrontText));
+            table.Children.Add(ColumnFilter.Empty(columns, rows) ?? Grey(CampaignModel.NoMatchingFrontText));
         }
 
         IReadOnlyList<CampaignModel.FrontRow> shown = sorted;
@@ -1262,17 +1271,20 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             shown = [.. sorted.Skip(_page * FactionModel.PageSize).Take(FactionModel.PageSize)];
         }
 
-        foreach (var row in shown)
+        if (!ColumnFilter.HidesRows(columns))
         {
-            table.Children.Add(RowBorder(columns.Row(row)));
+            foreach (var row in shown)
+            {
+                table.Children.Add(RowBorder(columns.Row(row)));
+            }
+
+            if (_headset && sorted.Count > FactionModel.PageSize)
+            {
+                table.Children.Add(Pager(sorted.Count));
+            }
         }
 
-        if (_headset && sorted.Count > FactionModel.PageSize)
-        {
-            table.Children.Add(Pager(sorted.Count));
-        }
-
-        panel.Children.Add(ArrangerAbove(columns));
+        panel.Children.Add(LedgerTables.Arranger(columns, rows));
         panel.Children.Add(Sideways(columns, table));
 
         if (!_headset)
@@ -1290,30 +1302,38 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return
         [
             StarSystemPage.Headed(heads[0], Fixed("Rank", 48, 44), row => FrontMono(row, row.Rank.ToString(CultureInfo.InvariantCulture), ThemeManager.WhiteKey), right: true),
-            StarSystemPage.Headed(heads[1], Fixed("Kind", 110, 120), row => Typeset.Prose(CampaignFronts.Describe(row.Front.Kind), TypeScale.ControlLarge, FrontInk(row), wrap: true)),
-            StarSystemPage.Headed(heads[2], Filled("System", 150, 120), FrontSystemCell),
+            StarSystemPage.Headed(heads[1], Fixed("Kind", 110, 120), row => Typeset.Prose(CampaignFronts.Describe(row.Front.Kind), TypeScale.ControlLarge, FrontInk(row), wrap: true))
+                with { Filters = [ValueLists.One<CampaignModel.FrontRow>("Kind", row => CampaignFronts.Describe(row.Front.Kind), "No kind")] },
+            StarSystemPage.Headed(heads[2], Filled("System", 150, 120), FrontSystemCell)
+                with { Filters = [ValueLists.One<CampaignModel.FrontRow>("System", row => row.Front.System, "No system")] },
             StarSystemPage.Headed(heads[3], new TableColumn("Distance") { Whole = true }, row => FrontMono(row, CampaignModel.DistanceText(row.Distance), ThemeManager.AKey), right: true),
-            StarSystemPage.Headed(heads[4], Filled("Reason", 190, 140), row => Typeset.Prose(row.Front.Reason, TypeScale.ControlLarge, FrontInk(row), wrap: true)),
+            StarSystemPage.Headed(heads[4], Filled("Reason", 190, 140), row => Typeset.Prose(row.Front.Reason, TypeScale.ControlLarge, FrontInk(row), wrap: true))
+                with { Filters = [ValueLists.One<CampaignModel.FrontRow>("Reason", row => row.Front.Reason, "No reason")] },
             StarSystemPage.Headed(heads[5], Fixed("Data age", 140, 120), AgeCell, right: true),
-            Added("Opponent", Filled("Opponent", 140, 120), row => TableCells.Text(row.Front.Opponent), SortColumn<CampaignModel.FrontRow>.Text("Opponent", row => row.Front.Opponent)),
-            Added("At stake", Filled("At stake", 140, 120), row => TableCells.Text(row.Front.Stake), SortColumn<CampaignModel.FrontRow>.Text("At stake", row => row.Front.Stake)),
+            Added("Opponent", Filled("Opponent", 140, 120), row => TableCells.Text(row.Front.Opponent), SortColumn<CampaignModel.FrontRow>.Text("Opponent", row => row.Front.Opponent))
+                with { Filters = [ValueLists.One<CampaignModel.FrontRow>("Opponent", row => row.Front.Opponent, "No opponent")] },
+            Added("At stake", Filled("At stake", 140, 120), row => TableCells.Text(row.Front.Stake), SortColumn<CampaignModel.FrontRow>.Text("At stake", row => row.Front.Stake))
+                with { Filters = [ValueLists.One<CampaignModel.FrontRow>("At stake", row => row.Front.Stake, "No stake")] },
             Added(
                 "Lead",
                 Fixed("Lead", 84, 70),
                 row => row.Front.Lead is null ? TableCells.Missing() : Typeset.Mono(CampaignModel.LeadText(row.Front.Lead), TypeScale.Control, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right),
                 SortColumn<CampaignModel.FrontRow>.Figure("Lead", row => row.Front.Lead, SortDirection.Descending))
                 with { Alignment = HorizontalAlignment.Right },
-            Added("Intent", Fixed("Intent", 130, 130), row => TableCells.Text(CampaignModel.Label(row.Front.Intent)), SortColumn<CampaignModel.FrontRow>.Text("Intent", row => CampaignModel.Label(row.Front.Intent))),
+            Added("Intent", Fixed("Intent", 130, 130), row => TableCells.Text(CampaignModel.Label(row.Front.Intent)), SortColumn<CampaignModel.FrontRow>.Text("Intent", row => CampaignModel.Label(row.Front.Intent)))
+                with { Filters = [ValueLists.One<CampaignModel.FrontRow>("Intent", row => CampaignModel.Label(row.Front.Intent), "No intent")] },
             Added(
                 "Controls",
                 Fixed("Controls", 96, 96),
                 row => TableCells.Flag(row.Front.Controls),
-                SortColumn<CampaignModel.FrontRow>.Figure<int>("Controls", row => row.Front.Controls ? 1 : 0, SortDirection.Descending)),
+                SortColumn<CampaignModel.FrontRow>.Figure<int>("Controls", row => row.Front.Controls ? 1 : 0, SortDirection.Descending))
+                with { Filters = [ValueLists.Flag<CampaignModel.FrontRow>("Controls", row => row.Front.Controls, "Not known")] },
             Added(
                 "States",
                 Filled("States", 140, 120),
                 row => TableCells.List(row.Front.States),
-                SortColumn<CampaignModel.FrontRow>.Figure<int>("States", row => row.Front.States.Count, SortDirection.Descending)),
+                SortColumn<CampaignModel.FrontRow>.Figure<int>("States", row => row.Front.States.Count, SortDirection.Descending))
+                with { Filters = [ValueLists.Many<CampaignModel.FrontRow>("States", row => row.Front.States, "No state")] },
             new TableField<CampaignModel.FrontRow>("Take", Fixed("Take", 80, 96), row => Centred(TakeCell(row))),
         ];
     }
@@ -1394,14 +1414,15 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         var columns = ChronicleColumns;
         columns.Refresh();
 
-        var sorted = columns.Sort(matching);
+        columns.Observe(rows);
+        var sorted = columns.Shown(matching);
         var table = new StackPanel { Spacing = Gaps.Tile };
 
         table.Children.Add(HeadOf(columns, new Thickness(12, 0)));
 
         if (sorted.Count == 0)
         {
-            table.Children.Add(Grey(CampaignModel.NoMatchingFrontText));
+            table.Children.Add(ColumnFilter.Empty(columns, rows) ?? Grey(CampaignModel.NoMatchingFrontText));
         }
 
         IReadOnlyList<CampaignModel.ChronicleRow> shown = sorted;
@@ -1412,17 +1433,20 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             shown = [.. sorted.Skip(_page * FactionModel.PageSize).Take(FactionModel.PageSize)];
         }
 
-        foreach (var row in shown)
+        if (!ColumnFilter.HidesRows(columns))
         {
-            table.Children.Add(ChronicleRowView(row, columns));
+            foreach (var row in shown)
+            {
+                table.Children.Add(ChronicleRowView(row, columns));
+            }
+
+            if (_headset && sorted.Count > FactionModel.PageSize)
+            {
+                table.Children.Add(Pager(sorted.Count));
+            }
         }
 
-        if (_headset && sorted.Count > FactionModel.PageSize)
-        {
-            table.Children.Add(Pager(sorted.Count));
-        }
-
-        panel.Children.Add(ArrangerAbove(columns));
+        panel.Children.Add(LedgerTables.Arranger(columns, rows));
         panel.Children.Add(Sideways(columns, table));
 
         if (!_headset)
@@ -1440,15 +1464,26 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         return
         [
             StarSystemPage.Headed(heads[0], Fixed("Ended", 76, 70), row => Centred(Typeset.Mono(CampaignModel.EndedText(row.Ended), TypeScale.ControlLarge, ThemeManager.WhiteKey))),
-            StarSystemPage.Headed(heads[1], Fixed("Kind", 110, 100), row => Typeset.Prose(row.Entry.Kind, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
-            StarSystemPage.Headed(heads[2], Fixed("System", 150, 140), ChronicleSystemCell),
-            StarSystemPage.Headed(heads[3], Filled("Outcome", 200, 120), row => Typeset.Prose(row.Entry.Outcome, TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true)),
+            StarSystemPage.Headed(heads[1], Fixed("Kind", 110, 100), row => Typeset.Prose(row.Entry.Kind, TypeScale.ControlLarge, ThemeManager.WhiteKey))
+                with { Filters = [ValueLists.One<CampaignModel.ChronicleRow>("Kind", row => row.Entry.Kind, "No kind")] },
+            StarSystemPage.Headed(heads[2], Fixed("System", 150, 140), ChronicleSystemCell)
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<CampaignModel.ChronicleRow>("System", row => row.Entry.System, "No system"),
+                        ValueLists.One<CampaignModel.ChronicleRow>("Opponent", row => row.Entry.Opponent, "No opponent"),
+                    ],
+                },
+            StarSystemPage.Headed(heads[3], Filled("Outcome", 200, 120), row => Typeset.Prose(row.Entry.Outcome, TypeScale.ControlLarge, ThemeManager.WhiteKey, wrap: true))
+                with { Filters = [ValueLists.One<CampaignModel.ChronicleRow>("Outcome", row => row.Entry.Outcome, "No outcome")] },
             StarSystemPage.Headed(
                 heads[4],
                 Fixed("Ticks", 56, 50),
                 row => Typeset.Mono(row.Entry.Ticks.Count.ToString(CultureInfo.InvariantCulture), TypeScale.ControlLarge, ThemeManager.WhiteKey, horizontal: HorizontalAlignment.Right, align: TextAlignment.Right),
                 right: true),
-            StarSystemPage.Headed(heads[5], Fixed("Your work", 190, 180), ChronicleWorkCell, right: true),
+            StarSystemPage.Headed(heads[5], Fixed("Your work", 190, 180), ChronicleWorkCell, right: true)
+                with { Filters = [ValueLists.Many<CampaignModel.ChronicleRow>("Your work", row => CampaignModel.WorkKinds(row.Entry.Work), "No work")] },
         ];
     }
 
@@ -1660,6 +1695,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     {
         var table = new ArrangedTable<T>(id, fields, _arrangements, _headset ? null : _columnWidths, _headset ? 14 : 16, sortedByDefault, headName);
         table.Changed += FillSection;
+        table.FilterChanged += () => _page = 0;
 
         return table;
     }
@@ -1682,13 +1718,26 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
 
         return
         [
-            StarSystemPage.Headed(heads[0], Filled("System", 180, 120), SystemCell),
+            StarSystemPage.Headed(heads[0], Filled("System", 180, 120), SystemCell)
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<CampaignSystemRow>("System", row => row.System, "No system"),
+                        .. _headset ? [] : (IEnumerable<ValueList<CampaignSystemRow>>)[ValueLists.Flag<CampaignSystemRow>("Controls", row => row.Controls, "Not known")],
+                    ],
+                },
             StarSystemPage.Headed(heads[1], new TableColumn("Distance") { Whole = true }, row => FigureCell(CampaignModel.DistanceText(row.Distance), row), right: true),
             StarSystemPage.Headed(heads[2], Fixed("Influence", 84, 70), row => FigureCell(CampaignModel.InfluenceText(row.Influence), row), right: true),
             StarSystemPage.Headed(heads[3], Fixed("Lead", 84, 70), LeadCell, right: true),
             StarSystemPage.Headed(desktop[4], Fixed(YourWorkKey, 190, 180), row => WorkStack(_systemWork.TryGetValue(row.System, out var held) ? held : [], left: false), right: true)
-                with { ByDefault = !_headset },
-            StarSystemPage.Headed(heads[state], Fixed("State", 130, 110), row => Typeset.Prose(row.State, TypeScale.ControlLarge, row.Old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true)),
+                with
+                {
+                    ByDefault = !_headset,
+                    Filters = [ValueLists.Many<CampaignSystemRow>("Your work", row => CampaignModel.WorkKinds(_systemWork.TryGetValue(row.System, out var held) ? held : []), "No work")],
+                },
+            StarSystemPage.Headed(heads[state], Fixed("State", 130, 110), row => Typeset.Prose(row.State, TypeScale.ControlLarge, row.Old ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true))
+                with { Filters = [ValueLists.One<CampaignSystemRow>("State", row => row.State, "No state")] },
             StarSystemPage.Headed(heads[state + 1], Fixed("Intent", 300, 300), row => IntentStepper(row, _frontier!)),
             Added(
                 "Updated",
@@ -1698,24 +1747,6 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
                     : TableCells.Missing(),
                 SortColumn<CampaignSystemRow>.Figure<DateTimeOffset>("Updated", row => row.Updated, SortDirection.Descending)),
         ];
-    }
-
-    /// <summary>The COLUMNS tile on a line of its own, then the bar while it is open.</summary>
-    private static StackPanel ArrangerAbove<T>(ArrangedTable<T> columns)
-    {
-        var top = new StackPanel();
-
-        if (ColumnArranger.Line(columns) is { } tile)
-        {
-            top.Children.Add(tile);
-        }
-
-        if (ColumnArranger.Bar(columns) is { } bar)
-        {
-            top.Children.Add(bar);
-        }
-
-        return top;
     }
 
     /// <summary>The header row; in the headset it is inset to exactly the width of the rows it heads, so both report one width to the table.</summary>

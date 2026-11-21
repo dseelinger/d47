@@ -240,6 +240,19 @@ public static class CampaignModel
     public static string WorkUnderNames(string faction, DateTimeOffset? tick) =>
         $"Under each system: your work for {faction} " + (tick is { } at ? $"since the {PageKit.Clock(at)} UTC tick." : "in the last 24 hours.");
 
+    /// <summary>The kind of each item of <paramref name="work"/>, one word each, for the filter.</summary>
+    public static IReadOnlyList<string> WorkKinds(IReadOnlyList<ChronicleWork> work) =>
+    [
+        .. work.Select(item => item.Kind switch
+        {
+            BgsWorkKind.Mission => "Marks",
+            BgsWorkKind.Bounty => "Bounties",
+            BgsWorkKind.CombatBond => "Bonds",
+            BgsWorkKind.Trade => "Trade",
+            _ => "Data sales",
+        }),
+    ];
+
     private static string WorkLine(ChronicleWork work) => work.Kind switch
     {
         BgsWorkKind.Mission => (work.Amount < 0 ? "−" : "+") + Math.Abs(work.Amount).ToString(CultureInfo.InvariantCulture) + (Math.Abs(work.Amount) == 1 ? " mark" : " marks"),
