@@ -143,6 +143,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _columns.Reopen();
 
         if (_thumbs?.Refresh() == true)
         {
@@ -221,14 +222,29 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
             return;
         }
 
-        _list.Top.Children.Add(LedgerTables.Arranger(_columns));
+        IReadOnlyList<CodexEntryRow> every = [.. view.Groups.SelectMany(group => group.Rows)];
+        _list.Top.Children.Add(LedgerTables.Arranger(_columns, every));
+
+        if (ColumnFilter.Empty(_columns, every) is { } hidden)
+        {
+            _list.Top.Children.Add(hidden);
+            Rows([]);
+            return;
+        }
 
         var items = new List<object>();
 
         foreach (var group in view.Groups)
         {
+            var shown = _columns.Shown(group.Rows);
+
+            if (shown.Count == 0)
+            {
+                continue;
+            }
+
             items.Add(group);
-            items.AddRange(_columns.Sort(group.Rows));
+            items.AddRange(shown);
         }
 
         Rows(items);
@@ -314,9 +330,25 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         [
             CodexThumbnails.Column<CodexEntryRow>(row => CodexThumbnails.Square(_thumbs?.Entry(row.Key, _regionId, row.PlaceholderFile))),
             StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), row => CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
-            StarSystemPage.Headed(heads[1], new TableColumn("System", ColumnFit.Fill), row => SystemCell(row, _copy)),
+            StarSystemPage.Headed(heads[1], new TableColumn("System", ColumnFit.Fill), row => SystemCell(row, _copy))
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<CodexEntryRow>("System", row => row.System, "No system"),
+                        ValueLists.One<CodexEntryRow>("Body", row => row.Body, "No body"),
+                    ],
+                },
             StarSystemPage.Headed(heads[2], new TableColumn("Time"), row => CreditsKit.Mono(CodexModel.DateTime(row.At), TypeScale.Small, ThemeManager.GreyKey, right: false)),
-            StarSystemPage.Headed(heads[3], new TableColumn("Status"), StatusCell),
+            StarSystemPage.Headed(heads[3], new TableColumn("Status"), StatusCell)
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<CodexEntryRow>("Status", CodexEntryPage.StatusWord, "No status"),
+                        ValueLists.One<CodexEntryRow>("Origin", row => row.First is null ? row.Origin : null, "No origin"),
+                    ],
+                },
         ];
     }
 

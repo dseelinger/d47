@@ -149,7 +149,12 @@ public sealed class ActivitiesPage : UserControl
         _page.Children.Add(PageFooter.Capped(header, Cap));
         _page.Children.Add(rule);
 
-        if (LedgerTables.Arranger(columns) is { Children.Count: > 0 } arranger)
+        var rows = ActivityCatalogue.All
+            .Select(entry => new ActivityRow(entry, _ledger.LastDone(entry.Key, commander)))
+            .OrderBy(row => row.SortKey)
+            .ToList();
+
+        if (LedgerTables.Arranger(columns, rows) is { Children.Count: > 0 } arranger)
         {
             _page.Children.Add(arranger);
         }
@@ -157,12 +162,7 @@ public sealed class ActivitiesPage : UserControl
         var table = new StackPanel { Spacing = 2 };
         table.Children.Add(Head(columns));
 
-        var rows = ActivityCatalogue.All
-            .Select(entry => new ActivityRow(entry, _ledger.LastDone(entry.Key, commander)))
-            .OrderBy(row => row.SortKey)
-            .ToList();
-
-        foreach (var row in columns.Sort(rows))
+        foreach (var row in columns.Shown(rows))
         {
             table.Children.Add(Row(row, columns));
         }

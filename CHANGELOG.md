@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The Codex catalogue, region and Possible firsts tables, Combat stats, Credits and its transactions, Commanders, Crew, Engineers, Materials, Phrases and Saved routes have a FILTER tile beside COLUMNS. It lists the values a column holds, such as a Codex kind's status, a ship's type, an engineer's status or a crew member's rank, and unticking one hides the rows with it, in the headset too, where the page count follows the rows shown. A column that names its row, or holds a number or date, is not filtered. Leaving a page and opening it again clears its filter and keeps its columns and sort.
+
 Added: Each Search answer, System, Station, Body, Outfitting, Signal and Rare goods, has a FILTER tile beside COLUMNS. It opens a bar that lists the values each column holds in the rows fetched, with a count for each; untick a value to hide the rows that have it. A list column such as Services, Rings or Signals lists its items, and number, distance and date columns are not filtered. The head says "these 18 of 25, filtered by Economy and Power" with CLEAR FILTERS, and a later page is filtered as it arrives. While rows are hidden, the next page is fetched only when you press FETCH THE NEXT 25 or scroll to the end of a list that fills the panel. The filter sends nothing to the service, leaves the spoken answer unchanged, and is cleared by a new search.
 
 Fixed: In the headset, a Search answer shows 25 rows to a page, with a readout such as "1–25 of 50", PREVIOUS and NEXT, and FETCH THE NEXT 25 while the service has more. Scrolling no longer fetches a page there. A new search, sort or filter returns to the first page. The desktop still scrolls every row.

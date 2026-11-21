@@ -58,6 +58,7 @@ public sealed class SavedRoutesPage : UserControl, IPageSummary
         _columns = new ArrangedTable<SavedRoute>(
             TableId, Fields(), columnArrangements, headset ? null : columnWidths, headset ? 12 : 16, PlottedKey, "SavedRoutesHead");
         _columns.Sorted += () => _page = 0;
+        _columns.FilterChanged += () => _page = 0;
         _columns.Changed += Draw;
 
         Margin = new Thickness(14);
@@ -95,6 +96,7 @@ public sealed class SavedRoutesPage : UserControl, IPageSummary
     {
         base.OnAttachedToVisualTree(e);
         _book.Changed += OnChanged;
+        _columns.Reopen();
         Draw();
     }
 
@@ -111,7 +113,8 @@ public sealed class SavedRoutesPage : UserControl, IPageSummary
         StarSystemPage.Headed(
             SortColumn<SavedRoute>.Text("Kind", route => KindName(route.Kind)),
             new TableColumn("Kind", ColumnFit.Content),
-            route => CreditsKit.Line(KindName(route.Kind), Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
+            route => CreditsKit.Line(KindName(route.Kind), Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey))
+            with { Filters = [ValueLists.One<SavedRoute>("Kind", route => KindName(route.Kind), "No kind")] },
         StarSystemPage.Headed(
             SortColumn<SavedRoute>.Text("Name", route => route.Name),
             new TableColumn("Name", ColumnFit.Fill),
@@ -225,7 +228,7 @@ public sealed class SavedRoutesPage : UserControl, IPageSummary
 
         _body.Children.Add(CreditsKit.Mono(CountText(routes.Count), TypeScale.Small, ThemeManager.GreyKey, right: false));
 
-        var sorted = _columns.Sort(routes);
+        var sorted = _columns.Shown(routes);
         IReadOnlyList<SavedRoute> page = sorted;
 
         if (_headset)
@@ -237,12 +240,19 @@ public sealed class SavedRoutesPage : UserControl, IPageSummary
         var list = new StackPanel { Spacing = Gaps.Tile };
         list.Children.Add(LedgerTables.Head(_columns, new Thickness(LedgerTables.RowInset, 0)));
 
-        foreach (var route in page)
+        if (ColumnFilter.Empty(_columns, routes) is { } empty)
         {
-            list.Children.Add(RowView(route));
+            list.Children.Add(empty);
         }
 
-        _body.Children.Add(LedgerTables.Arranger(_columns));
+        foreach (var route in page)
+        {
+            var view = RowView(route);
+            view.IsVisible = !ColumnFilter.HidesRows(_columns);
+            list.Children.Add(view);
+        }
+
+        _body.Children.Add(LedgerTables.Arranger(_columns, routes));
         _body.Children.Add(LedgerTables.Sideways(_columns, list));
 
         if (_headset && sorted.Count > FactionModel.PageSize)

@@ -161,7 +161,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         [
             .. Enum.GetValues<CombatGrouping>().Select(grouping =>
             {
-                var table = new ArrangedTable<CombatRow>(TableId, Fields(Heads(grouping)), columnArrangements, widths, spacing);
+                var table = new ArrangedTable<CombatRow>(TableId, Fields(Heads(grouping), NameValues(grouping)), columnArrangements, widths, spacing);
                 table.Changed += Draw;
                 return table;
             }),
@@ -187,6 +187,18 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         Margin = new Thickness(14);
         Content = LoadoutPages.Scrolling(new StackPanel { Children = { _notice, _controls, _body } });
         Draw();
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+
+        foreach (var table in _tables)
+        {
+            table.Reopen();
+        }
+
+        _paidTable.Reopen();
     }
 
     public string Summary => SummaryText;
@@ -550,12 +562,19 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 10, 0, 0) };
         var list = new StackPanel { Spacing = Gaps.Tile };
 
-        table.Children.Add(LedgerTables.Arranger(columns));
+        table.Children.Add(LedgerTables.Arranger(columns, rows));
         list.Children.Add(LedgerTables.Head(columns, new Thickness(LedgerTables.RowInset, 0)));
 
-        foreach (var row in columns.Sort(rows))
+        if (ColumnFilter.Empty(columns, rows) is { } empty)
         {
-            list.Children.Add(RowView(row, columns));
+            list.Children.Add(empty);
+        }
+
+        foreach (var row in columns.Shown(rows))
+        {
+            var view = RowView(row, columns);
+            view.IsVisible = !ColumnFilter.HidesRows(columns);
+            list.Children.Add(view);
         }
 
         table.Children.Add(LedgerTables.Sideways(columns, list));
@@ -563,9 +582,25 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         return table;
     }
 
-    private IReadOnlyList<TableField<CombatRow>> Fields(IReadOnlyList<SortColumn<CombatRow>> heads)
+    /// <summary>The value list of the second value the name cell draws; none for a grouping whose cell draws one.</summary>
+    private static IReadOnlyList<ValueList<CombatRow>> NameValues(CombatGrouping grouping) => grouping switch
     {
-        var name = StarSystemPage.Headed(heads[0], new TableColumn("Name", ColumnFit.Fill), row => NameOf(row, _current, _copy));
+        CombatGrouping.EnemyShip =>
+        [
+            new("Ship or on foot", row => row.Style == CombatNameStyle.Unnamed ? [] : [Suffix(row) is null ? "Ship" : "On foot"], "Bond"),
+        ],
+        CombatGrouping.OwnShip =>
+        [
+            new("Ship type", row => Suffix(row) is { } suffix ? [suffix.Trim('(', ')')] : [], "No ship type"),
+        ],
+        _ => [],
+    };
+
+    private IReadOnlyList<TableField<CombatRow>> Fields(
+        IReadOnlyList<SortColumn<CombatRow>> heads, IReadOnlyList<ValueList<CombatRow>>? nameValues = null)
+    {
+        var name = StarSystemPage.Headed(heads[0], new TableColumn("Name", ColumnFit.Fill), row => NameOf(row, _current, _copy))
+            with { Filters = nameValues };
         var credits = StarSystemPage.Headed(
             heads[^1],
             new TableColumn("Credits", ColumnFit.Fixed) { Fixed = CreditsWidth },
@@ -593,6 +628,10 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         return border;
     }
 
+    /// <summary>The grey value drawn after a name: the row's own suffix, or a trailing "(Type)" of its text.</summary>
+    private static string? Suffix(CombatRow row) =>
+        row.Suffix ?? (row.Text.EndsWith(')') && row.Text.LastIndexOf(" (", StringComparison.Ordinal) is > 0 and var cut ? row.Text[(cut + 1)..] : null);
+
     private static Control NameOf(CombatRow row, long? current, Func<string, Task<bool>>? copy)
     {
         var dock = new DockPanel { LastChildFill = false };
@@ -613,14 +652,8 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
             return dock;
         }
 
-        var text = row.Text;
-        var suffix = row.Suffix;
-
-        if (suffix is null && text.EndsWith(')') && text.LastIndexOf(" (", StringComparison.Ordinal) is > 0 and var cut)
-        {
-            suffix = text[(cut + 1)..];
-            text = text[..cut];
-        }
+        var suffix = Suffix(row);
+        var text = row.Suffix is null && suffix is not null ? row.Text[..row.Text.LastIndexOf(" (", StringComparison.Ordinal)] : row.Text;
 
         dock.Children.Add(CreditsKit.Line(text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));
 

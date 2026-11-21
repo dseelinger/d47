@@ -69,6 +69,12 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         Draw();
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _columns.Reopen();
+    }
+
     public string Summary => _headset ? CreditsPage.HeadsetSummaryText : CreditsPage.SummaryText;
 
     public event EventHandler? SummaryChanged
@@ -169,9 +175,17 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
             _table.Top.Children.Add(CreditsKit.Note(CreditsModel.NoBalanceLine, 6));
         }
 
-        _table.Top.Children.Add(LedgerTables.Arranger(_columns));
+        _table.Top.Children.Add(LedgerTables.Arranger(_columns, view.Rows));
 
-        IReadOnlyList<CreditTxRow> rows = view.Fold is { } fold ? [.. _columns.Sort(view.Rows), fold] : _columns.Sort(view.Rows);
+        if (ColumnFilter.Empty(_columns, view.Rows) is { } hidden)
+        {
+            _table.Top.Children.Add(hidden);
+            Rows([]);
+            return;
+        }
+
+        var shown = _columns.Shown(view.Rows);
+        IReadOnlyList<CreditTxRow> rows = view.Fold is { } fold ? [.. shown, fold] : shown;
 
         Rows(rows);
     }
@@ -217,7 +231,15 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         return
         [
             StarSystemPage.Headed(heads[0], new TableColumn("Time"), row => CreditsKit.Mono(TimeText(row), TypeScale.Small, ThemeManager.GreyKey, right: false)),
-            StarSystemPage.Headed(heads[1], new TableColumn("Kind", ColumnFit.Fill), KindCell),
+            StarSystemPage.Headed(heads[1], new TableColumn("Kind", ColumnFit.Fill), KindCell)
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<CreditTxRow>("Kind", row => CreditsModel.KindName(row.Kind), "No kind"),
+                        ValueLists.One<CreditTxRow>("Event", row => row.Event, "No event"),
+                    ],
+                },
             StarSystemPage.Headed(
                 heads[2],
                 new TableColumn("Amount"),

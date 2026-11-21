@@ -183,7 +183,15 @@ public sealed class MaterialsPage : UserControl
             return;
         }
 
-        _body.Children.Add(LedgerTables.Arranger(_needed));
+        IReadOnlyList<GapBuildLine> lines = [.. report.Builds.SelectMany(build => build.Lines)];
+        _body.Children.Add(LedgerTables.Arranger(_needed, lines));
+
+        if (ColumnFilter.Empty(_needed, lines) is { } hidden)
+        {
+            _body.Children.Add(hidden);
+
+            return;
+        }
 
         foreach (var build in report.Builds)
         {
@@ -313,7 +321,7 @@ public sealed class MaterialsPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _needed.StopArranging();
+        _needed.Reopen();
         _gap.Changed -= OnChanged;
         _gap.Changed += OnChanged;
         Refresh();
@@ -841,9 +849,9 @@ public sealed class MaterialsPage : UserControl
 
         var head = new WrapPanel { ItemSpacing = 12, LineSpacing = 4, Children = { name, kind } };
 
-        var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
+        var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0), IsVisible = !ColumnFilter.HidesRows(_needed) };
 
-        foreach (var line in _needed.Sort(build.Lines))
+        foreach (var line in _needed.Shown(build.Lines))
         {
             rows.Children.Add(Row(line, open, _needed));
         }
@@ -862,7 +870,8 @@ public sealed class MaterialsPage : UserControl
     private static IReadOnlyList<TableField<GapBuildLine>> Fields() =>
     [
         StarSystemPage.Headed(ColumnHeadings[0], new TableColumn("Material", ColumnFit.Fill), line => NameCell(line.Material)),
-        StarSystemPage.Headed(ColumnHeadings[1], new TableColumn("Ledger"), line => Chrome(LedgerOf(line.Material), ThemeManager.GreyKey)),
+        StarSystemPage.Headed(ColumnHeadings[1], new TableColumn("Ledger"), line => Chrome(LedgerOf(line.Material), ThemeManager.GreyKey))
+            with { Filters = [ValueLists.One<GapBuildLine>("Ledger", line => LedgerOf(line.Material), "No ledger")] },
         StarSystemPage.Headed(
             ColumnHeadings[2], new TableColumn("HeldNeed"), line => Mono($"{Count(line.Held)} / {Count(line.Needed)}", ThemeManager.WhiteKey), right: true),
         StarSystemPage.Headed(
@@ -879,7 +888,8 @@ public sealed class MaterialsPage : UserControl
             "FoundAt",
             new TableColumn("FoundAt", ColumnFit.Fill) { Min = 140 },
             line => TableCells.List(line.Material.Origins),
-            SortColumn<GapBuildLine>.Figure<int>("Found at", line => line.Material.Origins.Count, SortDirection.Descending)),
+            SortColumn<GapBuildLine>.Figure<int>("Found at", line => line.Material.Origins.Count, SortDirection.Descending))
+            with { Filters = [ValueLists.Many<GapBuildLine>("Found at", line => line.Material.Origins, "Found nowhere")] },
         LedgerTables.Control<GapBuildLine>(new TableColumn("Gauge", ColumnFit.Fixed) { Fixed = GaugeColumn }, GaugeCell),
     ];
 

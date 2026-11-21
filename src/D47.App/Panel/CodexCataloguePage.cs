@@ -164,6 +164,8 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _groupColumns?.Reopen();
+        _kindColumns?.Reopen();
 
         if (_thumbs is not null)
         {
@@ -469,6 +471,8 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
             GroupsTableId, GroupFields(region), _columnArrangements, widths, _headset ? 12 : 16, headName: "CodexGroupHead");
         _kindColumns = new ArrangedTable<CodexKindRow>(
             KindsTableId, KindFields(region), _columnArrangements, widths, _headset ? 12 : 16, CodexCatalogueModel.SystemsKey, "CodexKindHead");
+        _groupColumns.FilterChanged += () => _groupPage = 0;
+        _kindColumns.FilterChanged += () => _kindPage = 0;
         _groupColumns.Changed += Draw;
         _kindColumns.Changed += Draw;
     }
@@ -476,17 +480,24 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
     private StackPanel GroupTable(IReadOnlyList<CodexGroupRow> rows)
     {
         var columns = _groupColumns!;
-        var sorted = columns.Sort(rows);
+        var sorted = columns.Shown(rows);
         var list = new StackPanel { Name = "CodexGroupRows", Spacing = Gaps.Tile };
         list.Children.Add(LedgerTables.Head(columns, new Thickness(LedgerTables.RowInset, 0)));
 
+        if (ColumnFilter.Empty(columns, rows) is { } empty)
+        {
+            list.Children.Add(empty);
+        }
+
         foreach (var row in Paged(sorted, ref _groupPage))
         {
-            list.Children.Add(GroupView(row, columns));
+            var view = GroupView(row, columns);
+            view.IsVisible = !ColumnFilter.HidesRows(columns);
+            list.Children.Add(view);
         }
 
         var table = new StackPanel { Spacing = Gaps.Tile, Margin = new Thickness(0, 0, 0, 14) };
-        table.Children.Add(LedgerTables.Arranger(columns));
+        table.Children.Add(LedgerTables.Arranger(columns, rows));
         table.Children.Add(LedgerTables.Sideways(columns, list));
 
         if (_headset && sorted.Count > FactionModel.PageSize)
@@ -500,18 +511,25 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
     private StackPanel KindTable(IReadOnlyList<CodexKindRow> rows, int? scope)
     {
         var columns = _kindColumns!;
-        var sorted = columns.Sort(rows);
+        var sorted = columns.Shown(rows);
         var list = new StackPanel { Name = "CodexKindRows", Spacing = Gaps.Tile };
         var right = LedgerTables.RowInset + (_bodySearch is not null ? Gaps.Tile + SearchWidth : 0) + Gaps.Tile + TypeScale.MinimumTarget;
         list.Children.Add(LedgerTables.Head(columns, new Thickness(LedgerTables.RowInset, 0, right, 0)));
 
+        if (ColumnFilter.Empty(columns, rows) is { } empty)
+        {
+            list.Children.Add(empty);
+        }
+
         foreach (var row in Paged(sorted, ref _kindPage))
         {
-            list.Children.Add(KindView(row, columns, scope));
+            var view = KindView(row, columns, scope);
+            view.IsVisible = !ColumnFilter.HidesRows(columns);
+            list.Children.Add(view);
         }
 
         var table = new StackPanel { Spacing = Gaps.Tile };
-        table.Children.Add(LedgerTables.Arranger(columns));
+        table.Children.Add(LedgerTables.Arranger(columns, rows));
         table.Children.Add(LedgerTables.Sideways(columns, list));
 
         if (_headset && sorted.Count > FactionModel.PageSize)
@@ -594,13 +612,26 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
         return
         [
             CodexThumbnails.Column<CodexKindRow>(KindSquare),
-            StarSystemPage.Headed(heads[0], new TableColumn("Kind", ColumnFit.Fill), KindName),
+            StarSystemPage.Headed(heads[0], new TableColumn("Kind", ColumnFit.Fill), KindName)
+                with { Filters = [ValueLists.One<CodexKindRow>("Picture", row => CodexCatalogueModel.PictureLine(Picture(row).Line), "No picture")] },
             StarSystemPage.Headed(heads[1], new TableColumn(CodexCatalogueModel.SystemsKey), row => SystemsCell(row, region), right: true),
-            _headset
+            (_headset
                 ? LedgerTables.Added("FirstFound", firstFound, row => FirstFoundCell(row, region), heads[2])
-                : StarSystemPage.Headed(heads[2], firstFound, row => FirstFoundCell(row, region)),
-            StarSystemPage.Headed(heads[3], new TableColumn("Status"), StatusCell),
+                : StarSystemPage.Headed(heads[2], firstFound, row => FirstFoundCell(row, region)))
+                with { Filters = FirstFoundValues(region) },
+            StarSystemPage.Headed(heads[3], new TableColumn("Status"), StatusCell)
+                with { Filters = [ValueLists.One<CodexKindRow>("Status", row => row.OnRecord ? "On record" : "Missing", "No status")] },
         ];
+    }
+
+    /// <summary>The system the first find was in and, with every region shown, the region it was in.</summary>
+    private static IReadOnlyList<ValueList<CodexKindRow>> FirstFoundValues(string? region)
+    {
+        var system = ValueLists.One<CodexKindRow>("System", row => row.FirstFind is { } first ? first.System ?? CodexModel.UnknownSystemText : null, "Not found");
+
+        return region is null
+            ? [system, ValueLists.One<CodexKindRow>("Region", row => row.FirstFind?.RegionId is { } id ? CodexModel.RegionName(id) : null, "No region")]
+            : [system];
     }
 
     private static TextBlock Figure(int value, string key) =>

@@ -69,7 +69,7 @@ public sealed class CrewPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _table.StopArranging();
+        _table.Reopen();
     }
 
     /// <summary>Redraws when the crew changes.</summary>
@@ -119,11 +119,16 @@ public sealed class CrewPage : UserControl
         }
 
         _table.Refresh();
-        _body.Children.Add(new StackPanel { Margin = new Thickness(0, 28, 0, 0), Children = { LedgerTables.Arranger(_table) } });
+        _body.Children.Add(new StackPanel { Margin = new Thickness(0, 28, 0, 0), Children = { LedgerTables.Arranger(_table, crew.Members) } });
 
-        var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0) };
+        var rows = new StackPanel { Spacing = 2, Margin = new Thickness(0, 2, 0, 0), IsVisible = !ColumnFilter.HidesRows(_table) };
 
-        foreach (var member in _table.Sort(crew.Members))
+        if (ColumnFilter.Empty(_table, crew.Members) is { } empty)
+        {
+            rows.Children.Add(empty);
+        }
+
+        foreach (var member in _table.Shown(crew.Members))
         {
             rows.Children.Add(Row(member));
         }
@@ -140,18 +145,22 @@ public sealed class CrewPage : UserControl
         StarSystemPage.Headed(
             ColumnHeadings[1],
             new TableColumn("CombatRank"),
-            member => Cell(member.CombatRankName ?? "—", member.CombatRankName is not null ? ThemeManager.AKey : ThemeManager.GreyKey)),
+            member => Cell(member.CombatRankName ?? "—", member.CombatRankName is not null ? ThemeManager.AKey : ThemeManager.GreyKey))
+            with { Filters = [ValueLists.One<CrewMember>("Combat rank", member => member.CombatRankName, "No combat rank")] },
         StarSystemPage.Headed(
-            ColumnHeadings[2], new TableColumn("FighterBay"), member => Cell(Duty(member), member.Active ? ThemeManager.YellowKey : ThemeManager.GreyKey)),
+            ColumnHeadings[2], new TableColumn("FighterBay"), member => Cell(Duty(member), member.Active ? ThemeManager.YellowKey : ThemeManager.GreyKey))
+            with { Filters = [ValueLists.One<CrewMember>("Fighter bay", Duty, "No duty")] },
         StarSystemPage.Headed(
             ColumnHeadings[3],
             new TableColumn("PostedTo", ColumnFit.Fill),
-            member => Cell(Posting(member), member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey)),
+            member => Cell(Posting(member), member.PostedTo is { Length: > 0 } ? ThemeManager.WhiteKey : ThemeManager.GreyKey))
+            with { Filters = [ValueLists.One<CrewMember>("Posted to", Posting, "Not posted")] },
         LedgerTables.Added<CrewMember>(
             "HullLeft",
             new TableColumn("HullLeft"),
             member => TableCells.Flag(member.HullLeft),
-            SortColumn<CrewMember>.Figure<int>("Ship changed", member => member.HullLeft ? 1 : 0, SortDirection.Descending)),
+            SortColumn<CrewMember>.Figure<int>("Ship changed", member => member.HullLeft ? 1 : 0, SortDirection.Descending))
+            with { Filters = [ValueLists.Flag<CrewMember>("Ship changed", member => member.HullLeft, "Not known")] },
     ];
 
     private static Control NameCell(CrewMember member)

@@ -87,6 +87,12 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         Draw();
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _columns.Reopen();
+    }
+
     public string Summary => _headset ? HeadsetSummaryText : SummaryText;
 
     public event EventHandler? SummaryChanged
@@ -314,11 +320,11 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
 
         if (header)
         {
-            table.Children.Add(LedgerTables.Arranger(columns));
+            table.Children.Add(LedgerTables.Arranger(columns, rows));
             list.Children.Add(LedgerTables.Head(columns, new Thickness(LedgerTables.RowInset, 0)));
         }
 
-        foreach (var row in columns.Sort(rows))
+        foreach (var row in columns.Shown(rows))
         {
             list.Children.Add(RowView(row, columns));
         }

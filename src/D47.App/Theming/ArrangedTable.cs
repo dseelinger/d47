@@ -91,6 +91,9 @@ public sealed class ArrangedTable<TRow>
     /// <summary>Raised when a header press changes the sort, before <see cref="Changed"/>; not raised by <see cref="ShowSort"/>.</summary>
     public event Action? Sorted;
 
+    /// <summary>Raised when a tick changes which rows the filter shows, before <see cref="Changed"/>.</summary>
+    public event Action? FilterChanged;
+
     /// <summary>The key of the sorted field and its direction; null in the table's default order.</summary>
     public (string Key, SortDirection Direction)? SortedBy => _sort;
 
@@ -333,6 +336,7 @@ public sealed class ArrangedTable<TRow>
     {
         if (changed)
         {
+            FilterChanged?.Invoke();
             Changed?.Invoke();
         }
     }
@@ -382,6 +386,18 @@ public sealed class ArrangedTable<TRow>
         if (Arranging)
         {
             ToggleArranging();
+        }
+    }
+
+    /// <summary>Closes the COLUMNS and FILTER bars and forgets the filter, for a page opened again; the columns and sort stay.</summary>
+    public void Reopen()
+    {
+        StopArranging();
+        ClearFilters();
+
+        if (Filtering)
+        {
+            ToggleFiltering();
         }
     }
 

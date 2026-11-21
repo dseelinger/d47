@@ -392,6 +392,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         };
 
         _table.Sorted += () => _page = 0;
+        _table.FilterChanged += () => _page = 0;
         _table.Changed += Refresh;
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -455,7 +456,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
     /// <summary>The panel keeps a drilled page; opening it again returns the table to its default order.</summary>
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
-        _table.StopArranging();
+        _table.Reopen();
         base.OnAttachedToVisualTree(e);
     }
 
@@ -480,12 +481,22 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         _list.Children.Clear();
 
         _table.Refresh();
-        _list.Children.Add(LedgerTables.Arranger(_table));
+
+        IReadOnlyList<EngineerEntry> matching = [.. report.Directory.Where(Matches).Where(NotHidden)];
+        _list.Children.Add(LedgerTables.Arranger(_table, matching));
 
         var table = new StackPanel { Spacing = Gaps.Tile };
         table.Children.Add(LedgerTables.Head(_table, new Thickness(14, 0)));
 
-        var sorted = _table.Sort([.. report.Directory.Where(Matches).Where(NotHidden)]);
+        var sorted = _table.Shown(matching);
+
+        if (ColumnFilter.Empty(_table, matching) is { } hidden)
+        {
+            _list.Children.Add(LedgerTables.Sideways(_table, table));
+            _list.Children.Add(hidden);
+
+            return;
+        }
 
         if (sorted.Count == 0)
         {
@@ -507,7 +518,9 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
 
         foreach (var entry in shown)
         {
-            table.Children.Add(RowView(entry));
+            var view = RowView(entry);
+            view.IsVisible = !ColumnFilter.HidesRows(_table);
+            table.Children.Add(view);
         }
 
         _list.Children.Add(LedgerTables.Sideways(_table, table));
@@ -527,16 +540,20 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         [
             LedgerTables.Control<EngineerEntry>(new TableColumn("Portrait", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, PortraitCell),
             StarSystemPage.Headed(heads[1], new TableColumn("Engineer"), NameCell),
-            StarSystemPage.Headed(heads[2], new TableColumn("Status"), entry => StatusCell(entry, Showing(entry))),
-            StarSystemPage.Headed(heads[3], new TableColumn("Modules", ColumnFit.Fill) { Min = 160 }, entry => ModulesCell(entry, Showing(entry))),
+            StarSystemPage.Headed(heads[2], new TableColumn("Status"), entry => StatusCell(entry, Showing(entry)))
+                with { Filters = [ValueLists.One<EngineerEntry>("Status", StatusText, "No status")] },
+            StarSystemPage.Headed(heads[3], new TableColumn("Modules", ColumnFit.Fill) { Min = 160 }, entry => ModulesCell(entry, Showing(entry)))
+                with { Filters = [ValueLists.Many<EngineerEntry>("Modules", entry => entry.Engineer.Specialities.Select(speciality => speciality.Kind), "No modules")] },
             StarSystemPage.Headed(heads[4], new TableColumn("Planned"), entry => PlannedCell(entry, Showing(entry)), right: true),
-            StarSystemPage.Headed(heads[5], new TableColumn("Opens"), entry => OpensCell(entry, Showing(entry))),
+            StarSystemPage.Headed(heads[5], new TableColumn("Opens"), entry => OpensCell(entry, Showing(entry)))
+                with { Filters = [ValueLists.Many<EngineerEntry>("Opens", entry => entry.Gate.Select(engineer => engineer.Name), "Opens nobody")] },
             StarSystemPage.Headed(heads[6], new TableColumn("Distance"), entry => DistanceCell(entry, Showing(entry)), right: true),
             LedgerTables.Added<EngineerEntry>(
                 "System",
                 new TableColumn("System"),
                 entry => CopyGlyph.LinkBeside(TableCells.Text(entry.Engineer.System), entry.Engineer.System, _copy),
-                SortColumn<EngineerEntry>.Text("System", entry => entry.Engineer.System)),
+                SortColumn<EngineerEntry>.Text("System", entry => entry.Engineer.System))
+                with { Filters = [ValueLists.One<EngineerEntry>("System", entry => entry.Engineer.System, "No system")] },
             LedgerTables.Added<EngineerEntry>(
                 "Station",
                 new TableColumn("Station"),
@@ -546,7 +563,8 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
                 "ReferredBy",
                 new TableColumn("ReferredBy", ColumnFit.Fill) { Min = 140 },
                 entry => TableCells.List(entry.Engineer.ReferredBy),
-                SortColumn<EngineerEntry>.Figure<int>("Referred by", entry => entry.Engineer.ReferredBy.Count, SortDirection.Descending)),
+                SortColumn<EngineerEntry>.Figure<int>("Referred by", entry => entry.Engineer.ReferredBy.Count, SortDirection.Descending))
+                with { Filters = [ValueLists.Many<EngineerEntry>("Referred by", entry => entry.Engineer.ReferredBy, "Not referred")] },
         ];
     }
 

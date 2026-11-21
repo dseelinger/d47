@@ -64,6 +64,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
         _columns = new ArrangedTable<RegionFirstRecord>(
             TableId, Fields(), columnArrangements, headset ? null : columnWidths, headset ? 12 : 16, LoggedKey, "CodexPossibleFirstsHead");
         _columns.Sorted += () => _page = 0;
+        _columns.FilterChanged += () => _page = 0;
         _columns.Changed += Draw;
 
         Margin = new Thickness(14);
@@ -115,6 +116,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _columns.Reopen();
 
         if (_thumbs?.Refresh() == true)
         {
@@ -137,13 +139,20 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
 
         _body.Children.Add(RoutingKit.Ink(CodexModel.PossibleFirstsLine(records), TypeScale.Small, ThemeManager.GreyKey, wrap: true));
 
-        var sorted = _columns.Sort(shown);
-
-        if (sorted.Count == 0)
+        if (shown.Count == 0)
         {
             _body.Children.Add(CreditsKit.Message(CodexModel.PossibleFirstsNoMatchText));
             return;
         }
+
+        if (ColumnFilter.Empty(_columns, shown) is { } hidden)
+        {
+            _body.Children.Add(LedgerTables.Arranger(_columns, shown));
+            _body.Children.Add(hidden);
+            return;
+        }
+
+        var sorted = _columns.Shown(shown);
 
         IReadOnlyList<RegionFirstRecord> page = sorted;
 
@@ -158,10 +167,12 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
 
         foreach (var record in page)
         {
-            list.Children.Add(RowView(record));
+            var view = RowView(record);
+            view.IsVisible = !ColumnFilter.HidesRows(_columns);
+            list.Children.Add(view);
         }
 
-        _body.Children.Add(LedgerTables.Arranger(_columns));
+        _body.Children.Add(LedgerTables.Arranger(_columns, shown));
         _body.Children.Add(LedgerTables.Sideways(_columns, list));
 
         if (_headset && sorted.Count > FactionModel.PageSize)
@@ -177,13 +188,24 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
         return
         [
             CodexThumbnails.Column<RegionFirstRecord>(Square),
-            StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), EntryCell),
+            StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), EntryCell)
+                with { Filters = [ValueLists.One<RegionFirstRecord>("Kind", record => CodexModel.RegionFirstWord(record.First), "No kind")] },
             StarSystemPage.Headed(heads[1], new TableColumn("Region", ColumnFit.Fill), record =>
-                CreditsKit.Line(record.Region ?? CodexModel.NoRegionName, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
-            StarSystemPage.Headed(heads[2], new TableColumn("System", ColumnFit.Fill), SystemCell),
+                CreditsKit.Line(record.Region ?? CodexModel.NoRegionName, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey))
+                with { Filters = [ValueLists.One<RegionFirstRecord>("Region", record => record.Region ?? CodexModel.NoRegionName, "No region")] },
+            StarSystemPage.Headed(heads[2], new TableColumn("System", ColumnFit.Fill), SystemCell)
+                with
+                {
+                    Filters =
+                    [
+                        ValueLists.One<RegionFirstRecord>("System", record => record.System, "No system"),
+                        ValueLists.One<RegionFirstRecord>("Body", record => CodexModel.BodyOf(record.System, record.Body), "No body"),
+                    ],
+                },
             StarSystemPage.Headed(heads[3], new TableColumn(LoggedKey), record =>
                 CreditsKit.Mono(CodexModel.DateTime(record.At), TypeScale.Small, ThemeManager.WhiteKey, right: true), right: true),
-            StarSystemPage.Headed(heads[4], new TableColumn("Report"), ReportCell),
+            StarSystemPage.Headed(heads[4], new TableColumn("Report"), ReportCell)
+                with { Filters = [ValueLists.One<RegionFirstRecord>("Report", record => record.Reported is null ? "Not reported" : "Reported", "No report")] },
             LedgerTables.Control(new TableColumn("ReportTile", ColumnFit.Fixed) { Fixed = 190 }, TileCell, heads[5]),
             LedgerTables.Control(new TableColumn("Open", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, OpenCell, heads[6], right: true),
         ];

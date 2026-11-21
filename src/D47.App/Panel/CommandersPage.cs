@@ -66,7 +66,7 @@ public sealed class CommandersPage : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        _table.StopArranging();
+        _table.Reopen();
     }
 
     /// <summary>Redraws when the list or the shown Commander has changed since the last draw.</summary>
@@ -107,12 +107,17 @@ public sealed class CommandersPage : UserControl
         }
 
         _table.Refresh();
-        _body.Children.Add(LedgerTables.Arranger(_table));
+        _body.Children.Add(LedgerTables.Arranger(_table, commanders));
 
-        var rows = new StackPanel { Spacing = 2 };
+        var rows = new StackPanel { Spacing = 2, IsVisible = !ColumnFilter.HidesRows(_table) };
         rows.Children.Add(Header());
 
-        foreach (var sighting in _table.Sort(commanders))
+        if (ColumnFilter.Empty(_table, commanders) is { } empty)
+        {
+            rows.Children.Add(empty);
+        }
+
+        foreach (var sighting in _table.Shown(commanders))
         {
             rows.Children.Add(Row(sighting, Current(sighting)));
         }
@@ -138,8 +143,10 @@ public sealed class CommandersPage : UserControl
     private IReadOnlyList<TableField<CommanderSighting>> Fields() =>
     [
         StarSystemPage.Headed(Heads[0], new TableColumn("Name", ColumnFit.Fill), NameCell),
-        StarSystemPage.Headed(Heads[1], new TableColumn("Ship"), sighting => Text(sighting.Ship ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
-        StarSystemPage.Headed(Heads[2], new TableColumn("LastLocation"), LocationCell),
+        StarSystemPage.Headed(Heads[1], new TableColumn("Ship"), sighting => Text(sighting.Ship ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey))
+            with { Filters = [ValueLists.One<CommanderSighting>("Ship", sighting => sighting.Ship, "No ship seen")] },
+        StarSystemPage.Headed(Heads[2], new TableColumn("LastLocation"), LocationCell)
+            with { Filters = [ValueLists.One<CommanderSighting>("Last location", sighting => sighting.StarSystem, "No location seen")] },
         StarSystemPage.Headed(Heads[3], new TableColumn("LastDetected"), sighting => Text(CommanderRoster.Detected(sighting.LastSeen), Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey)),
         LedgerTables.Control<CommanderSighting>(new TableColumn("Switch", ColumnFit.Fixed) { Fixed = 140 }, ActionCell),
     ];

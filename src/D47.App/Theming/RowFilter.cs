@@ -6,6 +6,22 @@ namespace D47.App.Theming;
 /// <param name="NoValue">The entry that counts the rows with no value.</param>
 public sealed record ValueList<TRow>(string Label, Func<TRow, IReadOnlyList<string>> Values, string NoValue);
 
+/// <summary>Value lists over one row's values; a missing or blank value counts as none.</summary>
+public static class ValueLists
+{
+    /// <summary>One value per row.</summary>
+    public static ValueList<TRow> One<TRow>(string label, Func<TRow, string?> value, string noValue) =>
+        new(label, row => value(row) is { } text && !string.IsNullOrWhiteSpace(text) ? [text.Trim()] : [], noValue);
+
+    /// <summary>The items of a list cell.</summary>
+    public static ValueList<TRow> Many<TRow>(string label, Func<TRow, IEnumerable<string?>> values, string noValue) =>
+        new(label, row => [.. values(row).Where(text => !string.IsNullOrWhiteSpace(text)).Select(text => text!.Trim()).Distinct(StringComparer.Ordinal)], noValue);
+
+    /// <summary>"Yes" or "No"; a row whose flag is not known counts as none.</summary>
+    public static ValueList<TRow> Flag<TRow>(string label, Func<TRow, bool?> flag, string noValue) =>
+        One<TRow>(label, row => flag(row) is { } on ? (on ? "Yes" : "No") : null, noValue);
+}
+
 /// <summary>One value of a block with the rows that carry it.</summary>
 public sealed record FilterValue(string Value, int Count, bool Ticked);
 

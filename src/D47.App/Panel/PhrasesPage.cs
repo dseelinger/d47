@@ -187,6 +187,13 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         Build();
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _own.Reopen();
+        _builtIn.Reopen();
+    }
+
     public bool Filters => true;
 
     public string FilterPlaceholder => "Search every phrase";
@@ -437,9 +444,16 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
                 rows.Children.Add(Heads(_own, new Thickness(14, 0, 2, 0)));
             }
 
-            foreach (var phrase in _own.Sort(own))
+            if (ColumnFilter.Empty(_own, own) is { } ownHidden)
             {
-                rows.Children.Add(OwnRow(phrase));
+                rows.Children.Add(ownHidden);
+            }
+
+            foreach (var phrase in _own.Shown(own))
+            {
+                var view = OwnRow(phrase);
+                view.IsVisible = !ColumnFilter.HidesRows(_own);
+                rows.Children.Add(view);
             }
 
             if (own.Count == 0)
@@ -451,7 +465,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
 
             if (own.Count > 0)
             {
-                section.Children.Insert(1, LedgerTables.Arranger(_own));
+                section.Children.Insert(1, LedgerTables.Arranger(_own, own));
             }
 
             _lists.Children.Add(section);
@@ -459,9 +473,17 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
 
         if (groups.Count > 0)
         {
-            var arranger = LedgerTables.Arranger(_builtIn);
+            IReadOnlyList<BuiltIn> every = [.. groups.SelectMany(group => group.Phrases)];
+            var arranger = LedgerTables.Arranger(_builtIn, every);
             arranger.Margin = new Thickness(0, 28, 0, 0);
             _lists.Children.Add(arranger);
+
+            if (ColumnFilter.Empty(_builtIn, every) is { } builtInHidden)
+            {
+                _lists.Children.Add(builtInHidden);
+
+                return;
+            }
 
             var table = new StackPanel { Children = { Heads(_builtIn, new Thickness(14, 0)) } };
 
@@ -469,12 +491,16 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             {
                 var rows = new StackPanel { Spacing = 2 };
 
-                foreach (var phrase in _builtIn.Sort(group.Phrases))
+                var shown = _builtIn.Shown(group.Phrases);
+
+                foreach (var phrase in shown)
                 {
-                    rows.Children.Add(BuiltInRow(phrase));
+                    var view = BuiltInRow(phrase);
+                    view.IsVisible = !ColumnFilter.HidesRows(_builtIn);
+                    rows.Children.Add(view);
                 }
 
-                table.Children.Add(Section(group.Title, group.Phrases.Count, rows));
+                table.Children.Add(Section(group.Title, shown.Count, rows));
             }
 
             _lists.Children.Add(LedgerTables.Sideways(_builtIn, table));
@@ -491,7 +517,8 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         StarSystemPage.Headed(
             SortColumn<LearnedPhrase>.Text("Meaning", phrase => phrase.Phrase),
             new TableColumn("Meaning", ColumnFit.Fill),
-            phrase => Prose(phrase.Phrase, ThemeManager.WhiteKey, TypeScale.Secondary)),
+            phrase => Prose(phrase.Phrase, ThemeManager.WhiteKey, TypeScale.Secondary))
+            with { Filters = [ValueLists.One<LearnedPhrase>("Meaning", phrase => phrase.Phrase, "No meaning")] },
         LedgerTables.Added<LearnedPhrase>(
             "Learned",
             new TableColumn("Learned"),

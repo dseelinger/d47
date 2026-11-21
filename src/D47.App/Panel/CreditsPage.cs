@@ -75,6 +75,12 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
         Draw();
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _columns.Reopen();
+    }
+
     public string Summary => _headset ? HeadsetSummaryText : SummaryText;
 
     public event EventHandler? SummaryChanged
@@ -270,12 +276,19 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
 
         if (kinds.Count > 0)
         {
-            table.Children.Add(LedgerTables.Arranger(columns));
+            table.Children.Add(LedgerTables.Arranger(columns, kinds));
             rows.Children.Add(LedgerTables.Head(columns, new Thickness(LedgerTables.RowInset, 0)));
 
-            foreach (var row in columns.Sort(kinds))
+            if (ColumnFilter.Empty(columns, kinds) is { } empty)
             {
-                rows.Children.Add(RowView(row, columns));
+                rows.Children.Add(empty);
+            }
+
+            foreach (var row in columns.Shown(kinds))
+            {
+                var view = RowView(row, columns);
+                view.IsVisible = !ColumnFilter.HidesRows(columns);
+                rows.Children.Add(view);
             }
         }
 
@@ -318,7 +331,8 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
                 "Events",
                 new TableColumn("Events", ColumnFit.Fill) { Min = 160 },
                 row => TableCells.List(row.Events),
-                SortColumn<CreditKindRow>.Figure<int>("Journal events", row => row.Events.Count, SortDirection.Descending)),
+                SortColumn<CreditKindRow>.Figure<int>("Journal events", row => row.Events.Count, SortDirection.Descending))
+                with { Filters = [ValueLists.Many<CreditKindRow>("Events", row => row.Events, "No events")] },
         ];
     }
 
