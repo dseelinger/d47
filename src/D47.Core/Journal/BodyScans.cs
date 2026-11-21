@@ -149,7 +149,8 @@ public sealed record BodyScans
             TerraformState = journalEvent.String("TerraformState"),
             Materials = MaterialsOf(journalEvent),
             Rings = RingsOf(journalEvent),
-            WasFootfalled = FootfallFlag(journalEvent, Populated.Contains(systemAddress)),
+            // A footfall is not undone, and a Detailed scan can say false after an AutoScan of the body said true.
+            WasFootfalled = existing?.WasFootfalled == true ? true : FootfallFlag(journalEvent, Populated.Contains(systemAddress)),
             SeenAt = journalEvent.Timestamp,
             FootfallTakenAt = existing?.FootfallTakenAt,
         };

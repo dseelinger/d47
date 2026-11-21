@@ -116,6 +116,26 @@ public class ABodysScanKeepsItsFootfallTests
         Assert.Equal(RescannedAt, body?.SeenAt);
     }
 
+    [Fact]
+    public void ADetailedScanSayingUnwalkedDoesNotUndoAnAutoScanSayingWalked()
+    {
+        var scans = BodyScans.Empty
+            .Apply(Scan(wasFootfalled: true))
+            .Apply(Scan(wasFootfalled: false, at: RescannedAt));
+
+        Assert.True(scans.For(SystemAddress, BodyId)?.WasFootfalled);
+    }
+
+    [Fact]
+    public void ADetailedScanSayingWalkedOverridesAnEarlierUnwalked()
+    {
+        var scans = BodyScans.Empty
+            .Apply(Scan(wasFootfalled: false))
+            .Apply(Scan(wasFootfalled: true, at: RescannedAt));
+
+        Assert.True(scans.For(SystemAddress, BodyId)?.WasFootfalled);
+    }
+
     private static JournalEvent Scan(bool? wasFootfalled, DateTimeOffset? at = null, string atmosphere = "thin")
     {
         var timestamp = at ?? ScannedAt;
