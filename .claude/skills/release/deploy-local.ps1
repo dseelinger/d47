@@ -120,6 +120,24 @@ function Copy-Payload([string]$from, [string]$to) {
     }
 }
 
+# A process other than d47 that has loaded a file from the install, such as Elite with the OpenXR
+# layer DLL in runtimes\openxr, makes the copy fail part way. Called before anything is closed or copied.
+function Assert-NothingLoaded {
+    $holders = @(Get-Process | Where-Object { $_.Name -ne 'd47' -and $_.Id -ne $PID } | ForEach-Object {
+        $process = $_
+        $loaded = @(try {
+            $process.Modules.FileName | Where-Object {
+                $_ -and $_.StartsWith($Installed + '\', [StringComparison]::OrdinalIgnoreCase)
+            }
+        }
+        catch { })
+        if ($loaded) { "$($process.Name) (pid $($process.Id)) has $($loaded[0]) loaded" }
+    })
+    if ($holders) {
+        throw "$($holders -join '; '). Nothing was closed or copied. Close it, then run this again."
+    }
+}
+
 function Start-Installed {
     $exe = Join-Path $Installed 'd47.exe'
     Start-Process -FilePath $exe -WorkingDirectory $Installed | Out-Null
@@ -143,6 +161,8 @@ if ($others) {
     }) -join '; '
     throw "Another d47 is running ($where) and may write the installed data folder. Close it, then run this again."
 }
+
+Assert-NothingLoaded
 
 if ($Restore) {
     $saved = Join-Path $Backup 'app'
@@ -211,6 +231,8 @@ $stamped = Get-InstalledVersion $Staging
 if ($stamped -ne $next) { throw "The publish at $Staging is v$stamped, not v$next." }
 
 $current = Get-InstalledVersion $Installed
+# Again after the publish, which takes long enough for Elite to be started meanwhile.
+Assert-NothingLoaded
 $wasRunning = Stop-Installed
 
 # An install already carrying this version is an earlier deploy that was never restored, and the

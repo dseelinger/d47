@@ -103,6 +103,11 @@ Both modes refuse while any other d47 is running outside the install, such as a 
 build writes the installed `data\` from wherever it runs. Report the refusal and stop; do not close
 that copy.
 
+Both modes also refuse, before closing d47 or copying anything, while another process has a file from
+the install loaded: Elite in VR loads `runtimes\openxr\XR_APILAYER_D47_panel.dll`, and the copy of
+`runtimes` would fail part way. The message names the process and pid. Report it, ask the maintainer
+to close that process, and run the same command again once they have; do not close it yourself.
+
 Relay what it prints. Remember three things from it: the version deployed, the version backed up,
 and whether it closed a running d47 (and so started it again: `started …d47.exe again`).
 
