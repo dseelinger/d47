@@ -25,7 +25,7 @@ nav_order: 206
  <text x="660" y="66" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">A BODY</text>
  <text x="660" y="98" text-anchor="middle" font-size="15" fill="var(--text-muted)">what its biology is worth,</text>
  <text x="660" y="122" text-anchor="middle" font-size="15" fill="var(--text-muted)">and each species on it with its price</text>
- <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">On the plan page, the most valuable body at each stop is listed first.</text>
+ <text x="440" y="200" text-anchor="middle" font-size="16" fill="var(--text)">Each stop lists its most valuable body first, counting only species at or above the minimum.</text>
 </svg>
 </section>
 <section>
@@ -39,7 +39,7 @@ nav_order: 206
 </section>
 <section>
 <h2><span class="num">3</span> Stops, radius and a floor, as on Road to Riches.</h2>
-<svg viewBox="0 0 880 360" role="img" aria-label="Stops, radius, the least a species must be worth, jump range and the farthest a body may sit from arrival, with their defaults, and the two checkboxes">
+<svg viewBox="0 0 880 340" role="img" aria-label="Stops, radius, the least a species must be worth, jump range and the farthest a body may sit from arrival, with their defaults, and the checkbox">
  <rect x="20" y="30" width="270" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="155" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">STOPS</text>
  <text x="155" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">how many systems</text>
@@ -51,7 +51,7 @@ nav_order: 206
  <rect x="590" y="30" width="270" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="725" y="68" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">WORTH STOPPING</text>
  <text x="725" y="100" text-anchor="middle" font-size="15" fill="var(--text-muted)">the least a species must pay</text>
- <text x="725" y="130" text-anchor="middle" font-size="15" fill="var(--text)">1,000,000 cr out of the box</text>
+ <text x="725" y="130" text-anchor="middle" font-size="15" fill="var(--text)">no minimum out of the box</text>
  <rect x="20" y="170" width="410" height="120" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="225" y="208" text-anchor="middle" font-size="17" font-weight="800" fill="var(--text)">JUMP RANGE</text>
  <text x="225" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">how far one jump goes</text>
@@ -61,9 +61,6 @@ nav_order: 206
  <text x="655" y="240" text-anchor="middle" font-size="15" fill="var(--text-muted)">how far in-system a body may sit</text>
  <text x="655" y="266" text-anchor="middle" font-size="15" fill="var(--text)">10,000 ls out of the box</text>
  <text x="440" y="318" text-anchor="middle" font-size="15" fill="var(--text-muted)">Coming back to the start is on out of the box, and can be turned off.</text>
- <rect x="300" y="332" width="16" height="16" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
- <text x="326" y="345" font-size="15" fill="var(--text)">Most credits per scan</text>
- <text x="560" y="345" font-size="15" fill="var(--text-muted)">off out of the box</text>
 </svg>
 </section>
 <div class="next">
@@ -87,22 +84,17 @@ behind it.
 |---|---|---|---|
 | **Stops** | How many systems the circuit visits | 10 | 1 to 50 |
 | **Radius (ly)** | How far from the start it may look | 200 | 10 to 10,000 |
-| **Least a species is worth (cr)** | The least a species must be worth to be listed; a body is a stop when any of its species clears it | 1,000,000 | 0 to 100,000,000 |
+| **Least a species is worth (cr)** | The least a species must be worth to be listed; a body is a stop when any of its species clears it | No minimum | 0 to 100,000,000 |
 | **Jump range (ly)** | How far one jump goes | This ship's | 10.01 to 500 |
 | **Farthest from arrival (ls)** | How far in-system a body may sit | 10,000 | 100 to 1,000,000 |
 | **Come back to the start** | Whether the circuit ends where it started | On | |
-| **Most credits per scan** | Choose the systems that pay the most for each species scanned, not the most in total | Off | |
 
-It starts from where you are. Systems with Thargoid presence are avoided. A body's worth is the total of all its species, including those under the minimum. A value outside its range is moved to the nearest end of it. Plotting needs Look things up in the galaxy on; with it off, D47 says route planning is switched off.
-
-### Credits per scan
-
-`credits_per_scan` chooses the systems that pay the most for each species scanned, instead of the most in total. A system's score is the value of its listed species divided by how many there are; species under the minimum are not counted. D47 asks for up to three times as many stops as you wanted (at most 50), keeps the best-scoring ones in the order the service returned them, and adds the jumps to any dropped stop to the next kept stop. The route is not re-optimised, so it is longer than the service's own route for the same number of stops. Each stop then shows "N cr a scan".
+It starts from where you are. Systems with Thargoid presence are avoided. A body's worth is the total of its species at or above the minimum. A value outside its range is moved to the nearest end of it. Plotting needs Look things up in the galaxy on; with it off, D47 says route planning is switched off.
 
 ### What the plan shows
 
 Each stop shows its system, the jumps to reach it and how many bodies are worth landing on. Under
-it, each body shows what its biology is worth, most valuable first on the page, and each species on it with its
+it, each body shows what its biology is worth, most valuable first, and each species on it with its
 price. Arriving at a stop marks it reached, and "plot next exobiology stop" puts the next system in
 the galaxy map.
 

@@ -127,6 +127,9 @@ public sealed record ExobiologyBody(string Name, string? Subtype)
     public long? ScanValue { get; init; }
 
     public long? MappingValue { get; init; }
+
+    /// <summary>What the listed species are worth together, in credits.</summary>
+    public long Value => Species.Sum(species => species.Value);
 }
 
 public sealed record ExobiologyStop(string System, int Jumps, IReadOnlyList<ExobiologyBody> Bodies)
@@ -139,17 +142,10 @@ public sealed record ExobiologyStop(string System, int Jumps, IReadOnlyList<Exob
     /// <summary>The main star's journal class where Spansh knows it; null otherwise.</summary>
     public string? StarClass { get; init; }
 
-    public long Value => Bodies.Sum(body => body.LandmarkValue);
+    public long Value => Bodies.Sum(body => body.Value);
 
-    /// <summary>Credits a scan across the listed species; 0 when none are listed.</summary>
-    public long PerScan
-    {
-        get
-        {
-            var species = Bodies.SelectMany(body => body.Species).ToList();
-            return species.Count == 0 ? 0 : (long)Math.Round(species.Sum(item => item.Value) / (double)species.Count);
-        }
-    }
+    /// <summary>The bodies, the one whose listed species are worth most first.</summary>
+    public IEnumerable<ExobiologyBody> RichestFirst() => Bodies.OrderByDescending(body => body.Value);
 }
 
 public sealed record ExobiologyRoute(IReadOnlyList<ExobiologyStop> Stops)
@@ -167,32 +163,25 @@ public sealed record ExobiologyRoute(IReadOnlyList<ExobiologyStop> Stops)
 
     public int TotalJumps => Stops.Sum(stop => stop.Jumps) + UnlistedJumps;
 
-    /// <summary>The <paramref name="count"/> stops with the highest <see cref="ExobiologyStop.PerScan"/>, in the original order.</summary>
-    public ExobiologyRoute KeepBestPerScan(int count)
+    /// <summary>
+    /// The route with every species under <paramref name="minimum"/> dropped, then every body left with no
+    /// species and every stop left with no bodies; a dropped stop's jumps go to the next kept stop.
+    /// </summary>
+    public ExobiologyRoute KeepAtLeast(long minimum)
     {
-        if (Stops.Count <= count)
-        {
-            return this;
-        }
-
-        var kept = Stops
-            .Select((stop, index) => (stop, index))
-            .OrderByDescending(item => item.stop.PerScan)
-            .ThenBy(item => item.index)
-            .Take(count)
-            .Select(item => item.index)
-            .ToHashSet();
-
         var stops = new List<ExobiologyStop>();
         var carried = 0;
 
-        for (var index = 0; index < Stops.Count; index++)
+        foreach (var stop in Stops)
         {
-            var stop = Stops[index];
+            var bodies = stop.Bodies
+                .Select(body => body with { Species = [.. body.Species.Where(species => species.Value >= minimum)] })
+                .Where(body => body.Species.Count > 0)
+                .ToList();
 
-            if (kept.Contains(index))
+            if (bodies.Count > 0)
             {
-                stops.Add(stop with { Jumps = stop.Jumps + carried });
+                stops.Add(stop with { Jumps = stop.Jumps + carried, Bodies = bodies });
                 carried = 0;
             }
             else
@@ -222,8 +211,8 @@ public sealed record ExobiologyQuery
     /// <summary>How many systems to visit.</summary>
     public int MaxResults { get; init; } = 10;
 
-    /// <summary>The least a body's biology must be worth to be worth stopping for.</summary>
-    public long MinimumValue { get; init; } = 1_000_000;
+    /// <summary>The least a species must be worth to be listed; 0 is no minimum.</summary>
+    public long MinimumValue { get; init; }
 
     /// <summary>Light seconds.</summary>
     public double MaxDistanceToArrival { get; init; } = 10_000;
@@ -260,7 +249,7 @@ public sealed record ExobiologyQuery
             // Bounded low for the same reason the Road to Riches plot is: every extra stop is another line to
             // be read out, and the route is flown one system at a time regardless.
             MaxResults = Math.Clamp(maxResults ?? 10, 1, 50),
-            MinimumValue = Math.Clamp(minimumValue ?? 1_000_000, 0, 100_000_000),
+            MinimumValue = Math.Clamp(minimumValue ?? 0, 0, 100_000_000),
             MaxDistanceToArrival = Math.Clamp(maxDistanceToArrival ?? 10_000, 100, 1_000_000),
             Loop = loop ?? true,
         };

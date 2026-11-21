@@ -311,32 +311,137 @@ public class ExobiologyCapabilityTests
 
         // The species, which is the half the journal cannot supply.
         Assert.Contains("Frutexa Flabellum — 1,808,900 cr", result.Content, StringComparison.Ordinal);
-        Assert.Contains("6,904,100 cr", result.Content, StringComparison.Ordinal);
+        Assert.Contains("Opet 7 b (Rocky body, 2,536 ls out) — 3,575,500 cr", result.Content, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task ThePlotSaysWhatABodyHoldsBelowTheMinimum()
+    public async Task ThePlotCountsOnlyTheListedSpecies()
     {
         const string Jump = """{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}""";
 
         var result = await Ask(Store(Jump), "plot_exobiology_route", "{}", new FakeRoutes());
 
-        Assert.Contains("species under the minimum — 3,328,600 cr", result.Content, StringComparison.Ordinal);
+        Assert.Contains("3,575,500 credits of biology in all", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("6,904,100", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("under the minimum", result.Content, StringComparison.Ordinal);
+    }
 
-        var covered = new FakeRoutes
+    [Fact]
+    public async Task ThePlotListsTheRichestBodyOfAStopFirst()
+    {
+        const string Jump = """{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}""";
+
+        var routes = new FakeRoutes
         {
             Route = new([new ExobiologyStop("Opet", 3, [
+                new ExobiologyBody("Opet 2", "Rocky body")
+                {
+                    LandmarkValue = 50_000_000,
+                    Species = [new ExobiologySpecies("Frutexa", "Frutexa Flabellum", 1, 1_808_900)],
+                },
                 new ExobiologyBody("Opet 7 b", "Rocky body")
                 {
-                    LandmarkValue = 1_000,
-                    Species = [new ExobiologySpecies("Frutexa", "Frutexa Flabellum", 1, 1_000)],
+                    LandmarkValue = 20_000_000,
+                    Species = [new ExobiologySpecies("Stratum", "Stratum Tectonicas", 1, 19_010_800)],
                 },
             ])]),
         };
 
-        result = await Ask(Store(Jump), "plot_exobiology_route", "{}", covered);
+        var result = await Ask(Store(Jump), "plot_exobiology_route", "{}", routes);
 
-        Assert.DoesNotContain("under the minimum", result.Content, StringComparison.Ordinal);
+        Assert.True(
+            result.Content.IndexOf("Opet 7 b", StringComparison.Ordinal) < result.Content.IndexOf("Opet 2 ", StringComparison.Ordinal),
+            result.Content);
+    }
+
+    /// <summary>A stop with one species over 10,000,000 and one under, a body with only one under, and a stop with only one under.</summary>
+    private static ExobiologyRoute MixedValues() =>
+        new([
+            new ExobiologyStop("Opet", 3, [
+                new ExobiologyBody("Opet 7 b", "Rocky body")
+                {
+                    Species =
+                    [
+                        new ExobiologySpecies("Stratum", "Stratum Tectonicas", 1, 19_010_800),
+                        new ExobiologySpecies("Bacterium", "Bacterium Aurasus", 1, 1_000_000),
+                    ],
+                },
+                new ExobiologyBody("Opet 2", "Rocky body")
+                {
+                    Species = [new ExobiologySpecies("Bacterium", "Bacterium Vesicula", 1, 1_000_000)],
+                },
+            ]),
+            new ExobiologyStop("Lowly", 4, [
+                new ExobiologyBody("Lowly 1", "Rocky body")
+                {
+                    Species = [new ExobiologySpecies("Bacterium", "Bacterium Aurasus", 1, 1_000_000)],
+                },
+            ]),
+        ]);
+
+    [Fact]
+    public async Task ThePlotLeavesOutWhatIsUnderTheMinimum()
+    {
+        const string Jump = """{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}""";
+
+        var routes = new FakeRoutes { Route = MixedValues() };
+
+        var result = await Ask(Store(Jump), "plot_exobiology_route", """{"min_value":10000000}""", routes);
+
+        Assert.Equal(10_000_000, routes.LastQuery!.MinimumValue);
+        Assert.Contains("Stratum Tectonicas", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("Bacterium", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("Opet 2", result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("Lowly", result.Content, StringComparison.Ordinal);
+        Assert.Contains("1 system from Sol, 7 jumps, 19,010,800 credits", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task TheKeptPlanHoldsOnlyWhatClearsTheMinimum()
+    {
+        var install = new MemoryInstall();
+        var settings = TestSurface.For(install).Settings;
+        var plans = new RoutePlanBook(
+            Path.Combine(install.Root, "data", "route-plans.json"),
+            new MemoryFileSystem(), NullLogger<RoutePlanBook>.Instance);
+        var gameState = Store();
+
+        await CapabilityRegistry
+            .Build([ExobiologyCapability.Create(new FakeRoutes { Route = MixedValues() }, () => gameState.Active, settings, null, plans)])
+            .InvokeAsync(
+                "plot_exobiology_route",
+                ToolArguments.FromJson("""{"from":"Sol","min_value":10000000}"""),
+                TestContext.Current.CancellationToken);
+
+        var route = plans.Last(RoutePlanKind.Exobiology)!.Exobiology!;
+        var body = Assert.Single(Assert.Single(route.Stops).Bodies);
+
+        Assert.Equal("Stratum Tectonicas", Assert.Single(body.Species).Name);
+        Assert.Equal(7, route.TotalJumps);
+    }
+
+    [Fact]
+    public async Task WithNoMinimumTheServiceIsAskedForNone()
+    {
+        const string Jump = """{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}""";
+        var routes = new FakeRoutes();
+
+        await Ask(Store(Jump), "plot_exobiology_route", "{}", routes);
+
+        Assert.Equal(0, routes.LastQuery!.MinimumValue);
+    }
+
+    [Theory]
+    [InlineData("{}", "within 200 light years. A wider radius would find something.")]
+    [InlineData("""{"min_value":10000000}""", "at 10,000,000 credits a species or better.")]
+    public async Task AnEmptyRouteNamesTheMinimumOnlyWhenThereIsOne(string json, string expected)
+    {
+        const string Jump = """{"timestamp":"2026-08-16T09:05:00Z","event":"FSDJump","StarSystem":"Sol"}""";
+
+        var result = await Ask(Store(Jump), "plot_exobiology_route", json, new FakeRoutes { Route = new([]) });
+
+        Assert.Contains(expected, result.Content, StringComparison.Ordinal);
+        Assert.DoesNotContain("a body", result.Content, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -360,7 +465,11 @@ public class ExobiologyCapabilityTests
         var routes = new FakeRoutes
         {
             Route = new ExobiologyRoute(
-                [new ExobiologyStop("Opet", 2, [new ExobiologyBody("Opet 7 b", "Rocky body") { LandmarkValue = 100 }])])
+                [new ExobiologyStop("Opet", 2, [new ExobiologyBody("Opet 7 b", "Rocky body")
+                {
+                    LandmarkValue = 100,
+                    Species = [new ExobiologySpecies("Bacterium", "Bacterium Aurasus", 1, 100)],
+                }])])
             {
                 UnlistedJumps = 2,
             },
@@ -445,7 +554,7 @@ public class ExobiologyCapabilityTests
         var result = await Ask(
             Store(),
             "plot_exobiology_route",
-            """{"from":"Sol"}""",
+            """{"from":"Sol","min_value":5000000}""",
             new FakeRoutes { Route = new ExobiologyRoute([]) });
 
         Assert.False(result.IsError);

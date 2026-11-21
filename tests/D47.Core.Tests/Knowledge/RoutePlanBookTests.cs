@@ -473,6 +473,7 @@ public class RoutePlanBookTests : IDisposable
 
         Assert.Equal(1, kept?.Reached);
         Assert.Equal("Frutexa Flabellum", kept?.Exobiology?.Stops[0].Bodies[0].Species[0].Name);
-        Assert.Equal(6_904_100, kept?.Exobiology?.TotalValue);
+        Assert.Equal(6_904_100, kept?.Exobiology?.Stops[0].Bodies[0].LandmarkValue);
+        Assert.Equal(1_808_900, kept?.Exobiology?.TotalValue);
     }
 }

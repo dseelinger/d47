@@ -218,15 +218,11 @@ public static class ExobiologyCapability
                     ToolParameter.Integer(
                         "min_value",
                         "The least a species must be worth to be listed, in credits; a body is a stop "
-                            + "when any of its species clears it. Defaults to 1,000,000."),
+                            + "when any of its species clears it. Defaults to no minimum."),
                     ToolParameter.Number(
                         "max_distance_to_arrival",
                         "How far in-system a body may sit, in light seconds. Defaults to 10,000."),
                     ToolParameter.Flag("loop", "Whether the circuit returns to the start. Defaults to true."),
-                    ToolParameter.Flag(
-                        "credits_per_scan",
-                        "Choose the systems that pay the most for each species scanned, instead of the most in "
-                            + "total. The route is not re-optimised for distance. Defaults to false."),
                 ],
                 Handler = (arguments, cancellationToken) =>
                     PlotAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
@@ -922,35 +918,22 @@ public static class ExobiologyCapability
             return ToolResult.Ok(failure);
         }
 
-        var perScan = arguments.Boolean("credits_per_scan") == true;
-
-        var route = await routes
-            .PlotExobiologyAsync(
-                perScan ? query with { MaxResults = Math.Min(50, query.MaxResults * 3) } : query,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        if (perScan)
-        {
-            route = route?.KeepBestPerScan(query.MaxResults);
-        }
+        var route = (await routes.PlotExobiologyAsync(query, cancellationToken).ConfigureAwait(false))
+            ?.KeepAtLeast(query.MinimumValue);
 
         if (route is null || route.Stops.Count == 0)
         {
             return ToolResult.Ok(
-                $"No exobiology route from {query.From} within {Number((long)query.Radius)} light years "
-                + $"at {Number(query.MinimumValue)} credits a body or better. A wider radius or a lower "
-                + "minimum would find something.");
+                $"No exobiology route from {query.From} within {Number((long)query.Radius)} light years"
+                + (query.MinimumValue > 0
+                    ? $" at {Number(query.MinimumValue)} credits a species or better. A wider radius or a lower "
+                        + "minimum would find something."
+                    : ". A wider radius would find something."));
         }
 
         plans?.Record(route, $"{route.Stops.Count} stops from {query.From}", now?.Invoke() ?? default);
 
         var report = new StringBuilder();
-
-        if (perScan)
-        {
-            report.AppendLine("Stops chosen by credits per scan, not by total value.");
-        }
 
         report.AppendLine(
             $"{route.Stops.Count} system{(route.Stops.Count == 1 ? "" : "s")} from {query.From}, "
@@ -962,28 +945,22 @@ public static class ExobiologyCapability
             report.AppendLine(
                 $"{stop.System} — {stop.Jumps} jump{(stop.Jumps == 1 ? "" : "s")}, "
                 + $"{stop.Bodies.Count} bod{(stop.Bodies.Count == 1 ? "y" : "ies")}, "
-                + $"{Number(stop.Value)} cr"
-                + (perScan ? $", {Number(stop.PerScan)} cr a scan." : "."));
+                + $"{Number(stop.Value)} cr.");
 
-            foreach (var body in stop.Bodies)
+            foreach (var body in stop.RichestFirst())
             {
                 var where = body.DistanceToArrival is { } distance
                     ? $", {Number((long)distance)} ls out"
                     : string.Empty;
 
                 report.AppendLine($"  {body.Name} ({body.Subtype ?? "unknown type"}{where}) — "
-                    + $"{Number(body.LandmarkValue)} cr");
+                    + $"{Number(body.Value)} cr");
 
                 foreach (var species in body.Species)
                 {
                     report.AppendLine(
                         $"    {species.Name}{(species.Count > 1 ? $" ×{species.Count}" : string.Empty)}"
                         + $" — {Number(species.Value)} cr");
-                }
-
-                if (body.LandmarkValue - body.Species.Sum(species => species.Value) is > 0 and var under)
-                {
-                    report.AppendLine($"    species under the minimum — {Number(under)} cr");
                 }
             }
         }

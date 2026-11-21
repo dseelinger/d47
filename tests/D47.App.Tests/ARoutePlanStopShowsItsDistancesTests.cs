@@ -15,7 +15,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Exobiology and Road to Riches stops show the straight-line leg, body distance and unlisted species value (#1800).</summary>
+/// <summary>Exobiology and Road to Riches stops show the straight-line leg and body distance (#1800).</summary>
 public class ARoutePlanStopShowsItsDistancesTests
 {
     private static readonly StarPosition Origin = new(0, 0, 0);
@@ -119,9 +119,11 @@ public class ARoutePlanStopShowsItsDistancesTests
     }
 
     [AvaloniaFact]
-    public void ASpeciesTotalAboveTheListedSpeciesShowsTheDifference()
+    public void ABodyIsWorthItsListedSpeciesWhateverTheServiceTotals()
     {
-        Assert.Contains("species under the minimum — 23,607,700 cr", Lines(Exobiology(null, null, null, 698, 23_608_700)));
-        Assert.DoesNotContain(Lines(Exobiology(null, null, null, 698, 1_000)), line => line.StartsWith("species under", StringComparison.Ordinal));
+        var lines = Lines(Exobiology(null, null, null, 698, 23_608_700));
+
+        Assert.Contains("Body 1 — Rocky body, 698 ls, 1,000 cr", lines);
+        Assert.DoesNotContain(lines, line => line.StartsWith("species under", StringComparison.Ordinal));
     }
 }

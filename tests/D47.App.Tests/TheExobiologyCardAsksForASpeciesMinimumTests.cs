@@ -1,9 +1,14 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml.Styling;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
+using D47.App.Theming;
 using D47.Core.Capabilities;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Interface;
@@ -15,9 +20,9 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>The Exobiology card's "Most credits per scan" checkbox sends credits_per_scan (#2316).</summary>
+/// <summary>The Exobiology card chooses stops by the least a species is worth, and nothing else (#2628).</summary>
 [Trait("Category", "Integration")]
-public class TheExobiologyCardSendsCreditsPerScanTests
+public class TheExobiologyCardAsksForASpeciesMinimumTests
 {
     private sealed class RecordedRoutes : IRouteService
     {
@@ -40,7 +45,7 @@ public class TheExobiologyCardSendsCreditsPerScanTests
             Task.FromResult<CarrierRoute?>(null);
     }
 
-    private static (PanelView Panel, RecordedRoutes Routes) Open()
+    private static (Window Window, PanelView Panel, RecordedRoutes Routes) Open()
     {
         var folder = TempFolders.Create("d47-exobiology-card");
         var settings = TestSurface.Settings();
@@ -65,6 +70,9 @@ public class TheExobiologyCardSendsCreditsPerScanTests
             ExobiologyCapability.Create(routes, () => gameState.Active, settings, null, plans),
         ]);
 
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        Application.Current!.Styles.Add(new StyleInclude((Uri?)null) { Source = new Uri("avares://d47/Theming/ControlKitTheme.axaml") });
+
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.EnableRouting(new RoutingSurface(
@@ -74,59 +82,81 @@ public class TheExobiologyCardSendsCreditsPerScanTests
             plans,
             Commander: () => gameState.Active));
 
-        var window = new Window { Content = panel, Width = 1280, Height = 860 };
+        var window = new Window
+        {
+            Content = panel,
+            Width = 1280,
+            Height = 860,
+            Background = (IBrush?)Application.Current.Resources[ThemeManager.BgKey],
+        };
         window.Show();
 
         panel.Tab = PanelTab.Astrometrics;
         panel.Nav.SelectRoot(RoutingPages.PlanRoot);
         Dispatcher.UIThread.RunJobs();
 
-        return (panel, routes);
+        return (window, panel, routes);
     }
 
-    private static CheckBox PerScan(PanelView panel) =>
+    private static TextBox Minimum(PanelView panel) =>
         panel.GetVisualDescendants()
-            .OfType<CheckBox>()
-            .Single(box => (box.Content as TextBlock)?.Text == "Most credits per scan");
+            .OfType<TextBox>()
+            .Single(box => (Avalonia.Automation.AutomationProperties.GetName(box) ?? string.Empty)
+                .StartsWith("Least a species is worth", StringComparison.Ordinal));
 
-    private static void PlotExobiology(PanelView panel)
-    {
-        var plot = PerScan(panel).GetVisualAncestors()
+    private static Button Plot(PanelView panel) =>
+        Minimum(panel).GetVisualAncestors()
             .First(ancestor => ancestor.GetVisualDescendants().OfType<Button>().Any(button => button.Content as string == "Plot"))
             .GetVisualDescendants()
             .OfType<Button>()
             .Single(button => button.Content as string == "Plot");
+
+    private static void PlotExobiology(PanelView panel)
+    {
+        var plot = Plot(panel);
 
         plot.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
     }
 
     [AvaloniaFact]
-    public void TheCheckboxStartsUnchecked()
+    public void TheCardHasNoCreditsPerScanCheckbox()
     {
-        var (panel, _) = Open();
+        var (window, panel, _) = Open();
 
-        Assert.NotEqual(true, PerScan(panel).IsChecked);
+        Plot(panel).BringIntoView();
+        Dispatcher.UIThread.RunJobs();
+
+        using (var frame = window.CaptureRenderedFrame()!)
+        {
+            frame.SaveCapture("exobiology-card.png");
+        }
+
+        Assert.DoesNotContain(
+            panel.GetVisualDescendants().OfType<CheckBox>(),
+            box => (box.Content as TextBlock)?.Text == "Most credits per scan");
     }
 
     [AvaloniaFact]
-    public void CheckedTheCardAsksForCreditsPerScan()
+    public void AnEmptyMinimumSaysNoMinimumAndSendsNone()
     {
-        var (panel, routes) = Open();
+        var (_, panel, routes) = Open();
 
-        PerScan(panel).IsChecked = true;
+        Assert.Equal("no minimum", Minimum(panel).PlaceholderText);
+
         PlotExobiology(panel);
 
-        Assert.Equal(30, routes.Last?.MaxResults);
+        Assert.Equal(0, routes.Last?.MinimumValue);
     }
 
     [AvaloniaFact]
-    public void UncheckedTheCardAsksForTheServicesOwnRoute()
+    public void AMinimumTypedInTheCardIsSent()
     {
-        var (panel, routes) = Open();
+        var (_, panel, routes) = Open();
 
+        Minimum(panel).Text = "10000000";
         PlotExobiology(panel);
 
-        Assert.Equal(10, routes.Last?.MaxResults);
+        Assert.Equal(10_000_000, routes.Last?.MinimumValue);
     }
 }

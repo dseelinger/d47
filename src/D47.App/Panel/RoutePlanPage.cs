@@ -304,7 +304,7 @@ public sealed class RoutePlanPage : UserControl
     {
         var stops = Field("Stops", "10");
         var radius = Field("Radius (ly)", "200");
-        var minimum = Field("Least a species is worth (cr)", "1,000,000");
+        var minimum = Field("Least a species is worth (cr)", "no minimum");
         var range = Field(
             "Jump range (ly)",
             "this ship's",
@@ -315,12 +315,11 @@ public sealed class RoutePlanPage : UserControl
         var farthest = Field("Farthest from arrival (ls)", "10,000");
         var loop = RoutingKit.Switch("Come back to the start");
         loop.IsChecked = true;
-        var perScan = RoutingKit.Switch("Most credits per scan");
 
         var form = new StackPanel
         {
             Spacing = 8,
-            Children = { Row(stops, radius), Row(range, minimum), Row(farthest, null), loop, perScan },
+            Children = { Row(stops, radius), Row(range, minimum), Row(farthest, null), loop },
         };
 
         return Plottable(
@@ -334,8 +333,7 @@ public sealed class RoutePlanPage : UserControl
                 ("min_value", minimum.Text),
                 ("jump_range", range.Text),
                 ("max_distance_to_arrival", farthest.Text),
-                ("loop", loop.IsChecked == true ? "true" : "false"),
-                ("credits_per_scan", perScan.IsChecked == true ? "true" : "false")),
+                ("loop", loop.IsChecked == true ? "true" : "false")),
             () => true,
             ExobiologyHelp,
             FormField.Legend(required: false, supplied: true));

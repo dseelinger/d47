@@ -45,7 +45,12 @@ public class ARouteStopBodyIsNamedByItsDesignationTests
         Headline = "Exobiology",
         Exobiology = new ExobiologyRoute(
         [
-            new ExobiologyStop(system, 1, [new ExobiologyBody(body, "Rocky body") { DistanceToArrival = 698, LandmarkValue = 1_000 }]),
+            new ExobiologyStop(system, 1, [new ExobiologyBody(body, "Rocky body")
+            {
+                DistanceToArrival = 698,
+                LandmarkValue = 1_000,
+                Species = [new ExobiologySpecies("Bacterium", "Bacterium Aurasus", 1, 1_000)],
+            }]),
         ]),
     };
 

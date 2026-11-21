@@ -788,24 +788,16 @@ public sealed class RoutePlanResultPage : UserControl, IPageSummary
             RoutingKit.Values(StopValues(stop.Jumps, leg, stop.Bodies.Count), state.Reached),
         };
 
-        foreach (var body in stop.Bodies.OrderByDescending(body => body.LandmarkValue))
+        foreach (var body in stop.RichestFirst())
         {
             lines.Add(RoutingKit.Values(
-                $"{BodyLabel(stop.System, body.Name)} — {body.Subtype ?? "unknown"}{Away(body.DistanceToArrival)}, {body.LandmarkValue:N0} cr",
+                $"{BodyLabel(stop.System, body.Name)} — {body.Subtype ?? "unknown"}{Away(body.DistanceToArrival)}, {body.Value:N0} cr",
                 state.Reached));
 
             foreach (var species in body.Species)
             {
                 var count = species.Count > 1 ? $" ×{species.Count}" : string.Empty;
                 var line = RoutingKit.Values($"{species.Name}{count} — {species.Value:N0} cr", state.Reached);
-                line.Margin = new Thickness(16, 0, 0, 0);
-
-                lines.Add(line);
-            }
-
-            if (body.LandmarkValue - body.Species.Sum(species => species.Value) is > 0 and var under)
-            {
-                var line = RoutingKit.Values($"species under the minimum — {under:N0} cr", state.Reached);
                 line.Margin = new Thickness(16, 0, 0, 0);
 
                 lines.Add(line);
