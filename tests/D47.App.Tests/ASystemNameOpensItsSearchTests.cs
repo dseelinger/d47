@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -233,6 +234,9 @@ public class ASystemNameOpensItsSearchTests
 
         var aboveTheLine = link.TranslatePoint(new Point(4, 2), window)!.Value;
         Assert.True(aboveTheLine.Y < line.TranslatePoint(default, window)!.Value.Y);
+
+        AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+        Dispatcher.UIThread.RunJobs();
 
         var hit = Avalonia.Input.InputExtensions.InputHitTest(window, aboveTheLine) as Visual;
         Assert.True(hit == link || (hit?.GetVisualAncestors().Contains(link) ?? false));
