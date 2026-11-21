@@ -34,10 +34,14 @@ if (-not (Test-Path -LiteralPath $complete)) {
     if (Test-Path -LiteralPath $dir) { Remove-Item -LiteralPath $dir -Recurse -Force }
     $installer = Join-Path ([IO.Path]::GetTempPath()) "dotnet-install-$([guid]::NewGuid().ToString('N')).ps1"
     Invoke-WebRequest -Uri 'https://dot.net/v1/dotnet-install.ps1' -OutFile $installer
+    # dotnet-install runs `tar` by name. Git's GNU tar, first on PATH under Git Bash, reads `C:` as a host.
+    $pathBefore = $env:PATH
+    $env:PATH = "$([Environment]::SystemDirectory);$env:PATH"
     try {
         & $installer -Version $sdk -InstallDir $dir -NoPath | Out-Host
     }
     finally {
+        $env:PATH = $pathBefore
         Remove-Item -LiteralPath $installer -Force -ErrorAction SilentlyContinue
     }
     if (-not (Test-Path -LiteralPath $config)) { throw "dotnet-install did not install SDK $sdk to $dir." }
