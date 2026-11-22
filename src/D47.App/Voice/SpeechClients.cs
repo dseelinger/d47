@@ -915,6 +915,44 @@ public sealed class SpeechClients : IDisposable
         }
     }
 
+    /// <summary>
+    /// The local provider for <paramref name="providerId"/>, unmetered and without the Edge stand-in: the slots' own
+    /// client, otherwise the one built for a story's cast. Null when the id is not Kokoro or Chatterbox, or its model
+    /// is not installed. Not held: a slot moving onto the provider disposes the cast's client.
+    /// </summary>
+    internal ITtsProvider? LocalClient(string providerId)
+    {
+        var installed = string.Equals(providerId, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
+            ? D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
+            : string.Equals(providerId, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)
+              && D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder());
+
+        if (!installed)
+        {
+            return null;
+        }
+
+        if (ClientFor(providerId) is { } shared)
+        {
+            return LocalVoiceWithEdgeStandIn.Unwrapped(shared);
+        }
+
+        lock (_castGate)
+        {
+            if (!_castClients.TryGetValue(providerId, out var built))
+            {
+                if (BuildSpeechClient(providerId) is not { } client)
+                {
+                    return null;
+                }
+
+                _castClients[providerId] = built = client;
+            }
+
+            return LocalVoiceWithEdgeStandIn.Unwrapped(built);
+        }
+    }
+
     /// <summary>Why a character's chosen voice last failed and the story's own spoke instead, by StoryVoices key.</summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _castVoiceFailures = new(StringComparer.Ordinal);
 

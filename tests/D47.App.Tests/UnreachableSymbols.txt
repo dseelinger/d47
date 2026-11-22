@@ -83,6 +83,11 @@ D47.App.Theming.ListRow.SetNameBrush(Avalonia.Controls.Control, Avalonia.Media.I
 D47.App.Theming.ListRow.SetSecondaryBrush(Avalonia.Controls.Control, Avalonia.Media.IBrush)
 D47.App.Theming.RowFilter<TRow>.Any
 D47.App.Theming.RowFilter<TRow>.SetAll(string, int, bool)
+D47.App.Voice.BookPlayback.BookPlayback(D47.Core.Books.Book, D47.Core.Books.BookPlace, int, string, D47.App.Voice.StoryRunPause)
+D47.App.Voice.BookPlayer.Changed
+D47.App.Voice.BookPlayer.Play(D47.Core.Books.BookSource)
+D47.App.Voice.BookPlayer.Resume()
+D47.App.Voice.BookPlayer.Stop()
 D47.App.Voice.VoicePipeline.GameRunning
 D47.App.Voice.VoicePipeline.Held
 D47.Audio.FadeSampleProvider.Level
@@ -102,21 +107,22 @@ D47.Core.Adventures.AdventureStore.Path
 D47.Core.Adventures.AdventureWalkResult.Failed
 D47.Core.Adventures.Resolution.Succeeded
 D47.Core.AppPaths.Gutenberg
-D47.Core.Audio.AudioArbiter.Listening
-D47.Core.Audio.AudioArbiter.TurnInFlight
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
-D47.Core.Books.Book
-D47.Core.Books.BookChapter
+D47.Core.Books.Book.Book(string, string, D47.Core.Books.BookSource, System.Collections.Generic.IReadOnlyList<D47.Core.Books.BookChapter>)
+D47.Core.Books.BookChapter.BookChapter(string, System.Collections.Generic.IReadOnlyList<D47.Core.Books.BookParagraph>)
 D47.Core.Books.BookJson
-D47.Core.Books.BookParagraph
-D47.Core.Books.BookPlace
+D47.Core.Books.BookParagraph.BookParagraph(string)
 D47.Core.Books.BookRead
-D47.Core.Books.BookSentences
-D47.Core.Books.BookShelf
-D47.Core.Books.BookShelfJson
-D47.Core.Books.BookShelfRead
-D47.Core.Books.BookSource
+D47.Core.Books.BookShelf.Add(D47.Core.Books.Book)
+D47.Core.Books.BookShelf.Books
+D47.Core.Books.BookShelf.Find(D47.Core.Books.BookSource)
+D47.Core.Books.BookShelf.Open(D47.Core.Books.BookSource)
+D47.Core.Books.BookShelf.TakeOff(D47.Core.Books.BookSource)
+D47.Core.Books.BookShelf.TextFile(D47.Core.Books.BookSource)
+D47.Core.Books.BookSource.Hash(string)
+D47.Core.Books.BookSource.Id
+D47.Core.Books.BookSource.Slug(string)
 D47.Core.Books.BookTextPiece
 D47.Core.Books.BookTextPieceKind
 D47.Core.Books.EpubBookReader
@@ -127,7 +133,6 @@ D47.Core.Books.GutenbergLanguages
 D47.Core.Books.GutenbergOrder
 D47.Core.Books.GutenbergQuery
 D47.Core.Books.GutenbergResult
-D47.Core.Books.ShelfBook
 D47.Core.Books.TextBookParser
 D47.Core.Books.TextBookReader
 D47.Core.Callouts.NarratorCallout.StockCoreAboard

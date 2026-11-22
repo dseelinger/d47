@@ -110,6 +110,9 @@ public sealed record D47Settings
     /// <summary>The podcast feeds the Commander added.</summary>
     public PodcastSettings Podcasts { get; init; } = new();
 
+    /// <summary>The local voice books are read with.</summary>
+    public BookSettings Books { get; init; } = new();
+
     /// <summary>
     /// What each Commander has set of the rows that are theirs rather than the installation's (Phase
     /// 44).
@@ -1511,6 +1514,20 @@ public sealed record PodcastSettings
 
         return kept.Count == (Feeds ?? []).Count ? this : this with { Feeds = kept };
     }
+}
+
+/// <summary>The local voice books are read with; no other provider reads a book.</summary>
+public sealed record BookSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary><c>kokoro</c> or <c>chatterbox</c>.</summary>
+    public string Provider { get; init; } = "kokoro";
+
+    /// <summary>The voice id, or null for the provider's first voice.</summary>
+    public string? Voice { get; init; }
 }
 
 /// <summary>Where usage counts are sent.</summary>

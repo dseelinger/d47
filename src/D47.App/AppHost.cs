@@ -9,6 +9,7 @@ using D47.App.Panel;
 using D47.App.Ticking;
 using D47.App.Updates;
 using D47.App.Voice;
+using D47.Core.Books;
 using D47.Audio;
 using D47.Core.Audio;
 using D47.Core;
@@ -186,6 +187,19 @@ public sealed class AppHost : IDisposable
         RunPlayer.Changed += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.StoryPlayback = RunPlayer.Now is not null);
         Panel.StoryPlayer = RunPlayer;
         Panel.StoryPlaybackProgress = () => audio.SpeechProgress(StoryRunPlayer.Group);
+        Books = new BookShelf(files, paths.Books, loggerFactory.CreateLogger<BookShelf>());
+        BookPlayer = new BookPlayer(audio, Books, speech.LocalClient, () => settings.Current.Books);
+
+        // One playback holds the speech channels at a time: a book stops a story, and a story pauses a book.
+        BookPlayer.Starting += RunPlayer.Stop;
+        RunPlayer.Starting += () => BookPlayer.Pause(StoryRunPause.Commander);
+        voice.StateEntered += state =>
+        {
+            if (state == Core.Audio.LoopState.Idle)
+            {
+                BookPlayer.Settled();
+            }
+        };
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
         var savedFolder = viewState.Load().LastMusicFolder;
         Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile, lastFolder: savedFolder);
@@ -405,6 +419,7 @@ public sealed class AppHost : IDisposable
     public bool CancelNow()
     {
         RunPlayer.Stop();
+        BookPlayer.Pause(StoryRunPause.Commander);
         Audio.Silence();
         return Cancellation.Cancel();
     }
@@ -481,6 +496,12 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Play all on a story run's page; it keeps playing when the page is left.</summary>
     public StoryRunPlayer RunPlayer { get; }
+
+    /// <summary>The books added to read aloud, and where each was left.</summary>
+    public BookShelf Books { get; }
+
+    /// <summary>Reads a shelf book aloud with a local voice.</summary>
+    public BookPlayer BookPlayer { get; }
 
     /// <summary>Speaks again a story run's line that kept no clip, and keeps the clip it makes.</summary>
     public StoryRunVoicing RunVoicing { get; }
@@ -2519,6 +2540,7 @@ public sealed class AppHost : IDisposable
                     Silence = () =>
                     {
                         late.Host?.RunPlayer.Stop();
+                        late.Host?.BookPlayer.Pause(StoryRunPause.Commander);
                         services.Audio.Silence();
                     },
 
@@ -4019,6 +4041,7 @@ public sealed class AppHost : IDisposable
         // That d47 is listening, said both ways.
         gate.Started += () => host.Voice.EnterState(Core.Audio.LoopState.Listening);
         gate.Started += () => host.RunPlayer.Pause(StoryRunPause.PushToTalk);
+        gate.Started += () => host.BookPlayer.Pause(StoryRunPause.PushToTalk);
 
         // Only the discarded case.
         gate.Ended += reason =>

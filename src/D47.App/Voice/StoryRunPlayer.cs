@@ -107,6 +107,9 @@ public sealed class StoryRunPlayer
     /// <summary>Raised when what is playing, or whether it is paused, changed; on any thread.</summary>
     public event Action? Changed;
 
+    /// <summary>Raised on the calling thread as playback starts or resumes, before it takes the speech channels.</summary>
+    public event Action? Starting;
+
     /// <summary>How long a line that cannot be spoken is shown: half a second a word, and at least four seconds.</summary>
     public static TimeSpan ReadingTime(string text)
     {
@@ -143,6 +146,8 @@ public sealed class StoryRunPlayer
         }
 
         long generation;
+
+        Starting?.Invoke();
 
         lock (_gate)
         {
@@ -187,6 +192,13 @@ public sealed class StoryRunPlayer
     public void Resume()
     {
         long generation;
+
+        if (Now is not { IsPaused: true })
+        {
+            return;
+        }
+
+        Starting?.Invoke();
 
         lock (_gate)
         {
