@@ -52,6 +52,12 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
     public const string NoSubtitlesLabel = "No subtitle file";
 
+    public const string WriteCaptionsName = "VideoWriteCaptions";
+
+    public const string WrittenName = "VideoCaptionsWritten";
+
+    public const string WritingWait = "Writing captions…";
+
     public const string NotKept = "This title is not in your list or carrying on.";
 
     /// <summary>The width and height of the picture on the big panel, which the headset's video quad covers.</summary>
@@ -90,6 +96,9 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     private readonly TextBlock _videoKind = Typeset.Mono(string.Empty, 13, ThemeManager.WhiteKey, wrap: true);
     private readonly Segment _playsOn = new() { Name = PlaysOnName };
     private readonly Segment _captions = new() { Name = CaptionsChoiceName };
+    private readonly Button _write = new() { Name = WriteCaptionsName, Content = "WRITE CAPTIONS", MinHeight = TypeScale.MinimumTarget };
+    private readonly Grid _writtenTrack = Gauge.Track(0, ThemeManager.AKey);
+    private readonly StackPanel _written;
     private readonly CheckBox _pushToTalk = LabeledCheckBox.Caps("PAUSE WHILE YOU HOLD PUSH-TO-TALK");
     private readonly Level _volume = new() { Name = VolumeName, Minimum = 0, Maximum = 1, VerticalAlignment = VerticalAlignment.Center };
 
@@ -97,7 +106,8 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     private VideoFrame? _shown;
     private bool _refreshing;
     private bool _attached;
-    private (bool None, bool On)? _captionState;
+    private (bool None, bool On, bool Writing, string? CannotWrite, string? Problem)? _captionState;
+    private string? _writtenText;
     private (VideoFailure? Failure, string Text)? _failureState;
     private string? _waitingFor;
     private string? _ticked;
@@ -184,16 +194,43 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         _captions.ItemsSource = big ? ["FILE", "WRITE", "OFF"] : ["SUBTITLE FILE", "WRITE FROM THE SOUND", "OFF"];
         _captions.SelectionChanged += (_, _) =>
         {
-            if (!_refreshing && _captions.SelectedIndex is 0 or 2)
+            if (_refreshing)
             {
+                return;
+            }
+
+            if (_captions.SelectedIndex == 1)
+            {
+                WriteCaptions();
+            }
+            else if (_captions.SelectedIndex is 0 or 2)
+            {
+                _host.StopWriting();
                 _host.CaptionsOn = _captions.SelectedIndex == 0;
             }
         };
 
         _noSubtitles.Label = NoSubtitlesLabel;
         _noSubtitles.Text = "This video came without captions. D47 can write them from the soundtrack on this computer.";
-        var write = new Button { Content = "WRITE CAPTIONS", MinHeight = TypeScale.MinimumTarget, IsEnabled = false };
-        _noSubtitles.Actions.Add(write);
+        _write.Click += (_, _) => WriteCaptions();
+        _noSubtitles.Actions.Add(_write);
+
+        _written = new StackPanel
+        {
+            Name = WrittenName,
+            Spacing = 8,
+            IsVisible = false,
+            Children =
+            {
+                Gauge.Heading("Captions written to", string.Empty, ThemeManager.AKey),
+                _writtenTrack,
+                Typeset.Prose(
+                    "Written on this computer as the video plays. If the captions fall behind the picture, the video waits for them.",
+                    13,
+                    ThemeManager.GreyKey,
+                    wrap: true),
+            },
+        };
 
         var frame = new Grid { Background = Brushes.Black, MinHeight = 120 };
         frame.Children.Add(_elsewhere);
@@ -290,6 +327,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
                 _playsOn,
                 Head("Captions"),
                 _captions,
+                _written,
                 Head("Sound"),
                 _pushToTalk,
                 VolumeRow(),
@@ -439,6 +477,18 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         }
     }
 
+    /// <summary>Makes this title the current one if it is not, and writes its captions from the soundtrack.</summary>
+    private void WriteCaptions()
+    {
+        if (!IsCurrent)
+        {
+            _host.Open(_title);
+        }
+
+        _host.WriteCaptions();
+        Refresh();
+    }
+
     private void PlayOrPause()
     {
         if (HasVideo && _host.Video.State is VideoState.Playing or VideoState.Stalled or VideoState.Opening)
@@ -507,7 +557,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             DrawKind(loaded ? video.Frame : null);
             DrawWait(state);
             DrawFailure(loaded ? video.Failure : null, position);
-            DrawCaptions(position, here && !_big);
+            DrawCaptions(position, here && !_big, length);
 
             _pushToTalk.IsChecked = _host.PauseForPushToTalk;
             _volume.Value = _host.Volume;
@@ -528,7 +578,9 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
     private void DrawWait(VideoState? state)
     {
-        var waiting = state is VideoState.Opening or VideoState.Stalled ? $"Waiting for {SourceName()}…" : null;
+        var waiting = state is VideoState.Opening or VideoState.Stalled
+            ? _host.Video.Held ? WritingWait : $"Waiting for {SourceName()}…"
+            : null;
 
         if (waiting == _waitingFor)
         {
@@ -598,35 +650,70 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     }
 
     /// <param name="over">Whether the cue is drawn over the picture; the headset's caption band shows it otherwise.</param>
-    private void DrawCaptions(TimeSpan position, bool over)
+    private void DrawCaptions(TimeSpan position, bool over, TimeSpan? length)
     {
         var cues = IsCurrent ? _host.Cues : [];
-        var none = _title.Subtitles is null || (IsCurrent && !_host.CuesLoading && cues.Count == 0);
-        var cue = over && _host.CaptionsOn && !none ? SubtitleCues.At(cues, position) : null;
+        var writing = IsCurrent && _host.Writing;
+        var none = _title.Subtitles is null || (IsCurrent && !_host.CuesLoading && !writing && cues.Count == 0);
+        var cue = over && _host.CaptionsOn && (writing || !none) ? SubtitleCues.At(cues, position) : null;
 
         _caption.Text = cue?.Text ?? string.Empty;
         _captionBand.IsVisible = cue is not null;
-        _noSubtitles.IsVisible = none;
+        _noSubtitles.IsVisible = none && !writing;
+        DrawWritten(writing, position, length);
 
-        if (_captionState == (none, _host.CaptionsOn))
+        var problem = writing ? _host.WritingProblem : null;
+
+        if (_captionState is { } drawn && drawn.None == none && drawn.On == _host.CaptionsOn && drawn.Writing == writing && drawn.Problem == problem)
         {
             return;
         }
 
-        _captionState = (none, _host.CaptionsOn);
+        var cannotWrite = _host.CannotWrite;
+        _captionState = (none, _host.CaptionsOn, writing, cannotWrite, problem);
+        _write.IsEnabled = cannotWrite is null;
 
         if (!_big)
         {
             _captions.Statuses =
             [
                 new ChoiceStatus(none ? "None for this title" : _title.Source == WatchHost.FileSource ? "Beside the video" : "From the source", none ? ChoiceTone.Grey : ChoiceTone.Yellow),
-                new ChoiceStatus("As it plays · Whisper", ChoiceTone.Grey),
+                new ChoiceStatus(
+                    problem ?? (cannotWrite is null ? "As it plays · Whisper" : "Needs a speech model"),
+                    problem is not null ? ChoiceTone.Red : writing ? ChoiceTone.Yellow : ChoiceTone.Grey),
                 new ChoiceStatus("No captions", ChoiceTone.Grey),
             ];
         }
+
         _captions.SetOptionEnabled(0, !none);
-        _captions.SetOptionEnabled(1, false);
-        _captions.SelectedIndex = _host.CaptionsOn && !none ? 0 : 2;
+        _captions.SetOptionEnabled(1, cannotWrite is null || writing);
+        _captions.SelectedIndex = !_host.CaptionsOn ? 2 : writing ? 1 : none ? 2 : 0;
+    }
+
+    /// <summary>How far the written captions reach, beside the picture's position, on the window's page while they are written.</summary>
+    private void DrawWritten(bool writing, TimeSpan position, TimeSpan? length)
+    {
+        var shown = writing && !_big;
+        _written.IsVisible = shown;
+
+        if (!shown || _host.WrittenTo is not { } written)
+        {
+            _writtenText = null;
+            return;
+        }
+
+        var text = _host.WrittenToEnd
+            ? $"the end · playing {WatchPage.Clock(position)}"
+            : $"{WatchPage.Clock(written)} · playing {WatchPage.Clock(position)}";
+
+        if (text == _writtenText)
+        {
+            return;
+        }
+
+        _writtenText = text;
+        _written.Children[0] = Gauge.Heading("Captions written to", text, ThemeManager.AKey);
+        Gauge.Fill(_writtenTrack, _host.WrittenToEnd ? 1 : length is { } total && total > TimeSpan.Zero ? written / total : 0);
     }
 
     /// <summary>Draws the newest picture; on the big panel only the first of each size, since the headset's quad covers it.</summary>
@@ -667,6 +754,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             _failureState?.Failure,
             _waitingFor,
             _caption.Text,
+            _writtenText,
             _playsOn.SelectedIndex,
             _captions.SelectedIndex,
             _back.IsEnabled);

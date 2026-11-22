@@ -227,13 +227,22 @@ public sealed class AppHost : IDisposable
             new D47.Knowledge.NasaVideoSource(loggerFactory.CreateLogger<D47.Knowledge.NasaVideoSource>()),
             new D47.Core.Viewing.BlenderOpenMovies(),
         ];
+        var hearing = 0;
+        voice.StateEntered += state => Volatile.Write(ref hearing, state is Core.Audio.LoopState.Listening or Core.Audio.LoopState.Transcribing ? 1 : 0);
         WatchHost = new D47.App.Panel.WatchHost(
             Video,
             WatchStore,
             settings,
             files,
             catalogue: true,
-            videos: new D47.Core.Viewing.VideoCatalogue(_videoSources, () => settings.Current.Watch.SearchedSources()));
+            videos: new D47.Core.Viewing.VideoCatalogue(_videoSources, () => settings.Current.Watch.SearchedSources()),
+            captioner: new WhisperSoundtrackCaptioner(
+                () => WhisperModels.Find(WhisperModels.AdoptedId(settings.Current.Listening.Model)) is { } model && models.PathOf(model) is { } path
+                    ? (path, settings.Current.Listening.UseGpu)
+                    : null,
+                () => audio.Listening || Volatile.Read(ref hearing) == 1,
+                loggerFactory.CreateLogger<WhisperSoundtrackCaptioner>()),
+            logger: loggerFactory.CreateLogger<D47.App.Panel.WatchHost>());
         Video.TakesTurnsWith(BookPlayer);
         voice.StateEntered += state =>
         {

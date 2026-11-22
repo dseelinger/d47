@@ -579,7 +579,7 @@ public sealed class WhisperTranscriber : ISpeechTranscriber
     /// Whisper emits leading spaces on every segment, and emits bracketed annotations —
     /// "[BLANK_AUDIO]", "(wind blowing)" — for stretches with no speech in them.
     /// </summary>
-    private static string Clean(string text)
+    internal static string Clean(string text)
     {
         var trimmed = text.Trim();
 

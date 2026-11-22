@@ -211,6 +211,28 @@ public sealed class CaptionLayer
     }
 
     /// <summary>
+    /// Follows <paramref name="cues"/> in place of the cues being followed, for the same video, as when more have been
+    /// written: its position and D47's lines are kept, and the cue covering the position is shown at once.
+    /// </summary>
+    public void Extend(IReadOnlyList<SubtitleCue> cues)
+    {
+        ArgumentNullException.ThrowIfNull(cues);
+
+        if (_cues is null)
+        {
+            Follow(cues);
+            return;
+        }
+
+        _cues = cues;
+
+        if (_position is { } position && SubtitleCues.At(cues, position) is var cue && !ReferenceEquals(cue, _cue))
+        {
+            Show(cue);
+        }
+    }
+
+    /// <summary>
     /// The followed video's playback position, given every tick: shows the cue covering it, or none. A seek or a pause
     /// shows the cue for the new position on the call that gives it.
     /// </summary>
@@ -242,6 +264,11 @@ public sealed class CaptionLayer
             return;
         }
 
+        Show(cue);
+    }
+
+    private void Show(SubtitleCue? cue)
+    {
         _cue = cue;
         _cueLines = cue is null ? [] : [.. Caption.Wrap(cue.Text).Take(Caption.WindowLines)];
         Changed?.Invoke();

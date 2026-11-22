@@ -32,6 +32,7 @@ public sealed class VideoPlayback
 
     private Viewing? _viewing;
     private VideoPause _pause;
+    private bool _held;
 
     /// <param name="pauseWhileSpeaking">Whether D47 speaking pauses the video; true when null.</param>
     /// <param name="background">Runs work off the calling thread; the thread pool when null.</param>
@@ -115,8 +116,20 @@ public sealed class VideoPlayback
                     : viewing.Ended ? VideoState.Ended
                     : viewing.Id is null ? VideoState.Opening
                     : _pause != VideoPause.None ? VideoState.Paused
-                    : viewing.Decoder.Stalled ? VideoState.Stalled
+                    : _held || viewing.Decoder.Stalled ? VideoState.Stalled
                     : VideoState.Playing;
+            }
+        }
+    }
+
+    /// <summary>Whether the video is held still by <see cref="Hold"/>, as while its captions are written.</summary>
+    public bool Held
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _viewing is not null && _held;
             }
         }
     }
@@ -249,7 +262,42 @@ public sealed class VideoPlayback
             else
             {
                 _pause = reason;
-                _audio.PauseVideo();
+
+                if (!_held)
+                {
+                    _audio.PauseVideo();
+                }
+            }
+        }
+
+        Raise();
+    }
+
+    /// <summary>
+    /// Holds the video still, or lets it go. A held video is not paused: it reads as stalled, and plays on when let go
+    /// unless something paused it meanwhile. A new video starts not held.
+    /// </summary>
+    public void Hold(bool held)
+    {
+        lock (_gate)
+        {
+            if (_viewing is not { Ended: false } || _held == held)
+            {
+                return;
+            }
+
+            _held = held;
+
+            if (_pause == VideoPause.None && _viewing.Id is not null)
+            {
+                if (held)
+                {
+                    _audio.PauseVideo();
+                }
+                else
+                {
+                    _audio.ResumeVideo();
+                }
             }
         }
 
@@ -336,6 +384,7 @@ public sealed class VideoPlayback
 
         _viewing = null;
         _pause = VideoPause.None;
+        _held = false;
 
         if (viewing.Id is not null)
         {
@@ -361,7 +410,7 @@ public sealed class VideoPlayback
             viewing.Id = _audio.PlayVideo(track, viewing.Decoder.From);
             viewing.Starting = false;
 
-            if (!viewing.Ended && _pause != VideoPause.None)
+            if (!viewing.Ended && (_pause != VideoPause.None || _held))
             {
                 _audio.PauseVideo();
             }
@@ -382,6 +431,7 @@ public sealed class VideoPlayback
 
             viewing.Ended = true;
             _pause = VideoPause.None;
+            _held = false;
         }
 
         Raise();
@@ -440,7 +490,11 @@ public sealed class VideoPlayback
             else
             {
                 _pause = VideoPause.None;
-                _audio.ResumeVideo();
+
+                if (!_held)
+                {
+                    _audio.ResumeVideo();
+                }
             }
         }
 

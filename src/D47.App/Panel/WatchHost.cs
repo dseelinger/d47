@@ -1,5 +1,7 @@
 using System.Net.Http;
 using D47.App.Media;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using D47.Core.Capabilities.Builtin;
 using D47.Core.Audio;
 using D47.Core.Configuration;
@@ -26,6 +28,8 @@ public sealed class WatchHost : IDisposable
     private readonly Func<Uri, CancellationToken, Task<string?>> _readSubtitles;
     private readonly Action<Action> _background;
     private readonly IVideoCatalogue? _catalogue;
+    private readonly ISoundtrackCaptioner? _captioner;
+    private readonly ILogger _logger;
     private readonly ITimer _timer;
     private readonly Lock _gate = new();
 
@@ -36,11 +40,13 @@ public sealed class WatchHost : IDisposable
     private VideoScreen _playsOn = VideoScreen.Window;
     private VideoState? _lastState;
     private CancellationTokenSource? _loading;
+    private CaptionWriter? _writer;
 
     /// <param name="catalogue">Whether the video catalogue page exists, so FIND A VIDEO and a search can open it.</param>
     /// <param name="readSubtitles">Reads a subtitle file's text, or null when it cannot be read; the web and the disk when null.</param>
     /// <param name="videos">What the catalogue page searches, or null where there is none.</param>
     /// <param name="background">Runs work off the calling thread; the thread pool when null.</param>
+    /// <param name="captioner">What writes captions from a soundtrack, or null where none can.</param>
     public WatchHost(
         VideoPlayback video,
         WatchStore store,
@@ -50,9 +56,13 @@ public sealed class WatchHost : IDisposable
         bool catalogue = false,
         Func<Uri, CancellationToken, Task<string?>>? readSubtitles = null,
         Action<Action>? background = null,
-        IVideoCatalogue? videos = null)
+        IVideoCatalogue? videos = null,
+        ISoundtrackCaptioner? captioner = null,
+        ILogger? logger = null)
     {
         _catalogue = videos;
+        _captioner = captioner;
+        _logger = logger ?? NullLogger.Instance;
         Video = video;
         Store = store;
         _settings = settings;
@@ -120,13 +130,117 @@ public sealed class WatchHost : IDisposable
         }
     }
 
-    /// <summary>Whether captions are drawn over the picture.</summary>
+    /// <summary>Whether captions are drawn over the picture. Turning them off stops captions being written.</summary>
     public bool CaptionsOn
     {
         get => _captionsOn;
         set
         {
             _captionsOn = value;
+
+            if (!value)
+            {
+                StopWriting();
+            }
+
+            RaiseChanged();
+        }
+    }
+
+    /// <summary>Why captions cannot be written from the soundtrack on this computer, or null when they can.</summary>
+    public string? CannotWrite => _captioner is null ? "Captions cannot be written here." : _captioner.Unavailable;
+
+    /// <summary>Whether the current title's captions are being written from its soundtrack.</summary>
+    public bool Writing => Writer is not null;
+
+    /// <summary>How far the written captions reach, while they are written.</summary>
+    public TimeSpan? WrittenTo => Writer?.WrittenTo;
+
+    /// <summary>Whether the written captions reach the end of the soundtrack.</summary>
+    public bool WrittenToEnd => Writer?.Finished == true;
+
+    /// <summary>Why writing captions stopped short, or null.</summary>
+    public string? WritingProblem => Writer?.Problem;
+
+    private CaptionWriter? Writer
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _writer;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes the current title's captions from its soundtrack, from the video's position or the place kept for it,
+    /// and shows them. False with no title or where captions cannot be written.
+    /// </summary>
+    public bool WriteCaptions()
+    {
+        if (Current is not { } title || _captioner is null || title.Media is null)
+        {
+            return false;
+        }
+
+        var source = PlaySource(title);
+        var from = Video.Source == source && Video.State is not null
+            ? Video.Position
+            : Store.Find(title.Source, title.Id) is { Finished: false } kept ? kept.Place : TimeSpan.Zero;
+
+        CaptionWriter? writer = null;
+        writer = new CaptionWriter(
+            source,
+            from,
+            _captioner,
+            () => Video.Source == source && Video.State is not (null or VideoState.Ended or VideoState.Failed) ? Video.Position : null,
+            held =>
+            {
+                if (Video.Source == source && (!held || ReferenceEquals(Writer, writer)))
+                {
+                    Video.Hold(held);
+                }
+            },
+            _logger);
+        writer.Changed += RaiseChanged;
+
+        CaptionWriter? old;
+
+        lock (_gate)
+        {
+            old = _writer;
+            _writer = writer;
+        }
+
+        if (old is not null)
+        {
+            old.Changed -= RaiseChanged;
+            old.Dispose();
+        }
+
+        _captionsOn = true;
+        writer.Start();
+        RaiseChanged();
+
+        return true;
+    }
+
+    /// <summary>Stops writing captions; the subtitle file's are shown again.</summary>
+    public void StopWriting()
+    {
+        CaptionWriter? old;
+
+        lock (_gate)
+        {
+            old = _writer;
+            _writer = null;
+        }
+
+        if (old is not null)
+        {
+            old.Changed -= RaiseChanged;
+            old.Dispose();
             RaiseChanged();
         }
     }
@@ -171,14 +285,17 @@ public sealed class WatchHost : IDisposable
     /// <summary>Whether the current title is the video the playback has.</summary>
     public bool Loaded => Current is { } title && Video.Source == PlaySource(title) && Video.State is not null;
 
-    /// <summary>The current title's subtitle cues; none until they are read, or when it has no subtitle file.</summary>
+    /// <summary>
+    /// The current title's cues: those written from its soundtrack while they are written, otherwise its subtitle
+    /// file's, none until that is read or when it has none.
+    /// </summary>
     public IReadOnlyList<SubtitleCue> Cues
     {
         get
         {
             lock (_gate)
             {
-                return _cues;
+                return _writer?.Cues ?? _cues;
             }
         }
     }
@@ -368,6 +485,7 @@ public sealed class WatchHost : IDisposable
     {
         _timer.Dispose();
         _loading?.Cancel();
+        StopWriting();
     }
 
     private IReadOnlyList<(WatchEntry Entry, VideoTitle Title)> Titled(IReadOnlyList<WatchEntry> entries) =>
@@ -376,6 +494,11 @@ public sealed class WatchHost : IDisposable
     private void Select(VideoTitle title)
     {
         CancellationToken token;
+
+        if (Current is { } current && (current.Source != title.Source || current.Id != title.Id))
+        {
+            StopWriting();
+        }
 
         lock (_gate)
         {

@@ -54,6 +54,7 @@ public sealed class SourceReachesTheDiskOnlyThroughTheFileSeamGateTests
         "D47.Core.Input.BindsWatch",
         "D47.Core.Storage.DiskFileSystem",
         "D47.Stt.HttpModelStore",
+        "D47.Stt.WhisperSoundtrackCaptioner",
         "D47.Stt.WhisperTranscriber",
         "D47.Tts.ChatterboxInstaller",
         "D47.Tts.KokoroInstaller",

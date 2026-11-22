@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Controls;
 using D47.App.Panel;
 using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
@@ -52,7 +53,7 @@ public sealed class TheMoviesPagesPlayAndKeepVideoTests
 
         public WatchHost Host { get; }
 
-        public Fixture(bool catalogue = false)
+        public Fixture(bool catalogue = false, ISoundtrackCaptioner? captioner = null)
         {
             var (settings, _, _) = TestSurface.Create();
             Settings = settings;
@@ -60,7 +61,7 @@ public sealed class TheMoviesPagesPlayAndKeepVideoTests
             var arbiter = new AudioArbiter(new SilentSink(), NullLogger<AudioArbiter>.Instance).Start();
             var video = new D47.App.Media.VideoPlayback(arbiter, background: work => work());
 
-            Host = new WatchHost(video, Store, settings, Files, catalogue: catalogue, readSubtitles: (_, _) => Task.FromResult<string?>(null), background: work => work());
+            Host = new WatchHost(video, Store, settings, Files, catalogue: catalogue, readSubtitles: (_, _) => Task.FromResult<string?>(null), background: work => work(), captioner: captioner);
         }
     }
 
@@ -267,6 +268,69 @@ public sealed class TheMoviesPagesPlayAndKeepVideoTests
         Assert.Contains("PUBLIC DOMAIN", drawn);
 
         Finish(window, fixture);
+    }
+
+    [AvaloniaFact]
+    public void WriteCaptionsOnTheNoticeWritesThemFromTheSoundtrackAndSaysHowFarTheyReach()
+    {
+        var clip = Path.Combine(AppContext.BaseDirectory, "Fixtures", "video", "clip.mp4");
+        var fixture = new Fixture(captioner: new WritesOneCue(null));
+        var title = fixture.Host.FileTitle(clip);
+        fixture.Store.Add(title.Source, title.Id, Noon, title);
+        var (window, panel) = Open(fixture);
+
+        Click(panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == WatchPage.RowName && (button.Tag as string) == "file." + clip));
+        Click(Named(panel, VideoPlayerPage.WriteCaptionsName));
+
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+
+        while (!fixture.Host.WrittenToEnd)
+        {
+            Assert.True(DateTime.UtcNow < deadline, "The captions were not written.");
+            Thread.Sleep(10);
+        }
+
+        panel.GetVisualDescendants().OfType<VideoPlayerPage>().Single().Refresh();
+        Dispatcher.UIThread.RunJobs();
+        var drawn = Drawn(panel).Select(text => text.ToUpperInvariant()).ToList();
+
+        Assert.True(fixture.Host.Writing);
+        Assert.Equal("Words in the soundtrack.", Assert.Single(fixture.Host.Cues).Text);
+        Assert.False(Named(panel, VideoPlayerPage.WriteCaptionsName).IsEffectivelyVisible);
+        Assert.True(panel.GetVisualDescendants().OfType<StackPanel>().Single(stack => stack.Name == VideoPlayerPage.WrittenName).IsVisible);
+        Assert.Contains("CAPTIONS WRITTEN TO", drawn);
+        Assert.Contains(drawn, text => text.StartsWith("THE END · PLAYING ", StringComparison.Ordinal));
+        Assert.Equal(1, panel.GetVisualDescendants().OfType<Segment>().Single(choice => choice.Name == VideoPlayerPage.CaptionsChoiceName).SelectedIndex);
+
+        Finish(window, fixture);
+    }
+
+    [AvaloniaFact]
+    public void WithNoSpeechModelCaptionsCannotBeWritten()
+    {
+        var fixture = new Fixture(captioner: new WritesOneCue("Writing captions needs a speech model on this computer."));
+        Keep(fixture);
+        var (window, panel) = Open(fixture);
+
+        Click(panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == WatchPage.RowName && (button.Tag as string) == "archive.moon"));
+
+        Assert.False(Named(panel, VideoPlayerPage.WriteCaptionsName).IsEnabled);
+        Assert.Contains("NEEDS A SPEECH MODEL", Drawn(panel).Select(text => text.ToUpperInvariant()));
+        Assert.False(fixture.Host.Writing);
+
+        Finish(window, fixture);
+    }
+
+    private sealed class WritesOneCue(string? unavailable) : ISoundtrackCaptioner
+    {
+        public string? Unavailable => unavailable;
+
+        public Task<IReadOnlyList<D47.Core.Vr.SubtitleCue>> CaptionAsync(D47.Core.Listening.Utterance sound, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<D47.Core.Vr.SubtitleCue>>([new(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), "Words in the soundtrack.")]);
+
+        public void Release()
+        {
+        }
     }
 
     [AvaloniaFact]
