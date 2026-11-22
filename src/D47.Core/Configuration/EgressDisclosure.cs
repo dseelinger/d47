@@ -83,6 +83,9 @@ public static class EgressDisclosure
     /// <summary>Downloading the published rare index.</summary>
     public const string RareIndex = "rareindex";
 
+    /// <summary>Downloading the weekly list of Project Gutenberg titles.</summary>
+    public const string Books = "books";
+
     public const string EddnHost = "eddn.edcd.io";
 
     /// <summary>Sending the market prices the game shows to EDDN.</summary>
@@ -178,6 +181,7 @@ public static class EgressDisclosure
         SignalIndex,
         Eddn,
         RareIndex,
+        Books,
         UpdateCheck,
         ModelUpdates,
         HullArt,
@@ -222,6 +226,7 @@ public static class EgressDisclosure
         SignalIndex => "Signal index",
         Eddn => "EDDN",
         RareIndex => "Rare index",
+        Books => "Project Gutenberg list",
         WebSearch => "Web search",
         Screen => "Screen pictures",
         Recap => "Last session recap",
@@ -447,6 +452,19 @@ public static class EgressDisclosure
                 Eddn,
                 NameOf(Eddn),
                 "Sharing with EDDN is off, so nothing is sent."),
+
+        Books => new EgressEntry(
+            Books,
+            NameOf(Books),
+            "github.com",
+            "A request for the weekly list of Project Gutenberg titles, from the books-1 release, made when "
+            + "you open Add a book › Project Gutenberg and the copy in data\\books\\gutenberg is missing or more than 7 "
+            + "days old - one file, a few megabytes. A request that fails is tried again on a later visit, no sooner "
+            + "than an hour after. The catalogue is browsed and searched on this computer. Nothing about you goes "
+            + "with it.",
+            Active: true,
+            Summary: "Project Gutenberg's list of titles, at most once a week, when you browse it. Nothing about "
+                + "you goes with it."),
 
         RareIndex => new EgressEntry(
             RareIndex,

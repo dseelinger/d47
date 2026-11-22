@@ -541,7 +541,7 @@ public class EgressDisclosureTests
         var active = entries.Where(entry => entry.Active).Select(entry => entry.Id).Order().ToList();
         string[] always =
         [
-            EgressDisclosure.Donation, EgressDisclosure.RareIndex, EgressDisclosure.GalaxySearch,
+            EgressDisclosure.Donation, EgressDisclosure.RareIndex, EgressDisclosure.Books, EgressDisclosure.GalaxySearch,
             EgressDisclosure.ColonisationPlanner, EgressDisclosure.NotablePlaces, EgressDisclosure.CommunityBiology,
             EgressDisclosure.BgsTick, EgressDisclosure.GalNet, EgressDisclosure.ServerStatus,
             EgressDisclosure.SignalIndex,
