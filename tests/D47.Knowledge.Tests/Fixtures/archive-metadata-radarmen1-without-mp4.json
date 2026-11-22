@@ -1,0 +1,86 @@
+{
+  "server": "dn801209.us.archive.org",
+  "dir": "/0/items/radarmen1",
+  "metadata": {
+    "identifier": "radarmen1",
+    "mediatype": "movies",
+    "collection": [
+      "short_films",
+      "moviesandfilms"
+    ],
+    "title": "Radar Men From the Moon - Chapter 1: Moon Rocket",
+    "licenseurl": "http://creativecommons.org/licenses/publicdomain/"
+  },
+  "files": [
+    {
+      "name": "radar1.gif",
+      "source": "derivative",
+      "format": "Animated GIF",
+      "size": "327740"
+    },
+    {
+      "name": "radar1.mov",
+      "source": "original",
+      "format": "QuickTime",
+      "size": "124287592",
+      "length": "1202.08"
+    },
+    {
+      "name": "radar1.ogv",
+      "source": "derivative",
+      "format": "Ogg Video",
+      "size": "86147982",
+      "length": "1202.07"
+    },
+    {
+      "name": "radar1_st.mov",
+      "source": "original",
+      "format": "QuickTime",
+      "size": "220",
+      "length": "0"
+    },
+    {
+      "name": "radarmen1_archive.torrent",
+      "source": "metadata",
+      "format": "Archive BitTorrent",
+      "size": "35404"
+    },
+    {
+      "name": "radarmen1_files.xml",
+      "source": "metadata",
+      "format": "Metadata"
+    },
+    {
+      "name": "radarmen1_meta.xml",
+      "source": "metadata",
+      "format": "Metadata",
+      "size": "1180"
+    },
+    {
+      "name": "radarmen1_reviews.xml",
+      "source": "metadata",
+      "format": "Metadata",
+      "size": "14584"
+    },
+    {
+      "name": "radarmen_chapter1.gif",
+      "source": "derivative",
+      "format": "Animated GIF",
+      "size": "244994"
+    },
+    {
+      "name": "radarmen_chapter1.mpeg",
+      "source": "original",
+      "format": "MPEG2",
+      "size": "1228494848",
+      "length": "1203.74"
+    },
+    {
+      "name": "radarmen_chapter1.ogv",
+      "source": "derivative",
+      "format": "Ogg Video",
+      "size": "85331492",
+      "length": "1203.77"
+    }
+  ]
+}

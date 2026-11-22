@@ -113,6 +113,9 @@ public sealed record D47Settings
     /// <summary>The local voice books are read with.</summary>
     public BookSettings Books { get; init; } = new();
 
+    /// <summary>The video catalogue's own settings.</summary>
+    public WatchSettings Watch { get; init; } = new();
+
     /// <summary>
     /// What each Commander has set of the rows that are theirs rather than the installation's (Phase
     /// 44).
@@ -1514,6 +1517,21 @@ public sealed record PodcastSettings
 
         return kept.Count == (Feeds ?? []).Count ? this : this with { Feeds = kept };
     }
+}
+
+/// <summary>The video catalogue's sources, set from the catalogue page.</summary>
+public sealed record WatchSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>The ids in <see cref="Viewing.VideoSources"/> the catalogue searches.</summary>
+    public IReadOnlyList<string> Sources { get; init; } = Viewing.VideoSources.All;
+
+    /// <summary>The known sources ticked, once each, in <see cref="Viewing.VideoSources.All"/>'s order; none when none is ticked.</summary>
+    public IReadOnlyList<string> SearchedSources() =>
+        [.. Viewing.VideoSources.All.Where(source => (Sources ?? []).Contains(source, StringComparer.Ordinal))];
 }
 
 /// <summary>The local voice books are read with; no other provider reads a book.</summary>

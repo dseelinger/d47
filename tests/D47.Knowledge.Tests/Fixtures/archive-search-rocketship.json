@@ -1,0 +1,58 @@
+{
+  "responseHeader": {
+    "status": 0,
+    "QTime": 71,
+    "params": {
+      "query": "(text:rocketship OR text:rocketship OR text__reviews:rocketship) AND mediatype:movies AND (licenseurl:*publicdomain* OR licenseurl:*creativecommons*)",
+      "qin": "(rocketship) AND mediatype:movies AND (licenseurl:*publicdomain* OR licenseurl:*creativecommons*)",
+      "fields": "identifier,title,licenseurl,creator",
+      "wt": "json",
+      "sort": "downloads desc",
+      "rows": 4,
+      "start": 0
+    }
+  },
+  "response": {
+    "numFound": 29,
+    "start": 0,
+    "docs": [
+      {
+        "creator": "Irving Block, Jack Rabin",
+        "identifier": "UnknownWorld",
+        "licenseurl": "http://creativecommons.org/licenses/publicdomain/",
+        "title": "Unknown World"
+      },
+      {
+        "creator": "Tom Graeff",
+        "identifier": "TeenagersFromOuterSpace1959",
+        "licenseurl": "http://creativecommons.org/publicdomain/mark/1.0/",
+        "title": "Teenagers From Outer Space (1959)"
+      },
+      {
+        "creator": "Medicus (P.)",
+        "identifier": "Medicusc1939_2",
+        "licenseurl": "http://creativecommons.org/licenses/publicdomain/",
+        "title": "[Amateur film: Medicus collection: New York World's Fair, 1939-40] (Reel 2) (Part I)"
+      },
+      {
+        "identifier": "radarmen1",
+        "licenseurl": "http://creativecommons.org/licenses/publicdomain/",
+        "title": "Radar Men From the Moon - Chapter 1: Moon Rocket"
+      },
+      {
+        "identifier": "AllRightsReservedNewsreel",
+        "licenseurl": "https://example.org/all-rights-reserved",
+        "title": "A newsreel under another licence"
+      },
+      {
+        "identifier": "NoLicenceGiven",
+        "title": "A film with no licence"
+      },
+      {
+        "identifier": "../escape",
+        "licenseurl": "http://creativecommons.org/publicdomain/mark/1.0/",
+        "title": "An identifier that is a path"
+      }
+    ]
+  }
+}

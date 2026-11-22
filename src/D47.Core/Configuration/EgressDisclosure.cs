@@ -94,6 +94,15 @@ public static class EgressDisclosure
     /// <summary>Searching Apple's podcast directory for shows.</summary>
     public const string PodcastSearch = "podcastsearch";
 
+    /// <summary>Searching the Internet Archive's video catalogue, and streaming a video from it.</summary>
+    public const string ArchiveVideos = "archivevideos";
+
+    /// <summary>Searching NASA's video library, and streaming a video from it.</summary>
+    public const string NasaVideos = "nasavideos";
+
+    /// <summary>Streaming a Blender open movie.</summary>
+    public const string BlenderFilms = "blenderfilms";
+
     public const string EddnHost = "eddn.edcd.io";
 
     /// <summary>Sending the market prices the game shows to EDDN.</summary>
@@ -192,6 +201,9 @@ public static class EgressDisclosure
         Books,
         Podcasts,
         PodcastSearch,
+        ArchiveVideos,
+        NasaVideos,
+        BlenderFilms,
         UpdateCheck,
         ModelUpdates,
         HullArt,
@@ -239,6 +251,9 @@ public static class EgressDisclosure
         Books => "Project Gutenberg list",
         Podcasts => "Podcasts",
         PodcastSearch => "Podcast search",
+        ArchiveVideos => "Internet Archive videos",
+        NasaVideos => "NASA videos",
+        BlenderFilms => "Blender films",
         WebSearch => "Web search",
         Screen => "Screen pictures",
         Recap => "Last session recap",
@@ -679,6 +694,42 @@ public static class EgressDisclosure
             Active: true,
             Summary: "The words you search for, each time you search for a show."),
 
+        ArchiveVideos => VideoSourceEntry(
+            settings,
+            ArchiveVideos,
+            Viewing.VideoSources.InternetArchive,
+            $"{Viewing.VideoSources.ArchiveHost} and {Viewing.VideoSources.ArchiveMirrors}",
+            "The words you search the video catalogue for, and the kind and order you chose, go to archive.org each "
+            + "time you search, whoever typed or said them, and D47 then asks archive.org for each result's list of "
+            + "files. The video you watch, and its subtitle file where it has one, are streamed from archive.org, "
+            + "which hands each request to one of its *.us.archive.org mirrors, only while you watch. Nothing else "
+            + "about you goes with it: no key, no Commander name, nothing from your journal. The Internet Archive "
+            + "sees your IP address.",
+            "The words you search for, and the video you watch while you watch it."),
+
+        NasaVideos => VideoSourceEntry(
+            settings,
+            NasaVideos,
+            Viewing.VideoSources.Nasa,
+            $"{Viewing.VideoSources.NasaSearchHost} and {Viewing.VideoSources.NasaAssetsHost}",
+            "The words you search the video catalogue for go to images-api.nasa.gov each time you search, whoever "
+            + "typed or said them, and D47 then asks images-assets.nasa.gov for each result's list of files. The video "
+            + "you watch, and its subtitle file where it has one, are streamed from images-assets.nasa.gov, only while "
+            + "you watch. Nothing else about you goes with it: no key, no Commander name, nothing from your journal. "
+            + "NASA sees your IP address.",
+            "The words you search for, and the video you watch while you watch it."),
+
+        BlenderFilms => VideoSourceEntry(
+            settings,
+            BlenderFilms,
+            Viewing.VideoSources.Blender,
+            Viewing.VideoSources.BlenderHost,
+            "The Blender open movies are a list built into D47, so a search of them happens on this PC and the words "
+            + "you search for are not sent anywhere. The film you watch, and its subtitle file where it has one, are streamed from "
+            + "download.blender.org, only while you watch. Nothing about you goes with it: no key, no Commander name, "
+            + "nothing from your journal. The Blender Foundation sees your IP address.",
+            "The film you watch, while you watch it."),
+
         // On demand.
         SpeechModels => SpeechModelsEntry(settings),
         ChatterboxVoices => ChatterboxVoicesEntry(settings),
@@ -767,6 +818,21 @@ public static class EgressDisclosure
             + "Nothing about you goes with it: no key, no Commander name, nothing from your journal.",
             Active: true,
             Summary: "Each feed when you add it, save the feed list, open the podcast page or ask for a refresh, and an episode's audio while you listen.");
+    }
+
+    /// <summary>A video source's entry: active while the catalogue searches it.</summary>
+    private static EgressEntry VideoSourceEntry(
+        D47Settings settings, string id, string source, string destination, string what, string summary)
+    {
+        if (settings.Watch.SearchedSources().Contains(source, StringComparer.Ordinal))
+        {
+            return new EgressEntry(id, NameOf(id), destination, what, Active: true, Summary: summary);
+        }
+
+        return EgressEntry.Silent(
+            id,
+            NameOf(id),
+            $"{Viewing.VideoSources.NameOf(source)} is not ticked in the video catalogue's sources, so nothing is searched there.");
     }
 
     /// <summary>What a donation sends, and where.</summary>

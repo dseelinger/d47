@@ -531,6 +531,9 @@ public class EgressDisclosureTests
             // app updates itself from.
             Ui = new UiSettings { HullArt = false, CodexPictures = false, AvatarClips = false, StoryDownloads = false, StoryRatings = false },
             Usage = new UsageSettings { Counts = false },
+
+            // And the video catalogue's sources, with none ticked.
+            Watch = new WatchSettings { Sources = [] },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);

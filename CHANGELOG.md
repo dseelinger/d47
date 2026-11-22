@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Privacy and egress lists Internet Archive videos, NASA videos and Blender films, one entry for each source of the video catalogue. Each names the hosts it reaches and says that the words you search for go to that source and the video you watch is streamed from it while you watch; a Blender search happens on this PC, so only the film is fetched. An entry is silent while its source is not ticked. No page searches the catalogue yet.
+
 Added: The audio mixer has a Video row, below Podcasts, for the soundtrack of a video you are watching. It has its own level and mute, starts at 0.8, and drops to 0.2 while D47 speaks, as Ambient music does. Nothing plays on it yet.
 
 Added: Media › Books › Add a book opens on Project Gutenberg, beside A file on this PC. It downloads the weekly list of Project Gutenberg titles the first time you open it, at most once a week, and searches it on this computer: type a title or author, and change the sentence "Show Popular books about any subject in English" to sort by A to Z or Newest, tick any of eight subjects, or pick a language from the list, which gives each one's book count. The page shows how many books match, with Clear filters, and each book's author, subjects and Gutenberg number. A book already on your shelf says ON YOUR SHELF and cannot be added again. ADD AND READ shows "Fetching the first lines of" the title, then goes back to Books with the book reading from its first chapter. While a story plays the book goes on your shelf without reading. When the list or the book cannot be fetched, the page says "Could not retrieve results" and adds nothing. The headset shows the same page.

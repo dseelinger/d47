@@ -1,0 +1,172 @@
+{
+  "server": "dn600301.us.archive.org",
+  "dir": "/0/items/Medicusc1939_2",
+  "metadata": {
+    "identifier": "Medicusc1939_2",
+    "mediatype": "movies",
+    "collection": [
+      "prelingerhomemovies",
+      "prelinger",
+      "home_movies",
+      "moviesandfilms"
+    ],
+    "title": "[Amateur film: Medicus collection: New York World's Fair, 1939-40] (Reel 2) (Part I)",
+    "licenseurl": "http://creativecommons.org/licenses/publicdomain/",
+    "runtime": "18:28",
+    "year": "1939"
+  },
+  "files": [
+    {
+      "name": "Medicusc1939_2.asr.js",
+      "source": "original",
+      "format": "Unknown",
+      "size": "5653"
+    },
+    {
+      "name": "Medicusc1939_2.asr.srt",
+      "source": "original",
+      "format": "SubRip",
+      "size": "0"
+    },
+    {
+      "name": "Medicusc1939_2.asr.vtt",
+      "source": "derivative",
+      "format": "Web Video Text Tracks",
+      "size": "502"
+    },
+    {
+      "name": "Medicusc1939_2.avi",
+      "source": "original",
+      "format": "Cinepack",
+      "size": "61047958",
+      "length": "1136.87"
+    },
+    {
+      "name": "Medicusc1939_2.gif",
+      "source": "derivative",
+      "format": "Animated GIF",
+      "size": "298640"
+    },
+    {
+      "name": "Medicusc1939_2.mp3",
+      "source": "derivative",
+      "format": "MP3",
+      "size": "9091072",
+      "length": "18:56"
+    },
+    {
+      "name": "Medicusc1939_2.mp4",
+      "source": "derivative",
+      "format": "h.264",
+      "size": "118268911",
+      "length": "1136.6"
+    },
+    {
+      "name": "Medicusc1939_2.mpeg",
+      "source": "original",
+      "format": "MPEG2",
+      "size": "524870702",
+      "length": "1136.56"
+    },
+    {
+      "name": "Medicusc1939_2.ogv",
+      "source": "derivative",
+      "format": "Ogg Video",
+      "size": "79169582",
+      "length": "1136.6"
+    },
+    {
+      "name": "Medicusc1939_2.pack-car.log",
+      "source": "derivative",
+      "format": "Content Addressable aRchive Log",
+      "size": "0"
+    },
+    {
+      "name": "Medicusc1939_2.pack-car.trigger",
+      "source": "original",
+      "format": "Content Addressable aRchive Trigger",
+      "size": "0"
+    },
+    {
+      "name": "Medicusc1939_2.png",
+      "source": "derivative",
+      "format": "PNG",
+      "size": "2602"
+    },
+    {
+      "name": "Medicusc1939_2.transmit-car-offline.log",
+      "source": "original",
+      "format": "CAR Transmit Log (Offline)",
+      "size": "383"
+    },
+    {
+      "name": "Medicusc1939_2_256kb.rm",
+      "source": "original",
+      "format": "256Kb Real Media",
+      "size": "198645989",
+      "length": "1136.84"
+    },
+    {
+      "name": "Medicusc1939_2_512kb.mp4",
+      "source": "derivative",
+      "format": "512Kb MPEG4",
+      "size": "78644340",
+      "length": "1136.6"
+    },
+    {
+      "name": "Medicusc1939_2_64kb.rm",
+      "source": "original",
+      "format": "64Kb Real Media",
+      "size": "83468267",
+      "length": "1137.89"
+    },
+    {
+      "name": "Medicusc1939_2_archive.torrent",
+      "source": "metadata",
+      "format": "Archive BitTorrent",
+      "size": "32335"
+    },
+    {
+      "name": "Medicusc1939_2_edit.mp4",
+      "source": "original",
+      "format": "HiRes MPEG4",
+      "size": "277409802",
+      "length": "1136.46"
+    },
+    {
+      "name": "Medicusc1939_2_files.xml",
+      "source": "metadata",
+      "format": "Metadata"
+    },
+    {
+      "name": "Medicusc1939_2_intermediate_asr.json",
+      "source": "derivative",
+      "format": "Intermediate ASR JSON",
+      "size": "797"
+    },
+    {
+      "name": "Medicusc1939_2_meta.sqlite",
+      "source": "original",
+      "format": "Metadata",
+      "size": "20480"
+    },
+    {
+      "name": "Medicusc1939_2_meta.xml",
+      "source": "metadata",
+      "format": "Metadata",
+      "size": "1756"
+    },
+    {
+      "name": "Medicusc1939_2_reviews.xml",
+      "source": "original",
+      "format": "Metadata",
+      "size": "10003"
+    },
+    {
+      "name": "Medicusc1939_2_whisper_asr.json",
+      "source": "derivative",
+      "format": "Whisper ASR JSON",
+      "size": "18139"
+    }
+  ]
+}

@@ -236,6 +236,27 @@ search for a show, whoever typed or said them. Nothing else about you goes with 
 nothing from your journal. Apple sees your IP address. Adding a show from the results adds its feed to
 **Podcasts** above.
 
+**Internet Archive videos** — `archive.org` and `*.us.archive.org`. The words you search the video catalogue
+for, and the kind and order you chose, go to the Internet Archive each time you search, whoever typed or said them,
+and D47 then asks archive.org for each result's list of files. Every search asks only for videos the Internet
+Archive marks public domain or Creative Commons. The video you watch, and its subtitle file where it has one, are
+streamed from archive.org, which hands each request to one of its `*.us.archive.org` mirrors, only while you watch.
+Nothing else about you goes with it: no key, no Commander name, nothing from your journal. The Internet Archive sees
+your IP address. Silent while Internet Archive is not ticked in the catalogue's sources.
+
+**NASA videos** — `images-api.nasa.gov` and `images-assets.nasa.gov`. The words you search the video catalogue for
+go to NASA's Image and Video Library each time you search, whoever typed or said them, and D47 then asks
+images-assets.nasa.gov for each result's list of files. The video you watch, and its subtitle file where it has
+one, are streamed from images-assets.nasa.gov, only while you watch; D47 plays no file NASA's answer names on any
+other host. Nothing else about you goes with it: no key, no Commander name, nothing from your journal. NASA sees
+your IP address. Silent while NASA is not ticked in the catalogue's sources.
+
+**Blender films** — `download.blender.org`. The Blender open movies are a list built into D47, so a search of them
+happens on this PC and the words you search for are not sent anywhere. The film you watch, and its subtitle file
+where it has one, are streamed from download.blender.org, only while you watch. Nothing about you goes with it: no
+key, no Commander name, nothing from your journal. The Blender Foundation sees your IP address. Silent while Blender
+is not ticked in the catalogue's sources.
+
 **EDDN** — `eddn.edcd.io`. When you open a station's commodity market, D47 sends its prices,
 with the station, its system, the game's version and a random number made on this PC for your Commander.
 Opening its outfitting sends the names of the modules it sells.
@@ -517,7 +538,7 @@ the answer to anything you ask.
 
 The settings panel carries one row per destination, saying the same things this page does
 {#egress-recap} {#egress-websearch} {#egress-screen} {#egress-updates} {#egress-modelcatalog} {#egress-diagnostics} {#egress-journal}
-{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-colonisationprogress} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-rareindex} {#egress-books} {#egress-podcasts} {#egress-podcastsearch} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology} {#egress-regionfirstreport}
+{#egress-tts} {#egress-stt} {#egress-galaxy} {#egress-colonisationplanner} {#egress-colonisationprogress} {#egress-bgstick} {#egress-galnet} {#egress-serverstatus} {#egress-signalindex} {#egress-eddn} {#egress-rareindex} {#egress-books} {#egress-podcasts} {#egress-podcastsearch} {#egress-archivevideos} {#egress-nasavideos} {#egress-blenderfilms} {#egress-models} {#egress-chatterboxvoices} {#egress-notableplaces} {#egress-communitybiology} {#egress-regionfirstreport}
 {#egress-hullart} {#egress-codexpictures} {#egress-codexpublish} {#egress-avatarclips} {#egress-stockstories} {#egress-storyratings} {#egress-usagecounts} {#egress-webapp} {#egress-pictures} {#egress-codexcaptures} {#egress-ownvoice} {#egress-customvoices} {#egress-captainslog} {#egress-screenshots}
 {#egress-donation} — but computed live from your settings
 rather than written down once. They are read-only: not something you set, something Directive 47

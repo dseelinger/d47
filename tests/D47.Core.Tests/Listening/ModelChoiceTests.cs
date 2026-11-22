@@ -167,6 +167,9 @@ public class ModelChoiceTests
             },
             Usage = new UsageSettings { Counts = false },
             WebApp = new WebAppSettings { Enabled = false },
+
+            // And the video catalogue's sources, with none ticked.
+            Watch = new WatchSettings { Sources = [] },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);

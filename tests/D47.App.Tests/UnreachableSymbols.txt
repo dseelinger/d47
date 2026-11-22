@@ -229,6 +229,16 @@ D47.Core.Speech.LocalVoiceStandIn.Installed
 D47.Core.Stories.StoryCatalog.Faults()
 D47.Core.Stories.StoryChapterArchive.Changed
 D47.Core.Utilities.AlarmStore.Changed
+D47.Core.Viewing.BlenderOpenMovies
+D47.Core.Viewing.IVideoCatalogue
+D47.Core.Viewing.IVideoSource
+D47.Core.Viewing.VideoCatalogue
+D47.Core.Viewing.VideoFilters
+D47.Core.Viewing.VideoKind
+D47.Core.Viewing.VideoLicence
+D47.Core.Viewing.VideoOrder
+D47.Core.Viewing.VideoPage
+D47.Core.Viewing.VideoTitle
 D47.Core.Vr.CaptionLayer.At(System.TimeSpan)
 D47.Core.Viewing.WatchEntry
 D47.Core.Viewing.WatchStore
@@ -238,5 +248,9 @@ D47.Core.Vr.SubtitleCues
 D47.Core.Vr.VrLifecycle.Changed
 D47.Core.Watches.WatchStore.Changed
 D47.Knowledge.CanonnBiologyService.SystemRecordAsync(string, System.Threading.CancellationToken)
+D47.Knowledge.InternetArchiveVideoSource
+D47.Knowledge.KnowledgeHttp.Listed(System.Collections.Generic.IReadOnlyList<string>)
+D47.Knowledge.KnowledgeHttp.ReadJsonAtMostAsync(System.Net.Http.HttpResponseMessage, long, System.Threading.CancellationToken)
+D47.Knowledge.NasaVideoSource
 D47.Vr.SteamVrRuntime.Beam
 D47.Vr.SteamVrRuntime.Cursor

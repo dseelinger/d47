@@ -1,0 +1,76 @@
+{
+  "server": "dn801209.us.archive.org",
+  "dir": "/0/items/UnknownWorld",
+  "metadata": {
+    "identifier": "UnknownWorld",
+    "mediatype": "movies",
+    "collection": [
+      "film_scifi",
+      "feature_films",
+      "moviesandfilms"
+    ],
+    "title": "Unknown World",
+    "licenseurl": "http://creativecommons.org/licenses/publicdomain/",
+    "runtime": "74 min.",
+    "year": "1951"
+  },
+  "files": [
+    {
+      "name": "UnknownWorld.avi",
+      "source": "original",
+      "format": "DivX",
+      "size": "731273654",
+      "length": "4437.37"
+    },
+    {
+      "name": "UnknownWorld.gif",
+      "source": "derivative",
+      "format": "Animated GIF",
+      "size": "403037"
+    },
+    {
+      "name": "UnknownWorld.mp4",
+      "source": "derivative",
+      "format": "h.264",
+      "size": "462287896",
+      "length": "4437.37"
+    },
+    {
+      "name": "UnknownWorld.ogv",
+      "source": "derivative",
+      "format": "Ogg Video",
+      "size": "314409893",
+      "length": "4437.37"
+    },
+    {
+      "name": "UnknownWorld_512kb.mp4",
+      "source": "derivative",
+      "format": "512Kb MPEG4",
+      "size": "322176513",
+      "length": "4437.37"
+    },
+    {
+      "name": "UnknownWorld_archive.torrent",
+      "source": "metadata",
+      "format": "Archive BitTorrent",
+      "size": "37245"
+    },
+    {
+      "name": "UnknownWorld_files.xml",
+      "source": "metadata",
+      "format": "Metadata"
+    },
+    {
+      "name": "UnknownWorld_meta.xml",
+      "source": "metadata",
+      "format": "Metadata",
+      "size": "2062"
+    },
+    {
+      "name": "UnknownWorld_reviews.xml",
+      "source": "metadata",
+      "format": "Metadata",
+      "size": "4969"
+    }
+  ]
+}
