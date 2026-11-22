@@ -12,6 +12,9 @@ public sealed record BookPlayback(Book Book, BookPlace Place, int Sentence, stri
 {
     public bool IsPaused => Pause != StoryRunPause.None;
 
+    /// <summary>The book as the voice commands see it: paused only when the Commander paused it.</summary>
+    public BookNow ToBookNow() => new(Book.Source, Book.Title, Place.Chapter, Book.Chapters[Place.Chapter].Title, Pause == StoryRunPause.Commander);
+
     /// <summary>The sentence's clip is not made yet, so nothing is playing.</summary>
     public bool Waiting { get; init; }
 

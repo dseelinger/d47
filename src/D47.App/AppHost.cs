@@ -6024,9 +6024,7 @@ public sealed class AppHost : IDisposable
         () => Books.Books,
         () => BooksHost.AnyInstalled,
         BookPlayer.Play,
-        () => BookPlayer.Now is { } now
-            ? new D47.Core.Books.BookNow(now.Book.Source, now.Book.Title, now.Place.Chapter, now.Book.Chapters[now.Place.Chapter].Title, now.IsPaused)
-            : null,
+        () => BookPlayer.Now?.ToBookNow(),
         () => BookPlayer.Pause(StoryRunPause.Commander),
         BookPlayer.Resume,
         BooksHost.NextChapter,

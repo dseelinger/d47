@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Saying "pause the book", or a bare "pause" while a book reads, pauses it. The book had already been paused for push-to-talk, so D47 answered "The book is already paused." and the book carried on reading after the turn. "Resume the book" says the book is already playing when it was paused only for push-to-talk or a callout.
+
 Added: Media › Books has an ADD A BOOK tile. It opens Add a book, which lists the .txt and .epub files in your books folder that are not on the shelf, with title, author and chapter count where the file has them. On the desktop, CHOOSE A FILE copies a file into the folder and OPEN THE FOLDER opens it; the headset shows the same list. ADD AND READ puts the chosen book on your shelf and starts reading it. A file with no text, such as a protected EPUB, shows a warning and stays off the shelf. A file added to the folder appears without a restart. Nothing is sent anywhere.
 
 Added: The mini panels show the book while their surface is on Media › Books: its title and CH n OF m in grey, the sentence being read in white, a progress bar, and the hint "Say “pause the book” or “next chapter”.", which becomes "Say “resume the book”." while you have paused it. It has no buttons, and says "No book is being read." when none is.
