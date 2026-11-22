@@ -25,8 +25,6 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
     private readonly MusicRejects _rejects;
     private readonly FakeRelease _github = new();
     private string? _source;
-    private int _downloads;
-    private Action _onDownload = () => { };
 
     public TheThumbsDownTracksLeaveGitHubBeforeThisPcTests()
     {
@@ -71,7 +69,7 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
 
         Assert.All(_github.Requests, request =>
         {
-            Assert.Equal("Bearer " + Token, request.Authorization);
+            Assert.Equal(request.Url.StartsWith(MusicPackStore.Source, StringComparison.Ordinal) ? null : "Bearer " + Token, request.Authorization);
             Assert.DoesNotContain(Token, request.Url, StringComparison.Ordinal);
         });
     }
@@ -97,42 +95,47 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
     }
 
     [Fact]
-    public async Task AFolderBehindTheManifestVersionIsFetchedThenDeletedFrom()
+    public async Task TheNewZipIsBuiltFromThePublishedZipWhateverIsOnThisPc()
     {
-        _files.WriteText(Path.Combine(Pack, Situations.Docked, MusicPackStore.VersionFile), "2");
-        _onDownload = () => _files.WriteText(Path.Combine(Pack, Situations.Docked, MusicPackStore.VersionFile), "3");
+        _files.Delete(Path.Combine(Pack, Situations.Docked, "docked-003.mp3"));
+        _files.WriteText(Path.Combine(Pack, Situations.Docked, MusicPackStore.VersionFile), "1");
         _rejects.Add(Situations.Docked, "docked-001.mp3");
 
         var (_, said) = await Run();
 
-        Assert.Equal(1, _downloads);
         Assert.StartsWith("Deleted 1 track: 1 from docked.", said, StringComparison.Ordinal);
+        Assert.Equal(["docked-002.mp3", "docked-003.mp3"], Entries(_github.Asset("docked.zip")));
+        Assert.Equal(4, (int)Entry(_github.Manifest(), Situations.Docked)["version"]!);
+        Assert.Equal(2, (int)Entry(_github.Manifest(), Situations.Docked)["tracks"]!);
     }
 
     [Fact]
-    public async Task AFolderStillBehindAfterTheDownloadIsLeft()
+    public async Task APublishedZipThatDoesNotMatchTheManifestStopsThatFolder()
     {
-        _files.WriteText(Path.Combine(Pack, Situations.Docked, MusicPackStore.VersionFile), "2");
+        _github.CorruptDownloads = true;
         _rejects.Add(Situations.Docked, "docked-001.mp3");
+        var manifest = _github.Manifest();
 
         var (_, said) = await Run();
 
-        Assert.Equal(1, _downloads);
-        Assert.Contains("docked is behind the published library and could not be brought up to date", said, StringComparison.Ordinal);
-        Assert.DoesNotContain("Let the download finish first", said, StringComparison.Ordinal);
+        Assert.Contains("docked", said, StringComparison.Ordinal);
+        Assert.Contains("did not match the manifest", said, StringComparison.Ordinal);
         Assert.Empty(_github.Uploaded);
         Assert.Single(_rejects.Rows);
+        Assert.True(JsonNode.DeepEquals(manifest, _github.Manifest()));
         Assert.Equal(3, _files.Enumerate(Path.Combine(Pack, Situations.Docked), "*.mp3").Count);
     }
 
     [Fact]
-    public async Task FoldersAllCurrentDoNotStartTheDownload()
+    public async Task AQueuedTrackNotOnThisPcStillCountsAsDeleted()
     {
+        _files.Delete(Path.Combine(Pack, Situations.Docked, "docked-001.mp3"));
         _rejects.Add(Situations.Docked, "docked-001.mp3");
 
-        await Run();
+        var (_, said) = await Run();
 
-        Assert.Equal(0, _downloads);
+        Assert.StartsWith("Deleted 1 track: 1 from docked.", said, StringComparison.Ordinal);
+        Assert.Empty(_rejects.Rows);
     }
 
     [Fact]
@@ -245,13 +248,6 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
         () => Token,
         name => name == MusicRejectDeleter.SourceVariable ? _source : null,
         () => new MemoryStream(),
-        () =>
-        {
-            _downloads++;
-            _onDownload();
-
-            return Task.CompletedTask;
-        },
         NullLogger.Instance,
         _github);
 
@@ -297,6 +293,8 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
         public List<string> Uploaded { get; } = [];
 
         public bool FailUploads { get; set; }
+
+        public bool CorruptDownloads { get; set; }
 
         /// <summary>The next rename to this name answers 500, once.</summary>
         public string? FailRenameTo { get; set; }
@@ -375,6 +373,14 @@ public sealed class TheThumbsDownTracksLeaveGitHubBeforeThisPcTests
 
                 return Json(HttpStatusCode.OK, JsonSerializer.Serialize(
                     _assets.Skip((page - 1) * size).Take(size).Select(asset => new { id = asset.Id, name = asset.Name })));
+            }
+
+            if (method == HttpMethod.Get && path.StartsWith("/dseelinger/d47-music/releases/download/music-1/", StringComparison.Ordinal))
+            {
+                var asset = _assets.Single(held => held.Name == path.Split('/')[^1]);
+                var bytes = CorruptDownloads ? [.. asset.Bytes, (byte)0] : asset.Bytes;
+
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) };
             }
 
             if (method == HttpMethod.Get && path.StartsWith($"{Api}/releases/assets/", StringComparison.Ordinal))

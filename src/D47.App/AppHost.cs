@@ -4052,7 +4052,6 @@ public sealed class AppHost : IDisposable
                 host.Secrets.TryGet(MusicPublishToken.SecretName, out var stored) ? stored : null, Environment.GetEnvironmentVariable),
             Environment.GetEnvironmentVariable,
             () => MusicRejectDeleter.TempZip(new MusicPackDisk()),
-            () => host.MusicPack?.Start() ?? Task.CompletedTask,
             loggerFactory.CreateLogger<MusicRejectDeleter>());
 
         return host;

@@ -494,11 +494,11 @@ second reply, when the work ends, says what was deleted and what failed.
 
 For each folder with queued tracks, one at a time:
 
-1. A new `<folder>.zip` is built from the folder's tracks in `data/music-pack/<folder>/`, without the queued ones.
+1. A new `<folder>.zip` is built from the published `<folder>.zip`, checked against its SHA-256, without the queued ones.
 2. It replaces `<folder>.zip` on the `music-1` release of `dseelinger/d47-music`. Then `manifest.json` is replaced,
    with that folder's version increased by one and its size, SHA-256 and track count updated.
 3. The new version is recorded in the folder, so the library download does not fetch it again.
-4. The queued tracks are deleted from `data/music-pack/<folder>/`.
+4. The queued tracks are deleted from `data/music-pack/<folder>/` where they are on this PC.
 5. With `D47_MUSIC_SOURCE` set to the music generator's data folder, each track is deleted from
    `<source>/tracks/<folder>/` and its id, the file name without `.mp3`, is added to `<source>/rejected.tsv`.
    Without it, the reply says the generator's copies were left.
@@ -506,8 +506,7 @@ For each folder with queued tracks, one at a time:
 
 Nothing is deleted from this PC until GitHub has the folder's new zip and manifest.
 
-- A folder whose download here is older than the published version is fetched first. If it is still older after
-  that, it is left and the reply says so, because a zip built from it would drop tracks.
+- A published zip that does not match the manifest's SHA-256 leaves that folder as it is, and the reply names it.
 - A folder whose every track is queued is left, since a folder cannot be emptied.
 - When an upload fails, that folder keeps its rows and its files, and the work stops. The reply names the folder,
   GitHub's message, and the folders that were not tried. Saying the phrase again continues with the folders left.

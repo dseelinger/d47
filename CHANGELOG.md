@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Deleting the thumbs-down tracks builds each folder's new zip from the published zip, checked against the manifest's SHA-256, instead of from the tracks on this PC. A published zip that does not match leaves that folder queued, and a folder no longer needs to be downloaded here first.
+
 Fixed: A change of screen resolution, such as switching between 2D and the headset with Virtual Desktop, no longer overwrites where you put the 2D overlay strip. While that place does not fit on a screen the strip is centred on Elite's screen, and it goes back to your place when it fits again.
 
 Added: Privacy and egress lists a Project Gutenberg list entry. D47 will fetch the weekly list of titles from github.com at most once a week, when you browse it, and nothing about you goes with it. No page browses it yet.

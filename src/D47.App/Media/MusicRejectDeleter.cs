@@ -42,6 +42,9 @@ internal sealed class MusicRejectDeleter
     /// <summary>The longest an API call may take.</summary>
     private static readonly TimeSpan Answer = TimeSpan.FromMinutes(2);
 
+    /// <summary>The longest a read of the published zip may stall.</summary>
+    private static readonly TimeSpan ReadStall = TimeSpan.FromSeconds(60);
+
     /// <summary>The longest a zip upload may take.</summary>
     private static readonly TimeSpan Upload = TimeSpan.FromMinutes(60);
 
@@ -56,7 +59,6 @@ internal sealed class MusicRejectDeleter
     private readonly Func<string?> _token;
     private readonly Func<string, string?> _environment;
     private readonly Func<Stream> _temp;
-    private readonly Func<Task> _download;
     private readonly ILogger _logger;
     private readonly HttpClient _http;
     private int _running;
@@ -69,7 +71,6 @@ internal sealed class MusicRejectDeleter
 
     /// <param name="token">Read once at each run and never kept.</param>
     /// <param name="temp">A readable, writable, seekable stream for one zip, removed when it is disposed.</param>
-    /// <param name="download">Starts the library download and returns the running download.</param>
     internal MusicRejectDeleter(
         string pack,
         MusicRejects rejects,
@@ -77,7 +78,6 @@ internal sealed class MusicRejectDeleter
         Func<string?> token,
         Func<string, string?> environment,
         Func<Stream> temp,
-        Func<Task> download,
         ILogger logger,
         HttpMessageHandler? handler = null)
     {
@@ -87,7 +87,6 @@ internal sealed class MusicRejectDeleter
         _token = token;
         _environment = environment;
         _temp = temp;
-        _download = download;
         _logger = logger;
         _http = handler is null ? new HttpClient() : new HttpClient(handler);
         _http.Timeout = Timeout.InfiniteTimeSpan;
@@ -190,11 +189,6 @@ internal sealed class MusicRejectDeleter
                 return "Nothing was deleted. " + failure.Message;
             }
 
-            if (queued.Any(queue => IsBehind(queue.Folder, manifest)))
-            {
-                await _download().ConfigureAwait(false);
-            }
-
             for (var i = 0; i < queued.Count; i++)
             {
                 if (!await FolderAsync(queued[i], release, manifest, token, report).ConfigureAwait(false))
@@ -255,46 +249,67 @@ internal sealed class MusicRejectDeleter
             return true;
         }
 
-        if (LocalVersion(here) is not { } local || local < published)
+        if (entry["sha256"] is not JsonValue hashNode || !hashNode.TryGetValue<string>(out var expected))
         {
-            report.Failed.Add($"{folder} is behind the published library and could not be brought up to date, so it was left.");
+            report.Failed.Add($"{folder} has no checksum in the published library, so its tracks stay queued.");
             return true;
         }
 
-        var present = _files.Enumerate(here, "*.mp3");
         var queuedNames = new HashSet<string>(queue.Files, StringComparer.OrdinalIgnoreCase);
 
-        if (present.Any(path => queuedNames.Contains(Path.GetFileName(path))))
+        await using (var fetched = _temp())
         {
-            var keep = present.Where(path => !queuedNames.Contains(Path.GetFileName(path))).ToList();
-            string written;
-
-            if (keep.Count == 0)
+            try
             {
-                report.Failed.Add($"Every track in {folder} is queued, and a folder cannot be emptied, so it was left.");
+                if (!await DownloadAsync(folder + ".zip", expected, fetched).ConfigureAwait(false))
+                {
+                    report.Failed.Add($"The published {folder}.zip did not match the manifest, so {folder} was left and its tracks stay queued.");
+                    return true;
+                }
+            }
+            catch (Exception exception) when (exception is HttpRequestException or IOException or TaskCanceledException or TimeoutException)
+            {
+                _logger.LogInformation(exception, "Could not download the published {Folder}.zip", folder);
+                report.Failed.Add($"The published {folder}.zip could not be downloaded ({exception.GetType().Name}), so {folder} was left.");
                 return true;
             }
 
-            try
-            {
-                written = await ReplaceAsync(folder, keep, published + 1, release, manifest, entry, token).ConfigureAwait(false);
-            }
-            catch (DeleteFailure failure)
-            {
-                _logger.LogInformation("Music folder {Folder} was not replaced: {Failure}", folder, failure.Message);
-                report.Failed.Add($"{folder} was not changed. {failure.Message}");
-                return false;
-            }
+            fetched.Position = 0;
 
-            try
+            using var archive = new ZipArchive(fetched, ZipArchiveMode.Read, leaveOpen: true);
+            var names = archive.Entries.Select(item => item.FullName).ToList();
+
+            if (names.Any(name => queuedNames.Contains(name)))
             {
-                _files.WriteText(Path.Combine(here, MusicPackStore.VersionFile), (published + 1).ToString(CultureInfo.InvariantCulture));
-                _files.WriteText(Path.Combine(_pack, ManifestName), written);
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-                _logger.LogInformation(exception, "Could not record version {Version} of {Folder}", published + 1, folder);
-                report.Failed.Add($"GitHub has the new {folder}, but this PC could not record its version, so the download fetches it again.");
+                if (names.All(name => queuedNames.Contains(name)))
+                {
+                    report.Failed.Add($"Every track in {folder} is queued, and a folder cannot be emptied, so it was left.");
+                    return true;
+                }
+
+                string written;
+
+                try
+                {
+                    written = await ReplaceAsync(folder, archive, queuedNames, published + 1, release, manifest, entry, token).ConfigureAwait(false);
+                }
+                catch (DeleteFailure failure)
+                {
+                    _logger.LogInformation("Music folder {Folder} was not replaced: {Failure}", folder, failure.Message);
+                    report.Failed.Add($"{folder} was not changed. {failure.Message}");
+                    return false;
+                }
+
+                try
+                {
+                    _files.WriteText(Path.Combine(here, MusicPackStore.VersionFile), (published + 1).ToString(CultureInfo.InvariantCulture));
+                    _files.WriteText(Path.Combine(_pack, ManifestName), written);
+                }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                {
+                    _logger.LogInformation(exception, "Could not record version {Version} of {Folder}", published + 1, folder);
+                    report.Failed.Add($"GitHub has the new {folder}, but this PC could not record its version, so the download fetches it again.");
+                }
             }
         }
 
@@ -348,14 +363,14 @@ internal sealed class MusicRejectDeleter
     /// with the folder's entry updated. Returns the manifest written.
     /// </summary>
     private async Task<string> ReplaceAsync(
-        string folder, List<string> keep, int version, Release release, JsonObject manifest, JsonObject entry, string token)
+        string folder, ZipArchive published, HashSet<string> queued, int version, Release release, JsonObject manifest, JsonObject entry, string token)
     {
         var zipName = folder + ".zip";
         var nextZipName = folder + ".next.zip";
 
         await using var zip = _temp();
 
-        Write(zip, keep);
+        var kept = Write(zip, published, queued);
 
         var bytes = zip.Length;
         zip.Position = 0;
@@ -375,7 +390,7 @@ internal sealed class MusicRejectDeleter
         entry["version"] = version;
         entry["bytes"] = bytes;
         entry["sha256"] = sha256;
-        entry["tracks"] = keep.Count;
+        entry["tracks"] = kept;
 
         var written = manifest.ToJsonString(Indented);
 
@@ -388,37 +403,65 @@ internal sealed class MusicRejectDeleter
         var manifestId = await UploadAsync(release, NextManifestName, text, step, Answer, token).ConfigureAwait(false);
         await SwapAsync(release, ManifestName, manifestId, step, token).ConfigureAwait(false);
 
-        _logger.LogInformation("Music folder {Folder} is version {Version} with {Tracks} tracks", folder, version, keep.Count);
+        _logger.LogInformation("Music folder {Folder} is version {Version} with {Tracks} tracks", folder, version, kept);
 
         return written;
     }
 
-    /// <summary>The tracks at the zip's root, sorted, stored, with one timestamp, as <c>tools/publish-music.ps1</c> writes them.</summary>
-    private void Write(Stream into, List<string> tracks)
+    /// <summary>
+    /// Copies the published zip's entries except the queued ones, sorted, stored, with one timestamp, as
+    /// <c>tools/publish-music.ps1</c> writes them. Returns the number copied.
+    /// </summary>
+    private static int Write(Stream into, ZipArchive from, HashSet<string> queued)
     {
         using var archive = new ZipArchive(into, ZipArchiveMode.Create, leaveOpen: true);
+        var count = 0;
 
-        foreach (var track in tracks.OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase))
+        foreach (var source in from.Entries.Where(item => !queued.Contains(item.FullName)).OrderBy(item => item.FullName, StringComparer.OrdinalIgnoreCase))
         {
-            var entry = archive.CreateEntry(Path.GetFileName(track), CompressionLevel.NoCompression);
+            var entry = archive.CreateEntry(source.FullName, CompressionLevel.NoCompression);
             entry.LastWriteTime = EntryStamp;
 
-            using var from = _files.OpenRead(track) ?? throw new FileNotFoundException("A track went missing while its folder was zipped.", track);
+            using var read = source.Open();
             using var to = entry.Open();
-            from.CopyTo(to);
+            read.CopyTo(to);
+            count++;
         }
+
+        return count;
     }
 
-    private bool IsBehind(string folder, JsonObject manifest) =>
-        Entry(manifest, folder) is { } entry
-        && Number(entry["version"]) is { } published
-        && (LocalVersion(Path.Combine(_pack, folder)) is not { } local || local < published);
+    /// <summary>Copies the published zip into <paramref name="into"/>. False when it does not match <paramref name="sha256"/>.</summary>
+    private async Task<bool> DownloadAsync(string zipName, string sha256, Stream into)
+    {
+        using var answer = new CancellationTokenSource(Upload);
+        using var response = await _http.GetAsync(MusicPackStore.Source + zipName, HttpCompletionOption.ResponseHeadersRead, answer.Token)
+            .ConfigureAwait(false);
 
-    private int? LocalVersion(string folder) =>
-        _files.ReadText(Path.Combine(folder, MusicPackStore.VersionFile)) is { } text
-        && int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var version)
-            ? version
-            : null;
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException($"GitHub returned {(int)response.StatusCode}.");
+        }
+
+        await using var body = await response.Content.ReadAsStreamAsync(answer.Token).ConfigureAwait(false);
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        var buffer = new byte[81920];
+
+        while (true)
+        {
+            var read = await body.ReadAsync(buffer, answer.Token).AsTask().WaitAsync(ReadStall, answer.Token).ConfigureAwait(false);
+
+            if (read == 0)
+            {
+                break;
+            }
+
+            hash.AppendData(buffer, 0, read);
+            await into.WriteAsync(buffer.AsMemory(0, read), answer.Token).ConfigureAwait(false);
+        }
+
+        return string.Equals(Convert.ToHexStringLower(hash.GetHashAndReset()), sha256, StringComparison.OrdinalIgnoreCase);
+    }
 
     private static JsonObject? Entry(JsonObject manifest, string folder) =>
         (manifest["folders"] as JsonArray)?
