@@ -1070,7 +1070,8 @@ public partial class PanelView : UserControl, IPanelTabHost
     private readonly MediaFurnishing _media;
 
     /// <summary>Gives this surface the Media tab.</summary>
-    internal void EnableMedia() => _media.Enable();
+    internal void EnableMedia(PodcastsHost? podcasts = null, Func<string, Control?>? settingsStrip = null) =>
+        _media.Enable(podcasts, settingsStrip);
 
     /// <summary>Gives this surface the Modules tab once a module is installed (#2083).</summary>
     internal void EnableModules(D47.App.Settings.ModulesSource source) => _modules.Enable(source);

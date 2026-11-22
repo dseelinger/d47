@@ -37,6 +37,10 @@ public sealed class PodcastListening
         return new PodcastListening(copy);
     }
 
+    /// <summary>A copy without any episode of the feed.</summary>
+    public PodcastListening Without(Uri feedUrl) =>
+        new(_progress.Where(pair => pair.Key.Feed != feedUrl.AbsoluteUri).ToDictionary());
+
     public string ToJson() =>
         JsonSerializer.Serialize(
             new Document { Episodes = [.. _progress.Values.Select(Row.From)] },

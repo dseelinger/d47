@@ -121,11 +121,30 @@ one. With none it says so and stops. With no episode playing it says "No podcast
 `find_podcasts` searches Apple's podcast directory and numbers up to three results. The last search's results
 are kept until the next search. Adding takes the number, not an address.
 
+### The page {#page}
+
+Media › Podcasts lists the shows you follow on the left and the selected show's episodes on the right, newest
+first. Opening the page fetches every feed again, and says which could not be read. Each episode reads **New**,
+**In progress** with where you stopped, **Finished**, or nothing. An unfinished episode is new when it is newer
+than every episode of that show you have started; a show you have not started has only its newest episode new.
+
+Press an episode to play it from where you left off. Under the lists the transport shows the episode and its
+show, a seek bar with the elapsed time and the length, and **Back 30 s**, **Pause** or **Play**, **Forward
+30 s** and **Next episode**. The seek bar and the two skips are disabled for an episode whose server sends it only
+from the start.
+
+**Add a show** opens a page with a search box and a feed address box. Search sends the words you type to Apple's
+podcast directory, as "find a podcast" does; **Add** on a result adds its feed. The address box adds a feed by its
+RSS address. **Remove this show** asks first, then removes the feed and forgets where you were in its episodes.
+Adding a feed by address and removing one are made here and in the settings row, never by voice.
+
+The big panel has the same page, with five episodes at a time and **Previous** and **Next** under them.
+
 ### The feed list
 
-With Show every setting on, open Settings › Hearing and sound › Sounds and levels, group **Podcasts**. **Podcast
-feeds** holds the feed addresses, separated by spaces. Saving it fetches any feed that is new. Only http and
-https addresses are accepted. The model cannot change this row.
+The page's **Settings** tile opens **Podcast feeds**, which holds the feed addresses, separated by spaces. Saving
+it fetches any feed that is new. Only http and https addresses are accepted. The model cannot change this row.
+The page edits the same list.
 
 ### The media keys
 

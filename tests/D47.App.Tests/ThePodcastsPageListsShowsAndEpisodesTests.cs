@@ -1,0 +1,189 @@
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using D47.App.Panel;
+using D47.Core.Audio;
+using D47.Core.Interface;
+using D47.Core.Podcasts;
+using D47.Core.Storage;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+
+namespace D47.App.Tests;
+
+/// <summary>Media › Podcasts lists the shows and their episodes, plays one, removes a show and adds one by address (#2659).</summary>
+public class ThePodcastsPageListsShowsAndEpisodesTests
+{
+    private static readonly Uri FeedOne = new("https://example.test/one.xml");
+
+    private static readonly Uri FeedTwo = new("https://example.test/two.xml");
+
+    private static PodcastEpisode Episode(string id, int day) =>
+        new(id, $"Episode {id}", new DateTimeOffset(2026, 11, day, 0, 0, 0, TimeSpan.Zero), new Uri($"https://cdn.example.test/{id}.mp3"), "audio/mpeg", null, TimeSpan.FromMinutes(40));
+
+    private sealed class Fixture
+    {
+        public List<Uri> Feeds { get; } = [FeedOne, FeedTwo];
+
+        public List<Uri> Removed { get; } = [];
+
+        public int Refreshes { get; set; }
+
+        public PodcastsHost Host { get; }
+
+        public Fixture(bool fail = false)
+        {
+            var arbiter = new AudioArbiter(new SilentSink(), NullLogger<AudioArbiter>.Instance).Start();
+            var music = new AmbientMusic(arbiter, () => CueLibrary.Load());
+            var player = new PodcastPlayer(arbiter, music, episode => new MusicTrack(episode.Id, () => throw new IOException("no audio")), new MemoryFileSystem(), @"C:\d47\listening.json", NullLogger<PodcastPlayer>.Instance, work => work());
+
+            CachedShow[] shows =
+            [
+                new(FeedOne, new PodcastShow("Deep Space Radio", [Episode("a", 21), Episode("b", 14), Episode("c", 7)])),
+                new(FeedTwo, new PodcastShow("Coriolis Commons", [Episode("x", 3)])),
+            ];
+
+            Host = new PodcastsHost(
+                player,
+                () => [.. shows.Where(show => Feeds.Contains(show.Feed))],
+                () => Feeds,
+                () =>
+                {
+                    Refreshes++;
+                    IReadOnlyList<PodcastRefresh> results = fail ? [new PodcastRefresh(FeedTwo, null, "Coriolis Commons did not answer.")] : [];
+                    return Task.FromResult(results);
+                },
+                _ => Task.FromResult(new PodcastSearchOutcome([], null)),
+                feed => Task.FromResult(new PodcastRefresh(feed, null, "This is not an RSS feed.")),
+                feed =>
+                {
+                    Removed.Add(feed);
+                    Feeds.Remove(feed);
+                });
+        }
+    }
+
+    private static (Window Window, PanelView Panel) Open(Fixture fixture)
+    {
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableMedia(fixture.Host);
+
+        var window = new Window { Content = panel, Width = 1280, Height = 900 };
+
+        window.Show();
+        panel.Tab = PanelTab.Media;
+        Assert.True(panel.Nav.SelectRoot(MediaFurnishing.PodcastsRoot));
+        Dispatcher.UIThread.RunJobs();
+
+        return (window, panel);
+    }
+
+    private static IReadOnlyList<string> Drawn(Control root) =>
+        [.. root.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty)];
+
+    private static Button Named(Control root, string name) =>
+        root.GetVisualDescendants().OfType<Button>().First(button => button.Name == name);
+
+    private static void Click(Button button)
+    {
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void TheRootListsEachShowWithItsNewCountAndTheSelectedShowsEpisodes()
+    {
+        var (window, panel) = Open(new Fixture());
+        var drawn = Drawn(panel);
+
+        Assert.Contains("SHOWS · 2", drawn);
+        Assert.Contains("DEEP SPACE RADIO", drawn);
+        Assert.Contains("1 NEW · 1 EPISODE", drawn);
+        Assert.Contains("1 NEW · 3 EPISODES", drawn);
+        Assert.Contains("EPISODE A", drawn);
+        Assert.Contains("NEW", drawn);
+        Assert.Contains(NavLabel(panel), word => word == "Podcasts");
+        window.SaveFrame("podcasts-desktop.png");
+
+        window.Close();
+    }
+
+    private static IEnumerable<string> NavLabel(PanelView panel) => panel.Nav.Roots(PanelTab.Media).Select(root => root.Word);
+
+    [AvaloniaFact]
+    public void OpeningThePageRefreshesTheFeedsAndNamesOneThatFailed()
+    {
+        var fixture = new Fixture(fail: true);
+        var (window, panel) = Open(fixture);
+
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(fixture.Refreshes >= 1);
+        Assert.Contains(panel.GetVisualDescendants().OfType<D47.App.Controls.Notice>(), notice => notice.IsVisible && notice.Text!.Contains("did not answer", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void NothingPlayingDisablesTheTransportAndSaysSo()
+    {
+        var (window, panel) = Open(new Fixture());
+
+        Assert.False(Named(panel, PodcastsPage.PlayName).IsEnabled);
+        Assert.False(Named(panel, PodcastsPage.NextName).IsEnabled);
+        Assert.False(Named(panel, PodcastsPage.BackName).IsEnabled);
+        Assert.Contains(PodcastsPage.NothingPlaying, Drawn(panel));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void RemovingAShowAsksFirstThenForgetsIt()
+    {
+        var fixture = new Fixture();
+        var (window, panel) = Open(fixture);
+
+        Click(Named(panel, PodcastsPage.RemoveName));
+        Assert.Empty(fixture.Removed);
+        Assert.Contains(Drawn(panel), text => text.StartsWith("Remove Deep Space Radio and forget", StringComparison.Ordinal));
+
+        Click(Named(panel, PodcastsPage.RemoveKeepName));
+        Assert.Empty(fixture.Removed);
+
+        Click(Named(panel, PodcastsPage.RemoveName));
+        Click(Named(panel, PodcastsPage.RemoveConfirmName));
+
+        Assert.Equal([FeedOne], fixture.Removed);
+        Assert.DoesNotContain("DEEP SPACE RADIO", Drawn(panel));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AddAShowOpensItsPageAndAnAddressThatIsNotAFeedIsRefused()
+    {
+        var (window, panel) = Open(new Fixture());
+
+        Click(Named(panel, PodcastsPage.AddName));
+        Dispatcher.UIThread.RunJobs();
+
+        var url = panel.GetVisualDescendants().OfType<TextBox>().First(box => box.Name == PodcastAddPage.UrlBoxName);
+        var add = Named(panel, PodcastAddPage.UrlAddName);
+
+        Assert.False(add.IsEnabled);
+
+        url.Text = "https://example.org/podcast";
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(add.IsEnabled);
+
+        Click(add);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PodcastAddPage.NotAFeed, D47.App.Theming.FieldMessage.GetText(url));
+
+        window.Close();
+    }
+}

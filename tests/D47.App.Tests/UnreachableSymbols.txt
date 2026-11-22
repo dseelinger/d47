@@ -27,7 +27,6 @@ D47.App.Input.ChordSender.Recorded
 D47.App.Input.PushToTalkKey.Gesture
 D47.App.Input.ScancodeInjector.LastSequence
 D47.App.MainWindow.MainWindow()
-D47.App.Media.PodcastStore.Changed
 D47.App.Media.ScreenshotConverter.Running
 D47.App.Panel.AvatarView.Extent
 D47.App.Panel.AvatarView.Library

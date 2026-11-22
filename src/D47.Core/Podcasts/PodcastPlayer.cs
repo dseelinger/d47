@@ -40,6 +40,10 @@ public sealed class PodcastPlayer
 
     private const string NothingPlaying = "No podcast is playing.";
 
+    private const string NotStarted = "The episode has not started yet.";
+
+    private const string CannotSkip = "The episode cannot skip yet.";
+
     private readonly AudioArbiter _audio;
     private readonly AmbientMusic _music;
     private readonly Func<PodcastEpisode, MusicTrack> _open;
@@ -331,6 +335,69 @@ public sealed class PodcastPlayer
 
     public string SkipForward() => Skip(SkipBy);
 
+    /// <summary>Whether <paramref name="sentence"/> says a transport action did nothing, as opposed to reporting it done.</summary>
+    public static bool Refused(string sentence) =>
+        sentence is NothingPlaying or NotStarted or CannotSkip or FromStartOnlySentence;
+
+    /// <summary>Moves the playing episode to <paramref name="to"/>, clamped to its length.</summary>
+    public string Seek(TimeSpan to)
+    {
+        Playback? now;
+
+        lock (_gate)
+        {
+            now = _now;
+        }
+
+        if (now is null)
+        {
+            return NothingPlaying;
+        }
+
+        if (now.FromStartOnly)
+        {
+            return FromStartOnlySentence;
+        }
+
+        if (_audio.PodcastProgress() is not { } progress)
+        {
+            return NotStarted;
+        }
+
+        to = TimeSpan.FromTicks(Math.Max(0, to.Ticks));
+
+        if (progress.Length is { } length && to > length)
+        {
+            to = length;
+        }
+
+        return _audio.SeekPodcast(to) ? $"At {Clock(to)}." : CannotSkip;
+    }
+
+    /// <summary>Stops the episode if it belongs to <paramref name="feed"/> and forgets the feed's listening record.</summary>
+    public void Forget(Uri feed)
+    {
+        bool playing;
+
+        lock (_gate)
+        {
+            playing = _now is { } now && now.Feed.AbsoluteUri == feed.AbsoluteUri;
+        }
+
+        if (playing)
+        {
+            Stop();
+        }
+
+        lock (_gate)
+        {
+            _listening = _listening.Without(feed);
+            _dirty = true;
+        }
+
+        QueueSave();
+    }
+
     /// <summary>
     /// Plays the earliest unfinished episode of the same show published after the one playing. With none, says so
     /// and stops.
@@ -456,7 +523,7 @@ public sealed class PodcastPlayer
 
         if (_audio.PodcastProgress() is not { } progress)
         {
-            return "The episode has not started yet.";
+            return NotStarted;
         }
 
         var to = progress.Elapsed + by;
@@ -473,7 +540,7 @@ public sealed class PodcastPlayer
 
         if (!_audio.SeekPodcast(to))
         {
-            return "The episode cannot skip yet.";
+            return CannotSkip;
         }
 
         return by < TimeSpan.Zero ? "Back 30 seconds." : "Forward 30 seconds.";

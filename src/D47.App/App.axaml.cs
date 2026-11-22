@@ -132,6 +132,7 @@ public partial class App(AppHost? host) : Application
                 learnedPhrases: host.LearnedPhrases,
                 adventureDesk: host.AdventureDesk,
                 characters: host.CharactersHost,
+                podcasts: host.PodcastsHost,
                 buildTalk: host.BuildTalk,
                 spend: MainWindow.SpendDeskFor(host),
                 bgsTick: () => host.BgsTick?.Last,
@@ -226,6 +227,7 @@ public partial class App(AppHost? host) : Application
                     Modules = window?.ModulesSource,
                     Portraits = new Panel.SpeakerPortraits(host.SpeakerPictures, host.Loggers.CreateLogger<Panel.SpeakerPortraits>()),
                     RegionFirsts = host.RegionFirsts,
+                    Podcasts = host.PodcastsHost,
                 });
 
             // Through the same route as the other two (Phase 45).

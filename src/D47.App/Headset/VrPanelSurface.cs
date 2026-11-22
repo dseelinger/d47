@@ -140,6 +140,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Panel.SpeakerPortraits? portraits = null,
         D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? adventureDesk = null,
         Panel.CharactersHost? characters = null,
+        Panel.PodcastsHost? podcasts = null,
         D47.Core.Ships.BuildTalk? buildTalk = null,
         Panel.SpendDesk? spend = null,
         Func<DateTimeOffset?>? bgsTick = null,
@@ -230,6 +231,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             Portraits = portraits,
             AdventureDesk = adventureDesk,
             Characters = characters,
+            Podcasts = podcasts,
             BuildTalk = buildTalk,
         }.Furnish(_view);
 

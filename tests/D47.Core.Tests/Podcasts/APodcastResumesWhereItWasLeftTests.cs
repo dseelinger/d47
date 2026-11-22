@@ -179,6 +179,76 @@ public sealed class APodcastResumesWhereItWasLeftTests
     }
 
     [Fact]
+    public void ASeekMovesToThePositionAndStopsAtTheEnds()
+    {
+        var player = Player();
+        _ = player.Play(Feed, Show, First);
+        var id = Live.Id;
+
+        _sink.Progresses[id] = new TrackProgress(TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1));
+        Assert.Equal("At 0:40.", player.Seek(TimeSpan.FromSeconds(40)));
+        Assert.Equal((id, TimeSpan.FromSeconds(40)), _sink.Seeks.Last());
+
+        player.Seek(TimeSpan.FromMinutes(5));
+        Assert.Equal((id, TimeSpan.FromMinutes(1)), _sink.Seeks.Last());
+
+        player.Seek(TimeSpan.FromSeconds(-5));
+        Assert.Equal((id, TimeSpan.Zero), _sink.Seeks.Last());
+    }
+
+    [Fact]
+    public async Task ASeekOnAStreamThatCannotSeekSaysSoAndNothingMoves()
+    {
+        _stream = () => new MemoryPcm(canSeek: false);
+        var player = Player();
+
+        var said = player.Play(Feed, Show, First);
+        using var opened = Live.Track!.Open();
+        await said;
+
+        var before = _sink.Seeks.Count;
+
+        Assert.Equal(PodcastPlayer.FromStartOnlySentence, player.Seek(TimeSpan.FromSeconds(40)));
+        Assert.True(PodcastPlayer.Refused(PodcastPlayer.FromStartOnlySentence));
+        Assert.Equal(before, _sink.Seeks.Count);
+    }
+
+    [Fact]
+    public void ASeekWithNothingPlayingIsRefused()
+    {
+        var answer = Player().Seek(TimeSpan.FromSeconds(40));
+
+        Assert.Equal("No podcast is playing.", answer);
+        Assert.True(PodcastPlayer.Refused(answer));
+    }
+
+    [Fact]
+    public void ForgettingAFeedStopsItsEpisodeAndDropsItsRecord()
+    {
+        Saved(First, TimeSpan.FromMinutes(12));
+        var player = Player();
+        _ = player.Play(Feed, Show, First);
+
+        player.Forget(Feed);
+        RunQueued();
+
+        Assert.Null(player.State);
+        Assert.Null(player.Listening.Find(Feed, First.Id));
+        Assert.Null(PodcastListening.FromJson(_files.ReadText(ListeningPath)!).Listening.Find(Feed, First.Id));
+    }
+
+    [Fact]
+    public void ForgettingAnotherFeedLeavesTheEpisodePlaying()
+    {
+        var player = Player();
+        _ = player.Play(Feed, Show, First);
+
+        player.Forget(new Uri("https://example.test/other.xml"));
+
+        Assert.NotNull(player.State);
+    }
+
+    [Fact]
     public void NextSkipsFinishedEpisodesAndTakesTheEarliestLaterOne()
     {
         Saved(Second, TimeSpan.Zero, finished: true);

@@ -506,6 +506,8 @@ public sealed class AppHost : IDisposable
     /// <summary>The podcast voice commands act on this: the player, the shows, searches and adding a feed.</summary>
     internal Core.Podcasts.PodcastDesk? PodcastDesk { get; private set; }
 
+    internal PodcastSearchClient? PodcastSearch { get; private set; }
+
     /// <summary>Whether a Music publish token is stored or in the environment.</summary>
     internal bool MusicMaintainer =>
         MusicPublishToken.Present(Secrets.Names.Contains(MusicPublishToken.SecretName), Environment.GetEnvironmentVariable);
@@ -4074,6 +4076,7 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<Core.Podcasts.PodcastPlayer>());
         host.PodcastPlayer = podcastPlayer;
         var podcastSearch = new PodcastSearchClient(PodcastStore.CreateClient(), loggerFactory.CreateLogger<PodcastSearchClient>());
+        host.PodcastSearch = podcastSearch;
         host.PodcastDesk = new Core.Podcasts.PodcastDesk(
             podcastPlayer,
             () => podcasts.Shows,
@@ -5935,6 +5938,48 @@ public sealed class AppHost : IDisposable
         GatedDistance(Settings, () => Galaxy),
         CastVoices);
 
+    private D47.App.Panel.PodcastsHost? _podcastsHost;
+
+    /// <summary>What Media › Podcasts reads and does, shared by the window and the headset; null before the podcast player is built.</summary>
+    public D47.App.Panel.PodcastsHost? PodcastsHost
+    {
+        get
+        {
+            if (_podcastsHost is null && Podcasts is { } store && PodcastPlayer is { } player)
+            {
+                var search = PodcastSearch;
+
+                _podcastsHost = new D47.App.Panel.PodcastsHost(
+                    player,
+                    () => store.Shows,
+                    () => Settings.Current.Podcasts.FeedUris(),
+                    store.RefreshAllAsync,
+                    words => search is null
+                        ? Task.FromResult(new D47.Core.Podcasts.PodcastSearchOutcome([], "Podcast search is not available."))
+                        : search.SearchAsync(words),
+                    async feed =>
+                    {
+                        var read = await store.RefreshAsync(feed).ConfigureAwait(false);
+
+                        if (read.Show is not null)
+                        {
+                            Settings.Replace("a podcast feed was added", current => current with { Podcasts = current.Podcasts.WithFeed(feed) });
+                        }
+
+                        return read;
+                    },
+                    feed =>
+                    {
+                        Settings.Replace("a podcast feed was removed", current => current with { Podcasts = current.Podcasts.WithoutFeed(feed) });
+                        player.Forget(feed);
+                    });
+                store.Changed += _podcastsHost.RaiseChanged;
+            }
+
+            return _podcastsHost;
+        }
+    }
+
     private D47.App.Panel.CastVoiceSurface? _castVoices;
 
     /// <summary>What the panel may do about a story character's voice, shared by the window and the headset.</summary>
@@ -6441,6 +6486,7 @@ public sealed class AppHost : IDisposable
         if (change.Key == PodcastCapability.FeedsKey)
         {
             _ = Podcasts?.RefreshNewAsync();
+            _podcastsHost?.RaiseChanged();
         }
 
         // On every change, since a batch write can move a button under another key; unchanged slots are left alone.

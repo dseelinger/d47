@@ -1498,6 +1498,19 @@ public sealed record PodcastSettings
 
         return this with { Feeds = [.. Feeds ?? [], feed.AbsoluteUri] };
     }
+
+    /// <summary>These settings without <paramref name="feed"/>; the same instance when it is not added.</summary>
+    public PodcastSettings WithoutFeed(Uri feed)
+    {
+        ArgumentNullException.ThrowIfNull(feed);
+
+        var kept = (Feeds ?? [])
+            .Where(entry => !(Uri.TryCreate(entry?.Trim(), UriKind.Absolute, out var uri)
+                              && string.Equals(uri.AbsoluteUri, feed.AbsoluteUri, StringComparison.Ordinal)))
+            .ToList();
+
+        return kept.Count == (Feeds ?? []).Count ? this : this with { Feeds = kept };
+    }
 }
 
 /// <summary>Where usage counts are sent.</summary>

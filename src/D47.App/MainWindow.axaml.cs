@@ -318,7 +318,7 @@ public partial class MainWindow : Window
             Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableCommanders(host.Commanders);
 
-            Panel.EnableMedia();
+            Panel.EnableMedia(host.PodcastsHost, BuildSettingsStrip);
 
             if (ModulesSource is { } modulesSource)
             {

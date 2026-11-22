@@ -275,11 +275,10 @@ public static class PodcastCapability
     {
         Key = FeedsKey,
         Exercise =
-            "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), open "
-            + "Settings › Hearing and sound › Sounds and levels, group Podcasts, and find Podcast feeds. Paste a feed "
+            "Open Media › Podcasts, press Settings at the top of the page, and find Podcast feeds. Paste a feed "
             + "address and save: the feed is fetched, and \"list podcasts\" names the show. An address that is not "
             + "http or https is refused.",
-        Advanced = true,
+        Advanced = false,
         Label = "Podcast feeds",
         Help = "The addresses of the podcast feeds to play, separated by spaces. Saving fetches any feed that is new. "
                + "Only you can change this; the model cannot, because each feed adds a host D47 contacts.",

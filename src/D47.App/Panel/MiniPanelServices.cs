@@ -50,6 +50,8 @@ public sealed record MiniPanelServices
 
     public CharactersHost? Characters { get; init; }
 
+    public PodcastsHost? Podcasts { get; init; }
+
     public D47.Core.Ships.BuildTalk? BuildTalk { get; init; }
 
     public RoutingSurface? Routing { get; init; }
@@ -165,7 +167,7 @@ public sealed record MiniPanelServices
             view.EnableModules(Modules);
         }
 
-        view.EnableMedia();
+        view.EnableMedia(Podcasts, BuildSettingsStrip);
         view.EnableRawJournal();
 
         view.EnableLog(BuildSettingsStrip is null ? null : () => BuildSettingsStrip(PanelView.LogRoot));
