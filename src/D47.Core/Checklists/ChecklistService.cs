@@ -558,8 +558,10 @@ public sealed class ChecklistService(
         ChecklistItem item,
         IReadOnlyCollection<JournalEvent>? events,
         CommanderGameState state) =>
-        item is { Kind: ChecklistItemKind.Authored, State: ChecklistState.Open, Watch: { } watch } && events is { Count: > 0 }
-            ? ChecklistWatching.Count(watch, events, state.Location)
+        item is { Kind: ChecklistItemKind.Authored, State: ChecklistState.Open, Watch: { } watch }
+            ? watch.Kind == ChecklistWatchKind.Have
+                ? ChecklistWatching.Holding(watch, state.Materials)
+                : events is { Count: > 0 } ? ChecklistWatching.Count(watch, events, state.Location) : null
             : null;
 
     /// <summary>Removes any mission lines the store holds; missions are no longer checklist lines.</summary>

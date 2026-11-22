@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Journal;
+using D47.Core.Knowledge;
 
 namespace D47.Core.Checklists;
 
@@ -20,6 +21,9 @@ public enum ChecklistWatchKind
 
     /// <summary><c>CarrierTradeOrder</c> setting a buy order for a commodity.</summary>
     BuyOrder,
+
+    /// <summary>The Commander holding at least the quantity of a ship material.</summary>
+    Have,
 }
 
 /// <summary>One journal condition on an authored line; the line ticks when it is met.</summary>
@@ -35,7 +39,7 @@ public sealed record ChecklistWatch(ChecklistWatchKind Kind, string Subject)
     /// <summary>When the watch was set; an earlier event never counts.</summary>
     public DateTimeOffset Since { get; init; }
 
-    /// <summary>The running count for a buy or a sale.</summary>
+    /// <summary>The running count for a buy, a sale or a holding.</summary>
     public int Progress { get; init; }
 
     /// <summary>The timestamp of the last event counted; only a later one counts.</summary>
@@ -133,6 +137,35 @@ public static class ChecklistWatching
     }
 
     /// <summary>
+    /// What the Commander holds against a <see cref="ChecklistWatchKind.Have"/> watch, or null when nothing
+    /// changed, the watch is another kind, or no <c>Materials</c> snapshot has arrived.
+    /// </summary>
+    public static ChecklistWatchOutcome? Holding(ChecklistWatch watch, MaterialsInventory materials)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        ArgumentNullException.ThrowIfNull(materials);
+
+        if (watch.Kind != ChecklistWatchKind.Have
+            || !materials.SnapshotSeen
+            || MaterialCatalogue.Find(watch.Subject) is not { Ledger: MaterialLedger.Material } entry)
+        {
+            return null;
+        }
+
+        var wanted = watch.Quantity ?? 1;
+        var held = materials.CountOf(entry.Symbol);
+        var done = held >= wanted;
+        var progress = Math.Min(held, wanted);
+
+        return done || progress != watch.Progress
+            ? new ChecklistWatchOutcome(
+                watch with { Progress = progress },
+                done,
+                done ? $"you held {wanted.ToString(CultureInfo.InvariantCulture)} {entry.Name}" : null)
+            : null;
+    }
+
+    /// <summary>
     /// What one event adds: the count for a buy or a sale, the order size for a buy order, 1 for a dock
     /// or an arrival; null when it does not match.
     /// </summary>
@@ -186,6 +219,7 @@ public static class ChecklistWatching
             ChecklistWatchKind.Arrive => $"you arrive in {watch.Subject}",
             ChecklistWatchKind.Buy => $"you buy {what}{At(watch.Place)}",
             ChecklistWatchKind.Sell => $"you sell {what}{At(watch.Place)}",
+            ChecklistWatchKind.Have => $"you hold {what}",
             _ => $"your carrier has a buy order for {what}",
         };
 
@@ -200,7 +234,7 @@ public static class ChecklistWatching
         var said = $"Ticks when {Condition(watch)}";
 
         return open && watch.Progress > 0 && watch.Quantity is { } wanted
-               && watch.Kind is ChecklistWatchKind.Buy or ChecklistWatchKind.Sell
+               && watch.Kind is ChecklistWatchKind.Buy or ChecklistWatchKind.Sell or ChecklistWatchKind.Have
             ? $"{said} · {watch.Progress.ToString(CultureInfo.InvariantCulture)} of "
               + $"{wanted.ToString(CultureInfo.InvariantCulture)} so far"
             : said;

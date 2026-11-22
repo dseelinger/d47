@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -355,6 +356,27 @@ public static class ChecklistValidation
         return item.Watch is { } watch ? WatchProblem(item.Text, item.Kind, watch) : null;
     }
 
+    private static string? HaveProblem(string text, ChecklistWatch watch)
+    {
+        if (watch.Quantity is null)
+        {
+            return $"\"{text}\" watches for holding a material without saying how many.";
+        }
+
+        if (watch.Place is not null)
+        {
+            return $"\"{text}\" gives a place to a holding, which takes none.";
+        }
+
+        return MaterialCatalogue.Find(watch.Subject) switch
+        {
+            { Ledger: MaterialLedger.Material } => null,
+            { Ledger: MaterialLedger.Cargo or MaterialLedger.RareCargo } =>
+                $"\"{text}\" holds a commodity, which is cargo; a buy watch ticks when you buy it.",
+            _ => $"\"{text}\" holds {watch.Subject}, which is not a ship material I know.",
+        };
+    }
+
     /// <summary>Why a watch on the line called <paramref name="text"/> would be refused, or null.</summary>
     public static string? WatchProblem(string text, ChecklistItemKind kind, ChecklistWatch watch)
     {
@@ -376,6 +398,11 @@ public static class ChecklistValidation
         if (watch.Quantity is < 1)
         {
             return $"\"{text}\" watches for {watch.Quantity} of something, and the least is 1.";
+        }
+
+        if (watch.Kind == ChecklistWatchKind.Have && HaveProblem(text, watch) is { } have)
+        {
+            return have;
         }
 
         if (watch.Quantity is not null && watch.Kind is ChecklistWatchKind.Dock or ChecklistWatchKind.Arrive)

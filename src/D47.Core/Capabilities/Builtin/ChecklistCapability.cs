@@ -489,16 +489,17 @@ public static class ChecklistCapability
         ToolParameter.OneOf(
             "tick_when",
             "A journal condition that ticks the line itself once the Commander agrees: dock at a station, "
-            + "arrive in a system, buy or sell a commodity, or set a carrier buy order. Needs subject.",
-            ["dock", "arrive", "buy", "sell", "buy_order"]),
+            + "arrive in a system, buy or sell a commodity, set a carrier buy order, or hold a quantity of a "
+            + "ship material. Needs subject.",
+            ["dock", "arrive", "buy", "sell", "buy_order", "have"]),
         ToolParameter.Text(
             "subject",
             "What tick_when waits for, as Elite names it: a station for dock, a system for arrive, "
-            + "a commodity for buy, sell and buy_order."),
+            + "a commodity for buy, sell and buy_order, a ship material for have."),
         ToolParameter.Text(
             "place",
-            "The system for dock, the station for buy and sell. Not used by arrive or buy_order."),
-        ToolParameter.Integer("quantity", "How many, for buy, sell and buy_order. At least 1."),
+            "The system for dock, the station for buy and sell. Not used by arrive, buy_order or have."),
+        ToolParameter.Integer("quantity", "How many, for buy, sell, buy_order and have. At least 1."),
     ];
 
     /// <summary>Reads the watch arguments; returns a refusal sentence when they cannot make a watch.</summary>
