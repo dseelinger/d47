@@ -43,13 +43,12 @@ internal sealed class SteppedSink : IAudioSink
 
     public void Stop(long playbackId) => _done.Add(playbackId);
 
-    public void Pause(long playbackId)
-    {
-    }
+    /// <summary>The streams paused and not resumed since.</summary>
+    public HashSet<long> Paused { get; } = [];
 
-    public void Resume(long playbackId)
-    {
-    }
+    public void Pause(long playbackId) => Paused.Add(playbackId);
+
+    public void Resume(long playbackId) => Paused.Remove(playbackId);
 
     public void SetGain(long playbackId, float gain)
     {

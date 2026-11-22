@@ -174,28 +174,4 @@ public sealed class ABookPausesOnItsSentenceTests
         Assert.Null(rig.Player.Now);
         Assert.True(rig.Shelf.Find(BookRig.Source)!.Finished);
     }
-
-    [Fact]
-    public void StartingAStoryPausesTheBookAndStartingTheBookStopsTheStory()
-    {
-        var rig = BookRig.InMemory();
-        var story = new StoryRunPlayer(rig.Audio, (_, _) => null, rig.Background.Enqueue);
-        rig.Player.Starting += story.Stop;
-        story.Starting += () => rig.Player.Pause(StoryRunPause.Commander);
-        rig.Play();
-
-        story.Play(
-            new D47.Core.Stories.Story { Id = "quiet-relay", Title = "The Quiet Relay", PublicLayer = "-" },
-            [new D47.Core.Stories.StoryRunLine { From = "Narrator", Body = "line", Key = "line.0" }],
-            0);
-
-        Assert.Equal(StoryRunPause.Commander, rig.Player.Now!.Pause);
-        Assert.NotNull(story.Now);
-
-        rig.Player.Resume();
-        rig.Settle();
-
-        Assert.Null(story.Now);
-        Assert.False(rig.Player.Now!.IsPaused);
-    }
 }

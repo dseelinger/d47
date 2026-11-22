@@ -115,6 +115,14 @@ While a book is playing or paused, a bare "pause" or "play" acts on it. A story 
 them first. A podcast that is playing takes them over a paused book; otherwise the book takes them. With
 neither, they go to the music.
 
+Only one of a book and a podcast plays at a time. Starting a book pauses the episode, and playing or resuming an
+episode pauses the book, as if you had paused it; neither resumes by itself. A book does not start or resume
+while a story plays: D47 says "A story is playing." A story starting pauses the book.
+
+Speech or an alert pauses the book at its sentence, and once it ends the book reads that sentence again, as it
+does after you speak to D47. Invented chatter is not played while the book is read, and the ambient music fades
+out and stays silent until the book stops or you pause it.
+
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
 

@@ -643,12 +643,12 @@ public static class BuiltinCapabilities
     ];
 
     /// <summary>
-    /// Whether a book takes bare "play" and "pause": one is playing or paused, unless a podcast is playing and the
-    /// book is paused. Exactly one of a book, a podcast and the music takes them.
+    /// Whether a book takes bare "play" and "pause": one is playing or paused and no podcast is playing. A book and a
+    /// podcast never play at once, so exactly one of a book, a podcast and the music takes them.
     /// </summary>
     private static bool BookTakesBare(Func<Books.BookDesk?>? books, Func<Podcasts.PodcastDesk?>? podcasts) =>
-        books?.Invoke() is { Active: true } book
-        && (book.Playing || podcasts?.Invoke()?.Player.State is not { Playing: true });
+        books?.Invoke() is { Active: true }
+        && podcasts?.Invoke()?.Player.State is not { Playing: true };
 
     /// <summary>Whether a podcast takes bare "play" and "pause": one is playing or paused and no book takes them.</summary>
     private static bool PodcastTakesBare(Func<Books.BookDesk?>? books, Func<Podcasts.PodcastDesk?>? podcasts) =>

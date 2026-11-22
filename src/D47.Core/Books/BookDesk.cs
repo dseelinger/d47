@@ -3,7 +3,10 @@ namespace D47.Core.Books;
 /// <summary>The book being read or paused, as the voice commands see it.</summary>
 public sealed record BookNow(BookSource Source, string Title, int Chapter, string ChapterTitle, bool Paused);
 
-/// <summary>What the book voice commands act on: the shelf, and the reader that plays a book aloud.</summary>
+/// <summary>
+/// What the book voice commands act on: the shelf, and the reader that plays a book aloud. A book does not start or
+/// resume while <paramref name="storyPlaying"/> says a story plays.
+/// </summary>
 public sealed class BookDesk(
     Func<IReadOnlyList<ShelfBook>> shelf,
     Func<bool> voiceInstalled,
@@ -12,9 +15,12 @@ public sealed class BookDesk(
     Action pause,
     Action resume,
     Func<bool> nextChapter,
-    Func<bool> backAParagraph)
+    Func<bool> backAParagraph,
+    Func<bool>? storyPlaying = null)
 {
     public const string NoBook = "No book is being read.";
+
+    public const string StoryPlaying = "A story is playing.";
 
     private readonly Lock _gate = new();
 
@@ -22,8 +28,6 @@ public sealed class BookDesk(
 
     /// <summary>A book is being read, or the Commander has paused it.</summary>
     public bool Active => now() is not null;
-
-    public bool Playing => now() is { Paused: false };
 
     public IReadOnlyList<ShelfBook> Shelf() => shelf();
 
@@ -33,6 +37,11 @@ public sealed class BookDesk(
         if (!voiceInstalled())
         {
             return "Books are read only by Kokoro or Chatterbox, and neither is installed.";
+        }
+
+        if (storyPlaying?.Invoke() == true)
+        {
+            return StoryPlaying;
         }
 
         var books = shelf();
@@ -100,6 +109,11 @@ public sealed class BookDesk(
         if (!reading.Paused)
         {
             return "The book is already playing.";
+        }
+
+        if (storyPlaying?.Invoke() == true)
+        {
+            return StoryPlaying;
         }
 
         resume();

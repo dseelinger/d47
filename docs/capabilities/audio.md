@@ -203,6 +203,19 @@ a story plays. When the last of those ends it steps back two seconds and carries
 paused it yourself. Invented chatter is not played over a podcast. A row that does not apply is
 absent rather than greyed out.
 
+### One thing under Media at a time
+
+Only one of a podcast and a book plays at a time. Starting a book pauses the episode, and starting or
+resuming an episode pauses the book, as if you had paused it; neither resumes by itself. A story
+starting pauses a book or a podcast, and a book does not start or resume while a story plays: D47 says
+"A story is playing."
+
+A book being read pauses at its sentence for speech or an alert, and once the callout ends it reads that
+sentence again. A callout is never dropped because a book is being read. Invented chatter is not played
+while a book is read or an episode plays, and ambient music fades out for either and stays silent: for a book until it
+stops or you pause it, and for a podcast until the episode stops. Ambient music on its own still ducks
+under every voice, and chatter plays over it.
+
 ### Every voice at one loudness
 
 A voice that is quieter than the rest is raised to the same level, so one quiet voice among a

@@ -61,10 +61,12 @@ internal sealed class BookRig
 
     public static readonly BookSource Source = BookSource.FromFile("The Night Watch.txt");
 
-    private BookRig(IFileSystem files, string folder, string provider)
+    private BookRig(IFileSystem files, string folder, string provider, Func<AudioArbiter, AmbientMusic>? music)
     {
         Sink = new SteppedSink();
         Audio = new AudioArbiter(Sink, NullLogger<AudioArbiter>.Instance).Start();
+        Music = music?.Invoke(Audio);
+        Story = new StoryRunPlayer(Audio, (_, line) => new AudioClip(line.Body, new byte[960], AudioFormat.Standard), Background.Enqueue);
         Shelf = new BookShelf(files, folder, NullLogger.Instance);
         Settings = new BookSettings { Provider = provider };
         Voices = new Dictionary<string, FakeBookVoice>(StringComparer.OrdinalIgnoreCase)
@@ -82,7 +84,9 @@ internal sealed class BookRig
                 return Installed ? Voices.GetValueOrDefault(id) : null;
             },
             () => Settings,
-            Background.Enqueue);
+            Background.Enqueue,
+            Story,
+            Music);
     }
 
     public SteppedSink Sink { get; }
@@ -92,6 +96,12 @@ internal sealed class BookRig
     public BookShelf Shelf { get; }
 
     public BookPlayer Player { get; }
+
+    /// <summary>The story player the book yields to.</summary>
+    public StoryRunPlayer Story { get; }
+
+    /// <summary>The ambient music the book holds while it reads, when the rig was built with some.</summary>
+    public AmbientMusic? Music { get; }
 
     public BookSettings Settings { get; set; }
 
@@ -115,12 +125,17 @@ internal sealed class BookRig
         ]);
 
     /// <summary>A rig with the book on a shelf held in memory.</summary>
-    public static BookRig InMemory(string provider = "kokoro") => OnShelf(new MemoryFileSystem(), @"C:\d47\data\books", provider, add: true);
+    public static BookRig InMemory(string provider = "kokoro", Func<AudioArbiter, AmbientMusic>? music = null) => OnShelf(new MemoryFileSystem(), @"C:\d47\data\books", provider, add: true, music);
 
     /// <summary>A rig over the shelf in <paramref name="folder"/>, adding the book first when <paramref name="add"/>.</summary>
-    public static BookRig OnShelf(IFileSystem files, string folder, string provider = "kokoro", bool add = false)
+    public static BookRig OnShelf(
+        IFileSystem files,
+        string folder,
+        string provider = "kokoro",
+        bool add = false,
+        Func<AudioArbiter, AmbientMusic>? music = null)
     {
-        var rig = new BookRig(files, folder, provider);
+        var rig = new BookRig(files, folder, provider, music);
 
         if (add)
         {
@@ -155,14 +170,27 @@ internal sealed class BookRig
     }
 
     /// <summary>Queues a reply from D47 in a turn's group.</summary>
-    public void Reply(string name)
+    public void Reply(string name) => Say(AudioChannel.Speech, name, "turn-1");
+
+    /// <summary>Queues a line on <paramref name="channel"/> in <paramref name="group"/>, and runs what that starts.</summary>
+    public void Say(AudioChannel channel, string name, string? group = null)
     {
         Audio.Enqueue(new AudioRequest
         {
-            Channel = AudioChannel.Speech,
+            Channel = channel,
             Clip = new AudioClip(name, new byte[960], AudioFormat.Standard),
-            Group = "turn-1",
+            Group = group,
         });
+        Settle();
+    }
+
+    /// <summary>Plays a one-line story and runs what that starts.</summary>
+    public void PlayStory(string line = "story line")
+    {
+        Story.Play(
+            new D47.Core.Stories.Story { Id = "quiet-relay", Title = "The Quiet Relay", PublicLayer = "-" },
+            [new D47.Core.Stories.StoryRunLine { From = "Narrator", Body = line, Key = "line.0", Clip = "0.wav" }],
+            0);
         Settle();
     }
 }

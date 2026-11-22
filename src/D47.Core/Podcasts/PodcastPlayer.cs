@@ -93,6 +93,9 @@ public sealed class PodcastPlayer
     /// <summary>Raised outside any lock after an episode starts, pauses, resumes, stops or finishes.</summary>
     public event Action<PodcastPlayerState?>? Changed;
 
+    /// <summary>Raised on the calling thread, outside any lock, as an episode starts or resumes, before it plays.</summary>
+    public event Action? Starting;
+
     /// <summary>Why the last episode stopped before its end; null once another starts, or when none did.</summary>
     public string? Problem
     {
@@ -184,6 +187,7 @@ public sealed class PodcastPlayer
 
         previous?.Opened.TrySetCanceled();
         FollowYield();
+        Starting?.Invoke();
 
         try
         {
@@ -287,6 +291,8 @@ public sealed class PodcastPlayer
         {
             return "The podcast is already playing.";
         }
+
+        Starting?.Invoke();
 
         if (!_audio.ResumePodcast())
         {
@@ -602,7 +608,7 @@ public sealed class PodcastPlayer
                 yielding = _now is not null;
             }
 
-            _music.Yield(yielding);
+            _music.Yield(MusicYield.Podcast, yielding);
         }
     }
 

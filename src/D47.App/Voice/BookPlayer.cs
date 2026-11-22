@@ -1,6 +1,7 @@
 using D47.Core.Audio;
 using D47.Core.Books;
 using D47.Core.Configuration;
+using D47.Core.Podcasts;
 
 namespace D47.App.Voice;
 
@@ -21,9 +22,10 @@ public sealed record BookPlayback(Book Book, BookPlace Place, int Sentence, stri
 /// <summary>
 /// Reads a shelf book aloud, sentence by sentence from its place, with a local voice only. The next
 /// <see cref="SentencesAhead"/> sentences are made one at a time off the calling thread, and each clip is dropped once
-/// played. The place is saved to the shelf at each new paragraph. A push-to-talk or alert pause plays on from the start
-/// of its sentence once D47 is not listening, answering or speaking; a Commander pause, or a failed voice, waits for
-/// <see cref="Resume"/>.
+/// played. The place is saved to the shelf at each new paragraph. A push-to-talk pause, or a callout's, plays on from
+/// the start of its sentence once D47 is not listening, answering or speaking; a Commander pause, or a failed voice,
+/// waits for <see cref="Resume"/>. A book does not start or resume while a story plays, and a story starting pauses it.
+/// Ambient music yields while it reads, and chatter is refused.
 /// </summary>
 public sealed class BookPlayer
 {
@@ -38,7 +40,10 @@ public sealed class BookPlayer
     private readonly Func<string, ITtsProvider?> _localVoice;
     private readonly Func<BookSettings> _settings;
     private readonly Action<Action> _background;
+    private readonly StoryRunPlayer? _story;
+    private readonly AmbientMusic? _music;
     private readonly Lock _gate = new();
+    private readonly Lock _publishing = new();
 
     /// <summary>The sentence playing and those after it, made or being made, in order.</summary>
     private readonly List<Ahead> _ahead = [];
@@ -58,7 +63,9 @@ public sealed class BookPlayer
         BookShelf shelf,
         Func<string, ITtsProvider?> localVoice,
         Func<BookSettings> settings,
-        Action<Action>? background = null)
+        Action<Action>? background = null,
+        StoryRunPlayer? story = null,
+        AmbientMusic? music = null)
     {
         ArgumentNullException.ThrowIfNull(audio);
         ArgumentNullException.ThrowIfNull(shelf);
@@ -70,6 +77,8 @@ public sealed class BookPlayer
         _localVoice = localVoice;
         _settings = settings;
         _background = background ?? (work => _ = Task.Run(work));
+        _story = story;
+        _music = music;
         _audio.Played += OnPlayed;
         _audio.PlaybackPaused += () => Pause(StoryRunPause.Interrupted);
         _audio.ActivityChanged += activity =>
@@ -79,6 +88,11 @@ public sealed class BookPlayer
                 Settled();
             }
         };
+
+        if (story is not null)
+        {
+            story.Starting += () => Pause(StoryRunPause.Commander);
+        }
     }
 
     /// <summary>Raised when the sentence, the pause, waiting or the problem changed; on any thread.</summary>
@@ -86,6 +100,9 @@ public sealed class BookPlayer
 
     /// <summary>Raised on the calling thread as reading starts or resumes, before it takes the speech channels.</summary>
     public event Action? Starting;
+
+    /// <summary>A story is playing, or paused by anything but the Commander, so a book does not start or resume.</summary>
+    public bool StoryPlaying => _story?.Now is { Pause: not StoryRunPause.Commander };
 
     /// <summary>What is being read or paused, or null.</summary>
     public BookPlayback? Now
@@ -100,12 +117,36 @@ public sealed class BookPlayer
     }
 
     /// <summary>
+    /// Starting this book pauses <paramref name="podcast"/>, and starting the podcast pauses this book, each as the
+    /// Commander's pause.
+    /// </summary>
+    public void TakesTurnsWith(PodcastPlayer podcast)
+    {
+        ArgumentNullException.ThrowIfNull(podcast);
+
+        Starting += () =>
+        {
+            if (podcast.State is { Playing: true })
+            {
+                podcast.Pause();
+            }
+        };
+        podcast.Starting += () => Pause(StoryRunPause.Commander);
+    }
+
+    /// <summary>
     /// Reads <paramref name="source"/> from its place on the shelf, or from its start once finished. Reads its text from
-    /// the disk on the calling thread. False when it is not on the shelf or has no sentence to read.
+    /// the disk on the calling thread. False when a story is playing, or the book is not on the shelf or has no sentence
+    /// to read. With a callout queued or playing, it waits paused at its first sentence until the callout ends.
     /// </summary>
     public bool Play(BookSource source)
     {
         ArgumentNullException.ThrowIfNull(source);
+
+        if (StoryPlaying)
+        {
+            return false;
+        }
 
         if (_shelf.Find(source) is not { } entry || _shelf.Open(source) is not { } book)
         {
@@ -127,10 +168,14 @@ public sealed class BookPlayer
             _queued = null;
             _now = new BookPlayback(book, first.Place, first.Sentence, first.Text, StoryRunPause.None);
             _audio.DropGroup(Group);
-            _audio.HoldSpeechFor(Group);
+
+            if (!_audio.HoldSpeechForMedia(Group))
+            {
+                _now = _now with { Pause = StoryRunPause.Interrupted };
+            }
         }
 
-        Changed?.Invoke();
+        Raise();
         _background(Fill);
         return true;
     }
@@ -155,10 +200,13 @@ public sealed class BookPlayer
             }
         }
 
-        Changed?.Invoke();
+        Raise();
     }
 
-    /// <summary>Plays on from the start of the sentence paused at; after a failed voice, that sentence is made again.</summary>
+    /// <summary>
+    /// Plays on from the start of the sentence paused at; after a failed voice, that sentence is made again. Nothing
+    /// happens while a story is playing.
+    /// </summary>
     public void Resume() => ResumeWhen(static _ => true);
 
     /// <summary>
@@ -180,7 +228,7 @@ public sealed class BookPlayer
             End();
         }
 
-        Changed?.Invoke();
+        Raise();
     }
 
     private void ResumeIfQuiet()
@@ -198,7 +246,7 @@ public sealed class BookPlayer
 
     private void ResumeWhen(Func<StoryRunPause, bool> reason)
     {
-        if (Now is not { IsPaused: true } paused || !reason(paused.Pause))
+        if (Now is not { IsPaused: true } paused || !reason(paused.Pause) || StoryPlaying)
         {
             return;
         }
@@ -220,11 +268,36 @@ public sealed class BookPlayer
             // The paused sentence's clip was dropped from the queue; it is queued again from what was made.
             _queued = null;
             _now = now with { Pause = StoryRunPause.None, Problem = null };
-            _audio.HoldSpeechFor(Group);
+
+            if (!_audio.HoldSpeechForMedia(Group))
+            {
+                _now = _now with { Pause = StoryRunPause.Interrupted };
+            }
         }
 
-        Changed?.Invoke();
+        Raise();
         _background(Fill);
+    }
+
+    /// <summary>
+    /// Tells the arbiter and the ambient music, off the calling thread, whether the book is reading, then raises
+    /// <see cref="Changed"/>.
+    /// </summary>
+    private void Raise()
+    {
+        _background(Publish);
+        Changed?.Invoke();
+    }
+
+    /// <summary>Reads the book's state when it runs, so calls may land in any order.</summary>
+    private void Publish()
+    {
+        lock (_publishing)
+        {
+            var reading = Now is { Pause: not StoryRunPause.Commander };
+            _audio.MediaPlays(reading);
+            _music?.Yield(MusicYield.Book, reading);
+        }
     }
 
     /// <summary>Clears the book. Called holding <see cref="_gate"/>.</summary>
@@ -306,7 +379,7 @@ public sealed class BookPlayer
             _shelf.MoveTo(source, place, finished);
         }
 
-        Changed?.Invoke();
+        Raise();
         Fill();
     }
 
@@ -361,7 +434,7 @@ public sealed class BookPlayer
 
         if (changed)
         {
-            Changed?.Invoke();
+            Raise();
         }
     }
 

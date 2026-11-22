@@ -203,7 +203,9 @@ public sealed class BookPage : UserControl, IPageSummary
     {
         if (!started)
         {
-            _line.Say("The book could not be read. Its text may be missing from the shelf.");
+            _line.Say(_host.Player.StoryPlaying
+                ? D47.Core.Books.BookDesk.StoryPlaying
+                : "The book could not be read. Its text may be missing from the shelf.");
         }
     }
 

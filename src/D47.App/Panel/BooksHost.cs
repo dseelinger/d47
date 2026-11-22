@@ -75,7 +75,7 @@ public sealed class BooksHost(
     /// <summary>Reads from the start of <paramref name="chapter"/>.</summary>
     public bool ReadFrom(BookSource source, int chapter, int paragraph = 0)
     {
-        if (Shelf.MoveTo(source, new BookPlace(chapter, paragraph), finished: false) is null)
+        if (Player.StoryPlaying || Shelf.MoveTo(source, new BookPlace(chapter, paragraph), finished: false) is null)
         {
             return false;
         }

@@ -11,6 +11,13 @@ public enum MusicAction
     Previous,
 }
 
+/// <summary>What ambient music steps aside for.</summary>
+public enum MusicYield
+{
+    Podcast,
+    Book,
+}
+
 /// <summary>What the audio player tool does to the player.</summary>
 public enum AudioPlayerAction
 {
@@ -75,10 +82,13 @@ public sealed class AmbientMusic(
     /// <summary>True while music the Commander started with Elite closed is playing or paused.</summary>
     private bool _byCommander;
 
-    /// <summary>True while a podcast holds the slot's music: nothing starts, and the live track stays held.</summary>
+    /// <summary>What holds the slot's music: nothing starts while any does, and the live track stays held.</summary>
+    private readonly HashSet<MusicYield> _yieldingTo = [];
+
+    /// <summary>True while a podcast or a book holds the slot's music.</summary>
     private bool _yielding;
 
-    /// <summary>How long the live track takes to fade out when a podcast starts.</summary>
+    /// <summary>How long the live track takes to fade out when a podcast or a book starts.</summary>
     public static readonly TimeSpan YieldFadeOut = TimeSpan.FromSeconds(2);
 
     /// <summary>The last situation folder a track played from, skipping one-shot folders; null before any has.</summary>
@@ -259,22 +269,33 @@ public sealed class AmbientMusic(
     }
 
     /// <summary>
-    /// A podcast started or ended. While yielding, the live track fades out and is held, and nothing starts it or
-    /// another; ending it continues the held track, or starts one for the situation now, unless paused, idle, muted
-    /// or not playing.
+    /// A podcast or a book started or ended. While anything is yielded to, the live track fades out and is held, and
+    /// nothing starts it or another; once nothing is, the held track continues, or one starts for the situation now,
+    /// unless paused, idle, muted or not playing.
     /// </summary>
-    public void Yield(bool yielding)
+    public void Yield(MusicYield to, bool yielding)
     {
         lock (_gate)
         {
-            if (yielding == _yielding)
+            if (yielding)
+            {
+                _yieldingTo.Add(to);
+            }
+            else
+            {
+                _yieldingTo.Remove(to);
+            }
+
+            var held = _yieldingTo.Count > 0;
+
+            if (held == _yielding)
             {
                 return;
             }
 
-            _yielding = yielding;
+            _yielding = held;
 
-            if (yielding)
+            if (held)
             {
                 if (!_paused && !_idle && !audio.FadeOutMusic(YieldFadeOut) && !audio.Activity.MusicPlaying)
                 {
@@ -578,7 +599,7 @@ public sealed class AmbientMusic(
 
     /// <summary>
     /// How far the live track has played and how long it is; see <see cref="AudioArbiter.MusicProgress"/>. Null while
-    /// a podcast holds the music.
+    /// a podcast or a book holds the music.
     /// </summary>
     public TrackProgress? Progress()
     {
@@ -590,7 +611,7 @@ public sealed class AmbientMusic(
 
     /// <summary>
     /// Moves the live track to <paramref name="to"/>, counted as Commander activity; see <see cref="AudioArbiter.SeekMusic"/>.
-    /// False while a podcast holds the music.
+    /// False while a podcast or a book holds the music.
     /// </summary>
     public bool Seek(TimeSpan to)
     {
@@ -615,7 +636,9 @@ public sealed class AmbientMusic(
         {
             if (_yielding && action != MusicAction.Pause)
             {
-                return "Ambient music waits while a podcast plays.";
+                return _yieldingTo.Contains(MusicYield.Podcast)
+                    ? "Ambient music waits while a podcast plays."
+                    : "Ambient music waits while a book is read.";
             }
 
             Interlocked.Exchange(ref _stirred, 1);

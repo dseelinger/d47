@@ -144,6 +144,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private string? _playbackGroup;
     private bool _playbackPaused;
 
+    /// <summary>The hold is a Media item's: other speech and alerts pause it rather than being refused.</summary>
+    private bool _playbackYields;
+
+    private bool _mediaPlaying;
+
     private sealed record Pending(long Id, AudioRequest Request);
 
     private sealed record Playing(long Id, AudioRequest Request);
@@ -266,6 +271,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         {
             _playbackGroup = group;
             _playbackPaused = false;
+            _playbackYields = false;
 
             _queue.RemoveAll(pending => IsOtherSpeech(pending.Request, group));
 
@@ -280,6 +286,59 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
 
         ActivityChanged?.Invoke(activity);
+    }
+
+    /// <summary>
+    /// Holds the speech channels for a Media item read in <paramref name="group"/>, or resumes a paused hold. Overheard
+    /// is dropped now and refused; speech in any other group, and an alert, pause the hold and play. False, with the
+    /// hold taken paused, when such speech or an alert is already queued or playing.
+    /// </summary>
+    public bool HoldSpeechForMedia(string group)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(group);
+        AudioActivity activity;
+        bool playing;
+
+        lock (_gate)
+        {
+            _playbackGroup = group;
+            _playbackPaused = false;
+            _playbackYields = true;
+
+            _queue.RemoveAll(static pending => pending.Request.Channel == AudioChannel.Overheard);
+
+            if (_current is { Request.Channel: AudioChannel.Overheard } overheard)
+            {
+                sink.Stop(overheard.Id);
+                _current = null;
+            }
+
+            playing = !(_current is { } current && Yielded(current.Request, group))
+                && !_queue.Exists(pending => Yielded(pending.Request, group));
+
+            if (!playing)
+            {
+                PauseHeld();
+            }
+
+            Pump();
+            activity = Snapshot();
+        }
+
+        ActivityChanged?.Invoke(activity);
+        return playing;
+    }
+
+    /// <summary>
+    /// Says whether a book or other Media item is being read, including while a callout or the microphone has paused
+    /// it, and not paused by the Commander. Overheard is refused while it is.
+    /// </summary>
+    public void MediaPlays(bool playing)
+    {
+        lock (_gate)
+        {
+            _mediaPlaying = playing;
+        }
     }
 
     /// <summary>Pauses the hold: its group is dropped and refused until it resumes, and other speech plays again.</summary>
@@ -302,28 +361,35 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         ActivityChanged?.Invoke(activity);
     }
 
-    /// <summary>Ends the hold and drops what its group has queued or playing.</summary>
-    public void EndPlayback()
+    /// <summary>
+    /// Ends the hold and drops what its group has queued or playing. Given <paramref name="group"/>, drops that group
+    /// and ends the hold only when it is that group's, so a playback that lost the hold to another leaves it be.
+    /// </summary>
+    public void EndPlayback(string? group = null)
     {
-        string group;
-
         lock (_gate)
         {
-            if (_playbackGroup is not { } held)
+            if (_playbackGroup is { } held && (group is null || held == group))
             {
-                return;
+                group = held;
+                _playbackGroup = null;
+                _playbackPaused = false;
+                _playbackYields = false;
             }
-
-            group = held;
-            _playbackGroup = null;
-            _playbackPaused = false;
         }
 
-        DropGroup(group);
+        if (group is not null)
+        {
+            DropGroup(group);
+        }
     }
 
     private static bool IsOtherSpeech(AudioRequest request, string group) =>
         request.Channel is AudioChannel.Speech or AudioChannel.Overheard && request.Group != group;
+
+    /// <summary>Whether <paramref name="request"/> pauses a Media hold for <paramref name="group"/>: an alert, or speech in another group.</summary>
+    private static bool Yielded(AudioRequest request, string group) =>
+        request.Channel == AudioChannel.Alert || (request.Channel == AudioChannel.Speech && request.Group != group);
 
     private void PauseHeld()
     {
@@ -396,22 +462,35 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
             if (_playbackGroup is { } held && !_playbackPaused)
             {
-                if (IsOtherSpeech(request, held))
+                if (_playbackYields)
+                {
+                    if (request.Channel == AudioChannel.Overheard)
+                    {
+                        logger.LogDebug("A Media item is playing; {Clip} is not queued", request.Name);
+                        return;
+                    }
+
+                    if (Yielded(request, held))
+                    {
+                        PauseHeld();
+                        paused = true;
+                    }
+                }
+                else if (IsOtherSpeech(request, held))
                 {
                     logger.LogDebug("Playback holds speech for {Group}; {Clip} is not queued", held, request.Name);
                     return;
                 }
-
-                if (request.Channel == AudioChannel.Alert)
+                else if (request.Channel == AudioChannel.Alert)
                 {
                     PauseHeld();
                     paused = true;
                 }
             }
 
-            if (request.Channel == AudioChannel.Overheard && PodcastPlayingLocked)
+            if (request.Channel == AudioChannel.Overheard && (PodcastPlayingLocked || _mediaPlaying))
             {
-                logger.LogDebug("A podcast is playing; {Clip} is not queued", request.Name);
+                logger.LogDebug("A podcast or book is playing; {Clip} is not queued", request.Name);
                 return;
             }
 
@@ -1112,13 +1191,16 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         _podcastHeld = false;
     }
 
-    /// <summary>Whether the microphone, a turn, speech or an alert playing or queued, or a story playback holds the podcast.</summary>
+    /// <summary>
+    /// Whether the microphone, a turn, speech or an alert playing or queued, or a story playback holds the podcast. A
+    /// Media hold does not: a book and a podcast pause each other as the Commander's pause.
+    /// </summary>
     private bool PodcastHoldActive() =>
         _listening
         || _turnInFlight
         || _current?.Request.Channel is AudioChannel.Speech or AudioChannel.Alert
         || _queue.Exists(static pending => pending.Request.Channel is AudioChannel.Speech or AudioChannel.Alert)
-        || (_playbackGroup is not null && !_playbackPaused);
+        || (_playbackGroup is not null && !_playbackPaused && !_playbackYields);
 
     /// <summary>
     /// Pauses the podcast when a hold starts, and when the last hold clears steps it back

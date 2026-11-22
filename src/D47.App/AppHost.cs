@@ -187,19 +187,6 @@ public sealed class AppHost : IDisposable
         RunPlayer.Changed += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => Panel.StoryPlayback = RunPlayer.Now is not null);
         Panel.StoryPlayer = RunPlayer;
         Panel.StoryPlaybackProgress = () => audio.SpeechProgress(StoryRunPlayer.Group);
-        Books = new BookShelf(files, paths.Books, loggerFactory.CreateLogger<BookShelf>());
-        BookPlayer = new BookPlayer(audio, Books, speech.LocalClient, () => settings.Current.Books);
-
-        // One playback holds the speech channels at a time: a book stops a story, and a story pauses a book.
-        BookPlayer.Starting += RunPlayer.Stop;
-        RunPlayer.Starting += () => BookPlayer.Pause(StoryRunPause.Commander);
-        voice.StateEntered += state =>
-        {
-            if (state == Core.Audio.LoopState.Idle)
-            {
-                BookPlayer.Settled();
-            }
-        };
         MusicRejects = new MusicRejects(paths.MusicRejects, files);
         var savedFolder = viewState.Load().LastMusicFolder;
         Music = new AmbientMusic(audio, () => Cues, rejects: MusicRejects, deleteFile: RecycleFile, lastFolder: savedFolder);
@@ -211,6 +198,15 @@ public sealed class AppHost : IDisposable
             {
                 savedFolder = folder;
                 _ = Task.Run(() => viewState.Save(viewState.Load() with { LastMusicFolder = folder }));
+            }
+        };
+        Books = new BookShelf(files, paths.Books, loggerFactory.CreateLogger<BookShelf>());
+        BookPlayer = new BookPlayer(audio, Books, speech.LocalClient, () => settings.Current.Books, story: RunPlayer, music: Music);
+        voice.StateEntered += state =>
+        {
+            if (state == Core.Audio.LoopState.Idle)
+            {
+                BookPlayer.Settled();
             }
         };
         Panel.AudioPlayer = AudioPlayerReadout.From(Music.State, Settings.Current.Audio.Music.Muted);
@@ -4094,6 +4090,7 @@ public sealed class AppHost : IDisposable
             paths.PodcastListening,
             loggerFactory.CreateLogger<Core.Podcasts.PodcastPlayer>());
         host.PodcastPlayer = podcastPlayer;
+        host.BookPlayer.TakesTurnsWith(podcastPlayer);
         var podcastSearch = new PodcastSearchClient(PodcastStore.CreateClient(), loggerFactory.CreateLogger<PodcastSearchClient>());
         host.PodcastSearch = podcastSearch;
         host.PodcastDesk = new Core.Podcasts.PodcastDesk(
@@ -6022,7 +6019,8 @@ public sealed class AppHost : IDisposable
         () => BookPlayer.Pause(StoryRunPause.Commander),
         BookPlayer.Resume,
         BooksHost.NextChapter,
-        BooksHost.BackAParagraph);
+        BooksHost.BackAParagraph,
+        () => BookPlayer.StoryPlaying);
 
     private D47.App.Panel.BooksHost? _booksHost;
 

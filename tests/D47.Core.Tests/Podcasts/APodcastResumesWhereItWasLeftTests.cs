@@ -408,6 +408,27 @@ public sealed class APodcastResumesWhereItWasLeftTests
     }
 
     [Fact]
+    public void AmbientMusicWaitsForABookStillBeingReadWhenThePodcastStops()
+    {
+        var music = Music((Situations.Docked, "berth"));
+        music.Follow(Docked, musicTrack: null, Start);
+        var berth = Assert.Single(_sink.Started);
+        var player = Player(music);
+        _ = player.Play(Feed, Show, First);
+        music.Yield(MusicYield.Book, yielding: true);
+
+        player.Stop();
+
+        Assert.Contains(berth.Id, _sink.Held);
+        Assert.Equal("Ambient music waits while a book is read.", music.Control(MusicAction.Next));
+
+        music.Yield(MusicYield.Book, yielding: false);
+
+        Assert.DoesNotContain(berth.Id, _sink.Held);
+        Assert.True(music.State.Playing);
+    }
+
+    [Fact]
     public void AmbientMusicComesBackWhenTheEpisodeEnds()
     {
         var music = Music((Situations.Docked, "berth"));

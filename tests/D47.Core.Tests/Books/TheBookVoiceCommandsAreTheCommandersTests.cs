@@ -26,6 +26,7 @@ public sealed class TheBookVoiceCommandsAreTheCommandersTests
     private int _chapter;
     private bool _paused;
     private bool _voice = true;
+    private bool _story;
 
     private BookDesk Desk() => new(
         () => Books,
@@ -53,7 +54,8 @@ public sealed class TheBookVoiceCommandsAreTheCommandersTests
             _chapter++;
             return true;
         },
-        () => true);
+        () => true,
+        () => _story);
 
     private static CapabilityRegistry Registry(
         BookDesk desk,
@@ -180,6 +182,24 @@ public sealed class TheBookVoiceCommandsAreTheCommandersTests
 
         story = true;
         Assert.Equal(AdventureCapability.StoryPlaybackTool, router.MatchToolCommand("pause")?.ToolName);
+    }
+
+    [Fact]
+    public void ABookDoesNotStartOrResumeWhileAStoryPlays()
+    {
+        var desk = Desk();
+        _story = true;
+
+        Assert.Equal(BookDesk.StoryPlaying, desk.Read("The Time Machine"));
+        Assert.Empty(_calls);
+
+        _story = false;
+        desk.Read("The Time Machine");
+        desk.Pause();
+        _story = true;
+
+        Assert.Equal(BookDesk.StoryPlaying, desk.Resume());
+        Assert.True(_paused);
     }
 
     [Fact]

@@ -280,7 +280,7 @@ public sealed class StoryRunPlayer
         _queued = null;
         _generation++;
         CancelHold();
-        _audio.EndPlayback();
+        _audio.EndPlayback(Group);
     }
 
     /// <summary>Stops a held line's countdown. Called holding <see cref="_gate"/>.</summary>

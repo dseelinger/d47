@@ -111,6 +111,12 @@ Asking the model to play a named show plays that show's newest unfinished episod
 While an episode is playing or paused by you, a bare "pause" or "play" acts on it. A story playback that is
 open takes them first; with no episode in the slot they go to the music.
 
+Only one of a podcast and a book plays at a time. Playing or resuming an episode pauses a book being read, and
+starting a book pauses the episode, as if you had paused it; neither resumes by itself. A story playing
+pauses the episode until the story ends or is paused. The episode also pauses while D47 listens or speaks, and
+steps back two seconds when it carries on. Ambient music fades out and stays silent while an episode is in the slot, and
+invented chatter is not played while one plays.
+
 "Next episode" plays the earliest unfinished episode of the same show that was published after the current
 one. With none it says so and stops. With no episode playing it says "No podcast is playing."
 
