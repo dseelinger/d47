@@ -53,7 +53,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
 
     public const string ResetName = "CharacterReset";
 
-    public const string SidebarName = "CharactersSidebar";
+    public const string ListName = "CharactersList";
 
     public const string CaptainKey = "captain";
 
@@ -69,9 +69,9 @@ public sealed class CharactersPage : UserControl, IPageSummary
 
     private const string CustomPrefix = "custom:";
 
-    private const double WindowSidebar = 280;
+    private const double WindowList = 280;
 
-    private const double BigSidebar = 220;
+    private const double BigList = 220;
 
     private const double DetailMax = 900;
 
@@ -81,7 +81,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
     private readonly SpeakerPortraits? _portraits;
     private readonly Func<VoiceRole, string?>? _carrierPicture;
     private readonly bool _big;
-    private readonly ContentControl _sidebar = new();
+    private readonly ContentControl _list = new();
     private readonly StackPanel _detail = new() { Spacing = 14, MaxWidth = DetailMax, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly Dictionary<CharacterField, string> _errors = [];
 
@@ -115,8 +115,8 @@ public sealed class CharactersPage : UserControl, IPageSummary
         _big = big;
 
         var layout = new DockPanel { Margin = new Thickness(14) };
-        DockPanel.SetDock(_sidebar, Dock.Left);
-        layout.Children.Add(_sidebar);
+        DockPanel.SetDock(_list, Dock.Left);
+        layout.Children.Add(_list);
         layout.Children.Add(new ScrollViewer
         {
             Content = new Border { Padding = new Thickness(0, 0, 14, 0), Child = _detail },
@@ -138,7 +138,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
         remove { }
     }
 
-    /// <summary>The sidebar key of the character showing.</summary>
+    /// <summary>The list key of the character showing.</summary>
     public string? Selected => _selected;
 
     /// <summary>Completes when the distance last asked for has been looked up.</summary>
@@ -238,7 +238,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
 
         _selected = entry.Key;
 
-        _sidebar.Content = SidebarOf(entries, entry.Key);
+        _list.Content = ListOf(entries, entry.Key);
 
         _detail.Children.Clear();
         _detail.Children.Add(Group(entry));
@@ -257,7 +257,7 @@ public sealed class CharactersPage : UserControl, IPageSummary
         }
     }
 
-    private Control SidebarOf(IReadOnlyList<Entry> entries, string selected)
+    private Control ListOf(IReadOnlyList<Entry> entries, string selected)
     {
         var story = _host.Story(Fid);
         var captain = _host.Settings.Current.Speech;
@@ -281,15 +281,15 @@ public sealed class CharactersPage : UserControl, IPageSummary
             new("Yours", [.. entries.Where(e => e.Kind is Kind.Custom or Kind.Draft).Select(Item)]),
         };
 
-        var sidebar = new Sidebar(groups, selected, Select, width: _big ? BigSidebar : WindowSidebar) { Name = SidebarName };
+        var list = new ListColumn(groups, selected, Select, width: _big ? BigList : WindowList) { Name = ListName };
 
         var add = Tile("ADD A CHARACTER", AddName, StartDraft);
         add.Margin = new Thickness(0, 8, 0, 0);
-        sidebar.Append(add);
+        list.Append(add);
 
         return new ScrollViewer
         {
-            Content = sidebar,
+            Content = list,
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
         };

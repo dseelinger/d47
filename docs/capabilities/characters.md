@@ -11,7 +11,7 @@ nav_order: 164
 <section>
 <h2><span class="num">1</span> Add one on Commander › Assets › Characters.</h2>
 <p class="say">Open Commander, press Assets, press Characters, press ADD A CHARACTER, type a name and press SAVE.</p>
-<p class="expect">The name joins YOURS in the sidebar. Its page opens with the picture, voice, notes and where they are.</p>
+<p class="expect">The name joins YOURS in the list. Its page opens with the picture, voice, notes and where they are.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Select them, then use the comms key.</h2>
@@ -32,7 +32,7 @@ nav_order: 164
 <p class="intro">One page for everyone you can talk to, with the same rows for each.</p>
 <section>
 <h2><span class="num">1</span> Three kinds of character share one page.</h2>
-<p class="body">The sidebar groups Carrier, Story and Yours. Carrier holds the captain and tower, Story the cast of the running story, and Yours the characters you add. Each page has a picture, name, voice, personality notes and where they are.</p>
+<p class="body">The list groups Carrier, Story and Yours. Carrier holds the captain and tower, Story the cast of the running story, and Yours the characters you add. Each page has a picture, name, voice, personality notes and where they are.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Who owns a value decides who edits it.</h2>
@@ -57,7 +57,7 @@ nav_order: 164
 
 ## The details
 
-Commander › Assets › Characters has a sidebar and a detail page, in the window and on the headset's big panel.
+Commander › Assets › Characters has a list and a detail page, in the window and on the headset's big panel.
 
 ```text
 CARRIER   the captain, then the tower

@@ -111,7 +111,7 @@ public class WhatYouCarryOnFootIsCountedByKindTests
     public void TheSidebarCountsTheResourcesInEach()
     {
         var surface = Open();
-        var sidebar = Text(Materials(surface.Panel).GetVisualDescendants().OfType<Sidebar>().Single());
+        var sidebar = Text(Materials(surface.Panel).GetVisualDescendants().OfType<ListColumn>().Single());
         var empty = new Dictionary<string, int>();
 
         Assert.Equal(3, MaterialsPage.OnFootGroups(Carried(surface).Backpack, empty).Sum(group => group.Tiles.Count));
@@ -198,7 +198,7 @@ public class WhatYouCarryOnFootIsCountedByKindTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(surface.Panel.Nav.AtPage);
-        Assert.Equal(MaterialsPage.LockerView, Materials(surface.Panel).GetVisualDescendants().OfType<Sidebar>().Single().Selected);
+        Assert.Equal(MaterialsPage.LockerView, Materials(surface.Panel).GetVisualDescendants().OfType<ListColumn>().Single().Selected);
 
         surface.Window.Close();
     }

@@ -12,6 +12,8 @@ Added: Privacy and egress lists a Podcast search entry. The words you search for
 
 Added: Privacy and egress lists a Podcasts entry. Once you have added a podcast feed it names the feed hosts and the hosts the feeds stream episodes from, and says that a feed is fetched only when you open the podcast page or ask for a refresh. No page adds a feed yet.
 
+Changed: Characters, Materials, a material's page and an on-foot resource's page draw their list as a column inside the page, under list heads, instead of a second sidebar beside the Assets sidebar. Rows, counts and ADD A CHARACTER work as before.
+
 Changed: Asset Mgmt is no longer a tab. Its pages, Ships, Stored modules, Crew, Characters, Suits, Carrier, Construction, Materials and Engineers, are in a sidebar on Commander › Assets, on the window and the headset panel, and a ship reads Commander › Assets › Ships and its name in the breadcrumb. Commander's sub-tabs read Checklist, Assets, Missions, Watches, Progress, Statistics, BGS, Ledgers and Commanders. A window left on Asset Mgmt opens on Commander › Assets, and a switch position or binding that opened one of its pages opens that page. Saying "assets" opens Commander › Assets.
 
 Changed: Commander › Ledgers lists This session, Combat stats, Credits, Codex and Screenshots in a sidebar at the left, on the window and the headset panel, and the sidebar stays beside every page below a ledger. One press on an item opens that ledger from any depth. Opening Ledgers opens the ledger you last had open, or This session the first time, so the page that listed the ledgers is gone. At a ledger the sub-tab row shows; below one the breadcrumb takes its place and starts at Commander.

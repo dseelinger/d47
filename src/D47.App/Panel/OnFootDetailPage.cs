@@ -23,7 +23,7 @@ public sealed class OnFootDetailPage : UserControl
     private readonly GapSource _gap;
     private readonly PanelNavigator _nav;
     private readonly MaterialEntry _material;
-    private readonly ContentControl _sidebar = new();
+    private readonly ContentControl _list = new();
     private readonly StackPanel _body = new();
 
     public OnFootDetailPage(GapSource gap, PanelNavigator nav, MaterialEntry material, JournalClock clock)
@@ -32,7 +32,7 @@ public sealed class OnFootDetailPage : UserControl
         _nav = nav;
         _material = material;
 
-        Content = PageFooter.Shell(_sidebar, _body, Phrase(material), clock);
+        Content = PageFooter.Shell(_list, _body, Phrase(material), clock);
     }
 
     /// <summary>The footer's phrase; it is one of <c>find_micro_resource</c>'s examples.</summary>
@@ -51,7 +51,7 @@ public sealed class OnFootDetailPage : UserControl
         var ledgers = _gap.Tracker(report).Ship;
         var suit = _gap.State()?.Suit ?? SuitInventory.Empty;
 
-        _sidebar.Content = MaterialsPage.SidebarOf(
+        _list.Content = MaterialsPage.ListOf(
             report, ledgers, suit, MaterialsPage.NeedsOf(_gap.Tracker(report)), _gap.View, Back);
 
         _body.Children.Clear();

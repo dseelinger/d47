@@ -85,7 +85,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         Assert.Contains(MaterialsPage.NeededHead, shown);
         Assert.Contains($"Say: “{MaterialsPage.Phrase}”", shown);
 
-        var sidebar = page.GetVisualDescendants().OfType<Sidebar>().Single();
+        var sidebar = page.GetVisualDescendants().OfType<ListColumn>().Single();
         Assert.Equal(MaterialsPage.NeededView, sidebar.Selected);
 
         var distinct = report.Builds.SelectMany(build => build.Lines).Select(line => line.Material.Symbol).Distinct().Count();

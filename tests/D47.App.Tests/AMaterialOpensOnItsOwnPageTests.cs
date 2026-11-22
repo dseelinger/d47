@@ -142,7 +142,7 @@ public class AMaterialOpensOnItsOwnPageTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(surface.Panel.Nav.AtPage);
-        Assert.Equal("raw", Materials(surface.Panel).GetVisualDescendants().OfType<Sidebar>().Single().Selected);
+        Assert.Equal("raw", Materials(surface.Panel).GetVisualDescendants().OfType<ListColumn>().Single().Selected);
 
         surface.Window.Close();
     }

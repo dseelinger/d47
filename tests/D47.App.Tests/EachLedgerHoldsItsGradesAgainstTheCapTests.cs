@@ -108,7 +108,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         var page = Page(surface.Panel);
         var shown = Text(page);
 
-        Assert.Equal("raw", page.GetVisualDescendants().OfType<Sidebar>().Single().Selected);
+        Assert.Equal("raw", page.GetVisualDescendants().OfType<ListColumn>().Single().Selected);
         Assert.Contains("RAW", shown);
         Assert.Contains(MaterialsPage.LedgerHead, shown);
 

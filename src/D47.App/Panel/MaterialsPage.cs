@@ -17,7 +17,7 @@ using D47.Core.Loadout;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Fleet › Materials: a sidebar of views over the gap, the ship-material ledgers and the farming route, opening on
+/// Fleet › Materials: a list of views over the gap, the ship-material ledgers and the farming route, opening on
 /// Needed by plans.
 /// </summary>
 public sealed class MaterialsPage : UserControl
@@ -91,7 +91,7 @@ public sealed class MaterialsPage : UserControl
     private readonly EngineerSource? _engineers;
     private readonly PanelNavigator? _nav;
     private readonly Func<string, Task<bool>>? _copy;
-    private readonly ContentControl _sidebar = new();
+    private readonly ContentControl _list = new();
     private readonly StackPanel _body = new();
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
     private readonly StackPanel _sites = new() { Spacing = 2, Margin = new Thickness(0, 18, 0, 0) };
@@ -114,7 +114,7 @@ public sealed class MaterialsPage : UserControl
         _copy = copy;
         _needed.Changed += Refresh;
 
-        var root = PageFooter.Shell(_sidebar, _body, Phrase, clock);
+        var root = PageFooter.Shell(_list, _body, Phrase, clock);
 
         _detailLayer.HorizontalAlignment = HorizontalAlignment.Stretch;
         _detailLayer.VerticalAlignment = VerticalAlignment.Stretch;
@@ -136,7 +136,7 @@ public sealed class MaterialsPage : UserControl
         var suit = _gap.State()?.Suit ?? SuitInventory.Empty;
         var needs = NeedsOf(_gap.Tracker(report));
 
-        _sidebar.Content = SidebarOf(report, ledgers, suit, needs, _gap.View, Select);
+        _list.Content = ListOf(report, ledgers, suit, needs, _gap.View, Select);
 
         _body.Children.Clear();
 
@@ -281,10 +281,10 @@ public sealed class MaterialsPage : UserControl
     internal static string Thousands(int n) => n.ToString("N0", CultureInfo.InvariantCulture);
 
     /// <summary>
-    /// The sidebar every Materials page draws: Needed by plans, the five ship ledgers, the backpack and ship
+    /// The list every Materials page draws: Needed by plans, the five ship ledgers, the backpack and ship
     /// locker, then the farming route.
     /// </summary>
-    internal static Sidebar SidebarOf(
+    internal static ListColumn ListOf(
         GapReport report,
         IReadOnlyList<MaterialCard> ledgers,
         SuitInventory suit,
@@ -298,7 +298,7 @@ public sealed class MaterialsPage : UserControl
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Count();
 
-        return new Sidebar(
+        return new ListColumn(
             [
                 new SidebarGroup("Plans", [new SidebarItem(NeededView, "Needed by plans", Count(needed))]),
                 new SidebarGroup(
@@ -333,7 +333,7 @@ public sealed class MaterialsPage : UserControl
         _gap.Changed -= OnChanged;
     }
 
-    /// <summary>The sidebar key of a ledger card: <c>raw</c>, <c>guardian</c>.</summary>
+    /// <summary>The list key of a ledger card: <c>raw</c>, <c>guardian</c>.</summary>
     public static string ViewOf(MaterialCard card) => card.Name.ToLowerInvariant();
 
     /// <summary>

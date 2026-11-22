@@ -37,7 +37,7 @@ public sealed class MaterialDetailPage : UserControl
     private readonly GapSource _gap;
     private readonly PanelNavigator _nav;
     private readonly MaterialEntry _material;
-    private readonly ContentControl _sidebar = new();
+    private readonly ContentControl _list = new();
     private readonly StackPanel _body = new();
 
     /// <summary>The system the last search started from, or null when none has started.</summary>
@@ -57,7 +57,7 @@ public sealed class MaterialDetailPage : UserControl
         _nav = nav;
         _material = material;
 
-        Content = PageFooter.Shell(_sidebar, _body, Phrase(material), clock);
+        Content = PageFooter.Shell(_list, _body, Phrase(material), clock);
     }
 
     /// <summary>The footer's phrase.</summary>
@@ -98,7 +98,7 @@ public sealed class MaterialDetailPage : UserControl
             c.Rows.Any(row => string.Equals(row.Material.Symbol, _material.Symbol, StringComparison.OrdinalIgnoreCase)));
         var ledger = card?.Name ?? _material.Category ?? "Material";
 
-        _sidebar.Content = MaterialsPage.SidebarOf(
+        _list.Content = MaterialsPage.ListOf(
             report,
             ledgers,
             _gap.State()?.Suit ?? SuitInventory.Empty,

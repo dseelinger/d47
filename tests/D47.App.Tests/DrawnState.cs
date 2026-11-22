@@ -20,7 +20,7 @@ internal static class DrawnState
                 : null;
     }
 
-    extension(Sidebar sidebar)
+    extension(RowColumn sidebar)
     {
         /// <summary>The rows a Commander can choose, in order.</summary>
         public IReadOnlyList<Border> Items =>

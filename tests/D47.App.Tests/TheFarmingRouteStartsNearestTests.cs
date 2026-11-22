@@ -84,7 +84,7 @@ public class TheFarmingRouteStartsNearestTests
     {
         var surface = Open(AtSol);
 
-        var sidebar = Page(surface.Panel).GetVisualDescendants().OfType<Sidebar>().Single();
+        var sidebar = Page(surface.Panel).GetVisualDescendants().OfType<ListColumn>().Single();
         var text = Text(sidebar);
 
         Assert.Contains("FARMING", text, StringComparer.OrdinalIgnoreCase);
