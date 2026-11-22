@@ -26,7 +26,7 @@ public class AMaterialCountLineTicksItselfTests
 
         Assert.Equal(ChecklistState.Done, Find(checklists, line).State);
         Assert.Equal(
-            "Ticked \"Have 21 Guardian Power Cells\": you held 21 Guardian Power Cell.",
+            "Ticked \"Have 21 Guardian Power Cells\": you held Guardian Power Cell ×21.",
             Assert.Single(checklists.Drain()).Text);
     }
 
@@ -77,7 +77,7 @@ public class AMaterialCountLineTicksItselfTests
         Apply(game, checklists, Snapshot("2026-10-07T19:10:00Z", 14));
 
         Assert.Equal(
-            "Ticks when you hold 21 Guardian Power Cell · 14 of 21 so far",
+            "Ticks when you hold Guardian Power Cell ×21 · 14 of 21 so far",
             ChecklistWatching.Describe(Find(checklists, line).Watch!));
     }
 

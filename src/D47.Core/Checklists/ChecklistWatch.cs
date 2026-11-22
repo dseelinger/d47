@@ -164,7 +164,7 @@ public static class ChecklistWatching
             ? new ChecklistWatchOutcome(
                 watch with { Progress = progress },
                 done,
-                done ? $"you held {wanted.ToString(CultureInfo.InvariantCulture)} {entry.Name}" : null)
+                done ? $"you held {entry.Name} ×{wanted.ToString(CultureInfo.InvariantCulture)}" : null)
             : null;
     }
 
@@ -245,10 +245,12 @@ public static class ChecklistWatching
             ChecklistWatchKind.Arrive => $"you arrive in {watch.Subject}",
             ChecklistWatchKind.Buy => $"you buy {what}{At(watch.Place)}",
             ChecklistWatchKind.Sell => $"you sell {what}{At(watch.Place)}",
-            ChecklistWatchKind.Have => $"you hold {what}",
+            ChecklistWatchKind.Have => $"you hold {watch.Subject}{Times(watch.Quantity)}",
             ChecklistWatchKind.Unlock => $"you unlock {watch.Subject}",
             _ => $"your carrier has a buy order for {what}",
         };
+
+        static string Times(int? quantity) => quantity is { } n ? $" ×{n.ToString(CultureInfo.InvariantCulture)}" : string.Empty;
 
         static string In(string? place) => place is { Length: > 0 } ? $" in {place}" : string.Empty;
 
