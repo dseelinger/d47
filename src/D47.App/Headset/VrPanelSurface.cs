@@ -53,8 +53,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Beats the wait marks in <see cref="_modals"/>, which is not under the view.</summary>
     private readonly Controls.WaitTicker _modalWaits;
 
-    private readonly Func<Controls.AudioPlayerDialog>? _audioPlayer;
-    private Controls.AudioPlayerDialog? _player;
     private readonly Func<Controls.StoryPlaybackDialog>? _storyPlaybackBox;
     private Controls.StoryPlaybackDialog? _playbackBox;
 
@@ -141,6 +139,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? adventureDesk = null,
         Panel.CharactersHost? characters = null,
         Panel.PodcastsHost? podcasts = null,
+        Panel.MusicHost? music = null,
         D47.Core.Ships.BuildTalk? buildTalk = null,
         Panel.SpendDesk? spend = null,
         Func<DateTimeOffset?>? bgsTick = null,
@@ -158,16 +157,12 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // Which columns each table shows; a headset memory, stored apart from the window's.
         Panel.ColumnArrangementMemory? columnArrangements = null,
 
-        // Builds this surface's own copy of the audio player, which opens while the model says it is open.
-        Func<Controls.AudioPlayerDialog>? audioPlayer = null,
-
         // Builds this surface's own copy of the story playback box, which opens while the model says a story plays.
         Func<Controls.StoryPlaybackDialog>? storyPlayback = null)
     {
         _storyPlaybackBox = storyPlayback;
         _dumpTo = dumpTo;
         _modalWaits = new Controls.WaitTicker(_modals);
-        _audioPlayer = audioPlayer;
 
         _model = model;
         _settings = settings;
@@ -232,6 +227,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             AdventureDesk = adventureDesk,
             Characters = characters,
             Podcasts = podcasts,
+            Music = music,
             BuildTalk = buildTalk,
         }.Furnish(_view);
 
@@ -770,7 +766,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         _view.Mode = Mode;
         _dirty = true;
-        SyncAudioPlayer();
         SyncStoryPlayback();
     }
 
@@ -904,11 +899,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     {
         _dirty = true;
 
-        if (e.PropertyName == nameof(PanelViewModel.AudioPlayerOpen))
-        {
-            Avalonia.Threading.Dispatcher.UIThread.Post(SyncAudioPlayer);
-        }
-        else if (e.PropertyName == nameof(PanelViewModel.StoryPlayback))
+        if (e.PropertyName == nameof(PanelViewModel.StoryPlayback))
         {
             Avalonia.Threading.Dispatcher.UIThread.Post(SyncStoryPlayback);
         }
@@ -937,42 +928,6 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         {
             _playbackBox = null;
             _dirty = true;
-        };
-        _ = _modals.Show(dialog);
-        _dirty = true;
-    }
-
-    /// <summary>
-    /// Shows the player as a dialog while the big panel is up and the model says it is open; the mini panel
-    /// shows the read-out instead, so a dialog never sits on it.
-    /// </summary>
-    internal void SyncAudioPlayer()
-    {
-        var wanted = _model.AudioPlayerOpen && Mode == PanelMode.Full && _audioPlayer is not null;
-
-        if (!wanted)
-        {
-            _player?.Close();
-            return;
-        }
-
-        if (_player is not null)
-        {
-            return;
-        }
-
-        var dialog = _audioPlayer!();
-
-        _player = dialog;
-        dialog.Closed += (_, _) =>
-        {
-            _player = null;
-            _dirty = true;
-
-            if (Mode == PanelMode.Full)
-            {
-                _model.AudioPlayerOpen = false;
-            }
         };
         _ = _modals.Show(dialog);
         _dirty = true;

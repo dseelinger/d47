@@ -8,8 +8,21 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.App.Panel;
 
-/// <summary>The panel as the switch path sees it: every page any surface registered, and the one showing.</summary>
-public sealed record PanelSnapshot(IReadOnlyList<PanelDestination> Destinations, string? Showing);
+/// <summary>The panel as the switch path sees it: every page any surface registered, the one showing, and each surface's own.</summary>
+public sealed record PanelSnapshot(IReadOnlyList<PanelDestination> Destinations, string? Showing)
+{
+    /// <summary>The destination each surface is on, in the order the surfaces were routed.</summary>
+    public IReadOnlyList<string> Shown { get; init; } = [];
+}
+
+/// <summary>What <see cref="PanelRouting.Toggle"/> did.</summary>
+public enum PageToggle
+{
+    Opened,
+    Closed,
+    AlreadyOpen,
+    AlreadyClosed,
+}
 
 /// <summary>Routes spoken and switch input to the panel surfaces: the window, the headset and the mini panel.</summary>
 public sealed class PanelRouting(
@@ -154,6 +167,50 @@ public sealed class PanelRouting(
         nav.Step(direction);
     }
 
+    /// <summary>
+    /// Opens a destination on every surface, or closes it by putting each surface on it back where it was;
+    /// <paramref name="open"/> null toggles, opening it unless every surface already shows it.
+    /// </summary>
+    public PageToggle Toggle(string key, bool? open)
+    {
+        var shown = _panel.Shown;
+        var anywhere = shown.Contains(key);
+        var everywhere = anywhere && shown.All(showing => showing == key);
+        var opening = open ?? !everywhere;
+
+        if (opening ? everywhere : !anywhere)
+        {
+            return opening ? PageToggle.AlreadyOpen : PageToggle.AlreadyClosed;
+        }
+
+        if (opening)
+        {
+            Show(key);
+            return PageToggle.Opened;
+        }
+
+        Leave(key);
+        return PageToggle.Closed;
+    }
+
+    /// <summary>
+    /// Puts every surface showing this destination back on the place it showed before, each on its own thread;
+    /// surfaces elsewhere stay where they are.
+    /// </summary>
+    public void Leave(string key)
+    {
+        foreach (var (nav, post, _, _) in _surfaces)
+        {
+            post(() =>
+            {
+                if (nav.DestinationKey == key)
+                {
+                    nav.Previous();
+                }
+            });
+        }
+    }
+
     /// <summary>Opens the page a Commander's question was about on every surface (#575).</summary>
     public void Open(PageRef page) => PageTrail.OpenEverywhere(page, _surfaces, fleet, PromptHolds);
 
@@ -256,8 +313,9 @@ public sealed class PanelRouting(
             .ToList();
 
         // What the panel is showing is what every surface agrees it is showing.
-        var showing = navigators.Select(nav => nav.DestinationKey).Distinct().ToList();
+        var shown = navigators.Select(nav => nav.DestinationKey).ToList();
+        var showing = shown.Distinct().ToList();
 
-        _panel = new PanelSnapshot(destinations, showing.Count == 1 ? showing[0] : null);
+        _panel = new PanelSnapshot(destinations, showing.Count == 1 ? showing[0] : null) { Shown = shown };
     }
 }

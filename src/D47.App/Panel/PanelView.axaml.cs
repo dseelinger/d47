@@ -318,7 +318,11 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         Tabs.SizeChanged += (_, _) => FitTabs();
 
-        Nav.Changed += (_, _) => ApplyNavigation();
+        Nav.Changed += (_, _) =>
+        {
+            ApplyNavigation();
+            ApplyAudioReadout();
+        };
 
         ApplyNavigation();
 
@@ -448,10 +452,10 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     BodySearchLink? IPanelTabHost.BodySearch => _searchFurnishing.BodySearch;
 
-    /// <summary>Shows the audio player's read-out on a mini surface while the player is open.</summary>
+    /// <summary>Shows the music's read-out on a mini surface while this surface is on Media › Music.</summary>
     private void ApplyAudioReadout()
     {
-        var open = Mode == PanelMode.Mini && _bound?.AudioPlayerOpen == true;
+        var open = Mode == PanelMode.Mini && _bound is not null && Nav.DestinationKey == MediaFurnishing.MusicRoot;
 
         AudioReadoutBar.IsVisible = open;
 
@@ -502,7 +506,6 @@ public partial class PanelView : UserControl, IPanelTabHost
                 return;
 
             case nameof(PanelViewModel.AudioPlayer):
-            case nameof(PanelViewModel.AudioPlayerOpen):
                 Dispatcher.UIThread.Post(ApplyAudioReadout);
                 return;
 
@@ -1070,8 +1073,8 @@ public partial class PanelView : UserControl, IPanelTabHost
     private readonly MediaFurnishing _media;
 
     /// <summary>Gives this surface the Media tab.</summary>
-    internal void EnableMedia(PodcastsHost? podcasts = null, Func<string, Control?>? settingsStrip = null) =>
-        _media.Enable(podcasts, settingsStrip);
+    internal void EnableMedia(PodcastsHost? podcasts = null, Func<string, Control?>? settingsStrip = null, MusicHost? music = null) =>
+        _media.Enable(music, podcasts, settingsStrip);
 
     /// <summary>Gives this surface the Modules tab once a module is installed (#2083).</summary>
     internal void EnableModules(D47.App.Settings.ModulesSource source) => _modules.Enable(source);
@@ -1283,7 +1286,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         var tabPlace = place.SettingKey is { } named
             ? D47.Core.Configuration.SettingsLayout.Tabs.FirstOrDefault(
-                tab => tab.Entries.Any(entry => entry.Key == named || entry.Family?.Invoke(named) == true))
+                tab => tab.Holds(named))
             : null;
 
         if (tabPlace is not null)

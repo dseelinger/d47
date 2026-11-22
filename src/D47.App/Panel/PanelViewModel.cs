@@ -376,15 +376,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
         set => Set(ref _comms, value ?? CommsIndicatorState.NoChannel);
     }
 
-    private bool _audioPlayerOpen;
     private D47.Core.Audio.AudioPlayerReadout _audioPlayer = D47.Core.Audio.AudioPlayerReadout.From(new D47.Core.Audio.MusicState(null, false, false), false);
-
-    /// <summary>Whether the audio player is open; the dialogs and the mini read-outs all follow this.</summary>
-    public bool AudioPlayerOpen
-    {
-        get => _audioPlayerOpen;
-        set => Set(ref _audioPlayerOpen, value);
-    }
 
     private bool _storyPlayback;
 
@@ -411,7 +403,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     public void ShowRegionFirst(D47.Core.Journal.CodexFirstSeen seen, string? body) =>
         RegionFirst = new RegionFirstMoment(seen, body, Clock.GetUtcNow());
 
-    /// <summary>What the audio player says about the music, kept current while the music changes.</summary>
+    /// <summary>What Media › Music and the mini read-outs say about the music, kept current while the music changes.</summary>
     public D47.Core.Audio.AudioPlayerReadout AudioPlayer
     {
         get => _audioPlayer;

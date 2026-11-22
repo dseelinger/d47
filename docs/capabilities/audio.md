@@ -361,8 +361,8 @@ Ambience follows the game only while Elite is running. D47 checks for the game's
 when the game closes, crashed or not, the track stops, and when it starts again the music picks up
 for the situation it is in, unless you paused or muted it. Until Elite is detected, nothing starts on its own.
 
-With Elite closed you can still start the music: play, resume, next or previous, by voice, media key, the
-Audio player or the Ambient music rows, start the situation folder that played last, and General if none
+With Elite closed you can still start the music: play, resume, next or previous, by voice, media key or
+Media › Music, start the situation folder that played last, and General if none
 has played yet. D47 remembers that folder between runs. The music then carries on from that folder, track
 after track, until you pause it, Elite starts and the music moves to the situation the game is in, or Elite
 exits.
@@ -383,11 +383,11 @@ track is held where it stopped. When something happens it fades back in over thr
 point. Something happening is any journal event except `Music`, `ReceiveText`, `NpcCrewPaidWage`,
 `CommunityGoal` and `FSSSignalDiscovered`, which Elite writes while you sit docked; a change of situation;
 a turn with D47; or a media key. A track held this way is not dropped after 30 minutes. While it is held,
-the volume flyout shows it paused and **Now playing** reads Paused, and Resume or the play key brings it back.
+the volume flyout shows it paused and Media › Music reads Paused, and Resume or the play key brings it back.
 
 ### The music library
 
-**Download the D47 music library** (Settings › Hearing and sound › Sounds and levels, group Ambient music) is off
+**Download the D47 music library** (Media › Music, Page settings) is off
 by default. The library is several gigabytes on GitHub, but D47 keeps only two unplayed tracks of each folder on this
 PC, about 200 MB in all, in `data/music-pack/<folder>/`. On, D47 fetches each track in the background out of its
 folder's zip, writes it under another name, checks its size and CRC-32 against the zip's directory, and renames it
@@ -426,14 +426,10 @@ these keys.
 - Pause lasts until you resume or restart D47. It is not the **Mute** setting, which is saved and
   unchanged by these keys.
 
-The same controls are on the page. With Show every setting on, open Settings › Hearing and sound ›
-Sounds and levels; the **Ambient music** group, above Levels, holds three rows. **Now playing** shows the
-track's file name, or Paused, Muted or Nothing playing, and its button reads Pause while a track plays and
-Resume while paused or while Elite is closed and nothing plays. **Next track** has a Next button that starts another track from the same folder. **Previous track**
-has a Previous button that plays the track before the current one. All
-buttons are greyed out when nothing plays or the music is muted, except that with Elite closed Resume and Next
-stay usable and start the folder that played last. The [Audio player](#audio-player) has the same
-buttons in a dialog of its own.
+The same controls are on Media › Music, the [Audio player](#audio-player): Previous, Pause (Play while paused or idle) and Next.
+Its **Page settings** (the ▸ SETTINGS tile on the title line) hold the music's other rows: **Download the D47 music
+library**, the **Audio player** and **Thumbs down the playing track** keys, **Music publish token** and
+**Thumbs-down tracks**. The music's level, mute and duck stay in the Levels mixer with every other channel.
 
 Windows sends the media keys to whichever media session was used last. With Spotify or another
 player also open, the keys may go to that player instead.
@@ -449,9 +445,10 @@ by you before they act on the music ([Podcasts](podcasts.html)); "pause the musi
 
 ### Audio player {#audio-player}
 
-The Audio player shows the track that is playing, the situation folder it plays from, and the **Music level**.
-Its buttons are Previous, Pause (Play while paused or idle), Next and Thumbs down; they do what the rows
-above do, and Thumbs down does what `thumbs_down_music` does. All four are greyed out when nothing plays or
+The audio player is the Music page of the Media tab. Under **Ambient music** and the music's state (Playing,
+Paused, Muted or Nothing playing) it shows the track that is playing, the situation folder it plays from, and the
+**Music level**. Its buttons are Previous, Pause (Play while paused or idle), Next and Thumbs down; they do what the
+media keys and `manage_music` do, and Thumbs down does what `thumbs_down_music` does. All four are greyed out when nothing plays or
 the music is muted, except that with Elite closed and nothing playing, Play and Next stay usable and Folder
 shows the folder they will start. The level stays usable while muted and is drawn in its muted style.
 
@@ -461,15 +458,17 @@ track; the music jumps there when you let go, and the time shows where you would
 the headset's big panel only shows the position. Until the length is known, between tracks, with nothing
 playing and while the music is muted, the times read –:–– and the bar is empty and greyed out.
 
-Open and close it with the **Audio player** hotkey, which is Ctrl+Shift+P until you change it in Settings ›
-Hearing and sound › Sounds and levels, group Ambient music, or with a stick button, which can be a motion
-controller button in the headset. The key works while Elite
-has the foreground and does not take the foreground. It opens the dialog in the d47 window and on the headset's
-big panel at once. The two mini panels carry no buttons: while the player is open they show the track, whether
-it is playing or paused, the time played and the length either side of a thin bar, and the phrases to say. Esc, the Close button or the same key closes it everywhere.
+Open and close it with the **Audio player** hotkey, which is Ctrl+Shift+P until you change it in Media › Music,
+Page settings, or with a stick button, which can be a motion controller button in the headset. The key works while
+Elite has the foreground and does not take the foreground. It switches the d47 window and the headset's big panel to
+Media › Music at once. Pressed again, it returns each of them to the page it was on. If you have moved one of them
+off Media › Music yourself, the press opens it there again, and the next press returns them all. The two mini panels carry no buttons: while their surface is on
+Media › Music they show the track, whether it is playing or paused, the time played and the length either side of
+a thin bar, and the phrases to say.
 
-By voice, "audio player" opens it when it is closed and closes it when it is open. "Open the audio player" and
-"show the audio player" only open it. "Close the audio player" and "hide the audio player" only close it.
+By voice, "audio player" closes it when every surface shows Media › Music and otherwise opens it. "Open the
+audio player" and "show the audio player" only open it. "Close the audio player" and "hide the audio player" only
+close it, returning each surface on Media › Music to the page it was on.
 The phrases reach `audio_player`, which the model can also call:
 
 ```json
@@ -483,8 +482,8 @@ publish token, on library tracks. With one of your own tracks playing, "thumbs d
 down" moves the file to the Recycle Bin, skips to the next track and replies with the track's name and that it
 was deleted. With a library track playing and a token, it adds the track's folder and file name to
 `data/music-rejects.tsv`, skips to the next track and replies with the number of tracks queued. The same
-happens from the **Thumbs down the playing track** hotkey, which has no default and is bound in Settings ›
-Hearing and sound › Sounds and levels, group Ambient music, or from a stick button.
+happens from the **Thumbs down the playing track** hotkey, which has no default and is bound in Media › Music,
+Page settings, or from a stick button.
 
 - A track already in the file is not added twice, and a queued track is not played again.
 - A track from your own `data/audio/music` folder is moved to the Recycle Bin and the next track starts. A
@@ -502,7 +501,7 @@ The phrase reaches `thumbs_down_music`, which only you can reach: the model is n
 
 This is for the maintainer of the music library, and works only with a Music publish token. "Delete the
 thumbs-down tracks" deletes every track in `data/music-rejects.tsv` from the library's download and from this PC.
-The **Thumbs-down tracks** row in Settings › Hearing and sound › Sounds and levels, group Ambient music, shows how many are queued and has a **Delete** button that does the same; there is no hotkey. The reply says how many tracks in how many folders are being deleted, and a
+The **Thumbs-down tracks** row in Media › Music, Page settings, shows how many are queued and has a **Delete** button that does the same; there is no hotkey. The reply says how many tracks in how many folders are being deleted, and a
 second reply, when the work ends, says what was deleted and what failed.
 
 For each folder with queued tracks, one at a time:

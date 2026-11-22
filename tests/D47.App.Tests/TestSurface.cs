@@ -257,8 +257,6 @@ public static class TestSurface
             audioDrops: () => "Nothing in the audio folder in a headless test.",
             ownAudio: () => D47.Core.Audio.OwnAudioReport.Of([], [], []),
             controlMusic: _ => "Music in a headless test.",
-            musicState: () => new D47.Core.Audio.MusicState(null, false, false),
-            watchMusic: _ => () => { },
             coverage: coverage,
 
             // A real store over a real (empty) file, for the reason the two above are real: the documentation

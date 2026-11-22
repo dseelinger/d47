@@ -295,6 +295,28 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
+    /// <summary>Media › Music's strip draws the five music rows, the two hotkeys with their key slots (#2683).</summary>
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
+    public void TheMediaMusicStripDrawsTheMusicRows()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var (view, window) = OpenStrip(settings, viewState, paths, "media-music", width: 900);
+
+        view.ExpandTabStrip();
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = view.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text).ToList();
+
+        Assert.Contains("Download the D47 music library", texts);
+        Assert.Contains("Audio player", texts);
+        Assert.Contains("Thumbs down the playing track", texts);
+        Assert.Contains("Music publish token", texts);
+
+        window.SaveFrame("media-music-strip.png");
+        window.Close();
+    }
+
     /// <summary>Every SettingsTabPlace.RootKey is a root furnished on a tab.</summary>
     [AvaloniaFact]
     public void EveryTabPlaceRootKeyIsARootThisAppFurnishes()
@@ -302,7 +324,7 @@ public class ATabsOwnSettingsShowOnItTests
         var known = new[]
         {
             LoadoutPages.FleetRoot, LoadoutPages.CarrierRoot, AdventuresPage.RootKey,
-            "checklist", PanelView.LogRoot, PanelView.ConversationRoot, MediaFurnishing.PodcastsRoot,
+            "checklist", PanelView.LogRoot, PanelView.ConversationRoot, MediaFurnishing.MusicRoot, MediaFurnishing.PodcastsRoot,
         };
 
         foreach (var tab in SettingsLayout.Tabs)

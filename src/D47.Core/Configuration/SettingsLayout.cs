@@ -2,7 +2,12 @@ namespace D47.Core.Configuration;
 
 /// <summary>One key, or every bound row a family predicate matches. Exactly one of the two is set.</summary>
 /// <param name="Under">Drawn indented beneath the entry before it in the same group.</param>
-public sealed record SettingsEntry(string? Key, Func<string, bool>? Family = null, bool Under = false);
+/// <param name="Also">A key the entry's row draws in its own control, such as a hotkey's stick button.</param>
+public sealed record SettingsEntry(string? Key, Func<string, bool>? Family = null, bool Under = false, string? Also = null)
+{
+    /// <summary>Whether this entry draws <paramref name="key"/>: its own key, the key it also draws, or a key of its family.</summary>
+    public bool Holds(string key) => Key == key || Also == key || Family?.Invoke(key) == true;
+}
 
 /// <summary>A titled run of entries under one place, with one sentence saying what its rows are for.</summary>
 /// <param name="ToggleColumns">
@@ -54,7 +59,11 @@ public sealed record SettingsArea(string Id, string Title, string Sentence, IRea
 /// <param name="Strip">Whether the tab draws these rows with its own chrome stripped to match the page.</param>
 /// <param name="Title">How this tab and root read together, for a search match found elsewhere (#222).</param>
 public sealed record SettingsTabPlace(
-    string Id, string RootKey, bool Strip, string Title, IReadOnlyList<SettingsEntry> Entries);
+    string Id, string RootKey, bool Strip, string Title, IReadOnlyList<SettingsEntry> Entries)
+{
+    /// <summary>Whether one of this place's entries draws <paramref name="key"/>.</summary>
+    public bool Holds(string key) => Entries.Any(entry => entry.Holds(key));
+}
 
 /// <summary>
 /// The hand-authored map of every settings row into areas and places (#217), the precedent being
@@ -99,7 +108,7 @@ public static class SettingsLayout
     /// </summary>
     public static readonly IReadOnlyList<string> TotalLimitExceptions = ["sounds", "callouts", "exploring", "chatter", "in-flight", "headset"];
 
-    private static SettingsEntry E(string key, bool under = false) => new(key, Under: under);
+    private static SettingsEntry E(string key, bool under = false, string? also = null) => new(key, Under: under, Also: also);
 
     private static SettingsEntry F(Func<string, bool> family) => new(null, family);
 
@@ -513,20 +522,6 @@ public static class SettingsLayout
                                 E("speech.thinkingBed"),
                                 E("speech.waitingBed"),
                             ]),
-                        G(
-                            "Ambient music",
-                            "The background layer that follows what you are doing.",
-                            [
-                                E("audio.music.library"),
-                                E("audio.music.now"),
-                                E("audio.music.next"),
-                                E("audio.music.previous"),
-                                E(Capabilities.Builtin.AudioCapability.MusicPublishTokenKey),
-                                E(Capabilities.Builtin.AudioCapability.MusicRejectsKey),
-                                E(Capabilities.Builtin.AudioCapability.ThumbsDownHotkeyKey),
-                                E(Capabilities.Builtin.AudioCapability.AudioPlayerHotkeyKey),
-                            ],
-                            toggleColumns: 0),
                         G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0) with
                         {
                             Layout = SettingsGroupLayout.Mixer,
@@ -979,6 +974,18 @@ public static class SettingsLayout
                 E("speech.towerVoice"),
                 E("persona.carrierHumor"),
                 E("persona.carrierHumorPercent", under: true),
+            ]),
+        new SettingsTabPlace(
+            "media-music",
+            "media-music",
+            true,
+            "Media › Music",
+            [
+                E(Capabilities.Builtin.AudioCapability.MusicLibraryKey),
+                E(Capabilities.Builtin.AudioCapability.AudioPlayerHotkeyKey, also: Capabilities.Builtin.AudioCapability.AudioPlayerButtonKey),
+                E(Capabilities.Builtin.AudioCapability.ThumbsDownHotkeyKey, also: Capabilities.Builtin.AudioCapability.ThumbsDownButtonKey),
+                E(Capabilities.Builtin.AudioCapability.MusicPublishTokenKey),
+                E(Capabilities.Builtin.AudioCapability.MusicRejectsKey),
             ]),
         new SettingsTabPlace(
             "media-podcasts", "media-podcasts", true, "Media › Podcasts", [E(Capabilities.Builtin.PodcastCapability.FeedsKey)]),

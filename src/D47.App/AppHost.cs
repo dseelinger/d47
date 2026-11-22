@@ -541,24 +541,26 @@ public sealed class AppHost : IDisposable
             is { } found ? D47.App.Panel.StoryRunPage.ChapterName(found) : null;
     }
 
-    /// <summary>Opens, closes or toggles the audio player on every surface, and says which.</summary>
+    /// <summary>
+    /// Opens the audio player by putting every surface on Media › Music, or closes it by putting each surface on
+    /// that page back where it was, and says which.
+    /// </summary>
     internal string ControlAudioPlayer(AudioPlayerAction action)
     {
-        var open = action switch
+        bool? open = action switch
         {
             AudioPlayerAction.Open => true,
             AudioPlayerAction.Close => false,
-            _ => !Panel.AudioPlayerOpen,
+            _ => null,
         };
 
-        if (Panel.AudioPlayerOpen == open)
+        return PanelRouting.Toggle(D47.App.Panel.MediaFurnishing.MusicRoot, open) switch
         {
-            return open ? "The audio player is already open." : "The audio player is already closed.";
-        }
-
-        Panel.AudioPlayerOpen = open;
-
-        return open ? "Audio player opened." : "Audio player closed.";
+            D47.App.Panel.PageToggle.Opened => "Audio player opened.",
+            D47.App.Panel.PageToggle.Closed => "Audio player closed.",
+            D47.App.Panel.PageToggle.AlreadyOpen => "The audio player is already open.",
+            _ => "The audio player is already closed.",
+        };
     }
 
     internal static bool RecycleFile(string path)
@@ -2951,14 +2953,6 @@ public sealed class AppHost : IDisposable
                 colonisationPlans: () => late.Host?.ColonisationPlans,
                 colonisationProgress: () => late.Host?.ColonisationProgress,
                 commanderLog: stores.CommanderLog,
-                musicState: () => late.Host?.Music.State ?? new MusicState(null, false, false),
-                watchMusic: refresh =>
-                {
-                    void Changed(MusicState _) => refresh();
-                    var music = late.Host!.Music;
-                    music.Changed += Changed;
-                    return () => music.Changed -= Changed;
-                },
                 musicLibrary: () => late.Host?.MusicPack?.Status,
                 watchMusicLibrary: refresh =>
                 {
@@ -5937,6 +5931,16 @@ public sealed class AppHost : IDisposable
         RunningCast,
         GatedDistance(Settings, () => Galaxy),
         CastVoices);
+
+    private D47.App.Panel.MusicHost? _musicHost;
+
+    /// <summary>What Media › Music reads and does, shared by the window and the headset.</summary>
+    public D47.App.Panel.MusicHost MusicHost => _musicHost ??= new D47.App.Panel.MusicHost(
+        Settings,
+        action => Music.Control(action),
+        () => Announcer.SayAside(ThumbsDownMusic()),
+        Music.Progress,
+        Music.Seek);
 
     private D47.App.Panel.PodcastsHost? _podcastsHost;
 

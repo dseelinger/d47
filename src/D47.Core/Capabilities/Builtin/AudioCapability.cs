@@ -90,8 +90,6 @@ public static class AudioCapability
         Func<string>? drops = null,
         Action? openFolder = null,
         Func<MusicAction, string>? music = null,
-        Func<MusicState>? musicState = null,
-        Func<Action, Action>? watchMusic = null,
         Func<string?>? library = null,
         Func<Action, Action>? watchLibrary = null,
         Func<string>? thumbsDown = null,
@@ -120,7 +118,7 @@ public static class AudioCapability
         Settings =
         [
             .. Enum.GetValues<AudioChannel>().SelectMany(channel => channel == AudioChannel.Music
-                ? [LibraryRow(library, watchLibrary), .. TransportRows(music, musicState, watchMusic), .. RowsFor(channel)]
+                ? [LibraryRow(library, watchLibrary), .. RowsFor(channel)]
                 : RowsFor(channel)),
             .. drops is null ? Array.Empty<SettingRow>() : [DropsRow(drops)],
             .. ownAudio is null ? Array.Empty<SettingRow>() : OwnAudioRows(ownAudio, openFolder),
@@ -135,12 +133,13 @@ public static class AudioCapability
                 (s, v) => s with { Hotkeys = s.Hotkeys with { ThumbsDownMusic = v } },
                 systemWide: true,
                 exercise: new(
-                    "Settings › Hearing and sound › Sounds and levels, group Ambient music",
+                    MusicSettings,
                     "(unbound)",
                     "with one of your own tracks playing, the file moves to the Recycle Bin and the next track "
                         + "starts. With a Music publish token set and a library track playing, the track is added to "
                         + "data\\music-rejects.tsv and the next track starts. Without a token a library track "
-                        + "keeps playing.")),
+                        + "keeps playing."),
+                showEverySetting: false),
             .. InterfaceCapability.HotkeyRows(
                 AudioPlayerHotkeyKey,
                 AudioPlayerButtonKey,
@@ -150,10 +149,11 @@ public static class AudioCapability
                 (s, v) => s with { Hotkeys = s.Hotkeys with { AudioPlayer = v } },
                 systemWide: true,
                 exercise: new(
-                    "Settings › Hearing and sound › Sounds and levels, group Ambient music",
+                    MusicSettings,
                     "Ctrl+Shift+P",
-                    "the Audio player opens in the d47 window and on the headset's big panel, and the mini panels "
-                        + "show its read-out. Press it again and all of them close.")),
+                    "the d47 window and the headset's big panel switch to Media › Music, and the mini panels "
+                        + "show its read-out. Press it again and each returns to the page it was on."),
+                showEverySetting: false),
         ],
         Tools = [ManageMusic(music, storyPlaybackOpen, podcastActive), AudioPlayer(audioPlayer), ThumbsDownMusic(thumbsDown), DeleteMusicRejects(deleteRejects, maintainer)],
     };
@@ -304,17 +304,18 @@ public static class AudioCapability
     private static ToolCommandPhrase PlayerPhrase(string phrase, string action) =>
         new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });
 
-    /// <summary>Opens or closes the audio player: the track, its folder and the transport buttons.</summary>
+    /// <summary>Opens or closes the audio player, the Media › Music page: the track, its folder and the transport buttons.</summary>
     private static ToolDefinition AudioPlayer(Func<AudioPlayerAction, string>? audioPlayer) => new()
     {
         Name = AudioPlayerTool,
         Exercise =
-            "Say \"audio player\": the Audio player opens in the d47 window and on the headset's big panel, and the "
-            + "mini panels show its read-out. Say \"audio player\" again, or \"close the audio player\": all of them "
-            + "close. \"Open the audio player\" and \"show the audio player\" only open it, and \"close the audio player\" "
-            + "does nothing while it is closed. The reply says what the player did.",
-        Description = "Opens, closes or toggles the audio player, which shows the playing ambient music track with "
-                      + "previous, play or pause, next and thumbs down buttons.",
+            "Say \"audio player\": the d47 window and the headset's big panel switch to Media › Music, and the mini "
+            + "panels show its read-out. Say \"audio player\" again, or \"close the audio player\": each returns to the "
+            + "page it was on. With one of them moved off Media › Music by hand, \"audio player\" opens it there again. \"Open the audio player\" and \"show the audio player\" only open it, and \"close the "
+            + "audio player\" does nothing while it is closed. The reply says what the player did.",
+        Description = "Opens, closes or toggles the audio player: open switches the panel to Media › Music, which shows "
+                      + "the playing ambient music track with previous, play or pause, next and thumbs down buttons; "
+                      + "close returns the panel to the page it was on.",
         Parameters =
         [
             ToolParameter.OneOf("action", "Whether to open, close or toggle the audio player.", ["open", "close", "toggle"], required: true),
@@ -394,126 +395,21 @@ public static class AudioCapability
         },
     };
 
-    public const string NowPlayingKey = "audio.music.now";
-
     public const string MusicLibraryKey = "audio.music.library";
-
-    public const string NextTrackKey = "audio.music.next";
-
-    public const string PreviousTrackKey = "audio.music.previous";
 
     private const string MusicGroup = "Ambient music";
 
-    private const string ShowMusic = "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
-                                     + "open Settings › Hearing and sound › Sounds and levels, group Ambient music, ";
+    /// <summary>Where the music rows are drawn, for an exercise to name.</summary>
+    private const string MusicSettings = "Media › Music, Page settings (the ▸ SETTINGS tile on the title line)";
 
-    /// <summary>What the transport row says: the track, or why there is none.</summary>
-    internal static string NowPlaying(MusicState state, bool muted) => state switch
-    {
-        _ when muted => "Muted",
-        { Paused: true } or { Idle: true } => "Paused",
-        { Track: { } track } => Path.GetFileNameWithoutExtension(track),
-        _ => "Nothing playing",
-    };
-
-    private static bool CanControl(MusicState state, D47Settings settings) =>
-        !settings.Audio.For(AudioChannel.Music).Muted && (state.Playing || state.Paused || state.Idle);
-
-    /// <summary>Play and Next also start the last folder while Elite is closed.</summary>
-    private static bool CanStart(MusicState state, D47Settings settings) =>
-        CanControl(state, settings) || (!settings.Audio.For(AudioChannel.Music).Muted && state.Startable);
-
-    /// <summary>Pause or resume, and next, above the music's level row. None where nothing plays the music.</summary>
-    private static IEnumerable<SettingRow> TransportRows(
-        Func<MusicAction, string>? music,
-        Func<MusicState>? musicState,
-        Func<Action, Action>? watch)
-    {
-        if (music is null || musicState is null)
-        {
-            yield break;
-        }
-
-        var (_, what) = Describe(AudioChannel.Music);
-
-        yield return new SettingRow
-        {
-            Key = NowPlayingKey,
-            Exercise =
-                ShowMusic + "find Now playing. It shows the track's file name while music plays, Paused while "
-                + "paused, Muted while the music channel is muted and Nothing playing otherwise. The button reads "
-                + "Pause while a track plays: press it and the music holds, the row shows Paused and the button "
-                + "reads Resume; press Resume and the track carries on. The button is greyed out when nothing "
-                + "plays or the channel is muted, except with Elite closed, when it reads Resume and starts the folder "
-                + "that played last. Saying \"pause the music\" or \"resume the music\" does the "
-                + "same. Needs ambient music playing, which follows what you are doing in game.",
-            Advanced = true,
-            Label = "Now playing",
-            Help = "The track that is playing. Pause holds it where it is; Resume carries on. "
-                   + "Voice and the media keys do the same.",
-            Kind = SettingKind.Info,
-            Group = MusicGroup,
-            GroupHelp = what,
-            DocsAnchor = "the-eight-categories",
-            Binding = new SettingBinding
-            {
-                Read = s => NowPlaying(musicState(), s.Audio.For(AudioChannel.Music).Muted),
-            },
-            PressLabelFor = () => musicState() is { Paused: true } or { Idle: true } or { Startable: true } ? "Resume" : "Pause",
-            PressEnabled = s => CanStart(musicState(), s),
-            Press = () => music(musicState() is { Paused: true } or { Idle: true } or { Startable: true } ? MusicAction.Resume : MusicAction.Pause),
-            Watch = watch,
-        };
-
-        yield return new SettingRow
-        {
-            Key = NextTrackKey,
-            Exercise =
-                ShowMusic + "find Next track and press Next while music plays: another track from the same "
-                + "folder starts and Now playing shows its file name. The button is greyed out when nothing plays "
-                + "or the channel is muted, except with Elite closed, when it starts the folder that played last. "
-                + "Saying \"next track\" does the same. Needs ambient music playing.",
-            Advanced = true,
-            Label = "Next track",
-            Help = "Starts another track from the same folder.",
-            Kind = SettingKind.Info,
-            Group = MusicGroup,
-            GroupHelp = what,
-            DocsAnchor = "the-eight-categories",
-            PressLabel = "Next",
-            PressEnabled = s => CanStart(musicState(), s),
-            Press = () => music(MusicAction.Next),
-            Watch = watch,
-        };
-
-        yield return new SettingRow
-        {
-            Key = PreviousTrackKey,
-            Exercise =
-                ShowMusic + "find Previous track and press Previous while music plays: the track before the "
-                + "current one in the folder's shuffle starts and Now playing shows its file name. On the "
-                + "first track of a shuffle the same track starts again. The button is greyed out when nothing "
-                + "plays or the channel is muted. Saying \"previous track\" does the same. Needs ambient music playing.",
-            Advanced = true,
-            Label = "Previous track",
-            Help = "Plays the track before this one in the folder's shuffle.",
-            Kind = SettingKind.Info,
-            Group = MusicGroup,
-            GroupHelp = what,
-            DocsAnchor = "the-eight-categories",
-            PressLabel = "Previous",
-            PressEnabled = s => CanControl(musicState(), s),
-            Press = () => music(MusicAction.Previous),
-            Watch = watch,
-        };
-    }
+    private const string ShowMusic = "Open " + MusicSettings + ", ";
 
     /// <summary>Whether d47 downloads the music library, with the download's state under it.</summary>
     private static SettingRow LibraryRow(Func<string?>? library, Func<Action, Action>? watch) => new()
     {
         Key = MusicLibraryKey,
         Exercise =
-            "Open Settings › Hearing and sound › Sounds and levels, group Ambient music, and find Download the "
+            "Open " + MusicSettings + ", and find Download the "
             + "D47 music library (off by default). Tick it: the line under it gives the library's size and counts "
             + "the tracks ready as each one lands in data\\music-pack, two in each folder, naming the folder being "
             + "fetched. Needs a network connection to GitHub and about 200 MB free. With Elite running and Elite's "

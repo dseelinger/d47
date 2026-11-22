@@ -1,7 +1,5 @@
 D47.App.App.App()
 D47.App.AppHost.SignalSightings
-D47.App.Controls.AudioPlayerDialog.PollInterval
-D47.App.Controls.AudioPlayerDialog.Polling
 D47.App.Controls.AudioReadout.Polling
 D47.App.Controls.ChordPicker.Chord
 D47.App.Controls.ClampedText.FullText

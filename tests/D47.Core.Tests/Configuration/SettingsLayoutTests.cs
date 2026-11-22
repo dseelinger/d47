@@ -192,15 +192,40 @@ public class SettingsLayoutTests
             rows.Select(r => r.Key));
     }
 
-    /// <summary>The output device, the three music transport rows, then every channel's Level and Mute, and Duck for the three that duck, and the Music publish token and its hotkey; only the device and the secret token row are shown.</summary>
+    /// <summary>The output device, then every channel's Level and Mute, and Duck for the three that duck; only the device is shown. The music rows are on Media › Music.</summary>
     [Fact]
-    public void SoundsHoldsTheOutputDeviceTheMusicRowsAndTheAdvancedMixerEntriesTests()
+    public void SoundsHoldsTheOutputDeviceAndTheAdvancedMixerEntriesTests()
     {
         var surface = Surface();
 
-        Assert.Equal(37, EntryCount("sounds"));
-        Assert.Equal(3, ShownCount(surface.Settings, "sounds"));
-        Assert.Equal(37, surface.Settings.RowsForPlace("sounds").Count);
+        Assert.Equal(29, EntryCount("sounds"));
+        Assert.Equal(1, ShownCount(surface.Settings, "sounds"));
+        Assert.Equal(29, surface.Settings.RowsForPlace("sounds").Count);
+    }
+
+    /// <summary>Media › Music's Page settings hold the five music rows in the design's order, and the transport rows are gone (#2683).</summary>
+    [Fact]
+    public void MediaMusicHoldsTheFiveMusicRowsTests()
+    {
+        var music = SettingsLayout.Tabs.Single(tab => tab.Id == "media-music");
+
+        Assert.Equal("media-music", music.RootKey);
+        Assert.True(music.Strip);
+        Assert.Equal(
+            [
+                AudioCapability.MusicLibraryKey,
+                AudioCapability.AudioPlayerHotkeyKey,
+                AudioCapability.ThumbsDownHotkeyKey,
+                AudioCapability.MusicPublishTokenKey,
+                AudioCapability.MusicRejectsKey,
+            ],
+            music.Entries.Select(entry => entry.Key));
+
+        var keys = AudioCapability.Create(music: _ => string.Empty).Settings.Select(row => row.Key).ToList();
+
+        Assert.DoesNotContain("audio.music.now", keys);
+        Assert.DoesNotContain("audio.music.next", keys);
+        Assert.DoesNotContain("audio.music.previous", keys);
     }
 
     [Fact]

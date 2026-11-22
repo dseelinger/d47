@@ -34,16 +34,17 @@ public sealed class TheKeysListNamesEveryHotkeyTests
         var titles = Build(Surface()).Select(g => g.Title).ToArray();
 
         Assert.Equal(
-            ["Getting around", "Look and keys", "On the page", "In the ask box", "Microphone", "Ambient music", "Comms channel keys", "Overlay", "Headset overlay", "Galaxy map", "Hull viewer"],
+            ["Getting around", "Look and keys", "On the page", "In the ask box", "Microphone", "Comms channel keys", "Overlay", "Headset overlay", "Music", "Galaxy map", "Hull viewer"],
             titles);
     }
 
+    /// <summary>A group from a Settings place names it; one from a tab's Page settings names the tab (#2683).</summary>
     [Fact]
     public void AChangeableGroupNamesItsSettingsPlace()
     {
         var wheres = Build(Surface()).Where(g => g.Changeable).Select(g => g.Where!).ToArray();
 
-        Assert.Equal(["Settings › Window", "Settings › Voice Input", "Settings › Sounds and levels", "Settings › What D47 may do", "Settings › Overlay", "Settings › Headset"], wheres);
+        Assert.Equal(["Settings › Window", "Settings › Voice Input", "Settings › What D47 may do", "Settings › Overlay", "Settings › Headset", "Media › Music › Page settings"], wheres);
     }
 
     [Fact]

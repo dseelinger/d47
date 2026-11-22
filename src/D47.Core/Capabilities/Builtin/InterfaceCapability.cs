@@ -439,9 +439,11 @@ public static class InterfaceCapability
         Func<Configuration.D47Settings, string?> read,
         Func<Configuration.D47Settings, string?, Configuration.D47Settings> write,
         bool systemWide = false,
-        HotkeyExercise? exercise = null)
+        HotkeyExercise? exercise = null,
+        bool showEverySetting = true)
     {
         var slot = Hotas.ButtonSlots.All.Single(slot => slot.Key == buttonKey);
+        var opens = showEverySetting ? AdvancedPrefix : "Open ";
 
         var keyScope = systemWide
             ? "The key works while Elite has the foreground."
@@ -457,7 +459,7 @@ public static class InterfaceCapability
                 Key = key,
                 Exercise = exercise is null
                     ? null
-                    : AdvancedPrefix + exercise.Where + ", and find " + label + ". The row shows a key slot (default "
+                    : opens + exercise.Where + ", and find " + label + ". The row shows a key slot (default "
                       + exercise.DefaultKey + "), a stick slot that stays hidden while no controller is attached and "
                       + "nothing is bound to it. Press the key: " + exercise.Effect + " "
                       + keyScope + " To rebind, click the key slot: it reads PRESS A KEY…. Press another "
@@ -488,7 +490,7 @@ public static class InterfaceCapability
                 Key = buttonKey,
                 Exercise = exercise is null
                     ? null
-                    : AdvancedPrefix + exercise.Where + ", and find " + label + ". The stick slot of that row is this "
+                    : opens + exercise.Where + ", and find " + label + ". The stick slot of that row is this "
                       + "setting. It needs a stick or throttle attached; with none, the slot stays hidden until a "
                       + "button is bound. Click the stick slot: it reads PRESS A BUTTON…. Press a button that springs back and the slot shows its name. Press that "
                       + "button: " + exercise.Effect + " " + buttonScope + " Click the stick slot and press Esc: "

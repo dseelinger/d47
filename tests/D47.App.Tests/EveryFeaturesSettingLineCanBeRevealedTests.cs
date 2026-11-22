@@ -66,6 +66,6 @@ public sealed class EveryFeaturesSettingLineCanBeRevealedTests
     private static bool OnThePageBar(CapabilityRegistry registry, string key) =>
         registry.All.SelectMany(capability => capability.Descriptor.Settings).Any(row => row.Key == key && row.PageTop);
 
-    private static bool OnAStrip(string key) =>
-        SettingsLayout.Tabs.Any(tab => tab.Entries.Any(entry => entry.Key == key || entry.Family?.Invoke(key) == true));
+    /// <summary>A tab place's entry draws the row: its own key, a family member, or the stick button its hotkey row holds.</summary>
+    private static bool OnAStrip(string key) => SettingsLayout.Tabs.Any(tab => tab.Holds(key));
 }

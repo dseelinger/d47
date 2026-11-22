@@ -75,8 +75,8 @@ public static class KeyList
     ];
 
     /// <summary>
-    /// The list: the fixed keys as written here, and each settings group that holds a hotkey row, read from
-    /// <see cref="SettingsLayout"/>. <paramref name="boundAs"/> prints what a row's
+    /// The list: the fixed keys as written here, each settings group that holds a hotkey row, read from
+    /// <see cref="SettingsLayout"/>, then each tab's Page settings that hold one, titled by the tab's page. <paramref name="boundAs"/> prints what a row's
     /// <see cref="SettingRow.BoundKeys"/> hold now, aligned by index, null where a slot holds nothing.
     /// </summary>
     public static IReadOnlyList<KeyGroup> Build(SettingsService settings, Func<SettingRow, IReadOnlyList<string?>> boundAs)
@@ -97,12 +97,28 @@ public static class KeyList
                 [.. rows.Select(row => new KeyEntry(row.Label, [.. boundAs(row).OfType<string>()], "or"))])))
             .ToList();
 
+        var onTabs = (
+            from tab in SettingsLayout.Tabs
+            let rows = tab.Entries
+                .SelectMany(settings.RowsForEntry)
+                .Where(row => row.Kind == SettingKind.Hotkey && row.Applies(settings.Current))
+                .ToList()
+            where rows.Count > 0
+            select new KeyGroup(
+                tab.Title.Split(" › ")[^1],
+                tab.Title + " › Page settings",
+                rows.Any(row => row.SystemWide) ? WhileElite : null,
+                true,
+                [.. rows.Select(row => new KeyEntry(row.Label, [.. boundAs(row).OfType<string>()], "or"))]))
+            .ToList();
+
         return
         [
             GettingAround,
             .. changeable.Where(c => c.Place.Id == WindowPlace).Select(c => c.Group),
             .. OnThePage,
             .. changeable.Where(c => c.Place.Id != WindowPlace).Select(c => c.Group),
+            .. onTabs,
             .. OnTheMaps,
         ];
     }

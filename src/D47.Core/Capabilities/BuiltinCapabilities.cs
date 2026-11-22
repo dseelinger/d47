@@ -208,7 +208,7 @@ public static class BuiltinCapabilities
         Action? deleteMusicRejectsNow = null,
         Func<Action, Action>? watchMusicRejects = null,
 
-        // Opens, closes or toggles the audio player; null where there is no window to show it in.
+        // Opens, closes or toggles the audio player, the Media › Music page; null where there is no window to show it in.
         Func<Audio.AudioPlayerAction, string>? audioPlayer = null,
 
         // What the Commander's own audio folder holds, for the status rows and their page.
@@ -220,10 +220,6 @@ public static class BuiltinCapabilities
 
         // The Commanders this Commander has met, for the commander-log tool.
         Journal.CommanderLog? commanderLog = null,
-
-        // What the music is playing, and a way to be told when that changes.
-        Func<Audio.MusicState>? musicState = null,
-        Func<Action, Action>? watchMusic = null,
 
         // The music library download's state line, and a way to be told when it changes.
         Func<string?>? musicLibrary = null,
@@ -488,7 +484,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => podcastDesk?.Invoke()?.Active == true),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => podcastDesk?.Invoke()?.Active == true),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,

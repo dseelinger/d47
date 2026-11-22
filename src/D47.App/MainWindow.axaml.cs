@@ -58,7 +58,7 @@ public partial class MainWindow : Window
             AudioCapability.ThumbsDownHotkeyKey, () => Avalonia.Threading.Dispatcher.UIThread.Post(ThumbsDownMusic));
     }
 
-    /// <summary>The gesture that opens and closes the audio player.</summary>
+    /// <summary>The gesture that opens and closes the audio player, the Media › Music page.</summary>
     private void BindAudioPlayerKey()
     {
         if (_host is null)
@@ -76,36 +76,6 @@ public partial class MainWindow : Window
         {
             _host.ControlAudioPlayer(AudioPlayerAction.Toggle);
         }
-    }
-
-    /// <summary>Opens or closes this window's copy of the player to match <see cref="PanelViewModel.AudioPlayerOpen"/>.</summary>
-    private void ShowAudioPlayer()
-    {
-        if (_host is not { } host)
-        {
-            return;
-        }
-
-        if (!_model.AudioPlayerOpen)
-        {
-            _audioPlayer?.Close();
-            return;
-        }
-
-        if (_audioPlayer is not null)
-        {
-            return;
-        }
-
-        var dialog = new AudioPlayerDialog(_model, host.Settings, action => host.Music.Control(action), ThumbsDownMusic, host.Music.Progress, host.Music.Seek);
-
-        _audioPlayer = dialog;
-        dialog.Closed += (_, _) =>
-        {
-            _audioPlayer = null;
-            _model.AudioPlayerOpen = false;
-        };
-        _ = dialog.Over(this);
     }
 
     /// <summary>Opens or closes this window's copy of the playback box to match <see cref="PanelViewModel.StoryPlayback"/>.</summary>
@@ -153,7 +123,6 @@ public partial class MainWindow : Window
     private readonly GlobalHotkey _commsSubChannelDown;
     private readonly GlobalHotkey _thumbsDownMusic;
     private readonly GlobalHotkey _audioPlayerKey;
-    private AudioPlayerDialog? _audioPlayer;
     private StoryPlaybackDialog? _storyPlayback;
 
     private readonly PanelViewModel _model;
@@ -318,7 +287,7 @@ public partial class MainWindow : Window
             Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableCommanders(host.Commanders);
 
-            Panel.EnableMedia(host.PodcastsHost, BuildSettingsStrip);
+            Panel.EnableMedia(host.PodcastsHost, BuildSettingsStrip, host.MusicHost);
 
             if (ModulesSource is { } modulesSource)
             {
@@ -773,11 +742,7 @@ public partial class MainWindow : Window
         BindAudioPlayerKey();
         _model.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(PanelViewModel.AudioPlayerOpen))
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(ShowAudioPlayer);
-            }
-            else if (e.PropertyName == nameof(PanelViewModel.StoryPlayback))
+            if (e.PropertyName == nameof(PanelViewModel.StoryPlayback))
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(ShowStoryPlayback);
             }

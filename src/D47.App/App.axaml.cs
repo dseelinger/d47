@@ -133,6 +133,7 @@ public partial class App(AppHost? host) : Application
                 adventureDesk: host.AdventureDesk,
                 characters: host.CharactersHost,
                 podcasts: host.PodcastsHost,
+                music: host.MusicHost,
                 buildTalk: host.BuildTalk,
                 spend: MainWindow.SpendDeskFor(host),
                 bgsTick: () => host.BgsTick?.Last,
@@ -143,12 +144,6 @@ public partial class App(AppHost? host) : Application
                 modules: window?.ModulesSource,
                 paneWidths: new Panel.PaneWidthMemory(host.ViewState, headset: true),
                 columnArrangements: new Panel.ColumnArrangementMemory(host.ViewState, headset: true),
-                audioPlayer: () => new Controls.AudioPlayerDialog(
-                    host.Panel,
-                    host.Settings,
-                    action => host.Music.Control(action),
-                    () => host.Announcer.SayAside(host.ThumbsDownMusic()),
-                    host.Music.Progress),
                 storyPlayback: () => host.NewStoryPlayback(headset: true),
                 controllerButtons: host.ControllerButtons);
 
@@ -228,6 +223,7 @@ public partial class App(AppHost? host) : Application
                     Portraits = new Panel.SpeakerPortraits(host.SpeakerPictures, host.Loggers.CreateLogger<Panel.SpeakerPortraits>()),
                     RegionFirsts = host.RegionFirsts,
                     Podcasts = host.PodcastsHost,
+                    Music = host.MusicHost,
                 });
 
             // Through the same route as the other two (Phase 45).

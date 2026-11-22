@@ -198,6 +198,7 @@ public sealed class VrHost : IDisposable
         D47.Core.Capabilities.Builtin.AdventureCapability.AdventureDesk? adventureDesk = null,
         Panel.CharactersHost? characters = null,
         Panel.PodcastsHost? podcasts = null,
+        Panel.MusicHost? music = null,
         D47.Core.Ships.BuildTalk? buildTalk = null,
         Panel.SpendDesk? spend = null,
         Func<DateTimeOffset?>? bgsTick = null,
@@ -214,7 +215,6 @@ public sealed class VrHost : IDisposable
 
         // Which columns each table shows, stored apart from the window's.
         Panel.ColumnArrangementMemory? columnArrangements = null,
-        Func<D47.App.Controls.AudioPlayerDialog>? audioPlayer = null,
         Func<D47.App.Controls.StoryPlaybackDialog>? storyPlayback = null,
 
         // The motion controllers' buttons, which the aim loop reads and the stick poll binds.
@@ -241,6 +241,7 @@ public sealed class VrHost : IDisposable
             adventureDesk: adventureDesk,
             characters: characters,
             podcasts: podcasts,
+            music: music,
             buildTalk: buildTalk,
             spend: spend,
             bgsTick: bgsTick,
@@ -251,7 +252,6 @@ public sealed class VrHost : IDisposable
             modules: modules,
             paneWidths: paneWidths,
             columnArrangements: columnArrangements,
-            audioPlayer: audioPlayer,
             storyPlayback: storyPlayback,
             portraits: new Panel.SpeakerPortraits(new D47.Core.Interface.SpeakerPictures(files, paths), loggers.CreateLogger<Panel.SpeakerPortraits>()),
 
