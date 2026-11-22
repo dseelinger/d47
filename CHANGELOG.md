@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A change of screen resolution, such as switching between 2D and the headset with Virtual Desktop, no longer overwrites where you put the 2D overlay strip. While that place does not fit on a screen the strip is centred on Elite's screen, and it goes back to your place when it fits again.
+
 Changed: A ship's To buy block plots its route within 500 light years instead of 50, and so does "plot_outfitting_route" when no distance is named. The block has a Max report age field beside the Plot button, 3 days at first, and the plot uses the age you pick.
 
 Fixed: Every module Elite gives a mass now has one in the table. Fuel scoops, refineries, auto field-maintenance units, docking computers and the cargo hatch weigh 0 t, and the planetary vehicle hangars, Mk II passenger cabins and discovery scanners take their mass from EDSY, so a planned build with one of them has the right weight and jump range.

@@ -5,6 +5,9 @@ namespace D47.App.Windowing;
 /// <summary>One monitor as the overlay's placement sees it: physical-pixel rectangles and the scaling.</summary>
 public readonly record struct OverlayScreen(PixelRect Bounds, PixelRect WorkingArea, double Scaling);
 
+/// <summary>Where the strip goes: its position and size, and whether it was centred because the wanted place did not fit.</summary>
+public readonly record struct OverlayFit(PixelPoint Position, double Width, double Height, bool Centred);
+
 /// <summary>Where the overlay strip sits relative to the screens, as plain values.</summary>
 public static class OverlayGeometry
 {
@@ -51,5 +54,34 @@ public static class OverlayGeometry
             area.Y + (int)Math.Round((area.Height - (height * scaling)) / 2));
 
         return (position, width, height);
+    }
+
+    /// <summary>
+    /// The wanted place and size when that strip is wholly on a screen; otherwise the strip centred on
+    /// Elite's screen.
+    /// </summary>
+    public static OverlayFit Fit(
+        PixelPoint position, double width, double height,
+        IReadOnlyList<OverlayScreen> screens, OverlayScreen elite)
+    {
+        var scaling = elite.Scaling;
+
+        foreach (var screen in screens)
+        {
+            if (screen.Bounds.Contains(position))
+            {
+                scaling = screen.Scaling;
+                break;
+            }
+        }
+
+        if (IsWhollyOnAScreen(StripRect(position, width, height, scaling), screens))
+        {
+            return new OverlayFit(position, width, height, false);
+        }
+
+        var (centred, centredWidth, centredHeight) = Centre(width, height, elite);
+
+        return new OverlayFit(centred, centredWidth, centredHeight, true);
     }
 }

@@ -83,4 +83,40 @@ public class AStripOffEveryScreenIsCentredOnEliteTests
         Assert.Equal(520, height, 3);
         Assert.Equal(new PixelPoint(0, 260), position);
     }
+
+    [Fact]
+    public void ARememberedPlaceThatFitsIsUsed()
+    {
+        var fit = OverlayGeometry.Fit(new PixelPoint(1500, 600), 400, 300, [Left, Right], Left);
+
+        Assert.False(fit.Centred);
+        Assert.Equal(new PixelPoint(1500, 600), fit.Position);
+        Assert.Equal(400, fit.Width);
+        Assert.Equal(300, fit.Height);
+    }
+
+    [Fact]
+    public void ARememberedPlaceThatDoesNotFitIsCentredAndTheRememberedPlaceIsUnchanged()
+    {
+        var remembered = new PixelPoint(2500, 600);
+
+        var fit = OverlayGeometry.Fit(remembered, 400, 300, [Left], Left);
+
+        Assert.True(fit.Centred);
+        Assert.Equal(new PixelPoint(760, 370), fit.Position);
+        Assert.Equal(new PixelPoint(2500, 600), remembered);
+    }
+
+    [Fact]
+    public void ARememberedPlaceIsUsedAgainWhenTheScreensGrowBack()
+    {
+        var remembered = new PixelPoint(2500, 600);
+
+        var small = OverlayGeometry.Fit(remembered, 400, 300, [Left], Left);
+        var grown = OverlayGeometry.Fit(remembered, 400, 300, [Left, Right], Left);
+
+        Assert.True(small.Centred);
+        Assert.False(grown.Centred);
+        Assert.Equal(remembered, grown.Position);
+    }
 }

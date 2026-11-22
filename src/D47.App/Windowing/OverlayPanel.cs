@@ -57,6 +57,9 @@ public sealed class OverlayPanel : Window
     /// <summary>Whether the Commander has put the strip somewhere themselves (#36).</summary>
     private bool _placed;
 
+    /// <summary>The place the Commander ended place mode at, or null if they never did; screen changes read it and never write it.</summary>
+    private OverlayPlacement? _remembered;
+
     /// <summary>Whether the Commander has dragged a handle to a size of their own (#89).</summary>
     private bool _sized;
 
@@ -455,6 +458,7 @@ public sealed class OverlayPanel : Window
         }
 
         _placed = true;
+        _remembered = placement;
         Position = new PixelPoint((int)placement.X, (int)placement.Y);
 
         if (placement is { Width: { } width, Height: { } height })
@@ -507,12 +511,12 @@ public sealed class OverlayPanel : Window
         return screens.ScreenFromPoint(centre) ?? fallback;
     }
 
-    /// <summary>Centres the strip on Elite's screen if it is not wholly on one screen, and saves that placement.</summary>
+    /// <summary>Puts the strip at the remembered place if it fits, otherwise centres it on Elite's screen. Saves nothing.</summary>
     private void KeepOnScreen()
     {
-        if (_ready && Recentre() && _placed)
+        if (_ready)
         {
-            Remember();
+            Recentre();
         }
     }
 
@@ -526,33 +530,52 @@ public sealed class OverlayPanel : Window
     }
 
     /// <summary>
-    /// Moves the strip to the middle of Elite's working area when it is not wholly on one screen, shrinking
-    /// it if it is larger than that area. Returns whether it moved.
+    /// Puts the strip at the remembered place and size when that is wholly on a screen, otherwise in the
+    /// middle of Elite's working area, shrunk if it is larger than that area. Returns whether it centred.
     /// </summary>
-    private bool Recentre()
+    private bool Recentre(bool fromRemembered = true)
     {
         if (Screens is not { } screens || screens.All.Count == 0 || ScreenForElite() is not { } target)
         {
             return false;
         }
 
-        var all = screens.All.Select(Describe).ToArray();
-        var current = screens.ScreenFromPoint(Position) ?? target;
-        var strip = OverlayGeometry.StripRect(Position, Width, Height, current.Scaling);
+        var (position, width, height) = Wanted(fromRemembered);
+        var fit = OverlayGeometry.Fit(position, width, height, screens.All.Select(Describe).ToArray(), Describe(target));
 
-        if (OverlayGeometry.IsWhollyOnAScreen(strip, all))
+        Width = fit.Width;
+        Height = fit.Height;
+        Position = fit.Position;
+
+        if (fit.Centred)
         {
-            return false;
+            _logger.LogInformation("The overlay was not wholly on a screen, so it was centred on Elite's screen");
         }
 
-        var (position, width, height) = OverlayGeometry.Centre(Width, Height, Describe(target));
+        return fit.Centred;
+    }
 
-        Width = width;
-        Height = height;
-        Position = position;
+    /// <summary>
+    /// The remembered place and size, or where the strip is now when there is none or the Commander is
+    /// moving it or has just put it down.
+    /// </summary>
+    private (PixelPoint Position, double Width, double Height) Wanted(bool fromRemembered)
+    {
+        if (!fromRemembered || _placing || _remembered is not { } placement)
+        {
+            return (Position, Width, Height);
+        }
 
-        _logger.LogInformation("The overlay was not wholly on a screen, so it was centred on Elite's screen");
-        return true;
+        var position = new PixelPoint((int)placement.X, (int)placement.Y);
+
+        if (_sized && placement is { Width: { } width, Height: { } height })
+        {
+            return (position, Math.Max(MinimumSize.Width, width), Math.Max(MinimumSize.Height, height));
+        }
+
+        var factor = ZoomLadder.ScaleOf(_appliedScale);
+
+        return (position, PanelResolution.Mini.Width * factor, PanelResolution.Mini.Height * factor);
     }
 
     private static OverlayScreen Describe(Screen screen) => new(screen.Bounds, screen.WorkingArea, screen.Scaling);
@@ -704,7 +727,7 @@ public sealed class OverlayPanel : Window
         _frame.BorderThickness = new Thickness(0);
 
         ApplyStyles();
-        Recentre();
+        Recentre(fromRemembered: false);
         Remember();
     }
 
@@ -727,6 +750,7 @@ public sealed class OverlayPanel : Window
         };
 
         _viewState.Save(_viewState.Load().With(placement));
+        _remembered = placement;
 
         _logger.LogDebug(
             "The overlay was left at {X},{Y}",

@@ -424,7 +424,8 @@ size, so a drag that overshoots stops there rather than leaving nothing to grab 
 **If the strip is lost** — any part of it off every screen, after a drag, a change of resolution or
 scaling, or an unplugged monitor — d47 centres it on the screen Elite is on, and so does this key if
 it is pressed while the strip is lost. A strip wholly on a screen, a second monitor included, is not
-moved.
+moved. The centring lasts only while the place you chose does not fit: the strip goes back to that
+place when it fits again, for example after a change of resolution is undone.
 
 It comes up for this even if the game is not running, so you can put it where you want it before
 you launch.
