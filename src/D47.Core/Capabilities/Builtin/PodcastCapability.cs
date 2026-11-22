@@ -30,7 +30,8 @@ public static class PodcastCapability
     /// <param name="desk">The desk, or null where nothing plays podcasts.</param>
     /// <param name="storyPlaybackOpen">Whether a story playback is open, which takes bare "play" and "pause" first.</param>
     /// <param name="takesBare">Whether a podcast takes bare "play" and "pause"; by default, whenever one is playing or paused.</param>
-    public static CapabilityDescriptor Create(Func<PodcastDesk?> desk, Func<bool>? storyPlaybackOpen = null, Func<bool>? takesBare = null)
+    /// <param name="videoTakesSkip">Whether a video takes "back thirty seconds" and "forward thirty seconds" instead.</param>
+    public static CapabilityDescriptor Create(Func<PodcastDesk?> desk, Func<bool>? storyPlaybackOpen = null, Func<bool>? takesBare = null, Func<bool>? videoTakesSkip = null)
     {
         var gate = new Lock();
         IReadOnlyList<PodcastSearchResult> found = [];
@@ -45,7 +46,7 @@ public static class PodcastCapability
             Display = new CapabilityDisplay { PanelTitle = "Podcasts", Order = 97, ShowOnPanel = false },
             Tools =
             [
-                ManagePodcast(desk, storyPlaybackOpen, takesBare),
+                ManagePodcast(desk, storyPlaybackOpen, takesBare, videoTakesSkip),
                 ListPodcasts(desk),
                 FindPodcasts(
                     desk,
@@ -73,9 +74,11 @@ public static class PodcastCapability
     private static ToolCommandPhrase Phrase(string phrase, string action) =>
         new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });
 
-    private static ToolDefinition ManagePodcast(Func<PodcastDesk?> desk, Func<bool>? storyPlaybackOpen, Func<bool>? takesBare)
+    private static ToolDefinition ManagePodcast(Func<PodcastDesk?> desk, Func<bool>? storyPlaybackOpen, Func<bool>? takesBare, Func<bool>? videoTakesSkip)
     {
         bool Bare() => storyPlaybackOpen?.Invoke() != true && (takesBare?.Invoke() ?? desk()?.Active == true);
+
+        bool NotVideo() => videoTakesSkip?.Invoke() != true;
 
         return new ToolDefinition
         {
@@ -108,10 +111,10 @@ public static class PodcastCapability
                 Phrase("stop the podcast", "stop"),
                 Phrase("stop podcast", "stop"),
                 Phrase("next episode", "next"),
-                Phrase("skip back thirty seconds", "skip_back"),
-                Phrase("back thirty seconds", "skip_back"),
-                Phrase("skip forward thirty seconds", "skip_forward"),
-                Phrase("forward thirty seconds", "skip_forward"),
+                Phrase("skip back thirty seconds", "skip_back") with { When = NotVideo },
+                Phrase("back thirty seconds", "skip_back") with { When = NotVideo },
+                Phrase("skip forward thirty seconds", "skip_forward") with { When = NotVideo },
+                Phrase("forward thirty seconds", "skip_forward") with { When = NotVideo },
                 Phrase("refresh podcasts", "refresh"),
                 Phrase("play", "resume") with { When = Bare },
                 Phrase("pause", "pause") with { When = Bare },

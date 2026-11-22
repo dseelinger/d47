@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Videos by voice. Say watch followed by a title in Your list or Carry on watching, or ask for any title and the model looks in Your list and then the ticked sources. "Pause the video", "carry on" or "resume the video", "back thirty seconds", "forward thirty seconds" and "add this to my watch list" work on the video, and "carry on watching" plays the newest title in Carry on watching or tries a stopped video again. While a video is playing or paused, bare "pause" and "play" act on it after an open story playback; a playing podcast takes them first, and a paused book before a paused video. "Back thirty seconds" and "forward thirty seconds" go to the video while it is the one that plays.
+
 Added: Plays on, on a video's player, moves the picture between THIS WINDOW, BIG PANEL and MINI PANEL while the video plays on from the same place. Choosing a panel while the headset is on switches the headset to that panel and opens the video there; MINI PANEL also opens it on the desktop mini panel. The page that is not showing the picture says where it plays. A video started from the window plays in the window, and one started on the big panel plays there, unless Plays on is MINI PANEL.
 
 Added: On the big panel, a video's player draws a 640×360 picture with its position bar under it, and beside it ◄ 30 S, PAUSE, 30 S ►, Your place, Credit, Plays on (Big panel, Mini panel) and Captions (File, Write, Off). The subtitles go in the headset's caption band, in step with the video, rather than over the picture.

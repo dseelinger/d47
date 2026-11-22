@@ -3095,6 +3095,7 @@ public sealed class AppHost : IDisposable
                 heldVideoSources: () => late.Host?.WatchHost.HeldSources ?? [],
                 podcastDesk: () => late.Host?.PodcastDesk,
                 bookDesk: () => late.Host?.BookDesk,
+                watchDesk: () => late.Host?.WatchDesk,
                 liveRoute: () => loop.Feed.LiveRoute,
                 installedModules: () => late.Host?._modules?.Installed ?? [],
                 watches: () => late.Host?.WatchesDesk?.Store.Watches ?? [],
@@ -3137,6 +3138,7 @@ public sealed class AppHost : IDisposable
             services.ClipboardOffer.Phrases()
                 .Concat(AdventureCapability.RunPhrases(services.AdventureDesk))
                 .Concat(BookCapability.ReadPhrases(late.Host?.BookDesk))
+                .Concat(WatchCapability.WatchPhrases(late.Host?.WatchDesk))
                 .Concat(stores.HandInOffer.Phrases())
                 .Concat(stores.NeutronOffer.Phrases())
 
@@ -6081,6 +6083,32 @@ public sealed class AppHost : IDisposable
         BooksHost.NextChapter,
         BooksHost.BackAParagraph,
         () => BookPlayer.StoryPlaying);
+
+    private D47.Core.Viewing.WatchDesk? _watchDesk;
+
+    /// <summary>What the video voice commands act on.</summary>
+    public D47.Core.Viewing.WatchDesk WatchDesk => _watchDesk ??= new D47.Core.Viewing.WatchDesk(
+        () => [.. WatchHost.YourList().Select(row => row.Title)],
+        () => [.. WatchHost.CarryOn().Select(row => row.Title)],
+        (query, cancellationToken) => WatchHost.SearchAsync(query, new D47.Core.Viewing.VideoFilters(Order: D47.Core.Viewing.VideoOrder.Relevance), 1, cancellationToken),
+        title => WatchHost.Play(title),
+        () => WatchHost.Current is { } title
+            ? new D47.Core.Viewing.VideoNow(
+                title,
+                !WatchHost.Loaded ? D47.Core.Viewing.VideoStanding.Idle
+                : Video.State switch
+                {
+                    D47.App.Media.VideoState.Paused => D47.Core.Viewing.VideoStanding.Paused,
+                    D47.App.Media.VideoState.Failed => D47.Core.Viewing.VideoStanding.Failed,
+                    D47.App.Media.VideoState.Ended => D47.Core.Viewing.VideoStanding.Idle,
+                    _ => D47.Core.Viewing.VideoStanding.Playing,
+                })
+            : null,
+        WatchHost.Pause,
+        WatchHost.Resume,
+        by => Video.Skip(by),
+        title => WatchStore.Add(title.Source, title.Id, DateTimeOffset.UtcNow, title),
+        () => Video.StoryPlaying);
 
     private D47.App.Panel.BooksHost? _booksHost;
 

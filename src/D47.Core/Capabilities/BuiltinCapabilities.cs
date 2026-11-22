@@ -386,6 +386,9 @@ public static class BuiltinCapabilities
         // The book reader and shelf, once the host is built.
         Func<Books.BookDesk?>? bookDesk = null,
 
+        // The video player, Your list and the catalogue, once the host is built.
+        Func<Viewing.WatchDesk?>? watchDesk = null,
+
         // The sources of the titles in Your list, in Carry on watching or playing now, for the video disclosures.
         Func<IReadOnlyList<string>>? heldVideoSources = null) =>
     [
@@ -490,7 +493,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => BookTakesBare(bookDesk, podcastDesk) || PodcastTakesBare(bookDesk, podcastDesk)),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) != BareOwner.None),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,
@@ -620,9 +623,19 @@ public static class BuiltinCapabilities
 
         AstrometricsCapability.Create(() => gameState.Active, fid => travelLog?.Deaths(fid) ?? [], fid => travelLog?.FirstDiscoveries(fid) ?? []),
 
-        PodcastCapability.Create(podcastDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true, () => PodcastTakesBare(bookDesk, podcastDesk)),
+        PodcastCapability.Create(
+            podcastDesk ?? (() => null),
+            () => adventureDesk?.PlaybackOpen() == true,
+            () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Podcast,
+            () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Video),
 
-        BookCapability.Create(bookDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true, () => BookTakesBare(bookDesk, podcastDesk)),
+        BookCapability.Create(bookDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true, () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Book),
+
+        WatchCapability.Create(
+            watchDesk ?? (() => null),
+            () => adventureDesk?.PlaybackOpen() == true,
+            () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Video,
+            () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Video),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).
@@ -645,17 +658,41 @@ public static class BuiltinCapabilities
             about?.OpenDataFolder),
     ];
 
-    /// <summary>
-    /// Whether a book takes bare "play" and "pause": one is playing or paused and no podcast is playing. A book and a
-    /// podcast never play at once, so exactly one of a book, a podcast and the music takes them.
-    /// </summary>
-    private static bool BookTakesBare(Func<Books.BookDesk?>? books, Func<Podcasts.PodcastDesk?>? podcasts) =>
-        books?.Invoke() is { Active: true }
-        && podcasts?.Invoke()?.Player.State is not { Playing: true };
+    private enum BareOwner
+    {
+        None,
+        Book,
+        Podcast,
+        Video,
+    }
 
-    /// <summary>Whether a podcast takes bare "play" and "pause": one is playing or paused and no book takes them.</summary>
-    private static bool PodcastTakesBare(Func<Books.BookDesk?>? books, Func<Podcasts.PodcastDesk?>? podcasts) =>
-        podcasts?.Invoke()?.Active == true && !BookTakesBare(books, podcasts);
+    /// <summary>
+    /// Which one of a book, a podcast and a video takes bare "play" and "pause" and the skip phrases: the one playing,
+    /// else the one paused, a book before a podcast before a video. With none, the music takes the bare words.
+    /// </summary>
+    private static BareOwner BareOwnerOf(Func<Books.BookDesk?>? books, Func<Podcasts.PodcastDesk?>? podcasts, Func<Viewing.WatchDesk?>? videos)
+    {
+        var book = books?.Invoke();
+        var podcast = podcasts?.Invoke();
+        var video = videos?.Invoke();
+
+        if (podcast?.Player.State is { Playing: true })
+        {
+            return BareOwner.Podcast;
+        }
+
+        if (video?.Playing == true)
+        {
+            return BareOwner.Video;
+        }
+
+        if (book?.Active == true)
+        {
+            return BareOwner.Book;
+        }
+
+        return podcast?.Active == true ? BareOwner.Podcast : video?.Active == true ? BareOwner.Video : BareOwner.None;
+    }
 
     private static IEnumerable<CapabilityDescriptor> Optional(bool registered, Func<CapabilityDescriptor> create) =>
         registered ? [create()] : [];

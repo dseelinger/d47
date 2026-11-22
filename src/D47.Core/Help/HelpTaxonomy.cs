@@ -242,14 +242,21 @@ public static class HelpTaxonomy
                     "Audio mixer",
                     "Say how loud each kind of sound is, and how far it drops while D47 is speaking.",
                     "audio"),
-                HelpNode.Leaf(
-                    "Podcasts",
-                    "Play the podcasts you add, pick up where you left off, and find more shows.",
-                    "podcasts"),
-                HelpNode.Leaf(
-                    "Books",
-                    "Read the books on your shelf aloud with a local voice, and move by chapter and paragraph.",
-                    "books"),
+                HelpNode.Category(
+                    "Media",
+                    "Podcasts, books and videos, played by voice.",
+                    HelpNode.Leaf(
+                        "Podcasts",
+                        "Play the podcasts you add, pick up where you left off, and find more shows.",
+                        "podcasts"),
+                    HelpNode.Leaf(
+                        "Books",
+                        "Read the books on your shelf aloud with a local voice, and move by chapter and paragraph.",
+                        "books"),
+                    HelpNode.Leaf(
+                        "Watch",
+                        "Watch videos from Your list and the movie sources, pause and carry on, and skip within a video.",
+                        "watch")),
                 HelpNode.Leaf(
                     "Listening",
                     "Hear the Commander through the chosen microphone while the push-to-talk key is held.",
