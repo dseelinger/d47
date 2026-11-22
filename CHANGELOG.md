@@ -10,7 +10,9 @@
 
 Changed: A ship's To buy block plots its route within 500 light years instead of 50, and so does "plot_outfitting_route" when no distance is named. The block has a Max report age field beside the Plot button, 3 days at first, and the plot uses the age you pick.
 
-Added: The "Which one" page for a module is a table with Module, Code, Mass, Power and Price columns, plus the drive or hull-boost figures where the module has them. A module with no mass in the table, such as every fuel scoop, shows "—". Press a header to sort, and COLUMNS hides any column but Module.
+Fixed: Every module Elite gives a mass now has one in the table. Fuel scoops, refineries, auto field-maintenance units, docking computers and the cargo hatch weigh 0 t, and the planetary vehicle hangars, Mk II passenger cabins and discovery scanners take their mass from EDSY, so a planned build with one of them has the right weight and jump range.
+
+Added: The "Which one" page for a module is a table with Module, Code, Mass, Power and Price columns, plus the drive or hull-boost figures where the module has them. A module with no mass in the table shows "—". Press a header to sort, and COLUMNS hides any column but Module.
 
 Added: When you leave a planet's orbital cruise, or start a hyperspace jump near it, with one or two samples of a species taken there, D47 says so: "Leaving Smojue EB-O d6-37 AB 1 b with Stratum Paleas at 2 of 3." Leaving does not lose the samples; logging a different species does. The switch is Unfinished samples, under Settings › Your core › Exploring.
 

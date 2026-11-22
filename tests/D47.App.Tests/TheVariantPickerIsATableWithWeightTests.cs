@@ -30,23 +30,23 @@ public class TheVariantPickerIsATableWithWeightTests
         columns.Single(column => column.Label == label).Text(symbol);
 
     [Fact]
-    public void AFuelScoopShowsItsPowerAndPriceAndDashesForTheMassItLacks()
+    public void AFuelScoopShowsItsPowerAndPriceAndAMassOfZero()
     {
         var columns = ShipsMode.VariantColumns(Variants("Fuel Scoop"));
 
         Assert.Equal(["Module", "Code", "Mass", "Power", "Price"], Labels(columns));
         Assert.Equal("7A", Cell(columns, "Code", Scoop));
-        Assert.Equal("—", Cell(columns, "Mass", Scoop));
+        Assert.Equal("0.0 t", Cell(columns, "Mass", Scoop));
         Assert.Equal("0.97 MW", Cell(columns, "Power", Scoop));
         Assert.Equal("91,180,644 cr", Cell(columns, "Price", Scoop));
     }
 
     [Fact]
-    public void EveryFuelScoopHasADashForItsMass()
+    public void EveryFuelScoopWeighsNothing()
     {
         var columns = ShipsMode.VariantColumns(Variants("Fuel Scoop"));
 
-        Assert.All(Variants("Fuel Scoop"), scoop => Assert.Equal("—", Cell(columns, "Mass", scoop.Symbol)));
+        Assert.All(Variants("Fuel Scoop"), scoop => Assert.Equal("0.0 t", Cell(columns, "Mass", scoop.Symbol)));
     }
 
     [Fact]
@@ -63,11 +63,12 @@ public class TheVariantPickerIsATableWithWeightTests
     [Fact]
     public void MassSortsByFigureAndAMissingMassHasNoFigure()
     {
-        var columns = ShipsMode.VariantColumns(Variants("Fuel Scoop"));
+        const string Unmeasured = "int_hyperdrive_size8_class1";
+        var columns = ShipsMode.VariantColumns(Variants("Frame Shift Drive"));
         var mass = columns.Single(column => column.Label == "Mass");
 
-        Assert.Null(mass.Figure!(Scoop));
-        Assert.NotNull(columns.Single(column => column.Label == "Price").Figure!(Scoop));
+        Assert.Null(mass.Figure!(Unmeasured));
+        Assert.Equal("—", Cell(columns, "Mass", Unmeasured));
     }
 
     [Fact]

@@ -13,7 +13,7 @@
 # Ships: 49. Modules: 1221, of which bulkheads 247. Known but unmeasured: 0.
 # Slots: 1290 across 49 hulls. Modules with no type: 11.
 # coriolis-data tree 0db9234b5b9c. EDSY eddb.js as of the same day.
-# Built: 2026-11-10.
+# Built: 2026-11-21.
 [ships]
 symbol	name	manufacturer	pad	speed	boost	armour	shields	hardness	hull_mass	fuel	crew	masslock	cost	hardpoints	internals	requirement	stock
 adder	Adder	Zorgon Peterson	small	220	320	90	60	35	35	0.36	2	7	40833	2,1,1	3,3,2,2,1,1,1		hpt_pulselaser_fixed_small,hpt_pulselaser_fixed_small,adder_armour_grade1,int_powerplant_size3_class1,int_engine_size3_class1,int_hyperdrive_size3_class1,int_lifesupport_size1_class1,int_powerdistributor_size2_class1,int_sensors_size3_class1,int_fueltank_size3_class3,int_cargorack_size2_class1,int_shieldgenerator_size3_class1,int_cargorack_size1_class1,int_supercruiseassist,int_dockingcomputer_advanced
@@ -414,8 +414,8 @@ int_corrosionproofcargorack_size4_class1	Corrosion Resistant Cargo Rack	4	E		0		
 int_corrosionproofcargorack_size5_class1	Corrosion Resistant Cargo Rack	5	E		0			0										icr			capacity=32	Specialised storage rack for use in automated cargo transfer system that can resist the effects of corrosive cargo.				
 int_corrosionproofcargorack_size6_class1	Corrosion Resistant Cargo Rack	6	E		0			0										icr			capacity=64	Specialised storage rack for use in automated cargo transfer system that can resist the effects of corrosive cargo.				
 int_detailedsurfacescanner_tiny	Detailed Surface Scanner	1	I		0	0		250000										iss				Advanced stellar body scanner used during exploration.	iss			
-int_dockingcomputer_advanced	Advanced Docking Computer	1	E			0.45	10	13507										ifa				Allows assisted docking and launch at all starports and outposts.	ifa_dc			
-int_dockingcomputer_standard	Standard Docking Computer	1	E			0.39	10	4500										ifa				Allows assisted docking sequence at all starports and outposts.	ifa_dc			
+int_dockingcomputer_advanced	Advanced Docking Computer	1	E		0	0.45	10	13507										ifa				Allows assisted docking and launch at all starports and outposts.	ifa_dc			
+int_dockingcomputer_standard	Standard Docking Computer	1	E		0	0.39	10	4500										ifa				Allows assisted docking sequence at all starports and outposts.	ifa_dc			
 int_dronecontrol_collection_size1_class1	Collector Limpet Controller	1	E		0.5	0.14		600										iclc			range=0.8	Controls limpets to collect canisters and asteroid chunks automatically.				
 int_dronecontrol_collection_size1_class2	Collector Limpet Controller	1	D		0.5	0.18		1200										iclc			range=0.6	Controls limpets to collect canisters and asteroid chunks automatically.				
 int_dronecontrol_collection_size1_class3	Collector Limpet Controller	1	C		1.3	0.23		2400										iclc			range=1	Controls limpets to collect canisters and asteroid chunks automatically.				
@@ -599,46 +599,46 @@ int_fsdinterdictor_size4_class2	Frame Shift Drive Interdictor	4	D		4	0.33	48	790
 int_fsdinterdictor_size4_class3	Frame Shift Drive Interdictor	4	C		10	0.41	80	2370816										ifsdi				Used to pull targets out of supercruise.	ifsdi			
 int_fsdinterdictor_size4_class4	Frame Shift Drive Interdictor	4	B		16	0.49	112	7112448										ifsdi				Used to pull targets out of supercruise.	ifsdi			
 int_fsdinterdictor_size4_class5	Frame Shift Drive Interdictor	4	A		10	0.57	96	21337344										ifsdi				Used to pull targets out of supercruise.	ifsdi			
-int_fuelscoop_size1_class1	Fuel Scoop	1	E			0.14		309										ifs			rate=18	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size1_class2	Fuel Scoop	1	D			0.18		1285										ifs			rate=24	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size1_class3	Fuel Scoop	1	C			0.23		5142										ifs			rate=30	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size1_class4	Fuel Scoop	1	B			0.28		20568										ifs			rate=36	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size1_class5	Fuel Scoop	1	A			0.32		82270										ifs			rate=42	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size2_class1	Fuel Scoop	2	E			0.17		1068										ifs			rate=32	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size2_class2	Fuel Scoop	2	D			0.22		4451										ifs			rate=43	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size2_class3	Fuel Scoop	2	C			0.28		17803										ifs			rate=54	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size2_class4	Fuel Scoop	2	B			0.34		71211										ifs			rate=65	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size2_class5	Fuel Scoop	2	A			0.39		284844										ifs			rate=75	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size3_class1	Fuel Scoop	3	E			0.2		3386										ifs			rate=75	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size3_class2	Fuel Scoop	3	D			0.27		14109										ifs			rate=100	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size3_class3	Fuel Scoop	3	C			0.34		56435										ifs			rate=126	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size3_class4	Fuel Scoop	3	B			0.41		225738										ifs			rate=151	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size3_class5	Fuel Scoop	3	A			0.48		902954										ifs			rate=176	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size4_class1	Fuel Scoop	4	E			0.25		10734										ifs			rate=147	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size4_class2	Fuel Scoop	4	D			0.33		44724										ifs			rate=196	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size4_class3	Fuel Scoop	4	C			0.41		178898										ifs			rate=245	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size4_class4	Fuel Scoop	4	B			0.49		715591										ifs			rate=294	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size4_class5	Fuel Scoop	4	A			0.57		2862364										ifs			rate=342	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size5_class1	Fuel Scoop	5	E			0.3		34026										ifs			rate=247	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size5_class2	Fuel Scoop	5	D			0.4		141776										ifs			rate=330	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size5_class3	Fuel Scoop	5	C			0.5		567106										ifs			rate=412	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size5_class4	Fuel Scoop	5	B			0.6		2268424										ifs			rate=494	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size5_class5	Fuel Scoop	5	A			0.7		9073694										ifs			rate=577	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size6_class1	Fuel Scoop	6	E			0.35		107864										ifs			rate=376	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size6_class2	Fuel Scoop	6	D			0.47		449431										ifs			rate=502	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size6_class3	Fuel Scoop	6	C			0.59		1797726										ifs			rate=627	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size6_class4	Fuel Scoop	6	B			0.71		7190903										ifs			rate=752	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size6_class5	Fuel Scoop	6	A			0.83		28763610										ifs			rate=878	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size7_class1	Fuel Scoop	7	E			0.41		341927										ifs			rate=534	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size7_class2	Fuel Scoop	7	D			0.55		1424698										ifs			rate=712	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size7_class3	Fuel Scoop	7	C			0.69		5698790										ifs			rate=890	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size7_class4	Fuel Scoop	7	B			0.83		22795161										ifs			rate=1068	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size7_class5	Fuel Scoop	7	A			0.97		91180644										ifs			rate=1245	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size8_class1	Fuel Scoop	8	E			0.48		1083910										ifs			rate=720	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size8_class2	Fuel Scoop	8	D			0.64		4516291										ifs			rate=960	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size8_class3	Fuel Scoop	8	C			0.8		18065165										ifs			rate=1200	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size8_class4	Fuel Scoop	8	B			0.96		72260660										ifs			rate=1440	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
-int_fuelscoop_size8_class5	Fuel Scoop	8	A			1.12		289042641										ifs			rate=1680	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size1_class1	Fuel Scoop	1	E		0	0.14		309										ifs			rate=18	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size1_class2	Fuel Scoop	1	D		0	0.18		1285										ifs			rate=24	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size1_class3	Fuel Scoop	1	C		0	0.23		5142										ifs			rate=30	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size1_class4	Fuel Scoop	1	B		0	0.28		20568										ifs			rate=36	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size1_class5	Fuel Scoop	1	A		0	0.32		82270										ifs			rate=42	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size2_class1	Fuel Scoop	2	E		0	0.17		1068										ifs			rate=32	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size2_class2	Fuel Scoop	2	D		0	0.22		4451										ifs			rate=43	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size2_class3	Fuel Scoop	2	C		0	0.28		17803										ifs			rate=54	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size2_class4	Fuel Scoop	2	B		0	0.34		71211										ifs			rate=65	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size2_class5	Fuel Scoop	2	A		0	0.39		284844										ifs			rate=75	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size3_class1	Fuel Scoop	3	E		0	0.2		3386										ifs			rate=75	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size3_class2	Fuel Scoop	3	D		0	0.27		14109										ifs			rate=100	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size3_class3	Fuel Scoop	3	C		0	0.34		56435										ifs			rate=126	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size3_class4	Fuel Scoop	3	B		0	0.41		225738										ifs			rate=151	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size3_class5	Fuel Scoop	3	A		0	0.48		902954										ifs			rate=176	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size4_class1	Fuel Scoop	4	E		0	0.25		10734										ifs			rate=147	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size4_class2	Fuel Scoop	4	D		0	0.33		44724										ifs			rate=196	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size4_class3	Fuel Scoop	4	C		0	0.41		178898										ifs			rate=245	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size4_class4	Fuel Scoop	4	B		0	0.49		715591										ifs			rate=294	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size4_class5	Fuel Scoop	4	A		0	0.57		2862364										ifs			rate=342	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size5_class1	Fuel Scoop	5	E		0	0.3		34026										ifs			rate=247	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size5_class2	Fuel Scoop	5	D		0	0.4		141776										ifs			rate=330	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size5_class3	Fuel Scoop	5	C		0	0.5		567106										ifs			rate=412	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size5_class4	Fuel Scoop	5	B		0	0.6		2268424										ifs			rate=494	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size5_class5	Fuel Scoop	5	A		0	0.7		9073694										ifs			rate=577	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size6_class1	Fuel Scoop	6	E		0	0.35		107864										ifs			rate=376	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size6_class2	Fuel Scoop	6	D		0	0.47		449431										ifs			rate=502	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size6_class3	Fuel Scoop	6	C		0	0.59		1797726										ifs			rate=627	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size6_class4	Fuel Scoop	6	B		0	0.71		7190903										ifs			rate=752	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size6_class5	Fuel Scoop	6	A		0	0.83		28763610										ifs			rate=878	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size7_class1	Fuel Scoop	7	E		0	0.41		341927										ifs			rate=534	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size7_class2	Fuel Scoop	7	D		0	0.55		1424698										ifs			rate=712	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size7_class3	Fuel Scoop	7	C		0	0.69		5698790										ifs			rate=890	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size7_class4	Fuel Scoop	7	B		0	0.83		22795161										ifs			rate=1068	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size7_class5	Fuel Scoop	7	A		0	0.97		91180644										ifs			rate=1245	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size8_class1	Fuel Scoop	8	E		0	0.48		1083910										ifs			rate=720	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size8_class2	Fuel Scoop	8	D		0	0.64		4516291										ifs			rate=960	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size8_class3	Fuel Scoop	8	C		0	0.8		18065165										ifs			rate=1200	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size8_class4	Fuel Scoop	8	B		0	0.96		72260660										ifs			rate=1440	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
+int_fuelscoop_size8_class5	Fuel Scoop	8	A		0	1.12		289042641										ifs			rate=1680	Fly close to the sun with an active fuel scoop to collect fuel.	ifs			
 int_fueltank_size1_class3	Fuel Tank	1	C		0			1000										cft			capacity=2	Storage container for fuel used by ship's power plant.				
 int_fueltank_size1_class3_free	Fuel Tank (free)	1	C																							
 int_fueltank_size2_class3	Fuel Tank	2	C		0			3750										cft			capacity=4	Storage container for fuel used by ship's power plant.				
@@ -780,12 +780,12 @@ int_hyperdrive_size8_class2	Frame Shift Drive	8	D															cfsd
 int_hyperdrive_size8_class3	Frame Shift Drive	8	C															cfsd								
 int_hyperdrive_size8_class4	Frame Shift Drive	8	B															cfsd								
 int_hyperdrive_size8_class5	Frame Shift Drive	8	A															cfsd								
-int_largebuggybay_size2_class3	Large Planetary Vehicle Hangar	2	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_largebuggybay_size2_class3_free	Large Planetary Vehicle Hangar (free)	2	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
-int_largebuggybay_size4_class3	Large Planetary Vehicle Hangar	4	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_largebuggybay_size4_class3_free	Large Planetary Vehicle Hangar (free)	4	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
-int_largebuggybay_size6_class3	Large Planetary Vehicle Hangar	6	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_largebuggybay_size6_class3_free	Large Planetary Vehicle Hangar (free)	6	F															ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
+int_largebuggybay_size2_class3	Large Planetary Vehicle Hangar	2	F		12	0.75	30	32400										ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_largebuggybay_size2_class3_free	Large Planetary Vehicle Hangar (free)	2	F		12	0.75	30	0										ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
+int_largebuggybay_size4_class3	Large Planetary Vehicle Hangar	4	F		20	1.2	30	129600										ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_largebuggybay_size4_class3_free	Large Planetary Vehicle Hangar (free)	4	F		20	1.2	30	0										ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
+int_largebuggybay_size6_class3	Large Planetary Vehicle Hangar	6	F		34	1.8	30	1036800										ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_largebuggybay_size6_class3_free	Large Planetary Vehicle Hangar (free)	6	F		34	1.8	30	0										ipvh	anaconda anacondamkii belugaliner cutter explorer_nx federation_corvette federation_gunship independant_trader krait_mkii lakonminer panthermkii type9 type9_military typex_2					ELITE_V_LARGEBUGGYBAY_FREE		
 int_largecargorack_size6_class1	Mk II Cargo Rack	6	D		0			587400										icr	anacondamkii panthermkii		capacity=96					
 int_largecargorack_size7_class1	Mk II Cargo Rack	7	D		0			1958680										icr	anacondamkii panthermkii		capacity=192	Panther Clipper storage rack for use in automated cargo transfer system.				
 int_largecargorack_size8_class1	Mk II Cargo Rack	8	D		0			4929317										icr	anacondamkii panthermkii		capacity=384	Panther Clipper storage rack for use in automated cargo transfer system.				
@@ -840,22 +840,22 @@ int_metaalloyhullreinforcement_size4_class1	Meta Alloy Hull Reinforcement	4	E		1
 int_metaalloyhullreinforcement_size4_class2	Meta Alloy Hull Reinforcement	4	D		8			292501						0	0	0	0.03	imahrp			hull added=297	Increases the ship's hull integrity and resistance to caustic damage.		ELITE_HORIZONS_V_METAHULL		
 int_metaalloyhullreinforcement_size5_class1	Meta Alloy Hull Reinforcement	5	E		32			225001						0	0	0	0.03	imahrp			hull added=324	Increases the ship's hull integrity and resistance to caustic damage.		ELITE_HORIZONS_V_METAHULL		
 int_metaalloyhullreinforcement_size5_class2	Meta Alloy Hull Reinforcement	5	D		16			675001						0	0	0	0.03	imahrp			hull added=351	Increases the ship's hull integrity and resistance to caustic damage.		ELITE_HORIZONS_V_METAHULL		
-int_mkii_passengercabin_size2_class1	MkII Economy Class Passenger Cabin	2	D															ipc	mediumtransport01							
-int_mkii_passengercabin_size3_class1	MkII Economy Class Passenger Cabin	3	D															ipc	mediumtransport01							
-int_mkii_passengercabin_size3_class2	MkII Business Class Passenger Cabin	3	C															ipc	mediumtransport01							
-int_mkii_passengercabin_size4_class1	MkII Economy Class Passenger Cabin	4	D															ipc	mediumtransport01							
-int_mkii_passengercabin_size4_class2	MkII Business Class Passenger Cabin	4	C															ipc	mediumtransport01							
-int_mkii_passengercabin_size5_class1	MkII Economy Class Passenger Cabin (size5)	5	D															ipc	mediumtransport01							
-int_mkii_passengercabin_size5_class2	MkII Business Class Passenger Cabin (size5)	5	C															ipc	mediumtransport01							
-int_mkii_passengercabin_size6_class1	MkII Economy Class Passenger Cabin (size6)	5	D															ipc	mediumtransport01							
-int_mkii_passengercabin_size6_class2	MkII Business Class Passenger Cabin (size6)	5	C															ipc	mediumtransport01							
+int_mkii_passengercabin_size2_class1	MkII Economy Class Passenger Cabin	2	D		2.5			5750										ipc	mediumtransport01							
+int_mkii_passengercabin_size3_class1	MkII Economy Class Passenger Cabin	3	D		5			11540										ipc	mediumtransport01							
+int_mkii_passengercabin_size3_class2	MkII Business Class Passenger Cabin	3	C		5			35610										ipc	mediumtransport01							
+int_mkii_passengercabin_size4_class1	MkII Economy Class Passenger Cabin	4	D		10			25270										ipc	mediumtransport01							
+int_mkii_passengercabin_size4_class2	MkII Business Class Passenger Cabin	4	C		10			75820										ipc	mediumtransport01							
+int_mkii_passengercabin_size5_class1	MkII Economy Class Passenger Cabin (size5)	5	D		20			46610										ipc	mediumtransport01							
+int_mkii_passengercabin_size5_class2	MkII Business Class Passenger Cabin (size5)	5	C		20			123150										ipc	mediumtransport01							
+int_mkii_passengercabin_size6_class1	MkII Economy Class Passenger Cabin (size6)	5	D		40			81880										ipc	mediumtransport01							
+int_mkii_passengercabin_size6_class2	MkII Business Class Passenger Cabin (size6)	5	C		40			245640										ipc	mediumtransport01							
 int_mkiiagileboost_engine_size5_class5	Mk II Agile Boost Thrusters	5	A		20	6.29	106	6637629	840									ct	smallcombat01_nx		minimum mass=420;maximum mass=1260;multiplier at minimum=0.96;multiplier at optimal=1;multiplier at maximum=1.16	Normal-space propulsion system.				
-int_mkiilargebuggybay_size2_class3	Mk II Large Planetary Vehicle Hangar	2	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_mkiilargebuggybay_size2_class3_free	Mk II Large Planetary Vehicle Hangar (free)	2	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
-int_mkiilargebuggybay_size4_class3	Mk II Large Planetary Vehicle Hangar	4	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_mkiilargebuggybay_size4_class3_free	Mk II Large Planetary Vehicle Hangar (free)	4	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
-int_mkiilargebuggybay_size6_class3	Mk II Large Planetary Vehicle Hangar	6	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
-int_mkiilargebuggybay_size6_class3_free	Mk II Large Planetary Vehicle Hangar (free)	6	F															ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
+int_mkiilargebuggybay_size2_class3	Mk II Large Planetary Vehicle Hangar	2	F		9	0.5	30	32400										ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_mkiilargebuggybay_size2_class3_free	Mk II Large Planetary Vehicle Hangar (free)	2	F		9	0.5	30	0										ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
+int_mkiilargebuggybay_size4_class3	Mk II Large Planetary Vehicle Hangar	4	F		15	0.8	30	129600										ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_mkiilargebuggybay_size4_class3_free	Mk II Large Planetary Vehicle Hangar (free)	4	F		15	0.8	30	0										ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
+int_mkiilargebuggybay_size6_class3	Mk II Large Planetary Vehicle Hangar	6	F		25.5	1.2	30	1036800										ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
+int_mkiilargebuggybay_size6_class3_free	Mk II Large Planetary Vehicle Hangar (free)	6	F		25.5	1.2	30	0										ipvh	anacondamkii explorer_nx lakonminer panthermkii					ELITE_V_LARGEBUGGYBAY_FREE		
 int_modulereinforcement_size1_class1	Module Reinforcement Package	1	E		2		77	5000										imrp				Protects modules against weapons fire that penetrates the hull. This version of the module has high damage capacity but low absorption of module damage. I.e. it can absorb a small proportion of module damage each time over a long period before running out of damage capacity.				
 int_modulereinforcement_size1_class2	Module Reinforcement Package	1	D		1		70	15000										imrp				Protects modules against weapons fire that penetrates the hull. This version of the module has low damage capacity but high absorption of module damage. I.e. it can absorb a large proportion of module damage each time over a short period before running out of damage capacity.				
 int_modulereinforcement_size2_class1	Module Reinforcement Package	2	E		4		115	12000										imrp				Protects modules against weapons fire that penetrates the hull. This version of the module has high damage capacity but low absorption of module damage. I.e. it can absorb a small proportion of module damage each time over a long period before running out of damage capacity.				
@@ -970,66 +970,66 @@ int_powerplant_size8_class2	Power Plant	8	D		64		120	4323699										cpp				Con
 int_powerplant_size8_class3	Power Plant	8	C		80		150	12971097										cpp				Consumes fuel to power all ship modules.			30	
 int_powerplant_size8_class4	Power Plant	8	B		128		180	38913291										cpp				Consumes fuel to power all ship modules.			33	
 int_powerplant_size8_class5	Power Plant	8	A		80		165	116739873										cpp				Consumes fuel to power all ship modules.			36	
-int_refinery_size1_class1	Refinery	1	E			0.14		6000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size1_class2	Refinery	1	D			0.18		18000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size1_class3	Refinery	1	C			0.23		54000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size1_class4	Refinery	1	B			0.28		162000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size1_class5	Refinery	1	A			0.32		486000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size2_class1	Refinery	2	E			0.17		12600										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size2_class2	Refinery	2	D			0.22		37800										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size2_class3	Refinery	2	C			0.28		113400										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size2_class4	Refinery	2	B			0.34		340200										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size2_class5	Refinery	2	A			0.39		1020600										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size3_class1	Refinery	3	E			0.2		26460										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size3_class2	Refinery	3	D			0.27		79380										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size3_class3	Refinery	3	C			0.34		238140										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size3_class4	Refinery	3	B			0.41		714420										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size3_class5	Refinery	3	A			0.48		2143260										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size4_class1	Refinery	4	E			0.25		55566										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size4_class2	Refinery	4	D			0.33		166698										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size4_class3	Refinery	4	C			0.41		500094										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size4_class4	Refinery	4	B			0.49		1500282										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_refinery_size4_class5	Refinery	4	A			0.57		4500846										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
-int_repairer_size1_class1	Auto Field-Maintenance Unit	1	E			0.54		10000										iafmu			ammo=1000;repair rate=12	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size1_class2	Auto Field-Maintenance Unit	1	D			0.72		30000										iafmu			ammo=900;repair rate=14.4	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size1_class3	Auto Field-Maintenance Unit	1	C			0.9		90000										iafmu			ammo=1000;repair rate=20	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size1_class4	Auto Field-Maintenance Unit	1	B			1.04		270000										iafmu			ammo=1200;repair rate=27.6	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size1_class5	Auto Field-Maintenance Unit	1	A			1.26		810000										iafmu			ammo=1100;repair rate=30.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size2_class1	Auto Field-Maintenance Unit	2	E			0.68		18000										iafmu			ammo=2300;repair rate=27.6	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size2_class2	Auto Field-Maintenance Unit	2	D			0.9		54000										iafmu			ammo=2100;repair rate=33.6	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size2_class3	Auto Field-Maintenance Unit	2	C			1.13		162000										iafmu			ammo=2300;repair rate=46	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size2_class4	Auto Field-Maintenance Unit	2	B			1.29		486000										iafmu			ammo=2800;repair rate=64.4	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size2_class5	Auto Field-Maintenance Unit	2	A			1.58		1458000										iafmu			ammo=2500;repair rate=70	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size3_class1	Auto Field-Maintenance Unit	3	E			0.81		32400										iafmu			ammo=3600;repair rate=43.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size3_class2	Auto Field-Maintenance Unit	3	D			1.08		97200										iafmu			ammo=3200;repair rate=51.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size3_class3	Auto Field-Maintenance Unit	3	C			1.35		291600										iafmu			ammo=3600;repair rate=72	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size3_class4	Auto Field-Maintenance Unit	3	B			1.55		874800										iafmu			ammo=4300;repair rate=98.9	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size3_class5	Auto Field-Maintenance Unit	3	A			1.89		2624400										iafmu			ammo=4000;repair rate=112	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size4_class1	Auto Field-Maintenance Unit	4	E			0.99		58320										iafmu			ammo=4900;repair rate=58.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size4_class2	Auto Field-Maintenance Unit	4	D			1.32		174960										iafmu			ammo=4400;repair rate=70.4	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size4_class3	Auto Field-Maintenance Unit	4	C			1.65		524880										iafmu			ammo=4900;repair rate=98	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size4_class4	Auto Field-Maintenance Unit	4	B			1.9		1574640										iafmu			ammo=5900;repair rate=135.7	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size4_class5	Auto Field-Maintenance Unit	4	A			2.31		4723920										iafmu			ammo=5400;repair rate=151.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size5_class1	Auto Field-Maintenance Unit	5	E			1.17		104976										iafmu			ammo=6100;repair rate=73.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size5_class2	Auto Field-Maintenance Unit	5	D			1.56		314928										iafmu			ammo=5500;repair rate=88	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size5_class3	Auto Field-Maintenance Unit	5	C			1.95		944784										iafmu			ammo=6100;repair rate=122	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size5_class4	Auto Field-Maintenance Unit	5	B			2.24		2834352										iafmu			ammo=7300;repair rate=167.9	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size5_class5	Auto Field-Maintenance Unit	5	A			2.73		8503056										iafmu			ammo=6700;repair rate=187.6	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size6_class1	Auto Field-Maintenance Unit	6	E			1.4		188957										iafmu			ammo=7400;repair rate=88.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size6_class2	Auto Field-Maintenance Unit	6	D			1.86		566870										iafmu			ammo=6700;repair rate=107.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size6_class3	Auto Field-Maintenance Unit	6	C			2.33		1700611										iafmu			ammo=7400;repair rate=148	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size6_class4	Auto Field-Maintenance Unit	6	B			2.67		5101834										iafmu			ammo=8900;repair rate=204.7	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size6_class5	Auto Field-Maintenance Unit	6	A			3.26		15305501										iafmu			ammo=8100;repair rate=226.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size7_class1	Auto Field-Maintenance Unit	7	E			1.58		340122										iafmu			ammo=8700;repair rate=104.4	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size7_class2	Auto Field-Maintenance Unit	7	D			2.1		1020367										iafmu			ammo=7800;repair rate=124.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size7_class3	Auto Field-Maintenance Unit	7	C			2.63		3061100										iafmu			ammo=8700;repair rate=174	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size7_class4	Auto Field-Maintenance Unit	7	B			3.02		9183300										iafmu			ammo=10400;repair rate=239.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size7_class5	Auto Field-Maintenance Unit	7	A			3.68		27549901										iafmu			ammo=9600;repair rate=268.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size8_class1	Auto Field-Maintenance Unit	8	E			1.8		612220										iafmu			ammo=10000;repair rate=120	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size8_class2	Auto Field-Maintenance Unit	8	D			2.4		1836660										iafmu			ammo=9000;repair rate=144	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size8_class3	Auto Field-Maintenance Unit	8	C			3		5509980										iafmu			ammo=10000;repair rate=200	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size8_class4	Auto Field-Maintenance Unit	8	B			3.45		16529941										iafmu			ammo=12000;repair rate=276	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
-int_repairer_size8_class5	Auto Field-Maintenance Unit	8	A			4.2		49589823										iafmu			ammo=11000;repair rate=308	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_refinery_size1_class1	Refinery	1	E		0	0.14		6000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size1_class2	Refinery	1	D		0	0.18		18000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size1_class3	Refinery	1	C		0	0.23		54000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size1_class4	Refinery	1	B		0	0.28		162000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size1_class5	Refinery	1	A		0	0.32		486000										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size2_class1	Refinery	2	E		0	0.17		12600										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size2_class2	Refinery	2	D		0	0.22		37800										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size2_class3	Refinery	2	C		0	0.28		113400										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size2_class4	Refinery	2	B		0	0.34		340200										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size2_class5	Refinery	2	A		0	0.39		1020600										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size3_class1	Refinery	3	E		0	0.2		26460										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size3_class2	Refinery	3	D		0	0.27		79380										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size3_class3	Refinery	3	C		0	0.34		238140										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size3_class4	Refinery	3	B		0	0.41		714420										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size3_class5	Refinery	3	A		0	0.48		2143260										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size4_class1	Refinery	4	E		0	0.25		55566										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size4_class2	Refinery	4	D		0	0.33		166698										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size4_class3	Refinery	4	C		0	0.41		500094										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size4_class4	Refinery	4	B		0	0.49		1500282										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_refinery_size4_class5	Refinery	4	A		0	0.57		4500846										ir				Converts scooped fragments into usable resources (requires mining laser).	ir			
+int_repairer_size1_class1	Auto Field-Maintenance Unit	1	E		0	0.54		10000										iafmu			ammo=1000;repair rate=12	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size1_class2	Auto Field-Maintenance Unit	1	D		0	0.72		30000										iafmu			ammo=900;repair rate=14.4	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size1_class3	Auto Field-Maintenance Unit	1	C		0	0.9		90000										iafmu			ammo=1000;repair rate=20	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size1_class4	Auto Field-Maintenance Unit	1	B		0	1.04		270000										iafmu			ammo=1200;repair rate=27.6	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size1_class5	Auto Field-Maintenance Unit	1	A		0	1.26		810000										iafmu			ammo=1100;repair rate=30.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size2_class1	Auto Field-Maintenance Unit	2	E		0	0.68		18000										iafmu			ammo=2300;repair rate=27.6	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size2_class2	Auto Field-Maintenance Unit	2	D		0	0.9		54000										iafmu			ammo=2100;repair rate=33.6	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size2_class3	Auto Field-Maintenance Unit	2	C		0	1.13		162000										iafmu			ammo=2300;repair rate=46	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size2_class4	Auto Field-Maintenance Unit	2	B		0	1.29		486000										iafmu			ammo=2800;repair rate=64.4	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size2_class5	Auto Field-Maintenance Unit	2	A		0	1.58		1458000										iafmu			ammo=2500;repair rate=70	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size3_class1	Auto Field-Maintenance Unit	3	E		0	0.81		32400										iafmu			ammo=3600;repair rate=43.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size3_class2	Auto Field-Maintenance Unit	3	D		0	1.08		97200										iafmu			ammo=3200;repair rate=51.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size3_class3	Auto Field-Maintenance Unit	3	C		0	1.35		291600										iafmu			ammo=3600;repair rate=72	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size3_class4	Auto Field-Maintenance Unit	3	B		0	1.55		874800										iafmu			ammo=4300;repair rate=98.9	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size3_class5	Auto Field-Maintenance Unit	3	A		0	1.89		2624400										iafmu			ammo=4000;repair rate=112	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size4_class1	Auto Field-Maintenance Unit	4	E		0	0.99		58320										iafmu			ammo=4900;repair rate=58.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size4_class2	Auto Field-Maintenance Unit	4	D		0	1.32		174960										iafmu			ammo=4400;repair rate=70.4	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size4_class3	Auto Field-Maintenance Unit	4	C		0	1.65		524880										iafmu			ammo=4900;repair rate=98	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size4_class4	Auto Field-Maintenance Unit	4	B		0	1.9		1574640										iafmu			ammo=5900;repair rate=135.7	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size4_class5	Auto Field-Maintenance Unit	4	A		0	2.31		4723920										iafmu			ammo=5400;repair rate=151.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size5_class1	Auto Field-Maintenance Unit	5	E		0	1.17		104976										iafmu			ammo=6100;repair rate=73.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size5_class2	Auto Field-Maintenance Unit	5	D		0	1.56		314928										iafmu			ammo=5500;repair rate=88	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size5_class3	Auto Field-Maintenance Unit	5	C		0	1.95		944784										iafmu			ammo=6100;repair rate=122	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size5_class4	Auto Field-Maintenance Unit	5	B		0	2.24		2834352										iafmu			ammo=7300;repair rate=167.9	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size5_class5	Auto Field-Maintenance Unit	5	A		0	2.73		8503056										iafmu			ammo=6700;repair rate=187.6	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size6_class1	Auto Field-Maintenance Unit	6	E		0	1.4		188957										iafmu			ammo=7400;repair rate=88.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size6_class2	Auto Field-Maintenance Unit	6	D		0	1.86		566870										iafmu			ammo=6700;repair rate=107.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size6_class3	Auto Field-Maintenance Unit	6	C		0	2.33		1700611										iafmu			ammo=7400;repair rate=148	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size6_class4	Auto Field-Maintenance Unit	6	B		0	2.67		5101834										iafmu			ammo=8900;repair rate=204.7	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size6_class5	Auto Field-Maintenance Unit	6	A		0	3.26		15305501										iafmu			ammo=8100;repair rate=226.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size7_class1	Auto Field-Maintenance Unit	7	E		0	1.58		340122										iafmu			ammo=8700;repair rate=104.4	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size7_class2	Auto Field-Maintenance Unit	7	D		0	2.1		1020367										iafmu			ammo=7800;repair rate=124.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size7_class3	Auto Field-Maintenance Unit	7	C		0	2.63		3061100										iafmu			ammo=8700;repair rate=174	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size7_class4	Auto Field-Maintenance Unit	7	B		0	3.02		9183300										iafmu			ammo=10400;repair rate=239.2	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size7_class5	Auto Field-Maintenance Unit	7	A		0	3.68		27549901										iafmu			ammo=9600;repair rate=268.8	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size8_class1	Auto Field-Maintenance Unit	8	E		0	1.8		612220										iafmu			ammo=10000;repair rate=120	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size8_class2	Auto Field-Maintenance Unit	8	D		0	2.4		1836660										iafmu			ammo=9000;repair rate=144	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size8_class3	Auto Field-Maintenance Unit	8	C		0	3		5509980										iafmu			ammo=10000;repair rate=200	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size8_class4	Auto Field-Maintenance Unit	8	B		0	3.45		16529941										iafmu			ammo=12000;repair rate=276	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
+int_repairer_size8_class5	Auto Field-Maintenance Unit	8	A		0	4.2		49589823										iafmu			ammo=11000;repair rate=308	Allows in-flight repair of internal ship modules. Can restore broken modules. Requires ammunition.				
 int_sensors_size1_class1	Sensors	1	E		1.3	0.16	46	517										cs			range=4	Standard suite providing basic detection, identification and targeting capabilities.				
 int_sensors_size1_class1_free	Sensors (free)	1	E																							
 int_sensors_size1_class2	Sensors	1	D		0.5	0.18	41	1293										cs			range=4.5	Standard suite providing basic detection, identification and targeting capabilities.				
@@ -1167,9 +1167,9 @@ int_shieldgenerator_size8_class3_fast	Bi-Weave Shield Generator	8	C		160	4	150	2
 int_shieldgenerator_size8_class4	Shield Generator	8	B		256	4.8	210	54195495	1800					0.4	-0.2	0.5		isg			distributor draw=0.6;minimum mass=900;maximum mass=4500;multiplier at minimum=0.6;multiplier at optimal=1.1;multiplier at maximum=1.6;regeneration when broken=9.6;regeneration=2.4	Forms a continually regenerating protective energy shield around the vessel.	isg			
 int_shieldgenerator_size8_class5	Shield Generator	8	A		160	5.6	180	162586486	1800					0.4	-0.2	0.5		isg			distributor draw=0.6;minimum mass=900;maximum mass=4500;multiplier at minimum=0.7;multiplier at optimal=1.2;multiplier at maximum=1.7;regeneration when broken=9.6;regeneration=2.4	Forms a continually regenerating protective energy shield around the vessel.	isg			
 int_shieldgenerator_size8_class5_strong	Prismatic Shield Generator	8	A		320	8.4	180	243879730	1800					0.4	-0.2	0.5		isg			distributor draw=0.6;minimum mass=900;maximum mass=4500;multiplier at minimum=1;multiplier at optimal=1.5;multiplier at maximum=2;regeneration when broken=5.4;regeneration=1.4	An alternative shield generator that has higher than normal strength but requires a higher power draw and weight allowance.	isg	ELITE_SPECIFIC_V_POWER_200020		
-int_stellarbodydiscoveryscanner_advanced	Advanced Discovery Scanner	1	C															isbs					isbs	removed		
-int_stellarbodydiscoveryscanner_intermediate	Intermediate Discovery Scanner	1	D															isbs					isbs	removed		
-int_stellarbodydiscoveryscanner_standard	Basic Discovery Scanner	1	E															isbs					isbs	removed		
+int_stellarbodydiscoveryscanner_advanced	Advanced Discovery Scanner	1	C		2		40	1545000										isbs					isbs	removed		
+int_stellarbodydiscoveryscanner_intermediate	Intermediate Discovery Scanner	1	D		2		40	505000										isbs					isbs	removed		
+int_stellarbodydiscoveryscanner_standard	Basic Discovery Scanner	1	E		2		40	1000										isbs					isbs	removed		
 int_stellarbodydiscoveryscanner_standard_free	Basic Discovery Scanner (free)	1	E																							
 int_supercruiseassist	Supercruise Assist	1	E		0	0.3		9121										ifa				Provides additional supercruise guidance to a predetermined destination.	ifa_sc			
 krait_light_armour_grade1	Krait Phantom Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	krait_light					ELITE_HORIZONS_V_PLANETARY_LANDINGS		
@@ -1202,7 +1202,7 @@ mediumtransport01_armour_grade2	Lynx Highliner Reinforced Alloy				26			27715790
 mediumtransport01_armour_grade3	Lynx Highliner Military Grade Composite				53			62360520					2.5	-0.2	0	-0.4		cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
 mediumtransport01_armour_mirrored	Lynx Highliner Mirrored Surface Composite				53			147378700					2.5	-0.75	0.5	-0.5		cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
 mediumtransport01_armour_reactive	Lynx Highliner Reactive Surface Composite				53			163315270					2.5	0.25	-0.4	0.2		cbh	mediumtransport01					ELITE_V_MEDIUM_TRANSPORT_01		
-modularcargobaydoor	Cargo Hatch	1	H			0.6		0										cch								
+modularcargobaydoor	Cargo Hatch	1	H		0	0.6		0										cch								
 orca_armour_grade1	Orca Lightweight Alloy				0			0					0.8	-0.2	0	-0.4	0	cbh	orca							
 orca_armour_grade2	Orca Reinforced Alloy				21			19415954					1.52	-0.2	0	-0.4	0	cbh	orca							
 orca_armour_grade3	Orca Military Grade Composite				87			43685898					2.5	-0.2	0	-0.4	0	cbh	orca							

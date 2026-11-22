@@ -17,7 +17,7 @@ public class AModuleNewerThanTheTableTests
         // 5 and size 6 cabins under one name and one class.
         Assert.Equal("MkII Economy Class Passenger Cabin (size5)", cabin.Name);
         Assert.Equal(5, cabin.Class);
-        Assert.Null(cabin.Mass);
+        Assert.Equal(20, cabin.Mass);
 
         // And it still knows what kind of thing it is, so a slot can offer it.
         Assert.Equal("ipc", cabin.Type);

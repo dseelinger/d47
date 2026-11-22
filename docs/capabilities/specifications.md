@@ -311,4 +311,5 @@ mount, which is true of most modules; passing an unrecognised word through would
 id list starts writing straight into something spoken aloud.
 
 Empty is a real answer and zero is not. A module with no mass entry and a module that weighs
-nothing are different claims, and the generator writes an empty cell for the first.
+nothing are different claims, and the generator writes an empty cell for the first. A module type both sources model as massless, such as a fuel scoop, a refinery, an
+auto field-maintenance unit, a docking computer or a cargo hatch, is written as 0.

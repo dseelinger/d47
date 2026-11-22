@@ -139,6 +139,12 @@ public class SpecificationJoinTests
                 "int_fighterbaymk2_size5_class1_free",
                 "int_fighterbaymk2_size6_class1_free",
                 "int_fighterbaymk2_size7_class1_free",
+                "int_largebuggybay_size2_class3_free",
+                "int_largebuggybay_size4_class3_free",
+                "int_largebuggybay_size6_class3_free",
+                "int_mkiilargebuggybay_size2_class3_free",
+                "int_mkiilargebuggybay_size4_class3_free",
+                "int_mkiilargebuggybay_size6_class3_free",
                 "modularcargobaydoor",
             ],
             free);

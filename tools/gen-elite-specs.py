@@ -1278,10 +1278,13 @@ def edsy_modules(database: str, hulls: dict[int, str]) -> dict[str, tuple[str, s
     return built
 
 
+MASSLESS_TYPES = ("ifs", "iafmu", "ir", "ifa")
+
+
 def eddb_only_modules(
     database: str, types: dict[str, tuple[str, str, str, str]], unique: dict[str, list[str]]
 ) -> dict[str, list[str]]:
-    """Mass and power for a `cch`, `ifh` or `icr` module neither `outfitting.csv` nor
+    """Mass and power for a `cch`, `ifh`, `icr`, `ipvh`, `ipc` or `isbs` module neither `outfitting.csv` nor
     coriolis-data measures, and a cargo rack's capacity, off EDSY's own module cell — the same one `edsy_modules` already reads for the
     type. The cargo hatch, whose `fdid` is null, has no row at all yet and gets a full one,
     named from EDSY since nothing else names it. The Mk II vessel hangars and the `_free`
@@ -1312,13 +1315,23 @@ def eddb_only_modules(
     extra = {}
 
     for symbol, (mtype, _, _, _) in types.items():
-        if mtype not in ("cch", "ifh", "icr"):
-            continue
-
         cell = facts.get(symbol)
         existing = unique.get(symbol)
 
+        if mtype in MASSLESS_TYPES:
+            # Neither coriolis-data nor EDSY gives these a mass; they weigh nothing.
+            if existing is not None and not existing[5]:
+                extra[symbol] = [*existing[:5], "0", *existing[6:]]
+            continue
+
+        if mtype not in ("cch", "ifh", "icr", "ipvh", "ipc", "isbs"):
+            continue
+
         if cell is None or (existing is not None and (existing[5] or existing[6])):
+            continue
+
+        # These types only take figures; they never gain a row from EDSY alone.
+        if mtype in ("ipvh", "ipc", "isbs") and existing is None:
             continue
 
         # A cargo rack only takes figures; it never gains a row from EDSY alone.
@@ -1342,8 +1355,8 @@ def eddb_only_modules(
         if capacity := figure(cell, "cargocap"):
             row[21] = row[21] or f"capacity={capacity}"
 
-        # EDSY gives no cargo rack a mass; a cargo rack weighs nothing.
-        if mtype == "icr":
+        # EDSY gives no cargo rack or cargo hatch a mass; both weigh nothing.
+        if mtype in ("icr", "cch"):
             row[5] = row[5] or "0"
 
         extra[symbol] = row
