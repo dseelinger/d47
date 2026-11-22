@@ -13,7 +13,9 @@ public sealed class BooksHost(
     Action<Func<BookSettings, BookSettings>> change,
     Func<string, bool> installed,
     Func<string, CancellationToken, Task<VoiceCatalogue>> voices,
-    BookFolder? folder = null)
+    BookFolder? folder = null,
+    GutenbergCatalogueStore? catalogue = null,
+    GutenbergBookFetch? downloads = null)
 {
     /// <summary>The local providers a book is read with, in the order the page lists them.</summary>
     public static IReadOnlyList<string> Providers { get; } = [TtsProviderCatalog.KokoroId, TtsProviderCatalog.ChatterboxId];
@@ -26,6 +28,12 @@ public sealed class BooksHost(
 
     /// <summary>The books folder; null where the surface has none.</summary>
     public BookFolder? Folder { get; } = folder;
+
+    /// <summary>The Project Gutenberg catalogue; null where the surface has none.</summary>
+    public GutenbergCatalogueStore? Catalogue { get; } = catalogue;
+
+    /// <summary>Whether Add a book offers Project Gutenberg.</summary>
+    public bool OffersGutenberg => Catalogue is not null && downloads is not null;
 
     public BookSettings Settings => settings() ?? new BookSettings();
 
@@ -55,6 +63,22 @@ public sealed class BooksHost(
         reading = ReadFrom(file.Source, 0);
 
         return true;
+    }
+
+    /// <summary>
+    /// Puts a Project Gutenberg book on the shelf once its first lines arrive and reads it from its start. Null when it
+    /// could not be fetched, with nothing added; false when it is on the shelf but a story is playing, so it is not read.
+    /// </summary>
+    public async Task<bool?> AddAndReadAsync(GutenbergBook book, CancellationToken cancellationToken = default)
+    {
+        if (downloads is null || await downloads.AddAsync(book, cancellationToken).ConfigureAwait(true) is not { } added)
+        {
+            return null;
+        }
+
+        Changed?.Invoke();
+
+        return ReadFrom(added.Source, 0);
     }
 
     /// <summary>Whether the provider's model is on this computer.</summary>

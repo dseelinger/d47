@@ -42,8 +42,6 @@ D47.App.Panel.ConstructionPage.Selected
 D47.App.Panel.FactionPage.RowsDrawn
 D47.App.Panel.FactionPage.Section
 D47.App.Panel.GalaxySearchPage.CanRun
-D47.App.Panel.GutenbergBookFetch.AddAsync(D47.Core.Books.GutenbergBook, System.Threading.CancellationToken)
-D47.App.Panel.GutenbergCatalogueStore
 D47.App.Panel.HistoryTile.CanOpen
 D47.App.Panel.HullViewer.Frame
 D47.App.Panel.MinimumPopulation.Box
@@ -102,17 +100,8 @@ D47.Core.Adventures.AdventureResolver.Outage
 D47.Core.Adventures.AdventureStore.Path
 D47.Core.Adventures.AdventureWalkResult.Failed
 D47.Core.Adventures.Resolution.Succeeded
-D47.Core.AppPaths.Gutenberg
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
-D47.Core.Books.BookShelf.AddDownload(D47.Core.Books.BookSource, string, string)
-D47.Core.Books.GutenbergBook
-D47.Core.Books.GutenbergCatalogue
-D47.Core.Books.GutenbergLanguage
-D47.Core.Books.GutenbergLanguages
-D47.Core.Books.GutenbergOrder
-D47.Core.Books.GutenbergQuery
-D47.Core.Books.GutenbergResult
 D47.Core.Callouts.NarratorCallout.StockCoreAboard
 D47.Core.CaptainsLog.CaptainsLogStore.Changed
 D47.Core.CaptainsLog.CaptainsLogStore.Path

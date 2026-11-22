@@ -202,6 +202,8 @@ public sealed class AppHost : IDisposable
         };
         Books = new BookShelf(files, paths.Books, loggerFactory.CreateLogger<BookShelf>());
         BookFiles = new BookFolder(files, paths.Books, Books, loggerFactory.CreateLogger<BookFolder>());
+        BookDownloads = new GutenbergBookFetch(Books, loggerFactory.CreateLogger<GutenbergBookFetch>());
+        BookCatalogue = new GutenbergCatalogueStore(paths.Gutenberg, files, () => DateTimeOffset.UtcNow, loggerFactory.CreateLogger<GutenbergCatalogueStore>());
         BookPlayer = new BookPlayer(
             audio,
             Books,
@@ -209,7 +211,7 @@ public sealed class AppHost : IDisposable
             () => settings.Current.Books,
             story: RunPlayer,
             music: Music,
-            downloads: new GutenbergBookFetch(Books, loggerFactory.CreateLogger<GutenbergBookFetch>()));
+            downloads: BookDownloads);
         voice.StateEntered += state =>
         {
             if (state == Core.Audio.LoopState.Idle)
@@ -509,6 +511,12 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Reads a shelf book aloud with a local voice.</summary>
     public BookPlayer BookPlayer { get; }
+
+    /// <summary>Brings Project Gutenberg books onto the shelf; the one instance the player listens to.</summary>
+    public GutenbergBookFetch BookDownloads { get; }
+
+    /// <summary>The Project Gutenberg catalogue, fetched only when Add a book › Project Gutenberg asks for it.</summary>
+    public GutenbergCatalogueStore BookCatalogue { get; }
 
     /// <summary>Speaks again a story run's line that kept no clip, and keeps the clip it makes.</summary>
     public StoryRunVoicing RunVoicing { get; }
@@ -6050,7 +6058,9 @@ public sealed class AppHost : IDisposable
         (providerId, cancellationToken) => Speech.LocalClient(providerId) is { } provider
             ? provider.ListVoicesAsync(cancellationToken)
             : Task.FromResult(D47.Core.Audio.VoiceCatalogue.Unreachable($"{D47.Core.Audio.TtsProviderCatalog.Selected(providerId).Name} is not installed.")),
-        BookFiles);
+        BookFiles,
+        BookCatalogue,
+        BookDownloads);
 
     private D47.App.Panel.CastVoiceSurface? _castVoices;
 

@@ -49,6 +49,10 @@ public sealed class GutenbergCatalogue
     /// <summary>The most rows read; a file with more is refused.</summary>
     public const int MaxFileRows = 500_000;
 
+    /// <summary>The subjects <c>tools/book-catalogue.py</c> writes, in the order a page offers them.</summary>
+    public static IReadOnlyList<string> Subjects { get; } =
+        ["Science fiction", "Adventure", "Mystery", "Horror", "Gothic fiction", "Historical fiction", "Humour", "Poetry"];
+
     private readonly List<Entry> _entries = [];
 
     private GutenbergCatalogue()
