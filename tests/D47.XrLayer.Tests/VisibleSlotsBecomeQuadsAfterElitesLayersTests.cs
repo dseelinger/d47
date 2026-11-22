@@ -8,7 +8,7 @@ public sealed unsafe class VisibleSlotsBecomeQuadsAfterElitesLayersTests : IDisp
     private readonly LayerRig rig = new();
 
     [Fact]
-    public void VisibleSlotsAreAppendedInSlotOrderAsPremultipliedQuads()
+    public void VisibleSlotsAreAppendedInDrawOrderAsPremultipliedQuads()
     {
         rig.Show(4, XrQuadSpace.Cockpit);
         rig.Show(1, XrQuadSpace.Head);
@@ -35,6 +35,22 @@ public sealed unsafe class VisibleSlotsBecomeQuadsAfterElitesLayersTests : IDisp
             Assert.Equal(800, quad.SubImage.ImageRect.Width);
             Assert.Equal(300, quad.SubImage.ImageRect.Height);
         });
+    }
+
+    /// <summary>The video sits over the panel and under the captions, the beam and the cursor.</summary>
+    [Fact]
+    public void TheVideoIsComposedAfterThePanelAndBeforeTheCaptionsBeamAndCursor()
+    {
+        foreach (var index in new[] { 4, 3, 2, EliteSession.VideoSlot, 1, 0 })
+        {
+            rig.Show(index);
+        }
+
+        rig.Run();
+
+        var frame = Assert.Single(rig.EndFrame(2 * LayerRig.Millisecond).Calls);
+
+        Assert.Equal([0f, 1f, 5f, 2f, 3f, 4f], frame.Quads.Select(q => q.Pose.PositionX));
     }
 
     [Fact]

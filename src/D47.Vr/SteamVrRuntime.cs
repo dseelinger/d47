@@ -49,13 +49,19 @@ public interface IVrSurfaceSource
 /// Where the action manifest is written. Without it and <paramref name="files"/>, <see cref="PrepareInput"/>
 /// registers nothing; only the real application may claim the d47 application key with SteamVR.
 /// </param>
+/// <param name="video">The video quad. Without it and <paramref name="videoTextures"/> there is none.</param>
+/// <param name="videoTextures">The device the video presenter uses, and no other thread.</param>
+/// <param name="videoClock">Runs the video presenter. Without it, a thread of its own.</param>
 public sealed class SteamVrRuntime(
     IReadOnlyList<IVrSurfaceSource> sources,
     ILogger<SteamVrRuntime> logger,
     IOpenVrSession openVr,
     IVrTextureDevice? textures = null,
     IFileSystem? files = null,
-    string? actionFolder = null) : IVrSession
+    string? actionFolder = null,
+    IVrVideoSource? video = null,
+    IVrTextureDevice? videoTextures = null,
+    IVrVideoClock? videoClock = null) : IVrSession
 {
     /// <summary>Reverse-domain, one per quad.</summary>
     private static readonly IReadOnlyDictionary<VrSurface, (string Key, string Name)> Keys =
@@ -65,6 +71,7 @@ public sealed class SteamVrRuntime(
             [VrSurface.PanelMini] = ("com.dseelinger.D47.panel", "D47"),
             [VrSurface.Captions] = ("com.dseelinger.D47.captions", "D47 captions"),
             [VrSurface.Avatar] = ("com.dseelinger.D47.avatar", "D47 avatar"),
+            [VrSurface.Video] = ("com.dseelinger.D47.video", "D47 video"),
         };
 
     /// <summary>Above the panel; the beam and cursor sit above this.</summary>
@@ -151,6 +158,28 @@ public sealed class SteamVrRuntime(
 
     public bool SupportsCurvature => true;
 
+    /// <summary>
+    /// Held for every call on the video overlay, from the serve and from the presenter, and for
+    /// <see cref="_videoComplaints"/> and <see cref="_videoSubmitted"/>.
+    /// </summary>
+    private readonly Lock _video = new();
+
+    private VrOverlay? _videoOverlay;
+    private readonly HashSet<string> _videoComplaints = [];
+    private bool _videoSubmitted;
+    private IDisposable? _videoRun;
+
+    /// <summary>Whether the last serve wanted the video on screen. The presenter does nothing while it is false.</summary>
+    private volatile bool _videoWanted;
+    private int _videoAdapter;
+
+    // Used by the presenter thread only.
+    private readonly VrVideoCopy _videoCopy = new();
+    private TexturePair? _videoPair;
+    private FrameHeld _videoHeld;
+    private bool _videoDeviceOpen;
+    private string? _videoDeviceRefused;
+
     public VrStart Start()
     {
         if (!openVr.Load())
@@ -217,11 +246,16 @@ public sealed class SteamVrRuntime(
             }
         }
 
+        ServeVideo();
+
         return true;
     }
 
     public void Stop()
     {
+        // Outside the session, which the presenter never takes, and before the teardown frees what it calls into.
+        StopVideo();
+
         lock (_session)
         {
             Teardown();
@@ -709,6 +743,7 @@ public sealed class SteamVrRuntime(
             _overlays[key] = overlay;
         }
 
+        StartVideo();
         Guides();
 
         logger.LogInformation("Headset overlays are up; {Count} quad(s) claimed", _overlays.Count);
@@ -1022,6 +1057,272 @@ public sealed class SteamVrRuntime(
         }
 
         return true;
+    }
+
+    /// <summary>Claims the video overlay and starts its presenter, when there is a video quad. Fails soft.</summary>
+    private void StartVideo()
+    {
+        if (video is null || videoTextures is null)
+        {
+            return;
+        }
+
+        StopVideo();
+
+        lock (_video)
+        {
+            _videoOverlay = VrOverlay.Create(openVr, Keys[VrSurface.Video].Key, Keys[VrSurface.Video].Name, out _, VideoRefused);
+
+            if (_videoOverlay is null)
+            {
+                logger.LogWarning("SteamVR would not create the video overlay; no video goes to the headset this session");
+                return;
+            }
+
+            _videoOverlay.Above(AvatarAbove);
+            _videoOverlay.Show(false);
+        }
+
+        _videoAdapter = HeadsetAdapter() ?? 0;
+        _videoRun = (videoClock ?? new VrVideoThread(logger)).Run(PresentVideo, FinishVideo);
+    }
+
+    /// <summary>Stops the presenter, waiting for it to give back its textures and device, then gives back the overlay.</summary>
+    private void StopVideo()
+    {
+        _videoWanted = false;
+
+        var running = _videoRun;
+        _videoRun = null;
+        running?.Dispose();
+
+        lock (_video)
+        {
+            _videoOverlay?.Dispose();
+            _videoOverlay = null;
+            _videoSubmitted = false;
+            _videoComplaints.Clear();
+        }
+    }
+
+    /// <summary>Places the video quad and shows or hides it. Uploads nothing: the presenter does that.</summary>
+    private void ServeVideo()
+    {
+        if (video is null)
+        {
+            return;
+        }
+
+        var placement = video.Visible ? video.Placement.Sane() : null;
+        var head = Head ?? VrPose.Origin;
+        _videoWanted = placement is not null;
+
+        lock (_video)
+        {
+            if (_videoOverlay is not { } overlay)
+            {
+                return;
+            }
+
+            if (placement is null || !_videoSubmitted)
+            {
+                overlay.Show(false);
+                overlay.PumpEvents();
+                return;
+            }
+
+            if (placement.RidesTheHead)
+            {
+                overlay.PlaceOnHead(placement.AgainstTheHead(head));
+            }
+            else
+            {
+                overlay.PlaceAbsolute(placement.Where(head));
+            }
+
+            overlay.Look(placement.WidthMetres, placement.Curvature, placement.Opacity);
+            overlay.Show(true);
+            overlay.PumpEvents();
+        }
+    }
+
+    /// <summary>
+    /// One step of the presenter: a new picture is copied into its texture and set on the video overlay, and a picture
+    /// the compositor refused goes again, as <see cref="FrameDelivery"/> says.
+    /// </summary>
+    private void PresentVideo()
+    {
+        if (!_videoWanted || !OpenVideoDevice())
+        {
+            return;
+        }
+
+        var fresh = _videoCopy.Take(video!.Picture, 1f);
+
+        if (_videoCopy.Width == 0)
+        {
+            return;
+        }
+
+        bool drawnByTheRuntime;
+
+        lock (_video)
+        {
+            if (_videoOverlay is not { } overlay)
+            {
+                return;
+            }
+
+            drawnByTheRuntime = _videoHeld.Pending && overlay.Visible;
+        }
+
+        var plan = FrameDelivery.Plan(_videoHeld, fresh, drawnByTheRuntime);
+
+        if (!plan.Draw && !plan.Submit)
+        {
+            return;
+        }
+
+        if (VideoPair(_videoCopy.Width, _videoCopy.Height) is not { } pair)
+        {
+            return;
+        }
+
+        if (plan.Draw)
+        {
+            videoTextures!.Write(pair.Current, _videoCopy.Address, _videoCopy.RowBytes);
+            videoTextures.Flush();
+        }
+
+        bool accepted;
+        var first = false;
+
+        lock (_video)
+        {
+            if (_videoOverlay is not { } overlay)
+            {
+                return;
+            }
+
+            accepted = overlay.SubmitTexture(pair.Current);
+
+            if (accepted)
+            {
+                first = !_videoSubmitted;
+                _videoSubmitted = true;
+            }
+        }
+
+        // SteamVR copies the texture with commands on this device's context.
+        videoTextures!.Flush();
+
+        var outcome = FrameDelivery.Took(_videoHeld, accepted);
+
+        if (outcome.Recovered)
+        {
+            logger.LogInformation("{Surface}: SteamVR is taking frames again", VrSurface.Video);
+
+            lock (_video)
+            {
+                _videoComplaints.Clear();
+            }
+        }
+
+        if (outcome.Rotate)
+        {
+            pair.Rotate();
+        }
+
+        _videoHeld = outcome.Held;
+
+        if (first)
+        {
+            logger.LogInformation("{Surface} is up: {Width}x{Height}", VrSurface.Video, _videoCopy.Width, _videoCopy.Height);
+        }
+    }
+
+    /// <summary>Gives back the presenter's textures and device, on the presenter's thread. The overlay goes first, so it is not left showing a texture that has gone.</summary>
+    private void FinishVideo()
+    {
+        lock (_video)
+        {
+            _videoOverlay?.Dispose();
+            _videoOverlay = null;
+            _videoSubmitted = false;
+        }
+
+        _videoPair?.Release(videoTextures!);
+        _videoPair = null;
+        _videoHeld = default;
+        _videoCopy.Forget();
+
+        if (_videoDeviceOpen)
+        {
+            videoTextures!.Close();
+            _videoDeviceOpen = false;
+        }
+
+        _videoDeviceRefused = null;
+    }
+
+    /// <summary>Makes the presenter's device on the headset's adapter, once a session. Says once when it cannot.</summary>
+    private bool OpenVideoDevice()
+    {
+        if (_videoDeviceOpen)
+        {
+            return true;
+        }
+
+        if (_videoDeviceRefused is not null)
+        {
+            return false;
+        }
+
+        _videoDeviceRefused = videoTextures!.Open(_videoAdapter);
+        _videoDeviceOpen = _videoDeviceRefused is null;
+
+        if (!_videoDeviceOpen)
+        {
+            logger.LogWarning("No video goes to the headset this session: {Reason}", _videoDeviceRefused);
+        }
+
+        return _videoDeviceOpen;
+    }
+
+    /// <summary>The video's two textures, remade when the picture's size changes. Null, said once, when they cannot be made.</summary>
+    private TexturePair? VideoPair(int width, int height)
+    {
+        if (_videoPair is { } pair && pair.Width == width && pair.Height == height)
+        {
+            return pair;
+        }
+
+        _videoPair?.Release(videoTextures!);
+        _videoPair = null;
+        _videoHeld = default;
+
+        var refused = TexturePair.Make(videoTextures!, width, height, out pair);
+
+        if (refused is not null)
+        {
+            _videoDeviceRefused = refused;
+            _videoDeviceOpen = false;
+            videoTextures!.Close();
+            logger.LogWarning("No video goes to the headset this session: {Reason}", refused);
+            return null;
+        }
+
+        _videoPair = pair;
+        return pair;
+    }
+
+    /// <summary>Says what the runtime turned down on the video overlay, once per distinct complaint. Called holding <see cref="_video"/>.</summary>
+    private void VideoRefused(string what)
+    {
+        if (_videoComplaints.Add(what))
+        {
+            logger.LogWarning("SteamVR refused an overlay call. {What}", what);
+        }
     }
 
     /// <summary>

@@ -85,7 +85,7 @@ internal struct XrQuadSlot
     /// <summary>The shared texture's name, null-terminated.</summary>
     public XrTextureName TextureName;
 
-    /// <summary>0 is flat, 1 wraps the full circle. The layer draws slots 0 and 1 curved while <see cref="XrLayerHalf.Cylinders"/> is 1.</summary>
+    /// <summary>0 is flat, 1 wraps the full circle. The layer draws slots 0, 1 and 5 curved while <see cref="XrLayerHalf.Cylinders"/> is 1.</summary>
     public float Curvature;
 }
 

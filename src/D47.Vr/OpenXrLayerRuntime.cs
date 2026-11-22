@@ -11,13 +11,19 @@ namespace D47.Vr;
 /// The headset through d47's OpenXR layer in Elite: each surface is a quad slot in the shared block, drawn from
 /// a texture shared by name on the adapter the layer named. Every write to d47's half of the block is made
 /// holding one lock, because <see cref="Reposition"/>, <see cref="AimBeam"/> and <see cref="ShowCursor"/> are
-/// called from the aim thread.
+/// called from the aim thread, and the video's pictures are published from its presenter thread.
 /// </summary>
+/// <param name="video">The video quad. Without it and <paramref name="videoTextures"/> there is none.</param>
+/// <param name="videoTextures">The device the video presenter uses, and no other thread.</param>
+/// <param name="videoClock">Runs the video presenter. Without it, a thread of its own.</param>
 public sealed unsafe class OpenXrLayerRuntime(
     IReadOnlyList<IVrSurfaceSource> sources,
     ILogger<OpenXrLayerRuntime> logger,
     IXrBlockMemory memory,
-    IVrTextureDevice textures) : IVrSession
+    IVrTextureDevice textures,
+    IVrVideoSource? video = null,
+    IVrTextureDevice? videoTextures = null,
+    IVrVideoClock? videoClock = null) : IVrSession
 {
     /// <summary>How long the layer's frame counter may stand still before the session ends.</summary>
     public static readonly TimeSpan StallLimit = TimeSpan.FromSeconds(1);
@@ -41,6 +47,7 @@ public sealed unsafe class OpenXrLayerRuntime(
     internal const int CaptionSlot = 2;
     internal const int BeamSlot = 3;
     internal const int CursorSlot = 4;
+    internal const int VideoSlot = 5;
 
     private const XrButtons Clicks = XrButtons.Primary | XrButtons.Secondary | XrButtons.Menu | XrButtons.StickClick;
 
@@ -83,6 +90,24 @@ public sealed unsafe class OpenXrLayerRuntime(
     private bool _wanted;
     private bool _triggerDown;
     private bool _backWasDown;
+
+    private IDisposable? _videoRun;
+    private (uint Low, int High) _videoAdapter;
+    private volatile float _videoOpacity = 1f;
+
+    /// <summary>Whether the last serve wanted the video on screen. The presenter does nothing while it is false.</summary>
+    private volatile bool _videoWanted;
+    private bool _videoServed;
+
+    /// <summary>Set under <see cref="_half"/> before the presenter is stopped; it publishes nothing after.</summary>
+    private bool _videoStopping;
+
+    // Used by the presenter thread only.
+    private readonly VrVideoCopy _videoCopy = new();
+    private TexturePair? _videoPair;
+    private ulong _videoGeneration;
+    private bool _videoDeviceOpen;
+    private string? _videoDeviceRefused;
 
     /// <summary>What one look at the block found.</summary>
     internal readonly record struct Sighting(
@@ -228,6 +253,8 @@ public sealed unsafe class OpenXrLayerRuntime(
             Publish();
         }
 
+        StartVideo(_layer.AdapterLuidLow, _layer.AdapterLuidHigh);
+
         _counterAtServe = _layer.FrameCounter;
         _counterMovedAt = null;
         _controllerRefusal = XrControllerRefusal.None;
@@ -304,6 +331,8 @@ public sealed unsafe class OpenXrLayerRuntime(
             Serve(source);
         }
 
+        ServeVideo();
+
         lock (_half)
         {
             if (!_pointing)
@@ -321,6 +350,8 @@ public sealed unsafe class OpenXrLayerRuntime(
 
     public void Stop()
     {
+        StopVideo();
+
         lock (_half)
         {
             if (_block is not null)
@@ -371,6 +402,7 @@ public sealed unsafe class OpenXrLayerRuntime(
             _triggerDown = false;
             _backWasDown = false;
             _curved = false;
+            _videoServed = false;
             Array.Clear(_triggerBy);
             Array.Clear(_gripBy);
             Head = null;
@@ -544,6 +576,7 @@ public sealed unsafe class OpenXrLayerRuntime(
     {
         VrSurface.Avatar => AvatarSlot,
         VrSurface.Captions => CaptionSlot,
+        VrSurface.Video => VideoSlot,
         _ => PanelSlot,
     };
 
@@ -653,6 +686,212 @@ public sealed unsafe class OpenXrLayerRuntime(
                 placement.WidthMetres,
                 rides ? "on the head" : "in the cockpit");
         }
+    }
+
+    /// <summary>Starts the video presenter on the layer's adapter, when there is a video quad.</summary>
+    private void StartVideo(uint luidLow, int luidHigh)
+    {
+        if (video is null || videoTextures is null)
+        {
+            return;
+        }
+
+        StopVideo();
+
+        lock (_half)
+        {
+            _videoStopping = false;
+        }
+
+        _videoAdapter = (luidLow, luidHigh);
+        _videoRun = (videoClock ?? new VrVideoThread(logger)).Run(PresentVideo, FinishVideo);
+    }
+
+    /// <summary>Stops the presenter and waits for it to give back its textures and device.</summary>
+    private void StopVideo()
+    {
+        _videoWanted = false;
+
+        lock (_half)
+        {
+            _videoStopping = true;
+        }
+
+        var running = _videoRun;
+        _videoRun = null;
+        running?.Dispose();
+    }
+
+    /// <summary>Places the video slot and shows or hides it. Uploads nothing: the presenter does that.</summary>
+    private void ServeVideo()
+    {
+        if (video is null)
+        {
+            return;
+        }
+
+        var placement = video.Visible ? video.Placement.Sane() : null;
+
+        if (placement is not null)
+        {
+            _videoOpacity = placement.Opacity;
+        }
+
+        _videoWanted = placement is not null;
+
+        var head = Head ?? VrPose.Origin;
+        bool shown;
+
+        lock (_half)
+        {
+            ref var slot = ref _d47.Slots[VideoSlot];
+            shown = placement is not null && slot.TextureGeneration != 0;
+
+            if (!shown)
+            {
+                slot.Visible = 0;
+            }
+            else
+            {
+                var rides = placement!.RidesTheHead;
+                slot.Space = rides ? XrQuadSpace.Head : XrQuadSpace.Cockpit;
+                slot.Pose = ToBlock(rides ? placement.AgainstTheHead(head) : placement.Where(head));
+                slot.WidthMetres = placement.WidthMetres;
+                slot.Curvature = placement.Curvature;
+                slot.Visible = 1;
+            }
+        }
+
+        if (shown && !_videoServed)
+        {
+            _videoServed = true;
+            logger.LogInformation("{Surface} is up through the D47 layer, {Metres:0.00}m wide", VrSurface.Video, placement!.WidthMetres);
+        }
+    }
+
+    /// <summary>
+    /// One step of the presenter: a new picture, or the last one at a new opacity, is drawn into the spare texture,
+    /// flushed, and only then published under a new generation.
+    /// </summary>
+    private void PresentVideo()
+    {
+        if (!_videoWanted || !OpenVideoDevice())
+        {
+            return;
+        }
+
+        var opacity = _videoOpacity;
+
+        if (!_videoCopy.Take(video!.Picture, opacity))
+        {
+            return;
+        }
+
+        var (width, height) = (_videoCopy.Width, _videoCopy.Height);
+
+        if (VideoPair(width, height) is not { } pair)
+        {
+            return;
+        }
+
+        videoTextures!.Write(pair.Spare, _videoCopy.Address, _videoCopy.RowBytes, width, height);
+        videoTextures.Flush();
+        pair.Drawn((width, height), opacity);
+        pair.Rotate(++_videoGeneration);
+
+        lock (_half)
+        {
+            if (_block is null || _videoStopping)
+            {
+                return;
+            }
+
+            ref var slot = ref _d47.Slots[VideoSlot];
+            slot.TextureWidth = (uint)pair.Width;
+            slot.TextureHeight = (uint)pair.Height;
+            slot.TextureGeneration = pair.Generation;
+            slot.RectX = 0;
+            slot.RectY = 0;
+            slot.RectWidth = width;
+            slot.RectHeight = height;
+            Name(ref slot, pair.CurrentName);
+            Publish();
+        }
+    }
+
+    /// <summary>Gives back the presenter's textures and device, on the presenter's thread.</summary>
+    private void FinishVideo()
+    {
+        _videoPair?.Release(videoTextures!);
+        _videoPair = null;
+        _videoCopy.Forget();
+
+        if (_videoDeviceOpen)
+        {
+            videoTextures!.Close();
+            _videoDeviceOpen = false;
+        }
+
+        _videoDeviceRefused = null;
+    }
+
+    /// <summary>Makes the presenter's device on the layer's adapter, once a session. Says once when it cannot.</summary>
+    private bool OpenVideoDevice()
+    {
+        if (_videoDeviceOpen)
+        {
+            return true;
+        }
+
+        if (_videoDeviceRefused is not null)
+        {
+            return false;
+        }
+
+        _videoDeviceRefused = videoTextures!.OpenOnLuid(_videoAdapter.Low, _videoAdapter.High);
+        _videoDeviceOpen = _videoDeviceRefused is null;
+
+        if (!_videoDeviceOpen)
+        {
+            logger.LogWarning("{Surface} is not shown through the D47 layer this session: {Reason}", VrSurface.Video, _videoDeviceRefused);
+        }
+
+        return _videoDeviceOpen;
+    }
+
+    /// <summary>The video's two shared textures, at the picture's size and remade when it changes. Null, said once, when they cannot be made.</summary>
+    private TexturePair? VideoPair(int width, int height)
+    {
+        if (_videoPair is { } pair && pair.Width == width && pair.Height == height)
+        {
+            return pair;
+        }
+
+        var first = NextName();
+        var second = NextName();
+        var a = videoTextures!.CreateShared(width, height, first, out var refused);
+        var b = refused is null ? videoTextures.CreateShared(width, height, second, out refused) : 0;
+
+        if (refused is not null)
+        {
+            if (a != 0)
+            {
+                videoTextures.Release(a);
+            }
+
+            _videoPair?.Release(videoTextures);
+            _videoPair = null;
+            _videoDeviceRefused = refused;
+            _videoDeviceOpen = false;
+            videoTextures.Close();
+            logger.LogWarning("{Surface} is not shown through the D47 layer this session: {Reason}", VrSurface.Video, refused);
+            return null;
+        }
+
+        // The old pair goes once the new one is made; the layer holds its own reference to whatever it opened.
+        _videoPair?.Release(videoTextures);
+        _videoPair = new TexturePair([a, b], [first, second], width, height);
+        return _videoPair;
     }
 
     /// <summary>
@@ -825,7 +1064,8 @@ public sealed unsafe class OpenXrLayerRuntime(
         }
     }
 
-    private string NextName() => $"D47.{Environment.ProcessId}.{++_serial}";
+    /// <summary>A new shared texture name. Called from the serve and from the video presenter.</summary>
+    private string NextName() => $"D47.{Environment.ProcessId}.{Interlocked.Increment(ref _serial)}";
 
     private void Hide(int index)
     {

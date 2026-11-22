@@ -4,7 +4,7 @@ using Xunit;
 namespace D47.XrLayer.Tests;
 
 /// <summary>
-/// With the cylinder extension on, the panel and avatar slots are drawn as cylinders when they have a curvature:
+/// With the cylinder extension on, the panel, avatar and video slots are drawn as cylinders when they have a curvature:
 /// radius W/(c·2π), central angle c·2π kept below 2π, aspect from the sub-image, and the pose moved the radius
 /// along the slot's own +Z.
 /// </summary>
@@ -73,8 +73,23 @@ public sealed class ACurvedSlotIsDrawnAsACylinderTests : IDisposable
         Assert.Equal(-1f + (1f / MathF.Tau), cylinder.Pose.PositionZ, 5);
     }
 
+    [Fact]
+    public void ACurvedVideoIsACylinderLikeThePanelItSitsOn()
+    {
+        rig.Show(EliteSession.VideoSlot);
+        rig.Slot(EliteSession.VideoSlot).Curvature = 0.25f;
+        rig.Publish();
+        rig.Run();
+
+        var frame = rig.EndFrame(2 * LayerRig.Millisecond).Calls.Single();
+
+        Assert.Empty(frame.Quads);
+        Assert.Equal(MathF.PI / 2f, Assert.Single(frame.Cylinders).CentralAngle, 5);
+    }
+
     [Theory]
     [InlineData(2, 0.5f)]
+    [InlineData(4, 0.5f)]
     [InlineData(0, 0.0005f)]
     [InlineData(0, 0f)]
     [InlineData(0, float.NaN)]

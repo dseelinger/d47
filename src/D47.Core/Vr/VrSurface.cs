@@ -13,6 +13,9 @@ public enum VrSurface
 
     /// <summary>The avatar clip, laid over the panel's still frame of it.</summary>
     Avatar,
+
+    /// <summary>The playing video, laid over the picture area the panel reserves for it.</summary>
+    Video,
 }
 
 /// <summary>Head-locked or world-locked, per surface (Phase 9, "VR Panel locking").</summary>

@@ -270,17 +270,24 @@ public sealed class VrHost : IDisposable
         // After the panel, so it reads the avatar's place from the panel's draw in the same serve.
         var avatar = new VrAvatarSurface(panel);
 
+        // Its pictures go up from each runtime's presenter thread, on a device of its own.
+        var video = new VrVideoSurface(panel, () => watch?.Video.Frame);
+
         var steamVr = new SteamVrRuntime(
             [panel, avatar, captions],
             loggers.CreateLogger<SteamVrRuntime>(),
             OpenVrBinding.Instance,
             new D3D11TextureDevice(),
             files,
-            paths.VrActions);
+            paths.VrActions,
+            video,
+            new D3D11TextureDevice());
         var throughTheLayer = new OpenXrLayerRuntime(
             [panel, avatar, captions],
             loggers.CreateLogger<OpenXrLayerRuntime>(),
             new XrSharedBlock(),
+            new D3D11TextureDevice(),
+            video,
             new D3D11TextureDevice());
         var runtime = new HeadsetRuntime(
             steamVr,
@@ -447,7 +454,7 @@ public sealed class VrHost : IDisposable
         return VrResizeOutcome.On;
     }
 
-    /// <summary>Hides the panel and its avatar, or shows them again. Not saved; leaves resize mode when hiding.</summary>
+    /// <summary>Hides the panel, its avatar and its video, or shows them again. Not saved; leaves resize mode when hiding.</summary>
     public void SetPanelHidden(bool hidden)
     {
         _panelHidden = hidden;

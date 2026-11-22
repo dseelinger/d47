@@ -326,6 +326,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Where the last draw put the avatar's picture, in <see cref="DrawnSize"/> pixels, or null.</summary>
     public VrPixelRect? AvatarArea { get; private set; }
 
+    /// <summary>Where the last draw put the video player's picture, in <see cref="DrawnSize"/> pixels, or null.</summary>
+    public VrPixelRect? VideoArea { get; private set; }
+
     /// <summary>The pixel size of the last draw.</summary>
     public (int Width, int Height) DrawnSize { get; private set; } = PanelResolution.Default;
 
@@ -647,17 +650,62 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
 
         DrawnSize = (width, height);
         AvatarArea = MeasureAvatar();
+        VideoArea = MeasureVideo();
 
         Keep(rendered);
     }
 
     /// <summary>The avatar picture's drawn square, through the zoom, or null when no clip is on show.</summary>
-    private VrPixelRect? MeasureAvatar()
-    {
-        var picture = _view.Avatar.Picture;
+    private VrPixelRect? MeasureAvatar() =>
+        _view.Avatar.ShowingClip is null ? null : Measure(_view.Avatar.Picture);
 
-        if (_view.Avatar.ShowingClip is null
-            || !ShownWithin(picture, _offscreen.View)
+    /// <summary>
+    /// The video player's drawn picture, through the zoom, or null when no player with a picture is on show or any of
+    /// the picture is scrolled or clipped out of sight.
+    /// </summary>
+    private VrPixelRect? MeasureVideo()
+    {
+        foreach (var visual in _offscreen.View.GetVisualDescendants())
+        {
+            if (visual is Image { Name: VideoPlayerPage.PictureName } picture
+                && Measure(picture) is { } area
+                && Unclipped(picture, area))
+            {
+                return area;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Whether <paramref name="area"/> lies inside every clipping parent of <paramref name="control"/> and inside the surface.</summary>
+    private bool Unclipped(Visual control, VrPixelRect area)
+    {
+        const double Slack = 0.5;
+        var drawn = new Rect(area.X, area.Y, area.Width, area.Height).Deflate(Slack);
+
+        for (var at = control.GetVisualParent(); at is not null; at = at.GetVisualParent())
+        {
+            if ((at.ClipToBounds || ReferenceEquals(at, _offscreen.View))
+                && at.TransformToVisual(_offscreen.View) is { } toSurface
+                && !new Rect(at.Bounds.Size).TransformToAABB(toSurface).Contains(drawn))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(at, _offscreen.View))
+            {
+                break;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>The part of <paramref name="picture"/> its source is drawn in, through the zoom, or null when it is not on show.</summary>
+    private VrPixelRect? Measure(Image picture)
+    {
+        if (!ShownWithin(picture, _offscreen.View)
             || picture.Source is not { } source
             || picture.TransformToVisual(_offscreen.View) is not { } toSurface)
         {

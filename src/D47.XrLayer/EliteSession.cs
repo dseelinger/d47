@@ -17,10 +17,18 @@ internal sealed unsafe class EliteSession
     /// <summary>Below this curvature a slot is drawn flat.</summary>
     public const float Flat = 1e-3f;
 
-    /// <summary>The panel's slot. It and <see cref="AvatarSlot"/> are the slots that may be drawn as a cylinder.</summary>
+    /// <summary>The panel's slot. It, <see cref="AvatarSlot"/> and <see cref="VideoSlot"/> are the slots that may be drawn as a cylinder.</summary>
     public const int PanelSlot = 0;
 
     public const int AvatarSlot = 1;
+
+    public const int VideoSlot = 5;
+
+    /// <summary>
+    /// The order slots are appended in, so later ones are composed over earlier ones: the quads laid over the panel
+    /// come after it, and the captions, the beam and the cursor after those.
+    /// </summary>
+    internal static ReadOnlySpan<int> DrawOrder => [PanelSlot, AvatarSlot, VideoSlot, 2, 3, 4];
 
     /// <summary>Just below 2π, the largest central angle the extension allows.</summary>
     public static readonly float MostCentralAngle = MathF.BitDecrement(MathF.Tau);
@@ -285,14 +293,19 @@ internal sealed unsafe class EliteSession
         var room = XrConstant.MinLayersSupported - (int)eliteCount;
         var ours = stackalloc nint[XrBlock.SlotCount];
         var added = 0;
-        for (var i = 0; i < XrBlock.SlotCount && added < room; i++)
+        foreach (var i in DrawOrder)
         {
+            if (added >= room)
+            {
+                break;
+            }
+
             if (!TryQuad(slots[i], ref lastD47.Slots[i], &quads[added]))
             {
                 continue;
             }
 
-            if (cylinders && i is PanelSlot or AvatarSlot && IsCurved(lastD47.Slots[i].Curvature))
+            if (cylinders && i is PanelSlot or AvatarSlot or VideoSlot && IsCurved(lastD47.Slots[i].Curvature))
             {
                 curved[added] = Cylinder(in quads[added], lastD47.Slots[i].Curvature);
                 ours[added] = (nint)(&curved[added]);

@@ -377,8 +377,8 @@ Turn it off if you use SteamVR for other things and would rather Directive 47 st
 
 > "headset overlay on" / "headset overlay off"
 
-"Headset overlay off" switches everything off: the panel, the avatar, the captions and the SteamVR
-session. To hide the panel alone, say "hide VR panel". The avatar goes with it; the captions keep
+"Headset overlay off" switches everything off: the panel, the avatar, the video, the captions and the
+SteamVR session. To hide the panel alone, say "hide VR panel". The avatar and the video go with it; the captions keep
 showing and the session stays up. "Show VR panel" brings it back where it was, and also turns this
 setting on if it was off. A hidden panel is not remembered across a restart.
 
@@ -669,7 +669,7 @@ not the same as it appearing: with no runtime installed the setting takes and no
 
 #### `show_headset_panel`
 
-Hides the headset panel and its avatar, or shows them again. Captions and the SteamVR session are
+Hides the headset panel, its avatar and its video, or shows them again. Captions and the SteamVR session are
 untouched, and the hidden state is not saved. Showing the panel while `vr.enabled` is off turns
 that row on.
 
