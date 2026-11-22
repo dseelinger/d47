@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: The music library no longer downloads every folder whole. Each folder keeps two unplayed tracks in `data\music-pack`, about 200 MB in all instead of 4.4 GB. A track is deleted once it has played and its replacement is in, and each folder fetches its next track from those not yet played, so a track comes back in a later round. With no network a folder keeps and repeats what it has. A folder that holds more tracks keeps two and deletes the rest at the next start. The setting's line reads like "4.4 GB in all. 76 tracks ready in 38 folders (198 MB)." Previous on a library track restarts it.
+
 Changed: Deleting the thumbs-down tracks builds each folder's new zip from the published zip, checked against the manifest's SHA-256, instead of from the tracks on this PC. A published zip that does not match leaves that folder queued, and a folder no longer needs to be downloaded here first.
 
 Fixed: A change of screen resolution, such as switching between 2D and the headset with Virtual Desktop, no longer overwrites where you put the 2D overlay strip. While that place does not fit on a screen the strip is centred on Elite's screen, and it goes back to your place when it fits again.

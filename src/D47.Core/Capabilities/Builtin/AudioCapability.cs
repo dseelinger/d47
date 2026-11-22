@@ -510,15 +510,16 @@ public static class AudioCapability
         Exercise =
             "Open Settings › Hearing and sound › Sounds and levels, group Ambient music, and find Download the "
             + "D47 music library (off by default). Tick it: the line under it gives the library's size and counts "
-            + "folders in as each one lands in data\\music-pack, naming the folder being fetched. Needs a network "
-            + "connection to GitHub and several gigabytes free. With Elite running and Elite's music volume at zero, "
-            + "every situation plays the library, together with any files of your own. Untick it: the music stops and starts again "
+            + "the tracks ready as each one lands in data\\music-pack, two in each folder, naming the folder being "
+            + "fetched. Needs a network connection to GitHub and about 200 MB free. With Elite running and Elite's "
+            + "music volume at zero, every situation plays the library, together with any files of your own. Untick it: the music stops and starts again "
             + "without the library, nothing more is downloaded, and the files stay in data\\music-pack.",
         Label = "Download the D47 music library",
         Help =
-            "Ambient music for every situation, several gigabytes in all, downloaded in the background from "
-            + "GitHub into data\\music-pack, most-used folders first. Files of your own in a music folder play "
-            + "alongside the library's.\n\n"
+            "Ambient music for every situation, fetched in the background from GitHub into data\\music-pack. "
+            + "Each folder keeps two unplayed tracks, about 200 MB in all; a track is deleted once it has played "
+            + "and its replacement is in, and comes back in a later round. Files of your own in a music folder "
+            + "play alongside the library's.\n\n"
             + "Off, nothing more is downloaded and the library does not play. The files stay on disk; deleting "
             + "data\\music-pack reclaims the space.",
         Kind = SettingKind.Toggle,

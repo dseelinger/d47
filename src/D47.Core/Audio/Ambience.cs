@@ -299,17 +299,22 @@ public sealed class Ambience(Random? shuffle = null, Func<MusicTrack, bool>? rej
     public string Folder(CueLibrary library) =>
         library.Music(Situation).Count == 0 ? Situations.General : Situation;
 
-    /// <summary>The next track, or null when there is nothing to play.</summary>
-    public MusicTrack? Next(CueLibrary library)
+    /// <summary>The next track, or null when there is nothing to play. <paramref name="after"/> is as for <see cref="Draw"/>.</summary>
+    public MusicTrack? Next(CueLibrary library, MusicTrack? after = null)
     {
         var folder = Folder(library);
         Playing = folder;
-        return Draw(folder, library);
+        return Draw(folder, library, after);
     }
 
-    /// <summary>The next track of a folder's shuffle, whatever the situation is, or null when it is empty.</summary>
-    public MusicTrack? Draw(string folder, CueLibrary library)
+    /// <summary>
+    /// The next track of a folder's shuffle, whatever the situation is, or null when it is empty. It is
+    /// <paramref name="after"/>, the track that just played, only when the folder has no other.
+    /// </summary>
+    public MusicTrack? Draw(string folder, CueLibrary library, MusicTrack? after = null)
     {
+        MusicTrack? repeat = null;
+
         for (var pass = 0; pass < 2; pass++)
         {
             if (!_orders.TryGetValue(folder, out var order)
@@ -324,15 +329,30 @@ public sealed class Ambience(Random? shuffle = null, Func<MusicTrack, bool>? rej
             {
                 var track = order.Tracks[order.Next++];
 
-                if (rejected?.Invoke(track) != true)
+                if (rejected?.Invoke(track) == true)
                 {
-                    return track;
+                    continue;
                 }
+
+                if (after is not null && Same(track, after))
+                {
+                    repeat ??= track;
+                    continue;
+                }
+
+                return track;
             }
         }
 
-        return null;
+        return repeat;
     }
+
+    /// <summary>The same file, whichever library it was loaded into.</summary>
+    private static bool Same(MusicTrack a, MusicTrack b) =>
+        string.Equals(a.Name, b.Name, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(a.PackFolder, b.PackFolder, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(a.PackFile, b.PackFile, StringComparison.OrdinalIgnoreCase)
+        && string.Equals(a.OwnPath, b.OwnPath, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Steps the folder's shuffle back from <paramref name="current"/> to the nearest earlier track that is not

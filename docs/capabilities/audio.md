@@ -48,7 +48,7 @@ nav_order: 123
 <section>
 <h2><span class="num">3</span> Pause the music by voice.</h2>
 <p class="say">With music playing, say "pause the music", then "resume the music", "next track" or "previous track".</p>
-<p class="expect">Pause holds the track, resume carries on, next track starts another from the same folder, and previous track plays the one before the current track.</p>
+<p class="expect">Pause holds the track, resume carries on, next track starts another from the same folder, and previous track plays the one before the current track, or restarts a track from D47's music library.</p>
 <svg viewBox="0 0 880 140" role="img" aria-label="The ask row with a music command typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">pause the music</text>
@@ -383,17 +383,24 @@ the volume flyout shows it paused and **Now playing** reads Paused, and Resume o
 ### The music library
 
 **Download the D47 music library** (Settings › Hearing and sound › Sounds and levels, group Ambient music) is off
-by default. The library is several gigabytes; the line under the setting gives its size once D47 has read the list of
-folders. On, D47 downloads it from GitHub in the background, one folder at a time in the order the library lists
-them, the most-used first, into `data/music-pack/<folder>/`. Each folder is checked against its SHA-256 and unpacked under
-another name before it is renamed into place, so a folder never plays half-written. A folder already on disk at the
-current version is not downloaded again, and a newer version replaces it.
+by default. The library is several gigabytes on GitHub, but D47 keeps only two unplayed tracks of each folder on this
+PC, about 200 MB in all, in `data/music-pack/<folder>/`. On, D47 fetches each track in the background out of its
+folder's zip, writes it under another name, checks its size and CRC-32 against the zip's directory, and renames it
+into place, so a track never plays half-written. A track that does not match is discarded and its folder is tried
+again later.
 
-Before each folder D47 checks for twice its download size free on the drive, and stops with a message on the setting's
-line when there is less. The line also counts the folders in, names the one being fetched and says when one failed. A
-failed folder is tried again at the next start.
+A library track has played once it ends, is skipped or is thumbed down; one that is paused, faded out while nothing
+happens, or left for another folder has not. Once a played track's replacement is in, the played track is deleted.
+Each folder fetches its tracks at random from those not yet played, and starts again once every track has played, so
+a track comes back in a later round. With no network, a folder keeps and repeats the tracks it has. When the library
+publishes a new version of a folder, D47 keeps only the tracks still in it. A folder holding more than two tracks keeps
+two and deletes the rest at the next start.
 
-Off, nothing more is downloaded, the music restarts without the library, and the files stay on disk. Deleting
+Before each track D47 checks for twice its size free on the drive, and stops with a message on the setting's line
+when there is less. The line gives the library's size and the tracks ready, such as "4.4 GB in all. 76 tracks ready
+in 38 folders (198 MB).", names the folder being fetched and says when one failed.
+
+Off, nothing more is fetched, the music restarts without the library, and the files stay on disk. Deleting
 `data/music-pack` reclaims the space.
 
 ### Pause, resume, next and previous track
@@ -405,7 +412,7 @@ these keys.
 
 - **Pause** holds the track where it is. **Resume** continues it from that point.
 - **Next** ends the track and starts the next one in the shuffle. It also ends a pause.
-- **Previous** steps back one place in the current folder's shuffle and plays that track from the start; it does not restart the playing track first. A track queued for deletion is stepped over. On the first track of a shuffle it restarts the playing track. During a one-shot cue it ends the cue and continues the situation's shelved track. It also ends a pause.
+- **Previous** steps back one place in the current folder's shuffle and plays that track from the start; it does not restart the playing track first. A track queued for deletion is stepped over. On the first track of a shuffle it restarts the playing track. A track from the music library restarts, since the one before it has been deleted. During a one-shot cue it ends the cue and continues the situation's shelved track. It also ends a pause.
 - While paused, a change of situation starts nothing, and the paused track is held for its folder.
   Resume continues the held track of the folder you are in now, if it has one within 30 minutes,
   and otherwise starts that folder's next track.

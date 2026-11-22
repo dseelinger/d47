@@ -54,7 +54,11 @@ public sealed class AmbientMusic(
 
     private Ambience? _drawn;
     private readonly HashSet<string> _deletedOwn = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<MusicTrack> _played = [];
     private MusicTrack? _current;
+
+    /// <summary>The track that last ended or was skipped, which the next draw avoids repeating.</summary>
+    private MusicTrack? _left;
     private bool _paused;
     private bool _running;
     private string? _cue;
@@ -88,6 +92,12 @@ public sealed class AmbientMusic(
 
     /// <summary>Raised after the track or the paused state changes, outside any lock.</summary>
     public event Action<MusicState>? Changed;
+
+    /// <summary>
+    /// Raised outside any lock when a library track has been played: it ended, or was skipped or thumbed down. A
+    /// track that is shelved, held by a pause or the idle fade, restarted by Previous, or stopped by a mute is not.
+    /// </summary>
+    public event Action<MusicTrack>? Played;
 
     public MusicState State
     {
@@ -260,7 +270,7 @@ public sealed class AmbientMusic(
     {
         _spent = folder;
 
-        if (_paused || audio.Mix.Music.Muted || CurrentAmbience.Draw(folder, library()) is not { } track)
+        if (_paused || audio.Mix.Music.Muted || CurrentAmbience.Draw(folder, library(), _left) is not { } track)
         {
             return false;
         }
@@ -310,6 +320,7 @@ public sealed class AmbientMusic(
     {
         lock (_gate)
         {
+            Leave(_current);
             _current = null;
 
             if (_cue is not null)
@@ -587,6 +598,7 @@ public sealed class AmbientMusic(
         }
 
         audio.SkipMusic();
+        Leave(_current);
         _current = null;
         LeaveCue();
         return StartNext() ? "Next track." : NothingToPlay;
@@ -604,13 +616,25 @@ public sealed class AmbientMusic(
         }
 
         var inCue = _cue is not null;
+        var folder = audio.MusicFolder ?? CurrentAmbience.Playing;
         audio.SkipMusic();
 
         if (inCue)
         {
+            Leave(_current);
+            _left = null;
             _current = null;
             LeaveCue();
             return Continue() ? "Previous track." : NothingToPlay;
+        }
+
+        _left = null;
+
+        // The library deletes a track once it has played, so a library track restarts rather than stepping back.
+        if (_current is { PackFolder: not null } pack)
+        {
+            audio.PlayMusic(pack, folder, afterGap: false, fadeIn: null);
+            return "Restarted this track.";
         }
 
         var (track, restarted) = CurrentAmbience.Previous(library(), _current);
@@ -655,7 +679,7 @@ public sealed class AmbientMusic(
             return false;
         }
 
-        _current = CurrentAmbience.Next(library());
+        _current = CurrentAmbience.Next(library(), _left);
 
         if (_current is null)
         {
@@ -682,15 +706,39 @@ public sealed class AmbientMusic(
         return new MusicState(live ? _current!.Name : null, live && !_paused && !_idle, _paused, idle, shown, startable);
     }
 
+    /// <summary>Records that <paramref name="track"/> has played; a library track is reported by the next <see cref="Raise"/>.</summary>
+    private void Leave(MusicTrack? track)
+    {
+        if (track is null)
+        {
+            return;
+        }
+
+        _left = track;
+
+        if (track.PackFolder is not null)
+        {
+            _played.Add(track);
+        }
+    }
+
     private void Raise()
     {
         MusicState state;
+        MusicTrack[] played;
 
         lock (_gate)
         {
             state = Snapshot();
+            played = [.. _played];
+            _played.Clear();
         }
 
         Changed?.Invoke(state);
+
+        foreach (var track in played)
+        {
+            Played?.Invoke(track);
+        }
     }
 }

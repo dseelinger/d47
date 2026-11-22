@@ -4040,10 +4040,12 @@ public sealed class AppHost : IDisposable
         host.MusicPack = new MusicPackStore(
             paths.MusicPack,
             () => host.Settings.Current.Ui.MusicLibrary,
+            () => host.MusicRejects.Rows,
             new MusicPackDisk(),
             MusicPackStore.CreateClient(),
             loggerFactory.CreateLogger<MusicPackStore>());
         host.MusicPack.Landed += host._reloadAudio;
+        host.Music.Played += track => _ = host.MusicPack.Played(track);
         host.MusicRejectDeleter = new MusicRejectDeleter(
             paths.MusicPack,
             host.MusicRejects,
