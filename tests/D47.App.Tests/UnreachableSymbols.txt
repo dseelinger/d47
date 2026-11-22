@@ -169,6 +169,7 @@ D47.Core.Adventures.AdventureResolver.Outage
 D47.Core.Adventures.AdventureStore.Path
 D47.Core.Adventures.AdventureWalkResult.Failed
 D47.Core.Adventures.Resolution.Succeeded
+D47.Core.AppPaths.WatchFile
 D47.Core.Audio.AudioArbiter.PlayVideo(D47.Core.Audio.MusicTrack, System.TimeSpan)
 D47.Core.Audio.AudioArbiter.SeekVideo(System.TimeSpan)
 D47.Core.Audio.AudioArbiter.StopVideo()
@@ -229,6 +230,8 @@ D47.Core.Stories.StoryCatalog.Faults()
 D47.Core.Stories.StoryChapterArchive.Changed
 D47.Core.Utilities.AlarmStore.Changed
 D47.Core.Vr.CaptionLayer.At(System.TimeSpan)
+D47.Core.Viewing.WatchEntry
+D47.Core.Viewing.WatchStore
 D47.Core.Vr.CaptionLayer.Follow(System.Collections.Generic.IReadOnlyList<D47.Core.Vr.SubtitleCue>)
 D47.Core.Vr.SubtitleCue.SubtitleCue(System.TimeSpan, System.TimeSpan, string)
 D47.Core.Vr.SubtitleCues

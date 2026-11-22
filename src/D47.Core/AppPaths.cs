@@ -32,6 +32,7 @@ public sealed class AppPaths
         MusicRejects = Path.Combine(Data, "music-rejects.tsv");
         Podcasts = Path.Combine(Data, "podcasts");
         PodcastListening = Path.Combine(Podcasts, "listening.json");
+        WatchFile = Path.Combine(Data, "watch.json");
         SettingsFile = Path.Combine(Data, "settings.json");
         SecretsFile = Path.Combine(Data, "secrets.json");
         ViewStateFile = Path.Combine(Data, "view-state.json");
@@ -102,6 +103,9 @@ public sealed class AppPaths
 
     /// <summary>Where the Commander stopped in each podcast episode, and which are finished.</summary>
     public string PodcastListening { get; }
+
+    /// <summary>Your list and the place reached in each video title.</summary>
+    public string WatchFile { get; }
 
     public string SettingsFile { get; }
     public string SecretsFile { get; }
