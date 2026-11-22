@@ -210,6 +210,14 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             }
         };
 
+        _captions.Reselected += (_, index) =>
+        {
+            if (index == 1 && _host.WritingProblem is not null)
+            {
+                WriteCaptions();
+            }
+        };
+
         _noSubtitles.Label = NoSubtitlesLabel;
         _noSubtitles.Text = "This video came without captions. D47 can write them from the soundtrack on this computer.";
         _write.Click += (_, _) => WriteCaptions();
@@ -664,7 +672,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
         var problem = writing ? _host.WritingProblem : null;
 
-        if (_captionState is { } drawn && drawn.None == none && drawn.On == _host.CaptionsOn && drawn.Writing == writing && drawn.Problem == problem)
+        if (_captionState is { } drawn && drawn.None == none && drawn.On == _host.CaptionsOn && drawn.Writing == writing && drawn.Problem == problem && drawn.CannotWrite == _host.CannotWrite)
         {
             return;
         }

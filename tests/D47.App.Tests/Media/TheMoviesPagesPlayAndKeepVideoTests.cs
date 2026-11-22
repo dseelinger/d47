@@ -334,6 +334,98 @@ public sealed class TheMoviesPagesPlayAndKeepVideoTests
     }
 
     [AvaloniaFact]
+    public void TheWriteChoiceOpensOnceASpeechModelIsReady()
+    {
+        var captioner = new Switchable { Unavailable = "Writing captions needs a speech model on this computer." };
+        var fixture = new Fixture(captioner: captioner);
+        Keep(fixture);
+        var (window, panel) = Open(fixture);
+
+        Click(panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == WatchPage.RowName && (button.Tag as string) == "archive.moon"));
+
+        var choice = panel.GetVisualDescendants().OfType<Segment>().Single(segment => segment.Name == VideoPlayerPage.CaptionsChoiceName);
+
+        Assert.False(Named(panel, VideoPlayerPage.WriteCaptionsName).IsEnabled);
+        Assert.False(choice.GetVisualDescendants().OfType<RadioButton>().ElementAt(1).IsEnabled);
+
+        captioner.Unavailable = null;
+        panel.GetVisualDescendants().OfType<VideoPlayerPage>().Single().Refresh();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Named(panel, VideoPlayerPage.WriteCaptionsName).IsEnabled);
+        Assert.True(choice.GetVisualDescendants().OfType<RadioButton>().ElementAt(1).IsEnabled);
+
+        Finish(window, fixture);
+    }
+
+    [AvaloniaFact]
+    public void PickingWriteAgainAfterItFailedStartsWritingAgain()
+    {
+        var clip = Path.Combine(AppContext.BaseDirectory, "Fixtures", "video", "clip.mp4");
+        var captioner = new Switchable { Fails = true };
+        var fixture = new Fixture(captioner: captioner);
+        var title = fixture.Host.FileTitle(clip);
+        fixture.Store.Add(title.Source, title.Id, Noon, title);
+        var (window, panel) = Open(fixture);
+
+        Click(panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == WatchPage.RowName && (button.Tag as string) == "file." + clip));
+        Click(Named(panel, VideoPlayerPage.WriteCaptionsName));
+
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+
+        while (fixture.Host.WritingProblem is null)
+        {
+            Assert.True(DateTime.UtcNow < deadline, "Writing did not fail.");
+            Thread.Sleep(10);
+        }
+
+        var calls = captioner.Calls;
+        var page = panel.GetVisualDescendants().OfType<VideoPlayerPage>().Single();
+        page.Refresh();
+        Dispatcher.UIThread.RunJobs();
+
+        var write = panel.GetVisualDescendants().OfType<Segment>().Single(segment => segment.Name == VideoPlayerPage.CaptionsChoiceName)
+            .GetVisualDescendants().OfType<RadioButton>().ElementAt(1);
+
+        write.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+
+        deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+
+        while (captioner.Calls == calls)
+        {
+            Assert.True(DateTime.UtcNow < deadline, "Writing did not start again.");
+            Thread.Sleep(10);
+        }
+
+        Finish(window, fixture);
+    }
+
+    private sealed class Switchable : ISoundtrackCaptioner
+    {
+        private int _calls;
+
+        public string? Unavailable { get; set; }
+
+        public bool Fails { get; set; }
+
+        public int Calls => Volatile.Read(ref _calls);
+
+        public Task<IReadOnlyList<D47.Core.Vr.SubtitleCue>> CaptionAsync(D47.Core.Listening.Utterance sound, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _calls);
+
+            return Fails
+                ? Task.FromException<IReadOnlyList<D47.Core.Vr.SubtitleCue>>(new InvalidOperationException("The speech model failed."))
+                : Task.FromResult<IReadOnlyList<D47.Core.Vr.SubtitleCue>>([]);
+        }
+
+        public void Release()
+        {
+        }
+    }
+
+    [AvaloniaFact]
     public void TheSearchOpensTheCatalogueOnlyWhereOneExists()
     {
         var without = new Fixture();
