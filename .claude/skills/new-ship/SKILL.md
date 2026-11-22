@@ -57,7 +57,7 @@ Generated data is generated: edit the generator, never the table.
 ## 4. Art
 
 The maintainer takes a RenderDoc capture of the hull on the shipyard screen. Everything after that is
-this skill's, in the render pipeline at `C:\dev\tools\RenderDoc2obj` (dseelinger/3d-tools). That checkout
+this skill's, in the render pipeline at `C:\dev\d47\tools\RenderDoc2obj` (dseelinger/3d-tools). That checkout
 is outside this repository: show each change there and write only on the maintainer's word.
 
 1. **Find the capture.** New captures land in `%LOCALAPPDATA%\Temp\RenderDoc` as

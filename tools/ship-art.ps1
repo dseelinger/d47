@@ -49,7 +49,7 @@
 [CmdletBinding()]
 param(
     [string[]] $Hull,
-    [string] $Pipeline = 'C:\dev\tools\RenderDoc2obj\work'
+    [string] $Pipeline = 'C:\dev\d47\tools\RenderDoc2obj\work'
 )
 
 $ErrorActionPreference = 'Stop'

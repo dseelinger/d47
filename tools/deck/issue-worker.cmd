@@ -2,7 +2,7 @@
 rem Stream Deck launcher. Takes the issue number or lane letter as an argument, or asks for it,
 rem takes the model, effort and advisor from the last triage, then opens the session. Press
 rem "Desktop" to hand it over.
-cd /d C:\dev\d47
+cd /d C:\dev\d47\repo
 
 set NUM=%~1
 if "%NUM%"=="" set /p NUM=Issue number or lane letter:

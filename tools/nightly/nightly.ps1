@@ -12,7 +12,7 @@
     The folder that holds the worktree (src), each night's raw output (runs) and the reports (reports).
 #>
 param(
-    [string] $Root = 'C:\dev\d47-nightly',
+    [string] $Root = 'C:\dev\d47\nightly',
     [string] $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path,
     [string] $Journals = (Join-Path $env:USERPROFILE 'Saved Games\Frontier Developments\Elite Dangerous'),
     [string] $Corpus = 'C:\d47-corpus',

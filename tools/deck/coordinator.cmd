@@ -1,4 +1,4 @@
 @echo off
 rem Stream Deck launcher. Opens a session in the repo, then press "To desktop" to hand it over.
-cd /d C:\dev\d47
+cd /d C:\dev\d47\repo
 claude -n "Coordinator" --model opus --effort high "/coordinator"

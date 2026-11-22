@@ -39,7 +39,7 @@ $ErrorActionPreference = 'Stop'
 
 if (-not $Repo) {
     $top = try { & git rev-parse --show-toplevel 2>$null } catch { $null }
-    $Repo = if ($top -and (Test-Path (Join-Path $top 'd47.slnx'))) { $top } else { 'C:\dev\d47' }
+    $Repo = if ($top -and (Test-Path (Join-Path $top 'd47.slnx'))) { $top } else { 'C:\dev\d47\repo' }
 }
 
 $Repo = [IO.Path]::GetFullPath($Repo)

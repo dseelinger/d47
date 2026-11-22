@@ -3,7 +3,7 @@ rem Stream Deck launcher. Takes an issue number as an argument, or asks for it, 
 rem of that issue's commits and everything committed after them. With no number it reviews the last
 rem commit. The issue worker pushes when it lands, so origin/main holds the work and cannot be the
 rem base. Press "Desktop" to hand it over.
-cd /d C:\dev\d47
+cd /d C:\dev\d47\repo
 
 set NUM=%~1
 if "%NUM%"=="" set /p NUM=Issue number, or Enter for the last commit:

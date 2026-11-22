@@ -125,7 +125,7 @@ Folder count = visible pages + 1 for `Default` + 1 per `profile.openchild` child
 ```json
 {"ActionID": "<fresh uuid4>", "LinkedTitle": false, "Name": "Open",
  "Plugin": {"Name": "Open", "UUID": "com.elgato.streamdeck.system.open", "Version": "1.0"},
- "Settings": {"path": "C:\\dev\\d47\\tools\\deck\\triage.cmd"},
+ "Settings": {"path": "C:\\dev\\d47\\repo\\tools\\deck\\triage.cmd"},
  "State": 0, "States": [{ ... }], "UUID": "com.elgato.streamdeck.system.open"}
 ```
 

@@ -34,7 +34,7 @@
     The repository that holds the release.
 
 .EXAMPLE
-    tools\publish-music.ps1 -Source C:\dev\d47-music\library -WhatIf
+    tools\publish-music.ps1 -Source C:\dev\d47\music\library -WhatIf
 #>
 [CmdletBinding()]
 param(
