@@ -25,6 +25,7 @@ public sealed class WatchHost : IDisposable
     private readonly TimeProvider _time;
     private readonly Func<Uri, CancellationToken, Task<string?>> _readSubtitles;
     private readonly Action<Action> _background;
+    private readonly IVideoCatalogue? _catalogue;
     private readonly ITimer _timer;
     private readonly Lock _gate = new();
 
@@ -37,6 +38,7 @@ public sealed class WatchHost : IDisposable
 
     /// <param name="catalogue">Whether the video catalogue page exists, so FIND A VIDEO and a search can open it.</param>
     /// <param name="readSubtitles">Reads a subtitle file's text, or null when it cannot be read; the web and the disk when null.</param>
+    /// <param name="videos">What the catalogue page searches, or null where there is none.</param>
     /// <param name="background">Runs work off the calling thread; the thread pool when null.</param>
     public WatchHost(
         VideoPlayback video,
@@ -46,8 +48,10 @@ public sealed class WatchHost : IDisposable
         TimeProvider? time = null,
         bool catalogue = false,
         Func<Uri, CancellationToken, Task<string?>>? readSubtitles = null,
-        Action<Action>? background = null)
+        Action<Action>? background = null,
+        IVideoCatalogue? videos = null)
     {
+        _catalogue = videos;
         Video = video;
         Store = store;
         _settings = settings;
@@ -72,6 +76,33 @@ public sealed class WatchHost : IDisposable
 
     /// <summary>The words a search on the Watch page asked the catalogue for, or null.</summary>
     public string? CatalogueQuery { get; set; }
+
+    /// <summary>The sources the catalogue searches: the ticked ones, or every source when none is ticked.</summary>
+    public IReadOnlyList<string> SearchedSources => _settings.Current.Watch.SearchedSources();
+
+    /// <summary>The sources ticked; none when the Commander has ticked none, which searches every source.</summary>
+    public IReadOnlyList<string> TickedSources =>
+        [.. VideoSources.All.Where(source => (_settings.Current.Watch.Sources ?? []).Contains(source, StringComparer.Ordinal))];
+
+    /// <summary>Writes the sources the catalogue searches.</summary>
+    public void SetSources(IReadOnlyList<string> sources)
+    {
+        ArgumentNullException.ThrowIfNull(sources);
+
+        var chosen = VideoSources.All.Where(source => sources.Contains(source, StringComparer.Ordinal)).ToList();
+
+        _settings.Replace(
+            "the video catalogue's sources were chosen",
+            current => current.Watch.Sources.SequenceEqual(chosen, StringComparer.Ordinal)
+                ? current
+                : current with { Watch = current.Watch with { Sources = chosen } });
+    }
+
+    /// <summary>Page <paramref name="page"/>, counted from 1, of the catalogue's results; an empty page with a problem where there is no catalogue.</summary>
+    public Task<VideoPage> SearchAsync(string query, VideoFilters filters, int page, CancellationToken cancellationToken) =>
+        _catalogue is null
+            ? Task.FromResult(VideoPage.Empty with { Problem = "There is no video catalogue to search." })
+            : _catalogue.SearchAsync(query, filters, page, cancellationToken);
 
     /// <summary>Raised, on any thread, when the title, its captions, the lists or a setting changed.</summary>
     public event Action? Changed;

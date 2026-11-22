@@ -104,6 +104,14 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
         _count.Inlines.Add(new Run(" " + noun));
     }
 
+    /// <summary>Draws <paramref name="inlines"/> as the results line's text.</summary>
+    protected void ShowLine(params Inline[] inlines)
+    {
+        _count!.Inlines ??= [];
+        _count.Inlines.Clear();
+        _count.Inlines.AddRange(inlines);
+    }
+
     protected void RaiseChanged() => Changed?.Invoke(this, EventArgs.Empty);
 
     protected bool IsOpen(TKind kind) => Open is { } current && EqualityComparer<TKind>.Default.Equals(current, kind);

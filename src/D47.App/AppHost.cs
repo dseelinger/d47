@@ -50,6 +50,7 @@ public sealed class AppHost : IDisposable
 {
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<AppHost> _logger;
+    private readonly IReadOnlyList<D47.Core.Viewing.IVideoSource> _videoSources;
     private readonly Input.GameActions _actions;
     private readonly WasapiAudioSink _audioSink;
 
@@ -220,7 +221,19 @@ public sealed class AppHost : IDisposable
             pauseForPushToTalk: () => settings.Current.Watch.PauseForPushToTalk);
         WatchStore = new D47.Core.Viewing.WatchStore(paths.WatchFile, files, loggerFactory.CreateLogger<D47.Core.Viewing.WatchStore>());
         WatchStore.Load();
-        WatchHost = new D47.App.Panel.WatchHost(Video, WatchStore, settings, files);
+        _videoSources =
+        [
+            new D47.Knowledge.InternetArchiveVideoSource(loggerFactory.CreateLogger<D47.Knowledge.InternetArchiveVideoSource>()),
+            new D47.Knowledge.NasaVideoSource(loggerFactory.CreateLogger<D47.Knowledge.NasaVideoSource>()),
+            new D47.Core.Viewing.BlenderOpenMovies(),
+        ];
+        WatchHost = new D47.App.Panel.WatchHost(
+            Video,
+            WatchStore,
+            settings,
+            files,
+            catalogue: true,
+            videos: new D47.Core.Viewing.VideoCatalogue(_videoSources, () => settings.Current.Watch.SearchedSources()));
         Video.TakesTurnsWith(BookPlayer);
         voice.StateEntered += state =>
         {
@@ -6783,6 +6796,11 @@ public sealed class AppHost : IDisposable
         // Before anything stops the video, so the place it was left at is kept.
         WatchHost.Flush();
         WatchHost.Dispose();
+
+        foreach (var source in _videoSources.OfType<IDisposable>())
+        {
+            source.Dispose();
+        }
 
         // First of the teardown: a walk that has not started never will, and one under way stops at the end
         // of the journal file it is on. Its result is dropped, because the tick that would adopt it is gone.

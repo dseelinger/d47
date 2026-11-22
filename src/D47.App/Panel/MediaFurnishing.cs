@@ -67,6 +67,13 @@ internal sealed class MediaFurnishing(IPanelTabHost host)
                 host.Headset),
             BookAddPage.Key when books is { Folder: not null } => new BookAddPage(books, host.Nav, host.Headset, host.Model?.WaitSound),
             MoviesRoot when watch is not null => new WatchPage(watch, host.Nav, settingsStrip?.Invoke(MoviesRoot), host.Headset),
+            WatchPage.CatalogueKey when watch is { HasCatalogue: true } => new CataloguePage(
+                watch,
+                host.Nav,
+                settingsStrip?.Invoke(MoviesRoot),
+                host.Model?.WaitSound,
+                host.Seek,
+                host.Headset),
             _ when watch is not null && VideoPlayerPage.TitleOf(watch, crumb.Key) is { } title => new VideoPlayerPage(watch, title, settingsStrip?.Invoke(MoviesRoot), host.Headset),
             _ when books is not null && BookPage.SourceOf(books.Shelf, crumb.Key) is { } source => new BookPage(
                 books,
