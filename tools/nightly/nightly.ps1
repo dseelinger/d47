@@ -16,6 +16,10 @@ param(
     [string] $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path,
     [string] $Journals = (Join-Path $env:USERPROFILE 'Saved Games\Frontier Developments\Elite Dangerous'),
     [string] $Corpus = 'C:\d47-corpus',
+    # A test that runs this long without finishing is a hang; its test host is ended.
+    [double] $HangMinutes = 30,
+    # The whole suite is stopped after this long, whatever it is doing.
+    [double] $SuiteMinutes = 90,
     # Run even while Elite Dangerous is open; for a run started by hand.
     [switch] $Force
 )
@@ -44,6 +48,24 @@ trap {
     $lines | Set-Content $report -Encoding utf8
     Stop-Transcript | Out-Null
     exit 1
+}
+
+# Runs `dotnet test` with a hang limit. Returns the exit code, or -1 when the wall-clock limit ended the run.
+# Ends any test host left under $Root: VSTest ends testhost.exe on a hang but not the xunit host it launched.
+function Invoke-LimitedTest([string] $Target, [string] $Trx, [string] $Log, [double] $Hang, [double] $Wall, [string] $Root) {
+    $arguments = @('test', "`"$Target`"", '-c', 'Release', '--no-build', '--nologo', '--logger', 'trx', '--results-directory', "`"$Trx`"",
+        '--blame-hang-timeout', "$([Math]::Ceiling($Hang * 60))s", '--blame-hang-dump-type', 'none')
+    $process = Start-Process dotnet -ArgumentList $arguments -NoNewWindow -PassThru `
+        -RedirectStandardOutput $Log -RedirectStandardError "$Log.err"
+    $code = -1
+    if ($process.WaitForExit([int] ($Wall * 60000))) {
+        $code = $process.ExitCode
+    } else {
+        & taskkill /T /F /PID $process.Id *> $null
+    }
+    Get-Process | Where-Object { $_.Path -and $_.Path.StartsWith($Root + '\', [StringComparison]::OrdinalIgnoreCase) } |
+        Stop-Process -Force -ErrorAction SilentlyContinue
+    return $code
 }
 
 function Mark([string] $line) {
@@ -173,9 +195,29 @@ $lines.Add('')
 if ($built) {
     $trx = Join-Path $run 'trx'
     if (Test-Path $trx) { Remove-Item -Recurse -Force $trx }
-    dotnet test $sln -c Release --no-build --nologo --logger trx --results-directory $trx 2>&1 | Out-File (Join-Path $run 'test.txt')
+    $testLog = Join-Path $run 'test.txt'
+    $suiteCode = Invoke-LimitedTest $sln $trx $testLog $HangMinutes $SuiteMinutes $src
+    if (Test-Path "$testLog.err") { Get-Content -LiteralPath "$testLog.err" | Add-Content -LiteralPath $testLog }
 
-    $results = foreach ($file in Get-ChildItem $trx -Filter '*.trx') {
+    # The blame collector lists each test it saw start; one that never completed is the one that hung.
+    $hung = @(Get-ChildItem $trx -Recurse -Filter 'Sequence_*.xml' -ErrorAction SilentlyContinue | ForEach-Object {
+        ([xml] (Get-Content -LiteralPath $_.FullName -Raw)).TestSequence.Test | Where-Object Completed -eq 'False' | ForEach-Object {
+            [pscustomobject] @{ Project = [IO.Path]::GetFileNameWithoutExtension($_.Source); Test = $_.Name }
+        }
+    } | Sort-Object Project, Test -Unique)
+    if ($hung.Count -gt 0 -or $suiteCode -eq -1) {
+        $lines.Add('### Suite stopped for a hang')
+        $lines.Add('')
+        foreach ($h in $hung) {
+            $lines.Add((Mark "- $($h.Project): ``$($h.Test)`` was running when its test host was stopped after $HangMinutes minutes."))
+        }
+        if ($suiteCode -eq -1) {
+            $lines.Add("- The suite was stopped after $SuiteMinutes minutes" + $(if ($hung.Count -eq 0) { '; no running test was recorded.' } else { '.' }))
+        }
+        $lines.Add('')
+    }
+
+    $results = foreach ($file in @(Get-ChildItem $trx -Filter '*.trx' -ErrorAction SilentlyContinue)) {
         [xml] $doc = Get-Content -LiteralPath $file.FullName -Raw
         foreach ($r in $doc.TestRun.Results.UnitTestResult) {
             [pscustomobject] @{
