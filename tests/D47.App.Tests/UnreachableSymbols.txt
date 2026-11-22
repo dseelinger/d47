@@ -158,6 +158,13 @@ D47.Core.Loadout.OnFootBuildStore.Path
 D47.Core.Lore.LoreStore.Changed
 D47.Core.Memory.MemoryStore.Changed
 D47.Core.Persona.ShipCoreStore.Changed
+D47.Core.Podcasts.PodcastEpisode
+D47.Core.Podcasts.PodcastFeed
+D47.Core.Podcasts.PodcastFeedException
+D47.Core.Podcasts.PodcastListening
+D47.Core.Podcasts.PodcastListeningRead
+D47.Core.Podcasts.PodcastProgress
+D47.Core.Podcasts.PodcastShow
 D47.Core.Reminders.JournalReminderStore.Changed
 D47.Core.Ships.PowerPriorities.Retracted
 D47.Core.Ships.ShipBuildStore.Path
