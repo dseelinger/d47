@@ -265,6 +265,83 @@ public sealed class PanelNavigator
         return true;
     }
 
+    /// <summary>The roots that hold pages: the order their pages are listed in.</summary>
+    private readonly Dictionary<string, IReadOnlyList<string>> _holdsPages = new(StringComparer.Ordinal);
+
+    /// <summary>The page each page-holding root was last on.</summary>
+    private readonly Dictionary<string, string> _lastPage = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Makes a registered root one that holds its declared sub-pages as a page sidebar: it is never on its own,
+    /// opening on the page last open or else the first of <paramref name="order"/> that can open, and
+    /// <see cref="PagesOf"/> lists them in that order, any others after.
+    /// </summary>
+    public bool HoldPages(string rootKey, IReadOnlyList<string> order)
+    {
+        if (!_trails.ContainsKey(rootKey))
+        {
+            return false;
+        }
+
+        _holdsPages[rootKey] = order;
+        Raise();
+        return true;
+    }
+
+    /// <summary>Whether this root holds its sub-pages as a page sidebar.</summary>
+    public bool HoldsPages(string rootKey) => _holdsPages.ContainsKey(rootKey);
+
+    /// <summary>The pages a page-holding root can open now, in its order; empty for any other root.</summary>
+    public IReadOnlyList<NavCrumb> PagesOf(string rootKey)
+    {
+        if (!_holdsPages.TryGetValue(rootKey, out var order))
+        {
+            return [];
+        }
+
+        var open = SubPagesOf(rootKey).Where(sub => sub.CanOpen?.Invoke() != false).Select(sub => sub.Page).ToList();
+
+        return
+        [
+            .. order.SelectMany(key => open.Where(page => page.Key == key)),
+            .. open.Where(page => !order.Contains(page.Key)),
+        ];
+    }
+
+    /// <summary>Opens a page-holding root on its last page, or its first, when nothing is open on it.</summary>
+    private void Land()
+    {
+        foreach (var (tab, rootKey) in _current)
+        {
+            if (!_holdsPages.ContainsKey(rootKey) || _hidden.Contains(rootKey) || !_trails.TryGetValue(rootKey, out var trail))
+            {
+                continue;
+            }
+
+            if (trail.Count >= 2)
+            {
+                if (SubPagesOf(rootKey).Any(sub => sub.Page.Key == trail[1].Key))
+                {
+                    _lastPage[rootKey] = trail[1].Key;
+                }
+
+                continue;
+            }
+
+            var pages = PagesOf(rootKey);
+            var landing = pages.FirstOrDefault(page => page.Key == _lastPage.GetValueOrDefault(rootKey)) ?? pages.FirstOrDefault();
+
+            if (landing is not null && tab == Tab)
+            {
+                trail.Add(landing);
+            }
+        }
+    }
+
+    /// <summary>The fewest levels the trail keeps: a page-holding root always has a page open.</summary>
+    private int Floor(List<NavCrumb> trail) =>
+        _holdsPages.ContainsKey(trail[0].Key) && PagesOf(trail[0].Key).Count > 0 ? 2 : 1;
+
     /// <summary>Every root of every tab this surface furnished, each followed by its sub-pages, in bar order (Phase 46).</summary>
     public IReadOnlyList<PanelDestination> Destinations =>
     [
@@ -395,6 +472,9 @@ public sealed class PanelNavigator
     /// <summary>Nothing to go back to.</summary>
     public bool AtRoot => Trail.Count <= 1;
 
+    /// <summary>The level that shows the sub-tab row: the root, or one page of a page-holding root.</summary>
+    public bool AtPage => Trail.Count <= (Mutable() is { } trail ? Floor(trail) : 1);
+
     /// <summary>A chooser is holding the panel.</summary>
     public bool Modal => Trail.Count > 0 && Trail[^1].Modal;
 
@@ -479,7 +559,7 @@ public sealed class PanelNavigator
     {
         var trail = Mutable();
 
-        if (trail is null || trail.Count <= 1)
+        if (trail is null || trail.Count <= Floor(trail))
         {
             return false;
         }
@@ -497,12 +577,12 @@ public sealed class PanelNavigator
     {
         var trail = Mutable();
 
-        if (trail is null || trail.Count <= 1)
+        if (trail is null || trail.Count <= Floor(trail))
         {
             return false;
         }
 
-        trail.RemoveRange(1, trail.Count - 1);
+        trail.RemoveRange(Floor(trail), trail.Count - Floor(trail));
         Settle();
         Raise();
         return true;
@@ -861,7 +941,11 @@ public sealed class PanelNavigator
             ? trail
             : null;
 
-    private void Raise() => Changed?.Invoke(this, EventArgs.Empty);
+    private void Raise()
+    {
+        Land();
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
 
     private sealed record SubPage(NavCrumb Page, Func<bool>? CanOpen);
 

@@ -740,6 +740,12 @@
         </controls:Notice.Actions>
       </controls:Notice>
 
+      <!-- The page sidebar of a root that holds pages: left of the page at every depth below the sub-tab row or breadcrumb. -->
+      <Border x:Name="PageSidebarHost"
+              DockPanel.Dock="Left"
+              Margin="14,14,0,14"
+              IsVisible="False" />
+
       <Panel>
       <Border x:Name="TranscriptPane"
               Padding="14">

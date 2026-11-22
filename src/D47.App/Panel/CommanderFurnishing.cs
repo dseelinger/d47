@@ -329,11 +329,12 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             ? new CodexChoosePage(picture, pictures, host.Nav, work)
             : new CodexCropPage(picture, pictures, host.Nav, work, CodexPage.IsRecrop(crumb));
 
-    /// <summary>Furnishes the Ledgers root, once, and declares a ledger under it that is drawn open on the Ledgers page.</summary>
+    /// <summary>Furnishes the Ledgers root, once, and declares a ledger under it, which the page sidebar lists.</summary>
     private void DeclareLedger(string key, string word)
     {
         host.Furnish(PanelTab.Commander, BuildCommander, LedgersPage.Root);
         host.Nav.Declare(LedgersPage.RootKey, LedgersPage.Ledger(key, word));
+        host.Nav.HoldPages(LedgersPage.RootKey, LedgersPage.Order);
     }
 
     public void EnableCommanders(CommanderRoster roster)
@@ -422,7 +423,7 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
 
     /// <summary>Draws a Commander level: Missions, Progress, Statistics, BGS, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
-        IsLedger(crumb.Key) ? new LedgersPage(host.Nav, Page, crumb.Key)
+        IsLedger(crumb.Key) ? new LedgersPage(Page(crumb), crumb.Key)
         : Page(crumb);
 
     private static bool IsLedger(string key) =>
@@ -435,7 +436,6 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         : (crumb.Key == StatisticsPage.RootKey || crumb.Key == StatisticsPage.ActivitiesKey) && _statisticsBuild is { } statistics ? statistics(crumb)
         : crumb.Key == CampaignPage.RootKey && _campaignBuild is { } campaign ? campaign(crumb)
         : crumb.Key == SessionPage.RootKey && _sessionBuild is { } session ? session(crumb)
-        : crumb.Key == LedgersPage.RootKey ? new LedgersPage(host.Nav, Page)
         : crumb.Key == CombatStatsPage.PageKey && _combatStatsBuild is { } combatStats ? combatStats(crumb)
         : (crumb.Key == CreditsPage.PageKey || CreditsPage.IsTransactions(crumb.Key)) && _creditsBuild is { } credits ? credits(crumb)
         : (crumb.Key == CodexPage.PageKey || CodexPage.IsRegions(crumb.Key) || CodexPage.IsRegion(crumb.Key) || CodexPage.IsPossibleFirsts(crumb.Key) || CodexPage.IsEntry(crumb.Key) || CodexPage.IsPicturePage(crumb.Key) || CodexPage.IsCatalogue(crumb.Key)) && _codexBuild is { } codex ? codex(crumb)

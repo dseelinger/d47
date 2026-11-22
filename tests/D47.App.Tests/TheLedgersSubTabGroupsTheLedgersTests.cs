@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -19,7 +20,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Commander › Ledgers: the list, the ledger opened in place under its row, its place among the sub-tabs and the tick (#1291).</summary>
+/// <summary>Commander › Ledgers: the ledgers in the page sidebar at every depth, the sub-tab row and the breadcrumb, and the tick (#2685).</summary>
 public class TheLedgersSubTabGroupsTheLedgersTests
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.Parse("2026-10-10T20:00:00Z", CultureInfo.InvariantCulture);
@@ -55,6 +56,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     {
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Commander, LedgersPage.Root);
+        nav.HoldPages(LedgersPage.RootKey, LedgersPage.Order);
 
         foreach (var key in keys)
         {
@@ -73,27 +75,17 @@ public class TheLedgersSubTabGroupsTheLedgersTests
     }
 
     [Fact]
-    public void TheRowsFollowTheListsOrderWhateverOrderTheLedgersWereDeclaredIn()
+    public void ThePagesFollowTheSidebarsOrderWhateverOrderTheLedgersWereDeclaredIn()
     {
-        var rows = LedgersPage.Rows(Declared(CodexPage.PageKey, CreditsPage.PageKey, CombatStatsPage.PageKey));
+        var nav = Declared(CodexPage.PageKey, CreditsPage.PageKey, CombatStatsPage.PageKey, SessionPage.RootKey);
 
-        Assert.Equal(["Combat stats", "Credits", "Codex"], rows.Select(row => row.Name));
-        Assert.Equal(
-            [
-                "Your kills and the credits they were awarded.",
-                "Where your credits came from and where they went.",
-                "Every kind of object in the Codex, and the ones you have found.",
-            ],
-            rows.Select(row => row.Description));
-        Assert.Equal([CombatStatsPage.PageKey, CreditsPage.PageKey, CodexPage.PageKey], rows.Select(row => row.Crumb.Key));
+        Assert.Equal(["This session", "Combat stats", "Credits", "Codex"], nav.PagesOf(LedgersPage.RootKey).Select(page => page.Word));
     }
 
     [Fact]
     public void OnlyTheLedgersASurfaceEnabledAreListed()
     {
-        var rows = LedgersPage.Rows(Declared(CombatStatsPage.PageKey));
-
-        Assert.Equal(["Combat stats"], rows.Select(row => row.Name));
+        Assert.Equal(["Combat stats"], Declared(CombatStatsPage.PageKey).PagesOf(LedgersPage.RootKey).Select(page => page.Word));
     }
 
     private static ChecklistService Checklists()
@@ -221,97 +213,143 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         window.Close();
     }
 
+    private static Sidebar PageSidebar(PanelView view) => In<Sidebar>(view).Single();
+
+    private static string Label(Border item) => item.GetVisualDescendants().OfType<TextBlock>().First().Text!;
+
+    private static void PressItem(PanelView view, Window window, string word)
+    {
+        var item = PageSidebar(view).Items.Single(row => Label(row) == word.ToUpperInvariant());
+        var point = item.TranslatePoint(new Point(20, 20), window)!.Value;
+
+        window.MouseDown(point, MouseButton.Left);
+        window.MouseUp(point, MouseButton.Left);
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    private static void OpenLedgers(PanelView view)
+    {
+        view.Tab = PanelTab.Commander;
+        view.Nav.SelectRoot(PanelTab.Commander, LedgersPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+    }
+
     [AvaloniaFact]
-    public void APressedRowOpensItsLedgerBelowItAndPressingItAgainClosesIt()
+    public void OpeningLedgersOpensThisSessionFirstAndThenTheLedgerLastOpen()
     {
         using var look = AppLook.Put();
         var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
         var window = Show(view);
 
-        view.Tab = PanelTab.Commander;
+        OpenLedgers(view);
+
+        Assert.Equal(["Ledgers", "This session"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Single(In<SessionPage>(view));
+
+        PressItem(view, window, "Credits");
+        view.Nav.SelectRoot(PanelTab.Commander, MissionsPage.RootKey);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Empty(In<Sidebar>(view));
+
         view.Nav.SelectRoot(PanelTab.Commander, LedgersPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
-        var list = In<LedgersPage>(view).Single();
-        Assert.Equal(LedgersPage.SummaryText, list.Summary);
-        Assert.IsNotAssignableFrom<IFilterablePage>(list);
-
-        var rows = In<Button>(list).Where(button => button.Name?.StartsWith("Ledger.", StringComparison.Ordinal) == true).ToList();
-        Assert.Equal(["Ledger.combat-stats", "Ledger.credits", "Ledger.codex", "Ledger.session"], rows.Select(row => row.Name));
-        Assert.All(rows, row => Assert.True(row.Bounds.Height >= TypeScale.MinimumTarget));
-        Assert.False(Shows(list, "BGS WORK"));
-        Assert.True(Shows(list, "What you have earned and done since the game started."));
-
-        foreach (var (row, word, page) in new (string, string, Type)[]
-        {
-            ("Ledger.combat-stats", "Combat stats", typeof(CombatStatsPage)),
-            ("Ledger.credits", "Credits", typeof(CreditsPage)),
-            ("Ledger.codex", "Codex", typeof(CodexCataloguePage)),
-            ("Ledger.session", "This session", typeof(SessionPage)),
-        })
-        {
-            Press(In<Button>(view).Single(button => button.Name == row));
-
-            Assert.Equal(["Ledgers", word], view.Nav.Trail.Select(crumb => crumb.Word));
-            Assert.Empty(Crumbs(view));
-            Assert.True(view.FindControl<Control>("ModePicker")!.IsVisible);
-            Assert.Single(In<LedgersPage>(view));
-            Assert.Single(In<Control>(view), control => control.GetType() == page);
-            Assert.Equal(4, In<Button>(view).Count(button => button.Name?.StartsWith("Ledger.", StringComparison.Ordinal) == true));
-
-            if (TestSurface.CapturesWanted && row == "Ledger.credits")
-            {
-                using var frame = window.CaptureRenderedFrame()!;
-                frame.SaveCapture("ledgers-credits-desktop.png");
-            }
-
-            Press(In<Button>(view).Single(button => button.Name == row));
-
-            Assert.Equal(["Ledgers"], view.Nav.Trail.Select(crumb => crumb.Word));
-            Assert.Single(In<LedgersPage>(view));
-            Assert.DoesNotContain(In<Control>(view), control => control.GetType() == page);
-        }
-
-        Press(In<Button>(view).Single(button => button.Name == "Ledger.credits"));
-        Press(In<Button>(view).Single(button => button.Name == "Ledger.codex"));
-
-        Assert.Equal(["Ledgers", "Codex"], view.Nav.Trail.Select(crumb => crumb.Word));
-        Assert.Single(In<CodexCataloguePage>(view));
-        Assert.DoesNotContain(In<Control>(view), control => control is CreditsPage);
+        Assert.Equal(["Ledgers", "Credits"], view.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Single(In<CreditsPage>(view));
 
         window.Close();
     }
 
     [AvaloniaFact]
-    public void BackFromADrilledPageReturnsToLedgersWithTheLedgerStillOpen()
+    public void ThePageSidebarListsTheLedgersWithTheOpenOneSolid()
     {
         using var look = AppLook.Put();
         var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
         var window = Show(view);
 
-        view.Tab = PanelTab.Commander;
-        view.Nav.SelectRoot(PanelTab.Commander, LedgersPage.RootKey);
-        Dispatcher.UIThread.RunJobs();
-        Press(In<Button>(view).Single(button => button.Name == "Ledger.codex"));
+        OpenLedgers(view);
+
+        var sidebar = PageSidebar(view);
+
+        Assert.Equal(["THIS SESSION", "COMBAT STATS", "CREDITS", "CODEX"], sidebar.Items.Select(Label));
+        Assert.All(sidebar.Items, row => Assert.Equal(TypeScale.MinimumTarget, row.Bounds.Height));
+        Assert.Equal(SessionPage.RootKey, sidebar.Selected);
+        Assert.Equal(
+            ((ISolidColorBrush)Application.Current!.Resources[ThemeManager.AKey]!).Color,
+            ((ISolidColorBrush)sidebar.Items[0].Background!).Color);
+
+        if (TestSurface.CapturesWanted)
+        {
+            using var frame = window.CaptureRenderedFrame()!;
+            frame.SaveCapture("ledgers-sidebar-desktop.png");
+        }
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PressingASidebarItemOpensItsLedgerAndTheSubTabRowStays()
+    {
+        using var look = AppLook.Put();
+        var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
+        var window = Show(view);
+
+        OpenLedgers(view);
+
+        foreach (var (word, page) in new (string, Type)[]
+        {
+            ("Combat stats", typeof(CombatStatsPage)),
+            ("Credits", typeof(CreditsPage)),
+            ("Codex", typeof(CodexCataloguePage)),
+            ("This session", typeof(SessionPage)),
+        })
+        {
+            PressItem(view, window, word);
+
+            Assert.Equal(["Ledgers", word], view.Nav.Trail.Select(crumb => crumb.Word));
+            Assert.Empty(Crumbs(view));
+            Assert.True(view.FindControl<Control>("ModePicker")!.IsVisible);
+            Assert.Equal(view.Nav.Trail[1].Key, PageSidebar(view).Selected);
+            Assert.Single(In<LedgersPage>(view));
+            Assert.Single(In<Control>(view), control => control.GetType() == page);
+        }
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void BelowALedgerTheBreadcrumbStartsAtTheTabAndTheSidebarStaysWithTheLedgerSelected()
+    {
+        using var look = AppLook.Put();
+        var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
+        var window = Show(view);
+
+        OpenLedgers(view);
+        PressItem(view, window, "Codex");
 
         Assert.True(view.Nav.Drill(CodexPage.RegionCrumb(null)));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Empty(In<LedgersPage>(view));
         Assert.Single(In<CodexRegionPage>(view));
+        Assert.Empty(In<LedgersPage>(view));
+        Assert.False(view.FindControl<Control>("ModePicker")!.IsVisible);
+        Assert.Equal(["Commander", "Ledgers", "Codex", view.Nav.Trail[^1].Word], Crumbs(view));
+        Assert.Equal(CodexPage.PageKey, PageSidebar(view).Selected);
 
         Assert.True(view.Nav.Back());
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Ledgers", "Codex"], view.Nav.Trail.Select(crumb => crumb.Word));
-        Assert.Single(In<LedgersPage>(view));
         Assert.Single(In<CodexCataloguePage>(view));
+        Assert.Empty(Crumbs(view));
+        Assert.True(view.FindControl<Control>("ModePicker")!.IsVisible);
+        Assert.False(view.Nav.Back());
 
         window.Close();
     }
 
     [AvaloniaFact]
-    public void ACodexEntryOpenedFromASearchTileLeavesLedgersWithCodexOpenBehindIt()
+    public void OnePressOnASidebarItemOpensThatLedgerFromACodexEntry()
     {
         using var look = AppLook.Put();
         var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
@@ -325,20 +363,16 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(["Ledgers", "Codex"], view.Nav.Trail.Take(2).Select(crumb => crumb.Word));
+        Assert.Equal(5, view.Nav.Trail.Count);
+        Assert.Equal(CodexPage.PageKey, PageSidebar(view).Selected);
+        Assert.Equal("Commander", Crumbs(view)[0]);
 
-        Assert.True(view.Nav.Back());
-        Assert.True(view.Nav.Back());
-        Assert.True(view.Nav.Back());
-        Dispatcher.UIThread.RunJobs();
-
-        Assert.Single(In<LedgersPage>(view));
-        Assert.Single(In<CodexCataloguePage>(view));
-
-        Press(In<Button>(view).Single(button => button.Name == "Ledger.credits"));
+        PressItem(view, window, "Credits");
 
         Assert.Equal(["Ledgers", "Credits"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Single(In<CreditsPage>(view));
         Assert.DoesNotContain(In<Control>(view), control => control is CodexCataloguePage);
+        Assert.Empty(Crumbs(view));
 
         window.Close();
     }
@@ -350,22 +384,56 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
         var window = Show(view);
 
-        view.Tab = PanelTab.Commander;
-        view.Nav.SelectRoot(PanelTab.Commander, LedgersPage.RootKey);
-        Dispatcher.UIThread.RunJobs();
-        Press(In<Button>(view).Single(button => button.Name == "Ledger.credits"));
+        OpenLedgers(view);
+        PressItem(view, window, "Credits");
 
         var outer = In<ScrollViewer>(In<LedgersPage>(view).Single()).First();
         var inner = In<ScrollViewer>(In<CreditsPage>(view).Single()).Single();
 
-        Assert.True(outer.Extent.Height > outer.Viewport.Height);
+        Assert.NotNull(outer);
         Assert.Equal(inner.Viewport.Height, inner.Extent.Height);
 
         window.Close();
     }
 
     [AvaloniaFact]
-    public void EachLedgerIsADestinationUnderLedgersThatOpensWithTheBreadcrumb()
+    public void TheTitleLineSummarisesTheOpenLedger()
+    {
+        using var look = AppLook.Put();
+        var view = Desktop(JournalScript.Commander("F735466", "John Deparagon"));
+        var window = Show(view);
+
+        OpenLedgers(view);
+
+        Assert.Equal("What you have earned and done since the game started.", In<LedgersPage>(view).Single().Summary);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ThePageSidebarIsOnTheBigPanelToo()
+    {
+        using var look = AppLook.Put();
+        var view = BigPanel(JournalScript.Commander("F735466", "John Deparagon"));
+        var window = Show(view);
+
+        OpenLedgers(view);
+        PressItem(view, window, "Codex");
+
+        Assert.Equal(CodexPage.PageKey, PageSidebar(view).Selected);
+        Assert.Equal(["Ledgers", "Codex"], view.Nav.Trail.Select(crumb => crumb.Word));
+
+        if (TestSurface.CapturesWanted)
+        {
+            using var frame = window.CaptureRenderedFrame()!;
+            frame.SaveCapture("ledgers-sidebar-big-panel.png");
+        }
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void EachLedgerIsADestinationUnderLedgersThatOpensWithTheSidebar()
     {
         using var look = AppLook.Put();
         var view = BigPanel(JournalScript.Commander("F735466", "John Deparagon"));
@@ -375,7 +443,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         Assert.Equal(
             ["Ledgers (Commander)", "Combat stats (Ledgers)", "Credits (Ledgers)", "Codex (Ledgers)", "This session (Ledgers)"],
             underLedgers.Select(destination => destination.Describe()));
-        Assert.Equal(underLedgers.Count - 1, LedgersPage.Rows(view.Nav).Count);
+        Assert.Equal(underLedgers.Count - 1, view.Nav.PagesOf(LedgersPage.RootKey).Count);
 
         Assert.True(view.Nav.Show(CombatStatsPage.PageKey));
         Dispatcher.UIThread.RunJobs();
@@ -383,6 +451,7 @@ public class TheLedgersSubTabGroupsTheLedgersTests
         Assert.Equal(PanelTab.Commander, view.Tab);
         Assert.Equal(["Ledgers", "Combat stats"], view.Nav.Trail.Select(crumb => crumb.Word));
         Assert.Equal(CombatStatsPage.PageKey, view.Nav.DestinationKey);
+        Assert.Equal(CombatStatsPage.PageKey, PageSidebar(view).Selected);
 
         view.Nav.SelectRoot(PanelTab.Commander, MissionsPage.RootKey);
         view.Nav.SelectRoot(PanelTab.Commander, LedgersPage.RootKey);

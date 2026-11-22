@@ -114,20 +114,18 @@ public sealed class TheScreenshotsLedgerListsTheCommandersPicturesTests
     }
 
     [Fact]
-    public void TheLedgerListsAfterCodexAndBeforeThisSession()
+    public void TheLedgerListsAfterCodex()
     {
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Commander, LedgersPage.Root);
+        nav.HoldPages(LedgersPage.RootKey, LedgersPage.Order);
 
         foreach (var (key, word) in new[] { (SessionPage.RootKey, "This session"), (ScreenshotsPage.PageKey, "Screenshots"), (CodexPage.PageKey, "Codex") })
         {
             Assert.True(nav.Declare(LedgersPage.RootKey, new NavCrumb(key, word)));
         }
 
-        var rows = LedgersPage.Rows(nav);
-
-        Assert.Equal(["Codex", "Screenshots", "This session"], rows.Select(row => row.Name));
-        Assert.Equal("The pictures you have taken in Elite.", rows[1].Description);
+        Assert.Equal(["This session", "Codex", "Screenshots"], nav.PagesOf(LedgersPage.RootKey).Select(page => page.Word));
     }
 
     [AvaloniaFact]

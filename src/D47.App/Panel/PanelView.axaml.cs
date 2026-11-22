@@ -2620,6 +2620,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         PlaceAvatar();
         ApplyAudioReadout();
+        DrawPageSidebar();
 
         var modal = ModalPane.Child is not null;
 
@@ -2662,6 +2663,43 @@ public partial class PanelView : UserControl, IPanelTabHost
         _scroll.ShowFollowButton();
 
         DrawMiniTrail();
+    }
+
+    private string _pageSidebarFor = string.Empty;
+
+    /// <summary>The page sidebar of a root that holds pages, beside the page at every depth below it; absent elsewhere.</summary>
+    private void DrawPageSidebar()
+    {
+        var root = Nav.Root.Key;
+        var pages = Mode == PanelMode.Full && Tab != PanelTab.Transcript && !Nav.Modal && Nav.HoldsPages(root)
+            ? Nav.PagesOf(root)
+            : [];
+
+        if (pages.Count == 0)
+        {
+            PageSidebarHost.Child = null;
+            PageSidebarHost.IsVisible = false;
+            _pageSidebarFor = string.Empty;
+            return;
+        }
+
+        var selected = Nav.Trail.Count > 1 ? Nav.Trail[1].Key : null;
+        var stamp = root + "|" + string.Join('|', pages.Select(page => page.Key + "=" + page.Word));
+
+        if (stamp != _pageSidebarFor || PageSidebarHost.Child is not Controls.Sidebar sidebar)
+        {
+            PageSidebarHost.Child = new Controls.Sidebar(
+                [new Controls.SidebarGroup(null, [.. pages.Select(page => new Controls.SidebarItem(page.Key, page.Word))])],
+                selected,
+                key => Nav.Show(key));
+            _pageSidebarFor = stamp;
+        }
+        else
+        {
+            sidebar.Selected = selected;
+        }
+
+        PageSidebarHost.IsVisible = true;
     }
 
     /// <summary>Gives mini's trail its words; the trail fits them to its own room.</summary>
@@ -2837,7 +2875,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         var showing = Nav.RootKeyOf(Nav.Tab);
         showing = showing == RawJournalRoot ? JournalRoot : showing;
 
-        ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && (Nav.AtRoot || LedgerOpenInPlace);
+        ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtPage;
         ModeReadings.ItemSpacing = Classes.Contains("headset") ? 16 : 24;
 
         ShowPageBar();
@@ -2971,24 +3009,36 @@ public partial class PanelView : UserControl, IPanelTabHost
         Nav.SelectRoot(roots[index].Key);
     }
 
-    /// <summary>A ledger is open on the Ledgers page itself, which stays the level the Commander is on.</summary>
-    private bool LedgerOpenInPlace => Nav.Trail is [_, { Level: LedgersPage.RootKey }];
-
-    /// <summary>The trail, rebuilt.</summary>
+    /// <summary>
+    /// The trail, rebuilt. Where the root holds pages it starts at the tab, since the root is one of the tab's
+    /// sub-tabs and not the tab.
+    /// </summary>
     private void DrawCrumbs()
     {
         CrumbRow.Children.Clear();
 
         var trail = Nav.Trail;
 
-        if (trail.Count <= 1 || LedgerOpenInPlace)
+        if (Nav.AtPage)
         {
             return;
         }
 
-        for (var index = 0; index < trail.Count; index++)
+        var withTab = Nav.HoldsPages(trail[0].Key);
+        var tabWord = Tab.ToString();
+
+        var steps = new List<(string Word, string? Key, int Index)>();
+
+        if (withTab)
         {
-            if (index > 0)
+            steps.Add((tabWord, null, 0));
+        }
+
+        steps.AddRange(trail.Select((crumb, index) => (crumb.Word, (string?)crumb.Key, index)));
+
+        for (var step = 0; step < steps.Count; step++)
+        {
+            if (step > 0)
             {
                 var separator = new TextBlock
                 {
@@ -3005,14 +3055,16 @@ public partial class PanelView : UserControl, IPanelTabHost
                 CrumbRow.Children.Add(separator);
             }
 
-            var at = index;
-            var last = index == trail.Count - 1;
-            var key = trail[index].Key;
+            var last = step == steps.Count - 1;
+
+            // The tab and the root both go to the page that is open, which is as far back as a page-holding root goes.
+            var at = withTab ? Math.Max(steps[step].Index, 1) : steps[step].Index;
+            var key = steps[step].Key;
 
             var crumb = new Button
             {
                 Theme = this.FindResource("D47.Crumb") as ControlTheme,
-                Content = trail[index].Word,
+                Content = steps[step].Word,
                 IsEnabled = !last,
             };
 
@@ -3020,7 +3072,8 @@ public partial class PanelView : UserControl, IPanelTabHost
             {
                 crumb.Click += (_, _) =>
                 {
-                    if (PagePane.Child is DrillView { HiddenKey: { } hidden } strip
+                    if (key is not null
+                        && PagePane.Child is DrillView { HiddenKey: { } hidden } strip
                         && hidden == key
                         && strip.ShowHiddenPane())
                     {

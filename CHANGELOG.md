@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Commander › Ledgers lists This session, Combat stats, Credits, Codex and Screenshots in a sidebar at the left, on the window and the headset panel, and the sidebar stays beside every page below a ledger. One press on an item opens that ledger from any depth. Opening Ledgers opens the ledger you last had open, or This session the first time, so the page that listed the ledgers is gone. At a ledger the sub-tab row shows; below one the breadcrumb takes its place and starts at Commander.
+
 Added: Settings › Hearing and sound › Sounds and levels has a Podcasts row in Levels, with Level (0.8 at first) and Mute. A podcast pauses while the microphone is open, while D47 works on or speaks a reply, during an alert and while a story plays, then steps back two seconds and carries on. Saying "stop" pauses it where it is, and invented chatter is not played over it. No page plays a podcast yet.
 
 Added: A checklist line can tick itself when you unlock a Guardian or Human tech broker module, such as "Unlock Guardian FSD Booster". It ticks when the broker unlocks that module, or at once when D47 already knows it is unlocked. Adding an unlock line also proposes a line for each part of its cost, a "Have" line per ship material and a "Buy" line per commodity, which you accept or decline together; a cost line already on the list is not added again.
