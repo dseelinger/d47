@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: A Project Gutenberg book can be fetched onto your shelf from gutenberg.pglaf.org, Project Gutenberg's own server for programs, and read while its text arrives. If the download is cut off, the rest is asked for when you next play the book, at most once a minute. Reading that reaches the end of the text that has arrived waits for the next paragraph while the download runs, and otherwise pauses with "The rest of this book has not arrived yet." Privacy and egress names gutenberg.pglaf.org in the Project Gutenberg list entry. No page adds a Gutenberg book yet.
+
 Fixed: Saying "pause the book", or a bare "pause" while a book reads, pauses it. The book had already been paused for push-to-talk, so D47 answered "The book is already paused." and the book carried on reading after the turn. "Resume the book" says the book is already playing when it was paused only for push-to-talk or a callout.
 
 Added: Media › Books has an ADD A BOOK tile. It opens Add a book, which lists the .txt and .epub files in your books folder that are not on the shelf, with title, author and chapter count where the file has them. On the desktop, CHOOSE A FILE copies a file into the folder and OPEN THE FOLDER opens it; the headset shows the same list. ADD AND READ puts the chosen book on your shelf and starts reading it. A file with no text, such as a protected EPUB, shows a warning and stays off the shelf. A file added to the folder appears without a restart. Nothing is sent anywhere.

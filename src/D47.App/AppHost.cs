@@ -202,7 +202,14 @@ public sealed class AppHost : IDisposable
         };
         Books = new BookShelf(files, paths.Books, loggerFactory.CreateLogger<BookShelf>());
         BookFiles = new BookFolder(files, paths.Books, Books, loggerFactory.CreateLogger<BookFolder>());
-        BookPlayer = new BookPlayer(audio, Books, speech.LocalClient, () => settings.Current.Books, story: RunPlayer, music: Music);
+        BookPlayer = new BookPlayer(
+            audio,
+            Books,
+            speech.LocalClient,
+            () => settings.Current.Books,
+            story: RunPlayer,
+            music: Music,
+            downloads: new GutenbergBookFetch(Books, loggerFactory.CreateLogger<GutenbergBookFetch>()));
         voice.StateEntered += state =>
         {
             if (state == Core.Audio.LoopState.Idle)

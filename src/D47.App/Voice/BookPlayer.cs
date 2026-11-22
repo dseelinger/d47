@@ -1,3 +1,4 @@
+using D47.App.Panel;
 using D47.Core.Audio;
 using D47.Core.Books;
 using D47.Core.Configuration;
@@ -20,6 +21,9 @@ public sealed record BookPlayback(Book Book, BookPlace Place, int Sentence, stri
 
     /// <summary>Why the local voice could not read the sentence; set while the player is paused on it.</summary>
     public string? Problem { get; init; }
+
+    /// <summary>Paused at the end of a downloaded book's text, with no download running to bring the rest.</summary>
+    public bool NotArrived { get; init; }
 }
 
 /// <summary>
@@ -28,7 +32,9 @@ public sealed record BookPlayback(Book Book, BookPlace Place, int Sentence, stri
 /// played. The place is saved to the shelf at each new paragraph. A push-to-talk pause, or a callout's, plays on from
 /// the start of its sentence once D47 is not listening, answering or speaking; a Commander pause, or a failed voice,
 /// waits for <see cref="Resume"/>. A book does not start or resume while a story plays, and a story starting pauses it.
-/// Ambient music yields while it reads, and chatter is refused.
+/// Ambient music yields while it reads, and chatter is refused. In a downloaded book whose text is not whole, a
+/// paragraph not yet arrived is waited for while its download runs; with none running, a resume is tried at most once
+/// a minute, and the player pauses with <see cref="RestNotArrived"/> when none starts.
 /// </summary>
 public sealed class BookPlayer
 {
@@ -38,6 +44,8 @@ public sealed class BookPlayer
     /// <summary>How many sentences after the one playing are made before they are needed.</summary>
     public const int SentencesAhead = 3;
 
+    public const string RestNotArrived = "The rest of this book has not arrived yet.";
+
     private readonly AudioArbiter _audio;
     private readonly BookShelf _shelf;
     private readonly Func<string, ITtsProvider?> _localVoice;
@@ -45,6 +53,7 @@ public sealed class BookPlayer
     private readonly Action<Action> _background;
     private readonly StoryRunPlayer? _story;
     private readonly AmbientMusic? _music;
+    private readonly GutenbergBookFetch? _downloads;
     private readonly Lock _gate = new();
     private readonly Lock _publishing = new();
 
@@ -56,11 +65,18 @@ public sealed class BookPlayer
     private BookVoice? _voice;
     private CancellationTokenSource _rendering = new();
 
+    /// <summary>Where reading goes on from once that text arrives; set while waiting at the end of a downloaded book's text.</summary>
+    private BookPlace? _awaiting;
+
+    /// <summary>More of the book being read has arrived since it was opened.</summary>
+    private bool _arrived;
+
     /// <summary>The last sentence started; the next one is made after it.</summary>
     private Task _lastRender = Task.CompletedTask;
 
     /// <param name="localVoice">The local provider for a provider id, or null when its model is not installed.</param>
     /// <param name="background">Runs work off the calling thread; the thread pool when null.</param>
+    /// <param name="downloads">Brings the rest of a downloaded book's text.</param>
     public BookPlayer(
         AudioArbiter audio,
         BookShelf shelf,
@@ -68,7 +84,8 @@ public sealed class BookPlayer
         Func<BookSettings> settings,
         Action<Action>? background = null,
         StoryRunPlayer? story = null,
-        AmbientMusic? music = null)
+        AmbientMusic? music = null,
+        GutenbergBookFetch? downloads = null)
     {
         ArgumentNullException.ThrowIfNull(audio);
         ArgumentNullException.ThrowIfNull(shelf);
@@ -82,6 +99,7 @@ public sealed class BookPlayer
         _background = background ?? (work => _ = Task.Run(work));
         _story = story;
         _music = music;
+        _downloads = downloads;
         _audio.Played += OnPlayed;
         _audio.PlaybackPaused += () => Pause(StoryRunPause.Interrupted);
         _audio.ActivityChanged += activity =>
@@ -95,6 +113,11 @@ public sealed class BookPlayer
         if (story is not null)
         {
             story.Starting += () => Pause(StoryRunPause.Commander);
+        }
+
+        if (downloads is not null)
+        {
+            downloads.Arrived += OnArrived;
         }
     }
 
@@ -157,8 +180,13 @@ public sealed class BookPlayer
         }
 
         var place = entry.Finished ? new BookPlace(0, 0) : entry.Place;
+        var arriving = entry.Download is { Complete: false };
+        var first = FirstFrom(book, place);
 
-        if ((FirstFrom(book, place) ?? FirstFrom(book, new BookPlace(0, 0))) is not { } first)
+        // A place past the text that has arrived is kept and waited for; the last sentence that has arrived is shown.
+        BookPlace? awaiting = first is null && arriving ? place : null;
+
+        if ((first ?? (arriving ? LastIn(book) : FirstFrom(book, new BookPlace(0, 0)))) is not { } shown)
         {
             return false;
         }
@@ -169,13 +197,20 @@ public sealed class BookPlayer
         {
             Discard();
             _queued = null;
-            _now = new BookPlayback(book, first.Place, first.Sentence, first.Text, StoryRunPause.None);
+            _awaiting = awaiting;
+            _arrived = false;
+            _now = new BookPlayback(book, shown.Place, shown.Sentence, shown.Text, StoryRunPause.None) { Waiting = awaiting is not null };
             _audio.DropGroup(Group);
 
             if (!_audio.HoldSpeechForMedia(Group))
             {
                 _now = _now with { Pause = StoryRunPause.Interrupted };
             }
+        }
+
+        if (arriving)
+        {
+            _downloads?.TryResume(source);
         }
 
         Raise();
@@ -188,9 +223,9 @@ public sealed class BookPlayer
     {
         lock (_gate)
         {
-            if (_now is { IsPaused: true } paused && reason == StoryRunPause.Commander && paused.Pause != StoryRunPause.Commander)
+            if (_now is { IsPaused: true } paused && reason == StoryRunPause.Commander && (paused.Pause != StoryRunPause.Commander || paused.NotArrived))
             {
-                _now = paused with { Pause = reason };
+                _now = paused with { Pause = reason, NotArrived = false };
             }
             else if (_now is not { IsPaused: false } now || reason == StoryRunPause.None)
             {
@@ -270,7 +305,7 @@ public sealed class BookPlayer
 
             // The paused sentence's clip was dropped from the queue; it is queued again from what was made.
             _queued = null;
-            _now = now with { Pause = StoryRunPause.None, Problem = null };
+            _now = now with { Pause = StoryRunPause.None, Problem = null, NotArrived = false };
 
             if (!_audio.HoldSpeechForMedia(Group))
             {
@@ -310,6 +345,8 @@ public sealed class BookPlayer
 
         _now = null;
         _queued = null;
+        _awaiting = null;
+        _arrived = false;
         Discard();
 
         // A paused book may no longer hold the speech channels: a story can have taken them.
@@ -369,6 +406,11 @@ public sealed class BookPlayer
                 _now = now with { Place = next.Place, Sentence = next.Sentence, Text = next.Text, Waiting = false };
                 save = next.Place == now.Place ? null : next.Place;
             }
+            else if (_shelf.Find(source)?.Download is { Complete: false })
+            {
+                _awaiting = now.Place with { Paragraph = now.Place.Paragraph + 1 };
+                _now = now with { Waiting = true };
+            }
             else
             {
                 save = now.Place;
@@ -389,6 +431,11 @@ public sealed class BookPlayer
     /// <summary>Starts making the sentences ahead that are not made or being made, and queues the current one once made.</summary>
     private void Fill()
     {
+        if (AwaitingText())
+        {
+            return;
+        }
+
         var voice = VoiceNow(out var problem);
         var started = new List<Ahead>();
         bool changed;
@@ -549,6 +596,205 @@ public sealed class BookPlayer
         _background(Fill);
     }
 
+    /// <summary>
+    /// More of the book being read is on the shelf: reading waiting at the end of the text goes on, and a pause at the
+    /// end of the text with no download plays on.
+    /// </summary>
+    private void OnArrived(BookSource source)
+    {
+        bool resume;
+
+        lock (_gate)
+        {
+            if (_now?.Book.Source != source)
+            {
+                return;
+            }
+
+            _arrived = true;
+            resume = _now.NotArrived;
+        }
+
+        if (resume)
+        {
+            ResumeWhen(static _ => true);
+        }
+        else
+        {
+            _background(Fill);
+        }
+    }
+
+    /// <summary>
+    /// Opens the book again when more of it has arrived and reading is near or at the end of what it had. At the end,
+    /// moves on to the next paragraph once it is there; otherwise waits while a download runs, finishes a whole book,
+    /// or pauses with <see cref="RestNotArrived"/>. True while there is nothing to read yet, so nothing is made.
+    /// </summary>
+    private bool AwaitingText()
+    {
+        for (var pass = 0; pass < 2; pass++)
+        {
+            BookSource source;
+
+            lock (_gate)
+            {
+                if (_now is not { IsPaused: false } now)
+                {
+                    return false;
+                }
+
+                if (_awaiting is null && !(_arrived && NearEnd(now)))
+                {
+                    return false;
+                }
+
+                source = now.Book.Source;
+                _arrived = false;
+            }
+
+            var opened = _shelf.Open(source);
+            BookPlace? save = null;
+            BookPlace? last = null;
+
+            lock (_gate)
+            {
+                if (_now is not { IsPaused: false } now || now.Book.Source != source)
+                {
+                    return true;
+                }
+
+                if (opened is not null && Holds(opened, now.Place))
+                {
+                    _now = now = now with { Book = opened };
+                }
+
+                if (_awaiting is not { } awaiting)
+                {
+                    return false;
+                }
+
+                if (FirstFrom(now.Book, awaiting) is { } next)
+                {
+                    _now = now with { Place = next.Place, Sentence = next.Sentence, Text = next.Text, Waiting = true };
+                    _awaiting = null;
+                    save = next.Place;
+                }
+                else
+                {
+                    last = now.Place;
+                }
+            }
+
+            if (save is { } place)
+            {
+                _shelf.MoveTo(source, place);
+                Raise();
+                return false;
+            }
+
+            if (_downloads?.Downloading(source) == true || _downloads?.TryResume(source) == true)
+            {
+                return true;
+            }
+
+            if (_shelf.Find(source)?.Download is { Complete: false })
+            {
+                PauseNotArrived(source);
+                return true;
+            }
+
+            // The text became whole since it was opened: open it once more before finishing.
+            if (pass == 1)
+            {
+                FinishAt(source, last!.Value);
+                return true;
+            }
+
+            lock (_gate)
+            {
+                _arrived = true;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>Pauses at the end of the text that has arrived, with nothing bringing the rest.</summary>
+    private void PauseNotArrived(BookSource source)
+    {
+        lock (_gate)
+        {
+            if (_now is not { IsPaused: false } now || now.Book.Source != source || _awaiting is null)
+            {
+                return;
+            }
+
+            _now = now with { Pause = StoryRunPause.Commander, Waiting = false, NotArrived = true };
+            _audio.PausePlayback();
+        }
+
+        Raise();
+    }
+
+    /// <summary>Ends reading a book read to the end of its whole text.</summary>
+    private void FinishAt(BookSource source, BookPlace place)
+    {
+        lock (_gate)
+        {
+            if (_now?.Book.Source != source)
+            {
+                return;
+            }
+
+            End();
+        }
+
+        _shelf.MoveTo(source, place, finished: true);
+        Raise();
+    }
+
+    /// <summary>Fewer than <see cref="SentencesAhead"/> sentences follow the one being read in the text opened.</summary>
+    private static bool NearEnd(BookPlayback now)
+    {
+        var spot = SpotOf(now);
+
+        for (var ahead = 0; ahead <= SentencesAhead; ahead++)
+        {
+            if (After(now.Book, spot) is not { } next)
+            {
+                return true;
+            }
+
+            spot = next;
+        }
+
+        return false;
+    }
+
+    /// <summary>Whether <paramref name="book"/> has a paragraph at <paramref name="place"/>.</summary>
+    private static bool Holds(Book book, BookPlace place) =>
+        place.Chapter >= 0 && place.Chapter < book.Chapters.Count
+        && place.Paragraph >= 0 && place.Paragraph < book.Chapters[place.Chapter].Paragraphs.Count;
+
+    /// <summary>The last sentence of the book, or null when it has none.</summary>
+    private static Spot? LastIn(Book book)
+    {
+        for (var chapter = book.Chapters.Count - 1; chapter >= 0; chapter--)
+        {
+            var paragraphs = book.Chapters[chapter].Paragraphs;
+
+            for (var paragraph = paragraphs.Count - 1; paragraph >= 0; paragraph--)
+            {
+                if (paragraphs[paragraph].Sentences is { Count: > 0 } sentences)
+                {
+                    return new Spot(new BookPlace(chapter, paragraph), sentences.Count - 1, sentences[^1]);
+                }
+            }
+        }
+
+        return null;
+    }
+
     private static Spot SpotOf(BookPlayback now) => new(now.Place, now.Sentence, now.Text);
 
     /// <summary>The first sentence from the start of <paramref name="place"/>'s paragraph on, or null past the end.</summary>
@@ -573,6 +819,11 @@ public sealed class BookPlayer
     /// <summary>The sentence after <paramref name="spot"/>, or null at the end of the book.</summary>
     private static Spot? After(Book book, Spot spot)
     {
+        if (!Holds(book, spot.Place))
+        {
+            return null;
+        }
+
         var paragraphs = book.Chapters[spot.Place.Chapter].Paragraphs;
         var sentences = paragraphs[spot.Place.Paragraph].Sentences;
 

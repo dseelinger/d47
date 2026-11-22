@@ -83,7 +83,7 @@ public static class EgressDisclosure
     /// <summary>Downloading the published rare index.</summary>
     public const string RareIndex = "rareindex";
 
-    /// <summary>Downloading the weekly list of Project Gutenberg titles.</summary>
+    /// <summary>Downloading the weekly list of Project Gutenberg titles, and a book's text when it is added.</summary>
     public const string Books = "books";
 
     /// <summary>Fetching the podcast feeds the Commander added, and streaming their episodes.</summary>
@@ -470,15 +470,17 @@ public static class EgressDisclosure
         Books => new EgressEntry(
             Books,
             NameOf(Books),
-            "github.com",
+            "github.com, gutenberg.pglaf.org",
             "A request for the weekly list of Project Gutenberg titles, from the books-1 release, made when "
             + "you open Add a book › Project Gutenberg and the copy in data\\books\\gutenberg is missing or more than 7 "
             + "days old - one file, a few megabytes. A request that fails is tried again on a later visit, no sooner "
-            + "than an hour after. The catalogue is browsed and searched on this computer. Nothing about you goes "
-            + "with it.",
+            + "than an hour after. The catalogue is browsed and searched on this computer. "
+            + "A book's text, from gutenberg.pglaf.org, Project Gutenberg's own server for programs, when you add it: "
+            + "it is read as it arrives, and if it is cut off the rest is asked for when you next play it. No book "
+            + "text is sent anywhere to be spoken. Nothing about you goes with it.",
             Active: true,
-            Summary: "Project Gutenberg's list of titles, at most once a week, when you browse it. Nothing about "
-                + "you goes with it."),
+            Summary: "Project Gutenberg's list of titles, at most once a week, when you browse it, and a book's text "
+                + "when you add it. Nothing about you goes with it."),
 
         RareIndex => new EgressEntry(
             RareIndex,

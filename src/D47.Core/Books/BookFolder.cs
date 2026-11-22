@@ -24,8 +24,9 @@ public sealed record BookFolderListing(IReadOnlyList<BookFile> Books, IReadOnlyL
 }
 
 /// <summary>
-/// The .txt and .epub files in the books folder beside the shelf. A file is read again only when its size or write
-/// time changes. Reads the disk on the caller's thread, so it is not called from a tick.
+/// The .txt and .epub files in the books folder beside the shelf, other than a downloaded book's text. A file is read
+/// again only when its size or write time changes. Reads the disk on the caller's thread, so it is not called from a
+/// tick.
 /// </summary>
 public sealed class BookFolder
 {
@@ -88,7 +89,7 @@ public sealed class BookFolder
                 var name = Path.GetFileName(path);
                 seen.Add(path);
 
-                if (_shelf.Find(BookSource.FromFile(name)) is not null)
+                if (_shelf.Find(BookSource.FromFile(name)) is not null || _shelf.IsDownloadText(name))
                 {
                     continue;
                 }

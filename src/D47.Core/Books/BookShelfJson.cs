@@ -34,7 +34,10 @@ public static class BookShelfJson
                     row.Author ?? "",
                     Math.Max(1, row.Chapters),
                     new BookPlace(Math.Clamp(row.Chapter, 0, Math.Max(0, row.Chapters - 1)), Math.Max(0, row.Paragraph)),
-                    row.Finished));
+                    row.Finished)
+                {
+                    Download = row.Download(source),
+                });
             }
 
             return new BookShelfRead(books, null);
@@ -68,6 +71,13 @@ public static class BookShelfJson
 
         public bool Finished { get; set; }
 
+        /// <summary>Set for a downloaded book: whether its text is whole.</summary>
+        public bool? Complete { get; set; }
+
+        public long? Written { get; set; }
+
+        public string? ETag { get; set; }
+
         public static Row From(ShelfBook book) => new()
         {
             Gutenberg = book.Source.Gutenberg,
@@ -78,7 +88,15 @@ public static class BookShelfJson
             Chapter = book.Place.Chapter,
             Paragraph = book.Place.Paragraph,
             Finished = book.Finished,
+            Complete = book.Download?.Complete,
+            Written = book.Download?.Written,
+            ETag = book.Download?.ETag,
         };
+
+        public BookDownload? Download(BookSource source) =>
+            Complete is { } complete && source.Gutenberg is not null
+                ? new BookDownload(complete, Math.Max(0, Written ?? 0), string.IsNullOrWhiteSpace(ETag) ? null : ETag)
+                : null;
 
         public BookSource? Source() =>
             Gutenberg is { } number && number > 0 ? BookSource.FromGutenberg(number)

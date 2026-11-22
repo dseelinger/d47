@@ -119,7 +119,7 @@ internal static class BooksKit
     }
 
     /// <summary>The sentence under the status line for a pause or a wait, or null while reading.</summary>
-    public static string? PauseSentence(BookPlayback now) => now.Pause switch
+    public static string? PauseSentence(BookPlayback now) => now.NotArrived ? BookPlayer.RestNotArrived : now.Pause switch
     {
         StoryRunPause.Commander => CommanderPaused,
         StoryRunPause.PushToTalk => PushToTalkPaused,

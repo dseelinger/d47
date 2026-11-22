@@ -1,3 +1,4 @@
+using D47.App.Panel;
 using D47.App.Tests.Stories;
 using D47.App.Voice;
 using D47.Core.Audio;
@@ -61,7 +62,13 @@ internal sealed class BookRig
 
     public static readonly BookSource Source = BookSource.FromFile("The Night Watch.txt");
 
-    private BookRig(IFileSystem files, string folder, string provider, Func<AudioArbiter, AmbientMusic>? music)
+    private BookRig(
+        IFileSystem files,
+        string folder,
+        string provider,
+        Func<AudioArbiter, AmbientMusic>? music,
+        HttpMessageHandler? mirror,
+        TimeProvider? time)
     {
         Sink = new SteppedSink();
         Audio = new AudioArbiter(Sink, NullLogger<AudioArbiter>.Instance).Start();
@@ -71,6 +78,7 @@ internal sealed class BookRig
         Folder = folder;
         Shelf = new BookShelf(files, folder, NullLogger.Instance);
         BookFiles = new BookFolder(files, folder, Shelf, NullLogger.Instance);
+        Downloads = mirror is null ? null : new GutenbergBookFetch(Shelf, NullLogger.Instance, mirror, time, Background.Enqueue);
         Settings = new BookSettings { Provider = provider };
         Voices = new Dictionary<string, FakeBookVoice>(StringComparer.OrdinalIgnoreCase)
         {
@@ -89,7 +97,8 @@ internal sealed class BookRig
             () => Settings,
             Background.Enqueue,
             Story,
-            Music);
+            Music,
+            Downloads);
     }
 
     public SteppedSink Sink { get; }
@@ -106,6 +115,9 @@ internal sealed class BookRig
     public BookFolder BookFiles { get; }
 
     public BookPlayer Player { get; }
+
+    /// <summary>The Project Gutenberg downloads, over the fake mirror the rig was built with.</summary>
+    public GutenbergBookFetch? Downloads { get; }
 
     /// <summary>The story player the book yields to.</summary>
     public StoryRunPlayer Story { get; }
@@ -143,9 +155,11 @@ internal sealed class BookRig
         string folder,
         string provider = "kokoro",
         bool add = false,
-        Func<AudioArbiter, AmbientMusic>? music = null)
+        Func<AudioArbiter, AmbientMusic>? music = null,
+        HttpMessageHandler? mirror = null,
+        TimeProvider? time = null)
     {
-        var rig = new BookRig(files, folder, provider, music);
+        var rig = new BookRig(files, folder, provider, music, mirror, time);
 
         if (add)
         {
