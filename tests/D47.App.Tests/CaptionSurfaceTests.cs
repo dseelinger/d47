@@ -83,6 +83,86 @@ public class CaptionSurfaceTests
         Assert.Equal(Caption.WindowLines, layer.Lines.Count);
     }
 
+    /// <summary>D47's line above a subtitle adds a row above it, so the box reaches higher than the subtitle's alone.</summary>
+    [AvaloniaFact]
+    public void AD47LineAboveASubtitleRaisesTheBox()
+    {
+        var cue = new SubtitleCue(TimeSpan.Zero, TimeSpan.FromSeconds(5), "The reactor is stable for now. We have about ten minutes.");
+
+        var alone = new CaptionLayer();
+        alone.Follow([cue]);
+        alone.At(TimeSpan.FromSeconds(1));
+
+        var stacked = new CaptionLayer { VideoPausesForSpeech = false };
+        stacked.Follow([cue]);
+        stacked.At(TimeSpan.FromSeconds(1));
+        stacked.Say("Interdiction attempt detected, Commander.", Now);
+
+        Assert.NotNull(stacked.Above);
+
+        var aloneModel = new CaptionViewModel();
+        aloneModel.Show(alone.Lines, alone.Above);
+
+        var stackedModel = new CaptionViewModel();
+        stackedModel.Show(stacked.Lines, stacked.Above);
+
+        var aloneTop = 0;
+        var stackedTop = 0;
+
+        Render(aloneModel, (frame, size) =>
+        {
+            aloneTop = BoxTop(frame, size);
+            frame.SaveCapture("vr-captions-subtitle.png");
+        });
+
+        Render(stackedModel, (frame, size) =>
+        {
+            stackedTop = BoxTop(frame, size);
+            frame.SaveCapture("vr-captions-subtitle-stacked.png");
+        });
+
+        Assert.True(stackedTop < aloneTop, $"The stacked box starts at {stackedTop}, the subtitle's alone at {aloneTop}.");
+    }
+
+    /// <summary>A full-length D47 line with its mark, at the largest size, stays inside the quad.</summary>
+    [AvaloniaFact]
+    public void AD47LineAboveASubtitleFitsTheQuadAtTheLargestSize()
+    {
+        var settings = new CaptionSettings { Size = CaptionSize.Large };
+        var model = new CaptionViewModel();
+        model.Configure(settings);
+        model.Show(["Copy that, Houston."], "Warning: Maximum heat damage, move off now");
+
+        Assert.Equal(Caption.CharactersPerLine, model.Above!.Length);
+
+        Render(model, (frame, size) =>
+        {
+            frame.SaveCapture("vr-captions-subtitle-stacked-large.png");
+
+            for (var y = 0; y < size.Height; y++)
+            {
+                Assert.Equal(0, AlphaAt(frame, 4, y));
+                Assert.Equal(0, AlphaAt(frame, size.Width - 4, y));
+            }
+
+            Assert.Equal(0, AlphaAt(frame, size.Width / 2, 2));
+        });
+    }
+
+    /// <summary>The first row from the top with anything drawn in the middle column.</summary>
+    private static int BoxTop(RenderTargetBitmap frame, PixelSize size)
+    {
+        for (var y = 0; y < size.Height; y++)
+        {
+            if (AlphaAt(frame, size.Width / 2, y) > 0)
+            {
+                return y;
+            }
+        }
+
+        return size.Height;
+    }
+
     /// <summary>Renders and hands the frame to the assertion while the surface is still alive.</summary>
     private static void Render(CaptionViewModel model, Action<RenderTargetBitmap, PixelSize> assert)
     {

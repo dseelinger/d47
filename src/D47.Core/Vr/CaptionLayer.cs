@@ -1,8 +1,12 @@
 namespace D47.Core.Vr;
 
-/// <summary>The rolling caption window (Phase 9, "TheApp appears in the headset").</summary>
+/// <summary>
+/// The caption band (Phase 9, "TheApp appears in the headset"): D47's rolling caption window, and the subtitle cue
+/// covering a video's position.
+/// </summary>
 public sealed class CaptionLayer
 {
+    /// <summary>D47's own window.</summary>
     private readonly List<string> _lines = [];
 
     /// <summary>Lines of the current utterance that have not been shown yet (#200).</summary>
@@ -27,15 +31,39 @@ public sealed class CaptionLayer
     private DateTimeOffset? _sayStartedAt;
     private int _sayCharacters;
 
+    /// <summary>The subtitle cues being followed, or null with no video.</summary>
+    private IReadOnlyList<SubtitleCue>? _cues;
+
+    private SubtitleCue? _cue;
+
+    /// <summary>The shown cue, wrapped.</summary>
+    private IReadOnlyList<string> _cueLines = [];
+
+    /// <summary>The last playback position given.</summary>
+    private TimeSpan? _position;
+
+    /// <summary>The playback position when the voice stopped.</summary>
+    private TimeSpan? _quietAt;
+
     /// <summary>Running average of how fast sentences that ran to their end were spoken.</summary>
     public double SpeakingSpeed { get; private set; } = InitialSpeakingSpeed;
 
     public CaptionSettings Settings { get; set; } = new();
 
-    /// <summary>The window, oldest first.</summary>
-    public IReadOnlyList<string> Lines => _lines;
+    /// <summary>
+    /// Whether D47 speaking pauses the video being followed. When true, D47's lines take the band alone and the
+    /// subtitle comes back once the voice has stopped and the video has moved on, or once D47's lines clear. When
+    /// false, one line of D47's sits <see cref="Above"/> a subtitle of up to two lines; more takes the band alone.
+    /// </summary>
+    public bool VideoPausesForSpeech { get; set; } = true;
 
-    public bool Visible => Settings.Enabled && _lines.Count > 0;
+    /// <summary>The band's text, oldest first: D47's window, or the subtitle.</summary>
+    public IReadOnlyList<string> Lines => Shown().Lines;
+
+    /// <summary>D47's line drawn above the subtitle in <see cref="Lines"/>, or null.</summary>
+    public string? Above => Shown().Above;
+
+    public bool Visible => Settings.Enabled && Lines.Count > 0;
 
     /// <summary>Raised when the window changed, so the surface knows to redraw and only then.</summary>
     public event Action? Changed;
@@ -66,6 +94,7 @@ public sealed class CaptionLayer
         }
 
         Sample(now);
+        _quietAt = null;
         _sayStartedAt = now;
         _sayCharacters = string.Join(' ', wrapped).Length;
 
@@ -140,6 +169,7 @@ public sealed class CaptionLayer
         }
 
         _quiet = true;
+        _quietAt = _position;
 
         // Lines still waiting have not been read yet, so there is nothing to start counting down (#200).
         if (_pending.Count > 0)
@@ -159,14 +189,93 @@ public sealed class CaptionLayer
             return;
         }
 
+        Forget();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Follows <paramref name="cues"/>, a video's subtitles, from the next <see cref="At"/>; null for none.</summary>
+    public void Follow(IReadOnlyList<SubtitleCue>? cues)
+    {
+        _cues = cues;
+        _position = null;
+        _quietAt = null;
+
+        if (_cue is null)
+        {
+            return;
+        }
+
+        _cue = null;
+        _cueLines = [];
+        Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// The followed video's playback position, given every tick: shows the cue covering it, or none. A seek or a pause
+    /// shows the cue for the new position on the call that gives it.
+    /// </summary>
+    public void At(TimeSpan position)
+    {
+        if (_cues is not { } cues)
+        {
+            return;
+        }
+
+        _position = position;
+
+        // The video playing on after the voice stopped means it was paused for D47 and D47 has finished.
+        var yielded = VideoPausesForSpeech
+            && _quiet
+            && _lines.Count > 0
+            && _quietAt is { } quietAt
+            && position != quietAt;
+
+        if (yielded)
+        {
+            Forget();
+        }
+
+        var cue = SubtitleCues.At(cues, position);
+
+        if (!yielded && ReferenceEquals(cue, _cue))
+        {
+            return;
+        }
+
+        _cue = cue;
+        _cueLines = cue is null ? [] : [.. Caption.Wrap(cue.Text).Take(Caption.WindowLines)];
+        Changed?.Invoke();
+    }
+
+    /// <summary>D47's window, or the subtitle, or one line of D47's above a subtitle of up to two.</summary>
+    private (IReadOnlyList<string> Lines, string? Above) Shown()
+    {
+        if (_lines.Count == 0)
+        {
+            return (_cueLines, null);
+        }
+
+        if (_cueLines.Count == 0)
+        {
+            return (_lines, null);
+        }
+
+        return !VideoPausesForSpeech && _lines.Count == 1 && _cueLines.Count < Caption.WindowLines
+            ? (_cueLines, _lines[0])
+            : (_lines, null);
+    }
+
+    /// <summary>Clears D47's window and what was pacing it.</summary>
+    private void Forget()
+    {
         _lines.Clear();
         _pending.Clear();
         _advanceAt = null;
         _quiet = false;
+        _quietAt = null;
         _clearAt = null;
         _saying = null;
         _sayStartedAt = null;
-        Changed?.Invoke();
     }
 
     /// <summary>Takes a speed sample from the sentence that just ended on its own.</summary>
