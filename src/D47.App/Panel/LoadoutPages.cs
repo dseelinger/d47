@@ -1929,6 +1929,7 @@ public sealed class ItemPage : LoadoutPage
     private readonly Func<string, Task<bool>>? _copy;
     private readonly ArrangedTable<LoadoutPages.SlotLine> _slots;
     private readonly D47.App.Voice.WaitSound? _waitSound;
+    private readonly MaxReportAge _toBuyAge = new(OutfittingPlotter.FirstPlotReportAgeHours);
     private readonly WaitingState _plotWaiting = new(WaitForm.Line, "Working it out…") { IsVisible = false };
     private Button? _drop;
 
@@ -2542,10 +2543,18 @@ public sealed class ItemPage : LoadoutPage
         var cancel = new Button { Name = "CancelToBuy", Content = "Cancel", IsVisible = plotting, MinHeight = TypeScale.MinimumTarget };
         cancel.Click += (_, _) => _plotting?.Cancel();
 
-        var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Auto)], ColumnSpacing = Gaps.Tile };
-        Grid.SetColumn(plot, 1);
-        Grid.SetColumn(cancel, 2);
+        _toBuyAge.Picker.IsEnabled = !plotting;
+        (_toBuyAge.Picker.Parent as Avalonia.Controls.Panel)?.Children.Clear();
+
+        var row = new Grid { ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Auto)], ColumnSpacing = Gaps.Tile };
+        var age = _toBuyAge.Field("Max report age");
+        age.VerticalAlignment = VerticalAlignment.Bottom;
+        Grid.SetColumn(age, 1);
+        Grid.SetColumn(plot, 2);
+        Grid.SetColumn(cancel, 3);
+        plot.VerticalAlignment = VerticalAlignment.Bottom;
         row.Children.Add(summary);
+        row.Children.Add(age);
         row.Children.Add(plot);
         row.Children.Add(cancel);
 
@@ -2689,7 +2698,7 @@ public sealed class ItemPage : LoadoutPage
         {
             var token = _plotting.Token;
 
-            await Waiting.While(_plotWaiting, _waitSound, async () => outcome = await toBuy.Plot(token).ConfigureAwait(true))
+            await Waiting.While(_plotWaiting, _waitSound, async () => outcome = await toBuy.Plot(_toBuyAge.Value, token).ConfigureAwait(true))
                 .ConfigureAwait(true);
 
             _plotSaid = outcome!.Said;

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: A ship's To buy block plots its route within 500 light years instead of 50, and so does "plot_outfitting_route" when no distance is named. The block has a Max report age field beside the Plot button, 3 days at first, and the plot uses the age you pick.
+
 Added: When you leave a planet's orbital cruise, or start a hyperspace jump near it, with one or two samples of a species taken there, D47 says so: "Leaving Smojue EB-O d6-37 AB 1 b with Stratum Paleas at 2 of 3." Leaving does not lose the samples; logging a different species does. The switch is Unfinished samples, under Settings › Your core › Exploring.
 
 Added: The BGS work table, the Campaign systems, fronts and chronicle tables, and a faction's systems, conflicts and assets have a FILTER tile beside COLUMNS. It lists the values a column holds, such as a system, a front's kind, a state or a station's type, and unticking one hides the rows with it. In a list column such as Active, a system stays while any of its states is ticked. Numbers, dates and the Intent and TAKE controls are not filtered. In the headset the pager counts the rows shown and returns to the first page when the filter changes. Leaving a page and opening it again clears its filter and keeps its columns and sort.

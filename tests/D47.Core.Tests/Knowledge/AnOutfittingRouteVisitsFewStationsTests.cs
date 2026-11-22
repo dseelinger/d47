@@ -153,7 +153,7 @@ public class AnOutfittingRouteVisitsFewStationsTests
         Assert.Equal("Some system", plans.Last(RoutePlanKind.Outfitting)?.Outfitting?.Stops[0].System);
         Assert.Equal("1 stop for 1 of 2 items", plans.Last(RoutePlanKind.Outfitting)?.Headline);
         Assert.Null(plans.Last(RoutePlanKind.Outfitting)?.Outfitting?.StorageChecked);
-        Assert.Equal(50, plans.Last(RoutePlanKind.Outfitting)?.Outfitting?.MaxDistance);
+        Assert.Equal(500, plans.Last(RoutePlanKind.Outfitting)?.Outfitting?.MaxDistance);
     }
 
     [Fact]

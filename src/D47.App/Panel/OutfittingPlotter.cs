@@ -1,4 +1,5 @@
 using D47.Core.Capabilities;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Knowledge;
 using D47.Core.Ships;
@@ -14,10 +15,7 @@ public sealed record OutfittingPlotter(
     RoutePlanBook Plans,
     Func<string?> Here)
 {
-    /// <summary>The tool's search radius when the call names none.</summary>
-    private const int Radius = 50;
-
-    /// <summary>The oldest report, in hours, a first plot accepts.</summary>
+    /// <summary>The oldest report, in hours, the To buy block starts with.</summary>
     public const int FirstPlotReportAgeHours = 72;
 
     /// <summary>The to-buy block for a build, or null when it needs nothing bought.</summary>
@@ -41,11 +39,11 @@ public sealed record OutfittingPlotter(
         return new LoadoutToBuy(
             subhead,
             Summary(names),
-            $"Plots from {from}, within {Radius} ly, and opens the route on Astrometrics › Plan.",
+            $"Plots from {from}, within {RouteCapability.OutfittingDistance} ly, and opens the route on Astrometrics › Plan.",
             purchases.StorageChecked,
             ShipPurchasePrice.Of(purchases),
             balance,
-            Plot: async cancellationToken =>
+            Plot: async (reportAgeHours, cancellationToken) =>
             {
                 var before = Plans.Last(RoutePlanKind.Outfitting);
 
@@ -55,9 +53,9 @@ public sealed record OutfittingPlotter(
                         new ToolArguments(new Dictionary<string, string>(StringComparer.Ordinal)
                         {
                             ["items"] = string.Join(", ", kinds),
-                            ["max_distance"] = Radius.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            ["max_distance"] = RouteCapability.OutfittingDistance.ToString(System.Globalization.CultureInfo.InvariantCulture),
                             ["storage_checked"] = purchases.StorageChecked ? "true" : "false",
-                            ["max_report_age_hours"] = FirstPlotReportAgeHours.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                            ["max_report_age_hours"] = reportAgeHours.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         }),
                         cancellationToken)
                     .ConfigureAwait(true);
@@ -165,7 +163,7 @@ public sealed record OutfittingPlotter(
 /// <param name="StorageChecked">False until module storage has been seen.</param>
 /// <param name="Price">What the items cost at list price.</param>
 /// <param name="Balance">The Commander's balance; null until the journal has given one.</param>
-/// <param name="Plot">Plots the route and says what happened.</param>
+/// <param name="Plot">Plots the route for reports no older than the given hours (0 for any age) and says what happened.</param>
 public sealed record LoadoutToBuy(
     string Subhead,
     string Summary,
@@ -173,7 +171,7 @@ public sealed record LoadoutToBuy(
     bool StorageChecked,
     ShipPurchasePrice Price,
     long? Balance,
-    Func<CancellationToken, Task<LoadoutToBuyOutcome>> Plot);
+    Func<int, CancellationToken, Task<LoadoutToBuyOutcome>> Plot);
 
 /// <summary>What a plot said (a short line when it stored a new plan), and the result page to open then.</summary>
 public sealed record LoadoutToBuyOutcome(string Said, bool IsError, D47.Core.Interface.NavCrumb? Open);

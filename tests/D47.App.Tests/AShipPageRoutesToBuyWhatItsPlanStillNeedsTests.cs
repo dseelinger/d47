@@ -242,7 +242,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         var toBuy = bench.Mode.ToBuy(bench.BuildId)!;
 
         Assert.StartsWith("2 items to buy: Python and 6A Fuel Scoop.", toBuy.Summary, StringComparison.Ordinal);
-        Assert.Contains("within 50 ly", toBuy.Hint, StringComparison.Ordinal);
+        Assert.Contains("within 500 ly", toBuy.Hint, StringComparison.Ordinal);
         Assert.True(Plot(bench.Page).IsEnabled);
 
         Plot(bench.Page).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
@@ -265,6 +265,34 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         Assert.False(bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.StorageChecked);
         Assert.Equal([72], bench.Galaxy.Ages);
         Assert.Equal(72, bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.MaxReportAgeHours);
+        Assert.Equal(500, bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.MaxDistance);
+        Assert.Equal("3 days", PickerValue(bench.Page));
+    }
+
+    [AvaloniaFact]
+    public async Task APickedReportAgeIsWhatThePlotSendsAndAnyAgeIsZero()
+    {
+        using var kit = AppLook.ControlKit();
+        var bench = Set();
+        Show(bench.Page);
+
+        var picker = bench.Page.GetVisualDescendants().OfType<D47.App.Controls.InlinePicker>().Single();
+        Click(picker.GetVisualDescendants().OfType<Button>().Single(button => button.Name == D47.App.Controls.InlinePicker.ButtonName));
+        Dispatcher.UIThread.RunJobs();
+        Click(picker.GetVisualDescendants().OfType<Button>().Single(button =>
+            button.Classes.Contains(D47.App.Controls.InlinePicker.OptionClass)
+            && Avalonia.Automation.AutomationProperties.GetName(button) == "Any"));
+
+        Plot(bench.Page).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        for (var wait = 0; wait < 200 && bench.Nav.Tab != PanelTab.Astrometrics; wait++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal<int?[]>([null], [.. bench.Galaxy.Ages]);
+        Assert.Null(bench.Plans.Last(RoutePlanKind.Outfitting)!.Outfitting!.MaxReportAgeHours);
     }
 
     [AvaloniaFact]

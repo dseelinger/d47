@@ -12,6 +12,9 @@ public static class RouteCapability
 {
     public const string Id = "routes";
 
+    /// <summary>How far, in light years, plot_outfitting_route looks when the call names no distance.</summary>
+    public const int OutfittingDistance = 500;
+
     /// <summary>
     /// <param name="routes"> The plotter, or null where none is composed — under the designer and in a
     /// test that is not about it.
@@ -220,7 +223,7 @@ public static class RouteCapability
                         + "such as \"5A Frame Shift Drive (SCO), 2F Multi-Cannon gimballed, Python Mk II\".",
                         required: true),
                     ToolParameter.Text("near", "Search out from this system. Defaults to theirs."),
-                    ToolParameter.Number("max_distance", "How far to look, in light years. Default 50."),
+                    ToolParameter.Number("max_distance", $"How far to look, in light years. Default {OutfittingDistance}."),
                     ToolParameter.OneOf(
                         "min_pad",
                         "Large, or Medium for at least one medium pad.",
@@ -899,7 +902,7 @@ public static class RouteCapability
             pad = Enum.Parse<PadSize>(padText.Trim(), ignoreCase: true);
         }
 
-        var maxDistance = arguments.Double("max_distance") is > 0 and var distance ? distance : 50;
+        var maxDistance = arguments.Double("max_distance") is > 0 and var distance ? distance : OutfittingDistance;
 
         if (GalaxyCapability.ReportAge(
                 arguments,
