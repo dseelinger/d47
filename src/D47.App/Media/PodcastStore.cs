@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using D47.Core.Configuration;
 using D47.Core.Podcasts;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
@@ -87,6 +88,17 @@ internal sealed class PodcastStore
     /// <summary>Fetches one feed on the pool and caches it once it parses.</summary>
     internal Task<PodcastRefresh> RefreshAsync(Uri feed) => Task.Run(() => FetchAsync(feed));
 
+    /// <summary>
+    /// Adds a feed to <see cref="PodcastSettings.Feeds"/>, once, and fetches it on the pool. Adding a feed adds a
+    /// destination, so this is reached from the panel and the keyword router, never from a model tool.
+    /// </summary>
+    internal Task<PodcastRefresh> AddAsync(Uri feed, SettingsService settings)
+    {
+        settings.Replace("a podcast feed was added", current => current with { Podcasts = current.Podcasts.WithFeed(feed) });
+
+        return RefreshAsync(feed);
+    }
+
     /// <summary>Fetches every feed added, one after another, on the pool.</summary>
     internal Task<IReadOnlyList<PodcastRefresh>> RefreshAllAsync() => Task.Run(async () =>
     {
@@ -120,7 +132,7 @@ internal sealed class PodcastStore
             }
 
             if (response.Content.Headers.ContentLength > MostBytes
-                || await ReadAtMostAsync(response.Content, answer.Token).ConfigureAwait(false) is not { } bytes)
+                || await ReadAtMostAsync(response.Content, MostBytes, answer.Token).ConfigureAwait(false) is not { } bytes)
             {
                 return new PodcastRefresh(feed, null, "The feed is larger than 10 MB, so D47 does not read it.");
             }
@@ -169,8 +181,8 @@ internal sealed class PodcastStore
         return new PodcastRefresh(feed, show, null);
     }
 
-    /// <summary>The body, or null once it passes <see cref="MostBytes"/>.</summary>
-    private static async Task<byte[]?> ReadAtMostAsync(HttpContent content, CancellationToken token)
+    /// <summary>The body, or null once it passes <paramref name="most"/> bytes.</summary>
+    internal static async Task<byte[]?> ReadAtMostAsync(HttpContent content, long most, CancellationToken token)
     {
         await using var body = await content.ReadAsStreamAsync(token).ConfigureAwait(false);
         using var kept = new MemoryStream();
@@ -179,7 +191,7 @@ internal sealed class PodcastStore
 
         while ((read = await body.ReadAsync(buffer, token).ConfigureAwait(false)) > 0)
         {
-            if (kept.Length + read > MostBytes)
+            if (kept.Length + read > most)
             {
                 return null;
             }
@@ -240,7 +252,7 @@ internal sealed class PodcastStore
         }
     }
 
-    /// <summary>A client that keeps no cookies and has no overall timeout; each feed's fetch is bounded instead.</summary>
+    /// <summary>A client that keeps no cookies and has no overall timeout; each request is bounded instead.</summary>
     internal static HttpClient CreateClient()
     {
         var client = new HttpClient(new SocketsHttpHandler

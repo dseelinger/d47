@@ -1484,6 +1484,20 @@ public sealed record PodcastSettings
             .Select(feed => Uri.TryCreate(feed?.Trim(), UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" ? uri : null)
             .OfType<Uri>()
             .DistinctBy(uri => uri.AbsoluteUri, StringComparer.Ordinal)];
+
+    /// <summary>These settings with <paramref name="feed"/> added at the end; the same instance when it is already added or not http or https.</summary>
+    public PodcastSettings WithFeed(Uri feed)
+    {
+        ArgumentNullException.ThrowIfNull(feed);
+
+        if (!feed.IsAbsoluteUri || feed.Scheme is not ("http" or "https")
+            || FeedUris().Any(added => string.Equals(added.AbsoluteUri, feed.AbsoluteUri, StringComparison.Ordinal)))
+        {
+            return this;
+        }
+
+        return this with { Feeds = [.. Feeds ?? [], feed.AbsoluteUri] };
+    }
 }
 
 /// <summary>Where usage counts are sent.</summary>

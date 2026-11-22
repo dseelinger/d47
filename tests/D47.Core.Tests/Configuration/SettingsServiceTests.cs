@@ -547,7 +547,7 @@ public class EgressDisclosureTests
             EgressDisclosure.SignalIndex,
 
             // Sent only when the Commander asks, so the request is its only switch, as the donation's press is.
-            EgressDisclosure.RegionFirstReport,
+            EgressDisclosure.RegionFirstReport, EgressDisclosure.PodcastSearch,
         ];
         Assert.Equal(always.Order(), active);
         Assert.Contains($"{always.Length} of {entries.Count} destinations are active", described, StringComparison.Ordinal);

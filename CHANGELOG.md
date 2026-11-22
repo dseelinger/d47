@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Privacy and egress lists a Podcast search entry. The words you search for go to Apple's podcast directory, itunes.apple.com, each time you search for a show, and nothing else about you goes with them. No page searches yet.
+
 Added: Privacy and egress lists a Podcasts entry. Once you have added a podcast feed it names the feed hosts and the hosts the feeds stream episodes from, and says that a feed is fetched only when you open the podcast page or ask for a refresh. No page adds a feed yet.
 
 Changed: Commander › Ledgers lists This session, Combat stats, Credits, Codex and Screenshots in a sidebar at the left, on the window and the headset panel, and the sidebar stays beside every page below a ledger. One press on an item opens that ledger from any depth. Opening Ledgers opens the ledger you last had open, or This session the first time, so the page that listed the ledgers is gone. At a ledger the sub-tab row shows; below one the breadcrumb takes its place and starts at Commander.

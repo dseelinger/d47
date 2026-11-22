@@ -89,6 +89,11 @@ public static class EgressDisclosure
     /// <summary>Fetching the podcast feeds the Commander added, and streaming their episodes.</summary>
     public const string Podcasts = "podcasts";
 
+    public const string PodcastSearchHost = "itunes.apple.com";
+
+    /// <summary>Searching Apple's podcast directory for shows.</summary>
+    public const string PodcastSearch = "podcastsearch";
+
     public const string EddnHost = "eddn.edcd.io";
 
     /// <summary>Sending the market prices the game shows to EDDN.</summary>
@@ -186,6 +191,7 @@ public static class EgressDisclosure
         RareIndex,
         Books,
         Podcasts,
+        PodcastSearch,
         UpdateCheck,
         ModelUpdates,
         HullArt,
@@ -232,6 +238,7 @@ public static class EgressDisclosure
         RareIndex => "Rare index",
         Books => "Project Gutenberg list",
         Podcasts => "Podcasts",
+        PodcastSearch => "Podcast search",
         WebSearch => "Web search",
         Screen => "Screen pictures",
         Recap => "Last session recap",
@@ -659,6 +666,16 @@ public static class EgressDisclosure
                 summary: "Fetch model updates is off, so nothing is requested."),
 
         Podcasts => PodcastsEntry(settings, podcastEpisodeHosts ?? []),
+
+        PodcastSearch => new EgressEntry(
+            PodcastSearch,
+            NameOf(PodcastSearch),
+            PodcastSearchHost,
+            "The words you search for go to Apple's podcast directory each time you search for a show, whoever typed "
+            + "or said them. Nothing else about you goes with them: no key, no Commander name, nothing from your "
+            + "journal. Apple sees your IP address.",
+            Active: true,
+            Summary: "The words you search for, each time you search for a show."),
 
         // On demand.
         SpeechModels => SpeechModelsEntry(settings),
