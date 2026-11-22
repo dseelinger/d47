@@ -14,17 +14,20 @@ public enum AudioChannel
     /// <summary>Situational ambience (Phase 12, "Ambient music"), started with <see cref="AudioArbiter.PlayMusic"/>.</summary>
     Music = 2,
 
+    /// <summary>A podcast episode, started with <see cref="AudioArbiter.PlayPodcast"/>; paused while D47 speaks or listens.</summary>
+    Podcast = 3,
+
     /// <summary>A short non-speech marker.</summary>
-    Cue = 3,
+    Cue = 4,
 
     /// <summary>Invented radio traffic not addressed to the Commander; yields to an answer and an alert.</summary>
-    Overheard = 4,
+    Overheard = 5,
 
     /// <summary>An answer, spoken.</summary>
-    Speech = 5,
+    Speech = 6,
 
     /// <summary>A journal-triggered danger callout (Phase 8).</summary>
-    Alert = 6,
+    Alert = 7,
 }
 
 /// <summary>One thing to make audible: carries exactly one of <see cref="Clip"/> and <see cref="Arriving"/>.</summary>
@@ -87,6 +90,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// <summary>The silence between two ambience tracks, the Red Book CD pause (#522).</summary>
     public static readonly TimeSpan MusicGap = TimeSpan.FromSeconds(2);
 
+    /// <summary>How far a podcast steps back when it resumes after a hold, so the Commander hears the words it stopped on.</summary>
+    public static readonly TimeSpan PodcastStepBack = TimeSpan.FromSeconds(2);
+
     private static readonly AudioClip MusicGapClip = new(
         "music-gap",
         new byte[(int)(AudioFormat.Standard.SampleRate * MusicGap.TotalSeconds) * AudioFormat.Standard.BytesPerFrame],
@@ -122,6 +128,15 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     private bool _subscribed;
     private AudioMix _mix = AudioMix.Default;
 
+    private long? _podcast;
+
+    /// <summary>Paused by the Commander; only <see cref="ResumePodcast"/> or a new episode clears it.</summary>
+    private bool _podcastPaused;
+
+    /// <summary>Paused by a hold: listening, a turn, speech or an alert, or a story playback.</summary>
+    private bool _podcastHeld;
+    private bool _turnInFlight;
+
     /// <summary>The group of the most recently started routine or alert line, or null before the first.</summary>
     private string? _lastSpokenGroup;
 
@@ -143,6 +158,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     /// <summary>Raised when an ambience track reached its end on its own.</summary>
     public event Action? MusicFinished;
+
+    /// <summary>Raised when a podcast episode reached its end on its own, or failed to open or read.</summary>
+    public event Action? PodcastFinished;
 
     /// <summary>Raised when a queued request played to its own end; not for one stopped, dropped or superseded.</summary>
     public event Action<AudioRequest>? Played;
@@ -204,6 +222,32 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
                 _listening = value;
                 Relevel();
+            }
+        }
+    }
+
+    /// <summary>Whether a voice turn is running, from the microphone opening to its outcome; a podcast is held while it is.</summary>
+    public bool TurnInFlight
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _turnInFlight;
+            }
+        }
+
+        set
+        {
+            lock (_gate)
+            {
+                if (_turnInFlight == value)
+                {
+                    return;
+                }
+
+                _turnInFlight = value;
+                HoldOrReleasePodcast();
             }
         }
     }
@@ -365,6 +409,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
                 }
             }
 
+            if (request.Channel == AudioChannel.Overheard && PodcastPlayingLocked)
+            {
+                logger.LogDebug("A podcast is playing; {Clip} is not queued", request.Name);
+                return;
+            }
+
             if (request.Channel == AudioChannel.Bed)
             {
                 StartBed(request);
@@ -377,6 +427,10 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             else if (request.Channel == AudioChannel.Wait)
             {
                 throw new ArgumentException("The waiting loop is not queued; start it with OpenWait.", nameof(request));
+            }
+            else if (request.Channel == AudioChannel.Podcast)
+            {
+                throw new ArgumentException("A podcast is streamed; start it with PlayPodcast.", nameof(request));
             }
             else
             {
@@ -467,7 +521,8 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     /// <summary>
     /// Stops speech, alerts, cues, the bed, the waiting loop and everything queued; music is left playing. A
-    /// playing playback is paused, not ended. Waits open now stay silent until they close.
+    /// playing playback is paused, not ended. A podcast is paused as the Commander's pause, keeping its position.
+    /// Waits open now stay silent until they close.
     /// </summary>
     public void Silence()
     {
@@ -486,6 +541,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
 
             _queue.Clear();
+
+            // Before Relevel, so clearing the holds below does not resume it first.
+            PausePodcastLocked();
 
             if (_current is { } playing)
             {
@@ -904,6 +962,202 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    /// <summary>
+    /// Streams a podcast episode in its own slot from <paramref name="from"/>, replacing any episode playing. It
+    /// starts paused when something already holds it.
+    /// </summary>
+    public void PlayPodcast(MusicTrack track, TimeSpan from)
+    {
+        ArgumentNullException.ThrowIfNull(track);
+
+        lock (_gate)
+        {
+            if (_podcast is { } playing)
+            {
+                sink.Stop(playing);
+            }
+
+            var id = _nextId++;
+            _podcast = id;
+            _podcastPaused = false;
+            _podcastHeld = false;
+            sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Podcast)));
+
+            // The sink can report the episode finished inside Play.
+            if (_podcast != id)
+            {
+                return;
+            }
+
+            if (from > TimeSpan.Zero)
+            {
+                sink.Seek(id, from);
+            }
+
+            HoldOrReleasePodcast();
+        }
+
+        logger.LogInformation("Podcast started: {Episode}", track.Name);
+    }
+
+    /// <summary>The Commander's pause: the episode stays paused until <see cref="ResumePodcast"/>, whatever holds clear. False with no episode.</summary>
+    public bool PausePodcast()
+    {
+        lock (_gate)
+        {
+            return PausePodcastLocked();
+        }
+    }
+
+    /// <summary>Ends the Commander's pause; the episode stays paused while anything still holds it. False with no episode.</summary>
+    public bool ResumePodcast()
+    {
+        lock (_gate)
+        {
+            if (_podcast is not { } playing)
+            {
+                return false;
+            }
+
+            if (!_podcastPaused)
+            {
+                return true;
+            }
+
+            _podcastPaused = false;
+
+            if (PodcastHoldActive())
+            {
+                _podcastHeld = true;
+            }
+            else
+            {
+                _podcastHeld = false;
+                sink.Resume(playing);
+            }
+
+            return true;
+        }
+    }
+
+    /// <summary>Stops the episode and empties the podcast slot.</summary>
+    public void StopPodcast()
+    {
+        lock (_gate)
+        {
+            if (_podcast is { } playing)
+            {
+                sink.Stop(playing);
+            }
+
+            ClearPodcast();
+        }
+    }
+
+    /// <summary>Moves the episode to <paramref name="to"/>, leaving it paused or playing. False with no episode, or where the sink cannot seek it.</summary>
+    public bool SeekPodcast(TimeSpan to)
+    {
+        lock (_gate)
+        {
+            return _podcast is { } playing && sink.Seek(playing, to);
+        }
+    }
+
+    /// <summary>How far the episode has played and how long it is; null with no episode.</summary>
+    public TrackProgress? PodcastProgress()
+    {
+        lock (_gate)
+        {
+            return _podcast is { } playing ? sink.Progress(playing) : null;
+        }
+    }
+
+    /// <summary>Whether an episode is in the slot and not paused by the Commander; it may be held while D47 speaks.</summary>
+    public bool PodcastPlaying
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return PodcastPlayingLocked;
+            }
+        }
+    }
+
+    private bool PodcastPlayingLocked => _podcast is not null && !_podcastPaused;
+
+    private bool PausePodcastLocked()
+    {
+        if (_podcast is not { } playing)
+        {
+            return false;
+        }
+
+        if (!_podcastPaused && !_podcastHeld)
+        {
+            sink.Pause(playing);
+        }
+
+        _podcastPaused = true;
+        return true;
+    }
+
+    private void ClearPodcast()
+    {
+        _podcast = null;
+        _podcastPaused = false;
+        _podcastHeld = false;
+    }
+
+    /// <summary>Whether the microphone, a turn, speech or an alert playing or queued, or a story playback holds the podcast.</summary>
+    private bool PodcastHoldActive() =>
+        _listening
+        || _turnInFlight
+        || _current?.Request.Channel is AudioChannel.Speech or AudioChannel.Alert
+        || _queue.Exists(static pending => pending.Request.Channel is AudioChannel.Speech or AudioChannel.Alert)
+        || (_playbackGroup is not null && !_playbackPaused);
+
+    /// <summary>
+    /// Pauses the podcast when a hold starts, and when the last hold clears steps it back
+    /// <see cref="PodcastStepBack"/> and resumes it, unless the Commander paused it.
+    /// </summary>
+    private void HoldOrReleasePodcast()
+    {
+        if (_podcast is not { } playing)
+        {
+            return;
+        }
+
+        var hold = PodcastHoldActive();
+
+        if (hold && !_podcastHeld)
+        {
+            if (!_podcastPaused)
+            {
+                sink.Pause(playing);
+            }
+
+            _podcastHeld = true;
+        }
+        else if (!hold && _podcastHeld)
+        {
+            _podcastHeld = false;
+
+            if (_podcastPaused)
+            {
+                return;
+            }
+
+            if (sink.Progress(playing) is { } progress)
+            {
+                var back = progress.Elapsed - PodcastStepBack;
+                sink.Seek(playing, back > TimeSpan.Zero ? back : TimeSpan.Zero);
+            }
+
+            sink.Resume(playing);
+        }
+    }
+
     /// <summary>Whether an ambience track is held by <see cref="PauseMusic"/> or <see cref="FadeOutMusic"/>.</summary>
     public bool MusicHeld
     {
@@ -1126,10 +1380,17 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             sink.SetGain(shelved.Id, GainFor(AudioChannel.Music));
         }
 
+        if (_podcast is { } podcast)
+        {
+            sink.SetGain(podcast, GainFor(AudioChannel.Podcast));
+        }
+
         if (_current is { } playing)
         {
             sink.SetGain(playing.Id, GainFor(playing.Request.Channel));
         }
+
+        HoldOrReleasePodcast();
     }
 
     /// <summary>
@@ -1148,11 +1409,18 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     {
         AudioActivity activity;
         var trackEnded = false;
+        var podcastEnded = false;
         AudioRequest? played = null;
 
         lock (_gate)
         {
-            if (_music == playbackId && _musicAfterGap is { } next)
+            if (_podcast == playbackId)
+            {
+                ClearPodcast();
+                podcastEnded = true;
+                activity = Snapshot();
+            }
+            else if (_music == playbackId && _musicAfterGap is { } next)
             {
                 var id = _nextId++;
                 _music = id;
@@ -1200,6 +1468,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         if (trackEnded)
         {
             MusicFinished?.Invoke();
+        }
+
+        if (podcastEnded)
+        {
+            PodcastFinished?.Invoke();
         }
 
         if (played is not null)

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Settings › Hearing and sound › Sounds and levels has a Podcasts row in Levels, with Level (0.8 at first) and Mute. A podcast pauses while the microphone is open, while D47 works on or speaks a reply, during an alert and while a story plays, then steps back two seconds and carries on. Saying "stop" pauses it where it is, and invented chatter is not played over it. No page plays a podcast yet.
+
 Changed: The music library no longer downloads every folder whole. Each folder keeps two unplayed tracks in `data\music-pack`, about 200 MB in all instead of 4.4 GB. A track is deleted once it has played and its replacement is in, and each folder fetches its next track from those not yet played, so a track comes back in a later round. With no network a folder keeps and repeats what it has. A folder that holds more tracks keeps two and deletes the rest at the next start. The setting's line reads like "4.4 GB in all. 76 tracks ready in 38 folders (198 MB)." Previous on a library track restarts it.
 
 Changed: Deleting the thumbs-down tracks builds each folder's new zip from the published zip, checked against the manifest's SHA-256, instead of from the tracks on this PC. A published zip that does not match leaves that folder queued, and a folder no longer needs to be downloaded here first.

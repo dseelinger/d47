@@ -51,6 +51,9 @@ public sealed record AudioMix
     /// <summary>Music starts quieter than everything else and ducks harder.</summary>
     public ChannelMix Music { get; init; } = new(0.5, Muted: false, DuckUnderSpeech: 0.2);
 
+    /// <summary>Podcasts pause while D47 speaks rather than ducking.</summary>
+    public ChannelMix Podcast { get; init; } = new(0.8, Muted: false, DuckUnderSpeech: 1.0);
+
     public ChannelMix Cue { get; init; } = ChannelMix.Full;
 
     /// <summary>Chatter not meant for the Commander sits below speech and does not duck.</summary>
@@ -65,19 +68,21 @@ public sealed record AudioMix
     /// <summary>What d47 sounded like before there was a mixer.</summary>
     public static readonly AudioMix Default = new();
 
-    /// <summary>The channels that can duck — everything except the two that are ducked under.</summary>
+    /// <summary>The channels that can duck: not the three that are ducked under, and not podcasts, which pause instead.</summary>
     public static bool Ducks(AudioChannel channel) =>
-        channel is not (AudioChannel.Speech or AudioChannel.Alert or AudioChannel.Overheard);
+        channel is not (AudioChannel.Speech or AudioChannel.Alert or AudioChannel.Overheard or AudioChannel.Podcast);
 
     public ChannelMix For(AudioChannel channel) => channel switch
     {
         AudioChannel.Bed => Bed,
         AudioChannel.Wait => Wait,
         AudioChannel.Music => Music,
+        AudioChannel.Podcast => Podcast,
         AudioChannel.Cue => Cue,
         AudioChannel.Overheard => Overheard,
+        AudioChannel.Speech => Speech,
         AudioChannel.Alert => Alert,
-        _ => Speech,
+        _ => throw new ArgumentOutOfRangeException(nameof(channel), channel, null),
     };
 
     public AudioMix With(AudioChannel channel, ChannelMix mix) => channel switch
@@ -85,9 +90,11 @@ public sealed record AudioMix
         AudioChannel.Bed => this with { Bed = mix },
         AudioChannel.Wait => this with { Wait = mix },
         AudioChannel.Music => this with { Music = mix },
+        AudioChannel.Podcast => this with { Podcast = mix },
         AudioChannel.Cue => this with { Cue = mix },
         AudioChannel.Overheard => this with { Overheard = mix },
+        AudioChannel.Speech => this with { Speech = mix },
         AudioChannel.Alert => this with { Alert = mix },
-        _ => this with { Speech = mix },
+        _ => throw new ArgumentOutOfRangeException(nameof(channel), channel, null),
     };
 }

@@ -31,12 +31,14 @@ public static class AudioCapability
             "Ambient music",
             "The background layer that follows what you are doing. To hear it instead of Elite's, set Elite's "
             + "music volume to zero (Options, Audio)."),
+        AudioChannel.Podcast => ("Podcasts", "Episodes from the podcast feeds you add. Pauses while D47 speaks."),
         AudioChannel.Cue => ("Sound cues", "The short markers for listening, thinking and answering."),
         AudioChannel.Overheard => (
             "Overheard chatter",
             "Invented radio traffic between other pilots and controllers, not meant for you."),
         AudioChannel.Speech => ("Speech", "Everything D47 says out loud."),
-        _ => ("Alerts", "The danger callouts, which are the one thing that cuts in mid-sentence."),
+        AudioChannel.Alert => ("Alerts", "The danger callouts, which are the one thing that cuts in mid-sentence."),
+        _ => throw new ArgumentOutOfRangeException(nameof(channel), channel, null),
     };
 
     /// <summary>The sound to listen to for a channel, and how to make it play.</summary>
@@ -48,13 +50,15 @@ public static class AudioCapability
                              + "with Waiting bed ticked in the Cues group",
         AudioChannel.Music => "the ambient music: with Elite's own music volume set to zero (Options, Audio) "
                               + "and ambient music playing",
+        AudioChannel.Podcast => "a podcast episode playing from a feed you added",
         AudioChannel.Cue => "the short sounds as listening starts, thinking starts and the reply finishes: hold "
                             + "push-to-talk and ask anything, with Sound cues ticked in the Cues group",
         AudioChannel.Overheard => "invented radio chatter between other pilots and controllers, which plays on "
                                   + "its own while you fly with the chatter callouts on (Settings › Other voices › "
                                   + "Chatter and messages)",
         AudioChannel.Speech => "D47's spoken replies: ask any question out loud and listen to the answer",
-        _ => "a spoken danger callout: cause one, such as dropping below the fuel warning or being interdicted",
+        AudioChannel.Alert => "a spoken danger callout: cause one, such as dropping below the fuel warning or being interdicted",
+        _ => throw new ArgumentOutOfRangeException(nameof(channel), channel, null),
     };
 
     private static string Where(AudioChannel channel)
@@ -449,7 +453,7 @@ public static class AudioCapability
             Kind = SettingKind.Info,
             Group = MusicGroup,
             GroupHelp = what,
-            DocsAnchor = "the-seven-categories",
+            DocsAnchor = "the-eight-categories",
             Binding = new SettingBinding
             {
                 Read = s => NowPlaying(musicState(), s.Audio.For(AudioChannel.Music).Muted),
@@ -474,7 +478,7 @@ public static class AudioCapability
             Kind = SettingKind.Info,
             Group = MusicGroup,
             GroupHelp = what,
-            DocsAnchor = "the-seven-categories",
+            DocsAnchor = "the-eight-categories",
             PressLabel = "Next",
             PressEnabled = s => CanStart(musicState(), s),
             Press = () => music(MusicAction.Next),
@@ -495,7 +499,7 @@ public static class AudioCapability
             Kind = SettingKind.Info,
             Group = MusicGroup,
             GroupHelp = what,
-            DocsAnchor = "the-seven-categories",
+            DocsAnchor = "the-eight-categories",
             PressLabel = "Previous",
             PressEnabled = s => CanControl(musicState(), s),
             Press = () => music(MusicAction.Previous),
@@ -619,9 +623,9 @@ public static class AudioCapability
             Maximum = 1,
             Group = group,
             GroupHelp = what,
-            // The page explains the seven categories together and has no heading per channel, so this points
+            // The page explains the eight categories together and has no heading per channel, so this points
             // at the section rather than at a heading that would have to be written to satisfy a link (#123).
-            DocsAnchor = "the-seven-categories",
+            DocsAnchor = "the-eight-categories",
             Binding = Bind(channel, mix => Number(mix.Level), (mix, v) => mix with { Level = Fraction(v, mix.Level) }),
         };
 
@@ -638,7 +642,7 @@ public static class AudioCapability
             Kind = SettingKind.Toggle,
             Group = group,
             GroupHelp = what,
-            DocsAnchor = "the-seven-categories",
+            DocsAnchor = "the-eight-categories",
             Binding = Bind(
                 channel,
                 mix => mix.Muted ? "true" : "false",

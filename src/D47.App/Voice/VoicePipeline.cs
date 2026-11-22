@@ -729,6 +729,9 @@ public sealed class VoicePipeline(
         // and a follow-up asked while the loop still sits in Answered goes unsuppressed (#61).
         _state = state;
 
+        // A settled outcome leaves its reply queued, and the queued speech holds a podcast from there.
+        arbiter.TurnInFlight = state is LoopState.Listening or LoopState.Transcribing or LoopState.Thinking or LoopState.Speaking;
+
         // Invented chatter gets out of the way the moment the Commander starts talking, or a turn starts
         // without them having talked at all — cut mid-word if it is playing, dropped if it is queued, and
         // refused until the loop settles, because the lines after it are synthesised while it is speaking
@@ -784,6 +787,7 @@ public sealed class VoicePipeline(
         }
 
         _state = LoopState.Idle;
+        arbiter.TurnInFlight = false;
 
         if (_gameRunning)
         {

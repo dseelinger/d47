@@ -81,13 +81,13 @@ public class TheLevelsAreOneMixerTableTests
     }
 
     [AvaloniaFact]
-    public void SevenChannelsAreNamedInOrderUnderOneHeader()
+    public void EightChannelsAreNamedInOrderUnderOneHeader()
     {
         using var look = AppLook.ControlKit();
         var host = Open(out _);
 
         Assert.Equal(
-            ["Thinking bed", "Waiting bed", "Ambient music", "Sound cues", "Overheard chatter", "Speech", "Alerts"],
+            ["Thinking bed", "Waiting bed", "Ambient music", "Podcasts", "Sound cues", "Overheard chatter", "Speech", "Alerts"],
             Channels(host).Select(NameOf));
 
         Assert.Equal(

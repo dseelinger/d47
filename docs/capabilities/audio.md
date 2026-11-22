@@ -77,12 +77,12 @@ nav_order: 123
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Every sound D47 makes belongs to one of seven categories, each with its own level, mute and duck.</p>
+<p class="intro">Every sound D47 makes belongs to one of eight categories, each with its own level and mute.</p>
 <section>
 <h2><span class="num">1</span> Each category has a level and a mute.</h2>
-<svg viewBox="0 0 880 150" role="img" aria-label="Seven categories: speech, alerts, overheard chatter, sound cues, thinking bed, waiting bed and ambient music">
+<svg viewBox="0 0 880 150" role="img" aria-label="Eight categories: speech, alerts, overheard chatter, podcasts, sound cues, thinking bed, waiting bed and ambient music">
  <rect x="20" y="24" width="840" height="46" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.5"/>
- <text x="440" y="53" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">SPEECH   ALERTS   OVERHEARD CHATTER</text>
+ <text x="440" y="53" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">SPEECH   ALERTS   OVERHEARD CHATTER   PODCASTS</text>
  <rect x="20" y="80" width="840" height="46" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/>
  <text x="440" y="109" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">SOUND CUES   THINKING BED   WAITING BED   AMBIENT MUSIC</text>
 </svg>
@@ -144,7 +144,7 @@ nav_order: 123
 How loud each kind of sound is, whether it is muted, and how far it drops out of the way while
 Directive 47 is speaking.
 
-### The seven categories
+### The eight categories
 
 Everything audible goes through one queue, and everything on that queue belongs to exactly one
 of these:
@@ -154,6 +154,7 @@ of these:
 | **Speech** | Everything D47 says out loud. |
 | **Alerts** | The danger callouts — interdiction, shields down, low fuel. The one thing that cuts in mid-sentence. |
 | **Overheard chatter** | Invented radio traffic between other pilots and controllers, not meant for you. |
+| **Podcasts** | Episodes from the podcast feeds you add. Pauses while D47 speaks. |
 | **Sound cues** | The short markers for listening, thinking and answering. |
 | **Thinking bed** | The loop that plays underneath a response while D47 works. |
 | **Waiting bed** | The loop that plays while a page waits on a search or a lookup. |
@@ -172,7 +173,7 @@ finish. Four things cut it, and a new turn also drops what the previous turn had
 | **An alert** | Anything being said, mid-word | Nothing; only "stop" overrules it |
 | **You starting to talk to it** | Invented NPC chatter, playing or queued | Everything else, including the sound cue |
 | **Elite closing** | Invented chatter and Narrator lines, playing or queued | Everything else |
-| **"Stop"** | Everything audible but music, including the alert | Music |
+| **"Stop"** | Everything audible but music, including the alert; a podcast is paused where it is | Music |
 
 The middle row fires when the microphone opens, and also when a turn starts without you having
 spoken, rather than when the answer arrives. It stays shut until the loop goes quiet again, so
@@ -196,8 +197,11 @@ The same drop applies while the microphone is open, whichever key, voice activit
 `1` does not duck at all. `0` goes silent until the sentence ends, or until the key is released. Out of the box the thinking
 bed and the waiting bed sit at `0.35`, the sound cues at `1`, and music at `0.2`.
 
-Speech, alerts and overheard chatter have no duck row. A row that does not apply is absent rather
-than greyed out.
+Speech, alerts, overheard chatter and podcasts have no duck row. A podcast pauses instead: while
+the microphone is open, while a turn is running, while speech or an alert plays or waits, and while
+a story plays. When the last of those ends it steps back two seconds and carries on, unless you
+paused it yourself. Invented chatter is not played over a podcast. A row that does not apply is
+absent rather than greyed out.
 
 ### Every voice at one loudness
 
@@ -216,6 +220,7 @@ Ambient music and overheard chatter arrive at half level, and music ducks to `0.
   "bed":    { "level": 1,   "muted": false, "duckUnderSpeech": 0.35 },
   "wait":   { "level": 1,   "muted": false, "duckUnderSpeech": 0.35 },
   "music":  { "level": 0.5, "muted": false, "duckUnderSpeech": 0.2 },
+  "podcast": { "level": 0.8, "muted": false, "duckUnderSpeech": 1 },
   "cue":    { "level": 1,   "muted": false, "duckUnderSpeech": 1 },
   "overheard": { "level": 0.5, "muted": false, "duckUnderSpeech": 1 },
   "speech": { "level": 1,   "muted": false, "duckUnderSpeech": 1 },

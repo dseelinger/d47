@@ -105,6 +105,15 @@ D47.Core.Adventures.AdventureWalkResult.Failed
 D47.Core.Adventures.Resolution.Succeeded
 D47.Core.AppPaths.Gutenberg
 D47.Core.Audio.AudioArbiter.Listening
+D47.Core.Audio.AudioArbiter.PausePodcast()
+D47.Core.Audio.AudioArbiter.PlayPodcast(D47.Core.Audio.MusicTrack, System.TimeSpan)
+D47.Core.Audio.AudioArbiter.PodcastFinished
+D47.Core.Audio.AudioArbiter.PodcastPlaying
+D47.Core.Audio.AudioArbiter.PodcastProgress()
+D47.Core.Audio.AudioArbiter.ResumePodcast()
+D47.Core.Audio.AudioArbiter.SeekPodcast(System.TimeSpan)
+D47.Core.Audio.AudioArbiter.StopPodcast()
+D47.Core.Audio.AudioArbiter.TurnInFlight
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
 D47.Core.Books.GutenbergBook

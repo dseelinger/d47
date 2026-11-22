@@ -140,6 +140,41 @@ public class AudioMixTests
         }
     }
 
+    /// <summary>A channel without its own case in the mixer takes another's name; every name is its own.</summary>
+    [Fact]
+    public void NoTwoChannelsShareAMixerName()
+    {
+        var rows = AudioCapability.Create().Settings.ToDictionary(row => row.Key, StringComparer.Ordinal);
+        var names = Enum.GetValues<AudioChannel>().Select(channel => rows[AudioCapability.LevelKey(channel)].Group).ToList();
+
+        Assert.Equal(names.Count, names.Distinct(StringComparer.Ordinal).Count());
+    }
+
+    /// <summary>Writing one channel's mix changes that channel and no other.</summary>
+    [Fact]
+    public void EachChannelWritesItsOwnMix()
+    {
+        var written = new ChannelMix(0.123, Muted: true, DuckUnderSpeech: 0.456);
+
+        foreach (var channel in Enum.GetValues<AudioChannel>())
+        {
+            var mix = AudioMix.Default.With(channel, written);
+
+            Assert.Equal(written, mix.For(channel));
+            Assert.All(
+                Enum.GetValues<AudioChannel>().Where(other => other != channel),
+                other => Assert.Equal(AudioMix.Default.For(other), mix.For(other)));
+        }
+    }
+
+    [Fact]
+    public void PodcastsDefaultToEightTenthsAndPauseRatherThanDuck()
+    {
+        Assert.Equal(new ChannelMix(0.8, Muted: false, DuckUnderSpeech: 1.0), AudioMix.Default.Podcast);
+        Assert.False(AudioMix.Ducks(AudioChannel.Podcast));
+        Assert.Equal("Podcasts", AudioCapability.Create().Settings.Single(row => row.Key == AudioCapability.LevelKey(AudioChannel.Podcast)).Group);
+    }
+
     /// <summary>The tools are the music transport, the audio player, the protected thumbs down and the protected delete; no tool sets a level or a mute.</summary>
     [Fact]
     public void TheModelCannotReachTheMixer()
