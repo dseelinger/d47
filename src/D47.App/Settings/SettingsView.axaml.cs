@@ -448,9 +448,8 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         content.IsVisible = expanded;
         _tabStripContent = content;
 
-        var count = rows.Count.ToString(CultureInfo.InvariantCulture);
-
-        string Said(bool open) => $"{(open ? "▾" : "▸")} SETTINGS {count}";
+        string Said(bool open) =>
+            $"{(open ? "▾" : "▸")} SETTINGS {rows.Count(r => r.Applies(settings.Current)).ToString(CultureInfo.InvariantCulture)}";
 
         var tile = new Button
         {
@@ -483,6 +482,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         Show(expanded);
         _tabStripHeader = Show;
         _barTool = tile;
+        _barToolRefreshes.Add(() => tile.Content = Said(content.IsVisible));
 
         tile.Click += (_, _) =>
         {

@@ -170,7 +170,9 @@ public static class TestSurface
         Func<CancellationToken, Task<string?>>? guardianTest = null,
         string? root = null,
         Func<SpeechCapability.SpeechSurface, SpeechCapability.SpeechSurface>? speech = null,
-        Func<ListeningCapability.ListeningSurface, ListeningCapability.ListeningSurface>? listening = null)
+        Func<ListeningCapability.ListeningSurface, ListeningCapability.ListeningSurface>? listening = null,
+        Func<bool>? musicMaintainer = null,
+        Func<int>? musicRejectCount = null)
     {
         var paths = new AppPaths(root ?? Path.Combine(FakeRoot, Guid.NewGuid().ToString("N")));
 
@@ -254,6 +256,8 @@ public static class TestSurface
                     FilesFor(paths),
                     NullLogger<D47.Core.Checklists.ChecklistProposalStore>.Instance),
                 () => null),
+            musicMaintainer: musicMaintainer,
+            musicRejectCount: musicRejectCount,
             audioDrops: () => "Nothing in the audio folder in a headless test.",
             ownAudio: () => D47.Core.Audio.OwnAudioReport.Of([], [], []),
             controlMusic: _ => "Music in a headless test.",
@@ -312,12 +316,15 @@ public static class TestSurface
         SpeechSpend? speechSpend = null,
         Action? forgetCorrections = null,
         Func<string, CancellationToken, Task<SecretCheck>>? verifyKey = null,
-        string? root = null)
+        string? root = null,
+        Func<bool>? musicMaintainer = null,
+        Func<int>? musicRejectCount = null)
     {
         var (settings, viewState, paths, _, _) = CreateFull(
             coverage, personas, voices, localVoice, recording, rescan,
             resetVoices: resetVoices, audition: audition, inputDevices: inputDevices,
-            speechSpend: speechSpend, forgetCorrections: forgetCorrections, verifyKey: verifyKey, root: root);
+            speechSpend: speechSpend, forgetCorrections: forgetCorrections, verifyKey: verifyKey, root: root,
+            musicMaintainer: musicMaintainer, musicRejectCount: musicRejectCount);
         return (settings, viewState, paths);
     }
 

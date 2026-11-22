@@ -317,6 +317,32 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
+    /// <summary>Media › Music's tile counts the rows the strip draws: four without a publish token, five with one, following a change while open (#2697).</summary>
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
+    public void TheMediaMusicTileCountsOnlyTheRowsDrawn()
+    {
+        var maintainer = false;
+        var (settings, viewState, paths) = TestSurface.Create(musicMaintainer: () => maintainer, musicRejectCount: () => 0);
+        var (view, window) = OpenStrip(settings, viewState, paths, "media-music", width: 900);
+
+        Assert.Contains("SETTINGS 4", (string)((Button)view.BarTool!).Content!, StringComparison.Ordinal);
+
+        maintainer = true;
+        view.Refresh();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("SETTINGS 5", (string)((Button)view.BarTool!).Content!, StringComparison.Ordinal);
+
+        maintainer = false;
+        view.Refresh();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Contains("SETTINGS 4", (string)((Button)view.BarTool!).Content!, StringComparison.Ordinal);
+
+        window.Close();
+    }
+
     /// <summary>Media › Movies' strip draws the push-to-talk row and no row for D47 speaking (#2673).</summary>
     [Trait("Category", "Integration")]
     [AvaloniaFact]
