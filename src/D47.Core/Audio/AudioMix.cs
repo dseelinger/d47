@@ -54,6 +54,9 @@ public sealed record AudioMix
     /// <summary>Podcasts pause while D47 speaks rather than ducking.</summary>
     public ChannelMix Podcast { get; init; } = new(0.8, Muted: false, DuckUnderSpeech: 1.0);
 
+    /// <summary>A film's soundtrack ducks under speech as music does.</summary>
+    public ChannelMix Video { get; init; } = new(0.8, Muted: false, DuckUnderSpeech: 0.2);
+
     public ChannelMix Cue { get; init; } = ChannelMix.Full;
 
     /// <summary>Chatter not meant for the Commander sits below speech and does not duck.</summary>
@@ -78,6 +81,7 @@ public sealed record AudioMix
         AudioChannel.Wait => Wait,
         AudioChannel.Music => Music,
         AudioChannel.Podcast => Podcast,
+        AudioChannel.Video => Video,
         AudioChannel.Cue => Cue,
         AudioChannel.Overheard => Overheard,
         AudioChannel.Speech => Speech,
@@ -91,6 +95,7 @@ public sealed record AudioMix
         AudioChannel.Wait => this with { Wait = mix },
         AudioChannel.Music => this with { Music = mix },
         AudioChannel.Podcast => this with { Podcast = mix },
+        AudioChannel.Video => this with { Video = mix },
         AudioChannel.Cue => this with { Cue = mix },
         AudioChannel.Overheard => this with { Overheard = mix },
         AudioChannel.Speech => this with { Speech = mix },

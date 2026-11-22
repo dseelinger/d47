@@ -175,6 +175,36 @@ public class AudioMixTests
         Assert.Equal("Podcasts", AudioCapability.Create().Settings.Single(row => row.Key == AudioCapability.LevelKey(AudioChannel.Podcast)).Group);
     }
 
+    [Fact]
+    public void VideoHasItsOwnMixAndDucksAsMusicDoes()
+    {
+        Assert.Equal(new ChannelMix(0.8, Muted: false, DuckUnderSpeech: 0.2), AudioMix.Default.Video);
+        Assert.True(AudioMix.Ducks(AudioChannel.Video));
+        Assert.Equal("Video", AudioCapability.Create().Settings.Single(row => row.Key == AudioCapability.LevelKey(AudioChannel.Video)).Group);
+    }
+
+    [Fact]
+    public void NoChannelTakesAnotherChannelsMix()
+    {
+        var mix = AudioMix.Default with
+        {
+            Bed = new(0.11, false, 0.11),
+            Wait = new(0.12, false, 0.12),
+            Music = new(0.13, false, 0.13),
+            Podcast = new(0.14, false, 0.14),
+            Video = new(0.15, false, 0.15),
+            Cue = new(0.16, false, 0.16),
+            Overheard = new(0.17, false, 0.17),
+            Speech = new(0.18, false, 0.18),
+            Alert = new(0.19, false, 0.19),
+        };
+
+        var levels = Enum.GetValues<AudioChannel>().Select(channel => mix.For(channel).Level).ToList();
+
+        Assert.Equal(9, levels.Count);
+        Assert.Equal(levels.Count, levels.Distinct().Count());
+    }
+
     /// <summary>The tools are the music transport, the audio player, the protected thumbs down and the protected delete; no tool sets a level or a mute.</summary>
     [Fact]
     public void TheModelCannotReachTheMixer()

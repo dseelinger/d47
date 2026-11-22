@@ -77,7 +77,7 @@ nav_order: 123
 <details class="d47-band">
 <summary>How it works</summary>
 <div class="d47-eli5"><div class="d47-frame">
-<p class="intro">Every sound D47 makes belongs to one of eight categories, each with its own level and mute.</p>
+<p class="intro">Every sound D47 makes belongs to one of nine categories, each with its own level and mute.</p>
 <section>
 <h2><span class="num">1</span> Each category has a level and a mute.</h2>
 <svg viewBox="0 0 880 150" role="img" aria-label="Eight categories: speech, alerts, overheard chatter, podcasts, sound cues, thinking bed, waiting bed and ambient music">
@@ -144,7 +144,7 @@ nav_order: 123
 How loud each kind of sound is, whether it is muted, and how far it drops out of the way while
 Directive 47 is speaking.
 
-### The eight categories
+### The nine categories
 
 Everything audible goes through one queue, and everything on that queue belongs to exactly one
 of these:
@@ -155,6 +155,7 @@ of these:
 | **Alerts** | The danger callouts — interdiction, shields down, low fuel. The one thing that cuts in mid-sentence. |
 | **Overheard chatter** | Invented radio traffic between other pilots and controllers, not meant for you. |
 | **Podcasts** | Episodes from the podcast feeds you add. Pauses while D47 speaks. |
+| **Video** | The soundtrack of a video you are watching. |
 | **Sound cues** | The short markers for listening, thinking and answering. |
 | **Thinking bed** | The loop that plays underneath a response while D47 works. |
 | **Waiting bed** | The loop that plays while a page waits on a search or a lookup. |

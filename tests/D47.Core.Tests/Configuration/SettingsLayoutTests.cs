@@ -198,9 +198,9 @@ public class SettingsLayoutTests
     {
         var surface = Surface();
 
-        Assert.Equal(29, EntryCount("sounds"));
+        Assert.Equal(32, EntryCount("sounds"));
         Assert.Equal(1, ShownCount(surface.Settings, "sounds"));
-        Assert.Equal(29, surface.Settings.RowsForPlace("sounds").Count);
+        Assert.Equal(32, surface.Settings.RowsForPlace("sounds").Count);
     }
 
     /// <summary>Media › Music's Page settings hold the five music rows in the design's order, and the transport rows are gone (#2683).</summary>

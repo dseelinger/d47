@@ -17,17 +17,20 @@ public enum AudioChannel
     /// <summary>A podcast episode, started with <see cref="AudioArbiter.PlayPodcast"/>; paused while D47 speaks or listens.</summary>
     Podcast = 3,
 
+    /// <summary>The soundtrack of a video being watched; ducks under speech as music does.</summary>
+    Video = 4,
+
     /// <summary>A short non-speech marker.</summary>
-    Cue = 4,
+    Cue = 5,
 
     /// <summary>Invented radio traffic not addressed to the Commander; yields to an answer and an alert.</summary>
-    Overheard = 5,
+    Overheard = 6,
 
     /// <summary>An answer, spoken.</summary>
-    Speech = 6,
+    Speech = 7,
 
     /// <summary>A journal-triggered danger callout (Phase 8).</summary>
-    Alert = 7,
+    Alert = 8,
 }
 
 /// <summary>One thing to make audible: carries exactly one of <see cref="Clip"/> and <see cref="Arriving"/>.</summary>
@@ -506,6 +509,10 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             else if (request.Channel == AudioChannel.Wait)
             {
                 throw new ArgumentException("The waiting loop is not queued; start it with OpenWait.", nameof(request));
+            }
+            else if (request.Channel == AudioChannel.Video)
+            {
+                throw new ArgumentException("A video's soundtrack is not queued.", nameof(request));
             }
             else if (request.Channel == AudioChannel.Podcast)
             {

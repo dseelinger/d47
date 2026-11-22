@@ -32,6 +32,7 @@ public static class AudioCapability
             "The background layer that follows what you are doing. To hear it instead of Elite's, set Elite's "
             + "music volume to zero (Options, Audio)."),
         AudioChannel.Podcast => ("Podcasts", "Episodes from the podcast feeds you add. Pauses while D47 speaks."),
+        AudioChannel.Video => ("Video", "The soundtrack of a video you are watching."),
         AudioChannel.Cue => ("Sound cues", "The short markers for listening, thinking and answering."),
         AudioChannel.Overheard => (
             "Overheard chatter",
@@ -51,6 +52,7 @@ public static class AudioCapability
         AudioChannel.Music => "the ambient music: with Elite's own music volume set to zero (Options, Audio) "
                               + "and ambient music playing",
         AudioChannel.Podcast => "a podcast episode playing from a feed you added",
+        AudioChannel.Video => "the soundtrack of a video you are watching",
         AudioChannel.Cue => "the short sounds as listening starts, thinking starts and the reply finishes: hold "
                             + "push-to-talk and ask anything, with Sound cues ticked in the Cues group",
         AudioChannel.Overheard => "invented radio chatter between other pilots and controllers, which plays on "
@@ -523,7 +525,7 @@ public static class AudioCapability
             GroupHelp = what,
             // The page explains the eight categories together and has no heading per channel, so this points
             // at the section rather than at a heading that would have to be written to satisfy a link (#123).
-            DocsAnchor = "the-eight-categories",
+            DocsAnchor = "the-nine-categories",
             Binding = Bind(channel, mix => Number(mix.Level), (mix, v) => mix with { Level = Fraction(v, mix.Level) }),
         };
 
@@ -540,7 +542,7 @@ public static class AudioCapability
             Kind = SettingKind.Toggle,
             Group = group,
             GroupHelp = what,
-            DocsAnchor = "the-eight-categories",
+            DocsAnchor = "the-nine-categories",
             Binding = Bind(
                 channel,
                 mix => mix.Muted ? "true" : "false",
