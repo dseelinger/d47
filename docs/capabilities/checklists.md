@@ -318,7 +318,7 @@ the panel is for.
 
 ### The Checklist page
 
-**The first page of the Commander tab**, on the bar after Stories — and on the headset panel too, which is the
+**The first page of the Commander tab**, on the bar after Search — and on the headset panel too, which is the
 whole reason it moved: it used to be a separate window, and a window cannot appear in VR at all,
 so a Commander with a headset on could not see their checklist.
 

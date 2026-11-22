@@ -14,8 +14,8 @@ public class TheTabsCanRunDownTheLeftTests
 {
     private static readonly string[] TabNames =
     [
-        "TranscriptTab", "StoriesTab", "CommanderTab", "AssetsTab",
-        "AstrometricsTab", "SettingsTab",
+        "TranscriptTab", "CommanderTab", "AssetsTab",
+        "AstrometricsTab", "StoriesTab", "MediaTab", "SettingsTab",
     ];
 
     /// <summary>A panel with every tab shown, as the desktop window has them once its hosts have furnished them.</summary>
@@ -129,7 +129,7 @@ public class TheTabsCanRunDownTheLeftTests
         window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Same(panel.FindControl<RadioButton>("StoriesTab"), TopLevel.GetTopLevel(panel)!.FocusManager!.GetFocusedElement());
+        Assert.Same(panel.FindControl<RadioButton>("CommanderTab"), TopLevel.GetTopLevel(panel)!.FocusManager!.GetFocusedElement());
 
         window.Close();
     }

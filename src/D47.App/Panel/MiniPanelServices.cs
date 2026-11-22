@@ -165,6 +165,7 @@ public sealed record MiniPanelServices
             view.EnableModules(Modules);
         }
 
+        view.EnableMedia();
         view.EnableRawJournal();
 
         view.EnableLog(BuildSettingsStrip is null ? null : () => BuildSettingsStrip(PanelView.LogRoot));

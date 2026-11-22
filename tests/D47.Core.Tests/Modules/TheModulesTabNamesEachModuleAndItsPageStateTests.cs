@@ -15,11 +15,11 @@ public class TheModulesTabNamesEachModuleAndItsPageStateTests
             id + ".exe");
 
     [Fact]
-    public void TheModulesTabSitsBetweenNavigationAndSettings()
+    public void TheModulesTabSitsBetweenMediaAndSettings()
     {
         var tabs = Enum.GetValues<PanelTab>().ToList();
 
-        Assert.Equal(tabs.IndexOf(PanelTab.Astrometrics) + 1, tabs.IndexOf(PanelTab.Modules));
+        Assert.Equal(tabs.IndexOf(PanelTab.Media) + 1, tabs.IndexOf(PanelTab.Modules));
         Assert.Equal(tabs.IndexOf(PanelTab.Modules) + 1, tabs.IndexOf(PanelTab.Settings));
     }
 

@@ -318,6 +318,8 @@ public partial class MainWindow : Window
             Panel.EnableSession(() => host.GameState.Active);
             Panel.EnableCommanders(host.Commanders);
 
+            Panel.EnableMedia();
+
             if (ModulesSource is { } modulesSource)
             {
                 Panel.EnableModules(modulesSource);

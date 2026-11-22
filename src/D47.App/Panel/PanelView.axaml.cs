@@ -142,6 +142,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         _assets = new AssetsFurnishing(this, PlanCarrierRoute);
         _navigation = new NavigationFurnishing(this, _carrierRoute);
         _modules = new ModulesFurnishing(this);
+        _media = new MediaFurnishing(this);
         _navigation.PlanRootMiniChanged += () => Dispatcher.UIThread.Post(ApplyChrome);
         InitializeComponent();
         StoryReadout.Moved += PlaceStoryProgress;
@@ -281,10 +282,11 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         _tabs[PanelTab.Transcript] = TranscriptTab;
         _tabs[PanelTab.Search] = SearchTab;
-        _tabs[PanelTab.Stories] = StoriesTab;
         _tabs[PanelTab.Commander] = CommanderTab;
         _tabs[PanelTab.Assets] = AssetsTab;
         _tabs[PanelTab.Astrometrics] = AstrometricsTab;
+        _tabs[PanelTab.Stories] = StoriesTab;
+        _tabs[PanelTab.Media] = MediaTab;
         _tabs[PanelTab.Modules] = ModulesTab;
         _tabs[PanelTab.Settings] = SettingsTab;
 
@@ -1065,6 +1067,10 @@ public partial class PanelView : UserControl, IPanelTabHost
     private readonly StoriesFurnishing _stories;
     private readonly NavigationFurnishing _navigation;
     private readonly ModulesFurnishing _modules;
+    private readonly MediaFurnishing _media;
+
+    /// <summary>Gives this surface the Media tab.</summary>
+    internal void EnableMedia() => _media.Enable();
 
     /// <summary>Gives this surface the Modules tab once a module is installed (#2083).</summary>
     internal void EnableModules(D47.App.Settings.ModulesSource source) => _modules.Enable(source);

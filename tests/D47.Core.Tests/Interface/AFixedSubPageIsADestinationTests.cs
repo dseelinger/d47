@@ -113,7 +113,7 @@ public class AFixedSubPageIsADestinationTests
         var nav = Furnished();
 
         Assert.Equal(
-            ["conversation", "adventures", "adventure.ask", "stories", "engineers", "engineers.route", "routing.plan", "routing.progress"],
+            ["conversation", "engineers", "engineers.route", "routing.plan", "routing.progress", "adventures", "adventure.ask", "stories"],
             nav.Destinations.Select(page => page.Key));
 
         var catalogue = nav.Destinations.Single(page => page.Key == "stories");

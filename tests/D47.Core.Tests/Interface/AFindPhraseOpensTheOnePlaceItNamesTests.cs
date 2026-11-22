@@ -118,7 +118,7 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
 
         Assert.Null(answer?.Open);
         Assert.Equal(
-            "Several places: Stories › Zorblax, Commander › Zorblax, or Asset Mgmt › Zorblax. Which one?",
+            "Several places: Commander › Zorblax, Asset Mgmt › Zorblax, or Astrometrics › Zorblax. Which one?",
             answer?.Said);
     }
 

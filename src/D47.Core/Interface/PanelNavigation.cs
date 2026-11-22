@@ -9,9 +9,6 @@ public enum PanelTab
     /// <summary>Looking things up: the star system page first, more kinds of search after it.</summary>
     Search,
 
-    /// <summary>Stories the Commander flies, told by the ship's AI (Phase 47).</summary>
-    Stories,
-
     /// <summary>The Commander's own record, starting with the checklist (#805).</summary>
     Commander,
 
@@ -23,6 +20,12 @@ public enum PanelTab
     /// trade routes.
     /// </summary>
     Astrometrics,
+
+    /// <summary>Stories the Commander flies, told by the ship's AI (Phase 47).</summary>
+    Stories,
+
+    /// <summary>Music, podcasts, books and movies (#2651).</summary>
+    Media,
 
     /// <summary>The installed modules and the pages they draw; furnished only when a module is installed (#2083).</summary>
     Modules,
