@@ -1,0 +1,52 @@
+name: book-catalogue
+
+# Builds the Project Gutenberg catalogue that d47 browses and publishes it as the asset gutenberg.tsv.gz of
+# the prerelease books-1. Each run reads pg_catalog.csv and rdf-files.tar.bz2 from gutenberg.pglaf.org and
+# replaces the asset. tools/book-catalogue.py describes the format.
+#
+# The release exists already as a prerelease created with --latest=false, because UpdateChecker reads
+# releases/latest to find app updates. This workflow does not create it. The last step fails if
+# releases/latest stops being the app's tag.
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: book-catalogue
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE: books-1
+      ASSET: gutenberg.tsv.gz
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the script on its fixture
+        run: python3 tools/book-catalogue.py --check tools/fixtures/book-catalogue
+
+      - name: Note the latest release
+        run: echo "LATEST_BEFORE=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)" >> "$GITHUB_ENV"
+
+      - name: Build the catalogue
+        run: |
+          mkdir work
+          python3 tools/book-catalogue.py --out "work/$ASSET"
+
+      - name: Publish the catalogue
+        run: gh release upload "$RELEASE" "work/$ASSET" --clobber
+
+      - name: Check the latest release is still the app's
+        run: |
+          now=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
+          if [ "$now" != "$LATEST_BEFORE" ] || [ "$now" = "$RELEASE" ]; then
+            echo "releases/latest was '$LATEST_BEFORE' and is now '$now'." >&2
+            exit 1
+          fi
