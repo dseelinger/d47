@@ -177,6 +177,8 @@ public class DroppedInAudioIsConvertedOnLoadTests : IDisposable
             Refuse
                 ? throw new AudioDecodeException(Reason)
                 : WavReader.Open(new MemoryStream(WavWriter.ToBytes(Pcm, AudioFormat.Standard)), "fake");
+
+        public IPcmStream Open(Stream source) => throw new NotSupportedException();
     }
 
     private FolderAudioSource Source(IAudioDecoder? decoder) =>

@@ -27,6 +27,7 @@ D47.App.Input.ChordSender.Recorded
 D47.App.Input.PushToTalkKey.Gesture
 D47.App.Input.ScancodeInjector.LastSequence
 D47.App.MainWindow.MainWindow()
+D47.App.Media.HttpRangeStream
 D47.App.Media.ScreenshotConverter.Running
 D47.App.Panel.AvatarView.Extent
 D47.App.Panel.AvatarView.Library
@@ -88,6 +89,7 @@ D47.App.Theming.RowFilter<TRow>.SetAll(string, int, bool)
 D47.App.Voice.VoicePipeline.GameRunning
 D47.App.Voice.VoicePipeline.Held
 D47.Audio.FadeSampleProvider.Level
+D47.Audio.MediaFoundationDecoder.Open(System.IO.Stream)
 D47.Core.Activities.ActivityCatalogue.ByKey(string)
 D47.Core.Activities.ActivityDate
 D47.Core.Adventures.AdventureGenerator.BaseStep.Is(D47.Core.Adventures.AdventureTrigger)
@@ -114,6 +116,8 @@ D47.Core.Audio.AudioArbiter.ResumePodcast()
 D47.Core.Audio.AudioArbiter.SeekPodcast(System.TimeSpan)
 D47.Core.Audio.AudioArbiter.StopPodcast()
 D47.Core.Audio.AudioArbiter.TurnInFlight
+D47.Core.Audio.IAudioDecoder.Open(System.IO.Stream)
+D47.Core.Audio.IPcmStream.CanSeek
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
 D47.Core.Books.GutenbergBook

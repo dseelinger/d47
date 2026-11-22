@@ -243,5 +243,7 @@ public sealed class ThumbsDownQueuesALibraryTrackTests : IDisposable
         public IPcmStream Open(string path) =>
             WavReader.OpenMusic(
                 new MemoryStream(WavWriter.ToBytes(new byte[480], AudioFormat.Standard)), "stub");
+
+        public IPcmStream Open(Stream source) => throw new NotSupportedException();
     }
 }

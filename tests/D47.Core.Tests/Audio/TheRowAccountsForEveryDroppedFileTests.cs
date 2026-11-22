@@ -89,5 +89,7 @@ public class TheRowAccountsForEveryDroppedFileTests : IDisposable
         public AudioClip Decode(string path, string name) => throw new AudioDecodeException(Reason);
 
         public IPcmStream Open(string path) => throw new AudioDecodeException(Reason);
+
+        public IPcmStream Open(Stream source) => throw new NotSupportedException();
     }
 }

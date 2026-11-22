@@ -15,4 +15,10 @@ public interface IAudioDecoder
 
     /// <summary>The file on demand, for music. Read on the thread that opens it.</summary>
     IPcmStream Open(string path);
+
+    /// <summary>
+    /// A seekable stream on demand, for a podcast episode. The returned stream owns <paramref name="source"/> and
+    /// disposes it. Read on the thread that opens it.
+    /// </summary>
+    IPcmStream Open(Stream source);
 }

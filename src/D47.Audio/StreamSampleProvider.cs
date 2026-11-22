@@ -5,10 +5,11 @@ using NAudio.Wave;
 namespace D47.Audio;
 
 /// <summary>
-/// A <see cref="MusicTrack"/> as a sample source. A feeder thread opens and reads the track, keeping a
-/// few seconds decoded ahead; the render side only copies out of that buffer. An underrun renders
-/// silence. The source ends once the track is read, no seek is waiting and the buffer is empty, or when
-/// the track fails. Position counts the frames copied out, so it stops while the playback is paused or held.
+/// A <see cref="MusicTrack"/> as a sample source. A feeder thread opens and reads the track, keeping
+/// <see cref="MusicTrack.ReadAhead"/>, or <see cref="Ahead"/> when the track sets none, decoded ahead; the
+/// render side only copies out of that buffer. An underrun renders silence. The source ends once the track is
+/// read, no seek is waiting and the buffer is empty, or when the track fails. Position counts the frames copied
+/// out, so it stops while the playback is paused or held.
 /// </summary>
 internal sealed class StreamSampleProvider : ISampleProvider, IDisposable
 {
@@ -20,6 +21,7 @@ internal sealed class StreamSampleProvider : ISampleProvider, IDisposable
     private const long NoLength = -1;
 
     private readonly MusicTrack _track;
+    private readonly TimeSpan _ahead;
     private readonly ILogger _logger;
     private readonly BufferedWaveProvider _buffer;
     private readonly CancellationTokenSource _stop = new();
@@ -47,12 +49,13 @@ internal sealed class StreamSampleProvider : ISampleProvider, IDisposable
     {
         _track = track;
         _logger = logger;
+        _ahead = track.ReadAhead ?? Ahead;
 
         var format = AudioFormat.Music;
 
         _buffer = new BufferedWaveProvider(new WaveFormat(format.SampleRate, 16, format.Channels))
         {
-            BufferDuration = Ahead + Ahead,
+            BufferDuration = _ahead + _ahead,
             ReadFully = false,
             DiscardOnBufferOverflow = false,
         };
@@ -150,7 +153,7 @@ internal sealed class StreamSampleProvider : ISampleProvider, IDisposable
     private void Feed()
     {
         var chunk = new byte[(int)(AudioFormat.Music.SampleRate * Chunk.TotalSeconds) * AudioFormat.Music.BytesPerFrame];
-        var ahead = (int)(AudioFormat.Music.SampleRate * Ahead.TotalSeconds) * AudioFormat.Music.BytesPerFrame;
+        var ahead = (int)(AudioFormat.Music.SampleRate * _ahead.TotalSeconds) * AudioFormat.Music.BytesPerFrame;
         WaitHandle[] waits = [_stop.Token.WaitHandle, _wake];
 
         try

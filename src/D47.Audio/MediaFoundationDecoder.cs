@@ -5,8 +5,8 @@ using NAudio.Wave.SampleProviders;
 namespace D47.Audio;
 
 /// <summary>
-/// Any file Windows' Media Foundation codecs read, resampled to 48 kHz: mono for <see cref="Decode"/>,
-/// stereo for <see cref="Open"/>.
+/// Any file or seekable stream Windows' Media Foundation codecs read, resampled to 48 kHz: mono for
+/// <see cref="Decode"/>, stereo for <c>Open</c>.
 /// </summary>
 public sealed class MediaFoundationDecoder : IAudioDecoder
 {
@@ -34,6 +34,39 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
 
     public IPcmStream Open(string path) => Open(path, AudioFormat.Music);
 
+    /// <summary>Refuses a stream that cannot seek, which Media Foundation cannot read.</summary>
+    public IPcmStream Open(Stream source)
+    {
+        if (!source.CanSeek)
+        {
+            source.Dispose();
+            throw new AudioDecodeException("The server sends this episode only from the start, and Windows cannot play it that way.");
+        }
+
+        MediaFoundationReader? reader = null;
+
+        try
+        {
+            // One source reader, not one for the format and another for the reads: a second reads the stream from
+            // the start again.
+            reader = new StreamMediaFoundationReader(
+                source, new MediaFoundationReader.MediaFoundationReaderSettings { SingleReaderObject = true });
+            return new PcmStream(null, reader, AudioFormat.Music.Channels, source);
+        }
+        catch (Exception ex)
+        {
+            reader?.Dispose();
+            source.Dispose();
+
+            if (IsCodecFailure(ex))
+            {
+                throw Undecodable(ex);
+            }
+
+            throw;
+        }
+    }
+
     private static PcmStream Open(string path, AudioFormat target)
     {
         MediaFoundationReader? reader = null;
@@ -41,7 +74,7 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
         try
         {
             reader = new MediaFoundationReader(path);
-            return new PcmStream(path, reader, target.Channels);
+            return new PcmStream(path, reader, target.Channels, null);
         }
         catch (Exception ex) when (IsCodecFailure(ex))
         {
@@ -87,9 +120,11 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
             ? new("Windows has no decoder for this file. On a Windows N edition, install the Media Feature Pack.", ex)
             : new($"Windows cannot decode it: {ex.Message}", ex);
 
-    private sealed class PcmStream(string path, WaveStream reader, int channels) : IPcmStream
+    /// <summary>Reads a file at <paramref name="path"/>, or <paramref name="source"/>, which it disposes, when path is null.</summary>
+    private sealed class PcmStream(string? path, WaveStream reader, int channels, Stream? source) : IPcmStream
     {
-        private readonly bool _decodeToSeek = Path.GetExtension(path).Equals(".flac", StringComparison.OrdinalIgnoreCase);
+        private readonly bool _decodeToSeek =
+            path is not null && Path.GetExtension(path).Equals(".flac", StringComparison.OrdinalIgnoreCase);
         private WaveStream _reader = reader;
         private IWaveProvider _pcm = Standardise(reader, channels);
         private byte[] _chunk = [];
@@ -152,7 +187,11 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
             }
         }
 
-        public void Dispose() => _reader.Dispose();
+        public void Dispose()
+        {
+            _reader.Dispose();
+            source?.Dispose();
+        }
 
         /// <summary>
         /// Media Foundation's FLAC source ignores a seek made before the first read and misplaces one made after it,
@@ -160,7 +199,7 @@ public sealed class MediaFoundationDecoder : IAudioDecoder
         /// </summary>
         private void DecodeTo(TimeSpan target)
         {
-            var opened = new MediaFoundationReader(path);
+            var opened = new MediaFoundationReader(path!);
             _reader.Dispose();
             _reader = opened;
 
