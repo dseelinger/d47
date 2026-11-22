@@ -28,6 +28,8 @@ public sealed class VrHost : IDisposable
     private readonly VrAvatarSurface _avatar;
     private readonly VrCaptionSurface _captions;
     private readonly CaptionLayer _layer;
+    private readonly VideoCaptions _videoCaptions;
+    private readonly WatchHost? _watch;
     private readonly ILogger<VrHost> _logger;
 
     private int _pending;
@@ -96,6 +98,7 @@ public sealed class VrHost : IDisposable
         IVrSession runtime,
         VrLifecycle lifecycle,
         MotionControllerButtons buttons,
+        WatchHost? watch,
         ILogger<VrHost> logger)
     {
         _settings = settings;
@@ -105,6 +108,8 @@ public sealed class VrHost : IDisposable
         _avatar = avatar;
         _captions = captions;
         _layer = layer;
+        _videoCaptions = new VideoCaptions(layer);
+        _watch = watch;
         _runtime = runtime;
         _lifecycle = lifecycle;
         _buttons = buttons;
@@ -299,6 +304,7 @@ public sealed class VrHost : IDisposable
         var host = self = new VrHost(
             settings, viewState, panel, avatar, captions, layer, runtime, lifecycle,
             controllerButtons ?? new MotionControllerButtons(),
+            watch,
             loggers.CreateLogger<VrHost>());
 
         host.Configure();
@@ -560,6 +566,9 @@ public sealed class VrHost : IDisposable
             // And a possible first's read-out on the mini panel, whose line shortens once a second (#2598).
             _panel.TickRegionFirst();
 
+            // And the Movies player or the mini panel's video, whose place moves while it plays.
+            _panel.TickMedia();
+
             Serve(context.Now);
         });
     }
@@ -590,6 +599,7 @@ public sealed class VrHost : IDisposable
         _panel.Enabled = !_panelHidden;
         _captions.Enabled = _settings.Current.Vr.Captions.Enabled;
         _layer.Tick(now);
+        _videoCaptions.Serve(_watch, _panel.VideoArea is not null);
         _avatar.Advance(now);
 
         try

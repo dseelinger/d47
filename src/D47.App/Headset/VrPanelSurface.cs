@@ -368,6 +368,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Shows, redraws once a second and takes down a possible first's read-out on the mini panel.</summary>
     public void TickRegionFirst() => _dirty |= _view.TickRegionFirst();
 
+    /// <summary>Redraws the Movies player or the mini panel's video when what it shows changed.</summary>
+    public void TickMedia() => _dirty |= _view.TickMedia();
+
     /// <summary>One frame of the d47 is composing animation (asked for 2026-08-22).</summary>
     public void TickAdventures() => _dirty |= _view.TickAdventures();
 

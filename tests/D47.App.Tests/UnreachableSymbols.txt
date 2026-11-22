@@ -156,8 +156,6 @@ D47.Core.Speech.LocalVoiceStandIn.Installed
 D47.Core.Stories.StoryCatalog.Faults()
 D47.Core.Stories.StoryChapterArchive.Changed
 D47.Core.Utilities.AlarmStore.Changed
-D47.Core.Vr.CaptionLayer.At(System.TimeSpan)
-D47.Core.Vr.CaptionLayer.Follow(System.Collections.Generic.IReadOnlyList<D47.Core.Vr.SubtitleCue>)
 D47.Core.Vr.VrLifecycle.Changed
 D47.Core.Watches.WatchStore.Changed
 D47.Knowledge.CanonnBiologyService.SystemRecordAsync(string, System.Threading.CancellationToken)

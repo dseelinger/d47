@@ -12,9 +12,14 @@ internal sealed class MediaFurnishing(IPanelTabHost host)
     public const string MoviesRoot = "media-movies";
 
     private bool _furnished;
+    private WatchHost? _watch;
+    private VideoMini? _moviesMini;
 
     /// <summary>The book on the mini panel, once Books is furnished.</summary>
     public BookMini? BooksMini { get; private set; }
+
+    /// <summary>The video on the mini panel, once Movies is furnished.</summary>
+    public VideoMini? MoviesMini => _watch is null ? null : _moviesMini ??= new VideoMini(_watch, host.Headset);
 
     /// <param name="music">What the Music page reads, or null where the surface has none.</param>
     /// <param name="podcasts">What the Podcasts page reads, or null where the surface has none.</param>
@@ -30,6 +35,7 @@ internal sealed class MediaFurnishing(IPanelTabHost host)
 
         _furnished = true;
         BooksMini = books is null ? null : new BookMini(books);
+        _watch = watch;
 
         var help = D47.Core.Capabilities.Builtin.InterfaceCapability.Id;
 

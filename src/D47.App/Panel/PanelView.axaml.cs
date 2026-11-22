@@ -1073,8 +1073,78 @@ public partial class PanelView : UserControl, IPanelTabHost
     private readonly MediaFurnishing _media;
 
     /// <summary>Gives this surface the Media tab.</summary>
-    internal void EnableMedia(PodcastsHost? podcasts = null, Func<string, Control?>? settingsStrip = null, MusicHost? music = null, BooksHost? books = null, WatchHost? watch = null) =>
+    internal void EnableMedia(PodcastsHost? podcasts = null, Func<string, Control?>? settingsStrip = null, MusicHost? music = null, BooksHost? books = null, WatchHost? watch = null)
+    {
         _media.Enable(music, podcasts, books, settingsStrip, watch);
+
+        if (watch is not null && !_followsVideo)
+        {
+            _followsVideo = true;
+            watch.Moved += screen => Dispatcher.UIThread.Post(() => ShowVideoOn(watch, screen));
+        }
+    }
+
+    private bool _followsVideo;
+
+    /// <summary>
+    /// Opens the current title's player on this surface when the picture moved to it: the headset for either panel, the
+    /// desktop strip for the mini panel.
+    /// </summary>
+    private void ShowVideoOn(WatchHost watch, VideoScreen screen)
+    {
+        var here = Classes.Contains("headset")
+            ? screen != VideoScreen.Window
+            : screen == VideoScreen.MiniPanel && Mode == PanelMode.Mini;
+
+        if (!here || watch.Current is not { } title)
+        {
+            return;
+        }
+
+        var crumb = VideoPlayerPage.CrumbOf(title);
+
+        if (Tab != PanelTab.Media || Nav.DestinationKey != crumb.Key)
+        {
+            Nav.GoTo(PanelTab.Media, crumb);
+        }
+    }
+
+    /// <summary>Refreshes the Movies player or the mini panel's video, from the host's tick; true when either drew something new.</summary>
+    public bool TickMedia()
+    {
+        if (Tab != PanelTab.Media || Nav.RootKeyOf(Tab) != MediaFurnishing.MoviesRoot)
+        {
+            return false;
+        }
+
+        var moved = false;
+
+        foreach (var visual in this.GetVisualDescendants())
+        {
+            moved |= visual switch
+            {
+                VideoPlayerPage page when Shows(page) => page.Tick(),
+                VideoMini mini when Shows(mini) => mini.Tick(),
+                _ => false,
+            };
+        }
+
+        return moved;
+    }
+
+    /// <summary>Whether <paramref name="control"/> and every parent up to this surface are visible; true on a surface that is never shown.</summary>
+    private bool Shows(Visual control)
+    {
+        for (var at = control; at is not null && !ReferenceEquals(at, this); at = at.GetVisualParent())
+        {
+            if (!at.IsVisible)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /// <summary>Gives this surface the Modules tab once a module is installed (#2083).</summary>
     internal void EnableModules(D47.App.Settings.ModulesSource source) => _modules.Enable(source);
@@ -2643,6 +2713,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             PanelTab.Stories => _stories.Mini,
             PanelTab.Media when Nav.RootKeyOf(Tab) == MediaFurnishing.BooksRoot => _media.BooksMini,
+            PanelTab.Media when Nav.RootKeyOf(Tab) == MediaFurnishing.MoviesRoot => _media.MoviesMini,
             PanelTab.Astrometrics when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _navigation.PlanRootMini,
             PanelTab.Astrometrics when Nav.RootKeyOf(Tab) == RoutingPages.GalaxyMapRoot => _navigation.GalaxyMini,
             _ => null,
@@ -2661,6 +2732,12 @@ public partial class PanelView : UserControl, IPanelTabHost
         ApplyRegionFirst();
         ApplyStoryReadout();
         ApplyBindingConflicts();
+
+        // The video's picture fills mini's text area to its edges.
+        if (!full && MiniPane.IsVisible && MiniPane.Child is VideoMini)
+        {
+            Frame.Margin = default;
+        }
 
         // No tab has a frame of its own: the edge is the window's. The page's own bar keeps its inset.
         PageBar.Margin = transcript ? new Thickness(0, 8, 0, 0) : new Thickness(14, 12, 14, 0);

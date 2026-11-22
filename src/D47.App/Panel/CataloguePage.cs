@@ -371,7 +371,7 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
     {
         if (Chosen is { Playable: true } title)
         {
-            WatchPage.OpenPlayer(_nav, _host, title, start: true);
+            WatchPage.OpenPlayer(_nav, _host, title, start: true, headset: _big);
         }
     }
 }

@@ -118,12 +118,13 @@ public sealed class WatchPage : UserControl, IPageSummary, IPageChrome, IFiltera
     public static NavCrumb CatalogueCrumb { get; } = new(CatalogueKey, "Catalogue") { Help = InterfaceCapability.Id, Whole = true };
 
     /// <summary>Opens the player page for <paramref name="title"/> directly below Movies, however the Commander got there.</summary>
-    public static bool OpenPlayer(PanelNavigator nav, WatchHost host, VideoTitle title, bool start)
+    public static bool OpenPlayer(PanelNavigator nav, WatchHost host, VideoTitle title, bool start, bool headset = false)
     {
         host.Open(title);
 
         if (start)
         {
+            host.PlaysHere(headset);
             host.Play(title);
         }
 
@@ -168,7 +169,7 @@ public sealed class WatchPage : UserControl, IPageSummary, IPageChrome, IFiltera
         var title = _host.FileTitle(path);
 
         _host.Store.Add(title.Source, title.Id, DateTimeOffset.UtcNow, title);
-        OpenPlayer(_nav, _host, title, start: true);
+        OpenPlayer(_nav, _host, title, start: true, headset: _big);
     }
 
     private async Task<string?> PickAsync()
@@ -261,7 +262,7 @@ public sealed class WatchPage : UserControl, IPageSummary, IPageChrome, IFiltera
             };
             AutomationProperties.SetName(row, title.Title);
             ListRow.Dress(row);
-            row.Click += (_, _) => OpenPlayer(_nav, _host, title, start: title.Playable);
+            row.Click += (_, _) => OpenPlayer(_nav, _host, title, start: title.Playable, headset: _big);
             column.Children.Add(row);
         }
 

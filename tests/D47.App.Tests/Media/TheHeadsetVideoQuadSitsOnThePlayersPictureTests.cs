@@ -139,6 +139,7 @@ public sealed class TheHeadsetVideoQuadSitsOnThePlayersPictureTests
         Assert.True(panel.Nav.Select(PanelTab.Media));
         Assert.True(panel.Nav.SelectRoot(MediaFurnishing.MoviesRoot));
         Assert.True(WatchPage.OpenPlayer(panel.Nav, host, Moon, start: false));
+        host.MoveTo(VideoScreen.BigPanel);
         Dispatcher.UIThread.RunJobs();
 
         return (panel, host);

@@ -1,12 +1,10 @@
 using System.Globalization;
-using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Media;
@@ -56,6 +54,11 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
     public const string NotKept = "This title is not in your list or carrying on.";
 
+    /// <summary>The width and height of the picture on the big panel, which the headset's video quad covers.</summary>
+    public const double BigPictureWidth = 640;
+
+    public const double BigPictureHeight = 360;
+
     private const double CaptionSize = 20;
 
     private static readonly TimeSpan PollEvery = TimeSpan.FromMilliseconds(40);
@@ -67,26 +70,9 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     private readonly bool _big;
     private readonly DispatcherTimer _poll = new();
     private readonly Image _picture = new() { Stretch = Stretch.Uniform, Name = PictureName };
-    private readonly TextBlock _caption = new()
-    {
-        Name = CaptionName,
-        FontFamily = new FontFamily("Segoe UI"),
-        FontWeight = FontWeight.SemiBold,
-        FontSize = CaptionSize,
-        Foreground = Brushes.White,
-        TextAlignment = TextAlignment.Center,
-        TextWrapping = TextWrapping.Wrap,
-    };
-
-    private readonly Border _captionBand = new()
-    {
-        Background = ThemeManager.Scrim(),
-        Padding = new Thickness(20, 8),
-        HorizontalAlignment = HorizontalAlignment.Center,
-        VerticalAlignment = VerticalAlignment.Bottom,
-        Margin = new Thickness(20),
-        IsVisible = false,
-    };
+    private readonly TextBlock _caption;
+    private readonly Border _captionBand;
+    private readonly TextBlock _elsewhere = Typeset.Mono(string.Empty, 12, ThemeManager.Grey2Key, horizontal: HorizontalAlignment.Center, vertical: VerticalAlignment.Center);
 
     private readonly StatusLine _wait = new() { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(20) };
     private readonly Notice _stopped = new(NoticeLevel.Error) { IsVisible = false };
@@ -114,6 +100,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     private (bool None, bool On)? _captionState;
     private (VideoFailure? Failure, string Text)? _failureState;
     private string? _waitingFor;
+    private string? _ticked;
 
     public VideoPlayerPage(WatchHost host, VideoTitle title, Control? settingsStrip = null, bool big = false)
     {
@@ -121,6 +108,8 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         BarTool = PageChrome.ToolOf(settingsStrip);
         _title = title;
         _big = big;
+        (_captionBand, _caption) = FrameBitmap.Caption(CaptionSize, new Thickness(20, 8), new Thickness(20));
+        _caption.Name = CaptionName;
 
         _bar.Draggable = !big;
         _poll.Interval = big ? PollEveryInHeadset : PollEvery;
@@ -145,7 +134,11 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         _back.Click += (_, _) => Skip(-VideoPlayback.SkipBy);
         _forward.Click += (_, _) => Skip(VideoPlayback.SkipBy);
         _play.Click += (_, _) => PlayOrPause();
-        _fromStart.Click += (_, _) => _host.FromStart();
+        _fromStart.Click += (_, _) =>
+        {
+            _host.PlaysHere(_big);
+            _host.FromStart();
+        };
 
         _pushToTalk.Name = PushToTalkName;
         _pushToTalk.IsCheckedChanged += (_, _) =>
@@ -164,18 +157,31 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             }
         };
 
-        _playsOn.ItemsSource = ["THIS WINDOW", "BIG PANEL", "MINI PANEL"];
-        _playsOn.Statuses =
-        [
-            new ChoiceStatus("Desktop", ChoiceTone.Grey),
-            new ChoiceStatus("Headset", ChoiceTone.Grey),
-            new ChoiceStatus("Desktop and headset", ChoiceTone.Grey),
-        ];
-        _playsOn.SelectedIndex = 0;
-        _playsOn.SetOptionEnabled(1, false);
-        _playsOn.SetOptionEnabled(2, false);
+        if (big)
+        {
+            _playsOn.ItemsSource = ["BIG PANEL", "MINI PANEL"];
+        }
+        else
+        {
+            _playsOn.ItemsSource = ["THIS WINDOW", "BIG PANEL", "MINI PANEL"];
+            _playsOn.Statuses =
+            [
+                new ChoiceStatus("Desktop", ChoiceTone.Grey),
+                new ChoiceStatus("Headset", ChoiceTone.Grey),
+                new ChoiceStatus("Desktop and headset", ChoiceTone.Grey),
+            ];
+        }
 
-        _captions.ItemsSource = ["SUBTITLE FILE", "WRITE FROM THE SOUND", "OFF"];
+        _playsOn.SelectedIndex = IndexOf(_host.PlaysOn);
+        _playsOn.SelectionChanged += (_, _) =>
+        {
+            if (!_refreshing && ScreenAt(_playsOn.SelectedIndex) is { } screen)
+            {
+                _host.MoveTo(screen);
+            }
+        };
+
+        _captions.ItemsSource = big ? ["FILE", "WRITE", "OFF"] : ["SUBTITLE FILE", "WRITE FROM THE SOUND", "OFF"];
         _captions.SelectionChanged += (_, _) =>
         {
             if (!_refreshing && _captions.SelectedIndex is 0 or 2)
@@ -189,9 +195,8 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         var write = new Button { Content = "WRITE CAPTIONS", MinHeight = TypeScale.MinimumTarget, IsEnabled = false };
         _noSubtitles.Actions.Add(write);
 
-        _captionBand.Child = _caption;
-
         var frame = new Grid { Background = Brushes.Black, MinHeight = 120 };
+        frame.Children.Add(_elsewhere);
         frame.Children.Add(_picture);
         frame.Children.Add(_wait);
         frame.Children.Add(_captionBand);
@@ -202,7 +207,17 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             Name = "VideoFrame",
         };
         ThemeInk.Bind(picture, Border.BorderBrushProperty, ThemeManager.Line2Key);
-        picture.SizeChanged += (_, e) => picture.Height = Math.Max(120, e.NewSize.Width * 9 / 16);
+
+        if (big)
+        {
+            picture.Width = BigPictureWidth + 2;
+            picture.Height = BigPictureHeight + 2;
+            picture.HorizontalAlignment = HorizontalAlignment.Left;
+        }
+        else
+        {
+            picture.SizeChanged += (_, e) => picture.Height = Math.Max(120, e.NewSize.Width * 9 / 16);
+        }
 
         var timeline = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
         _elapsed.Width = 76;
@@ -215,15 +230,29 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
         var tiles = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,2*,*,*"),
+            ColumnDefinitions = new ColumnDefinitions(big ? "*,*,*" : "*,2*,*,*"),
             ColumnSpacing = Gaps.Tile,
-            Children = { _back, _play, _forward, _fromStart },
+            Children = { _back, _play, _forward },
         };
         Grid.SetColumn(_play, 1);
         Grid.SetColumn(_forward, 2);
-        Grid.SetColumn(_fromStart, 3);
 
-        var left = new StackPanel { Spacing = 12, Children = { picture, timeline, tiles } };
+        if (!big)
+        {
+            tiles.Children.Add(_fromStart);
+            Grid.SetColumn(_fromStart, 3);
+        }
+
+        Content = big
+            ? BigPage(new StackPanel { Spacing = 8, Children = { picture, timeline } }, tiles, title, settingsStrip)
+            : WindowPage(new StackPanel { Spacing = 12, Children = { picture, timeline, tiles } }, title, settingsStrip);
+
+        Refresh();
+    }
+
+    /// <summary>The window's player: the picture and its slabs side by side, then Plays on, Captions and Sound.</summary>
+    private DockPanel WindowPage(Control left, VideoTitle title, Control? settingsStrip)
+    {
 
         var slabs = new StackPanel
         {
@@ -232,26 +261,20 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             {
                 Datum("Your place", _place),
                 Datum("Length", _videoLength),
-                Datum("Credit", Typeset.Prose(title.Credit ?? WatchHost.SourceOf(title).Split(" · ")[0], 13, ThemeManager.WhiteKey, wrap: true)),
+                Datum("Credit", Typeset.Prose(CreditOf(title), 13, ThemeManager.WhiteKey, wrap: true)),
                 Datum("Licence", Typeset.Prose(string.IsNullOrEmpty(title.Licence) ? "Your own file" : title.Licence, 13, ThemeManager.WhiteKey, wrap: true)),
                 Datum("Plays from", _playsFrom),
                 Datum("Video", _videoKind),
             },
         };
 
-        var top = _big
-            ? (Control)new StackPanel { Spacing = 16, Children = { left, slabs } }
-            : new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions("*,300"),
-                ColumnSpacing = 28,
-                Children = { left, slabs },
-            };
-
-        if (!_big)
+        var top = new Grid
         {
-            Grid.SetColumn(slabs, 1);
-        }
+            ColumnDefinitions = new ColumnDefinitions("*,300"),
+            ColumnSpacing = 28,
+            Children = { left, slabs },
+        };
+        Grid.SetColumn(slabs, 1);
 
         var body = new StackPanel
         {
@@ -273,6 +296,47 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             },
         };
 
+        return Scrolled(body, settingsStrip);
+    }
+
+    /// <summary>
+    /// The big panel's player: the 640×360 picture over its timeline, and beside it the tiles, Your place, Credit,
+    /// Plays on and Captions, so the picture and every control fit the panel's 640 pixels of height without scrolling.
+    /// </summary>
+    private DockPanel BigPage(Control left, Control tiles, VideoTitle title, Control? settingsStrip)
+    {
+        var side = new StackPanel
+        {
+            Spacing = Gaps.Tile,
+            Children =
+            {
+                tiles,
+                Datum("Your place", _place),
+                Datum("Credit", Typeset.Prose(CreditOf(title), 13, ThemeManager.WhiteKey, wrap: true)),
+                Head("Plays on"),
+                _playsOn,
+                Head("Captions"),
+                _captions,
+            },
+        };
+
+        left.Width = BigPictureWidth + 2;
+
+        var top = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            ColumnSpacing = 20,
+            Children = { left, side },
+        };
+        Grid.SetColumn(side, 1);
+
+        var body = new StackPanel { Spacing = 12, Children = { _stopped, top } };
+
+        return Scrolled(body, settingsStrip);
+    }
+
+    private static DockPanel Scrolled(Control body, Control? settingsStrip)
+    {
         var page = new DockPanel();
 
         if (settingsStrip is not null)
@@ -287,10 +351,10 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
         });
 
-        Content = page;
-
-        Refresh();
+        return page;
     }
+
+    private static string CreditOf(VideoTitle title) => title.Credit ?? WatchHost.SourceOf(title).Split(" · ")[0];
 
     public Control? BarTool { get; }
 
@@ -362,6 +426,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         }
         else
         {
+            _host.PlaysHere(_big);
             _host.Play(_title, to);
         }
     }
@@ -385,6 +450,11 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             if (!IsCurrent)
             {
                 _host.Open(_title);
+            }
+
+            if (!HasVideo)
+            {
+                _host.PlaysHere(_big);
             }
 
             _host.Resume();
@@ -423,11 +493,21 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             _videoLength.Text = length is { } whole ? WatchPage.Clock(whole) : "Not given";
             _playsFrom.Text = _title.Media is { IsFile: false, Host: { Length: > 0 } host } ? host : "This computer";
 
-            ShowFrame(loaded ? video.Frame : null);
+            var here = _host.PlaysOn == Here;
+            _playsOn.SelectedIndex = IndexOf(_host.PlaysOn);
+            _picture.IsVisible = here;
+            _elsewhere.IsVisible = !here;
+            _elsewhere.Text = here ? string.Empty : Elsewhere(_host.PlaysOn);
+
+            if (here)
+            {
+                ShowFrame(loaded ? video.Frame : null);
+            }
+
             DrawKind(loaded ? video.Frame : null);
             DrawWait(state);
             DrawFailure(loaded ? video.Failure : null, position);
-            DrawCaptions(position);
+            DrawCaptions(position, here && !_big);
 
             _pushToTalk.IsChecked = _host.PauseForPushToTalk;
             _volume.Value = _host.Volume;
@@ -467,10 +547,13 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         }
     }
 
-    private string SourceName() =>
-        _title.Source == WatchHost.FileSource || !VideoSources.All.Contains(_title.Source, StringComparer.Ordinal)
+    private string SourceName() => SourceName(_title);
+
+    /// <summary>The source a title streams from, by name, or "this file".</summary>
+    internal static string SourceName(VideoTitle title) =>
+        title.Source == WatchHost.FileSource || !VideoSources.All.Contains(title.Source, StringComparer.Ordinal)
             ? "this file"
-            : VideoSources.NameOf(_title.Source);
+            : VideoSources.NameOf(title.Source);
 
     private void DrawFailure(VideoFailure? failure, TimeSpan position)
     {
@@ -514,11 +597,12 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         _stopped.Detail = $"MEDIA FOUNDATION · NO DECODER · {Path.GetFileName(_title.Media?.IsFile == true ? _title.Media.LocalPath : _title.Media?.AbsolutePath ?? string.Empty)}";
     }
 
-    private void DrawCaptions(TimeSpan position)
+    /// <param name="over">Whether the cue is drawn over the picture; the headset's caption band shows it otherwise.</param>
+    private void DrawCaptions(TimeSpan position, bool over)
     {
         var cues = IsCurrent ? _host.Cues : [];
         var none = _title.Subtitles is null || (IsCurrent && !_host.CuesLoading && cues.Count == 0);
-        var cue = _host.CaptionsOn && !none ? SubtitleCues.At(cues, position) : null;
+        var cue = over && _host.CaptionsOn && !none ? SubtitleCues.At(cues, position) : null;
 
         _caption.Text = cue?.Text ?? string.Empty;
         _captionBand.IsVisible = cue is not null;
@@ -531,44 +615,91 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
         _captionState = (none, _host.CaptionsOn);
 
-        _captions.Statuses =
-        [
-            new ChoiceStatus(none ? "None for this title" : _title.Source == WatchHost.FileSource ? "Beside the video" : "From the source", none ? ChoiceTone.Grey : ChoiceTone.Yellow),
-            new ChoiceStatus("As it plays · Whisper", ChoiceTone.Grey),
-            new ChoiceStatus("No captions", ChoiceTone.Grey),
-        ];
+        if (!_big)
+        {
+            _captions.Statuses =
+            [
+                new ChoiceStatus(none ? "None for this title" : _title.Source == WatchHost.FileSource ? "Beside the video" : "From the source", none ? ChoiceTone.Grey : ChoiceTone.Yellow),
+                new ChoiceStatus("As it plays · Whisper", ChoiceTone.Grey),
+                new ChoiceStatus("No captions", ChoiceTone.Grey),
+            ];
+        }
         _captions.SetOptionEnabled(0, !none);
         _captions.SetOptionEnabled(1, false);
         _captions.SelectedIndex = _host.CaptionsOn && !none ? 0 : 2;
     }
 
+    /// <summary>Draws the newest picture; on the big panel only the first of each size, since the headset's quad covers it.</summary>
     private void ShowFrame(VideoFrame? frame)
     {
-        if (frame is null || ReferenceEquals(frame, _shown))
+        if (frame is null
+            || ReferenceEquals(frame, _shown)
+            || (_big && _bitmap is { } drawn && drawn.PixelSize == new PixelSize(frame.Width, frame.Height)))
         {
             return;
         }
 
         _shown = frame;
+        var bitmap = FrameBitmap.Draw(frame, _bitmap);
 
-        if (_bitmap is null || _bitmap.PixelSize.Width != frame.Width || _bitmap.PixelSize.Height != frame.Height)
+        if (!ReferenceEquals(bitmap, _bitmap))
         {
-            _bitmap = new WriteableBitmap(new PixelSize(frame.Width, frame.Height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
-            _picture.Source = _bitmap;
-        }
-
-        using (var buffer = _bitmap.Lock())
-        {
-            var row = frame.Width * 4;
-
-            for (var y = 0; y < frame.Height; y++)
-            {
-                Marshal.Copy(frame.Pixels, y * row, buffer.Address + (y * buffer.RowBytes), row);
-            }
+            _bitmap = bitmap;
+            _picture.Source = bitmap;
         }
 
         _picture.InvalidateVisual();
     }
+
+    /// <summary>Refreshes from the headset's tick; true when anything drawn changed since the last tick.</summary>
+    internal bool Tick()
+    {
+        Refresh();
+
+        var drawn = string.Join(
+            '|',
+            _elapsed.Text,
+            _play.Content,
+            _picture.IsVisible,
+            _bitmap?.PixelSize,
+            _elsewhere.Text,
+            _failureState?.Text,
+            _failureState?.Failure,
+            _waitingFor,
+            _caption.Text,
+            _playsOn.SelectedIndex,
+            _captions.SelectedIndex,
+            _back.IsEnabled);
+
+        if (drawn == _ticked)
+        {
+            return false;
+        }
+
+        _ticked = drawn;
+        return true;
+    }
+
+    private VideoScreen Here => _big ? VideoScreen.BigPanel : VideoScreen.Window;
+
+    /// <summary>The Plays on option for <paramref name="screen"/>, or -1 where this page does not offer it.</summary>
+    private int IndexOf(VideoScreen screen) =>
+        _big
+            ? screen switch { VideoScreen.BigPanel => 0, VideoScreen.MiniPanel => 1, _ => -1 }
+            : (int)screen;
+
+    private VideoScreen? ScreenAt(int index) =>
+        _big
+            ? index switch { 0 => VideoScreen.BigPanel, 1 => VideoScreen.MiniPanel, _ => null }
+            : index is >= 0 and <= 2 ? (VideoScreen)index : null;
+
+    /// <summary>What the picture area says while the picture is on another screen.</summary>
+    internal static string Elsewhere(VideoScreen screen) => screen switch
+    {
+        VideoScreen.BigPanel => "Playing on the big panel.",
+        VideoScreen.MiniPanel => "Playing on the mini panel.",
+        _ => "Playing in the d47 window.",
+    };
 
     private Control VolumeRow()
     {

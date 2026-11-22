@@ -33,6 +33,7 @@ public sealed class WatchHost : IDisposable
     private IReadOnlyList<SubtitleCue> _cues = [];
     private bool _cuesLoading;
     private bool _captionsOn = true;
+    private VideoScreen _playsOn = VideoScreen.Window;
     private VideoState? _lastState;
     private CancellationTokenSource? _loading;
 
@@ -129,6 +130,46 @@ public sealed class WatchHost : IDisposable
             RaiseChanged();
         }
     }
+
+    /// <summary>Where the picture is drawn.</summary>
+    public VideoScreen PlaysOn => _playsOn;
+
+    /// <summary>Raised on the calling thread when the Commander moved the picture to another screen.</summary>
+    public event Action<VideoScreen>? Moved;
+
+    /// <summary>
+    /// Moves the picture to <paramref name="screen"/> and leaves the video playing as it was. A panel puts the headset
+    /// in the mode that shows it while the headset is on.
+    /// </summary>
+    public void MoveTo(VideoScreen screen)
+    {
+        if (_playsOn == screen)
+        {
+            return;
+        }
+
+        _playsOn = screen;
+
+        if (screen != VideoScreen.Window && _settings.Current.Vr.Enabled)
+        {
+            _settings.Apply(VrCapability.ModeKey, screen == VideoScreen.MiniPanel ? "mini" : "full", SettingsCaller.Panel);
+        }
+
+        RaiseChanged();
+        Moved?.Invoke(screen);
+    }
+
+    /// <summary>A video started from the window's page or the big panel's plays there, unless it plays on the mini panel.</summary>
+    public void PlaysHere(bool headset)
+    {
+        if (_playsOn != VideoScreen.MiniPanel)
+        {
+            _playsOn = headset ? VideoScreen.BigPanel : VideoScreen.Window;
+        }
+    }
+
+    /// <summary>Whether the current title is the video the playback has.</summary>
+    public bool Loaded => Current is { } title && Video.Source == PlaySource(title) && Video.State is not null;
 
     /// <summary>The current title's subtitle cues; none until they are read, or when it has no subtitle file.</summary>
     public IReadOnlyList<SubtitleCue> Cues
