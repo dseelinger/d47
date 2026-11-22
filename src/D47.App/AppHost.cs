@@ -212,11 +212,14 @@ public sealed class AppHost : IDisposable
             story: RunPlayer,
             music: Music,
             downloads: BookDownloads);
+        Video = new VideoPlayback(audio, story: RunPlayer, music: Music, logger: loggerFactory.CreateLogger<VideoPlayback>());
+        Video.TakesTurnsWith(BookPlayer);
         voice.StateEntered += state =>
         {
             if (state == Core.Audio.LoopState.Idle)
             {
                 BookPlayer.Settled();
+                Video.Settled();
             }
         };
         Panel.AudioPlayer = AudioPlayerReadout.From(Music.State, Settings.Current.Audio.Music.Muted);
@@ -511,6 +514,9 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Reads a shelf book aloud with a local voice.</summary>
     public BookPlayer BookPlayer { get; }
+
+    /// <summary>Plays a video from a file or an HTTPS URL; the one instance the Watch pages drive.</summary>
+    public VideoPlayback Video { get; }
 
     /// <summary>Brings Project Gutenberg books onto the shelf; the one instance the player listens to.</summary>
     public GutenbergBookFetch BookDownloads { get; }
@@ -4060,6 +4066,7 @@ public sealed class AppHost : IDisposable
         gate.Started += () => host.Voice.EnterState(Core.Audio.LoopState.Listening);
         gate.Started += () => host.RunPlayer.Pause(StoryRunPause.PushToTalk);
         gate.Started += () => host.BookPlayer.Pause(StoryRunPause.PushToTalk);
+        gate.Started += () => host.Video.Pause(VideoPause.PushToTalk);
 
         // Only the discarded case.
         gate.Ended += reason =>
@@ -4117,6 +4124,7 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<Core.Podcasts.PodcastPlayer>());
         host.PodcastPlayer = podcastPlayer;
         host.BookPlayer.TakesTurnsWith(podcastPlayer);
+        host.Video.TakesTurnsWith(podcastPlayer);
         var podcastSearch = new PodcastSearchClient(PodcastStore.CreateClient(), loggerFactory.CreateLogger<PodcastSearchClient>());
         host.PodcastSearch = podcastSearch;
         host.PodcastDesk = new Core.Podcasts.PodcastDesk(

@@ -26,6 +26,75 @@ D47.App.Input.PushToTalkKey.Gesture
 D47.App.Input.ScancodeInjector.LastSequence
 D47.App.MainWindow.MainWindow()
 D47.App.Media.ScreenshotConverter.Running
+D47.App.Media.SourceReader.IMFAttributes
+D47.App.Media.SourceReader.MFCreateAttributes(out D47.App.Media.SourceReader.IMFAttributes, int)
+D47.App.Media.SourceReader.MFCreateMediaType(out D47.App.Media.SourceReader.IMFMediaType)
+D47.App.Media.SourceReader.MFCreateSourceReaderFromURL(string, D47.App.Media.SourceReader.IMFAttributes, out D47.App.Media.SourceReader.IMFSourceReader)
+D47.App.Media.SourceReader.MFStartup(int, int)
+D47.App.Media.SourceReader.Release(object)
+D47.App.Media.SourceReader.Start()
+D47.App.Media.VideoDecoder.CancelSeek()
+D47.App.Media.VideoDecoder.Changed
+D47.App.Media.VideoDecoder.ChoosePicture(D47.App.Media.SourceReader.IMFSourceReader)
+D47.App.Media.VideoDecoder.ChooseSound(D47.App.Media.SourceReader.IMFSourceReader)
+D47.App.Media.VideoDecoder.Clock
+D47.App.Media.VideoDecoder.ExpectSeek(System.TimeSpan)
+D47.App.Media.VideoDecoder.Expected
+D47.App.Media.VideoDecoder.Fail(D47.App.Media.VideoFailure, string)
+D47.App.Media.VideoDecoder.FindStreams(D47.App.Media.SourceReader.IMFSourceReader)
+D47.App.Media.VideoDecoder.Fit(int, int)
+D47.App.Media.VideoDecoder.Frame
+D47.App.Media.VideoDecoder.From
+D47.App.Media.VideoDecoder.Length
+D47.App.Media.VideoDecoder.Loop()
+D47.App.Media.VideoDecoder.Open()
+D47.App.Media.VideoDecoder.Opened
+D47.App.Media.VideoDecoder.Present()
+D47.App.Media.VideoDecoder.ReadOne(D47.App.Media.VideoSoundtrack)
+D47.App.Media.VideoDecoder.ReadPictureType(D47.App.Media.SourceReader.IMFSourceReader, uint)
+D47.App.Media.VideoDecoder.Recycle(D47.App.Media.VideoFrame)
+D47.App.Media.VideoDecoder.Reposition(System.TimeSpan, long)
+D47.App.Media.VideoDecoder.Run()
+D47.App.Media.VideoDecoder.Stalled
+D47.App.Media.VideoDecoder.Start()
+D47.App.Media.VideoDecoder.TakePicture(D47.App.Media.SourceReader.IMFSample, long)
+D47.App.Media.VideoDecoder.TakeSound(D47.App.Media.SourceReader.IMFSample, long, D47.App.Media.VideoSoundtrack)
+D47.App.Media.VideoDecoder.VideoDecoder(string, System.TimeSpan, System.TimeProvider, Microsoft.Extensions.Logging.ILogger)
+D47.App.Media.VideoFrame.Height
+D47.App.Media.VideoFrame.Pixels
+D47.App.Media.VideoFrame.Time
+D47.App.Media.VideoFrame.VideoFrame(byte[], int, int, System.TimeSpan)
+D47.App.Media.VideoFrame.Width
+D47.App.Media.VideoPlayback.Changed
+D47.App.Media.VideoPlayback.Close()
+D47.App.Media.VideoPlayback.Current
+D47.App.Media.VideoPlayback.Failure
+D47.App.Media.VideoPlayback.Frame
+D47.App.Media.VideoPlayback.Length
+D47.App.Media.VideoPlayback.OnOpened(D47.App.Media.VideoPlayback.Viewing)
+D47.App.Media.VideoPlayback.Play(string, System.TimeSpan)
+D47.App.Media.VideoPlayback.Position
+D47.App.Media.VideoPlayback.Resume()
+D47.App.Media.VideoPlayback.Seek(System.TimeSpan)
+D47.App.Media.VideoPlayback.Skip(System.TimeSpan)
+D47.App.Media.VideoPlayback.Source
+D47.App.Media.VideoPlayback.State
+D47.App.Media.VideoPlayback.Stop()
+D47.App.Media.VideoPlayback.Viewing.Source
+D47.App.Media.VideoPlayback.Viewing.Viewing(string, D47.App.Media.VideoDecoder)
+D47.App.Media.VideoSoundtrack.Append(System.ReadOnlySpan<byte>)
+D47.App.Media.VideoSoundtrack.Buffered
+D47.App.Media.VideoSoundtrack.End()
+D47.App.Media.VideoSoundtrack.Grow(int)
+D47.App.Media.VideoSoundtrack.Positioned(System.TimeSpan, long)
+D47.App.Media.VideoSoundtrack.SeekComing(bool)
+D47.App.Media.VideoSoundtrack.Silence(long)
+D47.App.Media.VideoSoundtrack.SilenceTo(System.TimeSpan, long)
+D47.App.Media.VideoSoundtrack.TakeSeek(out System.TimeSpan, out long)
+D47.App.Media.VideoSoundtrack.ToBytes(long)
+D47.App.Media.VideoSoundtrack.VideoSoundtrack(System.Action, System.TimeSpan?)
+D47.App.Media.VideoSoundtrack.Write(System.ReadOnlySpan<byte>, System.TimeSpan, long)
+D47.App.Media.VideoState
 D47.App.Panel.AvatarView.Extent
 D47.App.Panel.AvatarView.Library
 D47.App.Panel.AvatarView.Speaker
@@ -100,6 +169,10 @@ D47.Core.Adventures.AdventureResolver.Outage
 D47.Core.Adventures.AdventureStore.Path
 D47.Core.Adventures.AdventureWalkResult.Failed
 D47.Core.Adventures.Resolution.Succeeded
+D47.Core.Audio.AudioArbiter.PlayVideo(D47.Core.Audio.MusicTrack, System.TimeSpan)
+D47.Core.Audio.AudioArbiter.SeekVideo(System.TimeSpan)
+D47.Core.Audio.AudioArbiter.StopVideo()
+D47.Core.Audio.AudioArbiter.VideoProgress()
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
 D47.Core.Callouts.NarratorCallout.StockCoreAboard

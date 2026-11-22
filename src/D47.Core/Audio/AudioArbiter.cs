@@ -17,7 +17,7 @@ public enum AudioChannel
     /// <summary>A podcast episode, started with <see cref="AudioArbiter.PlayPodcast"/>; paused while D47 speaks or listens.</summary>
     Podcast = 3,
 
-    /// <summary>The soundtrack of a video being watched; ducks under speech as music does.</summary>
+    /// <summary>The soundtrack of a video being watched, started with <see cref="AudioArbiter.PlayVideo"/>; ducks under speech as music does.</summary>
     Video = 4,
 
     /// <summary>A short non-speech marker.</summary>
@@ -152,6 +152,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     private bool _mediaPlaying;
 
+    private long? _video;
+    private bool _videoPlaying;
+
     private sealed record Pending(long Id, AudioRequest Request);
 
     private sealed record Playing(long Id, AudioRequest Request);
@@ -169,6 +172,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     /// <summary>Raised with the playback id <see cref="PlayPodcast"/> returned when that episode reached its end on its own, or failed to open or read.</summary>
     public event Action<long>? PodcastFinished;
+
+    /// <summary>Raised with the playback id <see cref="PlayVideo"/> returned when that soundtrack reached its end on its own, or failed to open or read.</summary>
+    public event Action<long>? VideoFinished;
 
     /// <summary>Raised when a queued request played to its own end; not for one stopped, dropped or superseded.</summary>
     public event Action<AudioRequest>? Played;
@@ -344,6 +350,18 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    /// <summary>
+    /// Says whether a video is being watched, including while a callout or the microphone has paused it, and not paused
+    /// by the Commander. Overheard is refused while it is.
+    /// </summary>
+    public void VideoPlays(bool playing)
+    {
+        lock (_gate)
+        {
+            _videoPlaying = playing;
+        }
+    }
+
     /// <summary>Pauses the hold: its group is dropped and refused until it resumes, and other speech plays again.</summary>
     public void PausePlayback()
     {
@@ -491,9 +509,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
                 }
             }
 
-            if (request.Channel == AudioChannel.Overheard && (PodcastPlayingLocked || _mediaPlaying))
+            if (request.Channel == AudioChannel.Overheard && (PodcastPlayingLocked || _mediaPlaying || _videoPlaying))
             {
-                logger.LogDebug("A podcast or book is playing; {Clip} is not queued", request.Name);
+                logger.LogDebug("A podcast, book or video is playing; {Clip} is not queued", request.Name);
                 return;
             }
 
@@ -512,7 +530,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             }
             else if (request.Channel == AudioChannel.Video)
             {
-                throw new ArgumentException("A video's soundtrack is not queued.", nameof(request));
+                throw new ArgumentException("A video's soundtrack is streamed; start it with PlayVideo.", nameof(request));
             }
             else if (request.Channel == AudioChannel.Podcast)
             {
@@ -1161,6 +1179,99 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    /// <summary>
+    /// Streams a video's soundtrack in its own slot from <paramref name="from"/>, replacing any soundtrack playing.
+    /// Returns its playback id; <see cref="VideoFinished"/> may be raised with it before this returns.
+    /// </summary>
+    public long PlayVideo(MusicTrack track, TimeSpan from)
+    {
+        ArgumentNullException.ThrowIfNull(track);
+        long id;
+
+        lock (_gate)
+        {
+            if (_video is { } playing)
+            {
+                sink.Stop(playing);
+            }
+
+            id = _nextId++;
+            _video = id;
+            sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Video)));
+
+            // The sink can report the soundtrack finished inside Play.
+            if (_video == id && from > TimeSpan.Zero)
+            {
+                sink.Seek(id, from);
+            }
+        }
+
+        logger.LogInformation("Video started: {Video}", track.Name);
+        return id;
+    }
+
+    /// <summary>Holds the soundtrack at its position. False with no soundtrack.</summary>
+    public bool PauseVideo()
+    {
+        lock (_gate)
+        {
+            if (_video is not { } playing)
+            {
+                return false;
+            }
+
+            sink.Pause(playing);
+            return true;
+        }
+    }
+
+    /// <summary>Plays the soundtrack on from where it was held. False with no soundtrack.</summary>
+    public bool ResumeVideo()
+    {
+        lock (_gate)
+        {
+            if (_video is not { } playing)
+            {
+                return false;
+            }
+
+            sink.Resume(playing);
+            return true;
+        }
+    }
+
+    /// <summary>Stops the soundtrack and empties the video slot.</summary>
+    public void StopVideo()
+    {
+        lock (_gate)
+        {
+            if (_video is { } playing)
+            {
+                sink.Stop(playing);
+            }
+
+            _video = null;
+        }
+    }
+
+    /// <summary>Moves the soundtrack to <paramref name="to"/>, leaving it paused or playing. False with no soundtrack, or where the sink cannot seek it.</summary>
+    public bool SeekVideo(TimeSpan to)
+    {
+        lock (_gate)
+        {
+            return _video is { } playing && sink.Seek(playing, to);
+        }
+    }
+
+    /// <summary>How far the soundtrack has played and how long it is; null with no soundtrack.</summary>
+    public TrackProgress? VideoProgress()
+    {
+        lock (_gate)
+        {
+            return _video is { } playing ? sink.Progress(playing) : null;
+        }
+    }
+
     /// <summary>Whether an episode is in the slot and not paused by the Commander; it may be held while D47 speaks.</summary>
     public bool PodcastPlaying
     {
@@ -1477,6 +1588,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             sink.SetGain(podcast, GainFor(AudioChannel.Podcast));
         }
 
+        if (_video is { } video)
+        {
+            sink.SetGain(video, GainFor(AudioChannel.Video));
+        }
+
         if (_current is { } playing)
         {
             sink.SetGain(playing.Id, GainFor(playing.Request.Channel));
@@ -1502,6 +1618,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         AudioActivity activity;
         var trackEnded = false;
         long? podcastEnded = null;
+        long? videoEnded = null;
         AudioRequest? played = null;
 
         lock (_gate)
@@ -1510,6 +1627,12 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             {
                 ClearPodcast();
                 podcastEnded = playbackId;
+                activity = Snapshot();
+            }
+            else if (_video == playbackId)
+            {
+                _video = null;
+                videoEnded = playbackId;
                 activity = Snapshot();
             }
             else if (_music == playbackId && _musicAfterGap is { } next)
@@ -1565,6 +1688,11 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         if (podcastEnded is { } podcast)
         {
             PodcastFinished?.Invoke(podcast);
+        }
+
+        if (videoEnded is { } video)
+        {
+            VideoFinished?.Invoke(video);
         }
 
         if (played is not null)

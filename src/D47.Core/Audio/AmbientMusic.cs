@@ -16,6 +16,7 @@ public enum MusicYield
 {
     Podcast,
     Book,
+    Video,
 }
 
 /// <summary>What the audio player tool does to the player.</summary>
@@ -636,8 +637,8 @@ public sealed class AmbientMusic(
         {
             if (_yielding && action != MusicAction.Pause)
             {
-                return _yieldingTo.Contains(MusicYield.Podcast)
-                    ? "Ambient music waits while a podcast plays."
+                return _yieldingTo.Contains(MusicYield.Podcast) ? "Ambient music waits while a podcast plays."
+                    : _yieldingTo.Contains(MusicYield.Video) ? "Ambient music waits while a video plays."
                     : "Ambient music waits while a book is read.";
             }
 
