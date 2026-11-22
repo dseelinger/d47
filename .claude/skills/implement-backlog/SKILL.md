@@ -1,9 +1,9 @@
 ---
-name: triage-and-implement
-description: Run /triage lanes, then work every lane without the maintainer — each issue a background subagent started from here on the model and effort the grid gives it, running /issue-worker in its lane's worktree, and the lane's next issue started as soon as the one before it has merged into main. Subagents do no manual testing and speak only when something stops them. Use when the user invokes /triage-and-implement, /triage-and-implement <N> for N lanes, or says "triage and implement", "triage and run the lanes", "work the lanes without me".
+name: implement-backlog
+description: Run /triage lanes, then work every lane without the maintainer — each issue a background subagent started from here on the model and effort the grid gives it, running /issue-worker in its lane's worktree, and the lane's next issue started as soon as the one before it has merged into main. Subagents do no manual testing and speak only when something stops them. Use when the user invokes /implement-backlog, /implement-backlog <N> for N lanes, or says "implement the backlog", "triage and implement", "triage and run the lanes", "work the lanes without me".
 ---
 
-# Triage and implement
+# Implement backlog
 
 `/triage lanes` and then the lanes themselves, run from this session. Everything `/triage` and
 `/issue-worker` say still holds; this file covers only what differs.

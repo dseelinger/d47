@@ -64,7 +64,7 @@ python -c "import json,os,sys; p=sys.argv[1]; s=json.load(open(p)) if os.path.is
 The file is pretty-printed, so a line-based `grep` for the entry finds nothing; read it as JSON.
 
 - The top level is already a worktree for this issue — `.claude/worktrees/lane-<X>` on branch
-  `issue/<N>`, or `.claude/worktrees/<N>`: the Issue key or `/triage-and-implement` readied it and
+  `issue/<N>`, or `.claude/worktrees/<N>`: the Issue key or `/implement-backlog` readied it and
   started this session in it. Work there, and land it through **Merging into main** whether or not
   the issue has a lane.
 - `lanes no`: work in the main checkout.
