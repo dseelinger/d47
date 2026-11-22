@@ -500,6 +500,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The podcast feeds as last fetched; a feed is requested only when asked.</summary>
     internal PodcastStore? Podcasts { get; private set; }
 
+    /// <summary>Plays podcast episodes and keeps where each was left.</summary>
+    internal Core.Podcasts.PodcastPlayer? PodcastPlayer { get; private set; }
+
     /// <summary>Whether a Music publish token is stored or in the environment.</summary>
     internal bool MusicMaintainer =>
         MusicPublishToken.Present(Secrets.Names.Contains(MusicPublishToken.SecretName), Environment.GetEnvironmentVariable);
@@ -4055,6 +4058,15 @@ public sealed class AppHost : IDisposable
             files,
             PodcastStore.CreateClient(),
             loggerFactory.CreateLogger<PodcastStore>());
+        var episodeClient = HttpRangeStream.CreateClient();
+        var episodeDecoder = new MediaFoundationDecoder();
+        host.PodcastPlayer = new Core.Podcasts.PodcastPlayer(
+            host.Audio,
+            host.Music,
+            episode => HttpRangeStream.Episode(episode.Title, episode.Enclosure, episodeClient, episodeDecoder),
+            files,
+            paths.PodcastListening,
+            loggerFactory.CreateLogger<Core.Podcasts.PodcastPlayer>());
         host.Music.Played += track => _ = host.MusicPack.Played(track);
         host.MusicRejectDeleter = new MusicRejectDeleter(
             paths.MusicPack,
@@ -4338,6 +4350,9 @@ public sealed class AppHost : IDisposable
                 feed.Settlement.Held,
                 feed.Settlement.InGroundConflict);
         });
+
+        // Reads no game state; registered after the journal poll all the same. Only queues a save.
+        tick.Add("podcast", context => host.PodcastPlayer?.Tick(context.Now));
 
         // After ambience, so it reads this tick's running state.
         var viewState = foundations.ViewState;
@@ -6668,6 +6683,9 @@ public sealed class AppHost : IDisposable
         // left behind, so the queue is drained rather than dropped (#365).
         InputTrace?.Dispose();
         ScreenCapture?.Dispose();
+
+        // After the tick, and while the arbiter can still say where the episode is.
+        PodcastPlayer?.SaveNow();
 
         // Stop making noise before tearing anything down.
         Audio.Silence();

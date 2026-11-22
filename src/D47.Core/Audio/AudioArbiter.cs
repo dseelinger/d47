@@ -159,8 +159,8 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     /// <summary>Raised when an ambience track reached its end on its own.</summary>
     public event Action? MusicFinished;
 
-    /// <summary>Raised when a podcast episode reached its end on its own, or failed to open or read.</summary>
-    public event Action? PodcastFinished;
+    /// <summary>Raised with the playback id <see cref="PlayPodcast"/> returned when that episode reached its end on its own, or failed to open or read.</summary>
+    public event Action<long>? PodcastFinished;
 
     /// <summary>Raised when a queued request played to its own end; not for one stopped, dropped or superseded.</summary>
     public event Action<AudioRequest>? Played;
@@ -964,11 +964,13 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     /// <summary>
     /// Streams a podcast episode in its own slot from <paramref name="from"/>, replacing any episode playing. It
-    /// starts paused when something already holds it.
+    /// starts paused when something already holds it. Returns its playback id; <see cref="PodcastFinished"/> may be
+    /// raised with it before this returns.
     /// </summary>
-    public void PlayPodcast(MusicTrack track, TimeSpan from)
+    public long PlayPodcast(MusicTrack track, TimeSpan from)
     {
         ArgumentNullException.ThrowIfNull(track);
+        long id;
 
         lock (_gate)
         {
@@ -977,7 +979,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
                 sink.Stop(playing);
             }
 
-            var id = _nextId++;
+            id = _nextId++;
             _podcast = id;
             _podcastPaused = false;
             _podcastHeld = false;
@@ -986,7 +988,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             // The sink can report the episode finished inside Play.
             if (_podcast != id)
             {
-                return;
+                return id;
             }
 
             if (from > TimeSpan.Zero)
@@ -998,6 +1000,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
 
         logger.LogInformation("Podcast started: {Episode}", track.Name);
+        return id;
     }
 
     /// <summary>The Commander's pause: the episode stays paused until <see cref="ResumePodcast"/>, whatever holds clear. False with no episode.</summary>
@@ -1409,7 +1412,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     {
         AudioActivity activity;
         var trackEnded = false;
-        var podcastEnded = false;
+        long? podcastEnded = null;
         AudioRequest? played = null;
 
         lock (_gate)
@@ -1417,7 +1420,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             if (_podcast == playbackId)
             {
                 ClearPodcast();
-                podcastEnded = true;
+                podcastEnded = playbackId;
                 activity = Snapshot();
             }
             else if (_music == playbackId && _musicAfterGap is { } next)
@@ -1470,9 +1473,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             MusicFinished?.Invoke();
         }
 
-        if (podcastEnded)
+        if (podcastEnded is { } podcast)
         {
-            PodcastFinished?.Invoke();
+            PodcastFinished?.Invoke(podcast);
         }
 
         if (played is not null)

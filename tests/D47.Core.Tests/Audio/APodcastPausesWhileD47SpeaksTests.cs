@@ -231,12 +231,12 @@ public class APodcastPausesWhileD47SpeaksTests
     public void TheEpisodeEndingRaisesPodcastFinishedAndEmptiesTheSlot()
     {
         var podcast = Play();
-        var finished = 0;
-        _audio.PodcastFinished += () => finished++;
+        long? finished = null;
+        _audio.PodcastFinished += id => finished = id;
 
         _sink.CompletePlayback(podcast);
 
-        Assert.Equal(1, finished);
+        Assert.Equal(podcast, finished);
         Assert.False(_audio.PodcastPlaying);
         Assert.Null(_audio.PodcastProgress());
     }

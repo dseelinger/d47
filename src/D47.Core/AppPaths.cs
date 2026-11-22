@@ -31,6 +31,7 @@ public sealed class AppPaths
         MusicPack = Path.Combine(Data, "music-pack");
         MusicRejects = Path.Combine(Data, "music-rejects.tsv");
         Podcasts = Path.Combine(Data, "podcasts");
+        PodcastListening = Path.Combine(Podcasts, "listening.json");
         SettingsFile = Path.Combine(Data, "settings.json");
         SecretsFile = Path.Combine(Data, "secrets.json");
         ViewStateFile = Path.Combine(Data, "view-state.json");
@@ -95,8 +96,11 @@ public sealed class AppPaths
     /// <summary>The library tracks the maintainer rejected: folder, a tab, file name.</summary>
     public string MusicRejects { get; }
 
-    /// <summary>Podcast feeds as last fetched, under <c>feeds\</c>.</summary>
+    /// <summary>Podcast feeds as last fetched, under <c>feeds\</c>, and <see cref="PodcastListening"/>.</summary>
     public string Podcasts { get; }
+
+    /// <summary>Where the Commander stopped in each podcast episode, and which are finished.</summary>
+    public string PodcastListening { get; }
 
     public string SettingsFile { get; }
     public string SecretsFile { get; }

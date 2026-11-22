@@ -27,7 +27,6 @@ D47.App.Input.ChordSender.Recorded
 D47.App.Input.PushToTalkKey.Gesture
 D47.App.Input.ScancodeInjector.LastSequence
 D47.App.MainWindow.MainWindow()
-D47.App.Media.HttpRangeStream
 D47.App.Media.PodcastRefresh
 D47.App.Media.PodcastSearchClient
 D47.App.Media.PodcastSearchOutcome
@@ -100,7 +99,6 @@ D47.App.Theming.RowFilter<TRow>.SetAll(string, int, bool)
 D47.App.Voice.VoicePipeline.GameRunning
 D47.App.Voice.VoicePipeline.Held
 D47.Audio.FadeSampleProvider.Level
-D47.Audio.MediaFoundationDecoder.Open(System.IO.Stream)
 D47.Core.Activities.ActivityCatalogue.ByKey(string)
 D47.Core.Activities.ActivityDate
 D47.Core.Adventures.AdventureGenerator.BaseStep.Is(D47.Core.Adventures.AdventureTrigger)
@@ -120,14 +118,10 @@ D47.Core.AppPaths.Gutenberg
 D47.Core.Audio.AudioArbiter.Listening
 D47.Core.Audio.AudioArbiter.PausePodcast()
 D47.Core.Audio.AudioArbiter.PlayPodcast(D47.Core.Audio.MusicTrack, System.TimeSpan)
-D47.Core.Audio.AudioArbiter.PodcastFinished
-D47.Core.Audio.AudioArbiter.PodcastPlaying
-D47.Core.Audio.AudioArbiter.PodcastProgress()
 D47.Core.Audio.AudioArbiter.ResumePodcast()
 D47.Core.Audio.AudioArbiter.SeekPodcast(System.TimeSpan)
 D47.Core.Audio.AudioArbiter.StopPodcast()
 D47.Core.Audio.AudioArbiter.TurnInFlight
-D47.Core.Audio.IAudioDecoder.Open(System.IO.Stream)
 D47.Core.Audio.IPcmStream.CanSeek
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
@@ -183,9 +177,24 @@ D47.Core.Loadout.OnFootBuildStore.Path
 D47.Core.Lore.LoreStore.Changed
 D47.Core.Memory.MemoryStore.Changed
 D47.Core.Persona.ShipCoreStore.Changed
-D47.Core.Podcasts.PodcastListening
-D47.Core.Podcasts.PodcastListeningRead
-D47.Core.Podcasts.PodcastProgress
+D47.Core.Podcasts.PodcastListening.All
+D47.Core.Podcasts.PodcastPlayer.Changed
+D47.Core.Podcasts.PodcastPlayer.Clock(System.TimeSpan)
+D47.Core.Podcasts.PodcastPlayer.Heard()
+D47.Core.Podcasts.PodcastPlayer.Listening
+D47.Core.Podcasts.PodcastPlayer.Next()
+D47.Core.Podcasts.PodcastPlayer.Pause()
+D47.Core.Podcasts.PodcastPlayer.Play(System.Uri, D47.Core.Podcasts.PodcastShow, D47.Core.Podcasts.PodcastEpisode)
+D47.Core.Podcasts.PodcastPlayer.Playback.Playback(System.Uri, D47.Core.Podcasts.PodcastShow, D47.Core.Podcasts.PodcastEpisode)
+D47.Core.Podcasts.PodcastPlayer.Problem
+D47.Core.Podcasts.PodcastPlayer.Resume()
+D47.Core.Podcasts.PodcastPlayer.Sentence(System.Exception)
+D47.Core.Podcasts.PodcastPlayer.Skip(System.TimeSpan)
+D47.Core.Podcasts.PodcastPlayer.SkipBack()
+D47.Core.Podcasts.PodcastPlayer.SkipForward()
+D47.Core.Podcasts.PodcastPlayer.Stop()
+D47.Core.Podcasts.PodcastPlayer.Watch(D47.Core.Audio.MusicTrack, D47.Core.Podcasts.PodcastPlayer.Playback)
+D47.Core.Podcasts.PodcastPlayer.Watched
 D47.Core.Podcasts.PodcastSearch
 D47.Core.Podcasts.PodcastSearchException
 D47.Core.Podcasts.PodcastSearchResult

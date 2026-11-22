@@ -75,6 +75,12 @@ public sealed class AmbientMusic(
     /// <summary>True while music the Commander started with Elite closed is playing or paused.</summary>
     private bool _byCommander;
 
+    /// <summary>True while a podcast holds the slot's music: nothing starts, and the live track stays held.</summary>
+    private bool _yielding;
+
+    /// <summary>How long the live track takes to fade out when a podcast starts.</summary>
+    public static readonly TimeSpan YieldFadeOut = TimeSpan.FromSeconds(2);
+
     /// <summary>The last situation folder a track played from, skipping one-shot folders; null before any has.</summary>
     public string? LastFolder
     {
@@ -142,6 +148,11 @@ public sealed class AmbientMusic(
             var oneShot = Situations.OneShot.Contains(target);
             var changed = Idle(target, events ?? [], now);
 
+            if (_yielding)
+            {
+                return;
+            }
+
             if (!oneShot)
             {
                 _spent = null;
@@ -204,6 +215,12 @@ public sealed class AmbientMusic(
             return false;
         }
 
+        if (_yielding)
+        {
+            _idle = idle;
+            return false;
+        }
+
         if (idle)
         {
             _idle = true;
@@ -239,6 +256,50 @@ public sealed class AmbientMusic(
         {
             Continue(WakeFadeIn);
         }
+    }
+
+    /// <summary>
+    /// A podcast started or ended. While yielding, the live track fades out and is held, and nothing starts it or
+    /// another; ending it continues the held track, or starts one for the situation now, unless paused, idle, muted
+    /// or not playing.
+    /// </summary>
+    public void Yield(bool yielding)
+    {
+        lock (_gate)
+        {
+            if (yielding == _yielding)
+            {
+                return;
+            }
+
+            _yielding = yielding;
+
+            if (yielding)
+            {
+                if (!_paused && !_idle && !audio.FadeOutMusic(YieldFadeOut) && !audio.Activity.MusicPlaying)
+                {
+                    _current = null;
+                }
+            }
+            else if (Plays && !_paused && !_idle && !audio.Mix.Music.Muted)
+            {
+                if (audio.MusicHeld)
+                {
+                    audio.ResumeMusic(WakeFadeIn);
+                }
+                else if (!audio.Activity.MusicPlaying)
+                {
+                    if (_running)
+                    {
+                        CurrentAmbience.Enter(Underlying());
+                    }
+
+                    Continue(WakeFadeIn);
+                }
+            }
+        }
+
+        Raise();
     }
 
     /// <summary>A voice turn started. Safe from any thread; the next <see cref="Follow"/> counts it.</summary>
@@ -291,7 +352,7 @@ public sealed class AmbientMusic(
         CurrentAmbience.Enter(Underlying());
         _current = null;
 
-        if (!_paused)
+        if (!_paused && !_yielding)
         {
             Continue(null);
         }
@@ -327,7 +388,7 @@ public sealed class AmbientMusic(
             {
                 EndCue();
             }
-            else if (Plays && !_paused && !_idle)
+            else if (Plays && !_paused && !_idle && !_yielding)
             {
                 StartNext(afterGap: true);
             }
@@ -347,7 +408,7 @@ public sealed class AmbientMusic(
                 _current = null;
                 LeaveCue();
             }
-            else if (Plays && !_paused && !_idle && !audio.Activity.MusicPlaying)
+            else if (Plays && !_paused && !_idle && !_yielding && !audio.Activity.MusicPlaying)
             {
                 StartNext();
             }
@@ -368,7 +429,7 @@ public sealed class AmbientMusic(
             _current = null;
             LeaveCue();
 
-            if (Plays && !_paused && !_idle && !audio.Mix.Music.Muted)
+            if (Plays && !_paused && !_idle && !_yielding && !audio.Mix.Music.Muted)
             {
                 StartNext();
             }
@@ -449,7 +510,7 @@ public sealed class AmbientMusic(
 
         lock (_gate)
         {
-            var live = _current is not null && audio.Activity.MusicPlaying;
+            var live = _current is not null && audio.Activity.MusicPlaying && !_yielding;
 
             if (!live)
             {
@@ -515,14 +576,34 @@ public sealed class AmbientMusic(
             : $"Could not delete {name}; it may be locked or read-only. {next}";
     }
 
-    /// <summary>How far the live track has played and how long it is; see <see cref="AudioArbiter.MusicProgress"/>.</summary>
-    public TrackProgress? Progress() => audio.MusicProgress();
+    /// <summary>
+    /// How far the live track has played and how long it is; see <see cref="AudioArbiter.MusicProgress"/>. Null while
+    /// a podcast holds the music.
+    /// </summary>
+    public TrackProgress? Progress()
+    {
+        lock (_gate)
+        {
+            return _yielding ? null : audio.MusicProgress();
+        }
+    }
 
-    /// <summary>Moves the live track to <paramref name="to"/>, counted as Commander activity; see <see cref="AudioArbiter.SeekMusic"/>.</summary>
+    /// <summary>
+    /// Moves the live track to <paramref name="to"/>, counted as Commander activity; see <see cref="AudioArbiter.SeekMusic"/>.
+    /// False while a podcast holds the music.
+    /// </summary>
     public bool Seek(TimeSpan to)
     {
-        Interlocked.Exchange(ref _stirred, 1);
-        return audio.SeekMusic(to);
+        lock (_gate)
+        {
+            if (_yielding)
+            {
+                return false;
+            }
+
+            Interlocked.Exchange(ref _stirred, 1);
+            return audio.SeekMusic(to);
+        }
     }
 
     /// <summary>Carries out one transport action and says what happened. Any action ends idle.</summary>
@@ -532,6 +613,11 @@ public sealed class AmbientMusic(
 
         lock (_gate)
         {
+            if (_yielding && action != MusicAction.Pause)
+            {
+                return "Ambient music waits while a podcast plays.";
+            }
+
             Interlocked.Exchange(ref _stirred, 1);
             var waking = _idle;
             _idle = false;
@@ -703,7 +789,7 @@ public sealed class AmbientMusic(
 
         var startable = !live && !_running && !audio.Mix.Music.Muted;
         var shown = live ? audio.MusicFolder : startable ? _lastFolder ?? Situations.General : null;
-        return new MusicState(live ? _current!.Name : null, live && !_paused && !_idle, _paused, idle, shown, startable);
+        return new MusicState(live ? _current!.Name : null, live && !_paused && !_idle && !_yielding, _paused, idle, shown, startable);
     }
 
     /// <summary>Records that <paramref name="track"/> has played; a library track is reported by the next <see cref="Raise"/>.</summary>
