@@ -8,6 +8,7 @@ using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.App.Settings;
 using D47.App.Theming;
+using D47.Core.Audio;
 using D47.Core.Checklists;
 using D47.Core.Configuration;
 using D47.Core.Interface;
@@ -109,7 +110,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         SettingsPageReading.Open(host.View, "sounds");
 
         Assert.Equal(
-            8,
+            Enum.GetValues<AudioChannel>().Length,
             host.View.GetVisualDescendants().OfType<Grid>()
                 .Count(grid => grid.Classes.Contains(SettingsView.MixerRowClass) && grid.IsEffectivelyVisible));
 

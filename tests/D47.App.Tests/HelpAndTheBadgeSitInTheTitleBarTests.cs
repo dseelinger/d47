@@ -191,7 +191,7 @@ public class HelpAndTheBadgeSitInTheTitleBarTests
 
         var tabs = panel.GetControl<Avalonia.Controls.Panel>("Tabs").Children.Where(tab => tab.IsVisible).ToList();
 
-        Assert.Equal(6, tabs.Count);
+        Assert.Equal(5, tabs.Count);
         Assert.Single(tabs.Select(tab => tab.TranslatePoint(default, panel)!.Value.Y).Distinct());
         Assert.DoesNotContain(
             panel.GetControl<StackPanel>("ChromeRow").Children, child => child.IsVisible);
