@@ -759,12 +759,12 @@ public static class EgressDisclosure
             Podcasts,
             NameOf(Podcasts),
             string.Join(", ", hosts),
-            "Each feed is fetched when you open the podcast page or ask for a refresh. An episode's audio is streamed "
+            "Each feed is fetched when you add it, when you save the feed list, when you open the podcast page or when you ask for a refresh. An episode's audio is streamed "
             + "from the host its feed names, only while you listen. Many feeds send episode requests through the "
             + "publisher's download-counting services, which see your IP address and can redirect to other hosts. "
             + "Nothing about you goes with it: no key, no Commander name, nothing from your journal.",
             Active: true,
-            Summary: "Each feed when you open the podcast page or ask for a refresh, and an episode's audio while you listen.");
+            Summary: "Each feed when you add it, save the feed list, open the podcast page or ask for a refresh, and an episode's audio while you listen.");
     }
 
     /// <summary>What a donation sends, and where.</summary>

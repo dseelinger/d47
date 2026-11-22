@@ -382,7 +382,10 @@ public static class BuiltinCapabilities
         Knowledge.IRegionFirstReport? regionFirstReport = null,
 
         // The hosts the cached podcast feeds name for their episodes, for the Podcasts disclosure.
-        Func<IReadOnlyList<string>>? podcastEpisodeHosts = null) =>
+        Func<IReadOnlyList<string>>? podcastEpisodeHosts = null,
+
+        // The podcast player, shows and searches, once the host is built.
+        Func<Podcasts.PodcastDesk?>? podcastDesk = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -485,7 +488,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicState, watchMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => podcastDesk?.Invoke()?.Active == true),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,
@@ -614,6 +617,8 @@ public static class BuiltinCapabilities
         CampaignCapability.Create(campaigns, () => gameState.Active, squadronFactions, galaxy, campaignSystems, campaignFronts, campaignFocus),
 
         AstrometricsCapability.Create(() => gameState.Active, fid => travelLog?.Deaths(fid) ?? [], fid => travelLog?.FirstDiscoveries(fid) ?? []),
+
+        PodcastCapability.Create(podcastDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).

@@ -125,6 +125,21 @@ public class APodcastFeedIsFetchedOnlyWhenAskedTests
     }
 
     [Fact]
+    public async Task RefreshingNewFetchesOnlyAFeedWithNoCacheAndNoEarlierRequest()
+    {
+        var other = new Uri("http://other.example/rss");
+        var disk = new MemoryFileSystem();
+        await Build(disk, new FakeHandler(_ => Ok(Rss("First"))), Feed).RefreshAsync(Feed);
+        var handler = new FakeHandler(request => Ok(Rss(request.RequestUri!.Host)));
+        var store = Build(disk, handler, Feed, other);
+
+        await store.RefreshNewAsync();
+        await store.RefreshNewAsync();
+
+        Assert.Equal([other], handler.Requests);
+    }
+
+    [Fact]
     public async Task RefreshingAllFetchesEveryFeedAdded()
     {
         var other = new Uri("http://other.example/rss");

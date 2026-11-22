@@ -8,12 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.App.Media;
 
-/// <summary>A feed and its show as last read.</summary>
-internal sealed record CachedShow(Uri Feed, PodcastShow Show);
-
-/// <summary>What one refresh did. <see cref="Problem"/> is a sentence for the Commander, null when the feed was read.</summary>
-internal sealed record PodcastRefresh(Uri Feed, PodcastShow? Show, string? Problem);
-
 /// <summary>
 /// The podcast feeds as last fetched, one file per feed in <c>data\podcasts\feeds\</c> named by the SHA-256 of its URL.
 /// Reads that cache when built and requests a feed only when <see cref="RefreshAsync"/> or <see cref="RefreshAllAsync"/>
@@ -36,6 +30,9 @@ internal sealed class PodcastStore
 
     /// <summary>Replaced whole under <see cref="_gate"/>, never changed in place.</summary>
     private Dictionary<string, PodcastShow> _shows = new(StringComparer.Ordinal);
+
+    /// <summary>The feeds requested since the app started, under <see cref="_gate"/>.</summary>
+    private readonly HashSet<string> _requested = new(StringComparer.Ordinal);
 
     /// <param name="folder"><c>data\podcasts</c>.</param>
     /// <param name="feeds">The feeds added, as <c>PodcastSettings.FeedUris</c> gives them.</param>
@@ -99,6 +96,29 @@ internal sealed class PodcastStore
         return RefreshAsync(feed);
     }
 
+    /// <summary>Fetches each feed added that has no cached show and has not been requested since the app started.</summary>
+    internal Task<IReadOnlyList<PodcastRefresh>> RefreshNewAsync() => Task.Run(async () =>
+    {
+        var results = new List<PodcastRefresh>();
+
+        foreach (var feed in _feeds())
+        {
+            bool isNew;
+
+            lock (_gate)
+            {
+                isNew = !_shows.ContainsKey(feed.AbsoluteUri) && !_requested.Contains(feed.AbsoluteUri);
+            }
+
+            if (isNew)
+            {
+                results.Add(await FetchAsync(feed).ConfigureAwait(false));
+            }
+        }
+
+        return (IReadOnlyList<PodcastRefresh>)results;
+    });
+
     /// <summary>Fetches every feed added, one after another, on the pool.</summary>
     internal Task<IReadOnlyList<PodcastRefresh>> RefreshAllAsync() => Task.Run(async () =>
     {
@@ -114,6 +134,11 @@ internal sealed class PodcastStore
 
     private async Task<PodcastRefresh> FetchAsync(Uri feed)
     {
+        lock (_gate)
+        {
+            _requested.Add(feed.AbsoluteUri);
+        }
+
         if (!feed.IsAbsoluteUri || feed.Scheme is not ("http" or "https"))
         {
             return new PodcastRefresh(feed, null, "A podcast feed has to be an http or https address.");

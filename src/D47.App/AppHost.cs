@@ -503,6 +503,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Plays podcast episodes and keeps where each was left.</summary>
     internal Core.Podcasts.PodcastPlayer? PodcastPlayer { get; private set; }
 
+    /// <summary>The podcast voice commands act on this: the player, the shows, searches and adding a feed.</summary>
+    internal Core.Podcasts.PodcastDesk? PodcastDesk { get; private set; }
+
     /// <summary>Whether a Music publish token is stored or in the environment.</summary>
     internal bool MusicMaintainer =>
         MusicPublishToken.Present(Secrets.Names.Contains(MusicPublishToken.SecretName), Environment.GetEnvironmentVariable);
@@ -3022,6 +3025,7 @@ public sealed class AppHost : IDisposable
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList() ?? [],
                 podcastEpisodeHosts: () => late.Host?.Podcasts?.EpisodeHosts ?? [],
+                podcastDesk: () => late.Host?.PodcastDesk,
                 liveRoute: () => loop.Feed.LiveRoute,
                 installedModules: () => late.Host?._modules?.Installed ?? [],
                 watches: () => late.Host?.WatchesDesk?.Store.Watches ?? [],
@@ -4052,21 +4056,30 @@ public sealed class AppHost : IDisposable
             MusicPackStore.CreateClient(),
             loggerFactory.CreateLogger<MusicPackStore>());
         host.MusicPack.Landed += host._reloadAudio;
-        host.Podcasts = new PodcastStore(
+        var podcasts = new PodcastStore(
             paths.Podcasts,
             () => host.Settings.Current.Podcasts.FeedUris(),
             files,
             PodcastStore.CreateClient(),
             loggerFactory.CreateLogger<PodcastStore>());
+        host.Podcasts = podcasts;
         var episodeClient = HttpRangeStream.CreateClient();
         var episodeDecoder = new MediaFoundationDecoder();
-        host.PodcastPlayer = new Core.Podcasts.PodcastPlayer(
+        var podcastPlayer = new Core.Podcasts.PodcastPlayer(
             host.Audio,
             host.Music,
             episode => HttpRangeStream.Episode(episode.Title, episode.Enclosure, episodeClient, episodeDecoder),
             files,
             paths.PodcastListening,
             loggerFactory.CreateLogger<Core.Podcasts.PodcastPlayer>());
+        host.PodcastPlayer = podcastPlayer;
+        var podcastSearch = new PodcastSearchClient(PodcastStore.CreateClient(), loggerFactory.CreateLogger<PodcastSearchClient>());
+        host.PodcastDesk = new Core.Podcasts.PodcastDesk(
+            podcastPlayer,
+            () => podcasts.Shows,
+            podcasts.RefreshAllAsync,
+            podcastSearch.SearchAsync,
+            feed => podcasts.AddAsync(feed, host.Settings));
         host.Music.Played += track => _ = host.MusicPack.Played(track);
         host.MusicRejectDeleter = new MusicRejectDeleter(
             paths.MusicPack,
@@ -6423,6 +6436,11 @@ public sealed class AppHost : IDisposable
 
             default:
                 break;
+        }
+
+        if (change.Key == PodcastCapability.FeedsKey)
+        {
+            _ = Podcasts?.RefreshNewAsync();
         }
 
         // On every change, since a batch write can move a button under another key; unchanged slots are left alone.

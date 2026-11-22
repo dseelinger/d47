@@ -794,6 +794,7 @@ public partial class MainWindow : Window
             _mediaSession = Media.MediaSession.Attach(
                 window,
                 _host.Music,
+                _host.PodcastDesk,
                 _host.Loggers.CreateLogger<Media.MediaSession>());
             Closed += (_, _) => _mediaSession?.Dispose();
         }

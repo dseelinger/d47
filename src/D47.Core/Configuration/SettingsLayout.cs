@@ -527,6 +527,10 @@ public static class SettingsLayout
                                 E(Capabilities.Builtin.AudioCapability.AudioPlayerHotkeyKey),
                             ],
                             toggleColumns: 0),
+                        G(
+                            "Podcasts",
+                            "Episodes from the podcast feeds you add.",
+                            [E(Capabilities.Builtin.PodcastCapability.FeedsKey)]),
                         G("Levels", "Level, mute and duck, for every channel.", LevelEntries(), toggleColumns: 0) with
                         {
                             Layout = SettingsGroupLayout.Mixer,

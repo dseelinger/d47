@@ -224,8 +224,8 @@ position, no key, no Commander name, no identifier and nothing from your journal
 for it ([Galaxy search](galaxy.md#rare-index)).
 
 **Podcasts** — the hosts of the podcast feeds you add, and the hosts those feeds name for their episodes.
-Each feed is fetched when you open the podcast page or ask for a refresh, never on a timer and never at
-startup; a feed larger than 10 MB is refused, and the last copy read is kept in `data\podcasts\feeds` on
+Each feed is fetched when you add it, when you save the feed list, when you open the podcast page or when you
+ask for a refresh, never on a timer and never at startup; a feed larger than 10 MB is refused, and the last copy read is kept in `data\podcasts\feeds` on
 this PC. An episode's audio is streamed from the host its feed names, only while you listen. Many feeds send
 episode requests through the publisher's download-counting services, which see your IP address and can
 redirect to other hosts. Nothing about you goes with it: no key, no Commander name and nothing from your

@@ -40,7 +40,7 @@ public class TheEgressListNamesPodcastsTests
 
         Assert.True(entry.Active);
         Assert.Equal("feeds.example, other.example, cdn.example, tracking.example", entry.Destination);
-        Assert.Contains("Each feed is fetched when you open the podcast page or ask for a refresh.", entry.What, StringComparison.Ordinal);
+        Assert.Contains("Each feed is fetched when you add it, when you save the feed list, when you open the podcast page or when you ask for a refresh.", entry.What, StringComparison.Ordinal);
         Assert.Contains("which see your IP address and can redirect to other hosts", entry.What, StringComparison.Ordinal);
         Assert.Contains("no key, no Commander name, nothing from your journal", entry.What, StringComparison.Ordinal);
     }

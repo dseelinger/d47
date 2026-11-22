@@ -1415,7 +1415,7 @@ Play, pause or skip to the next line of the story playback that is open, as the 
 
 While a story playback is open, playing or paused, four words drive it: "play" or "resume" carries on, "pause" holds it, and
 "next", "next line" or "skip" moves to the next line. The words are live only while the playback is open; outside it, "pause"
-and "play" act on the music and "next" matches nothing. "Pause" is the Commander's own pause even when the playback is
+and "play" act on the podcast if one is playing, otherwise the music, and "next" matches nothing. "Pause" is the Commander's own pause even when the playback is
 already paused for push-to-talk. "Next" plays the next line, stays paused at it when you paused the playback, and on the last
 line ends the playback. The replies are "Playing.", "Paused." and "Next line.". "Stop", "quiet", "enough", "shut up" and
 "be quiet" end the playback and close the box. The model is refused.

@@ -243,6 +243,10 @@ public static class HelpTaxonomy
                     "Say how loud each kind of sound is, and how far it drops while D47 is speaking.",
                     "audio"),
                 HelpNode.Leaf(
+                    "Podcasts",
+                    "Play the podcasts you add, pick up where you left off, and find more shows.",
+                    "podcasts"),
+                HelpNode.Leaf(
                     "Listening",
                     "Hear the Commander through the chosen microphone while the push-to-talk key is held.",
                     "listening"),

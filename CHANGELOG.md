@@ -8,9 +8,11 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Podcasts by voice. Say "play the podcast", "pause the podcast", "resume the podcast", "stop the podcast", "next episode", "skip back thirty seconds", "skip forward thirty seconds" or "refresh podcasts"; each episode resumes where you left it. While an episode is playing or paused by you, a bare "pause" or "play" acts on it before the music, and a story playback that is open still takes them first. The keyboard's media keys act on the episode too: next plays the next episode, previous skips back 30 seconds, and the volume flyout shows the episode and its show. The model can search the podcast directory ("find podcasts about deep space") and list your shows, but only you add one: say "add podcast one", two or three after a search. With Show every setting on, Settings › Hearing and sound › Sounds and levels has a Podcast feeds row for feed addresses; saving it fetches any feed that is new.
+
 Added: Privacy and egress lists a Podcast search entry. The words you search for go to Apple's podcast directory, itunes.apple.com, each time you search for a show, and nothing else about you goes with them. No page searches yet.
 
-Added: Privacy and egress lists a Podcasts entry. Once you have added a podcast feed it names the feed hosts and the hosts the feeds stream episodes from, and says that a feed is fetched only when you open the podcast page or ask for a refresh. No page adds a feed yet.
+Added: Privacy and egress lists a Podcasts entry. Once you have added a podcast feed it names the feed hosts and the hosts the feeds stream episodes from, and says that a feed is fetched when you add it, when you save the feed list, when you open the podcast page or when you ask for a refresh.
 
 Changed: Characters, Materials, a material's page and an on-foot resource's page draw their list as a column inside the page, under list heads, instead of a second sidebar beside the Assets sidebar. Rows, counts and ADD A CHARACTER work as before.
 

@@ -103,7 +103,8 @@ public static class AudioCapability
         Action? deleteRejectsNow = null,
         Func<Action, Action>? watchRejects = null,
         Func<AudioPlayerAction, string>? audioPlayer = null,
-        Func<bool>? storyPlaybackOpen = null) => new()
+        Func<bool>? storyPlaybackOpen = null,
+        Func<bool>? podcastActive = null) => new()
     {
         Id = Id,
         Group = "Voice",
@@ -154,7 +155,7 @@ public static class AudioCapability
                     "the Audio player opens in the d47 window and on the headset's big panel, and the mini panels "
                         + "show its read-out. Press it again and all of them close.")),
         ],
-        Tools = [ManageMusic(music, storyPlaybackOpen), AudioPlayer(audioPlayer), ThumbsDownMusic(thumbsDown), DeleteMusicRejects(deleteRejects, maintainer)],
+        Tools = [ManageMusic(music, storyPlaybackOpen, podcastActive), AudioPlayer(audioPlayer), ThumbsDownMusic(thumbsDown), DeleteMusicRejects(deleteRejects, maintainer)],
     };
 
     public const string ThumbsDownTool = "thumbs_down_music";
@@ -353,7 +354,7 @@ public static class AudioCapability
     };
 
     /// <summary>Pause, resume, skip and step back for the ambient music. Levels and mutes stay out of the model's reach.</summary>
-    private static ToolDefinition ManageMusic(Func<MusicAction, string>? music, Func<bool>? storyPlaybackOpen) => new()
+    private static ToolDefinition ManageMusic(Func<MusicAction, string>? music, Func<bool>? storyPlaybackOpen, Func<bool>? podcastActive) => new()
     {
         Name = ManageMusicTool,
         Exercise =
@@ -377,8 +378,8 @@ public static class AudioCapability
             Phrase("skip track", "next"),
             Phrase("skip this track", "next"),
             Phrase("previous track", "previous"),
-            Phrase("play", "resume") with { When = NoStoryPlayback(storyPlaybackOpen) },
-            Phrase("pause", "pause") with { When = NoStoryPlayback(storyPlaybackOpen) },
+            Phrase("play", "resume") with { When = NoStoryPlaybackOrPodcast(storyPlaybackOpen, podcastActive) },
+            Phrase("pause", "pause") with { When = NoStoryPlaybackOrPodcast(storyPlaybackOpen, podcastActive) },
         ],
         Handler = (arguments, _) =>
         {
@@ -537,7 +538,8 @@ public static class AudioCapability
             (s, on) => s with { Ui = s.Ui with { MusicLibrary = on } }),
     };
 
-    private static Func<bool> NoStoryPlayback(Func<bool>? open) => () => open?.Invoke() != true;
+    private static Func<bool> NoStoryPlaybackOrPodcast(Func<bool>? open, Func<bool>? podcast) =>
+        () => open?.Invoke() != true && podcast?.Invoke() != true;
 
     private static ToolCommandPhrase Phrase(string phrase, string action) =>
         new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });

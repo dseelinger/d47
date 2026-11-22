@@ -5,9 +5,6 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.App.Media;
 
-/// <summary>What one search found. <see cref="Problem"/> is a sentence for the Commander, null when the directory answered.</summary>
-internal sealed record PodcastSearchOutcome(IReadOnlyList<PodcastSearchResult> Results, string? Problem);
-
 /// <summary>Searches Apple's podcast directory. Sends only the words and the fixed query; nothing about the Commander.</summary>
 internal sealed class PodcastSearchClient(HttpClient http, ILogger logger)
 {

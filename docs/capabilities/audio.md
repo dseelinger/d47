@@ -440,7 +440,8 @@ player also open, the keys may go to that player instead.
 
 The same four actions work by voice — "pause", "play", "pause the music", "resume the music", "next track",
 "skip track" or "previous track" — through `manage_music`, which the model can also call. The bare "pause" and "play"
-act on the story playback box instead while it is open; "pause the music" and "next track" always act on the music:
+act on the story playback box instead while it is open, and otherwise on a podcast episode that is playing or paused
+by you before they act on the music ([Podcasts](podcasts.html)); "pause the music" and "next track" always act on the music:
 
 ```json
 {"type":"object","properties":{"action":{"type":"string","description":"What to do to the music.","enum":["pause","resume","next","previous"]}},"required":["action"],"additionalProperties":false}

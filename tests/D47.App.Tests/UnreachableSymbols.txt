@@ -27,17 +27,7 @@ D47.App.Input.ChordSender.Recorded
 D47.App.Input.PushToTalkKey.Gesture
 D47.App.Input.ScancodeInjector.LastSequence
 D47.App.MainWindow.MainWindow()
-D47.App.Media.PodcastRefresh
-D47.App.Media.PodcastSearchClient
-D47.App.Media.PodcastSearchOutcome
-D47.App.Media.PodcastStore.AddAsync(System.Uri, D47.Core.Configuration.SettingsService)
 D47.App.Media.PodcastStore.Changed
-D47.App.Media.PodcastStore.Decode(byte[], string)
-D47.App.Media.PodcastStore.FetchAsync(System.Uri)
-D47.App.Media.PodcastStore.Raise()
-D47.App.Media.PodcastStore.ReadAtMostAsync(System.Net.Http.HttpContent, long, System.Threading.CancellationToken)
-D47.App.Media.PodcastStore.RefreshAllAsync()
-D47.App.Media.PodcastStore.RefreshAsync(System.Uri)
 D47.App.Media.ScreenshotConverter.Running
 D47.App.Panel.AvatarView.Extent
 D47.App.Panel.AvatarView.Library
@@ -116,13 +106,7 @@ D47.Core.Adventures.AdventureWalkResult.Failed
 D47.Core.Adventures.Resolution.Succeeded
 D47.Core.AppPaths.Gutenberg
 D47.Core.Audio.AudioArbiter.Listening
-D47.Core.Audio.AudioArbiter.PausePodcast()
-D47.Core.Audio.AudioArbiter.PlayPodcast(D47.Core.Audio.MusicTrack, System.TimeSpan)
-D47.Core.Audio.AudioArbiter.ResumePodcast()
-D47.Core.Audio.AudioArbiter.SeekPodcast(System.TimeSpan)
-D47.Core.Audio.AudioArbiter.StopPodcast()
 D47.Core.Audio.AudioArbiter.TurnInFlight
-D47.Core.Audio.IPcmStream.CanSeek
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
 D47.Core.Books.GutenbergBook
@@ -140,7 +124,6 @@ D47.Core.Checklists.ChecklistProposalStore.Path
 D47.Core.Checklists.ChecklistService.SelectionChanged
 D47.Core.Checklists.ChecklistStore.Path
 D47.Core.Checklists.PlanBlock.Unlocked
-D47.Core.Configuration.PodcastSettings.WithFeed(System.Uri)
 D47.Core.Conversation.TurnLoop.Target
 D47.Core.Debrief.DebriefWriteRefused.Attempted
 D47.Core.Debrief.DebriefWriteRefused.Why
@@ -178,26 +161,7 @@ D47.Core.Lore.LoreStore.Changed
 D47.Core.Memory.MemoryStore.Changed
 D47.Core.Persona.ShipCoreStore.Changed
 D47.Core.Podcasts.PodcastListening.All
-D47.Core.Podcasts.PodcastPlayer.Changed
-D47.Core.Podcasts.PodcastPlayer.Clock(System.TimeSpan)
-D47.Core.Podcasts.PodcastPlayer.Heard()
-D47.Core.Podcasts.PodcastPlayer.Listening
-D47.Core.Podcasts.PodcastPlayer.Next()
-D47.Core.Podcasts.PodcastPlayer.Pause()
-D47.Core.Podcasts.PodcastPlayer.Play(System.Uri, D47.Core.Podcasts.PodcastShow, D47.Core.Podcasts.PodcastEpisode)
-D47.Core.Podcasts.PodcastPlayer.Playback.Playback(System.Uri, D47.Core.Podcasts.PodcastShow, D47.Core.Podcasts.PodcastEpisode)
 D47.Core.Podcasts.PodcastPlayer.Problem
-D47.Core.Podcasts.PodcastPlayer.Resume()
-D47.Core.Podcasts.PodcastPlayer.Sentence(System.Exception)
-D47.Core.Podcasts.PodcastPlayer.Skip(System.TimeSpan)
-D47.Core.Podcasts.PodcastPlayer.SkipBack()
-D47.Core.Podcasts.PodcastPlayer.SkipForward()
-D47.Core.Podcasts.PodcastPlayer.Stop()
-D47.Core.Podcasts.PodcastPlayer.Watch(D47.Core.Audio.MusicTrack, D47.Core.Podcasts.PodcastPlayer.Playback)
-D47.Core.Podcasts.PodcastPlayer.Watched
-D47.Core.Podcasts.PodcastSearch
-D47.Core.Podcasts.PodcastSearchException
-D47.Core.Podcasts.PodcastSearchResult
 D47.Core.Reminders.JournalReminderStore.Changed
 D47.Core.Ships.PowerPriorities.Retracted
 D47.Core.Ships.ShipBuildStore.Path
