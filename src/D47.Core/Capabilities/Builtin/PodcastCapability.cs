@@ -29,7 +29,8 @@ public static class PodcastCapability
 
     /// <param name="desk">The desk, or null where nothing plays podcasts.</param>
     /// <param name="storyPlaybackOpen">Whether a story playback is open, which takes bare "play" and "pause" first.</param>
-    public static CapabilityDescriptor Create(Func<PodcastDesk?> desk, Func<bool>? storyPlaybackOpen = null)
+    /// <param name="takesBare">Whether a podcast takes bare "play" and "pause"; by default, whenever one is playing or paused.</param>
+    public static CapabilityDescriptor Create(Func<PodcastDesk?> desk, Func<bool>? storyPlaybackOpen = null, Func<bool>? takesBare = null)
     {
         var gate = new Lock();
         IReadOnlyList<PodcastSearchResult> found = [];
@@ -44,7 +45,7 @@ public static class PodcastCapability
             Display = new CapabilityDisplay { PanelTitle = "Podcasts", Order = 97, ShowOnPanel = false },
             Tools =
             [
-                ManagePodcast(desk, storyPlaybackOpen),
+                ManagePodcast(desk, storyPlaybackOpen, takesBare),
                 ListPodcasts(desk),
                 FindPodcasts(
                     desk,
@@ -72,9 +73,9 @@ public static class PodcastCapability
     private static ToolCommandPhrase Phrase(string phrase, string action) =>
         new(phrase, new Dictionary<string, string>(StringComparer.Ordinal) { ["action"] = action });
 
-    private static ToolDefinition ManagePodcast(Func<PodcastDesk?> desk, Func<bool>? storyPlaybackOpen)
+    private static ToolDefinition ManagePodcast(Func<PodcastDesk?> desk, Func<bool>? storyPlaybackOpen, Func<bool>? takesBare)
     {
-        bool Bare() => storyPlaybackOpen?.Invoke() != true && desk()?.Active == true;
+        bool Bare() => storyPlaybackOpen?.Invoke() != true && (takesBare?.Invoke() ?? desk()?.Active == true);
 
         return new ToolDefinition
         {

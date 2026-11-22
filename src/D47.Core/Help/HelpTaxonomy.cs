@@ -247,6 +247,10 @@ public static class HelpTaxonomy
                     "Play the podcasts you add, pick up where you left off, and find more shows.",
                     "podcasts"),
                 HelpNode.Leaf(
+                    "Books",
+                    "Read the books on your shelf aloud with a local voice, and move by chapter and paragraph.",
+                    "books"),
+                HelpNode.Leaf(
                     "Listening",
                     "Hear the Commander through the chosen microphone while the push-to-talk key is held.",
                     "listening"),

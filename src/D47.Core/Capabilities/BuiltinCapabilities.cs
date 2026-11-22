@@ -381,7 +381,10 @@ public static class BuiltinCapabilities
         Func<IReadOnlyList<string>>? podcastEpisodeHosts = null,
 
         // The podcast player, shows and searches, once the host is built.
-        Func<Podcasts.PodcastDesk?>? podcastDesk = null) =>
+        Func<Podcasts.PodcastDesk?>? podcastDesk = null,
+
+        // The book reader and shelf, once the host is built.
+        Func<Books.BookDesk?>? bookDesk = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -484,7 +487,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => podcastDesk?.Invoke()?.Active == true),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => BookTakesBare(bookDesk, podcastDesk) || PodcastTakesBare(bookDesk, podcastDesk)),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,
@@ -614,7 +617,9 @@ public static class BuiltinCapabilities
 
         AstrometricsCapability.Create(() => gameState.Active, fid => travelLog?.Deaths(fid) ?? [], fid => travelLog?.FirstDiscoveries(fid) ?? []),
 
-        PodcastCapability.Create(podcastDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true),
+        PodcastCapability.Create(podcastDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true, () => PodcastTakesBare(bookDesk, podcastDesk)),
+
+        BookCapability.Create(bookDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true, () => BookTakesBare(bookDesk, podcastDesk)),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).
@@ -636,6 +641,18 @@ public static class BuiltinCapabilities
             about?.PendingUpdateVersion,
             about?.OpenDataFolder),
     ];
+
+    /// <summary>
+    /// Whether a book takes bare "play" and "pause": one is playing or paused, unless a podcast is playing and the
+    /// book is paused. Exactly one of a book, a podcast and the music takes them.
+    /// </summary>
+    private static bool BookTakesBare(Func<Books.BookDesk?>? books, Func<Podcasts.PodcastDesk?>? podcasts) =>
+        books?.Invoke() is { Active: true } book
+        && (book.Playing || podcasts?.Invoke()?.Player.State is not { Playing: true });
+
+    /// <summary>Whether a podcast takes bare "play" and "pause": one is playing or paused and no book takes them.</summary>
+    private static bool PodcastTakesBare(Func<Books.BookDesk?>? books, Func<Podcasts.PodcastDesk?>? podcasts) =>
+        podcasts?.Invoke()?.Active == true && !BookTakesBare(books, podcasts);
 
     private static IEnumerable<CapabilityDescriptor> Optional(bool registered, Func<CapabilityDescriptor> create) =>
         registered ? [create()] : [];

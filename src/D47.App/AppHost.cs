@@ -3044,6 +3044,7 @@ public sealed class AppHost : IDisposable
                     .ToList() ?? [],
                 podcastEpisodeHosts: () => late.Host?.Podcasts?.EpisodeHosts ?? [],
                 podcastDesk: () => late.Host?.PodcastDesk,
+                bookDesk: () => late.Host?.BookDesk,
                 liveRoute: () => loop.Feed.LiveRoute,
                 installedModules: () => late.Host?._modules?.Installed ?? [],
                 watches: () => late.Host?.WatchesDesk?.Store.Watches ?? [],
@@ -3085,6 +3086,7 @@ public sealed class AppHost : IDisposable
         IEnumerable<DynamicCommand> OtherDynamicCommands() =>
             services.ClipboardOffer.Phrases()
                 .Concat(AdventureCapability.RunPhrases(services.AdventureDesk))
+                .Concat(BookCapability.ReadPhrases(late.Host?.BookDesk))
                 .Concat(stores.HandInOffer.Phrases())
                 .Concat(stores.NeutronOffer.Phrases())
 
@@ -6006,6 +6008,21 @@ public sealed class AppHost : IDisposable
             return _podcastsHost;
         }
     }
+
+    private D47.Core.Books.BookDesk? _bookDesk;
+
+    /// <summary>What the book voice commands act on.</summary>
+    public D47.Core.Books.BookDesk BookDesk => _bookDesk ??= new D47.Core.Books.BookDesk(
+        () => Books.Books,
+        () => BooksHost.AnyInstalled,
+        BookPlayer.Play,
+        () => BookPlayer.Now is { } now
+            ? new D47.Core.Books.BookNow(now.Book.Source, now.Book.Title, now.Place.Chapter, now.Book.Chapters[now.Place.Chapter].Title, now.IsPaused)
+            : null,
+        () => BookPlayer.Pause(StoryRunPause.Commander),
+        BookPlayer.Resume,
+        BooksHost.NextChapter,
+        BooksHost.BackAParagraph);
 
     private D47.App.Panel.BooksHost? _booksHost;
 
