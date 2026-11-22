@@ -28,6 +28,14 @@ D47.App.Input.PushToTalkKey.Gesture
 D47.App.Input.ScancodeInjector.LastSequence
 D47.App.MainWindow.MainWindow()
 D47.App.Media.HttpRangeStream
+D47.App.Media.PodcastRefresh
+D47.App.Media.PodcastStore.Changed
+D47.App.Media.PodcastStore.Decode(byte[], string)
+D47.App.Media.PodcastStore.FetchAsync(System.Uri)
+D47.App.Media.PodcastStore.Raise()
+D47.App.Media.PodcastStore.ReadAtMostAsync(System.Net.Http.HttpContent, System.Threading.CancellationToken)
+D47.App.Media.PodcastStore.RefreshAllAsync()
+D47.App.Media.PodcastStore.RefreshAsync(System.Uri)
 D47.App.Media.ScreenshotConverter.Running
 D47.App.Panel.AvatarView.Extent
 D47.App.Panel.AvatarView.Library
@@ -171,13 +179,9 @@ D47.Core.Loadout.OnFootBuildStore.Path
 D47.Core.Lore.LoreStore.Changed
 D47.Core.Memory.MemoryStore.Changed
 D47.Core.Persona.ShipCoreStore.Changed
-D47.Core.Podcasts.PodcastEpisode
-D47.Core.Podcasts.PodcastFeed
-D47.Core.Podcasts.PodcastFeedException
 D47.Core.Podcasts.PodcastListening
 D47.Core.Podcasts.PodcastListeningRead
 D47.Core.Podcasts.PodcastProgress
-D47.Core.Podcasts.PodcastShow
 D47.Core.Reminders.JournalReminderStore.Changed
 D47.Core.Ships.PowerPriorities.Retracted
 D47.Core.Ships.ShipBuildStore.Path

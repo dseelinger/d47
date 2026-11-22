@@ -107,6 +107,9 @@ public sealed record D47Settings
     /// <summary>How long without activity counts as away.</summary>
     public PresenceSettings Presence { get; init; } = new();
 
+    /// <summary>The podcast feeds the Commander added.</summary>
+    public PodcastSettings Podcasts { get; init; } = new();
+
     /// <summary>
     /// What each Commander has set of the rows that are theirs rather than the installation's (Phase
     /// 44).
@@ -1464,6 +1467,23 @@ public sealed record UsageSettings
     public Dictionary<string, JsonElement>? Extra { get; init; }
 
     public bool Counts { get; init; } = true;
+}
+
+/// <summary>The podcast feeds the Commander added, as RSS feed URLs.</summary>
+public sealed record PodcastSettings
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    public IReadOnlyList<string> Feeds { get; init; } = [];
+
+    /// <summary>The feeds that are absolute http or https URLs, once each, in the order added.</summary>
+    public IReadOnlyList<Uri> FeedUris() =>
+        [.. (Feeds ?? [])
+            .Select(feed => Uri.TryCreate(feed?.Trim(), UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" ? uri : null)
+            .OfType<Uri>()
+            .DistinctBy(uri => uri.AbsoluteUri, StringComparer.Ordinal)];
 }
 
 /// <summary>Where usage counts are sent.</summary>

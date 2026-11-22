@@ -81,13 +81,15 @@ public static class PrivacyCapability
         Func<IReadOnlyList<RunningStoryVoice>>? runningStory = null,
         Func<IReadOnlyList<string>>? remoteCharacterSystems = null,
         Func<IReadOnlyList<Modules.InstalledModule>>? installedModules = null,
-        Web.WebAppLink? webApp = null)
+        Web.WebAppLink? webApp = null,
+        Func<IReadOnlyList<string>>? podcastEpisodeHosts = null)
     {
         var canSearch = searchAvailable ?? (() => true);
         var readsImages = imagesAvailable ?? (() => true);
         var storyVoices = runningStory ?? (() => []);
         var remoteSystems = remoteCharacterSystems ?? (() => []);
         var modules = installedModules ?? (() => []);
+        var episodeHosts = podcastEpisodeHosts ?? (() => []);
 
         // Presence of the key, never its value — the disclosure has to distinguish "configured and sending"
         // from "selected but inert", and that is the only bit it needs.
@@ -135,11 +137,11 @@ public static class PrivacyCapability
                         + "and exactly what is sent there.",
                     Handler = (_, _) => Task.FromResult(
                         ToolResult.Ok(EgressDisclosure.Describe(
-                            settings.Current, KeyPresent(), canSearch(), readsImages(), storyVoices(), CodexPublishTokenPresent(), remoteSystems(), modules()))),
+                            settings.Current, KeyPresent(), canSearch(), readsImages(), storyVoices(), CodexPublishTokenPresent(), remoteSystems(), modules(), episodeHosts()))),
                 },
             ],
             Settings = BuildSettingRows(
-                KeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices, CodexPublishTokenPresent, remoteSystems, webApp),
+                KeyPresent, canSearch, memories, recording, files is null ? null : donorTokenFile, files, forgetDonations, readsImages, storyVoices, CodexPublishTokenPresent, remoteSystems, webApp, episodeHosts),
         };
     }
 
@@ -155,7 +157,8 @@ public static class PrivacyCapability
         Func<IReadOnlyList<RunningStoryVoice>> runningStory,
         Func<bool> codexPublishTokenPresent,
         Func<IReadOnlyList<string>> remoteCharacterSystems,
-        Web.WebAppLink? webApp)
+        Web.WebAppLink? webApp,
+        Func<IReadOnlyList<string>> podcastEpisodeHosts)
     {
         var rows = new List<SettingRow>
         {
@@ -423,12 +426,12 @@ public static class PrivacyCapability
                 Read = s =>
                 {
                     var entry = EgressDisclosure.Entry(
-                        id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent(), remoteCharacterSystems());
+                        id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent(), remoteCharacterSystems(), podcastEpisodeHosts());
                     return entry.Active ? $"{entry.Line}\n{entry.Summary}" : entry.Summary;
                 },
             },
             DetailBinding = s => EgressDisclosure.Entry(
-                id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent(), remoteCharacterSystems()).What,
+                id, s, keyPresent(), searchAvailable(), imagesAvailable(), runningStory(), codexPublishTokenPresent(), remoteCharacterSystems(), podcastEpisodeHosts()).What,
         }));
 
         return rows;

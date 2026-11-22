@@ -497,6 +497,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Downloads the music library while <see cref="UiSettings.MusicLibrary"/> is on.</summary>
     internal MusicPackStore? MusicPack { get; private set; }
 
+    /// <summary>The podcast feeds as last fetched; a feed is requested only when asked.</summary>
+    internal PodcastStore? Podcasts { get; private set; }
+
     /// <summary>Whether a Music publish token is stored or in the environment.</summary>
     internal bool MusicMaintainer =>
         MusicPublishToken.Present(Secrets.Names.Contains(MusicPublishToken.SecretName), Environment.GetEnvironmentVariable);
@@ -3015,6 +3018,7 @@ public sealed class AppHost : IDisposable
                     .Select(c => c.System!)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList() ?? [],
+                podcastEpisodeHosts: () => late.Host?.Podcasts?.EpisodeHosts ?? [],
                 liveRoute: () => loop.Feed.LiveRoute,
                 installedModules: () => late.Host?._modules?.Installed ?? [],
                 watches: () => late.Host?.WatchesDesk?.Store.Watches ?? [],
@@ -4045,6 +4049,12 @@ public sealed class AppHost : IDisposable
             MusicPackStore.CreateClient(),
             loggerFactory.CreateLogger<MusicPackStore>());
         host.MusicPack.Landed += host._reloadAudio;
+        host.Podcasts = new PodcastStore(
+            paths.Podcasts,
+            () => host.Settings.Current.Podcasts.FeedUris(),
+            files,
+            PodcastStore.CreateClient(),
+            loggerFactory.CreateLogger<PodcastStore>());
         host.Music.Played += track => _ = host.MusicPack.Played(track);
         host.MusicRejectDeleter = new MusicRejectDeleter(
             paths.MusicPack,

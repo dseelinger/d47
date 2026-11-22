@@ -379,7 +379,10 @@ public static class BuiltinCapabilities
 
         // Each Commander's possible region firsts, and where one is sent when the Commander asks.
         Journal.RegionFirstBook? regionFirsts = null,
-        Knowledge.IRegionFirstReport? regionFirstReport = null) =>
+        Knowledge.IRegionFirstReport? regionFirstReport = null,
+
+        // The hosts the cached podcast feeds name for their episodes, for the Podcasts disclosure.
+        Func<IReadOnlyList<string>>? podcastEpisodeHosts = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -549,7 +552,7 @@ public static class BuiltinCapabilities
         // list keeps the shape it has — no parameter inserted in the middle, which is the one edit this file
         // records as silently rebinding everything after it.
         PrivacyCapability.Create(
-            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems, installedModules, webApp),
+            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems, installedModules, webApp, podcastEpisodeHosts),
         SettingsCapability.Create(settings),
         RemindersCapability.Create(
             journalReminders,

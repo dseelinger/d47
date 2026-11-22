@@ -86,6 +86,9 @@ public static class EgressDisclosure
     /// <summary>Downloading the weekly list of Project Gutenberg titles.</summary>
     public const string Books = "books";
 
+    /// <summary>Fetching the podcast feeds the Commander added, and streaming their episodes.</summary>
+    public const string Podcasts = "podcasts";
+
     public const string EddnHost = "eddn.edcd.io";
 
     /// <summary>Sending the market prices the game shows to EDDN.</summary>
@@ -182,6 +185,7 @@ public static class EgressDisclosure
         Eddn,
         RareIndex,
         Books,
+        Podcasts,
         UpdateCheck,
         ModelUpdates,
         HullArt,
@@ -227,6 +231,7 @@ public static class EgressDisclosure
         Eddn => "EDDN",
         RareIndex => "Rare index",
         Books => "Project Gutenberg list",
+        Podcasts => "Podcasts",
         WebSearch => "Web search",
         Screen => "Screen pictures",
         Recap => "Last session recap",
@@ -260,6 +265,7 @@ public static class EgressDisclosure
     /// <param name="imagesAvailable">Whether the model in use reads pictures.</param>
     /// <param name="codexPublishTokenPresent">Whether a codex publish token is stored or in the environment.</param>
     /// <param name="remoteCharacterSystems">The systems the Commander's remote characters are in.</param>
+    /// <param name="podcastEpisodeHosts">The hosts the cached podcast feeds name for their episodes.</param>
     public static EgressEntry Entry(
         string id,
         D47Settings settings,
@@ -268,7 +274,8 @@ public static class EgressDisclosure
         bool imagesAvailable = true,
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
         bool codexPublishTokenPresent = false,
-        IReadOnlyList<string>? remoteCharacterSystems = null) => id switch
+        IReadOnlyList<string>? remoteCharacterSystems = null,
+        IReadOnlyList<string>? podcastEpisodeHosts = null) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
@@ -651,6 +658,8 @@ public static class EgressDisclosure
                 + "has: the one it last fetched, or the one built into this release, whichever is newer.",
                 summary: "Fetch model updates is off, so nothing is requested."),
 
+        Podcasts => PodcastsEntry(settings, podcastEpisodeHosts ?? []),
+
         // On demand.
         SpeechModels => SpeechModelsEntry(settings),
         ChatterboxVoices => ChatterboxVoicesEntry(settings),
@@ -710,6 +719,36 @@ public static class EgressDisclosure
 
         _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not an egress disclosure id."),
     };
+
+    /// <summary>Where podcast requests go: the hosts of the feeds added, then the episode hosts those feeds name.</summary>
+    private static EgressEntry PodcastsEntry(D47Settings settings, IReadOnlyList<string> episodeHosts)
+    {
+        var feeds = settings.Podcasts.FeedUris();
+
+        if (feeds.Count == 0)
+        {
+            return EgressEntry.Silent(
+                Podcasts,
+                NameOf(Podcasts),
+                "No podcast feeds are added, so nothing is fetched.");
+        }
+
+        var hosts = feeds
+            .Select(feed => feed.Host)
+            .Concat(episodeHosts.Where(host => !string.IsNullOrWhiteSpace(host)))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+        return new EgressEntry(
+            Podcasts,
+            NameOf(Podcasts),
+            string.Join(", ", hosts),
+            "Each feed is fetched when you open the podcast page or ask for a refresh. An episode's audio is streamed "
+            + "from the host its feed names, only while you listen. Many feeds send episode requests through the "
+            + "publisher's download-counting services, which see your IP address and can redirect to other hosts. "
+            + "Nothing about you goes with it: no key, no Commander name, nothing from your journal.",
+            Active: true,
+            Summary: "Each feed when you open the podcast page or ask for a refresh, and an episode's audio while you listen.");
+    }
 
     /// <summary>What a donation sends, and where.</summary>
     private static EgressEntry DonationEntry()
@@ -1117,9 +1156,10 @@ public static class EgressDisclosure
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
         bool codexPublishTokenPresent = false,
         IReadOnlyList<string>? remoteCharacterSystems = null,
-        IReadOnlyList<InstalledModule>? installedModules = null) =>
+        IReadOnlyList<InstalledModule>? installedModules = null,
+        IReadOnlyList<string>? podcastEpisodeHosts = null) =>
         [
-            .. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems)),
+            .. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems, podcastEpisodeHosts)),
             .. ModuleEntries(settings, installedModules ?? []),
         ];
 
@@ -1143,9 +1183,10 @@ public static class EgressDisclosure
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
         bool codexPublishTokenPresent = false,
         IReadOnlyList<string>? remoteCharacterSystems = null,
-        IReadOnlyList<InstalledModule>? installedModules = null)
+        IReadOnlyList<InstalledModule>? installedModules = null,
+        IReadOnlyList<string>? podcastEpisodeHosts = null)
     {
-        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems, installedModules);
+        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems, installedModules, podcastEpisodeHosts);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();
