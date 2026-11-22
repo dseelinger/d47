@@ -865,18 +865,19 @@ public class LoadoutTabTests
  // files it under.
         var variants = Offered(surface.Panel);
 
-        Assert.Contains("Large, gimballed", variants);
-        Assert.Contains("Small, fixed", variants);
-        Assert.Contains("3E · 8.0 t · 0.92 MW · 140,600 cr", variants);
+        Assert.Contains("LARGE, GIMBALLED", variants);
+        Assert.Contains("SMALL, FIXED", variants);
+        Assert.Contains("0.92 MW", variants);
+        Assert.Contains("140,600 cr", variants);
 
         // Nothing bigger than the slot, and the decline is still a real plan.
-        Assert.DoesNotContain("Huge, fixed", variants);
+        Assert.DoesNotContain("HUGE, FIXED", variants);
         Assert.Contains("Any Pulse Laser — I do not mind which", variants);
 
         // **And it never claims the size or the mount is irrelevant**.
         Assert.DoesNotContain(variants, said => said.Contains("do not matter", StringComparison.Ordinal));
 
-        Pick(surface.Panel, "Large, gimballed").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Pick(surface.Panel, "LARGE, GIMBALLED").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         // Then the rolls that apply to a pulse laser, rather than every blueprint in the game.
@@ -930,7 +931,7 @@ public class LoadoutTabTests
         Press(surface.Panel, "Plan this slot").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        foreach (var choice in new[] { "Pulse Laser", "Large, gimballed", "Lightweight Mount", "No effect" })
+        foreach (var choice in new[] { "Pulse Laser", "LARGE, GIMBALLED", "Lightweight Mount", "No effect" })
         {
             Pick(surface.Panel, choice).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Dispatcher.UIThread.RunJobs();

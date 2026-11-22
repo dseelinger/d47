@@ -23,6 +23,9 @@ public sealed record ChoiceOption(string Key, string Label, string? Detail = nul
 {
     /// <summary>The heading this option sits under, where the list is grouped.</summary>
     public string? Group { get; init; }
+
+    /// <summary>Drawn above the table, outside its sort, where the request has <see cref="ChoiceRequest.Columns"/>.</summary>
+    public bool Pinned { get; init; }
 }
 
 /// <summary>
@@ -57,4 +60,13 @@ public sealed record ChoiceRequest(
     /// underneath it declares (asked for 2026-08-23).
     /// </summary>
     public string? Help { get; init; }
+
+    /// <summary>
+    /// Draws the options that are not <see cref="ChoiceOption.Pinned"/> as a sortable table with these columns, read
+    /// per option key. Null draws the plain list.
+    /// </summary>
+    public IReadOnlyList<EntryColumn>? Columns { get; init; }
+
+    /// <summary>The key the table's arrangement is stored under; <see cref="Key"/> where null.</summary>
+    public string? TableId { get; init; }
 }

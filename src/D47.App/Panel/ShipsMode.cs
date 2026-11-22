@@ -1655,7 +1655,7 @@ public sealed class ShipsMode(
             // **What the Commander means, not a claim about the game.** This row read "size and mount do not
             // matter", and that is false about every module in Elite: an FSD's size is most of a jump range,
             // and a weapon's mount is the whole of how it tracks.
-            new ChoiceOption(string.Empty, $"Any {module} — I do not mind which"),
+            new ChoiceOption(string.Empty, $"Any {module} — I do not mind which") { Pinned = true },
         ];
 
         if (kept is not null)
@@ -1663,14 +1663,17 @@ public sealed class ShipsMode(
             rows.Add(new ChoiceOption(
                 kept.Symbol,
                 $"Keep the {EliteSpecifications.ModuleName(kept.Symbol) ?? Wording(kept)} — the one fitted now",
-                Figures(kept)));
+                Figures(kept))
+            {
+                Pinned = true,
+            });
         }
 
         // The coin again, per variant this time — the level a Commander is actually choosing at.
         rows.AddRange(rest.Select(variant => new ChoiceOption(
             variant.Symbol,
             Badged(Wording(variant), variant),
-            Detail(Figures(variant), Gate(variant) ?? string.Empty))));
+            Gate(variant))));
 
         prompts.Choose(
             new ChoiceRequest(
@@ -1684,8 +1687,84 @@ public sealed class ShipsMode(
             {
                 CurrentWord = "planned now",
                 Searchable = true,
+                Columns = VariantColumns(rest),
+                TableId = VariantTableId(rest),
             },
             option => chosen(option.Key.Length == 0 ? null : option.Key));
+    }
+
+    /// <summary>The key a variant table's arrangement is stored under: one per set of columns.</summary>
+    private static string VariantTableId(IReadOnlyCollection<ModuleSpecification> variants) =>
+        "loadout.variant" + (variants.Any(variant => variant.IsDrive) ? ".drive" : string.Empty)
+        + (variants.Any(variant => variant.HullBoost is not null) ? ".hull" : string.Empty);
+
+    /// <summary>
+    /// The variant picker's columns, read per variant symbol: the module, its code, mass, power and price, with the
+    /// drive figures when the page has a frame shift drive and the hull boost and resistances when a variant carries them.
+    /// </summary>
+    internal static IReadOnlyList<EntryColumn> VariantColumns(IReadOnlyCollection<ModuleSpecification> variants)
+    {
+        var bySymbol = variants
+            .GroupBy(variant => variant.Symbol, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+
+        ModuleSpecification? Of(string symbol) =>
+            bySymbol.GetValueOrDefault(symbol) ?? EliteSpecifications.Module(symbol);
+
+        EntryColumn Figure(string label, Func<ModuleSpecification, double?> read, string format, string unit)
+        {
+            double? Read(string symbol) => Of(symbol) is { } variant ? read(variant) : null;
+
+            return new(
+                label,
+                symbol => Read(symbol) is { } value ? value.ToString(format, CultureInfo.InvariantCulture) + unit : "—",
+                symbol => Read(symbol) is { } value ? (long)Math.Round(value * 1000) : null,
+                Right: true);
+        }
+
+        EntryColumn Boost(string label, Func<ModuleSpecification, double?> read)
+        {
+            double? Read(string symbol) => Of(symbol) is { } variant ? read(variant) : null;
+
+            return new(
+                label,
+                symbol => Read(symbol) is { } value ? SpecificationCapability.Percentage(value) : "—",
+                symbol => Read(symbol) is { } value ? (long)Math.Round(value * 10000) : null,
+                Right: true,
+                Descending: true);
+        }
+
+        List<EntryColumn> columns =
+        [
+            new(
+                "Module",
+                symbol => Of(symbol) is { } variant ? Badged(Wording(variant), variant) : symbol),
+            new("Code", symbol => Of(symbol)?.Size ?? "—"),
+            Figure("Mass", variant => variant.Mass, "N1", " t"),
+            Figure("Power", variant => variant.Power, "N2", " MW"),
+            new(
+                "Price",
+                symbol => Of(symbol)?.Cost is { } cost ? Credits(cost) : "—",
+                symbol => Of(symbol)?.Cost,
+                Right: true),
+        ];
+
+        if (variants.Any(variant => variant.IsDrive))
+        {
+            columns.Add(Figure("Optimal mass", variant => variant.OptimalMass, "0.##", " t"));
+            columns.Add(Figure("Max fuel per jump", variant => variant.MaxFuelPerJump, "0.##", " t"));
+        }
+
+        if (variants.Any(variant => variant.HullBoost is not null))
+        {
+            columns.Add(Boost("Hull", variant => variant.HullBoost));
+            columns.Add(Boost("Kinetic", variant => variant.KineticResistance));
+            columns.Add(Boost("Thermal", variant => variant.ThermalResistance));
+            columns.Add(Boost("Explosive", variant => variant.ExplosiveResistance));
+            columns.Add(Boost("Caustic", variant => variant.CausticResistance));
+        }
+
+        return columns;
     }
 
     /// <summary>The blueprint, then the grade, then the effect.</summary>

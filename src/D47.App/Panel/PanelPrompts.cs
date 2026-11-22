@@ -65,11 +65,15 @@ public sealed class PanelPrompts : IHearsText
         Control Build() => Frame(
             request.Title,
             request.Context,
-            Rows(request, option =>
-            {
-                Dismiss(request.Key, request.Surface);
-                chosen(option);
-            }),
+            Rows(
+                request,
+                option =>
+                {
+                    Dismiss(request.Key, request.Surface);
+                    chosen(option);
+                },
+                ColumnArrangements?.Invoke(),
+                ColumnWidths?.Invoke()),
             () => Dismiss(request.Key, request.Surface),
             request.Surface);
 
@@ -287,32 +291,100 @@ public sealed class PanelPrompts : IHearsText
     /// <summary>
     /// The options, one pressable row each, with what is fitted now marked rather than selected.
     /// </summary>
-    private static Control Rows(ChoiceRequest request, Action<ChoiceOption> chosen)
+    private static Control Rows(
+        ChoiceRequest request,
+        Action<ChoiceOption> chosen,
+        ColumnArrangementMemory? arrangement = null,
+        ColumnWidthMemory? widths = null)
     {
         var rows = new StackPanel { Spacing = 3 };
+        var pinned = new StackPanel { Spacing = 3 };
         var query = string.Empty;
+
+        var columns = request.Columns is { Count: > 0 } given ? given : null;
+        var byKey = request.Options.GroupBy(option => option.Key).ToDictionary(group => group.Key, group => group.First());
+        ArrangedTable<string>? table = null;
+        var header = new Border { Margin = new Thickness(12, 0, 12, 2) };
+        var arranger = new StackPanel();
+
+        if (columns is not null)
+        {
+            table = new ArrangedTable<string>(
+                request.TableId ?? request.Key,
+                PickTable.Fields(columns, key => TableName(request, byKey[key]), firstRequired: true),
+                arrangement,
+                widths,
+                spacing: 12,
+                sortedByDefault: null,
+                headName: "ChoiceHead");
+        }
+
+        void DrawHeader()
+        {
+            var grid = table!.Header();
+            grid.MinHeight = TypeScale.MinimumTarget;
+            header.Child = grid;
+
+            arranger.Children.Clear();
+
+            if (ColumnArranger.Line(table) is { } line)
+            {
+                arranger.Children.Add(line);
+            }
+
+            if (ColumnArranger.Bar(table) is { } bar)
+            {
+                arranger.Children.Add(bar);
+            }
+        }
 
         void Draw()
         {
             rows.Children.Clear();
+            pinned.Children.Clear();
 
-            var shown = request.Options.Where(option => Matches(option, query)).ToList();
+            var shown = request.Options
+                .Where(option => Matches(option, query)
+                    || (columns is not null && !option.Pinned && PickTable.Matches(option.Key, query.Trim(), columns)))
+                .ToList();
+
+            if (table is not null)
+            {
+                foreach (var option in shown.Where(option => option.Pinned))
+                {
+                    pinned.Children.Add(Option(request, option, chosen));
+                }
+
+                var tabled = table.Sort([.. shown.Where(option => !option.Pinned).Select(option => option.Key)]);
+
+                if (shown.Count == 0)
+                {
+                    rows.Children.Add(Nothing(query));
+                    return;
+                }
+
+                foreach (var key in tabled)
+                {
+                    var row = new Button
+                    {
+                        Content = table.Row(key),
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                        MinHeight = TypeScale.MinimumTarget,
+                        Padding = new Thickness(12, 6),
+                    };
+
+                    var option = byKey[key];
+                    row.Click += (_, _) => chosen(option);
+                    rows.Children.Add(row);
+                }
+
+                return;
+            }
 
             if (shown.Count == 0)
             {
-                var nothing = new TextBlock
-                {
-                    Text = $"Nothing here matches “{query}”.",
-                    FontSize = TypeScale.Body,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(12, 6),
-                };
-
-                nothing.Bind(
-                    TextBlock.ForegroundProperty,
-                    App.Current!.GetResourceObservable(ThemeManager.GreyKey));
-
-                rows.Children.Add(nothing);
+                rows.Children.Add(Nothing(query));
                 return;
             }
 
@@ -332,6 +404,16 @@ public sealed class PanelPrompts : IHearsText
             }
         }
 
+        if (table is not null)
+        {
+            DrawHeader();
+            table.Changed += () =>
+            {
+                DrawHeader();
+                Draw();
+            };
+        }
+
         Draw();
 
         var list = new ScrollViewer
@@ -341,9 +423,38 @@ public sealed class PanelPrompts : IHearsText
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
 
+        Control content = list;
+
+        if (table is not null)
+        {
+            // The header stands over the rows' columns: narrowed by the list's scroll bar.
+            list.LayoutUpdated += (_, _) =>
+            {
+                if (list.Bounds.Width <= 0 || list.Viewport.Width <= 0)
+                {
+                    return;
+                }
+
+                var right = 12 + Math.Max(0, list.Bounds.Width - list.Viewport.Width);
+
+                if (Math.Abs(header.Margin.Right - right) > 0.5)
+                {
+                    header.Margin = new Thickness(12, 0, right, 2);
+                }
+            };
+
+            var top = new StackPanel { Children = { pinned, arranger, header } };
+            var frame = new DockPanel { LastChildFill = true };
+
+            DockPanel.SetDock(top, Dock.Top);
+            frame.Children.Add(top);
+            frame.Children.Add(list);
+            content = frame;
+        }
+
         if (!request.Searchable)
         {
-            return list;
+            return content;
         }
 
         var box = new TextBox
@@ -403,9 +514,56 @@ public sealed class PanelPrompts : IHearsText
 
         body.Children.Add(head);
         body.Children.Add(board);
-        body.Children.Add(list);
+        body.Children.Add(content);
 
         return body;
+    }
+
+    private static TextBlock Nothing(string query)
+    {
+        var nothing = new TextBlock
+        {
+            Text = $"Nothing here matches “{query}”.",
+            FontSize = TypeScale.Body,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(12, 6),
+        };
+
+        nothing.Bind(
+            TextBlock.ForegroundProperty,
+            App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+
+        return nothing;
+    }
+
+    /// <summary>A table row's first cell: the label, the detail under it where there is one, and the current word.</summary>
+    private static Control TableName(ChoiceRequest request, ChoiceOption option)
+    {
+        var stack = new StackPanel
+        {
+            Spacing = 1,
+            Children = { ListRow.Name(new TextBlock { Text = option.Label, TextWrapping = TextWrapping.Wrap }) },
+        };
+
+        if (!string.IsNullOrWhiteSpace(option.Detail))
+        {
+            var detail = new TextBlock
+            {
+                Text = option.Detail,
+                FontSize = TypeScale.Secondary,
+                TextWrapping = TextWrapping.Wrap,
+            };
+
+            detail.Classes.Add(ListRow.DetailClass);
+            stack.Children.Add(detail);
+        }
+
+        if (option.Key == request.Current)
+        {
+            stack.Children.Add(ListRow.Sub(new TextBlock { Text = request.CurrentWord }));
+        }
+
+        return stack;
     }
 
     /// <summary>Whether a row survives the query.</summary>
@@ -1211,7 +1369,7 @@ public sealed class PanelPrompts : IHearsText
     internal static class PickTable
     {
         /// <summary>A table field per entry column, keyed on its label: the first drawn by <paramref name="first"/>, the rest one cell each.</summary>
-        public static IReadOnlyList<TableField<string>> Fields(IReadOnlyList<EntryColumn> columns, Func<string, Control> first)
+        public static IReadOnlyList<TableField<string>> Fields(IReadOnlyList<EntryColumn> columns, Func<string, Control> first, bool firstRequired = false)
         {
             var sorts = SortColumns(columns);
 
@@ -1226,6 +1384,7 @@ public sealed class PanelPrompts : IHearsText
                     Sort = sorts[i],
                     Filters = [],
                     Alignment = column.Right ? HorizontalAlignment.Right : HorizontalAlignment.Left,
+                    Required = firstRequired && i == 0,
                 }),
             ];
         }
