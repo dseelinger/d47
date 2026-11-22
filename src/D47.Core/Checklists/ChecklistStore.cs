@@ -377,6 +377,18 @@ public static class ChecklistValidation
         };
     }
 
+    private static string? UnlockProblem(string text, ChecklistWatch watch)
+    {
+        if (watch.Quantity is not null || watch.Place is not null)
+        {
+            return $"\"{text}\" gives a place or a quantity to an unlock, which takes neither.";
+        }
+
+        return TechBrokerCatalogue.ForName(watch.Subject) is null
+            ? $"\"{text}\" unlocks {watch.Subject}, which is not a tech broker unlock I know."
+            : null;
+    }
+
     /// <summary>Why a watch on the line called <paramref name="text"/> would be refused, or null.</summary>
     public static string? WatchProblem(string text, ChecklistItemKind kind, ChecklistWatch watch)
     {
@@ -403,6 +415,11 @@ public static class ChecklistValidation
         if (watch.Kind == ChecklistWatchKind.Have && HaveProblem(text, watch) is { } have)
         {
             return have;
+        }
+
+        if (watch.Kind == ChecklistWatchKind.Unlock && UnlockProblem(text, watch) is { } unlock)
+        {
+            return unlock;
         }
 
         if (watch.Quantity is not null && watch.Kind is ChecklistWatchKind.Dock or ChecklistWatchKind.Arrive)

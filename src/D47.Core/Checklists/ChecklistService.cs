@@ -559,9 +559,13 @@ public sealed class ChecklistService(
         IReadOnlyCollection<JournalEvent>? events,
         CommanderGameState state) =>
         item is { Kind: ChecklistItemKind.Authored, State: ChecklistState.Open, Watch: { } watch }
-            ? watch.Kind == ChecklistWatchKind.Have
-                ? ChecklistWatching.Holding(watch, state.Materials)
-                : events is { Count: > 0 } ? ChecklistWatching.Count(watch, events, state.Location) : null
+            ? watch.Kind switch
+            {
+                ChecklistWatchKind.Have => ChecklistWatching.Holding(watch, state.Materials),
+                ChecklistWatchKind.Unlock => (events is { Count: > 0 } ? ChecklistWatching.Count(watch, events, state.Location) : null)
+                                             ?? ChecklistWatching.Unlocked(watch, state.TechBroker),
+                _ => events is { Count: > 0 } ? ChecklistWatching.Count(watch, events, state.Location) : null,
+            }
             : null;
 
     /// <summary>Removes any mission lines the store holds; missions are no longer checklist lines.</summary>
@@ -1831,27 +1835,37 @@ public sealed class ChecklistService(
             return "There was nothing to propose.";
         }
 
-        var items = wanted.Select((line, index) => new ChecklistItem
-        {
-            Key = ChecklistKeys.NotePrefix + "proposed-" + index.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            Scope = scope,
-            Kind = ChecklistItemKind.Authored,
-            Text = line,
-            Provenance = ChecklistProvenance.Quoted,
-            Goal = goal,
-            Watch = watch is null ? null : watch with { Since = Now },
-        }).ToList();
+        var costs = watch is { Kind: ChecklistWatchKind.Unlock }
+            ? CostLines(scope, wanted, watch)
+            : [];
+
+        var items = wanted
+            .Select(line => (Text: line, Watch: watch))
+            .Concat(costs)
+            .Take(ChecklistLimits.MaxPendingProposals)
+            .Select((line, index) => new ChecklistItem
+            {
+                Key = ChecklistKeys.NotePrefix + "proposed-" + index.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                Scope = scope,
+                Kind = ChecklistItemKind.Authored,
+                Text = line.Text,
+                Provenance = ChecklistProvenance.Quoted,
+                Goal = goal,
+                Watch = line.Watch is null ? null : line.Watch with { Since = Now },
+            }).ToList();
 
         if (items.Select(ChecklistValidation.Problem).FirstOrDefault(reason => reason is not null) is { } refused)
         {
             return refused;
         }
 
-        var summary = wanted.Count == 1
+        var summary = items.Count == 1
             ? $"Add \"{wanted[0]}\" to the {scope} list"
-            : $"Add {wanted.Count} lines to the {scope} list";
+            : costs.Count > 0
+                ? $"Add \"{wanted[0]}\" and {costs.Count} cost {(costs.Count == 1 ? "line" : "lines")} to the {scope} list"
+                : $"Add {items.Count} lines to the {scope} list";
 
-        if (watch is not null)
+        if (watch is not null && costs.Count == 0)
         {
             summary += $", ticked when {ChecklistWatching.Condition(watch)}";
         }
@@ -1865,6 +1879,52 @@ public sealed class ChecklistService(
             Summary = Trim(summary),
             Items = items,
         });
+    }
+
+    /// <summary>
+    /// The lines for the cost of the broker row an unlock watch names: a <c>have</c> line per ship material and a
+    /// <c>buy</c> line per commodity, leaving out any whose text is already on the list or in the proposal.
+    /// </summary>
+    private List<(string Text, ChecklistWatch? Watch)> CostLines(
+        ChecklistScope scope,
+        IReadOnlyList<string> proposed,
+        ChecklistWatch unlock)
+    {
+        var lines = new List<(string Text, ChecklistWatch? Watch)>();
+
+        if (TechBrokerCatalogue.ForName(unlock.Subject) is not { } row)
+        {
+            return lines;
+        }
+
+        var taken = Document.Items
+            .Where(item => item.Scope.Same(scope))
+            .Select(item => item.Text)
+            .Concat(proposed)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var ingredient in row.Blueprint.Ingredients)
+        {
+            var material = ingredient.Material;
+
+            (string Text, ChecklistWatch Watch)? line = material?.Ledger switch
+            {
+                MaterialLedger.Material => (
+                    $"Have {ingredient.Size.ToString(System.Globalization.CultureInfo.InvariantCulture)} {material.Name}",
+                    new ChecklistWatch(ChecklistWatchKind.Have, material.Name) { Quantity = ingredient.Size, Since = Now }),
+                MaterialLedger.Cargo or MaterialLedger.RareCargo => (
+                    $"Buy {ingredient.Size.ToString(System.Globalization.CultureInfo.InvariantCulture)} {material.Name}",
+                    new ChecklistWatch(ChecklistWatchKind.Buy, material.Name) { Quantity = ingredient.Size, Since = Now }),
+                _ => null,
+            };
+
+            if (line is { } cost && taken.Add(cost.Text))
+            {
+                lines.Add((cost.Text, cost.Watch));
+            }
+        }
+
+        return lines;
     }
 
     /// <summary>Records one proposal per kit line, each accepted or declined on its own; returns how many are waiting.</summary>

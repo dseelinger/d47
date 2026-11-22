@@ -24,6 +24,9 @@ public enum ChecklistWatchKind
 
     /// <summary>The Commander holding at least the quantity of a ship material.</summary>
     Have,
+
+    /// <summary>A tech broker row being unlocked.</summary>
+    Unlock,
 }
 
 /// <summary>One journal condition on an authored line; the line ticks when it is met.</summary>
@@ -166,6 +169,22 @@ public static class ChecklistWatching
     }
 
     /// <summary>
+    /// A tick for an <see cref="ChecklistWatchKind.Unlock"/> watch whose row the Commander is known to have
+    /// unlocked, or null when it is another kind or the row is not known to be unlocked.
+    /// </summary>
+    public static ChecklistWatchOutcome? Unlocked(ChecklistWatch watch, TechBrokerUnlocks unlocks)
+    {
+        ArgumentNullException.ThrowIfNull(watch);
+        ArgumentNullException.ThrowIfNull(unlocks);
+
+        return watch.Kind == ChecklistWatchKind.Unlock
+               && TechBrokerCatalogue.ForName(watch.Subject) is { } row
+               && unlocks.IsKnownUnlocked(row)
+            ? new ChecklistWatchOutcome(watch, true, $"you unlocked {row.Name}")
+            : null;
+    }
+
+    /// <summary>
     /// What one event adds: the count for a buy or a sale, the order size for a buy order, 1 for a dock
     /// or an arrival; null when it does not match.
     /// </summary>
@@ -189,6 +208,13 @@ public static class ChecklistWatching
                        && (watch.Place is null || Same(stationOf(journalEvent), watch.Place))
                        && journalEvent.Int("Count") is { } count and > 0
                     ? count
+                    : null;
+
+            case (ChecklistWatchKind.Unlock, "TechnologyBroker"):
+                return TechBrokerCatalogue.ForName(watch.Subject) is { } row
+                       && journalEvent.Items("ItemsUnlocked")
+                           .Any(item => TechBrokerCatalogue.ForSymbol(item.String("Name"))?.Name == row.Name)
+                    ? 1
                     : null;
 
             case (ChecklistWatchKind.BuyOrder, "CarrierTradeOrder"):
@@ -220,6 +246,7 @@ public static class ChecklistWatching
             ChecklistWatchKind.Buy => $"you buy {what}{At(watch.Place)}",
             ChecklistWatchKind.Sell => $"you sell {what}{At(watch.Place)}",
             ChecklistWatchKind.Have => $"you hold {what}",
+            ChecklistWatchKind.Unlock => $"you unlock {watch.Subject}",
             _ => $"your carrier has a buy order for {what}",
         };
 
@@ -256,6 +283,7 @@ public static class ChecklistWatching
     {
         ChecklistWatchKind.Dock => $"you docked at {journalEvent.Named("StationName") ?? watch.Subject}",
         ChecklistWatchKind.Arrive => $"you arrived in {journalEvent.String("StarSystem") ?? watch.Subject}",
+        ChecklistWatchKind.Unlock => $"you unlocked {TechBrokerCatalogue.ForName(watch.Subject)?.Name ?? watch.Subject}",
         _ => $"your carrier has a buy order for {amount.ToString(CultureInfo.InvariantCulture)} "
              + $"{journalEvent.String("Commodity_Localised") ?? watch.Subject}",
     };

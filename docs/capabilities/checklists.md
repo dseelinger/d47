@@ -216,6 +216,11 @@ still tick or untick it, and **Remove fulfilled items** never removes it.
 | `sell` | Selling the commodity, on the same terms |
 | `buyOrder` | Your carrier's buy order for the commodity reaching the quantity |
 | `have` | Holding at least the quantity of a ship material |
+| `unlock` | Unlocking the module at a Guardian or Human technology broker |
+
+An unlock line brings its cost lines: proposing it also proposes a `have` line for each ship material and a `buy`
+line for each commodity the broker asks for, and you accept or decline them together. A cost line already on the
+list is not added again.
 
 Names are compared without case, spaces or punctuation, and only an exact match counts. The line
 says what it is waiting for — *Ticks when you buy 5 Hydrogen Fuel at Jameson Memorial · 2 of 5 so
@@ -602,12 +607,12 @@ still needs delivered.
 Proposes a line in your own words. **Proposes** — it is not added until you agree.
 
 It can also propose that the line ticks itself: `tick_when` (`dock`, `arrive`, `buy`, `sell`,
-`buy_order` or `have`) with `subject`, and `place` and `quantity` where they apply. The proposal names the
+`buy_order`, `have` or `unlock`) with `subject`, and `place` and `quantity` where they apply. The proposal names the
 condition, and counting starts when you accept. A condition that cannot work, such as a quantity on
 a dock, is refused with the reason and nothing is recorded.
 
 ```json
-{"type":"object","properties":{"group":{"type":"string","description":"Which list it belongs on. Defaults to custom.","enum":["custom","ship","system","suit","weapon"]},"name":{"type":"string","description":"A specific ship id or star system, when it is not the current one."},"place":{"type":"string","description":"The system for dock, the station for buy and sell. Not used by arrive, buy_order or have."},"quantity":{"type":"integer","description":"How many, for buy, sell, buy_order and have. At least 1."},"subject":{"type":"string","description":"What tick_when waits for, as Elite names it: a station for dock, a system for arrive, a commodity for buy, sell and buy_order, a ship material for have."},"text":{"type":"string","description":"The line, as the Commander would say it."},"tick_when":{"type":"string","description":"A journal condition that ticks the line itself once the Commander agrees: dock at a station, arrive in a system, buy or sell a commodity, set a carrier buy order, or hold a quantity of a ship material. Needs subject.","enum":["dock","arrive","buy","sell","buy_order","have"]}},"required":["text"],"additionalProperties":false}
+{"type":"object","properties":{"group":{"type":"string","description":"Which list it belongs on. Defaults to custom.","enum":["custom","ship","system","suit","weapon"]},"name":{"type":"string","description":"A specific ship id or star system, when it is not the current one."},"place":{"type":"string","description":"The system for dock, the station for buy and sell. Not used by arrive, buy_order, have or unlock."},"quantity":{"type":"integer","description":"How many, for buy, sell, buy_order and have. At least 1."},"subject":{"type":"string","description":"What tick_when waits for, as Elite names it: a station for dock, a system for arrive, a commodity for buy, sell and buy_order, a ship material for have, a tech broker module for unlock."},"text":{"type":"string","description":"The line, as the Commander would say it."},"tick_when":{"type":"string","description":"A journal condition that ticks the line itself once the Commander agrees: dock at a station, arrive in a system, buy or sell a commodity, set a carrier buy order, hold a quantity of a ship material, or unlock a Guardian or Human tech broker module. Needs subject.","enum":["dock","arrive","buy","sell","buy_order","have","unlock"]}},"required":["text"],"additionalProperties":false}
 ```
 
 #### `propose_checklist_change`
@@ -620,7 +625,7 @@ agree to. That is the distinction between **observing** and **asserting**, and i
 tool exists at all.
 
 ```json
-{"type":"object","properties":{"change":{"type":"string","description":"What to propose.","enum":["done","open","remove","watch"]},"item":{"type":"string","description":"The line, in enough of its own words to pick it out."},"place":{"type":"string","description":"The system for dock, the station for buy and sell. Not used by arrive, buy_order or have."},"quantity":{"type":"integer","description":"How many, for buy, sell, buy_order and have. At least 1."},"subject":{"type":"string","description":"What tick_when waits for, as Elite names it: a station for dock, a system for arrive, a commodity for buy, sell and buy_order, a ship material for have."},"tick_when":{"type":"string","description":"A journal condition that ticks the line itself once the Commander agrees: dock at a station, arrive in a system, buy or sell a commodity, set a carrier buy order, or hold a quantity of a ship material. Needs subject.","enum":["dock","arrive","buy","sell","buy_order","have"]}},"required":["item"],"additionalProperties":false}
+{"type":"object","properties":{"change":{"type":"string","description":"What to propose.","enum":["done","open","remove","watch"]},"item":{"type":"string","description":"The line, in enough of its own words to pick it out."},"place":{"type":"string","description":"The system for dock, the station for buy and sell. Not used by arrive, buy_order, have or unlock."},"quantity":{"type":"integer","description":"How many, for buy, sell, buy_order and have. At least 1."},"subject":{"type":"string","description":"What tick_when waits for, as Elite names it: a station for dock, a system for arrive, a commodity for buy, sell and buy_order, a ship material for have, a tech broker module for unlock."},"tick_when":{"type":"string","description":"A journal condition that ticks the line itself once the Commander agrees: dock at a station, arrive in a system, buy or sell a commodity, set a carrier buy order, hold a quantity of a ship material, or unlock a Guardian or Human tech broker module. Needs subject.","enum":["dock","arrive","buy","sell","buy_order","have","unlock"]}},"required":["item"],"additionalProperties":false}
 ```
 
 #### `plan_ship_build`

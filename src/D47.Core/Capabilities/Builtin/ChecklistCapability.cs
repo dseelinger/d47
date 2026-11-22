@@ -489,16 +489,16 @@ public static class ChecklistCapability
         ToolParameter.OneOf(
             "tick_when",
             "A journal condition that ticks the line itself once the Commander agrees: dock at a station, "
-            + "arrive in a system, buy or sell a commodity, set a carrier buy order, or hold a quantity of a "
-            + "ship material. Needs subject.",
-            ["dock", "arrive", "buy", "sell", "buy_order", "have"]),
+            + "arrive in a system, buy or sell a commodity, set a carrier buy order, hold a quantity of a "
+            + "ship material, or unlock a Guardian or Human tech broker module. Needs subject.",
+            ["dock", "arrive", "buy", "sell", "buy_order", "have", "unlock"]),
         ToolParameter.Text(
             "subject",
             "What tick_when waits for, as Elite names it: a station for dock, a system for arrive, "
-            + "a commodity for buy, sell and buy_order, a ship material for have."),
+            + "a commodity for buy, sell and buy_order, a ship material for have, a tech broker module for unlock."),
         ToolParameter.Text(
             "place",
-            "The system for dock, the station for buy and sell. Not used by arrive, buy_order or have."),
+            "The system for dock, the station for buy and sell. Not used by arrive, buy_order, have or unlock."),
         ToolParameter.Integer("quantity", "How many, for buy, sell, buy_order and have. At least 1."),
     ];
 
