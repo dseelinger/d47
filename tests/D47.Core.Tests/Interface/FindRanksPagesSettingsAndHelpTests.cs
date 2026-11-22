@@ -11,7 +11,7 @@ namespace D47.Core.Tests.Interface;
 /// <summary>Find returns the pages, settings places, rows and help pages a query names, best first (#1471).</summary>
 public class FindRanksPagesSettingsAndHelpTests
 {
-    private static readonly Dictionary<PanelTab, string> Words = new() { [PanelTab.Assets] = "Asset Mgmt" };
+    private static readonly Dictionary<PanelTab, string> Words = new() { [PanelTab.Media] = "Media" };
 
     internal static (PanelFind Find, SettingsService Settings, PanelNavigator Nav) Build()
     {
@@ -36,8 +36,10 @@ public class FindRanksPagesSettingsAndHelpTests
         ]));
 
         var nav = new PanelNavigator();
-        nav.Register(PanelTab.Assets, new NavCrumb("ships", "Ships"));
-        nav.Register(PanelTab.Assets, new NavCrumb("suits", "Suits"));
+        nav.Register(PanelTab.Commander, new NavCrumb(PanelTabNames.AssetsRoot, "Assets"));
+        nav.Declare(PanelTabNames.AssetsRoot, new NavCrumb("ships", "Ships"));
+        nav.HoldPages(PanelTabNames.AssetsRoot, ["ships"]);
+        nav.Register(PanelTab.Media, new NavCrumb("suits", "Suits"));
         nav.Register(PanelTab.Settings, new NavCrumb("settings.phrases", "Phrases") { Spoken = ["commands", "voice commands"] });
 
         return (new PanelFind(nav, settings, Words), settings, nav);
@@ -78,7 +80,7 @@ public class FindRanksPagesSettingsAndHelpTests
         var first = First("hull");
 
         Assert.Equal("Hull pictures", first.Title);
-        Assert.Equal("Asset Mgmt › Ships", first.Path);
+        Assert.Equal("Commander › Assets › Ships", first.Path);
         Assert.Equal("ships.art", first.Target);
     }
 
@@ -97,7 +99,7 @@ public class FindRanksPagesSettingsAndHelpTests
 
         Assert.Equal(PanelFindKind.Page, results[0].Kind);
         Assert.Equal("ships", results[0].Target);
-        Assert.Equal("Asset Mgmt", results[0].Path);
+        Assert.Equal("Commander › Assets", results[0].Path);
     }
 
     [Fact]
@@ -119,7 +121,7 @@ public class FindRanksPagesSettingsAndHelpTests
 
         Assert.Contains(find.Search("suits"), r => r.Target == "suits");
 
-        nav.SetVisible(PanelTab.Assets, "suits", false);
+        nav.SetVisible(PanelTab.Media, "suits", false);
 
         Assert.DoesNotContain(find.Search("suits"), r => r.Target == "suits");
     }

@@ -113,8 +113,8 @@ public class ThePlannedGroupListsSitesNoDepotHasSeenTests
         };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
-        panel.Nav.SelectRoot(PanelTab.Assets, ConstructionPage.RootKey);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        panel.Nav.Show(ConstructionPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel.GetVisualDescendants().OfType<ConstructionPage>().Single());

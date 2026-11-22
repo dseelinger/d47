@@ -68,9 +68,9 @@ public class WhatYouCarryOnFootIsCountedByKindTests
         var window = new Window { Content = panel, Width = 1280, Height = 1000 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
-        Assert.True(panel.Nav.SelectRoot(LoadoutPages.GapRoot));
+        Assert.True(panel.Nav.Show(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, kit, store);
@@ -197,7 +197,7 @@ public class WhatYouCarryOnFootIsCountedByKindTests
         detail.Back(MaterialsPage.LockerView);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(surface.Panel.Nav.AtRoot);
+        Assert.True(surface.Panel.Nav.AtPage);
         Assert.Equal(MaterialsPage.LockerView, Materials(surface.Panel).GetVisualDescendants().OfType<Sidebar>().Single().Selected);
 
         surface.Window.Close();

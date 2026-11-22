@@ -66,7 +66,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -91,8 +91,9 @@ public class TheFleetPagesAreDrawnOnTheKitTests
 
         var ship = window.SaveFrame($"fleet-ship-{themeId}-{width}x{height}.png");
 
-        // The card of the ship being shown is filled solid, not outlined; mini draws only the ship page.
-        if (panel.Mode == PanelMode.Full)
+        // The card of the ship being shown is filled solid, not outlined; mini draws only the ship page, and a
+        // window too narrow for the fleet beside the page sidebar and the ship draws only the ship.
+        if (panel.Mode == PanelMode.Full && panel.GetVisualDescendants().OfType<IndexPage>().Any())
         {
             Assert.Contains(
                 panel.GetVisualDescendants().OfType<Button>(),
@@ -107,7 +108,7 @@ public class TheFleetPagesAreDrawnOnTheKitTests
 
         var slot = window.SaveFrame($"fleet-slot-{themeId}-{width}x{height}.png");
 
-        Assert.True(panel.Nav.SelectRoot(LoadoutPages.GapRoot));
+        Assert.True(panel.Nav.Show(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
         var materials = window.SaveFrame($"fleet-materials-{themeId}-{width}x{height}.png");

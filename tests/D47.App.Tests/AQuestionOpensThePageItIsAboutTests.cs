@@ -23,8 +23,7 @@ public class AQuestionOpensThePageItIsAboutTests
         var nav = new PanelNavigator();
 
         nav.Register(PanelTab.Transcript, new NavCrumb("transcript", "Transcript"));
-        nav.Register(PanelTab.Assets, new NavCrumb(LoadoutPages.FleetRoot, "Ships"));
-        nav.Register(PanelTab.Assets, new NavCrumb(EngineersPages.DirectoryRoot, "Engineers"));
+        AssetsNav.Pages(nav, (LoadoutPages.FleetRoot, "Ships"), (EngineersPages.DirectoryRoot, "Engineers"));
         nav.Register(PanelTab.Search, new NavCrumb(StarSystemPage.RootKey, "System"));
 
         return nav;
@@ -49,9 +48,9 @@ public class AQuestionOpensThePageItIsAboutTests
 
         Assert.All([first, second], nav =>
         {
-            Assert.Equal(PanelTab.Assets, nav.Tab);
+            Assert.Equal(PanelTab.Commander, nav.Tab);
             Assert.Equal(EngineersPages.WhoPrefix + Farseer.Id, nav.Trail[^1].Key);
-            Assert.Equal(EngineersPages.DirectoryRoot, nav.Root.Key);
+            Assert.Equal(EngineersPages.DirectoryRoot, nav.PageKeyOf(PanelTab.Commander));
         });
     }
 
@@ -65,7 +64,7 @@ public class AQuestionOpensThePageItIsAboutTests
         Open(PageRef.Engineer(Farseer.Id), nav);
 
         Assert.Equal(
-            [EngineersPages.DirectoryRoot, EngineersPages.WhoPrefix + Farseer.Id],
+            [PanelTabNames.AssetsRoot, EngineersPages.DirectoryRoot, EngineersPages.WhoPrefix + Farseer.Id],
             nav.Trail.Select(crumb => crumb.Key));
     }
 
@@ -76,7 +75,7 @@ public class AQuestionOpensThePageItIsAboutTests
 
         Open(PageRef.Ship(4), nav);
 
-        Assert.Equal(LoadoutPages.FleetRoot, nav.Root.Key);
+        Assert.Equal(LoadoutPages.FleetRoot, nav.PageKeyOf(PanelTab.Commander));
         Assert.Equal(LoadoutPages.Ship(Runner).Key, nav.Trail[^1].Key);
     }
 

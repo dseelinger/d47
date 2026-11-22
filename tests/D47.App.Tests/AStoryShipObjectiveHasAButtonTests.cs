@@ -179,7 +179,7 @@ public sealed class AStoryShipObjectiveHasAButtonTests
 
         Press(show);
 
-        Assert.Equal(PanelTab.Assets, surface.Panel.Tab);
+        Assert.Equal(PanelTab.Commander, surface.Panel.Tab);
         Assert.StartsWith(EngineersPages.WhoPrefix, surface.Panel.Nav.Trail[^1].Key);
 
         surface.Window.Close();

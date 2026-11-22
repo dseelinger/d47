@@ -36,7 +36,7 @@ public class EveryTabDrawsOneHeaderTests
 
     private static readonly PanelTab[] Every =
     [
-        PanelTab.Transcript, PanelTab.Stories, PanelTab.Commander, PanelTab.Assets,
+        PanelTab.Transcript, PanelTab.Stories, PanelTab.Commander,
         PanelTab.Astrometrics, PanelTab.Settings,
     ];
 
@@ -48,7 +48,7 @@ public class EveryTabDrawsOneHeaderTests
             """{"timestamp":"2026-08-18T09:00:00Z","event":"EngineerProgress","Engineers":[{"Engineer":"Liz Ryder","EngineerID":300080,"Progress":"Unlocked","Rank":5}]}""");
     }
 
-    /// <summary>Furnishes Stories, Commander, Asset Mgmt and Navigation from real pages.</summary>
+    /// <summary>Furnishes Stories, Commander with its Assets, and Navigation from real pages.</summary>
     internal static void FurnishEveryTabButSettings(PanelView panel)
     {
         var root = TempFolders.Create("d47-one-header");
@@ -161,16 +161,16 @@ public class EveryTabDrawsOneHeaderTests
 
         foreach (var (tab, expected) in new[]
                  {
-                     (PanelTab.Assets, "1 of "),
+                     (PanelTab.Commander, "1 of "),
                      (PanelTab.Stories, "Stories you fly, told by the core. Progress comes from your own journal."),
                      (PanelTab.Settings, "Changes apply as you make them."),
                  })
         {
             Show(panel, tab);
 
-            if (tab == PanelTab.Assets)
+            if (tab == PanelTab.Commander)
             {
-                panel.Nav.SelectRoot(EngineersPages.DirectoryRoot);
+                panel.Nav.Show(EngineersPages.DirectoryRoot);
                 Dispatcher.UIThread.RunJobs();
             }
 
@@ -198,7 +198,9 @@ public class EveryTabDrawsOneHeaderTests
         var panel = host.Panel;
         var avatar = panel.GetControl<AvatarView>("Avatar");
 
-        Show(panel, PanelTab.Assets);
+        Show(panel, PanelTab.Commander);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(new Size(PanelView.HeaderAvatarExtent, PanelView.HeaderAvatarExtent), avatar.Bounds.Size);
         Assert.Equal(Top(panel, "TabStrip"), Top(panel, "Avatar"), 0.5);
@@ -213,8 +215,8 @@ public class EveryTabDrawsOneHeaderTests
         var host = Open();
         var panel = host.Panel;
 
-        Show(panel, PanelTab.Assets);
-        panel.Nav.SelectRoot(EngineersPages.DirectoryRoot);
+        Show(panel, PanelTab.Commander);
+        panel.Nav.Show(EngineersPages.DirectoryRoot);
 
         var liz = EngineerDirectory.All.Single(engineer => engineer.Name == "Liz Ryder");
 
@@ -222,7 +224,7 @@ public class EveryTabDrawsOneHeaderTests
         Dispatcher.UIThread.RunJobs();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal("ASSET MGMT", panel.GetControl<TextBlock>("PageTitle").Text);
+        Assert.Equal("COMMANDER", panel.GetControl<TextBlock>("PageTitle").Text);
         Assert.True(panel.GetControl<Control>("CrumbBar").IsVisible);
 
         Assert.Contains(

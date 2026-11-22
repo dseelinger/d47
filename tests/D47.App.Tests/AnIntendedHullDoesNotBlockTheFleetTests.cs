@@ -37,7 +37,7 @@ public class AnIntendedHullDoesNotBlockTheFleetTests
         var window = new Window { Content = panel, Width = 1400, Height = 700 };
 
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (panel, ships);
@@ -58,12 +58,12 @@ public class AnIntendedHullDoesNotBlockTheFleetTests
         panel.Nav.Drill(Crumb(intended, "Python"));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Ships", "Python"], panel.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["Assets", "Ships", "Python"], panel.Nav.Trail.Select(crumb => crumb.Word));
 
         panel.Nav.Drill(Crumb(owned, "Reaper"));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Ships", "Reaper"], panel.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["Assets", "Ships", "Reaper"], panel.Nav.Trail.Select(crumb => crumb.Word));
     }
 
     /// <summary>And the other way round, which is the same claim from the other side.</summary>
@@ -81,7 +81,7 @@ public class AnIntendedHullDoesNotBlockTheFleetTests
         panel.Nav.Drill(Crumb(intended, "Python"));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Ships", "Python"], panel.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["Assets", "Ships", "Python"], panel.Nav.Trail.Select(crumb => crumb.Word));
     }
 
     /// <summary>

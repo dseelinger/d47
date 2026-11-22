@@ -1270,7 +1270,7 @@ public sealed class ChecklistPage : UserControl, IFilterablePage, IPageSummary
             "Delete this list",
             "Delete this list",
             $"{list.Name} would lose {(count == 1 ? "its 1 line" : $"all {count} lines")}, your own included. "
-            + "Its plan on Asset Mgmt is not changed. There is no way back from this one.",
+            + "Its plan on Commander › Assets is not changed. There is no way back from this one.",
             new ChoiceOption("keep", "Keep it"),
             new ChoiceOption("delete", "Delete it"),
             () => Settle(_checklists.DeleteList(list)));

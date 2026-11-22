@@ -14,7 +14,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>What Asset Mgmt › Construction reads and drives.</summary>
+/// <summary>What Commander › Assets › Construction reads and drives.</summary>
 /// <param name="Plans">The planner's plan held for each system; empty while the planner is off.</param>
 /// <param name="Want">Asks for a system's plan; returns at once.</param>
 public sealed record ConstructionSurface(
@@ -50,7 +50,7 @@ internal sealed class PlanIdentity(IReadOnlyList<SystemPlan> plans)
     public override int GetHashCode() => _plans.Count;
 }
 
-/// <summary>Asset Mgmt › Construction: every site still being built, beside the selected site's needs and its last market search (#828).</summary>
+/// <summary>Commander › Assets › Construction: every site still being built, beside the selected site's needs and its last market search (#828).</summary>
 public sealed class ConstructionPage : UserControl, IPageSummary
 {
     public const string RootKey = "loadout.construction";

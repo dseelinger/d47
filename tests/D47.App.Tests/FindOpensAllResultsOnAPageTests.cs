@@ -22,7 +22,7 @@ public sealed class FindOpensAllResultsOnAPageTests
     }
 
     private static IReadOnlyList<PanelFindResult> Hits(int count) =>
-        [.. Enumerable.Range(1, count).Select(i => new PanelFindResult(PanelFindKind.Page, $"Page {i}", "Asset Mgmt", $"key{i}", i))];
+        [.. Enumerable.Range(1, count).Select(i => new PanelFindResult(PanelFindKind.Page, $"Page {i}", "Commander › Assets", $"key{i}", i))];
 
     private static (FindDialog Dialog, Window Window, List<(string Query, IReadOnlyList<PanelFindResult> Results)> Opened) Shown(int count)
     {

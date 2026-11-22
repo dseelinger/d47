@@ -107,12 +107,12 @@ public class TheFleetTabIsInTheHeadsetTests
     /// <summary>Selects a root and rasterises it, the way the runtime asks for a frame.</summary>
     private static void Draw(VrPanelSurface panel, VrPixels pixels, string root)
     {
-        panel.Nav.Select(PanelTab.Assets);
-        panel.Nav.SelectRoot(PanelTab.Assets, root);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        panel.Nav.Show(root);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Assets, panel.Nav.Tab);
-        Assert.Equal(root, panel.Nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal(PanelTab.Commander, panel.Nav.Tab);
+        Assert.Equal(root, panel.Nav.PageKeyOf(PanelTab.Commander));
 
         panel.Invalidate();
         panel.Draw(pixels.Address, pixels.RowBytes);
@@ -178,12 +178,13 @@ public class TheFleetTabIsInTheHeadsetTests
         // claim about.
         window.EnableChecklist(checklists);
         window.EnableLoadout(ships, checklists, state);
+        window.EnableMedia();
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(Tabs(window.Nav), Tabs(panel.Nav));
-        Assert.Contains(PanelTab.Assets, Tabs(panel.Nav));
-
-        Assert.Equal([PanelTab.Transcript, PanelTab.Commander, PanelTab.Assets], Tabs(panel.Nav));
+        Assert.Equal(
+            [CommanderFurnishing.ChecklistRoot, PanelTabNames.AssetsRoot],
+            panel.Nav.Roots(PanelTab.Commander).Select(root => root.Key).Take(2));
     }
 
     /// <summary>Every root the tab has, drawn — the headset's own copy, through the real rasterise.</summary>
@@ -225,7 +226,7 @@ public class TheFleetTabIsInTheHeadsetTests
         Assert.True(Press(panel, pixels, card!));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(2, panel.Nav.Trail.Count);
+        Assert.Equal(3, panel.Nav.Trail.Count);
     }
 
     /// <summary>
@@ -274,19 +275,20 @@ public class TheFleetTabIsInTheHeadsetTests
         Assert.True(Press(panel, pixels, slot!));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(3, panel.Nav.Trail.Count);
+        Assert.Equal([PanelTabNames.AssetsRoot, LoadoutPages.FleetRoot], panel.Nav.Trail.Take(2).Select(crumb => crumb.Key));
+        Assert.Equal(4, panel.Nav.Trail.Count);
 
         Assert.True(panel.Back());
         Assert.True(panel.Back());
 
-        Assert.Single(panel.Nav.Trail);
-        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal(2, panel.Nav.Trail.Count);
+        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.PageKeyOf(PanelTab.Commander));
 
-        // Nothing left in the drill: the third grip-back carries the panel off the Loadout tab instead,
-        // the same as a grip-back at the root of any other tab - and leaves the root it left behind alone.
+        // Nothing left in the drill: the third grip-back carries the panel off the Commander tab instead,
+        // the same as a grip-back at the root of any other tab - and leaves the page it left behind alone.
         Assert.True(panel.Back());
-        Assert.NotEqual(PanelTab.Assets, panel.Nav.Tab);
-        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Assets));
+        Assert.NotEqual(PanelTab.Commander, panel.Nav.Tab);
+        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.PageKeyOf(PanelTab.Commander));
     }
 
     /// <summary>

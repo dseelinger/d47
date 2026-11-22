@@ -85,7 +85,7 @@ public class TheOverlayWithoutAHeadsetTests
 
         foreach (var tab in new[]
                  {
-                     PanelTab.Settings, PanelTab.Assets, PanelTab.Commander,
+                     PanelTab.Settings, PanelTab.Commander,
                      PanelTab.Astrometrics,
                  })
         {

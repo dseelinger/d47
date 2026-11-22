@@ -987,7 +987,7 @@ public static class SpeechCapability
             {
                 Key = CarrierCaptainNameKey,
                 Exercise =
-                    "Open the Asset Mgmt › Carrier tab, set Captain name to Reyes and have the carrier captain speak: the "
+                    "Open Commander › Assets › Carrier, set Captain name to Reyes and have the carrier captain speak: the "
                     + "line is addressed as \"Captain Reyes\". Clear it and the line says \"Captain\" alone. The row is absent "
                     + "while the Voice provider is None.",
                 Advanced = true,
@@ -1011,7 +1011,7 @@ public static class SpeechCapability
             {
                 Key = CarrierCaptainVoiceKey,
                 Exercise =
-                    "Open the Asset Mgmt › Carrier tab and pick a Carrier captain voice, using the audition button to "
+                    "Open Commander › Assets › Carrier and pick a Carrier captain voice, using the audition button to "
                     + "hear it; the captain speaks in it. Clear the row and d47 pairs one again. The row is absent while "
                     + "the Voice provider is None.",
                 Advanced = true,
@@ -1043,7 +1043,7 @@ public static class SpeechCapability
             {
                 Key = TowerNameKey,
                 Exercise =
-                    "Open the Asset Mgmt › Carrier tab, set Tower name to Harbour Control and have the tower speak: the "
+                    "Open Commander › Assets › Carrier, set Tower name to Harbour Control and have the tower speak: the "
                     + "line is credited to Harbour Control. Clear it and the line says \"Tower Control\". The row is absent "
                     + "while the Voice provider is None.",
                 Advanced = true,
@@ -1067,7 +1067,7 @@ public static class SpeechCapability
             {
                 Key = TowerVoiceKey,
                 Exercise =
-                    "Open the Asset Mgmt › Carrier tab and pick a Carrier tower voice different from the captain's, using "
+                    "Open Commander › Assets › Carrier and pick a Carrier tower voice different from the captain's, using "
                     + "the audition button to hear it; the tower speaks in it. The row is absent while the Voice provider "
                     + "is None.",
                 Advanced = true,

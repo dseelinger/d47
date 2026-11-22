@@ -964,14 +964,14 @@ public static class SettingsLayout
     public static readonly IReadOnlyList<SettingsTabPlace> Tabs =
     [
         new SettingsTabPlace(
-            "fleet-ships", "loadout.ships", true, "Asset Mgmt › Ships", [E("ships.remembered"), E("ships.art"), E("ships.hullgpu")]),
+            "fleet-ships", "loadout.ships", true, "Commander › Assets › Ships", [E("ships.remembered"), E("ships.art"), E("ships.hullgpu")]),
         new SettingsTabPlace(
             "adventures", "adventures", true, "Stories", [E("adventures.storyDownloads"), E("adventures.storyRatings"), E("adventures.castReactions"), F(IsCareerRatingFamily)]),
         new SettingsTabPlace(
             "fleet-carrier",
             "loadout.carrier",
             true,
-            "Asset Mgmt › Carrier",
+            "Commander › Assets › Carrier",
             [
                 E("speech.carrierCaptainName"),
                 E("speech.carrierCaptainVoice"),

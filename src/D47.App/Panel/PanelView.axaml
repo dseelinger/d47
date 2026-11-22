@@ -432,12 +432,6 @@
                          Content="COMMANDER"
                          Tapped="OnTabTapped"
                          IsCheckedChanged="OnTabChecked" />
-            <RadioButton x:Name="AssetsTab"
-                         Theme="{StaticResource D47.Tab}"
-                         IsVisible="False"
-                         Content="ASSET MGMT"
-                         Tapped="OnTabTapped"
-                         IsCheckedChanged="OnTabChecked" />
             <RadioButton x:Name="AstrometricsTab"
                          Theme="{StaticResource D47.Tab}"
                          IsVisible="False"

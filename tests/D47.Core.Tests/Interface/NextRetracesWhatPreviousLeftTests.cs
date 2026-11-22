@@ -12,8 +12,8 @@ public class NextRetracesWhatPreviousLeftTests
 
         nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
         nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
-        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
-        nav.Register(PanelTab.Assets, new NavCrumb("locker", "Suits and weapons"));
+        nav.Register(PanelTab.Media, new NavCrumb("fleet", "Ships"));
+        nav.Register(PanelTab.Media, new NavCrumb("locker", "Suits and weapons"));
 
         return nav;
     }
@@ -25,7 +25,7 @@ public class NextRetracesWhatPreviousLeftTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(new NavCrumb("ship:1", "Corsair"));
         var start = Place(nav);
 
@@ -35,7 +35,7 @@ public class NextRetracesWhatPreviousLeftTests
         Assert.True(nav.CanGoNext);
 
         Assert.True(nav.Next());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.True(nav.Next());
         Assert.Equal(start, Place(nav));
         Assert.False(nav.Next());
@@ -47,7 +47,7 @@ public class NextRetracesWhatPreviousLeftTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(new NavCrumb("ship:1", "Corsair"));
         Assert.True(nav.Previous());
         Assert.True(nav.CanGoNext);
@@ -63,14 +63,14 @@ public class NextRetracesWhatPreviousLeftTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Select(PanelTab.Commander);
         Assert.True(nav.Previous());
         Assert.True(nav.Next());
         Assert.Equal("Commander:checklist", Place(nav));
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class NextRetracesWhatPreviousLeftTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         Assert.True(nav.Previous());
         Assert.True(nav.Take(new NavCrumb("choose", "Choose")));
 

@@ -65,9 +65,9 @@ public class AMaterialOpensOnItsOwnPageTests
         surface = new Surface(window, panel, ships, store, galaxy) { SearchOn = searchOn };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
-        Assert.True(panel.Nav.SelectRoot(LoadoutPages.GapRoot));
+        Assert.True(panel.Nav.Show(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
         return surface;
@@ -141,7 +141,7 @@ public class AMaterialOpensOnItsOwnPageTests
         detail.Back("raw");
         Dispatcher.UIThread.RunJobs();
 
-        Assert.True(surface.Panel.Nav.AtRoot);
+        Assert.True(surface.Panel.Nav.AtPage);
         Assert.Equal("raw", Materials(surface.Panel).GetVisualDescendants().OfType<Sidebar>().Single().Selected);
 
         surface.Window.Close();

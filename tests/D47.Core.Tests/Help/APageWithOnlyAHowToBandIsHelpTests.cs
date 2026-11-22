@@ -34,8 +34,8 @@ public class APageWithOnlyAHowToBandIsHelpTests
     public void ThePageOpensFromItsLevel()
     {
         var nav = new PanelNavigator();
-        nav.Register(PanelTab.Assets, new NavCrumb("about", "About") { Help = "about" });
-        nav.Select(PanelTab.Assets);
+        nav.Register(PanelTab.Media, new NavCrumb("about", "About") { Help = "about" });
+        nav.Select(PanelTab.Media);
 
         Assert.True(HelpLevel.Open(nav));
         Assert.Equal("help:about", nav.Trail[^1].Key);

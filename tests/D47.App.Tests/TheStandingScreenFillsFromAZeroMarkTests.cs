@@ -79,11 +79,12 @@ public class TheStandingScreenFillsFromAZeroMarkTests
         panel.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == text);
 
     [AvaloniaFact]
-    public void StandingIsTheCommanderTabsFirstRoot()
+    public void ProgressFollowsChecklistAndOpensFirstWhenItIsFurnishedFirst()
     {
         var (window, panel, _) = Open(Reputation);
 
-        Assert.Equal(StandingPage.RootKey, panel.Nav.Roots(PanelTab.Commander)[0].Key);
+        Assert.Equal([CommanderFurnishing.ChecklistRoot, StandingPage.RootKey], panel.Nav.Roots(PanelTab.Commander).Select(root => root.Key));
+        Assert.Equal(StandingPage.RootKey, panel.Nav.RootKeyOf(PanelTab.Commander));
         Assert.True(Shows(panel, "CMDR JOHN DEPARAGON"));
         Assert.True(Shows(panel, "COMMANDER RECORD"));
 

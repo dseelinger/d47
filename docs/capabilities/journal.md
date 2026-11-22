@@ -686,8 +686,8 @@ owns when named — from the loadout last seen for it, dated, rather than refusi
 With `jump_range` set, `get_ship` answers with one line, `Unladen jump range is 52.31 ly.`, for the flown ship or the named one. "Jump range", "my jump range" and "what is my jump range" ask it directly. A remembered ship's line carries its as-of date, and a ship with no recorded jump range says it is not known yet.
 
 Spoken, `get_ship` gives the ship's line and metrics, the module count, and the unpowered modules as
-a count with at most three named, then points to Asset Mgmt › Ships for the full loadout. The model
-still receives every fitted module. The answer also opens that ship's page under Asset Mgmt › Ships
+a count with at most three named, then points to Commander › Assets › Ships for the full loadout. The model
+still receives every fitted module. The answer also opens that ship's page under Commander › Assets › Ships
 on the panel and in the headset, unless a chooser is open there.
 
 `get_fleet` answers about the carrier, and lists the ships only when it was asked to:

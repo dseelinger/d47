@@ -224,8 +224,8 @@ public class ACarrierRouteIsPlottedOnItsOwnCardTests
     {
         var surface = Open(loadout: true);
 
-        surface.Panel.Tab = PanelTab.Assets;
-        surface.Panel.Nav.SelectRoot(LoadoutPages.CarrierRoot);
+        surface.Panel.Nav.Show(PanelTabNames.AssetsRoot);
+        surface.Panel.Nav.Show(LoadoutPages.CarrierRoot);
         Dispatcher.UIThread.RunJobs();
 
         Save(surface.Window, "carrier-page-plan-action.png");

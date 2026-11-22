@@ -35,10 +35,10 @@ public class TheOpenEngineerIsOutlinedTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
         panel.EnableEngineers(unlocks, ships, () => state, onFoot);
 
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
+        var window = new Window { Content = panel, Width = 1180, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);

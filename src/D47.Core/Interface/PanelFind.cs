@@ -29,7 +29,7 @@ public sealed record PanelFindName(
 
 /// <summary>One Find result: what it is, how it reads, where it sits, and the key that reaches it.</summary>
 /// <param name="Title">A destination's word, a place's title, a row's label or an article's title.</param>
-/// <param name="Path">Where it sits, such as "Asset Mgmt › Ships".</param>
+/// <param name="Path">Where it sits, such as "Commander › Assets › Ships".</param>
 /// <param name="Target">The destination key, place id, row key or capability id, by <paramref name="Kind"/>.</param>
 /// <param name="Rank">The step it matched at, 1 to 8; lower is better. A name matches at 1 to 4 only.</param>
 /// <param name="ReadOnly">A row that shows a value and has no control to change it.</param>
@@ -39,7 +39,7 @@ public sealed record PanelFindResult(
     PanelFindKind Kind, string Title, string Path, string Target, int Rank, bool ReadOnly = false,
     long? SystemAddress = null, double? LightYears = null)
 {
-    /// <summary>The path and the title, such as "Asset Mgmt › Ships › Hull pictures".</summary>
+    /// <summary>The path and the title, such as "Commander › Assets › Ships › Hull pictures".</summary>
     public string Where => Path + PanelFind.Separator + Title;
 }
 
@@ -168,6 +168,11 @@ public sealed class PanelFind(
             var path = destination.SubPage is null || string.Equals(destination.Root.Word, tab, StringComparison.OrdinalIgnoreCase)
                 ? tab
                 : tab + Separator + destination.Root.Word;
+
+            if (destination.Parent is { } parent)
+            {
+                path += Separator + parent.Word;
+            }
 
             yield return new Candidate(
                 new PanelFindResult(PanelFindKind.Page, destination.Word, path, destination.Key, 0),

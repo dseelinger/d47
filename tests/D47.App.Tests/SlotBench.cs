@@ -50,7 +50,7 @@ internal sealed class SlotBench
         var window = new Window { Content = panel, Width = width, Height = 1600 };
 
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return new SlotBench(window, panel, kit);
@@ -82,7 +82,7 @@ internal sealed class SlotBench
 
     public void OpenSuit()
     {
-        Panel.Nav.SelectRoot(OnFootMode.Root);
+        Panel.Nav.Show(OnFootMode.Root);
         Dispatcher.UIThread.RunJobs();
 
         var build = Kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");

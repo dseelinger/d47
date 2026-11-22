@@ -154,8 +154,8 @@ Nothing here touches the network. The last two phrases need no AI configured at 
 ### It is not a wishlist
 
 A wishlist is a list of things you want. That is what your ship builds and your suit plans already
-are. **This is the arithmetic between them and what is in your hold** — the Materials page of the
-Asset Mgmt tab, reading across both, because a Commander gathering materials does not care
+are. **This is the arithmetic between them and what is in your hold** — Commander › Assets ›
+Materials, reading across both, because a Commander gathering materials does not care
 which ship needs them.
 
 ### The ledgers are never totalled together

@@ -199,7 +199,7 @@ carrier — those are different answers, and only one of them is true.
 
 ### The carrier's picture
 
-With Hull pictures on, Asset Mgmt › Carrier shows the carrier's hull beside its tiles, from the same
+With Hull pictures on, Commander › Assets › Carrier shows the carrier's hull beside its tiles, from the same
 fetch and setting as a ship's picture; see [the pictures](ships.md#hull-art). The mini panel and the
 squadron's carrier show none.
 

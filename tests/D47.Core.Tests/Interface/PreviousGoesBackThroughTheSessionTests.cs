@@ -18,8 +18,8 @@ public class PreviousGoesBackThroughTheSessionTests
         nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
         nav.Register(PanelTab.Transcript, new NavCrumb("technical", "Technical"));
         nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
-        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
-        nav.Register(PanelTab.Assets, new NavCrumb("locker", "Suits and weapons"));
+        nav.Register(PanelTab.Media, new NavCrumb("fleet", "Ships"));
+        nav.Register(PanelTab.Media, new NavCrumb("locker", "Suits and weapons"));
 
         return nav;
     }
@@ -34,17 +34,17 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.SelectRoot("locker");
         nav.Drill(new NavCrumb("suit:1", "Maverick"));
         nav.Drill(new NavCrumb("weapon:2", "Karma C-44"));
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:locker>suit:1", Place(nav));
+        Assert.Equal("Media:locker>suit:1", Place(nav));
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:locker", Place(nav));
+        Assert.Equal("Media:locker", Place(nav));
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.True(nav.Previous());
         Assert.Equal("Transcript:conversation", Place(nav));
         Assert.False(nav.Previous());
@@ -60,7 +60,7 @@ public class PreviousGoesBackThroughTheSessionTests
         nav.Step(1);
         nav.Step(1);
 
-        Assert.Equal(PanelTab.Assets, nav.Tab);
+        Assert.Equal(PanelTab.Media, nav.Tab);
         Assert.True(nav.Previous());
         Assert.Equal(PanelTab.Commander, nav.Tab);
         Assert.True(nav.Previous());
@@ -75,7 +75,7 @@ public class PreviousGoesBackThroughTheSessionTests
 
         nav.Show("locker");
 
-        Assert.Equal("Assets:locker", Place(nav));
+        Assert.Equal("Media:locker", Place(nav));
         Assert.True(nav.Previous());
         Assert.Equal("Transcript:conversation", Place(nav));
         Assert.False(nav.Previous());
@@ -89,14 +89,14 @@ public class PreviousGoesBackThroughTheSessionTests
         var open = true;
 
         nav.Declare("fleet", new NavCrumb("shipyard", "Shipyard"), () => open);
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Show("shipyard");
         nav.Select(PanelTab.Commander);
 
         open = false;
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.True(nav.Previous());
         Assert.Equal("Transcript:conversation", Place(nav));
     }
@@ -107,11 +107,11 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.GoTo(ShipCrumb(1), new NavCrumb("slot:3", "Weapon 3"));
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
     }
 
     /// <summary>A second ship replaces the first in the trail, and one step back shows the first ship.</summary>
@@ -120,15 +120,15 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(ShipCrumb(1));
         nav.Drill(ShipCrumb(2));
 
-        Assert.Equal("Assets:fleet>ship:2", Place(nav));
+        Assert.Equal("Media:fleet>ship:2", Place(nav));
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet>ship:1", Place(nav));
+        Assert.Equal("Media:fleet>ship:1", Place(nav));
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
     }
 
     /// <summary>A crumb swapped in place replaces where the panel is rather than adding a step back to it.</summary>
@@ -137,12 +137,12 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(new NavCrumb("plan", "Plan to Colonia"));
         nav.Drill(new NavCrumb("plan", "Plan to Sol"));
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
     }
 
     /// <summary>A drill to a level already lower in the trail cuts back, and the level cut away is not returned to.</summary>
@@ -151,14 +151,14 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(ShipCrumb(1));
         nav.Drill(new NavCrumb("slot:3", "Weapon 3"));
         nav.Drill(ShipCrumb(1));
 
-        Assert.Equal("Assets:fleet>ship:1", Place(nav));
+        Assert.Equal("Media:fleet>ship:1", Place(nav));
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
     }
 
     /// <summary>A form drilled into and cancelled is not shown again by the next step back.</summary>
@@ -167,13 +167,13 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(ShipCrumb(1));
         nav.Drill(new NavCrumb("bookmark.form", "New bookmark"));
         nav.Back();
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.True(nav.Previous());
         Assert.Equal("Transcript:conversation", Place(nav));
     }
@@ -184,7 +184,7 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(ShipCrumb(1));
         nav.ToRoot();
 
@@ -198,15 +198,15 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(ShipCrumb(1));
         nav.Drill(new NavCrumb("slot:3", "Weapon 3"));
         nav.JumpTo(0);
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet>ship:1", Place(nav));
+        Assert.Equal("Media:fleet>ship:1", Place(nav));
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.True(nav.Previous());
         Assert.Equal("Transcript:conversation", Place(nav));
     }
@@ -217,7 +217,7 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Take(new NavCrumb("choose.ship", "Choose a ship"));
         nav.Back();
 
@@ -231,7 +231,7 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Take(new NavCrumb("choose.ship", "Choose a ship"));
 
         var raised = 0;
@@ -239,7 +239,7 @@ public class PreviousGoesBackThroughTheSessionTests
 
         Assert.False(nav.CanGoPrevious);
         Assert.False(nav.Previous());
-        Assert.Equal("Assets:fleet>choose.ship", Place(nav));
+        Assert.Equal("Media:fleet>choose.ship", Place(nav));
         Assert.Equal(0, raised);
     }
 
@@ -249,14 +249,14 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(ShipCrumb(1));
         nav.Select(PanelTab.Commander);
 
-        Assert.True(nav.ToRootIfAny(PanelTab.Assets, crumb => crumb.Key == "ship:1"));
+        Assert.True(nav.ToRootIfAny(PanelTab.Media, crumb => crumb.Key == "ship:1"));
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.True(nav.Previous());
         Assert.Equal("Transcript:conversation", Place(nav));
         Assert.False(nav.Previous());
@@ -268,14 +268,14 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(ShipCrumb(1));
         nav.SelectRoot("locker");
 
-        Assert.False(nav.ToRootIfAny(PanelTab.Assets, crumb => crumb.Key == "ship:1"));
+        Assert.False(nav.ToRootIfAny(PanelTab.Media, crumb => crumb.Key == "ship:1"));
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.True(nav.Previous());
         Assert.Equal("Transcript:conversation", Place(nav));
     }
@@ -286,15 +286,15 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.SelectRoot("locker");
         nav.Drill(new NavCrumb("suit:1", "Maverick"));
         nav.Select(PanelTab.Commander);
 
-        Assert.True(nav.SetVisible(PanelTab.Assets, "locker", false));
+        Assert.True(nav.SetVisible(PanelTab.Media, "locker", false));
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.True(nav.Previous());
         Assert.Equal("Transcript:conversation", Place(nav));
         Assert.False(nav.Previous());
@@ -306,10 +306,10 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.Drill(ShipCrumb(1));
         nav.Select(PanelTab.Commander);
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.ToRoot();
         nav.Select(PanelTab.Transcript);
 
@@ -317,7 +317,7 @@ public class PreviousGoesBackThroughTheSessionTests
         nav.Changed += (_, _) => raised++;
 
         Assert.True(nav.Previous());
-        Assert.Equal("Assets:fleet", Place(nav));
+        Assert.Equal("Media:fleet", Place(nav));
         Assert.Equal(1, raised);
     }
 
@@ -328,7 +328,7 @@ public class PreviousGoesBackThroughTheSessionTests
         var nav = Furnished();
 
         nav.Select(PanelTab.Commander);
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
 
         Assert.True(nav.Previous());
         Assert.Equal(PanelTab.Commander, nav.Tab);
@@ -343,7 +343,7 @@ public class PreviousGoesBackThroughTheSessionTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
 
         for (var id = 1; id <= 101; id++)
         {
@@ -358,7 +358,7 @@ public class PreviousGoesBackThroughTheSessionTests
         }
 
         Assert.Equal(100, steps);
-        Assert.Equal("Assets:fleet>ship:1", Place(nav));
+        Assert.Equal("Media:fleet>ship:1", Place(nav));
     }
 
     /// <summary>A place inside Settings is a step: going back raises the place left, and the first place is only a baseline.</summary>

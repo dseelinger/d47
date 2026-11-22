@@ -19,7 +19,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Asset Mgmt › Characters: the captain, the tower, the story's cast and the Commander's own characters (#1603).</summary>
+/// <summary>Commander › Assets › Characters: the captain, the tower, the story's cast and the Commander's own characters (#1603).</summary>
 public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
 {
     private sealed record Surface(
@@ -75,8 +75,8 @@ public class TheCharactersPageKeepsEveryoneYouCanTalkToTests
             voices);
 
         var nav = new PanelNavigator();
-        nav.Register(PanelTab.Assets, new NavCrumb(CharactersPage.RootKey, "Characters"));
-        Assert.True(nav.Select(PanelTab.Assets));
+        AssetsNav.Pages(nav, (CharactersPage.RootKey, "Characters"));
+        Assert.True(nav.Show(PanelTabNames.AssetsRoot));
 
         var prompts = new PanelPrompts(nav, new Avalonia.Controls.Panel());
         var page = new CharactersPage(host, () => state.Active, prompts, big: big, copy: copy);

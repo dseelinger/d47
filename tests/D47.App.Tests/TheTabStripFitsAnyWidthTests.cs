@@ -17,7 +17,7 @@ public class TheTabStripFitsAnyWidthTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.Furnish(
-            PanelTab.Assets,
+            PanelTab.Media,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("locker", "Suits and weapons"),

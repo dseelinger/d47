@@ -100,7 +100,7 @@ public class AHullTurnsOnItsOwnPageTests
         var window = new Window { Content = panel, Width = 1400, Height = 860 };
 
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         panel.GetVisualDescendants()

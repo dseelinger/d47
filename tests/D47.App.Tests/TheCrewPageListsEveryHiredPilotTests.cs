@@ -54,9 +54,9 @@ public class TheCrewPageListsEveryHiredPilotTests
         var window = new Window { Content = panel, Width = 1280, Height = 1100 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
-        panel.Nav.SelectRoot(CrewPage.RootKey);
+        panel.Nav.Show(CrewPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, store);

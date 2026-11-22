@@ -109,7 +109,7 @@ public class HelpInTheHeadsetTests
     {
         var (panel, view, _) = Headset();
 
-        Assert.Equal(PanelTab.Assets, view.Tab);
+        Assert.Equal(PanelTab.Commander, view.Tab);
 
         var mark = Mark(view);
 
@@ -139,11 +139,11 @@ public class HelpInTheHeadsetTests
         Assert.Equal("Help", view.Nav.Trail[^1].Word);
 
         // Still the Engineers tab underneath.
-        Assert.Equal(PanelTab.Assets, view.Tab);
+        Assert.Equal(PanelTab.Commander, view.Tab);
 
         // And nothing can navigate away from it while it is up.
         Assert.False(view.Nav.Select(PanelTab.Transcript));
-        Assert.Equal(PanelTab.Assets, view.Tab);
+        Assert.Equal(PanelTab.Commander, view.Tab);
 
         panel.Dispose();
     }
@@ -239,7 +239,7 @@ public class HelpInTheHeadsetTests
 
         Assert.False(view.Nav.Modal, "the panel is handed back");
         Assert.Empty(view.GetVisualDescendants().OfType<HelpFigureView>());
-        Assert.Equal(PanelTab.Assets, view.Tab);
+        Assert.Equal(PanelTab.Commander, view.Tab);
 
         // And the tab is usable again.
         Assert.True(view.Nav.Select(PanelTab.Transcript));

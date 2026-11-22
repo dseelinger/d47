@@ -190,7 +190,7 @@ public class APickedVoiceShowsOnItsRowTests
     }
 
     /// <summary>
-    /// Both carrier voice rows are on Asset Mgmt › Carrier now, not the settings page (#305) — drawn as a
+    /// Both carrier voice rows are on Commander › Assets › Carrier now, not the settings page (#305) — drawn as a
     /// standalone strip the way <c>MainWindow.BuildSettingsStrip</c> actually builds one, not through the
     /// full settings page.
     /// </summary>

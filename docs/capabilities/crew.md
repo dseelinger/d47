@@ -167,7 +167,7 @@ different answers, and only one of them is true.
 
 ### A picture for each pilot
 
-Each hired pilot's row on Asset Mgmt › Crew has **Change picture** and **Use the default**. The picture is kept
+Each hired pilot's row on Commander › Assets › Crew has **Change picture** and **Use the default**. The picture is kept
 under the pilot's game crew id, not their name, so two pilots with the same name keep separate pictures. It
 shows beside that pilot's turns on the Conversation page. A pilot you fire keeps their file, and a rehire
 with the same crew id gets it back.

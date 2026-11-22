@@ -156,8 +156,8 @@ public class TheTopBarHelpOpensThePlacesGuideTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Assets, new NavCrumb("ships", "Ships") { Help = "ships" });
-        nav.Select(PanelTab.Assets);
+        nav.Register(PanelTab.Media, new NavCrumb("ships", "Ships") { Help = "ships" });
+        nav.Select(PanelTab.Media);
 
         // What PanelPrompts does for a page-surface chooser, with the help its request declares.
         nav.Take(new NavCrumb("loadout.module", "Module") { Help = ShipsMode.ModuleChoiceHelp });

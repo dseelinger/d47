@@ -49,9 +49,9 @@ public class TheFleetComparesByAnyColumnTests
         var window = new Window { Content = panel, Width = 1280, Height = 900 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
-        panel.Nav.SelectRoot(LoadoutPages.FleetRoot);
+        panel.Nav.Show(LoadoutPages.FleetRoot);
         Dispatcher.UIThread.RunJobs();
 
         if (drill)
@@ -248,10 +248,10 @@ public class TheFleetComparesByAnyColumnTests
 
         using var surface = new OffscreenSurface(panel, new PixelSize(1280, 900));
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         surface.Render();
         Dispatcher.UIThread.RunJobs();
-        panel.Nav.SelectRoot(LoadoutPages.FleetRoot);
+        panel.Nav.Show(LoadoutPages.FleetRoot);
         Dispatcher.UIThread.RunJobs();
         surface.Render();
 

@@ -86,7 +86,7 @@ nav_order: 204
 
 ## The details
 
-The **Module** page, reached from Asset Mgmt, then Ships, a ship and a slot. It lists everything that
+The **Module** page, reached from Commander › Assets, then Ships, a ship and a slot. It lists everything that
 fits, and is where a build is decided one slot at a time.
 
 ### The line at the top of the page

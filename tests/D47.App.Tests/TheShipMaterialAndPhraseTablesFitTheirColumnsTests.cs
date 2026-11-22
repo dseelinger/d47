@@ -253,7 +253,7 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         var window = new Window { Content = panel, Width = 1280, Height = 1400 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel, ships, kit);
@@ -274,7 +274,7 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         var suit = kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");
         kit.Plan(suit.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
 
-        Assert.True(panel.Nav.SelectRoot(LoadoutPages.GapRoot));
+        Assert.True(panel.Nav.Show(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
         var heads = Grids(panel, MaterialsPage.NeededTable).Count(grid => grid.IsHeader);
@@ -388,8 +388,8 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
 
         var window = new Window { Content = panel, Width = 1280, Height = 900 };
         window.Show();
-        panel.Tab = PanelTab.Assets;
-        panel.Nav.SelectRoot(PanelTab.Assets, ConstructionPage.RootKey);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        panel.Nav.Show(ConstructionPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         Fits(panel, ConstructionPage.NeedsTable, 3);

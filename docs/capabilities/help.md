@@ -236,7 +236,7 @@ waits. These move it, and are taken before anything else hears them:
   shut-up hotkey stop the voice too, and leave the walkthrough where it is.
 
 ```text
-Engineers. 4 steps. Step 1. Open Engineers on the Asset Mgmt tab and read the directory.
+Engineers. 4 steps. Step 1. Open Engineers on Commander › Assets and read the directory.
 ```
 
 Anything else you say goes to D47 as usual, and "next" afterwards carries on from the same step. A

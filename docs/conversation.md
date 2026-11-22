@@ -202,7 +202,7 @@ You choose your own picture on the Commander record, under your name: **Change p
 Commander flying, and **Use the default** removes it, which leaves no picture. Until D47 has seen which
 Commander is flying, both buttons are disabled.
 
-You choose the captain's and the tower's pictures on Asset Mgmt › Carrier, under **Captain and tower**. A picture
+You choose the captain's and the tower's pictures on Commander › Assets › Carrier, under **Captain and tower**. A picture
 is kept for the Commander flying and for the gender of the voice now set: **Change picture** keeps the file, and
 **Use the default** removes this Commander's file for that gender, which brings the shipped picture back. Another
 Commander on the same install sees the shipped pictures until they choose their own. The section is not drawn in the

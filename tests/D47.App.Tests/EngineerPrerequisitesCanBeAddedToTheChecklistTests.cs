@@ -55,7 +55,7 @@ public class EngineerPrerequisitesCanBeAddedToTheChecklistTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
 
         // Felicity Farseer needs no referral: an unmet exploration-rank invitation and an unmet Meta
         // Alloys tribute, the same pair the issue's own example uses.

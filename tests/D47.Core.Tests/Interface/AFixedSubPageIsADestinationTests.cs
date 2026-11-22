@@ -22,7 +22,7 @@ public class AFixedSubPageIsADestinationTests
         Assert.True(nav.Declare("adventures", Catalogue));
         Assert.True(nav.Declare("routing.plan", new NavCrumb("routing.progress", "Progress") { Spoken = ["route"] }));
 
-        nav.Register(PanelTab.Assets, new NavCrumb("engineers", "Engineers"));
+        nav.Register(PanelTab.Media, new NavCrumb("engineers", "Engineers"));
         Assert.True(nav.Declare(
             "engineers",
             new NavCrumb("engineers.route", "Route") { Spoken = ["engineers route", "engineer route"], SpokenOnly = true }));
@@ -113,7 +113,7 @@ public class AFixedSubPageIsADestinationTests
         var nav = Furnished();
 
         Assert.Equal(
-            ["conversation", "engineers", "engineers.route", "routing.plan", "routing.progress", "adventures", "adventure.ask", "stories"],
+            ["conversation", "routing.plan", "routing.progress", "adventures", "adventure.ask", "stories", "engineers", "engineers.route"],
             nav.Destinations.Select(page => page.Key));
 
         var catalogue = nav.Destinations.Single(page => page.Key == "stories");
@@ -179,7 +179,7 @@ public class AFixedSubPageIsADestinationTests
         var nav = Furnished();
 
         Assert.NotNull(PanelPhrases.Apply(phrase, nav));
-        Assert.Equal(PanelTab.Assets, nav.Tab);
+        Assert.Equal(PanelTab.Media, nav.Tab);
         Assert.Equal("engineers.route", nav.DestinationKey);
     }
 }

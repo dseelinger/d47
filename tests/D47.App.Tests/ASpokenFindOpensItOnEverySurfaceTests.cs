@@ -87,7 +87,7 @@ public sealed class ASpokenFindOpensItOnEverySurfaceTests
 
         var mini = new PanelNavigator();
         mini.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
-        mini.Register(PanelTab.Assets, new NavCrumb("loadout.ships", "Ships"));
+        AssetsNav.Pages(mini, ("loadout.ships", "Ships"));
 
         var routing = new PanelRouting(() => false, () => []);
         var ui = Dispatcher.UIThread;
@@ -133,14 +133,14 @@ public sealed class ASpokenFindOpensItOnEverySurfaceTests
         using var look = AppLook.Put();
         var (routing, window, headset, _) = Routed();
 
-        Assert.Equal("Asset Mgmt › Ships › Hull pictures.", routing.Find("show me the hull pictures setting"));
+        Assert.Equal("Commander › Assets › Ships › Hull pictures.", routing.Find("show me the hull pictures setting"));
         Jobs();
         Jobs();
 
         foreach (var surface in new[] { window, headset })
         {
-            Assert.Equal(PanelTab.Assets, surface.View.Nav.Tab);
-            Assert.Equal("loadout.ships", surface.View.Nav.RootKeyOf(PanelTab.Assets));
+            Assert.Equal(PanelTab.Commander, surface.View.Nav.Tab);
+            Assert.Equal("loadout.ships", surface.View.Nav.PageKeyOf(PanelTab.Commander));
             Assert.StartsWith("▾ SETTINGS ", ((Button)surface.Strip.BarTool!).Content as string, StringComparison.Ordinal);
             Assert.True(surface.Strip.MarksRow(surface.Settings, "ships.art"));
         }
@@ -155,12 +155,12 @@ public sealed class ASpokenFindOpensItOnEverySurfaceTests
         using var look = AppLook.Put();
         var (routing, window, headset, mini) = Routed();
 
-        Assert.Equal("Asset Mgmt › Ships.", routing.Find("show me the ships page"));
+        Assert.Equal("Commander › Assets › Ships.", routing.Find("show me the ships page"));
         Jobs();
 
-        Assert.Equal("loadout.ships", window.View.Nav.RootKeyOf(PanelTab.Assets));
-        Assert.Equal(PanelTab.Assets, headset.View.Nav.Tab);
-        Assert.Equal(PanelTab.Assets, mini.Tab);
+        Assert.Equal("loadout.ships", window.View.Nav.PageKeyOf(PanelTab.Commander));
+        Assert.Equal(PanelTab.Commander, headset.View.Nav.Tab);
+        Assert.Equal(PanelTab.Commander, mini.Tab);
 
         window.Close();
         headset.Close();

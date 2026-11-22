@@ -52,7 +52,7 @@ public static class PageTrail
     {
         nav.Show(root);
 
-        return nav.Root.Key == root && nav.GoTo(crumbs);
+        return (nav.Root.Key == root || nav.PageKeyOf(nav.Tab) == root) && nav.GoTo(crumbs);
     }
 
     /// <summary>

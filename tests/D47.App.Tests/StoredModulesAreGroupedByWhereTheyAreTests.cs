@@ -66,9 +66,9 @@ public class StoredModulesAreGroupedByWhereTheyAreTests
         var window = new Window { Content = panel, Width = 1280, Height = 1100 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
-        panel.Nav.SelectRoot(StoredModulesPage.RootKey);
+        panel.Nav.Show(StoredModulesPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, store);

@@ -16,7 +16,7 @@ using D47.Core.Knowledge;
 
 namespace D47.App.Panel;
 
-/// <summary>The Engineers root of the Asset Mgmt tab (Phase 28).</summary>
+/// <summary>Commander › Assets › Engineers (Phase 28).</summary>
 public static class EngineersPages
 {
     /// <summary>The root: everybody, in the order they can be acted on.</summary>

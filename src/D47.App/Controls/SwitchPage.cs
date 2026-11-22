@@ -173,7 +173,7 @@ public sealed class SwitchPage : DialogPage
         {
             _pageKeys.Add(page.Key);
             _destinations[page.Key] = page;
-            _pageWords[page.Key] = page.SubPage is null ? page.Describe() : $"{page.Root.Word} › {page.Word}";
+            _pageWords[page.Key] = page.SubPage is null ? page.Describe() : $"{page.Above.Word} › {page.Word}";
         }
 
         // A saved destination no surface offers right now is shown as its key rather than silently reset to
@@ -915,11 +915,7 @@ public sealed class SwitchPage : DialogPage
     private string? GroupOf(string value) =>
         _destinations.TryGetValue(value, out var page) ? TabWord(page.Tab) : null;
 
-    private static string TabWord(PanelTab tab) => tab switch
-    {
-        PanelTab.Assets => "ASSET MGMT",
-        _ => tab.ToString().ToUpperInvariant(),
-    };
+    private static string TabWord(PanelTab tab) => tab.ToString().ToUpperInvariant();
 
     /// <summary>Applies a page chosen in the picker; naming a page clears the action.</summary>
     private static void TakePage(MutablePosition position, string? chosen, Action redraw)

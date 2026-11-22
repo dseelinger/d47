@@ -101,7 +101,7 @@ public class ClearCompletedTakesEveryTickedSlotTests
         var window = new Window { Content = panel, Width = 1400, Height = 800 };
 
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         panel.Nav.Drill(new NavCrumb(LoadoutPages.ShipPrefix + id, "Python") { Level = LoadoutPages.ShipPrefix });

@@ -139,7 +139,7 @@ public class TheHeadsetHasTheServicesTheWindowFurnishesTests
             buildTalk: talk ? buildTalk : null);
 
         Dispatcher.UIThread.RunJobs();
-        panel.Nav.Select(PanelTab.Assets);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
 
         return panel;
     }

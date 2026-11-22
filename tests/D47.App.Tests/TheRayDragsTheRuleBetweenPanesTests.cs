@@ -91,11 +91,11 @@ public sealed class TheRayDragsTheRuleBetweenPanesTests
             .GetValue(panel)!;
 
         view.Furnish(
-            PanelTab.Assets,
+            PanelTab.Media,
             crumb => crumb.Key == "fleet" && scrolling ? Scrolling() : new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"));
 
-        view.Tab = PanelTab.Assets;
+        view.Tab = PanelTab.Media;
         view.Nav.GoTo(new NavCrumb("fleet", "Ships"), new NavCrumb("ship:12", "Corsair"));
 
         panel.Serve();
@@ -319,12 +319,12 @@ public sealed class TheRayDragsTheRuleBetweenPanesTests
         Assert.Equal([0.7, 0.3], new PaneWidthMemory(store, headset: true).Remembered(2));
 
         var panel = new PanelView { DataContext = new PanelViewModel() };
-        panel.Furnish(PanelTab.Assets, crumb => new TextBlock { Text = crumb.Word }, new NavCrumb("fleet", "Ships"));
+        panel.Furnish(PanelTab.Media, crumb => new TextBlock { Text = crumb.Word }, new NavCrumb("fleet", "Ships"));
 
         var window = new Window { Content = panel, Width = 1200, Height = 700 };
         window.Show();
         panel.EnableDraggablePanes(desktop);
-        panel.Tab = PanelTab.Assets;
+        panel.Tab = PanelTab.Media;
         panel.Nav.GoTo(new NavCrumb("fleet", "Ships"), new NavCrumb("ship:12", "Corsair"));
         Dispatcher.UIThread.RunJobs();
 

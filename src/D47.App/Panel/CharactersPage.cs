@@ -20,7 +20,7 @@ using D47.Core.Stories;
 namespace D47.App.Panel;
 
 /// <summary>
-/// Asset Mgmt › Characters: the carrier's captain and tower, the running story's cast and the Commander's own
+/// Commander › Assets › Characters: the carrier's captain and tower, the running story's cast and the Commander's own
 /// characters, each with a picture, name, voice, personality notes and a place.
 /// </summary>
 public sealed class CharactersPage : UserControl, IPageSummary

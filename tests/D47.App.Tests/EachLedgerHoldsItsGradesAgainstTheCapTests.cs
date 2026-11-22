@@ -56,9 +56,9 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         var window = new Window { Content = panel, Width = 1280, Height = 900 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
-        Assert.True(panel.Nav.SelectRoot(LoadoutPages.GapRoot));
+        Assert.True(panel.Nav.Show(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, kit, () => store.Active!);

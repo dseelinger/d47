@@ -9,9 +9,9 @@ public class AHiddenRootLeavesTheTabsRootsTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Assets, new NavCrumb("ships", "Ships"));
-        nav.Register(PanelTab.Assets, new NavCrumb("carrier", "Carrier"));
-        nav.Register(PanelTab.Assets, new NavCrumb("engineers", "Engineers"));
+        nav.Register(PanelTab.Media, new NavCrumb("ships", "Ships"));
+        nav.Register(PanelTab.Media, new NavCrumb("carrier", "Carrier"));
+        nav.Register(PanelTab.Media, new NavCrumb("engineers", "Engineers"));
 
         return nav;
     }
@@ -21,9 +21,9 @@ public class AHiddenRootLeavesTheTabsRootsTests
     {
         var nav = Assets();
 
-        nav.SetVisible(PanelTab.Assets, "carrier", false);
+        nav.SetVisible(PanelTab.Media, "carrier", false);
 
-        Assert.Equal(["ships", "engineers"], nav.Roots(PanelTab.Assets).Select(r => r.Key));
+        Assert.Equal(["ships", "engineers"], nav.Roots(PanelTab.Media).Select(r => r.Key));
         Assert.DoesNotContain(nav.Destinations, d => d.Root.Key == "carrier");
         Assert.False(nav.Show("carrier"));
     }
@@ -33,10 +33,10 @@ public class AHiddenRootLeavesTheTabsRootsTests
     {
         var nav = Assets();
 
-        nav.SetVisible(PanelTab.Assets, "carrier", false);
-        nav.SetVisible(PanelTab.Assets, "carrier", true);
+        nav.SetVisible(PanelTab.Media, "carrier", false);
+        nav.SetVisible(PanelTab.Media, "carrier", true);
 
-        Assert.Equal(["ships", "carrier", "engineers"], nav.Roots(PanelTab.Assets).Select(r => r.Key));
+        Assert.Equal(["ships", "carrier", "engineers"], nav.Roots(PanelTab.Media).Select(r => r.Key));
     }
 
     [Fact]
@@ -44,10 +44,10 @@ public class AHiddenRootLeavesTheTabsRootsTests
     {
         var nav = Assets();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.SelectRoot("carrier");
-        nav.SetVisible(PanelTab.Assets, "carrier", false);
+        nav.SetVisible(PanelTab.Media, "carrier", false);
 
-        Assert.Equal("ships", nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal("ships", nav.RootKeyOf(PanelTab.Media));
     }
 }

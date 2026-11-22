@@ -3,9 +3,38 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Asset Mgmt tab: Ships, Stored modules, Crew, Suits, Carrier, Construction, Materials and Engineers.</summary>
-internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> planCarrierRoute)
+/// <summary>
+/// Commander › Assets: Ships, Stored modules, Crew, Characters, Suits, Carrier, Construction, Materials and Engineers,
+/// the pages of its page sidebar.
+/// </summary>
+internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> planCarrierRoute, CommanderFurnishing commander)
 {
+    /// <summary>The pages in the page sidebar's order.</summary>
+    public static IReadOnlyList<string> Order { get; } =
+    [
+        LoadoutPages.FleetRoot,
+        StoredModulesPage.RootKey,
+        CrewPage.RootKey,
+        CharactersPage.RootKey,
+        OnFootMode.Root,
+        LoadoutPages.CarrierRoot,
+        ConstructionPage.RootKey,
+        LoadoutPages.GapRoot,
+        EngineersPages.DirectoryRoot,
+    ];
+
+    /// <summary>The Assets sub-tab's crumb.</summary>
+    public static NavCrumb Root { get; } = new(PanelTabNames.AssetsRoot, "Assets")
+    {
+        Spoken = ["asset management"],
+    };
+
+    /// <summary>A page of Assets: its own pane and the levels drilled from it, never the root beside them.</summary>
+    private static NavCrumb Page(string key, string word, string help) =>
+        new(key, word) { Help = help, Starts = true, Level = PanelTabNames.AssetsRoot };
+
+    private bool _carrierOwned;
+
     private Func<NavCrumb, Control>? _loadoutBuild;
     private Func<NavCrumb, Control>? _engineerBuild;
     private Func<NavCrumb, Control>? _constructionBuild;
@@ -93,21 +122,11 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             _materialsClock = new D47.App.Controls.JournalClock(() => state()?.Session.LastEventAt);
         }
 
-        // Per root, because this tab's roots are three different subjects.
-        var roots = new List<NavCrumb>
+        var pages = new List<NavCrumb>
         {
-            new(LoadoutPages.FleetRoot, "Ships")
-            {
-                Help = D47.Core.Capabilities.Builtin.ShipsCapability.Id,
-            },
-            new(StoredModulesPage.RootKey, "Stored modules")
-            {
-                Help = D47.Core.Capabilities.Builtin.JournalCapability.Id,
-            },
-            new(CrewPage.RootKey, "Crew")
-            {
-                Help = D47.Core.Capabilities.Builtin.CrewCapability.Id,
-            },
+            Page(LoadoutPages.FleetRoot, "Ships", D47.Core.Capabilities.Builtin.ShipsCapability.Id),
+            Page(StoredModulesPage.RootKey, "Stored modules", D47.Core.Capabilities.Builtin.JournalCapability.Id),
+            Page(CrewPage.RootKey, "Crew", D47.Core.Capabilities.Builtin.CrewCapability.Id),
         };
 
         if (characters is not null)
@@ -121,34 +140,23 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
                 host.Headset,
                 host.Copy);
 
-            roots.Add(new NavCrumb(CharactersPage.RootKey, "Characters")
-            {
-                Help = D47.Core.Capabilities.Builtin.CharactersCapability.Id,
-            });
+            pages.Add(Page(CharactersPage.RootKey, "Characters", D47.Core.Capabilities.Builtin.CharactersCapability.Id));
         }
 
         if (onFoot is not null)
         {
-            roots.Add(new NavCrumb(OnFootMode.Root, "Suits")
-            {
-                Help = D47.Core.Capabilities.Builtin.OnFootCapability.Id,
-            });
+            pages.Add(Page(OnFootMode.Root, "Suits", D47.Core.Capabilities.Builtin.OnFootCapability.Id));
         }
 
-        _carrier = new CarrierSource(
+        var carrier = _carrier = new CarrierSource(
             () => state()?.Carrier ?? D47.Core.Journal.CarrierState.None,
             () => state()?.SquadronCarrier ?? D47.Core.Journal.CarrierState.NoSquadron,
             () => state()?.Hold is { IsShip: true } hold ? hold.Of("tritium") : 0,
             () => state()?.Location.StarSystem);
 
-        roots.Add(new NavCrumb(LoadoutPages.CarrierRoot, "Carrier")
-        {
-            Help = D47.Core.Capabilities.Builtin.CarrierCapability.Id,
-        });
-
         // _engineers is read when the first draw opens Materials, not here (#477); Copy and Portraits likewise.
         _loadoutBuild = crumb => LoadoutPages.Build(
-            crumb, modes, gap, _carrier, host.Nav, host.Prompts, host.Copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
+            crumb, modes, gap, carrier, host.Nav, host.Prompts, host.Copy, settingsStrip, carrierSettingsStrip, _engineers, _materialsClock,
             () => _comparePage = new ComparePage(state, host.ColumnWidths, host.Copy, host.ColumnArrangements),
             () => _storedModulesPage = new StoredModulesPage(state, host.ColumnWidths, host.Copy, host.ColumnArrangements),
             () => _crewPage = new CrewPage(state, host.Portraits?.Pictures, host.ColumnWidths, host.ColumnArrangements),
@@ -161,9 +169,14 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             host.Model?.WaitSound,
             host.ColumnArrangements);
 
-        host.Furnish(PanelTab.Assets, BuildAssets, [.. roots]);
+        foreach (var page in pages)
+        {
+            DeclarePage(page);
+        }
+
+        _carrierOwned = carrier.Now.Owned;
+        DeclarePage(Page(LoadoutPages.CarrierRoot, "Carrier", D47.Core.Capabilities.Builtin.CarrierCapability.Id), () => carrier.Now.Owned);
         host.Nav.Declare(LoadoutPages.FleetRoot, ComparePage.Crumb);
-        ShowCarrierRoot();
 
         if (construction is not null)
         {
@@ -172,40 +185,39 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
 
         if (onFoot is not null)
         {
-            host.Furnish(
-                PanelTab.Assets,
-                BuildAssets,
-                new NavCrumb(LoadoutPages.GapRoot, "Materials")
-                {
-                    Help = D47.Core.Capabilities.Builtin.GapCapability.Id,
-                });
+            DeclarePage(Page(LoadoutPages.GapRoot, "Materials", D47.Core.Capabilities.Builtin.GapCapability.Id));
         }
     }
 
-    /// <summary>Adds Asset Mgmt › Construction; <see cref="EnableLoadout"/> calls it after Carrier.</summary>
+    /// <summary>Furnishes the Assets root, once, and declares a page under it, which the page sidebar lists.</summary>
+    private void DeclarePage(NavCrumb page, Func<bool>? canOpen = null)
+    {
+        commander.FurnishAssets(Root, BuildAssets);
+        host.Nav.Declare(PanelTabNames.AssetsRoot, page, canOpen);
+        host.Nav.HoldPages(PanelTabNames.AssetsRoot, Order);
+    }
+
+    /// <summary>Whether Commander is showing this page of Assets, at any depth below it.</summary>
+    private bool Showing(string page) =>
+        host.Tab == PanelTab.Commander && host.Nav.PageKeyOf(PanelTab.Commander) == page;
+
+    /// <summary>Adds Commander › Assets › Construction; <see cref="EnableLoadout"/> calls it after Carrier.</summary>
     public void EnableConstruction(ConstructionSurface construction)
     {
         var headset = host.Headset;
 
         _constructionBuild = _ => _construction = new ConstructionPage(construction, host.Copy, headset, host.Browse, host.ColumnWidths, host.Model?.WaitSound, host.ColumnArrangements);
 
-        host.Furnish(
-            PanelTab.Assets,
-            BuildAssets,
-            new NavCrumb(ConstructionPage.RootKey, "Construction")
-            {
-                Help = D47.Core.Capabilities.Builtin.ColonisationCapability.Id,
-            });
+        DeclarePage(Page(ConstructionPage.RootKey, "Construction", D47.Core.Capabilities.Builtin.ColonisationCapability.Id));
     }
 
     /// <summary>Redraws the Construction page when the journal has moved the sites, the hold or the carrier.</summary>
     public bool TickConstruction() =>
         _construction is { } page
-        && host.Tab == PanelTab.Assets
-        && host.Nav.RootKeyOf(PanelTab.Assets) == ConstructionPage.RootKey
+        && Showing(ConstructionPage.RootKey)
         && page.Tick();
 
-    /// <summary>Adds the Engineers root; call after <see cref="EnableLoadout"/> so it lands last.</summary>
+    /// <summary>Adds the Engineers page; call after <see cref="EnableLoadout"/> so it lands last.</summary>
     public void EnableEngineers(
         D47.Core.Engineers.EngineerPlanService unlocks,
         D47.Core.Ships.ShipPlanService ships,
@@ -240,22 +252,14 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
 
         _engineerBuild = crumb => EngineersPages.Build(crumb, source, host.Nav, memory, host.Copy, host.Headset, host.ColumnWidths, host.ColumnArrangements);
 
-        host.Furnish(
-            PanelTab.Assets,
-            BuildAssets,
-            new NavCrumb(EngineersPages.DirectoryRoot, "Engineers")
-            {
-                Help = D47.Core.Capabilities.Builtin.EngineerCapability.Id,
-            });
+        DeclarePage(Page(EngineersPages.DirectoryRoot, "Engineers", D47.Core.Capabilities.Builtin.EngineerCapability.Id));
         host.Nav.Declare(EngineersPages.DirectoryRoot, EngineersPages.RouteCrumb);
     }
 
     /// <summary>Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody.</summary>
     public bool TickEngineers()
     {
-        if (_engineers is not { } source
-            || host.Tab != PanelTab.Assets
-            || host.Nav.RootKeyOf(PanelTab.Assets) != EngineersPages.DirectoryRoot)
+        if (_engineers is not { } source || !Showing(EngineersPages.DirectoryRoot))
         {
             return false;
         }
@@ -273,14 +277,16 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         return true;
     }
 
-    /// <summary>Redraws the Assets tab when the journal says the ship, carrier, stock or engineers moved.</summary>
+    /// <summary>Redraws Commander › Assets when the journal says the ship, carrier, stock or engineers moved.</summary>
     public bool TickLoadout()
     {
         var changed = TickConstruction();
 
-        changed |= ShowCarrierRoot();
+        changed |= ShowCarrierPage();
 
-        if (_loadoutMode is not { } mode || host.Tab != PanelTab.Assets)
+        if (_loadoutMode is not { } mode
+            || host.Tab != PanelTab.Commander
+            || host.Nav.RootKeyOf(PanelTab.Commander) != PanelTabNames.AssetsRoot)
         {
             return changed;
         }
@@ -362,23 +368,23 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             changed |= compare.Tick();
         }
 
-        if (_storedModulesPage is { } stored && nav.RootKeyOf(PanelTab.Assets) == StoredModulesPage.RootKey)
+        if (_storedModulesPage is { } stored && Showing(StoredModulesPage.RootKey))
         {
             changed |= stored.Tick();
         }
 
-        if (_crewPage is { } crewPage && nav.RootKeyOf(PanelTab.Assets) == CrewPage.RootKey)
+        if (_crewPage is { } crewPage && Showing(CrewPage.RootKey))
         {
             changed |= crewPage.Tick();
         }
 
-        if (_charactersPage is { } charactersPage && nav.RootKeyOf(PanelTab.Assets) == CharactersPage.RootKey)
+        if (_charactersPage is { } charactersPage && Showing(CharactersPage.RootKey))
         {
             changed |= charactersPage.Tick();
         }
 
         // The Materials page measures plans against the inventory, which moves without either store saying so.
-        if (_gap is { } gap && nav.RootKeyOf(PanelTab.Assets) == LoadoutPages.GapRoot)
+        if (_gap is { } gap && Showing(LoadoutPages.GapRoot))
         {
             changed |= _materialsClock?.Tick() ?? false;
 
@@ -398,14 +404,27 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         return changed;
     }
 
-    /// <summary>Shows the Carrier root only while the Commander owns a carrier.</summary>
-    private bool ShowCarrierRoot() =>
-        _carrier is { } carrier && host.Nav.SetVisible(PanelTab.Assets, LoadoutPages.CarrierRoot, carrier.Now.Owned);
+    /// <summary>
+    /// Lists the Carrier page only while the Commander owns a carrier, and moves a surface off it when the carrier
+    /// goes; true when that changed.
+    /// </summary>
+    private bool ShowCarrierPage()
+    {
+        if (_carrier is not { } carrier || carrier.Now.Owned == _carrierOwned)
+        {
+            return false;
+        }
+
+        _carrierOwned = carrier.Now.Owned;
+        host.Nav.Refresh();
+        return true;
+    }
 
     /// <summary>Redraws an open Ships page after the Hull pictures setting changes (#247).</summary>
     public void InvalidateLoadout() => _loadoutMode?.Invalidate();
 
-    /// <summary>Draws an Asset Mgmt level: the Construction page, the engineer pages, or whatever the loadout roots draw.</summary>
+    /// <summary>Draws a level of Commander › Assets: the Construction page, the engineer pages, or whatever the loadout pages draw.</summary>
+
     private Control BuildAssets(NavCrumb crumb) =>
         crumb.Key == ConstructionPage.RootKey && _constructionBuild is { } construction ? construction(crumb)
         : crumb.Key == CharactersPage.RootKey && _charactersBuild is { } characters ? characters(crumb)

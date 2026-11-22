@@ -67,7 +67,7 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
 
         Assert.NotNull(answer?.Open);
         Assert.Equal("ships.art", answer.Open.Target);
-        Assert.Equal("Asset Mgmt › Ships › Hull pictures.", answer.Said);
+        Assert.Equal("Commander › Assets › Ships › Hull pictures.", answer.Said);
     }
 
     [Fact]
@@ -80,28 +80,28 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
     public void TwoPlacesThatShareTheTopRankMoveNothingAndAreBothNamed()
     {
         var (find, _, nav) = FindRanksPagesSettingsAndHelpTests.Build();
-        nav.Register(PanelTab.Assets, new NavCrumb("zorblax-assets", "Zorblax"));
+        nav.Register(PanelTab.Media, new NavCrumb("zorblax-media", "Zorblax"));
         nav.Register(PanelTab.Commander, new NavCrumb("zorblax-commander", "Zorblax"));
 
         var answer = PanelFindPhrases.Answer("find the zorblax page", find);
 
         Assert.NotNull(answer);
         Assert.Null(answer.Open);
-        Assert.Equal("Two places: Commander › Zorblax, or Asset Mgmt › Zorblax. Which one?", answer.Said);
+        Assert.Equal("Two places: Commander › Zorblax, or Media › Zorblax. Which one?", answer.Said);
     }
 
     [Fact]
     public void ThreeTiedPlacesAreAllNamed()
     {
         var (find, _, nav) = FindRanksPagesSettingsAndHelpTests.Build();
-        nav.Register(PanelTab.Assets, new NavCrumb("zorblax-assets", "Zorblax"));
+        nav.Register(PanelTab.Media, new NavCrumb("zorblax-media", "Zorblax"));
         nav.Register(PanelTab.Commander, new NavCrumb("zorblax-commander", "Zorblax"));
         nav.Register(PanelTab.Astrometrics, new NavCrumb("zorblax-navigation", "Zorblax"));
 
         var answer = PanelFindPhrases.Answer("find the zorblax page", find);
 
         Assert.Equal(
-            "Three places: Commander › Zorblax, Asset Mgmt › Zorblax, or Astrometrics › Zorblax. Which one?",
+            "Three places: Commander › Zorblax, Astrometrics › Zorblax, or Media › Zorblax. Which one?",
             answer?.Said);
     }
 
@@ -109,7 +109,7 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
     public void MoreThanThreeTiedPlacesNameOnlyThree()
     {
         var (find, _, nav) = FindRanksPagesSettingsAndHelpTests.Build();
-        nav.Register(PanelTab.Assets, new NavCrumb("zorblax-assets", "Zorblax"));
+        nav.Register(PanelTab.Media, new NavCrumb("zorblax-media", "Zorblax"));
         nav.Register(PanelTab.Commander, new NavCrumb("zorblax-commander", "Zorblax"));
         nav.Register(PanelTab.Astrometrics, new NavCrumb("zorblax-navigation", "Zorblax"));
         nav.Register(PanelTab.Stories, new NavCrumb("zorblax-stories", "Zorblax"));
@@ -118,7 +118,7 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
 
         Assert.Null(answer?.Open);
         Assert.Equal(
-            "Several places: Commander › Zorblax, Asset Mgmt › Zorblax, or Astrometrics › Zorblax. Which one?",
+            "Several places: Commander › Zorblax, Astrometrics › Zorblax, or Stories › Zorblax. Which one?",
             answer?.Said);
     }
 
@@ -132,7 +132,7 @@ public class AFindPhraseOpensTheOnePlaceItNamesTests
         var answer = PanelFindPhrases.Answer("show me the ships page", Find());
 
         Assert.Equal(PanelFindKind.Page, answer?.Open?.Kind);
-        Assert.Equal("Asset Mgmt › Ships.", answer?.Said);
+        Assert.Equal("Commander › Assets › Ships.", answer?.Said);
     }
 
     [Fact]

@@ -1190,7 +1190,7 @@ public partial class MainWindow : Window
     /// <summary>The Search tab's System page, built here and handed to the headset copy.</summary>
     internal StarSystemSurface? StarSystem { get; }
 
-    /// <summary>Asset Mgmt › Construction, built here and handed to the headset and the overlay (#828).</summary>
+    /// <summary>Commander › Assets › Construction, built here and handed to the headset and the overlay (#828).</summary>
     internal ConstructionSurface? Construction { get; }
 
     /// <summary>

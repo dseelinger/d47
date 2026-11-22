@@ -59,7 +59,7 @@ public class AGoalQuestionReachesTheModelTests
 
         nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
         nav.Register(PanelTab.Commander, new NavCrumb("goals", "Goals"));
-        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
+        nav.Register(PanelTab.Media, new NavCrumb("fleet", "Ships"));
 
         Assert.Null(PanelPhrases.Apply(question, nav));
     }

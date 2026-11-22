@@ -24,7 +24,7 @@ namespace D47.App.Tests;
 
 /// <summary>
 /// A tab's own settings, drawn from its <see cref="SettingsLayout"/> tab place (#218): the strip
-/// SettingsView draws in place mode, and where it lands on Asset Mgmt › Ships, Astrometrics › Community Goal
+/// SettingsView draws in place mode, and where it lands on Commander › Assets › Ships, Astrometrics › Community Goal
 /// and Adventures.
 /// </summary>
 public class ATabsOwnSettingsShowOnItTests
@@ -63,7 +63,7 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
-    /// <summary>The captain and tower's names and voices are on Asset Mgmt › Carrier, not the settings window (#305).</summary>
+    /// <summary>The captain and tower's names and voices are on Commander › Assets › Carrier, not the settings window (#305).</summary>
     [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void TheFleetCarrierStripDrawsTheNamesAndVoices()
@@ -206,7 +206,7 @@ public class ATabsOwnSettingsShowOnItTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         var host = (Control)marker.GetVisualParent()!;

@@ -343,8 +343,8 @@ public sealed class TheJournalPaneReadsTheEventTests
         var link = surface.Panel.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "ReadingLink");
         Press(link);
 
-        Assert.Equal(PanelTab.Assets, surface.Panel.Nav.Tab);
-        Assert.Equal(EngineersPages.DirectoryRoot, surface.Panel.Nav.Root.Key);
+        Assert.Equal(PanelTab.Commander, surface.Panel.Nav.Tab);
+        Assert.Equal(EngineersPages.DirectoryRoot, surface.Panel.Nav.PageKeyOf(PanelTab.Commander));
         Assert.Equal("Liz Ryder", surface.Panel.Nav.Trail[^1].Word);
 
         surface.Window.Close();
@@ -360,8 +360,8 @@ public sealed class TheJournalPaneReadsTheEventTests
         var link = surface.Panel.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "ReadingLink");
         Press(link);
 
-        Assert.Equal(PanelTab.Assets, surface.Panel.Nav.Tab);
-        Assert.Equal(LoadoutPages.FleetRoot, surface.Panel.Nav.Root.Key);
+        Assert.Equal(PanelTab.Commander, surface.Panel.Nav.Tab);
+        Assert.Equal(LoadoutPages.FleetRoot, surface.Panel.Nav.PageKeyOf(PanelTab.Commander));
         Assert.Equal(LoadoutPages.ShipPrefix + "new:12", surface.Panel.Nav.Trail[^1].Key);
 
         surface.Panel.Tab = PanelTab.Transcript;

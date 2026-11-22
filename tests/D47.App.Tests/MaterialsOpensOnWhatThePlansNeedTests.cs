@@ -46,7 +46,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         var window = new Window { Content = panel, Width = 1280, Height = 900 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, kit, () => store.Active!, Apply);
@@ -73,7 +73,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         var surface = Open();
         Plan(surface);
 
-        Assert.True(surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot));
+        Assert.True(surface.Panel.Nav.Show(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
         var page = Page(surface.Panel);
@@ -114,7 +114,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
         var surface = Open();
         Plan(surface);
 
-        surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
+        surface.Panel.Nav.Show(LoadoutPages.GapRoot);
         Dispatcher.UIThread.RunJobs();
 
         Assert.DoesNotContain(MaterialsPage.Met, Text(Page(surface.Panel)));
@@ -138,7 +138,7 @@ public class MaterialsOpensOnWhatThePlansNeedTests
     {
         var surface = Open();
 
-        surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
+        surface.Panel.Nav.Show(LoadoutPages.GapRoot);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains(MaterialsPage.NoPlans, Text(Page(surface.Panel)));

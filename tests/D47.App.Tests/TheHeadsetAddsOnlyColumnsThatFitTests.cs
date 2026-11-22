@@ -43,9 +43,9 @@ public class TheHeadsetAddsOnlyColumnsThatFitTests
         var window = new Window { Content = panel, Width = 800, Height = 500 };
         window.Closed += (_, _) => look.Dispose();
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
-        panel.Nav.SelectRoot(StoredModulesPage.RootKey);
+        panel.Nav.Show(StoredModulesPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return (window, views);

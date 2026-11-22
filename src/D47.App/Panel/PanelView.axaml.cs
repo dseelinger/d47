@@ -139,7 +139,8 @@ public partial class PanelView : UserControl, IPanelTabHost
         _stories = new StoriesFurnishing(this);
         _settings = new SettingsFurnishing(this);
         _commander = new CommanderFurnishing(this);
-        _assets = new AssetsFurnishing(this, PlanCarrierRoute);
+        Nav.Order(PanelTab.Commander, CommanderFurnishing.SubTabs);
+        _assets = new AssetsFurnishing(this, PlanCarrierRoute, _commander);
         _navigation = new NavigationFurnishing(this, _carrierRoute);
         _modules = new ModulesFurnishing(this);
         _media = new MediaFurnishing(this);
@@ -283,7 +284,6 @@ public partial class PanelView : UserControl, IPanelTabHost
         _tabs[PanelTab.Transcript] = TranscriptTab;
         _tabs[PanelTab.Search] = SearchTab;
         _tabs[PanelTab.Commander] = CommanderTab;
-        _tabs[PanelTab.Assets] = AssetsTab;
         _tabs[PanelTab.Astrometrics] = AstrometricsTab;
         _tabs[PanelTab.Stories] = StoriesTab;
         _tabs[PanelTab.Media] = MediaTab;
@@ -926,10 +926,10 @@ public partial class PanelView : UserControl, IPanelTabHost
         // The live Status.json, for the fuel level on the flown ship's page.
         Func<D47.Core.Journal.GameStatus>? status = null,
 
-        // Asset Mgmt › Construction, between Carrier and Materials (#828).
+        // Commander › Assets › Construction, between Carrier and Materials (#828).
         ConstructionSurface? construction = null,
 
-        // Asset Mgmt › Characters, after Crew.
+        // Commander › Assets › Characters, after Crew.
         CharactersHost? characters = null,
 
         // Plots a route to buy what a ship's plan still needs (#1827).
@@ -957,7 +957,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         ApplyChrome();
     }
 
-    /// <summary>Gives this surface the engineer directory and the solver, as the last root of Asset Mgmt; call after <see cref="EnableLoadout"/>.</summary>
+    /// <summary>Gives this surface the engineer directory and the solver, as the last page of Commander › Assets; call after <see cref="EnableLoadout"/>.</summary>
     public void EnableEngineers(
         D47.Core.Engineers.EngineerPlanService unlocks,
         D47.Core.Ships.ShipPlanService ships,
@@ -970,7 +970,7 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Redraws the engineer pages when the Commander has moved, re-fitted or unlocked somebody.</summary>
     public bool TickEngineers() => _assets.TickEngineers();
 
-    /// <summary>Redraws the Assets tab when the journal says the ship, carrier, stock or engineers moved.</summary>
+    /// <summary>Redraws Commander › Assets when the journal says the ship, carrier, stock or engineers moved.</summary>
     public bool TickLoadout() => _assets.TickLoadout();
 
     /// <summary>Redraws an open Ships page after the Hull pictures setting changes (#247).</summary>
@@ -1001,10 +1001,10 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// <summary>Beats every wait mark shown on this surface, on any tab, from the host's tick; true when one moved, appeared or went.</summary>
     public bool TickWaiting() => (_waits ??= new Controls.WaitTicker(this)).Tick();
 
-    /// <summary>Refreshes the write bars on the Stories and Assets tabs, from the host's tick; true when either drew something new.</summary>
+    /// <summary>Refreshes the write bars on the Stories tab and Commander › Assets, from the host's tick; true when either drew something new.</summary>
     public bool TickAdventures()
     {
-        if (Tab is not (PanelTab.Stories or PanelTab.Assets))
+        if (Tab is not PanelTab.Stories && (Tab is not PanelTab.Commander || Nav.RootKeyOf(Tab) != PanelTabNames.AssetsRoot))
         {
             return false;
         }
@@ -1572,7 +1572,10 @@ public partial class PanelView : UserControl, IPanelTabHost
     {
         _tabMemory = memory;
 
-        if (memory.Remembered() is { } tab)
+        // A tab since moved under another one opens the root it became.
+        var root = memory.RememberedRoot();
+
+        if ((root is null || !Nav.Show(root)) && memory.Remembered() is { } tab)
         {
             Tab = tab;
         }
@@ -2808,8 +2811,8 @@ public partial class PanelView : UserControl, IPanelTabHost
             _showing = tab;
         }
 
-        // The page being read has changed - a different tab, or a different mode of the same one.
-        var root = Nav.RootKeyOf(tab);
+        // The page being read has changed - a different tab, or a different mode or page of the same one.
+        var root = Nav.PageKeyOf(tab);
 
         if (tab != _showingTab || root != _showingRoot)
         {
@@ -3467,7 +3470,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         if (page is null
             || PageTrail.For(page, () => _shipPlans!.Fleet()) is not { } target
-            || !Nav.Destinations.Any(destination => destination.Root.Key == target.Root))
+            || !Nav.Destinations.Any(destination => destination.Key == target.Root))
         {
             return null;
         }

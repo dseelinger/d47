@@ -164,6 +164,7 @@ public class TheRoutingTabIsInTheHeadsetTests
 
         window.EnableChecklist(Checklists(paths.Data));
         window.EnableRouting(Surface(paths.Data, Registry(), clipboard));
+        window.EnableMedia();
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(Tabs(window.Nav), Tabs(panel.Nav));

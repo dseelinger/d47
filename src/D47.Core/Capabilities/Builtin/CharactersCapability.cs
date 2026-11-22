@@ -1,6 +1,6 @@
 namespace D47.Core.Capabilities.Builtin;
 
-/// <summary>The people you can talk to on comms, kept on Asset Mgmt › Characters; it has no tool and no setting.</summary>
+/// <summary>The people you can talk to on comms, kept on Commander › Assets › Characters; it has no tool and no setting.</summary>
 public static class CharactersCapability
 {
     public const string Id = "characters";

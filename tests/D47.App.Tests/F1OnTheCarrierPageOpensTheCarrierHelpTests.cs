@@ -14,7 +14,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Help on Asset Mgmt › Carrier opens the carrier page, not the tab's help (#1886).</summary>
+/// <summary>Help on Commander › Assets › Carrier opens the carrier page, not the tab's help (#1886).</summary>
 public class F1OnTheCarrierPageOpensTheCarrierHelpTests
 {
     private const string Stats = """
@@ -44,8 +44,8 @@ public class F1OnTheCarrierPageOpensTheCarrierHelpTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
-        panel.Nav.SelectRoot(PanelTab.Assets, LoadoutPages.CarrierRoot);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        panel.Nav.Show(LoadoutPages.CarrierRoot);
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(panel.OpenHelp());

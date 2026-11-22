@@ -233,7 +233,8 @@ public sealed class EveryTabOpensWhereItWasLeftTests
     [Theory]
     [InlineData("Adventures", PanelTab.Stories)]
     [InlineData("Checklist", PanelTab.Commander)]
-    [InlineData("Loadout", PanelTab.Assets)]
+    [InlineData("Loadout", PanelTab.Commander)]
+    [InlineData("Assets", PanelTab.Commander)]
     [InlineData("Routing", PanelTab.Astrometrics)]
     public void ATabSavedUnderItsOldNameReopensUnderItsNewOne(string saved, PanelTab renamed)
     {
@@ -241,6 +242,38 @@ public sealed class EveryTabOpensWhereItWasLeftTests
         store.Save(store.Load() with { LastTab = saved });
 
         Assert.Equal(renamed, new PanelTabMemory(store).Remembered());
+    }
+
+    /// <summary>The Assets tab became Commander › Assets; a view state left on it reopens there (#2686).</summary>
+    [AvaloniaTheory]
+    [InlineData("Assets")]
+    [InlineData("Loadout")]
+    public void ATabSavedAsAssetsReopensOnCommanderAssets(string saved)
+    {
+        var store = Store();
+        store.Save(store.Load().With("Commander", "checklist").With(saved, LoadoutPages.CarrierRoot) with { LastTab = saved });
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        panel.Furnish(
+            PanelTab.Commander,
+            crumb => new TextBlock { Text = crumb.Word },
+            new NavCrumb("checklist", "Checklist"),
+            new NavCrumb(PanelTabNames.AssetsRoot, "Assets"));
+        panel.Nav.Declare(PanelTabNames.AssetsRoot, new NavCrumb(LoadoutPages.FleetRoot, "Ships") { Starts = true });
+        panel.Nav.HoldPages(PanelTabNames.AssetsRoot, [LoadoutPages.FleetRoot]);
+
+        panel.RememberRoots(new PanelRootMemory(store));
+        panel.RememberTab(new PanelTabMemory(store));
+
+        var window = new Window { Content = panel, Width = 1180, Height = 800 };
+        window.Show();
+        Jobs();
+
+        Assert.Equal(PanelTab.Commander, panel.Tab);
+        Assert.Equal(PanelTabNames.AssetsRoot, panel.Nav.RootKeyOf(PanelTab.Commander));
+        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.PageKeyOf(PanelTab.Commander));
+
+        window.Close();
     }
 
     [AvaloniaTheory]

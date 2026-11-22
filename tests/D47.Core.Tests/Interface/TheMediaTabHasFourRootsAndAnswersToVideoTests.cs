@@ -22,7 +22,7 @@ public class TheMediaTabHasFourRootsAndAnswersToVideoTests
     public void TheTabRowReadsInTheOrderTheDesignGives()
     {
         Assert.Equal(
-            [PanelTab.Transcript, PanelTab.Search, PanelTab.Commander, PanelTab.Assets, PanelTab.Astrometrics, PanelTab.Stories, PanelTab.Media, PanelTab.Modules, PanelTab.Settings],
+            [PanelTab.Transcript, PanelTab.Search, PanelTab.Commander, PanelTab.Astrometrics, PanelTab.Stories, PanelTab.Media, PanelTab.Modules, PanelTab.Settings],
             Enum.GetValues<PanelTab>());
     }
 
@@ -31,7 +31,8 @@ public class TheMediaTabHasFourRootsAndAnswersToVideoTests
     [InlineData("Stories", PanelTab.Stories)]
     [InlineData("Adventures", PanelTab.Stories)]
     [InlineData("Checklist", PanelTab.Commander)]
-    [InlineData("Loadout", PanelTab.Assets)]
+    [InlineData("Loadout", PanelTab.Commander)]
+    [InlineData("Assets", PanelTab.Commander)]
     [InlineData("Routing", PanelTab.Astrometrics)]
     public void AStoredTabNameStillOpensTheSameTab(string saved, PanelTab expected) =>
         Assert.Equal(expected, PanelTabNames.Parse(saved));

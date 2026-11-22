@@ -13,7 +13,6 @@ public class AMessageLinksThePlacesItNamesTests
         [PanelTab.Search] = "SEARCH",
         [PanelTab.Stories] = "STORIES",
         [PanelTab.Commander] = "COMMANDER",
-        [PanelTab.Assets] = "ASSET MGMT",
         [PanelTab.Astrometrics] = "ASTROMETRICS",
         [PanelTab.Settings] = "SETTINGS",
     };
@@ -26,8 +25,10 @@ public class AMessageLinksThePlacesItNamesTests
         nav.Register(PanelTab.Transcript, new NavCrumb("transcript.log", "Log File") { Spoken = ["log"] });
         nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
         nav.Register(PanelTab.Commander, new NavCrumb("missions", "Missions"));
-        nav.Register(PanelTab.Assets, new NavCrumb("loadout.ships", "Ships"));
-        nav.Register(PanelTab.Assets, new NavCrumb("loadout.carrier", "Carrier"));
+        nav.Register(PanelTab.Commander, new NavCrumb(PanelTabNames.AssetsRoot, "Assets"));
+        nav.Declare(PanelTabNames.AssetsRoot, new NavCrumb("loadout.ships", "Ships"));
+        nav.Declare(PanelTabNames.AssetsRoot, new NavCrumb("loadout.carrier", "Carrier"));
+        nav.HoldPages(PanelTabNames.AssetsRoot, ["loadout.ships", "loadout.carrier"]);
         nav.Register(PanelTab.Astrometrics, new NavCrumb("routing.plan", "Plan"));
 
         if (settings)
@@ -47,13 +48,36 @@ public class AMessageLinksThePlacesItNamesTests
     [Fact]
     public void APathWithASeparatorLinksTheTabAndTheRoot()
     {
-        const string text = "The full loadout is on Asset Mgmt › Ships.";
+        const string text = "Your missions are on Commander › Missions.";
 
         var place = Assert.Single(Find(text));
 
-        Assert.Equal("Asset Mgmt › Ships", Linked(text, place));
-        Assert.Equal(PanelTab.Assets, place.Tab);
+        Assert.Equal("Commander › Missions", Linked(text, place));
+        Assert.Equal(PanelTab.Commander, place.Tab);
+        Assert.Equal("missions", place.RootKey);
+    }
+
+    [Fact]
+    public void AThirdPartLinksThePageUnderTheRoot()
+    {
+        const string text = "The full loadout is on Commander › Assets › Ships.";
+
+        var place = Assert.Single(Find(text));
+
+        Assert.Equal("Commander › Assets › Ships", Linked(text, place));
+        Assert.Equal(PanelTab.Commander, place.Tab);
         Assert.Equal("loadout.ships", place.RootKey);
+    }
+
+    [Fact]
+    public void AThirdPartThatIsNoPageLinksTheRoot()
+    {
+        const string text = "It is on Commander › Assets › Shipyard.";
+
+        var place = Assert.Single(Find(text));
+
+        Assert.Equal("Commander › Assets", Linked(text, place));
+        Assert.Equal(PanelTabNames.AssetsRoot, place.RootKey);
     }
 
     [Fact]
@@ -136,12 +160,12 @@ public class AMessageLinksThePlacesItNamesTests
     [Fact]
     public void TheTabFormReadsTheWordAsTheTabBarDrawsIt()
     {
-        const string text = "Open the Asset Mgmt tab.";
+        const string text = "Open the Commander tab.";
 
         var place = Assert.Single(Find(text));
 
-        Assert.Equal("Asset Mgmt tab", Linked(text, place));
-        Assert.Equal(PanelTab.Assets, place.Tab);
+        Assert.Equal("Commander tab", Linked(text, place));
+        Assert.Equal(PanelTab.Commander, place.Tab);
     }
 
     [Theory]
@@ -166,12 +190,12 @@ public class AMessageLinksThePlacesItNamesTests
     [Fact]
     public void EveryPlaceInAMessageIsFoundInOrder()
     {
-        const string text = "Add a key in Settings, then open the Commander tab and Asset Mgmt › Carrier.";
+        const string text = "Add a key in Settings, then open the Commander tab and Commander › Assets › Carrier.";
 
         var places = Find(text);
 
         Assert.Equal(
-            ["Settings", "Commander tab", "Asset Mgmt › Carrier"],
+            ["Settings", "Commander tab", "Commander › Assets › Carrier"],
             places.Select(place => Linked(text, place)));
         Assert.Equal("loadout.carrier", places[2].RootKey);
     }

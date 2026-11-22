@@ -46,7 +46,7 @@ public class TheShipPageBuildColumnFillsItsPaneTests
         var window = new Window { Content = panel, Width = width, Height = 900 };
 
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         panel.GetVisualDescendants()

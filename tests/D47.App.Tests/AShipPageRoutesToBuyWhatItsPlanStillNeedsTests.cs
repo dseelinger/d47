@@ -99,7 +99,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
         }
 
         var nav = new PanelNavigator();
-        nav.Register(PanelTab.Assets, new NavCrumb(LoadoutPages.FleetRoot, "Ships"));
+        AssetsNav.Pages(nav, (LoadoutPages.FleetRoot, "Ships"));
         nav.Register(PanelTab.Astrometrics, new NavCrumb(RoutingPages.PlanRoot, "Plan"));
 
         var plotter = new OutfittingPlotter(registry, plans, () => game.Active?.Location.StarSystem);
@@ -310,7 +310,7 @@ public class AShipPageRoutesToBuyWhatItsPlanStillNeedsTests
             await Task.Delay(10, TestContext.Current.CancellationToken);
         }
 
-        bench.Nav.Select(PanelTab.Assets);
+        bench.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Contains("1 stop. First: Ackerman Market, Eravate, 12 ly. 1 not found.", Texts(bench.Page));

@@ -14,7 +14,7 @@ public class PanelPhrasesTests
         nav.Register(PanelTab.Transcript, new NavCrumb("technical", "Technical"));
         nav.Register(PanelTab.Transcript, new NavCrumb("log", "Log file"));
         nav.Register(PanelTab.Commander, new NavCrumb("checklist", "Checklist"));
-        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
+        nav.Register(PanelTab.Media, new NavCrumb("fleet", "Ships"));
 
         return nav;
     }
@@ -56,7 +56,6 @@ public class PanelPhrasesTests
     [Theory]
     [InlineData("stories", PanelTab.Stories, "Stories.")]
     [InlineData("open the stories tab", PanelTab.Stories, "Stories.")]
-    [InlineData("assets", PanelTab.Assets, "Assets.")]
     [InlineData("astrometrics", PanelTab.Astrometrics, "Astrometrics.")]
     [InlineData("navigation", PanelTab.Astrometrics, "Astrometrics.")]
     [InlineData("astro metrics", PanelTab.Astrometrics, "Astrometrics.")]
@@ -156,7 +155,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
 
         Assert.Equal("Back to Ships.", PanelPhrases.Apply(spoken, nav));
@@ -170,7 +169,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"));
         Assert.Equal("Back to Ships.", PanelPhrases.Apply("back", nav));
 
@@ -200,7 +199,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
 
         Assert.NotNull(PanelPhrases.Apply("corsair", nav));
@@ -212,7 +211,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"));
 
         Assert.Null(PanelPhrases.Apply("corsair", nav));
@@ -224,7 +223,7 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
         nav.Register(PanelTab.Stories, new NavCrumb("adventures", "Your story"));
-        nav.Register(PanelTab.Assets, new NavCrumb("suits", "Suits"));
+        nav.Register(PanelTab.Media, new NavCrumb("suits", "Suits"));
         nav.Register(PanelTab.Astrometrics, new NavCrumb("routing.plan", "Plan"));
         nav.Register(PanelTab.Astrometrics, new NavCrumb("engineers", "Engineers"));
 
@@ -246,15 +245,15 @@ public class PanelPhrasesTests
 
     /// <summary>A root of another tab is reached from anywhere by its name (#803).</summary>
     [Theory]
-    [InlineData("suits", PanelTab.Assets, "suits")]
-    [InlineData("show me the suits", PanelTab.Assets, "suits")]
+    [InlineData("suits", PanelTab.Media, "suits")]
+    [InlineData("show me the suits", PanelTab.Media, "suits")]
     [InlineData("engineers", PanelTab.Astrometrics, "engineers")]
-    [InlineData("suits page", PanelTab.Assets, "suits")]
+    [InlineData("suits page", PanelTab.Media, "suits")]
     [InlineData("open the engineers page", PanelTab.Astrometrics, "engineers")]
     public void ARootOfAnyTabIsReachedByName(string spoken, PanelTab tab, string key)
     {
         var nav = Furnished();
-        nav.Register(PanelTab.Assets, new NavCrumb("suits", "Suits"));
+        nav.Register(PanelTab.Media, new NavCrumb("suits", "Suits"));
         nav.Register(PanelTab.Astrometrics, new NavCrumb("routing.plan", "Plan"));
         nav.Register(PanelTab.Astrometrics, new NavCrumb("engineers", "Engineers"));
 
@@ -269,12 +268,12 @@ public class PanelPhrasesTests
     {
         var nav = new PanelNavigator();
         nav.Register(PanelTab.Transcript, new NavCrumb("conversation", "Conversation"));
-        nav.Register(PanelTab.Assets, new NavCrumb("fleet", "Ships"));
-        nav.Register(PanelTab.Assets, new NavCrumb("checklist", "Checklist"));
+        nav.Register(PanelTab.Media, new NavCrumb("fleet", "Ships"));
+        nav.Register(PanelTab.Media, new NavCrumb("checklist", "Checklist"));
 
         Assert.Equal("Checklist.", PanelPhrases.Apply("checklist", nav));
-        Assert.Equal(PanelTab.Assets, nav.Tab);
-        Assert.Equal("checklist", nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal(PanelTab.Media, nav.Tab);
+        Assert.Equal("checklist", nav.RootKeyOf(PanelTab.Media));
     }
 
     /// <summary>A tab's name beats a root of the same word on another tab.</summary>
@@ -282,11 +281,11 @@ public class PanelPhrasesTests
     public void ATabNameWinsOverARootOfTheSameWord()
     {
         var nav = Furnished();
-        nav.Register(PanelTab.Assets, new NavCrumb("assets.commander", "Commander"));
+        nav.Register(PanelTab.Media, new NavCrumb("assets.commander", "Commander"));
 
         Assert.Equal("Commander.", PanelPhrases.Apply("commander", nav));
         Assert.Equal(PanelTab.Commander, nav.Tab);
-        Assert.Equal("fleet", nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal("fleet", nav.RootKeyOf(PanelTab.Media));
     }
 
     /// <summary>A word naming roots on two tabs says nothing about which, so nothing moves.</summary>
@@ -294,12 +293,12 @@ public class PanelPhrasesTests
     public void AWordTwoTabsShareMovesNothing()
     {
         var nav = Furnished();
-        nav.Register(PanelTab.Assets, new NavCrumb("assets.history", "History"));
+        nav.Register(PanelTab.Media, new NavCrumb("assets.history", "History"));
         nav.Register(PanelTab.Astrometrics, new NavCrumb("navigation.history", "History"));
 
         Assert.Null(PanelPhrases.Apply("history", nav));
         Assert.Equal(PanelTab.Transcript, nav.Tab);
-        Assert.Equal("fleet", nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal("fleet", nav.RootKeyOf(PanelTab.Media));
     }
 
     [Fact]
@@ -307,10 +306,10 @@ public class PanelPhrasesTests
     {
         var nav = Furnished();
 
-        nav.Select(PanelTab.Assets);
+        nav.Select(PanelTab.Media);
         nav.GoTo(new NavCrumb("ship:12", "Corsair"), new NavCrumb("slot:3", "Weapon 3"));
 
-        Assert.NotNull(PanelPhrases.Apply("assets", nav));
+        Assert.NotNull(PanelPhrases.Apply("media", nav));
         Assert.True(nav.AtRoot);
     }
 

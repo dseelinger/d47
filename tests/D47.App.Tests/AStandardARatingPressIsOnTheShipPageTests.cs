@@ -26,7 +26,7 @@ public class AStandardARatingPressIsOnTheShipPageTests
         new ThemeManager(Avalonia.Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
 
         var nav = new PanelNavigator();
-        nav.Register(PanelTab.Assets, new NavCrumb(LoadoutPages.FleetRoot, "Ships"));
+        AssetsNav.Pages(nav, (LoadoutPages.FleetRoot, "Ships"));
 
         var page = new ItemPage(new ShipsMode(ships, checklists, () => null), nav, build.Id, prompts: null);
 

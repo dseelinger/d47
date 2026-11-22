@@ -21,7 +21,7 @@ namespace D47.App.Tests;
 public sealed class APlaceNamedInAMessageIsALinkTests
 {
     private const string NoVoice = "No Chatterbox voice has been chosen. Pick one in Settings.";
-    private const string Loadout = "The full loadout is on Asset Mgmt › Ships.";
+    private const string Loadout = "The full loadout is on Commander › Assets › Ships.";
 
     private static void Jobs() => Dispatcher.UIThread.RunJobs();
 
@@ -95,13 +95,13 @@ public sealed class APlaceNamedInAMessageIsALinkTests
 
         var block = view.TranscriptBlocks.Single();
 
-        Assert.Equal(Cyan(), Ink(Run(block, "Asset Mgmt › Ships")));
-        Assert.Equal("carrier", view.Nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal(Cyan(), Ink(Run(block, "Commander › Assets › Ships")));
+        Assert.Equal("checklist", view.Nav.PageKeyOf(PanelTab.Commander));
 
-        Click(window, block, "Asset Mgmt › Ships");
+        Click(window, block, "Commander › Assets › Ships");
 
-        Assert.Equal(PanelTab.Assets, view.Nav.Tab);
-        Assert.Equal("ships", view.Nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal(PanelTab.Commander, view.Nav.Tab);
+        Assert.Equal("ships", view.Nav.PageKeyOf(PanelTab.Commander));
 
         window.Close();
     }
@@ -152,13 +152,13 @@ public sealed class APlaceNamedInAMessageIsALinkTests
         Jobs();
 
         var block = view.TranscriptBlocks.Single();
-        var link = Centre(block, "Asset Mgmt › Ships", window);
+        var link = Centre(block, "Commander › Assets › Ships", window);
         var before = Centre(block, "loadout", window);
 
         window.MouseMove(link);
         Jobs();
 
-        Assert.Equal(TextDecorations.Underline, Run(block, "Asset Mgmt › Ships").TextDecorations);
+        Assert.Equal(TextDecorations.Underline, Run(block, "Commander › Assets › Ships").TextDecorations);
 
         window.MouseDown(link, MouseButton.Left);
         window.MouseMove(before, RawInputModifiers.LeftMouseButton);
@@ -182,15 +182,15 @@ public sealed class APlaceNamedInAMessageIsALinkTests
         model.Append(Loadout);
         Jobs();
 
-        view.GetControl<TextBox>("SearchInput").Text = "Mgmt";
+        view.GetControl<TextBox>("SearchInput").Text = "Assets";
         Jobs();
 
         var block = view.TranscriptBlocks.Single();
-        var match = Run(block, "Mgmt");
+        var match = Run(block, "Assets");
 
         Assert.NotNull(match.Background);
-        Assert.Equal("Asset ", Run(block, "Asset ").Text);
-        Assert.Equal(Cyan(), Ink(Run(block, "Asset ")));
+        Assert.Equal("Commander › ", Run(block, "Commander › ").Text);
+        Assert.Equal(Cyan(), Ink(Run(block, "Commander › ")));
 
         window.Close();
     }
@@ -238,12 +238,14 @@ public sealed class APlaceNamedInAMessageIsALinkTests
         var view = new PanelView { DataContext = model };
 
         view.EnableSettings(() => new TextBlock { Text = "Settings page" });
-        view.Furnish(PanelTab.Commander, crumb => new TextBlock { Text = crumb.Word }, new NavCrumb("checklist", "Checklist"));
         view.Furnish(
-            PanelTab.Assets,
+            PanelTab.Commander,
             crumb => new TextBlock { Text = crumb.Word },
-            new NavCrumb("carrier", "Carrier"),
-            new NavCrumb("ships", "Ships"));
+            new NavCrumb("checklist", "Checklist"),
+            new NavCrumb(PanelTabNames.AssetsRoot, "Assets"));
+        view.Nav.Declare(PanelTabNames.AssetsRoot, new NavCrumb("carrier", "Carrier") { Starts = true });
+        view.Nav.Declare(PanelTabNames.AssetsRoot, new NavCrumb("ships", "Ships") { Starts = true });
+        view.Nav.HoldPages(PanelTabNames.AssetsRoot, ["carrier", "ships"]);
 
         var window = new Window { Content = view, Width = 1000, Height = 700 };
         window.Show();

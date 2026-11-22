@@ -100,8 +100,8 @@ public class TheCarrierPageShowsTritiumAndRangeTests
 
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
-        panel.Nav.SelectRoot(PanelTab.Assets, LoadoutPages.CarrierRoot);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        panel.Nav.Show(LoadoutPages.CarrierRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);

@@ -105,8 +105,7 @@ internal sealed class PanelPathFixture : IDisposable
         panel.EnableStarSystem(new StarSystemSurface(
             new Systems(), () => new JournalLocation("Sol", null, false, null)));
 
-        // Roots the window shows only while the Commander owns a carrier or a short story can be asked for.
-        panel.Nav.SetVisible(PanelTab.Assets, LoadoutPages.CarrierRoot, true);
+        // A root the window shows only while a short story can be asked for.
         panel.Nav.SetVisible(PanelTab.Stories, AdventuresPage.AskKey, true);
 
         Dispatcher.UIThread.RunJobs();

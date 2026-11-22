@@ -57,10 +57,10 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
     {
         var host = Open();
 
-        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
+        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
         Assert.Equal(PanelTab.Stories, host.Panel.Tab);
 
-        Press(host, Key.D7, KeyModifiers.Control, PhysicalKey.Digit7);
+        Press(host, Key.D6, KeyModifiers.Control, PhysicalKey.Digit6);
         Assert.Equal(PanelTab.Settings, host.Panel.Tab);
 
         host.Close();
@@ -71,17 +71,17 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
     {
         var host = Open();
 
-        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
-        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
+        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
+        Assert.Equal(PanelTab.Commander, host.Panel.Tab);
 
         Assert.True(host.Panel.Nav.Drill(new NavCrumb("ship:test", "Test")));
         Dispatcher.UIThread.RunJobs();
-        Assert.False(host.Panel.Nav.AtRoot);
+        Assert.False(host.Panel.Nav.AtPage);
 
-        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
+        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
 
-        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
-        Assert.True(host.Panel.Nav.AtRoot);
+        Assert.Equal(PanelTab.Commander, host.Panel.Tab);
+        Assert.True(host.Panel.Nav.AtPage);
 
         host.Close();
     }
@@ -91,7 +91,7 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
     {
         var host = Open();
 
-        Press(host, Key.D7, KeyModifiers.Control, PhysicalKey.Digit7);
+        Press(host, Key.D6, KeyModifiers.Control, PhysicalKey.Digit6);
         Press(host, Key.Tab, KeyModifiers.Control, PhysicalKey.Tab);
         Assert.Equal(PanelTab.Transcript, host.Panel.Tab);
 
@@ -122,15 +122,15 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
     {
         var host = Open();
 
-        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
+        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
         Assert.True(host.Panel.Nav.Drill(new NavCrumb("ship:test", "Test")));
         Dispatcher.UIThread.RunJobs();
-        Assert.False(host.Panel.Nav.AtRoot);
+        Assert.False(host.Panel.Nav.AtPage);
 
         Press(host, Key.Left, KeyModifiers.Alt, PhysicalKey.ArrowLeft);
 
-        Assert.True(host.Panel.Nav.AtRoot);
-        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
+        Assert.True(host.Panel.Nav.AtPage);
+        Assert.Equal(PanelTab.Commander, host.Panel.Tab);
 
         host.Close();
     }
@@ -163,8 +163,8 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
 
     private static void MakeThreeMoves(SettingsHost host)
     {
-        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
         Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
+        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
         Assert.True(host.Panel.Nav.Drill(new NavCrumb("story:test", "Test")));
         Dispatcher.UIThread.RunJobs();
     }
@@ -177,14 +177,14 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
 
         MakeThreeMoves(host);
         Assert.Equal(PanelTab.Stories, host.Panel.Tab);
-        Assert.False(host.Panel.Nav.AtRoot);
+        Assert.False(host.Panel.Nav.AtPage);
 
         MouseBack(host);
         Assert.Equal(PanelTab.Stories, host.Panel.Tab);
-        Assert.True(host.Panel.Nav.AtRoot);
+        Assert.True(host.Panel.Nav.AtPage);
 
         MouseBack(host);
-        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
+        Assert.Equal(PanelTab.Commander, host.Panel.Tab);
 
         MouseBack(host);
         Assert.Equal(start, host.Panel.Tab);
@@ -208,10 +208,10 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
 
         Press(host, Key.Left, KeyModifiers.Alt, PhysicalKey.ArrowLeft);
         Assert.Equal(PanelTab.Stories, host.Panel.Tab);
-        Assert.True(host.Panel.Nav.AtRoot);
+        Assert.True(host.Panel.Nav.AtPage);
 
         Press(host, Key.Left, KeyModifiers.Alt, PhysicalKey.ArrowLeft);
-        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
+        Assert.Equal(PanelTab.Commander, host.Panel.Tab);
 
         Press(host, Key.Left, KeyModifiers.Alt, PhysicalKey.ArrowLeft);
         Assert.Equal(start, host.Panel.Tab);
@@ -224,8 +224,8 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
     {
         var host = Open();
 
-        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
         Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
+        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
 
         Press(host, Key.Escape, KeyModifiers.None, PhysicalKey.Escape);
 
@@ -240,7 +240,7 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
         var host = Open();
         var start = host.Panel.Tab;
 
-        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
+        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
 
         var said = PanelPhrases.Apply("back", host.Panel.Nav);
 
@@ -266,18 +266,18 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
         MakeThreeMoves(host);
         MouseBack(host);
         MouseBack(host);
-        Assert.Equal(PanelTab.Assets, host.Panel.Tab);
+        Assert.Equal(PanelTab.Commander, host.Panel.Tab);
 
         MouseForward(host);
         Assert.Equal(PanelTab.Stories, host.Panel.Tab);
-        Assert.True(host.Panel.Nav.AtRoot);
+        Assert.True(host.Panel.Nav.AtPage);
 
         Press(host, Key.Right, KeyModifiers.Alt, PhysicalKey.ArrowRight);
         Assert.Equal(PanelTab.Stories, host.Panel.Tab);
-        Assert.False(host.Panel.Nav.AtRoot);
+        Assert.False(host.Panel.Nav.AtPage);
 
         MouseForward(host);
-        Assert.False(host.Panel.Nav.AtRoot);
+        Assert.False(host.Panel.Nav.AtPage);
 
         host.Close();
     }
@@ -287,10 +287,10 @@ public class TheKeyboardSwitchesTabsAndGoesBackTests
     {
         var host = Open();
 
-        Press(host, Key.D7, KeyModifiers.Control, PhysicalKey.Digit7);
+        Press(host, Key.D6, KeyModifiers.Control, PhysicalKey.Digit6);
         host.ShowPlaceOf(D47.Core.Capabilities.Builtin.ListeningCapability.ProviderKey);
         Dispatcher.UIThread.RunJobs();
-        Press(host, Key.D3, KeyModifiers.Control, PhysicalKey.Digit3);
+        Press(host, Key.D5, KeyModifiers.Control, PhysicalKey.Digit5);
         MouseBack(host);
         Assert.Equal(PanelTab.Settings, host.Panel.Tab);
 

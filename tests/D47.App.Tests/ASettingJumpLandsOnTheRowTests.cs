@@ -221,8 +221,8 @@ public sealed class ASettingJumpLandsOnTheRowTests
         Jobs();
         Jobs();
 
-        Assert.Equal(PanelTab.Assets, view.Nav.Tab);
-        Assert.Equal("loadout.ships", view.Nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal(PanelTab.Commander, view.Nav.Tab);
+        Assert.Equal("loadout.ships", view.Nav.PageKeyOf(PanelTab.Commander));
 
         Assert.StartsWith("▾ SETTINGS ", ((Button)strip.BarTool!).Content as string, StringComparison.Ordinal);
         Assert.True(strip.MarksRow(settings, "ships.art"));

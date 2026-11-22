@@ -9,8 +9,8 @@ nav_order: 164
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps to a character you can talk to.</p>
 <section>
-<h2><span class="num">1</span> Add one on Asset Mgmt › Characters.</h2>
-<p class="say">Open Asset Mgmt, press Characters, press ADD A CHARACTER, type a name and press SAVE.</p>
+<h2><span class="num">1</span> Add one on Commander › Assets › Characters.</h2>
+<p class="say">Open Commander, press Assets, press Characters, press ADD A CHARACTER, type a name and press SAVE.</p>
 <p class="expect">The name joins YOURS in the sidebar. Its page opens with the picture, voice, notes and where they are.</p>
 </section>
 <section>
@@ -57,7 +57,7 @@ nav_order: 164
 
 ## The details
 
-Asset Mgmt › Characters has a sidebar and a detail page, in the window and on the headset's big panel.
+Commander › Assets › Characters has a sidebar and a detail page, in the window and on the headset's big panel.
 
 ```text
 CARRIER   the captain, then the tower

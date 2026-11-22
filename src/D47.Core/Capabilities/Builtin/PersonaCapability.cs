@@ -269,7 +269,7 @@ public static class PersonaCapability
             s => s.CarrierHumor,
             (p, v) => p with { CarrierHumor = v },
             [],
-            "Open the Asset Mgmt › Carrier tab and find Carrier crew humor. Set it to 10 with Carrier crew humor "
+            "Open Commander › Assets › Carrier and find Carrier crew humor. Set it to 10 with Carrier crew humor "
             + "frequency at 100% and have your carrier captain or tower speak, such as the payroll callout or a "
             + "tower exchange: their lines carry jokes. At 0 they are serious and the frequency row is greyed out. "
             + "Needs a fleet carrier. Warnings never get humor."),
@@ -280,7 +280,7 @@ public static class PersonaCapability
             s => s.CarrierHumor,
             s => s.CarrierHumorPercent,
             (p, v) => p with { CarrierHumorPercent = v },
-            "Open the Asset Mgmt › Carrier tab and find Carrier crew humor frequency. It is greyed out while "
+            "Open Commander › Assets › Carrier and find Carrier crew humor frequency. It is greyed out while "
             + "Carrier crew humor is 0; set that to 5 first. At 100% every captain and tower line carries humor; "
             + "at 0% none does; between, that share of lines does. Needs a fleet carrier. It has no voice phrase."),
     ];

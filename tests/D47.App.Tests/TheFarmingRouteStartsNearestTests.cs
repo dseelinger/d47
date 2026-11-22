@@ -49,9 +49,9 @@ public class TheFarmingRouteStartsNearestTests
         var window = new Window { Content = panel, Width = 1280, Height = 1150 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
-        Assert.True(panel.Nav.SelectRoot(LoadoutPages.GapRoot));
+        Assert.True(panel.Nav.Show(LoadoutPages.GapRoot));
         Dispatcher.UIThread.RunJobs();
 
         Page(panel).Select(MaterialsPage.FarmingView);

@@ -27,7 +27,7 @@ public sealed class TheLeftmostPaneCanBeDraggedAwayTests
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
         panel.Furnish(
-            PanelTab.Assets,
+            PanelTab.Media,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"));
 
@@ -35,7 +35,7 @@ public sealed class TheLeftmostPaneCanBeDraggedAwayTests
         window.Show();
         panel.EnableDraggablePanes(memory);
 
-        panel.Tab = PanelTab.Assets;
+        panel.Tab = PanelTab.Media;
         panel.Nav.GoTo(
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("ship:12", "Corsair"),

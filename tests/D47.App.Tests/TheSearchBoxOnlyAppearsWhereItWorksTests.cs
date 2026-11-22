@@ -26,7 +26,7 @@ public class TheSearchBoxOnlyAppearsWhereItWorksTests
 
         // A tab whose levels do not filter, which is what the Ships page is.
         panel.Furnish(
-            PanelTab.Assets,
+            PanelTab.Media,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"));
 
@@ -66,7 +66,7 @@ public class TheSearchBoxOnlyAppearsWhereItWorksTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Tab = PanelTab.Media;
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(BoxShown(panel), "the Ships page offered a search box that does nothing");
@@ -81,7 +81,7 @@ public class TheSearchBoxOnlyAppearsWhereItWorksTests
     {
         var panel = Furnished();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Tab = PanelTab.Media;
         Dispatcher.UIThread.RunJobs();
 
         Assert.False(BoxShown(panel));

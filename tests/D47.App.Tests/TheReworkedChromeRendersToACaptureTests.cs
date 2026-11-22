@@ -80,7 +80,7 @@ public class TheReworkedChromeRendersToACaptureTests
 
         panel.Furnish(PanelTab.Commander, _ => new TextBlock { Text = "checklist" }, new NavCrumb("checklist", "Checklist"));
         panel.Furnish(
-            PanelTab.Assets,
+            PanelTab.Media,
             crumb => new TextBlock { Text = crumb.Word },
             new NavCrumb("fleet", "Ships"),
             new NavCrumb("locker", "Suits and weapons"),

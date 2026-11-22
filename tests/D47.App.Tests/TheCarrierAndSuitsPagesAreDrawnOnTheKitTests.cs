@@ -67,7 +67,7 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, kit);
@@ -83,13 +83,13 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
         var surface = Open(width, height);
         var panel = surface.Panel;
 
-        Assert.True(panel.Nav.SelectRoot(LoadoutPages.CarrierRoot));
+        Assert.True(panel.Nav.Show(LoadoutPages.CarrierRoot));
         var carrier = surface.Window.SaveFrame($"carrier-{themeId}-{width}x{height}.png");
 
         var build = surface.Kit.BuildFor(OnFootKind.Suit, 7, "Maverick Suit");
         surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
 
-        Assert.True(panel.Nav.SelectRoot(OnFootMode.Root));
+        Assert.True(panel.Nav.Show(OnFootMode.Root));
         var suits = surface.Window.SaveFrame($"suits-{themeId}-{width}x{height}.png");
 
         panel.Nav.GoTo(
@@ -110,7 +110,7 @@ public class TheCarrierAndSuitsPagesAreDrawnOnTheKitTests
 
         var surface = Open(1280, 860);
 
-        Assert.True(surface.Panel.Nav.SelectRoot(LoadoutPages.CarrierRoot));
+        Assert.True(surface.Panel.Nav.Show(LoadoutPages.CarrierRoot));
         Dispatcher.UIThread.RunJobs();
 
         var page = surface.Panel.GetVisualDescendants().OfType<CarrierPage>().Single();

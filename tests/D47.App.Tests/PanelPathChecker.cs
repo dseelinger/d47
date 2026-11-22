@@ -144,11 +144,9 @@ internal sealed class PanelPathChecker(
             return null;
         }
 
-        var last = parts.Count == 2 ? 1 : 2;
-
-        if (parts.Count > 3)
+        if (parts.Count > 4)
         {
-            return "more than tab, root and sub-page";
+            return "more than tab, root, page and sub-page";
         }
 
         var roots = onTab.Where(d => d.SubPage is null && Called(parts[1], d.Root, parts.Count == 2)).ToList();
@@ -163,11 +161,27 @@ internal sealed class PanelPathChecker(
             return null;
         }
 
-        return onTab.Any(d => d.SubPage is { } page
+        var pages = onTab
+            .Where(d => d is { SubPage: not null, Parent: null }
                 && roots.Any(root => root.Root.Key == d.Root.Key)
-                && Called(parts[last], page, last: true))
+                && Called(parts[2], d.SubPage, last: parts.Count == 3))
+            .ToList();
+
+        if (pages.Count == 0)
+        {
+            return $"'{parts[2]}' is not a sub-page declared under {parts[1]}";
+        }
+
+        if (parts.Count == 3)
+        {
+            return null;
+        }
+
+        return onTab.Any(d => d is { SubPage: { } page, Parent: { } parent }
+                && pages.Any(above => above.SubPage!.Key == parent.Key)
+                && Called(parts[3], page, last: true))
             ? null
-            : $"'{parts[last]}' is not a sub-page declared under {parts[1]}";
+            : $"'{parts[3]}' is not a sub-page declared under {parts[2]}";
     }
 
     private static bool Exact(string written, string title) => string.Equals(written, title, StringComparison.OrdinalIgnoreCase);

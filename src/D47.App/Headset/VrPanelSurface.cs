@@ -347,7 +347,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
     /// <summary>Redraws the Commander pages when the journal moves them on, from the headset's own tick.</summary>
     public void TickCommander() => _dirty |= _view.TickCommander();
 
-    /// <summary>Redraws the Assets tab when the journal says the ship changed, from the headset's own tick.</summary>
+    /// <summary>Redraws Commander › Assets when the journal says the ship changed, from the headset's own tick.</summary>
     public void TickLoadout() => _dirty |= _view.TickLoadout();
 
     /// <summary>Redraws an open Ships page after the Hull pictures setting changes (#247).</summary>

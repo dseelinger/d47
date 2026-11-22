@@ -5899,7 +5899,7 @@ public sealed class AppHost : IDisposable
 
     private D47.App.Panel.CharactersHost? _charactersHost;
 
-    /// <summary>What Asset Mgmt › Characters reads, shared by the window and the headset.</summary>
+    /// <summary>What Commander › Assets › Characters reads, shared by the window and the headset.</summary>
     public D47.App.Panel.CharactersHost CharactersHost => _charactersHost ??= new D47.App.Panel.CharactersHost(
         () => Characters,
         Settings,

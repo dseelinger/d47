@@ -232,7 +232,7 @@ public class AProposalIsReviewedOnTheShipPageTests
 
         var window = new Window { Content = panel, Width = 1400, Height = 1700 };
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         panel.GetVisualDescendants().OfType<Button>()

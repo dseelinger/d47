@@ -52,7 +52,7 @@ public class TheSlotListIsATableTests
 
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships);

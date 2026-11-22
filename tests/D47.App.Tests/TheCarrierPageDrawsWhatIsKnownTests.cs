@@ -65,8 +65,8 @@ public class TheCarrierPageDrawsWhatIsKnownTests
 
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
-        panel.Nav.SelectRoot(PanelTab.Assets, LoadoutPages.CarrierRoot);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        panel.Nav.Show(LoadoutPages.CarrierRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -188,7 +188,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
 
         panel.EnableLoadout(ships, checklists, () => state);
 
-        bool Offered() => panel.Nav.Roots(PanelTab.Assets).Any(r => r.Key == LoadoutPages.CarrierRoot);
+        bool Offered() => panel.Nav.PagesOf(PanelTabNames.AssetsRoot).Any(r => r.Key == LoadoutPages.CarrierRoot);
 
         Assert.False(Offered());
         Assert.DoesNotContain(panel.Nav.Destinations, d => d.Root.Key == LoadoutPages.CarrierRoot);
@@ -198,7 +198,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
 
         Assert.True(Offered());
 
-        var keys = panel.Nav.Roots(PanelTab.Assets).Select(r => r.Key).ToList();
+        var keys = panel.Nav.PagesOf(PanelTabNames.AssetsRoot).Select(r => r.Key).ToList();
 
         Assert.Equal(CrewPage.RootKey, keys[keys.IndexOf(LoadoutPages.CarrierRoot) - 1]);
     }
@@ -215,7 +215,7 @@ public class TheCarrierPageDrawsWhatIsKnownTests
              "FuelLevel":140,"Finance":{"CarrierBalance":9999}}
             """);
 
-        Assert.DoesNotContain(panel.Nav.Roots(PanelTab.Assets), r => r.Key == LoadoutPages.CarrierRoot);
+        Assert.DoesNotContain(panel.Nav.PagesOf(PanelTabNames.AssetsRoot), r => r.Key == LoadoutPages.CarrierRoot);
 
         window.Close();
     }

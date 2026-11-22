@@ -21,8 +21,8 @@ nav_order: 108
 <div class="d47-howto"><div class="d47-frame">
 <p class="intro">Three steps from locked to a route you can fly.</p>
 <section>
-<h2><span class="num">1</span> Open Engineers on the Asset Mgmt tab and read the directory.</h2>
-<p class="say">Open Engineers on the Asset Mgmt tab and read the directory.</p>
+<h2><span class="num">1</span> Open Engineers on Commander › Assets and read the directory.</h2>
+<p class="say">Open Engineers on Commander › Assets and read the directory.</p>
 <p class="expect">The directory is a table. Its Status column gives Ready for Unlock, then Unlocked, then Needs a Referral, and any header re-sorts it.</p>
 <svg viewBox="0 0 880 246" role="img" aria-label="The Engineers table">
  <rect x="20" y="16" width="840" height="210" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -320,7 +320,7 @@ referral that has already happened, and no table can be more right about that th
 
 ### The Engineers page
 
-The last root of the Asset Mgmt tab. The directory is everybody in one table, ordered by what you
+The last page of Commander › Assets. The directory is everybody in one table, ordered by what you
 can act on today; every header but Portrait sorts it, and the column widths can be dragged and are
 remembered. Columns are added, moved and removed with COLUMNS; System, Station and Referred by can be added. Each row shows the engineer's portrait, and pressing it shows the whole picture full size. A cell that does not fit ends in an ellipsis and shows its whole value in a tooltip.
 In the headset the same table has no grips or tooltips and shows 25 rows a page. Its **Route** button opens the solver as a level beside it, and Back returns to the
@@ -346,7 +346,7 @@ returns to the default order.
 
 The line at the top counts the game's own three states — unlocked, in progress (known about or
 invited), not started — against the whole directory. It does not distinguish a plan blocked on an
-engineer from one blocked on materials; the gap analysis on the Asset Mgmt tab cannot tell the two
+engineer from one blocked on materials; the gap analysis on Commander › Assets cannot tell the two
 apart either.
 
 One pane rather than two: a row holds the name, status, every module they modify with its top

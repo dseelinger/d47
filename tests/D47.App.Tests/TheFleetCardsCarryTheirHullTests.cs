@@ -101,7 +101,7 @@ public class TheFleetCardsCarryTheirHullTests
         var window = new Window { Content = panel, Width = 1400, Height = 700 };
 
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (panel, value =>

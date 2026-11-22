@@ -228,7 +228,7 @@ your journals it has been read, so the next start picks up exactly where it left
 long that is. Come back after a year away and the first start takes a few seconds longer while it
 reads the gap, and says so in the log.
 
-**Not look right? Rescan.** Asset Mgmt › Ships' own "Page settings" strip says how many ships
+**Not look right? Rescan.** Commander › Assets › Ships' own "Page settings" strip says how many ships
 are remembered and how stale the oldest of them is, and offers **Rescan my journals**: it reads
 every journal on disk again and rebuilds the lot from scratch. A ship nothing in your journals
 supports stops existing, and one that has been sitting there wrong is put back the way the game
@@ -300,7 +300,7 @@ hull — with whatever history it had.
 
 ### The fleet, and the fleet you intend
 
-The Asset Mgmt tab opens on your fleet and answers where each ship is before you drill into anything.
+Commander › Assets opens on your fleet and answers where each ship is before you drill into anything.
 
 **A hull you do not own is not in the fleet.** It is its own thing, with no ship id, because
 Elite's id is what a ship list is keyed by and a Corsair nobody has bought has none. So
@@ -353,7 +353,7 @@ files for that hull, from a release on the same GitHub repository it updates its
 The hull symbol is all that is sent. Not your Commander name, not which ships you own, not where
 you are, nothing from your journal.
 
-**One switch, and turning it off puts every picture away.** Asset Mgmt › Ships' own settings strip has
+**One switch, and turning it off puts every picture away.** Commander › Assets › Ships' own settings strip has
 **Hull pictures**; off, fleet cards are text only, a ship's own page shows no picture and plays no
 turntable, and nothing is fetched — even for a hull whose files are already in `data/ships`. The
 files themselves stay on disk; the setting only stops them being shown. Offline behaves the same
@@ -381,7 +381,7 @@ everywhere uses for *the row you have selected* — so the fleet opened looking 
 ### The hull viewer on the graphics card {#hull-gpu}
 
 A hull with a mesh is drawn by the processor unless **Hull viewer on the graphics card** is on, in
-Asset Mgmt › Ships' own settings strip. On, the viewer and its whole-window size are drawn through
+Commander › Assets › Ships' own settings strip. On, the viewer and its whole-window size are drawn through
 OpenGL, multisampled, so a large window turns smoothly. It is off unless you turn it on.
 
 **Best with Elite not running, since the two share the graphics card.** The window already draws

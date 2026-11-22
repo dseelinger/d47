@@ -46,7 +46,7 @@ public class TheMiniPanelDrawsNoLoadoutPressesTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
 
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -68,7 +68,7 @@ public class TheMiniPanelDrawsNoLoadoutPressesTests
     {
         var (window, panel) = Open();
 
-        Assert.True(panel.Nav.SelectRoot(OnFootMode.Root));
+        Assert.True(panel.Nav.Show(OnFootMode.Root));
         Dispatcher.UIThread.RunJobs();
         Assert.NotEmpty(Presses(panel));
 

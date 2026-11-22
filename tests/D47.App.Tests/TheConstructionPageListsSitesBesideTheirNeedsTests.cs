@@ -24,7 +24,7 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Asset Mgmt › Construction: the sites beside the selected one's needs and its last market search (#828).</summary>
+/// <summary>Commander › Assets › Construction: the sites beside the selected one's needs and its last market search (#828).</summary>
 public class TheConstructionPageListsSitesBesideTheirNeedsTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 5, 18, 0, 0, TimeSpan.Zero);
@@ -188,8 +188,8 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
         };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
-        panel.Nav.SelectRoot(PanelTab.Assets, ConstructionPage.RootKey);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        panel.Nav.Show(ConstructionPage.RootKey);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);
@@ -228,7 +228,7 @@ public class TheConstructionPageListsSitesBesideTheirNeedsTests
 
         Assert.Equal(
             ["Ships", "Stored modules", "Crew", "Suits", "Carrier", "Construction", "Materials"],
-            panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
+            panel.Nav.PagesOf(PanelTabNames.AssetsRoot).Select(root => root.Word));
 
         window.Close();
     }

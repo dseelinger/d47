@@ -52,7 +52,7 @@ public class TheTickingTabsDoNotAskForARedrawTests
             onFoot: bench.OnFoot,
             unlocks: bench.Unlocks);
 
-        Assert.True(panel.Nav.Select(PanelTab.Assets), "the headset furnishes Asset Mgmt");
+        Assert.True(panel.Nav.Show(PanelTabNames.AssetsRoot), "the headset furnishes Commander › Assets");
         Dispatcher.UIThread.RunJobs();
 
         Settle(panel);

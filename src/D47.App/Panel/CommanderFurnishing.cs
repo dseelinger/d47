@@ -3,9 +3,37 @@ using D47.Core.Interface;
 
 namespace D47.App.Panel;
 
-/// <summary>The Commander tab: Checklist, Watches, Missions, Progress, Statistics, BGS, Ledgers (with This session among them) and Commanders.</summary>
+/// <summary>The Commander tab: Checklist, Assets, Missions, Watches, Progress, Statistics, BGS, Ledgers (with This session among them) and Commanders.</summary>
 internal sealed class CommanderFurnishing(IPanelTabHost host)
 {
+    /// <summary>The sub-tabs in the order the row draws them, whichever order they are furnished in.</summary>
+    public static IReadOnlyList<string> SubTabs { get; } =
+    [
+        ChecklistRoot,
+        PanelTabNames.AssetsRoot,
+        MissionsPage.RootKey,
+        WatchesPage.RootKey,
+        StandingPage.RootKey,
+        StatisticsPage.RootKey,
+        CampaignPage.RootKey,
+        LedgersPage.RootKey,
+        CommandersPage.RootKey,
+    ];
+
+    private Func<NavCrumb, Control>? _assetsBuild;
+
+    /// <summary>Furnishes the Assets sub-tab, whose levels <paramref name="build"/> draws.</summary>
+    public void FurnishAssets(NavCrumb root, Func<NavCrumb, Control> build)
+    {
+        _assetsBuild = build;
+        host.Furnish(PanelTab.Commander, BuildCommander, root);
+    }
+
+    /// <summary>Whether a level being drawn is on the Assets trail: every level is drawn from the trail showing.</summary>
+    private bool InAssets(NavCrumb crumb) =>
+        host.Nav.TrailOf(PanelTab.Commander) is [{ Key: PanelTabNames.AssetsRoot }, ..] trail
+        && trail.Any(level => level.Key == crumb.Key);
+
     private Func<NavCrumb, Control>? _checklistBuild;
     private Func<NavCrumb, Control>? _missionsBuild;
     private Func<NavCrumb, Control>? _standingBuild;
@@ -388,23 +416,25 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
             changed |= campaign.Tick();
         }
 
-        if (_session is { } session && leaf == SessionPage.RootKey)
+        var ledger = root == LedgersPage.RootKey;
+
+        if (_session is { } session && ledger && leaf == SessionPage.RootKey)
         {
             changed |= session.Tick();
         }
 
-        if (_combatStats is { } combatStats && leaf == CombatStatsPage.PageKey)
+        if (_combatStats is { } combatStats && ledger && leaf == CombatStatsPage.PageKey)
         {
             changed |= combatStats.Tick();
         }
 
-        if (leaf == CreditsPage.PageKey || CreditsPage.IsTransactions(leaf))
+        if (ledger && (leaf == CreditsPage.PageKey || CreditsPage.IsTransactions(leaf)))
         {
             changed |= _credits?.Tick() ?? false;
             changed |= _creditTransactions?.Tick() ?? false;
         }
 
-        if (leaf == CodexPage.PageKey || CodexPage.IsRegions(leaf) || CodexPage.IsRegion(leaf) || CodexPage.IsPossibleFirsts(leaf) || CodexPage.IsEntry(leaf) || CodexPage.IsCatalogue(leaf))
+        if (ledger && (leaf == CodexPage.PageKey || CodexPage.IsRegions(leaf) || CodexPage.IsRegion(leaf) || CodexPage.IsPossibleFirsts(leaf) || CodexPage.IsEntry(leaf) || CodexPage.IsCatalogue(leaf)))
         {
             changed |= _codexCatalogue?.Tick() ?? false;
             changed |= _codexEntry?.Tick() ?? false;
@@ -421,10 +451,12 @@ internal sealed class CommanderFurnishing(IPanelTabHost host)
         return changed;
     }
 
-    /// <summary>Draws a Commander level: Missions, Progress, Statistics, BGS, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
+    /// <summary>Draws a Commander level: the Assets pages, Missions, Progress, Statistics, BGS, This session, Ledgers and its ledgers, Commanders, or whatever the checklist roots draw.</summary>
     public Control BuildCommander(NavCrumb crumb) =>
-        IsLedger(crumb.Key) ? new LedgersPage(Page(crumb), crumb.Key)
+        _assetsBuild is { } assets && InAssets(crumb) ? assets(crumb)
+        : IsLedger(crumb.Key) ? new LedgersPage(Page(crumb), crumb.Key)
         : Page(crumb);
+
 
     private static bool IsLedger(string key) =>
         key is CombatStatsPage.PageKey or CreditsPage.PageKey or CodexPage.PageKey or ScreenshotsPage.PageKey or SessionPage.RootKey;

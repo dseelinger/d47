@@ -876,7 +876,7 @@ drift apart.
 
 #### Other voices {#carrier-voices}
 
-Directive 47 speaks as more than one person. These four rows live on Asset Mgmt ›
+Directive 47 speaks as more than one person. These four rows live on Commander › Assets ›
 Carrier itself rather than in this settings window (#305), at the top of the page they affect.
 
 | Row | Who it is |

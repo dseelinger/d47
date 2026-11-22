@@ -11,7 +11,7 @@ using D47.Core.Ships;
 
 namespace D47.App.Panel;
 
-/// <summary>The Assets tab's Ships mode: the fleet, a ship, a slot (Phase 26, "Ships").</summary>
+/// <summary>The Ships mode of Commander › Assets: the fleet, a ship, a slot (Phase 26, "Ships").</summary>
 public sealed class ShipsMode(
     ShipPlanService ships,
     ChecklistService checklists,

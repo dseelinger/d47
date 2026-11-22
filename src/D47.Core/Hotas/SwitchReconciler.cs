@@ -1163,13 +1163,14 @@ public sealed class SwitchReconciler(ILogger<SwitchReconciler> logger, IHeadsetV
         tick.Destinations.FirstOrDefault(page => string.Equals(page.Key, key, StringComparison.Ordinal));
 
     /// <summary>
-    /// Whether the panel is where a position asks: on that destination, or, for a root, on one of the root's
-    /// sub-pages, which is still that root.
+    /// Whether the panel is where a position asks: on that destination, or, for a root or a page, on one of the
+    /// sub-pages under it, which is still that root or page.
     /// </summary>
     private static bool Agrees(SwitchTick tick, string destination, string showing) =>
         string.Equals(showing, destination, StringComparison.Ordinal)
         || (Page(tick, showing) is { SubPage: not null } beside
-            && string.Equals(beside.Root.Key, destination, StringComparison.Ordinal));
+            && (string.Equals(beside.Root.Key, destination, StringComparison.Ordinal)
+                || string.Equals(beside.Parent?.Key, destination, StringComparison.Ordinal)));
 
     /// <summary>Item 5.</summary>
     private void Watching(SwitchTick tick, SwitchMapping mapping, bool flipped)

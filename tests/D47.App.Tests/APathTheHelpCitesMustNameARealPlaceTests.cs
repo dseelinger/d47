@@ -20,7 +20,7 @@ public sealed class APathTheHelpCitesMustNameARealPlaceTests
     public void APlantedUnresolvablePathFails()
     {
         Assert.NotNull(Failure("Open Settings › Nowhere at all › Nothing."));
-        Assert.NotNull(Failure("Open Asset Mgmt › Nothing."));
+        Assert.NotNull(Failure("Open Commander › Assets › Nothing."));
     }
 
     [AvaloniaFact]

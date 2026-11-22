@@ -64,7 +64,7 @@ public class ThePickerAndSwitchTablesAreArrangedTests
         var window = new Window { Content = panel, Width = 1600, Height = 1000 };
         window.Closed += (_, _) => look.Dispose();
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         panel.GetVisualDescendants().OfType<Button>().First(button => button.Content as string == "Plan a ship you do not own")

@@ -106,11 +106,13 @@ public class EveryCareerFigureIsOneSearchAwayTests
         within.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == text);
 
     [AvaloniaFact]
-    public void StatisticsIsTheCommanderTabsSecondRoot()
+    public void StatisticsFollowsProgress()
     {
         var (window, panel, _) = Open(Statistics);
 
-        Assert.Equal(StatisticsPage.RootKey, panel.Nav.Roots(PanelTab.Commander)[1].Key);
+        Assert.Equal(
+            [CommanderFurnishing.ChecklistRoot, StandingPage.RootKey, StatisticsPage.RootKey],
+            panel.Nav.Roots(PanelTab.Commander).Select(root => root.Key));
 
         window.Close();
     }

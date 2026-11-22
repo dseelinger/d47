@@ -36,9 +36,9 @@ public class TheMiniPanelNamesWhereItIsTests
     [Fact]
     public void ATabWithSeveralRootsNamesTheRootToo()
     {
-        var words = MiniTrail.Words("Asset mgmt", [new NavCrumb("fleet", "Fleet")], 3);
+        var words = MiniTrail.Words("Commander", [new NavCrumb("fleet", "Fleet")], 3);
 
-        Assert.Equal(["ASSET MGMT", "FLEET"], words);
+        Assert.Equal(["COMMANDER", "FLEET"], words);
     }
 
     [Fact]
@@ -52,9 +52,9 @@ public class TheMiniPanelNamesWhereItIsTests
             new NavCrumb("pick", "Pick a module", Modal: true),
         };
 
-        var words = MiniTrail.Words("Asset mgmt", trail, 2);
+        var words = MiniTrail.Words("Commander", trail, 2);
 
-        Assert.Equal(["ASSET MGMT", "FLEET", "PYTHON", "LOADOUT", "PICK A MODULE"], words);
+        Assert.Equal(["COMMANDER", "FLEET", "PYTHON", "LOADOUT", "PICK A MODULE"], words);
     }
 
     [Fact]

@@ -23,7 +23,6 @@ public static class TabGlyph
         [PanelTab.Search] = "M6 3 H11 L14 6 V11 L11 14 H6 L3 11 V6 Z M14 14 L18 18",
         [PanelTab.Stories] = "M10 5 L3 3 V15 L10 17 L17 15 V3 Z M10 5 V17",
         [PanelTab.Commander] = "M8.5 2 H11.5 L13.5 4 V7 L11.5 9 H8.5 L6.5 7 V4 Z M3 18 V15.5 L6.5 12 H13.5 L17 15.5 V18",
-        [PanelTab.Assets] = "M3 8 L5 4 H15 L17 8 M3 8 H17 V17 H3 Z M9 6.5 H11 V10.5 H9 Z",
         [PanelTab.Astrometrics] = "M10 2 L17 18 L10 14 L3 18 Z",
         [PanelTab.Media] = "M3 4 H17 V16 H3 Z M8 7.5 L13 10 L8 12.5 Z",
         [PanelTab.Modules] = "M10 2 L17 6 V14 L10 18 L3 14 V6 Z M3 6 L10 10 L17 6 M10 10 V18",

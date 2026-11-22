@@ -26,7 +26,7 @@ public sealed class FindOpensAndChoosesTests
     private static IReadOnlyList<PanelFindResult> Hits(string query) =>
         query.Length == 0
             ? []
-            : [.. Enumerable.Range(1, 12).Select(i => new PanelFindResult(PanelFindKind.Page, $"{query} {i}", "Asset Mgmt", $"key{i}", i))];
+            : [.. Enumerable.Range(1, 12).Select(i => new PanelFindResult(PanelFindKind.Page, $"{query} {i}", "Commander › Assets", $"key{i}", i))];
 
     private static (FindDialog Dialog, Window Window, List<PanelFindResult> Opened) Shown()
     {

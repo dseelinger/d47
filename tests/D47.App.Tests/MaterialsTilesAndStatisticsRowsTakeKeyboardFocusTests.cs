@@ -53,8 +53,8 @@ public class MaterialsTilesAndStatisticsRowsTakeKeyboardFocusTests
         };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
-        panel.Nav.SelectRoot(LoadoutPages.GapRoot);
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        panel.Nav.Show(LoadoutPages.GapRoot);
         Dispatcher.UIThread.RunJobs();
 
         return (window, panel);

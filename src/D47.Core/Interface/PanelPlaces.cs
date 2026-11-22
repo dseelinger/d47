@@ -1,8 +1,8 @@
 namespace D47.Core.Interface;
 
 /// <summary>
-/// A place in the panel named in a message: the characters that name it, its tab, its root where the text
-/// names one, the settings row the message means where it carries one, and the web page it opens where it has one.
+/// A place in the panel named in a message: the characters that name it, its tab, its root or a page under the root
+/// where the text names one, the settings row the message means where it carries one, and the web page it opens where it has one.
 /// </summary>
 public sealed record PanelPlace(int Start, int Length, PanelTab Tab, string? RootKey = null, string? SettingKey = null, string? Url = null);
 
@@ -14,7 +14,8 @@ public static class PanelPlaces
 
     /// <summary>
     /// Every place <paramref name="text"/> names that <paramref name="nav"/> has, in order: a path such as
-    /// "Asset Mgmt › Ships" or "Settings > About", resolved as far as its parts name a tab and a root of it;
+    /// "Commander › Assets › Ships" or "Settings > About", resolved as far as its parts name a tab, a root of it and
+    /// a page declared under that root;
     /// "Settings" as a capitalised word; and "the Astrometrics tab". <paramref name="words"/> holds each tab's
     /// word as the tab bar draws it.
     /// </summary>
@@ -79,10 +80,21 @@ public static class PanelPlaces
 
             if (Separator(text, end) is { } part)
             {
-                return Longest(text, part, nav.Roots(tab)) is { } root
-                    ? new PanelPlace(at, root.End - at, tab, root.Key)
-                    : new PanelPlace(at, word.Length, tab);
+                if (Longest(text, part, nav.Roots(tab)) is not { } root)
+                {
+                    return new PanelPlace(at, word.Length, tab);
+                }
+
+                var pages = nav.Destinations
+                    .Where(destination => destination.Tab == tab && destination.Root.Key == root.Key && destination is { SubPage: not null, Parent: null })
+                    .Select(destination => destination.Page)
+                    .ToList();
+
+                return Separator(text, root.End) is { } next && Longest(text, next, pages) is { } page
+                    ? new PanelPlace(at, page.End - at, tab, page.Key)
+                    : new PanelPlace(at, root.End - at, tab, root.Key);
             }
+
 
             return tab == PanelTab.Settings && char.IsUpper(text[at])
                 ? new PanelPlace(at, word.Length, tab)

@@ -109,7 +109,7 @@ public class SearchSettingsByAreaAndSectionNamesTests
         SettingsPageReading.Open(host.View, "sounds");
 
         Assert.Equal(
-            7,
+            8,
             host.View.GetVisualDescendants().OfType<Grid>()
                 .Count(grid => grid.Classes.Contains(SettingsView.MixerRowClass) && grid.IsEffectivelyVisible));
 
@@ -224,15 +224,15 @@ public class SearchSettingsByAreaAndSectionNamesTests
         Box2(panel).Text = "hull pictures";
         Jobs();
 
-        var button = OtherTabsButtons2(view).Single(b => (b.Content as string) == "Open Asset Mgmt › Ships");
+        var button = OtherTabsButtons2(view).Single(b => (b.Content as string) == "Open Commander › Assets › Ships");
 
         Assert.Equal(PanelTab.Settings, panel.Tab);
 
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Jobs();
 
-        Assert.Equal(PanelTab.Assets, panel.Tab);
-        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.RootKeyOf(PanelTab.Assets));
+        Assert.Equal(PanelTab.Commander, panel.Tab);
+        Assert.Equal(LoadoutPages.FleetRoot, panel.Nav.PageKeyOf(PanelTab.Commander));
 
         var strip = (StackPanel)fleetStrip!.GetVisualDescendants().First(c => c.Name == SettingsView.TabStripName);
         var content = (StackPanel)strip.Children[0];

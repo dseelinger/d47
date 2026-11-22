@@ -17,8 +17,8 @@ public class HelpLinksTests
     {
         var nav = new PanelNavigator();
 
-        nav.Register(PanelTab.Assets, new NavCrumb("directory", "Engineers") { Help = "engineers" });
-        nav.Select(PanelTab.Assets);
+        nav.Register(PanelTab.Media, new NavCrumb("directory", "Engineers") { Help = "engineers" });
+        nav.Select(PanelTab.Media);
 
         return nav;
     }
@@ -193,8 +193,8 @@ public class HelpLinksTests
         // here, for the reason the sibling test above gives.
         var bandless = HelpLibrary.Pages.First(id => !HelpLibrary.Has(id));
 
-        nav.Register(PanelTab.Assets, new NavCrumb("clocks", "Clocks") { Help = bandless });
-        nav.Select(PanelTab.Assets);
+        nav.Register(PanelTab.Media, new NavCrumb("clocks", "Clocks") { Help = bandless });
+        nav.Select(PanelTab.Media);
 
         Assert.True(HelpLevel.Open(nav));
         Assert.Equal("help:help", nav.Trail[^1].Key);

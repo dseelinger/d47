@@ -21,6 +21,13 @@ public sealed class PanelTabMemory(ViewStateStore store)
         return PanelTabNames.Parse(_tab);
     }
 
+    /// <summary>The root a tab saved under a former name now opens, or null.</summary>
+    public string? RememberedRoot()
+    {
+        Remembered();
+        return PanelTabNames.RootOf(_tab);
+    }
+
     /// <summary>Records the tab this surface is on.</summary>
     public void Remember(PanelTab tab)
     {

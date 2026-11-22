@@ -37,7 +37,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
         new(PanelTab.Stories, Stories),
         new(PanelTab.Stories, Stories, Catalogue),
         new(PanelTab.Stories, AdventuresPage.AskCrumb),
-        new(PanelTab.Assets, new NavCrumb("assets.ships", "Ships")),
+        new(PanelTab.Media, new NavCrumb("assets.ships", "Ships")),
         new(PanelTab.Settings, new NavCrumb("settings", "Settings")),
     ];
 
@@ -107,7 +107,7 @@ public class ThePageAPositionOpensIsPickedByTabTests
             ["Nothing", "Next tab", "Previous tab", "Technical", "Stories", "Catalogue", "Short Story", "Ships", "Settings"],
             rows.Select(row => row.Text));
         Assert.Equal(
-            [null, null, null, "TRANSCRIPT", "STORIES", null, null, "ASSET MGMT", "SETTINGS"],
+            [null, null, null, "TRANSCRIPT", "STORIES", null, null, "MEDIA", "SETTINGS"],
             rows.Select(row => row.Head));
         Assert.Equal(["1", "3", "1", "1"], rows.Where(row => row.Head is not null).Select(row => row.HeadCount));
         Assert.Equal([false, false, false, false, false, true, false, false, false], rows.Select(row => row.Nested));

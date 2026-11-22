@@ -10,7 +10,7 @@ public sealed class APathIsReadOutOfTheProseAroundItTests
     [Fact]
     public void APathInProseIsReadWithoutTheWordsAroundIt()
     {
-        Assert.Equal(["Asset Mgmt › Carrier"], Read("You choose the pictures on Asset Mgmt › Carrier, under Captain and tower."));
+        Assert.Equal(["Commander › Assets › Carrier"], Read("You choose the pictures on Commander › Assets › Carrier, under Captain and tower."));
     }
 
     [Fact]

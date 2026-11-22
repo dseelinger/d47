@@ -64,10 +64,10 @@ public class LoadoutTabTests
             panel.EnableChecklist(checklists);
         }
 
-        var window = new Window { Content = panel, Width = 900, Height = 700 };
+        var window = new Window { Content = panel, Width = 1180, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, checklists, sitting, clipboard);
@@ -182,17 +182,19 @@ public class LoadoutTabTests
     /// <summary>The crumb the ship page opens for one slot of a build: the slot row's key under the slot prefix.</summary>
     private static NavCrumb Slot(string buildId, string slot) => new($"{LoadoutPages.SlotPrefix}{buildId}|{slot}", slot);
 
-    /// <summary>The tab arrives when the host furnishes it, on both surfaces.</summary>
+    /// <summary>Commander › Assets arrives when the host furnishes it, on both surfaces.</summary>
     [AvaloniaFact]
     public void TheTabIsThereOnceTheHostGivesIt()
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
 
-        Assert.False(panel.FindControl<Control>("AssetsTab")!.IsVisible);
+        Assert.False(panel.FindControl<Control>("CommanderTab")!.IsVisible);
+        Assert.DoesNotContain(panel.Nav.Roots(PanelTab.Commander), root => root.Key == PanelTabNames.AssetsRoot);
 
         var surface = Open();
 
-        Assert.True(surface.Panel.FindControl<Control>("AssetsTab")!.IsVisible);
+        Assert.True(surface.Panel.FindControl<Control>("CommanderTab")!.IsVisible);
+        Assert.Contains(surface.Panel.Nav.Roots(PanelTab.Commander), root => root.Key == PanelTabNames.AssetsRoot);
 
         surface.Window.Close();
     }
@@ -206,8 +208,8 @@ public class LoadoutTabTests
     {
         var surface = Open();
 
-        Assert.True(surface.Panel.Nav.AtRoot);
-        Assert.Equal("Ships", surface.Panel.Nav.Root.Word);
+        Assert.True(surface.Panel.Nav.AtPage);
+        Assert.Equal("Ships", surface.Panel.Nav.Trail[^1].Word);
 
         var shown = Text(surface.Panel);
 
@@ -251,7 +253,7 @@ public class LoadoutTabTests
         surface.Panel.Tab = PanelTab.Commander;
         Dispatcher.UIThread.RunJobs();
 
-        surface.Panel.Tab = PanelTab.Assets;
+        surface.Panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -272,7 +274,7 @@ public class LoadoutTabTests
         Row(surface.Panel, "Bad Idea (Python)").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(["Ships", "Bad Idea"], surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
+        Assert.Equal(["Assets", "Ships", "Bad Idea"], surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
 
         // The slot index: one line each, for every slot the hull has rather than only the ones the journal
         // mentioned, and said in words rather than in Frontier's spelling.
@@ -280,7 +282,7 @@ public class LoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
-            ["Ships", "Bad Idea", "Thrusters"],
+            ["Assets", "Ships", "Bad Idea", "Thrusters"],
             surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
 
         surface.Window.Close();

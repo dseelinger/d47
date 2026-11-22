@@ -23,7 +23,7 @@ public class TabsTurnToGlyphsWhenNarrowTests
 
         panel.Furnish(PanelTab.Stories, _ => new TextBlock(), new NavCrumb("stories", "Stories"));
         panel.Furnish(PanelTab.Commander, _ => new TextBlock(), new NavCrumb("checklist", "Checklist"));
-        panel.Furnish(PanelTab.Assets, _ => new TextBlock(), new NavCrumb("fleet", "Ships"));
+        panel.Furnish(PanelTab.Media, _ => new TextBlock(), new NavCrumb("fleet", "Ships"));
         panel.Furnish(PanelTab.Astrometrics, _ => new TextBlock(), new NavCrumb("plan", "Plan"));
         panel.EnableSettings(() => new TextBlock());
 

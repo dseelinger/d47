@@ -80,7 +80,7 @@ public class ClearCompletedFitsTheActionRowTests
         };
 
         window.Show();
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
 
         if (surface == "mini")
         {

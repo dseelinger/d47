@@ -24,7 +24,7 @@ public static class ModulePlace
 
     public const string NothingWhileOff = "Nothing while it is off.";
 
-    public const string SpeaksAsHelp = "A core or a character, in its voice. Add a character on Asset mgmt › Characters.";
+    public const string SpeaksAsHelp = "A core or a character, in its voice. Add a character on Commander › Assets › Characters.";
 
     /// <summary>The options in order: the core aboard, the module's own character, the cores, the Commander's cores, the Commander's characters.</summary>
     public static IReadOnlyList<ModuleSpeaker> Speakers(

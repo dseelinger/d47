@@ -79,7 +79,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
         var window = new Window { Content = panel, Width = width, Height = height };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel);
@@ -102,7 +102,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
         panel.Nav.Drill(EngineersPages.Crumb(Named("Felicity Farseer")));
         var felicity = surface.Window.SaveFrame($"engineers-felicity-{themeId}-{width}x{height}.png");
 
-        panel.Nav.SelectRoot(EngineersPages.DirectoryRoot);
+        panel.Nav.Show(EngineersPages.DirectoryRoot);
         panel.Nav.Drill(EngineersPages.Crumb(Named("Marco Qwent")));
         var marco = surface.Window.SaveFrame($"engineers-marco-{themeId}-{width}x{height}.png");
 
@@ -128,7 +128,7 @@ public class TheEngineersPagesAreDrawnOnTheKitTests
 
         Assert.Equal(Ink(ThemeManager.CyanKey), Figure(surface.Panel, "Farseer Inc in Deciat"));
 
-        surface.Panel.Nav.SelectRoot(EngineersPages.DirectoryRoot);
+        surface.Panel.Nav.Show(EngineersPages.DirectoryRoot);
         surface.Panel.Nav.Drill(EngineersPages.Crumb(Named("Liz Ryder")));
         Dispatcher.UIThread.RunJobs();
 

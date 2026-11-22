@@ -45,7 +45,7 @@ public class OnFootLoadoutTabTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, kit, checklists);
@@ -68,7 +68,7 @@ public class OnFootLoadoutTabTests
         var window = new Window { Content = panel, Width = 900, Height = 700 };
         window.Show();
 
-        panel.Tab = PanelTab.Assets;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
         Dispatcher.UIThread.RunJobs();
 
         return new Surface(window, panel, ships, kit, checklists);
@@ -118,7 +118,7 @@ public class OnFootLoadoutTabTests
 
         Assert.Equal(
             ["Ships", "Stored modules", "Crew", "Suits", "Carrier", "Materials", "Engineers"],
-            surface.Panel.Nav.Roots(PanelTab.Assets).Select(root => root.Word));
+            surface.Panel.Nav.PagesOf(PanelTabNames.AssetsRoot).Select(root => root.Word));
 
         surface.Window.Close();
     }
@@ -132,7 +132,7 @@ public class OnFootLoadoutTabTests
     {
         var surface = Open();
 
-        Assert.True(surface.Panel.Nav.SelectRoot(OnFootMode.Root));
+        Assert.True(surface.Panel.Nav.Show(OnFootMode.Root));
         Dispatcher.UIThread.RunJobs();
 
         var shown = Text(surface.Panel);
@@ -160,7 +160,7 @@ public class OnFootLoadoutTabTests
 
         surface.Kit.Intend("Dominator");
 
-        Assert.True(surface.Panel.Nav.SelectRoot(OnFootMode.Root));
+        Assert.True(surface.Panel.Nav.Show(OnFootMode.Root));
         Dispatcher.UIThread.RunJobs();
 
         var row = Row(surface.Panel, "Dominator Suit");
@@ -181,14 +181,14 @@ public class OnFootLoadoutTabTests
     {
         var surface = Open();
 
-        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.Show(OnFootMode.Root);
         Dispatcher.UIThread.RunJobs();
 
         Row(surface.Panel, "Maverick Suit").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
-            ["Suits", "Maverick Suit"],
+            ["Assets", "Suits", "Maverick Suit"],
             surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
 
         // The grade is the first slot, and a grade 3 suit has two modification slots under it.
@@ -203,7 +203,7 @@ public class OnFootLoadoutTabTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(
-            ["Suits", "Maverick Suit", "Grade"],
+            ["Assets", "Suits", "Maverick Suit", "Grade"],
             surface.Panel.Nav.Trail.Select(crumb => crumb.Word));
 
         surface.Window.Close();
@@ -223,7 +223,7 @@ public class OnFootLoadoutTabTests
 
         surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
 
-        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.Show(OnFootMode.Root);
         surface.Panel.Nav.GoTo(
             new NavCrumb(OnFootMode.KitPrefix + build.Id, "Maverick Suit"),
             new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.GradeSlot}", "Grade"));
@@ -269,7 +269,7 @@ public class OnFootLoadoutTabTests
 
         void AskForTheGrade()
         {
-            surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+            surface.Panel.Nav.Show(OnFootMode.Root);
             surface.Panel.Nav.GoTo(new NavCrumb(OnFootMode.KitPrefix + build.Id, "Maverick Suit"), slot);
             Dispatcher.UIThread.RunJobs();
 
@@ -340,7 +340,7 @@ public class OnFootLoadoutTabTests
 
         void AskForMod1()
         {
-            surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+            surface.Panel.Nav.Show(OnFootMode.Root);
             surface.Panel.Nav.GoTo(
                 new NavCrumb(OnFootMode.KitPrefix + build.Id, build.Equipment),
                 new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.ModSlot(1)}", OnFootBuild.ModSlot(1)));
@@ -413,7 +413,7 @@ public class OnFootLoadoutTabTests
 
         surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.ModSlot(1), Modification: "Stowed reloading"));
 
-        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.Show(OnFootMode.Root);
         surface.Panel.Nav.GoTo(
             new NavCrumb(OnFootMode.KitPrefix + build.Id, build.Equipment),
             new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.ModSlot(1)}", OnFootBuild.ModSlot(1)));
@@ -464,7 +464,7 @@ public class OnFootLoadoutTabTests
 
         var planned = surface.Kit.Kit().FirstOrDefault(entry => entry.Build?.Id == build.Id)!.Build!.For(OnFootBuild.ModSlot(1))!.Describe();
 
-        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.Show(OnFootMode.Root);
         surface.Panel.Nav.GoTo(
             new NavCrumb(OnFootMode.KitPrefix + build.Id, build.Equipment),
             new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.ModSlot(1)}", OnFootBuild.ModSlot(1)));
@@ -489,7 +489,7 @@ public class OnFootLoadoutTabTests
 
     private static void OpenGrade(Surface surface, OnFootBuild build)
     {
-        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.Show(OnFootMode.Root);
         surface.Panel.Nav.GoTo(
             new NavCrumb(OnFootMode.KitPrefix + build.Id, build.Equipment),
             new NavCrumb($"{OnFootMode.KitSlotPrefix}{build.Id}|{OnFootBuild.GradeSlot}", "Grade"));
@@ -609,7 +609,7 @@ public class OnFootLoadoutTabTests
 
         surface.Kit.Plan(build.Id, new KitPlan(OnFootBuild.GradeSlot, 5));
 
-        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.Show(OnFootMode.Root);
         surface.Panel.Nav.Drill(new NavCrumb(OnFootMode.KitPrefix + build.Id, "Maverick Suit"));
         Dispatcher.UIThread.RunJobs();
 
@@ -641,7 +641,7 @@ public class OnFootLoadoutTabTests
         surface.Ships.Plan(build.Id, new SlotPlan("TinyHardpoint4") { Blueprint = "Heavy Duty", Grade = 5, Module = "Shield Booster" });
         surface.Ships.Plan(build.Id, new SlotPlan("TinyHardpoint5") { Blueprint = "Heavy Duty", Grade = 5, Module = "Shield Booster" });
 
-        surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
+        surface.Panel.Nav.Show(LoadoutPages.GapRoot);
         Dispatcher.UIThread.RunJobs();
 
         // Counted in jobs — one job on two slots — not in the two lines the old per-slot gate wrote.
@@ -691,14 +691,14 @@ public class OnFootLoadoutTabTests
         surface.Window.Width = 1024;
         surface.Window.Height = 640;
 
-        surface.Panel.Nav.SelectRoot(OnFootMode.Root);
+        surface.Panel.Nav.Show(OnFootMode.Root);
         Dispatcher.UIThread.RunJobs();
 
         surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-suits.png");
 
         surface.Window.Width = 1280;
         surface.Window.Height = 1000;
-        surface.Panel.Nav.SelectRoot(LoadoutPages.GapRoot);
+        surface.Panel.Nav.Show(LoadoutPages.GapRoot);
         Dispatcher.UIThread.RunJobs();
 
         surface.Window.CaptureRenderedFrame()!.SaveCapture("loadout-gap.png");
@@ -726,6 +726,6 @@ public class OnFootLoadoutTabTests
         // Suits and Gap are the on-foot half, and Carrier shows only while a carrier is owned (#1123).
         Assert.Equal(
             ["Ships", "Stored modules", "Crew"],
-            panel.Nav.Roots(PanelTab.Assets).Select(item => item.Word));
+            panel.Nav.PagesOf(PanelTabNames.AssetsRoot).Select(item => item.Word));
     }
 }
