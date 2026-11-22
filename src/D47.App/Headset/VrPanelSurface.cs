@@ -140,6 +140,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         Panel.CharactersHost? characters = null,
         Panel.PodcastsHost? podcasts = null,
         Panel.MusicHost? music = null,
+        Panel.BooksHost? books = null,
         D47.Core.Ships.BuildTalk? buildTalk = null,
         Panel.SpendDesk? spend = null,
         Func<DateTimeOffset?>? bgsTick = null,
@@ -228,6 +229,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             Characters = characters,
             Podcasts = podcasts,
             Music = music,
+            Books = books,
             BuildTalk = buildTalk,
         }.Furnish(_view);
 

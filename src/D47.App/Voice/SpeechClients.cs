@@ -922,12 +922,7 @@ public sealed class SpeechClients : IDisposable
     /// </summary>
     internal ITtsProvider? LocalClient(string providerId)
     {
-        var installed = string.Equals(providerId, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
-            ? D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
-            : string.Equals(providerId, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)
-              && D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder());
-
-        if (!installed)
+        if (!LocalInstalled(providerId))
         {
             return null;
         }
@@ -952,6 +947,13 @@ public sealed class SpeechClients : IDisposable
             return LocalVoiceWithEdgeStandIn.Unwrapped(built);
         }
     }
+
+    /// <summary>Whether <paramref name="providerId"/> is Kokoro or Chatterbox with its model on this computer.</summary>
+    internal bool LocalInstalled(string providerId) =>
+        string.Equals(providerId, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
+            ? D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
+            : string.Equals(providerId, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)
+              && D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder());
 
     /// <summary>Why a character's chosen voice last failed and the story's own spoke instead, by StoryVoices key.</summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _castVoiceFailures = new(StringComparer.Ordinal);

@@ -134,6 +134,7 @@ public partial class App(AppHost? host) : Application
                 characters: host.CharactersHost,
                 podcasts: host.PodcastsHost,
                 music: host.MusicHost,
+                books: host.BooksHost,
                 buildTalk: host.BuildTalk,
                 spend: MainWindow.SpendDeskFor(host),
                 bgsTick: () => host.BgsTick?.Last,
@@ -224,6 +225,7 @@ public partial class App(AppHost? host) : Application
                     RegionFirsts = host.RegionFirsts,
                     Podcasts = host.PodcastsHost,
                     Music = host.MusicHost,
+                    Books = host.BooksHost,
                 });
 
             // Through the same route as the other two (Phase 45).

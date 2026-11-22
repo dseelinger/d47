@@ -6007,6 +6007,19 @@ public sealed class AppHost : IDisposable
         }
     }
 
+    private D47.App.Panel.BooksHost? _booksHost;
+
+    /// <summary>What Media › Books reads and does, shared by the window and the headset.</summary>
+    public D47.App.Panel.BooksHost BooksHost => _booksHost ??= new D47.App.Panel.BooksHost(
+        Books,
+        BookPlayer,
+        () => Settings.Current.Books,
+        change => Settings.Replace("the book voice was changed", current => current with { Books = change(current.Books) }),
+        Speech.LocalInstalled,
+        (providerId, cancellationToken) => Speech.LocalClient(providerId) is { } provider
+            ? provider.ListVoicesAsync(cancellationToken)
+            : Task.FromResult(D47.Core.Audio.VoiceCatalogue.Unreachable($"{D47.Core.Audio.TtsProviderCatalog.Selected(providerId).Name} is not installed.")));
+
     private D47.App.Panel.CastVoiceSurface? _castVoices;
 
     /// <summary>What the panel may do about a story character's voice, shared by the window and the headset.</summary>
