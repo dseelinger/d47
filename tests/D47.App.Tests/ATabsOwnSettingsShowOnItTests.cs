@@ -317,6 +317,25 @@ public class ATabsOwnSettingsShowOnItTests
         window.Close();
     }
 
+    /// <summary>Media › Movies' strip draws the push-to-talk row and no row for D47 speaking (#2673).</summary>
+    [Trait("Category", "Integration")]
+    [AvaloniaFact]
+    public void TheMediaMoviesStripDrawsOnlyThePushToTalkRow()
+    {
+        var (settings, viewState, paths) = TestSurface.Create();
+        var (view, window) = OpenStrip(settings, viewState, paths, "media-movies", width: 900);
+
+        view.ExpandTabStrip();
+        Dispatcher.UIThread.RunJobs();
+
+        var texts = view.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text).ToList();
+
+        Assert.Contains("Pause while you hold push-to-talk", texts);
+        Assert.DoesNotContain(texts, text => text?.Contains("D47 speaks", StringComparison.OrdinalIgnoreCase) == true);
+
+        window.Close();
+    }
+
     /// <summary>Every SettingsTabPlace.RootKey is a root furnished on a tab.</summary>
     [AvaloniaFact]
     public void EveryTabPlaceRootKeyIsARootThisAppFurnishes()
@@ -325,6 +344,7 @@ public class ATabsOwnSettingsShowOnItTests
         {
             LoadoutPages.FleetRoot, LoadoutPages.CarrierRoot, AdventuresPage.RootKey,
             "checklist", PanelView.LogRoot, PanelView.ConversationRoot, MediaFurnishing.MusicRoot, MediaFurnishing.PodcastsRoot,
+            MediaFurnishing.MoviesRoot,
         };
 
         foreach (var tab in SettingsLayout.Tabs)

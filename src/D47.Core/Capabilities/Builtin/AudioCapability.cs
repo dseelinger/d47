@@ -126,6 +126,7 @@ public static class AudioCapability
             .. ownAudio is null ? Array.Empty<SettingRow>() : OwnAudioRows(ownAudio, openFolder),
             TokenRow,
             RejectsRow(rejectCount, rejectsRunning, deleteRejectsNow, watchRejects, maintainer),
+            VideoPushToTalkRow,
             .. InterfaceCapability.HotkeyRows(
                 ThumbsDownHotkeyKey,
                 ThumbsDownButtonKey,
@@ -398,6 +399,28 @@ public static class AudioCapability
     };
 
     public const string MusicLibraryKey = "audio.music.library";
+
+    public const string VideoPushToTalkKey = "watch.pauseForPushToTalk";
+
+    private static readonly SettingRow VideoPushToTalkRow = new()
+    {
+        Key = VideoPushToTalkKey,
+        Exercise =
+            "Open Media › Movies, press Settings at the top of the page, and find Pause while you hold push-to-talk "
+            + "(on by default). With a video playing, hold push-to-talk: the picture and sound stop until D47 has "
+            + "answered, then play on. Untick it and hold push-to-talk again: the video keeps playing. The same row "
+            + "is under Sound on the player page, and ticking one ticks the other.",
+        Label = "Pause while you hold push-to-talk",
+        Help = "Holding push-to-talk pauses the video until D47 has answered. D47 speaking a callout or an alert "
+               + "always pauses it; there is no setting for that.",
+        Kind = SettingKind.Toggle,
+        Group = "Video playback",
+        GroupHelp = "How a playing video yields to you speaking.",
+        DocsAnchor = "one-thing-under-media-at-a-time",
+        Binding = SettingBinding.Toggle(
+            s => s.Watch.PauseForPushToTalk,
+            (s, on) => s with { Watch = s.Watch with { PauseForPushToTalk = on } }),
+    };
 
     private const string MusicGroup = "Ambient music";
 

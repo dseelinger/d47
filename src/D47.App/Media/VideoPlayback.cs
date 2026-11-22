@@ -10,7 +10,8 @@ namespace D47.App.Media;
 /// Plays one video at a time, from a file or an HTTPS URL, its soundtrack on <see cref="AudioChannel.Video"/> and its
 /// pictures following the soundtrack's position. Opening and decoding run on the video's own thread. While
 /// <c>pauseWhileSpeaking</c> is true, D47 speaking an answer or an alert pauses the video, which plays on once D47 is
-/// quiet; otherwise speech ducks it. Push-to-talk pauses it until D47 is quiet again. Stop or Cancel, a story starting,
+/// quiet; otherwise speech ducks it. Push-to-talk pauses it until D47 is quiet again while <c>pauseForPushToTalk</c> is
+/// true. Stop or Cancel, a story starting,
 /// and another Media item starting pause it until <see cref="Resume"/>. It does not start or resume while a story plays.
 /// Ambient music yields and chatter is refused while it plays.
 /// </summary>
@@ -20,6 +21,7 @@ public sealed class VideoPlayback
 
     private readonly AudioArbiter _audio;
     private readonly Func<bool> _pauseWhileSpeaking;
+    private readonly Func<bool> _pauseForPushToTalk;
     private readonly StoryRunPlayer? _story;
     private readonly AmbientMusic? _music;
     private readonly Action<Action> _background;
@@ -33,6 +35,7 @@ public sealed class VideoPlayback
 
     /// <param name="pauseWhileSpeaking">Whether D47 speaking pauses the video; true when null.</param>
     /// <param name="background">Runs work off the calling thread; the thread pool when null.</param>
+    /// <param name="pauseForPushToTalk">Whether push-to-talk pauses the video; true when null.</param>
     public VideoPlayback(
         AudioArbiter audio,
         Func<bool>? pauseWhileSpeaking = null,
@@ -40,12 +43,14 @@ public sealed class VideoPlayback
         AmbientMusic? music = null,
         Action<Action>? background = null,
         TimeProvider? time = null,
-        ILogger? logger = null)
+        ILogger? logger = null,
+        Func<bool>? pauseForPushToTalk = null)
     {
         ArgumentNullException.ThrowIfNull(audio);
 
         _audio = audio;
         _pauseWhileSpeaking = pauseWhileSpeaking ?? (static () => true);
+        _pauseForPushToTalk = pauseForPushToTalk ?? (static () => true);
         _story = story;
         _music = music;
         _background = background ?? (work => _ = Task.Run(work));
@@ -217,9 +222,14 @@ public sealed class VideoPlayback
         return true;
     }
 
-    /// <summary>Pauses the video. A Commander pause replaces any other reason.</summary>
+    /// <summary>Pauses the video. A Commander pause replaces any other reason. A push-to-talk pause is ignored while that setting is off.</summary>
     public void Pause(VideoPause reason)
     {
+        if (reason == VideoPause.PushToTalk && !_pauseForPushToTalk())
+        {
+            return;
+        }
+
         lock (_gate)
         {
             if (_viewing is not { Ended: false } || reason == VideoPause.None)

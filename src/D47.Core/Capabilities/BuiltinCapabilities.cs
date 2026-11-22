@@ -384,7 +384,10 @@ public static class BuiltinCapabilities
         Func<Podcasts.PodcastDesk?>? podcastDesk = null,
 
         // The book reader and shelf, once the host is built.
-        Func<Books.BookDesk?>? bookDesk = null) =>
+        Func<Books.BookDesk?>? bookDesk = null,
+
+        // The sources of the titles in Your list, in Carry on watching or playing now, for the video disclosures.
+        Func<IReadOnlyList<string>>? heldVideoSources = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -554,7 +557,7 @@ public static class BuiltinCapabilities
         // list keeps the shape it has — no parameter inserted in the middle, which is the one edit this file
         // records as silently rebinding everything after it.
         PrivacyCapability.Create(
-            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems, installedModules, webApp, podcastEpisodeHosts),
+            settings, searchAvailable, memories, recording, paths.DonorTokenFile, forgetDonations, imagesAvailable, files, runningStory, remoteCharacterSystems, installedModules, webApp, podcastEpisodeHosts, heldVideoSources),
         SettingsCapability.Create(settings),
         RemindersCapability.Create(
             journalReminders,

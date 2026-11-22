@@ -81,6 +81,59 @@ public class TheEgressListNamesEachVideoSourceTests
 
         Assert.Equal([VideoSources.Nasa, VideoSources.Blender], watch.SearchedSources());
         Assert.Equal(VideoSources.All, new WatchSettings().SearchedSources());
-        Assert.Empty(new WatchSettings { Sources = null! }.SearchedSources());
+        Assert.Equal(VideoSources.All, new WatchSettings { Sources = null! }.SearchedSources());
+        Assert.Equal(VideoSources.All, new WatchSettings { Sources = [] }.SearchedSources());
+        Assert.Equal(VideoSources.All, new WatchSettings { Sources = ["loc"] }.SearchedSources());
+    }
+
+    [Fact]
+    public async Task WithNoSourceTickedTheToolNamesAllThreeHosts()
+    {
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
+        var settings = new SettingsService(store, secrets, new D47Settings { Watch = new WatchSettings { Sources = [] } }, NullLogger<SettingsService>.Instance);
+        var privacy = PrivacyCapability.Create(settings);
+
+        var report = await privacy.Tools.Single().Handler(D47.Core.Capabilities.ToolArguments.Empty, TestContext.Current.CancellationToken);
+
+        Assert.Contains("Internet Archive videos → archive.org and *.us.archive.org", report.Content, StringComparison.Ordinal);
+        Assert.Contains("NASA videos → images-api.nasa.gov and images-assets.nasa.gov", report.Content, StringComparison.Ordinal);
+        Assert.Contains("Blender films → download.blender.org", report.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ATitleKeptFromAnUntickedSourceKeepsItsEntryActive()
+    {
+        var settings = new D47Settings { Watch = new WatchSettings { Sources = [VideoSources.InternetArchive] } };
+
+        var without = EgressDisclosure.For(settings, llmKeyPresent: false);
+        var held = EgressDisclosure.For(settings, llmKeyPresent: false, heldVideoSources: [VideoSources.Nasa, "file"]);
+
+        Assert.False(without.Single(entry => entry.Id == EgressDisclosure.NasaVideos).Active);
+
+        var nasa = held.Single(entry => entry.Id == EgressDisclosure.NasaVideos);
+        Assert.True(nasa.Active);
+        Assert.Equal("images-api.nasa.gov and images-assets.nasa.gov", nasa.Destination);
+        Assert.Contains("still streams from it", nasa.What, StringComparison.Ordinal);
+        Assert.False(held.Single(entry => entry.Id == EgressDisclosure.BlenderFilms).Active);
+    }
+
+    [Fact]
+    public async Task ATitleKeptFromAnUntickedSourceIsNamedByTheToolAndTheRow()
+    {
+        var install = new MemoryInstall();
+        var store = new SettingsStore(install.Paths, install.Files, NullLogger<SettingsStore>.Instance);
+        var secrets = new SecretStore(install.Paths, new ReversibleProtector(), install.Files, NullLogger<SecretStore>.Instance);
+        var settings = new SettingsService(
+            store, secrets, new D47Settings { Watch = new WatchSettings { Sources = [VideoSources.InternetArchive] } }, NullLogger<SettingsService>.Instance);
+        var privacy = PrivacyCapability.Create(settings, heldVideoSources: () => [VideoSources.Blender]);
+
+        var report = await privacy.Tools.Single().Handler(D47.Core.Capabilities.ToolArguments.Empty, TestContext.Current.CancellationToken);
+        Assert.Contains("Blender films → download.blender.org", report.Content, StringComparison.Ordinal);
+        Assert.Contains("NASA videos → nothing sent", report.Content, StringComparison.Ordinal);
+
+        var row = privacy.Settings.Single(setting => setting.Key == $"egress.{EgressDisclosure.BlenderFilms}");
+        Assert.StartsWith("Blender films → download.blender.org", row.Binding!.Read(settings.Current), StringComparison.Ordinal);
     }
 }

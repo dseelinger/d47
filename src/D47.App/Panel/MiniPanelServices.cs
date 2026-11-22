@@ -54,6 +54,8 @@ public sealed record MiniPanelServices
 
     public BooksHost? Books { get; init; }
 
+    public WatchHost? Watch { get; init; }
+
     public MusicHost? Music { get; init; }
 
     public D47.Core.Ships.BuildTalk? BuildTalk { get; init; }
@@ -171,7 +173,7 @@ public sealed record MiniPanelServices
             view.EnableModules(Modules);
         }
 
-        view.EnableMedia(Podcasts, BuildSettingsStrip, Music, Books);
+        view.EnableMedia(Podcasts, BuildSettingsStrip, Music, Books, Watch);
         view.EnableRawJournal();
 
         view.EnableLog(BuildSettingsStrip is null ? null : () => BuildSettingsStrip(PanelView.LogRoot));

@@ -168,8 +168,6 @@ public class ModelChoiceTests
             Usage = new UsageSettings { Counts = false },
             WebApp = new WebAppSettings { Enabled = false },
 
-            // And the video catalogue's sources, with none ticked.
-            Watch = new WatchSettings { Sources = [] },
         };
 
         var entries = EgressDisclosure.For(settings, llmKeyPresent: false);
@@ -185,6 +183,9 @@ public class ModelChoiceTests
 
             // Sent only when the Commander asks, so the request is its only switch, as the donation's press is.
             EgressDisclosure.RegionFirstReport, EgressDisclosure.PodcastSearch,
+
+            // With no source ticked the catalogue searches all three, so the sources have no off position.
+            EgressDisclosure.ArchiveVideos, EgressDisclosure.NasaVideos, EgressDisclosure.BlenderFilms,
         ];
         Assert.Equal(always.Order(), active);
         Assert.Contains(

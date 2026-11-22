@@ -94,10 +94,10 @@ public class TheVideoCatalogueSharesEachPageAmongItsSourcesTests
     }
 
     [Fact]
-    public async Task NoSourceTickedSearchesNothing()
+    public async Task NoSourceAskedSearchesNothing()
     {
         var archive = new Source(VideoSources.InternetArchive, 100);
-        var catalogue = new VideoCatalogue([archive], () => new WatchSettings { Sources = [] }.SearchedSources());
+        var catalogue = new VideoCatalogue([archive], () => []);
 
         var page = await catalogue.SearchAsync("moon", new VideoFilters(), 1, TestContext.Current.CancellationToken);
 

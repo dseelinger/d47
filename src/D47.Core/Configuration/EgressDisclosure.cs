@@ -288,6 +288,7 @@ public static class EgressDisclosure
     /// <param name="codexPublishTokenPresent">Whether a codex publish token is stored or in the environment.</param>
     /// <param name="remoteCharacterSystems">The systems the Commander's remote characters are in.</param>
     /// <param name="podcastEpisodeHosts">The hosts the cached podcast feeds name for their episodes.</param>
+    /// <param name="heldVideoSources">The video sources of the titles in Your list, in Carry on watching or playing now.</param>
     public static EgressEntry Entry(
         string id,
         D47Settings settings,
@@ -297,7 +298,8 @@ public static class EgressDisclosure
         IReadOnlyList<RunningStoryVoice>? runningStory = null,
         bool codexPublishTokenPresent = false,
         IReadOnlyList<string>? remoteCharacterSystems = null,
-        IReadOnlyList<string>? podcastEpisodeHosts = null) => id switch
+        IReadOnlyList<string>? podcastEpisodeHosts = null,
+        IReadOnlyList<string>? heldVideoSources = null) => id switch
     {
         LanguageModel => LanguageModelEntry(settings, llmKeyPresent),
         WebSearch => WebSearchEntry(settings, llmKeyPresent, searchAvailable),
@@ -696,6 +698,7 @@ public static class EgressDisclosure
 
         ArchiveVideos => VideoSourceEntry(
             settings,
+            heldVideoSources,
             ArchiveVideos,
             Viewing.VideoSources.InternetArchive,
             $"{Viewing.VideoSources.ArchiveHost} and {Viewing.VideoSources.ArchiveMirrors}",
@@ -709,6 +712,7 @@ public static class EgressDisclosure
 
         NasaVideos => VideoSourceEntry(
             settings,
+            heldVideoSources,
             NasaVideos,
             Viewing.VideoSources.Nasa,
             $"{Viewing.VideoSources.NasaSearchHost} and {Viewing.VideoSources.NasaAssetsHost}",
@@ -721,6 +725,7 @@ public static class EgressDisclosure
 
         BlenderFilms => VideoSourceEntry(
             settings,
+            heldVideoSources,
             BlenderFilms,
             Viewing.VideoSources.Blender,
             Viewing.VideoSources.BlenderHost,
@@ -820,13 +825,27 @@ public static class EgressDisclosure
             Summary: "Each feed when you add it, save the feed list, open the podcast page or ask for a refresh, and an episode's audio while you listen.");
     }
 
-    /// <summary>A video source's entry: active while the catalogue searches it.</summary>
+    /// <summary>A video source's entry: active while the catalogue searches it or a title kept from it can be played.</summary>
     private static EgressEntry VideoSourceEntry(
-        D47Settings settings, string id, string source, string destination, string what, string summary)
+        D47Settings settings, IReadOnlyList<string>? held, string id, string source, string destination, string what, string summary)
     {
         if (settings.Watch.SearchedSources().Contains(source, StringComparer.Ordinal))
         {
             return new EgressEntry(id, NameOf(id), destination, what, Active: true, Summary: summary);
+        }
+
+        if (held?.Contains(source, StringComparer.Ordinal) == true)
+        {
+            return new EgressEntry(
+                id,
+                NameOf(id),
+                destination,
+                $"{Viewing.VideoSources.NameOf(source)} is not ticked in the video catalogue's sources, so no search goes there. "
+                + "A title kept in Your list or Carry on watching, or playing now, still streams from it, with its "
+                + "subtitle file where it has one, only while you watch. Nothing about you goes with it: no key, no "
+                + "Commander name, nothing from your journal. The host sees your IP address.",
+                Active: true,
+                Summary: "Titles kept from it, while you watch them.");
         }
 
         return EgressEntry.Silent(
@@ -1242,9 +1261,10 @@ public static class EgressDisclosure
         bool codexPublishTokenPresent = false,
         IReadOnlyList<string>? remoteCharacterSystems = null,
         IReadOnlyList<InstalledModule>? installedModules = null,
-        IReadOnlyList<string>? podcastEpisodeHosts = null) =>
+        IReadOnlyList<string>? podcastEpisodeHosts = null,
+        IReadOnlyList<string>? heldVideoSources = null) =>
         [
-            .. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems, podcastEpisodeHosts)),
+            .. Ids.Select(id => Entry(id, settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems, podcastEpisodeHosts, heldVideoSources)),
             .. ModuleEntries(settings, installedModules ?? []),
         ];
 
@@ -1269,9 +1289,10 @@ public static class EgressDisclosure
         bool codexPublishTokenPresent = false,
         IReadOnlyList<string>? remoteCharacterSystems = null,
         IReadOnlyList<InstalledModule>? installedModules = null,
-        IReadOnlyList<string>? podcastEpisodeHosts = null)
+        IReadOnlyList<string>? podcastEpisodeHosts = null,
+        IReadOnlyList<string>? heldVideoSources = null)
     {
-        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems, installedModules, podcastEpisodeHosts);
+        var entries = For(settings, llmKeyPresent, searchAvailable, imagesAvailable, runningStory, codexPublishTokenPresent, remoteCharacterSystems, installedModules, podcastEpisodeHosts, heldVideoSources);
         var active = entries.Count(e => e.Active);
 
         var report = new System.Text.StringBuilder();

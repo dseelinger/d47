@@ -4,7 +4,10 @@ using Microsoft.Extensions.Logging;
 
 namespace D47.Core.Viewing;
 
-/// <summary>A title in the install's watch list or with a saved place, keyed by source and id.</summary>
+/// <summary>
+/// A title in the install's watch list or with a saved place, keyed by source and id. <paramref name="Video"/> is what
+/// the title was when it was last added or played, so a row can be drawn and played again without asking the source.
+/// </summary>
 public sealed record WatchEntry(
     string Source,
     string Id,
@@ -12,7 +15,8 @@ public sealed record WatchEntry(
     DateTimeOffset? AddedAt,
     TimeSpan Place,
     bool Finished,
-    DateTimeOffset? LastWatched);
+    DateTimeOffset? LastWatched,
+    VideoTitle? Video = null);
 
 /// <summary>
 /// Your list and the place reached in each title, one for the install, kept at <c>data\watch.json</c>.
@@ -62,7 +66,7 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
                 }
 
                 loaded[(row.Source, row.Id)] = new WatchEntry(
-                    row.Source, row.Id, row.InList, row.AddedAt, TimeSpan.FromSeconds(row.Seconds), row.Finished, row.LastWatched);
+                    row.Source, row.Id, row.InList, row.AddedAt, TimeSpan.FromSeconds(row.Seconds), row.Finished, row.LastWatched, ReadVideo(row));
             }
         }
         catch (Exception ex) when (ex is JsonException or ArgumentException or OverflowException or NotSupportedException)
@@ -109,22 +113,37 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
         }
     }
 
-    /// <summary>Adds the title to Your list; one already there keeps its position in the list.</summary>
-    public void Add(string source, string id, DateTimeOffset now) =>
+    /// <summary>Adds the title to Your list; one already there keeps its position in the list. <paramref name="video"/> replaces what is kept of the title when given.</summary>
+    public void Add(string source, string id, DateTimeOffset now, VideoTitle? video = null) =>
         Change(source, id, entry => entry is { InList: true }
-            ? entry
-            : (entry ?? Blank(source, id)) with { InList = true, AddedAt = now });
+            ? entry with { Video = video ?? entry.Video }
+            : (entry ?? Blank(source, id)) with { InList = true, AddedAt = now, Video = video ?? entry?.Video });
 
     /// <summary>Takes the title off Your list; its saved place stays.</summary>
     public void Remove(string source, string id) =>
         Change(source, id, entry => entry is null ? null : entry with { InList = false, AddedAt = null });
 
-    /// <summary>Saves where the title was left, and whether it is finished.</summary>
-    public void SavePlace(string source, string id, TimeSpan place, bool finished, DateTimeOffset now)
+    /// <summary>Saves where the title was left, and whether it is finished. <paramref name="video"/> replaces what is kept of the title when given.</summary>
+    public void SavePlace(string source, string id, TimeSpan place, bool finished, DateTimeOffset now, VideoTitle? video = null)
     {
         var kept = place < TimeSpan.Zero ? TimeSpan.Zero : place;
 
-        Change(source, id, entry => (entry ?? Blank(source, id)) with { Place = kept, Finished = finished, LastWatched = now });
+        Change(source, id, entry => (entry ?? Blank(source, id)) with
+        {
+            Place = kept,
+            Finished = finished,
+            LastWatched = now,
+            Video = video ?? entry?.Video,
+        });
+    }
+
+    /// <summary>The source ids of every title in Your list or with a saved place.</summary>
+    public IReadOnlyList<string> Sources()
+    {
+        lock (_gate)
+        {
+            return [.. _entries.Values.Select(entry => entry.Source).Distinct(StringComparer.Ordinal)];
+        }
     }
 
     private static WatchEntry Blank(string source, string id) =>
@@ -176,9 +195,45 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
                     Seconds = entry.Place.TotalSeconds,
                     Finished = entry.Finished,
                     LastWatched = entry.LastWatched,
+                    Video = WriteVideo(entry.Video),
                 })],
             },
             StoreJson.OmittingNulls);
+
+    private static VideoRow? WriteVideo(VideoTitle? video) =>
+        video is null
+            ? null
+            : new VideoRow
+            {
+                Title = video.Title,
+                Kind = video.Kind,
+                Licence = video.Licence,
+                LengthSeconds = video.Length?.TotalSeconds,
+                Media = video.Media?.OriginalString,
+                Subtitles = video.Subtitles?.OriginalString,
+                Credit = video.Credit,
+                Unplayable = video.Unplayable,
+            };
+
+    private const double MostSeconds = 10_000_000;
+
+    private static VideoTitle? ReadVideo(Row row) =>
+        row.Video is { } video && !string.IsNullOrWhiteSpace(video.Title)
+            ? new VideoTitle(
+                row.Source,
+                row.Id,
+                video.Title,
+                video.Kind,
+                video.Licence ?? string.Empty,
+                video.LengthSeconds is > 0 and < MostSeconds ? TimeSpan.FromSeconds(video.LengthSeconds.Value) : null,
+                AddressOf(video.Media),
+                AddressOf(video.Subtitles),
+                video.Credit,
+                video.Unplayable)
+            : null;
+
+    private static Uri? AddressOf(string? text) =>
+        Uri.TryCreate(text, UriKind.RelativeOrAbsolute, out var uri) ? uri : null;
 
     private void SetAside()
     {
@@ -213,5 +268,26 @@ public sealed class WatchStore(string path, IFileSystem files, ILogger<WatchStor
         public bool Finished { get; set; }
 
         public DateTimeOffset? LastWatched { get; set; }
+
+        public VideoRow? Video { get; set; }
+    }
+
+    private sealed class VideoRow
+    {
+        public string Title { get; set; } = "";
+
+        public VideoKind Kind { get; set; }
+
+        public string? Licence { get; set; }
+
+        public double? LengthSeconds { get; set; }
+
+        public string? Media { get; set; }
+
+        public string? Subtitles { get; set; }
+
+        public string? Credit { get; set; }
+
+        public string? Unplayable { get; set; }
     }
 }

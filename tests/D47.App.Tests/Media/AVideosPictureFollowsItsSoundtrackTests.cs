@@ -54,14 +54,14 @@ public sealed class AVideosPictureFollowsItsSoundtrackTests : IDisposable
     private static string Fixture(string name) => Path.Combine(AppContext.BaseDirectory, "Fixtures", "video", name);
 
     /// <summary>A playback stopped when the test ends; skips the test where Media Foundation cannot decode the fixture.</summary>
-    private VideoPlayback Video(Func<bool>? pauseWhileSpeaking = null)
+    private VideoPlayback Video(Func<bool>? pauseWhileSpeaking = null, Func<bool>? pauseForPushToTalk = null)
     {
         if (!Decodes.Value)
         {
             Assert.Skip("Media Foundation cannot decode the fixture here.");
         }
 
-        var video = new VideoPlayback(_audio, pauseWhileSpeaking, background: work => work());
+        var video = new VideoPlayback(_audio, pauseWhileSpeaking, background: work => work(), pauseForPushToTalk: pauseForPushToTalk);
         _videos.Add(video);
         return video;
     }
@@ -274,6 +274,22 @@ public sealed class AVideosPictureFollowsItsSoundtrackTests : IDisposable
         _audio.TurnInFlight = false;
         video.Settled();
         Assert.Equal(VideoPause.None, video.PausedFor);
+    }
+
+    [Fact]
+    public void PushToTalkDoesNotPauseTheVideoWhileThatSettingIsOff()
+    {
+        var on = false;
+        var video = Video(pauseForPushToTalk: () => on);
+        video.Play(Clip);
+        Opened(video);
+
+        video.Pause(VideoPause.PushToTalk);
+        Assert.Equal(VideoPause.None, video.PausedFor);
+
+        on = true;
+        video.Pause(VideoPause.PushToTalk);
+        Assert.Equal(VideoPause.PushToTalk, video.PausedFor);
     }
 
     [Fact]

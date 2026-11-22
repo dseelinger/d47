@@ -212,7 +212,15 @@ public sealed class AppHost : IDisposable
             story: RunPlayer,
             music: Music,
             downloads: BookDownloads);
-        Video = new VideoPlayback(audio, story: RunPlayer, music: Music, logger: loggerFactory.CreateLogger<VideoPlayback>());
+        Video = new VideoPlayback(
+            audio,
+            story: RunPlayer,
+            music: Music,
+            logger: loggerFactory.CreateLogger<VideoPlayback>(),
+            pauseForPushToTalk: () => settings.Current.Watch.PauseForPushToTalk);
+        WatchStore = new D47.Core.Viewing.WatchStore(paths.WatchFile, files, loggerFactory.CreateLogger<D47.Core.Viewing.WatchStore>());
+        WatchStore.Load();
+        WatchHost = new D47.App.Panel.WatchHost(Video, WatchStore, settings, files);
         Video.TakesTurnsWith(BookPlayer);
         voice.StateEntered += state =>
         {
@@ -517,6 +525,12 @@ public sealed class AppHost : IDisposable
 
     /// <summary>Plays a video from a file or an HTTPS URL; the one instance the Watch pages drive.</summary>
     public VideoPlayback Video { get; }
+
+    /// <summary>Your list and the place reached in each video.</summary>
+    internal D47.Core.Viewing.WatchStore WatchStore { get; }
+
+    /// <summary>What Media › Movies reads and does, shared by the window and the headset.</summary>
+    public D47.App.Panel.WatchHost WatchHost { get; }
 
     /// <summary>Brings Project Gutenberg books onto the shelf; the one instance the player listens to.</summary>
     public GutenbergBookFetch BookDownloads { get; }
@@ -3065,6 +3079,7 @@ public sealed class AppHost : IDisposable
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList() ?? [],
                 podcastEpisodeHosts: () => late.Host?.Podcasts?.EpisodeHosts ?? [],
+                heldVideoSources: () => late.Host?.WatchHost.HeldSources ?? [],
                 podcastDesk: () => late.Host?.PodcastDesk,
                 bookDesk: () => late.Host?.BookDesk,
                 liveRoute: () => loop.Feed.LiveRoute,
@@ -6764,6 +6779,10 @@ public sealed class AppHost : IDisposable
     {
         // First, so the reason survives whatever the teardown below does.
         _logger.LogInformation("d47 {Version} is stopping: {Why}", Version, StoppingBecause);
+
+        // Before anything stops the video, so the place it was left at is kept.
+        WatchHost.Flush();
+        WatchHost.Dispose();
 
         // First of the teardown: a walk that has not started never will, and one under way stops at the end
         // of the journal file it is on. Its result is dropped, because the tick that would adopt it is gone.

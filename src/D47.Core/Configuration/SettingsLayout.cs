@@ -990,6 +990,8 @@ public static class SettingsLayout
         new SettingsTabPlace(
             "media-podcasts", "media-podcasts", true, "Media › Podcasts", [E(Capabilities.Builtin.PodcastCapability.FeedsKey)]),
         new SettingsTabPlace(
+            "media-movies", "media-movies", true, "Media › Movies", [E(Capabilities.Builtin.AudioCapability.VideoPushToTalkKey)]),
+        new SettingsTabPlace(
             "checklist", "checklist", false, "Checklist",
             [E("checklists.summary"), E("checklists.removeFulfilled")]),
         new SettingsTabPlace(

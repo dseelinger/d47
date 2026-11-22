@@ -1519,7 +1519,7 @@ public sealed record PodcastSettings
     }
 }
 
-/// <summary>The video catalogue's sources, set from the catalogue page.</summary>
+/// <summary>The video catalogue's sources, set from the catalogue page, and how a playing video yields.</summary>
 public sealed record WatchSettings
 {
     /// <inheritdoc cref="D47Settings.Extra"/>
@@ -1529,9 +1529,16 @@ public sealed record WatchSettings
     /// <summary>The ids in <see cref="Viewing.VideoSources"/> the catalogue searches.</summary>
     public IReadOnlyList<string> Sources { get; init; } = Viewing.VideoSources.All;
 
-    /// <summary>The known sources ticked, once each, in <see cref="Viewing.VideoSources.All"/>'s order; none when none is ticked.</summary>
-    public IReadOnlyList<string> SearchedSources() =>
-        [.. Viewing.VideoSources.All.Where(source => (Sources ?? []).Contains(source, StringComparer.Ordinal))];
+    /// <summary>Whether holding push-to-talk pauses the video until D47 has answered.</summary>
+    public bool PauseForPushToTalk { get; init; } = true;
+
+    /// <summary>The known sources ticked, once each, in <see cref="Viewing.VideoSources.All"/>'s order; every source when none is ticked.</summary>
+    public IReadOnlyList<string> SearchedSources()
+    {
+        IReadOnlyList<string> ticked = [.. Viewing.VideoSources.All.Where(source => (Sources ?? []).Contains(source, StringComparer.Ordinal))];
+
+        return ticked.Count == 0 ? Viewing.VideoSources.All : ticked;
+    }
 }
 
 /// <summary>The local voice books are read with; no other provider reads a book.</summary>

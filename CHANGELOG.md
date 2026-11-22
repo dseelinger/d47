@@ -8,6 +8,14 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Media › Movies opens on the Watch page: FIND A VIDEO and ADD A FILE FROM THIS COMPUTER, Carry on watching with the place and length of each title, and Your list. Pressing a title opens its player, Media › Movies › the title, with the picture, captions over its bottom from the subtitle file, a position bar, ◄ 30 S, PAUSE, 30 S ► and FROM THE START, and slabs for your place, length, credit, licence, where it plays from and its format. The place is saved every ten seconds, on a pause and when you start another title, so closing d47 mid-film lists it under Carry on watching and PLAY resumes there. FIND A VIDEO waits for the catalogue page.
+
+Added: Media › Movies has a Page settings tile with Pause while you hold push-to-talk, on by default. Off, holding push-to-talk leaves the video playing. The same row is under Sound on the player. D47 speaking a callout or an alert always pauses a video, as it does a book or a podcast.
+
+Changed: Privacy and egress keeps a video source's entry active while a title from it is in Your list, in Carry on watching or playing, even when the source is not ticked, because that title streams from its host.
+
+Changed: With no video source ticked, the catalogue searches all three, and Privacy and egress lists all three hosts.
+
 Added: Privacy and egress lists Internet Archive videos, NASA videos and Blender films, one entry for each source of the video catalogue. Each names the hosts it reaches and says that the words you search for go to that source and the video you watch is streamed from it while you watch; a Blender search happens on this PC, so only the film is fetched. An entry is silent while its source is not ticked. No page searches the catalogue yet.
 
 Added: The audio mixer has a Video row, below Podcasts, for the soundtrack of a video you are watching. It has its own level and mute, starts at 0.8, and drops to 0.2 while D47 speaks, as Ambient music does. Nothing plays on it yet.
