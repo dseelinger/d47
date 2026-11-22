@@ -114,11 +114,16 @@ open takes them first; with no episode in the slot they go to the music.
 Only one of a podcast and a book plays at a time. Playing or resuming an episode pauses a book being read, and
 starting a book pauses the episode, as if you had paused it; neither resumes by itself. A story playing
 pauses the episode until the story ends or is paused. The episode also pauses while D47 listens or speaks, and
-steps back two seconds when it carries on. Ambient music fades out and stays silent while an episode is in the slot, and
-invented chatter is not played while one plays.
+steps back two seconds when it carries on. Ambient music fades out and stays silent while an episode plays, and comes back when you pause it; a pause for
+push-to-talk, a callout or a story keeps it off. Invented chatter is not played while an episode plays.
 
 "Next episode" plays the earliest unfinished episode of the same show that was published after the current
-one. With none it says so and stops. With no episode playing it says "No podcast is playing."
+one. With none it says so and stops. After an episode ends by itself, or stops on a failure, it plays the one
+after that. It says "No podcast is playing." when nothing is in the slot, and after you stop the podcast.
+
+"Skip forward thirty seconds" with less than thirty seconds left is refused: the episode keeps playing and D47
+says how much is left, for example "Only 20 seconds are left." Dragging the seek bar to the end still finishes
+the episode. When a stream fails part way, the place saved is the last one reached, so a resume starts there.
 
 ### Find and add a show {#adding}
 

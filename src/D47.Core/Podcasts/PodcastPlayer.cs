@@ -22,8 +22,8 @@ public sealed record PodcastPlayerState(
 
 /// <summary>
 /// Plays podcast episodes in the arbiter's podcast slot, resuming each where the Commander left it, and keeps the
-/// listening record in a file. Ambient music yields while an episode plays or is paused by the Commander. An
-/// episode that plays to its end is marked finished and playback stops. Positions are saved on pause, stop, finish
+/// listening record in a file. Ambient music yields while an episode plays, including while D47 holds it, and comes
+/// back when the Commander pauses it. An episode that plays to its end is marked finished and playback stops. Positions are saved on pause, stop, finish
 /// and <see cref="SaveNow"/>, and every <see cref="SaveEvery"/> while playing; saves are written off the caller's
 /// thread.
 /// </summary>
@@ -58,6 +58,9 @@ public sealed class PodcastPlayer
 
     private PodcastListening _listening;
     private Playback? _now;
+
+    /// <summary>The episode that ended by itself or on a failure, until another plays or the Commander stops.</summary>
+    private Playback? _ended;
     private DateTimeOffset? _savedAt;
     private bool _wasPlaying;
     private string? _problem;
@@ -178,6 +181,7 @@ public sealed class PodcastPlayer
             }
 
             playback.Replaces = _now?.Id ?? 0;
+            _ended = null;
             from = _listening.Find(feed, episode.Id)?.Position ?? TimeSpan.Zero;
             _now = playback;
             _savedAt = null;
@@ -197,6 +201,8 @@ public sealed class PodcastPlayer
             {
                 playback.Id = id;
             }
+
+            FollowYield();
         }
         catch
         {
@@ -272,6 +278,7 @@ public sealed class PodcastPlayer
             _savedAt = null;
         }
 
+        FollowYield();
         QueueSave();
         Raise();
         return "Podcast paused.";
@@ -304,6 +311,7 @@ public sealed class PodcastPlayer
             _wasPlaying = true;
         }
 
+        FollowYield();
         Raise();
         return "Podcast resumed.";
     }
@@ -315,6 +323,8 @@ public sealed class PodcastPlayer
 
         lock (_gate)
         {
+            _ended = null;
+
             if (now is null || !ReferenceEquals(_now, now))
             {
                 return NothingPlaying;
@@ -343,7 +353,8 @@ public sealed class PodcastPlayer
 
     /// <summary>Whether <paramref name="sentence"/> says a transport action did nothing, as opposed to reporting it done.</summary>
     public static bool Refused(string sentence) =>
-        sentence is NothingPlaying or NotStarted or CannotSkip or FromStartOnlySentence;
+        sentence is NothingPlaying or NotStarted or CannotSkip or FromStartOnlySentence
+        || (sentence.StartsWith("Only ", StringComparison.Ordinal) && sentence.EndsWith(" left.", StringComparison.Ordinal));
 
     /// <summary>Moves the playing episode to <paramref name="to"/>, clamped to its length.</summary>
     public string Seek(TimeSpan to)
@@ -388,6 +399,11 @@ public sealed class PodcastPlayer
         lock (_gate)
         {
             playing = _now is { } now && now.Feed.AbsoluteUri == feed.AbsoluteUri;
+
+            if (_ended is { } ended && ended.Feed.AbsoluteUri == feed.AbsoluteUri)
+            {
+                _ended = null;
+            }
         }
 
         if (playing)
@@ -405,8 +421,8 @@ public sealed class PodcastPlayer
     }
 
     /// <summary>
-    /// Plays the earliest unfinished episode of the same show published after the one playing. With none, says so
-    /// and stops.
+    /// Plays the earliest unfinished episode of the same show published after the one playing, or after the one
+    /// that just ended. With none, says so and stops.
     /// </summary>
     public Task<string> Next()
     {
@@ -415,7 +431,7 @@ public sealed class PodcastPlayer
 
         lock (_gate)
         {
-            now = _now;
+            now = _now ?? _ended;
 
             if (now is null)
             {
@@ -446,6 +462,7 @@ public sealed class PodcastPlayer
         var playing = _audio.PodcastPlaying;
         var save = false;
         var paused = false;
+        var resumed = false;
 
         lock (_gate)
         {
@@ -463,6 +480,7 @@ public sealed class PodcastPlayer
             }
             else
             {
+                resumed = !_wasPlaying;
                 _wasPlaying = true;
 
                 if (_savedAt is not { } saved)
@@ -480,6 +498,11 @@ public sealed class PodcastPlayer
         if (save)
         {
             QueueSave(capture: true);
+        }
+
+        if (paused || resumed)
+        {
+            _background(FollowYield);
         }
 
         if (paused)
@@ -539,9 +562,9 @@ public sealed class PodcastPlayer
             to = TimeSpan.Zero;
         }
 
-        if (progress.Length is { } length && to > length)
+        if (by > TimeSpan.Zero && progress.Length is { } length && to >= length)
         {
-            to = length;
+            return Left(length - progress.Elapsed);
         }
 
         if (!_audio.SeekPodcast(to))
@@ -550,6 +573,12 @@ public sealed class PodcastPlayer
         }
 
         return by < TimeSpan.Zero ? "Back 30 seconds." : "Forward 30 seconds.";
+    }
+
+    private static string Left(TimeSpan left)
+    {
+        var seconds = Math.Max(1, (int)Math.Ceiling(Math.Max(0, left.TotalSeconds)));
+        return seconds == 1 ? "Only 1 second is left." : $"Only {seconds} seconds are left.";
     }
 
     /// <summary>
@@ -570,6 +599,7 @@ public sealed class PodcastPlayer
 
             ended = now;
             _now = null;
+            _ended = now;
             _savedAt = null;
 
             if (ended.ReachedEnd)
@@ -581,6 +611,11 @@ public sealed class PodcastPlayer
             {
                 problem = ended.Failure ?? "The episode stopped before its end.";
                 _problem = problem;
+
+                if (ended.Heard is { } heard)
+                {
+                    Remember(ended, heard);
+                }
             }
         }
 
@@ -596,16 +631,20 @@ public sealed class PodcastPlayer
         _background(Raise);
     }
 
-    /// <summary>Holds ambient music while an episode is in the slot. Reads the slot when it runs, so calls may land in any order.</summary>
+    /// <summary>
+    /// Holds ambient music while an episode is in the slot and not paused by the Commander. Reads the slot when it
+    /// runs, so calls may land in any order.
+    /// </summary>
     private void FollowYield()
     {
         lock (_yielding)
         {
+            var playing = _audio.PodcastPlaying;
             bool yielding;
 
             lock (_gate)
             {
-                yielding = _now is not null;
+                yielding = _now is { } now && (now.Id == 0 || playing);
             }
 
             _music.Yield(MusicYield.Podcast, yielding);
@@ -785,6 +824,13 @@ public sealed class PodcastPlayer
         public volatile bool FromStartOnly;
 
         public volatile string? Failure;
+
+        private long _heardTicks = -1;
+
+        /// <summary>How far the stream has been read since it opened or last sought; null before either.</summary>
+        public TimeSpan? Heard => Volatile.Read(ref _heardTicks) is var ticks and >= 0 ? TimeSpan.FromTicks(ticks) : null;
+
+        public void HeardAt(TimeSpan position) => Volatile.Write(ref _heardTicks, Math.Max(0, position.Ticks));
     }
 
     /// <summary>Passes the stream through, recording its end and its failures on the playback.</summary>
@@ -804,6 +850,10 @@ public sealed class PodcastPlayer
                 {
                     playback.ReachedEnd = true;
                 }
+                else if (read > 0)
+                {
+                    playback.HeardAt((playback.Heard ?? TimeSpan.Zero) + AudioFormat.Music.DurationOf(read));
+                }
 
                 return read;
             }
@@ -820,6 +870,11 @@ public sealed class PodcastPlayer
             {
                 inner.Seek(to);
                 playback.ReachedEnd = false;
+
+                if (inner.CanSeek)
+                {
+                    playback.HeardAt(to);
+                }
             }
             catch (Exception ex)
             {

@@ -159,7 +159,7 @@ public sealed class APodcastResumesWhereItWasLeftTests
     }
 
     [Fact]
-    public void SkipsMoveThirtySecondsAndStopAtTheEnds()
+    public void SkipsMoveThirtySecondsAndStopAtTheStart()
     {
         var player = Player();
         _ = player.Play(Feed, Show, First);
@@ -173,9 +173,10 @@ public sealed class APodcastResumesWhereItWasLeftTests
         player.SkipForward();
         Assert.Equal((id, TimeSpan.FromSeconds(50)), _sink.Seeks.Last());
 
+        var seeks = _sink.Seeks.Count;
         _sink.Progresses[id] = new TrackProgress(TimeSpan.FromSeconds(45), TimeSpan.FromMinutes(1));
         player.SkipForward();
-        Assert.Equal((id, TimeSpan.FromMinutes(1)), _sink.Seeks.Last());
+        Assert.Equal(seeks, _sink.Seeks.Count);
     }
 
     [Fact]
@@ -395,11 +396,6 @@ public sealed class APodcastResumesWhereItWasLeftTests
         Assert.Contains(berth.Id, _sink.Held);
         Assert.False(music.State.Playing);
 
-        player.Pause();
-        music.Follow(Docked, musicTrack: null, Start.AddSeconds(10));
-        Assert.Contains(berth.Id, _sink.Held);
-        Assert.Equal(2, _sink.Started.Count);
-
         player.Stop();
 
         Assert.DoesNotContain(berth.Id, _sink.Held);
@@ -462,6 +458,169 @@ public sealed class APodcastResumesWhereItWasLeftTests
         Assert.Contains(_sink.Started, request => request.Track is { } track && track.Name != First.Id);
     }
 
+    [Fact]
+    public void NextAfterAnEpisodeEndedByItselfPlaysTheOneAfterIt()
+    {
+        var player = Player();
+        _ = player.Play(Feed, Show, First);
+        var id = Live.Id;
+
+        using (var stream = Live.Track!.Open())
+        {
+            var buffer = new byte[4096];
+
+            while (stream.Read(buffer) > 0)
+            {
+            }
+        }
+
+        _sink.CompletePlayback(id);
+        RunQueued();
+        Assert.Null(player.State);
+
+        _ = player.Next();
+
+        Assert.Equal(Second.Id, Live.Name);
+        Assert.Equal(Second, player.State!.Episode);
+    }
+
+    [Fact]
+    public void NextAfterAnEpisodeStoppedOnAFailurePlaysTheOneAfterIt()
+    {
+        _stream = () => throw new IOException("The episode stopped arriving.");
+        var player = Player();
+        _ = player.Play(Feed, Show, First);
+        var id = Live.Id;
+
+        Assert.Throws<IOException>(() => Live.Track!.Open());
+        _sink.CompletePlayback(id);
+        RunQueued();
+        _stream = () => new MemoryPcm(canSeek: true);
+
+        _ = player.Next();
+
+        Assert.Equal(Second.Id, Live.Name);
+    }
+
+    [Fact]
+    public async Task NextAfterTheCommanderStoppedThePodcastStillSaysNothingIsPlaying()
+    {
+        var player = Player();
+        _ = player.Play(Feed, Show, First);
+        var id = Live.Id;
+
+        using (var stream = Live.Track!.Open())
+        {
+            var buffer = new byte[4096];
+
+            while (stream.Read(buffer) > 0)
+            {
+            }
+        }
+
+        _sink.CompletePlayback(id);
+        RunQueued();
+        player.Stop();
+
+        Assert.Equal("No podcast is playing.", await player.Next());
+    }
+
+    [Fact]
+    public void AStreamThatFailsPartWaySavesWhereItHadReached()
+    {
+        var player = Player();
+        _stream = () => new FailingPcm(afterSeconds: 3);
+        _ = player.Play(Feed, Show, First);
+        var id = Live.Id;
+        var buffer = new byte[AudioFormat.Music.SampleRate * AudioFormat.Music.BytesPerFrame];
+
+        using var stream = Live.Track!.Open();
+        Assert.Equal(buffer.Length, stream.Read(buffer));
+        Assert.Equal(buffer.Length, stream.Read(buffer));
+        Assert.Equal(buffer.Length, stream.Read(buffer));
+        Assert.Throws<IOException>(() => stream.Read(buffer));
+        _sink.CompletePlayback(id);
+        RunQueued();
+
+        Assert.Equal(TimeSpan.FromSeconds(3), OnDisk(First)!.Position);
+        Assert.False(OnDisk(First)!.Finished);
+    }
+
+    [Fact]
+    public void AForwardSkipThatWouldReachTheEndIsRefusedAndSaysHowMuchIsLeft()
+    {
+        var player = Player();
+        _ = player.Play(Feed, Show, First);
+        var id = Live.Id;
+        var seeks = _sink.Seeks.Count;
+
+        _sink.Progresses[id] = new TrackProgress(TimeSpan.FromSeconds(40), TimeSpan.FromMinutes(1));
+        var said = player.SkipForward();
+
+        Assert.Equal("Only 20 seconds are left.", said);
+        Assert.True(PodcastPlayer.Refused(said));
+        Assert.Equal(seeks, _sink.Seeks.Count);
+
+        _sink.Progresses[id] = new TrackProgress(TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(1));
+        Assert.Equal("Only 30 seconds are left.", player.SkipForward());
+        Assert.NotNull(player.State);
+    }
+
+    [Fact]
+    public void AForwardSkipWithNoKnownLengthIsNotRefused()
+    {
+        var player = Player();
+        _ = player.Play(Feed, Show, First);
+        var id = Live.Id;
+
+        _sink.Progresses[id] = new TrackProgress(TimeSpan.FromSeconds(40), null);
+
+        Assert.Equal("Forward 30 seconds.", player.SkipForward());
+        Assert.Equal((id, TimeSpan.FromSeconds(70)), _sink.Seeks.Last());
+    }
+
+    [Fact]
+    public void AmbientMusicComesBackWhileTheCommanderHasThePodcastPausedAndLeavesAgainOnResume()
+    {
+        var music = Music((Situations.Docked, "berth"));
+        music.Follow(Docked, musicTrack: null, Start);
+        var berth = Assert.Single(_sink.Started);
+        var player = Player(music);
+        _ = player.Play(Feed, Show, First);
+        Assert.Contains(berth.Id, _sink.Held);
+
+        player.Pause();
+
+        Assert.DoesNotContain(berth.Id, _sink.Held);
+        Assert.True(music.State.Playing);
+        Assert.NotEqual("Ambient music waits while a podcast plays.", music.Control(MusicAction.Next));
+        Assert.True(player.State!.PausedByCommander);
+
+        player.Resume();
+
+        Assert.NotEmpty(_sink.Held);
+        Assert.False(music.State.Playing);
+        Assert.Equal("Ambient music waits while a podcast plays.", music.Control(MusicAction.Next));
+    }
+
+    [Fact]
+    public void AmbientMusicComesBackWhenSilenceLeavesThePodcastPaused()
+    {
+        var music = Music((Situations.Docked, "berth"));
+        music.Follow(Docked, musicTrack: null, Start);
+        var berth = Assert.Single(_sink.Started);
+        var player = Player(music);
+        _ = player.Play(Feed, Show, First);
+        player.Tick(Start);
+        _queued.Clear();
+
+        _audio.Silence();
+        player.Tick(Start.AddSeconds(1));
+        RunQueued();
+
+        Assert.DoesNotContain(berth.Id, _sink.Held);
+    }
+
     private static readonly GameStatus Docked = Status(StatusFlags.Docked);
 
     private static GameStatus Status(StatusFlags flags) =>
@@ -515,6 +674,37 @@ internal sealed class MemoryPcm(bool canSeek) : IPcmStream
         {
             _at = (int)Math.Min(_pcm.Length, to.TotalSeconds * AudioFormat.Music.SampleRate) * AudioFormat.Music.BytesPerFrame;
         }
+    }
+
+    public void Dispose()
+    {
+    }
+}
+
+/// <summary>Reads silence for <paramref name="afterSeconds"/> seconds, then throws.</summary>
+internal sealed class FailingPcm(int afterSeconds) : IPcmStream
+{
+    private int _served;
+
+    public TimeSpan? Length => TimeSpan.FromHours(1);
+
+    public int Read(Span<byte> buffer)
+    {
+        var second = AudioFormat.Music.SampleRate * AudioFormat.Music.BytesPerFrame;
+
+        if (_served >= afterSeconds * second)
+        {
+            throw new IOException("The episode stopped arriving.");
+        }
+
+        var count = Math.Min(buffer.Length, second);
+        buffer[..count].Clear();
+        _served += count;
+        return count;
+    }
+
+    public void Seek(TimeSpan to)
+    {
     }
 
     public void Dispose()
