@@ -13,6 +13,9 @@ internal sealed class MediaFurnishing(IPanelTabHost host)
 
     private bool _furnished;
 
+    /// <summary>The book on the mini panel, once Books is furnished.</summary>
+    public BookMini? BooksMini { get; private set; }
+
     /// <param name="music">What the Music page reads, or null where the surface has none.</param>
     /// <param name="podcasts">What the Podcasts page reads, or null where the surface has none.</param>
     /// <param name="books">What the Books page reads, or null where the surface has none.</param>
@@ -25,6 +28,7 @@ internal sealed class MediaFurnishing(IPanelTabHost host)
         }
 
         _furnished = true;
+        BooksMini = books is null ? null : new BookMini(books);
 
         var help = D47.Core.Capabilities.Builtin.InterfaceCapability.Id;
 

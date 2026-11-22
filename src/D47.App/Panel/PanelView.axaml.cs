@@ -2636,6 +2636,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         Control? miniControl = Tab switch
         {
             PanelTab.Stories => _stories.Mini,
+            PanelTab.Media when Nav.RootKeyOf(Tab) == MediaFurnishing.BooksRoot => _media.BooksMini,
             PanelTab.Astrometrics when Nav.RootKeyOf(Tab) == RoutingPages.PlanRoot => _navigation.PlanRootMini,
             PanelTab.Astrometrics when Nav.RootKeyOf(Tab) == RoutingPages.GalaxyMapRoot => _navigation.GalaxyMini,
             _ => null,

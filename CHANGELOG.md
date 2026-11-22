@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: The mini panels show the book while their surface is on Media › Books: its title and CH n OF m in grey, the sentence being read in white, a progress bar, and the hint "Say “pause the book” or “next chapter”.", which becomes "Say “resume the book”." while you have paused it. It has no buttons, and says "No book is being read." when none is.
+
 Added: One thing under Media plays at a time. Starting a book pauses a podcast, and playing or resuming a podcast pauses a book, as if you had paused it; neither resumes by itself. While a story plays, a book does not start or resume and D47 says "A story is playing.", and a story starting pauses a book or a podcast. Speech and alerts pause a book at its sentence, and the book reads that sentence again once the callout ends. Invented chatter is not played while a book is read, and ambient music fades out while a book is read, as it does for a podcast, and fades back in when the book stops or you pause it.
 
 Added: Books by voice. Say "read the book" to carry on the book last read, read followed by a shelf title to read that book, "pause the book", "resume the book", "next chapter" or "back a paragraph". Only you can say them; the model is refused. While a book is playing or paused, bare "pause" and "play" act on it after an open story playback and before the music, and a podcast that is playing takes them from a paused book.
