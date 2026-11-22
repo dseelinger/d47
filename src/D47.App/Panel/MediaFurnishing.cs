@@ -64,6 +64,7 @@ internal sealed class MediaFurnishing(IPanelTabHost host)
                 host.OpenSettingsPlace,
                 settingsStrip?.Invoke(BooksRoot),
                 host.Headset),
+            BookAddPage.Key when books is { Folder: not null } => new BookAddPage(books, host.Nav, host.Headset),
             _ when books is not null && BookPage.SourceOf(books.Shelf, crumb.Key) is { } source => new BookPage(
                 books,
                 host.Nav,

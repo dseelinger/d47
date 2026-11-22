@@ -104,12 +104,6 @@ D47.Core.Adventures.Resolution.Succeeded
 D47.Core.AppPaths.Gutenberg
 D47.Core.Audio.PlaybackRequest.Name
 D47.Core.Audio.SpeechSpend.Utterances
-D47.Core.Books.BookJson.ToJson(D47.Core.Books.Book)
-D47.Core.Books.BookRead
-D47.Core.Books.BookShelf.Add(D47.Core.Books.Book)
-D47.Core.Books.BookTextPiece
-D47.Core.Books.BookTextPieceKind
-D47.Core.Books.EpubBookReader
 D47.Core.Books.GutenbergBook
 D47.Core.Books.GutenbergCatalogue
 D47.Core.Books.GutenbergLanguage
@@ -117,8 +111,6 @@ D47.Core.Books.GutenbergLanguages
 D47.Core.Books.GutenbergOrder
 D47.Core.Books.GutenbergQuery
 D47.Core.Books.GutenbergResult
-D47.Core.Books.TextBookParser
-D47.Core.Books.TextBookReader
 D47.Core.Callouts.NarratorCallout.StockCoreAboard
 D47.Core.CaptainsLog.CaptainsLogStore.Changed
 D47.Core.CaptainsLog.CaptainsLogStore.Path

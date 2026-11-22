@@ -24,7 +24,8 @@ public class TheBooksPageReadsTheShelfTests
             () => rig.Settings,
             change => rig.Settings = change(rig.Settings),
             _ => rig.Installed,
-            (_, _) => Task.FromResult(voices is null ? VoiceCatalogue.Silent : VoiceCatalogue.Of(voices)));
+            (_, _) => Task.FromResult(voices is null ? VoiceCatalogue.Silent : VoiceCatalogue.Of(voices)),
+            rig.BookFiles);
 
     private static (Window Window, PanelView Panel) Open(BookRig rig, bool headset = false, BooksHost? host = null)
     {
@@ -103,7 +104,7 @@ public class TheBooksPageReadsTheShelfTests
         Assert.Contains("H. G. WELLSTONE · FROM A FILE · THE NIGHT WATCH.TXT · READING NOW", drawn);
         Assert.Contains("CH 1 OF 2 · 0%", drawn);
         Assert.Equal("PAUSE", Named(panel, BooksKit.PauseName).Content);
-        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "ADD A BOOK"));
+        Assert.NotNull(MaybeNamed(panel, BooksPage.AddName));
         window.SaveFrame("books-desktop.png");
 
         window.Close();
@@ -377,7 +378,7 @@ public class TheBooksPageReadsTheShelfTests
     }
 
     [AvaloniaFact]
-    public void TheBigPanelListsTheShelfInCompactRowsWithoutAddingABook()
+    public void TheBigPanelListsTheShelfInCompactRows()
     {
         var rig = BookRig.InMemory();
         rig.Play();
@@ -388,7 +389,7 @@ public class TheBooksPageReadsTheShelfTests
         Assert.Contains("CH 1 OF 2 · 0%", drawn);
         Assert.DoesNotContain(drawn, text => text.Contains("from a file", StringComparison.Ordinal));
         Assert.NotNull(MaybeNamed(panel, BooksKit.ChaptersName));
-        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "ADD A BOOK"));
+        Assert.NotNull(MaybeNamed(panel, BooksPage.AddName));
         window.SaveFrame("books-headset.png");
 
         window.Close();

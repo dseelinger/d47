@@ -67,7 +67,10 @@ internal sealed class BookRig
         Audio = new AudioArbiter(Sink, NullLogger<AudioArbiter>.Instance).Start();
         Music = music?.Invoke(Audio);
         Story = new StoryRunPlayer(Audio, (_, line) => new AudioClip(line.Body, new byte[960], AudioFormat.Standard), Background.Enqueue);
+        Files = files;
+        Folder = folder;
         Shelf = new BookShelf(files, folder, NullLogger.Instance);
+        BookFiles = new BookFolder(files, folder, Shelf, NullLogger.Instance);
         Settings = new BookSettings { Provider = provider };
         Voices = new Dictionary<string, FakeBookVoice>(StringComparer.OrdinalIgnoreCase)
         {
@@ -93,7 +96,14 @@ internal sealed class BookRig
 
     public AudioArbiter Audio { get; }
 
+    public IFileSystem Files { get; }
+
+    public string Folder { get; }
+
     public BookShelf Shelf { get; }
+
+    /// <summary>The .txt and .epub files in the shelf's folder.</summary>
+    public BookFolder BookFiles { get; }
 
     public BookPlayer Player { get; }
 

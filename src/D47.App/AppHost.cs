@@ -201,6 +201,7 @@ public sealed class AppHost : IDisposable
             }
         };
         Books = new BookShelf(files, paths.Books, loggerFactory.CreateLogger<BookShelf>());
+        BookFiles = new BookFolder(files, paths.Books, Books, loggerFactory.CreateLogger<BookFolder>());
         BookPlayer = new BookPlayer(audio, Books, speech.LocalClient, () => settings.Current.Books, story: RunPlayer, music: Music);
         voice.StateEntered += state =>
         {
@@ -496,6 +497,9 @@ public sealed class AppHost : IDisposable
     /// <summary>The books added to read aloud, and where each was left.</summary>
     public BookShelf Books { get; }
 
+    /// <summary>The .txt and .epub files in the books folder.</summary>
+    public BookFolder BookFiles { get; }
+
     /// <summary>Reads a shelf book aloud with a local voice.</summary>
     public BookPlayer BookPlayer { get; }
 
@@ -681,6 +685,7 @@ public sealed class AppHost : IDisposable
     private volatile CueLibrary _cues;
 
     private AudioFolderWatch? _audioWatch;
+    private AudioFolderWatch? _bookWatch;
     private AudioFolderWatch? _musicPackWatch;
 
     private Action? _reloadAudio;
@@ -4057,6 +4062,12 @@ public sealed class AppHost : IDisposable
             host._reloadAudio,
             loggerFactory.CreateLogger<AudioFolderWatch>());
 
+        Directory.CreateDirectory(paths.Books);
+        host._bookWatch = new AudioFolderWatch(
+            paths.Books,
+            () => host._booksHost?.NotifyFilesChanged(),
+            loggerFactory.CreateLogger<AudioFolderWatch>());
+
         if (Directory.Exists(paths.MusicPack))
         {
             host._musicPackWatch = new AudioFolderWatch(
@@ -6033,7 +6044,8 @@ public sealed class AppHost : IDisposable
         Speech.LocalInstalled,
         (providerId, cancellationToken) => Speech.LocalClient(providerId) is { } provider
             ? provider.ListVoicesAsync(cancellationToken)
-            : Task.FromResult(D47.Core.Audio.VoiceCatalogue.Unreachable($"{D47.Core.Audio.TtsProviderCatalog.Selected(providerId).Name} is not installed.")));
+            : Task.FromResult(D47.Core.Audio.VoiceCatalogue.Unreachable($"{D47.Core.Audio.TtsProviderCatalog.Selected(providerId).Name} is not installed.")),
+        BookFiles);
 
     private D47.App.Panel.CastVoiceSurface? _castVoices;
 
@@ -6768,6 +6780,7 @@ public sealed class AppHost : IDisposable
         // After the tick and the hotkeys, so no step comes after the last write.
         _commsSelection?.Dispose();
         _audioWatch?.Dispose();
+        _bookWatch?.Dispose();
         _musicPackWatch?.Dispose();
         _modelCatalog?.Dispose();
         foreach (var source in _feedSources)

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Media › Books has an ADD A BOOK tile. It opens Add a book, which lists the .txt and .epub files in your books folder that are not on the shelf, with title, author and chapter count where the file has them. On the desktop, CHOOSE A FILE copies a file into the folder and OPEN THE FOLDER opens it; the headset shows the same list. ADD AND READ puts the chosen book on your shelf and starts reading it. A file with no text, such as a protected EPUB, shows a warning and stays off the shelf. A file added to the folder appears without a restart. Nothing is sent anywhere.
+
 Added: The mini panels show the book while their surface is on Media › Books: its title and CH n OF m in grey, the sentence being read in white, a progress bar, and the hint "Say “pause the book” or “next chapter”.", which becomes "Say “resume the book”." while you have paused it. It has no buttons, and says "No book is being read." when none is.
 
 Added: One thing under Media plays at a time. Starting a book pauses a podcast, and playing or resuming a podcast pauses a book, as if you had paused it; neither resumes by itself. While a story plays, a book does not start or resume and D47 says "A story is playing.", and a story starting pauses a book or a podcast. Speech and alerts pause a book at its sentence, and the book reads that sentence again once the callout ends. Invented chatter is not played while a book is read, and ambient music fades out while a book is read, as it does for a podcast, and fades back in when the book stops or you pause it.

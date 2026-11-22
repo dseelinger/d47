@@ -12,7 +12,8 @@ public sealed class BooksHost(
     Func<BookSettings> settings,
     Action<Func<BookSettings, BookSettings>> change,
     Func<string, bool> installed,
-    Func<string, CancellationToken, Task<VoiceCatalogue>> voices)
+    Func<string, CancellationToken, Task<VoiceCatalogue>> voices,
+    BookFolder? folder = null)
 {
     /// <summary>The local providers a book is read with, in the order the page lists them.</summary>
     public static IReadOnlyList<string> Providers { get; } = [TtsProviderCatalog.KokoroId, TtsProviderCatalog.ChatterboxId];
@@ -23,10 +24,38 @@ public sealed class BooksHost(
 
     public BookPlayer Player { get; } = player;
 
+    /// <summary>The books folder; null where the surface has none.</summary>
+    public BookFolder? Folder { get; } = folder;
+
     public BookSettings Settings => settings() ?? new BookSettings();
 
     /// <summary>Raised, on the calling thread, after a book was taken off the shelf.</summary>
     public event Action? Changed;
+
+    /// <summary>Raised, on any thread, when a file was added to or removed from the books folder.</summary>
+    public event Action? FilesChanged;
+
+    public void NotifyFilesChanged() => FilesChanged?.Invoke();
+
+    /// <summary>
+    /// Puts the file on the shelf and reads it from its start. False when it cannot be put on the shelf; <paramref name="reading"/>
+    /// is false when it is on the shelf but a story is playing, so the book is not read.
+    /// </summary>
+    public bool AddAndRead(BookFile file, out bool reading)
+    {
+        reading = false;
+
+        if (Folder?.AddToShelf(file) is null)
+        {
+            return false;
+        }
+
+        Changed?.Invoke();
+        FilesChanged?.Invoke();
+        reading = ReadFrom(file.Source, 0);
+
+        return true;
+    }
 
     /// <summary>Whether the provider's model is on this computer.</summary>
     public bool Installed(string providerId) => installed(providerId);

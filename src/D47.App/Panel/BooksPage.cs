@@ -28,6 +28,8 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
 
     public const string RowName = "BookRow";
 
+    public const string AddName = "BookAdd";
+
     public const string NotInstalled = "Not installed";
 
     /// <summary>The books the big panel lists at a time.</summary>
@@ -65,6 +67,15 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
         }
 
         _body.Children.Add(_shelf);
+
+        if (host.Folder is not null)
+        {
+            var add = BooksKit.Tile(AddName, "ADD A BOOK", "Add a book");
+            add.HorizontalAlignment = HorizontalAlignment.Left;
+            add.MinWidth = 160;
+            add.Click += (_, _) => _nav.Drill(BookAddPage.Crumb);
+            _body.Children.Add(add);
+        }
 
         var root = new DockPanel { Margin = new Thickness(14) };
 
