@@ -51,7 +51,8 @@ public sealed class AppPaths
         ScreenshotThumbnails = Path.Combine(Data, "screenshot-thumbnails");
         Signals = Path.Combine(Data, "signals");
         Rares = Path.Combine(Data, "rares");
-        Gutenberg = Path.Combine(Data, "books", "gutenberg");
+        Books = Path.Combine(Data, "books");
+        Gutenberg = Path.Combine(Books, "gutenberg");
         GalNet = Path.Combine(Data, "galnet.json");
         WatchesFile = Path.Combine(Data, "watches.json");
         Pictures = Path.Combine(Data, "pictures");
@@ -166,6 +167,9 @@ public sealed class AppPaths
 
     /// <summary>The rare index, <c>rares.tsv</c>, downloaded when a rare is asked about.</summary>
     public string Rares { get; }
+
+    /// <summary>The book shelf: <c>shelf.json</c> and each book's paragraphs, one <c>.json</c> file per book.</summary>
+    public string Books { get; }
 
     /// <summary>The Project Gutenberg catalogue, <c>catalogue.tsv.gz</c>, downloaded when the page that browses it opens.</summary>
     public string Gutenberg { get; }
