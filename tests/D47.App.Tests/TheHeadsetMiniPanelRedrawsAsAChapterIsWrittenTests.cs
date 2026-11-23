@@ -2,9 +2,12 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using D47.App.Headset;
 using D47.App.Panel;
 using D47.Core;
 using D47.Core.Adventures;
+using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Stories;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -120,6 +123,86 @@ public sealed class TheHeadsetMiniPanelRedrawsAsAChapterIsWrittenTests
         task.GetAwaiter().GetResult();
         window.Close();
     }
+
+    [AvaloniaFact]
+    public void TheHeadsetMiniSurfaceIsDirtiedAndDrawsANewClockEverySecond()
+    {
+        var paths = new AppPaths(TestSurface.MemoryFolder("d47-headset-write-bar-surface"));
+        paths.EnsureCreated();
+        var stories = StoryStore.Open(Path.Combine(paths.Data, "story.json"), TestSurface.FilesFor(paths), NullLogger<StoryStore>.Instance);
+        var clock = new Clock();
+        var gate = new TaskCompletionSource();
+        var baseSurface = AdventureFixture.Surface(paths);
+        var catalog = new StoryCatalog([StoryFixture.Story], () => [StoryFixture.Secret]);
+
+        var director = new StoryDirector(
+            stories, baseSurface.Book, () => catalog,
+            async (ask, _, _) =>
+            {
+                ask.Progress!.Enter(WriteStage.Objectives, StoryPace.For("claude-sonnet-5-5", chapter: true));
+                await gate.Task.ConfigureAwait(false);
+                return new AdventureOutcome(null, null, "Not written.", []);
+            },
+            () => null, _ => { }, NullLogger.Instance)
+        {
+            Time = clock,
+        };
+
+        using var look = AppLook.Put();
+        var task = director.PickAsync("F1", StoryFixture.Story.Id, Now, CancellationToken.None);
+
+        var (settings, _, _) = TestSurface.Create();
+        settings.Apply(VrCapability.ModeKey, "mini", SettingsCaller.Panel);
+
+        using (var vr = new VrPanelSurface(new PanelViewModel(), settings, _ => null, adventures: baseSurface with { Stories = director }))
+        {
+            vr.ApplyMode();
+            vr.Nav.Select(PanelTab.Stories);
+            Dispatcher.UIThread.RunJobs();
+            Serve(vr);
+            Until(() => HeadsetBars(vr).Count == 1, 10, 20);
+            Serve(vr);
+
+            vr.TickAdventures();
+            Serve(vr);
+
+            for (var second = 1; second <= 5; second++)
+            {
+                var before = HeadsetClockText(vr);
+                clock.Advance(TimeSpan.FromSeconds(1));
+                HeadsetBars(vr).Single().Refresh();
+
+                vr.TickAdventures();
+                Assert.True(vr.IsDirty, $"second {second}: the tick did not mark the frame dirty");
+
+                Serve(vr);
+                Assert.NotEqual(before, HeadsetClockText(vr));
+            }
+        }
+
+        gate.SetResult();
+        task.GetAwaiter().GetResult();
+    }
+
+    private static void Serve(VrPanelSurface panel)
+    {
+        var (width, height) = panel.Size;
+        var buffer = new byte[width * height * 4];
+
+        unsafe
+        {
+            fixed (byte* pixels = buffer)
+            {
+                panel.Draw((IntPtr)pixels, width * 4);
+            }
+        }
+    }
+
+    private static List<WriteProgressBar> HeadsetBars(VrPanelSurface panel) =>
+        [.. panel.Board.View.GetVisualDescendants().OfType<WriteProgressBar>().Where(bar => bar.FindAncestorOfType<AdventureMini>() is not null)];
+
+    private static string? HeadsetClockText(VrPanelSurface panel) =>
+        HeadsetBars(panel).Single().GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text).FirstOrDefault(text => text?.Contains(':') == true);
 
     private static List<WriteProgressBar> Bars(PanelView panel) =>
         [.. panel.GetVisualDescendants().OfType<WriteProgressBar>().Where(bar => bar.IsEffectivelyVisible)];

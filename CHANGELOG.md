@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: In the headset, the Writing the chapter bar on the mini panel's Stories reading moves once a second for the whole write, as it does in the d47 window. It had stopped between redraws.
+
 Fixed: In the headset, the Music and Podcasts seek bars and times on the big panel, and the music read-out on the mini panel, move once a second while the track or episode plays. They had stopped between redraws.
 
 Changed: The Raw, Manufactured and Encoded material ledgers are laid out like the in-game material trader: grades are columns headed by their storage cap, and each trader line is a row of one material per grade. Guardian and Thargoid keep their grade groups.

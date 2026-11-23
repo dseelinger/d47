@@ -1023,7 +1023,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
 
         foreach (var bar in this.GetVisualDescendants().OfType<WriteProgressBar>())
         {
-            if (bar.IsEffectivelyVisible)
+            if (ShownHere(bar))
             {
                 bar.Refresh();
                 moved |= bar.TakeMoved();
@@ -1031,6 +1031,25 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         }
 
         return moved;
+    }
+
+    /// <summary>Whether the control and every parent up to this view is visible; unlike <see cref="Visual.IsEffectivelyVisible"/>, true in the headset's hidden offscreen window.</summary>
+    private bool ShownHere(Visual control)
+    {
+        for (Visual? at = control; at is not null; at = at.GetVisualParent())
+        {
+            if (!at.IsVisible)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(at, this))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
