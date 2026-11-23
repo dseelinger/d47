@@ -41,7 +41,14 @@ internal sealed class SteppedSink : IAudioSink
         }
     }
 
-    public void Stop(long playbackId) => _done.Add(playbackId);
+    /// <summary>The clips stopped before they finished.</summary>
+    public List<long> Stopped { get; } = [];
+
+    public void Stop(long playbackId)
+    {
+        _done.Add(playbackId);
+        Stopped.Add(playbackId);
+    }
 
     /// <summary>The streams paused and not resumed since.</summary>
     public HashSet<long> Paused { get; } = [];

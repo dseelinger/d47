@@ -24,10 +24,18 @@ internal sealed class VoiceAuditions
     private readonly AudioArbiter _audio;
     private readonly SettingsService _settings;
     private readonly PersonaHost _personas;
+    private readonly Func<string, ITtsProvider?> _localVoice;
 
-    internal VoiceAuditions(SpeechClients speech, AudioArbiter audio, SettingsService settings, PersonaHost personas)
+    /// <param name="localVoice">The local provider a book is read with, by provider id; null when its model is not installed.</param>
+    internal VoiceAuditions(
+        SpeechClients speech,
+        AudioArbiter audio,
+        SettingsService settings,
+        PersonaHost personas,
+        Func<string, ITtsProvider?> localVoice)
     {
         _speech = speech;
+        _localVoice = localVoice;
         _audio = audio;
         _settings = settings;
         _personas = personas;
@@ -106,7 +114,7 @@ internal sealed class VoiceAuditions
     /// <summary>Speaks the Narrator audition line in a voice of the local provider books are read with, at the speed a book is read.</summary>
     internal async Task AuditionBookVoiceAsync(string providerId, string voiceId, CancellationToken cancellationToken)
     {
-        if (_speech.LocalClient(providerId) is not { } provider)
+        if (_localVoice(providerId) is not { } provider)
         {
             throw new InvalidOperationException("No voice provider is selected.");
         }

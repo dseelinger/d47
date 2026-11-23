@@ -2457,7 +2457,7 @@ public sealed class AppHost : IDisposable
             ownVoice,
             customVoices);
 
-        var auditions = new VoiceAuditions(speech, audio, settings, personas);
+        var auditions = new VoiceAuditions(speech, audio, settings, personas, speech.LocalClient);
 
         // Built once and shared with TurnLoop, so the drill capability (#168) opens an offer TurnLoop
         // itself reads, rather than one nobody looks at.

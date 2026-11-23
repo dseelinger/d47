@@ -40,7 +40,7 @@ public class TheCovasTestPlaysTheStandInTests : IDisposable
             new OwnVoice(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()),
             new CustomVoices(paths.Data, new DiskFileSystem(), new DpapiSecretProtector()));
 
-        _auditions = new VoiceAuditions(_speech, _arbiter, settings, personas);
+        _auditions = new VoiceAuditions(_speech, _arbiter, settings, personas, _speech.LocalClient);
     }
 
     public void Dispose() => _speech.Dispose();
