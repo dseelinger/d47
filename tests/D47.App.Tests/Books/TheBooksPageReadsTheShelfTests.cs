@@ -283,6 +283,7 @@ public class TheBooksPageReadsTheShelfTests
         Assert.Contains(BooksPage.NothingReading, Drawn(panel));
 
         Click(Named(panel, BooksPage.RowName));
+        RowClicks.Until(() => panel.Nav.Trail[^1].Word == "The Night Watch");
 
         Assert.Equal("The Night Watch", panel.Nav.Trail[^1].Word);
         Assert.Contains("H. G. Wellstone · from a file · The Night Watch.txt · 2 chapters", Drawn(panel));
@@ -318,6 +319,7 @@ public class TheBooksPageReadsTheShelfTests
         Assert.Contains("✓ FINISHED", Drawn(panel));
 
         Click(Named(panel, BooksPage.RowName));
+        RowClicks.Until(() => panel.Nav.Trail[^1].Word == "The Night Watch");
 
         Assert.Contains("✓ FINISHED · 2 CHAPTERS", Drawn(panel));
         Assert.Null(MaybeNamed(panel, BookPage.ReadOnName));
@@ -334,6 +336,7 @@ public class TheBooksPageReadsTheShelfTests
         var (window, panel) = Open(rig);
 
         Click(Named(panel, BooksPage.RowName));
+        RowClicks.Until(() => panel.Nav.Trail[^1].Word == "The Night Watch");
         Click(Named(panel, BookPage.TakeOffName));
         Settled(rig);
 

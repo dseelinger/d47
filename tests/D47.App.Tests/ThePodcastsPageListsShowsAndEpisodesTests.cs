@@ -38,6 +38,8 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
 
         public List<(bool? Continuous, PodcastOrder? Order)> Sets { get; } = [];
 
+        public List<Uri> PlayedShows { get; } = [];
+
         public PodcastsHost Host { get; }
 
         public Fixture(bool fail = false)
@@ -83,6 +85,11 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
                     var current = Plays.TryGetValue(feed.AbsoluteUri, out var play) ? play : new PodcastShowPlay { Feed = feed.AbsoluteUri };
                     Plays[feed.AbsoluteUri] = current with { Continuous = continuous ?? current.Continuous, Order = order ?? current.Order };
                     Host!.RaiseChanged();
+                },
+                feed =>
+                {
+                    PlayedShows.Add(feed);
+                    return Task.FromResult("Every episode of Deep Space Radio is finished.");
                 });
         }
     }

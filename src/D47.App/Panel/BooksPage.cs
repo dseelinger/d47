@@ -40,6 +40,11 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
     private readonly PanelPrompts _prompts;
     private readonly Action<string> _openSettings;
     private readonly bool _big;
+    private readonly RowPresses _presses = new();
+    private CancellationTokenSource? _drill;
+    private string? _failure;
+    private string? _readKey;
+    private DateTime _readAt;
     private readonly StackPanel _body = new() { Spacing = 16, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly StackPanel _notices = new() { Spacing = 8 };
     private readonly StackPanel _now = new() { Spacing = 2 };
@@ -123,6 +128,7 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
         base.OnDetachedFromVisualTree(e);
         _host.Player.Changed -= OnPlayerChanged;
         _host.Changed -= OnPlayerChanged;
+        CancelDrill();
     }
 
     /// <summary>Lists the chosen provider's voices so the mono line can name the voice.</summary>
@@ -171,8 +177,17 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
         if (now is null)
         {
             _now.Children.Add(Typeset.Prose(NothingReading, 15, ThemeManager.GreyKey, wrap: true, margin: new Thickness(0, 6, 0, 6)));
+
+            if (_failure is not null)
+            {
+                _line.Say(_failure);
+                _now.Children.Add(_line);
+            }
+
             return;
         }
+
+        _failure = null;
 
         _now.Children.Add(BooksKit.NowBlock(_host, now, titled: true, _big));
 
@@ -341,6 +356,44 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
         }
     }
 
+    private async void DrillAfterDoubleClickTime(NavCrumb crumb)
+    {
+        CancelDrill();
+
+        var waiting = new CancellationTokenSource();
+
+        _drill = waiting;
+
+        try
+        {
+            await Task.Delay(ListRow.DoubleClickTime, waiting.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        _drill = null;
+        _nav.Drill(crumb);
+    }
+
+    private void CancelDrill()
+    {
+        _drill?.Cancel();
+        _drill = null;
+    }
+
+    /// <summary>Says why a book did not start; a start needs no line.</summary>
+    private void Report(bool started)
+    {
+        _failure = started
+            ? null
+            : _host.Player.StoryPlaying
+                ? D47.Core.Books.BookDesk.StoryPlaying
+                : "The book could not be read. Its text may be missing from the shelf.";
+        Draw();
+    }
+
     private Button Row(D47.Core.Books.ShelfBook entry, D47.App.Voice.BookPlayback? now)
     {
         var reading = now is not null && now.Book.Source == entry.Source;
@@ -388,7 +441,32 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
         };
         Avalonia.Automation.AutomationProperties.SetName(row, entry.Title);
         ListRow.Dress(row, reading);
-        row.Click += (_, _) => _nav.Drill(BookPage.CrumbOf(entry.Source, entry.Title));
+        var crumb = BookPage.CrumbOf(entry.Source, entry.Title);
+
+        if (_big)
+        {
+            row.Click += (_, _) => _nav.Drill(crumb);
+            return row;
+        }
+
+        // The drill waits out the double-click time, so a second press finds the shelf and not the book's page.
+        row.Click += (_, _) =>
+        {
+            // The release of a double-click's second press raises a click of its own.
+            if (_readKey == entry.Source.Id && DateTime.UtcNow - _readAt < ListRow.DoubleClickTime)
+            {
+                return;
+            }
+
+            DrillAfterDoubleClickTime(crumb);
+        };
+        ListRow.OnDoubleClick(row, _presses, entry.Source.Id, () =>
+        {
+            CancelDrill();
+            _readKey = entry.Source.Id;
+            _readAt = DateTime.UtcNow;
+            Report(_host.ReadOn(entry.Source));
+        });
 
         return row;
     }

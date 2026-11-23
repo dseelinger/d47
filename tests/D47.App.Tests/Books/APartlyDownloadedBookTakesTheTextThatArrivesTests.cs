@@ -68,7 +68,7 @@ public sealed class APartlyDownloadedBookTakesTheTextThatArrivesTests
 
         var row = panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == BooksPage.RowName);
         row.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Dispatcher.UIThread.RunJobs();
+        RowClicks.Until(() => panel.Nav.Trail[^1].Word == "The Night Watch");
 
         return (window, panel);
     }

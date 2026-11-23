@@ -50,6 +50,27 @@ public sealed class PodcastDesk(
             : PlayNewest([found], string.Empty, $"Every episode of {found.Show.Title} is finished.");
     }
 
+    /// <summary>
+    /// Carries on the episode in the slot when it is from <paramref name="feed"/>; otherwise plays that show's newest
+    /// unfinished episode. The show is found by feed, not by title.
+    /// </summary>
+    public Task<string> PlayFeed(Uri feed)
+    {
+        var found = shows().FirstOrDefault(entry => string.Equals(entry.Feed.AbsoluteUri, feed.AbsoluteUri, StringComparison.Ordinal));
+
+        if (found is null)
+        {
+            return Task.FromResult("That show is not added.");
+        }
+
+        if (Player.State is { } now && string.Equals(now.Feed.AbsoluteUri, feed.AbsoluteUri, StringComparison.Ordinal))
+        {
+            return Task.FromResult(Player.Resume());
+        }
+
+        return PlayNewest([found], string.Empty, $"Every episode of {found.Show.Title} is finished.");
+    }
+
     public string Pause() => Player.Pause();
 
     public string Resume() => Player.Resume();

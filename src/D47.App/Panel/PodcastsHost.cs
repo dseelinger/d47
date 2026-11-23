@@ -13,7 +13,8 @@ public sealed class PodcastsHost(
     Func<Uri, Task<PodcastRefresh>> add,
     Action<Uri> remove,
     Func<Uri, PodcastShowPlay> playFor,
-    Action<Uri, bool?, PodcastOrder?> setPlay)
+    Action<Uri, bool?, PodcastOrder?> setPlay,
+    Func<Uri, Task<string>> playShow)
 {
     private readonly Lock _gate = new();
     private Task<IReadOnlyList<PodcastRefresh>>? _refreshing;
@@ -78,6 +79,9 @@ public sealed class PodcastsHost(
 
     /// <summary>Sets the feed's continuous play and, where given, its order.</summary>
     public void SetPlay(Uri feed, bool? continuous, PodcastOrder? order) => setPlay(feed, continuous, order);
+
+    /// <summary>Carries on the show's episode in the slot, or plays its newest unfinished one; says what it did.</summary>
+    public Task<string> PlayShow(Uri feed) => playShow(feed);
 
     public void RaiseChanged() => Changed?.Invoke();
 

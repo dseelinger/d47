@@ -85,6 +85,7 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
     private readonly PanelNavigator _nav;
     private readonly WaitSound? _wait;
     private readonly bool _big;
+    private readonly RowPresses _presses = new();
     private readonly ContentControl _shows = new();
     private readonly StackPanel _episodes = new() { Spacing = 12 };
     private readonly StatusLine _line = new() { Margin = new Thickness(0, 0, 0, 10) };
@@ -337,6 +338,17 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
                 _host.Selected = show.Feed.AbsoluteUri;
                 Draw();
             };
+
+            if (!_big)
+            {
+                ListRow.OnDoubleClick(row, _presses, show.Feed.AbsoluteUri, () =>
+                {
+                    _host.Selected = show.Feed.AbsoluteUri;
+                    Draw();
+                    _ = PlayShowAsync(show);
+                });
+            }
+
             column.Children.Add(row);
         }
 
@@ -646,6 +658,12 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
             Margin = new Thickness(0, 2, 0, 0),
             Children = { range, previous, next },
         };
+    }
+
+    private async Task PlayShowAsync(CachedShow show)
+    {
+        Report(await _host.PlayShow(show.Feed));
+        Draw();
     }
 
     private async Task PlayAsync(CachedShow show, PodcastEpisode episode)

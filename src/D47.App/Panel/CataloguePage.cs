@@ -62,6 +62,8 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
     private readonly Button _watch = BooksKit.Tile(WatchName, "WATCH NOW", "Watch now");
     private readonly DockPanel _pager = new() { Name = PagerName, Margin = new Thickness(0, 6, 0, 0) };
 
+    private readonly RowPresses _presses = new();
+
     private VideoPage _result = VideoPage.Empty;
     private string _query = string.Empty;
     private int _page = 1;
@@ -355,6 +357,16 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
             _chosen = Key(title);
             Draw();
         };
+
+        if (!_big && title.Playable)
+        {
+            ListRow.OnDoubleClick(row, _presses, Key(title), () =>
+            {
+                _chosen = Key(title);
+                Draw();
+                WatchChosen();
+            });
+        }
 
         return row;
     }

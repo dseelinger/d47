@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 
@@ -87,6 +88,49 @@ public static class ListRow
         };
 
         return target;
+    }
+
+    /// <summary>How long the platform allows between the two presses of a double-click.</summary>
+    public static TimeSpan DoubleClickTime =>
+        Application.Current?.PlatformSettings?.GetDoubleTapTime(PointerType.Mouse) is { } time && time > TimeSpan.Zero
+            ? time
+            : TimeSpan.FromMilliseconds(500);
+
+    /// <summary>
+    /// Runs <paramref name="act"/> on the second left press of a double-click on <paramref name="row"/>. Counted from
+    /// the presses, not <c>DoubleTapped</c>, because a first click that redraws the list puts the second press on a
+    /// new control: the first press is remembered in <paramref name="presses"/>, which the page owns, by
+    /// <paramref name="key"/>. A press with Control held, or one whose first press was on another row, does nothing.
+    /// </summary>
+    public static void OnDoubleClick(Control row, RowPresses presses, string key, Action act)
+    {
+        row.AddHandler(
+            InputElement.PointerPressedEvent,
+            (_, args) =>
+            {
+                if (!args.GetCurrentPoint(row).Properties.IsLeftButtonPressed)
+                {
+                    return;
+                }
+
+                if (args.ClickCount == 1)
+                {
+                    presses.Key = key;
+                    return;
+                }
+
+                if (args.ClickCount != 2
+                    || args.KeyModifiers.HasFlag(KeyModifiers.Control)
+                    || !string.Equals(presses.Key, key, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                presses.Key = null;
+                act();
+            },
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
     }
 
     /// <summary>True for a visible, enabled control that takes keyboard focus and is dressed as a row.</summary>
@@ -188,4 +232,10 @@ public static class ListRow
         text.Bind(TextBlock.ForegroundProperty, text.GetObservable(brush));
         return text;
     }
+}
+
+/// <summary>The key of the row last pressed once, kept by the page whose rows <see cref="ListRow.OnDoubleClick"/> watches.</summary>
+public sealed class RowPresses
+{
+    internal string? Key { get; set; }
 }

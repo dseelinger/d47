@@ -6079,7 +6079,10 @@ public sealed class AppHost : IDisposable
                     feed => Settings.Current.Podcasts.PlayFor(feed),
                     (feed, continuous, order) => Settings.Replace(
                         "a podcast show's continuous play was set",
-                        current => current with { Podcasts = current.Podcasts.WithPlay(feed, continuous, order) }));
+                        current => current with { Podcasts = current.Podcasts.WithPlay(feed, continuous, order) }),
+                    feed => PodcastDesk is { } desk
+                        ? desk.PlayFeed(feed)
+                        : Task.FromResult("Podcasts are not available."));
                 store.Changed += _podcastsHost.RaiseChanged;
 
                 var shown = Settings.Current.Podcasts.Shows;

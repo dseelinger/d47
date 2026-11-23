@@ -150,6 +150,10 @@ first. Opening the page fetches every feed again, and says which could not be re
 **In progress** with where you stopped, **Finished**, or nothing. An unfinished episode is new when it is newer
 than every episode of that show you have started; a show you have not started has only its newest episode new.
 
+On the window, double-clicking a show plays it: the episode in the player's slot resumes when it is from that show,
+and otherwise the show's newest unfinished episode starts. When every episode is finished the page says so. The
+big panel has no double-click; an episode row plays there.
+
 Above the selected show's episodes one row sets its continuous play: the checkbox **Play another episode when
 one ends** and the order, **Oldest first** or **Newest first**. While the box is clear the order is disabled and
 a line under the row says which order is kept, for example "Order kept for when it is on: oldest first". Ticking
