@@ -38,6 +38,9 @@ public static class CopyGlyph
 
     public static string? GetCopies(Button button) => button.GetValue(CopiesProperty);
 
+    private static readonly AttachedProperty<string?> RestingTipProperty =
+        AvaloniaProperty.RegisterAttached<Button, string?>("RestingTip", typeof(CopyGlyph));
+
     /// <summary>Puts a copy glyph for <paramref name="system"/> beside the tile's figures; the tile is unchanged without a system or a clipboard.</summary>
     public static Border WithCopy(Border tile, string? system, Func<string, Task<bool>>? copy, bool link = false)
     {
@@ -154,12 +157,34 @@ public static class CopyGlyph
         return button;
     }
 
-    /// <summary>Names a copy's result on <paramref name="button"/>, and goes back to <see cref="Name"/> after two seconds.</summary>
+    /// <summary>
+    /// Names a copy's result on <paramref name="button"/>, and goes back to <see cref="Name"/> after two seconds.
+    /// A button with a hover label shows the result there too; one with an empty tip keeps it empty.
+    /// </summary>
     public static void Show(Button button, bool worked)
     {
-        AutomationProperties.SetName(button, worked ? Copied : Failed);
+        var result = worked ? Copied : Failed;
 
-        OneShot.Dispatcher(Shown, () => AutomationProperties.SetName(button, Name));
+        AutomationProperties.SetName(button, result);
+
+        var resting = button.GetValue(RestingTipProperty) ?? GlyphLabel.GetTip(button);
+
+        if (resting is { Length: > 0 })
+        {
+            button.SetValue(RestingTipProperty, resting);
+            GlyphLabel.SetTip(button, result);
+        }
+
+        OneShot.Dispatcher(Shown, () =>
+        {
+            AutomationProperties.SetName(button, Name);
+
+            if (button.GetValue(RestingTipProperty) is { } back)
+            {
+                button.SetValue(RestingTipProperty, null);
+                GlyphLabel.SetTip(button, back);
+            }
+        });
     }
 
     /// <summary>

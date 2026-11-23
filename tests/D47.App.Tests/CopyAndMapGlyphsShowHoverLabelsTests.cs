@@ -116,23 +116,87 @@ public class CopyAndMapGlyphsShowHoverLabelsTests
         window.Close();
     }
 
+    private static string LabelText(Control glyph) =>
+        ((TextBlock)((Border)glyph.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.Popup>().Single(popup => popup.Name == "Label").Child!).Child!).Text!;
+
+    private static void Hover(Window window, Control glyph)
+    {
+        window.MouseMove(glyph.TranslatePoint(new Point(22, 22), window)!.Value);
+        Dispatcher.UIThread.RunJobs();
+    }
+
     [AvaloniaFact]
-    public void ThePressChangesTheAccessibleNameAndLeavesTheTip()
+    public void ThePressMakesTheLabelSayCopiedAndItGoesBackToTheTip()
     {
         using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
 
         var glyph = CopyGlyph.For("Sol", Copy);
         var (window, _) = Hosted(glyph, headset: false);
+        Hover(window, glyph);
+
+        CopyGlyph.Show(glyph, worked: true);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(CopyGlyph.Copied, AutomationProperties.GetName(glyph));
+        Assert.Equal("COPIED", LabelText(glyph));
+
+        clock.Advance(TimeSpan.FromSeconds(2));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(CopyGlyph.Name, AutomationProperties.GetName(glyph));
+        Assert.Equal("COPY SYSTEM NAME", LabelText(glyph));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AFailedCopyMakesTheLabelSayCopyFailedAndItKeepsTheButtonsOwnTip()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.For("Sol", Copy, "Copy station name");
+        var (window, _) = Hosted(glyph, headset: false);
+        Hover(window, glyph);
+
+        CopyGlyph.Show(glyph, worked: false);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(CopyGlyph.Failed, AutomationProperties.GetName(glyph));
+        Assert.Equal("COPY FAILED", LabelText(glyph));
+
+        clock.Advance(TimeSpan.FromSeconds(2));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("COPY STATION NAME", LabelText(glyph));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void OnTheBigPanelAPressLeavesTheTipEmptySoNoLabelOpens()
+    {
+        using var kit = AppLook.ControlKit();
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.For("Sol", Copy);
+        var (window, _) = Hosted(glyph, headset: true);
 
         CopyGlyph.Show(glyph, worked: true);
 
         Assert.Equal(CopyGlyph.Copied, AutomationProperties.GetName(glyph));
-        Assert.Equal("Copy system name", GlyphLabel.GetTip(glyph));
+        Assert.Equal(string.Empty, GlyphLabel.GetTip(glyph));
 
-        CopyGlyph.Show(glyph, worked: false);
+        clock.Advance(TimeSpan.FromSeconds(2));
 
-        Assert.Equal(CopyGlyph.Failed, AutomationProperties.GetName(glyph));
-        Assert.Equal("Copy system name", GlyphLabel.GetTip(glyph));
+        Assert.Equal(CopyGlyph.Name, AutomationProperties.GetName(glyph));
+        Assert.Equal(string.Empty, GlyphLabel.GetTip(glyph));
 
         window.Close();
     }
