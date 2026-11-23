@@ -6153,7 +6153,9 @@ public sealed class AppHost : IDisposable
             : Task.FromResult(D47.Core.Audio.VoiceCatalogue.Unreachable($"{D47.Core.Audio.TtsProviderCatalog.Selected(providerId).Name} is not installed.")),
         BookFiles,
         BookCatalogue,
-        BookDownloads);
+        BookDownloads,
+        (providerId, voiceId, token) => Auditions?.AuditionBookVoiceAsync(providerId, voiceId, token)
+            ?? Task.CompletedTask);
 
     private D47.App.Panel.CastVoiceSurface? _castVoices;
 

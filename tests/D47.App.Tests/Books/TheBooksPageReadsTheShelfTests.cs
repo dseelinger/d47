@@ -17,7 +17,8 @@ namespace D47.App.Tests.Books;
 /// <summary>Media › Books reads the shelf and the player, on the window and on the big panel (#2662).</summary>
 public class TheBooksPageReadsTheShelfTests
 {
-    private static BooksHost HostOf(BookRig rig, IReadOnlyList<VoiceInfo>? voices = null) =>
+    private static BooksHost HostOf(
+        BookRig rig, IReadOnlyList<VoiceInfo>? voices = null, Func<string, string, CancellationToken, Task>? audition = null) =>
         new(
             rig.Shelf,
             rig.Player,
@@ -25,7 +26,8 @@ public class TheBooksPageReadsTheShelfTests
             change => rig.Settings = change(rig.Settings),
             id => rig.Installed || id == "edge",
             (_, _) => Task.FromResult(voices is null ? VoiceCatalogue.Silent : VoiceCatalogue.Of(voices)),
-            rig.BookFiles);
+            rig.BookFiles,
+            audition: audition);
 
     private static (Window Window, PanelView Panel) Open(BookRig rig, bool headset = false, BooksHost? host = null)
     {
@@ -359,6 +361,28 @@ public class TheBooksPageReadsTheShelfTests
         }
 
         Assert.True(panel.Prompts.IsOpen);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheVoicePickerOffersAuditionsWithTheLocalCostLine()
+    {
+        var rig = BookRig.InMemory();
+        var host = HostOf(rig, [new VoiceInfo("bm_george", "George", "en-GB")], (_, _, _) => Task.CompletedTask);
+        var (window, panel) = Open(rig, host: host);
+
+        Click(Named(panel, BooksPage.ChangeVoiceName));
+
+        for (var wait = 0; wait < 300 && !panel.Prompts.IsOpen; wait++)
+        {
+            Thread.Sleep(10);
+            Dispatcher.UIThread.RunJobs();
+        }
+
+        Assert.Contains(
+            "Play a voice to hear it. This provider costs nothing.",
+            panel.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Empty));
 
         window.Close();
     }

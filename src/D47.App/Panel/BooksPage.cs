@@ -289,6 +289,15 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
                     : "the first voice",
                 WhyEmpty = listed.WhyEmpty(provider.Name),
                 Sorts = [PickerSort.Name],
+                Facet = SpeechCapability.GenderFacet(listed),
+                ChoiceNoun = "voices",
+                Audition = _host.CanAudition
+                    ? new PickerAudition
+                    {
+                        Play = (id, token) => _host.Audition(settings.Provider, id, token),
+                        Cost = SpeechCapability.AuditionCost(new D47.Core.Configuration.D47Settings(), settings.Provider),
+                    }
+                    : null,
             },
             result =>
             {

@@ -15,7 +15,8 @@ public sealed class BooksHost(
     Func<string, CancellationToken, Task<VoiceCatalogue>> voices,
     BookFolder? folder = null,
     GutenbergCatalogueStore? catalogue = null,
-    GutenbergBookFetch? downloads = null)
+    GutenbergBookFetch? downloads = null,
+    Func<string, string, CancellationToken, Task>? audition = null)
 {
     /// <summary>The providers a book is read with, in the order the page lists them.</summary>
     public static IReadOnlyList<string> Providers { get; } = [TtsProviderCatalog.KokoroId, TtsProviderCatalog.ChatterboxId, TtsProviderCatalog.EdgeId];
@@ -34,6 +35,13 @@ public sealed class BooksHost(
 
     /// <summary>Whether Add a book offers Project Gutenberg.</summary>
     public bool OffersGutenberg => Catalogue is not null && downloads is not null;
+
+    /// <summary>Whether a voice can be played in the picker; false where the surface has no speaker.</summary>
+    public bool CanAudition => audition is not null;
+
+    /// <summary>Speaks the Narrator audition line in <paramref name="voiceId"/> of <paramref name="providerId"/>, at the speed a book is read.</summary>
+    public Task Audition(string providerId, string voiceId, CancellationToken cancellationToken) =>
+        audition?.Invoke(providerId, voiceId, cancellationToken) ?? Task.CompletedTask;
 
     public BookSettings Settings => settings() ?? new BookSettings();
 

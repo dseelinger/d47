@@ -103,6 +103,47 @@ internal sealed class VoiceAuditions
         await PlaySampleAsync(provider, voiceId, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Speaks the Narrator audition line in a voice of the local provider books are read with, at the speed a book is read.</summary>
+    internal async Task AuditionBookVoiceAsync(string providerId, string voiceId, CancellationToken cancellationToken)
+    {
+        if (_speech.LocalClient(providerId) is not { } provider)
+        {
+            throw new InvalidOperationException("No voice provider is selected.");
+        }
+
+        // Dropped before the synthesis, so a second press silences the first while the second is fetched.
+        _audio.DropGroup(Group);
+
+        var key = (provider.Id, $"book:{voiceId}");
+
+        if (!_auditions.TryGetValue(key, out var clip))
+        {
+            if (provider is ChatterboxTtsProvider chatterbox
+                && !await chatterbox.FetchAsync(voiceId, cancellationToken).ConfigureAwait(false))
+            {
+                throw new InvalidOperationException(
+                    $"That Chatterbox voice could not be fetched from {ChatterboxCatalog.Host}. Press Play to try again.");
+            }
+
+            clip = await provider.SynthesizeAsync(
+                AuditionLine.For(VoiceRole.Narrator),
+                new VoiceSelection(voiceId),
+                cancellationToken).ConfigureAwait(false);
+
+            _auditions[key] = clip;
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _audio.Enqueue(new AudioRequest
+        {
+            Channel = AudioChannel.Speech,
+            Clip = SpeechLeveller.Apply(clip),
+            Group = Group,
+            Caption = clip.Name,
+        });
+    }
+
     private async Task PlaySampleAsync(ITtsProvider provider, string voiceId, CancellationToken cancellationToken)
     {
         _audio.DropGroup(Group);
