@@ -854,9 +854,11 @@ public sealed class PanelPrompts : IHearsText
 
             Show(request.Surface == EntrySurface.Keyboard || request.Spelled);
 
-            // Focused once it is actually in a tree, so a Commander at a desk can simply type or paste
-            // (remediation.md 10, item 11).
-            AttachedToVisualTree += (_, _) => _shown.Focus();
+            // Focused once it is in a tree, so a Commander at a desk can simply type or paste
+            // (remediation.md 10, item 11). Posted, because focusing during the attach event runs before
+            // the page under it has finished building and whatever settles focus last wins.
+            AttachedToVisualTree += (_, _) =>
+                Dispatcher.UIThread.Post(() => _shown.Focus(), DispatcherPriority.Input);
         }
 
         /// <summary>Swaps between listening and typing, and says which one is on.</summary>
