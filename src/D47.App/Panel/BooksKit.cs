@@ -93,7 +93,7 @@ internal static class BooksKit
     {
         if (now is not null && now.Book.Source == entry.Source)
         {
-            return $"CH {now.Place.Chapter + 1} OF {entry.Chapters} · {Percent(now.Book, now.Place)}%";
+            return WithPlace(ChapterNumbering.Place(now.Place.Chapter, now.Book.Chapters.Count, now.Book.FrontMatter), $"{Percent(now.Book, now.Place)}%");
         }
 
         if (entry.Finished)
@@ -103,14 +103,17 @@ internal static class BooksKit
 
         return entry.Place == new BookPlace(0, 0)
             ? "NOT STARTED"
-            : $"CH {entry.Place.Chapter + 1} OF {entry.Chapters} · {ChapterPercent(entry)}%";
+            : WithPlace(ChapterNumbering.Place(entry.Place.Chapter, entry.Chapters, entry.FrontMatter), $"{ChapterPercent(entry)}%");
     }
+
+    /// <summary>The chapter place and the progress joined; the progress alone when the chapter has no number.</summary>
+    public static string WithPlace(string? chapter, string progress) => chapter is null ? progress : $"{chapter} · {progress}";
 
     /// <summary>The mono line under a sentence: place, progress and the voice, or <c>PAUSED</c>.</summary>
     public static string MonoLine(BooksHost host, BookPlayback now)
     {
         var settings = host.Settings;
-        var place = $"CH {now.Place.Chapter + 1} OF {now.Book.Chapters.Count} · {Percent(now.Book, now.Place)}%";
+        var place = WithPlace(ChapterNumbering.Place(now.Place.Chapter, now.Book.Chapters.Count, now.Book.FrontMatter), $"{Percent(now.Book, now.Place)}%");
         var provider = TtsProviderCatalog.Selected(settings.Provider).Name;
 
         return now.Pause == StoryRunPause.Commander

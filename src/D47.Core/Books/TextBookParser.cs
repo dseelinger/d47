@@ -14,7 +14,8 @@ public readonly record struct BookTextPiece(BookTextPieceKind Kind, string Text)
 
 /// <summary>
 /// Reads a plain-text book one line at a time. Paragraphs are separated by blank lines; a block whose first line is a
-/// chapter heading starts a chapter. A Project Gutenberg licence header and footer are dropped, and the header's
+/// chapter heading starts a chapter, unless another heading follows it with no paragraph between: a run of headings
+/// is a contents list and starts none. A Project Gutenberg licence header and footer are dropped, and the header's
 /// <c>Title:</c> and <c>Author:</c> lines are kept. Lines before a <c>*** START OF</c> line are held until it arrives,
 /// so a text without one gives its pieces at <see cref="Finish"/>.
 /// </summary>
@@ -37,6 +38,8 @@ public sealed partial class TextBookParser
     private string? _pendingChapter;
 
     private bool _pendingTakesTitle;
+
+    private bool _inContents;
 
     private bool _finished;
 
@@ -143,6 +146,14 @@ public sealed partial class TextBookParser
 
         if (IsHeading(lines))
         {
+            if (_pendingChapter is not null || _inContents)
+            {
+                _pendingChapter = null;
+                _pendingTakesTitle = false;
+                _inContents = true;
+                return;
+            }
+
             _pendingChapter = Collapse(string.Join(' ', lines));
             _pendingTakesTitle = lines.Count == 1;
             return;
@@ -156,6 +167,8 @@ public sealed partial class TextBookParser
             _pendingTakesTitle = false;
             return;
         }
+
+        _inContents = false;
 
         if (_pendingChapter is not null)
         {

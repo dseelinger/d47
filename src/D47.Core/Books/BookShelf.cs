@@ -12,6 +12,9 @@ public sealed record ShelfBook(BookSource Source, string Title, string Author, i
 {
     /// <summary>For a book whose text is downloaded, how much of it has arrived; null for a book read from a file.</summary>
     public BookDownload? Download { get; init; }
+
+    /// <summary>The first chapter is text before the book's first heading and has no number.</summary>
+    public bool FrontMatter { get; init; }
 }
 
 /// <summary>
@@ -118,7 +121,10 @@ public sealed class BookShelf
     {
         ArgumentNullException.ThrowIfNull(book);
 
-        var entry = new ShelfBook(book.Source, book.Title, book.Author, book.Chapters.Count, new BookPlace(0, 0), Finished: false);
+        var entry = new ShelfBook(book.Source, book.Title, book.Author, book.Chapters.Count, new BookPlace(0, 0), Finished: false)
+        {
+            FrontMatter = book.FrontMatter,
+        };
 
         lock (_gate)
         {
@@ -235,7 +241,7 @@ public sealed class BookShelf
     /// once the text is whole. Null when the book is not a download on the shelf, or, after logging, when the text
     /// cannot be written.
     /// </summary>
-    public ShelfBook? Arrived(BookSource source, string text, bool replace, BookDownload download, int chapters)
+    public ShelfBook? Arrived(BookSource source, string text, bool replace, BookDownload download, int chapters, bool frontMatter = false)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(text);
@@ -274,10 +280,11 @@ public sealed class BookShelf
                 ? book with
                 {
                     Chapters = count,
+                    FrontMatter = frontMatter,
                     Place = new BookPlace(Math.Min(book.Place.Chapter, count - 1), book.Place.Paragraph),
                     Download = download,
                 }
-                : book with { Chapters = Math.Max(book.Chapters, count), Download = download };
+                : book with { Chapters = Math.Max(book.Chapters, count), FrontMatter = frontMatter, Download = download };
 
             _books[index] = updated;
             SaveShelf();
@@ -373,9 +380,43 @@ public sealed class BookShelf
             pieces.AddRange(parser.Finish());
         }
 
-        return TextBookReader.Assemble(parser, pieces, entry.Source).Book is { } book
-            ? book with { Title = entry.Title, Author = entry.Author }
-            : null;
+        if (TextBookReader.Assemble(parser, pieces, entry.Source).Book is not { } book)
+        {
+            return null;
+        }
+
+        if (download.Complete)
+        {
+            CorrectCount(entry.Source, book);
+        }
+
+        return book with { Title = entry.Title, Author = entry.Author };
+    }
+
+    /// <summary>Brings a complete download's entry in line with the chapters its text reads into.</summary>
+    private void CorrectCount(BookSource source, Book book)
+    {
+        lock (_gate)
+        {
+            var index = _books.FindIndex(existing => existing.Source == source);
+
+            if (index < 0 || _books[index] is not { Download.Complete: true } entry
+                || (entry.Chapters == book.Chapters.Count && entry.FrontMatter == book.FrontMatter))
+            {
+                return;
+            }
+
+            var count = book.Chapters.Count;
+
+            _books[index] = entry with
+            {
+                Chapters = count,
+                FrontMatter = book.FrontMatter,
+                Place = new BookPlace(Math.Min(entry.Place.Chapter, count - 1), entry.Place.Paragraph),
+            };
+
+            SaveShelf();
+        }
     }
 
     private void SaveShelf() => TryWrite(ShelfFile, BookShelfJson.ToJson(_books));

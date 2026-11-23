@@ -10,6 +10,8 @@
 
 Fixed: Media › Books › Add a book › Project Gutenberg lists every book that matches, not the first 200. In the window the list draws 25 books and draws the next 25 as you scroll to its end, and the results line counts the books drawn. On the headset panel the list shows 25 books a page with PREVIOUS and NEXT, and an open order, subject or language choice takes the list's place until you close it. The field, the sentence and the results line stay on screen while the list scrolls, and "Fetching the first lines of …" shows beside BACK.
 
+Fixed: A Project Gutenberg text with a contents list now reads into its real chapters. The contents entries no longer become the title of the front matter, which stays one chapter named for the book. Chapters are numbered by the book, so Moby Dick's Loomings is chapter 1 of 135 on the shelf, the Book page, the mini panel and in speech, and the front matter shows no chapter number. A title that begins with Chapter is spoken as it is, "Chapter 2. The Carpet-Bag.", instead of after "Chapter 3:". A book already downloaded takes the new count the next time it is opened.
+
 Fixed: A book opened, or being read, while its Project Gutenberg download is still arriving now takes the chapters that arrive afterwards. The Book page lists each by its own title instead of a numbered placeholder, and "next chapter" reaches them without stopping and starting the book.
 
 Fixed: While the headset is connected, a video plays on the panel the headset is showing. Saying "big panel" or "small panel", or changing Panel content, moves a playing video to that panel and keeps its place. When the headset session starts the picture moves to that panel, and when it ends the picture returns to the window.

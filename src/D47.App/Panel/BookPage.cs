@@ -117,6 +117,7 @@ public sealed class BookPage : UserControl, IPageSummary
         {
             _opened = entry.Download;
             _text = _host.Shelf.Open(_source);
+            entry = _host.Shelf.Find(_source) ?? entry;
         }
 
         _body.Children.Add(Typeset.Prose(
@@ -155,7 +156,7 @@ public sealed class BookPage : UserControl, IPageSummary
         }
         else if (_text is { } text && entry.Place != new BookPlace(0, 0))
         {
-            place = $"CH {entry.Place.Chapter + 1} OF {entry.Chapters} · {BooksKit.Percent(text, entry.Place)}%";
+            place = BooksKit.WithPlace(ChapterNumbering.Place(entry.Place.Chapter, entry.Chapters, entry.FrontMatter), $"{BooksKit.Percent(text, entry.Place)}%");
         }
 
         stack.Children.Add(Typeset.Mono(place, 12, entry.Finished ? ThemeManager.BlueKey : ThemeManager.GreyKey));

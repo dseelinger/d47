@@ -41,7 +41,7 @@ nav_order: 169
 <section>
 <h2><span class="num">3</span> Move through the book.</h2>
 <p class="say">Say "next chapter", then "back a paragraph".</p>
-<p class="expect">D47 says "Chapter 2: The Falling Star." and reads it from its start; "back a paragraph" says "Back a paragraph." and reads the paragraph before again.</p>
+<p class="expect">D47 says "Chapter 2. The Falling Star." and reads it from its start; "back a paragraph" says "Back a paragraph." and reads the paragraph before again.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="The ask row with a next chapter command typed into it">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">next chapter</text>

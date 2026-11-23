@@ -36,6 +36,7 @@ public static class BookShelfJson
                     new BookPlace(Math.Clamp(row.Chapter, 0, Math.Max(0, row.Chapters - 1)), Math.Max(0, row.Paragraph)),
                     row.Finished)
                 {
+                    FrontMatter = row.FrontMatter == true,
                     Download = row.Download(source),
                 });
             }
@@ -65,6 +66,8 @@ public static class BookShelfJson
 
         public int Chapters { get; set; }
 
+        public bool? FrontMatter { get; set; }
+
         public int Chapter { get; set; }
 
         public int Paragraph { get; set; }
@@ -85,6 +88,7 @@ public static class BookShelfJson
             Title = book.Title,
             Author = book.Author,
             Chapters = book.Chapters,
+            FrontMatter = book.FrontMatter ? true : null,
             Chapter = book.Place.Chapter,
             Paragraph = book.Place.Paragraph,
             Finished = book.Finished,
@@ -117,6 +121,7 @@ public static class BookJson
             {
                 Title = book.Title,
                 Author = book.Author,
+                FrontMatter = book.FrontMatter ? true : null,
                 Chapters = [.. book.Chapters.Select(chapter => new Chapter
                 {
                     Title = chapter.Title,
@@ -149,7 +154,10 @@ public static class BookJson
             string.IsNullOrWhiteSpace(document.Title) ? source.DefaultTitle : document.Title,
             document.Author ?? "",
             source,
-            chapters);
+            chapters)
+        {
+            FrontMatter = document.FrontMatter == true,
+        };
     }
 
     private sealed class Document
@@ -157,6 +165,8 @@ public static class BookJson
         public string? Title { get; set; }
 
         public string? Author { get; set; }
+
+        public bool? FrontMatter { get; set; }
 
         public List<Chapter>? Chapters { get; set; }
     }

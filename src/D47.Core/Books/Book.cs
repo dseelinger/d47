@@ -4,7 +4,42 @@ using System.Text;
 namespace D47.Core.Books;
 
 /// <summary>A book read from a text or EPUB file: its chapters in order, never none.</summary>
-public sealed record Book(string Title, string Author, BookSource Source, IReadOnlyList<BookChapter> Chapters);
+public sealed record Book(string Title, string Author, BookSource Source, IReadOnlyList<BookChapter> Chapters)
+{
+    /// <summary>The first chapter is text before the book's first heading and has no number.</summary>
+    public bool FrontMatter { get; init; }
+}
+
+/// <summary>Chapters are numbered by the book: the first one that starts at a heading is 1, and front matter has no number.</summary>
+public static class ChapterNumbering
+{
+    public static int Count(int chapters, bool frontMatter) => Math.Max(0, chapters - (frontMatter ? 1 : 0));
+
+    /// <summary>The number of the chapter at <paramref name="index"/>; null for front matter.</summary>
+    public static int? Number(int index, bool frontMatter) =>
+        frontMatter ? (index <= 0 ? null : index) : index + 1;
+
+    /// <summary><c>CH 3 OF 135</c>; null for front matter.</summary>
+    public static string? Place(int index, int chapters, bool frontMatter) =>
+        Number(index, frontMatter) is { } number ? $"CH {number} OF {Count(chapters, frontMatter)}" : null;
+
+    /// <summary>The title as it is spoken: a title that begins with "Chapter" alone, any other after "Chapter n: ".</summary>
+    public static string Spoken(int? number, string title)
+    {
+        var text = title.Trim();
+
+        if (text.StartsWith("chapter", StringComparison.OrdinalIgnoreCase) && (text.Length == 7 || !char.IsLetter(text[7])))
+        {
+            text = "Chapter" + text[7..];
+        }
+        else if (number is { } n)
+        {
+            text = $"Chapter {n}: {text}";
+        }
+
+        return text.EndsWith('.') ? text : text + ".";
+    }
+}
 
 public sealed record BookChapter(string Title, IReadOnlyList<BookParagraph> Paragraphs);
 

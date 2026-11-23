@@ -45,6 +45,7 @@ public static class TextBookReader
         var title = parser.Title ?? source.DefaultTitle;
         var chapters = new List<BookChapter>();
         string? chapterTitle = null;
+        var frontMatter = false;
         var paragraphs = new List<BookParagraph>();
 
         foreach (var piece in pieces)
@@ -64,12 +65,13 @@ public static class TextBookReader
 
         return chapters.Count == 0
             ? BookRead.Refused("The text has no paragraphs to read.")
-            : BookRead.Read(new Book(title, parser.Author ?? "", source, chapters));
+            : BookRead.Read(new Book(title, parser.Author ?? "", source, chapters) { FrontMatter = frontMatter });
 
         void Close()
         {
             if (paragraphs.Count > 0)
             {
+                frontMatter |= chapterTitle is null;
                 chapters.Add(new BookChapter(chapterTitle ?? title, [.. paragraphs]));
                 paragraphs.Clear();
             }

@@ -143,4 +143,74 @@ public sealed class APlainTextBookIsReadIntoChaptersTests
             [new BookTextPiece(BookTextPieceKind.Chapter, "CHAPTER 1"), new BookTextPiece(BookTextPieceKind.Paragraph, "It began.")],
             parser.Feed(""));
     }
+
+    private const string WithContents = """
+        Title: The Long Chase
+
+        *** START OF THE PROJECT GUTENBERG EBOOK THE LONG CHASE ***
+
+        THE LONG CHASE
+
+        by A. Pursuer
+
+
+        CONTENTS
+
+        CHAPTER 1. Departure.
+
+        CHAPTER 2. The Harbour.
+
+        CHAPTER 3. The Chase.
+
+        AFTERCONTENTS
+
+        ETYMOLOGY.
+
+        The word is old.
+
+        EXTRACTS.
+
+        Many have written of it.
+
+
+        CHAPTER 1. Departure.
+
+        They left at dawn.
+
+
+        CHAPTER 2. The Harbour.
+
+        The harbour was quiet.
+
+        CHAPTER 3. The Chase.
+
+        The chase began.
+
+        *** END OF THE PROJECT GUTENBERG EBOOK THE LONG CHASE ***
+        """;
+
+    [Theory]
+    [InlineData("Epilogue")]
+    [InlineData("A plain line.")]
+    public void AContentsListIsNoChapterAndFrontMatterIsOneChapterNamedForTheBook(string afterContents)
+    {
+        var book = Read(WithContents.Replace("AFTERCONTENTS", afterContents, StringComparison.Ordinal)).Book!;
+
+        Assert.Equal(
+            ["The Long Chase", "CHAPTER 1. Departure.", "CHAPTER 2. The Harbour.", "CHAPTER 3. The Chase."],
+            book.Chapters.Select(chapter => chapter.Title));
+        Assert.True(book.FrontMatter);
+        Assert.Equal(3, ChapterNumbering.Count(book.Chapters.Count, book.FrontMatter));
+        Assert.Contains("The word is old.", book.Chapters[0].Paragraphs.Select(paragraph => paragraph.Text));
+        Assert.Equal("They left at dawn.", Assert.Single(book.Chapters[1].Paragraphs).Text);
+    }
+
+    [Fact]
+    public void ABookThatOpensAtAHeadingHasNoFrontMatter()
+    {
+        var book = Read("*** START OF THE PROJECT GUTENBERG EBOOK X ***\n\nCHAPTER I.\n\nOne.\n\nCHAPTER II.\n\nTwo.\n").Book!;
+
+        Assert.False(book.FrontMatter);
+        Assert.Equal(2, ChapterNumbering.Count(book.Chapters.Count, book.FrontMatter));
+    }
 }

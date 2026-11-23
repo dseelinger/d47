@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.App.Voice;
+using D47.Core.Books;
 
 namespace D47.App.Panel;
 
@@ -61,9 +62,9 @@ public sealed class BookMini : UserControl
             return;
         }
 
-        var place = $"CH {now.Place.Chapter + 1} OF {now.Book.Chapters.Count}";
+        var place = ChapterNumbering.Place(now.Place.Chapter, now.Book.Chapters.Count, now.Book.FrontMatter);
 
-        _body.Children.Add(Typeset.Chrome($"{now.Book.Title} · {place}", 13, ThemeManager.GreyKey, wrap: true));
+        _body.Children.Add(Typeset.Chrome(place is null ? now.Book.Title : $"{now.Book.Title} · {place}", 13, ThemeManager.GreyKey, wrap: true));
         _body.Children.Add(Typeset.Prose(now.Text, 15, now.Waiting ? ThemeManager.GreyKey : ThemeManager.WhiteKey, wrap: true));
 
         var percent = BooksKit.Percent(now.Book, now.Place);

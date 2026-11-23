@@ -1,7 +1,7 @@
 namespace D47.Core.Books;
 
 /// <summary>The book being read or paused, as the voice commands see it.</summary>
-public sealed record BookNow(BookSource Source, string Title, int Chapter, string ChapterTitle, bool Paused);
+public sealed record BookNow(BookSource Source, string Title, int Chapter, string ChapterTitle, bool Paused, bool FrontMatter = false);
 
 /// <summary>
 /// What the book voice commands act on: the shelf, and the reader that plays a book aloud. A book does not start or
@@ -79,7 +79,9 @@ public sealed class BookDesk(
         }
 
         return now() is { } reading
-            ? $"Reading {reading.Title}, chapter {reading.Chapter + 1}."
+            ? ChapterNumbering.Number(reading.Chapter, reading.FrontMatter) is { } number
+                ? $"Reading {reading.Title}, chapter {number}."
+                : $"Reading {reading.Title}."
             : $"Reading {chosen.Title}.";
     }
 
@@ -132,7 +134,9 @@ public sealed class BookDesk(
             return "This is the last chapter.";
         }
 
-        return now() is { } reading ? $"Chapter {reading.Chapter + 1}: {reading.ChapterTitle}." : "Next chapter.";
+        return now() is { } reading
+            ? ChapterNumbering.Spoken(ChapterNumbering.Number(reading.Chapter, reading.FrontMatter), reading.ChapterTitle)
+            : "Next chapter.";
     }
 
     public string BackAParagraph() =>

@@ -323,7 +323,8 @@ public sealed class GutenbergBookFetch
             lines,
             text.Replacing,
             new BookDownload(whole, text.Written + bytes.Length, text.ETag),
-            text.Chapters);
+            text.Chapters,
+            text.FrontMatter);
 
         if (entry is null)
         {
@@ -376,6 +377,8 @@ public sealed class GutenbergBookFetch
         public bool HasParagraph { get; private set; }
 
         public int Chapters => _chapters + (_preface ? 1 : 0);
+
+        public bool FrontMatter => _preface;
 
         /// <summary>Carries on after <paramref name="sofar"/>, the text already on the shelf.</summary>
         public void ContinueFrom(BookDownload download, string? sofar)
