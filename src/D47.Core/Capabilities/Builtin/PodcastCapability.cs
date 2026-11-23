@@ -23,7 +23,7 @@ public static class PodcastCapability
     public const int MostResults = SpokenList.Limit;
 
     private static readonly string[] ActionNames =
-        ["play", "pause", "resume", "stop", "next", "skip_back", "skip_forward", "refresh"];
+        ["play", "pause", "resume", "stop", "next", "skip_back", "skip_forward", "refresh", "continuous_on", "continuous_off", "continuous_newest", "continuous_oldest"];
 
     private static readonly string[] Numbers = ["one", "two", "three"];
 
@@ -88,17 +88,23 @@ public static class PodcastCapability
                 + "you left it and the ambient music stands aside. Say \"pause the podcast\" or \"pause\", then \"resume "
                 + "the podcast\" or \"play\"; \"skip back thirty seconds\" and \"skip forward thirty seconds\" move "
                 + "within the episode; \"next episode\" plays the next unfinished episode of the same show; \"stop the "
-                + "podcast\" ends it and the music returns. \"Refresh podcasts\" fetches every feed again. With "
-                + "nothing playing, \"next episode\" answers that no podcast is playing.",
+                + "podcast\" ends it and the music returns. \"Refresh podcasts\" fetches every feed again. Say \"continuous play "
+                + "on\" while an episode plays, and when it ends the next episode of that show starts by itself with no "
+                + "chatter or music between; \"continuous play newest first\" makes it the latest earlier episode instead "
+                + "of the earliest later one, and \"continuous play off\" stops it. With nothing playing, \"next "
+                + "episode\" and the continuous play phrases answer that no podcast is playing.",
             Description =
                 "Plays, pauses, resumes or stops a podcast episode, skips 30 seconds back or forward, plays the next "
                 + "episode of the same show, or refreshes the added feeds. Play with a show plays that show's newest "
                 + "unfinished episode; without one it carries on the current episode or plays the newest unfinished "
-                + "episode of any show. Each episode resumes where it was left.",
+                + "episode of any show. Each episode resumes where it was left. The continuous actions turn a show's "
+                + "continuous play on or off, or set its order and turn it on: after an episode plays to its end the "
+                + "next episode of the show starts, oldest first by default or newest first. They act on the show named "
+                + "by show, or else the show playing.",
             Parameters =
             [
                 ToolParameter.OneOf("action", "What to do.", ActionNames, required: true),
-                ToolParameter.Text("show", "With play: the show title, or part of it. Optional."),
+                ToolParameter.Text("show", "With play or the continuous actions: the show title, or part of it. Optional."),
             ],
             Commands =
             [
@@ -116,6 +122,10 @@ public static class PodcastCapability
                 Phrase("skip forward thirty seconds", "skip_forward") with { When = NotVideo },
                 Phrase("forward thirty seconds", "skip_forward") with { When = NotVideo },
                 Phrase("refresh podcasts", "refresh"),
+                Phrase("continuous play on", "continuous_on"),
+                Phrase("continuous play off", "continuous_off"),
+                Phrase("continuous play newest first", "continuous_newest"),
+                Phrase("continuous play oldest first", "continuous_oldest"),
                 Phrase("play", "resume") with { When = Bare },
                 Phrase("pause", "pause") with { When = Bare },
             ],
@@ -141,6 +151,10 @@ public static class PodcastCapability
                     "skip_back" => podcasts.SkipBack(),
                     "skip_forward" => podcasts.SkipForward(),
                     "refresh" => await podcasts.Refresh().ConfigureAwait(false),
+                    "continuous_on" => podcasts.SetContinuous(arguments.Text("show"), true, null),
+                    "continuous_off" => podcasts.SetContinuous(arguments.Text("show"), false, null),
+                    "continuous_newest" => podcasts.SetContinuous(arguments.Text("show"), true, PodcastOrder.NewestFirst),
+                    "continuous_oldest" => podcasts.SetContinuous(arguments.Text("show"), true, PodcastOrder.OldestFirst),
                     _ => null,
                 };
 
@@ -295,17 +309,18 @@ public static class PodcastCapability
         Binding = new SettingBinding
         {
             Read = s => string.Join(' ', s.Podcasts.FeedUris().Select(feed => feed.AbsoluteUri)),
-            Write = (s, v) => s with
+            Write = (s, v) =>
             {
-                Podcasts = s.Podcasts with
-                {
-                    Feeds =
-                    [
-                        .. (v ?? string.Empty)
-                            .Split([' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
-                            .Distinct(StringComparer.Ordinal),
-                    ],
-                },
+                IReadOnlyList<string> feeds =
+                [
+                    .. (v ?? string.Empty)
+                        .Split([' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                        .Distinct(StringComparer.Ordinal),
+                ];
+
+                var kept = feeds.Select(feed => Uri.TryCreate(feed, UriKind.Absolute, out var uri) ? uri.AbsoluteUri : feed);
+
+                return s with { Podcasts = s.Podcasts with { Feeds = feeds, Shows = PodcastSettings.KeepFor(s.Podcasts.Shows, kept) } };
             },
         },
     };

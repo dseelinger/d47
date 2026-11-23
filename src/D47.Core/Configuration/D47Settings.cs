@@ -1475,7 +1475,29 @@ public sealed record UsageSettings
     public bool Counts { get; init; } = true;
 }
 
-/// <summary>The podcast feeds the Commander added, as RSS feed URLs.</summary>
+/// <summary>Which episode of a show follows one that played to its end.</summary>
+public enum PodcastOrder
+{
+    OldestFirst,
+    NewestFirst,
+}
+
+/// <summary>Whether a show carries on to its next episode by itself, and in which order.</summary>
+public sealed record PodcastShowPlay
+{
+    /// <inheritdoc cref="D47Settings.Extra"/>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? Extra { get; init; }
+
+    /// <summary>The feed's address, as <see cref="Uri.AbsoluteUri"/> gives it.</summary>
+    public string Feed { get; init; } = string.Empty;
+
+    public bool Continuous { get; init; }
+
+    public PodcastOrder Order { get; init; }
+}
+
+/// <summary>The podcast feeds the Commander added, as RSS feed URLs, and how each show carries on.</summary>
 public sealed record PodcastSettings
 {
     /// <inheritdoc cref="D47Settings.Extra"/>
@@ -1483,6 +1505,51 @@ public sealed record PodcastSettings
     public Dictionary<string, JsonElement>? Extra { get; init; }
 
     public IReadOnlyList<string> Feeds { get; init; } = [];
+
+    /// <summary>Continuous play per feed; a feed with no entry, or one not in <see cref="Feeds"/>, is off and oldest first.</summary>
+    public IReadOnlyList<PodcastShowPlay> Shows { get; init; } = [];
+
+    /// <summary>How <paramref name="feed"/> carries on: off and oldest first unless it is added and has an entry.</summary>
+    public PodcastShowPlay PlayFor(Uri feed)
+    {
+        ArgumentNullException.ThrowIfNull(feed);
+
+        var plain = new PodcastShowPlay { Feed = feed.AbsoluteUri };
+
+        if (!FeedUris().Any(added => string.Equals(added.AbsoluteUri, feed.AbsoluteUri, StringComparison.Ordinal)))
+        {
+            return plain;
+        }
+
+        return (Shows ?? []).FirstOrDefault(entry => string.Equals(entry?.Feed, feed.AbsoluteUri, StringComparison.Ordinal)) ?? plain;
+    }
+
+    /// <summary>These settings with the feed's continuous play and order changed where given; the same instance when the feed is not added.</summary>
+    public PodcastSettings WithPlay(Uri feed, bool? continuous = null, PodcastOrder? order = null)
+    {
+        ArgumentNullException.ThrowIfNull(feed);
+
+        if (!FeedUris().Any(added => string.Equals(added.AbsoluteUri, feed.AbsoluteUri, StringComparison.Ordinal)))
+        {
+            return this;
+        }
+
+        var current = PlayFor(feed);
+        var changed = current with { Continuous = continuous ?? current.Continuous, Order = order ?? current.Order };
+
+        return this with { Shows = [.. WithoutShow(Shows, feed.AbsoluteUri), changed] };
+    }
+
+    /// <summary>The entries for feeds in <paramref name="feeds"/>, once each.</summary>
+    internal static IReadOnlyList<PodcastShowPlay> KeepFor(IReadOnlyList<PodcastShowPlay>? shows, IEnumerable<string> feeds)
+    {
+        var kept = feeds.ToHashSet(StringComparer.Ordinal);
+
+        return [.. (shows ?? []).Where(entry => entry is not null && kept.Contains(entry.Feed)).DistinctBy(entry => entry.Feed, StringComparer.Ordinal)];
+    }
+
+    private static IEnumerable<PodcastShowPlay> WithoutShow(IReadOnlyList<PodcastShowPlay>? shows, string feed) =>
+        (shows ?? []).Where(entry => entry is not null && !string.Equals(entry.Feed, feed, StringComparison.Ordinal));
 
     /// <summary>The feeds that are absolute http or https URLs, once each, in the order added.</summary>
     public IReadOnlyList<Uri> FeedUris() =>
@@ -1502,7 +1569,7 @@ public sealed record PodcastSettings
             return this;
         }
 
-        return this with { Feeds = [.. Feeds ?? [], feed.AbsoluteUri] };
+        return this with { Feeds = [.. Feeds ?? [], feed.AbsoluteUri], Shows = [.. WithoutShow(Shows, feed.AbsoluteUri)] };
     }
 
     /// <summary>These settings without <paramref name="feed"/>; the same instance when it is not added.</summary>
@@ -1515,7 +1582,7 @@ public sealed record PodcastSettings
                               && string.Equals(uri.AbsoluteUri, feed.AbsoluteUri, StringComparison.Ordinal)))
             .ToList();
 
-        return kept.Count == (Feeds ?? []).Count ? this : this with { Feeds = kept };
+        return kept.Count == (Feeds ?? []).Count ? this : this with { Feeds = kept, Shows = [.. WithoutShow(Shows, feed.AbsoluteUri)] };
     }
 }
 

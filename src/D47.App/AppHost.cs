@@ -4160,7 +4160,8 @@ public sealed class AppHost : IDisposable
             episode => HttpRangeStream.Episode(episode.Title, episode.Enclosure, episodeClient, episodeDecoder),
             files,
             paths.PodcastListening,
-            loggerFactory.CreateLogger<Core.Podcasts.PodcastPlayer>());
+            loggerFactory.CreateLogger<Core.Podcasts.PodcastPlayer>(),
+            playFor: feed => host.Settings.Current.Podcasts.PlayFor(feed));
         host.PodcastPlayer = podcastPlayer;
         host.BookPlayer.TakesTurnsWith(podcastPlayer);
         host.Video.TakesTurnsWith(podcastPlayer);
@@ -4171,7 +4172,11 @@ public sealed class AppHost : IDisposable
             () => podcasts.Shows,
             podcasts.RefreshAllAsync,
             podcastSearch.SearchAsync,
-            feed => podcasts.AddAsync(feed, host.Settings));
+            feed => podcasts.AddAsync(feed, host.Settings),
+            feed => host.Settings.Current.Podcasts.PlayFor(feed),
+            (feed, continuous, order) => host.Settings.Replace(
+                "a podcast show's continuous play was set",
+                current => current with { Podcasts = current.Podcasts.WithPlay(feed, continuous, order) }));
         host.Music.Played += track => _ = host.MusicPack.Played(track);
         host.MusicRejectDeleter = new MusicRejectDeleter(
             paths.MusicPack,

@@ -1,5 +1,6 @@
 using System.Globalization;
 using D47.Core.Audio;
+using D47.Core.Configuration;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -23,7 +24,8 @@ public sealed record PodcastPlayerState(
 /// <summary>
 /// Plays podcast episodes in the arbiter's podcast slot, resuming each where the Commander left it, and keeps the
 /// listening record in a file. Ambient music yields while an episode plays, including while D47 holds it, and comes
-/// back when the Commander pauses it. An episode that plays to its end is marked finished and playback stops. Positions are saved on pause, stop, finish
+/// back when the Commander pauses it. An episode that plays to its end is marked finished; playback then stops, or
+/// carries on with the show's next episode when the show is on continuous play. Positions are saved on pause, stop, finish
 /// and <see cref="SaveNow"/>, and every <see cref="SaveEvery"/> while playing; saves are written off the caller's
 /// thread.
 /// </summary>
@@ -52,6 +54,7 @@ public sealed class PodcastPlayer
     private readonly ILogger _logger;
     private readonly Action<Action> _background;
     private readonly TimeProvider _time;
+    private readonly Func<Uri, PodcastShowPlay> _playFor;
     private readonly Lock _gate = new();
     private readonly Lock _writing = new();
     private readonly Lock _yielding = new();
@@ -65,11 +68,15 @@ public sealed class PodcastPlayer
     private bool _wasPlaying;
     private string? _problem;
 
+    /// <summary>An episode ended and the next is about to start; ambient music stays away until it has.</summary>
+    private bool _continuing;
+
     /// <summary>The record has changed since it was last written.</summary>
     private bool _dirty;
 
     /// <param name="open">The episode as a track; nothing may be requested until the track is opened.</param>
     /// <param name="background">Runs a save off the caller's thread; the thread pool when null.</param>
+    /// <param name="playFor">How a feed's show carries on after an episode; off and oldest first when null.</param>
     public PodcastPlayer(
         AudioArbiter audio,
         AmbientMusic music,
@@ -78,7 +85,8 @@ public sealed class PodcastPlayer
         string path,
         ILogger logger,
         Action<Action>? background = null,
-        TimeProvider? time = null)
+        TimeProvider? time = null,
+        Func<Uri, PodcastShowPlay>? playFor = null)
     {
         _audio = audio;
         _music = music;
@@ -88,6 +96,7 @@ public sealed class PodcastPlayer
         _logger = logger;
         _background = background ?? (work => _ = Task.Run(work));
         _time = time ?? TimeProvider.System;
+        _playFor = playFor ?? (feed => new PodcastShowPlay { Feed = feed.AbsoluteUri });
         _listening = Load();
 
         audio.PodcastFinished += OnFinished;
@@ -187,6 +196,7 @@ public sealed class PodcastPlayer
             _savedAt = null;
             _wasPlaying = true;
             _problem = null;
+            _continuing = false;
         }
 
         previous?.Opened.TrySetCanceled();
@@ -321,12 +331,21 @@ public sealed class PodcastPlayer
     {
         var (now, progress) = Heard();
 
+        var wasContinuing = false;
+
         lock (_gate)
         {
             _ended = null;
+            wasContinuing = _continuing;
+            _continuing = false;
 
             if (now is null || !ReferenceEquals(_now, now))
             {
+                if (wasContinuing)
+                {
+                    _background(FollowYield);
+                }
+
                 return NothingPlaying;
             }
 
@@ -421,8 +440,9 @@ public sealed class PodcastPlayer
     }
 
     /// <summary>
-    /// Plays the earliest unfinished episode of the same show published after the one playing, or after the one
-    /// that just ended. With none, says so and stops.
+    /// Plays the episode that follows the one playing, or the one that just ended, in the show's order: the earliest
+    /// unfinished episode published after it, or with the show on continuous play newest first, the latest one
+    /// published before it. With none, says so and stops.
     /// </summary>
     public Task<string> Next()
     {
@@ -438,16 +458,14 @@ public sealed class PodcastPlayer
                 return Task.FromResult(NothingPlaying);
             }
 
-            next = now.Show.Episodes
-                .Where(episode => episode.Published > now.Episode.Published
-                                  && _listening.Find(now.Feed, episode.Id) is not { Finished: true })
-                .MinBy(episode => episode.Published);
+            next = Following(now, NewestFirst(now.Feed));
         }
 
         if (next is null)
         {
+            var direction = NewestFirst(now.Feed) ? "earlier" : "later";
             Stop();
-            return Task.FromResult($"There is no later unfinished episode of {now.Show.Title}.");
+            return Task.FromResult($"There is no {direction} unfinished episode of {now.Show.Title}.");
         }
 
         return Play(now.Feed, now.Show, next);
@@ -531,6 +549,19 @@ public sealed class PodcastPlayer
         }
     }
 
+    private bool NewestFirst(Uri feed) => _playFor(feed) is { Continuous: true, Order: PodcastOrder.NewestFirst };
+
+    /// <summary>The unfinished episode that follows <paramref name="after"/> in the given order, or null. Under <see cref="_gate"/>.</summary>
+    private PodcastEpisode? Following(Playback after, bool newestFirst)
+    {
+        var unfinished = after.Show.Episodes
+            .Where(episode => _listening.Find(after.Feed, episode.Id) is not { Finished: true });
+
+        return newestFirst
+            ? unfinished.Where(episode => episode.Published < after.Episode.Published).MaxBy(episode => episode.Published)
+            : unfinished.Where(episode => episode.Published > after.Episode.Published).MinBy(episode => episode.Published);
+    }
+
     private string Skip(TimeSpan by)
     {
         Playback? now;
@@ -588,6 +619,7 @@ public sealed class PodcastPlayer
     private void OnFinished(long id)
     {
         Playback ended;
+        PodcastEpisode? following = null;
         string? problem = null;
 
         lock (_gate)
@@ -606,6 +638,12 @@ public sealed class PodcastPlayer
             {
                 _listening = _listening.With(ended.Feed, ended.Episode.Id, TimeSpan.Zero, finished: true);
                 _dirty = true;
+
+                if (_playFor(ended.Feed) is { Continuous: true } play)
+                {
+                    following = Following(ended, play.Order == PodcastOrder.NewestFirst);
+                    _continuing = following is not null;
+                }
             }
             else
             {
@@ -628,7 +666,43 @@ public sealed class PodcastPlayer
         // Off this thread: the arbiter may still hold its lock here, and the music takes its own before the arbiter's.
         _background(FollowYield);
         QueueSave();
+
+        if (following is not null)
+        {
+            _background(() => _ = Continue(ended, following));
+            return;
+        }
+
         _background(Raise);
+    }
+
+    /// <summary>Starts <paramref name="next"/> after <paramref name="ended"/> unless something else has taken the slot or stopped it.</summary>
+    private async Task Continue(Playback ended, PodcastEpisode next)
+    {
+        lock (_gate)
+        {
+            if (!_continuing || _now is not null)
+            {
+                return;
+            }
+        }
+
+        try
+        {
+            await Play(ended.Feed, ended.Show, next).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "The next podcast episode could not be started");
+
+            lock (_gate)
+            {
+                _continuing = false;
+            }
+
+            FollowYield();
+            Raise();
+        }
     }
 
     /// <summary>
@@ -644,7 +718,7 @@ public sealed class PodcastPlayer
 
             lock (_gate)
             {
-                yielding = _now is { } now && (now.Id == 0 || playing);
+                yielding = _continuing || (_now is { } now && (now.Id == 0 || playing));
             }
 
             _music.Yield(MusicYield.Podcast, yielding);

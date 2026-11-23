@@ -94,7 +94,7 @@ nav_order: 168
 
 ## The details
 
-Podcasts you add, played by voice, the media keys and the feed list. Each episode resumes where you left it.
+Podcasts you add, played by voice, the media keys and the feed list. Each episode resumes where you left it. A show can continue to its next episode by itself when one ends.
 
 ### Ask for it
 
@@ -104,6 +104,8 @@ Podcasts you add, played by voice, the media keys and the feed list. Each episod
 > "skip back thirty seconds", "back thirty seconds"
 > "skip forward thirty seconds"
 > "refresh podcasts"
+> "continuous play on", "continuous play off"
+> "continuous play newest first", "continuous play oldest first"
 
 "Play the podcast" carries on the episode in the slot, or plays the newest unfinished episode of any show.
 Asking the model to play a named show plays that show's newest unfinished episode.
@@ -118,8 +120,17 @@ steps back two seconds when it carries on. Ambient music fades out and stays sil
 push-to-talk, a callout or a story keeps it off. Invented chatter is not played while an episode plays.
 
 "Next episode" plays the earliest unfinished episode of the same show that was published after the current
-one. With none it says so and stops. After an episode ends by itself, or stops on a failure, it plays the one
+one. With a show on continuous play newest first it plays the latest unfinished episode published before the
+current one instead. With none it says so and stops. After an episode ends by itself, or stops on a failure, it plays the one
 after that. It says "No podcast is playing." when nothing is in the slot, and after you stop the podcast.
+
+Each show has continuous play, off by default. With it on, an episode of that show that plays to its end starts
+the next one by itself, with no music or chatter in between, and it stops when none is left in that direction. Say
+"continuous play on" or "continuous play off" while an episode of the show plays, or ask the model to set a named
+show. "Continuous play newest first" and "continuous play oldest first" set the order, oldest first by default,
+and turn it on; turning it off and on again keeps the order. An episode that stops on a failure, or that you stop,
+starts nothing. Nothing is spoken when the next episode starts. With nothing playing these answer "No podcast is
+playing."
 
 "Skip forward thirty seconds" with less than thirty seconds left is refused: the episode keeps playing and D47
 says how much is left, for example "Only 20 seconds are left." Dragging the seek bar to the end still finishes
@@ -160,7 +171,7 @@ The page edits the same list.
 ### The media keys
 
 While an episode is playing or paused by you, the keyboard's play/pause key and the volume flyout's buttons act
-on it: next is the next episode and previous is skip back 30 seconds. The flyout shows the episode and its show.
+on it: next is the next episode, in the same order as "next episode", and previous is skip back 30 seconds. The flyout shows the episode and its show.
 Otherwise they act on the ambient music.
 
 <details markdown="1">
@@ -171,10 +182,10 @@ Otherwise they act on the ambient music.
 Plays, pauses, resumes or stops a podcast episode, skips 30 seconds back or forward, plays the next episode of
 the same show, or refreshes the added feeds. Play with a show plays that show's newest unfinished episode;
 without one it carries on the current episode or plays the newest unfinished episode of any show. Each episode
-resumes where it was left.
+resumes where it was left. The continuous actions turn a show's continuous play on or off, or set its order and turn it on: after an episode plays to its end the next episode of the show starts, oldest first by default or newest first. They act on the show named by show, or else the show playing.
 
 ```json
-{"type":"object","properties":{"action":{"type":"string","description":"What to do.","enum":["play","pause","resume","stop","next","skip_back","skip_forward","refresh"]},"show":{"type":"string","description":"With play: the show title, or part of it. Optional."}},"required":["action"],"additionalProperties":false}
+{"type":"object","properties":{"action":{"type":"string","description":"What to do.","enum":["play","pause","resume","stop","next","skip_back","skip_forward","refresh","continuous_on","continuous_off","continuous_newest","continuous_oldest"]},"show":{"type":"string","description":"With play or the continuous actions: the show title, or part of it. Optional."}},"required":["action"],"additionalProperties":false}
 ```
 
 #### `list_podcasts`

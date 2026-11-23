@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Podcasts. Each show can be set to continuous play, off by default: when an episode plays to its end, the next episode of that show starts by itself, with no music or chatter between. The order is oldest first, or newest first, which plays the latest unfinished episode published before the one that ended. Say "continuous play on", "continuous play off", "continuous play newest first" or "continuous play oldest first" while a show plays, or ask for a named show. "Next episode" and the media key's next follow the order while a show is on newest first.
+
 Fixed: The SETTINGS count on Media › Music counted the Thumbs-down tracks row even when it was not drawn. It now counts only the rows shown, and changes when a Music publish token is saved or cleared.
 
 Fixed: On the Movies player page, WRITE CAPTIONS and WRITE FROM THE SOUND become available as soon as a speech model is ready, without leaving the page. After writing captions fails, choosing WRITE again tries again.

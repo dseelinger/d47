@@ -1,3 +1,5 @@
+using D47.Core.Configuration;
+
 namespace D47.Core.Podcasts;
 
 /// <summary>One show and the titles of its unfinished episodes, newest first.</summary>
@@ -12,7 +14,9 @@ public sealed class PodcastDesk(
     Func<IReadOnlyList<CachedShow>> shows,
     Func<Task<IReadOnlyList<PodcastRefresh>>> refresh,
     Func<string, Task<PodcastSearchOutcome>> search,
-    Func<Uri, Task<PodcastRefresh>> add)
+    Func<Uri, Task<PodcastRefresh>> add,
+    Func<Uri, PodcastShowPlay>? playFor = null,
+    Action<Uri, bool?, PodcastOrder?>? setPlay = null)
 {
     public PodcastPlayer Player { get; } = player;
 
@@ -53,6 +57,54 @@ public sealed class PodcastDesk(
     public string Stop() => Player.Stop();
 
     public Task<string> Next() => Player.Next();
+
+    /// <summary>
+    /// Turns continuous play on or off for the show whose title is, or contains, <paramref name="show"/>, or the show in
+    /// the slot, and sets its order where given; says what is now set.
+    /// </summary>
+    public string SetContinuous(string? show, bool? on, PodcastOrder? order)
+    {
+        Uri feed;
+        string title;
+
+        if (string.IsNullOrWhiteSpace(show))
+        {
+            if (Player.State is not { } now)
+            {
+                return "No podcast is playing.";
+            }
+
+            feed = now.Feed;
+            title = now.Show;
+        }
+        else
+        {
+            var wanted = show.Trim();
+            var cached = shows();
+            var found = cached.FirstOrDefault(entry => string.Equals(entry.Show.Title, wanted, StringComparison.OrdinalIgnoreCase))
+                ?? cached.FirstOrDefault(entry => entry.Show.Title.Contains(wanted, StringComparison.OrdinalIgnoreCase));
+
+            if (found is null)
+            {
+                return $"No added show is called {wanted}.";
+            }
+
+            feed = found.Feed;
+            title = found.Show.Title;
+        }
+
+        if (setPlay is null || playFor is null)
+        {
+            return "Continuous play is not available.";
+        }
+
+        setPlay(feed, on, order);
+        var set = playFor(feed);
+
+        return set.Continuous
+            ? $"Continuous play is on for {title}, {(set.Order == PodcastOrder.NewestFirst ? "newest" : "oldest")} first."
+            : $"Continuous play is off for {title}.";
+    }
 
     public string SkipBack() => Player.SkipBack();
 
