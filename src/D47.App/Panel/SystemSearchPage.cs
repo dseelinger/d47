@@ -25,6 +25,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
 
     private readonly Func<string?> _here;
     private readonly Action<SystemSummary>? _open;
+    private readonly Action<GalaxyMapStar>? _showOnMap;
 
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
@@ -49,9 +50,11 @@ public sealed class SystemSearchPage : GalaxySearchPage
         Func<string?> here,
         Action<SystemSummary>? open,
         Func<string, Task<bool>>? copy,
-        bool headset)
+        bool headset,
+        Action<GalaxyMapStar>? showOnMap = null)
         : base(searches, headset)
     {
+        _showOnMap = showOnMap;
         _here = here;
         Copy = copy;
         _nearNames = SuggestNames(_near);
@@ -251,7 +254,9 @@ public sealed class SystemSearchPage : GalaxySearchPage
                 : controlling
             : Dash;
 
-        return Centered(Pair(CopyGlyph.Beside(SystemLink.Look(name), system.Name, Copy), Sub(faction)));
+        Action? onMap = _showOnMap is { } show && system.Position is { } at ? () => show(new GalaxyMapStar(system.Name, at)) : null;
+
+        return Centered(Pair(CopyGlyph.Beside(SystemLink.Look(name), system.Name, Copy, onMap), Sub(faction)));
     }
 
     protected override Control BuildForm()

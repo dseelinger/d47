@@ -18,6 +18,9 @@ internal interface IPanelTabHost
 
     Func<string, Task<bool>>? Copy { get; }
 
+    /// <summary>Opens Astrometrics › Galaxy map on a system on this surface, or null where there is no Galaxy map.</summary>
+    Action<GalaxyMapStar>? ShowOnGalaxyMap => null;
+
     /// <summary>Opens an address in the Commander's browser, or null where this surface has none.</summary>
     Action<string>? Browse { get; }
 

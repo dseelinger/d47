@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: **Show on galaxy map** on each Search › Systems row and on the Search › System page opens Astrometrics › Galaxy map centred on that system with it selected, in the window and on the headset panel. A selected system that no layer draws now has its brackets, name and a centre point, and the strip, the centre point and the "not visited" line agree on whether you have arrived there.
+
 Fixed: Media › Books › Add a book › Project Gutenberg lists every book that matches, not the first 200. In the window the list draws 25 books and draws the next 25 as you scroll to its end, and the results line counts the books drawn. On the headset panel the list shows 25 books a page with PREVIOUS and NEXT, and an open order, subject or language choice takes the list's place until you close it. The field, the sentence and the results line stay on screen while the list scrolls, and "Fetching the first lines of …" shows beside BACK.
 
 Fixed: A Project Gutenberg text with a contents list now reads into its real chapters. The contents entries no longer become the title of the front matter, which stays one chapter named for the book. Chapters are numbered by the book, so Moby Dick's Loomings is chapter 1 of 135 on the shelf, the Book page, the mini panel and in speech, and the front matter shows no chapter number. A title that begins with Chapter is spoken as it is, "Chapter 2. The Carpet-Bag.", instead of after "Chapter 3:". A book already downloaded takes the new count the next time it is opened.

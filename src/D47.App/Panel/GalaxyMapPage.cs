@@ -143,7 +143,6 @@ public sealed class GalaxyMapPage : UserControl
     private string? _stripFor;
     private IReadOnlyList<GalaxyMapMark> _placed = [];
     private Placement _placement = new([], []);
-    private HashSet<string> _unvisitedNames = new(StringComparer.OrdinalIgnoreCase);
     private bool _stripUnvisited;
     private bool _unvisitedWanted = true;
     private bool _settingUnvisited;
@@ -474,7 +473,6 @@ public sealed class GalaxyMapPage : UserControl
         var placement = _placement = Place(log, commander, fid, offDuty is not null, galaxy is not null);
         var unvisited = Shows(StarChartKind.Unvisited) ? Unvisited(steps, here) : [];
 
-        _unvisitedNames = new HashSet<string>(unvisited.Select(star => star.Name), StringComparer.OrdinalIgnoreCase);
         _placed = placement.Marks;
         _carrierMark.IsEnabled = offDuty is null;
 
@@ -675,6 +673,13 @@ public sealed class GalaxyMapPage : UserControl
             _map.View(fitted);
             Moved();
         }
+    }
+
+    /// <summary>Centres the view on <paramref name="system"/> at the zoom, heading and tilt it has, and selects it.</summary>
+    public void ShowSystem(GalaxyMapStar system)
+    {
+        Step(view => view with { CentreX = system.At.X, CentreZ = system.At.Z });
+        _map.Select(system);
     }
 
     /// <summary>Where <paramref name="kind"/> is drawn: its fixed systems, or its placed marks.</summary>
@@ -1171,7 +1176,8 @@ public sealed class GalaxyMapPage : UserControl
         }
 
         _stripCurrent = _current is not null && string.Equals(star.Name, _current, StringComparison.OrdinalIgnoreCase);
-        _stripUnvisited = _unvisitedNames.Contains(star.Name);
+        _stripUnvisited = !Arrivals(star).Any();
+        _map.SelectedWasVisited(!_stripUnvisited);
         _strip.IsVisible = true;
         _stripSystem = star.Name;
         _stripName.Text = star.Name.ToUpperInvariant();
@@ -1267,6 +1273,15 @@ public sealed class GalaxyMapPage : UserControl
         return run;
     }
 
+    /// <summary>The Commander's arrivals at <paramref name="star"/>, which the facts line, the strip's glyph and the map's centre point all read.</summary>
+    private IEnumerable<TravelStep> Arrivals(GalaxyMapStar star)
+    {
+        var fid = _commander()?.Identity.FrontierId ?? string.Empty;
+
+        return (_travel() is { } log && fid.Length > 0 ? log.Steps(fid) : [])
+            .Where(step => string.Equals(step.System, star.Name, StringComparison.OrdinalIgnoreCase));
+    }
+
     private IEnumerable<Run> Facts(GalaxyMapStar star)
     {
         if (_stripCurrent)
@@ -1281,10 +1296,7 @@ public sealed class GalaxyMapPage : UserControl
             yield return Ink(" away");
         }
 
-        var fid = _commander()?.Identity.FrontierId ?? string.Empty;
-        var arrivals = (_travel() is { } log && fid.Length > 0 ? log.Steps(fid) : [])
-            .Where(step => string.Equals(step.System, star.Name, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        var arrivals = Arrivals(star).ToList();
 
         yield return Ink(_stripCurrent || _position is not null ? " · " : string.Empty);
 

@@ -237,7 +237,8 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
                 () => surface.Here()?.StarSystem,
                 OpenFound,
                 host.Copy,
-                host.Headset)
+                host.Headset,
+                host.ShowOnGalaxyMap)
             {
                 PaneWidths = host.PaneWidths,
                 ColumnWidths = host.ColumnWidths,
@@ -371,7 +372,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         if (crumb.Key.StartsWith(FoundKeyPrefix, StringComparison.Ordinal)
             && FoundTarget(crumb.Key) is var (address, suffix))
         {
-            var found = _found = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex, ColumnArrangements = host.ColumnArrangements };
+            var found = _found = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex, ColumnArrangements = host.ColumnArrangements, ShowOnMap = host.ShowOnGalaxyMap };
             found.FiltersChanged += (_, _) =>
             {
                 host.ShowSearch();
@@ -399,7 +400,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
             return found;
         }
 
-        _starSystem = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex, ColumnArrangements = host.ColumnArrangements };
+        _starSystem = new StarSystemPage(surface, host.Copy) { OpenBody = OpenBody, OpenStation = OpenStation, Codex = Codex, ColumnArrangements = host.ColumnArrangements, ShowOnMap = host.ShowOnGalaxyMap };
         _starSystem.FiltersChanged += (_, _) =>
         {
             host.ShowSearch();

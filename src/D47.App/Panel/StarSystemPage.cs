@@ -107,6 +107,9 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     /// <summary>Which columns each table shows; the headset's memory when the page is drawn there.</summary>
     public ColumnArrangementMemory? ColumnArrangements { get; init; }
 
+    /// <summary>Opens the Galaxy map on a system; null draws no map glyph.</summary>
+    public Action<GalaxyMapStar>? ShowOnMap { get; init; }
+
     /// <summary>The surface's dragged widths; the headset does not drag.</summary>
     private ColumnWidthMemory? Widths => ColumnArrangements?.Headset == true ? null : _surface.ColumnWidths;
 
@@ -704,12 +707,24 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
 
         Control named = title;
 
-        if (_copy is { } copy && _opened?.Name is { Length: > 0 } shown)
-        {
-            var glyph = CopyGlyph.For(shown, copy);
-            glyph.VerticalAlignment = VerticalAlignment.Center;
+        var glyphs = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
 
-            named = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { title, glyph } };
+        if (_opened?.Name is { Length: > 0 } shown)
+        {
+            if (_copy is { } copy)
+            {
+                glyphs.Children.Add(CopyGlyph.For(shown, copy));
+            }
+
+            if (ShowOnMap is { } show && _profile?.Position is { } where)
+            {
+                glyphs.Children.Add(MapGlyph.For(() => show(new GalaxyMapStar(shown, where))));
+            }
+        }
+
+        if (glyphs.Children.Count > 0)
+        {
+            named = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { title, glyphs } };
         }
 
         return TitleText.Block(named, context, reportedAt is { } at ? Reported(at) : null);

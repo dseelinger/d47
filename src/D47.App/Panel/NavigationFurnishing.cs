@@ -19,6 +19,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
     private GalaxyMapPage? _galaxyMap;
     private RoutePlanKind? _planOnMap;
     private StarChartKind? _chartAsked;
+    private GalaxyMapStar? _systemAsked;
+    private bool _hasGalaxyMap;
 
     private static readonly RoutePlanKind[] PlanPageKinds = [RoutePlanKind.Jump, RoutePlanKind.Riches, RoutePlanKind.Exobiology, RoutePlanKind.Carrier];
 
@@ -163,6 +165,8 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
             Mini = new RouteMini(miniPlans, surface.Route, surface.Here, surface.OffDuty, InPlay, RoutingPages.Copy(surface));
         }
 
+        _hasGalaxyMap = galaxyMap && surface.Travel is not null;
+
         if (galaxyMap && surface.Travel is not null)
         {
             var stored = surface.Plans;
@@ -222,6 +226,12 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
                         surface.Searches);
 
                     _chartAsked = null;
+
+                    if (_systemAsked is { } system)
+                    {
+                        _systemAsked = null;
+                        galaxyPage.ShowSystem(system);
+                    }
 
                     galaxyPage.PlanChosen += kind => _planOnMap = kind;
 
@@ -374,6 +384,22 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         _planOnMap = kind;
         host.Nav.Show(RoutingPages.GalaxyMapRoot);
         _galaxyMap?.ShowPlan(kind);
+    }
+
+    /// <summary>Whether this surface has a Galaxy map page.</summary>
+    public bool HasGalaxyMap => _hasGalaxyMap;
+
+    /// <summary>Opens the Galaxy map root on this surface with <paramref name="system"/> centred and selected, once the page is built when it is not yet.</summary>
+    public void ShowSystemOnGalaxyMap(GalaxyMapStar system)
+    {
+        _systemAsked = system;
+        host.Nav.Show(RoutingPages.GalaxyMapRoot);
+
+        if (_systemAsked is { } waiting && _galaxyMap is { } map)
+        {
+            _systemAsked = null;
+            map.ShowSystem(waiting);
+        }
     }
 
     /// <summary>Opens Navigation › Market with <paramref name="commodity"/> as the only tile and runs the search.</summary>

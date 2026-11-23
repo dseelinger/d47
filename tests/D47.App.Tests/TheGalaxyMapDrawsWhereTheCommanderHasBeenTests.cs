@@ -162,6 +162,17 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             panel.Classes.Add("headset");
         }
 
+        EnableRouting(panel, game);
+
+        panel.Tab = PanelTab.Astrometrics;
+        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, root) || panel.Nav.Root.Key == root);
+
+        return panel;
+    }
+
+    /// <summary>Gives <paramref name="panel"/> the Astrometrics tab with every one of its pages.</summary>
+    internal static void EnableRouting(PanelView panel, Game game)
+    {
         var folder = TestSurface.MemoryFolder("d47-galaxy-map-tests");
         var files = new MemoryFileSystem();
 
@@ -185,11 +196,6 @@ public class TheGalaxyMapDrawsWhereTheCommanderHasBeenTests
             GalaxyLayers = game.Layers,
             Searches = game.Searches,
         });
-
-        panel.Tab = PanelTab.Astrometrics;
-        Assert.True(panel.Nav.SelectRoot(PanelTab.Astrometrics, root) || panel.Nav.Root.Key == root);
-
-        return panel;
     }
 
     internal static (Window Window, PanelView Panel, GalaxyMapPage Page) Show() => InWindow(Played());

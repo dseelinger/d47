@@ -297,6 +297,10 @@ from journals already on this machine. Nothing is fetched.
   box and a gem with a line across it. Outfitting and rares answers carry their own positions. A
   signal is placed by the travel log and then by the position lookups the map already makes; one
   that neither places is counted in the line under the map. The map makes no search for these layers.
+- **Show on galaxy map**, on the Systems search page and on the System page of the Search tab, opens
+  this page centred on the system with it selected, at the zoom, heading and tilt the map has. The selection is marked
+  even where no layer draws the system: the white brackets, the name and a centre point, a grey
+  outline for a system the Commander has not visited and a small accent square for one they have.
 - **Exobiology**, in the **Galaxy** group on the Layers picker, fills each region's ground by how many
   species d47's exobiology catalogue lists for it: the range from the fewest to the most is divided
   into four equal steps, drawn in the accent mixed into the background at 14, 24, 34 and 46%. The

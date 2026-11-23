@@ -24,9 +24,11 @@ public static class SearchPanelHosting
         bool headset = false,
         PanelRouting? routing = null,
         IClipboard? copy = null,
-        ColumnArrangementMemory? arrangements = null)
+        ColumnArrangementMemory? arrangements = null,
+        Action<PanelView>? furnish = null)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
+        furnish?.Invoke(panel);
 
         if (headset)
         {
@@ -68,7 +70,8 @@ public static class SearchPanelHosting
         IStarSystemService systems,
         string root,
         ColumnArrangementMemory? arrangements = null,
-        bool headset = false)
+        bool headset = false,
+        Action<PanelView>? furnish = null)
     {
         var history = new SearchHistory("search-history.json", new MemoryFileSystem(), NullLogger<SearchHistory>.Instance);
         var registry = CapabilityRegistry.Build([GalaxyCapability.Create(galaxy, () => "LTT 7786", settings, searches: board, history: history)]);
@@ -86,6 +89,6 @@ public static class SearchPanelHosting
             },
         };
 
-        return Show(surface, root, headset, arrangements: arrangements);
+        return Show(surface, root, headset, arrangements: arrangements, furnish: furnish);
     }
 }

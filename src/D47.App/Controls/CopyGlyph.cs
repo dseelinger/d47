@@ -67,16 +67,17 @@ public static class CopyGlyph
     }
 
     /// <summary>The name with a copy glyph for <paramref name="system"/> to its right; the name alone without a system or a clipboard.</summary>
-    public static Control Beside(Control name, string? system, Func<string, Task<bool>>? copy) =>
-        Place(name, system, copy, linked: false);
+    public static Control Beside(Control name, string? system, Func<string, Task<bool>>? copy, Action? showOnMap = null) =>
+        Place(name, system, copy, linked: false, showOnMap);
 
     /// <summary>As <see cref="Beside"/>, with the name a <see cref="SystemLink"/> that opens Search › System.</summary>
     public static Control LinkBeside(TextBlock name, string? system, Func<string, Task<bool>>? copy) =>
         Place(name, system, copy, linked: true);
 
-    private static Control Place(Control name, string? system, Func<string, Task<bool>>? copy, bool linked)
+    /// <summary>A map glyph, when there is one, sits straight after the copy glyph, 2 px apart.</summary>
+    private static Control Place(Control name, string? system, Func<string, Task<bool>>? copy, bool linked, Action? showOnMap = null)
     {
-        if (system is not { Length: > 0 } target || copy is null)
+        if (system is not { Length: > 0 } target || (copy is null && showOnMap is null))
         {
             return name;
         }
@@ -87,7 +88,13 @@ public static class CopyGlyph
         name.VerticalAlignment = VerticalAlignment.Center;
         name.HorizontalAlignment = HorizontalAlignment.Left;
 
-        var glyph = For(target, copy);
+        Control glyph = copy is null ? MapGlyph.For(showOnMap!) : For(target, copy);
+
+        if (copy is not null && showOnMap is not null)
+        {
+            glyph = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, Children = { glyph, MapGlyph.For(showOnMap) } };
+        }
+
         Grid.SetColumn(glyph, 1);
 
         var grid = new Grid

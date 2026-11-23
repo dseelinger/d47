@@ -809,7 +809,8 @@ the date of Spansh's last report. With no `system`, it describes the system the 
 
 The panel opens **Search › System** on that system and stops following the Commander, as typing
 the name there does. Pressing a system's name on any other page opens Search › System on it the same
-way, and the copy glyph beside it still copies. Only a question the Commander asked moves the panel, and a surface holding a
+way, and the copy glyph beside it still copies. The page, and each row of the Systems search with a position,
+have **Show on galaxy map**, which opens the Galaxy map on the system. Only a question the Commander asked moves the panel, and a surface holding a
 chooser stays where it is.
 
 A name with no exact match answers with up to three close names and opens nothing; a misheard name

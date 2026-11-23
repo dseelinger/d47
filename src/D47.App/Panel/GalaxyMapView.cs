@@ -177,6 +177,8 @@ public sealed class GalaxyMapView : Control
     private bool _stale = true;
     private GalaxyMapStar? _selected;
     private Point? _selectedAt;
+    private bool _selectedDrawn;
+    private bool _selectedVisited;
     private double _bottomInset;
     private double? _fitInset;
     private bool _fitEachAxis;
@@ -226,6 +228,27 @@ public sealed class GalaxyMapView : Control
 
     public GalaxyMapStar? Selected => _selected;
 
+    /// <summary>Whether the Commander has arrived at the selected system; the centre point of a system no layer draws reads it.</summary>
+    public void SelectedWasVisited(bool visited)
+    {
+        if (_selectedVisited == visited)
+        {
+            return;
+        }
+
+        _selectedVisited = visited;
+        InvalidateVisual();
+    }
+
+    /// <summary>Selects <paramref name="star"/>: the drawn target of that name where there is one, else the system at its own position.</summary>
+    public void Select(GalaxyMapStar star)
+    {
+        _selected = star;
+        Reselect();
+        InvalidateVisual();
+        Picked?.Invoke(_selected);
+    }
+
     public void Clear()
     {
         if (_selected is null)
@@ -235,6 +258,7 @@ public sealed class GalaxyMapView : Control
 
         _selected = null;
         _selectedAt = null;
+        _selectedDrawn = false;
         InvalidateVisual();
         Picked?.Invoke(null);
     }
@@ -322,7 +346,7 @@ public sealed class GalaxyMapView : Control
         Redrawn?.Invoke(Drawn);
     }
 
-    /// <summary>Follows the selected system to where it is drawn now; it has no mark while it is not drawn.</summary>
+    /// <summary>Follows the selected system to where it is drawn now, or to its own position while no layer draws it.</summary>
     private void Reselect()
     {
         if (_selected is not { } was)
@@ -333,7 +357,8 @@ public sealed class GalaxyMapView : Control
         var found = _layout.Targets.FirstOrDefault(target => string.Equals(target.Star.Name, was.Name, StringComparison.OrdinalIgnoreCase));
 
         _selected = found.Star ?? was;
-        _selectedAt = found.Star is null ? null : Screen(found.Star.At);
+        _selectedDrawn = found.Star is not null;
+        _selectedAt = Screen(_selected.At);
     }
 
     private void Pick(Point at)
@@ -343,6 +368,7 @@ public sealed class GalaxyMapView : Control
 
         _selected = index is { } i ? near[i].Star : null;
         _selectedAt = index is { } j ? Screen(near[j].Star.At) : null;
+        _selectedDrawn = true;
 
         InvalidateVisual();
         Picked?.Invoke(_selected);
@@ -541,6 +567,11 @@ public sealed class GalaxyMapView : Control
             if (!named)
             {
                 SelectedName(context, star.Name, bounds, size);
+            }
+
+            if (!_selectedDrawn)
+            {
+                CentrePoint(context, picked, _selectedVisited);
             }
         }
 
@@ -1118,6 +1149,27 @@ public sealed class GalaxyMapView : Control
 
         context.DrawGeometry(null, new Pen(Brush(ThemeManager.BgKey), 3.5, lineCap: PenLineCap.Square), geometry);
         context.DrawGeometry(null, new Pen(Brush(ThemeManager.WhiteKey), 1.5, lineCap: PenLineCap.Square), geometry);
+    }
+
+    /// <summary>The strip glyph's centre point on a Bg halo: a 1 px grey square outline 4 px across when not visited, else a 3 px square in the accent.</summary>
+    private void CentrePoint(DrawingContext context, Point at, bool visited)
+    {
+        var halo = Brush(ThemeManager.BgKey);
+
+        if (visited)
+        {
+            var square = new Rect(at.X - 1.5, at.Y - 1.5, 3, 3);
+
+            context.DrawRectangle(halo, new Pen(halo, 2), square);
+            context.DrawRectangle(Brush(ThemeManager.AKey), null, square);
+
+            return;
+        }
+
+        var outline = new Rect(at.X - 2, at.Y - 2, 4, 4);
+
+        context.DrawRectangle(halo, new Pen(halo, 2.5), outline);
+        context.DrawRectangle(null, new Pen(Brush(ThemeManager.GreyKey), 1), outline);
     }
 
     /// <summary>The selected system's name beside its brackets, on the left near the right edge, kept inside the map.</summary>
