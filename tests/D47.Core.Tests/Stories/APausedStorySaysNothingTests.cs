@@ -71,15 +71,14 @@ public sealed class APausedStorySaysNothingTests
     }
 
     [Fact]
-    public void TheClueClockStopsWhileOff()
+    public void TheClueClockKeepsRunningWhileOff()
     {
         var story = new Story { Id = Id, Title = "T", PublicLayer = "P", PickedAt = Now.AddDays(-1), BeaconScanAt = Now }
             .SwitchedOff(Now.AddDays(2))
             .SwitchedOn(Now.AddDays(5));
 
-        Assert.Equal(TimeSpan.FromDays(4), story.SinceBeacon(Now.AddDays(7)));
-        Assert.Null(StoryClues.Due(story, Now.AddDays(9)));
-        Assert.Equal(new StoryClueDue(Id, 0), StoryClues.Due(story, Now.AddDays(10)));
+        Assert.Equal(TimeSpan.FromDays(7), story.SinceBeacon(Now.AddDays(7)));
+        Assert.Equal(new StoryClueDue(Id, 0), StoryClues.Due(story, Now.AddDays(7)));
     }
 
     [Trait("Category", "Integration")]

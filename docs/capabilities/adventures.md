@@ -571,7 +571,7 @@ and begins. **Switch** shelves the running story and picks another; it never aba
 
 You have one active story at a time, running or paused. Switching to another story shelves the active one:
 the chapter under way is abandoned and the story is switched off. A shelved story gives no objectives, nudges
-or clues, holds back no Guardian cores, has no objective on the panel, and its days do not count; its
+or clues, holds back no Guardian cores, has no objective on the panel, and its days still count; its
 messages and its last two chapters are kept. Any number of stories can be shelved. **Continue story** on a shelved story, or **Switch** to it, makes that same run active again rather than starting it over. It comes back paused,
 and **Resume** writes the chapter that was under way again from where you are. A shelved story's chapter
 offers no **Begin again** on its page. To end a shelved story, make it active and **Abandon** it.
@@ -1380,7 +1380,7 @@ Choose one of the options a story chapter offers, by the number the offer gave i
 Clear **Story on**, on the Stories page or on the chapter's page, or say "pause the story", and the
 running stock story goes quiet until you switch it on again. While it is off no objective is said, no
 nudge or clue is owed, nothing from the story is posted, missions get no story aside, and the
-hidden layer is left out of every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock stops.
+hidden layer is left out of every prompt, so the Narrator, the core aboard and chatter do not hint at it. The clue clock keeps running.
 Narration and chatter work as they always do, and your Backstory goes back to your default, with your cores and persona unchanged. Switching the story on again brings back its own Backstory.
 
 A place you visit while the story is off does not count. Its objective waits for the next visit. The
@@ -1483,8 +1483,8 @@ Answer the ending of a finished story with one of its options, numbered from one
 ### Clues
 
 Each story card has one of seven lengths, and the story is paced to it. Every story in the catalog is a
-year long. The days count from the beacon scan, or from the pick where the scan is narrated; days while the story is paused, switched off or without
-Odyssey do not count.
+year long. The days count from the beacon scan, or from the pick where the scan is narrated; days while it is shelved, paused or switched off count; days without
+Odyssey do not.
 
 | Length | Clues come due on day | Finale from day | Finale chapters | Clues in all | Objective sheet |
 | --- | --- | --- | --- | --- | --- |

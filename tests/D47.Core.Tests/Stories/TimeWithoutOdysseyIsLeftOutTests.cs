@@ -46,7 +46,7 @@ public sealed class TimeWithoutOdysseyIsLeftOutTests
     }
 
     [Fact]
-    public void TimeSwitchedOffAndWithoutOdysseyIsLeftOutOnce()
+    public void TimeSwitchedOffCountsAndTimeWithoutOdysseyDoesNot()
     {
         var story = Scanned
             .SwitchedOff(Now.AddDays(1))
@@ -54,7 +54,7 @@ public sealed class TimeWithoutOdysseyIsLeftOutTests
             .SwitchedOn(Now.AddDays(4))
             .Loaded(odyssey: true, Now.AddDays(6));
 
-        Assert.Equal(TimeSpan.FromDays(5), story.SinceBeacon(Now.AddDays(10)));
+        Assert.Equal(TimeSpan.FromDays(6), story.SinceBeacon(Now.AddDays(10)));
         Assert.False(story.IsOff);
         Assert.False(story.IsWithoutOdyssey);
     }

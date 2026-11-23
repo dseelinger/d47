@@ -54,7 +54,7 @@ public sealed record StoryPacing
     /// <summary>The length as the Commander reads it.</summary>
     public string Name { get; }
 
-    /// <summary>Days after the beacon scan, paused days not counted, before each clue may be spoken.</summary>
+    /// <summary>Days after the beacon scan, before each clue may be spoken.</summary>
     public IReadOnlyList<int> ClueDays { get; }
 
     /// <summary>Days after the beacon scan, counted as for <see cref="ClueDays"/>, before the finale may begin.</summary>

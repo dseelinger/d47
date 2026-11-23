@@ -4,8 +4,8 @@ using Xunit;
 
 namespace D47.Core.Tests.Stories;
 
-/// <summary>A shelved story's clock stops: its time since the beacon is the same when it comes back, and grows only while it runs.</summary>
-public sealed class AShelvedStorysClockCountsTheShelfOnceTests
+/// <summary>A shelved story's clock keeps running: the days on the shelf count toward its time since the beacon.</summary>
+public sealed class AShelvedStorysClockKeepsRunningTests
 {
     private static readonly DateTimeOffset Scan = new(2026, 9, 1, 12, 0, 0, TimeSpan.Zero);
 
@@ -20,39 +20,35 @@ public sealed class AShelvedStorysClockCountsTheShelfOnceTests
     };
 
     [Fact]
-    public void AStoryPausedWhenShelvedComesBackWithTheSameClock()
+    public void AStoryPausedWhenShelvedComesBackWithTheShelfCounted()
     {
         var paused = Running().Paused(Scan.AddDays(2));
-        var before = paused.SinceBeacon(Scan.AddDays(3));
 
         var shelved = paused.Shelved(Scan.AddDays(3));
 
         Assert.Equal(StoryState.Shelved, shelved.State);
         Assert.True(shelved.IsOff);
         Assert.Null(shelved.PausedAt);
-        Assert.Equal(before, shelved.SinceBeacon(Scan.AddDays(30)));
+        Assert.Equal(TimeSpan.FromDays(30), shelved.SinceBeacon(Scan.AddDays(30)));
 
         var back = shelved.Unshelved(Scan.AddDays(40));
 
         Assert.Equal(StoryState.Paused, back.State);
         Assert.False(back.IsOff);
-        Assert.Equal(before, back.SinceBeacon(Scan.AddDays(41)));
+        Assert.Equal(TimeSpan.FromDays(41), back.SinceBeacon(Scan.AddDays(41)));
 
         var resumed = back.Resumed(Scan.AddDays(42));
 
-        Assert.Equal(before + TimeSpan.FromHours(6), resumed.SinceBeacon(Scan.AddDays(42).AddHours(6)));
+        Assert.Equal(TimeSpan.FromDays(42), resumed.SinceBeacon(Scan.AddDays(42)));
     }
 
     [Fact]
-    public void ARunningStoryShelvedAndBroughtBackLosesOnlyTheShelf()
+    public void ARunningStoryShelvedAndBroughtBackKeepsTheShelfOnItsClock()
     {
-        var running = Running();
-        var before = running.SinceBeacon(Scan.AddDays(3));
+        var back = Running().Shelved(Scan.AddDays(3)).Unshelved(Scan.AddDays(10));
 
-        var back = running.Shelved(Scan.AddDays(3)).Unshelved(Scan.AddDays(10));
-
-        Assert.Equal(before, back.SinceBeacon(Scan.AddDays(12)));
-        Assert.Equal(before + TimeSpan.FromDays(1), back.Resumed(Scan.AddDays(12)).SinceBeacon(Scan.AddDays(13)));
+        Assert.Equal(TimeSpan.FromDays(12), back.SinceBeacon(Scan.AddDays(12)));
+        Assert.Equal(TimeSpan.FromDays(13), back.Resumed(Scan.AddDays(12)).SinceBeacon(Scan.AddDays(13)));
     }
 
     [Fact]

@@ -263,7 +263,7 @@ public sealed partial class StoryBench
         }
 
         var spans = now > meta.At ? [.. basis.OffSpans, new StoryOffSpan(meta.At, now)] : basis.OffSpans;
-        var rewound = (basis with { OffSpans = spans }).Paused(now);
+        var rewound = (basis with { OffSpans = spans }).Rewound(meta.At, now).Paused(now);
 
         _stories.Update(meta.FrontierId, meta.StoryId, _ => rewound);
     }

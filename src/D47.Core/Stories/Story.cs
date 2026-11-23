@@ -90,7 +90,7 @@ public sealed record Story
     /// <summary>When the current pause began, while <see cref="State"/> is paused.</summary>
     public DateTimeOffset? PausedAt { get; init; }
 
-    /// <summary>Time spent paused since <see cref="BeaconScanAt"/>, not counting the current pause.</summary>
+    /// <summary>Time spent paused since <see cref="BeaconScanAt"/>, not counting the current pause. It is a record; the clock counts paused time.</summary>
     public TimeSpan PausedFor { get; init; }
 
     /// <summary>Play sessions, counted by <c>LoadGame</c>, since the story was picked.</summary>
@@ -187,6 +187,9 @@ public sealed record Story
     /// <summary>The stretches the Commander had the story switched off, oldest first. The last is open while it is off.</summary>
     public IReadOnlyList<StoryOffSpan> OffSpans { get; init; } = [];
 
+    /// <summary>The stretches a Story bench rewind holds the clock, oldest first. The last is open until the story is resumed.</summary>
+    public IReadOnlyList<StoryOffSpan> RewindSpans { get; init; } = [];
+
     /// <summary>The stretches the game ran without Odyssey, oldest first. The last is open until a LoadGame says it is back.</summary>
     public IReadOnlyList<StoryOffSpan> WithoutOdyssey { get; init; } = [];
 
@@ -242,7 +245,7 @@ public sealed record Story
     [JsonIgnore]
     public string? CurrentChapter => Chapters.Count > 0 ? Chapters[^1] : null;
 
-    /// <summary>Real time since the beacon scan with paused, switched-off and without-Odyssey time taken out, or null before the scan.</summary>
+    /// <summary>Real time since the beacon scan with without-Odyssey time and Story bench rewind time taken out, or null before the scan. Paused, shelved and switched-off time counts.</summary>
     public TimeSpan? SinceBeacon(DateTimeOffset now)
     {
         if (BeaconScanAt is not { } scan)
@@ -250,8 +253,7 @@ public sealed record Story
             return null;
         }
 
-        var paused = PausedFor + (State == StoryState.Paused ? PausedSince(scan, now) : TimeSpan.Zero) + OffSince(scan, now);
-        var since = now - scan - paused;
+        var since = now - scan - OffSince(scan, now);
 
         return since > TimeSpan.Zero ? since : TimeSpan.Zero;
     }
@@ -263,12 +265,21 @@ public sealed record Story
         State = StoryState.Running,
         PausedAt = null,
         PausedFor = PausedFor + (BeaconScanAt is { } scan ? PausedSince(scan, now) : TimeSpan.Zero),
+        RewindSpans = RewindSpans.Count > 0 && RewindSpans[^1].To is null
+            ? [.. RewindSpans.SkipLast(1), RewindSpans[^1] with { To = now > RewindSpans[^1].From ? now : RewindSpans[^1].From }]
+            : RewindSpans,
     };
 
-    /// <summary>Shelves the story: an open pause is folded into <see cref="PausedFor"/> and an off span opens, so no time is both.</summary>
+    /// <summary>Rewinds to a checkpoint taken at <paramref name="at"/>: the clock holds from then until the story is resumed.</summary>
+    public Story Rewound(DateTimeOffset at, DateTimeOffset now) => this with
+    {
+        RewindSpans = [.. RewindSpans, .. (now > at ? new[] { new StoryOffSpan(at, now) } : []), new StoryOffSpan(now, null)],
+    };
+
+    /// <summary>Shelves the story: an open pause is folded into <see cref="PausedFor"/> and an off span opens. The clock keeps running.</summary>
     public Story Shelved(DateTimeOffset now) => (State == StoryState.Paused ? Resumed(now) : this).SwitchedOff(now) with { State = StoryState.Shelved };
 
-    /// <summary>Makes a shelved story active again, paused: the off span closes and a pause opens.</summary>
+    /// <summary>Makes a shelved story active again, paused: the off span closes and a pause opens. The shelved days stay counted.</summary>
     public Story Unshelved(DateTimeOffset now) => SwitchedOn(now).Paused(now);
 
     /// <summary>Whether the story was switched off at this moment.</summary>
@@ -287,13 +298,13 @@ public sealed record Story
         _ => this,
     };
 
-    /// <summary>The time the story was switched off or without Odyssey between the beacon scan and <paramref name="now"/>, overlaps counted once.</summary>
+    /// <summary>The time the story was without Odyssey or held by a rewind between the beacon scan and <paramref name="now"/>, overlaps counted once.</summary>
     private TimeSpan OffSince(DateTimeOffset scan, DateTimeOffset now)
     {
         var total = TimeSpan.Zero;
         var reached = scan;
 
-        foreach (var span in OffSpans.Concat(WithoutOdyssey).OrderBy(span => span.From))
+        foreach (var span in RewindSpans.Concat(WithoutOdyssey).OrderBy(span => span.From))
         {
             var from = span.From > reached ? span.From : reached;
             var to = span.To is { } end && end < now ? end : now;

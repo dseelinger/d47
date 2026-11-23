@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: A story's days keep counting while it is shelved, switched off with Story on, or paused by an abandoned chapter. Once you resume it and finish the chapter, the next clue and the finale come on the same calendar day as for a story that ran all along; a long stop is caught up one clue per chapter. Days without Odyssey still do not count, and a Story bench rewind still holds the clock until Resume. A story saved before this change gets its shelved, off and paused days back.
+
 Added: Podcasts. Media › Podcasts has a continuous play row above the selected show's episodes, on the window and the headset panel: a checkbox, "Play another episode when one ends", and an order, Oldest first or Newest first. While the box is clear the order is disabled and a line under the row names the order kept for when it is on. A change by voice shows on an open page.
 
 Added: Podcasts. Each show can be set to continuous play, off by default: when an episode plays to its end, the next episode of that show starts by itself, with no music or chatter between. The order is oldest first, or newest first, which plays the latest unfinished episode published before the one that ended. Say "continuous play on", "continuous play off", "continuous play newest first" or "continuous play oldest first" while a show plays, or ask for a named show. "Next episode" and the media key's next follow the order while a show is on newest first.

@@ -51,7 +51,7 @@ public static class StoryJump
 
     /// <summary>
     /// The story with the target due at <paramref name="now"/>, or null when <see cref="Refusal"/> gives a reason. The
-    /// beacon scan moves to where the story has run for the target's day, paused and switched-off time left out.
+    /// beacon scan moves to where the story has run for the target's day, without-Odyssey and rewind time left out.
     /// </summary>
     public static Story? Jump(Story story, StoryJumpTarget target, DateTimeOffset now)
     {
@@ -69,7 +69,7 @@ public static class StoryJump
             ClueChapter = null,
         };
 
-        // Moving the scan back brings more paused and switched-off time into the count, so the scan is moved again by
+        // Moving the scan back brings more without-Odyssey and rewind time into the count, so the scan is moved again by
         // what is still short. The time counted never falls, and never passes the target day.
         var scan = now - day;
 
