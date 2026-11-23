@@ -23,7 +23,7 @@ public class BuildTalkUsesTheCatalogsHighModelTests
     {
         var settings = new D47Settings { Llm = new LlmSettings { Provider = LlmProviderCatalog.OpenAiId } };
 
-        Assert.Equal("gpt-6-astra", HighModels.Resolve(settings));
+        Assert.Equal("gpt-6.2-astra", HighModels.Resolve(settings));
     }
 
     [Fact]

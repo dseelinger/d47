@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "published": "2026-11-17",
+  "published": "2026-11-23",
   "providers": {
     "anthropic": {
       "default": "claude-sonnet-5-5",
@@ -99,8 +99,10 @@
     "openai": {
       "default": "gpt-6.1-terra",
       "backgroundDefault": "gpt-6-luna",
-      "highDefault": "gpt-6-astra",
+      "highDefault": "gpt-6.2-astra",
       "models": [
+        { "id": "gpt-6.2-astra", "label": "GPT-6.2 Astra", "offered": true, "price": { "input": 8, "output": 40, "cacheRead": 0.05, "cacheWrite": 1.25 }, "traits": { "images": true } },
+        { "id": "gpt-6.2-sol", "label": "GPT-6.2 Sol", "offered": true, "price": { "input": 2, "output": 10, "cacheRead": 0.05, "cacheWrite": 1.25 }, "traits": { "images": true } },
         { "id": "gpt-6.1-sol", "label": "GPT-6.1 Sol", "offered": true, "price": { "input": 2, "output": 10, "cacheRead": 0.05, "cacheWrite": 1.25 }, "traits": { "images": true } },
         { "id": "gpt-6.1-terra", "label": "GPT-6.1 Terra", "offered": true, "price": { "input": 1, "output": 5, "cacheRead": 0.05, "cacheWrite": 1.25 }, "traits": { "images": true } },
         { "id": "gpt-6-sol", "label": "GPT-6 Sol", "offered": true, "price": { "input": 2, "output": 10, "cacheRead": 0.1, "cacheWrite": 1.25 }, "traits": { "images": true } },
