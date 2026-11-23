@@ -1364,7 +1364,7 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
                     var name = CreditsKit.Line(station.Name, Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
                     name.FontWeight = FontWeight.Medium;
 
-                    return CopyGlyph.Beside(name, station.Name, Copy);
+                    return CopyGlyph.Beside(name, station.Name, Copy, tip: "Copy station name");
                 }),
             StarSystemPage.Headed(heads[1], Fill("System", 160, 120), station => CopyGlyph.LinkBeside(SystemName(station.System), station.System, Copy))
                 with { Filters = [ValueLists.One<FactionStation>("System", station => station.System, "No system")] },

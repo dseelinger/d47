@@ -159,7 +159,7 @@
       A button whose only content is a glyph: a 32-square Tile holding an A glyph, centred in a hit
       target of at least 44 x 44. Hover or keyboard focus turns the tile solid A with a Knock glyph and
       opens a label flush to its left (GlyphLabel) naming the button, taken from
-      AutomationProperties.Name, so every glyph button must set one. Disabled, the glyph is Grey2 and no label opens. No glow. Applies to
+      GlyphLabel.Tip or else AutomationProperties.Name, so every glyph button must set one. Disabled, the glyph is Grey2 and no label opens. No glow. Applies to
       RepeatButton, which derives from Button.
     -->
     <ControlTheme x:Key="D47.GlyphButton" TargetType="Button">
@@ -199,13 +199,19 @@
                       Padding="10,0"
                       IsHitTestVisible="False">
                 <TextBlock x:Name="LabelText"
-                           Text="{TemplateBinding (AutomationProperties.Name), Converter={x:Static theming:Capitals.Text}}"
                            Foreground="{DynamicResource D47.White}"
                            FontFamily="{StaticResource D47.Font.Chrome}"
                            FontSize="{StaticResource D47.Type.Meta}"
                            FontWeight="Medium"
                            LetterSpacing="0.48"
-                           VerticalAlignment="Center" />
+                           VerticalAlignment="Center">
+                  <TextBlock.Text>
+                    <MultiBinding Converter="{x:Static theming:GlyphLabel.Words}">
+                      <Binding Path="(theming:GlyphLabel.Tip)" RelativeSource="{RelativeSource TemplatedParent}" />
+                      <Binding Path="(AutomationProperties.Name)" RelativeSource="{RelativeSource TemplatedParent}" />
+                    </MultiBinding>
+                  </TextBlock.Text>
+                </TextBlock>
               </Border>
             </Popup>
           </Panel>

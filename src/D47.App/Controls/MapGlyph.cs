@@ -16,6 +16,9 @@ public static class MapGlyph
 {
     public const string Name = RoutePlanResultPage.ShowOnGalaxyMapWords;
 
+    /// <summary>The hover label in the window; the headset's panel has none.</summary>
+    public const string Tip = RoutePlanResultPage.ShowOnGalaxyMapWords;
+
     /// <summary>The face's side, each corner leg's length and thickness, and the centre square's side.</summary>
     public const double Size = 22;
     public const double Leg = 6;
@@ -35,6 +38,7 @@ public static class MapGlyph
 
         button.Content = Face(button);
         AutomationProperties.SetName(button, Name);
+        GlyphLabel.Tip(button, Tip);
 
         button.Click += (_, e) =>
         {

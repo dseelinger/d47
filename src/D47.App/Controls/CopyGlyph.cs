@@ -20,6 +20,9 @@ public static class CopyGlyph
     public const string Copied = "Copied";
     public const string Failed = "Copy failed";
 
+    /// <summary>The hover label in the window beside a system name; the headset's panel has none.</summary>
+    public const string SystemTip = "Copy system name";
+
     /// <summary>Each square's side, and the stroke drawn inside it.</summary>
     public const double Square = 10;
     public const double Stroke = 2;
@@ -67,15 +70,15 @@ public static class CopyGlyph
     }
 
     /// <summary>The name with a copy glyph for <paramref name="system"/> to its right; the name alone without a system or a clipboard.</summary>
-    public static Control Beside(Control name, string? system, Func<string, Task<bool>>? copy, Action? showOnMap = null) =>
-        Place(name, system, copy, linked: false, showOnMap);
+    public static Control Beside(Control name, string? system, Func<string, Task<bool>>? copy, Action? showOnMap = null, string tip = SystemTip) =>
+        Place(name, system, copy, linked: false, showOnMap, tip);
 
     /// <summary>As <see cref="Beside"/>, with the name a <see cref="SystemLink"/> that opens Search › System.</summary>
     public static Control LinkBeside(TextBlock name, string? system, Func<string, Task<bool>>? copy) =>
         Place(name, system, copy, linked: true);
 
     /// <summary>A map glyph, when there is one, sits straight after the copy glyph, 2 px apart.</summary>
-    private static Control Place(Control name, string? system, Func<string, Task<bool>>? copy, bool linked, Action? showOnMap = null)
+    private static Control Place(Control name, string? system, Func<string, Task<bool>>? copy, bool linked, Action? showOnMap = null, string tip = SystemTip)
     {
         if (system is not { Length: > 0 } target || (copy is null && showOnMap is null))
         {
@@ -88,7 +91,7 @@ public static class CopyGlyph
         name.VerticalAlignment = VerticalAlignment.Center;
         name.HorizontalAlignment = HorizontalAlignment.Left;
 
-        Control glyph = copy is null ? MapGlyph.For(showOnMap!) : For(target, copy);
+        Control glyph = copy is null ? MapGlyph.For(showOnMap!) : For(target, copy, tip);
 
         if (copy is not null && showOnMap is not null)
         {
@@ -111,10 +114,11 @@ public static class CopyGlyph
         return grid;
     }
 
-    /// <summary>A copy glyph that copies <paramref name="value"/> through <paramref name="copy"/>.</summary>
-    public static Button For(string value, Func<string, Task<bool>> copy)
+    /// <summary>A copy glyph that copies <paramref name="value"/> through <paramref name="copy"/>, with the hover label <paramref name="tip"/>.</summary>
+    public static Button For(string value, Func<string, Task<bool>> copy, string tip = SystemTip)
     {
         var button = Dress(new Button { VerticalAlignment = VerticalAlignment.Center });
+        GlyphLabel.Tip(button, tip);
         button.SetValue(CopiesProperty, value);
 
         button.Click += async (_, e) =>
