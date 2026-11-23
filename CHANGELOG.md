@@ -10,6 +10,8 @@
 
 Fixed: A technology broker at a colony station reads as Human in the Technology broker column on Stations and Outfitting, in its filter and in the next-system watch, where Spansh reported Guardian or nothing. A station in a colonised system without the Technology Broker service shows no type. Stations elsewhere keep Spansh's value.
 
+Fixed: A Technology broker search on Search › Stations or by voice finds the type d47 shows. Human lists colony stations whatever Spansh labels them and counts them in its total, and Guardian no longer lists them. Guardian with Colonised is refused with a sentence, since a Guardian broker is never in a colonised system.
+
 Added: Media › Books › Voice has a play button on each voice, as the other voice pickers do. It speaks the Narrator's audition line in that voice on this computer, at the speed a book is read, and a second press stops the first. A Chatterbox voice not yet on this PC is fetched first. A book being read pauses for the sample and resumes after it. The picker also filters by gender, in the window and on the headset panel.
 
 Added: **Show on galaxy map** on each Search › Systems row and on the Search › System page opens Astrometrics › Galaxy map centred on that system with it selected, in the window and on the headset panel. A selected system that no layer draws now has its brackets, name and a centre point, and the strip, the centre point and the "not visited" line agree on whether you have arrived there.

@@ -60,32 +60,104 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
         StationQuery query,
         CancellationToken cancellationToken)
     {
-        if (query.Modules.Any(module => module.MountChecked))
+        if (query.TechnologyBroker == StationQuery.HumanBroker)
         {
-            return await FindByMountAsync(query, cancellationToken).ConfigureAwait(false);
+            return await FindHumanBrokersAsync(query, cancellationToken).ConfigureAwait(false);
         }
 
-        using var content = new StringContent(SpanshRequest.Stations(query, _now()), Encoding.UTF8, "application/json");
-        using var document = await SendAsync(
-            _logger,
-            token => _http.PostAsync("api/stations/search", content, token),
-            "the station search",
-            cancellationToken).ConfigureAwait(false);
+        if (query.Modules.Any(module => module.MountChecked))
+        {
+            return await FindCheckedAsync(query, MountsListed(query), cancellationToken).ConfigureAwait(false);
+        }
 
-        var result = SpanshResponse.ReadStations(document!);
+        return await FindListedAsync(query, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<StationSearchResult> FindListedAsync(StationQuery query, CancellationToken cancellationToken)
+    {
+        using var document = await PostStationsAsync(query, null, cancellationToken).ConfigureAwait(false);
+
+        var result = SpanshResponse.ReadStations(document);
 
         return result with { More = GalaxyQuery.HasMore(query.Page, query.Size, result.Stations.Count, result.Total) };
     }
 
-    /// <summary>The most requests one answer makes when the stock rows are checked for a mount.</summary>
+    /// <summary>
+    /// A Human technology broker search. The service's own label is wrong in a colonised system, so the rows are read
+    /// by the Technology Broker service and kept where <see cref="StationSummary.TechnologyBroker"/> is Human, and the
+    /// total is the stations with the service in a colonised system plus those labelled Human outside one.
+    /// </summary>
+    private async Task<StationSearchResult> FindHumanBrokersAsync(StationQuery query, CancellationToken cancellationToken)
+    {
+        var listed = query with
+        {
+            TechnologyBroker = null,
+            Services = query.Services.Contains(BrokerService) ? query.Services : [.. query.Services, BrokerService],
+        };
+
+        var mounted = query.Modules.Any(module => module.MountChecked);
+
+        if (query.InColonisedSystems)
+        {
+            return mounted
+                ? await FindCheckedAsync(listed, MountsListed(query), cancellationToken).ConfigureAwait(false)
+                : await FindListedAsync(listed, cancellationToken).ConfigureAwait(false);
+        }
+
+        var mountsListed = MountsListed(query);
+        var result = await FindCheckedAsync(
+            listed,
+            row => row.Station.TechnologyBroker == StationQuery.HumanBroker && mountsListed(row),
+            cancellationToken).ConfigureAwait(false);
+
+        if (mounted)
+        {
+            return result;
+        }
+
+        var inColonies = await CountAsync(listed, colonised: true, cancellationToken).ConfigureAwait(false);
+        var elsewhere = await CountAsync(query, colonised: false, cancellationToken).ConfigureAwait(false);
+
+        return result with { Total = inColonies + elsewhere, Uncounted = false };
+    }
+
+    private const string BrokerService = "Technology Broker";
+
+    private async Task<int> CountAsync(StationQuery query, bool colonised, CancellationToken cancellationToken)
+    {
+        using var document = await PostStationsAsync(query with { Page = 1, Size = 1 }, colonised, cancellationToken)
+            .ConfigureAwait(false);
+
+        return SpanshResponse.ReadStations(document).Total;
+    }
+
+    private async Task<JsonDocument> PostStationsAsync(StationQuery query, bool? colonised, CancellationToken cancellationToken)
+    {
+        using var content = new StringContent(SpanshRequest.Stations(query, _now(), colonised), Encoding.UTF8, "application/json");
+
+        // Only null where a rejection was asked to mean "missing", which this call does not.
+        return (await SendAsync(
+            _logger,
+            token => _http.PostAsync("api/stations/search", content, token),
+            "the station search",
+            cancellationToken).ConfigureAwait(false))!;
+    }
+
+    private static Func<(StationSummary Station, StationStock Stock), bool> MountsListed(StationQuery query) =>
+        row => query.Modules.All(module => !module.MountChecked || row.Stock.Lists(module));
+
+    /// <summary>The most requests one answer makes when the rows are checked after the service returns them.</summary>
     public const int MountReads = 3;
 
     /// <summary>
-    /// A station search whose mount the service cannot filter on: reads its rows <see cref="GalaxyQuery.MaxSize"/>
-    /// at a time and keeps the stations whose stock lists every checked module, until the page is filled, the
-    /// service has no more, or <see cref="MountReads"/> requests are made.
+    /// A station search the service cannot filter fully: reads its rows <see cref="GalaxyQuery.MaxSize"/> at a time
+    /// and keeps those <paramref name="keep"/> accepts, until the page is filled, the service has no more, or
+    /// <see cref="MountReads"/> requests are made. <see cref="StationSearchResult.Total"/> counts the rows kept.
     /// </summary>
-    private async Task<StationSearchResult> FindByMountAsync(StationQuery query, CancellationToken cancellationToken)
+    private async Task<StationSearchResult> FindCheckedAsync(
+        StationQuery query,
+        Func<(StationSummary Station, StationStock Stock), bool> keep,
+        CancellationToken cancellationToken)
     {
         var wanted = query.Page * query.Size;
         var kept = new List<StationSummary>();
@@ -94,22 +166,16 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
 
         for (var read = 1; read <= MountReads; read++)
         {
-            var asked = query with { Page = read, Size = GalaxyQuery.MaxSize };
-
-            using var content = new StringContent(SpanshRequest.Stations(asked, _now()), Encoding.UTF8, "application/json");
-            using var document = await SendAsync(
-                _logger,
-                token => _http.PostAsync("api/stations/search", content, token),
-                "the station search",
+            using var document = await PostStationsAsync(
+                query with { Page = read, Size = GalaxyQuery.MaxSize },
+                null,
                 cancellationToken).ConfigureAwait(false);
 
-            var page = SpanshResponse.ReadStations(document!);
-            var rows = SpanshResponse.ReadOutfitters(document!);
+            var page = SpanshResponse.ReadStations(document);
+            var rows = SpanshResponse.ReadOutfitters(document);
 
             reference ??= page.Reference;
-            kept.AddRange(rows
-                .Where(row => query.Modules.All(module => !module.MountChecked || row.Stock.Lists(module)))
-                .Select(row => row.Station));
+            kept.AddRange(rows.Where(keep).Select(row => row.Station));
 
             unread = GalaxyQuery.HasMore(read, GalaxyQuery.MaxSize, rows.Count, page.Total);
 

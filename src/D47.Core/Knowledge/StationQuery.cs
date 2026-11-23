@@ -437,12 +437,21 @@ public sealed record StationQuery
         new("Fleet Carrier Vendor", "Fleet Carrier Vendor"),
     ];
 
+    public const string GuardianBroker = "Guardian";
+
+    public const string HumanBroker = "Human";
+
     /// <summary>The two kinds of technology broker, in the index's own spelling.</summary>
-    public static IReadOnlyList<string> BrokerTypes { get; } = ["Guardian", "Human"];
+    public static IReadOnlyList<string> BrokerTypes { get; } = [GuardianBroker, HumanBroker];
 
     /// <summary>The broker type to show: Human for a listed broker in a colonised system, otherwise the index's own value.</summary>
     public static string? BrokerTypeAt(bool hasBroker, bool? systemIsColonised, string? reported) =>
-        systemIsColonised is true ? (hasBroker ? "Human" : null) : reported;
+        systemIsColonised is true ? (hasBroker ? HumanBroker : null) : reported;
+
+    /// <summary>Whether the search carries the <c>colonised</c> filter.</summary>
+    public bool InColonisedSystems => Criteria.Any(criterion => criterion.Filter.Name == ColonisedFilter);
+
+    private const string ColonisedFilter = "colonised";
 
     /// <summary>The pad sizes <c>min_pad</c> offers.</summary>
     public static IReadOnlyList<string> MinPads { get; } = ["Medium", "Large"];
@@ -685,6 +694,13 @@ public sealed record StationQuery
 
         if (!GalaxyCriteria.TryParse(GalaxySearchKind.Stations, search.Filters, out var criteria, out failure))
         {
+            return false;
+        }
+
+        if (broker == GuardianBroker && criteria.Any(criterion => criterion.Filter.Name == ColonisedFilter))
+        {
+            failure = "A Guardian technology broker is never in a colonised system. Leave out colonised, or ask "
+                      + "for a Human technology broker.";
             return false;
         }
 

@@ -119,8 +119,14 @@ internal static class SpanshRequest
     }
 
     /// <summary>The station search body.</summary>
-    public static string Stations(StationQuery query, DateTimeOffset? now = null)
+    /// <param name="colonised">
+    /// Sends <c>system_is_colonised</c> as a JSON boolean in place of any <c>colonised</c> criterion. Null sends it
+    /// false for a Guardian technology broker and leaves it out otherwise.
+    /// </param>
+    public static string Stations(StationQuery query, DateTimeOffset? now = null, bool? colonised = null)
     {
+        colonised ??= query.TechnologyBroker == StationQuery.GuardianBroker ? false : null;
+
         var buffer = new ArrayBufferWriter<byte>();
 
         using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = false }))
@@ -213,6 +219,14 @@ internal static class SpanshRequest
             WriteChoice(writer, "material_trader", query.TraderType);
             WriteChoice(writer, "technology_broker", query.TechnologyBroker);
 
+            if (colonised is { } inColony)
+            {
+                // A boolean, unlike the ["true"] the colonised criterion sends: any array means true.
+                writer.WriteStartObject(ColonisedKey);
+                writer.WriteBoolean("value", inColony);
+                writer.WriteEndObject();
+            }
+
             if (query.LargePadOnly || query.MinPad == PadSize.Large)
             {
                 writer.WriteStartObject("has_large_pad");
@@ -239,7 +253,12 @@ internal static class SpanshRequest
                     && (!query.FixedOnly || StationQuery.IsFixedType(type))));
             }
 
-            WriteCriteria(writer, GalaxySearchKind.Stations, query.Criteria);
+            WriteCriteria(
+                writer,
+                GalaxySearchKind.Stations,
+                colonised is null
+                    ? query.Criteria
+                    : [.. query.Criteria.Where(criterion => criterion.Filter.FieldOn(GalaxySearchKind.Stations) != ColonisedKey)]);
 
             if (query.Modules.Count > 0 || query.Ship is not null)
             {
@@ -272,6 +291,8 @@ internal static class SpanshRequest
 
         return Encoding.UTF8.GetString(buffer.WrittenSpan);
     }
+
+    private const string ColonisedKey = "system_is_colonised";
 
     private static void WriteReference(Utf8JsonWriter writer, string? system, StarPosition? position)
     {

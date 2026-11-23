@@ -618,7 +618,16 @@ finds stations with at least one medium pad, and a station with only large pads 
 
 `services` are sent as one object per service, so a station must have every one asked for. Rearm
 is sent as `Restock` and Interstellar Factors as `Interstellar Factors Contact`, the service's own
-names. `material_trader` and `technology_broker` are choices of their own.
+names. `material_trader` is a choice of its own.
+
+`technology_broker` matches the type d47 shows, which is Human for every broker in a colonised system
+whatever Spansh labels it. Guardian sends `technology_broker` Guardian with `system_is_colonised` false,
+as a JSON boolean. Human reads the stations with the Technology Broker service and no
+`technology_broker` key, 100 at a time in the asked order, and keeps those that read Human until the page
+is filled, as for a checked mount; its total is two counts added together, the stations with the service
+in a colonised system and those Spansh labels Human outside one. With `colonised`, Human sends the
+Technology Broker service and the filter with no `technology_broker` key, since every such broker is
+Human, and Guardian is refused.
 
 The station search honours fewer of the system filters than the systems search does. Probed on
 2026-10-03, stations within 20 light years of Sol (control 3,601, an unknown key 3,601):
@@ -631,6 +640,7 @@ The station search honours fewer of the system filters than the systems search d
 | `distance_to_arrival` 0–100 Ls | comparison | 1,403 (min/max: 3,596, ignored) |
 | `material_trader` Raw | choice | 3 |
 | `technology_broker` Guardian | choice | 2 |
+| `system_is_colonised` | boolean `false` or `true` | stations outside or inside colonised systems (probed 2026-11-22); any array, `[false]` included, means true |
 | `allegiance` Federation (the station's) | choice | 1,003 |
 | `government` Democracy (the station's) | choice | 434 |
 | `controlling_minor_faction` Mother Gaia | choice | 22 |

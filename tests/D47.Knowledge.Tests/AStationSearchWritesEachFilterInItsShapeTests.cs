@@ -102,13 +102,38 @@ public class AStationSearchWritesEachFilterInItsShapeTests
     }
 
     [Fact]
-    public void TheTraderAndBrokerAreChoices()
+    public void TheTraderIsAChoiceAndAGuardianBrokerIsOutsideColonisedSystems()
     {
         var filters = Filters(new StationSearch { MaterialTrader = "raw", TechnologyBroker = "guardian" });
 
         Assert.Equal(["Raw"], Values(filters.GetProperty("material_trader")));
         Assert.Equal(["Guardian"], Values(filters.GetProperty("technology_broker")));
+        Assert.Equal(JsonValueKind.False, filters.GetProperty("system_is_colonised").GetProperty("value").ValueKind);
         Assert.False(filters.TryGetProperty("services", out _));
+    }
+
+    [Fact]
+    public void AColonisedBooleanReplacesTheColonisedFilterRatherThanJoiningIt()
+    {
+        Assert.True(
+            StationQuery.TryParse(
+                new StationSearch
+                {
+                    ReferenceSystem = "Sol",
+                    Services = "Technology Broker",
+                    Filters = new Dictionary<string, string> { ["colonised"] = "true" },
+                },
+                out var query,
+                out var failure),
+            failure);
+
+        var body = SpanshRequest.Stations(query, colonised: true);
+
+        Assert.Equal(1, body.Split("\"system_is_colonised\"").Length - 1);
+        Assert.Equal(
+            JsonValueKind.True,
+            JsonDocument.Parse(body).RootElement.GetProperty("filters").GetProperty("system_is_colonised")
+                .GetProperty("value").ValueKind);
     }
 
     [Fact]
