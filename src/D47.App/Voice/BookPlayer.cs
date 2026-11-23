@@ -71,6 +71,9 @@ public sealed class BookPlayer
     /// <summary>More of the book being read has arrived since it was opened.</summary>
     private bool _arrived;
 
+    /// <summary>The shelf's download state when the book being read was last opened.</summary>
+    private BookDownload? _opened;
+
     /// <summary>The last sentence started; the next one is made after it.</summary>
     private Task _lastRender = Task.CompletedTask;
 
@@ -199,6 +202,7 @@ public sealed class BookPlayer
             _queued = null;
             _awaiting = awaiting;
             _arrived = false;
+            _opened = entry.Download;
             _now = new BookPlayback(book, shown.Place, shown.Sentence, shown.Text, StoryRunPause.None) { Waiting = awaiting is not null };
             _audio.DropGroup(Group);
 
@@ -615,6 +619,11 @@ public sealed class BookPlayer
             resume = _now.NotArrived;
         }
 
+        if (RefreshText())
+        {
+            Raise();
+        }
+
         if (resume)
         {
             ResumeWhen(static _ => true);
@@ -622,6 +631,45 @@ public sealed class BookPlayer
         else
         {
             _background(Fill);
+        }
+    }
+
+    /// <summary>Opens the book being read again when its download has written more since it was last opened; true when it changed.</summary>
+    public bool RefreshText()
+    {
+        BookSource source;
+        BookDownload? seen;
+
+        lock (_gate)
+        {
+            if (_now is not { } now)
+            {
+                return false;
+            }
+
+            source = now.Book.Source;
+            seen = _opened;
+        }
+
+        var download = _shelf.Find(source)?.Download;
+
+        if (download == seen)
+        {
+            return false;
+        }
+
+        var opened = _shelf.Open(source);
+
+        lock (_gate)
+        {
+            if (_now is not { } now || now.Book.Source != source || opened is null || !Holds(opened, now.Place))
+            {
+                return false;
+            }
+
+            _opened = download;
+            _now = now with { Book = opened };
+            return true;
         }
     }
 
@@ -652,6 +700,7 @@ public sealed class BookPlayer
                 _arrived = false;
             }
 
+            var download = _shelf.Find(source)?.Download;
             var opened = _shelf.Open(source);
             BookPlace? save = null;
             BookPlace? last = null;
@@ -666,6 +715,7 @@ public sealed class BookPlayer
                 if (opened is not null && Holds(opened, now.Place))
                 {
                     _now = now = now with { Book = opened };
+                    _opened = download;
                 }
 
                 if (_awaiting is not { } awaiting)

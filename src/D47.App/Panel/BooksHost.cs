@@ -160,10 +160,16 @@ public sealed class BooksHost(
     }
 
     /// <summary>Whether the book being read has a chapter after the one it is in.</summary>
-    public bool HasNextChapter => Player.Now is { } now && now.Place.Chapter + 1 < now.Book.Chapters.Count;
+    public bool HasNextChapter => Current() is { } now && now.Place.Chapter + 1 < now.Book.Chapters.Count;
 
     public bool NextChapter() =>
-        Player.Now is { } now && now.Place.Chapter + 1 < now.Book.Chapters.Count && ReadFrom(now.Book.Source, now.Place.Chapter + 1);
+        Current() is { } now && now.Place.Chapter + 1 < now.Book.Chapters.Count && ReadFrom(now.Book.Source, now.Place.Chapter + 1);
+
+    private BookPlayback? Current()
+    {
+        Player.RefreshText();
+        return Player.Now;
+    }
 
     /// <summary>Stops the book if it is the one being read, then takes it and its text off the shelf.</summary>
     public bool TakeOff(BookSource source)

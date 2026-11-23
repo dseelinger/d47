@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A book opened, or being read, while its Project Gutenberg download is still arriving now takes the chapters that arrive afterwards. The Book page lists each by its own title instead of a numbered placeholder, and "next chapter" reaches them without stopping and starting the book.
+
 Fixed: A second update during one Elite session no longer fails. When Elite still has the headset panel layer from an earlier update loaded, the update retires the layer under a numbered `.old` name instead of rolling back, and the next start removes it once Elite has closed.
 
 Changed: A story's days keep counting while it is shelved, switched off with Story on, or paused by an abandoned chapter. Once you resume it and finish the chapter, the next clue and the finale come on the same calendar day as for a story that ran all along; a long stop is caught up one clue per chapter. Days without Odyssey still do not count, and a Story bench rewind still holds the clock until Resume. A story saved before this change gets its shelved, off and paused days back.

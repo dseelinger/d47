@@ -39,6 +39,9 @@ public sealed class BookPage : UserControl, IPageSummary
     private readonly StatusLine _line = new() { Margin = new Thickness(0, 6, 0, 0) };
 
     private Book? _text;
+
+    /// <summary>The shelf's download state when <see cref="_text"/> was opened.</summary>
+    private BookDownload? _opened;
     private int _first;
 
     public BookPage(BooksHost host, PanelNavigator nav, BookSource source, Action<string> openSettings, bool big = false)
@@ -106,9 +109,15 @@ public sealed class BookPage : UserControl, IPageSummary
             return;
         }
 
+        _host.Player.RefreshText();
+
         var playing = _host.Player.Now is { } now && now.Book.Source == _source ? now : null;
 
-        _text ??= playing?.Book ?? _host.Shelf.Open(_source);
+        if (_text is null || entry.Download != _opened)
+        {
+            _opened = entry.Download;
+            _text = _host.Shelf.Open(_source);
+        }
 
         _body.Children.Add(Typeset.Prose(
             $"{entry.Author} · {BooksKit.SourceLabel(_source)} · {(entry.Chapters == 1 ? "1 chapter" : $"{entry.Chapters} chapters")}",
