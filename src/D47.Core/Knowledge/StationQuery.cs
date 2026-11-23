@@ -440,6 +440,10 @@ public sealed record StationQuery
     /// <summary>The two kinds of technology broker, in the index's own spelling.</summary>
     public static IReadOnlyList<string> BrokerTypes { get; } = ["Guardian", "Human"];
 
+    /// <summary>The broker type to show: Human for a listed broker in a colonised system, otherwise the index's own value.</summary>
+    public static string? BrokerTypeAt(bool hasBroker, bool? systemIsColonised, string? reported) =>
+        systemIsColonised is true ? (hasBroker ? "Human" : null) : reported;
+
     /// <summary>The pad sizes <c>min_pad</c> offers.</summary>
     public static IReadOnlyList<string> MinPads { get; } = ["Medium", "Large"];
 
