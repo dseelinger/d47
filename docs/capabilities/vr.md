@@ -415,6 +415,9 @@ Ask for either by name, in whichever words come out:
 > "big panel" / "large panel" / "full panel"
 > "small panel" / "little panel" / "minimal panel" / "mini panel"
 
+A video that is playing moves to the panel you ask for, keeping its place, and a video you start while the
+headset is showing plays on the panel it is showing.
+
 The two keep their own placements, so parking mini out to one side while the full panel stays in
 front of you works the way you would expect.
 

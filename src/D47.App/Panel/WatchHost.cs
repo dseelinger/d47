@@ -38,6 +38,8 @@ public sealed class WatchHost : IDisposable
     private bool _cuesLoading;
     private bool _captionsOn = true;
     private VideoScreen _playsOn = VideoScreen.Window;
+    private bool _headsetUp;
+    private string _followedMode = string.Empty;
     private VideoState? _lastState;
     private CancellationTokenSource? _loading;
     private CaptionWriter? _writer;
@@ -74,7 +76,11 @@ public sealed class WatchHost : IDisposable
 
         video.Changed += OnVideoChanged;
         store.Changed += RaiseChanged;
-        settings.Changed += _ => RaiseChanged();
+        settings.Changed += _ =>
+        {
+            FollowPanelMode();
+            RaiseChanged();
+        };
         _timer = _time.CreateTimer(_ => SaveWhilePlaying(), null, SaveEvery, SaveEvery);
     }
 
@@ -273,12 +279,61 @@ public sealed class WatchHost : IDisposable
         Moved?.Invoke(screen);
     }
 
-    /// <summary>A video started from the window's page or the big panel's plays there, unless it plays on the mini panel.</summary>
+    /// <summary>
+    /// A video started from the window's page or the big panel's plays there, unless it plays on the mini panel. While
+    /// the headset session is up the panel mode decides instead, when the video starts.
+    /// </summary>
     public void PlaysHere(bool headset)
     {
-        if (_playsOn != VideoScreen.MiniPanel)
+        if (!_headsetUp && _playsOn != VideoScreen.MiniPanel)
         {
             _playsOn = headset ? VideoScreen.BigPanel : VideoScreen.Window;
+        }
+    }
+
+    /// <summary>
+    /// Tells the host whether the headset session is up; call it from the headset tick. A session that comes up moves
+    /// the picture to the panel the panel mode names, one that ends moves it back to the window.
+    /// </summary>
+    public void FollowHeadset(bool up)
+    {
+        if (_headsetUp == up)
+        {
+            return;
+        }
+
+        _headsetUp = up;
+        _followedMode = _settings.Current.Vr.Mode;
+        Follow(up ? ScreenOf(_followedMode) : VideoScreen.Window);
+    }
+
+    private static VideoScreen ScreenOf(string mode) => mode == "mini" ? VideoScreen.MiniPanel : VideoScreen.BigPanel;
+
+    private void FollowPanelMode()
+    {
+        var mode = _settings.Current.Vr.Mode;
+
+        if (!_headsetUp || mode == _followedMode)
+        {
+            return;
+        }
+
+        _followedMode = mode;
+        Follow(ScreenOf(mode));
+    }
+
+    private void Follow(VideoScreen screen)
+    {
+        if (_playsOn == screen)
+        {
+            return;
+        }
+
+        _playsOn = screen;
+
+        if (Loaded)
+        {
+            Moved?.Invoke(screen);
         }
     }
 
@@ -415,9 +470,19 @@ public sealed class WatchHost : IDisposable
 
         Select(title);
 
+        if (_headsetUp)
+        {
+            _playsOn = ScreenOf(_settings.Current.Vr.Mode);
+        }
+
         if (!Video.Play(PlaySource(title), start))
         {
             return false;
+        }
+
+        if (_headsetUp)
+        {
+            Moved?.Invoke(_playsOn);
         }
 
         _lastState = null;

@@ -585,6 +585,7 @@ public sealed class VrHost : IDisposable
         if (!wanted)
         {
             _buttons.Clear();
+            _watch?.FollowHeadset(false);
 
             if (_lifecycle.State == VrState.Active)
             {
@@ -605,6 +606,7 @@ public sealed class VrHost : IDisposable
         try
         {
             _lifecycle.Tick(now);
+            _watch?.FollowHeadset(_lifecycle.State == VrState.Active);
 
             // The ray tests read the panel's placement, so a flat route makes them flat too.
             _panel.Curved = _runtime.SupportsCurvature;

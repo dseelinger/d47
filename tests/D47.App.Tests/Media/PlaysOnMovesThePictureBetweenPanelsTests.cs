@@ -124,6 +124,174 @@ public sealed class PlaysOnMovesThePictureBetweenPanelsTests
         }
     }
 
+    private static void SetMode(SettingsService settings, string mode) =>
+        settings.Replace("test", current => current with { Vr = current.Vr with { Mode = mode } });
+
+    [AvaloniaFact]
+    public void AVideoStartedWhileTheHeadsetIsUpPlaysOnThePanelTheModeNames()
+    {
+        var (settings, host) = Watch(settings => SetMode(settings, "full"));
+        var moved = new List<VideoScreen>();
+        host.Moved += moved.Add;
+
+        try
+        {
+            host.FollowHeadset(true);
+            Assert.True(host.Play(FileTitle(Missing)));
+            Assert.Equal(VideoScreen.BigPanel, host.PlaysOn);
+            Assert.Equal([VideoScreen.BigPanel], moved);
+
+            SetMode(settings, "mini");
+            Assert.True(host.Play(FileTitle(Clip)));
+            Assert.Equal(VideoScreen.MiniPanel, host.PlaysOn);
+        }
+        finally
+        {
+            host.Video.Stop();
+            host.Dispose();
+        }
+    }
+
+    [AvaloniaFact]
+    public void AVideoStartedFromTheWindowsPlayerPageOpensTheHeadsetBigPanelsPlayer()
+    {
+        var (settings, host) = Watch(settings => SetMode(settings, "full"));
+        var panel = new VrPanelSurface(new PanelViewModel(), settings, _ => null, watch: host) { Enabled = true };
+
+        try
+        {
+            panel.Configure();
+            panel.ApplyMode();
+            Dispatcher.UIThread.RunJobs();
+            Assert.True(panel.Nav.Select(PanelTab.Media));
+            Draw(panel);
+            host.FollowHeadset(true);
+
+            Assert.True(host.Play(FileTitle(Missing)));
+            Dispatcher.UIThread.RunJobs(DispatcherPriority.Background);
+
+            Assert.Equal(VideoPlayerPage.CrumbOf(host.Current!).Key, panel.Nav.Trail[^1].Key);
+            Assert.Equal(VideoScreen.BigPanel, host.PlaysOn);
+        }
+        finally
+        {
+            host.Video.Stop();
+            host.Dispose();
+            panel.Dispose();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ChangingThePanelModeMovesThePictureWithoutLosingThePlace()
+    {
+        var (settings, host) = Watch(settings => SetMode(settings, "full"));
+        var starts = 0;
+        host.Video.Starting += () => starts++;
+
+        try
+        {
+            host.FollowHeadset(true);
+            Assert.True(host.Play(FileTitle(Missing), TimeSpan.FromMinutes(5)));
+            var source = host.Video.Source;
+            var place = host.Video.Position;
+            starts = 0;
+
+            SetMode(settings, "mini");
+            Assert.Equal(VideoScreen.MiniPanel, host.PlaysOn);
+
+            SetMode(settings, "full");
+            Assert.Equal(VideoScreen.BigPanel, host.PlaysOn);
+
+            Assert.Equal(0, starts);
+            Assert.Equal(source, host.Video.Source);
+            Assert.Equal(place, host.Video.Position);
+        }
+        finally
+        {
+            host.Video.Stop();
+            host.Dispose();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ASessionThatStartsOrEndsMovesThePictureAndKeepsTheVideoPlaying()
+    {
+        var (_, host) = Watch(settings => SetMode(settings, "mini"));
+
+        try
+        {
+            Assert.True(host.Play(FileTitle(Missing), TimeSpan.FromMinutes(5)));
+            var source = host.Video.Source;
+            var place = host.Video.Position;
+            Assert.Equal(VideoScreen.Window, host.PlaysOn);
+
+            host.FollowHeadset(true);
+            Assert.Equal(VideoScreen.MiniPanel, host.PlaysOn);
+
+            host.FollowHeadset(false);
+            Assert.Equal(VideoScreen.Window, host.PlaysOn);
+            Assert.Equal(source, host.Video.Source);
+            Assert.Equal(place, host.Video.Position);
+        }
+        finally
+        {
+            host.Video.Stop();
+            host.Dispose();
+        }
+    }
+
+    [AvaloniaFact]
+    public void WithNoHeadsetSessionAVideoStaysOnTheWindowWhateverThePanelMode()
+    {
+        var (settings, host) = Watch(settings => SetMode(settings, "full"));
+
+        try
+        {
+            Assert.True(host.Play(FileTitle(Missing)));
+            SetMode(settings, "mini");
+            SetMode(settings, "full");
+
+            Assert.Equal(VideoScreen.Window, host.PlaysOn);
+        }
+        finally
+        {
+            host.Video.Stop();
+            host.Dispose();
+        }
+    }
+
+    [AvaloniaFact]
+    public void ThisWindowHoldsUntilThePanelModeChangesTheSessionEndsOrAnotherVideoStarts()
+    {
+        var (settings, host) = Watch(settings => SetMode(settings, "full"));
+
+        try
+        {
+            host.FollowHeadset(true);
+            Assert.True(host.Play(FileTitle(Missing)));
+            host.MoveTo(VideoScreen.Window);
+
+            settings.Replace("test", current => current with { Watch = current.Watch with { PauseForPushToTalk = !current.Watch.PauseForPushToTalk } });
+            Assert.Equal(VideoScreen.Window, host.PlaysOn);
+
+            SetMode(settings, "mini");
+            Assert.Equal(VideoScreen.MiniPanel, host.PlaysOn);
+
+            host.MoveTo(VideoScreen.Window);
+            Assert.True(host.Play(FileTitle(Clip)));
+            Assert.Equal(VideoScreen.MiniPanel, host.PlaysOn);
+
+            host.MoveTo(VideoScreen.Window);
+            host.FollowHeadset(false);
+            Assert.Equal(VideoScreen.Window, host.PlaysOn);
+        }
+        finally
+        {
+            host.Video.Stop();
+            host.Dispose();
+        }
+    }
+
     [AvaloniaFact]
     public void APanelPutsTheHeadsetInItsModeOnlyWhileTheHeadsetIsOn()
     {

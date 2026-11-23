@@ -1080,7 +1080,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         if (watch is not null && !_followsVideo)
         {
             _followsVideo = true;
-            watch.Moved += screen => Dispatcher.UIThread.Post(() => ShowVideoOn(watch, screen));
+            watch.Moved += screen => Dispatcher.UIThread.Post(() => ShowVideoOn(watch, screen), DispatcherPriority.Background);
         }
     }
 
@@ -1105,6 +1105,7 @@ public partial class PanelView : UserControl, IPanelTabHost
 
         if (Tab != PanelTab.Media || Nav.DestinationKey != crumb.Key)
         {
+            Nav.SelectRoot(PanelTab.Media, WatchPage.RootKey);
             Nav.GoTo(PanelTab.Media, crumb);
         }
     }

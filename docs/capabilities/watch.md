@@ -97,7 +97,7 @@ nav_order: 170
 
 The videos on Media › Movies. A title is looked for in Your list first, then in the sources ticked on the Watch
 page; with none ticked every source is searched ([Privacy and egress](privacy.html)). A video resumes where it
-was left.
+was left. In the headset, a video plays on the panel the headset is showing.
 
 ### Ask for it
 
