@@ -161,7 +161,9 @@ show, a seek bar with the elapsed time and the length, and **Back 30 s**, **Paus
 30 s** and **Next episode**. The seek bar and the two skips are disabled for an episode whose server sends it only
 from the start.
 
-**Add a show** opens a page with a search box and a feed address box. Search sends the words you type to Apple's
+**Add a show** opens a page with a search box, a feed address box and a list of suggested shows in three groups,
+Elite Dangerous, Science fiction and Science fact, that **Add** follows with one press; showing the list contacts
+nothing. Search sends the words you type to Apple's
 podcast directory, as "find a podcast" does; **Add** on a result adds its feed. The address box adds a feed by its
 RSS address. **Remove this show** asks first, then removes the feed and forgets where you were in its episodes.
 Adding a feed by address and removing one are made here and in the settings row, never by voice.

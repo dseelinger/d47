@@ -7,15 +7,16 @@ using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.App.Voice;
+using D47.Core.Capabilities;
 using D47.Core.Interface;
 using D47.Core.Podcasts;
 
 namespace D47.App.Panel;
 
-/// <summary>Media › Podcasts › Add a show: a directory search whose results are added by a tile, and a feed address.</summary>
+/// <summary>Media › Podcasts › Add a show: a directory search whose results are added by a tile, a feed address, and a built-in list of suggested shows.</summary>
 public sealed class PodcastAddPage : UserControl, IPageSummary
 {
-    public const string PageSummary = "Find a show by name, or add one by its feed address.";
+    public const string PageSummary = "Find a show by name, pick one D47 suggests, or add one by its feed address.";
 
     public const string NameBoxName = "PodcastSearchName";
 
@@ -30,6 +31,20 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
     public const string UrlAddName = "PodcastFeedAdd";
 
     public const string BackName = "PodcastAddBack";
+
+    public const string SuggestedName = "PodcastSuggested";
+
+    public const string SuggestionName = "PodcastSuggestion";
+
+    public const string SuggestionAddName = "PodcastSuggestionAdd";
+
+    public const string SuggestedPreviousName = "PodcastSuggestedPrevious";
+
+    public const string SuggestedNextName = "PodcastSuggestedNext";
+
+    public const string SuggestedLine = "A few shows to start from. ADD follows one, as it does for a search result.";
+
+    public const int BigSuggestionsPerPage = 4;
 
     public const string NotAFeed = "That address is not a podcast feed. Check it and paste it again.";
 
@@ -50,9 +65,14 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
     private readonly StackPanel _results = new() { Spacing = Gaps.Tile };
     private readonly StatusLine _outcome = new() { Margin = new Thickness(0, 8, 0, 0) };
     private readonly TextBlock _matches = Typeset.Chrome(string.Empty, 12, ThemeManager.GreyKey, vertical: VerticalAlignment.Bottom);
+    private readonly Segment _groups;
+    private readonly StackPanel _suggestions = new() { Spacing = Gaps.Tile };
+    private readonly StatusLine _suggestedOutcome = new() { Margin = new Thickness(0, 8, 0, 0) };
     private readonly HashSet<string> _adding = new(StringComparer.Ordinal);
 
     private IReadOnlyList<PodcastSearchResult> _found = [];
+    private int _group;
+    private int _first;
 
     public PodcastAddPage(PodcastsHost host, PanelNavigator nav, WaitSound? wait = null, bool big = false)
     {
@@ -89,6 +109,28 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
         _addUrl.Click += (_, _) => _ = AddAddressAsync();
         _addUrl.IsEnabled = false;
 
+        var suggested = SuggestedPodcasts.Groups;
+
+        _groups = new Segment
+        {
+            Name = SuggestedName,
+            ItemsSource = [.. suggested.Select(group => group.Name)],
+            SelectedIndex = 0,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+
+        if (!_big)
+        {
+            _groups.Statuses = [.. suggested.Select(group => (ChoiceStatus?)new ChoiceStatus(Shows(group.Shows.Count), ChoiceTone.Grey))];
+        }
+
+        _groups.SelectionChanged += (_, _) =>
+        {
+            _group = Math.Clamp(_groups.SelectedIndex, 0, suggested.Count - 1);
+            _first = 0;
+            DrawSuggestions();
+        };
+
         var back = Tile(BackName, "BACK", "Back");
         back.Click += (_, _) => _nav.Back();
 
@@ -108,6 +150,17 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
 
         body.Children.Add(Joined(_url, _addUrl));
         body.Children.Add(_outcome);
+        body.Children.Add(RoutingKit.Section("Suggested shows"));
+
+        if (!_big)
+        {
+            body.Children.Add(Typeset.Prose(SuggestedLine, 15, ThemeManager.GreyKey, wrap: true));
+        }
+
+        body.Children.Add(_groups);
+        body.Children.Add(_suggestedOutcome);
+        body.Children.Add(_suggestions);
+        DrawSuggestions();
 
         var footer = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 12, 0, 0), Children = { back } };
         back.MinWidth = 120;
@@ -200,18 +253,84 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
         }
     }
 
-    private Control ResultRow(int number, PodcastSearchResult result)
+    private static string Shows(int count) => count == 1 ? "1 show" : $"{count.ToString(System.Globalization.CultureInfo.InvariantCulture)} shows";
+
+    private void DrawSuggestions()
+    {
+        var group = SuggestedPodcasts.Groups[_group];
+        var count = group.Shows.Count;
+
+        _suggestions.Children.Clear();
+
+        if (!_big)
+        {
+            _suggestions.Children.Add(LoadoutPages.ListHead($"{group.Name} · {count.ToString(System.Globalization.CultureInfo.InvariantCulture)}"));
+        }
+
+        var shown = _big ? group.Shows.Skip(_first).Take(BigSuggestionsPerPage) : group.Shows;
+
+        foreach (var show in shown)
+        {
+            _suggestions.Children.Add(ResultRow(null, show, suggested: true));
+        }
+
+        if (_big)
+        {
+            _suggestions.Children.Add(SuggestedPager(count));
+        }
+    }
+
+    private Grid SuggestedPager(int count)
+    {
+        var previous = Tile(SuggestedPreviousName, "◄ PREVIOUS", "Previous suggested shows");
+        previous.IsEnabled = _first > 0;
+        previous.Click += (_, _) =>
+        {
+            _first = Math.Max(0, _first - BigSuggestionsPerPage);
+            DrawSuggestions();
+        };
+
+        var next = Tile(SuggestedNextName, "NEXT ►", "More suggested shows");
+        next.IsEnabled = _first + BigSuggestionsPerPage < count;
+        next.Click += (_, _) =>
+        {
+            _first += BigSuggestionsPerPage;
+            DrawSuggestions();
+        };
+
+        var range = Typeset.Mono(
+            $"{_first + 1}–{Math.Min(count, _first + BigSuggestionsPerPage)} of {count}",
+            12,
+            ThemeManager.GreyKey,
+            vertical: VerticalAlignment.Center,
+            margin: new Thickness(12, 0, 0, 0));
+
+        Grid.SetColumn(previous, 1);
+        Grid.SetColumn(next, 2);
+
+        return new Grid
+        {
+            ColumnSpacing = Gaps.Tile,
+            ColumnDefinitions = [new ColumnDefinition(GridLength.Star), new ColumnDefinition(GridLength.Auto), new ColumnDefinition(GridLength.Auto)],
+            Margin = new Thickness(0, 2, 0, 0),
+            Children = { range, previous, next },
+        };
+    }
+
+    private Control ResultRow(int? number, PodcastSearchResult result, bool suggested = false)
     {
         var following = _host.Following(result.Feed);
         var adding = _adding.Contains(result.Feed.AbsoluteUri);
         var name = ListRow.Name(new TextBlock { Text = result.Title, TextTrimming = TextTrimming.CharacterEllipsis });
 
-        var heading = new StackPanel
+        var heading = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+
+        if (number is { } n)
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 10,
-            Children = { Typeset.Mono(number.ToString(System.Globalization.CultureInfo.InvariantCulture), 13, ThemeManager.GreyKey, vertical: VerticalAlignment.Center), name },
-        };
+            heading.Children.Add(Typeset.Mono(n.ToString(System.Globalization.CultureInfo.InvariantCulture), 13, ThemeManager.GreyKey, vertical: VerticalAlignment.Center));
+        }
+
+        heading.Children.Add(name);
 
         var main = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { heading } };
         var episodes = result.EpisodeCount is { } count ? (count == 1 ? "1 episode" : $"{count} episodes") : null;
@@ -228,9 +347,11 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
 
         var right = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, VerticalAlignment = VerticalAlignment.Center };
 
-        if (_big && episodes is not null)
+        var aside = suggested ? result.Author : episodes;
+
+        if (_big && !string.IsNullOrWhiteSpace(aside))
         {
-            right.Children.Add(ListRow.Aside(new TextBlock { Text = episodes, VerticalAlignment = VerticalAlignment.Center }));
+            right.Children.Add(ListRow.Aside(new TextBlock { Text = aside, VerticalAlignment = VerticalAlignment.Center }));
         }
 
         if (following)
@@ -245,10 +366,10 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
                 right.Children.Add(new WaitingState(WaitForm.Inline) { VerticalAlignment = VerticalAlignment.Center });
             }
 
-            var add = Tile(ResultAddName, "ADD", $"Add {result.Title}");
+            var add = Tile(suggested ? SuggestionAddName : ResultAddName, "ADD", $"Add {result.Title}");
             add.MinWidth = 120;
             add.IsEnabled = !adding;
-            add.Click += (_, _) => _ = AddResultAsync(result);
+            add.Click += (_, _) => _ = AddResultAsync(result, suggested);
             right.Children.Add(add);
         }
 
@@ -256,17 +377,19 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
         ListRow.Dress(row);
         row.Classes.Set(ListRow.DimClass, following);
         AutomationProperties.SetName(row, result.Title);
-        row.Name = ResultName;
+        row.Name = suggested ? SuggestionName : ResultName;
         row.Child = new DockPanel { LastChildFill = true, Children = { Docked(right, Dock.Right), main } };
 
         return row;
     }
 
-    private async Task AddResultAsync(PodcastSearchResult result)
+    private async Task AddResultAsync(PodcastSearchResult result, bool suggested)
     {
+        var outcome = suggested ? _suggestedOutcome : _outcome;
+
         _adding.Add(result.Feed.AbsoluteUri);
-        _outcome.Clear();
-        ShowResults(new PodcastSearchOutcome(_found, null));
+        outcome.Clear();
+        Redraw();
 
         PodcastRefresh added;
 
@@ -279,8 +402,18 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
             _adding.Remove(result.Feed.AbsoluteUri);
         }
 
-        ShowResults(new PodcastSearchOutcome(_found, null));
-        Said(result.Title, added);
+        Redraw();
+        Said(outcome, result.Title, added);
+    }
+
+    private void Redraw()
+    {
+        if (_found.Count > 0)
+        {
+            ShowResults(new PodcastSearchOutcome(_found, null));
+        }
+
+        DrawSuggestions();
     }
 
     private async Task AddAddressAsync()
@@ -300,7 +433,7 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
         if (added is { Show: { } show })
         {
             _url.Text = string.Empty;
-            Said(show.Title, added);
+            Said(_outcome, show.Title, added);
         }
         else
         {
@@ -308,17 +441,17 @@ public sealed class PodcastAddPage : UserControl, IPageSummary
         }
     }
 
-    private void Said(string title, PodcastRefresh added)
+    private static void Said(StatusLine outcome, string title, PodcastRefresh added)
     {
         if (added.Show is { } show)
         {
-            _outcome.Say(show.Episodes.Count == 1
+            outcome.Say(show.Episodes.Count == 1
                 ? $"Added {show.Title}, with 1 episode."
                 : $"Added {show.Title}, with {show.Episodes.Count} episodes.");
         }
         else
         {
-            _outcome.Fail($"{title} could not be added. {added.Problem}");
+            outcome.Fail($"{title} could not be added. {added.Problem}");
         }
     }
 

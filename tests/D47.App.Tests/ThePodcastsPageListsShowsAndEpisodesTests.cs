@@ -32,6 +32,8 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
 
         public int Refreshes { get; set; }
 
+        public List<Uri> Added { get; } = [];
+
         public Dictionary<string, PodcastShowPlay> Plays { get; } = [];
 
         public List<(bool? Continuous, PodcastOrder? Order)> Sets { get; } = [];
@@ -61,7 +63,14 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
                     return Task.FromResult(results);
                 },
                 _ => Task.FromResult(new PodcastSearchOutcome([], null)),
-                feed => Task.FromResult(new PodcastRefresh(feed, null, "This is not an RSS feed.")),
+                feed =>
+                {
+                    Added.Add(feed);
+
+                    return Task.FromResult(feed.Host == "suggested.test"
+                        ? new PodcastRefresh(feed, new PodcastShow("Added Show", [Episode("s", 1)]), null)
+                        : new PodcastRefresh(feed, null, "This is not an RSS feed."));
+                },
                 feed =>
                 {
                     Removed.Add(feed);
@@ -196,6 +205,116 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PodcastAddPage.NotAFeed, D47.App.Theming.FieldMessage.GetText(url));
+
+        window.Close();
+    }
+
+    private static void Press(D47.App.Controls.Segment segment, int index)
+    {
+        segment.GetVisualDescendants().OfType<RadioButton>().ElementAt(index).IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    private static void OpenAddPage(Control panel)
+    {
+        Click(Named(panel, PodcastsPage.AddName));
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
+    public void AddAShowOffersTheSuggestedGroupsAndAddsAShowWithOnePress()
+    {
+        var fixture = new Fixture();
+        var (window, panel) = Open(fixture);
+
+        OpenAddPage(panel);
+
+        var segment = panel.GetVisualDescendants().OfType<D47.App.Controls.Segment>().First(s => s.Name == PodcastAddPage.SuggestedName);
+        var rows = () => panel.GetVisualDescendants().OfType<Border>().Count(row => row.Name == PodcastAddPage.SuggestionName);
+
+        Assert.Equal(["Elite Dangerous", "Science fiction", "Science fact"], segment.ItemsSource);
+        Assert.Equal(0, segment.SelectedIndex);
+        Assert.Equal(3, rows());
+        Assert.Contains(PodcastAddPage.SuggestedLine, Drawn(panel));
+        Assert.Contains("3 SHOWS", Drawn(panel));
+        Assert.Contains("15 SHOWS", Drawn(panel));
+        Assert.Empty(fixture.Added);
+
+        Press(segment, 2);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(15, rows());
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PressingAddOnASuggestedShowAddsItsFeedAndSaysSo()
+    {
+        var fixture = new Fixture();
+        var (window, panel) = Open(fixture);
+
+        OpenAddPage(panel);
+        Click(panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == PodcastAddPage.SuggestionAddName));
+
+        Assert.Equal([SuggestedPodcasts.Groups[0].Shows[0].Feed], fixture.Added);
+        Assert.Contains(Drawn(panel), text => text.StartsWith("Lave Radio: an Elite Dangerous podcast could not be added.", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASuggestedShowThatIsAlreadyFollowedReadsFollowingInsteadOfAdd()
+    {
+        var fixture = new Fixture();
+
+        fixture.Feeds.Add(SuggestedPodcasts.Groups[0].Shows[1].Feed);
+
+        var (window, panel) = Open(fixture);
+
+        OpenAddPage(panel);
+
+        Assert.Equal(2, panel.GetVisualDescendants().OfType<Button>().Count(button => button.Name == PodcastAddPage.SuggestionAddName));
+        Assert.Contains("FOLLOWING", Drawn(panel));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ThePanelPagesSuggestedShowsFourAtATimeAndSwitchingGroupReturnsToTheFirstPage()
+    {
+        var fixture = new Fixture();
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableMedia(fixture.Host);
+
+        var window = new Window { Content = panel, Width = 1280, Height = 900 };
+        var page = new PodcastAddPage(fixture.Host, panel.Nav, big: true);
+
+        window.Content = page;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var rows = () => page.GetVisualDescendants().OfType<Border>().Count(row => row.Name == PodcastAddPage.SuggestionName);
+
+        Assert.Equal(3, rows());
+        Assert.Contains("1–3 of 3", Drawn(page));
+
+        var segment = page.GetVisualDescendants().OfType<D47.App.Controls.Segment>().First(s => s.Name == PodcastAddPage.SuggestedName);
+
+        Press(segment, 2);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(4, rows());
+        Assert.Contains("1–4 of 15", Drawn(page));
+        Assert.False(Named(page, PodcastAddPage.SuggestedPreviousName).IsEnabled);
+
+        Click(Named(page, PodcastAddPage.SuggestedNextName));
+        Assert.Contains("5–8 of 15", Drawn(page));
+
+        Press(segment, 1);
+        Dispatcher.UIThread.RunJobs();
+        Press(segment, 2);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Contains("1–4 of 15", Drawn(page));
 
         window.Close();
     }
