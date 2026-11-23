@@ -1,8 +1,10 @@
 using System.Runtime.InteropServices;
 using D47.App.Voice;
 using D47.Core.Audio;
+using D47.Core.Books;
 using D47.Core.Capabilities;
 using D47.Core.Podcasts;
+using D47.Core.Viewing;
 using static D47.App.Interop.WinRtInterop;
 using Microsoft.Extensions.Logging;
 using Windows.Media;
@@ -23,6 +25,7 @@ internal sealed class MediaSession : IDisposable
     private readonly PodcastDesk? _podcasts;
     private readonly AppHost _host;
     private readonly ILogger _logger;
+    private readonly HostTargets _targets;
     private bool _disposed;
 
     private MediaSession(SystemMediaTransportControls controls, AmbientMusic music, PodcastDesk? podcasts, AppHost host, ILogger logger)
@@ -32,6 +35,7 @@ internal sealed class MediaSession : IDisposable
         _podcasts = podcasts;
         _host = host;
         _logger = logger;
+        _targets = new HostTargets(host, music, podcasts);
 
         _controls.IsEnabled = true;
         _controls.IsPlayEnabled = true;
@@ -71,41 +75,32 @@ internal sealed class MediaSession : IDisposable
         SystemMediaTransportControls sender,
         SystemMediaTransportControlsButtonPressedEventArgs args)
     {
-        switch (Owner())
+        MediaKey? key = args.Button switch
         {
-            case MediaOwner.Story:
-                PressOnStory(args.Button);
-                return;
-
-            case MediaOwner.Book:
-                PressOnBook(args.Button);
-                return;
-
-            case MediaOwner.Podcast when _podcasts is { } podcasts:
-                PressOnPodcast(podcasts, args.Button);
-                return;
-
-            case MediaOwner.Video:
-                PressOnVideo(args.Button);
-                return;
-
-            default:
-                break;
-        }
-
-        MusicAction? action = args.Button switch
-        {
-            SystemMediaTransportControlsButton.Play => MusicAction.Resume,
-            SystemMediaTransportControlsButton.Pause => MusicAction.Pause,
-            SystemMediaTransportControlsButton.Next => MusicAction.Next,
-            SystemMediaTransportControlsButton.Previous => MusicAction.Previous,
+            SystemMediaTransportControlsButton.Play => MediaKey.Play,
+            SystemMediaTransportControlsButton.Pause => MediaKey.Pause,
+            SystemMediaTransportControlsButton.Next => MediaKey.Next,
+            SystemMediaTransportControlsButton.Previous => MediaKey.Previous,
             _ => null,
         };
 
-        if (action is { } pressed)
+        if (key is not { } pressed)
         {
-            _logger.LogInformation("Media key: {Button} ({Result})", args.Button, _music.Control(pressed));
+            return;
         }
+
+        var owner = Owner();
+
+        if (owner == MediaOwner.Podcast && _podcasts is null)
+        {
+            owner = MediaOwner.Music;
+        }
+
+        // Playing the next podcast episode waits for it to open, so the key does not.
+        _ = MediaKeys.Press(owner, pressed, _targets)?.ContinueWith(
+            done => _logger.LogInformation(
+                "Media key: {Button} ({Result})", args.Button, done.IsCompletedSuccessfully ? done.Result : "failed"),
+            TaskScheduler.Default);
     }
 
     private MediaOwner Owner() => MediaOwners.Of(
@@ -113,98 +108,6 @@ internal sealed class MediaSession : IDisposable
         () => _host.BookDesk,
         () => _host.PodcastDesk,
         () => _host.WatchDesk);
-
-    private void PressOnStory(SystemMediaTransportControlsButton button)
-    {
-        var player = _host.RunPlayer;
-
-        switch (button)
-        {
-            case SystemMediaTransportControlsButton.Play:
-                player.Resume();
-                break;
-
-            case SystemMediaTransportControlsButton.Pause:
-                player.Pause(StoryRunPause.Commander);
-                break;
-
-            case SystemMediaTransportControlsButton.Next:
-                player.Skip();
-                break;
-
-            default:
-                return;
-        }
-
-        _logger.LogInformation("Media key: {Button} (story)", button);
-    }
-
-    private void PressOnBook(SystemMediaTransportControlsButton button)
-    {
-        var book = _host.BookDesk;
-
-        string? result = button switch
-        {
-            SystemMediaTransportControlsButton.Play => book.Resume(),
-            SystemMediaTransportControlsButton.Pause => book.Pause(),
-            SystemMediaTransportControlsButton.Next => book.NextChapter(),
-            SystemMediaTransportControlsButton.Previous => book.BackAParagraph(),
-            _ => null,
-        };
-
-        if (result is not null)
-        {
-            _logger.LogInformation("Media key: {Button} ({Result})", button, result);
-        }
-    }
-
-    private void PressOnVideo(SystemMediaTransportControlsButton button)
-    {
-        var video = _host.WatchDesk;
-
-        string? result = button switch
-        {
-            SystemMediaTransportControlsButton.Play => video.Resume(),
-            SystemMediaTransportControlsButton.Pause => video.Pause(),
-            SystemMediaTransportControlsButton.Next => video.Skip(30),
-            SystemMediaTransportControlsButton.Previous => video.Skip(-30),
-            _ => null,
-        };
-
-        if (result is not null)
-        {
-            _logger.LogInformation("Media key: {Button} ({Result})", button, result);
-        }
-    }
-
-    private void PressOnPodcast(PodcastDesk podcasts, SystemMediaTransportControlsButton button)
-    {
-        switch (button)
-        {
-            case SystemMediaTransportControlsButton.Play:
-                _logger.LogInformation("Media key: {Button} ({Result})", button, podcasts.Resume());
-                break;
-
-            case SystemMediaTransportControlsButton.Pause:
-                _logger.LogInformation("Media key: {Button} ({Result})", button, podcasts.Pause());
-                break;
-
-            case SystemMediaTransportControlsButton.Previous:
-                _logger.LogInformation("Media key: {Button} ({Result})", button, podcasts.SkipBack());
-                break;
-
-            case SystemMediaTransportControlsButton.Next:
-                // Playing the next episode waits for it to open, so the key does not.
-                _ = podcasts.Next().ContinueWith(
-                    done => _logger.LogInformation(
-                        "Media key: {Button} ({Result})", button, done.IsCompletedSuccessfully ? done.Result : "failed"),
-                    TaskScheduler.Default);
-                break;
-
-            default:
-                break;
-        }
-    }
 
     /// <summary>Raised on the tick; the flyout is updated on the UI thread instead.</summary>
     private void OnChanged(MusicState state) => Avalonia.Threading.Dispatcher.UIThread.Post(Show);
@@ -222,28 +125,29 @@ internal sealed class MediaSession : IDisposable
 
         try
         {
-            switch (Owner())
+            var flyout = MediaKeys.Flyout(Owner(), _targets);
+
+            _controls.PlaybackStatus = flyout.Status switch
             {
-                case MediaOwner.Story when _host.RunPlayer.Now is { } story:
-                    DisplayItem(story.Run.Title, "Story", !story.IsPaused);
-                    break;
+                MediaFlyoutStatus.Playing => MediaPlaybackStatus.Playing,
+                MediaFlyoutStatus.Paused => MediaPlaybackStatus.Paused,
+                _ => MediaPlaybackStatus.Stopped,
+            };
 
-                case MediaOwner.Book when _host.BookPlayer.Now?.ToBookNow() is { } book:
-                    DisplayItem(book.Title, book.ChapterTitle, !book.Paused);
-                    break;
+            var display = _controls.DisplayUpdater;
 
-                case MediaOwner.Podcast when _podcasts?.Player.State is { } episode:
-                    DisplayPodcast(episode);
-                    break;
-
-                case MediaOwner.Video when _host.WatchHost.Current is { } title:
-                    DisplayItem(title.Title, "Video", _host.WatchDesk.Playing);
-                    break;
-
-                default:
-                    Display(_music.State);
-                    break;
+            if (flyout.Title is { } title)
+            {
+                display.Type = MediaPlaybackType.Music;
+                display.MusicProperties.Title = title;
+                display.MusicProperties.Artist = flyout.Artist;
             }
+            else
+            {
+                display.ClearAll();
+            }
+
+            display.Update();
         }
         catch (COMException ex)
         {
@@ -251,51 +155,51 @@ internal sealed class MediaSession : IDisposable
         }
     }
 
-    private void DisplayItem(string title, string artist, bool playing)
+    private sealed class HostTargets(AppHost host, AmbientMusic music, PodcastDesk? podcasts) : IMediaKeyTargets, IMediaFlyoutSource
     {
-        _controls.PlaybackStatus = playing ? MediaPlaybackStatus.Playing : MediaPlaybackStatus.Paused;
+        public void StoryResume() => host.RunPlayer.Resume();
 
-        var display = _controls.DisplayUpdater;
-        display.Type = MediaPlaybackType.Music;
-        display.MusicProperties.Title = title;
-        display.MusicProperties.Artist = artist;
-        display.Update();
-    }
+        public void StoryPause() => host.RunPlayer.Pause(StoryRunPause.Commander);
 
-    private void DisplayPodcast(PodcastPlayerState state)
-    {
-        _controls.PlaybackStatus = state.Playing ? MediaPlaybackStatus.Playing : MediaPlaybackStatus.Paused;
+        public void StorySkip() => host.RunPlayer.Skip();
 
-        var display = _controls.DisplayUpdater;
-        display.Type = MediaPlaybackType.Music;
-        display.MusicProperties.Title = state.Episode.Title;
-        display.MusicProperties.Artist = state.Show;
-        display.Update();
-    }
+        public string BookResume() => host.BookDesk.Resume();
 
-    private void Display(MusicState state)
-    {
-        _controls.PlaybackStatus = state switch
-        {
-            { Playing: true } => MediaPlaybackStatus.Playing,
-            { Paused: true } or { Idle: true } => MediaPlaybackStatus.Paused,
-            _ => MediaPlaybackStatus.Stopped,
-        };
+        public string BookPause() => host.BookDesk.Pause();
 
-        var display = _controls.DisplayUpdater;
+        public string BookNextChapter() => host.BookDesk.NextChapter();
 
-        if (state.Track is { } track)
-        {
-            display.Type = MediaPlaybackType.Music;
-            display.MusicProperties.Title = Path.GetFileNameWithoutExtension(track);
-            display.MusicProperties.Artist = "Directive 47";
-        }
-        else
-        {
-            display.ClearAll();
-        }
+        public string BookBackAParagraph() => host.BookDesk.BackAParagraph();
 
-        display.Update();
+        public string VideoResume() => host.WatchDesk.Resume();
+
+        public string VideoPause() => host.WatchDesk.Pause();
+
+        public string VideoSkip(int seconds) => host.WatchDesk.Skip(seconds);
+
+        public string PodcastResume() => podcasts!.Resume();
+
+        public string PodcastPause() => podcasts!.Pause();
+
+        public string PodcastSkipBack() => podcasts!.SkipBack();
+
+        public Task<string> PodcastNext() => podcasts!.Next();
+
+        public string MusicControl(MusicAction action) => music.Control(action);
+
+        public string? StoryTitle => host.RunPlayer.Now?.Run.Title;
+
+        public bool StoryPaused => host.RunPlayer.Now?.IsPaused == true;
+
+        public BookNow? Book => host.BookPlayer.Now?.ToBookNow();
+
+        public PodcastPlayerState? Podcast => podcasts?.Player.State;
+
+        public VideoTitle? Video => host.WatchHost.Current;
+
+        public bool VideoPlaying => host.WatchDesk.Playing;
+
+        public MusicState Music => music.State;
     }
 
     public void Dispose()
