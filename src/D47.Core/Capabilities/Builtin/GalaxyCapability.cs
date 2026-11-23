@@ -38,7 +38,7 @@ public static class GalaxyCapability
     public const string CourseToQuickSearch = "course_to_quick_search";
 
     /// <summary>How far the commodity search looks when nobody said (#157).</summary>
-    private const double DefaultDistance = 50;
+    private const double DefaultDistance = 500;
 
     /// <summary>
     /// How stale a quoted price may be when nobody said, in hours — one month, the bound the trade
@@ -648,7 +648,7 @@ public static class GalaxyCapability
                     NearParameter,
                     ToolParameter.Number(
                         "max_distance",
-                        "How far to look, in light years. Default 50, at most 1,000. A codex_entry search, or a "
+                        "How far to look, in light years. Default 500, at most 1,000. A codex_entry search, or a "
                             + "body_type in a region, with no max_distance has no limit."),
                     LimitParameter,
                     PageParameter,
@@ -891,7 +891,7 @@ public static class GalaxyCapability
     private static readonly ToolParameter NearParameter =
         ToolParameter.Text("near", "Search out from this system. Defaults to theirs.");
     private static readonly ToolParameter MaxDistanceParameter =
-        ToolParameter.Number("max_distance", "How far to look, in light years. Default 50.");
+        ToolParameter.Number("max_distance", "How far to look, in light years. Default 500.");
     private static readonly ToolParameter MinPadParameter =
         ToolParameter.OneOf("min_pad", "Large, or Medium for at least one medium pad.", StationQuery.MinPads);
     private static readonly ToolParameter MaxStationDistanceParameter =

@@ -119,8 +119,22 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
             ("max_distance", "500"));
 
         Assert.Equal(500, search.Query.MaxDistance);
-        Assert.Contains("out to 500 ly", said, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("out to", said, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("250", said, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ARadiusOtherThanTheDefaultIsSaidBack()
+    {
+        var install = new MemoryInstall();
+
+        var (said, search) = await AskAsync(
+            install,
+            new CommodityAnswer([], 30, 0, true),
+            ("max_distance", "50"));
+
+        Assert.Equal(50, search.Query.MaxDistance);
+        Assert.Contains("out to 50 ly", said, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>And nothing above it either.</summary>
@@ -214,7 +228,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
             install,
             new CommodityAnswer([new CommodityOffer(Coleman, 444, 5229, 11.0)], 30, 0, true));
 
-        Assert.Equal(50, search.Query.MaxDistance);
+        Assert.Equal(500, search.Query.MaxDistance);
         Assert.Equal(72, search.MaxPriceAge);
         Assert.False(search.Query.IncludeCarriers);
         Assert.False(search.Query.LargePadOnly);
@@ -223,7 +237,7 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
         Assert.DoesNotContain("Searched", said, StringComparison.Ordinal);
 
         Assert.Equal(
-            "Best for buying Landmines within 50 ly of Eurybia: Coleman Relay (Enayex), 11 ly, "
+            "Best for buying Landmines within 500 ly of Eurybia: Coleman Relay (Enayex), 11 ly, "
             + "444 cr a tonne, 5,229 in stock — undated. Prices are reported by other Commanders "
             + "and can be out of date; supply moves fastest.",
             said);
@@ -237,6 +251,6 @@ public class TheCommoditySearchsKnobsAreTheModelsTests
 
         var (said, _) = await AskAsync(install, new CommodityAnswer([], 30, 0, true));
 
-        Assert.Equal("Nothing within 50 light years of Eurybia is buying Landmines.", said);
+        Assert.Equal("Nothing within 500 light years of Eurybia is buying Landmines.", said);
     }
 }

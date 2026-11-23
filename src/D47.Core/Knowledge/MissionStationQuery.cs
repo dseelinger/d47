@@ -18,7 +18,7 @@ public sealed record MissionStationQuery
     {
     }
 
-    public const double DefaultDistance = 50;
+    public const double DefaultDistance = 500;
 
     public const double MaxDistanceCeiling = 500;
 

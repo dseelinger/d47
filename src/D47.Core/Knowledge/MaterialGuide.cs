@@ -177,14 +177,14 @@ public static class MaterialGuide
         }
 
         var result = await galaxy
-            .FindBodiesAsync(BodyQuery.ForMaterial(near, indexed, maxDistance: 50, size: 20), cancellationToken)
+            .FindBodiesAsync(BodyQuery.ForMaterial(near, indexed, maxDistance: 500, size: 20), cancellationToken)
             .ConfigureAwait(false);
 
         if (result.Bodies.Count == 0)
         {
             return Said(
                 MaterialPlaceKind.Body,
-                $"No landable body within 50 light years is recorded as carrying {material.Name}.");
+                $"No landable body within 500 light years is recorded as carrying {material.Name}.");
         }
 
         // The index cannot sort or filter on share, so the ranking is over the bodies fetched.
@@ -219,7 +219,7 @@ public static class MaterialGuide
     {
         var requested = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["distance"] = "50",
+            ["distance"] = "500",
             ["allegiance"] = group.Allegiance,
         };
 
@@ -250,7 +250,7 @@ public static class MaterialGuide
 
         if (populous.Count == 0)
         {
-            return Said(MaterialPlaceKind.System, $"No system within 50 light years is {described}.");
+            return Said(MaterialPlaceKind.System, $"No system within 500 light years is {described}.");
         }
 
         return new MaterialPlaces(

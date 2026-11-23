@@ -166,10 +166,10 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
-        Assert.Contains(VisibleText(panel), text => text == "50");
+        Assert.Contains(VisibleText(panel), text => text == "500");
 
         page.Type("codex_entry", "Bacterium Cerbrus");
-        Assert.DoesNotContain(VisibleText(panel), text => text == "50");
+        Assert.DoesNotContain(VisibleText(panel), text => text == "500");
         Assert.Contains(VisibleText(panel), text => text == "ANY");
         Assert.False(page.FormArguments().ContainsKey("max_distance"));
 

@@ -220,7 +220,7 @@ public class SeveralCommoditiesAreSearchedAtOneStationTests
             Market("Gold one", 1, ("Gold", 9_000, 100)),
             Market("Gold two", 1, ("Gold", 9_000, 100)),
             Market("Painite", 1, ("Painite", 50_000, 100)),
-            Market("Too far", 500, ("Gold", 9_000, 100)),
+            Market("Too far", 5_000, ("Gold", 9_000, 100)),
         ];
 
         var query = Basket();
@@ -250,7 +250,7 @@ public class SeveralCommoditiesAreSearchedAtOneStationTests
             ("commodity", "Gold, Painite"));
 
         Assert.StartsWith(
-            "12 stations sell Gold and 3 sell Painite; none sells both within 50 light years of Sol.",
+            "12 stations sell Gold and 3 sell Painite; none sells both within 500 light years of Sol.",
             said,
             StringComparison.Ordinal);
     }
@@ -269,7 +269,7 @@ public class SeveralCommoditiesAreSearchedAtOneStationTests
             new CommodityAnswer([offer], 1, 0, true),
             ("commodity", "Gold, Painite"));
 
-        Assert.Contains("Best for buying Gold and Painite within 50 ly of Sol: Both (Both System), 3 ly", said, StringComparison.Ordinal);
+        Assert.Contains("Best for buying Gold and Painite within 500 ly of Sol: Both (Both System), 3 ly", said, StringComparison.Ordinal);
         Assert.Contains($"Gold {9_000:N0} cr, Painite {50_000:N0} cr a tonne", said, StringComparison.Ordinal);
     }
 

@@ -31,12 +31,12 @@ public class ACodexEntrySearchHasNoDistanceLimitTests
     [Theory]
     [InlineData(null)]
     [InlineData("Norma Arm")]
-    public void ASearchWithoutACodexEntryKeepsTheDefaultOf50(string? region)
+    public void ASearchWithoutACodexEntryKeepsTheDefaultOf500(string? region)
     {
         var query = Parse(new() { Landable = true, Region = region });
 
         Assert.False(query.NoDistanceLimit);
-        Assert.Equal(50, query.MaxDistance);
+        Assert.Equal(500, query.MaxDistance);
     }
 
     [Fact]

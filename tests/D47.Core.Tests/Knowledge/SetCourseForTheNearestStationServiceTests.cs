@@ -15,8 +15,14 @@ public class SetCourseForTheNearestStationServiceTests
             Task.FromResult(new GalaxySearchResult(
                 "Sol", stations.Length, [.. stations.Select(station => new SystemSummary { Name = station.SystemName })]));
 
-        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken) =>
-            Task.FromResult(new StationSearchResult("Sol", stations.Length, stations));
+        public List<StationQuery> Asked { get; } = [];
+
+        public override Task<StationSearchResult> FindStationsAsync(StationQuery query, CancellationToken cancellationToken)
+        {
+            Asked.Add(query);
+
+            return Task.FromResult(new StationSearchResult("Sol", stations.Length, stations));
+        }
     }
 
     private sealed class RecordingClipboard : IClipboard
@@ -34,7 +40,10 @@ public class SetCourseForTheNearestStationServiceTests
     private static StationSummary Station(string name, string system) => new() { Name = name, SystemName = system };
 
     private static (CapabilityRegistry Registry, RecordingClipboard Clipboard, LastFoundSystem LastFound) Build(
-        params StationSummary[] stations)
+        params StationSummary[] stations) => Build(new FakeGalaxy(stations));
+
+    private static (CapabilityRegistry Registry, RecordingClipboard Clipboard, LastFoundSystem LastFound) Build(
+        FakeGalaxy galaxy)
     {
         var install = new MemoryInstall();
         var clipboard = new RecordingClipboard();
@@ -44,7 +53,7 @@ public class SetCourseForTheNearestStationServiceTests
         var registry = CapabilityRegistry.Build(
         [
             GalaxyCapability.Create(
-                new FakeGalaxy(stations),
+                galaxy,
                 () => "Sol",
                 TestSurface.For(install).Settings,
                 clipboard: null,
@@ -130,6 +139,21 @@ public class SetCourseForTheNearestStationServiceTests
         Assert.False(result.IsError, result.Content);
         Assert.Contains("Nothing was found", result.Content, StringComparison.Ordinal);
         Assert.Empty(clipboard.Texts);
+    }
+
+    [Fact]
+    public async Task TheCourseToTheNearestEncodedMaterialTraderSearches500LightYears()
+    {
+        var galaxy = new FakeGalaxy(Station("Trader", "Lave"));
+        var (registry, _, _) = Build(galaxy);
+
+        var result = await registry.InvokeAsync(
+            GalaxyCapability.CourseToQuickSearch,
+            new ToolArguments(new Dictionary<string, string> { ["search"] = "encoded material trader" }),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError, result.Content);
+        Assert.Equal(500, Assert.Single(galaxy.Asked).MaxDistance);
     }
 
     [Fact]

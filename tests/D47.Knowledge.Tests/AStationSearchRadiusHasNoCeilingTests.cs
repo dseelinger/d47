@@ -41,10 +41,10 @@ public class AStationSearchRadiusHasNoCeilingTests
 
     [Theory]
     [MemberData(nameof(Overloads))]
-    public void ZeroOrNoRadiusBecomesFifty(Func<double?, StationQuery> parse)
+    public void ZeroOrNoRadiusBecomesFiveHundred(Func<double?, StationQuery> parse)
     {
-        Assert.Equal(50, parse(0).MaxDistance);
-        Assert.Equal(50, parse(null).MaxDistance);
+        Assert.Equal(500, parse(0).MaxDistance);
+        Assert.Equal(500, parse(null).MaxDistance);
     }
 
     [Fact]

@@ -468,7 +468,7 @@ Nearest systems reported Empire-aligned, over 1,000,000 people:
 ```
 
 **The filter is stated in the answer**, so a wrong one is visible to you rather than only to a test.
-If nothing within 50 light years matches, D47 says which filter found nothing rather than offering
+If nothing within 500 light years matches, D47 says which filter found nothing rather than offering
 the best of a bad list.
 
 #### Both searches offer the clipboard

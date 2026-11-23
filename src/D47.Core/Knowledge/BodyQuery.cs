@@ -276,7 +276,7 @@ public sealed record BodyQuery
     public StarPosition? ReferencePosition { get; init; }
 
     /// <summary>Maximum light years from the reference; unused where <see cref="NoDistanceLimit"/>.</summary>
-    public double MaxDistance { get; init; } = 50;
+    public double MaxDistance { get; init; } = 500;
 
     /// <summary>True for a codex entry search, or a body type in a region, that gave no distance: the nearest anywhere, with no radius.</summary>
     public bool NoDistanceLimit { get; init; }
@@ -570,7 +570,7 @@ public sealed record BodyQuery
             // Wider than the station search allows, because a body search is often the one a Commander makes
             // from deep space where the nearest anything is a long way off, and still bounded because
             // unbounded is the galaxy.
-            MaxDistance = Math.Clamp(request.MaxDistance is > 0 ? request.MaxDistance.Value : 50, 1, MaxDistanceCeiling),
+            MaxDistance = Math.Clamp(request.MaxDistance is > 0 ? request.MaxDistance.Value : 500, 1, MaxDistanceCeiling),
             Size = exactRings is not null ? ExactRingsOf : orderByMaterial ? RichestOf : limit,
             Limit = limit,
             Page = page,
@@ -606,7 +606,7 @@ public sealed record BodyQuery
             ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
             Material = material,
             Landable = true,
-            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, MaxDistanceCeiling),
+            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 500, 1, MaxDistanceCeiling),
             Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
 

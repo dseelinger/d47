@@ -643,12 +643,12 @@ public static class EngineeringCapability
         try
         {
             var result = await galaxy
-                .FindStationsAsync(StationQuery.ForTrader(near, type, maxDistance: 100, size: 5), cancellationToken)
+                .FindStationsAsync(StationQuery.ForTrader(near, type, maxDistance: 500, size: 5), cancellationToken)
                 .ConfigureAwait(false);
 
             if (result.Stations.Count == 0)
             {
-                return ToolResult.Ok("I found no material trader within 100 light years.");
+                return ToolResult.Ok("I found no material trader within 500 light years.");
             }
 
             var report = new StringBuilder();

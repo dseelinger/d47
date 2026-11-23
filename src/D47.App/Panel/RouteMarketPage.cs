@@ -32,7 +32,7 @@ public sealed class RouteMarketPage : UserControl
 
     public const string DistanceName = "MarketDistance";
 
-    public const int DefaultDistance = 50;
+    public const int DefaultDistance = 500;
 
     public const string FullName = "CommoditiesFull";
 

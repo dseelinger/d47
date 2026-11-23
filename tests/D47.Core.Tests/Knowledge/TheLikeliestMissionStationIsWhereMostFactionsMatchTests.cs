@@ -202,7 +202,7 @@ public class TheLikeliestMissionStationIsWhereMostFactionsMatchTests
 
         Assert.False(result.IsError, result.Content);
         Assert.Equal(
-            "No system within 50 light years of Sol has a faction in Civil Unrest, Civil War, Expansion, Lockdown, Retreat or War, "
+            "No system within 500 light years of Sol has a faction in Civil Unrest, Civil War, Expansion, Lockdown, Retreat or War, "
             + "so I have no likeliest station for disable missions there.",
             result.Content);
         SaysLikeliest(result.Content);

@@ -197,7 +197,7 @@ public class TheStationSearchsLimitIsSaidOutLoudTests
         var (commodity, search) = await ForACommodityAsync(install);
 
         Assert.Equal(25, search.Query.Limit);
-        Assert.Equal("Nothing within 50 light years of Eurybia is buying Landmines.", commodity);
+        Assert.Equal("Nothing within 500 light years of Eurybia is buying Landmines.", commodity);
 
         var (module, query) = await ForAModuleAsync(install);
 

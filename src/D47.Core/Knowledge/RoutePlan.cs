@@ -682,7 +682,7 @@ public sealed record SourcingSearch(
     string System,
     string? Station,
     IReadOnlyList<SourcingNeed> Outstanding,
-    double MaxDistance = 50,
+    double MaxDistance = 500,
     bool LargePadOnly = false,
     int MaxStops = 6,
     int MaxPriceAge = 72,

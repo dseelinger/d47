@@ -721,7 +721,7 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     /// <summary>Whether the tool would refuse these filters before asking the service.</summary>
     protected abstract bool Refusal(IReadOnlyDictionary<string, string> arguments);
 
-    /// <summary>The words after the count in the answer head, such as “WITHIN 50 LY OF ”, or null for none.</summary>
+    /// <summary>The words after the count in the answer head, such as “WITHIN 500 LY OF ”, or null for none.</summary>
     protected abstract (string Lead, string Reference)? Aside(IReadOnlyDictionary<string, string> arguments, string? reference);
 
     /// <summary>The answer's table drawn whole, or null when it matched nothing or the page draws it through <see cref="Paged"/>.</summary>

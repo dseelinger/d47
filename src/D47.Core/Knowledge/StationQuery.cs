@@ -312,7 +312,7 @@ public sealed record StationQuery
     public double? MinDistance { get; init; }
 
     /// <summary>Maximum light years from the reference.</summary>
-    public double MaxDistance { get; init; } = 50;
+    public double MaxDistance { get; init; } = 500;
 
     /// <summary>Searches the whole galaxy; <see cref="MaxDistance"/> is ignored.</summary>
     public bool Unbounded { get; init; }
@@ -509,7 +509,7 @@ public sealed record StationQuery
             LargePadOnly = largePadOnly,
 
             // Bounded on both ends.
-            MaxDistance = Math.Max(maxDistance is > 0 ? maxDistance.Value : 50, 1),
+            MaxDistance = Math.Max(maxDistance is > 0 ? maxDistance.Value : 500, 1),
             Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
 
@@ -585,7 +585,7 @@ public sealed record StationQuery
                     (search.IncludeCarriers || kind != StationKind.FleetCarrier)
                     && (search.SurfaceStations || kind is not (StationKind.SurfacePort or StationKind.Settlement))),
             ],
-            MaxDistance = Math.Max(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1),
+            MaxDistance = Math.Max(search.MaxDistance is > 0 ? search.MaxDistance.Value : 500, 1),
             Size = Math.Clamp(search.Size <= 0 ? GalaxyQuery.DefaultSize : search.Size, 1, GalaxyQuery.MaxSize),
         };
 
@@ -762,7 +762,7 @@ public sealed record StationQuery
             Sort = sort,
             MinDistance = minimum,
             Unbounded = minimum is not null && search.MaxDistance is not > 0,
-            MaxDistance = Math.Max(search.MaxDistance is > 0 ? search.MaxDistance.Value : 50, 1),
+            MaxDistance = Math.Max(search.MaxDistance is > 0 ? search.MaxDistance.Value : 500, 1),
             Size = Math.Clamp(search.Size <= 0 ? GalaxyQuery.DefaultSize : search.Size, 1, GalaxyQuery.MaxSize),
         };
 
@@ -958,7 +958,7 @@ public sealed record StationQuery
             ReferenceSystem = string.IsNullOrWhiteSpace(referenceSystem) ? null : referenceSystem.Trim(),
             TraderType = matched,
             IsAboutTraders = true,
-            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 50, 1, 500),
+            MaxDistance = Math.Clamp(maxDistance is > 0 ? maxDistance.Value : 500, 1, 500),
             Size = Math.Clamp(size <= 0 ? GalaxyQuery.DefaultSize : size, 1, GalaxyQuery.MaxSize),
         };
     }

@@ -23,7 +23,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     public const string ServicesHelp = "Stations that have every service you tick. Fleet carriers are left out unless the station type names them.";
 
-    public const int DefaultDistance = 50;
+    public const int DefaultDistance = 500;
 
     public const string HeadName = "StationHead";
 

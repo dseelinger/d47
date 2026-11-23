@@ -14,7 +14,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 {
     public const string RootKey = "search.bodies";
 
-    public const int DefaultDistance = 50;
+    public const int DefaultDistance = 500;
 
     public const string HeadName = "BodyHead";
 
@@ -27,7 +27,7 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
-    private readonly Amount _distance = new() { Placeholder = "50", Minimum = 1, Maximum = (decimal)BodyQuery.MaxDistanceCeiling, Step = 10, Format = "#,0" };
+    private readonly Amount _distance = new() { Placeholder = "500", Minimum = 1, Maximum = (decimal)BodyQuery.MaxDistanceCeiling, Step = 10, Format = "#,0" };
     private readonly CheckBox _landable = Tile("Landable");
     private readonly CheckBox _terraformable = Tile("Terraforming candidate");
     private readonly CheckBox _tidallyLocked = Tile("Tidally locked");

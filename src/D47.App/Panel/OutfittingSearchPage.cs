@@ -26,7 +26,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     /// <summary>Marks an added item's tile; pressing it removes the item.</summary>
     public const string ItemClass = "item-tile";
 
-    public const int DefaultDistance = 50;
+    public const int DefaultDistance = 500;
 
     public const string HeadName = "OutfittingHead";
 

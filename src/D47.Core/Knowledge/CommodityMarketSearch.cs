@@ -44,7 +44,7 @@ public sealed record CommodityQuery(
     string Commodity,
     TradeSide Side = TradeSide.Buying,
     int? Tonnes = null,
-    double MaxDistance = 50,
+    double MaxDistance = 500,
     bool LargePadOnly = false,
     bool IncludeCarriers = false,
     int Limit = 5,
