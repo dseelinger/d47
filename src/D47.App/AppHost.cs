@@ -6105,7 +6105,6 @@ public sealed class AppHost : IDisposable
     /// <summary>What the book voice commands act on.</summary>
     public D47.Core.Books.BookDesk BookDesk => _bookDesk ??= new D47.Core.Books.BookDesk(
         () => Books.Books,
-        () => BooksHost.AnyInstalled,
         BookPlayer.Play,
         () => BookPlayer.Now?.ToBookNow(),
         () => BookPlayer.Pause(StoryRunPause.Commander),

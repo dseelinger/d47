@@ -13,7 +13,6 @@ public sealed class SayingPauseOverPushToTalkKeepsTheMediaPausedTests
 {
     private static BookDesk Desk(BookRig rig) => new(
         () => rig.Shelf.Books,
-        () => true,
         rig.Player.Play,
         () => rig.Player.Now?.ToBookNow(),
         () => rig.Player.Pause(StoryRunPause.Commander),

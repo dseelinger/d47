@@ -32,7 +32,7 @@ public class TheEgressListNamesTheGutenbergListTests
             "A book's text, from gutenberg.pglaf.org, Project Gutenberg's own server for programs, when you add it",
             entry.What,
             StringComparison.Ordinal);
-        Assert.Contains("No book text is sent anywhere to be spoken.", entry.What, StringComparison.Ordinal);
+        Assert.Contains("Where a book's text is spoken is under Spoken replies.", entry.What, StringComparison.Ordinal);
         Assert.Contains("and a book's text when you add it", entry.Summary, StringComparison.Ordinal);
         Assert.DoesNotContain("www.gutenberg.org", entry.Destination, StringComparison.Ordinal);
     }

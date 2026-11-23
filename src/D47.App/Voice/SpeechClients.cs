@@ -916,9 +916,8 @@ public sealed class SpeechClients : IDisposable
     }
 
     /// <summary>
-    /// The local provider for <paramref name="providerId"/>, unmetered and without the Edge stand-in: the slots' own
-    /// client, otherwise the one built for a story's cast. Null when the id is not Kokoro or Chatterbox, or its model
-    /// is not installed. Not held: a slot moving onto the provider disposes the cast's client.
+    /// The provider a book is read with, unmetered and without the Edge stand-in: the slots' own client, otherwise the
+    /// one built for a story's cast. Null when the id is not Kokoro, Chatterbox or Edge, or its model is not installed. Not held: a slot moving onto the provider disposes the cast's client.
     /// </summary>
     internal ITtsProvider? LocalClient(string providerId)
     {
@@ -948,12 +947,13 @@ public sealed class SpeechClients : IDisposable
         }
     }
 
-    /// <summary>Whether <paramref name="providerId"/> is Kokoro or Chatterbox with its model on this computer.</summary>
+    /// <summary>Whether <paramref name="providerId"/> is Edge, or Kokoro or Chatterbox with its model on this computer.</summary>
     internal bool LocalInstalled(string providerId) =>
-        string.Equals(providerId, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
+        string.Equals(providerId, TtsProviderCatalog.EdgeId, StringComparison.OrdinalIgnoreCase)
+        || (string.Equals(providerId, TtsProviderCatalog.KokoroId, StringComparison.OrdinalIgnoreCase)
             ? D47.Core.Speech.KokoroAssets.IsInstalled(_files, KokoroFolder())
             : string.Equals(providerId, TtsProviderCatalog.ChatterboxId, StringComparison.OrdinalIgnoreCase)
-              && D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder());
+              && D47.Core.Speech.ChatterboxAssets.IsInstalled(_files, ChatterboxFolder()));
 
     /// <summary>Why a character's chosen voice last failed and the story's own spoke instead, by StoryVoices key.</summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _castVoiceFailures = new(StringComparer.Ordinal);

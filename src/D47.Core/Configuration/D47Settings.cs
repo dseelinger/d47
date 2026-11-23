@@ -1608,17 +1608,17 @@ public sealed record WatchSettings
     }
 }
 
-/// <summary>The local voice books are read with; no other provider reads a book.</summary>
+/// <summary>The voice books are read with: Kokoro, Chatterbox or Edge Neural; no paid provider reads a book.</summary>
 public sealed record BookSettings
 {
     /// <inheritdoc cref="D47Settings.Extra"/>
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? Extra { get; init; }
 
-    /// <summary><c>kokoro</c> or <c>chatterbox</c>.</summary>
-    public string Provider { get; init; } = "kokoro";
+    /// <summary><c>edge</c>, <c>kokoro</c> or <c>chatterbox</c>.</summary>
+    public string Provider { get; init; } = "edge";
 
-    /// <summary>The voice id, or null for the provider's first voice.</summary>
+    /// <summary>The voice id, or null for the provider's default voice.</summary>
     public string? Voice { get; init; }
 }
 

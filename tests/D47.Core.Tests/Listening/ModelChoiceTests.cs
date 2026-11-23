@@ -158,6 +158,7 @@ public class ModelChoiceTests
 
             // Every provider off means the voice one too: Edge Neural is free, not local.
             Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
+            Books = new BookSettings { Provider = Core.Audio.TtsProviderCatalog.KokoroId },
 
             // And the hull art, which fetches a picture and a turntable on a press, the stock codex pictures and the
             // stock story downloads.

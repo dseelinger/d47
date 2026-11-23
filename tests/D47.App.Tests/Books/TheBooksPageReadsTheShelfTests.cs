@@ -23,7 +23,7 @@ public class TheBooksPageReadsTheShelfTests
             rig.Player,
             () => rig.Settings,
             change => rig.Settings = change(rig.Settings),
-            _ => rig.Installed,
+            id => rig.Installed || id == "edge",
             (_, _) => Task.FromResult(voices is null ? VoiceCatalogue.Silent : VoiceCatalogue.Of(voices)),
             rig.BookFiles);
 
@@ -229,22 +229,21 @@ public class TheBooksPageReadsTheShelfTests
     }
 
     [AvaloniaFact]
-    public void ANoticeWithNoLocalVoiceShowsAboveTheShelfAndTheSegmentsAreDisabled()
+    public void WithNoLocalVoiceInstalledEdgeIsStillOfferedAndNoNoticeShows()
     {
         var rig = BookRig.InMemory();
         rig.Installed = false;
         var (window, panel) = Open(rig);
 
-        var notice = Page(panel).GetVisualDescendants().OfType<Notice>().Where(found => found.IsEffectivelyVisible).Single();
-
-        Assert.Equal(NoticeLevel.Warning, notice.Level);
-        Assert.Equal(BooksKit.NoVoiceLabel, notice.Label);
-        Assert.NotNull(MaybeNamed(panel, BooksKit.VoiceSettingsName));
+        Assert.DoesNotContain(Page(panel).GetVisualDescendants().OfType<Notice>(), found => found.IsEffectivelyVisible);
         Assert.Contains("ON YOUR SHELF · 1 BOOK", Drawn(panel));
         Assert.Contains("NOT STARTED", Drawn(panel));
         Assert.Equal(2, Drawn(panel).Count(text => string.Equals(text, BooksPage.NotInstalled, StringComparison.OrdinalIgnoreCase)));
-        Assert.All(Page(panel).GetVisualDescendants().OfType<Segment>().Single().GetVisualDescendants().OfType<RadioButton>(), radio => Assert.False(radio.IsEnabled));
-        Assert.False(Named(panel, BooksPage.ChangeVoiceName).IsEnabled);
+        var options = Page(panel).GetVisualDescendants().OfType<Segment>().Single().GetVisualDescendants().OfType<RadioButton>().ToList();
+
+        Assert.Equal(3, options.Count);
+        Assert.Equal([false, false, true], options.Select(radio => radio.IsEnabled));
+        Assert.Contains("Needs an internet connection", Drawn(panel).Concat(Drawn(panel)).Select(text => text), StringComparer.OrdinalIgnoreCase);
 
         window.Close();
     }

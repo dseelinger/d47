@@ -25,12 +25,10 @@ public sealed class TheBookVoiceCommandsAreTheCommandersTests
     private BookSource? _reading;
     private int _chapter;
     private bool _paused;
-    private bool _voice = true;
     private bool _story;
 
     private BookDesk Desk() => new(
         () => Books,
-        () => _voice,
         source =>
         {
             _calls.Add("read " + source.Id);
@@ -153,18 +151,6 @@ public sealed class TheBookVoiceCommandsAreTheCommandersTests
 
         Assert.Equal(["read " + Time.Id], _calls);
         Assert.Equal("Reading The Time Machine, chapter 1.", reply.Content);
-    }
-
-    [Fact]
-    public async Task WithNoLocalVoiceReadSaysBooksNeedKokoroOrChatterbox()
-    {
-        _voice = false;
-        var registry = Registry(Desk());
-
-        var reply = await registry.InvokeAsync(BookCapability.ReadBookTool, Args(), TestContext.Current.CancellationToken, ToolCaller.Commander);
-
-        Assert.Equal("Books are read only by Kokoro or Chatterbox, and neither is installed.", reply.Content);
-        Assert.Empty(_calls);
     }
 
     [Fact]

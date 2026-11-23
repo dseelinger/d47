@@ -543,15 +543,19 @@ public sealed class BookPlayer
         return true;
     }
 
-    /// <summary>The configured local voice, or null with why no sentence can be made with it.</summary>
+    /// <summary>Whether a book may be read with this provider: Kokoro, Chatterbox or Edge Neural.</summary>
+    public static bool Reads(string? id) =>
+        TtsProviderCatalog.IsLocal(id) || string.Equals(id, TtsProviderCatalog.EdgeId, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The configured voice, or null with why no sentence can be made with it.</summary>
     private BookVoice? VoiceNow(out string? problem)
     {
         var settings = _settings() ?? new BookSettings();
         var id = settings.Provider;
 
-        if (!TtsProviderCatalog.IsLocal(id))
+        if (!Reads(id))
         {
-            problem = $"Books are read only with Kokoro or Chatterbox, which run on this computer, and the book voice is set to {id}.";
+            problem = $"Books are read only with Kokoro, Chatterbox or Edge Neural, and the book voice is set to {id}.";
             return null;
         }
 
@@ -574,7 +578,14 @@ public sealed class BookPlayer
         }
 
         problem = null;
-        return new BookVoice(provider, new VoiceSelection(string.IsNullOrWhiteSpace(settings.Voice) ? null : settings.Voice));
+        var voice = string.IsNullOrWhiteSpace(settings.Voice) ? null : settings.Voice;
+
+        if (voice is null && string.Equals(id, TtsProviderCatalog.EdgeId, StringComparison.OrdinalIgnoreCase))
+        {
+            voice = D47.Core.Speech.LocalVoiceStandIn.EdgeVoice;
+        }
+
+        return new BookVoice(provider, new VoiceSelection(voice));
     }
 
     /// <summary>Makes one sentence once the sentence before it is made, then looks again at what to queue.</summary>

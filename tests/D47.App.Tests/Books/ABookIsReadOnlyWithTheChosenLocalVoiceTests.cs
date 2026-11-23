@@ -24,6 +24,40 @@ public sealed class ABookIsReadOnlyWithTheChosenLocalVoiceTests
     }
 
     [Fact]
+    public void EdgeNeuralAloneMakesTheSentencesWhenItIsChosen()
+    {
+        var rig = BookRig.InMemory(provider: "edge");
+
+        rig.Play();
+
+        Assert.Equal([BookRig.First, BookRig.Second, BookRig.Third, BookRig.Fourth], rig.Voices["edge"].Said);
+        Assert.Empty(rig.Voices["kokoro"].Said);
+        Assert.Empty(rig.Voices["chatterbox"].Said);
+        Assert.Empty(rig.Voices["elevenlabs"].Said);
+    }
+
+    [Fact]
+    public void EdgeNeuralWithNoVoiceChosenReadsInSoniaRatherThanItsFirstListedVoice()
+    {
+        var rig = BookRig.InMemory(provider: "edge");
+
+        rig.Play();
+
+        Assert.All(rig.Voices["edge"].Selections, selection => Assert.Equal("en-GB-SoniaNeural", selection.VoiceId));
+    }
+
+    [Fact]
+    public void ABookVoiceTheCommanderChoseOnEdgeIsKept()
+    {
+        var rig = BookRig.InMemory(provider: "edge");
+        rig.Settings = rig.Settings with { Voice = "en-US-AriaNeural" };
+
+        rig.Play();
+
+        Assert.All(rig.Voices["edge"].Selections, selection => Assert.Equal("en-US-AriaNeural", selection.VoiceId));
+    }
+
+    [Fact]
     public void AVoiceThatIsNotLocalMakesNothingAndSaysWhy()
     {
         var rig = BookRig.InMemory(provider: "elevenlabs");

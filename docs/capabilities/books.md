@@ -13,7 +13,7 @@ nav_order: 169
 <details class="d47-band" open>
 <summary>How to use it</summary>
 <div class="d47-howto"><div class="d47-frame">
-<p class="intro">Three steps to a book read aloud by voice. Books are read only by a voice that runs on this computer.</p>
+<p class="intro">Three steps to a book read aloud by voice. Books are read by a voice on this computer or by Edge Neural.</p>
 <section>
 <h2><span class="num">1</span> Start a book.</h2>
 <p class="say">Say "read the book", or say read followed by a title from your shelf.</p>
@@ -95,9 +95,8 @@ nav_order: 169
 
 ## The details
 
-The books on the shelf at Media › Books, read aloud by Kokoro or Chatterbox, which run on this computer. A book
-resumes where it was left. With neither voice installed, "read the book" says that books are read only by
-Kokoro or Chatterbox and neither is installed.
+The books on the shelf at Media › Books, read aloud by Kokoro or Chatterbox, which run on this computer, or by Edge Neural,
+which needs an internet connection and sends the text to Microsoft. A book resumes where it was left.
 
 ### Ask for it
 

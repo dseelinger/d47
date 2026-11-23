@@ -9,7 +9,7 @@ namespace D47.Core.Tests.Audio;
 public class ChatterboxSaysWhatItSendsTests
 {
     private static D47Settings With(string provider) =>
-        D47Settings.Defaults with { Speech = D47Settings.Defaults.Speech with { Provider = provider } };
+        D47Settings.Defaults with { Speech = D47Settings.Defaults.Speech with { Provider = provider }, Books = new BookSettings { Provider = TtsProviderCatalog.KokoroId } };
 
     [Fact]
     public void SpokenRepliesSayNothingLeavesTheMachine()

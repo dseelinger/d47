@@ -9,7 +9,6 @@ public sealed record BookNow(BookSource Source, string Title, int Chapter, strin
 /// </summary>
 public sealed class BookDesk(
     Func<IReadOnlyList<ShelfBook>> shelf,
-    Func<bool> voiceInstalled,
     Func<BookSource, bool> read,
     Func<BookNow?> now,
     Action pause,
@@ -34,11 +33,6 @@ public sealed class BookDesk(
     /// <summary>Reads the shelf book called <paramref name="title"/>; with none, the book last read.</summary>
     public string Read(string? title)
     {
-        if (!voiceInstalled())
-        {
-            return "Books are read only by Kokoro or Chatterbox, and neither is installed.";
-        }
-
         if (storyPlaying?.Invoke() == true)
         {
             return StoryPlaying;

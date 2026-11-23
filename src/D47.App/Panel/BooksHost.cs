@@ -17,8 +17,8 @@ public sealed class BooksHost(
     GutenbergCatalogueStore? catalogue = null,
     GutenbergBookFetch? downloads = null)
 {
-    /// <summary>The local providers a book is read with, in the order the page lists them.</summary>
-    public static IReadOnlyList<string> Providers { get; } = [TtsProviderCatalog.KokoroId, TtsProviderCatalog.ChatterboxId];
+    /// <summary>The providers a book is read with, in the order the page lists them.</summary>
+    public static IReadOnlyList<string> Providers { get; } = [TtsProviderCatalog.KokoroId, TtsProviderCatalog.ChatterboxId, TtsProviderCatalog.EdgeId];
 
     private readonly Dictionary<string, VoiceCatalogue> _listed = new(StringComparer.OrdinalIgnoreCase);
 
@@ -81,10 +81,8 @@ public sealed class BooksHost(
         return ReadFrom(added.Source, 0);
     }
 
-    /// <summary>Whether the provider's model is on this computer.</summary>
+    /// <summary>Whether the provider can read: Edge always, a local voice once its model is on this computer.</summary>
     public bool Installed(string providerId) => installed(providerId);
-
-    public bool AnyInstalled => Providers.Any(Installed);
 
     public void Choose(string providerId) =>
         change(current => string.Equals(current.Provider, providerId, StringComparison.OrdinalIgnoreCase)

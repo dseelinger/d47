@@ -16,6 +16,9 @@ internal sealed class FakeBookVoice(string id) : ITtsProvider
 
     public List<string> Said { get; } = [];
 
+    /// <summary>The voice selection each sentence was asked with.</summary>
+    public List<VoiceSelection> Selections { get; } = [];
+
     /// <summary>The sentence that throws instead of being made.</summary>
     public string? Fails { get; set; }
 
@@ -31,6 +34,7 @@ internal sealed class FakeBookVoice(string id) : ITtsProvider
     public Task<AudioClip> SynthesizeAsync(string text, VoiceSelection voice, CancellationToken cancellationToken = default)
     {
         Said.Add(text);
+        Selections.Add(voice);
 
         if (text == Fails)
         {
@@ -85,6 +89,7 @@ internal sealed class BookRig
             ["kokoro"] = new("kokoro"),
             ["chatterbox"] = new("chatterbox"),
             ["elevenlabs"] = new("elevenlabs"),
+            ["edge"] = new("edge"),
         };
         Player = new BookPlayer(
             Audio,

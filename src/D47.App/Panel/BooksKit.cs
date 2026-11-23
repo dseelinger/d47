@@ -24,11 +24,7 @@ internal static class BooksKit
     public const string PreviousPageName = "BookPreviousPage";
     public const string NextPageName = "BookNextPage";
 
-    public const string NoVoiceLabel = "No voice on this computer";
-
-    public const string NoVoiceText = "D47 reads books only with Kokoro or Chatterbox, which run on this computer. Install either one in Voice settings and your shelf reads.";
-
-    public const string StoppedText = "The book is paused on this line. D47 reads books only with a voice on this computer, so no other voice took over.";
+    public const string StoppedText = "The book is paused on this line. No other voice takes over.";
 
     public const string CommanderPaused = "Paused. Press Resume.";
 
@@ -207,18 +203,6 @@ internal static class BooksKit
         settings.Click += (_, _) => openVoiceSettings();
 
         notice.Actions.Add(retry);
-        notice.Actions.Add(settings);
-
-        return notice;
-    }
-
-    /// <summary>The amber notice for a computer with neither local voice.</summary>
-    public static Notice NoVoice(Action openVoiceSettings)
-    {
-        var notice = new Notice(NoticeLevel.Warning) { Label = NoVoiceLabel, Text = NoVoiceText };
-        var settings = Tile(VoiceSettingsName, "VOICE SETTINGS", "Voice settings");
-
-        settings.Click += (_, _) => openVoiceSettings();
         notice.Actions.Add(settings);
 
         return notice;

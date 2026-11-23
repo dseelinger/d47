@@ -493,8 +493,8 @@ public static class EgressDisclosure
             + "days old - one file, a few megabytes. A request that fails is tried again on a later visit, no sooner "
             + "than an hour after. The catalogue is browsed and searched on this computer. "
             + "A book's text, from gutenberg.pglaf.org, Project Gutenberg's own server for programs, when you add it: "
-            + "it is read as it arrives, and if it is cut off the rest is asked for when you next play it. No book "
-            + "text is sent anywhere to be spoken. Nothing about you goes with it.",
+            + "it is read as it arrives, and if it is cut off the rest is asked for when you next play it. Where "
+            + "a book's text is spoken is under Spoken replies. Nothing about you goes with it.",
             Active: true,
             Summary: "Project Gutenberg's list of titles, at most once a week, when you browse it, and a book's text "
                 + "when you add it. Nothing about you goes with it."),
@@ -1138,7 +1138,11 @@ public static class EgressDisclosure
 
         var cast = StoryCast(settings, runningStory);
 
-        if (speaking.Count == 0 && cast.Count == 0)
+        var booksOnEdge = string.Equals(settings.Books?.Provider, Audio.TtsProviderCatalog.EdgeId, StringComparison.OrdinalIgnoreCase)
+            && !speaking.Any(pair => IsEdge(pair.Provider))
+            && !cast.Any(line => IsEdge(line.Provider));
+
+        if (speaking.Count == 0 && cast.Count == 0 && !booksOnEdge)
         {
             return EgressEntry.Silent(
                 TextToSpeech,
@@ -1191,6 +1195,12 @@ public static class EgressDisclosure
 
         var providers = speaking.Select(pair => pair.Provider).Concat(cast.Select(line => line.Provider)).ToList();
 
+        if (booksOnEdge)
+        {
+            what.Append("Books → Edge Neural: the text of a book being read is sent to Microsoft to be spoken. ");
+            providers.Add(Audio.TtsProviderCatalog.Edge);
+        }
+
         // Each service's own disclosure, once, whichever slots and characters reached it.
         what.AppendJoin(
             " ",
@@ -1206,6 +1216,9 @@ public static class EgressDisclosure
             Active: true,
             Summary: headline);
     }
+
+    private static bool IsEdge(Audio.TtsProviderInfo provider) =>
+        string.Equals(provider.Destination, Audio.TtsProviderCatalog.Edge.Destination, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Each voice slot that speaks, in slot order, with the provider that speaks for it now.</summary>
     internal static List<(Audio.VoiceGroupInfo Slot, Audio.TtsProviderInfo Provider)> SpeakingSlots(D47Settings settings) =>

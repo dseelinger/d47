@@ -366,7 +366,7 @@ public class TextToSpeechEgressTests
     {
         var silent = EgressDisclosure.Entry(
             EgressDisclosure.TextToSpeech,
-            new D47Settings { Speech = new SpeechSettings { Provider = TtsProviderCatalog.NoneId } },
+            new D47Settings { Speech = new SpeechSettings { Provider = TtsProviderCatalog.NoneId }, Books = new BookSettings { Provider = TtsProviderCatalog.KokoroId } },
             llmKeyPresent: false);
 
         Assert.False(silent.Active);

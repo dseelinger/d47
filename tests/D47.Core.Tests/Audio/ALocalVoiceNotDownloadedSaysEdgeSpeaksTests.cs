@@ -14,7 +14,7 @@ public sealed class LocalVoiceStandInCollection;
 public class ALocalVoiceNotDownloadedSaysEdgeSpeaksTests
 {
     private static D47Settings With(string provider) =>
-        D47Settings.Defaults with { Speech = D47Settings.Defaults.Speech with { Provider = provider } };
+        D47Settings.Defaults with { Speech = D47Settings.Defaults.Speech with { Provider = provider }, Books = new BookSettings { Provider = TtsProviderCatalog.KokoroId } };
 
     private static EgressEntry Disclosure(string provider, bool installed)
     {

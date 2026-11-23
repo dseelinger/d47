@@ -58,7 +58,6 @@ public sealed class TheMediaKeysAndTheBareWordsShareOneOwnerTests
 
     private BookDesk NewBookDesk() => new(
         () => [],
-        () => true,
         _ => true,
         () => _book ? new BookNow(BookSource.FromGutenberg(36), "The War of the Worlds", 0, "The Eve of the War", _bookPaused) : null,
         () => { },

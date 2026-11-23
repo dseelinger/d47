@@ -16,7 +16,7 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
 {
     public const string RootKey = MediaFurnishing.BooksRoot;
 
-    public const string PageSummary = "Public domain books, read aloud by a voice on this computer.";
+    public const string PageSummary = "Public domain books, read aloud.";
 
     public const string NothingReading = "Nothing is being read. Press a book on your shelf to open it.";
 
@@ -157,11 +157,6 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
     {
         _notices.Children.Clear();
 
-        if (!_host.AnyInstalled)
-        {
-            _notices.Children.Add(BooksKit.NoVoice(OpenVoiceSettings));
-        }
-
         if (now is { Problem: not null })
         {
             _notices.Children.Add(BooksKit.Stopped(_host, now, OpenVoiceSettings));
@@ -221,9 +216,12 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
         {
             var chosen = string.Equals(id, settings.Provider, StringComparison.OrdinalIgnoreCase);
 
+            var edge = string.Equals(id, TtsProviderCatalog.EdgeId, StringComparison.OrdinalIgnoreCase);
+            var where = edge ? "needs an internet connection" : "this computer · free";
+
             statuses.Add(!_host.Installed(id)
                 ? new ChoiceStatus(NotInstalled, ChoiceTone.Grey)
-                : new ChoiceStatus(chosen ? $"{_host.VoiceName(settings)} · this computer · free" : "This computer · free", ChoiceTone.Grey));
+                : new ChoiceStatus(chosen ? $"{_host.VoiceName(settings)} · {where}" : Capitalised(where), ChoiceTone.Grey));
         }
 
         var segment = new Segment
@@ -267,6 +265,8 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
         };
     }
 
+    private static string Capitalised(string text) => char.ToUpperInvariant(text[0]) + text[1..];
+
     private static Avalonia.Media.FontWeight FontWeightSemiBold => Avalonia.Media.FontWeight.SemiBold;
 
     private async Task ChangeVoiceAsync()
@@ -284,7 +284,9 @@ public sealed class BooksPage : UserControl, IPageSummary, IPageChrome
                 Choices = [.. listed.Voices.Select(voice => voice.Id)],
                 Describe = id => listed.LabelFor(id, provider),
                 Current = settings.Voice,
-                DefaultDisplay = "the first voice",
+                DefaultDisplay = string.Equals(settings.Provider, TtsProviderCatalog.EdgeId, StringComparison.OrdinalIgnoreCase)
+                    ? D47.Core.Speech.LocalVoiceStandIn.EdgeVoice
+                    : "the first voice",
                 WhyEmpty = listed.WhyEmpty(provider.Name),
                 Sorts = [PickerSort.Name],
             },

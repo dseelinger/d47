@@ -523,6 +523,7 @@ public class EgressDisclosureTests
 
             // The voice provider counts.
             Speech = new SpeechSettings { Provider = Core.Audio.TtsProviderCatalog.NoneId },
+            Books = new BookSettings { Provider = Core.Audio.TtsProviderCatalog.KokoroId },
 
             // So does the speech model, now that a fresh install selects one and fetches it.
             Listening = new ListeningSettings { Model = Core.Listening.WhisperModels.NoneId },
