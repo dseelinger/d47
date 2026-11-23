@@ -105,9 +105,9 @@ public class EliteGlowsAndDarkAndLightDoNotTests
         Assert.False(scanlines.IsHitTestVisible);
     }
 
-    /// <summary>Drawn last, over the frame and every page inside it, rather than under any of them.</summary>
+    /// <summary>Drawn over the frame and every page inside it; the full-screen player's layer is the one child drawn over it.</summary>
     [AvaloniaFact]
-    public void TheScanlineLayerIsTheTopmostChildOfTheWindow()
+    public void OnlyTheFullScreenLayerIsDrawnOverTheScanlineLayer()
     {
         Manager().Apply(ThemeCatalog.Elite);
 
@@ -118,7 +118,8 @@ public class EliteGlowsAndDarkAndLightDoNotTests
         var scanlines = view.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "Scanlines");
         var root = (Avalonia.Controls.Panel)scanlines.GetVisualParent()!;
 
-        Assert.Same(scanlines, root.Children[^1]);
+        var above = Assert.Single(root.Children.Skip(root.Children.IndexOf(scanlines) + 1));
+        Assert.Equal("FullScreenLayer", above.Name);
     }
 
     /// <summary>The overlay is half opaque as a whole, on top of the tile's own 30% alpha line.</summary>
