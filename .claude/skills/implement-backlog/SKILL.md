@@ -83,7 +83,9 @@ How to finish:
 - Do not speak the done sentence when the issue lands.
 ```
 
-Lanes run at the same time, so start every lane's first issue before doing anything else.
+Lanes run at the same time, so start every lane's first issue before doing anything else. Then run
+`date` and print the time in the turn's text: it is the run's start, which the landing report in
+step 5 measures from.
 
 ## 4. Wait for the notices
 
@@ -100,7 +102,50 @@ Check its issue against `main` and read the subagent's final message:
   lane and keep the others running. Speak one sentence through `/claude-voice` naming the lane, the
   issue and what stopped it, unless the subagent already spoke it.
 
-Then end the turn again, as step 4 says.
+When the issue merged, print the landing report below. Then end the turn again, as step 4 says.
+
+### The landing report
+
+Every turn that finds an issue merged prints this report, after the lane's next issue has started
+and as the last text of the turn. It is never skipped, shortened to a sentence or left for the final
+report. Counts come from `lanes` in `.claude/triage-state.json` and the `Fixes #N` lines on `main`.
+The time comes from `date`, never from memory.
+
+- **Completed, in total.** A bold headline: how many of the run's issues have merged, out of every
+  issue in every lane, how many are left, and the issue that just landed.
+- **The ETA**, as a clock time in local time, with what it assumes on the same line.
+- **What remains in each lane.** One bullet per lane, in letter order, every lane each time: the
+  lane that just landed, lanes with nothing left and paused lanes included. Each gives the lane
+  letter and how many of its issues have not merged, the running one counted. Under it, those
+  issues in work order as linked numbers with short titles, the running one marked. A lane with
+  nothing left is one line saying 0 left. A paused lane names the issue it paused on, why, and how
+  many issues behind it will not run.
+
+```
+**4 of 9 done, 5 left.** [2706](https://github.com/dseelinger/d47/issues/2706) landed in lane A.
+ETA 16:40, at 22 minutes an issue. Lane C is paused and not counted.
+
+- **Lane A, 2 left**
+  - [2713](https://github.com/dseelinger/d47/issues/2713) Number chapters by the book (running)
+  - [2715](https://github.com/dseelinger/d47/issues/2715) Media keys on the big panel
+- **Lane B, 0 left.** Finished.
+- **Lane C, 3 left, paused** on [2709](https://github.com/dseelinger/d47/issues/2709): rebase
+  conflict. 2 issues behind it will not run.
+```
+
+The ETA is worked out from this run only:
+
+- An issue's minutes run from its start to its landing. A lane's first issue started at the run's
+  start; every later one started when the issue before it in the lane landed. Earlier landing
+  reports carry the earlier times.
+- Minutes an issue is the mean over the issues landed so far in this run.
+- A lane still running needs its issues left times that mean, less the minutes its running issue
+  has already had, and never less than zero.
+- Lanes run at the same time, so the ETA is now plus the largest lane figure, not their sum.
+- A paused lane is left out, and the line says so.
+
+On the landing that finishes the last running lane, the ETA line says the run is finished, and the
+final report follows it.
 
 Never ask whether to start a lane's next issue, in text, in the wrap-up or through the voice. The
 maintainer invoking this skill is the instruction to start every issue in every lane.
