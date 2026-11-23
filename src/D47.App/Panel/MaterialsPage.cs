@@ -431,10 +431,150 @@ public sealed class MaterialsPage : UserControl
             TitleText.Context("Materials ›")));
         _body.Children.Add(Hint(LedgerHead, new Thickness(0, 10, 0, 0)));
 
+        if (TraderLines.TryGetValue(card.Name, out var lines))
+        {
+            _body.Children.Add(Trader(card, lines, Open));
+            return;
+        }
+
         foreach (var (head, cap, rows) in GroupsOf(card))
         {
             _body.Children.Add(Grade(head, cap, rows, Open));
         }
+    }
+
+    /// <summary>The trader lines of the Raw, Manufactured and Encoded ledgers, top row first.</summary>
+    public static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> TraderLines =
+        new Dictionary<string, IReadOnlyList<string>>
+        {
+            ["Raw"] = ["raw-1", "raw-2", "raw-3", "raw-4", "raw-5", "raw-6", "raw-7"],
+            ["Manufactured"] =
+            [
+                "manufactured-chemical", "manufactured-thermic", "manufactured-heat", "manufactured-conductive",
+                "manufactured-mechanical-components", "manufactured-capacitors", "manufactured-shielding",
+                "manufactured-composite", "manufactured-crystals", "manufactured-alloys",
+            ],
+            ["Encoded"] =
+            [
+                "encoded-emission-data", "encoded-wake-scans", "encoded-shield-data", "encoded-encryption-files",
+                "encoded-data-archives", "encoded-firmware",
+            ],
+        };
+
+    /// <summary>The number of grade columns a trader ledger draws.</summary>
+    public static int GradeColumns(string ledger) => ledger == "Raw" ? 4 : 5;
+
+    /// <summary>One material at a trader line and grade, or null where the ledger holds none.</summary>
+    public static MaterialRow? CellOf(MaterialCard card, string line, int grade) =>
+        MaterialCatalogue.InLine(line).FirstOrDefault(entry => entry.Grade == grade) is { } entry
+            ? card.Rows.FirstOrDefault(row => string.Equals(row.Material.Symbol, entry.Symbol, StringComparison.OrdinalIgnoreCase))
+            : null;
+
+    /// <summary>Grade heads over one band per trader line, a cell per grade, as the in-game trader lays them out.</summary>
+    private static Control Trader(MaterialCard card, IReadOnlyList<string> lines, Action<MaterialEntry> open)
+    {
+        var grades = GradeColumns(card.Name);
+        var columns = string.Join(',', Enumerable.Repeat("*", grades));
+
+        var heads = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = 2, Margin = new Thickness(0, 18, 0, 0) };
+
+        for (var grade = 1; grade <= grades; grade++)
+        {
+            var head = new Border
+            {
+                Height = TypeScale.MinimumTarget,
+                Padding = new Thickness(8, 0),
+                Child = new StackPanel
+                {
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Children =
+                    {
+                        Typeset.Chrome(
+                            $"GRADE {Count(grade)}", TypeScale.Meta, ThemeManager.WhiteKey,
+                            weight: FontWeight.SemiBold, tracking: TypeScale.Meta * Fonts.ChromeTracking),
+                        Typeset.Mono($"CAP {Count(MaterialGrades.CapacityOfGrade(grade) ?? 0)}", TypeScale.MetaSmall, ThemeManager.GreyKey),
+                    },
+                },
+            };
+            ThemeInk.Bind(head, Border.BackgroundProperty, ThemeManager.SlabKey);
+            Grid.SetColumn(head, grade - 1);
+            heads.Children.Add(head);
+        }
+
+        var stack = new StackPanel { Children = { heads } };
+
+        foreach (var line in lines)
+        {
+            var first = MaterialCatalogue.InLine(line).FirstOrDefault();
+            var name = Typeset.Chrome(
+                first is null ? line : MaterialDetailPage.LineName(first), TypeScale.Meta, ThemeManager.WhiteKey,
+                weight: FontWeight.SemiBold);
+
+            var rule = new Border
+            {
+                BorderThickness = new Thickness(0, 0, 0, 1),
+                Margin = new Thickness(0, 12, 0, 2),
+                Padding = new Thickness(0, 0, 0, 4),
+                Child = name,
+            };
+            ThemeInk.Bind(rule, Border.BorderBrushProperty, ThemeManager.Line2Key);
+            stack.Children.Add(rule);
+
+            var cells = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = 2 };
+
+            for (var grade = 1; grade <= grades; grade++)
+            {
+                if (CellOf(card, line, grade) is { } row)
+                {
+                    var cell = Cell(row, open);
+                    Grid.SetColumn(cell, grade - 1);
+                    cells.Children.Add(cell);
+                }
+            }
+
+            stack.Children.Add(cells);
+        }
+
+        return stack;
+    }
+
+    /// <summary>One trader cell: the name as written, <c>NEED n</c> and the count under it, the capacity bar along the foot.</summary>
+    private static Border Cell(MaterialRow row, Action<MaterialEntry> open)
+    {
+        var atCap = row.Capacity is { } cap && row.Held >= cap;
+
+        var name = Typeset.Chrome(row.Material.Name, TypeScale.Control, ThemeManager.WhiteKey, weight: FontWeight.Medium, wrap: true);
+
+        var foot = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 2, 0, 4) };
+        var count = Mono(Count(row.Held), atCap ? ThemeManager.YellowKey : ThemeManager.AKey);
+        Grid.SetColumn(count, 1);
+        foot.Children.Add(count);
+
+        if (row.Needed > 0)
+        {
+            foot.Children.Add(Typeset.Mono($"NEED {Count(row.Needed)}", TypeScale.MetaSmall, ThemeManager.GreyKey, vertical: VerticalAlignment.Center));
+        }
+
+        var bar = CapacityBar(row.Capacity is { } limit and > 0 ? (double)row.Held / limit : 0);
+        DockPanel.SetDock(bar, Dock.Bottom);
+
+        var tile = new Border
+        {
+            MinHeight = TypeScale.MinimumTarget,
+            Child = new DockPanel
+            {
+                Children = { bar, new StackPanel { Margin = new Thickness(8, 6, 8, 0), Children = { name, foot } } },
+            },
+        };
+        Hover(tile);
+        Pressable(tile, () => open(row.Material));
+
+        var held = row.Capacity is { } c ? $"{Count(row.Held)} of {Count(c)}" : Count(row.Held);
+        AutomationProperties.SetName(
+            tile,
+            $"{row.Material.Name}, {held}" + (row.Needed > 0 ? $", need {Count(row.Needed)}" : string.Empty));
+
+        return tile;
     }
 
     private void Farming()

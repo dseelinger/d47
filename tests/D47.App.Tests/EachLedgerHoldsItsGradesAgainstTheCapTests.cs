@@ -100,7 +100,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
     }
 
     [AvaloniaFact]
-    public void RawIsOneGroupPerGradeWithItsCapAndNoGuardianMaterial()
+    public void RawIsSevenLineBandsAndFourGradeColumnsWithItsCapAndNoGuardianMaterial()
     {
         var surface = Open();
         Show(surface, "raw");
@@ -114,16 +114,52 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
 
         for (var grade = 1; grade <= 4; grade++)
         {
-            Assert.Contains($"GRADE {grade}", shown);
-            Assert.Contains($"CAP {MaterialGrades.CapacityOfGrade(grade)}", shown);
+            Assert.Single(shown, $"GRADE {grade}");
+            Assert.Single(shown, $"CAP {MaterialGrades.CapacityOfGrade(grade)}");
         }
 
-        Assert.Contains("IRON", shown);
-        Assert.Contains("CARBON", shown);
-        Assert.DoesNotContain("GUARDIAN POWER CELL", shown);
-        Assert.DoesNotContain(shown, line => line.Contains('·', StringComparison.Ordinal) && line.StartsWith("RAW", StringComparison.Ordinal));
+        Assert.DoesNotContain("GRADE 5", shown);
+
+        for (var category = 1; category <= 7; category++)
+        {
+            Assert.Single(shown, $"Category {category}");
+        }
+
+        Assert.Contains("Iron", shown);
+        Assert.Contains("Carbon", shown);
+        Assert.DoesNotContain("Guardian Power Cell", shown);
+        Assert.DoesNotContain(shown, line => line.Contains('·', StringComparison.Ordinal) && line.StartsWith("RAW", StringComparison.OrdinalIgnoreCase));
 
         surface.Window.Close();
+    }
+
+    [Fact]
+    public void EveryTraderCellHoldsTheMaterialAtItsLineAndGrade()
+    {
+        var ledgers = MaterialTracker.Of(null, PlanGap.Of([], [], null)).Ship;
+
+        foreach (var card in ledgers.Where(card => MaterialsPage.TraderLines.ContainsKey(card.Name)))
+        {
+            var lines = MaterialsPage.TraderLines[card.Name];
+            var seen = new List<string>();
+
+            foreach (var line in lines)
+            {
+                for (var grade = 1; grade <= MaterialsPage.GradeColumns(card.Name); grade++)
+                {
+                    var cell = MaterialsPage.CellOf(card, line, grade);
+
+                    Assert.NotNull(cell);
+                    Assert.Equal(line, cell.Material.Line);
+                    Assert.Equal(grade, cell.Material.Grade);
+                    seen.Add(cell.Material.Symbol);
+                }
+            }
+
+            Assert.Equal(card.Rows.Count, seen.Count);
+        }
+
+        Assert.Equal([7, 10, 6], new[] { "Raw", "Manufactured", "Encoded" }.Select(name => MaterialsPage.TraderLines[name].Count));
     }
 
     [AvaloniaFact]
@@ -185,7 +221,7 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
 
         var shown = Text(Page(surface.Panel));
 
-        Assert.Contains(row.row.Material.Name.ToUpperInvariant(), shown);
+        Assert.Contains(row.row.Material.Name, shown);
         Assert.Contains($"NEED {row.row.Needed}", shown);
 
         surface.Window.Close();
