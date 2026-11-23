@@ -67,6 +67,16 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
     private const double CaptionSize = 20;
 
+    private const double SettingsWidth = 900;
+
+    private const double SlabWidth = 300;
+
+    private const double SlabGap = 28;
+
+    private const double PagePadding = 14;
+
+    private const double LeastFrameHeight = 120;
+
     private static readonly TimeSpan PollEvery = TimeSpan.FromMilliseconds(40);
 
     private static readonly TimeSpan PollEveryInHeadset = TimeSpan.FromSeconds(1);
@@ -111,6 +121,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     private (VideoFailure? Failure, string Text)? _failureState;
     private string? _waitingFor;
     private string? _ticked;
+    private ScrollViewer? _scroll;
 
     public VideoPlayerPage(WatchHost host, VideoTitle title, Control? settingsStrip = null, bool big = false)
     {
@@ -240,7 +251,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             },
         };
 
-        var frame = new Grid { Background = Brushes.Black, MinHeight = 120 };
+        var frame = new Grid { Background = Brushes.Black, MinHeight = LeastFrameHeight };
         frame.Children.Add(_elsewhere);
         frame.Children.Add(_picture);
         frame.Children.Add(_wait);
@@ -258,10 +269,6 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             picture.Width = BigPictureWidth + 2;
             picture.Height = BigPictureHeight + 2;
             picture.HorizontalAlignment = HorizontalAlignment.Left;
-        }
-        else
-        {
-            picture.SizeChanged += (_, e) => picture.Height = Math.Max(120, e.NewSize.Width * 9 / 16);
         }
 
         var timeline = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
@@ -288,17 +295,32 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             Grid.SetColumn(_fromStart, 3);
         }
 
-        Content = big
-            ? BigPage(new StackPanel { Spacing = 8, Children = { picture, timeline } }, tiles, title, settingsStrip)
-            : WindowPage(new StackPanel { Spacing = 12, Children = { picture, timeline, tiles } }, title, settingsStrip);
+        if (big)
+        {
+            Content = BigPage(new StackPanel { Spacing = 8, Children = { picture, timeline } }, tiles, title, settingsStrip);
+        }
+        else
+        {
+            Content = WindowPage(new StackPanel { Spacing = 12, Children = { picture, timeline, tiles } }, title, settingsStrip);
+
+            void Fit() => FitFrame(picture, frame, timeline, tiles);
+
+            picture.SizeChanged += (_, _) => Fit();
+            timeline.SizeChanged += (_, _) => Fit();
+            tiles.SizeChanged += (_, _) => Fit();
+            _stopped.SizeChanged += (_, _) => Fit();
+            _noSubtitles.SizeChanged += (_, _) => Fit();
+            _scroll!.SizeChanged += (_, _) => Fit();
+            frame.SizeChanged += (_, _) => PlaceWait(frame);
+            _picture.SizeChanged += (_, _) => PlaceWait(frame);
+        }
 
         Refresh();
     }
 
-    /// <summary>The window's player: the picture and its slabs side by side, then Plays on, Captions and Sound.</summary>
+    /// <summary>The window's player: the picture and its slabs span the page, then Plays on, Captions and Sound.</summary>
     private DockPanel WindowPage(Control left, VideoTitle title, Control? settingsStrip)
     {
-
         var slabs = new StackPanel
         {
             Spacing = Gaps.Tile,
@@ -315,22 +337,17 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
         var top = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,300"),
-            ColumnSpacing = 28,
+            ColumnDefinitions = new ColumnDefinitions("*," + SlabWidth.ToString(CultureInfo.InvariantCulture)),
+            ColumnSpacing = SlabGap,
             Children = { left, slabs },
         };
         Grid.SetColumn(slabs, 1);
 
-        var body = new StackPanel
+        var settings = new StackPanel
         {
             Spacing = 16,
-            MaxWidth = 1100,
-            HorizontalAlignment = HorizontalAlignment.Left,
             Children =
             {
-                _stopped,
-                _noSubtitles,
-                top,
                 Head("Plays on"),
                 _playsOn,
                 Head("Captions"),
@@ -342,7 +359,72 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             },
         };
 
-        return Scrolled(body, settingsStrip);
+        var body = new StackPanel
+        {
+            Spacing = 16,
+            Children = { Capped(_stopped, followsChild: true), Capped(_noSubtitles, followsChild: true), top, Capped(settings) },
+        };
+
+        var page = Scrolled(body, settingsStrip, out var scroll);
+        _scroll = scroll;
+
+        return page;
+    }
+
+    /// <summary>The control left-aligned and no wider than <see cref="SettingsWidth"/>.</summary>
+    private static Grid Capped(Control child, bool followsChild = false)
+    {
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Children = { child } };
+        grid.ColumnDefinitions[0].MaxWidth = SettingsWidth;
+
+        if (followsChild)
+        {
+            grid.Bind(IsVisibleProperty, child.GetObservable(IsVisibleProperty));
+        }
+
+        return grid;
+    }
+
+    /// <summary>
+    /// Sets the frame's height to its width at 16:9, or less where the timeline and the tiles would otherwise fall
+    /// below the visible page at the top of the scroll.
+    /// </summary>
+    private void FitFrame(Border picture, Grid frame, Control timeline, Control tiles)
+    {
+        if (_scroll is not { Content: Control content } || picture.Bounds.Width <= 2 || _scroll.Bounds.Height <= 0
+            || picture.TranslatePoint(default, content) is not { } at)
+        {
+            return;
+        }
+
+        var natural = (picture.Bounds.Width - 2) * 9 / 16 + 2;
+        var below = timeline.Bounds.Height + tiles.Bounds.Height + 12 + 12 + PagePadding;
+        var fits = _scroll.Bounds.Height - at.Y - below;
+        var height = Math.Max(LeastFrameHeight, Math.Min(natural, fits));
+
+        if (double.IsNaN(picture.Height) || Math.Abs(picture.Height - height) > 0.5)
+        {
+            picture.Height = height;
+        }
+
+        PlaceWait(frame);
+    }
+
+    /// <summary>Puts the wait mark at the lower left of the picture itself, not of the black around it.</summary>
+    private void PlaceWait(Grid frame)
+    {
+        if (_picture.Bounds.Width <= 0 || frame.Bounds.Width <= 0)
+        {
+            _wait.Margin = new Thickness(20);
+
+            return;
+        }
+
+        _wait.Margin = new Thickness(
+            20 + (frame.Bounds.Width - _picture.Bounds.Width) / 2,
+            20,
+            20,
+            20 + (frame.Bounds.Height - _picture.Bounds.Height) / 2);
     }
 
     /// <summary>
@@ -379,10 +461,10 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
         var body = new StackPanel { Spacing = 12, Children = { _stopped, top } };
 
-        return Scrolled(body, settingsStrip);
+        return Scrolled(body, settingsStrip, out _);
     }
 
-    private static DockPanel Scrolled(Control body, Control? settingsStrip)
+    private static DockPanel Scrolled(Control body, Control? settingsStrip, out ScrollViewer scroll)
     {
         var page = new DockPanel();
 
@@ -391,12 +473,13 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             page.DockStripAtTop(settingsStrip);
         }
 
-        page.Children.Add(new ScrollViewer
+        scroll = new ScrollViewer
         {
-            Content = new Border { Padding = new Thickness(14), Child = body },
+            Content = new Border { Padding = new Thickness(PagePadding), Child = body },
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
-        });
+        };
+        page.Children.Add(scroll);
 
         return page;
     }

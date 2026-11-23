@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: In the window, a movie's picture and its slabs span the page: the slabs keep their width at the right and the picture takes the rest, whatever the buttons under it say. The picture's frame is 16:9, or shorter where the timeline and the buttons would fall below the visible page, and the picture is then centred in the frame with black at its sides. Plays on, Captions and Sound stay at most 900 pixels wide. The big panel's player is unchanged.
+
 Changed: Carry on watching on Media › Movies is named Continue watching, on the page, in spoken replies, in Privacy and egress and in the help. Say "continue watching" to play the newest title in it or to try a stopped video again; "carry on watching" still works.
 
 Fixed: In the window, the copy glyph's hover label reads COPIED after a press, or COPY FAILED when the copy failed, for the two seconds the button says so, and then goes back to COPY SYSTEM NAME (COPY STATION NAME on the Faction page). The big panel still shows no label.
