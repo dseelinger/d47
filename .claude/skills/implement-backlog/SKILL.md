@@ -22,6 +22,13 @@ the report, the voice, and the grid written to `.claude/triage-state.json` in th
 `/triage` says it starts no work. This skill is the instruction to start it, so carry on to step 2
 in the same turn without asking.
 
+An issue whose body says Claude Design comes first but that carries no `needs-design` has been
+designed: the label came off when the design was accepted. Never put `needs-design` back on it,
+leave it out of a lane, or tell the maintainer it will pause for want of a design. Check the label
+history (`/issue-worker`, under **One issue, one checkout**, has the command) and the archived `Design <N>`
+session, then give the issue's prompt one paragraph saying where the design is: the design system
+card and the canvas it links.
+
 ## 2. Check the advisor
 
 A subagent cannot have the Opus advisor. Under the report, list in one line the issues whose row

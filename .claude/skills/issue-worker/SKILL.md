@@ -88,9 +88,22 @@ A Claude Design handoff is posted as a comment, not in the body, and links a can
 `claude.ai/artifact/…`. Open each linked canvas with the Artifact tool: `read` it, then read the
 `project/*.dc.html` boards the change draws. The repo's design folders and docs do not hold
 handoffs, so a search of the tree finding nothing does not mean there is no design. When several
-comments specify the same thing, the newest wins. If the issue says a design exists and no comment
-links one, or a linked canvas will not open, stop and say so rather than designing the page
-yourself.
+comments specify the same thing, the newest wins.
+
+An accepted design can also be recorded only in the design system: the design session puts the
+chosen option in a component card, links its canvas from that card and removes `needs-design`,
+and the body keeps its "Claude Design draws it first" line. So an issue that asks for a design and
+no longer carries `needs-design` has been designed. Before calling a design missing, read the label
+history:
+
+```bash
+gh api repos/dseelinger/d47/issues/<N>/timeline --paginate --jq '.[] | select(.event=="unlabeled" and .label.name=="needs-design") | .created_at'
+```
+
+A date there means the design was accepted. Find it in the design system artifact's card for the
+page the issue changes, and follow the canvas that card links. Stop and say so only when the issue
+says a design exists and neither a comment nor the design system holds it, or a linked canvas will
+not open. Never design the page yourself, and never put `needs-design` back on an issue that lost it.
 
 ## Check what it needs first
 
