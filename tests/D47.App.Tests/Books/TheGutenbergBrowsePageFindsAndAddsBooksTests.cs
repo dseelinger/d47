@@ -41,13 +41,19 @@ public sealed class TheGutenbergBrowsePageFindsAndAddsBooksTests
 
     private int _fetches;
 
-    private static byte[] Catalogue()
+    private string[] _rows = Rows;
+
+    /// <summary>Sixty English adventure books, ids 1001 to 1060 from most downloaded to least.</summary>
+    private static string[] Sixty() =>
+        [.. Enumerable.Range(1, 60).Select(n => $"{1000 + n}\tBook {n:000}\tAuthor {n:000}\ten\tAdventure\t{1000 - n}\t2020-01-01")];
+
+    private byte[] Catalogue()
     {
         using var buffer = new MemoryStream();
 
         using (var gzip = new GZipStream(buffer, CompressionLevel.Fastest, leaveOpen: true))
         {
-            gzip.Write(Encoding.UTF8.GetBytes(GutenbergCatalogue.Header + "\n" + string.Join("\n", Rows) + "\n"));
+            gzip.Write(Encoding.UTF8.GetBytes(GutenbergCatalogue.Header + "\n" + string.Join("\n", _rows) + "\n"));
         }
 
         return buffer.ToArray();
@@ -143,16 +149,43 @@ public sealed class TheGutenbergBrowsePageFindsAndAddsBooksTests
     private static List<string> Drawn(Control root) =>
         [.. root.GetVisualDescendants().OfType<TextBlock>().Where(block => block.IsEffectivelyVisible).Select(block => block.Text ?? string.Empty)];
 
-    /// <summary>The "N of M books" line.</summary>
+    /// <summary>The results line: "N of M books" on the desktop, "M books" in the headset.</summary>
     private static string? Count(Control root) =>
-        root.GetVisualDescendants().OfType<TextBlock>()
-            .Select(block => block.Inlines is { Count: > 0 } inlines ? string.Concat(inlines.OfType<Run>().Select(run => run.Text)) : null)
-            .FirstOrDefault(text => text is not null && text.EndsWith(" books", StringComparison.Ordinal));
+        root.GetVisualDescendants().OfType<TextBlock>().Select(Count).FirstOrDefault(text => text is not null);
+
+    private static string? Count(TextBlock block) =>
+        block.Inlines is { Count: > 0 } inlines && string.Concat(inlines.OfType<Run>().Select(run => run.Text)) is var text && text.EndsWith(" books", StringComparison.Ordinal)
+            ? text
+            : null;
 
     private static string Token(Control root, string kind) =>
         Find<Button>(root, "GutenbergToken." + kind).GetVisualDescendants().OfType<TextBlock>().First().Text!;
 
     private static Button ClearFilters(Control root) => Find<Button>(root, GutenbergFilters.ClearName);
+
+    private static ScrollViewer List(Control root) => Find<ScrollViewer>(root, BookAddPage.BookListName);
+
+    /// <summary>True when <paramref name="control"/> scrolls with the list.</summary>
+    private static bool InTheList(Control root, Control control) => control.GetVisualAncestors().Contains(List(root));
+
+    private static void Settle()
+    {
+        for (var i = 0; i < 6; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+        }
+    }
+
+    private static void ScrollToEnd(Control root)
+    {
+        var scroll = List(root);
+        scroll.Offset = new Avalonia.Vector(0, scroll.Extent.Height - scroll.Viewport.Height);
+        Settle();
+    }
+
+    private static string Readout(Control root) => Find<TextBlock>(root, BookAddPage.PageReadoutName).Text!;
+
+    private static TextBlock ResultsLine(Control root) => root.GetVisualDescendants().OfType<TextBlock>().First(block => Count(block) is not null);
 
     [AvaloniaTheory]
     [InlineData(false)]
@@ -166,7 +199,7 @@ public sealed class TheGutenbergBrowsePageFindsAndAddsBooksTests
 
         Assert.Equal(0, Find<Segment>(panel, BookAddPage.SourceName).SelectedIndex);
         Assert.Equal([84, 1342, 1661, 36, 35, GutenbergText.Number], Listed(panel));
-        Assert.Equal("6 of 6 books", Count(panel));
+        Assert.Equal(headset ? "6 books" : "6 of 6 books", Count(panel));
         Assert.Equal("POPULAR", Token(panel, "Order"));
         Assert.Equal("ANY SUBJECT", Token(panel, "Subject"));
         Assert.Equal("ENGLISH", Token(panel, "Language"));
@@ -232,6 +265,155 @@ public sealed class TheGutenbergBrowsePageFindsAndAddsBooksTests
         Assert.Equal("ANY SUBJECT", Token(panel, "Subject"));
         Assert.Equal("ENGLISH", Token(panel, "Language"));
         Assert.False(ClearFilters(panel).IsVisible);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ScrollingTheDesktopListToItsEndDrawsTheNextTwentyFiveUntilEveryMatchIsDrawn()
+    {
+        _rows = Sixty();
+        var (window, panel, _) = Open();
+        await OpenAddPage(panel);
+        Settle();
+
+        Assert.Equal("25 of 60 books", Count(panel));
+        Assert.True(List(panel).Extent.Height > List(panel).Viewport.Height);
+
+        ScrollToEnd(panel);
+        Assert.Equal("50 of 60 books", Count(panel));
+
+        ScrollToEnd(panel);
+        Assert.Equal("60 of 60 books", Count(panel));
+
+        ScrollToEnd(panel);
+        Assert.Equal("60 of 60 books", Count(panel));
+        Assert.Equal(1060, Listed(panel)[^1]);
+
+        window.SaveFrame("gutenberg-scrolled-to-the-end-desktop.png");
+
+        var field = Find<TextBox>(panel, GutenbergFilters.TextName);
+        Assert.True(field.IsEffectivelyVisible);
+        Assert.False(InTheList(panel, field));
+        Assert.False(InTheList(panel, Find<Button>(panel, "GutenbergToken.Order")));
+        Assert.False(InTheList(panel, ResultsLine(panel)));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ChoosingARowKeepsTheRowsDrawnAndTheScroll()
+    {
+        _rows = Sixty();
+        var (window, panel, _) = Open();
+        await OpenAddPage(panel);
+        Settle();
+        ScrollToEnd(panel);
+
+        Assert.Equal("50 of 60 books", Count(panel));
+        var offset = List(panel).Offset;
+        var row = BookRows(panel)[^1];
+
+        Click(row);
+        Settle();
+
+        Assert.Equal("50 of 60 books", Count(panel));
+        Assert.Equal(offset, List(panel).Offset);
+        Assert.Contains(D47.App.Theming.ListRow.SelectedClass, row.Classes);
+        Assert.True(Find<Button>(panel, BookAddPage.AddName).IsEnabled);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task AFilterChangeReturnsTheDesktopListToItsFirstTwentyFiveAtTheTop()
+    {
+        _rows = Sixty();
+        var (window, panel, _) = Open();
+        await OpenAddPage(panel);
+        Settle();
+        ScrollToEnd(panel);
+        ScrollToEnd(panel);
+
+        Assert.Equal("60 of 60 books", Count(panel));
+
+        Find<TextBox>(panel, GutenbergFilters.TextName).Text = "book";
+        await Until(() => Count(panel) == "25 of 60 books");
+        Settle();
+
+        Assert.Equal("25 of 60 books", Count(panel));
+        Assert.Equal(0, List(panel).Offset.Y);
+        Assert.Equal(1001, Listed(panel)[0]);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task TheHeadsetListPagesByTwentyFiveAndAFilterChangeReturnsToPageOne()
+    {
+        _rows = Sixty();
+        var (window, panel, _) = Open(headset: true);
+        await OpenAddPage(panel);
+        Settle();
+
+        Assert.Equal("60 books", Count(panel));
+        Assert.Equal("1–25 of 60", Readout(panel));
+        Assert.Equal(Enumerable.Range(1001, 25), Listed(panel));
+        Assert.False(Find<Button>(panel, BookAddPage.PreviousName).IsEnabled);
+        Assert.True(Find<Button>(panel, BookAddPage.NextName).IsEnabled);
+
+        Click(Find<Button>(panel, BookAddPage.NextName));
+        Click(Find<Button>(panel, BookAddPage.NextName));
+        Settle();
+
+        Assert.Equal("51–60 of 60", Readout(panel));
+        Assert.Equal(Enumerable.Range(1051, 10), Listed(panel));
+        Assert.True(Find<Button>(panel, BookAddPage.PreviousName).IsEnabled);
+        Assert.False(Find<Button>(panel, BookAddPage.NextName).IsEnabled);
+        Assert.Equal("60 books", Count(panel));
+
+        ScrollToEnd(panel);
+        var field = Find<TextBox>(panel, GutenbergFilters.TextName);
+        Assert.True(field.IsEffectivelyVisible);
+        Assert.False(InTheList(panel, field));
+        Assert.False(InTheList(panel, ResultsLine(panel)));
+        Assert.True(InTheList(panel, Find<Button>(panel, BookAddPage.NextName)));
+        window.SaveFrame("gutenberg-scrolled-to-the-end-headset.png");
+
+        field.Text = "book";
+        await Until(() => Readout(panel) == "1–25 of 60");
+
+        Assert.Equal(Enumerable.Range(1001, 25), Listed(panel));
+        Assert.False(Find<Button>(panel, BookAddPage.PreviousName).IsEnabled);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task InTheHeadsetAnOpenTokenPanelTakesTheListsPlaceUntilAPick()
+    {
+        _rows = Sixty();
+        var (window, panel, _) = Open(headset: true);
+        await OpenAddPage(panel);
+        Settle();
+
+        Click(Find<Button>(panel, "GutenbergToken.Language"));
+        Settle();
+
+        var english = panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == GutenbergFilters.LanguageName);
+        Assert.True(english.IsEffectivelyVisible);
+        Assert.False(List(panel).IsEffectivelyVisible);
+        Assert.Empty(BookRows(panel));
+        Assert.Equal("60 books", Count(panel));
+        Assert.True(ResultsLine(panel).IsEffectivelyVisible);
+        window.SaveFrame("gutenberg-language-open-headset.png");
+
+        Click(english);
+        Settle();
+
+        Assert.True(List(panel).IsEffectivelyVisible);
+        Assert.Equal(25, BookRows(panel).Count);
+        Assert.True(Find<Button>(panel, BookAddPage.NextName).IsEffectivelyVisible);
 
         window.Close();
     }
@@ -324,6 +506,7 @@ public sealed class TheGutenbergBrowsePageFindsAndAddsBooksTests
         Assert.Null(rig.Player.Now);
         Assert.Same(page, Page(panel));
         Assert.Contains("The Night Watch is on your shelf. Press it there to read it.", Drawn(panel));
+        Assert.False(InTheList(panel, panel.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == "The Night Watch is on your shelf. Press it there to read it.")));
         Assert.False(Row(panel, GutenbergText.Number).IsEnabled);
 
         window.Close();

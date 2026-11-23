@@ -28,6 +28,7 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
     private TextBlock? _count;
     private Button? _clear;
     private DockPanel? _results;
+    private TKind? _shownOpen;
 
     protected TokenFilterBar(string? tokenNamePrefix)
     {
@@ -36,6 +37,12 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
 
     /// <summary>Raised after the Commander changes the filter.</summary>
     public event EventHandler? Changed;
+
+    /// <summary>Raised when a token's panel opens, closes or is swapped for another's.</summary>
+    public event EventHandler? OpenChanged;
+
+    /// <summary>True while a token's panel is open.</summary>
+    public bool PanelOpen => Open is not null;
 
     protected Dictionary<TKind, TextBlock> Values { get; } = [];
 
@@ -93,6 +100,14 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
         return _results;
     }
 
+    /// <summary>Takes the token panel's host out of the bar, for a page that places it apart from the sentence.</summary>
+    public Control TakePanel()
+    {
+        Children.Remove(_panelHost!);
+
+        return _panelHost!;
+    }
+
     /// <summary>Draws "N of M" followed by <paramref name="noun"/>.</summary>
     protected void ShowCount(int shown, int total, string noun)
     {
@@ -135,6 +150,12 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
         _panelHost.Child = Open is { } opened ? PanelFor(opened) : null;
 
         Syncing = false;
+
+        if (!Nullable.Equals(_shownOpen, Open))
+        {
+            _shownOpen = Open;
+            OpenChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     protected static TextBlock Words(string text)

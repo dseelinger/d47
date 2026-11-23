@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Media › Books › Add a book › Project Gutenberg lists every book that matches, not the first 200. In the window the list draws 25 books and draws the next 25 as you scroll to its end, and the results line counts the books drawn. On the headset panel the list shows 25 books a page with PREVIOUS and NEXT, and an open order, subject or language choice takes the list's place until you close it. The field, the sentence and the results line stay on screen while the list scrolls, and "Fetching the first lines of …" shows beside BACK.
+
 Fixed: A book opened, or being read, while its Project Gutenberg download is still arriving now takes the chapters that arrive afterwards. The Book page lists each by its own title instead of a numbered placeholder, and "next chapter" reaches them without stopping and starting the book.
 
 Fixed: While the headset is connected, a video plays on the panel the headset is showing. Saying "big panel" or "small panel", or changing Panel content, moves a playing video to that panel and keeps its place. When the headset session starts the picture moves to that panel, and when it ends the picture returns to the window.

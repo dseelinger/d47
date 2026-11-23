@@ -1,10 +1,13 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.App.Voice;
@@ -57,6 +60,17 @@ public sealed class BookAddPage : UserControl, IPageSummary
 
     public const string OnYourShelf = "ON YOUR SHELF";
 
+    public const string BookListName = "GutenbergBookList";
+
+    public const string PreviousName = "GutenbergPrevious";
+
+    public const string NextName = "GutenbergNext";
+
+    public const string PageReadoutName = "GutenbergPageReadout";
+
+    /// <summary>The rows drawn at a time on the desktop, and the rows to a page in the headset.</summary>
+    public const int Step = FactionModel.PageSize;
+
     /// <summary>The two places a book comes from, in the order the Segmented shows them.</summary>
     public static IReadOnlyList<string> Sources { get; } = ["Project Gutenberg", "A file on this PC"];
 
@@ -69,18 +83,25 @@ public sealed class BookAddPage : UserControl, IPageSummary
     private readonly StatusLine _line = new() { Margin = new Thickness(0, 6, 0, 0) };
     private readonly Button _add = BooksKit.Tile(AddName, "ADD AND READ", "Add the book and read it");
     private readonly StackPanel _files;
-    private readonly StackPanel? _gutenberg;
-    private readonly GutenbergFilters _filters = new();
-    private readonly StatusLine _retrieving = new();
+    private readonly ScrollViewer _filesPage;
+    private readonly Grid? _gutenberg;
+    private readonly GutenbergFilters _filters;
+    private readonly StatusLine _retrieving = new() { Margin = new Thickness(0, 0, 14, 8) };
     private readonly Notice _unreachable = new(NoticeLevel.Error, inline: true)
     {
         Name = UnreachableName,
         Label = UnreachableLabel,
         Text = UnreachableText,
         IsVisible = false,
+        Margin = new Thickness(0, 0, 14, 8),
     };
-    private readonly StackPanel _books = new() { Spacing = Gaps.Tile };
-    private readonly StatusLine _fetching = new() { Margin = new Thickness(0, 6, 0, 0) };
+    private readonly ObservableCollection<GutenbergBook> _shown = [];
+    private readonly ItemsControl _bookList;
+    private readonly ScrollViewer _bookScroll;
+    private readonly Border _pagerSlot = new();
+    private readonly DockPanel _listArea;
+    private readonly StatusLine _fetching = new();
+    private readonly Border _fetchSlot;
 
     private BookFolderListing _listing = BookFolderListing.Empty;
     private string? _selected;
@@ -91,6 +112,7 @@ public sealed class BookAddPage : UserControl, IPageSummary
     private GutenbergResult _result = new([], 0);
     private int? _chosen;
     private bool _adding;
+    private int _page;
 
     public BookAddPage(BooksHost host, PanelNavigator nav, bool big = false, WaitSound? wait = null)
     {
@@ -99,9 +121,10 @@ public sealed class BookAddPage : UserControl, IPageSummary
         _big = big;
         _wait = wait;
 
-        var body = new StackPanel { Spacing = big ? 8 : 12, MaxWidth = 900, HorizontalAlignment = HorizontalAlignment.Left };
+        var gap = big ? 8 : 12;
+        var root = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
 
-        _files = new StackPanel { Spacing = big ? 8 : 12 };
+        _files = new StackPanel { Spacing = gap };
 
         if (!_big)
         {
@@ -119,6 +142,32 @@ public sealed class BookAddPage : UserControl, IPageSummary
         _files.Children.Add(_list);
         _files.Children.Add(_line);
 
+        _filesPage = LoadoutPages.Scrolling(_files);
+        Grid.SetRow(_filesPage, 1);
+
+        _filters = new GutenbergFilters(fill: big);
+
+        _bookList = new ItemsControl
+        {
+            // The headset lays out without a layout manager, so a virtualising panel there never learns its viewport.
+            ItemsPanel = new FuncTemplate<Avalonia.Controls.Panel?>(() => big ? new StackPanel() : new VirtualizingStackPanel()),
+            ItemTemplate = new FuncDataTemplate<GutenbergBook>((book, _) => book is null ? null : BookRow(book)),
+            ItemsSource = _shown,
+        };
+        _bookScroll = LoadoutPages.Scrolling(big ? new StackPanel { Children = { _bookList, _pagerSlot } } : _bookList);
+        _bookScroll.Name = BookListName;
+
+        if (!big)
+        {
+            _bookScroll.ScrollChanged += (_, _) => CheckSoon();
+        }
+
+        var above = new StackPanel { Children = { _retrieving, _unreachable } };
+        DockPanel.SetDock(above, Dock.Top);
+        _listArea = new DockPanel { Children = { above, _bookScroll } };
+
+        _fetchSlot = new Border { Child = _fetching, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, Gaps.Tile, 0) };
+
         if (host.OffersGutenberg)
         {
             var source = new Segment
@@ -131,6 +180,7 @@ public sealed class BookAddPage : UserControl, IPageSummary
                     new ChoiceStatus(".txt or .epub · nothing sent", ChoiceTone.Grey),
                 ],
                 SelectedIndex = 0,
+                Margin = new Thickness(0, 0, 14, gap),
             };
             AutomationProperties.SetName(source, "Where the book comes from");
             source.SelectionChanged += (_, _) =>
@@ -142,19 +192,36 @@ public sealed class BookAddPage : UserControl, IPageSummary
             };
 
             _filters.Changed += (_, _) => _ = QueryAsync();
+            _filters.OpenChanged += (_, _) => FitPanel();
+            _filters.Margin = new Thickness(0, 0, 14, 0);
 
-            _gutenberg = new StackPanel
+            var panel = _filters.TakePanel();
+            panel.Margin = new Thickness(0, 6, 14, 0);
+            Grid.SetRow(panel, 1);
+
+            var results = _filters.TakeResults();
+            results.Margin = new Thickness(0, big ? 4 : 6, 14, big ? 4 : 6);
+            Grid.SetRow(results, 2);
+
+            Grid.SetRow(_listArea, 3);
+
+            _gutenberg = new Grid
             {
-                Spacing = big ? 8 : 12,
-                Children = { _filters, _retrieving, _unreachable, _books, _fetching },
+                RowDefinitions = new RowDefinitions("Auto,Auto,Auto,*"),
+                Children = { _filters, panel, results, _listArea },
             };
+            Grid.SetRow(_gutenberg, 1);
 
-            body.Children.Add(source);
-            body.Children.Add(_gutenberg);
-            _files.IsVisible = false;
+            root.Children.Add(source);
+            root.Children.Add(_gutenberg);
+            _filesPage.IsVisible = false;
+        }
+        else
+        {
+            _fetchSlot.IsVisible = false;
         }
 
-        body.Children.Add(_files);
+        root.Children.Add(_filesPage);
 
         _add.IsEnabled = false;
         _add.MinWidth = 120;
@@ -175,29 +242,27 @@ public sealed class BookAddPage : UserControl, IPageSummary
         back.MinWidth = 120;
         back.Click += (_, _) => _nav.Back();
 
-        var footer = new StackPanel
+        var tiles = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = Gaps.Tile,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 12, 0, 0),
             Children = { back, _add },
         };
-        DockPanel.SetDock(footer, Dock.Bottom);
+        DockPanel.SetDock(tiles, Dock.Right);
 
-        Content = new DockPanel
+        var footer = new DockPanel
+        {
+            Margin = new Thickness(0, 12, 14, 0),
+            Children = { tiles, _fetchSlot },
+        };
+        Grid.SetRow(footer, 1);
+
+        Content = new Grid
         {
             Margin = new Thickness(14),
-            Children =
-            {
-                footer,
-                new ScrollViewer
-                {
-                    Content = new Border { Padding = new Thickness(0, 0, 14, 0), Child = body },
-                    VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
-                    HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
-                },
-            },
+            ColumnDefinitions = { new ColumnDefinition(1, GridUnitType.Star) { MaxWidth = 914 } },
+            RowDefinitions = new RowDefinitions("*,Auto"),
+            Children = { root, footer },
         };
 
         DrawList();
@@ -324,14 +389,31 @@ public sealed class BookAddPage : UserControl, IPageSummary
     private void ShowSource(bool gutenberg)
     {
         _gutenberg!.IsVisible = gutenberg;
-        _files.IsVisible = !gutenberg;
+        _fetchSlot.IsVisible = gutenberg;
+        _filesPage.IsVisible = !gutenberg;
 
         if (gutenberg)
         {
             AskForCatalogue();
+            CheckSoon();
         }
 
         UpdateAdd();
+    }
+
+    /// <summary>In the headset, an open token panel takes the list's height and the list and its pager are hidden.</summary>
+    private void FitPanel()
+    {
+        if (!_big || _gutenberg is not { } grid)
+        {
+            return;
+        }
+
+        var open = _filters.PanelOpen;
+
+        grid.RowDefinitions[1].Height = open ? GridLength.Star : GridLength.Auto;
+        grid.RowDefinitions[3].Height = open ? GridLength.Auto : GridLength.Star;
+        _listArea.IsVisible = !open;
     }
 
     /// <summary>Asks for the catalogue the first time Project Gutenberg is shown, and again after it could not be had.</summary>
@@ -372,7 +454,10 @@ public sealed class BookAddPage : UserControl, IPageSummary
         await QueryAsync();
     }
 
-    /// <summary>Searches the catalogue off the calling thread and draws the books found. A search overtaken by a newer one is dropped.</summary>
+    /// <summary>
+    /// Searches the catalogue off the calling thread and draws the first rows found, scrolled to the top. A search
+    /// overtaken by a newer one is dropped.
+    /// </summary>
     private async Task QueryAsync()
     {
         if (_catalogue is not { } catalogue)
@@ -390,6 +475,7 @@ public sealed class BookAddPage : UserControl, IPageSummary
         }
 
         _result = result;
+        _page = 0;
 
         if (_chosen is { } chosen && !result.Books.Any(book => book.Id == chosen))
         {
@@ -401,22 +487,104 @@ public sealed class BookAddPage : UserControl, IPageSummary
 
     private bool OnShelf(GutenbergBook book) => _host.Shelf.Find(BookSource.FromGutenberg(book.Id)) is not null;
 
+    /// <summary>Draws the first <see cref="Step"/> rows on the desktop, or the current page in the headset, scrolled to the top.</summary>
     private void DrawBooks()
     {
-        _books.Children.Clear();
+        _shown.Clear();
 
-        foreach (var book in _result.Books)
+        if (_big)
         {
-            _books.Children.Add(BookRow(book));
+            _page = FactionModel.ClampPage(_page, _result.Matched);
+
+            foreach (var book in _result.Books.Skip(_page * Step).Take(Step))
+            {
+                _shown.Add(book);
+            }
+
+            _pagerSlot.Child = _result.Matched > Step ? Pager() : null;
+            _filters.ShowMatched(_result.Matched);
+        }
+        else
+        {
+            DrawMore();
+            _filters.Show(_shown.Count, _result.Matched);
         }
 
-        _filters.Show(_result.Books.Count, _result.Matched);
+        _bookScroll.Offset = default;
         UpdateAdd();
+    }
+
+    /// <summary>Adds the next <see cref="Step"/> matches to the desktop list.</summary>
+    private void DrawMore()
+    {
+        foreach (var book in _result.Books.Skip(_shown.Count).Take(Step))
+        {
+            _shown.Add(book);
+        }
+
+        _filters.ShowDrawn(_shown.Count, _result.Matched);
+        CheckSoon();
+    }
+
+    private void CheckSoon()
+    {
+        if (!_big)
+        {
+            Dispatcher.UIThread.Post(MoreIfAtEnd, DispatcherPriority.Background);
+        }
+    }
+
+    /// <summary>Draws the next rows when the desktop list is within one row of its end and more books match.</summary>
+    private void MoreIfAtEnd()
+    {
+        if (!Gutenberg || _shown.Count == 0 || _shown.Count >= _result.Matched || _bookScroll.Viewport.Height <= 0)
+        {
+            return;
+        }
+
+        var row = _bookScroll.Extent.Height / _shown.Count;
+
+        if (_bookScroll.Offset.Y + _bookScroll.Viewport.Height >= _bookScroll.Extent.Height - row)
+        {
+            DrawMore();
+        }
+    }
+
+    /// <summary>The headset's pager row: "1–25 of 1204", then ◄ PREVIOUS and NEXT ►, each disabled at its end.</summary>
+    private Grid Pager()
+    {
+        var readout = CreditsKit.Mono(FactionModel.PageReadout(_page, _result.Matched), TypeScale.Tip, ThemeManager.GreyKey, right: false);
+        readout.Name = PageReadoutName;
+        readout.VerticalAlignment = VerticalAlignment.Center;
+
+        var previous = new Button { Name = PreviousName, Content = "◄ PREVIOUS", Height = TypeScale.MinimumTarget, IsEnabled = _page > 0 };
+        var next = new Button
+        {
+            Name = NextName,
+            Content = "NEXT ►",
+            Height = TypeScale.MinimumTarget,
+            IsEnabled = FactionModel.ClampPage(_page + 1, _result.Matched) > _page,
+        };
+        previous.Click += (_, _) => Turn(_page - 1);
+        next.Click += (_, _) => Turn(_page + 1);
+
+        var tiles = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gaps.Tile, Children = { previous, next } };
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 8, 0, 0) };
+        Grid.SetColumn(tiles, 1);
+        grid.Children.Add(readout);
+        grid.Children.Add(tiles);
+
+        return grid;
+    }
+
+    private void Turn(int page)
+    {
+        _page = page;
+        DrawBooks();
     }
 
     private Button BookRow(GutenbergBook book)
     {
-        var shelved = OnShelf(book);
         var name = ListRow.Name(new TextBlock { Text = book.Title, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
         var main = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Children = { name } };
         var sub = string.Join(
@@ -428,35 +596,56 @@ public sealed class BookAddPage : UserControl, IPageSummary
             main.Children.Add(ListRow.Sub(new TextBlock { Text = sub, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis }));
         }
 
-        var aside = Typeset.Mono(
-            shelved ? OnYourShelf : "#" + book.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            13,
-            ThemeManager.GreyKey,
-            vertical: VerticalAlignment.Center,
-            margin: new Thickness(10, 0, 0, 0));
+        var aside = Typeset.Mono(string.Empty, 13, ThemeManager.GreyKey, vertical: VerticalAlignment.Center, margin: new Thickness(10, 0, 0, 0));
         DockPanel.SetDock(aside, Dock.Right);
 
         var row = new Button
         {
             Name = GutenbergRowName,
             Tag = book.Id,
-            IsEnabled = !shelved,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             MinHeight = TypeScale.MinimumTarget,
+            Margin = new Thickness(0, 0, 0, Gaps.Tile),
             Content = new DockPanel { LastChildFill = true, Children = { aside, main } },
         };
         AutomationProperties.SetName(row, book.Title);
-        ListRow.Dress(row, book.Id == _chosen);
+        Dress(row);
         row.Click += (_, _) =>
         {
             _chosen = book.Id;
             _fetching.Clear();
             _unreachable.IsVisible = false;
-            DrawBooks();
+            Redress();
         };
 
         return row;
+    }
+
+    /// <summary>Marks a row chosen, or on the shelf and disabled, from the page's state.</summary>
+    private void Dress(Button row)
+    {
+        var id = (int)row.Tag!;
+        var shelved = _host.Shelf.Find(BookSource.FromGutenberg(id)) is not null;
+
+        row.IsEnabled = !shelved;
+        ListRow.Dress(row, id == _chosen);
+
+        if (row.Content is DockPanel content && content.Children[0] is TextBlock aside)
+        {
+            aside.Text = shelved ? OnYourShelf : "#" + id.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+
+    /// <summary>Dresses the rows drawn again, leaving the list's length and scroll as they are.</summary>
+    private void Redress()
+    {
+        foreach (var row in _bookList.GetVisualDescendants().OfType<Button>().Where(button => button.Name == GutenbergRowName))
+        {
+            Dress(row);
+        }
+
+        UpdateAdd();
     }
 
     /// <summary>Adds the chosen book and, once its first lines are on the shelf, goes back to Books with it reading.</summary>
@@ -509,7 +698,7 @@ public sealed class BookAddPage : UserControl, IPageSummary
                 break;
         }
 
-        DrawBooks();
+        Redress();
     }
 
     /// <summary>The count a row shows in mono.</summary>

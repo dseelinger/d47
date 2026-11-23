@@ -31,7 +31,7 @@ public sealed record GutenbergQuery(
     string? Language = null,
     GutenbergOrder Order = GutenbergOrder.Popular);
 
-/// <summary>At most <see cref="GutenbergCatalogue.MaxRows"/> books, and the number that matched.</summary>
+/// <summary>Every book that matched, in the chosen order, and their number.</summary>
 public sealed record GutenbergResult(IReadOnlyList<GutenbergBook> Books, int Matched);
 
 public sealed record GutenbergLanguage(string Code, string Name, int Books);
@@ -42,9 +42,6 @@ public sealed record GutenbergLanguage(string Code, string Name, int Books);
 public sealed class GutenbergCatalogue
 {
     public const string Header = "id\ttitle\tauthor\tlanguage\tsubjects\tdownloads\tissued";
-
-    /// <summary>The most books a search returns.</summary>
-    public const int MaxRows = 200;
 
     /// <summary>The most rows read; a file with more is refused.</summary>
     public const int MaxFileRows = 500_000;
@@ -143,7 +140,7 @@ public sealed class GutenbergCatalogue
             _ => matches.OrderByDescending(entry => entry.Book.Downloads),
         };
 
-        return new GutenbergResult([.. ordered.Take(MaxRows).Select(entry => entry.Book)], matches.Count);
+        return new GutenbergResult([.. ordered.Select(entry => entry.Book)], matches.Count);
     }
 
     /// <summary>The languages present with their book counts, most books first.</summary>

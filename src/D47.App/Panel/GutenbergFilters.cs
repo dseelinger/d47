@@ -41,6 +41,7 @@ internal sealed class GutenbergFilters : TokenFilterBar<GutenbergFilters.Kind>
     private static readonly string[] OrderLabels = ["Popular", "A to Z", "Newest"];
 
     private readonly TextBox _text;
+    private readonly bool _fill;
     private readonly HashSet<string> _subjects = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<CheckBox> _subjectBoxes = [];
     private Control? _subjectPanel;
@@ -50,9 +51,11 @@ internal sealed class GutenbergFilters : TokenFilterBar<GutenbergFilters.Kind>
     private string _language = English;
     private bool _clearingText;
 
-    public GutenbergFilters()
+    /// <summary>Given <paramref name="fill"/>, the language panel takes whatever height its host is given rather than at most 240.</summary>
+    public GutenbergFilters(bool fill = false)
         : base("GutenbergToken.")
     {
+        _fill = fill;
         _text = new TextBox
         {
             Name = TextName,
@@ -121,7 +124,17 @@ internal sealed class GutenbergFilters : TokenFilterBar<GutenbergFilters.Kind>
     /// <summary>Draws "N of M books" and the token values.</summary>
     public void Show(int shown, int matched)
     {
-        ShowCount(shown, matched, "books");
+        ShowDrawn(shown, matched);
+        Refresh();
+    }
+
+    /// <summary>Draws "N of M books" alone, leaving an open panel as it is.</summary>
+    public void ShowDrawn(int shown, int matched) => ShowCount(shown, matched, "books");
+
+    /// <summary>Draws "M books" and the token values.</summary>
+    public void ShowMatched(int matched)
+    {
+        ShowLine(Fonts.Mono(matched.ToString(CultureInfo.InvariantCulture)), new Avalonia.Controls.Documents.Run(" books"));
         Refresh();
     }
 
@@ -289,7 +302,7 @@ internal sealed class GutenbergFilters : TokenFilterBar<GutenbergFilters.Kind>
 
         return new ScrollViewer
         {
-            MaxHeight = 240,
+            MaxHeight = _fill ? double.PositiveInfinity : 240,
             Content = grid,
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,

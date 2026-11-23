@@ -117,15 +117,14 @@ public sealed class TheGutenbergCatalogueIsSearchedLocallyTests
     }
 
     [Fact]
-    public void ASearchReturnsTwoHundredRowsAndTheTrueCount()
+    public void ASearchReturnsEveryMatchInOrder()
     {
         var rows = Enumerable.Range(1, 350)
             .Select(id => $"{id}\tBook {id:000}\tAuthor\ten\tAdventure\t{1000 - id}\t2020-01-01");
         var result = Read([.. rows]).Search(new GutenbergQuery("book"));
 
         Assert.Equal(350, result.Matched);
-        Assert.Equal(200, result.Books.Count);
-        Assert.Equal(1, result.Books[0].Id);
+        Assert.Equal(Enumerable.Range(1, 350), result.Books.Select(book => book.Id));
     }
 
     [Fact]
