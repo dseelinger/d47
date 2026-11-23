@@ -25,12 +25,21 @@ public sealed class TheMoviesCataloguePageSearchesAndPagesTests
     {
         public List<Call> Calls { get; } = [];
 
-        public Task<VideoPage> SearchAsync(string query, VideoFilters filters, int page, CancellationToken cancellationToken)
+        public TaskCompletionSource<bool>? Hold { get; set; }
+
+        public Func<Call, bool> Holds { get; set; } = _ => false;
+
+        public async Task<VideoPage> SearchAsync(string query, VideoFilters filters, int page, CancellationToken cancellationToken)
         {
             var call = new Call(query, filters, page);
             Calls.Add(call);
 
-            return Task.FromResult(answer(call));
+            if (Hold is { } hold && Holds(call))
+            {
+                await hold.Task;
+            }
+
+            return answer(call);
         }
     }
 
@@ -85,9 +94,14 @@ public sealed class TheMoviesCataloguePageSearchesAndPagesTests
         }
     }
 
-    private static (Window Window, PanelView Panel) Open(Fixture fixture)
+    private static (Window Window, PanelView Panel) Open(Fixture fixture, bool headset = false)
     {
         var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        if (headset)
+        {
+            panel.Classes.Add("headset");
+        }
 
         panel.EnableMedia(watch: fixture.Host);
 
@@ -115,9 +129,9 @@ public sealed class TheMoviesCataloguePageSearchesAndPagesTests
     private static IReadOnlyList<string> Drawn(Control root) =>
         [.. root.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text ?? string.Concat(block.Inlines?.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text) ?? []))];
 
-    private static (Window Window, PanelView Panel) OpenCatalogue(Fixture fixture)
+    private static (Window Window, PanelView Panel) OpenCatalogue(Fixture fixture, bool headset = false)
     {
-        var (window, panel) = Open(fixture);
+        var (window, panel) = Open(fixture, headset);
 
         Click(Named(panel, WatchPage.FindName));
         Settle();
@@ -137,7 +151,7 @@ public sealed class TheMoviesCataloguePageSearchesAndPagesTests
 
         var drawn = Drawn(panel);
 
-        Assert.Contains(drawn, text => text == "1–25 of 40");
+        Assert.Contains(drawn, text => text == "25 of 40 videos");
         Assert.Contains("SHOW", drawn.Select(text => text.ToUpperInvariant()));
         Assert.Contains(drawn, text => text.Contains("public domain · footage · no captions yet", StringComparison.OrdinalIgnoreCase));
 
@@ -168,18 +182,218 @@ public sealed class TheMoviesCataloguePageSearchesAndPagesTests
         fixture.Dispose();
     }
 
+    private static ScrollViewer ListScroll(Control root) =>
+        root.GetVisualDescendants().OfType<ScrollViewer>().First(scroll => scroll.GetVisualDescendants().OfType<Button>().Any(button => button.Name == CataloguePage.RowName));
+
+    private static int RowCount(Control root) =>
+        root.GetVisualDescendants().OfType<Button>().Count(button => button.Name == CataloguePage.RowName);
+
+    private static void ScrollToEnd(Control root)
+    {
+        var scroll = ListScroll(root);
+
+        scroll.Offset = new Avalonia.Vector(0, scroll.Extent.Height);
+        Settle();
+    }
+
+    private static TextBox SearchBox(Control root) =>
+        root.GetVisualDescendants().OfType<TextBox>().First(box => box.Name == CataloguePage.SearchName);
+
     [AvaloniaFact]
-    public void NextAndPreviousAskTheCatalogueForTheOtherPages()
+    public void TheDesktopCatalogueHasNoPagerAndTheTitleLineHasNoSearchField()
     {
         var fixture = new Fixture(Many);
         var (window, panel) = OpenCatalogue(fixture);
 
+        Assert.DoesNotContain(panel.GetVisualDescendants().OfType<Control>(), control => control.Name is CataloguePage.PagerName or CataloguePage.PreviousName or CataloguePage.NextName);
+        Assert.Equal(CataloguePage.Placeholder, SearchBox(panel).PlaceholderText);
+        Assert.False(panel.GetVisualDescendants().OfType<TextBox>().First(box => box.Name == "SearchInput").IsVisible);
+
+        window.Close();
+        fixture.Dispose();
+    }
+
+    [AvaloniaFact]
+    public void ScrollingToTheEndAddsTheNextTitlesUnderTheRowsDrawnAndKeepsTheFixedPart()
+    {
+        var fixture = new Fixture(Many);
+        var (window, panel) = OpenCatalogue(fixture);
+
+        Click(panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == CataloguePage.RowName && (button.Tag as string) == "archive.item2"));
+
+        var first = panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == CataloguePage.RowName && (button.Tag as string) == "archive.item0");
+
+        ScrollToEnd(panel);
+
+        Assert.Equal(2, fixture.Catalogue.Calls[^1].Page);
+        Assert.Equal(40, RowCount(panel));
+        Assert.Contains(Drawn(panel), text => text == "40 of 40 videos");
+        Assert.True(SearchBox(panel).IsEffectivelyVisible);
+        Assert.True(Named(panel, CataloguePage.WatchName).IsEffectivelyVisible);
+        Assert.DoesNotContain(SearchBox(panel), ListScroll(panel).GetVisualDescendants());
+        var count = panel.GetVisualDescendants().OfType<TextBlock>().First(block => string.Concat(block.Inlines?.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text) ?? []).Contains("of 40 videos", StringComparison.Ordinal));
+
+        Assert.DoesNotContain(count, ListScroll(panel).GetVisualDescendants());
+        Assert.Same(first, panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == CataloguePage.RowName));
+        Assert.Contains(D47.App.Theming.ListRow.SelectedClass, panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == CataloguePage.RowName && (button.Tag as string) == "archive.item2").Classes);
+
+        ScrollToEnd(panel);
+
+        Assert.Equal(2, fixture.Catalogue.Calls.Count);
+
+        window.Close();
+        fixture.Dispose();
+    }
+
+    [AvaloniaFact]
+    public void ALaterPageThatFailsKeepsTheRowsAndRetryAsksForThatPageAgain()
+    {
+        var failing = true;
+        var fixture = new Fixture(call => call.Page == 2 && failing ? VideoPage.Empty with { Problem = "Internet Archive could not be searched." } : Many(call));
+        var (window, panel) = OpenCatalogue(fixture);
+
+        ScrollToEnd(panel);
+
+        var notice = panel.GetVisualDescendants().OfType<Notice>().First(found => found.Name == CataloguePage.FailedName);
+
+        Assert.True(notice.IsVisible);
+        Assert.Equal(25, RowCount(panel));
+
+        ScrollToEnd(panel);
+
+        Assert.Equal(2, fixture.Catalogue.Calls.Count);
+
+        failing = false;
+        Click(Named(panel, CataloguePage.RetryName));
+
+        Assert.Equal(2, fixture.Catalogue.Calls[^1].Page);
+        Assert.False(notice.IsVisible);
+        Assert.Equal(40, RowCount(panel));
+
+        window.Close();
+        fixture.Dispose();
+    }
+
+    [AvaloniaFact]
+    public void EnterInTheSearchBoxSearchesFromTheFirstPageWithNothingSelectedAndDownFocusesTheFirstRow()
+    {
+        var fixture = new Fixture(Many);
+        var (window, panel) = OpenCatalogue(fixture);
+
+        Click(panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == CataloguePage.RowName && (button.Tag as string) == "archive.item2"));
+        ScrollToEnd(panel);
+
+        var box = SearchBox(panel);
+
+        box.Text = " rocket ";
+        box.RaiseEvent(new Avalonia.Input.KeyEventArgs { RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Enter });
+        Settle();
+
+        Assert.Equal(new Call("rocket", new VideoFilters(), 1), fixture.Catalogue.Calls[^1]);
+        Assert.Equal(25, RowCount(panel));
+        Assert.Equal(0, ListScroll(panel).Offset.Y);
+        Assert.False(Named(panel, CataloguePage.WatchName).IsEnabled);
+        Assert.Contains(Drawn(panel), text => text.Contains("match “rocket”", StringComparison.OrdinalIgnoreCase));
+
+        box.Focus();
+        box.RaiseEvent(new Avalonia.Input.KeyEventArgs { RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Down });
+        Settle();
+
+        Assert.Equal("archive.item0", (TopLevel.GetTopLevel(panel)!.FocusManager!.GetFocusedElement() as Button)?.Tag);
+
+        window.Close();
+        fixture.Dispose();
+    }
+
+    [AvaloniaFact]
+    public void ScrollingWhileANewSearchIsOnItsWayAsksForNothingMore()
+    {
+        var fixture = new Fixture(Many);
+        var (window, panel) = OpenCatalogue(fixture);
+        var hold = fixture.Catalogue.Hold = new TaskCompletionSource<bool>();
+
+        fixture.Catalogue.Holds = call => call.Query == "rocket";
+
+        var box = SearchBox(panel);
+
+        box.Text = "rocket";
+        box.RaiseEvent(new Avalonia.Input.KeyEventArgs { RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Enter });
+        Settle();
+        ScrollToEnd(panel);
+
+        Assert.All(fixture.Catalogue.Calls.Skip(1), call => Assert.Equal(new Call("rocket", new VideoFilters(), 1), call));
+
+        hold.SetResult(true);
+        Settle();
+
+        Assert.Equal(25, RowCount(panel));
+        Assert.Equal(new Call("rocket", new VideoFilters(), 1), fixture.Catalogue.Calls[^1]);
+
+        window.Close();
+        fixture.Dispose();
+    }
+
+    [AvaloniaFact]
+    public void ASearchWaitsAboveTheListWhileTheOldRowsStayDrawn()
+    {
+        var fixture = new Fixture(Many);
+        var (window, panel) = OpenCatalogue(fixture);
+        var hold = fixture.Catalogue.Hold = new TaskCompletionSource<bool>();
+
+        fixture.Catalogue.Holds = call => call.Query == "rocket";
+
+        var box = SearchBox(panel);
+
+        box.Text = "rocket";
+        box.RaiseEvent(new Avalonia.Input.KeyEventArgs { RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent, Key = Avalonia.Input.Key.Enter });
+        Settle();
+        Task.Delay(Waiting.Delay * 3).Wait();
+        Settle();
+
+        var waiting = panel.GetVisualDescendants().OfType<StatusLine>().Where(line => line.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == CataloguePage.Searching)).ToList();
+
+        Assert.Single(waiting);
+        Assert.DoesNotContain(waiting[0], ListScroll(panel).GetVisualDescendants());
+
+        hold.SetResult(true);
+        Settle();
+
+        window.Close();
+        fixture.Dispose();
+    }
+
+    [AvaloniaFact]
+    public void ASearchTypedOnTheWatchPageFillsTheCataloguesSearchBox()
+    {
+        var fixture = new Fixture(Many);
+        var (window, panel) = Open(fixture);
+
+        Assert.True(panel.GetVisualDescendants().OfType<WatchPage>().First().Submit("rocket"));
+        Settle();
+
+        Assert.Equal("rocket", SearchBox(panel).Text);
+
+        window.Close();
+        fixture.Dispose();
+    }
+
+    [AvaloniaFact]
+    public void TheHeadsetCataloguePagesByTwentyFiveWithAPagerAndNoScrollingLoad()
+    {
+        var fixture = new Fixture(Many);
+        var (window, panel) = OpenCatalogue(fixture, headset: true);
+
+        Assert.Equal(25, RowCount(panel));
+        Assert.Contains(Drawn(panel), text => text == "1–25 of 40");
+        Assert.Contains(Drawn(panel), text => text == "40 videos");
         Assert.False(Named(panel, CataloguePage.PreviousName).IsEnabled);
         Assert.True(Named(panel, CataloguePage.NextName).IsEnabled);
+        Assert.True(SearchBox(panel).IsEffectivelyVisible);
 
         Click(Named(panel, CataloguePage.NextName));
 
         Assert.Equal(2, fixture.Catalogue.Calls[^1].Page);
+        Assert.Equal(15, RowCount(panel));
         Assert.Contains(Drawn(panel), text => text == "26–40 of 40");
         Assert.False(Named(panel, CataloguePage.NextName).IsEnabled);
 

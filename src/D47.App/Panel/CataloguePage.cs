@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Input;
 using Avalonia.Threading;
 using D47.App.Controls;
 using D47.App.Theming;
@@ -13,12 +14,18 @@ using D47.Core.Viewing;
 
 namespace D47.App.Panel;
 
-/// <summary>Media › Movies › Catalogue: search the video sources, filter and page the results, add a title to Your list or watch it.</summary>
-public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFilterablePage, ISubmitSearchPage
+/// <summary>
+/// Media › Movies › Catalogue: search the video sources, filter the results, add a title to Your list or watch it. The
+/// search box, sentence and count stay on screen and only the rows scroll. The desktop draws the next page when the list
+/// is scrolled to its end; the headset pages by <see cref="VideoCatalogue.PageSize"/>.
+/// </summary>
+public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome
 {
     public const string PageSummary = "Free films and footage from the sources' own catalogues.";
 
     public const string Placeholder = "Search the catalogue";
+
+    public const string SearchName = "CatalogueSearch";
 
     public const string RowName = "CatalogueRow";
 
@@ -49,35 +56,48 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
     private readonly WatchHost _host;
     private readonly PanelNavigator _nav;
     private readonly WaitSound? _wait;
-    private readonly Action<string>? _seek;
     private readonly bool _big;
     private readonly VideoFilterBar _filters;
     private readonly StatusLine _searching = new();
+    private readonly StatusLine _retrieving = new() { Margin = new Thickness(0, 0, 14, 8) };
     private readonly Notice _failed = new(NoticeLevel.Error, inline: false) { Name = FailedName, Label = FailedLabel, IsVisible = false };
     private readonly StackPanel _list = new() { Spacing = Gaps.Tile };
+    private readonly TextBox _search = new()
+    {
+        Name = SearchName,
+        PlaceholderText = Placeholder,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        Margin = new Thickness(0, 0, 14, 12),
+    };
+    private readonly List<VideoTitle> _titles = [];
+    private readonly ScrollViewer _scroll;
+    private readonly Grid _body;
     private readonly TextBlock _range = new() { FontFamily = new Avalonia.Media.FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Small, VerticalAlignment = VerticalAlignment.Center };
     private readonly Button _previous = BooksKit.Tile(PreviousName, "◄ PREVIOUS", "Previous page");
     private readonly Button _next = BooksKit.Tile(NextName, "NEXT ►", "Next page");
     private readonly Button _add = BooksKit.Tile(AddName, "ADD TO MY LIST", "Add to my list");
     private readonly Button _watch = BooksKit.Tile(WatchName, "WATCH NOW", "Watch now");
-    private readonly DockPanel _pager = new() { Name = PagerName, Margin = new Thickness(0, 6, 0, 0) };
+    private readonly DockPanel _pager = new() { Name = PagerName, Margin = new Thickness(0, 6, 14, 0) };
 
     private readonly RowPresses _presses = new();
 
     private VideoPage _result = VideoPage.Empty;
     private string _query = string.Empty;
     private int _page = 1;
+    private int _lastAsked = 1;
+    private bool _lastAppend;
+    private bool _busy;
+    private bool _stalled;
     private int _version;
     private bool _asked;
     private CancellationTokenSource? _running;
     private string? _chosen;
 
-    public CataloguePage(WatchHost host, PanelNavigator nav, Control? settingsStrip = null, WaitSound? wait = null, Action<string>? seek = null, bool big = false)
+    public CataloguePage(WatchHost host, PanelNavigator nav, Control? settingsStrip = null, WaitSound? wait = null, bool big = false)
     {
         _host = host;
         _nav = nav;
         _wait = wait;
-        _seek = seek;
         _big = big;
         BarTool = PageChrome.ToolOf(settingsStrip);
 
@@ -85,7 +105,7 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
         _filters.Changed += (_, _) => Ask(1);
 
         var retry = new Button { Name = RetryName, Content = "Retry", MinHeight = TypeScale.MinimumTarget };
-        retry.Click += (_, _) => Ask(_page);
+        retry.Click += (_, _) => Ask(_lastAsked, _lastAppend);
         _failed.Actions.Add(retry);
 
         foreach (var tile in new[] { _previous, _next, _add, _watch })
@@ -95,6 +115,8 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
 
         _previous.Click += (_, _) => Ask(_page - 1);
         _next.Click += (_, _) => Ask(_page + 1);
+
+        _search.KeyDown += OnSearchKey;
         _add.Click += (_, _) => AddChosen();
         _watch.Click += (_, _) => WatchChosen();
 
@@ -117,12 +139,43 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
         };
         DockPanel.SetDock(footer, Dock.Bottom);
 
-        var body = new StackPanel
+        _filters.OpenChanged += (_, _) => FitPanel();
+        _filters.Margin = new Thickness(0, 0, 14, 0);
+
+        var panel = _filters.TakePanel();
+        panel.Margin = new Thickness(0, 6, 14, 0);
+        Grid.SetRow(panel, 2);
+
+        var results = _filters.TakeResults();
+        results.Margin = new Thickness(0, big ? 4 : 6, 14, big ? 4 : 6);
+        Grid.SetRow(results, 3);
+
+        _failed.Margin = new Thickness(0, 0, 14, 8);
+
+        var above = new StackPanel { Children = { _retrieving, _failed } };
+        Grid.SetRow(above, 4);
+        Grid.SetRow(_filters, 1);
+
+        var content = new StackPanel { Spacing = big ? 8 : 12, Children = { _list, _searching } };
+
+        if (big)
         {
-            Spacing = big ? 8 : 12,
-            MaxWidth = 1100,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Children = { _filters, _searching, _failed, _list, _pager },
+            content.Children.Add(_pager);
+        }
+
+        _scroll = LoadoutPages.Scrolling(content);
+        Grid.SetRow(_scroll, 5);
+
+        if (!big)
+        {
+            _scroll.ScrollChanged += (_, _) => CheckSoon();
+        }
+
+        _body = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto,Auto,Auto,*"),
+            ColumnDefinitions = { new ColumnDefinition(1, GridUnitType.Star) { MaxWidth = 1100 } },
+            Children = { _search, _filters, panel, results, above, _scroll },
         };
 
         var root = new DockPanel { Margin = new Thickness(14) };
@@ -133,12 +186,7 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
         }
 
         root.Children.Add(footer);
-        root.Children.Add(new ScrollViewer
-        {
-            Content = new Border { Padding = new Thickness(0, 0, 14, 0), Child = body },
-            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
-        });
+        root.Children.Add(_body);
 
         Content = root;
         Draw();
@@ -154,23 +202,6 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
     {
         add { }
         remove { }
-    }
-
-    public bool Filters => !_big;
-
-    public string FilterPlaceholder => Placeholder;
-
-    public void Filter(string? query)
-    {
-    }
-
-    /// <summary>Searches for <paramref name="query"/>, from the first page.</summary>
-    public bool Submit(string query)
-    {
-        _query = (query ?? string.Empty).Trim();
-        Ask(1);
-
-        return true;
     }
 
     /// <summary>The "1–25 of N" the pager reads.</summary>
@@ -204,12 +235,8 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
         if (!_asked || wanted != _query)
         {
             _query = wanted;
+            _search.Text = wanted;
             Ask(1);
-        }
-
-        if (_seek is { } seek && _query.Length > 0)
-        {
-            Dispatcher.UIThread.Post(() => seek(_query));
         }
     }
 
@@ -221,36 +248,73 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
 
     private void OnStoreChanged() => Dispatcher.UIThread.Post(DrawActions);
 
-    private VideoTitle? Chosen => _result.Titles.FirstOrDefault(title => Key(title) == _chosen);
+    private VideoTitle? Chosen => _titles.FirstOrDefault(title => Key(title) == _chosen);
 
     private static string Key(VideoTitle title) => $"{title.Source}.{title.Id}";
 
-    /// <summary>Searches for page <paramref name="page"/> off the calling thread and draws it. A search overtaken by a newer one is dropped.</summary>
-    internal void Ask(int page)
+    private void OnSearchKey(object? sender, KeyEventArgs e)
     {
-        _ = AskAsync(page);
+        if (e.KeyModifiers != KeyModifiers.None)
+        {
+            return;
+        }
+
+        if (e.Key == Avalonia.Input.Key.Enter)
+        {
+            e.Handled = true;
+            Search();
+        }
+        else if (e.Key == Avalonia.Input.Key.Down && _list.Children.OfType<Button>().FirstOrDefault(row => row.IsEffectivelyEnabled && row.Focusable) is { } first)
+        {
+            e.Handled = true;
+            first.Focus();
+        }
     }
 
-    internal async Task AskAsync(int page)
+    /// <summary>Searches for what the box says, from the first page.</summary>
+    internal void Search()
+    {
+        _query = (_search.Text ?? string.Empty).Trim();
+        _host.CatalogueQuery = _query;
+        Ask(1);
+    }
+
+    /// <summary>Searches for page <paramref name="page"/> off the calling thread. A search overtaken by a newer one is dropped.</summary>
+    internal void Ask(int page, bool append = false)
+    {
+        _ = AskAsync(page, append);
+    }
+
+    /// <summary>
+    /// Draws page <paramref name="page"/>, or on the desktop under <paramref name="append"/> adds it under the rows
+    /// drawn, leaving them as they are when it fails.
+    /// </summary>
+    internal async Task AskAsync(int page, bool append = false)
     {
         _asked = true;
-        _page = Math.Max(1, page);
+        _lastAsked = Math.Max(1, page);
+        _lastAppend = append;
+        _busy = true;
         _running?.Cancel();
 
         var running = _running = new CancellationTokenSource();
         var version = ++_version;
         var query = _query;
         var filters = _filters.Filters;
-        var asked = _page;
+        var asked = _lastAsked;
         VideoPage? result = null;
 
         _failed.IsVisible = false;
-        _chosen = null;
+
+        if (!append)
+        {
+            _chosen = null;
+        }
 
         try
         {
             await Waiting.While(
-                _searching,
+                append ? _searching : _retrieving,
                 Searching,
                 _wait,
                 async () => result = await _host.SearchAsync(query, filters, asked, running.Token).ConfigureAwait(true));
@@ -266,8 +330,97 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
         }
 
         _searching.Clear();
+        _retrieving.Clear();
+        _busy = false;
+
+        if (append)
+        {
+            Append(result, asked);
+            return;
+        }
+
+        _stalled = false;
+        _page = asked;
         _result = result;
+        _titles.Clear();
+        _titles.AddRange(result.Titles);
         Draw();
+        _scroll.Offset = default;
+    }
+
+    private void Append(VideoPage result, int asked)
+    {
+        var problem = result.Problem is { Length: > 0 };
+
+        _stalled = problem && result.Titles.Count == 0;
+
+        if (problem)
+        {
+            _failed.Text = result.Problem;
+            _failed.Level = NoticeLevel.Warning;
+            _failed.IsVisible = true;
+        }
+
+        if (_stalled)
+        {
+            return;
+        }
+
+        _page = asked;
+        _result = result;
+
+        var drawn = _titles.Select(Key).ToHashSet(StringComparer.Ordinal);
+        var added = result.Titles.Where(title => !drawn.Contains(Key(title))).ToList();
+
+        _titles.AddRange(added);
+
+        foreach (var title in added)
+        {
+            _list.Children.Add(Row(title));
+        }
+
+        _filters.ShowDrawn(_titles.Count, _result.Total, _query);
+        DrawActions();
+        CheckSoon();
+    }
+
+    private void CheckSoon()
+    {
+        if (!_big)
+        {
+            Dispatcher.UIThread.Post(MoreIfAtEnd, DispatcherPriority.Background);
+        }
+    }
+
+    /// <summary>Asks for the next page when the desktop list is within one row of its end and more titles match.</summary>
+    private void MoreIfAtEnd()
+    {
+        if (_big || !_asked || _busy || _stalled || !_result.More || _titles.Count == 0 || _scroll.Viewport.Height <= 0)
+        {
+            return;
+        }
+
+        var row = _scroll.Extent.Height / Math.Max(1, _list.Children.Count);
+
+        if (_scroll.Offset.Y + _scroll.Viewport.Height >= _scroll.Extent.Height - row)
+        {
+            Ask(_page + 1, append: true);
+        }
+    }
+
+    /// <summary>In the headset, an open token panel takes the list's height and the list and its pager are hidden.</summary>
+    private void FitPanel()
+    {
+        if (!_big)
+        {
+            return;
+        }
+
+        var open = _filters.PanelOpen;
+
+        _body.RowDefinitions[2].Height = open ? GridLength.Star : GridLength.Auto;
+        _body.RowDefinitions[5].Height = open ? GridLength.Auto : GridLength.Star;
+        _scroll.IsVisible = !open;
     }
 
     private void Draw()
@@ -286,7 +439,14 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
 
         if (_asked && !failed)
         {
-            _filters.Show(_result.Total, _query);
+            if (_big)
+            {
+                _filters.Show(_result.Total, _query);
+            }
+            else
+            {
+                _filters.Show(_titles.Count, _result.Total, _query);
+            }
         }
         else
         {
@@ -304,6 +464,18 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
         }
 
         DrawActions();
+        CheckSoon();
+    }
+
+    /// <summary>Marks the chosen row, leaving the rows drawn and the scroll as they are.</summary>
+    private void Redress()
+    {
+        foreach (var row in _list.Children.OfType<Button>())
+        {
+            ListRow.Dress(row, (row.Tag as string) == _chosen);
+        }
+
+        DrawActions();
     }
 
     private void DrawActions()
@@ -311,7 +483,7 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
         var chosen = Chosen;
         var kept = chosen is not null && _host.Store.Find(chosen.Source, chosen.Id) is { InList: true };
 
-        _pager.IsVisible = _asked && (_result.Titles.Count > 0 || _page > 1);
+        _pager.IsVisible = _big && _asked && (_result.Titles.Count > 0 || _page > 1);
         _range.Text = Range(_page, _result.Titles.Count, _result.Total);
         _previous.IsEnabled = _page > 1;
         _next.IsEnabled = _result.More;
@@ -355,7 +527,7 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
         row.Click += (_, _) =>
         {
             _chosen = Key(title);
-            Draw();
+            Redress();
         };
 
         if (!_big && title.Playable)
@@ -363,7 +535,7 @@ public sealed class CataloguePage : UserControl, IPageSummary, IPageChrome, IFil
             ListRow.OnDoubleClick(row, _presses, Key(title), () =>
             {
                 _chosen = Key(title);
-                Draw();
+                Redress();
                 WatchChosen();
             });
         }

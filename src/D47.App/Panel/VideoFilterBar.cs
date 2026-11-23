@@ -75,6 +75,22 @@ internal sealed class VideoFilterBar : TokenFilterBar<VideoFilterBar.Part>
         Refresh();
     }
 
+    /// <summary>Draws "N of M videos match “query”" and the token values.</summary>
+    public void Show(int drawn, int total, string query)
+    {
+        ShowDrawn(drawn, total, query);
+        Refresh();
+    }
+
+    /// <summary>Draws "N of M videos match “query”" alone, leaving an open panel as it is.</summary>
+    public void ShowDrawn(int drawn, int total, string query) =>
+        ShowLine(
+            Fonts.Mono(drawn.ToString("N0", CultureInfo.InvariantCulture)),
+            new Run(" of "),
+            Fonts.Mono(total.ToString("N0", CultureInfo.InvariantCulture)),
+            new Run(total == 1 ? " video" : " videos"),
+            new Run(query.Length == 0 ? string.Empty : $" match “{query}”"));
+
     /// <summary>Empties the results line, for a search that has not answered.</summary>
     public void ShowNone()
     {

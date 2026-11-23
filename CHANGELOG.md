@@ -10,6 +10,8 @@
 
 Fixed: In the window, a movie's picture and its slabs span the page: the slabs keep their width at the right and the picture takes the rest, whatever the buttons under it say. The picture's frame is 16:9, or shorter where the timeline and the buttons would fall below the visible page, and the picture is then centred in the frame with black at its sides. Plays on, Captions and Sound stay at most 900 pixels wide. The big panel's player is unchanged.
 
+Changed: Media › Movies › Catalogue has its search box in the page, as Add a book has. The box, the filter sentence and the count stay on screen and only the titles scroll. On the window, scrolling to the end of the list adds the next 25 titles under the ones drawn, the count reads "25 of 412 videos", and the pager is gone; a later page that fails keeps the titles and shows a notice with RETRY. In the headset the list still pages by 25 with PREVIOUS and NEXT, and the title line no longer has a search field on this page.
+
 Changed: Carry on watching on Media › Movies is named Continue watching, on the page, in spoken replies, in Privacy and egress and in the help. Say "continue watching" to play the newest title in it or to try a stopped video again; "carry on watching" still works.
 
 Fixed: In the window, the copy glyph's hover label reads COPIED after a press, or COPY FAILED when the copy failed, for the two seconds the button says so, and then goes back to COPY SYSTEM NAME (COPY STATION NAME on the Faction page). The big panel still shows no label.
