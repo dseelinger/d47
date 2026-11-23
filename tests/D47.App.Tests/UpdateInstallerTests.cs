@@ -146,6 +146,58 @@ public class UpdateInstallerTests
         Assert.Equal("the first build", File.ReadAllText(install.Whisper + UpdateInstaller.RetiredSuffix));
     }
 
+    /// <summary>A retired file Elite still has loaded cannot be deleted; the next one goes to a numbered name.</summary>
+    [Trait("Category", "Integration")]
+    [Fact]
+    public void AnUndeletableRetiredFileDoesNotStopTheUpdate()
+    {
+        var (installer, folder) = Installer();
+
+        var install = InstalledBuild(folder, "the second build");
+        var firstRetired = install.Whisper + UpdateInstaller.RetiredSuffix;
+        File.WriteAllText(firstRetired, "the first build");
+
+        using (File.Open(firstRetired, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            Assert.True(installer.TrySwap(install.Exe, Payload(folder, "the third build")));
+
+            Assert.Equal("the third build", File.ReadAllText(install.Whisper));
+            Assert.Equal("the first build", File.ReadAllText(firstRetired));
+            Assert.Equal("the second build", File.ReadAllText(install.Whisper + ".1" + UpdateInstaller.RetiredSuffix));
+
+            installer.CleanUpRetired(install.Exe);
+
+            Assert.True(File.Exists(firstRetired));
+            Assert.False(File.Exists(install.Whisper + ".1" + UpdateInstaller.RetiredSuffix));
+        }
+
+        installer.CleanUpRetired(install.Exe);
+
+        Assert.False(File.Exists(firstRetired));
+    }
+
+    /// <summary>A failed update restores a file from the numbered name it was retired to.</summary>
+    [Trait("Category", "Integration")]
+    [Fact]
+    public void AFailedUpdateRestoresFromTheNumberedName()
+    {
+        var (installer, folder) = Installer();
+
+        var install = InstalledBuild(folder, "the second build");
+        var firstRetired = install.Whisper + UpdateInstaller.RetiredSuffix;
+        File.WriteAllText(firstRetired, "the first build");
+
+        using (File.Open(firstRetired, FileMode.Open, FileAccess.Read, FileShare.Read))
+        using (File.Open(install.Exe, FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            Assert.False(installer.TrySwap(install.Exe, Payload(folder, "the third build")));
+        }
+
+        Assert.Equal("the second build", File.ReadAllText(install.Whisper));
+        Assert.Equal("the second build", File.ReadAllText(install.Exe));
+        Assert.False(File.Exists(install.Whisper + ".1" + UpdateInstaller.RetiredSuffix));
+    }
+
     /// <summary>
     /// A native library the new build no longer ships is retired, not left in place: Whisper's loader
     /// picks up whatever sits under runtimes\, and a stale library beside new ones is a load failure

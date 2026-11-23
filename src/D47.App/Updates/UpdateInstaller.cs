@@ -197,18 +197,31 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
         }
     }
 
-    /// <summary>Renames a file aside, replacing whatever an earlier update left there.</summary>
+    /// <summary>Renames a file aside to a name ending in <c>.old</c>, numbering it when an earlier one cannot be deleted.</summary>
     private static string Retire(string file)
     {
         var retired = file + RetiredSuffix;
 
-        if (File.Exists(retired))
+        for (var n = 1; !TryClear(retired); n++)
         {
-            File.Delete(retired);
+            retired = $"{file}.{n}{RetiredSuffix}";
         }
 
         File.Move(file, retired);
         return retired;
+    }
+
+    private static bool TryClear(string retired)
+    {
+        try
+        {
+            File.Delete(retired);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     /// <summary>Files under <c>runtimes\</c>, <c>ships\</c>, <c>portraits\</c>, <c>engineers\</c> or <c>voices\</c> that the new build does not ship.</summary>
@@ -324,9 +337,12 @@ public sealed class UpdateInstaller(AppPaths paths, ILogger<UpdateInstaller> log
 
     private static IEnumerable<string> RetiredFiles(string runningExecutable, string installRoot)
     {
-        if (File.Exists(runningExecutable + RetiredSuffix))
+        var exeFolder = Path.GetDirectoryName(Path.GetFullPath(runningExecutable))!;
+        var exeName = Path.GetFileName(runningExecutable);
+
+        foreach (var retired in Directory.EnumerateFiles(exeFolder, exeName + "*" + RetiredSuffix))
         {
-            yield return runningExecutable + RetiredSuffix;
+            yield return retired;
         }
 
         var runtimes = Path.Combine(installRoot, "runtimes");

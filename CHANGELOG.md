@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A second update during one Elite session no longer fails. When Elite still has the headset panel layer from an earlier update loaded, the update retires the layer under a numbered `.old` name instead of rolling back, and the next start removes it once Elite has closed.
+
 Changed: A story's days keep counting while it is shelved, switched off with Story on, or paused by an abandoned chapter. Once you resume it and finish the chapter, the next clue and the finale come on the same calendar day as for a story that ran all along; a long stop is caught up one clue per chapter. Days without Odyssey still do not count, and a Story bench rewind still holds the clock until Resume. A story saved before this change gets its shelved, off and paused days back.
 
 Added: Podcasts. Media › Podcasts › Add a show has a third section, Suggested shows: 27 shows in three groups, Elite Dangerous, Science fiction and Science fact, switched by a row of three tiles. ADD follows a show with one press, as it does for a search result, and a show you already follow reads FOLLOWING. On the headset panel the group shows four at a time with PREVIOUS and NEXT. The list is built into D47 and showing it contacts nothing.
