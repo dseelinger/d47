@@ -92,6 +92,7 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
     private readonly Notice _failed = new(NoticeLevel.Error, inline: true) { IsVisible = false, Margin = new Thickness(0, 0, 0, 10) };
     private readonly DispatcherTimer _poll = new() { Interval = PollEvery };
 
+    private string? _ticked;
     private readonly TextBlock _title = Typeset.Prose(string.Empty, 15, ThemeManager.WhiteKey, trimming: Avalonia.Media.TextTrimming.CharacterEllipsis, vertical: VerticalAlignment.Center);
     private readonly TextBlock _from = Typeset.Chrome(string.Empty, 12, ThemeManager.AKey, vertical: VerticalAlignment.Center);
     private readonly TextBlock _elapsed = Typeset.Mono("0:00", 12, ThemeManager.WhiteKey, vertical: VerticalAlignment.Center);
@@ -802,6 +803,22 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         {
             _nowAside.Text = Reading(state.Position, state.Length);
         }
+    }
+
+    /// <summary>Reads the episode from the headset's tick; true when the bar or the times drawn changed since the last tick.</summary>
+    internal bool Tick()
+    {
+        Poll();
+
+        var drawn = string.Join('|', _elapsed.Text, _length.Text, _bar.Position, _bar.Active, _title.Text, _play.Content);
+
+        if (drawn == _ticked)
+        {
+            return false;
+        }
+
+        _ticked = drawn;
+        return true;
     }
 
     /// <summary>Shows the sentence a show's play answered when it started nothing.</summary>

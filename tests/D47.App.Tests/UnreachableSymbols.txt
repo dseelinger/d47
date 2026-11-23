@@ -13,8 +13,6 @@ D47.App.Controls.Notice.Detail
 D47.App.Controls.Notice.Label
 D47.App.Controls.Notice.Level
 D47.App.Controls.PickerChoice.Clip
-D47.App.Controls.SeekBar.Active
-D47.App.Controls.SeekBar.Position
 D47.App.Controls.RowColumn.Selected
 D47.App.Controls.StatusLine.Text
 D47.App.Controls.SystemNameSuggestions<T>.Shown

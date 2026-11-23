@@ -63,6 +63,7 @@ public sealed class MusicPage : UserControl, IPageSummary, IPageChrome
     private readonly PanelNavigator _nav;
     private readonly bool _big;
     private readonly DispatcherTimer _poll = new();
+    private string? _ticked;
     private readonly SeekBar _bar = new() { Name = SeekName };
     private readonly TextBlock _elapsed = Typeset.Mono("0:00", 12, ThemeManager.WhiteKey, vertical: VerticalAlignment.Center);
     private readonly TextBlock _length = Typeset.Mono("0:00", 12, ThemeManager.WhiteKey, vertical: VerticalAlignment.Center, align: TextAlignment.Right);
@@ -369,6 +370,27 @@ public sealed class MusicPage : UserControl, IPageSummary, IPageChrome
 
         _elapsed.Text = AudioPlayerReadout.Clock(now?.Elapsed);
         _bar.Position = now is { Length: { } length } && length > TimeSpan.Zero ? now.Value.Elapsed / length : 0;
+    }
+
+    /// <summary>Reads the position from the headset's tick; true when the bar or the times drawn changed since the last tick.</summary>
+    internal bool Tick()
+    {
+        if (_mini)
+        {
+            return false;
+        }
+
+        Poll();
+
+        var drawn = string.Join('|', _elapsed.Text, _length.Text, _bar.Position, _bar.Active);
+
+        if (drawn == _ticked)
+        {
+            return false;
+        }
+
+        _ticked = drawn;
+        return true;
     }
 
     private TimeSpan? Target(double fraction) => _known is { } length ? length * fraction : null;

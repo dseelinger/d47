@@ -1140,15 +1140,27 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         }
     }
 
-    /// <summary>Refreshes the Movies player or the mini panel's video, from the host's tick; true when either drew something new.</summary>
+    /// <summary>Refreshes the Media readouts that move on their own (Movies, Music, Podcasts, the mini music read-out), from the host's tick; true when any drew something new.</summary>
     public bool TickMedia()
     {
-        if (Tab != PanelTab.Media || Nav.RootKeyOf(Tab) != MediaFurnishing.MoviesRoot)
+        if (Tab != PanelTab.Media)
+        {
+            return false;
+        }
+
+        var root = Nav.RootKeyOf(Tab);
+
+        if (root is not (MediaFurnishing.MoviesRoot or MediaFurnishing.MusicRoot or MediaFurnishing.PodcastsRoot))
         {
             return false;
         }
 
         var moved = false;
+
+        if (AudioReadoutBar.IsVisible && Shows(AudioReadoutBar))
+        {
+            moved |= AudioReadoutBar.Tick();
+        }
 
         foreach (var visual in this.GetVisualDescendants())
         {
@@ -1156,6 +1168,8 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             {
                 VideoPlayerPage page when Shows(page) => page.Tick(),
                 VideoMini mini when Shows(mini) => mini.Tick(),
+                MusicPage music when Shows(music) => music.Tick(),
+                PodcastsPage podcasts when Shows(podcasts) => podcasts.Tick(),
                 _ => false,
             };
         }

@@ -566,7 +566,7 @@ public sealed class VrHost : IDisposable
             // And a possible first's read-out on the mini panel, whose line shortens once a second (#2598).
             _panel.TickRegionFirst();
 
-            // And the Movies player or the mini panel's video, whose place moves while it plays.
+            // And the Media readouts that move while playing: the Movies player, the mini panel video, the Music and Podcasts seek bars and the mini music read-out (#2729).
             _panel.TickMedia();
 
             Serve(context.Now);

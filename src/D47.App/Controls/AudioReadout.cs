@@ -37,6 +37,7 @@ public sealed class AudioReadout : Border
     private Func<TrackProgress?>? _progress;
     private bool _enabled;
     private double _position;
+    private string? _ticked;
 
     public AudioReadout()
     {
@@ -128,6 +129,27 @@ public sealed class AudioReadout : Border
         _position = now is { Length: { } length } && length > TimeSpan.Zero ? Math.Clamp(now.Value.Elapsed / length, 0, 1) : 0;
         ThemeInk.Bind(_fill, BackgroundProperty, _enabled ? ThemeManager.AKey : ThemeManager.Grey2Key);
         Place();
+    }
+
+    /// <summary>Reads the position from the headset's tick; true when the times or the bar drawn changed since the last tick.</summary>
+    internal bool Tick()
+    {
+        if (_progress is null)
+        {
+            return false;
+        }
+
+        Poll();
+
+        var drawn = string.Join('|', _elapsed.Text, _length.Text, _position, _enabled, _state.Text, _track.Text);
+
+        if (drawn == _ticked)
+        {
+            return false;
+        }
+
+        _ticked = drawn;
+        return true;
     }
 
     private void Place() => _fill.Width = _position * _rail.Bounds.Width;
