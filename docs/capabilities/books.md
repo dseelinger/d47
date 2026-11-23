@@ -115,6 +115,9 @@ While a book is playing or paused, a bare "pause" or "play" acts on it. A story 
 them first. A podcast that is playing takes them over a paused book; otherwise the book takes them. With
 neither, they go to the music.
 
+The media keys and the volume flyout's buttons follow the same order. On a book, Next is the next chapter and
+Previous is back a paragraph; the flyout shows the book's title and the chapter title.
+
 Only one of a book and a podcast plays at a time. Starting a book pauses the episode, and playing or resuming an
 episode pauses the book, as if you had paused it; neither resumes by itself. A book does not start or resume
 while a story plays: D47 says "A story is playing." A story starting pauses the book.

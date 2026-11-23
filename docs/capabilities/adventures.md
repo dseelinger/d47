@@ -1413,6 +1413,9 @@ Play, pause or skip to the next line of the story playback that is open, as the 
 {"type":"object","properties":{"action":{"type":"string","description":"What to do to the playback.","enum":["play","pause","next"]}},"required":["action"],"additionalProperties":false}
 ```
 
+While a story playback is open, the media keys drive it as the words do: play/pause pauses or resumes it, Next moves to
+the next line, and Previous does nothing, because a playback has no rewind. The flyout shows the story's title.
+
 While a story playback is open, playing or paused, four words drive it: "play" or "resume" carries on, "pause" holds it, and
 "next", "next line" or "skip" moves to the next line. The words are live only while the playback is open; outside it, "pause"
 and "play" act on the podcast if one is playing, otherwise the music, and "next" matches nothing. "Pause" is the Commander's own pause even when the playback is

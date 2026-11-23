@@ -424,10 +424,11 @@ Off, nothing more is fetched, the music restarts without the library, and the fi
 
 ### Pause, resume, next and previous track
 
-The keyboard's play/pause, next-track and previous-track keys control the ambient music. D47 registers as a Windows
-media session, so it also appears in the volume flyout with the current track's file name, minus its
-extension, and working buttons. Nothing else D47 plays — speech, cues, alerts or the thinking bed — answers to
-these keys.
+The keyboard's play/pause, next-track and previous-track keys act on an open story playback first, then on the
+book, podcast or video that is playing, else the one that is paused, in the same order as a bare "pause"; otherwise
+they control the ambient music. D47 registers as a Windows media session, so it also appears in the volume flyout
+with the current track's file name, minus its extension, and working buttons. Speech, cues, alerts and the thinking
+bed do not answer to these keys.
 
 - **Pause** holds the track where it is. **Resume** continues it from that point.
 - **Next** ends the track and starts the next one in the shuffle. It also ends a pause.
@@ -461,8 +462,8 @@ by you before they act on the music ([Podcasts](podcasts.html)); "pause the musi
 
 The audio player is the Music page of the Media tab. Under **Ambient music** and the music's state (Playing,
 Paused, Muted or Nothing playing) it shows the track that is playing, the situation folder it plays from, and the
-**Music level**. Its buttons are Previous, Pause (Play while paused or idle), Next and Thumbs down; they do what the
-media keys and `manage_music` do, and Thumbs down does what `thumbs_down_music` does. All four are greyed out when nothing plays or
+**Music level**. Its buttons are Previous, Pause (Play while paused or idle), Next and Thumbs down; they do what
+`manage_music` does, and what the media keys do while nothing else takes them, and Thumbs down does what `thumbs_down_music` does. All four are greyed out when nothing plays or
 the music is muted, except that with Elite closed and nothing playing, Play and Next stay usable and Folder
 shows the folder they will start. The level stays usable while muted and is drawn in its muted style.
 

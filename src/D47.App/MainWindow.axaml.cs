@@ -760,6 +760,7 @@ public partial class MainWindow : Window
                 window,
                 _host.Music,
                 _host.PodcastDesk,
+                _host,
                 _host.Loggers.CreateLogger<Media.MediaSession>());
             Closed += (_, _) => _mediaSession?.Dispose();
         }

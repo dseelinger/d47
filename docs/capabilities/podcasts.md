@@ -182,7 +182,8 @@ The page edits the same list.
 
 While an episode is playing or paused by you, the keyboard's play/pause key and the volume flyout's buttons act
 on it: next is the next episode, in the same order as "next episode", and previous is skip back 30 seconds. The flyout shows the episode and its show.
-Otherwise they act on the ambient music.
+A story playback that is open takes the keys first, and a playing book or video takes them over a paused episode,
+in the same order as the bare words. Otherwise they act on the ambient music.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>

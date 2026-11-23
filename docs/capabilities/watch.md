@@ -116,6 +116,9 @@ model. Any other title is reached by asking the model, which calls `watch_video`
 the same for a video that is playing, paused or stopped, and otherwise plays the newest title in Carry on
 watching from where it was left. The mini panel's notice for a stopped video tells you to say it.
 
+The media keys and the volume flyout's buttons follow the same order as the bare words; on a video, Next and
+Previous skip 30 seconds forward and back, and the flyout shows its title.
+
 While a video is playing or paused, a bare "pause" or "play" acts on it. A story playback that is open takes
 them first. Of a book, a podcast and a video, the one that is playing takes them, and the skip phrases; when
 none plays, the paused one does, a book before a podcast before a video. With none of them, they go to the music.

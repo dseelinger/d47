@@ -493,7 +493,7 @@ public static class BuiltinCapabilities
             pictureNote),
         PersonaCapability.Create(personas, settings, shipCores),
         SpeechCapability.Create(speech),
-        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) != BareOwner.None),
+        AudioCapability.Create(audioDrops, openAudioFolder, controlMusic, musicLibrary, watchMusicLibrary, thumbsDownMusic, musicMaintainer, deleteMusicRejects, ownAudio, musicRejectCount, musicRejectsRunning, deleteMusicRejectsNow, watchMusicRejects, audioPlayer, () => adventureDesk?.PlaybackOpen() == true, () => MediaOwners.Of(null, bookDesk, podcastDesk, watchDesk) != MediaOwner.Music),
         ListeningCapability.Create(settings, listening),
         LearnedPhrasesCapability.Create(
             learnedPhrases,
@@ -626,16 +626,16 @@ public static class BuiltinCapabilities
         PodcastCapability.Create(
             podcastDesk ?? (() => null),
             () => adventureDesk?.PlaybackOpen() == true,
-            () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Podcast,
-            () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Video),
+            () => MediaOwners.Of(null, bookDesk, podcastDesk, watchDesk) == MediaOwner.Podcast,
+            () => MediaOwners.Of(null, bookDesk, podcastDesk, watchDesk) == MediaOwner.Video),
 
-        BookCapability.Create(bookDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true, () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Book),
+        BookCapability.Create(bookDesk ?? (() => null), () => adventureDesk?.PlaybackOpen() == true, () => MediaOwners.Of(null, bookDesk, podcastDesk, watchDesk) == MediaOwner.Book),
 
         WatchCapability.Create(
             watchDesk ?? (() => null),
             () => adventureDesk?.PlaybackOpen() == true,
-            () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Video,
-            () => BareOwnerOf(bookDesk, podcastDesk, watchDesk) == BareOwner.Video),
+            () => MediaOwners.Of(null, bookDesk, podcastDesk, watchDesk) == MediaOwner.Video,
+            () => MediaOwners.Of(null, bookDesk, podcastDesk, watchDesk) == MediaOwner.Video),
 
         // LAST, and it has to be last twice over (#50) - for two different reasons, which is what makes this
         // easy to get wrong twice (#83).
@@ -657,42 +657,6 @@ public static class BuiltinCapabilities
             about?.PendingUpdateVersion,
             about?.OpenDataFolder),
     ];
-
-    private enum BareOwner
-    {
-        None,
-        Book,
-        Podcast,
-        Video,
-    }
-
-    /// <summary>
-    /// Which one of a book, a podcast and a video takes bare "play" and "pause" and the skip phrases: the one playing,
-    /// else the one paused, a book before a podcast before a video. With none, the music takes the bare words.
-    /// </summary>
-    private static BareOwner BareOwnerOf(Func<Books.BookDesk?>? books, Func<Podcasts.PodcastDesk?>? podcasts, Func<Viewing.WatchDesk?>? videos)
-    {
-        var book = books?.Invoke();
-        var podcast = podcasts?.Invoke();
-        var video = videos?.Invoke();
-
-        if (podcast?.Player.State is { Playing: true })
-        {
-            return BareOwner.Podcast;
-        }
-
-        if (video?.Playing == true)
-        {
-            return BareOwner.Video;
-        }
-
-        if (book?.Active == true)
-        {
-            return BareOwner.Book;
-        }
-
-        return podcast?.Active == true ? BareOwner.Podcast : video?.Active == true ? BareOwner.Video : BareOwner.None;
-    }
 
     private static IEnumerable<CapabilityDescriptor> Optional(bool registered, Func<CapabilityDescriptor> create) =>
         registered ? [create()] : [];
