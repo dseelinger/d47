@@ -111,6 +111,13 @@ public sealed class WindowPlacementMemory
         // once with a window that can never be un-maximised back to a size they chose.
         window.Resized += (_, _) => memory.SampleWhenSettled();
         window.PositionChanged += (_, _) => memory.SampleWhenSettled();
+        window.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == Window.WindowStateProperty)
+            {
+                memory.SampleWhenSettled();
+            }
+        };
 
         window.Closing += (_, _) =>
         {
@@ -165,6 +172,12 @@ public sealed class WindowPlacementMemory
 
     private void Sample()
     {
+        // Full screen keeps the placement it was entered from.
+        if (_window.WindowState == WindowState.FullScreen)
+        {
+            return;
+        }
+
         if (_window.WindowState != WindowState.Normal)
         {
             var maximised = _window.WindowState == WindowState.Maximized;

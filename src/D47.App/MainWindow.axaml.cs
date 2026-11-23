@@ -288,6 +288,7 @@ public partial class MainWindow : Window
             Panel.EnableCommanders(host.Commanders);
 
             Panel.EnableMedia(host.PodcastsHost, BuildSettingsStrip, host.MusicHost, host.BooksHost, host.WatchHost);
+            WindowFullScreen.Follow(this, Panel);
 
             if (ModulesSource is { } modulesSource)
             {

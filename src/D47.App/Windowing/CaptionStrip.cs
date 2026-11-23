@@ -213,6 +213,7 @@ public static class CaptionStrip
             else if (e.Property == Window.WindowStateProperty)
             {
                 wrapper.Margin = window.WindowState == WindowState.Maximized ? window.OffScreenMargin : default;
+                strip.IsVisible = window.WindowState != WindowState.FullScreen;
             }
         };
     }

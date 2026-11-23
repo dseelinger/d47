@@ -12,10 +12,21 @@ public enum VideoStanding
 /// <summary>The title the player is on and what it is doing.</summary>
 public sealed record VideoNow(VideoTitle Title, VideoStanding Standing);
 
+/// <summary>What a request to enter or leave full screen did.</summary>
+public enum FullScreenAnswer
+{
+    Done,
+    Already,
+
+    /// <summary>The picture is on the mini panel, which has no full screen.</summary>
+    MiniPanel,
+}
+
 /// <summary>
 /// What the video voice commands act on: Your list, Continue watching, the catalogue and the player. A video does not
 /// start or resume while <paramref name="storyPlaying"/> says a story plays.
 /// </summary>
+/// <param name="fullScreen">Puts the picture in full screen when given true and back to normal size when given false.</param>
 public sealed class WatchDesk(
     Func<IReadOnlyList<VideoTitle>> yourList,
     Func<IReadOnlyList<VideoTitle>> carryOn,
@@ -26,13 +37,32 @@ public sealed class WatchDesk(
     Func<bool> resume,
     Func<TimeSpan, bool> skip,
     Action<VideoTitle> addToList,
-    Func<bool>? storyPlaying = null)
+    Func<bool>? storyPlaying = null,
+    Func<bool, FullScreenAnswer>? fullScreen = null)
 {
     public const string NoVideo = "No video is playing.";
 
     public const string StoryPlaying = "A story is playing.";
 
     public const string SayTitle = "Say watch, then the title of a video.";
+
+    public const string NoFullScreen = "The mini panel has no full screen.";
+
+    /// <summary>Puts the playing or paused video in full screen, or with <paramref name="on"/> false back to normal size.</summary>
+    public string FullScreen(bool on)
+    {
+        if (!Active || fullScreen is null)
+        {
+            return NoVideo;
+        }
+
+        return fullScreen(on) switch
+        {
+            FullScreenAnswer.Done => on ? "Full screen." : "Normal size.",
+            FullScreenAnswer.Already => on ? "The video is already full screen." : "The video is not full screen.",
+            _ => NoFullScreen,
+        };
+    }
 
     /// <summary>A video is playing, or the Commander has paused it.</summary>
     public bool Active => now() is { Standing: VideoStanding.Playing or VideoStanding.Paused };

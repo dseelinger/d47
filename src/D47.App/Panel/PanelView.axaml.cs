@@ -20,7 +20,7 @@ using System.Globalization;
 namespace D47.App.Panel;
 
 /// <summary>The panel, as a view.</summary>
-public partial class PanelView : UserControl, IPanelTabHost
+public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
 {
     /// <summary>How much of the panel this instantiation shows.</summary>
     public static readonly StyledProperty<PanelMode> ModeProperty =
@@ -322,6 +322,11 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             ApplyNavigation();
             ApplyAudioReadout();
+
+            if (_fullScreen is { } shown && (Tab, ShownKey) != (shown.Tab, shown.Key))
+            {
+                LeaveFullScreen();
+            }
         };
 
         ApplyNavigation();
@@ -1083,6 +1088,7 @@ public partial class PanelView : UserControl, IPanelTabHost
         {
             _followsVideo = true;
             watch.Moved += screen => Dispatcher.UIThread.Post(() => ShowVideoOn(watch, screen), DispatcherPriority.Background);
+            watch.FullScreenEntered += screen => Dispatcher.UIThread.Post(() => ShowFullScreenOn(watch, screen), DispatcherPriority.Background);
         }
     }
 
@@ -1098,7 +1104,29 @@ public partial class PanelView : UserControl, IPanelTabHost
             ? screen != VideoScreen.Window
             : screen == VideoScreen.MiniPanel && Mode == PanelMode.Mini;
 
-        if (!here || watch.Current is not { } title)
+        if (here)
+        {
+            OpenPlayer(watch);
+        }
+    }
+
+    /// <summary>Opens the current title's player on this surface when full screen was asked for on it, so the player can fill it.</summary>
+    private void ShowFullScreenOn(WatchHost watch, VideoScreen screen)
+    {
+        var here = Classes.Contains("headset")
+            ? screen == VideoScreen.BigPanel && Mode != PanelMode.Mini
+            : screen == VideoScreen.Window && Mode != PanelMode.Mini;
+
+        if (here && watch.FullScreen)
+        {
+            Nav.Select(PanelTab.Media);
+            OpenPlayer(watch);
+        }
+    }
+
+    private void OpenPlayer(WatchHost watch)
+    {
+        if (watch.Current is not { } title)
         {
             return;
         }
@@ -1442,6 +1470,58 @@ public partial class PanelView : UserControl, IPanelTabHost
     /// there is none or a chooser is open.
     /// </summary>
     public bool GoPrevious() => Nav.Previous() || GoBack();
+
+    private (Control Content, Action Leave, PanelTab Tab, string Key)? _fullScreen;
+
+    /// <summary>Raised when a control is drawn over the whole surface (true) and when it is taken off (false).</summary>
+    public event Action<bool>? FullScreenChanged;
+
+    /// <summary>The key of the page this surface shows: the last crumb of its trail.</summary>
+    private string ShownKey => Nav.Trail.Count > 0 ? Nav.Trail[^1].Key : string.Empty;
+
+    /// <summary>Draws <paramref name="content"/> over the tabs, header, page and scanlines until the page it was shown from is left.</summary>
+    public void ShowFullScreen(Control content, Action leave)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+
+        var was = _fullScreen is not null;
+        _fullScreen = (content, leave, Tab, ShownKey);
+        FullScreenLayer.Children.Clear();
+        FullScreenLayer.Children.Add(content);
+        FullScreenLayer.IsVisible = true;
+
+        if (!was)
+        {
+            FullScreenChanged?.Invoke(true);
+        }
+    }
+
+    public void EndFullScreen(Control content)
+    {
+        if (_fullScreen is not { } shown || !ReferenceEquals(shown.Content, content))
+        {
+            return;
+        }
+
+        _fullScreen = null;
+        FullScreenLayer.Children.Clear();
+        FullScreenLayer.IsVisible = false;
+        FullScreenChanged?.Invoke(false);
+    }
+
+    /// <summary>Asks the full-screen control to go; true when there was one, so Escape and Back go no further.</summary>
+    public bool LeaveFullScreen()
+    {
+        if (_fullScreen is not { } shown)
+        {
+            return false;
+        }
+
+        shown.Leave();
+        EndFullScreen(shown.Content);
+
+        return true;
+    }
 
     /// <summary>The Forward controls: the place <see cref="GoPrevious"/> left, if any.</summary>
     public bool GoNext() => Nav.Next();
@@ -2284,6 +2364,12 @@ public partial class PanelView : UserControl, IPanelTabHost
 
     private void OnSurfaceKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && LeaveFullScreen())
+        {
+            e.Handled = true;
+            return;
+        }
+
         // Above the search guard, because folding the page is not a search affordance: a surface with no
         // search box still has a transcript, and the headset is exactly that surface (remediation.md 11, item
         // 14). **This is also where Ctrl+L stops being the ask box's** (#413).

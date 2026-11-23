@@ -69,7 +69,7 @@ nav_order: 170
  <text x="440" y="56" text-anchor="middle" font-size="16" fill="var(--text-muted)">No video tool is protected.</text>
  <text x="440" y="90" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">You say it, or the model calls it.</text>
 </svg>
-<p class="body">The five video tools, such as <code>watch_video</code>, delete and spend nothing, so the model may call them as well as the phrases above.</p>
+<p class="body">The six video tools, such as <code>watch_video</code>, delete and spend nothing, so the model may call them as well as the phrases above.</p>
 </section>
 <section>
 <h2><span class="num">2</span> Pause and play go to one thing at a time.</h2>
@@ -108,6 +108,8 @@ was left. In the headset, a video plays on the panel the headset is showing.
 > "back thirty seconds", "skip back thirty seconds"
 > "forward thirty seconds", "skip forward thirty seconds"
 > "add this to my watch list", "add to my watch list", "add to watch list"
+> "full screen"
+> "exit full screen", "normal size"
 
 Watch followed by the title of anything in Your list or Continue watching is a phrase of its own and needs no
 model. Any other title is reached by asking the model, which calls `watch_video`.
@@ -127,6 +129,14 @@ Only one of a video, a book and a podcast plays at a time. Starting a video paus
 starting either pauses the video, as if you had paused it; neither resumes by itself. A video does not start or
 resume while a story plays: D47 says "A story is playing." A video pauses while D47 speaks, and plays on once it
 has finished.
+
+FULL SCREEN on the player, or "full screen" while a video plays or is paused, makes the picture fill the screen it
+plays on, opening the player there if another page is showing. In the window, d47 covers the monitor it is on, with
+no title bar, tabs or taskbar, and the controls are a band over the bottom of the picture that fades out once the
+mouse has been still for 5 seconds. On the big panel the picture takes the panel's width, with the controls in a row
+under it. EXIT FULL SCREEN, "exit full screen" and "normal size" return it, as do Escape in the window and the
+controller's Back on the big panel. Full screen also ends when the player page is left, when Plays on moves the
+picture to another screen, and when the video stops on an error. The mini panel has no full screen.
 
 <details markdown="1">
 <summary>The tool surface, for contributors</summary>
@@ -169,6 +179,14 @@ Adds a video to Your list. With no title it adds the video the player is on.
 
 ```json
 {"type":"object","properties":{"title":{"type":"string","description":"The title of the video, or part of it. Optional."}},"required":[],"additionalProperties":false}
+```
+
+#### `full_screen_video`
+
+Makes the playing or paused video full screen on the screen it plays on, or with exit set returns it to normal size.
+
+```json
+{"type":"object","properties":{"exit":{"type":"boolean","description":"True to return the video to normal size. Optional."}},"required":[],"additionalProperties":false}
 ```
 
 </details>

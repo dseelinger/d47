@@ -1019,5 +1019,8 @@
     says whether the theme has scanlines at all. No bitmap smoothing, so a 1px line stays 1px.
   -->
   <Border x:Name="Scanlines" Opacity="0.5" IsHitTestVisible="False" RenderOptions.BitmapInterpolationMode="None" />
+
+  <!-- A full-screen player, over everything above and the scanlines too. -->
+  <Panel x:Name="FullScreenLayer" IsVisible="False" />
   </Panel>
 </UserControl>

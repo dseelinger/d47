@@ -6140,7 +6140,8 @@ public sealed class AppHost : IDisposable
         WatchHost.Resume,
         by => Video.Skip(by),
         title => WatchStore.Add(title.Source, title.Id, DateTimeOffset.UtcNow, title),
-        () => Video.StoryPlaying);
+        () => Video.StoryPlaying,
+        WatchHost.SetFullScreen);
 
     private D47.App.Panel.BooksHost? _booksHost;
 

@@ -18,6 +18,8 @@ public static class WatchCapability
 
     public const string AddToWatchListTool = "add_to_watch_list";
 
+    public const string FullScreenVideoTool = "full_screen_video";
+
     public const string WatchPhrase = "watch ";
 
     /// <summary>"Watch" and a title, one per title in Your list or Continue watching.</summary>
@@ -118,6 +120,18 @@ public static class WatchCapability
                         Phrase("add to watch list"),
                     ],
                     [ToolParameter.Text("title", "The title of the video, or part of it. Optional.")]),
+                Tool(
+                    FullScreenVideoTool,
+                    "Makes the playing or paused video full screen on the screen it plays on, or with exit set returns it to normal size.",
+                    "While a video plays or is paused, say \"full screen\": the picture fills the screen it plays on and the reply is \"Full screen.\" Say \"exit full screen\" or \"normal size\" to return it; the reply is \"Normal size.\" On the mini panel the reply is \"The mini panel has no full screen.\"",
+                    desk,
+                    (videos, arguments, _) => Task.FromResult(videos.FullScreen(arguments.Boolean("exit") != true)),
+                    [
+                        Phrase("full screen"),
+                        new ToolCommandPhrase("exit full screen", Arguments(("exit", "true"))),
+                        new ToolCommandPhrase("normal size", Arguments(("exit", "true"))),
+                    ],
+                    [ToolParameter.Flag("exit", "True to return the video to normal size. Optional.")]),
             ],
         };
     }

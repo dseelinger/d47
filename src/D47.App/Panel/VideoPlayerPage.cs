@@ -1,11 +1,14 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
+using Avalonia.Animation;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Media;
 using D47.App.Theming;
@@ -35,6 +38,25 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     public const string ForwardName = "VideoForward";
 
     public const string FromStartName = "VideoFromStart";
+
+    public const string FullScreenName = "VideoFullScreen";
+
+    public const string ExitFullScreenName = "VideoExitFullScreen";
+
+    /// <summary>The control a full-screen player draws over the whole surface.</summary>
+    public const string FullScreenLayerName = "VideoFullScreenLayer";
+
+    /// <summary>The window's full-screen control band, or the big panel's control row.</summary>
+    public const string FullScreenBandName = "VideoFullScreenBand";
+
+    /// <summary>The height of the window's full-screen band and of the big panel's full-screen control row.</summary>
+    public const double BandHeight = 64;
+
+    /// <summary>How far the captions and the wait mark keep from the edges of the screen in full screen.</summary>
+    public const double FullScreenEdge = 20;
+
+    /// <summary>The full-screen caption size as a share of the screen's height.</summary>
+    public const double CaptionShare = 1.0 / 27;
 
     public const string RetryName = "VideoRetry";
 
@@ -81,6 +103,8 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
     private static readonly TimeSpan PollEveryInHeadset = TimeSpan.FromSeconds(1);
 
+    private static readonly TimeSpan BandFade = TimeSpan.FromMilliseconds(200);
+
     private readonly WatchHost _host;
     private readonly VideoTitle _title;
     private readonly bool _big;
@@ -100,6 +124,17 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     private readonly Button _play = Tile(PlayName, "PLAY", "Play or pause");
     private readonly Button _forward = Tile(ForwardName, "30 S ►", "Forward 30 seconds");
     private readonly Button _fromStart = Tile(FromStartName, "FROM THE START", "From the start");
+    private readonly Button _fullScreenTile = Tile(FullScreenName, "FULL SCREEN", "Full screen");
+    private readonly Button _fullBack = Tile("VideoFullBack", "◄ 30 S", "Back 30 seconds");
+    private readonly Button _fullPlay = Tile("VideoFullPlay", "PLAY", "Play or pause");
+    private readonly Button _fullForward = Tile("VideoFullForward", "30 S ►", "Forward 30 seconds");
+    private readonly Button _exitFullScreen = Tile(ExitFullScreenName, "EXIT FULL SCREEN", "Exit full screen");
+    private readonly Border _fullPicture = new();
+    private readonly DockPanel _bandRow = new();
+    private readonly Grid _frame;
+    private readonly Border _pictureBorder;
+    private readonly DockPanel _timeline;
+    private readonly StackPanel _column;
     private readonly TextBlock _place = Typeset.Mono(string.Empty, 15, ThemeManager.CyanKey, wrap: true);
     private readonly TextBlock _videoLength = Typeset.Mono(string.Empty, 15, ThemeManager.WhiteKey, wrap: true);
     private readonly TextBlock _playsFrom = Typeset.Mono(string.Empty, 13, ThemeManager.WhiteKey, wrap: true);
@@ -122,6 +157,13 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     private string? _waitingFor;
     private string? _ticked;
     private ScrollViewer? _scroll;
+    private IFullScreenHost? _fullHost;
+    private Grid? _full;
+    private Control? _band;
+    private FullScreenBandTimer? _bandTimer;
+    private Point? _pointerAt;
+    private bool _bandShown;
+    private Cursor? _noCursor;
 
     public VideoPlayerPage(WatchHost host, VideoTitle title, Control? settingsStrip = null, bool big = false)
     {
@@ -155,6 +197,15 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         _back.Click += (_, _) => Skip(-VideoPlayback.SkipBy);
         _forward.Click += (_, _) => Skip(VideoPlayback.SkipBy);
         _play.Click += (_, _) => PlayOrPause();
+        _fullBack.Click += (_, _) => Skip(-VideoPlayback.SkipBy);
+        _fullForward.Click += (_, _) => Skip(VideoPlayback.SkipBy);
+        _fullPlay.Click += (_, _) => PlayOrPause();
+        _fullScreenTile.Click += (_, _) =>
+        {
+            _host.SetFullScreen(true);
+            Refresh();
+        };
+        _exitFullScreen.Click += (_, _) => LeaveFullScreen();
         _fromStart.Click += (_, _) =>
         {
             _host.PlaysHere(_big);
@@ -263,6 +314,8 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             Name = "VideoFrame",
         };
         ThemeInk.Bind(picture, Border.BorderBrushProperty, ThemeManager.Line2Key);
+        _frame = frame;
+        _pictureBorder = picture;
 
         if (big)
         {
@@ -272,6 +325,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         }
 
         var timeline = new DockPanel { Margin = new Thickness(0, 4, 0, 0) };
+        _timeline = timeline;
         _elapsed.Width = 76;
         _length.Width = 76;
         DockPanel.SetDock(_elapsed, Dock.Left);
@@ -282,7 +336,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
 
         var tiles = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions(big ? "*,*,*" : "*,2*,*,*"),
+            ColumnDefinitions = new ColumnDefinitions(big ? "*,*,*" : "*,2*,*,*,*"),
             ColumnSpacing = Gaps.Tile,
             Children = { _back, _play, _forward },
         };
@@ -293,15 +347,21 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         {
             tiles.Children.Add(_fromStart);
             Grid.SetColumn(_fromStart, 3);
+            tiles.Children.Add(_fullScreenTile);
+            Grid.SetColumn(_fullScreenTile, 4);
         }
+
+        BuildBandRow();
 
         if (big)
         {
-            Content = BigPage(new StackPanel { Spacing = 8, Children = { picture, timeline } }, tiles, title, settingsStrip);
+            _column = new StackPanel { Spacing = 8, Children = { picture, timeline } };
+            Content = BigPage(_column, tiles, title, settingsStrip);
         }
         else
         {
-            Content = WindowPage(new StackPanel { Spacing = 12, Children = { picture, timeline, tiles } }, title, settingsStrip);
+            _column = new StackPanel { Spacing = 12, Children = { picture, timeline, tiles } };
+            Content = WindowPage(_column, title, settingsStrip);
 
             void Fit() => FitFrame(picture, frame, timeline, tiles);
 
@@ -413,6 +473,11 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     /// <summary>Puts the wait mark at the lower left of the picture itself, not of the black around it.</summary>
     private void PlaceWait(Grid frame)
     {
+        if (_fullHost is not null)
+        {
+            return;
+        }
+
         if (_picture.Bounds.Width <= 0 || frame.Bounds.Width <= 0)
         {
             _wait.Margin = new Thickness(20);
@@ -428,7 +493,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     }
 
     /// <summary>
-    /// The big panel's player: the 640×360 picture over its timeline, and beside it the tiles, Your place, Credit,
+    /// The big panel's player: the 640×360 picture over its timeline, and beside it the tiles, FULL SCREEN, Credit,
     /// Plays on and Captions, so the picture and every control fit the panel's 640 pixels of height without scrolling.
     /// </summary>
     private DockPanel BigPage(Control left, Control tiles, VideoTitle title, Control? settingsStrip)
@@ -439,7 +504,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             Children =
             {
                 tiles,
-                Datum("Your place", _place),
+                _fullScreenTile,
                 Datum("Credit", Typeset.Prose(CreditOf(title), 13, ThemeManager.WhiteKey, wrap: true)),
                 Head("Plays on"),
                 _playsOn,
@@ -482,6 +547,208 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         page.Children.Add(scroll);
 
         return page;
+    }
+
+    /// <summary>The full-screen row's tiles at the right; the timeline joins them on the left while full screen lasts.</summary>
+    private void BuildBandRow()
+    {
+        _fullBack.Width = 96;
+        _fullPlay.Width = 96;
+        _fullForward.Width = 96;
+        _exitFullScreen.Width = 176;
+
+        var tiles = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = Gaps.Tile,
+            Margin = new Thickness(20, 0, 0, 0),
+            Children = { _fullBack, _fullPlay, _fullForward, _exitFullScreen },
+        };
+        DockPanel.SetDock(tiles, Dock.Right);
+        _bandRow.Children.Add(tiles);
+    }
+
+    /// <summary>
+    /// The window's full screen: the picture over the whole screen on black, with the band over its bottom. The big
+    /// panel's: the picture over the panel's width with the control row under it, so nothing is drawn over the quad.
+    /// </summary>
+    private Grid BuildFull()
+    {
+        var full = new Grid { Name = FullScreenLayerName, Background = Brushes.Black };
+
+        if (_big)
+        {
+            var row = new Border { Name = FullScreenBandName, Height = BandHeight, Padding = new Thickness(14, 10), Child = _bandRow };
+            ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.BgKey);
+            full.RowDefinitions = new RowDefinitions("*," + BandHeight.ToString(CultureInfo.InvariantCulture));
+            Grid.SetRow(row, 1);
+            full.Children.Add(_fullPicture);
+            full.Children.Add(row);
+            _band = row;
+
+            return full;
+        }
+
+        var backing = new Border { Opacity = 0.9 };
+        ThemeInk.Bind(backing, Border.BackgroundProperty, ThemeManager.BgKey);
+
+        var band = new Grid
+        {
+            Name = FullScreenBandName,
+            Height = BandHeight,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Background = Brushes.Transparent,
+            Transitions = BandTransitions(AnimationEffects.AreOn()),
+            Children = { backing, new Border { Padding = new Thickness(20, 10), Child = _bandRow } },
+        };
+
+        full.Children.Add(_fullPicture);
+        full.Children.Add(band);
+        full.Focusable = true;
+        full.PointerMoved += (_, e) => PointerMovedOver(e.GetPosition(full));
+        full.SizeChanged += (_, _) => DrawBand();
+        _band = band;
+
+        return full;
+    }
+
+    /// <summary>The band's 200 ms fade each way, or none when Windows' animation effects are off.</summary>
+    internal static Transitions? BandTransitions(bool animate) =>
+        animate ? [new DoubleTransition { Property = OpacityProperty, Duration = BandFade }] : null;
+
+    /// <summary>Enters or leaves full screen to match the host, while this page shows the title on its own screen.</summary>
+    private void SyncFullScreen()
+    {
+        var wanted = _host.FullScreen && _host.PlaysOn == Here && IsCurrent && !Failed;
+
+        if (wanted && _fullHost is null)
+        {
+            if (ShownIn() is { } host)
+            {
+                EnterFullScreen(host);
+            }
+        }
+        else if (!wanted && _fullHost is not null)
+        {
+            ExitFullScreen();
+        }
+        else
+        {
+            DrawBand();
+        }
+    }
+
+    /// <summary>The surface this page is shown on, when it and every parent up to that surface are visible.</summary>
+    private IFullScreenHost? ShownIn()
+    {
+        for (Visual? at = this; at is not null; at = at.GetVisualParent())
+        {
+            if (!at.IsVisible)
+            {
+                return null;
+            }
+
+            if (at is IFullScreenHost host)
+            {
+                return host;
+            }
+        }
+
+        return null;
+    }
+
+    private void EnterFullScreen(IFullScreenHost host)
+    {
+        _full ??= BuildFull();
+        _pictureBorder.Child = null;
+        _fullPicture.Child = _frame;
+        _column.Children.Remove(_timeline);
+        _timeline.VerticalAlignment = VerticalAlignment.Center;
+        _bandRow.Children.Add(_timeline);
+        _fullHost = host;
+        _bandTimer = _big ? null : new FullScreenBandTimer(_host.Time);
+        _bandShown = true;
+        _pointerAt = null;
+        host.ShowFullScreen(_full, LeaveFullScreen);
+
+        if (!_big)
+        {
+            _full.Focus();
+        }
+
+        DrawBand();
+    }
+
+    private void ExitFullScreen()
+    {
+        if (_fullHost is not { } host || _full is null)
+        {
+            return;
+        }
+
+        _fullHost = null;
+        host.EndFullScreen(_full);
+        _fullPicture.Child = null;
+        _bandRow.Children.Remove(_timeline);
+        _timeline.VerticalAlignment = VerticalAlignment.Stretch;
+        _pictureBorder.Child = _frame;
+        _column.Children.Insert(1, _timeline);
+        _bandTimer = null;
+        _full.Cursor = null;
+        _caption.FontSize = CaptionSize;
+        _captionBand.Margin = new Thickness(20);
+        PlaceWait(_frame);
+    }
+
+    /// <summary>EXIT FULL SCREEN, Escape, the controller's Back, and leaving the page.</summary>
+    private void LeaveFullScreen()
+    {
+        _host.SetFullScreen(false);
+        Refresh();
+        ExitFullScreen();
+    }
+
+    private void PointerMovedOver(Point at)
+    {
+        if (_bandTimer is null || _pointerAt == at)
+        {
+            return;
+        }
+
+        var first = _pointerAt is null;
+        _pointerAt = at;
+
+        // The first report after entering only says where the pointer is; the band is already shown.
+        if (first)
+        {
+            return;
+        }
+
+        _bandTimer.Moved();
+        DrawBand();
+    }
+
+    /// <summary>Shows or hides the window's band and the pointer with it, and keeps the captions and the wait mark above it.</summary>
+    private void DrawBand()
+    {
+        if (_fullHost is null || _full is null || _band is null || _bandTimer is null)
+        {
+            return;
+        }
+
+        _bandShown = _bandTimer.Shows(_bandShown && _band.IsPointerOver);
+        _band.Opacity = _bandShown ? 1 : 0;
+        _band.IsHitTestVisible = _bandShown;
+        _full.Cursor = _bandShown ? null : _noCursor ??= new Cursor(StandardCursorType.None);
+
+        var edges = new Thickness(FullScreenEdge, FullScreenEdge, FullScreenEdge, FullScreenEdge + (_bandShown ? BandHeight : 0));
+        _captionBand.Margin = edges;
+        _wait.Margin = edges;
+
+        if (_full.Bounds.Height > 0)
+        {
+            _caption.FontSize = _full.Bounds.Height * CaptionShare;
+        }
     }
 
     private static string CreditOf(VideoTitle title) => title.Credit ?? WatchHost.SourceOf(title).Split(" · ")[0];
@@ -532,6 +799,12 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         _host.Changed -= OnChanged;
         _attached = false;
         _poll.Stop();
+
+        if (_fullHost is not null)
+        {
+            _host.SetFullScreen(false);
+            ExitFullScreen();
+        }
     }
 
     private void OnChanged()
@@ -545,6 +818,9 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
     private bool IsCurrent => _host.Current is { } current && current.Source == _title.Source && current.Id == _title.Id;
 
     private bool HasVideo => _host.Video.Source == WatchHost.PlaySource(_title) && _host.Video.State is not null;
+
+    /// <summary>Whether this title stopped on a failure, whose notice and RETRY full screen would cover.</summary>
+    private bool Failed => HasVideo && _host.Video.Failure is not null;
 
     private TimeSpan? Length() => HasVideo && _host.Video.Length is { } length ? length : _title.Length;
 
@@ -623,6 +899,10 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             _back.IsEnabled = loaded;
             _forward.IsEnabled = loaded;
             _fromStart.IsEnabled = _title.Playable;
+            _fullPlay.Content = _play.Content;
+            _fullPlay.IsEnabled = _play.IsEnabled;
+            _fullBack.IsEnabled = loaded;
+            _fullForward.IsEnabled = loaded;
 
             if (!_bar.IsDragging)
             {
@@ -636,6 +916,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             _playsFrom.Text = _title.Media is { IsFile: false, Host: { Length: > 0 } host } ? host : "This computer";
 
             var here = _host.PlaysOn == Here;
+            _fullScreenTile.IsEnabled = loaded && here && !Failed;
             _playsOn.SelectedIndex = IndexOf(_host.PlaysOn);
             _picture.IsVisible = here;
             _elsewhere.IsVisible = !here;
@@ -650,6 +931,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             DrawWait(state);
             DrawFailure(loaded ? video.Failure : null, position);
             DrawCaptions(position, here && !_big, length);
+            SyncFullScreen();
 
             _pushToTalk.IsChecked = _host.PauseForPushToTalk;
             _volume.Value = _host.Volume;
@@ -853,7 +1135,8 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             _writtenText,
             _playsOn.SelectedIndex,
             _captions.SelectedIndex,
-            _back.IsEnabled);
+            _back.IsEnabled,
+            _fullHost is not null);
 
         if (drawn == _ticked)
         {

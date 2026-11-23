@@ -254,6 +254,52 @@ public sealed class WatchHost : IDisposable
     /// <summary>Where the picture is drawn.</summary>
     public VideoScreen PlaysOn => _playsOn;
 
+    private volatile bool _fullScreen;
+
+    /// <summary>Whether the picture is full screen on the screen it plays on. Not kept between sessions.</summary>
+    public bool FullScreen => _fullScreen;
+
+    /// <summary>The clock the full-screen band's idle time is read from.</summary>
+    public TimeProvider Time => _time;
+
+    /// <summary>Raised on the calling thread when full screen is entered, with the screen the picture plays on.</summary>
+    public event Action<VideoScreen>? FullScreenEntered;
+
+    /// <summary>Puts the picture in full screen on the screen it plays on, or back to normal size; the mini panel has none.</summary>
+    public FullScreenAnswer SetFullScreen(bool on)
+    {
+        if (_playsOn == VideoScreen.MiniPanel)
+        {
+            return FullScreenAnswer.MiniPanel;
+        }
+
+        if (_fullScreen == on)
+        {
+            return FullScreenAnswer.Already;
+        }
+
+        _fullScreen = on;
+        RaiseChanged();
+
+        if (on)
+        {
+            FullScreenEntered?.Invoke(_playsOn);
+        }
+
+        return FullScreenAnswer.Done;
+    }
+
+    /// <summary>Moves the picture to <paramref name="screen"/>, which ends full screen when it is another screen.</summary>
+    private void SetPlaysOn(VideoScreen screen)
+    {
+        if (_playsOn != screen)
+        {
+            _fullScreen = false;
+        }
+
+        _playsOn = screen;
+    }
+
     /// <summary>Raised on the calling thread when the Commander moved the picture to another screen.</summary>
     public event Action<VideoScreen>? Moved;
 
@@ -268,7 +314,7 @@ public sealed class WatchHost : IDisposable
             return;
         }
 
-        _playsOn = screen;
+        SetPlaysOn(screen);
 
         if (screen != VideoScreen.Window && _settings.Current.Vr.Enabled)
         {
@@ -287,7 +333,7 @@ public sealed class WatchHost : IDisposable
     {
         if (!_headsetUp && _playsOn != VideoScreen.MiniPanel)
         {
-            _playsOn = headset ? VideoScreen.BigPanel : VideoScreen.Window;
+            SetPlaysOn(headset ? VideoScreen.BigPanel : VideoScreen.Window);
         }
     }
 
@@ -329,7 +375,7 @@ public sealed class WatchHost : IDisposable
             return;
         }
 
-        _playsOn = screen;
+        SetPlaysOn(screen);
 
         if (Loaded)
         {
@@ -472,7 +518,7 @@ public sealed class WatchHost : IDisposable
 
         if (_headsetUp)
         {
-            _playsOn = ScreenOf(_settings.Current.Vr.Mode);
+            SetPlaysOn(ScreenOf(_settings.Current.Vr.Mode));
         }
 
         if (!Video.Play(PlaySource(title), start))
@@ -563,6 +609,7 @@ public sealed class WatchHost : IDisposable
         if (Current is { } current && (current.Source != title.Source || current.Id != title.Id))
         {
             StopWriting();
+            _fullScreen = false;
         }
 
         lock (_gate)
@@ -625,6 +672,11 @@ public sealed class WatchHost : IDisposable
     private void OnVideoChanged()
     {
         var state = Video.State;
+
+        if (Video.Failure is not null)
+        {
+            _fullScreen = false;
+        }
 
         if (state != _lastState)
         {

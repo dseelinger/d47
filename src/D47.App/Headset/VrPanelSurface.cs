@@ -287,6 +287,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // Anything the panel shows changing is a reason to redraw, and nothing else is.
         model.PropertyChanged += OnModelChanged;
         _view.Nav.Changed += OnNavChanged;
+        _view.FullScreenChanged += _ => _dirty = true;
     }
 
     public bool Enabled { get; set; }
@@ -311,6 +312,12 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         if (_modals.Top is { } top)
         {
             top.Close();
+            return true;
+        }
+
+        if (_view.LeaveFullScreen())
+        {
+            _dirty = true;
             return true;
         }
 
