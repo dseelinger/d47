@@ -13,7 +13,7 @@ public enum VideoStanding
 public sealed record VideoNow(VideoTitle Title, VideoStanding Standing);
 
 /// <summary>
-/// What the video voice commands act on: Your list, Carry on watching, the catalogue and the player. A video does not
+/// What the video voice commands act on: Your list, Continue watching, the catalogue and the player. A video does not
 /// start or resume while <paramref name="storyPlaying"/> says a story plays.
 /// </summary>
 public sealed class WatchDesk(
@@ -39,7 +39,7 @@ public sealed class WatchDesk(
 
     public bool Playing => now() is { Standing: VideoStanding.Playing };
 
-    /// <summary>The titles in Your list and in Carry on watching, for the phrases that name one.</summary>
+    /// <summary>The titles in Your list and in Continue watching, for the phrases that name one.</summary>
     public IReadOnlyList<VideoTitle> Known() =>
     [
         .. yourList().Concat(carryOn()).DistinctBy(title => (title.Source, title.Id)),
@@ -96,7 +96,7 @@ public sealed class WatchDesk(
     {
         if (now() is not { } current)
         {
-            return "No video is open. Say carry on watching.";
+            return "No video is open. Say continue watching.";
         }
 
         if (current.Standing == VideoStanding.Playing)
@@ -122,7 +122,7 @@ public sealed class WatchDesk(
         };
     }
 
-    /// <summary>"Carry on watching": the current video while it plays, is paused or stopped, otherwise the newest in Carry on watching.</summary>
+    /// <summary>"Continue watching": the current video while it plays, is paused or stopped, otherwise the newest in Continue watching.</summary>
     public string CarryOn()
     {
         if (now() is { Standing: VideoStanding.Playing or VideoStanding.Paused or VideoStanding.Failed })
@@ -137,7 +137,7 @@ public sealed class WatchDesk(
 
         if (carryOn().FirstOrDefault() is not { } newest)
         {
-            return "Nothing is waiting in Carry on watching.";
+            return "Nothing is waiting in Continue watching.";
         }
 
         return play(newest) ? $"Carrying on {newest.Title}." : $"{newest.Title} could not be played.";

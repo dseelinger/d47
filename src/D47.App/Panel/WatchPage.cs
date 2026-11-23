@@ -12,7 +12,7 @@ using D47.Core.Viewing;
 
 namespace D47.App.Panel;
 
-/// <summary>Media › Movies: find a video or add a file, carry on watching and Your list.</summary>
+/// <summary>Media › Movies: find a video or add a file, Continue watching and Your list.</summary>
 public sealed class WatchPage : UserControl, IPageSummary, IPageChrome, IFilterablePage, ISubmitSearchPage
 {
     public const string RootKey = MediaFurnishing.MoviesRoot;
@@ -27,7 +27,7 @@ public sealed class WatchPage : UserControl, IPageSummary, IPageChrome, IFiltera
 
     public const string RowName = "WatchRow";
 
-    public const string CarryOnHead = "Carry on watching";
+    public const string CarryOnHead = "Continue watching";
 
     public const string YourListHead = "Your list";
 

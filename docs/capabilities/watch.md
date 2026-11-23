@@ -35,7 +35,7 @@ nav_order: 170
  <text x="44" y="57" font-size="17" fill="var(--text)">pause the video</text>
  <text x="836" y="57" text-anchor="end" font-size="15" fill="var(--text-muted)">Ask</text>
  <text x="20" y="118" font-size="16" fill="var(--text-muted)">While a video is playing or paused, "pause" and "play" act on it.</text>
- <text x="20" y="152" font-size="16" fill="var(--text-muted)">"Carry on watching" plays the newest title in Carry on watching, or tries a stopped video again.</text>
+ <text x="20" y="152" font-size="16" fill="var(--text-muted)">"Continue watching" plays the newest title in Continue watching, or tries a stopped video again.</text>
 </svg>
 </section>
 <section>
@@ -104,16 +104,16 @@ was left. In the headset, a video plays on the panel the headset is showing.
 > watch, then a title
 > "pause the video", "pause video"
 > "carry on", "resume the video", "resume video"
-> "carry on watching"
+> "continue watching", "carry on watching"
 > "back thirty seconds", "skip back thirty seconds"
 > "forward thirty seconds", "skip forward thirty seconds"
 > "add this to my watch list", "add to my watch list", "add to watch list"
 
-Watch followed by the title of anything in Your list or Carry on watching is a phrase of its own and needs no
+Watch followed by the title of anything in Your list or Continue watching is a phrase of its own and needs no
 model. Any other title is reached by asking the model, which calls `watch_video`.
 
-"Carry on" plays the current video on, or tries it again when it stopped on an error. "Carry on watching" does
-the same for a video that is playing, paused or stopped, and otherwise plays the newest title in Carry on
+"Carry on" plays the current video on, or tries it again when it stopped on an error. "Continue watching" does
+the same for a video that is playing, paused or stopped, and otherwise plays the newest title in Continue
 watching from where it was left. The mini panel's notice for a stopped video tells you to say it.
 
 The media keys and the volume flyout's buttons follow the same order as the bare words; on a video, Next and
@@ -149,10 +149,10 @@ Pauses the video that is playing.
 
 #### `resume_video`
 
-Plays the paused video on, or with carry_on set the newest title in Carry on watching, or tries a stopped video again.
+Plays the paused video on, or with carry_on set the newest title in Continue watching, or tries a stopped video again.
 
 ```json
-{"type":"object","properties":{"carry_on":{"type":"boolean","description":"True to play the newest title in Carry on watching, or try a stopped video again. Optional."}},"required":[],"additionalProperties":false}
+{"type":"object","properties":{"carry_on":{"type":"boolean","description":"True to play the newest title in Continue watching, or try a stopped video again. Optional."}},"required":[],"additionalProperties":false}
 ```
 
 #### `skip_video`

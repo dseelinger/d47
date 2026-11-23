@@ -504,7 +504,7 @@ public sealed class PlaysOnMovesThePictureBetweenPanelsTests
 
             var notice = mini.GetVisualDescendants().OfType<Notice>().Single(found => found.IsEffectivelyVisible);
             Assert.Equal(VideoPlayerPage.StoppedLabel, notice.Label);
-            Assert.Contains("Say “carry on watching” to try again.", notice.Text, StringComparison.Ordinal);
+            Assert.Contains("Say “continue watching” to try again.", notice.Text, StringComparison.Ordinal);
             Assert.Empty(notice.Actions);
         }
         finally

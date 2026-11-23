@@ -19,7 +19,7 @@ namespace D47.App.Panel;
 public sealed class VideoMini : UserControl
 {
     /// <summary>What the Commander says to try a stopped video again.</summary>
-    public const string TryAgain = "carry on watching";
+    public const string TryAgain = "continue watching";
 
     public const string NothingPlaying = "No video is playing.";
 

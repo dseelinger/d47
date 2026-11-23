@@ -389,7 +389,7 @@ public static class BuiltinCapabilities
         // The video player, Your list and the catalogue, once the host is built.
         Func<Viewing.WatchDesk?>? watchDesk = null,
 
-        // The sources of the titles in Your list, in Carry on watching or playing now, for the video disclosures.
+        // The sources of the titles in Your list, in Continue watching or playing now, for the video disclosures.
         Func<IReadOnlyList<string>>? heldVideoSources = null) =>
     [
         HelpCapability.Create(

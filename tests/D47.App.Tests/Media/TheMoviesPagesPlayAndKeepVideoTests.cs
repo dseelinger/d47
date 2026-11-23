@@ -116,7 +116,7 @@ public sealed class TheMoviesPagesPlayAndKeepVideoTests
         var (window, panel) = Open(fixture);
         var drawn = Drawn(panel);
 
-        Assert.Contains("CARRY ON WATCHING", drawn);
+        Assert.Contains("CONTINUE WATCHING", drawn);
         Assert.Contains("TEARS OF STEEL", drawn);
         Assert.Contains("00:06:41 OF 00:12:14", drawn);
         Assert.Contains("YOUR LIST", drawn);

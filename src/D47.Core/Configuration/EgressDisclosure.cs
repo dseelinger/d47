@@ -288,7 +288,7 @@ public static class EgressDisclosure
     /// <param name="codexPublishTokenPresent">Whether a codex publish token is stored or in the environment.</param>
     /// <param name="remoteCharacterSystems">The systems the Commander's remote characters are in.</param>
     /// <param name="podcastEpisodeHosts">The hosts the cached podcast feeds name for their episodes.</param>
-    /// <param name="heldVideoSources">The video sources of the titles in Your list, in Carry on watching or playing now.</param>
+    /// <param name="heldVideoSources">The video sources of the titles in Your list, in Continue watching or playing now.</param>
     public static EgressEntry Entry(
         string id,
         D47Settings settings,
@@ -841,7 +841,7 @@ public static class EgressDisclosure
                 NameOf(id),
                 destination,
                 $"{Viewing.VideoSources.NameOf(source)} is not ticked in the video catalogue's sources, so no search goes there. "
-                + "A title kept in Your list or Carry on watching, or playing now, still streams from it, with its "
+                + "A title kept in Your list or Continue watching, or playing now, still streams from it, with its "
                 + "subtitle file where it has one, only while you watch. Nothing about you goes with it: no key, no "
                 + "Commander name, nothing from your journal. The host sees your IP address.",
                 Active: true,

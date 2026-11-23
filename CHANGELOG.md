@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Carry on watching on Media › Movies is named Continue watching, on the page, in spoken replies, in Privacy and egress and in the help. Say "continue watching" to play the newest title in it or to try a stopped video again; "carry on watching" still works.
+
 Fixed: In the window, the copy glyph's hover label reads COPIED after a press, or COPY FAILED when the copy failed, for the two seconds the button says so, and then goes back to COPY SYSTEM NAME (COPY STATION NAME on the Faction page). The big panel still shows no label.
 
 Fixed: A double-click on a show in Media › Podcasts whose episodes are all finished says so in the status line while another show's episode is playing or paused. The same goes for a show that is not added.

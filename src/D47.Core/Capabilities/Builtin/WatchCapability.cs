@@ -20,7 +20,7 @@ public static class WatchCapability
 
     public const string WatchPhrase = "watch ";
 
-    /// <summary>"Watch" and a title, one per title in Your list or Carry on watching.</summary>
+    /// <summary>"Watch" and a title, one per title in Your list or Continue watching.</summary>
     public static IEnumerable<DynamicCommand> WatchPhrases(WatchDesk? desk)
     {
         if (desk is null)
@@ -58,7 +58,7 @@ public static class WatchCapability
             Group = "Voice",
             Name = "Watch",
             Summary = "Watch videos from Your list and the movie sources, pause and carry on, and skip within a video.",
-            Examples = ["watch Big Buck Bunny", "pause the video", "carry on watching", "back thirty seconds"],
+            Examples = ["watch Big Buck Bunny", "pause the video", "continue watching", "back thirty seconds"],
             Display = new CapabilityDisplay { PanelTitle = "Watch", Order = 92, ShowOnPanel = false },
             Tools =
             [
@@ -79,8 +79,8 @@ public static class WatchCapability
                     [Phrase("pause the video"), Phrase("pause video"), Phrase("pause") with { When = Bare }]),
                 Tool(
                     ResumeVideoTool,
-                    "Plays the paused video on, or with carry_on set the newest title in Carry on watching, or tries a stopped video again.",
-                    "With a video paused, say \"carry on\" or \"play\": the reply is \"Resumed.\" Say \"carry on watching\" to play the newest title in Carry on watching from where it was left, or to try a video that stopped again.",
+                    "Plays the paused video on, or with carry_on set the newest title in Continue watching, or tries a stopped video again.",
+                    "With a video paused, say \"carry on\" or \"play\": the reply is \"Resumed.\" Say \"continue watching\" to play the newest title in Continue watching from where it was left, or to try a video that stopped again.",
                     desk,
                     (videos, arguments, _) => Task.FromResult(arguments.Boolean("carry_on") == true ? videos.CarryOn() : videos.Resume()),
                     [
@@ -88,9 +88,10 @@ public static class WatchCapability
                         Phrase("resume the video"),
                         Phrase("resume video"),
                         Phrase("play") with { When = Bare },
+                        new ToolCommandPhrase("continue watching", Arguments(("carry_on", "true"))),
                         new ToolCommandPhrase("carry on watching", Arguments(("carry_on", "true"))),
                     ],
-                    [ToolParameter.Flag("carry_on", "True to play the newest title in Carry on watching, or try a stopped video again. Optional.")]),
+                    [ToolParameter.Flag("carry_on", "True to play the newest title in Continue watching, or try a stopped video again. Optional.")]),
                 Tool(
                     SkipVideoTool,
                     "Moves the video back or forward by a number of seconds.",

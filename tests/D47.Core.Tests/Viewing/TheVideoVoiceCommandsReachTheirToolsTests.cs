@@ -84,6 +84,7 @@ public sealed class TheVideoVoiceCommandsReachTheirToolsTests
     [InlineData("carry on", WatchCapability.ResumeVideoTool)]
     [InlineData("resume the video", WatchCapability.ResumeVideoTool)]
     [InlineData("resume video", WatchCapability.ResumeVideoTool)]
+    [InlineData("continue watching", WatchCapability.ResumeVideoTool)]
     [InlineData("carry on watching", WatchCapability.ResumeVideoTool)]
     [InlineData("add this to my watch list", WatchCapability.AddToWatchListTool)]
     [InlineData("add to my watch list", WatchCapability.AddToWatchListTool)]
@@ -96,10 +97,11 @@ public sealed class TheVideoVoiceCommandsReachTheirToolsTests
     }
 
     [Fact]
-    public void CarryOnWatchingAsksForTheNewestAndCarryOnDoesNot()
+    public void ContinueWatchingAsksForTheNewestAndCarryOnDoesNot()
     {
         var router = new KeywordRouter(Registry(Desk()));
 
+        Assert.Equal("true", router.MatchToolCommand("continue watching")?.Arguments.Text("carry_on"));
         Assert.Equal("true", router.MatchToolCommand("carry on watching")?.Arguments.Text("carry_on"));
         Assert.Null(router.MatchToolCommand("carry on")?.Arguments.Text("carry_on"));
     }
@@ -175,7 +177,7 @@ public sealed class TheVideoVoiceCommandsReachTheirToolsTests
             (await registry.InvokeAsync(tool, Args(arguments), token, ToolCaller.Commander)).Content;
 
         Assert.Equal("No video is playing.", await Say(WatchCapability.PauseVideoTool));
-        Assert.Equal("No video is open. Say carry on watching.", await Say(WatchCapability.ResumeVideoTool));
+        Assert.Equal("No video is open. Say continue watching.", await Say(WatchCapability.ResumeVideoTool));
         Assert.Equal("Carrying on Sintel.", await Say(WatchCapability.ResumeVideoTool, ("carry_on", "true")));
         Assert.Equal("Paused.", await Say(WatchCapability.PauseVideoTool));
         Assert.Equal("The video is already paused.", await Say(WatchCapability.PauseVideoTool));
