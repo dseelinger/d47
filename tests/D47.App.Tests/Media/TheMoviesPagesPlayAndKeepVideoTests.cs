@@ -306,6 +306,46 @@ public sealed class TheMoviesPagesPlayAndKeepVideoTests
     }
 
     [AvaloniaFact]
+    public void TheBigPanelStacksTheWrittenReadoutInItsSideColumnWhileCaptionsAreWritten()
+    {
+        var clip = Path.Combine(AppContext.BaseDirectory, "Fixtures", "video", "clip.mp4");
+        var fixture = new Fixture(captioner: new WritesOneCue(null));
+        var title = fixture.Host.FileTitle(clip);
+        fixture.Store.Add(title.Source, title.Id, Noon, title);
+        var (window, panel) = Open(fixture);
+
+        Click(panel.GetVisualDescendants().OfType<Button>().First(button => button.Name == WatchPage.RowName && (button.Tag as string) == "file." + clip));
+        Click(Named(panel, VideoPlayerPage.WriteCaptionsName));
+
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+
+        while (!fixture.Host.WrittenToEnd)
+        {
+            Assert.True(DateTime.UtcNow < deadline, "The captions were not written.");
+            Thread.Sleep(10);
+        }
+
+        var big = new VideoPlayerPage(fixture.Host, title, null, big: true);
+        var bigWindow = new Window { Content = big, Width = 1000, Height = 640 };
+
+        bigWindow.Show();
+        big.Refresh();
+        Dispatcher.UIThread.RunJobs();
+
+        var written = big.GetVisualDescendants().OfType<StackPanel>().Single(stack => stack.Name == VideoPlayerPage.WrittenName);
+        var heading = Assert.IsType<StackPanel>(written.Children[0]);
+        var texts = heading.Children.OfType<TextBlock>().Select(block => block.Text).ToList();
+
+        Assert.True(written.IsVisible);
+        Assert.Equal("CAPTIONS WRITTEN TO", texts[0]);
+        Assert.StartsWith("the end · playing ", texts[1], StringComparison.Ordinal);
+        Assert.Equal(heading.Bounds.X, written.Children[1].Bounds.X);
+
+        bigWindow.Close();
+        Finish(window, fixture);
+    }
+
+    [AvaloniaFact]
     public void WithNoSpeechModelCaptionsCannotBeWritten()
     {
         var fixture = new Fixture(captioner: new WritesOneCue("Writing captions needs a speech model on this computer."));

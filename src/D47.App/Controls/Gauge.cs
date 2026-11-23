@@ -69,6 +69,32 @@ public static class Gauge
         return heading;
     }
 
+    /// <summary>The label in Grey above the value in <paramref name="valueKey"/>, both left-aligned and wrapping, for a column too narrow for <see cref="Heading"/>.</summary>
+    public static StackPanel StackedHeading(string label, string value, string valueKey)
+    {
+        var name = new TextBlock
+        {
+            Text = label.ToUpperInvariant(),
+            FontFamily = new FontFamily(Fonts.ChromeFamily),
+            FontSize = TypeScale.Meta,
+            FontWeight = FontWeight.Medium,
+            LetterSpacing = TypeScale.Meta * Fonts.ChromeTracking,
+            TextWrapping = TextWrapping.Wrap,
+        };
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+
+        var reading = new TextBlock
+        {
+            Text = value,
+            FontFamily = new FontFamily(Fonts.MonoFamily),
+            FontSize = TypeScale.Small,
+            TextWrapping = TextWrapping.Wrap,
+        };
+        ThemeInk.Bind(reading, TextBlock.ForegroundProperty, valueKey);
+
+        return new StackPanel { Spacing = 2, Children = { name, reading } };
+    }
+
     /// <summary>A Tile track filled with <paramref name="fillKey"/> to <paramref name="fill"/>, clamped to 0–1.</summary>
     public static Grid Track(double fill, string fillKey)
     {

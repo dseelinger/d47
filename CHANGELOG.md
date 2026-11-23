@@ -14,6 +14,8 @@ Added: Podcasts. Each show can be set to continuous play, off by default: when a
 
 Changed: Show D47 without SteamVR now keeps its OpenXR layer registered while both headset switches are on, whether or not D47 is running, and closing D47 no longer removes it. Elite shows the panel whichever of Elite and D47 starts first; turning the switch on still takes effect the next time Elite starts. Turning either switch off removes the registration, and the uninstaller removes it too.
 
+Changed: The big panel's Movies player now shows "Captions written to" in its side column, under Captions, while captions are written from the soundtrack: the time the captions reach and the playing position, with a gauge. It was shown only in the window.
+
 Fixed: The SETTINGS count on Media › Music counted the Thumbs-down tracks row even when it was not drawn. It now counts only the rows shown, and changes when a Music publish token is saved or cleared.
 
 Fixed: On the Movies player page, WRITE CAPTIONS and WRITE FROM THE SOUND become available as soon as a speech model is ready, without leaving the page. After writing captions fails, choosing WRITE again tries again.

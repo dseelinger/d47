@@ -230,7 +230,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
             IsVisible = false,
             Children =
             {
-                Gauge.Heading("Captions written to", string.Empty, ThemeManager.AKey),
+                WrittenHeading(big, string.Empty),
                 _writtenTrack,
                 Typeset.Prose(
                     "Written on this computer as the video plays. If the captions fall behind the picture, the video waits for them.",
@@ -363,6 +363,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
                 _playsOn,
                 Head("Captions"),
                 _captions,
+                _written,
             },
         };
 
@@ -698,10 +699,14 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         _captions.SelectedIndex = !_host.CaptionsOn ? 2 : writing ? 1 : none ? 2 : 0;
     }
 
-    /// <summary>How far the written captions reach, beside the picture's position, on the window's page while they are written.</summary>
+    private static Control WrittenHeading(bool stacked, string text) => stacked
+        ? Gauge.StackedHeading("Captions written to", text, ThemeManager.AKey)
+        : Gauge.Heading("Captions written to", text, ThemeManager.AKey);
+
+    /// <summary>How far the written captions reach, beside the picture's position, while they are written; stacked in the big panel's side column.</summary>
     private void DrawWritten(bool writing, TimeSpan position, TimeSpan? length)
     {
-        var shown = writing && !_big;
+        var shown = writing;
         _written.IsVisible = shown;
 
         if (!shown || _host.WrittenTo is not { } written)
@@ -720,7 +725,7 @@ public sealed class VideoPlayerPage : UserControl, IPageSummary, IPageChrome
         }
 
         _writtenText = text;
-        _written.Children[0] = Gauge.Heading("Captions written to", text, ThemeManager.AKey);
+        _written.Children[0] = WrittenHeading(_big, text);
         Gauge.Fill(_writtenTrack, _host.WrittenToEnd ? 1 : length is { } total && total > TimeSpan.Zero ? written / total : 0);
     }
 
