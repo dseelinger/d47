@@ -22,7 +22,7 @@ nav_order: 128
 <p class="intro">Three steps to D47 in the headset.</p>
 <section>
 <h2><span class="num">1</span> Start SteamVR first, then D47.</h2>
-<p class="say">Start SteamVR first, then D47, and check that Show D47 in the headset is on. With Elite on OpenXR and no SteamVR, turn on Show D47 without SteamVR and start D47 before Elite.</p>
+<p class="say">Start SteamVR first, then D47, and check that Show D47 in the headset is on. With Elite on OpenXR and no SteamVR, turn on Show D47 without SteamVR.</p>
 <p class="expect">The panel appears in the headset as an overlay beside the game, and the Headset row reads "Showing in the headset."</p>
 <svg viewBox="0 0 880 252" role="img" aria-label="Headset">
  <rect x="20" y="16" width="840" height="212" fill="var(--surface-alt)" stroke="var(--border)" stroke-width="2"/>
@@ -389,15 +389,16 @@ setting on if it was off. A hidden panel is not remembered across a restart.
 Off by default, and shown while Show D47 in the headset is on. For Elite running on OpenXR through a
 mod, with no SteamVR.
 
-While D47 is running with both switches on, D47 writes one value under the current user's OpenXR
+While both switches are on, D47 writes one value under the current user's OpenXR
 implicit-layer key, `HKCU\SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit`, naming
 `runtimes\openxr\XR_APILAYER_D47_panel.json` beside the running `d47.exe`. The value needs no
-elevation. D47 removes it when either switch goes off, when D47 exits (including on a crash) and at
-the next start if a run left it behind; the uninstaller removes it too.
+elevation. D47 removes it when either switch goes off, and at its next start if a switch is off; the
+uninstaller removes it too.
 
 Every OpenXR application on the PC loads the layer while the value exists, because the loader has no
-per-application filter. Outside Elite the layer passes every call through and does nothing. Start D47
-before Elite: Elite loads the layer when it starts, so a change takes effect the next time Elite starts.
+per-application filter. Outside Elite the layer passes every call through and does nothing. Elite and D47
+can start in either order. Elite loads the layer when it starts, so turning the switch on takes effect the
+next time Elite starts.
 
 Nothing here leaves the machine.
 

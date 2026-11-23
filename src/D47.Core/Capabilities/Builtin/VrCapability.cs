@@ -429,11 +429,12 @@ public static class VrCapability
                     + "running: D47 registers its OpenXR layer for the current user, and Elite started afterwards "
                     + "on an OpenXR runtime that is not SteamVR's shows the panel. Turn it off, or turn Show D47 in "
                     + "the headset off: the registration is removed and Elite started afterwards shows no panel. "
-                    + "Closing D47 removes it too. Needs Elite on a non-SteamVR OpenXR runtime and a headset.",
+                    + "Closing D47 leaves it, and Elite started before D47 shows the panel once D47 starts. Needs Elite on a non-SteamVR OpenXR runtime and a headset.",
                 Label = "Show D47 without SteamVR",
-                Help = "For Elite running on OpenXR through a mod, with no SteamVR. While D47 is running, every "
-                       + "OpenXR application on this PC loads D47's layer; it acts only in Elite. Start D47 before "
-                       + "Elite; takes effect the next time Elite starts.",
+                Help = "For Elite running on OpenXR through a mod, with no SteamVR. While this is on, every "
+                       + "OpenXR application on this PC loads D47's layer, whether or not D47 is running; it acts "
+                       + "only in Elite. Start Elite and D47 in either order; turning this on takes effect the next "
+                       + "time Elite starts.",
                 Kind = SettingKind.Toggle,
                 DocsAnchor = "openxr-layer",
                 AppliesWhen = s => s.Vr.Enabled,

@@ -10,6 +10,8 @@
 
 Added: Podcasts. Each show can be set to continuous play, off by default: when an episode plays to its end, the next episode of that show starts by itself, with no music or chatter between. The order is oldest first, or newest first, which plays the latest unfinished episode published before the one that ended. Say "continuous play on", "continuous play off", "continuous play newest first" or "continuous play oldest first" while a show plays, or ask for a named show. "Next episode" and the media key's next follow the order while a show is on newest first.
 
+Changed: Show D47 without SteamVR now keeps its OpenXR layer registered while both headset switches are on, whether or not D47 is running, and closing D47 no longer removes it. Elite shows the panel whichever of Elite and D47 starts first; turning the switch on still takes effect the next time Elite starts. Turning either switch off removes the registration, and the uninstaller removes it too.
+
 Fixed: The SETTINGS count on Media › Music counted the Thumbs-down tracks row even when it was not drawn. It now counts only the rows shown, and changes when a Music publish token is saved or cleared.
 
 Fixed: On the Movies player page, WRITE CAPTIONS and WRITE FROM THE SOUND become available as soon as a speech model is ready, without leaving the page. After writing captions fails, choosing WRITE again tries again.

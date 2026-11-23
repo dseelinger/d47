@@ -49,7 +49,6 @@ internal static class Program
                 Log.Fatal("d47 is going down on {Thrown}, which is not an exception", crash.ExceptionObject);
             }
 
-            Headset.OpenXrLayerRegistration.Current?.RemoveAtExit();
             Log.CloseAndFlush();
         };
 
@@ -80,11 +79,7 @@ internal static class Program
         wiring.Dispose();
 
         // Handed over when an accepted update starts the build that replaces this one.
-        host.ReleaseSingleInstance = () =>
-        {
-            Headset.OpenXrLayerRegistration.Current?.HandOver();
-            only.ReleaseForSuccessor();
-        };
+        host.ReleaseSingleInstance = only.ReleaseForSuccessor;
 
         Build(host).StartWithClassicDesktopLifetime(args);
     }

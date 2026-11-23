@@ -70,13 +70,11 @@ public sealed class TheOpenXrLayerValueFollowsTheHeadsetSettingsTests
     }
 
     [Fact]
-    public void ExitRemovesTheValue()
+    public void TheValueIsStillThereOnceD47IsDoneWithTheRegistration()
     {
         var store = new StandInStore();
-        var registration = Over(store);
-        registration.Apply(On);
-        registration.RemoveAtExit();
-        Assert.Empty(store.Values);
+        Over(store).Apply(On);
+        Assert.Equal([Mine], store.Values);
     }
 
     [Fact]
@@ -86,17 +84,6 @@ public sealed class TheOpenXrLayerValueFollowsTheHeadsetSettingsTests
         store.Values.AddRange([Mine, Copy, Other]);
         Over(store).Apply(new VrSettings { Enabled = true, OpenXrLayer = false });
         Assert.Equal([Other], store.Values);
-    }
-
-    [Fact]
-    public void AnUpdateHandedOverLeavesTheSuccessorsValueAtExit()
-    {
-        var store = new StandInStore();
-        var registration = Over(store);
-        registration.Apply(On);
-        registration.HandOver();
-        registration.RemoveAtExit();
-        Assert.Equal([Mine], store.Values);
     }
 
     [Fact]

@@ -39,8 +39,8 @@ public sealed class RegistryImplicitLayerStore : IImplicitLayerStore
 }
 
 /// <summary>
-/// Keeps the implicit-layer registry value in step with the settings: present only while d47 is running with
-/// Show D47 in the headset and Show D47 without SteamVR both on.
+/// Keeps the implicit-layer registry value in step with the settings: present while Show D47 in the headset and
+/// Show D47 without SteamVR are both on, whether or not d47 is running.
 /// </summary>
 public sealed class OpenXrLayerRegistration(
     IImplicitLayerStore store,
@@ -50,10 +50,6 @@ public sealed class OpenXrLayerRegistration(
     public const string ManifestName = "XR_APILAYER_D47_panel.json";
 
     private readonly object _gate = new();
-    private bool _handedOver;
-
-    /// <summary>The registration for this process, set by the host so the crash handler can reach it.</summary>
-    public static OpenXrLayerRegistration? Current { get; set; }
 
     public static string ManifestPathBeside(string exeFolder) =>
         Path.Combine(exeFolder, "runtimes", "openxr", ManifestName);
@@ -85,27 +81,6 @@ public sealed class OpenXrLayerRegistration(
                     store.Remove(manifestPath);
                 }
             });
-        }
-    }
-
-    /// <summary>Removes the value at exit, unless an update has handed it to the successor.</summary>
-    public void RemoveAtExit()
-    {
-        lock (_gate)
-        {
-            if (!_handedOver)
-            {
-                Try(() => store.Remove(manifestPath));
-            }
-        }
-    }
-
-    /// <summary>The successor build uses the same path and has written the value; this exit leaves it.</summary>
-    public void HandOver()
-    {
-        lock (_gate)
-        {
-            _handedOver = true;
         }
     }
 

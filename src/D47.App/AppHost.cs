@@ -3723,7 +3723,6 @@ public sealed class AppHost : IDisposable
             Headset.OpenXrLayerRegistration.ManifestPathBeside(
                 Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory),
             host.Loggers.CreateLogger<Headset.OpenXrLayerRegistration>());
-        Headset.OpenXrLayerRegistration.Current = layerRegistration;
         _ = Task.Run(() => layerRegistration.Apply(settings.Current.Vr));
         settings.Changed += change =>
         {
@@ -6897,8 +6896,6 @@ public sealed class AppHost : IDisposable
 
         // And then let go of the game (#206).
         _gameInput.Dispose();
-
-        Headset.OpenXrLayerRegistration.Current?.RemoveAtExit();
 
         // After the tick, so a serve cannot land on a destroyed overlay handle.
         Vr?.Dispose();
