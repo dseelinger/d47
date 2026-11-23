@@ -520,6 +520,10 @@
         <Setter Property="Foreground" Value="{DynamicResource D47.Grey2}" />
         <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
       </Style>
+      <Style Selector="^:disabled:checked">
+        <Setter Property="Foreground" Value="{DynamicResource D47.Grey}" />
+        <Setter Property="Background" Value="{DynamicResource D47.Slab}" />
+      </Style>
     </ControlTheme>
 
     <!--

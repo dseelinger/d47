@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Podcasts. Media › Podcasts has a continuous play row above the selected show's episodes, on the window and the headset panel: a checkbox, "Play another episode when one ends", and an order, Oldest first or Newest first. While the box is clear the order is disabled and a line under the row names the order kept for when it is on. A change by voice shows on an open page.
+
 Added: Podcasts. Each show can be set to continuous play, off by default: when an episode plays to its end, the next episode of that show starts by itself, with no music or chatter between. The order is oldest first, or newest first, which plays the latest unfinished episode published before the one that ended. Say "continuous play on", "continuous play off", "continuous play newest first" or "continuous play oldest first" while a show plays, or ask for a named show. "Next episode" and the media key's next follow the order while a show is on newest first.
 
 Changed: Show D47 without SteamVR now keeps its OpenXR layer registered while both headset switches are on, whether or not D47 is running, and closing D47 no longer removes it. Elite shows the panel whichever of Elite and D47 starts first; turning the switch on still takes effect the next time Elite starts. Turning either switch off removes the registration, and the uninstaller removes it too.

@@ -1,3 +1,4 @@
+using D47.Core.Configuration;
 using D47.Core.Podcasts;
 
 namespace D47.App.Panel;
@@ -10,7 +11,9 @@ public sealed class PodcastsHost(
     Func<Task<IReadOnlyList<PodcastRefresh>>> refresh,
     Func<string, Task<PodcastSearchOutcome>> search,
     Func<Uri, Task<PodcastRefresh>> add,
-    Action<Uri> remove)
+    Action<Uri> remove,
+    Func<Uri, PodcastShowPlay> playFor,
+    Action<Uri, bool?, PodcastOrder?> setPlay)
 {
     private readonly Lock _gate = new();
     private Task<IReadOnlyList<PodcastRefresh>>? _refreshing;
@@ -20,7 +23,7 @@ public sealed class PodcastsHost(
     /// <summary>The feed the page has selected, as an absolute address; both surfaces share it.</summary>
     public string? Selected { get; set; }
 
-    /// <summary>Raised, on any thread, after a show was refreshed, added or removed.</summary>
+    /// <summary>Raised, on any thread, after a show was refreshed, added or removed, or its continuous play changed.</summary>
     public event Action? Changed;
 
     /// <summary>The cached show of each feed added, in the order added.</summary>
@@ -69,6 +72,12 @@ public sealed class PodcastsHost(
 
         RaiseChanged();
     }
+
+    /// <summary>How the feed carries on: off and oldest first unless it has a setting.</summary>
+    public PodcastShowPlay PlayFor(Uri feed) => playFor(feed);
+
+    /// <summary>Sets the feed's continuous play and, where given, its order.</summary>
+    public void SetPlay(Uri feed, bool? continuous, PodcastOrder? order) => setPlay(feed, continuous, order);
 
     public void RaiseChanged() => Changed?.Invoke();
 

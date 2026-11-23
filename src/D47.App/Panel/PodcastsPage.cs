@@ -9,6 +9,7 @@ using D47.App.Theming;
 using D47.App.Voice;
 using D47.Core.Audio;
 using D47.Core.Capabilities.Builtin;
+using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Podcasts;
 
@@ -56,6 +57,20 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
     public const string NextPageName = "PodcastNextPage";
 
     public const string RetryName = "PodcastRetry";
+
+    public const string ContinuousName = "PodcastContinuous";
+
+    public const string OrderName = "PodcastOrder";
+
+    public const string KeptOrderName = "PodcastKeptOrder";
+
+    public const string ContinuousLabel = "Play another episode when one ends";
+
+    public static readonly IReadOnlyList<string> OrderLabels = ["Oldest first", "Newest first"];
+
+    private const double WindowOrderWidth = 320;
+
+    private const double BigOrderWidth = 240;
 
     /// <summary>The episodes the big panel lists at a time.</summary>
     public const int BigEpisodesPerPage = 5;
@@ -430,6 +445,7 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
 
         if (_big)
         {
+            _episodes.Children.Add(ContinuousRow(chosen));
             rows.Children.Add(ListRow.Head($"{chosen.Show.Title} · {Plural(lines.Count, "episode")}"));
         }
         else
@@ -437,6 +453,8 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
             _episodes.Children.Add(RoutingKit.Section(
                 chosen.Show.Title,
                 Typeset.Chrome(Plural(lines.Count, "episode").ToUpperInvariant(), 12, ThemeManager.GreyKey, vertical: VerticalAlignment.Bottom)));
+
+            _episodes.Children.Add(ContinuousRow(chosen));
 
             var hint = Typeset.Prose("Press an episode to play it from where you left off.", 15, ThemeManager.GreyKey, wrap: true, vertical: VerticalAlignment.Center);
             var removal = Removal(chosen, wide: true);
@@ -460,6 +478,50 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         {
             _episodes.Children.Add(Pager(lines.Count));
         }
+    }
+
+    /// <summary>The selected show's continuous play: a checkbox, and the order, which is disabled and named below while it is off.</summary>
+    private StackPanel ContinuousRow(CachedShow show)
+    {
+        var play = _host.PlayFor(show.Feed);
+        var (box, _) = LabeledCheckBox.Build(ContinuousLabel);
+
+        box.Name = ContinuousName;
+        box.IsChecked = play.Continuous;
+        box.MinHeight = TypeScale.MinimumTarget;
+        box.IsCheckedChanged += (_, _) => _host.SetPlay(show.Feed, box.IsChecked == true, null);
+
+        var order = new Segment
+        {
+            Name = OrderName,
+            ItemsSource = OrderLabels,
+            SelectedIndex = play.Order == PodcastOrder.NewestFirst ? 1 : 0,
+            Width = _big ? BigOrderWidth : WindowOrderWidth,
+            IsEnabled = play.Continuous,
+        };
+
+        AutomationProperties.SetName(order, "Order");
+        order.SelectionChanged += (_, _) => _host.SetPlay(show.Feed, null, order.SelectedIndex == 1 ? PodcastOrder.NewestFirst : PodcastOrder.OldestFirst);
+        DockPanel.SetDock(order, Dock.Right);
+
+        var row = new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 0, 12) };
+
+        row.Children.Add(new DockPanel { LastChildFill = true, Children = { order, box } });
+
+        if (!play.Continuous)
+        {
+            var kept = Typeset.Chrome(
+                $"Order kept for when it is on: {(play.Order == PodcastOrder.NewestFirst ? "newest" : "oldest")} first",
+                11,
+                ThemeManager.GreyKey,
+                align: Avalonia.Media.TextAlignment.Right);
+
+            kept.Name = KeptOrderName;
+            kept.HorizontalAlignment = HorizontalAlignment.Right;
+            row.Children.Add(kept);
+        }
+
+        return row;
     }
 
     private Button EpisodeRow(CachedShow show, PodcastEpisodeLine line, bool now, PodcastPlayerState? state)

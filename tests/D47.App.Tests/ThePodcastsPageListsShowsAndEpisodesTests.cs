@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core.Audio;
+using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Podcasts;
 using D47.Core.Storage;
@@ -30,6 +31,10 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
         public List<Uri> Removed { get; } = [];
 
         public int Refreshes { get; set; }
+
+        public Dictionary<string, PodcastShowPlay> Plays { get; } = [];
+
+        public List<(bool? Continuous, PodcastOrder? Order)> Sets { get; } = [];
 
         public PodcastsHost Host { get; }
 
@@ -61,6 +66,14 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
                 {
                     Removed.Add(feed);
                     Feeds.Remove(feed);
+                },
+                feed => Plays.TryGetValue(feed.AbsoluteUri, out var play) ? play : new PodcastShowPlay { Feed = feed.AbsoluteUri },
+                (feed, continuous, order) =>
+                {
+                    Sets.Add((continuous, order));
+                    var current = Plays.TryGetValue(feed.AbsoluteUri, out var play) ? play : new PodcastShowPlay { Feed = feed.AbsoluteUri };
+                    Plays[feed.AbsoluteUri] = current with { Continuous = continuous ?? current.Continuous, Order = order ?? current.Order };
+                    Host!.RaiseChanged();
                 });
         }
     }
@@ -183,6 +196,98 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PodcastAddPage.NotAFeed, D47.App.Theming.FieldMessage.GetText(url));
+
+        window.Close();
+    }
+
+    private static CheckBox Continuous(Control root) =>
+        root.GetVisualDescendants().OfType<CheckBox>().First(box => box.Name == PodcastsPage.ContinuousName);
+
+    private static D47.App.Controls.Segment Order(Control root) =>
+        root.GetVisualDescendants().OfType<D47.App.Controls.Segment>().First(segment => segment.Name == PodcastsPage.OrderName);
+
+    [AvaloniaFact]
+    public void AShowWithNoSettingReadsOffOldestFirstAndNamesTheKeptOrder()
+    {
+        var (window, panel) = Open(new Fixture());
+
+        Assert.False(Continuous(panel).IsChecked);
+        Assert.False(Order(panel).IsEnabled);
+        Assert.Equal(0, Order(panel).SelectedIndex);
+        Assert.Contains("Order kept for when it is on: oldest first", Drawn(panel));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AShowOnNewestFirstEnablesTheOrderAndDropsTheKeptLine()
+    {
+        var fixture = new Fixture();
+
+        fixture.Plays[FeedOne.AbsoluteUri] = new PodcastShowPlay { Feed = FeedOne.AbsoluteUri, Continuous = true, Order = PodcastOrder.NewestFirst };
+
+        var (window, panel) = Open(fixture);
+
+        Assert.True(Continuous(panel).IsChecked);
+        Assert.True(Order(panel).IsEnabled);
+        Assert.Equal(1, Order(panel).SelectedIndex);
+        Assert.DoesNotContain(Drawn(panel), text => text.StartsWith("Order kept", StringComparison.Ordinal));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ATickedBoxWritesTheSettingAndKeepsTheOrder()
+    {
+        var fixture = new Fixture();
+
+        fixture.Plays[FeedOne.AbsoluteUri] = new PodcastShowPlay { Feed = FeedOne.AbsoluteUri, Order = PodcastOrder.NewestFirst };
+
+        var (window, panel) = Open(fixture);
+
+        Continuous(panel).IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal((true, null), fixture.Sets.Last());
+        Assert.True(fixture.Plays[FeedOne.AbsoluteUri].Continuous);
+        Assert.True(Order(panel).IsEnabled);
+        Assert.Equal(1, Order(panel).SelectedIndex);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void APressedOrderWritesTheOrder()
+    {
+        var fixture = new Fixture();
+
+        fixture.Plays[FeedOne.AbsoluteUri] = new PodcastShowPlay { Feed = FeedOne.AbsoluteUri, Continuous = true };
+
+        var (window, panel) = Open(fixture);
+        var newest = Order(panel).GetVisualDescendants().OfType<RadioButton>().Last();
+
+        newest.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal((null, PodcastOrder.NewestFirst), fixture.Sets.Last());
+        Assert.Equal(1, Order(panel).SelectedIndex);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASettingChangedFromOutsideRedrawsTheRow()
+    {
+        var fixture = new Fixture();
+        var (window, panel) = Open(fixture);
+
+        fixture.Plays[FeedOne.AbsoluteUri] = new PodcastShowPlay { Feed = FeedOne.AbsoluteUri, Continuous = true, Order = PodcastOrder.NewestFirst };
+        fixture.Host.RaiseChanged();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(Continuous(panel).IsChecked);
+        Assert.True(Order(panel).IsEnabled);
+        Assert.Equal(1, Order(panel).SelectedIndex);
 
         window.Close();
     }

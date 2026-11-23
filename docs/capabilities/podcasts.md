@@ -150,6 +150,12 @@ first. Opening the page fetches every feed again, and says which could not be re
 **In progress** with where you stopped, **Finished**, or nothing. An unfinished episode is new when it is newer
 than every episode of that show you have started; a show you have not started has only its newest episode new.
 
+Above the selected show's episodes one row sets its continuous play: the checkbox **Play another episode when
+one ends** and the order, **Oldest first** or **Newest first**. While the box is clear the order is disabled and
+a line under the row says which order is kept, for example "Order kept for when it is on: oldest first". Ticking
+the box turns the order on with that order selected. The row reads the same setting the voice phrases change, so
+"continuous play newest first" shows on an open page.
+
 Press an episode to play it from where you left off. Under the lists the transport shows the episode and its
 show, a seek bar with the elapsed time and the length, and **Back 30 s**, **Pause** or **Play**, **Forward
 30 s** and **Next episode**. The seek bar and the two skips are disabled for an episode whose server sends it only
@@ -160,7 +166,9 @@ podcast directory, as "find a podcast" does; **Add** on a result adds its feed. 
 RSS address. **Remove this show** asks first, then removes the feed and forgets where you were in its episodes.
 Adding a feed by address and removing one are made here and in the settings row, never by voice.
 
-The big panel has the same page, with five episodes at a time and **Previous** and **Next** under them.
+The big panel has the same page, with five episodes at a time and **Previous** and **Next** under them. The
+continuous play row sits above the episode list's head, and the shows column keeps **Add a show** and **Remove
+this show**.
 
 ### The feed list
 

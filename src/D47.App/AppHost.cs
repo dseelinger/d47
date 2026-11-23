@@ -6075,8 +6075,25 @@ public sealed class AppHost : IDisposable
                     {
                         Settings.Replace("a podcast feed was removed", current => current with { Podcasts = current.Podcasts.WithoutFeed(feed) });
                         player.Forget(feed);
-                    });
+                    },
+                    feed => Settings.Current.Podcasts.PlayFor(feed),
+                    (feed, continuous, order) => Settings.Replace(
+                        "a podcast show's continuous play was set",
+                        current => current with { Podcasts = current.Podcasts.WithPlay(feed, continuous, order) }));
                 store.Changed += _podcastsHost.RaiseChanged;
+
+                var shown = Settings.Current.Podcasts.Shows;
+
+                Settings.Changed += change =>
+                {
+                    var now = change.Settings.Podcasts.Shows;
+
+                    if (!ReferenceEquals(now, shown))
+                    {
+                        shown = now;
+                        _podcastsHost?.RaiseChanged();
+                    }
+                };
             }
 
             return _podcastsHost;
