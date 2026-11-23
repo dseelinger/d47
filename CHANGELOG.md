@@ -10,6 +10,8 @@
 
 Fixed: In the window, the copy glyph's hover label reads COPIED after a press, or COPY FAILED when the copy failed, for the two seconds the button says so, and then goes back to COPY SYSTEM NAME (COPY STATION NAME on the Faction page). The big panel still shows no label.
 
+Fixed: A double-click on a show in Media › Podcasts whose episodes are all finished says so in the status line while another show's episode is playing or paused. The same goes for a show that is not added.
+
 Fixed: A technology broker at a colony station reads as Human in the Technology broker column on Stations and Outfitting, in its filter and in the next-system watch, where Spansh reported Guardian or nothing. A station in a colonised system without the Technology Broker service shows no type. Stations elsewhere keep Spansh's value.
 
 Fixed: A Technology broker search on Search › Stations or by voice finds the type d47 shows. Human lists colony stations whatever Spansh labels them and counts them in its total, and Guardian no longer lists them. Guardian with Colonised is refused with a sentence, since a Guardian broker is never in a colonised system.

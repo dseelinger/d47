@@ -662,7 +662,17 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
 
     private async Task PlayShowAsync(CachedShow show)
     {
-        Report(await _host.PlayShow(show.Feed));
+        var said = await _host.PlayShow(show.Feed);
+
+        if (_host.Player.State is { } now && string.Equals(now.Feed.AbsoluteUri, show.Feed.AbsoluteUri, StringComparison.Ordinal))
+        {
+            Report(said);
+        }
+        else
+        {
+            SayNothingStarted(said);
+        }
+
         Draw();
     }
 
@@ -792,6 +802,21 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         {
             _nowAside.Text = Reading(state.Position, state.Length);
         }
+    }
+
+    /// <summary>Shows the sentence a show's play answered when it started nothing.</summary>
+    private void SayNothingStarted(string sentence)
+    {
+        if (string.IsNullOrWhiteSpace(sentence))
+        {
+            _line.Clear();
+        }
+        else
+        {
+            _line.Say(sentence);
+        }
+
+        Poll();
     }
 
     /// <summary>Says what a transport action answered when it did nothing, or when it ended the episode.</summary>

@@ -235,7 +235,7 @@ public sealed class DoubleClickingAMediaRowPlaysItTests
     private static PodcastEpisode Episode(string id, int day) =>
         new(id, $"Episode {id}", new DateTimeOffset(2026, 11, day, 0, 0, 0, TimeSpan.Zero), new Uri($"https://cdn.example.test/{id}.mp3"), "audio/mpeg", null, TimeSpan.FromMinutes(40));
 
-    private static (Window Window, PanelView Panel, List<Uri> Played, List<string> Said) OpenPodcasts(bool headset = false)
+    private static (Window Window, PanelView Panel, List<Uri> Played, List<string> Said) OpenPodcasts(bool headset = false, Action<PodcastPlayer>? created = null)
     {
         var arbiter = new AudioArbiter(new SilentSink(), NullLogger<AudioArbiter>.Instance).Start();
         var music = new AmbientMusic(arbiter, () => CueLibrary.Load());
@@ -247,6 +247,8 @@ public sealed class DoubleClickingAMediaRowPlaysItTests
             new(FeedOne, new PodcastShow("Deep Space", [Episode("a", 21)])),
             new(FeedTwo, new PodcastShow("Deep Space Hour", [Episode("x", 3)])),
         ];
+
+        created?.Invoke(player);
 
         var host = new PodcastsHost(
             player,
@@ -300,6 +302,25 @@ public sealed class DoubleClickingAMediaRowPlaysItTests
     public void ADoubleClickOnAShowPlaysThatShowByItsFeedAndSaysWhenEveryEpisodeIsFinished()
     {
         var (window, panel, played, _) = OpenPodcasts();
+
+        DoubleClick(window, () => Row(panel, PodcastsPage.ShowName, FeedTwo.AbsoluteUri));
+
+        Assert.Equal([FeedTwo], played);
+        Assert.Contains(
+            panel.GetVisualDescendants().OfType<StatusLine>(),
+            line => line.IsVisible && line.Text == "Every episode of Deep Space Hour is finished.");
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public async Task ADoubleClickOnAFinishedShowSaysSoWhileAnotherShowsEpisodeIsInTheSlot()
+    {
+        PodcastPlayer? slot = null;
+        var (window, panel, played, _) = OpenPodcasts(created: player => slot = player);
+
+        await slot!.Play(FeedOne, new PodcastShow("Deep Space", [Episode("a", 21)]), Episode("a", 21));
+        Assert.NotNull(slot.State);
 
         DoubleClick(window, () => Row(panel, PodcastsPage.ShowName, FeedTwo.AbsoluteUri));
 
