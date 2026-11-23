@@ -95,10 +95,10 @@ internal sealed class OrbitPlot : Control
         });
     }
 
-    /// <summary>Advances one frame from the host's tick; true when the plot is visible and its clock runs.</summary>
+    /// <summary>Advances one frame from the host's tick; true when its clock runs. The caller decides whether the plot is shown.</summary>
     public bool Tick()
     {
-        if (!_clock.Running || !IsEffectivelyVisible)
+        if (!_clock.Running)
         {
             return false;
         }

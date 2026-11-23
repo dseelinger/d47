@@ -1000,7 +1000,10 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
 
         foreach (var plot in this.GetVisualDescendants().OfType<OrbitPlot>())
         {
-            moved |= plot.Tick();
+            if (ShownHere(plot))
+            {
+                moved |= plot.Tick();
+            }
         }
 
         return moved;

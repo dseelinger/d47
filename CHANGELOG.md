@@ -10,6 +10,8 @@
 
 Changed: Galaxy searches that are not given a distance look 500 light years out, where they looked 50. That covers stations, outfitting, bodies, commodities, mission stations, where a material is found, and the nearest material trader, which looked 100. "Set course for the nearest encoded material trader" and the other quick searches now find one that is further than 50 light years away. The Stations, Outfitting, Bodies and Market pages open with 500 in their distance box. Commodity searches still rank by best price, so the best price can now be several hundred light years away; say a distance to search less far.
 
+Fixed: In the headset, the Orbits plot on the System page moves on every tick while its clock runs, as it does in the d47 window. It had moved only when something else redrew the panel.
+
 Fixed: In the headset, the Writing the chapter bar on the mini panel's Stories reading moves once a second for the whole write, as it does in the d47 window. It had stopped between redraws.
 
 Fixed: In the headset, the Music and Podcasts seek bars and times on the big panel, and the music read-out on the mini panel, move once a second while the track or episode plays. They had stopped between redraws.
