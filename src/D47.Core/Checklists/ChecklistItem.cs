@@ -205,6 +205,12 @@ public enum ChecklistIntentKind
 
     /// <summary>A hull to buy, by its symbol. Nothing in the journal ticks it on a planned ship's list.</summary>
     Hull,
+
+    /// <summary>
+    /// A ship material to hold for the engineering lines of its list, by the material's symbol. Read against
+    /// the whole document by <see cref="PlanMaterials"/>, not by <see cref="ChecklistEvaluator"/>.
+    /// </summary>
+    Material,
 }
 
 /// <summary>A structured intent, which is half of an item's identity.</summary>

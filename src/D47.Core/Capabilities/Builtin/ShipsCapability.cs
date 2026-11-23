@@ -110,7 +110,8 @@ public static class ShipsCapability
                 Description =
                     "Put a ship's build on the checklist. The Commander's own act: each planned slot becomes "
                     + "a line for its blueprint and grade, plus a second line when the slot names an "
-                    + "experimental effect, and the lines are written at once.",
+                    + "experimental effect, plus a line for each ship material the plan leaves you short of, "
+                    + "and the lines are written at once.",
                 Protected = true,
                 Parameters =
                 [

@@ -883,7 +883,7 @@ public sealed class ShipPlanService(
             replacing = [build.Hull, .. replacing];
         }
 
-        return checklists.AdoptPlan(scope, ChecklistSource.EngineeringPlan, items, replacing, wholePlan: true);
+        return checklists.AdoptPlan(scope, ChecklistSource.EngineeringPlan, items, replacing, wholePlan: true, materials: true);
     }
 
     /// <summary>The first line of a planned ship's list: "Buy a Python".</summary>

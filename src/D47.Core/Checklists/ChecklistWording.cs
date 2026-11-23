@@ -85,7 +85,10 @@ public static class ChecklistWording
             ? Planned(item.BuildName, item.Hull)
             : Ship(item.Scope, item.Hull, state);
 
-        return ship is not null ? $"{said} on {ship}" : said;
+        // A material is held for the ship rather than fitted to it: "Have 12 Arsenic for Flamebrand (Anaconda)".
+        var joined = item.Intent?.Kind == ChecklistIntentKind.Material ? "for" : "on";
+
+        return ship is not null ? $"{said} {joined} {ship}" : said;
     }
 
     /// <summary>

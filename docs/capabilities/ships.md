@@ -400,8 +400,9 @@ does — so it looks like the same rule, because it is one.
 
 ### Dropping a build
 
-Drop the plan for a ship you own and whatever it already put on your checklist **stays there**. You
-ordered your list around those lines, and silently removing them makes the history wrong. Drop the
+Drop the plan for a ship you own and whatever it already put on your checklist **stays there**, the material
+lines with the engineering lines. You ordered your list around those lines, and silently removing them
+makes the history wrong. Drop the
 plan for a hull you have not bought and its "(planned)" list on the Checklist tab goes with it.
 
 ### Importing a build from the clipboard
@@ -504,8 +505,8 @@ to do about it.
 #### `promote_ship_plan`
 
 Put a ship's build on the checklist. The Commander's own act: each planned slot becomes a line for
-its blueprint and grade, plus a second line when the slot names an experimental effect, and the
-lines are written at once.
+its blueprint and grade, plus a second line when the slot names an experimental effect, plus a line
+for each ship material the plan leaves you short of, and the lines are written at once.
 
 ```json
 {"type":"object","properties":{"ship":{"type":"string","description":"Which ship, by name or hull. Omit for the one the Commander is flying."}},"required":[],"additionalProperties":false}

@@ -75,7 +75,36 @@ public sealed class ChecklistService(
     public ChecklistDocument Document => list.For(Fid, Name);
 
     /// <summary>What the journal says about one item right now, or null when nothing can be said.</summary>
-    public ChecklistVerdict? Verdict(ChecklistItem item) => ChecklistEvaluator.Evaluate(item, State);
+    public ChecklistVerdict? Verdict(ChecklistItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        var state = State;
+
+        if (!PlanMaterials.Is(item))
+        {
+            return ChecklistEvaluator.Evaluate(item, state);
+        }
+
+        return state is null ? null : PlanMaterials.Verdict(item, MaterialNeeds(Document, state), state);
+    }
+
+    private PlanMaterialNeeds? _materialNeeds;
+
+    /// <summary>The material needs of this document, read again only when the document or the materials held change.</summary>
+    private PlanMaterialNeeds MaterialNeeds(ChecklistDocument document, CommanderGameState state, bool fresh = false)
+    {
+        var held = Volatile.Read(ref _materialNeeds);
+
+        if (!fresh && held is not null && held.Reads(document, state))
+        {
+            return held;
+        }
+
+        var read = PlanMaterials.Read(document, state);
+        Volatile.Write(ref _materialNeeds, read);
+        return read;
+    }
 
     /// <summary>The line as a Commander reads it, with the slot resolved to the module in it.</summary>
     public string Said(ChecklistItem item) => ChecklistWording.Said(item, State);
@@ -369,6 +398,9 @@ public sealed class ChecklistService(
     /// <summary>News waiting to be spoken.</summary>
     private readonly Queue<ChecklistNews> _news = new();
 
+    /// <summary>The document the material lines were last brought up to date against.</summary>
+    private ChecklistDocument? _materialsReconciled;
+
     /// <summary>Takes what is waiting to be said.</summary>
     public IReadOnlyList<ChecklistNews> Drain()
     {
@@ -488,6 +520,20 @@ public sealed class ChecklistService(
                         ? verdict.Says
                         : $"\"{said}\" is done. {verdict.Says}"));
             }
+        }
+
+        // Read again on a tick with events or after the document changed, because netting every plan is not a
+        // per-tick cost. A material line ticking says nothing here: ChecklistCallout says the material is covered.
+        if (document.Items.Any(PlanMaterials.Is)
+            && (events is { Count: > 0 } || !ReferenceEquals(document, _materialsReconciled)))
+        {
+            _materialsReconciled = document;
+
+            var (rewritten, gone) = PlanMaterials.Reconcile(
+                MaterialNeeds(document, state, fresh: true), document, state, RemoveFulfilled);
+
+            moved.AddRange(rewritten);
+            removed.AddRange(gone);
         }
 
         if (announce && news.Count > 0)
@@ -1251,7 +1297,7 @@ public sealed class ChecklistService(
             return item.Watch is { } watch ? $"{text} — {ChecklistWatching.Describe(watch, !item.IsComplete)}" : text;
         }
 
-        var verdict = ChecklistEvaluator.Evaluate(item, State);
+        var verdict = Verdict(item);
 
         return verdict is { } known
             ? $"{text} — {known.Says}"
@@ -1979,7 +2025,7 @@ public sealed class ChecklistService(
         if (!item.TicksByHand && change != ProposalKind.Remove)
         {
             // Observing rather than asserting.
-            var verdict = ChecklistEvaluator.Evaluate(item, State);
+            var verdict = Verdict(item);
 
             return verdict is { } known
                 ? $"\"{item.Text}\" is worked out from your journal rather than agreed: {known.Says}"
@@ -2059,12 +2105,14 @@ public sealed class ChecklistService(
     /// </summary>
     /// <param name="replacing">The subjects this proposal has an opinion about.</param>
     /// <param name="wholePlan">True when <paramref name="items"/> is the entire plan for the scope and source.</param>
+    /// <param name="materials">Whether the list also takes a line for each ship material the plan leaves the Commander short of.</param>
     public string AdoptPlan(
         ChecklistScope scope,
         ChecklistSource source,
         IReadOnlyList<ChecklistItem> items,
         IReadOnlyCollection<string> replacing,
-        bool wholePlan = false)
+        bool wholePlan = false,
+        bool materials = false)
     {
         var wanted = Wanted(scope, source, items, replacing, wholePlan);
 
@@ -2073,10 +2121,19 @@ public sealed class ChecklistService(
             return "That would leave the plan empty, and I would rather you dropped it from the panel.";
         }
 
-        var change = Adding(document => document.Revise(scope, source, wanted));
+        var state = State;
+        var materialLines = 0;
+
+        var change = Adding(document =>
+        {
+            IReadOnlyList<ChecklistItem> lines = materials ? PlanMaterials.With(document, scope, wanted, state) : wanted;
+
+            materialLines = lines.Count(PlanMaterials.Is);
+            return document.Revise(scope, source, lines);
+        });
 
         // The count, said out loud.
-        var landed = items.Count;
+        var landed = items.Count + materialLines;
 
         return landed == 0
             ? change.Report

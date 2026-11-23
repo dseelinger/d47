@@ -517,8 +517,8 @@ that one, so it is checked exactly.
 #### A ship you do not own
 
 Pressing **Put this build on my checklist** on the page of a ship you do not own makes a list named for the plan, such as
-"Python (planned)". It holds a "Buy a Python" line, a line for each module the plan names and the
-engineering lines. A module line ticks once a matching module is in your module storage; until then it
+"Python (planned)". It holds a "Buy a Python" line, a line for each module the plan names, the
+engineering lines and a "Have 12 Arsenic" line for each ship material the plan leaves you short of. A module line ticks once a matching module is in your module storage; until then it
 says you can buy it into storage before you buy the ship. The checklist filter offers the planned ship group.
 
 Buying the ship ticks "Buy a Python", or removes it when **Remove fulfilled items** is on. The rest of
