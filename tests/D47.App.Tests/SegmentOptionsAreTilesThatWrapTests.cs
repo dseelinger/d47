@@ -75,17 +75,23 @@ public class SegmentOptionsAreTilesThatWrapTests
     }
 
     [AvaloniaFact]
-    public void ADisabledSegmentIsSlabWithGreyTwoInk()
+    public void ADisabledSegmentIsSlabWithGreyTwoInkAndItsChosenOptionInGrey()
     {
         var (_, segment) = Open();
 
         segment.IsEnabled = false;
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 
-        foreach (var button in segment.GetVisualDescendants().OfType<RadioButton>())
+        var buttons = segment.GetVisualDescendants().OfType<RadioButton>().ToList();
+
+        Assert.Single(buttons, button => button.IsChecked == true);
+
+        foreach (var button in buttons)
         {
             Assert.Equal(Resource(ThemeManager.SlabKey), button.Background);
-            Assert.Equal(Resource(ThemeManager.Grey2Key), button.Foreground);
+            Assert.Equal(
+                Resource(button.IsChecked == true ? ThemeManager.GreyKey : ThemeManager.Grey2Key),
+                button.Foreground);
         }
     }
 
