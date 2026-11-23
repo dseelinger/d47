@@ -54,14 +54,14 @@ public sealed class AVideosPictureFollowsItsSoundtrackTests : IDisposable
     private static string Fixture(string name) => Path.Combine(AppContext.BaseDirectory, "Fixtures", "video", name);
 
     /// <summary>A playback stopped when the test ends; skips the test where Media Foundation cannot decode the fixture.</summary>
-    private VideoPlayback Video(Func<bool>? pauseWhileSpeaking = null, Func<bool>? pauseForPushToTalk = null)
+    private VideoPlayback Video(Func<bool>? pauseForPushToTalk = null)
     {
         if (!Decodes.Value)
         {
             Assert.Skip("Media Foundation cannot decode the fixture here.");
         }
 
-        var video = new VideoPlayback(_audio, pauseWhileSpeaking, background: work => work(), pauseForPushToTalk: pauseForPushToTalk);
+        var video = new VideoPlayback(_audio, background: work => work(), pauseForPushToTalk: pauseForPushToTalk);
         _videos.Add(video);
         return video;
     }
@@ -240,14 +240,14 @@ public sealed class AVideosPictureFollowsItsSoundtrackTests : IDisposable
     }
 
     [Fact]
-    public void WithPauseWhileSpeakingOffSpeechDucksTheVideoInstead()
+    public void WithPauseForPushToTalkOffPushToTalkDucksTheVideoInstead()
     {
-        var video = Video(pauseWhileSpeaking: () => false);
+        var video = Video(pauseForPushToTalk: () => false);
         video.Play(Clip);
         Opened(video);
         var soundtrack = _sink.Started.Single().Id;
 
-        _audio.Enqueue(new AudioRequest { Channel = AudioChannel.Speech, Clip = new AudioClip("reply", new byte[960], AudioFormat.Standard) });
+        _audio.Listening = true;
 
         Assert.Equal(VideoPause.None, video.PausedFor);
         Assert.False(_sink.IsPaused(soundtrack));

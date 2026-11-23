@@ -24,9 +24,9 @@ public class ASubtitleSharesTheCaptionBandTests
     /// <summary>The first cue as the caption rules wrap it.</summary>
     private static readonly IReadOnlyList<string> Reactor = Caption.Wrap("The reactor is stable for now. We have about ten minutes.");
 
-    private static CaptionLayer Following(bool pausesForSpeech = true)
+    private static CaptionLayer Following()
     {
-        var layer = new CaptionLayer { VideoPausesForSpeech = pausesForSpeech };
+        var layer = new CaptionLayer();
         layer.Follow(Cues);
         return layer;
     }
@@ -39,7 +39,6 @@ public class ASubtitleSharesTheCaptionBandTests
         layer.At(TimeSpan.FromSeconds(2));
 
         Assert.Equal(Reactor, layer.Lines);
-        Assert.Null(layer.Above);
         Assert.True(layer.Visible);
         Assert.All(layer.Lines, line => Assert.True(line.Length <= Caption.CharactersPerLine));
     }
@@ -158,13 +157,12 @@ public class ASubtitleSharesTheCaptionBandTests
     [Fact]
     public void WithTheVideoPausingD47sLineTakesTheBandAndTheCueReturnsWhenD47Finishes()
     {
-        var layer = Following(pausesForSpeech: true);
+        var layer = Following();
         layer.At(TimeSpan.FromSeconds(2));
 
         layer.Say("Interdiction attempt detected, Commander.", Now);
 
         Assert.Equal(["Interdiction attempt detected, Commander."], layer.Lines);
-        Assert.Null(layer.Above);
 
         // The video is paused while D47 speaks, so the position stands still.
         layer.At(TimeSpan.FromSeconds(2));
@@ -179,13 +177,12 @@ public class ASubtitleSharesTheCaptionBandTests
         layer.At(TimeSpan.FromSeconds(2.1));
 
         Assert.Equal(Reactor, layer.Lines);
-        Assert.Null(layer.Above);
     }
 
     [Fact]
     public void WithTheVideoPausedForOtherReasonsTheCueReturnsWhenD47sLinesClear()
     {
-        var layer = Following(pausesForSpeech: true);
+        var layer = Following();
         layer.At(TimeSpan.FromSeconds(2));
 
         layer.Say("Fuel is at nineteen per cent.", Now);
@@ -201,81 +198,9 @@ public class ASubtitleSharesTheCaptionBandTests
     }
 
     [Fact]
-    public void WithTheVideoPlayingOnD47sLineSitsAboveTheCue()
-    {
-        var layer = Following(pausesForSpeech: false);
-        layer.At(TimeSpan.FromSeconds(2));
-
-        layer.Say("Interdiction attempt detected, Commander.", Now);
-
-        Assert.Equal("Interdiction attempt detected, Commander.", layer.Above);
-        Assert.Equal(Reactor, layer.Lines);
-
-        // The cue moves on underneath it.
-        layer.At(TimeSpan.FromSeconds(5.5));
-
-        Assert.Equal("Interdiction attempt detected, Commander.", layer.Above);
-        Assert.Equal(["Copy that."], layer.Lines);
-    }
-
-    [Fact]
-    public void WithTheVideoPlayingOnD47sLineLeavesWhenItsDwellEnds()
-    {
-        var layer = Following(pausesForSpeech: false);
-        layer.At(TimeSpan.FromSeconds(2));
-
-        layer.Say("Fuel is at nineteen per cent.", Now);
-        layer.Quiet(Now + (Second * 2));
-        layer.Tick(Now + (Second * 2) + Caption.MaximumDwell);
-
-        Assert.Null(layer.Above);
-        Assert.Equal(Reactor, layer.Lines);
-    }
-
-    [Fact]
-    public void WithTheVideoPlayingOnALongerD47LineTakesTheBandAlone()
-    {
-        var layer = Following(pausesForSpeech: false);
-        layer.At(TimeSpan.FromSeconds(2));
-
-        layer.Say("Interdiction attempt detected, Commander. Submit or run, but decide now.", Now);
-
-        Assert.Null(layer.Above);
-        Assert.Equal(2, layer.Lines.Count);
-        Assert.DoesNotContain(Reactor[^1], layer.Lines);
-
-        // Once D47's lines clear, the cue for wherever the video has got to is back.
-        layer.Quiet(Now + (Second * 4));
-        layer.Tick(Now + (Second * 4) + Caption.MaximumDwell);
-        layer.At(TimeSpan.FromSeconds(5.5));
-
-        Assert.Equal(["Copy that."], layer.Lines);
-    }
-
-    [Fact]
-    public void WithTheVideoPlayingOnAThreeLineCueLeavesNoRoomAndD47TakesTheBandAlone()
-    {
-        var layer = new CaptionLayer { VideoPausesForSpeech = false };
-        layer.Follow(
-        [
-            new SubtitleCue(
-                TimeSpan.Zero,
-                TimeSpan.FromSeconds(10),
-                "Telemetry shows the second stage separating cleanly, the third stage igniting on time, and the vehicle downrange."),
-        ]);
-        layer.At(TimeSpan.FromSeconds(1));
-        Assert.Equal(Caption.WindowLines, layer.Lines.Count);
-
-        layer.Say("Fuel is at nineteen per cent.", Now);
-
-        Assert.Null(layer.Above);
-        Assert.Equal(["Fuel is at nineteen per cent."], layer.Lines);
-    }
-
-    [Fact]
     public void SilencingD47LeavesTheCue()
     {
-        var layer = Following(pausesForSpeech: false);
+        var layer = Following();
         layer.At(TimeSpan.FromSeconds(2));
         layer.Say("Fuel is at nineteen per cent.", Now);
         var changes = 0;
@@ -284,7 +209,6 @@ public class ASubtitleSharesTheCaptionBandTests
         layer.Silence();
 
         Assert.Equal(1, changes);
-        Assert.Null(layer.Above);
         Assert.Equal(Reactor, layer.Lines);
     }
 }

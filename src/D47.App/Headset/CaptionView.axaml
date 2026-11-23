@@ -36,38 +36,13 @@
     -->
     <StackPanel Margin="28,16" HorizontalAlignment="Center">
 
-      <!-- D47's line above a subtitle: the mark, the line, and a rule between it and the subtitle. -->
-      <StackPanel Orientation="Horizontal"
-                  HorizontalAlignment="Center"
-                  IsVisible="{Binding Stacked}">
-        <TextBlock Text="D47"
-                   Margin="0,0,16,0"
-                   VerticalAlignment="Center"
-                   Foreground="{DynamicResource D47.A}"
-                   FontFamily="{StaticResource D47.Font.Chrome}"
-                   FontWeight="SemiBold"
-                   LetterSpacing="1.5"
-                   FontSize="{Binding MarkFontSize}" />
-        <TextBlock Text="{Binding Above}"
-                   VerticalAlignment="Center"
-                   Foreground="{DynamicResource D47.White}"
-                   FontFamily="Segoe UI,Inter,sans-serif"
-                   FontWeight="SemiBold"
-                   FontSize="{Binding TextFontSize}" />
-      </StackPanel>
-      <Border Height="1"
-              Margin="0,8"
-              HorizontalAlignment="Stretch"
-              Background="{DynamicResource D47.Line2}"
-              IsVisible="{Binding Stacked}" />
-
       <TextBlock Text="{Binding Text}"
                  TextAlignment="Center"
                  HorizontalAlignment="Center"
                  Foreground="{DynamicResource D47.White}"
                  FontFamily="Segoe UI,Inter,sans-serif"
                  FontWeight="SemiBold"
-                 FontSize="{Binding TextFontSize}" />
+                 FontSize="{Binding FontSize}" />
     </StackPanel>
   </Panel>
 </UserControl>

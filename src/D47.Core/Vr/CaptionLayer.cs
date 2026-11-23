@@ -51,17 +51,10 @@ public sealed class CaptionLayer
     public CaptionSettings Settings { get; set; } = new();
 
     /// <summary>
-    /// Whether D47 speaking pauses the video being followed. When true, D47's lines take the band alone and the
-    /// subtitle comes back once the voice has stopped and the video has moved on, or once D47's lines clear. When
-    /// false, one line of D47's sits <see cref="Above"/> a subtitle of up to two lines; more takes the band alone.
+    /// The band's text, oldest first: D47's window, or the subtitle. D47's lines take the band alone, and the
+    /// subtitle comes back once the voice has stopped and the video has moved on, or once D47's lines clear.
     /// </summary>
-    public bool VideoPausesForSpeech { get; set; } = true;
-
-    /// <summary>The band's text, oldest first: D47's window, or the subtitle.</summary>
-    public IReadOnlyList<string> Lines => Shown().Lines;
-
-    /// <summary>D47's line drawn above the subtitle in <see cref="Lines"/>, or null.</summary>
-    public string? Above => Shown().Above;
+    public IReadOnlyList<string> Lines => _lines.Count > 0 ? _lines : _cueLines;
 
     public bool Visible => Settings.Enabled && Lines.Count > 0;
 
@@ -246,8 +239,7 @@ public sealed class CaptionLayer
         _position = position;
 
         // The video playing on after the voice stopped means it was paused for D47 and D47 has finished.
-        var yielded = VideoPausesForSpeech
-            && _quiet
+        var yielded = _quiet
             && _lines.Count > 0
             && _quietAt is { } quietAt
             && position != quietAt;
@@ -272,24 +264,6 @@ public sealed class CaptionLayer
         _cue = cue;
         _cueLines = cue is null ? [] : [.. Caption.Wrap(cue.Text).Take(Caption.WindowLines)];
         Changed?.Invoke();
-    }
-
-    /// <summary>D47's window, or the subtitle, or one line of D47's above a subtitle of up to two.</summary>
-    private (IReadOnlyList<string> Lines, string? Above) Shown()
-    {
-        if (_lines.Count == 0)
-        {
-            return (_cueLines, null);
-        }
-
-        if (_cueLines.Count == 0)
-        {
-            return (_lines, null);
-        }
-
-        return !VideoPausesForSpeech && _lines.Count == 1 && _cueLines.Count < Caption.WindowLines
-            ? (_cueLines, _lines[0])
-            : (_lines, null);
     }
 
     /// <summary>Clears D47's window and what was pacing it.</summary>

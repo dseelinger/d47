@@ -8,10 +8,9 @@ namespace D47.App.Media;
 
 /// <summary>
 /// Plays one video at a time, from a file or an HTTPS URL, its soundtrack on <see cref="AudioChannel.Video"/> and its
-/// pictures following the soundtrack's position. Opening and decoding run on the video's own thread. While
-/// <c>pauseWhileSpeaking</c> is true, D47 speaking an answer or an alert pauses the video, which plays on once D47 is
-/// quiet; otherwise speech ducks it. Push-to-talk pauses it until D47 is quiet again while <c>pauseForPushToTalk</c> is
-/// true. Stop or Cancel, a story starting,
+/// pictures following the soundtrack's position. Opening and decoding run on the video's own thread. D47
+/// speaking an answer or an alert pauses the video, which plays on once D47 is quiet. Push-to-talk pauses it until D47
+/// is quiet again while <c>pauseForPushToTalk</c> is true; otherwise push-to-talk ducks it. Stop or Cancel, a story starting,
 /// and another Media item starting pause it until <see cref="Resume"/>. It does not start or resume while a story plays.
 /// Ambient music yields and chatter is refused while it plays.
 /// </summary>
@@ -20,7 +19,6 @@ public sealed class VideoPlayback
     public static readonly TimeSpan SkipBy = TimeSpan.FromSeconds(30);
 
     private readonly AudioArbiter _audio;
-    private readonly Func<bool> _pauseWhileSpeaking;
     private readonly Func<bool> _pauseForPushToTalk;
     private readonly StoryRunPlayer? _story;
     private readonly AmbientMusic? _music;
@@ -34,12 +32,10 @@ public sealed class VideoPlayback
     private VideoPause _pause;
     private bool _held;
 
-    /// <param name="pauseWhileSpeaking">Whether D47 speaking pauses the video; true when null.</param>
     /// <param name="background">Runs work off the calling thread; the thread pool when null.</param>
     /// <param name="pauseForPushToTalk">Whether push-to-talk pauses the video; true when null.</param>
     public VideoPlayback(
         AudioArbiter audio,
-        Func<bool>? pauseWhileSpeaking = null,
         StoryRunPlayer? story = null,
         AmbientMusic? music = null,
         Action<Action>? background = null,
@@ -50,7 +46,6 @@ public sealed class VideoPlayback
         ArgumentNullException.ThrowIfNull(audio);
 
         _audio = audio;
-        _pauseWhileSpeaking = pauseWhileSpeaking ?? (static () => true);
         _pauseForPushToTalk = pauseForPushToTalk ?? (static () => true);
         _story = story;
         _music = music;
@@ -372,7 +367,7 @@ public sealed class VideoPlayback
     }
 
     private bool SpeakingNow() =>
-        _pauseWhileSpeaking() && _audio.Activity.Channel is AudioChannel.Speech or AudioChannel.Alert;
+        _audio.Activity.Channel is AudioChannel.Speech or AudioChannel.Alert;
 
     /// <summary>Stops the soundtrack and the reader. Called holding <see cref="_gate"/>.</summary>
     private void Close()
@@ -441,10 +436,7 @@ public sealed class VideoPlayback
     {
         if (activity.Channel is AudioChannel.Speech or AudioChannel.Alert)
         {
-            if (_pauseWhileSpeaking())
-            {
-                Pause(VideoPause.Speaking);
-            }
+            Pause(VideoPause.Speaking);
         }
         else if (activity.Channel is null)
         {

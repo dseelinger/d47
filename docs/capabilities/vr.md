@@ -556,12 +556,8 @@ are already written out in full, with their sender, in the Transcript's Journal 
 in the caption band, wrapped to the same 42-character lines and three-line window, and your caption
 settings apply to them as they do to Directive 47's lines. Each subtitle is shown for the times the
 file gives it, from the video's position, so a seek or a pause shows the subtitle for the new
-position at once. When Directive 47 speaks during a subtitle, what happens depends on **Pause while
-D47 speaks**. With it on, the video pauses and Directive 47's line takes the band; the subtitle
-comes back when Directive 47 has finished and the video plays on. With it off, the video keeps
-playing and Directive 47's line sits above the subtitle, marked D47, with a rule between them: one
-line of Directive 47's above up to two lines of subtitle. A longer line from Directive 47 takes the
-band alone until it clears.
+position at once. When Directive 47 speaks during a subtitle, the video pauses and Directive 47's line takes the band;
+the subtitle comes back when Directive 47 has finished and the video plays on.
 
 Captions follow what is actually audible rather than what was generated, so if you say "stop" the
 captions stop with the voice. A caption still sitting there after a silence command is Directive

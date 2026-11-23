@@ -146,7 +146,7 @@ public sealed class VrCaptionSurface : IVrSurfaceSource, IDisposable
 
     private void OnLayerChanged()
     {
-        _model.Show(_layer.Lines, _layer.Above);
+        _model.Show(_layer.Lines);
         _dirty = true;
     }
 

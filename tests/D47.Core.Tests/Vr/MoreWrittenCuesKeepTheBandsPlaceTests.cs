@@ -44,7 +44,7 @@ public class MoreWrittenCuesKeepTheBandsPlaceTests
     [Fact]
     public void D47sFinishedLineStillGivesWayWhenMoreCuesArriveDuringIt()
     {
-        var layer = new CaptionLayer { VideoPausesForSpeech = true };
+        var layer = new CaptionLayer();
         layer.Follow([First]);
         layer.At(TimeSpan.FromSeconds(2));
         layer.Say("Fuel is at nineteen per cent.", Now);
