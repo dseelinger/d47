@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: A material your plans need is cyan once you hold enough and red while you are short, wherever plan needs are shown: the Short column on Needed by plans, the NEED tag on the material ledgers and the backpack and ship locker, a material's own page, and a ship's Plan section. Short figures had been orange and ✓ MET blue. The ledgers now tag a material your plans need even when you hold enough of it, where they had tagged only what you were short of.
+
 Changed: Galaxy searches that are not given a distance look 500 light years out, where they looked 50. That covers stations, outfitting, bodies, commodities, mission stations, where a material is found, and the nearest material trader, which looked 100. "Set course for the nearest encoded material trader" and the other quick searches now find one that is further than 50 light years away. The Stations, Outfitting, Bodies and Market pages open with 500 in their distance box. Commodity searches still rank by best price, so the best price can now be several hundred light years away; say a distance to search less far.
 
 Fixed: In the headset, the Orbits plot on the System page moves on every tick while its clock runs, as it does in the d47 window. It had moved only when something else redrew the panel.

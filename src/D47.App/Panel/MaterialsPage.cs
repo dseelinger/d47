@@ -552,7 +552,7 @@ public sealed class MaterialsPage : UserControl
 
         if (row.Needed > 0)
         {
-            foot.Children.Add(Typeset.Mono($"NEED {Count(row.Needed)}", TypeScale.MetaSmall, ThemeManager.GreyKey, vertical: VerticalAlignment.Center));
+            foot.Children.Add(Typeset.Mono($"NEED {Count(row.Needed)}", TypeScale.MetaSmall, NeedKey(row.Held, row.Needed), vertical: VerticalAlignment.Center));
         }
 
         var bar = CapacityBar(row.Capacity is { } limit and > 0 ? (double)row.Held / limit : 0);
@@ -860,7 +860,7 @@ public sealed class MaterialsPage : UserControl
         return tile;
     }
 
-    /// <summary>A tile's line: the name, <c>NEED n</c> in mono grey when needed, and the count in A, or Yellow at cap.</summary>
+    /// <summary>A tile's line: the name, <c>NEED n</c> in mono when needed (see <see cref="NeedKey"/>), and the count in A, or Yellow at cap.</summary>
     private static Grid TileWords(string text, int needed, int held, bool atCap)
     {
         var name = new TextBlock
@@ -891,7 +891,7 @@ public sealed class MaterialsPage : UserControl
                 Margin = new Thickness(8, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            ThemeInk.Bind(need, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
+            ThemeInk.Bind(need, TextBlock.ForegroundProperty, NeedKey(held, needed));
             Grid.SetColumn(need, 1);
             words.Children.Add(need);
         }
@@ -974,6 +974,9 @@ public sealed class MaterialsPage : UserControl
 
     internal static string Count(int n) => n.ToString(CultureInfo.InvariantCulture);
 
+    /// <summary>The ink of a plan's need for a material: Cyan once what is held meets it, Red while it is short.</summary>
+    internal static string NeedKey(int held, int needed) => held >= needed ? ThemeManager.CyanKey : ThemeManager.RedKey;
+
     private Control Group(GapBuild build, Action<MaterialEntry> open)
     {
         var name = TitleText.Build(build.Name, TypeScale.Section, TitleRank.Group);
@@ -1017,7 +1020,7 @@ public sealed class MaterialsPage : UserControl
         StarSystemPage.Headed(
             ColumnHeadings[3],
             new TableColumn("Short"),
-            line => line.Short > 0 ? Mono(Count(line.Short), ThemeManager.AKey) : Mono(Met, ThemeManager.BlueKey),
+            line => Mono(line.Short > 0 ? Count(line.Short) : Met, NeedKey(line.Held, line.Needed)),
             right: true),
         LedgerTables.Added<GapBuildLine>(
             "Grade",

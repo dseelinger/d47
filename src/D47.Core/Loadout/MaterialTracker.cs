@@ -53,6 +53,11 @@ public static class MaterialTracker
             .SelectMany(ledger => ledger.Lines)
             .ToDictionary(line => line.Material.Symbol, StringComparer.OrdinalIgnoreCase);
 
+        var needed = gap.Builds
+            .SelectMany(build => build.Lines)
+            .GroupBy(line => line.Material.Symbol, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Sum(line => line.Needed), StringComparer.OrdinalIgnoreCase);
+
         var ship = ShipCards
             .Select(name => Card(
                 name,
@@ -61,7 +66,8 @@ public static class MaterialTracker
                     .OrderBy(entry => entry.Grade)
                     .ThenBy(entry => entry.Name, StringComparer.Ordinal),
                 state,
-                lines))
+                lines,
+                needed))
             .ToList();
 
         var onFoot = OnFootCards
@@ -72,7 +78,8 @@ public static class MaterialTracker
                         && string.Equals(entry.Category, card.Category, StringComparison.Ordinal))
                     .OrderBy(entry => entry.Name, StringComparer.Ordinal),
                 state,
-                lines))
+                lines,
+                needed))
             .ToList();
 
         return new MaterialTrackerReport(ship, onFoot);
@@ -82,9 +89,10 @@ public static class MaterialTracker
         string name,
         IEnumerable<MaterialEntry> entries,
         CommanderGameState? state,
-        IReadOnlyDictionary<string, GapLine> lines)
+        IReadOnlyDictionary<string, GapLine> lines,
+        IReadOnlyDictionary<string, int> needed)
     {
-        var rows = entries.Select(entry => Row(entry, state, lines)).ToList();
+        var rows = entries.Select(entry => Row(entry, state, lines, needed)).ToList();
 
         return new MaterialCard(name, rows) { Sources = Sources(rows) };
     }
@@ -92,11 +100,12 @@ public static class MaterialTracker
     private static MaterialRow Row(
         MaterialEntry material,
         CommanderGameState? state,
-        IReadOnlyDictionary<string, GapLine> lines)
+        IReadOnlyDictionary<string, GapLine> lines,
+        IReadOnlyDictionary<string, int> needed)
     {
         var gapLine = lines.GetValueOrDefault(material.Symbol);
 
-        return new MaterialRow(material, HeldCount(material, state), gapLine?.Needed ?? 0)
+        return new MaterialRow(material, HeldCount(material, state), needed.GetValueOrDefault(material.Symbol))
         {
             Wanted = gapLine?.Wanted ?? [],
         };

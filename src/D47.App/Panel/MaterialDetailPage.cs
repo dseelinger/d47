@@ -437,9 +437,9 @@ public sealed class MaterialDetailPage : UserControl
 
         var need = MaterialsPage.Mono($"NEED {MaterialsPage.Count(line.Needed)}", ThemeManager.WhiteKey);
 
-        var shortfall = line.Short > 0
-            ? MaterialsPage.Mono($"SHORT {MaterialsPage.Count(line.Short)}", ThemeManager.AKey)
-            : MaterialsPage.Mono(MaterialsPage.Met, ThemeManager.BlueKey);
+        var shortfall = MaterialsPage.Mono(
+            line.Short > 0 ? $"SHORT {MaterialsPage.Count(line.Short)}" : MaterialsPage.Met,
+            MaterialsPage.NeedKey(line.Held, line.Needed));
 
         return Row("*,110,110", name, need, shortfall);
     }

@@ -204,8 +204,10 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
     }
 
     [AvaloniaFact]
-    public void ATilePlansNeedCarriesTheTotalNeed()
+    public void ATilePlansNeedCarriesTheTotalNeedInRedWhileShort()
     {
+        using var look = AppLook.Put();
+
         var surface = Open();
 
         var ship = surface.Ships.BuildFor(12, "anaconda", "Sacred Wings");
@@ -224,7 +226,19 @@ public class EachLedgerHoldsItsGradesAgainstTheCapTests
         Assert.Contains(row.row.Material.Name, shown);
         Assert.Contains($"NEED {row.row.Needed}", shown);
 
+        var need = Blocks(Page(surface.Panel)).First(block => block.Text == $"NEED {row.row.Needed}");
+        var expected = row.row.Short > 0 ? ThemeManager.RedKey : ThemeManager.CyanKey;
+        Assert.Equal(((ISolidColorBrush)Application.Current!.FindResource(expected)!).Color, ((ISolidColorBrush)need.Foreground!).Color);
+
         surface.Window.Close();
+    }
+
+    [Fact]
+    public void APlansNeedIsCyanOnceMetAndRedWhileShort()
+    {
+        Assert.Equal(ThemeManager.RedKey, MaterialsPage.NeedKey(held: 4, needed: 5));
+        Assert.Equal(ThemeManager.CyanKey, MaterialsPage.NeedKey(held: 5, needed: 5));
+        Assert.Equal(ThemeManager.CyanKey, MaterialsPage.NeedKey(held: 297, needed: 5));
     }
 
     [Fact]

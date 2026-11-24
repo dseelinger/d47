@@ -121,6 +121,31 @@ public class MaterialTrackerTests
         Assert.Equal(gapLine.Wanted.Count, row.Wanted.Count);
     }
 
+    /// <summary>A material held in full still carries what the plans need of it, so a page can show it met.</summary>
+    [Fact]
+    public void AMaterialHeldInFullStillCarriesItsNeed()
+    {
+        var line = PlanGap.Of([Ship()], [], State()).Builds.Single().Lines
+            .First(candidate => candidate.Material.Ledger == MaterialLedger.Material && candidate.Material.Symbol != "iron");
+
+        string Kind(string category) =>
+            line.Material.Category == category ? $$"""[{"Name":"{{line.Material.Symbol}}","Count":{{line.Needed}}}]""" : "[]";
+
+        var stocked = JournalScript.State(
+        [
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Commander","FID":"F1","Name":"Jameson"}""",
+            $$"""{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":{{Kind("Raw")}},"Manufactured":{{Kind("Manufactured")}},"Encoded":{{Kind("Encoded")}}}""",
+        ]);
+
+        var gap = PlanGap.Of([Ship()], [], stocked);
+        var row = ShipRows(MaterialTracker.Of(stocked, gap)).Single(candidate => candidate.Material.Symbol == line.Material.Symbol);
+
+        Assert.DoesNotContain(gap.Ledgers.SelectMany(ledger => ledger.Lines), short_ => short_.Material.Symbol == line.Material.Symbol);
+        Assert.Equal(line.Needed, row.Held);
+        Assert.Equal(line.Needed, row.Needed);
+        Assert.Equal(0, row.Short);
+    }
+
     /// <summary>The Raw card's top source is what every one of its 28 rows carries.</summary>
     [Fact]
     public void TheRawCardsTopSourceIsSurfaceProspecting()

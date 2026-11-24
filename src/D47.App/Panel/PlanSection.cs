@@ -123,10 +123,10 @@ public static class PlanSection
             ThemeManager.WhiteKey);
 
         var met = row.Short == 0;
-        var left = Mono(ShortText(row), met ? ThemeManager.BlueKey : ThemeManager.AKey);
+        var left = Mono(ShortText(row), met ? ThemeManager.CyanKey : ThemeManager.RedKey);
 
         var fill = row.Needed <= 0 ? 1 : (double)row.Held / row.Needed;
-        var gauge = Gauge.Track(fill, met ? ThemeManager.BlueKey : Gauge.FillKey(GaugeFill.Capacity));
+        var gauge = Gauge.Track(fill, met ? ThemeManager.CyanKey : Gauge.FillKey(GaugeFill.Capacity));
         gauge.VerticalAlignment = VerticalAlignment.Center;
 
         Place(grid, name, 0);

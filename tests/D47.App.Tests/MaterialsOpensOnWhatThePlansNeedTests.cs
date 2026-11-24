@@ -4,6 +4,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
 using D47.App.Panel;
+using D47.App.Theming;
 using D47.Core.Checklists;
 using D47.Core.Interface;
 using D47.Core.Journal;
@@ -132,6 +133,48 @@ public class MaterialsOpensOnWhatThePlansNeedTests
 
         surface.Window.Close();
     }
+
+    [AvaloniaFact]
+    public void AShortMaterialReadsRedAndAMetOneCyan()
+    {
+        using var look = AppLook.Put();
+
+        var surface = Open();
+        Plan(surface);
+
+        surface.Panel.Nav.Show(LoadoutPages.GapRoot);
+        Dispatcher.UIThread.RunJobs();
+
+        var report = PlanGap.Of(surface.Ships.Store.Builds, surface.Kit.Store.Builds, surface.State());
+        var line = report.Builds[0].Lines.First(line => line.Material.Ledger == MaterialLedger.Material);
+        var shortText = line.Needed.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        Assert.Equal(Ink(ThemeManager.RedKey), InkOf(ShortCell(surface, line.Material.Name, shortText)));
+
+        surface.Apply(
+            $$"""{"timestamp":"2026-08-18T09:01:00Z","event":"MaterialCollected","Category":"{{line.Material.Category}}","Name":"{{line.Material.Symbol}}","Count":{{line.Needed}}}""");
+
+        surface.Panel.TickLoadout();
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(Ink(ThemeManager.CyanKey), InkOf(ShortCell(surface, line.Material.Name, MaterialsPage.Met)));
+        surface.Window.Close();
+    }
+
+    /// <summary>The block reading <paramref name="text"/> in the first row that names <paramref name="material"/>.</summary>
+    private static TextBlock ShortCell(Surface surface, string material, string text)
+    {
+        var name = Page(surface.Panel).GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == material);
+
+        return name.GetVisualAncestors().OfType<Border>()
+            .Select(row => row.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(block => block.Text == text))
+            .First(block => block is not null)!;
+    }
+
+    private static Avalonia.Media.Color Ink(string key) =>
+        ((Avalonia.Media.ISolidColorBrush)Avalonia.Application.Current!.FindResource(key)!).Color;
+
+    private static Avalonia.Media.Color InkOf(TextBlock block) => ((Avalonia.Media.ISolidColorBrush)block.Foreground!).Color;
 
     [AvaloniaFact]
     public void WithNoPlanThePageSaysSo()
