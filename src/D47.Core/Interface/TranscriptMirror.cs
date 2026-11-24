@@ -8,14 +8,17 @@ public sealed class TranscriptMirror
     /// <summary>The transcript root each navigator was last known to be on.</summary>
     private readonly Dictionary<PanelNavigator, string> _seen = [];
 
-    /// <summary>
-    /// The navigator whose position the others follow, or null where nobody leads and the position half is
-    /// simply off.
-    /// </summary>
-    private PanelNavigator? _leader;
+    /// <summary>Where each navigator was last known to be, how many moves it had made then and what it stood in for.</summary>
+    private readonly Dictionary<PanelNavigator, (Position At, int Moves, PanelAddress? StandingIn)> _known = [];
 
-    /// <summary>Where the leader was last known to be, so a move it made is told apart from one it was given.</summary>
-    private Position? _led;
+    /// <summary>The navigators a chooser held when the address last moved, which go to it once the chooser is gone.</summary>
+    private readonly HashSet<PanelNavigator> _behind = [];
+
+    /// <summary>The address every navigator is on, or null before the first navigator is added.</summary>
+    private Position? _shared;
+
+    /// <summary>The navigator that last moved the address, whose history the others take.</summary>
+    private PanelNavigator? _source;
 
     /// <summary>Set while a move of this mirror's own making is raising <c>Changed</c>.</summary>
     private bool _mirroring;
@@ -23,7 +26,7 @@ public sealed class TranscriptMirror
     /// <summary>The root every surface is reading, or null before the first navigator is added.</summary>
     public string? Root { get; private set; }
 
-    /// <summary>Brings a navigator into the mirror.</summary>
+    /// <summary>Brings a navigator into the mirror, on the address the others are on.</summary>
     public void Add(PanelNavigator nav)
     {
         if (!Join(nav))
@@ -31,44 +34,43 @@ public sealed class TranscriptMirror
             return;
         }
 
-        if (Root is null)
+        if (_shared is not { } shared || _source is not { } source)
         {
             Root = _seen[nav];
+            _shared = PositionOf(nav);
+            _source = nav;
+            return;
         }
-        else
-        {
-            Mirroring(() =>
-            {
-                CatchUp(nav);
 
-                if (_leader is not null)
-                {
-                    Follow(nav, PositionOf(_leader));
-                }
-            });
-        }
+        Mirroring(() =>
+        {
+            CatchUp(nav);
+            Carry(nav, shared, source);
+        });
     }
 
     /// <summary>
-    /// Names the navigator the others follow — the window's (change-requests.md 34) — and brings every
-    /// navigator already added to where it is, its transcript reading included.
+    /// Puts every navigator already added on this one's address, its transcript reading included: the window's at
+    /// start-up (change-requests.md 34). After that it moves the others as any navigator does.
     /// </summary>
     public void Lead(PanelNavigator nav)
     {
         Join(nav);
 
-        _leader = nav;
         _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
         Root = _seen[nav];
 
         var position = PositionOf(nav);
+
+        _shared = position;
+        _source = nav;
 
         Mirroring(() =>
         {
             foreach (var other in _navigators.Where(other => !ReferenceEquals(other, nav)))
             {
                 CatchUp(other);
-                Follow(other, position);
+                Carry(other, position, nav);
             }
         });
     }
@@ -83,6 +85,7 @@ public sealed class TranscriptMirror
 
         _navigators.Add(nav);
         _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
+        _known[nav] = Known(nav);
         nav.Changed += (_, _) => OnChanged(nav);
 
         return true;
@@ -96,7 +99,7 @@ public sealed class TranscriptMirror
             return;
         }
 
-        Led(nav);
+        Addressed(nav);
 
         var root = nav.RootKeyOf(PanelTab.Transcript);
 
@@ -127,45 +130,64 @@ public sealed class TranscriptMirror
     }
 
     /// <summary>
-    /// The position half: where the leader moved, the followers go, and where anybody else moved, nothing
-    /// happens.
+    /// The address half: a move a navigator made puts every other on its address, and a navigator a chooser held
+    /// goes to the address once the chooser is gone. A change that is not a move, or leaves the navigator where it
+    /// was, carries nothing.
     /// </summary>
-    private void Led(PanelNavigator nav)
+    private void Addressed(PanelNavigator nav)
     {
-        if (!ReferenceEquals(nav, _leader))
-        {
-            return;
-        }
-
+        var (at, moves, standingIn) = _known[nav];
         var position = PositionOf(nav);
 
-        if (position == _led)
+        _known[nav] = Known(nav);
+
+        if (nav.Held)
         {
             return;
         }
 
-        Mirroring(() =>
+        if (nav.Moves != moves && (position != at || !Equals(nav.StandingIn, standingIn)))
         {
-            foreach (var other in _navigators.Where(other => !ReferenceEquals(other, nav)))
+            _shared = position;
+            _source = nav;
+            _behind.Remove(nav);
+
+            Mirroring(() =>
             {
-                Follow(other, position);
-            }
-        });
+                foreach (var other in _navigators.Where(other => !ReferenceEquals(other, nav)))
+                {
+                    Carry(other, position, nav);
+                }
+            });
+        }
+        else if (_behind.Contains(nav) && _shared is { } shared && _source is { } source)
+        {
+            Mirroring(() => Carry(nav, shared, source));
+        }
+    }
+
+    /// <summary>Puts a navigator on an address and gives it the history of the navigator that moved there.</summary>
+    private void Carry(PanelNavigator nav, Position position, PanelNavigator source)
+    {
+        if (nav.Held)
+        {
+            _behind.Add(nav);
+            return;
+        }
+
+        _behind.Remove(nav);
+        Follow(nav, position);
+        nav.TakeHistory(source);
     }
 
     /// <summary>
-    /// Puts a follower on the leader's tab, root and trail, as far down as it can draw: a follower without the
-    /// tab stays where it is, one without the root stays on the tab's current root, and a trail stops above
-    /// the first level that stays on the surface that opened it. A follower that falls short of the leader's
-    /// address, or reads it as another destination, stands in for it. A follower held by a chooser is left alone.
+    /// Puts a navigator on an address's tab, root and trail, as far down as it can draw: one without the tab stays
+    /// where it is, one without the root stays on the tab's current root, and a trail stops above the first level
+    /// that stays on the surface that opened it. One that falls short of the address, or reads it as another
+    /// destination, stands in for it.
     /// </summary>
     private void Follow(PanelNavigator nav, Position position)
     {
-        if (nav.Modal)
-        {
-            return;
-        }
-
         List<NavCrumb> drawn = [.. position.Trail.TakeWhile(crumb => !crumb.Local)];
 
         if (nav.Has(position.Tab))
@@ -204,6 +226,9 @@ public sealed class TranscriptMirror
             RootCount = nav.Roots(nav.Tab).Count,
         };
 
+    private static (Position At, int Moves, PanelAddress? StandingIn) Known(PanelNavigator nav) =>
+        (PositionOf(nav), nav.Moves, nav.StandingIn);
+
     /// <summary>Puts one navigator on the shared root, and records it only if the move was taken.</summary>
     private void CatchUp(PanelNavigator nav)
     {
@@ -225,10 +250,10 @@ public sealed class TranscriptMirror
         {
             _mirroring = false;
 
-            // A move of the mirror's making can reach the leader too, by the transcript half.
-            if (_leader is not null)
+            // A move of the mirror's making is not one a navigator made.
+            foreach (var nav in _navigators)
             {
-                _led = PositionOf(_leader);
+                _known[nav] = Known(nav);
             }
         }
     }

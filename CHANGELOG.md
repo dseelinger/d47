@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: A move on the headset's big panel moves the d47 window and the 2D overlay with it, as a move in the window moves them: a tab, a sub-tab, a page, a drill, a breadcrumb, Back, Previous and Next put every surface on the same page. Back, Previous and Next then go to the same place whichever surface they are pressed on. A surface with a chooser open stays where it is and moves nothing; once the chooser closes it goes to the page the others are on.
+
 Added: Search > Systems has a Faction state column after System, shown by default, listing every active state of the controlling faction, such as Boom · Civil Liberty, or None when it has none. It sorts, filters by each state, and while it is shown the System cell's second line is the faction name alone. A saved column layout does not gain it automatically; turn it on under COLUMNS.
 
 Fixed: On the headset's big panel a copy glyph draws a COPIED or COPY FAILED label beside the button for two seconds after any copy. It sits at the button's left, or at its right where the left has no room, covers what is beside it without moving it, and takes no press. COPY FAILED has a red outline.

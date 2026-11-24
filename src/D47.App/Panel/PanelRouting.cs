@@ -142,9 +142,12 @@ public sealed class PanelRouting(
     {
         if (RelativeTab.Direction(key) is { } direction)
         {
+            // One step, taken by the first surface on its own address; the mirror carries it to the others.
+            var stepped = false;
+
             foreach (var (nav, post, _, _) in _surfaces)
             {
-                post(() => Step(nav, direction));
+                post(() => stepped = stepped || Step(nav, direction));
             }
 
             return;
@@ -156,15 +159,15 @@ public sealed class PanelRouting(
         }
     }
 
-    private void Step(PanelNavigator nav, int direction)
+    private bool Step(PanelNavigator nav, int direction)
     {
-        if (nav.Modal)
+        if (nav.Held)
         {
             logger?.LogInformation("A dialog holds the panel, so the switch's tab step was ignored");
-            return;
+            return false;
         }
 
-        nav.Step(direction);
+        return nav.StandingIn is null && nav.Step(direction);
     }
 
     /// <summary>
@@ -257,19 +260,21 @@ public sealed class PanelRouting(
         return PanelScroll.Answer(heard.Step, _scrollers.Select(scroll => scroll(heard.Step, heard.Side)));
     }
 
-    /// <summary>Moves every surface the phrase named somewhere and says what happened, or null when it named nowhere.</summary>
+    /// <summary>
+    /// Moves the first surface the phrase takes, which the mirror carries to the others, and says what happened; null
+    /// when it named nowhere. A surface on its own address is asked before one standing in or held by a chooser.
+    /// </summary>
     public string? Navigate(string spoken)
     {
-        string? said = null;
-
-        foreach (var nav in _navigators)
+        foreach (var nav in _navigators.OrderBy(nav => nav.Held).ThenBy(nav => nav.StandingIn is not null))
         {
-            var moved = PanelPhrases.Apply(spoken, nav);
-
-            said ??= moved;
+            if (PanelPhrases.Apply(spoken, nav) is { } said)
+            {
+                return said;
+            }
         }
 
-        return said;
+        return null;
     }
 
     /// <summary>

@@ -571,8 +571,8 @@ public partial class MainWindow : Window
             // — which arrives from the tick thread, so it is given the dispatcher captured here rather than
             // left to read the static one from a worker.
             var ui = Avalonia.Threading.Dispatcher.UIThread;
-            // The window leads: its tab carries to any surface that furnished the same one
-            // (change-requests.md 34).
+            // The window leads at start-up: every surface opens where it reopened. After that a move on any
+            // surface carries to the others.
             host.PanelRouting.RouteNavigation(
                 Panel.Nav,
                 move => ui.Post(move),

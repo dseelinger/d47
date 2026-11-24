@@ -50,8 +50,9 @@ public class EverySurfaceMovesWithTheOthersTests
         return (routing, window, headset);
     }
 
+    /// <summary>Nothing moves until a surface's post runs; the first to run moves its surface and the mirror carries it to the others (#2739).</summary>
     [Fact]
-    public void AShowReachesEachSurfaceOnlyThroughItsOwnPost()
+    public void AShowMovesNothingUntilAPostRunsAndTheFirstIsCarriedToTheOthers()
     {
         var (routing, window, headset) = TwoSurfaces();
 
@@ -63,11 +64,14 @@ public class EverySurfaceMovesWithTheOthersTests
         window.RunPosted();
 
         Assert.Equal("lookup", window.Nav.Root.Key);
-        Assert.Equal(PanelTab.Transcript, headset.Nav.Tab);
+        Assert.Equal("lookup", headset.Nav.Root.Key);
+
+        var moves = headset.Nav.Moves;
 
         headset.RunPosted();
 
         Assert.Equal("lookup", headset.Nav.Root.Key);
+        Assert.Equal(moves, headset.Nav.Moves);
     }
 
     [Fact]
@@ -81,9 +85,40 @@ public class EverySurfaceMovesWithTheOthersTests
 
         Assert.Equal("lookup", routing.Snapshot.Showing);
 
+        // A chooser holds the headset where it is while the window moves.
+        Assert.True(headset.Nav.Take(new NavCrumb("pick", "Pick one")));
+
         window.Nav.Show("compare");
 
         Assert.Null(routing.Snapshot.Showing);
+
+        Assert.True(headset.Nav.Back());
+
+        Assert.Equal("compare", routing.Snapshot.Showing);
+    }
+
+    /// <summary>A chooser drawn over the headset's page holds it like one on the trail, and closing it takes the headset to the window (#2739).</summary>
+    [AvaloniaFact]
+    public void AChooserOnTheLayerHoldsItsSurfaceUntilItCloses()
+    {
+        var (_, window, headset) = TwoSurfaces();
+        var prompts = new PanelPrompts(headset.Nav, new Avalonia.Controls.Panel());
+
+        prompts.Choose(
+            new ChoiceRequest("pick", "Pick", "Pick one", null, [new ChoiceOption("a", "A")], null, ChoiceSurface.Layer),
+            _ => { });
+
+        Assert.True(prompts.IsOpen);
+        Assert.False(headset.Nav.Modal);
+
+        Assert.True(window.Nav.Show("compare"));
+
+        Assert.Equal(PanelTab.Transcript, headset.Nav.Tab);
+
+        prompts.Abandon();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("compare", headset.Nav.Root.Key);
     }
 
     [Fact]
@@ -94,6 +129,64 @@ public class EverySurfaceMovesWithTheOthersTests
         var keys = routing.Snapshot.Destinations.Select(destination => destination.Root.Key).ToList();
 
         Assert.Equal(["conversation", "lookup", "compare"], keys);
+    }
+
+    private static (PanelRouting Routing, Surface[] Surfaces) ThreeSurfaces()
+    {
+        var routing = new PanelRouting(() => false, () => []);
+        Surface[] surfaces = [new(), new(), new()];
+
+        foreach (var surface in surfaces)
+        {
+            routing.RouteNavigation(surface.Nav, surface.Post);
+        }
+
+        return (routing, surfaces);
+    }
+
+    /// <summary>A spoken "back" moves one surface one place, and the mirror takes the others with it: one place, not one per surface (#2739).</summary>
+    [Fact]
+    public void ASpokenBackGoesOnePlaceOnEverySurface()
+    {
+        var (routing, surfaces) = ThreeSurfaces();
+        var first = surfaces[0].Nav;
+
+        Assert.True(first.Show("lookup"));
+        Assert.True(first.Drill(new NavCrumb("item", "An item")));
+        Assert.True(first.Drill(new NavCrumb("step", "A step")));
+
+        Assert.NotNull(routing.Navigate("back"));
+
+        Assert.All(surfaces, surface => Assert.Equal(["lookup", "item"], surface.Nav.Trail.Select(crumb => crumb.Key)));
+
+        Assert.NotNull(routing.Navigate("back"));
+
+        Assert.All(surfaces, surface => Assert.Equal(["lookup"], surface.Nav.Trail.Select(crumb => crumb.Key)));
+    }
+
+    /// <summary>A switch's next-tab step, posted to every surface, moves every surface one tab (#2739).</summary>
+    [Fact]
+    public void ANextTabSwitchStepsEverySurfaceOneTab()
+    {
+        var (routing, surfaces) = ThreeSurfaces();
+
+        routing.Show(D47.Core.Hotas.RelativeTab.Next);
+
+        foreach (var surface in surfaces)
+        {
+            surface.RunPosted();
+        }
+
+        Assert.All(surfaces, surface => Assert.Equal(PanelTab.Search, surface.Nav.Tab));
+
+        routing.Show(D47.Core.Hotas.RelativeTab.Next);
+
+        foreach (var surface in surfaces)
+        {
+            surface.RunPosted();
+        }
+
+        Assert.All(surfaces, surface => Assert.Equal(PanelTab.Transcript, surface.Nav.Tab));
     }
 
     private static (PanelRouting Routing, PanelPrompts Window, PanelPrompts Headset, Surface WindowSurface, Surface HeadsetSurface, Box<bool> Showing)

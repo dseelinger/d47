@@ -320,9 +320,10 @@ does — including Directive 47's own window, which is right there showing stric
 The mini panel names the tab it is on, and where in it, in a line at the top right of its text area:
 tab, sub-tab and level, shortened with a `…` when it does not fit beside the comms indicator.
 
-**It follows the main window to every tab.** On Settings and Search, which mini does not draw, it shows
-where the window is in its trail line and one line in its text area: "Not available here". The same holds
-on any page the window has open that this panel cannot draw: a dialog, All results or a search result.
+**Every surface follows the others to every tab.** A move in the window, on the headset's big panel, or by a
+phrase or a switch puts the mini panel on the same page. On Settings and Search, which mini does not draw, it shows
+where the others are in its trail line and one line in its text area: "Not available here". The same holds on any
+page the others have open that this panel cannot draw: a dialog, All results or a search result.
 
 **You cannot click it, and that is the design.** The pointer goes straight through: a click the
 strip ate would be a click Elite did not get, and a focus steal mid-combat is worse than anything
@@ -678,10 +679,10 @@ One asymmetry is kept rather than smoothed over: In Ship is held in memory and t
 are **read off disk** — which is why the log carries a working indicator, and why this is a
 stepper rather than a single toggle.
 
-Which mode you are on belongs to the surface you are looking at, not to the transcript. The
-desktop window can sit on the log while the headset panel shows the conversation — same
-transcript underneath, and each surface decides how much of it to show. The mini headset panel
-has no bar at all, being the transcript's tail and the microphone row and nothing else.
+Which mode you are on is shared by every surface, as is the rest of the address: switch the window to
+the log and the headset panel shows the log too, and a move on the headset panel moves the window the same
+way. The mini headset panel has no bar at all, being the transcript's tail and the microphone row and
+nothing else.
 
 #### Hide comms traffic and Hide invented chatter {#in-ship-filters}
 

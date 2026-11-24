@@ -197,7 +197,7 @@ public sealed class APlaceNamedInAMessageIsALinkTests
 
     [Trait("Category", "Integration")]
     [AvaloniaFact]
-    public void TheHeadsetBannerOpensSettingsInTheHeadsetOnly()
+    public void TheHeadsetBannerOpensSettingsOnEverySurface()
     {
         using var look = AppLook.Put();
         var (desk, shown, _) = Shown();
@@ -226,7 +226,7 @@ public sealed class APlaceNamedInAMessageIsALinkTests
         Jobs();
 
         Assert.Equal(PanelTab.Settings, headset.Nav.Tab);
-        Assert.Equal(PanelTab.Transcript, desk.Nav.Tab);
+        Assert.Equal(PanelTab.Settings, desk.Nav.Tab);
 
         headset.Dispose();
         shown.Close();

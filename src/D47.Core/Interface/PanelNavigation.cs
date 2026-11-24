@@ -578,7 +578,7 @@ public sealed class PanelNavigator
         {
             Remember(before);
             Moved(tab);
-            Raise();
+            Move();
         }
 
         return drilled || moved || selected;
@@ -628,6 +628,12 @@ public sealed class PanelNavigator
     /// <summary>A chooser is holding the panel.</summary>
     public bool Modal => Trail.Count > 0 && Trail[^1].Modal;
 
+    /// <summary>Says whether a chooser drawn over the page holds this surface; set by the surface, which calls <see cref="Refresh"/> when it closes.</summary>
+    public Func<bool>? Holds { get; set; }
+
+    /// <summary>A chooser holds the panel, as a level of the trail or drawn over the page.</summary>
+    public bool Held => Modal || Holds?.Invoke() == true;
+
     /// <summary>Shows a tab, restoring the root and the trail it was left on.</summary>
     public bool Select(PanelTab tab)
     {
@@ -641,7 +647,7 @@ public sealed class PanelNavigator
         Tab = tab;
         Remember(before);
         Moved();
-        Raise();
+        Move();
         return true;
     }
 
@@ -685,7 +691,7 @@ public sealed class PanelNavigator
         _current[tab] = rootKey;
         Remember(before);
         Moved(tab);
-        Raise();
+        Move();
         return true;
     }
 
@@ -719,7 +725,7 @@ public sealed class PanelNavigator
         trail.RemoveAt(trail.Count - 1);
         Settle();
         Moved(Tab);
-        Raise();
+        Move();
         return true;
     }
 
@@ -738,7 +744,7 @@ public sealed class PanelNavigator
         trail.RemoveRange(Floor(trail), trail.Count - Floor(trail));
         Settle();
         Moved(Tab);
-        Raise();
+        Move();
         return true;
     }
 
@@ -791,7 +797,7 @@ public sealed class PanelNavigator
         trail.RemoveRange(index + 1, trail.Count - index - 1);
         Settle();
         Moved(Tab);
-        Raise();
+        Move();
         return true;
     }
 
@@ -840,7 +846,7 @@ public sealed class PanelNavigator
 
         Remember(before);
         Moved(tab);
-        Raise();
+        Move();
         return true;
     }
 
@@ -856,7 +862,7 @@ public sealed class PanelNavigator
         }
 
         var visit = _back[at];
-        var left = Here();
+        var left = Shown();
 
         _back.RemoveRange(at, _back.Count - at);
 
@@ -868,7 +874,7 @@ public sealed class PanelNavigator
         Restore(visit);
         Settle();
         Moved();
-        Raise();
+        Move();
         RaisePlace(visit);
         return true;
     }
@@ -885,7 +891,7 @@ public sealed class PanelNavigator
         }
 
         var visit = _forward[at];
-        var left = Here();
+        var left = Shown();
 
         _forward.RemoveRange(at, _forward.Count - at);
 
@@ -896,7 +902,7 @@ public sealed class PanelNavigator
 
         Restore(visit);
         Moved();
-        Raise();
+        Move();
         RaisePlace(visit);
         return true;
     }
@@ -953,7 +959,7 @@ public sealed class PanelNavigator
     /// <summary>The newest place <see cref="Previous"/> left that differs from this one and can still be opened, or null.</summary>
     private int? Newer()
     {
-        var here = Here();
+        var here = Shown();
 
         for (var at = _forward.Count - 1; at >= 0; at--)
         {
@@ -969,7 +975,7 @@ public sealed class PanelNavigator
     /// <summary>The newest remembered place that differs from this one and can still be opened, or null.</summary>
     private int? Older()
     {
-        var here = Here();
+        var here = Shown();
 
         for (var at = _back.Count - 1; at >= 0; at--)
         {
@@ -987,6 +993,12 @@ public sealed class PanelNavigator
         && visit.Trail.Skip(1).All(crumb =>
             SubPagesOf(visit.RootKey).FirstOrDefault(sub => sub.Page.Key == crumb.Key) is not { } sub
             || Opens(visit.RootKey, sub));
+
+    /// <summary>Where the panel shows it is: the address it stands in for, or else <see cref="Here"/>.</summary>
+    private Visit? Shown() =>
+        StandingIn is { Trail.Count: > 0 } address
+            ? new Visit(address.Tab, address.Trail[0].Key, address.Trail)
+            : Here();
 
     /// <summary>Where the panel is now, without a chooser, or null when the showing tab has no root.</summary>
     private Visit? Here() =>
@@ -1066,7 +1078,7 @@ public sealed class PanelNavigator
             }
 
             Moved(tab);
-            Raise();
+            Move();
             return true;
         }
 
@@ -1085,7 +1097,7 @@ public sealed class PanelNavigator
             }
 
             Moved(tab);
-            Raise();
+            Move();
             return true;
         }
 
@@ -1106,7 +1118,7 @@ public sealed class PanelNavigator
         trail.Add(crumb);
         Remember(before);
         Moved(tab);
-        Raise();
+        Move();
         return true;
     }
 
@@ -1121,6 +1133,43 @@ public sealed class PanelNavigator
     {
         Land();
         Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Counts the moves made on this navigator: a tab, root, trail or history step, not a change of what it offers.</summary>
+    public int Moves { get; private set; }
+
+    private void Move()
+    {
+        Moves++;
+        Raise();
+    }
+
+    /// <summary>
+    /// Takes another navigator's <see cref="Previous"/> and <see cref="Next"/> places in place of this one's, each cut
+    /// above its first level that stays on the surface that opened it.
+    /// </summary>
+    public bool TakeHistory(PanelNavigator from)
+    {
+        static Visit Drawn(Visit visit) =>
+            visit.Trail.Any(crumb => crumb.Local) ? visit with { Trail = [.. visit.Trail.TakeWhile(crumb => !crumb.Local)] } : visit;
+
+        List<Visit> back = [.. from._back.Select(Drawn)];
+        List<Visit> forward = [.. from._forward.Select(Drawn)];
+
+        static bool Same(List<Visit> these, List<Visit> those) =>
+            these.Count == those.Count && these.Zip(those).All(pair => pair.First.Same(pair.Second));
+
+        if (ReferenceEquals(from, this) || (Same(_back, back) && Same(_forward, forward)))
+        {
+            return false;
+        }
+
+        _back.Clear();
+        _back.AddRange(back);
+        _forward.Clear();
+        _forward.AddRange(forward);
+        Raise();
+        return true;
     }
 
     /// <summary>A declared sub-page: directly under its root, or under the page <paramref name="Under"/>.</summary>

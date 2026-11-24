@@ -476,8 +476,7 @@ playing and while the music is muted, the times read –:–– and the bar is e
 Open and close it with the **Audio player** hotkey, which is Ctrl+Shift+P until you change it in Media › Music,
 Page settings, or with a stick button, which can be a motion controller button in the headset. The key works while
 Elite has the foreground and does not take the foreground. It switches the d47 window and the headset's big panel to
-Media › Music at once. Pressed again, it returns each of them to the page it was on. If you have moved one of them
-off Media › Music yourself, the press opens it there again, and the next press returns them all. The two mini panels carry no buttons: while their surface is on
+Media › Music at once. Pressed again, it returns each of them to the page it was on. The two mini panels carry no buttons: while their surface is on
 Media › Music they show the track, whether it is playing or paused, the time played and the length either side of
 a thin bar, and the phrases to say.
 

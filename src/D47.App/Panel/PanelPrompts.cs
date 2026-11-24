@@ -57,6 +57,23 @@ public sealed class PanelPrompts : IHearsText
     {
         _nav = nav;
         _layer = layer;
+
+        // A chooser on the layer holds this surface where it is while the others move; closing it lets it follow.
+        var held = false;
+
+        nav.Holds = () => _layer.Children.Count > 0;
+        LayerChanged += () =>
+        {
+            var was = held;
+
+            held = _layer.Children.Count > 0;
+
+            // Posted, so the surface finishes whatever closed the chooser before it is moved.
+            if (was && !held)
+            {
+                Dispatcher.UIThread.Post(_nav.Refresh);
+            }
+        };
     }
 
     /// <summary>Puts a question to the Commander and calls back with what they picked.</summary>

@@ -4,8 +4,11 @@ using Xunit;
 
 namespace D47.App.Tests;
 
-/// <summary>Opening the audio player puts every surface on Media › Music; leaving it puts each surface on it back where it was (#2683).</summary>
-public sealed class TheAudioPlayerReturnsEachSurfaceWhereItWasTests
+/// <summary>
+/// Opening the audio player puts every surface on Media › Music; leaving it puts every surface back on the address they
+/// shared before (#2683, #2739).
+/// </summary>
+public sealed class TheAudioPlayerReturnsEverySurfaceWhereItWasTests
 {
     private static readonly NavCrumb Music = new(MediaFurnishing.MusicRoot, "Music");
 
@@ -40,17 +43,15 @@ public sealed class TheAudioPlayerReturnsEachSurfaceWhereItWasTests
     }
 
     [Fact]
-    public void EverySurfaceGoesToMusicAndBackToItsOwnPage()
+    public void EverySurfaceGoesToMusicAndBackToWhereTheyWere()
     {
         var window = Surface();
         var headset = Surface();
         var mini = Surface();
+        var routing = Routed(window, headset, mini);
 
         Assert.True(headset.Show(Ships.Key));
         Assert.True(headset.Drill(Ship));
-        Assert.True(mini.Show(Podcasts.Key));
-
-        var routing = Routed(window, headset, mini);
 
         routing.Show(MediaFurnishing.MusicRoot);
 
@@ -59,16 +60,17 @@ public sealed class TheAudioPlayerReturnsEachSurfaceWhereItWasTests
 
         routing.Leave(MediaFurnishing.MusicRoot);
 
-        Assert.Equal(PanelTab.Transcript, window.Tab);
-        Assert.Equal(PanelTab.Commander, headset.Tab);
-        Assert.Equal([Ships.Key, Ship.Key], headset.Trail.Select(crumb => crumb.Key));
-        Assert.Equal(PanelTab.Media, mini.Tab);
-        Assert.Equal(Podcasts.Key, mini.DestinationKey);
+        Assert.All([window, headset, mini], nav =>
+        {
+            Assert.Equal(PanelTab.Commander, nav.Tab);
+            Assert.Equal([Ships.Key, Ship.Key], nav.Trail.Select(crumb => crumb.Key));
+        });
         Assert.DoesNotContain(MediaFurnishing.MusicRoot, routing.Snapshot.Shown);
     }
 
+    /// <summary>A surface moved off Music takes every surface with it, so leaving Music afterwards moves nothing.</summary>
     [Fact]
-    public void ASurfaceThatLeftMusicItselfStaysWhereItWent()
+    public void LeavingMusicAfterASurfaceLeftItMovesNothing()
     {
         var window = Surface();
         var headset = Surface();
@@ -77,11 +79,11 @@ public sealed class TheAudioPlayerReturnsEachSurfaceWhereItWasTests
         routing.Show(MediaFurnishing.MusicRoot);
         Assert.True(headset.Show(Ships.Key));
 
-        Assert.Contains(MediaFurnishing.MusicRoot, routing.Snapshot.Shown);
+        Assert.DoesNotContain(MediaFurnishing.MusicRoot, routing.Snapshot.Shown);
 
         routing.Leave(MediaFurnishing.MusicRoot);
 
-        Assert.Equal(PanelTab.Transcript, window.Tab);
+        Assert.Equal(Ships.Key, window.DestinationKey);
         Assert.Equal(Ships.Key, headset.DestinationKey);
     }
 
@@ -100,9 +102,9 @@ public sealed class TheAudioPlayerReturnsEachSurfaceWhereItWasTests
         Assert.Equal(PageToggle.AlreadyClosed, routing.Toggle(MediaFurnishing.MusicRoot, false));
     }
 
-    /// <summary>The window is clicked away from Music while the mini panel stays on it: the next press opens it on the window again.</summary>
+    /// <summary>The window is clicked away from Music and the mini panel goes with it: the next press opens it on both again.</summary>
     [Fact]
-    public void ToggleAfterASurfaceLeftMusicOpensItThereAgain()
+    public void ToggleAfterASurfaceLeftMusicOpensItEverywhereAgain()
     {
         var window = Surface();
         var mini = Surface();
@@ -111,12 +113,14 @@ public sealed class TheAudioPlayerReturnsEachSurfaceWhereItWasTests
         routing.Toggle(MediaFurnishing.MusicRoot, null);
         Assert.True(window.Show(Ships.Key));
 
+        Assert.Equal(Ships.Key, mini.DestinationKey);
+
         Assert.Equal(PageToggle.Opened, routing.Toggle(MediaFurnishing.MusicRoot, null));
         Assert.Equal(MediaFurnishing.MusicRoot, window.DestinationKey);
         Assert.Equal(MediaFurnishing.MusicRoot, mini.DestinationKey);
 
         Assert.Equal(PageToggle.Closed, routing.Toggle(MediaFurnishing.MusicRoot, null));
         Assert.Equal(Ships.Key, window.DestinationKey);
-        Assert.Equal(PanelTab.Transcript, mini.Tab);
+        Assert.Equal(Ships.Key, mini.DestinationKey);
     }
 }
