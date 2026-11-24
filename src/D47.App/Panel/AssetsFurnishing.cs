@@ -167,7 +167,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
             host.CarrierHulls,
             host.ColumnWidths,
             host.Model?.WaitSound,
-            host.ColumnArrangements);
+            host.ColumnArrangements,
+            () => host.SystemSearch);
 
         foreach (var page in pages)
         {

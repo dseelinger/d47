@@ -457,6 +457,8 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
 
     BodySearchLink? IPanelTabHost.BodySearch => _searchFurnishing.BodySearch;
 
+    SystemSearchLink? IPanelTabHost.SystemSearch => _searchFurnishing.SystemSearch;
+
     Action<GalaxyMapStar>? IPanelTabHost.ShowOnGalaxyMap => _navigation.HasGalaxyMap ? _navigation.ShowSystemOnGalaxyMap : null;
 
     /// <summary>Shows the music's read-out on a mini surface while this surface is on Media › Music.</summary>

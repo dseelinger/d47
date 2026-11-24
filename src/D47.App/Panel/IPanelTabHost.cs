@@ -43,6 +43,9 @@ internal interface IPanelTabHost
     /// <summary>Runs a Search › Bodies search from any tab, or null where this surface has no search.</summary>
     BodySearchLink? BodySearch { get; }
 
+    /// <summary>Runs a Search › Systems search, or opens Search › System, from any tab; null where this surface has no search.</summary>
+    SystemSearchLink? SystemSearch => null;
+
     void Furnish(PanelTab tab, Func<NavCrumb, Control> build, params NavCrumb[] roots);
 
     void Forget(PanelTab tab, Func<string, bool> match);

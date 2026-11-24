@@ -58,6 +58,24 @@ public static class EmissionRules
         ];
     }
 
+    /// <summary>The Systems search that finds where <paramref name="group"/> is produced: allegiance, states, 500 light years, the population floor.</summary>
+    public static IReadOnlyDictionary<string, string> SearchArguments(EmissionGroup group)
+    {
+        var arguments = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["distance"] = "500",
+            ["allegiance"] = group.Allegiance,
+            ["population"] = MinimumPopulation.ToString(System.Globalization.CultureInfo.InvariantCulture) + "-",
+        };
+
+        if (group.States.Count > 0)
+        {
+            arguments["state"] = string.Join(",", group.States.Select(FarmingAdvice.Spaced));
+        }
+
+        return arguments;
+    }
+
     /// <summary>What one material needs, or null for one no emission carries.</summary>
     public static EmissionGroup? Holding(string? symbol) =>
         symbol is { Length: > 0 }

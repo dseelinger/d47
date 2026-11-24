@@ -44,6 +44,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     private string? _systemEntry;
     private readonly Dictionary<GalaxySearchKind, SearchHistoryEntry> _pending = [];
     private IReadOnlyDictionary<string, string>? _pendingBodies;
+    private IReadOnlyDictionary<string, string>? _pendingSystems;
     private (IReadOnlyDictionary<string, string> Arguments, string Rare, bool PowerOpen)? _pendingRareRun;
 
     public void EnableStarSystem(StarSystemSurface surface)
@@ -112,6 +113,18 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     public BodySearchLink? BodySearch =>
         _surface is { Searches: not null } surface ? new BodySearchLink(SearchBodies) : null;
 
+    /// <summary>The way to run a Systems search or open a system by name from another tab, or null where this surface has no search.</summary>
+    public SystemSearchLink? SystemSearch =>
+        _surface is { Searches: not null } ? new SystemSearchLink(SearchSystems, OpenSystemNamed) : null;
+
+    private void SearchSystems(IReadOnlyDictionary<string, string> arguments)
+    {
+        ClearPending();
+        _pendingSystems = arguments;
+        host.Nav.Show(SystemSearchPage.RootKey);
+        ApplyPending();
+    }
+
     private void SearchBodies(IReadOnlyDictionary<string, string> arguments)
     {
         _pending.Clear();
@@ -163,6 +176,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     {
         _pending.Clear();
         _pendingBodies = null;
+        _pendingSystems = null;
         _pendingRareRun = null;
         _pendingSystem = null;
         _pendingName = null;
@@ -463,6 +477,7 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
     {
         _pending.Clear();
         _pendingBodies = null;
+        _pendingSystems = null;
         _pendingSystem = null;
 
         if (entry.Tool == "describe_system" && entry.SystemAddress is { } address)
@@ -521,6 +536,12 @@ internal sealed class SearchFurnishing(IPanelTabHost host)
         {
             _pendingFaction = null;
             search.Run(new Dictionary<string, string>(StringComparer.Ordinal) { ["faction"] = faction });
+        }
+
+        if (_pendingSystems is { } systems && _systems is { } systemSearch)
+        {
+            _pendingSystems = null;
+            systemSearch.Run(systems);
         }
 
         if (_pendingSystem is { } system && _starSystem is { } page)

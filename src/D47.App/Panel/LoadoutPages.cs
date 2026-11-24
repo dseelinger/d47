@@ -98,7 +98,10 @@ public static class LoadoutPages
         D47.App.Voice.WaitSound? waitSound = null,
 
         // Where the column arrangements are kept.
-        ColumnArrangementMemory? columnArrangements = null)
+        ColumnArrangementMemory? columnArrangements = null,
+
+        // Runs a Systems search from the Materials ledgers' search tiles.
+        Func<SystemSearchLink?>? systemSearch = null)
     {
         if (crumb.Key == ComparePage.Key && compare is not null)
         {
@@ -149,7 +152,7 @@ public static class LoadoutPages
 
         if (crumb.Key == GapRoot && gap is not null)
         {
-            return new MaterialsPage(gap, materialsClock ?? new JournalClock(() => null), engineers, nav, copy, columnWidths, columnArrangements);
+            return new MaterialsPage(gap, materialsClock ?? new JournalClock(() => null), engineers, nav, copy, columnWidths, columnArrangements, systemSearch);
         }
 
         if (crumb.Key.StartsWith(MaterialsPage.DetailPrefix, StringComparison.Ordinal)

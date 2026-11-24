@@ -91,6 +91,7 @@ public sealed class MaterialsPage : UserControl
     private readonly EngineerSource? _engineers;
     private readonly PanelNavigator? _nav;
     private readonly Func<string, Task<bool>>? _copy;
+    private readonly Func<SystemSearchLink?>? _systemSearch;
     private readonly ContentControl _list = new();
     private readonly StackPanel _body = new();
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
@@ -105,8 +106,10 @@ public sealed class MaterialsPage : UserControl
         PanelNavigator? nav = null,
         Func<string, Task<bool>>? copy = null,
         ColumnWidthMemory? columnWidths = null,
-        ColumnArrangementMemory? columnArrangements = null)
+        ColumnArrangementMemory? columnArrangements = null,
+        Func<SystemSearchLink?>? systemSearch = null)
     {
+        _systemSearch = systemSearch;
         _needed = new ArrangedTable<GapBuildLine>(NeededTable, Fields(), columnArrangements, columnWidths, headName: "MaterialsHead");
         _gap = gap;
         _engineers = engineers;
@@ -433,7 +436,7 @@ public sealed class MaterialsPage : UserControl
 
         if (TraderLines.TryGetValue(card.Name, out var lines))
         {
-            _body.Children.Add(Trader(card, lines, Open));
+            _body.Children.Add(Trader(card, lines, Open, _systemSearch?.Invoke(), _gap.State()?.Location.StarSystem));
             return;
         }
 
@@ -471,7 +474,8 @@ public sealed class MaterialsPage : UserControl
             : null;
 
     /// <summary>Grade heads over one band per trader line, a cell per grade, as the in-game trader lays them out.</summary>
-    private static Control Trader(MaterialCard card, IReadOnlyList<string> lines, Action<MaterialEntry> open)
+    private static Control Trader(
+        MaterialCard card, IReadOnlyList<string> lines, Action<MaterialEntry> open, SystemSearchLink? search, string? here)
     {
         var grades = GradeColumns(card.Name);
         var columns = string.Join(',', Enumerable.Repeat("*", grades));
@@ -521,6 +525,7 @@ public sealed class MaterialsPage : UserControl
             stack.Children.Add(rule);
 
             var cells = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = 2 };
+            var tiles = new Grid { ColumnDefinitions = new ColumnDefinitions(columns), ColumnSpacing = 2, Margin = new Thickness(0, 2, 0, 0) };
 
             for (var grade = 1; grade <= grades; grade++)
             {
@@ -529,10 +534,21 @@ public sealed class MaterialsPage : UserControl
                     var cell = Cell(row, open);
                     Grid.SetColumn(cell, grade - 1);
                     cells.Children.Add(cell);
+
+                    if (search is not null && SearchTile(row, line, grade, search, here) is { } tile)
+                    {
+                        Grid.SetColumn(tile, grade - 1);
+                        tiles.Children.Add(tile);
+                    }
                 }
             }
 
             stack.Children.Add(cells);
+
+            if (tiles.Children.Count > 0)
+            {
+                stack.Children.Add(tiles);
+            }
         }
 
         return stack;
@@ -573,6 +589,129 @@ public sealed class MaterialsPage : UserControl
         AutomationProperties.SetName(
             tile,
             $"{row.Material.Name}, {held}" + (row.Needed > 0 ? $", need {Count(row.Needed)}" : string.Empty));
+
+        return tile;
+    }
+
+    /// <summary>The label of an HGE search tile.</summary>
+    public const string HgeLabel = "HGE";
+
+    /// <summary>The tile under a High Grade Emission material's cell, or under a grade 4 raw's, or null where the cell has none.</summary>
+    private static Border? SearchTile(MaterialRow row, string line, int grade, SystemSearchLink search, string? here)
+    {
+        if (EmissionRules.Holding(row.Material.Symbol) is { } group)
+        {
+            return Tile(
+                HgeLabel, ThemeManager.AKey, upper: true,
+                $"Search HGE systems for {row.Material.Name}",
+                () => search.Run(EmissionRules.SearchArguments(group)));
+        }
+
+        if (grade == 4
+            && FarmingSites.FastestFor(line) is { } site
+            && string.Equals(site.MaterialSymbol, row.Material.Symbol, StringComparison.OrdinalIgnoreCase))
+        {
+            var current = string.Equals(site.System, here, StringComparison.OrdinalIgnoreCase);
+
+            return Tile(
+                site.System, current ? ThemeManager.CyanKey : ThemeManager.AKey, upper: false,
+                $"Open {site.System} in Search, where {row.Material.Name} is found",
+                () => search.OpenSystem(site.System));
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// A search tile: Tile ground, the Search tab's glyph and a label in <paramref name="inkKey"/>; Tile2 on hover and
+    /// keyboard focus, solid A with Knock ink while pressed.
+    /// </summary>
+    private static Border Tile(string label, string inkKey, bool upper, string automationName, Action press)
+    {
+        var glyph = new Avalonia.Controls.Shapes.Path
+        {
+            Data = Geometry.Parse(TabGlyph.PathFor(PanelTab.Search)!),
+            Width = TabGlyph.Size,
+            Height = TabGlyph.Size,
+            Stretch = Stretch.None,
+            StrokeThickness = 1.6,
+            StrokeJoin = PenLineJoin.Miter,
+            StrokeLineCap = PenLineCap.Square,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var words = upper
+            ? Typeset.Chrome(
+                label, TypeScale.Control, inkKey, weight: FontWeight.SemiBold, tracking: TypeScale.Control * Fonts.ChromeTracking,
+                vertical: VerticalAlignment.Center)
+            : Typeset.Chrome(label, TypeScale.Control, inkKey, weight: FontWeight.Medium, wrap: true, vertical: VerticalAlignment.Center);
+        words.Margin = new Thickness(8, 0, 0, 0);
+        Grid.SetColumn(words, 1);
+
+        var tile = new Border
+        {
+            MinHeight = TypeScale.MinimumTarget,
+            Padding = new Thickness(8, 0),
+            Child = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+                Children = { glyph, words },
+            },
+        };
+
+        var pointerOver = false;
+        var keyboardFocus = false;
+        var pressed = false;
+        IDisposable? ground = null;
+        IDisposable? stroke = null;
+        IDisposable? text = null;
+
+        void Refresh()
+        {
+            ground?.Dispose();
+            stroke?.Dispose();
+            text?.Dispose();
+            var ink = pressed ? ThemeManager.KnockKey : inkKey;
+            ground = ThemeInk.Bind(tile, Border.BackgroundProperty, pressed ? ThemeManager.AKey : pointerOver || keyboardFocus ? ThemeManager.Tile2Key : ThemeManager.TileKey);
+            stroke = ThemeInk.Bind(glyph, Avalonia.Controls.Shapes.Shape.StrokeProperty, ink);
+            text = ThemeInk.Bind(words, TextBlock.ForegroundProperty, ink);
+        }
+
+        tile.PointerEntered += (_, _) =>
+        {
+            pointerOver = true;
+            Refresh();
+        };
+        tile.PointerExited += (_, _) =>
+        {
+            pointerOver = false;
+            pressed = false;
+            Refresh();
+        };
+        tile.PointerPressed += (_, _) =>
+        {
+            pressed = true;
+            Refresh();
+        };
+        tile.PointerReleased += (_, _) =>
+        {
+            pressed = false;
+            Refresh();
+        };
+        tile.GotFocus += (_, e) =>
+        {
+            keyboardFocus = e.NavigationMethod is NavigationMethod.Tab or NavigationMethod.Directional;
+            Refresh();
+        };
+        tile.LostFocus += (_, _) =>
+        {
+            keyboardFocus = false;
+            Refresh();
+        };
+        Refresh();
+
+        Pressable(tile, press);
+        AutomationProperties.SetName(tile, automationName);
 
         return tile;
     }
