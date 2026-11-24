@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Targeting your own parked ship from the SRV no longer counts as meeting another Commander. Before, the next game session's target of your ship was announced as "Commander <your name> — you met … ago; you targeted them", and you appeared in your own Commander log. Earlier meetings with yourself are gone from the log too, since it is rebuilt from the journals at every start.
+
 Fixed: On the headset, the Podcasts, Music and Movies seek bars draw their fill and mark at the point the episode, track or film has reached, on the big panel and, for Podcasts, on the mini panel. Before, the fill was drawn to a width left from an earlier layout, so 15 minutes into a 35-minute podcast it showed about a fifth of the bar on the big panel and three quarters on the mini, and could run past the end of the bar.
 
 Fixed: On the headset, the mini panel's Music read-out draws its position where the track is. Before, its bar could show a stale width or run past the end of its rail.

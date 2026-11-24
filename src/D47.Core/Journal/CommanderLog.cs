@@ -53,6 +53,8 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
 
     private string? _commander;
 
+    private string? _commanderKey;
+
     private string _system = string.Empty;
 
     private DateTimeOffset _session = DateTimeOffset.MinValue;
@@ -183,6 +185,11 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
                 if (journalEvent.String("FID") is { Length: > 0 } fid)
                 {
                     _commander = fid;
+                }
+
+                if (journalEvent.String(journalEvent.Kind == "Commander" ? "Name" : "Commander") is { Length: > 0 } own)
+                {
+                    _commanderKey = KeyOf(own);
                 }
 
                 if (journalEvent.Kind == "LoadGame")
@@ -320,7 +327,7 @@ public sealed class CommanderLog(IFileSystem fileSystem, ILogger logger)
 
         var key = KeyOf(rawName);
 
-        if (key.Length == 0)
+        if (key.Length == 0 || key == _commanderKey)
         {
             return;
         }
