@@ -122,7 +122,7 @@ public static class GalaxyFilters
             "allegiance",
             "Superpower allegiance.",
             "Alliance", "Empire", "Federation", "Guardian", "Independent", "Pilots Federation", "Thargoid")
-            .On(GalaxySearchKind.Stations, "allegiance"),
+            .On(GalaxySearchKind.Stations, "allegiance") with { Several = true },
         GalaxyFilter.ChoiceOf("government", "government", "Form of government.", Governments)
             .On(GalaxySearchKind.Stations, "government"),
         GalaxyFilter.Choice(
@@ -163,7 +163,7 @@ public static class GalaxyFilters
             "controlling_minor_faction_state",
             "What the controlling faction is going through. Crowd-reported, so this finds systems reported in "
             + "that state.",
-            States).On(GalaxySearchKind.Stations, "controlling_minor_faction_state"),
+            States).On(GalaxySearchKind.Stations, "controlling_minor_faction_state") with { Several = true },
 
         // faction, faction_state and faction_government are written together as one element of
         // minor_faction_presences, so together they match one faction that is all of them.

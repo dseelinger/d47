@@ -10,6 +10,8 @@
 
 Fixed: The High Grade Emissions callout reads every faction in the system, not only the controlling one, because each emission belongs to one faction and holds what that faction's state produces. A system whose minor Independent faction is in Outbreak is now named for Pharmaceutical Isolators, and the same goes for the other state materials. Alliance factions count beside Independent ones, so an Alliance system in Outbreak, War, Civil Unrest, Boom or Expansion is named where it had been silent. The HGE search tiles and "where do I find" answers ask for Independent or Alliance systems. Because minor factions now count, the callout speaks in more systems than it did.
 
+Fixed: The HGE search tiles for Military Grade Alloys, Military Supercapacitors and the three Proto materials keep their states on Search > Systems; they had run with no state at all. Allegiance and State on that page take several choices, as Faction state does.
+
 Added: Commander > Assets > Materials names the nearest material trader of each kind from the galaxy search: its system, which you can open or copy, and how far away it is. The Raw, Manufactured and Encoded ledgers show their own kind at the right of the title; Needed by plans and the Farming route show all three under the title, and a filtered Farming route shows its one kind. A trader in a permit system is named only when your navy rank or a past visit shows you hold the permit; otherwise the next nearest is named. The traders also appear on the headset's big panel.
 
 Added: Each podcast episode on the headset big panel shows its publication date under the title, in the form the window uses, such as 21 NOV 2026.

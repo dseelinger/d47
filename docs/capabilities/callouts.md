@@ -852,7 +852,7 @@ be worth the trip.
 A system can offer several unrelated groups, when its factions are in different states, or one faction
 is in two states at once. Civil Unrest *and* Expansion gives you Improvised Components and all three
 Proto materials. Because an emission can belong to any faction present, a system named for one group
-will also hold emissions with other materials.
+can also hold emissions with other materials.
 
 **Nothing is said about a material you are already full of**, and a system whose materials are all
 full says nothing. So once you have finished gathering, this goes quiet on its own without your

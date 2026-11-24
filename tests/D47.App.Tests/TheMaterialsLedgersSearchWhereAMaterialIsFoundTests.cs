@@ -194,6 +194,38 @@ public sealed class TheMaterialsLedgersSearchWhereAMaterialIsFoundTests
     }
 
     [AvaloniaFact]
+    public void PressingThePharmaceuticalIsolatorsTileAsksForIndependentOrAllianceInOutbreak()
+    {
+        var (panel, window) = Open(withSearch: true);
+        Select(panel, "manufactured");
+
+        Enter(Tile(panel, "Search HGE systems for Pharmaceutical Isolators"));
+
+        Assert.Equal(PanelTab.Search, panel.Tab);
+        Assert.Equal(SystemSearchPage.RootKey, panel.Nav.RootKeyOf(PanelTab.Search));
+
+        var form = panel.GetVisualDescendants().OfType<SystemSearchPage>().Single().FormArguments();
+        Assert.Equal("Independent, Alliance", form["allegiance"]);
+        Assert.Equal("Outbreak", form["state"]);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void PressingTheMilitaryGradeAlloysTileKeepsBothWarStates()
+    {
+        var (panel, window) = Open(withSearch: true);
+        Select(panel, "manufactured");
+
+        Enter(Tile(panel, "Search HGE systems for Military Grade Alloys"));
+
+        var form = panel.GetVisualDescendants().OfType<SystemSearchPage>().Single().FormArguments();
+        Assert.Equal("War, Civil War", form["state"]);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void PressingTheSeleniumTileOpensSearchSystemOnHR3230()
     {
         var (panel, window) = Open(withSearch: true);

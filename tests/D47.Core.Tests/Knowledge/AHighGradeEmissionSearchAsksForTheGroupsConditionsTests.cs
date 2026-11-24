@@ -35,6 +35,18 @@ public sealed class AHighGradeEmissionSearchAsksForTheGroupsConditionsTests
         Assert.Equal("Outbreak", arguments["state"]);
     }
 
+    /// <summary>The material guide sends the same arguments, distance and population included.</summary>
+    [Fact]
+    public void EveryGroupsSearchIsOneTheMaterialGuideCanSend()
+    {
+        foreach (var group in EmissionRules.Groups)
+        {
+            Assert.True(
+                GalaxyQuery.TryParse("Sol", EmissionRules.SearchArguments(group), size: 50, out _, out var failure),
+                failure);
+        }
+    }
+
     [Fact]
     public void EveryGroupsSearchIsOneTheSystemsSearchAccepts()
     {
