@@ -428,6 +428,77 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     internal static bool OnHeadset(Visual control) =>
         control.FindAncestorOfType<PanelView>()?.Classes.Contains("headset") == true;
 
+    private Button? _copyLabelOwner;
+
+    /// <summary>Draws the copy result label at <paramref name="button"/> on the headset's panel; one label at a time.</summary>
+    internal static void ShowCopyLabel(Button button, bool worked)
+    {
+        if (button.FindAncestorOfType<PanelView>() is not { } panel || !panel.Classes.Contains("headset"))
+        {
+            return;
+        }
+
+        panel.CopyLabelLayer.Children.Clear();
+        panel._copyLabelOwner = button;
+
+        void Gone(object? sender, VisualTreeAttachmentEventArgs e)
+        {
+            button.DetachedFromVisualTree -= Gone;
+
+            if (panel._copyLabelOwner == button)
+            {
+                panel._copyLabelOwner = null;
+                panel.CopyLabelLayer.Children.Clear();
+            }
+        }
+
+        button.DetachedFromVisualTree += Gone;
+
+        object? Find(string key) => panel.TryFindResource(key, panel.ActualThemeVariant, out var found) ? found : null;
+
+        var text = new TextBlock
+        {
+            Text = (worked ? Controls.CopyGlyph.Copied : Controls.CopyGlyph.Failed).ToUpperInvariant(),
+            Foreground = Find("D47.White") as IBrush,
+            FontFamily = Find("D47.Font.Chrome") as FontFamily ?? FontFamily.Default,
+            FontSize = Find("D47.Type.Meta") is double size ? size : 12,
+            FontWeight = FontWeight.Medium,
+            LetterSpacing = 0.48,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var label = new Border
+        {
+            Background = Find("D47.Bg") as IBrush,
+            BorderBrush = Find(worked ? "D47.A" : "D47.Red") as IBrush,
+            BorderThickness = new Thickness(1),
+            Height = 32,
+            Padding = new Thickness(10, 0),
+            IsHitTestVisible = false,
+            Child = text,
+        };
+
+        label.Measure(Size.Infinity);
+
+        var tile = button.TranslatePoint(default, panel.CopyLabelLayer) ?? default;
+        var width = label.DesiredSize.Width;
+        var x = tile.X - width >= 0 ? tile.X - width : tile.X + button.Bounds.Width;
+
+        Canvas.SetLeft(label, x);
+        Canvas.SetTop(label, tile.Y + (button.Bounds.Height - label.Height) / 2);
+        panel.CopyLabelLayer.Children.Add(label);
+    }
+
+    /// <summary>Removes the copy result label when it is the one drawn for <paramref name="button"/>.</summary>
+    internal static void HideCopyLabel(Button button)
+    {
+        if (button.FindAncestorOfType<PanelView>() is { } panel && panel._copyLabelOwner == button)
+        {
+            panel._copyLabelOwner = null;
+            panel.CopyLabelLayer.Children.Clear();
+        }
+    }
+
     /// <summary>The width memory of the desktop panel above <paramref name="control"/>; null on the headset or off a panel.</summary>
     internal static ColumnWidthMemory? ColumnWidthsOf(Visual control) =>
         control.FindAncestorOfType<PanelView>() is { } panel && !panel.Classes.Contains("headset") ? panel._columnWidths : null;

@@ -10,6 +10,8 @@
 
 Added: Search > Systems has a Faction state column after System, shown by default, listing every active state of the controlling faction, such as Boom · Civil Liberty, or None when it has none. It sorts, filters by each state, and while it is shown the System cell's second line is the faction name alone. A saved column layout does not gain it automatically; turn it on under COLUMNS.
 
+Fixed: On the headset's big panel a copy glyph draws a COPIED or COPY FAILED label beside the button for two seconds after any copy. It sits at the button's left, or at its right where the left has no room, covers what is beside it without moving it, and takes no press. COPY FAILED has a red outline.
+
 Fixed: A copy glyph in the window shows COPIED or COPY FAILED in its label for two seconds after any copy, including Ctrl+Shift+C on the Transcript tab and a press once the pointer has left the button. Before, the label opened only while the pointer or keyboard focus was on the button, so the shortcut showed nothing. COPY FAILED has a red outline.
 
 Fixed: The High Grade Emissions callout reads every faction in the system, not only the controlling one, because each emission belongs to one faction and holds what that faction's state produces. A system whose minor Independent faction is in Outbreak is now named for Pharmaceutical Isolators, and the same goes for the other state materials. Alliance factions count beside Independent ones, so an Alliance system in Outbreak, War, Civil Unrest, Boom or Expansion is named where it had been silent. The HGE search tiles and "where do I find" answers ask for Independent or Alliance systems. Because minor factions now count, the callout speaks in more systems than it did.

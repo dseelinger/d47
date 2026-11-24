@@ -163,8 +163,8 @@ public static class CopyGlyph
 
     /// <summary>
     /// Names a copy's result on <paramref name="button"/>, and goes back to <see cref="Name"/> after two seconds.
-    /// In the window the button's label opens with the result for those two seconds, hovered or not; one with an
-    /// empty tip, as on the headset's panel, keeps it empty.
+    /// In the window the button's label opens with the result for those two seconds, hovered or not. On the
+    /// headset's panel the panel draws the result label itself and the tip stays empty.
     /// </summary>
     public static void Show(Button button, bool worked)
     {
@@ -180,7 +180,11 @@ public static class CopyGlyph
             GlyphLabel.SetTip(button, result);
         }
 
-        if (!PanelView.OnHeadset(button))
+        if (PanelView.OnHeadset(button))
+        {
+            PanelView.ShowCopyLabel(button, worked);
+        }
+        else
         {
             GlyphLabel.SetResult(button, worked);
         }
@@ -191,6 +195,7 @@ public static class CopyGlyph
         {
             button.SetValue(RestoreProperty, null);
             GlyphLabel.SetResult(button, null);
+            PanelView.HideCopyLabel(button);
             AutomationProperties.SetName(button, Name);
 
             if (button.GetValue(RestingTipProperty) is { } back)

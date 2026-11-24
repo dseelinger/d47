@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -291,26 +291,186 @@ public class CopyAndMapGlyphsShowHoverLabelsTests
         window.Close();
     }
 
+    private static Canvas LayerOf(Control host) => ((PanelView)host).FindControl<Canvas>("CopyLabelLayer")!;
+
+    private static Border? DrawnLabel(Control host) => LayerOf(host).Children.OfType<Border>().SingleOrDefault();
+
     [AvaloniaFact]
-    public void OnTheBigPanelAPressLeavesTheTipEmptySoNoLabelOpens()
+    public void OnTheBigPanelAPressDrawsTheCopiedLabelAndItIsGoneTwoSecondsLater()
     {
         using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
         var clock = new ManualClock();
         using var replaced = clock.UseForDispatcher();
 
         var glyph = CopyGlyph.For("Sol", Copy);
-        var (window, _) = Hosted(glyph, headset: true);
+        var (window, host) = Hosted(glyph, headset: true);
 
         CopyGlyph.Show(glyph, worked: true);
+        Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(CopyGlyph.Copied, AutomationProperties.GetName(glyph));
+        var label = DrawnLabel(host)!;
+
+        Assert.Equal("COPIED", ((TextBlock)label.Child!).Text);
+        Assert.Equal(Resource("D47.A"), label.BorderBrush);
+        Assert.Equal(32, label.Height);
+        Assert.False(label.IsHitTestVisible);
         Assert.Equal(string.Empty, GlyphLabel.GetTip(glyph));
+        Assert.Equal(CopyGlyph.Copied, AutomationProperties.GetName(glyph));
 
         clock.Advance(TimeSpan.FromSeconds(2));
+        Dispatcher.UIThread.RunJobs();
 
+        Assert.Null(DrawnLabel(host));
         Assert.Equal(CopyGlyph.Name, AutomationProperties.GetName(glyph));
         Assert.Equal(string.Empty, GlyphLabel.GetTip(glyph));
 
         window.Close();
+    }
+
+    [AvaloniaFact]
+    public void OnTheBigPanelAFailedCopyDrawsCopyFailedWithARedBorder()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.For("Sol", Copy);
+        var (window, host) = Hosted(glyph, headset: true);
+
+        CopyGlyph.Show(glyph, worked: false);
+        Dispatcher.UIThread.RunJobs();
+
+        var label = DrawnLabel(host)!;
+
+        Assert.Equal("COPY FAILED", ((TextBlock)label.Child!).Text);
+        Assert.Equal(Resource("D47.Red"), label.BorderBrush);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void OnTheBigPanelTheLabelSitsAtTheLeftOfTheGlyphWhenItFitsThereAndAtTheRightWhenItDoesNot()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.For("Sol", Copy);
+        glyph.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right;
+        var (window, host) = Hosted(glyph, headset: true);
+        var layer = LayerOf(host);
+
+        CopyGlyph.Show(glyph, worked: true);
+        Dispatcher.UIThread.RunJobs();
+
+        var tile = glyph.TranslatePoint(default, layer)!.Value;
+        var label = DrawnLabel(host)!;
+
+        Assert.True(tile.X > label.DesiredSize.Width);
+        Assert.Equal(tile.X, Canvas.GetLeft(label) + label.DesiredSize.Width, 0.5);
+        Assert.Equal(tile.Y + (glyph.Bounds.Height - 32) / 2, Canvas.GetTop(label), 0.5);
+
+        glyph.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        glyph.Margin = default;
+        Dispatcher.UIThread.RunJobs();
+        host.UpdateLayout();
+        tile = glyph.TranslatePoint(default, layer)!.Value;
+
+        Assert.True(tile.X < label.DesiredSize.Width, "the glyph must have less room at its left than the label's width");
+
+        CopyGlyph.Show(glyph, worked: true);
+        Dispatcher.UIThread.RunJobs();
+
+        label = DrawnLabel(host)!;
+
+        Assert.Equal(tile.X + glyph.Bounds.Width, Canvas.GetLeft(label), 0.5);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void OnTheBigPanelASecondCopyReplacesTheLabelAndShowsForItsOwnTwoSeconds()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var first = CopyGlyph.For("Sol", Copy);
+        var second = CopyGlyph.For("Alpha Centauri", Copy);
+        var (window, host) = Hosted(first, headset: true);
+        ((Avalonia.Controls.Panel)first.Parent!).Children.Add(second);
+        Dispatcher.UIThread.RunJobs();
+
+        CopyGlyph.Show(first, worked: true);
+        clock.Advance(TimeSpan.FromSeconds(1));
+        CopyGlyph.Show(second, worked: false);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("COPY FAILED", ((TextBlock)DrawnLabel(host)!.Child!).Text);
+
+        clock.Advance(TimeSpan.FromSeconds(1.5));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("COPY FAILED", ((TextBlock)DrawnLabel(host)!.Child!).Text);
+
+        clock.Advance(TimeSpan.FromSeconds(0.5));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(DrawnLabel(host));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void OnTheBigPanelTheLabelGoesWhenItsButtonLeavesTheTree()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.For("Sol", Copy);
+        var (window, host) = Hosted(glyph, headset: true);
+
+        CopyGlyph.Show(glyph, worked: true);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotNull(DrawnLabel(host));
+
+        ((Avalonia.Controls.Panel)glyph.Parent!).Children.Remove(glyph);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(DrawnLabel(host));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void InTheWindowAPressDrawsNothingInThePanelTree()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        var hosting = new Window { Content = panel, Width = 800, Height = 600 };
+        hosting.Show();
+        Dispatcher.UIThread.RunJobs();
+        var glyph = CopyGlyph.For("Sol", Copy);
+        panel.GetVisualDescendants().OfType<StackPanel>().First().Children.Add(glyph);
+        Dispatcher.UIThread.RunJobs();
+
+        CopyGlyph.Show(glyph, worked: true);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Null(DrawnLabel(panel));
+        Assert.True(LabelOf(glyph).IsOpen);
+
+        hosting.Close();
     }
 }

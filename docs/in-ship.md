@@ -121,7 +121,7 @@ The headset's big panel does the same, and so does the mini panel.
 ### The controls
 
 **Copy**, the button showing two overlapping squares beside the search box, puts the entire
-conversation on the clipboard. The name that appears when you point at it reads *Copied* or
+conversation on the clipboard. A label beside it reads *Copied* or
 *Copy failed* for two seconds after. **Ctrl+Shift+C** does the same. To copy only part of it,
 select the text and press Ctrl+C. A search query does not
 narrow what it copies — you asked for the conversation, not for the matches.
