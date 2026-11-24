@@ -18,6 +18,52 @@ public sealed class APodcastFeedIsReadFromItsTextTests
     private static string Audio(string url = "https://cdn.example.test/a.mp3") =>
         $"<enclosure url=\"{url}\" type=\"audio/mpeg\" length=\"1234\"/>";
 
+    [Theory]
+    [InlineData("UT", 0)]
+    [InlineData("GMT", 0)]
+    [InlineData("EST", -5)]
+    [InlineData("EDT", -4)]
+    [InlineData("CST", -6)]
+    [InlineData("CDT", -5)]
+    [InlineData("MST", -7)]
+    [InlineData("MDT", -6)]
+    [InlineData("PST", -8)]
+    [InlineData("PDT", -7)]
+    public void ARfc822ZoneNameIsReadAsItsOffset(string zone, int hours)
+    {
+        var show = PodcastFeed.Parse(
+            Rss(Item(Audio(), $"<guid>g</guid><pubDate>Thu, 19 Mar 2026 22:45:00 {zone}</pubDate>")),
+            Feed);
+
+        Assert.Equal(new DateTimeOffset(2026, 3, 19, 22, 45, 0, TimeSpan.FromHours(hours)), show.Episodes[0].Published);
+        Assert.Equal(TimeSpan.FromHours(hours), show.Episodes[0].Published.Offset);
+    }
+
+    [Fact]
+    public void AFeedMixingAZoneNameAndANumericOffsetIsOrderedByTheInstant()
+    {
+        var show = PodcastFeed.Parse(
+            Rss(
+                "<item><title>Earlier</title><guid>a</guid><pubDate>Thu, 19 Mar 2026 22:00:00 +0000</pubDate>" + Audio() + "</item>",
+                "<item><title>Later</title><guid>b</guid><pubDate>Thu, 19 Mar 2026 18:00:00 EST</pubDate>" + Audio("https://cdn.example.test/b.mp3") + "</item>"),
+            Feed);
+
+        Assert.Equal(["Later", "Earlier"], show.Episodes.Select(episode => episode.Title));
+    }
+
+    [Fact]
+    public void AnUnreadableDateKeepsMinValueAndSortsLast()
+    {
+        var show = PodcastFeed.Parse(
+            Rss(
+                "<item><title>Bad</title><guid>a</guid><pubDate>Thu, 19 Mar 2026 22:00:00 XYZ</pubDate>" + Audio() + "</item>",
+                "<item><title>Good</title><guid>b</guid><pubDate>Thu, 19 Mar 2026 18:00:00 EST</pubDate>" + Audio("https://cdn.example.test/b.mp3") + "</item>"),
+            Feed);
+
+        Assert.Equal(["Good", "Bad"], show.Episodes.Select(episode => episode.Title));
+        Assert.Equal(DateTimeOffset.MinValue, show.Episodes[1].Published);
+    }
+
     [Fact]
     public void AnItunesFeedGivesItsTitleAndEpisodesNewestFirst()
     {

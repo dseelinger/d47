@@ -550,7 +550,9 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         {
             var sub = ListRow.Sub(new TextBlock
             {
-                Inlines = [Fonts.Mono($"{line.Episode.Published.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)} · {Clock(line.Episode.Duration)}")],
+                Inlines = [Fonts.Mono(line.Episode.Published == DateTimeOffset.MinValue
+                    ? Clock(line.Episode.Duration)
+                    : $"{line.Episode.Published.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)} · {Clock(line.Episode.Duration)}")],
                 TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
             });
 

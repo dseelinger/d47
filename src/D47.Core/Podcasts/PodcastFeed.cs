@@ -107,10 +107,29 @@ public static class PodcastFeed
         return AudioExtensions.Any(extension => address.AbsolutePath.EndsWith(extension, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static DateTimeOffset ReadDate(string text) =>
-        DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date)
+    private static readonly Dictionary<string, string> ZoneOffsets = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["UT"] = "+0000", ["GMT"] = "+0000",
+        ["EST"] = "-0500", ["EDT"] = "-0400",
+        ["CST"] = "-0600", ["CDT"] = "-0500",
+        ["MST"] = "-0700", ["MDT"] = "-0600",
+        ["PST"] = "-0800", ["PDT"] = "-0700",
+    };
+
+    private static DateTimeOffset ReadDate(string text)
+    {
+        var trimmed = text.Trim();
+        var space = trimmed.LastIndexOf(' ');
+
+        if (space > 0 && ZoneOffsets.TryGetValue(trimmed[(space + 1)..], out var offset))
+        {
+            trimmed = trimmed[..space] + " " + offset;
+        }
+
+        return DateTimeOffset.TryParse(trimmed, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date)
             ? date
             : DateTimeOffset.MinValue;
+    }
 
     /// <summary>Seconds, <c>mm:ss</c> or <c>hh:mm:ss</c>; null when the text is none of these.</summary>
     private static TimeSpan? ReadDuration(string text)
