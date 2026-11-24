@@ -63,7 +63,6 @@ D47.App.Panel.StarSystemPage.CanOpenHistory
 D47.App.Panel.StationSearchPage.TextField(string)
 D47.App.Panel.StationSearchPage.Type(string, string)
 D47.App.Panel.StoredModulesPage.Crumb
-D47.App.Panel.SystemBodyPage.Sections
 D47.App.Panel.SystemBodyPage.Show(D47.App.Panel.SystemBodyPage.Section)
 D47.App.Panel.SystemBodyPage.Showing
 D47.App.Panel.SystemSearchPage.TextField(string)

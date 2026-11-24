@@ -124,6 +124,29 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
 
     public string OpenSection => _sectionWord.Word;
 
+    public string OpenSectionId => _sectionWord.Id;
+
+    bool IPageSection.SectionChosen => _sectionWord.Chosen;
+
+    public bool OpenSectionById(string id)
+    {
+        if (!Enum.TryParse<Section>(id, out var section) || section.ToString() != id)
+        {
+            return false;
+        }
+
+        _sectionWord.Unchoose();
+
+        if (section != _section)
+        {
+            _marketColumns?.Reopen();
+            _section = section;
+            Draw();
+        }
+
+        return true;
+    }
+
     event EventHandler? IPageSection.OpenSectionChanged
     {
         add => _sectionWord.Changed += value;
@@ -182,6 +205,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
     {
         _marketColumns?.Reopen();
         _section = section;
+        _sectionWord.Choose();
         Draw();
     }
 
@@ -252,7 +276,8 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
     private void Draw()
     {
         DrawPage();
-        _sectionWord.Set(this, !_loading && _failure is null && Station is not null ? _section.ToString() : string.Empty);
+        var section = !_loading && _failure is null && Station is not null ? _section.ToString() : string.Empty;
+        _sectionWord.Set(this, section, section);
     }
 
     private void DrawPage()
@@ -327,6 +352,7 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
             {
                 _marketColumns?.Reopen();
                 _section = (Section)segment.SelectedIndex;
+                _sectionWord.Choose();
                 Draw();
             }
         };

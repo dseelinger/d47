@@ -14,7 +14,7 @@ namespace D47.App.Panel;
 /// A tab's drill stack, drawn as however many panes will fit (Phase 25, "Drill in, and find your way
 /// back" and "The panel resizes and zooms").
 /// </summary>
-public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPageSummary, IPageSection
+public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPageSummary
 {
     /// <summary>The narrowest a pane may be before the strip shows one fewer.</summary>
     public const double MinimumPaneWidth = 380;
@@ -47,6 +47,9 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
     /// <summary>What each level drew, kept by crumb key.</summary>
     private readonly Dictionary<string, Control> _built = [];
+
+    /// <summary>The navigator's section for each level when this strip last matched its page to it, by crumb key.</summary>
+    private readonly Dictionary<string, PageSection?> _sectionsSeen = [];
 
     /// <summary>The row that had focus when a deeper level was opened, and its place among the level's rows, by crumb key.</summary>
     private readonly Dictionary<string, (Control Row, int Index)> _focusedRows = [];
@@ -213,6 +216,11 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         var wentBack = trail.Count < _depth;
         _depth = trail.Count;
 
+        foreach (var key in keys)
+        {
+            MatchSection(key);
+        }
+
         if (_showing.SequenceEqual(keys) && hide == _hiding)
         {
             return;
@@ -262,7 +270,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
 
                 if (pane is IPageSection section)
                 {
-                    section.OpenSectionChanged += (_, _) => OpenSectionChanged?.Invoke(this, EventArgs.Empty);
+                    Adopt(crumb.Key, section);
                 }
             }
 
@@ -720,6 +728,98 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
             ? section.OpenSection
             : string.Empty;
 
+    /// <summary>
+    /// Ties a level's page to the navigator's section for that level: the page opens the section the navigator holds,
+    /// or the navigator notes the page's when it holds none, and the page's changes go to the navigator.
+    /// </summary>
+    private void Adopt(string key, IPageSection page)
+    {
+        page.OpenSectionChanged += (_, _) =>
+        {
+            if (_built.TryGetValue(key, out var built) && ReferenceEquals(built, page))
+            {
+                Reported(key, page);
+            }
+
+            OpenSectionChanged?.Invoke(this, EventArgs.Empty);
+        };
+
+        if (_nav.SectionOf(key) is { } held)
+        {
+            _sectionsSeen[key] = held;
+
+            if (held.Id != page.OpenSectionId)
+            {
+                page.OpenSectionById(held.Id);
+            }
+        }
+        else if (page.OpenSectionId.Length > 0)
+        {
+            // After the draw that built it, since noting raises the navigator's change.
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (_built.TryGetValue(key, out var built) && ReferenceEquals(built, page))
+                {
+                    Reported(key, page);
+                }
+            });
+        }
+    }
+
+    /// <summary>
+    /// Gives the navigator a page's section: a choice as a move, a report as a note. A report that differs from the
+    /// section the navigator holds opens that section instead, for a page that could not open it earlier.
+    /// </summary>
+    private void Reported(string key, IPageSection page)
+    {
+        var id = page.OpenSectionId;
+
+        if (id.Length == 0)
+        {
+            return;
+        }
+
+        var section = new PageSection(id, page.OpenSection);
+
+        if (page.SectionChosen)
+        {
+            _sectionsSeen[key] = section;
+            _nav.ChooseSection(key, section);
+            return;
+        }
+
+        if (_nav.SectionOf(key) is { } held && held.Id != id && page.OpenSectionById(held.Id) && page.OpenSectionId == held.Id)
+        {
+            return;
+        }
+
+        _sectionsSeen[key] = section;
+        _nav.NoteSection(key, section);
+    }
+
+    /// <summary>Opens on a level's page the section the navigator took from another surface since this strip last looked.</summary>
+    private void MatchSection(string key)
+    {
+        if (!_built.TryGetValue(key, out var pane) || pane is not IPageSection page)
+        {
+            return;
+        }
+
+        var held = _nav.SectionOf(key);
+
+        if (Equals(held, _sectionsSeen.GetValueOrDefault(key)))
+        {
+            return;
+        }
+
+        _sectionsSeen[key] = held;
+
+        if (held is not null && held.Id != page.OpenSectionId)
+        {
+            page.OpenSectionById(held.Id);
+        }
+    }
+
     /// <summary>Forgets every level whose key matches.</summary>
     public void ForgetWhere(Func<string, bool> match)
     {
@@ -727,6 +827,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
         {
             _built.Remove(key);
             _focusedRows.Remove(key);
+            _sectionsSeen.Remove(key);
         }
 
         _showing = [];
@@ -741,6 +842,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
     {
         _built.Remove(key);
         _focusedRows.Remove(key);
+        _sectionsSeen.Remove(key);
         _showing = [];
         Draw();
     }

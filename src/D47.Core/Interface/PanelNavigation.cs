@@ -132,17 +132,24 @@ public sealed record PanelDestination(PanelTab Tab, NavCrumb Root, NavCrumb? Sub
         : $"{Root.Word} ({Tab})";
 }
 
+/// <summary>A page's open section: a stable id, and the word the Commander sees.</summary>
+public sealed record PageSection(string Id, string Word);
+
 /// <summary>
 /// A place on another surface: its tab, its trail, the destination it is, and how many roots its tab has there.
 /// Trails compare by their crumbs.
 /// </summary>
 public sealed record PanelAddress(PanelTab Tab, IReadOnlyList<NavCrumb> Trail, string DestinationKey, int RootCount)
 {
+    /// <summary>The open section of the deepest level's page, or null.</summary>
+    public PageSection? Section { get; init; }
+
     public bool Equals(PanelAddress? other) =>
         other is not null
         && Tab == other.Tab
         && DestinationKey == other.DestinationKey
         && RootCount == other.RootCount
+        && Equals(Section, other.Section)
         && Trail.SequenceEqual(other.Trail);
 
     public override int GetHashCode() => HashCode.Combine(Tab, DestinationKey, Trail.Count);
@@ -202,6 +209,67 @@ public sealed class PanelNavigator
 
     /// <summary>Which place each tab is showing, for the tabs that have places inside them.</summary>
     private readonly Dictionary<PanelTab, string> _places = [];
+
+    /// <summary>The open section of each level's page, keyed by the level's crumb key.</summary>
+    private readonly Dictionary<string, PageSection> _sections = new(StringComparer.Ordinal);
+
+    /// <summary>The open section of a level's page, or null where none is known.</summary>
+    public PageSection? SectionOf(string levelKey) => _sections.GetValueOrDefault(levelKey);
+
+    /// <summary>The open section of the deepest level above any chooser on the showing tab, or null.</summary>
+    public PageSection? Section => ShowingLevel is { } key ? SectionOf(key) : null;
+
+    /// <summary>The key of the deepest level above any chooser on the showing tab, or null for a tab with no root.</summary>
+    private string? ShowingLevel => Trail.LastOrDefault(crumb => !crumb.Modal)?.Key;
+
+    /// <summary>
+    /// Opens a section the Commander chose on a level's page: a move where that level is the deepest showing and this
+    /// surface stands in for no other address, so the other surfaces take it. False when that section was already open.
+    /// </summary>
+    public bool ChooseSection(string levelKey, PageSection section)
+    {
+        if (!HoldSection(levelKey, section))
+        {
+            return false;
+        }
+
+        if (levelKey == ShowingLevel && StandingIn is null)
+        {
+            Move();
+        }
+        else
+        {
+            Raise();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Notes the section a level's page has open, from the page or from another surface, without moving. False when
+    /// that section was already open.
+    /// </summary>
+    public bool NoteSection(string levelKey, PageSection section)
+    {
+        if (!HoldSection(levelKey, section))
+        {
+            return false;
+        }
+
+        Raise();
+        return true;
+    }
+
+    private bool HoldSection(string levelKey, PageSection section)
+    {
+        if (Equals(_sections.GetValueOrDefault(levelKey), section))
+        {
+            return false;
+        }
+
+        _sections[levelKey] = section;
+        return true;
+    }
 
     /// <summary>Raised whenever the tab, the root or any trail changes.</summary>
     public event EventHandler? Changed;

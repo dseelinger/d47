@@ -3012,7 +3012,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
 
         if (StandIn is { } address)
         {
-            MiniTrailRow.Show(MiniTrail.Words(TabWordOf(address.Tab), address.Trail, address.RootCount));
+            MiniTrailRow.Show(MiniTrail.Words(TabWordOf(address.Tab), address.Trail, address.RootCount, address.Section?.Word ?? string.Empty));
             return;
         }
 
@@ -3033,7 +3033,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     internal PanelAddress? StandIn =>
         Nav.StandingIn
         ?? ((Tab != PanelTab.Transcript && !_builders.ContainsKey(Tab)) || (Mode == PanelMode.Mini && !MiniShows(Tab))
-            ? new PanelAddress(Tab, Nav.Trail, Nav.DestinationKey, Nav.Roots(Tab).Count)
+            ? new PanelAddress(Tab, Nav.Trail, Nav.DestinationKey, Nav.Roots(Tab).Count) { Section = Nav.Section }
             : null);
 
     private TextBlock? _standInLine;
@@ -3388,13 +3388,18 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     }
 
     /// <summary>
-    /// The full path a stand-in is for, at every depth: the tab, the root where the tab has more than one, then
-    /// every level. Nothing on it is pressable, since none of it is this surface's own trail.
+    /// The full path a stand-in is for, at every depth: the tab, the root where the tab has more than one, every
+    /// level, then the open section. Nothing on it is pressable, since none of it is this surface's own trail.
     /// </summary>
     private void DrawStandInCrumbs(PanelAddress address)
     {
         var words = new List<string> { TabWords.TryGetValue(address.Tab, out var tabWord) ? tabWord : address.Tab.ToString() };
         words.AddRange(address.Trail.Where((_, index) => index > 0 || address.RootCount > 1).Select(crumb => crumb.Word));
+
+        if (address.Section is { Word.Length: > 0 } section)
+        {
+            words.Add(section.Word);
+        }
 
         for (var step = 0; step < words.Count; step++)
         {

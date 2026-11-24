@@ -24,8 +24,8 @@ public static class MiniTrail
     public const double SeparatorGap = 6;
 
     /// <summary>
-    /// The tab's word, the root's word when the tab has more than one root, then every deeper level, then the
-    /// page's open section when it has one. Upper case.
+    /// The tab's word, the root's word when the tab has more than one root and the word is not the tab's, then every
+    /// deeper level, then the page's open section when it has one. Upper case.
     /// </summary>
     public static IReadOnlyList<string> Words(string tabWord, IReadOnlyList<NavCrumb> trail, int rootCount, string openSection = "")
     {
@@ -33,7 +33,7 @@ public static class MiniTrail
 
         for (var index = 0; index < trail.Count; index++)
         {
-            if (index == 0 && rootCount <= 1)
+            if (index == 0 && (rootCount <= 1 || string.Equals(trail[0].Word, tabWord, StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }

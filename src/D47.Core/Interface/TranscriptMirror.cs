@@ -164,6 +164,32 @@ public sealed class TranscriptMirror
         {
             Mirroring(() => Carry(nav, shared, source));
         }
+        else if (position.Section is { } section && !Equals(section, at.Section) && position.SamePlace(at))
+        {
+            Noted(position, section);
+        }
+    }
+
+    /// <summary>
+    /// A section a page reported without the Commander moving: it becomes the shared address's where that is the same
+    /// place, and goes to every other navigator that holds no section for the level.
+    /// </summary>
+    private void Noted(Position position, PageSection section)
+    {
+        var level = position.Trail[^1].Key;
+
+        if (_shared is { } shared && shared.SamePlace(position))
+        {
+            _shared = shared with { Section = section };
+        }
+
+        Mirroring(() =>
+        {
+            foreach (var other in _navigators.Where(other => other.SectionOf(level) is null))
+            {
+                other.NoteSection(level, section);
+            }
+        });
     }
 
     /// <summary>Puts a navigator on an address and gives it the history of the navigator that moved there.</summary>
@@ -209,11 +235,18 @@ public sealed class TranscriptMirror
             }
         }
 
+        if (position.Section is { } section && position.Trail.Count > 0)
+        {
+            nav.NoteSection(position.Trail[^1].Key, section);
+        }
+
         var there = nav.Tab == position.Tab
             && nav.OwnDestinationKey == position.DestinationKey
             && nav.Trail.Select(crumb => crumb.Key).SequenceEqual(position.Trail.Select(crumb => crumb.Key), StringComparer.Ordinal);
 
-        nav.StandIn(there ? null : new PanelAddress(position.Tab, position.Trail, position.DestinationKey, position.RootCount));
+        nav.StandIn(there
+            ? null
+            : new PanelAddress(position.Tab, position.Trail, position.DestinationKey, position.RootCount) { Section = position.Section });
 
         _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
     }
@@ -224,6 +257,7 @@ public sealed class TranscriptMirror
         {
             DestinationKey = nav.DestinationKey,
             RootCount = nav.Roots(nav.Tab).Count,
+            Section = nav.Section,
         };
 
     private static (Position At, int Moves, PanelAddress? StandingIn) Known(PanelNavigator nav) =>
@@ -258,14 +292,20 @@ public sealed class TranscriptMirror
         }
     }
 
-    /// <summary>A tab and a trail, compared by the crumbs on it.</summary>
+    /// <summary>A tab, a trail compared by the crumbs on it, and the open section of the trail's deepest level.</summary>
     private sealed record Position(PanelTab Tab, IReadOnlyList<NavCrumb> Trail)
     {
         public string DestinationKey { get; init; } = string.Empty;
 
         public int RootCount { get; init; }
 
+        public PageSection? Section { get; init; }
+
         public bool Equals(Position? other) =>
+            SamePlace(other) && Equals(Section, other!.Section);
+
+        /// <summary>The same tab and trail, whatever the section.</summary>
+        public bool SamePlace(Position? other) =>
             other is not null && Tab == other.Tab && Trail.SequenceEqual(other.Trail);
 
         public override int GetHashCode() => HashCode.Combine(Tab, Trail.Count);

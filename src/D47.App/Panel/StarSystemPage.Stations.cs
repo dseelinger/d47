@@ -158,6 +158,20 @@ public sealed partial class StarSystemPage
 
     private void ShowSection(Section section, string? kind = null)
     {
+        _sectionWord.Choose();
+        Switch(section);
+
+        if (kind is not null)
+        {
+            _stationFilter.Kind = kind;
+        }
+
+        Draw();
+    }
+
+    /// <summary>Moves to a section, with what opening it starts; the caller draws.</summary>
+    private void Switch(Section section)
+    {
         if (section == Section.Orbits && _section != Section.Orbits)
         {
             ResetOrbits();
@@ -169,13 +183,6 @@ public sealed partial class StarSystemPage
         {
             AskNearby(profile);
         }
-
-        if (kind is not null)
-        {
-            _stationFilter.Kind = kind;
-        }
-
-        Draw();
     }
 
     /// <summary>The section switch, laid on six equal columns.</summary>

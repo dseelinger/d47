@@ -186,6 +186,28 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
 
     public string OpenSection => _sectionWord.Word;
 
+    public string OpenSectionId => _sectionWord.Id;
+
+    bool IPageSection.SectionChosen => _sectionWord.Chosen;
+
+    public bool OpenSectionById(string id)
+    {
+        if (!Enum.TryParse<Section>(id, out var section) || section.ToString() != id)
+        {
+            return false;
+        }
+
+        _sectionWord.Unchoose();
+
+        if (section != _section)
+        {
+            Switch(section);
+            Draw();
+        }
+
+        return true;
+    }
+
     event EventHandler? IPageSection.OpenSectionChanged
     {
         add => _sectionWord.Changed += value;
@@ -301,6 +323,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         }
 
         _section = Section.Orbits;
+        _sectionWord.Choose();
         ResetOrbits();
         _orbitFocus = focus;
         Draw();
@@ -316,6 +339,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         }
 
         _section = section;
+        _sectionWord.Choose();
         Draw();
 
         return true;
@@ -369,6 +393,11 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     {
         if (_opened?.Address != address)
         {
+            if (_opened is not null)
+            {
+                _sectionWord.Choose();
+            }
+
             _section = Section.Overview;
             ResetOrbits();
             _stationFilter = new StationFilter { Query = _stationFilter.Query };
@@ -530,7 +559,8 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     private void Draw()
     {
         DrawBody();
-        _sectionWord.Set(this, _view == View.Ready && _profile is not null ? _section.ToString() : string.Empty);
+        var section = _view == View.Ready && _profile is not null ? _section.ToString() : string.Empty;
+        _sectionWord.Set(this, section, section);
 
         if (Filters != _filtering)
         {

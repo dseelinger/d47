@@ -29,7 +29,7 @@ using D47.App.Windowing;
 namespace D47.App.Settings;
 
 /// <summary>The settings surface.</summary>
-public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, D47.App.Panel.IPageChrome, D47.App.Panel.IPageSummary
+public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, D47.App.Panel.IPageChrome, D47.App.Panel.IPageSummary, D47.App.Panel.IPageSection
 {
     public string Summary => "Changes apply as you make them.";
 
@@ -995,20 +995,43 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
             : null;
 
     /// <summary>Shows a place the history returned to, without recording the move again.</summary>
-    internal void RestorePlace(string placeId)
+    internal void RestorePlace(string placeId) => OpenPlace(placeId, chosen: true);
+
+    private readonly D47.App.Panel.PageSectionWord _sectionWord = new();
+
+    public string OpenSection => _sectionWord.Word;
+
+    public string OpenSectionId => _sectionWord.Id;
+
+    bool D47.App.Panel.IPageSection.SectionChosen => _sectionWord.Chosen;
+
+    public bool OpenSectionById(string id) => OpenPlace(id, chosen: false);
+
+    public event EventHandler? OpenSectionChanged
+    {
+        add => _sectionWord.Changed += value;
+        remove => _sectionWord.Changed -= value;
+    }
+
+    private bool OpenPlace(string placeId, bool chosen)
     {
         var index = _sections.FindIndex(section => string.Equals(section.PlaceId, placeId, StringComparison.Ordinal));
 
-        if (index >= 0 && _sift.Places[index].Exists)
+        if (index < 0 || !_sift.Places[index].Exists)
         {
-            ShowPlace(index, record: false);
+            return false;
         }
+
+        ShowPlace(index, record: false, chosen);
+        return true;
     }
 
     /// <summary>Replaces the page with one place, filtered by the current query.</summary>
     internal void ShowPlace(int index) => ShowPlace(index, record: true);
 
-    private void ShowPlace(int index, bool record)
+    private void ShowPlace(int index, bool record) => ShowPlace(index, record, chosen: record);
+
+    private void ShowPlace(int index, bool record, bool chosen)
     {
         if (_nav is not { } nav || index < 0 || index >= _sections.Count)
         {
@@ -1027,6 +1050,17 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         }
 
         PlaceShown?.Invoke(_sections[index].PlaceId, record);
+
+        if (chosen)
+        {
+            _sectionWord.Choose();
+        }
+        else
+        {
+            _sectionWord.Unchoose();
+        }
+
+        _sectionWord.Set(this, _sections[index].PlaceId, _sections[index].Title);
     }
 
     /// <summary>Opens the place the page was left on (#268).</summary>

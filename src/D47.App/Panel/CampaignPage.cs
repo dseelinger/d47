@@ -178,11 +178,8 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         };
         _segment.SelectionChanged += (_, _) =>
         {
-            StopArranging();
-            _section = _segment.SelectedIndex;
-            _page = 0;
-            FillSection();
-            ReportSection();
+            _sectionWord.Choose();
+            ShowSection(_segment.SelectedIndex);
         };
 
         Margin = new Thickness(14);
@@ -191,8 +188,22 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
         Draw();
     }
 
-    private void ReportSection() =>
-        _sectionWord.Set(this, _section >= 0 && _section < CampaignModel.Sections.Count ? CampaignModel.Sections[_section] : string.Empty);
+    private void ShowSection(int index)
+    {
+        StopArranging();
+        _section = index;
+        _page = 0;
+        FillSection();
+        ReportSection();
+    }
+
+    private void ReportSection()
+    {
+        var section = _segment.Parent is not null && _section >= 0 && _section < CampaignModel.Sections.Count
+            ? CampaignModel.Sections[_section]
+            : string.Empty;
+        _sectionWord.Set(this, section, section);
+    }
 
     public string Summary { get; private set; } = string.Empty;
 
@@ -201,6 +212,30 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
     private readonly PageSectionWord _sectionWord = new();
 
     public string OpenSection => _sectionWord.Word;
+
+    public string OpenSectionId => _sectionWord.Id;
+
+    bool IPageSection.SectionChosen => _sectionWord.Chosen;
+
+    public bool OpenSectionById(string id)
+    {
+        var index = CampaignModel.Sections.ToList().IndexOf(id);
+
+        if (index < 0)
+        {
+            return false;
+        }
+
+        _sectionWord.Unchoose();
+
+        if (index != _section)
+        {
+            _segment.SelectedIndex = index;
+            ShowSection(index);
+        }
+
+        return true;
+    }
 
     public event EventHandler? OpenSectionChanged
     {
@@ -459,7 +494,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
                 column.Children.Add(Grey(none));
             }
 
-            _sectionWord.Set(this, string.Empty);
+            _sectionWord.Set(this, string.Empty, string.Empty);
             _seenFronts = FrontsKeyNow();
             return;
         }

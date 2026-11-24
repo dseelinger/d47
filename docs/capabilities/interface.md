@@ -318,7 +318,10 @@ within a day, so it comes up when the game has the foreground and goes away when
 does — including Directive 47's own window, which is right there showing strictly more.
 
 The mini panel names the tab it is on, and where in it, in a line at the top right of its text area:
-tab, sub-tab and level, shortened with a `…` when it does not fit beside the comms indicator.
+tab, sub-tab and level, shortened with a `…` when it does not fit beside the comms indicator. Where the page
+has sections, the last word is the open section: on Settings with Voice open, the trail ends in VOICE. The open section is part of where you are, so it
+is the same on every surface: choose Stations on a system page in the window and the headset's big panel shows
+Stations too, and the reverse. That holds for Settings and for the system, body, station, faction and campaign pages.
 
 **Every surface follows the others to every tab.** A move in the window, on the headset's big panel, or by a
 phrase or a switch puts the mini panel on the same page. On Settings and Search, which mini does not draw, it shows

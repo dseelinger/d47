@@ -116,6 +116,34 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
 
     public string OpenSection => _sectionWord.Word;
 
+    public string OpenSectionId => _sectionWord.Id;
+
+    bool IPageSection.SectionChosen => _sectionWord.Chosen;
+
+    public bool OpenSectionById(string id)
+    {
+        if (!Enum.TryParse<Section>(id, out var section) || section.ToString() != id)
+        {
+            return false;
+        }
+
+        // Held until the record is read; a section the body does not offer is refused once it is.
+        if (_profile is not null && Body is not null && !Sections.Contains(section))
+        {
+            return false;
+        }
+
+        _sectionWord.Unchoose();
+
+        if (section != _section)
+        {
+            _section = section;
+            Draw();
+        }
+
+        return true;
+    }
+
     event EventHandler? IPageSection.OpenSectionChanged
     {
         add => _sectionWord.Changed += value;
@@ -182,6 +210,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
         }
 
         _section = section;
+        _sectionWord.Choose();
         Draw();
     }
 
@@ -285,9 +314,12 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
     {
         DrawPage();
 
+        var ready = !_loading && _failure is null && Body is not null;
+
         _sectionWord.Set(
             this,
-            !_loading && _failure is null && Body is not null
+            ready ? _section.ToString() : string.Empty,
+            ready
                 ? _section switch
                 {
                     Section.Composition => "Composition",
@@ -395,6 +427,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
             if (segment.SelectedIndex >= 0 && segment.SelectedIndex < sections.Count && sections[segment.SelectedIndex] != _section)
             {
                 _section = sections[segment.SelectedIndex];
+                _sectionWord.Choose();
                 Draw();
             }
         };

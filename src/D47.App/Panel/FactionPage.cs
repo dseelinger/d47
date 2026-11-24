@@ -202,11 +202,8 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         };
         _sections.SelectionChanged += (_, _) =>
         {
-            StopArranging();
-            _section = _sections.SelectedIndex;
-            _page = 0;
-            DrawContent();
-            ReportSection();
+            _sectionWord.Choose();
+            ShowSection(_sections.SelectedIndex);
         };
 
         _count = Chrome(string.Empty, TypeScale.Meta, FontWeight.Medium, ThemeManager.GreyKey);
@@ -322,6 +319,39 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
 
     public string OpenSection => _sectionWord.Word;
 
+    public string OpenSectionId => _sectionWord.Id;
+
+    bool IPageSection.SectionChosen => _sectionWord.Chosen;
+
+    public bool OpenSectionById(string id)
+    {
+        var index = Sections.ToList().IndexOf(id);
+
+        if (index < 0)
+        {
+            return false;
+        }
+
+        _sectionWord.Unchoose();
+
+        if (index != _section)
+        {
+            _sections.SelectedIndex = index;
+            ShowSection(index);
+        }
+
+        return true;
+    }
+
+    private void ShowSection(int index)
+    {
+        StopArranging();
+        _section = index;
+        _page = 0;
+        DrawContent();
+        ReportSection();
+    }
+
     public event EventHandler? OpenSectionChanged
     {
         add => _sectionWord.Changed += value;
@@ -431,6 +461,12 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
             _report = null;
             StopArranging();
             _find.Text = string.Empty;
+
+            if (_faction is not null)
+            {
+                _sectionWord.Choose();
+            }
+
             _section = 0;
             _sections.SelectedIndex = 0;
             _page = 0;
@@ -629,8 +665,11 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
     private TimeSpan FetchedAge() =>
         _report?.FetchedAt is { } at ? _now() - at : TimeSpan.Zero;
 
-    private void ReportSection() =>
-        _sectionWord.Set(this, ReferenceEquals(_switchSlot.Child, _sections) && _section >= 0 && _section < Sections.Count ? Sections[_section] : string.Empty);
+    private void ReportSection()
+    {
+        var section = ReferenceEquals(_switchSlot.Child, _sections) && _section >= 0 && _section < Sections.Count ? Sections[_section] : string.Empty;
+        _sectionWord.Set(this, section, section);
+    }
 
     private void DrawSwitch()
     {
