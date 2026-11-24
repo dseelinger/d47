@@ -130,7 +130,7 @@ public sealed class EmissionCallout(ILogger? logger = null) : ICallout
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var group in EmissionRules.For(journalEvent.String("SystemAllegiance"), States(journalEvent)))
+        foreach (var group in EmissionRules.For(journalEvent.String("SystemAllegiance"), Factions(journalEvent)))
         {
             foreach (var symbol in group.Materials)
             {
@@ -155,45 +155,42 @@ public sealed class EmissionCallout(ILogger? logger = null) : ICallout
     }
 
     /// <summary>
-    /// Every state the controlling faction is in: its headline <c>FactionState</c> plus its
-    /// <c>ActiveStates</c>.
+    /// Every faction present, each with its allegiance and every state it is in: its headline
+    /// <c>FactionState</c> plus its <c>ActiveStates</c>.
     /// </summary>
-    private static IEnumerable<string> States(JournalEvent journalEvent)
+    private static IEnumerable<EmissionFaction> Factions(JournalEvent journalEvent)
     {
         var controlling = journalEvent.Object("SystemFaction")?.String("Name");
-
-        if (controlling is not { Length: > 0 })
-        {
-            yield break;
-        }
+        var listed = false;
 
         foreach (var faction in journalEvent.Items("Factions"))
         {
-            if (!string.Equals(faction.String("Name"), controlling, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
+            listed |= string.Equals(faction.String("Name"), controlling, StringComparison.OrdinalIgnoreCase);
+
+            var states = new List<string>();
 
             if (faction.String("FactionState") is { Length: > 0 } headline)
             {
-                yield return headline;
+                states.Add(headline);
             }
 
             foreach (var active in faction.Items("ActiveStates"))
             {
                 if (active.String("State") is { Length: > 0 } state)
                 {
-                    yield return state;
+                    states.Add(state);
                 }
             }
 
-            yield break;
+            yield return new EmissionFaction(faction.String("Allegiance"), states);
         }
 
-        // The one journal in 205 whose controlling faction is not in its own Factions array.
-        if (journalEvent.Object("SystemFaction")?.String("FactionState") is { Length: > 0 } only)
+        // A controlling faction missing from its own Factions array, which SystemFaction still describes.
+        if (!listed
+            && controlling is { Length: > 0 }
+            && journalEvent.Object("SystemFaction")?.String("FactionState") is { Length: > 0 } only)
         {
-            yield return only;
+            yield return new EmissionFaction(journalEvent.String("SystemAllegiance"), [only]);
         }
     }
 

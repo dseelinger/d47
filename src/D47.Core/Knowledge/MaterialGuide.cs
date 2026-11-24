@@ -217,19 +217,8 @@ public static class MaterialGuide
         string? near,
         CancellationToken cancellationToken)
     {
-        var requested = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["distance"] = "500",
-            ["allegiance"] = group.Allegiance,
-        };
-
-        if (group.States.Count > 0)
-        {
-            requested["state"] = string.Join(",", group.States.Select(FarmingAdvice.Spaced));
-        }
-
-        // Asked for well beyond the five kept, because the population floor is applied afterwards.
-        if (!GalaxyQuery.TryParse(near, requested, size: 50, out var query, out var failure))
+        // The population floor is applied afterwards as well, against what each system reports.
+        if (!GalaxyQuery.TryParse(near, EmissionRules.SearchArguments(group), size: 50, out var query, out var failure))
         {
             return Said(MaterialPlaceKind.System, failure);
         }
@@ -241,11 +230,10 @@ public static class MaterialGuide
             .Take(5)
             .ToList();
 
+        var conditions = EmissionRules.Conditions(group);
         var described =
-            $"{group.Allegiance}-aligned"
-            + (group.States.Count > 0
-                ? $", in {string.Join(" or ", group.States.Select(FarmingAdvice.Spaced))}"
-                : string.Empty)
+            string.Join(" or ", group.Allegiances.Select(allegiance => $"{allegiance}-aligned"))
+            + (conditions.Count > 1 ? $", controlling faction in {conditions[1]}" : string.Empty)
             + $", over {EmissionRules.MinimumPopulation.ToString("N0", CultureInfo.InvariantCulture)} people";
 
         if (populous.Count == 0)

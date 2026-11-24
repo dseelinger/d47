@@ -43,22 +43,22 @@ public class FindMaterialAsksTheOneTableTests
         var group = EmissionRules.Holding("imperialshielding");
 
         Assert.NotNull(group);
-        Assert.Equal("Empire", group!.Allegiance);
+        Assert.Equal(["Empire"], group!.Allegiances);
         Assert.Empty(group.States);
     }
 
-    /// <summary>And the four state groups are Independent, never a superpower.</summary>
+    /// <summary>And the four state groups are Independent or Alliance, never a superpower.</summary>
     [Theory]
     [InlineData("improvisedcomponents", "CivilUnrest")]
     [InlineData("militarygradealloys", "War")]
     [InlineData("protoradiolicalloys", "Boom")]
     [InlineData("pharmaceuticalisolators", "Outbreak")]
-    public void AStateGroupIsIndependentAndCarriesItsOwnStates(string symbol, string state)
+    public void AStateGroupIsIndependentOrAllianceAndCarriesItsOwnStates(string symbol, string state)
     {
         var group = EmissionRules.Holding(symbol);
 
         Assert.NotNull(group);
-        Assert.Equal("Independent", group!.Allegiance);
+        Assert.Equal(["Independent", "Alliance"], group!.Allegiances);
         Assert.Contains(state, group.States, StringComparer.OrdinalIgnoreCase);
 
         // The one thing eight materials wrongly carried.

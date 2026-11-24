@@ -160,12 +160,7 @@ public static class FarmingAdvice
 
         if (top is not null && EmissionRules.Holding(top.Symbol) is { } group)
         {
-            var search = new List<string> { group.Allegiance };
-
-            if (group.States.Count > 0)
-            {
-                search.Add(string.Join(" or ", group.States.Select(Spaced)));
-            }
+            var search = new List<string>(EmissionRules.Conditions(group));
 
             search.Add(
                 $"population over {EmissionRules.MinimumPopulation.ToString("N0", CultureInfo.InvariantCulture)}");

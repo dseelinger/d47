@@ -460,7 +460,9 @@ It never says a shorter range cannot make the trip — nothing shorter has actua
 
 Ask where to get one of the ten materials that come from High Grade Emissions and D47 searches on
 the conditions in [the callout's table](callouts.md#emissions) — the system's allegiance, the
-controlling faction's state where the material has one, and a population over a million:
+controlling faction's state where the material has one, and a population over a million. Any faction
+present can produce a state's materials, but a system whose controlling faction is in that state is the
+surest place to find them, so that is what the search asks for:
 
 ```
 Nearest systems reported Empire-aligned, over 1,000,000 people:

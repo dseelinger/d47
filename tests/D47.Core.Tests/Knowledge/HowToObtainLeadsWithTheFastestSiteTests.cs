@@ -56,7 +56,7 @@ public class HowToObtainLeadsWithTheFastestSiteTests
     public void AManufacturedMaterialLeadsWithWhatToSearchFor()
     {
         Assert.Equal(
-            "High Grade Emission — search for Independent · War or Civil War · population over 1,000,000.",
+            "High Grade Emission — search for Independent or Alliance · War or Civil War · population over 1,000,000.",
             Steps("militarygradealloys")[0]);
     }
 

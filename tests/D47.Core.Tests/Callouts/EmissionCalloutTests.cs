@@ -11,11 +11,21 @@ namespace D47.Core.Tests.Callouts;
 /// <summary>Systems that might be running High Grade Emissions.</summary>
 public class EmissionCalloutTests
 {
+    /// <summary>An arrival whose controlling faction is in <paramref name="states"/>, beside a Federal minority in Boom.</summary>
     private static JournalEvent Arrival(
         string system,
         long population,
         string allegiance,
-        params string[] states)
+        params string[] states) =>
+        ArrivalWithMinority(system, population, allegiance, states, ("Federation", "Boom"));
+
+    /// <summary>An arrival whose controlling faction is in <paramref name="states"/>, beside one minority faction.</summary>
+    private static JournalEvent ArrivalWithMinority(
+        string system,
+        long population,
+        string allegiance,
+        string[] states,
+        (string Allegiance, string State) minority)
     {
         var controlling = $"Ruling party of {system}";
 
@@ -40,9 +50,9 @@ public class EmissionCalloutTests
                 },
                 new Dictionary<string, object?>
                 {
-                    ["Name"] = $"Federal minority of {system}",
-                    ["Allegiance"] = "Federation",
-                    ["FactionState"] = "Boom",
+                    ["Name"] = $"{minority.Allegiance} minority of {system}",
+                    ["Allegiance"] = minority.Allegiance,
+                    ["FactionState"] = minority.State,
                 },
             },
         };
@@ -77,7 +87,7 @@ public class EmissionCalloutTests
         Assert.Contains("Proto Radiolic Alloys", said, StringComparison.Ordinal);
     }
 
-    /// <summary>Superpower beats state, and never the other way.</summary>
+    /// <summary>An Imperial faction's Outbreak produces Imperial Shielding, not Pharmaceutical Isolators.</summary>
     [Fact]
     public void AnImperialFactionInOutbreakStillOnlyOffersShielding()
     {
@@ -145,12 +155,60 @@ public class EmissionCalloutTests
         Assert.Contains("Proto Radiolic Alloys", said, StringComparison.Ordinal);
     }
 
-    /// <summary>Alliance yields nothing at all.</summary>
-    [Fact]
-    public void AnAllianceSystemOffersNothingWhateverItsState()
+    /// <summary>An Alliance faction's state produces the same materials an Independent faction's does.</summary>
+    [Theory]
+    [InlineData("Outbreak", "Pharmaceutical Isolators")]
+    [InlineData("War", "Military Supercapacitors")]
+    public void AnAllianceFactionsStateOffersItsMaterials(string state, string material)
     {
-        Assert.Empty(Heard(Arrival("Alioth", 8_000_000, "Alliance", "Boom")));
-        Assert.Empty(Heard(Arrival("Alioth", 8_000_000, "Alliance", "Outbreak")));
+        Assert.Contains(
+            material,
+            Said(new EmissionCallout(), Commander(), Arrival("Alioth", 8_000_000, "Alliance", state)),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>Alliance has no materials of its own, so an Alliance system with no useful state says nothing.</summary>
+    [Fact]
+    public void AnAllianceSystemInNoUsefulStateSaysNothing()
+    {
+        Assert.Empty(Heard(Arrival("Alioth", 8_000_000, "Alliance")));
+    }
+
+    /// <summary>An emission can belong to any faction present, not only the controlling one.</summary>
+    [Fact]
+    public void AMinorIndependentFactionInOutbreakOffersPharmaceuticalIsolators()
+    {
+        var said = Said(
+            new EmissionCallout(),
+            Commander(),
+            ArrivalWithMinority("Sol", 22_000_000, "Federation", [], ("Independent", "Outbreak")));
+
+        Assert.Contains("Core Dynamics Composites", said, StringComparison.Ordinal);
+        Assert.Contains("Pharmaceutical Isolators", said, StringComparison.Ordinal);
+    }
+
+    /// <summary>A minor faction adds its state's materials, never its superpower's.</summary>
+    [Fact]
+    public void AMinorFederalFactionAddsNoComposites()
+    {
+        var said = Said(
+            new EmissionCallout(),
+            Commander(),
+            ArrivalWithMinority("Deciat", 5_000_000, "Independent", ["Outbreak"], ("Federation", "None")));
+
+        Assert.Equal("Deciat could be running high grade emissions for Pharmaceutical Isolators.", said);
+    }
+
+    /// <summary>A minor Federal faction's state produces nothing, so it cannot widen what a system offers.</summary>
+    [Fact]
+    public void AMinorFederalFactionsStateAddsNothing()
+    {
+        var said = Said(
+            new EmissionCallout(),
+            Commander(),
+            ArrivalWithMinority("Deciat", 5_000_000, "Independent", ["Outbreak"], ("Federation", "Boom")));
+
+        Assert.DoesNotContain("Proto", said, StringComparison.Ordinal);
     }
 
     /// <summary>Every remaining row of the Commander's table, by name.</summary>
@@ -550,7 +608,7 @@ public class EmissionCalloutTests
                 // And the condition itself, in the words the generated table uses for it.
                 var wanted = group switch
                 {
-                    { States.Count: 0, Allegiance: "Federation" } => "Federation systems",
+                    { States.Count: 0 } when group.Allegiances.Contains("Federation") => "Federation systems",
                     { States.Count: 0 } => "Empire systems",
                     _ => group.States[0] switch
                     {

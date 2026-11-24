@@ -832,23 +832,27 @@ Shinrarta Dezhra could be running high grade emissions for Core Dynamics Composi
 Proprietary Composites and Pharmaceutical Isolators.
 ```
 
-**Every row is the system's allegiance plus a population of a million or more**, and four of them add a
-state — which is the **controlling faction's**, not any faction's:
+Each emission belongs to one faction present in the system, **not only the controlling faction**, and
+holds what that faction's state produces. The first two rows go by the system's allegiance; the other
+four go by any Independent or Alliance faction present:
 
 | The system | Emissions hold |
 |---|---|
 | Federal | Core Dynamics Composites, Proprietary Composites |
 | Imperial | Imperial Shielding |
-| Independent, controlling faction in Civil Unrest | Improvised Components |
-| Independent, controlling faction in War or Civil War | Military Grade Alloys, Military Supercapacitors |
-| Independent, controlling faction in Boom or Expansion | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
-| Independent, controlling faction in Outbreak | Pharmaceutical Isolators |
+| An Independent or Alliance faction present in Civil Unrest | Improvised Components |
+| An Independent or Alliance faction present in War or Civil War | Military Grade Alloys, Military Supercapacitors |
+| An Independent or Alliance faction present in Boom or Expansion | Proto Heat Radiators, Proto Light Alloys, Proto Radiolic Alloys |
+| An Independent or Alliance faction present in Outbreak | Pharmaceutical Isolators |
 
-**Alliance systems yield nothing**, and systems under a million people are not mentioned at all.
-A minority Federal faction in an Independent system does not make it Federal.
+A minority Federal faction in an Independent system does not make it Federal. Systems under a
+million people are not mentioned at all; that floor is D47's, so it only names systems busy enough to
+be worth the trip.
 
-A system can still offer two unrelated groups, when its controlling faction is in two states at
-once. Civil Unrest *and* Expansion gives you Improvised Components and all three Proto materials.
+A system can offer several unrelated groups, when its factions are in different states, or one faction
+is in two states at once. Civil Unrest *and* Expansion gives you Improvised Components and all three
+Proto materials. Because an emission can belong to any faction present, a system named for one group
+will also hold emissions with other materials.
 
 **Nothing is said about a material you are already full of**, and a system whose materials are all
 full says nothing. So once you have finished gathering, this goes quiet on its own without your

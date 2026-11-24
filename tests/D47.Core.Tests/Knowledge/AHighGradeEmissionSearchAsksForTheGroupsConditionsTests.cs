@@ -27,9 +27,12 @@ public sealed class AHighGradeEmissionSearchAsksForTheGroupsConditionsTests
     }
 
     [Fact]
-    public void PharmaceuticalIsolatorsAsksForOutbreak()
+    public void PharmaceuticalIsolatorsAsksForIndependentOrAllianceInOutbreak()
     {
-        Assert.Equal("Outbreak", For("pharmaceuticalisolators")["state"]);
+        var arguments = For("pharmaceuticalisolators");
+
+        Assert.Equal("Independent,Alliance", arguments["allegiance"]);
+        Assert.Equal("Outbreak", arguments["state"]);
     }
 
     [Fact]
