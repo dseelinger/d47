@@ -1008,6 +1008,8 @@
           HorizontalAlignment="Left"
           VerticalAlignment="Bottom" />
 
+  <!-- The copy result label on the headset's panel: no ground, takes no press. -->
+  <Canvas x:Name="CopyLabelLayer" IsHitTestVisible="False" />
 
   <!--
     Scanlines, over the whole window and on top of everything else — only on a theme that glows, since the
@@ -1019,9 +1021,6 @@
     says whether the theme has scanlines at all. No bitmap smoothing, so a 1px line stays 1px.
   -->
   <Border x:Name="Scanlines" Opacity="0.5" IsHitTestVisible="False" RenderOptions.BitmapInterpolationMode="None" />
-
-  <!-- The copy result label on the headset's panel: no ground, takes no press. -->
-  <Canvas x:Name="CopyLabelLayer" IsHitTestVisible="False" />
 
   <!-- A full-screen player, over everything above and the scanlines too. -->
   <Panel x:Name="FullScreenLayer" IsVisible="False" />
