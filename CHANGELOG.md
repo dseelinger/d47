@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Commander > Assets > Materials names the nearest material trader of each kind from the galaxy search: its system, which you can open or copy, and how far away it is. The Raw, Manufactured and Encoded ledgers show their own kind at the right of the title; Needed by plans and the Farming route show all three under the title, and a filtered Farming route shows its one kind. A trader in a permit system is named only when your navy rank or a past visit shows you hold the permit; otherwise the next nearest is named. The traders also appear on the headset's big panel.
+
 Added: Each podcast episode on the headset big panel shows its publication date under the title, in the form the window uses, such as 21 NOV 2026.
 
 Fixed: A podcast episode dated with a US zone name (EST, EDT, CST, CDT, MST, MDT, PST or PDT) now has its date read, and a feed that uses them is in publication order with the right episode marked new. Before, the episode showed 01 Jan 0001 and sorted last. An episode whose date still cannot be read shows its length alone, with no date.

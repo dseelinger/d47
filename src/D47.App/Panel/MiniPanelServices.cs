@@ -74,6 +74,9 @@ public sealed record MiniPanelServices
 
     public Func<D47.Core.Knowledge.IGalaxyService?>? Galaxy { get; init; }
 
+    /// <summary>What the Commander's visited-systems list says about a system, by FID and system address.</summary>
+    public Func<string?, long, D47.Core.Journal.VisitState>? Visited { get; init; }
+
     public StarSystemSurface? StarSystem { get; init; }
 
     public CommanderRoster? Commanders { get; init; }
@@ -223,7 +226,8 @@ public sealed record MiniPanelServices
                 construction: Construction,
                 outfitting: Routing is { Registry: { } registry, Plans: { } planBook } routing
                     ? new OutfittingPlotter(registry, planBook, routing.Here)
-                    : null);
+                    : null,
+                visited: Visited);
         }
 
         if (StarSystem is not null)

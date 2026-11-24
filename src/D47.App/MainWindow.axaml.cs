@@ -382,6 +382,7 @@ public partial class MainWindow : Window
                 settingsStrip: () => BuildSettingsStrip(LoadoutPages.FleetRoot),
                 carrierSettingsStrip: () => BuildSettingsStrip(LoadoutPages.CarrierRoot),
                 galaxy: () => host.Galaxy,
+                visited: host.Visit,
                 characters: host.CharactersHost,
                 talk: host.BuildTalk,
                 status: () => host.LiveStatus,

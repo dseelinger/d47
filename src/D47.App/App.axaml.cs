@@ -120,6 +120,9 @@ public partial class App(AppHost? host) : Application
                 // And the galaxy search material detail runs.
                 galaxy: () => host.Galaxy,
 
+                // And the visited-systems list, for the permit systems the nearest trader leaves out.
+                visited: host.Visit,
+
                 // And the Search tab's System page, on the window's record.
                 starSystem: window?.StarSystem,
                 activities: host.Activities,

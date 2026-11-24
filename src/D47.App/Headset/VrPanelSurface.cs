@@ -126,6 +126,9 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
         // The galaxy service while its setting is on, for material detail.
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
 
+        // What the Commander's visited-systems list says about a system, by FID and system address.
+        Func<string?, long, D47.Core.Journal.VisitState>? visited = null,
+
         // The Search tab's System page, on the window's record.
         Panel.StarSystemSurface? starSystem = null,
         D47.Core.Activities.ActivityLedger? activities = null,
@@ -218,6 +221,7 @@ public sealed class VrPanelSurface : IVrSurfaceSource, IDisposable
             Known = known,
             BuildSettingsStrip = buildSettingsStrip,
             Galaxy = galaxy,
+            Visited = visited,
             StarSystem = starSystem,
             Commanders = commanders,
             Watches = watches,

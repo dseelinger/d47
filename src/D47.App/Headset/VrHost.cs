@@ -191,6 +191,7 @@ public sealed class VrHost : IDisposable
         // above (#218).
         Func<string, Control?>? buildSettingsStrip = null,
         Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
+        Func<string?, long, D47.Core.Journal.VisitState>? visited = null,
         Panel.StarSystemSurface? starSystem = null,
         D47.Core.Activities.ActivityLedger? activities = null,
         Panel.ConstructionSurface? construction = null,
@@ -236,6 +237,7 @@ public sealed class VrHost : IDisposable
             modulePower, hullArt, engineersMemory, clipboard, known,
             buildSettingsStrip: buildSettingsStrip,
             galaxy: galaxy,
+            visited: visited,
             starSystem: starSystem,
             activities: activities,
             construction: construction,

@@ -920,6 +920,12 @@ public sealed class AppHost : IDisposable
     /// <summary>The galaxy service, for the adventure editor to check a typed place against (Phase 47).</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy { get; private set; }
 
+    private VisitedStarsBook? _visitedStars;
+
+    /// <summary>What the visited-systems list of the Commander with this FID says about a system. Reads a file.</summary>
+    public VisitState Visit(string? frontierId, long systemAddress) =>
+        _visitedStars?.Find(frontierId, systemAddress).State ?? VisitState.Unreadable;
+
     /// <summary>One system's full record, for the Search tab's System page.</summary>
     public D47.Core.Knowledge.IStarSystemService? StarSystems { get; private set; }
 
@@ -3748,6 +3754,7 @@ public sealed class AppHost : IDisposable
         checklists.Typed += host.AskForWatch;
         host.Ships = services.ShipPlans;
         host.BuildTalk = services.BuildTalk;
+        host._visitedStars = services.VisitedStars;
         host.OnFootPlans = services.OnFootPlans;
         host.Unlocks = services.Unlocks;
 

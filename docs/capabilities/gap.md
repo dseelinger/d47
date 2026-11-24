@@ -149,14 +149,15 @@ What everything you have planned needs that you are not carrying, ledger by ledg
 > "what am I short of"
 > "what do I still have to find"
 
-Nothing here touches the network. The last two phrases need no AI configured at all.
+None of these phrases touches the network. The last two phrases need no AI configured at all.
 
 ### It is not a wishlist
 
 A wishlist is a list of things you want. That is what your ship builds and your suit plans already
 are. **This is the arithmetic between them and what is in your hold** — Commander › Assets ›
 Materials, reading across both, because a Commander gathering materials does not care
-which ship needs them.
+which ship needs them. The page also names the nearest material trader of each kind from the galaxy
+search, leaving out a permit system unless your navy rank or a past visit shows you hold the permit.
 
 ### The ledgers are never totalled together
 

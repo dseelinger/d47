@@ -945,11 +945,15 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         CharactersHost? characters = null,
 
         // Plots a route to buy what a ship's plan still needs (#1827).
-        OutfittingPlotter? outfitting = null)
+        OutfittingPlotter? outfitting = null,
+
+        // What the Commander's visited-systems list says about a system, by FID and system address.
+        Func<string?, long, D47.Core.Journal.VisitState>? visited = null)
     {
         _shipPlans = ships;
         _assets.EnableLoadout(
-            ships, checklists, state, onFoot, modulePower, hullArt, settingsStrip, carrierSettingsStrip, galaxy, talk, status, construction, characters, outfitting);
+            ships, checklists, state, onFoot, modulePower, hullArt, settingsStrip, carrierSettingsStrip, galaxy, talk, status, construction, characters, outfitting,
+            visited);
     }
 
     private D47.Core.Ships.ShipPlanService? _shipPlans;

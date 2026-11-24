@@ -77,7 +77,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
         Func<D47.Core.Journal.GameStatus>? status = null,
         ConstructionSurface? construction = null,
         CharactersHost? characters = null,
-        OutfittingPlotter? outfitting = null)
+        OutfittingPlotter? outfitting = null,
+        Func<string?, long, D47.Core.Journal.VisitState>? visited = null)
     {
         var shipsMode = new ShipsMode(ships, checklists, state, modulePower, hullArt, talk, status,
             D47.App.Input.DesktopClipboard.ReadTextAsync,
@@ -112,7 +113,8 @@ internal sealed class AssetsFurnishing(IPanelTabHost host, Func<string?, bool> p
                     includeIntended: true,
                     checklists.SlotFor),
                 state,
-                galaxy);
+                galaxy,
+                visited);
 
             // Either store moving changes the subtraction, and neither knows about the other.
             ships.Store.Changed += gap.Invalidate;

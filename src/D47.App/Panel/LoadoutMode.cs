@@ -7,7 +7,8 @@ namespace D47.App.Panel;
 public sealed class GapSource(
     Func<GapReport> report,
     Func<CommanderGameState?> state,
-    Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null)
+    Func<D47.Core.Knowledge.IGalaxyService?>? galaxy = null,
+    Func<string?, long, VisitState>? visited = null)
 {
     /// <summary>Raised when either store changed, the inventory moved, the system changed or galaxy search was switched.</summary>
     public event Action? Changed;
@@ -21,6 +22,10 @@ public sealed class GapSource(
 
     /// <summary>The galaxy service, or null when there is none.</summary>
     public D47.Core.Knowledge.IGalaxyService? Galaxy() => galaxy?.Invoke();
+
+    /// <summary>What the visited-systems list of the Commander with this FID says about a system. Reads a file: never call it on the UI thread or the tick.</summary>
+    public VisitState Visit(string? frontierId, long systemAddress) =>
+        visited?.Invoke(frontierId, systemAddress) ?? VisitState.Unreadable;
 
     /// <summary>Every catalogue material grouped into ledger cards, needs taken from <paramref name="gap"/>.</summary>
     public MaterialTrackerReport Tracker(GapReport gap) => MaterialTracker.Of(state(), gap);

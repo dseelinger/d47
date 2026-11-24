@@ -20,7 +20,7 @@ namespace D47.App.Panel;
 /// Fleet › Materials: a list of views over the gap, the ship-material ledgers and the farming route, opening on
 /// Needed by plans.
 /// </summary>
-public sealed class MaterialsPage : UserControl
+public sealed partial class MaterialsPage : UserControl
 {
 
     /// <summary>The footer's phrase; it carries a <c>get_build_gap</c> keyword.</summary>
@@ -96,6 +96,7 @@ public sealed class MaterialsPage : UserControl
     private readonly StackPanel _body = new();
     private readonly Avalonia.Controls.Panel _detailLayer = new() { IsVisible = false };
     private readonly StackPanel _sites = new() { Spacing = 2, Margin = new Thickness(0, 18, 0, 0) };
+    private readonly ContentControl _farmingTop = new();
     private int _farmingFilter;
     private Segment? _filter;
 
@@ -141,6 +142,8 @@ public sealed class MaterialsPage : UserControl
 
         _list.Content = ListOf(report, ledgers, suit, needs, _gap.View, Select);
 
+        SeekTraders(TraderKinds(_gap.View, _farmingFilter));
+
         _body.Children.Clear();
 
         if (ledgers.FirstOrDefault(card => ViewOf(card) == _gap.View) is { } ledger)
@@ -161,10 +164,7 @@ public sealed class MaterialsPage : UserControl
             return;
         }
 
-        _body.Children.Add(TitleText.Block(
-            TitleText.Build("Needed by plans", TypeScale.Title, TitleRank.Screen),
-            TitleText.Context("Materials ›")));
-        _body.Children.Add(Hint(NeededHead, new Thickness(0, 10, 0, 0)));
+        Head(TitleText.Build("Needed by plans", TypeScale.Title, TitleRank.Screen), NeededHead, _body.Children);
 
         var notes = Notes(report);
 
@@ -334,6 +334,30 @@ public sealed class MaterialsPage : UserControl
     {
         base.OnDetachedFromVisualTree(e);
         _gap.Changed -= OnChanged;
+        SeekTraders([]);
+    }
+
+    /// <summary>
+    /// The title block under <c>Materials ›</c> with the view's traders, then <paramref name="head"/>, then the
+    /// sentence that stops every trader search where one does.
+    /// </summary>
+    private void Head(TextBlock title, string head, Avalonia.Controls.Controls into)
+    {
+        var (figure, line, stopped) = Traders(TraderKinds(_gap.View, _farmingFilter));
+
+        into.Add(TitleWith(title, TitleText.Context("Materials ›"), figure));
+
+        if (line is not null)
+        {
+            into.Add(line);
+        }
+
+        into.Add(Hint(head, new Thickness(0, 10, 0, 0)));
+
+        if (stopped is not null)
+        {
+            into.Add(Hint(stopped, new Thickness(0, 2, 0, 0)));
+        }
     }
 
     /// <summary>The list key of a ledger card: <c>raw</c>, <c>guardian</c>.</summary>
@@ -429,10 +453,7 @@ public sealed class MaterialsPage : UserControl
 
     private void Ledger(MaterialCard card)
     {
-        _body.Children.Add(TitleText.Block(
-            TitleText.Build(card.Name, TypeScale.Title, TitleRank.Screen),
-            TitleText.Context("Materials ›")));
-        _body.Children.Add(Hint(LedgerHead, new Thickness(0, 10, 0, 0)));
+        Head(TitleText.Build(card.Name, TypeScale.Title, TitleRank.Screen), LedgerHead, _body.Children);
 
         if (TraderLines.TryGetValue(card.Name, out var lines))
         {
@@ -718,10 +739,8 @@ public sealed class MaterialsPage : UserControl
 
     private void Farming()
     {
-        _body.Children.Add(TitleText.Block(
-            TitleText.Build("Farming route", TypeScale.Title, TitleRank.Screen),
-            TitleText.Context("Materials ›")));
-        _body.Children.Add(Hint(FarmingHead, new Thickness(0, 10, 0, 0)));
+        _farmingTop.Content = FarmingTop();
+        _body.Children.Add(_farmingTop);
 
         var filter = _filter = new Segment
         {
@@ -740,6 +759,15 @@ public sealed class MaterialsPage : UserControl
         Sites();
     }
 
+    /// <summary>The farming route's title block, its traders under the filter, and its head line.</summary>
+    private StackPanel FarmingTop()
+    {
+        var top = new StackPanel();
+        Head(TitleText.Build("Farming route", TypeScale.Title, TitleRank.Screen), FarmingHead, top.Children);
+
+        return top;
+    }
+
     /// <summary>Narrows the farming route to one of <see cref="FarmingFilters"/>.</summary>
     internal void Filter(int index)
     {
@@ -748,6 +776,12 @@ public sealed class MaterialsPage : UserControl
         if (_filter is { } filter)
         {
             filter.SelectedIndex = _farmingFilter;
+        }
+
+        if (_gap.View == FarmingView)
+        {
+            SeekTraders(TraderKinds(FarmingView, _farmingFilter));
+            _farmingTop.Content = FarmingTop();
         }
 
         Sites();
