@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Each podcast episode on the headset big panel shows its publication date under the title, in the form the window uses, such as 21 NOV 2026.
+
 Fixed: A podcast episode dated with a US zone name (EST, EDT, CST, CDT, MST, MDT, PST or PDT) now has its date read, and a feed that uses them is in publication order with the right episode marked new. Before, the episode showed 01 Jan 0001 and sorted last. An episode whose date still cannot be read shows its length alone, with no date.
 
 Changed: A material your plans need is cyan once you hold enough and red while you are short, wherever plan needs are shown: the Short column on Needed by plans, the NEED tag on the material ledgers and the backpack and ship locker, a material's own page, and a ship's Plan section. Short figures had been orange and ✓ MET blue. The ledgers now tag a material your plans need even when you hold enough of it, where they had tagged only what you were short of.

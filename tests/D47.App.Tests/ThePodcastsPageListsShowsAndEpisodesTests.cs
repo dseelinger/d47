@@ -326,6 +326,33 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
         window.Close();
     }
 
+    [AvaloniaFact]
+    public void ABigPanelEpisodeRowShowsItsDateAndStaysFortyFourHigh()
+    {
+        var fixture = new Fixture();
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        var window = new Window { Content = panel, Width = 1280, Height = 900 };
+        var page = new PodcastsPage(fixture.Host, panel.Nav, big: true);
+
+        window.Content = page;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var rows = page.GetVisualDescendants().OfType<Button>().Where(button => button.Name == PodcastsPage.EpisodeName).ToList();
+
+        Assert.Equal(3, rows.Count);
+        Assert.All(rows, row => Assert.Equal(44, row.Bounds.Height));
+
+        var drawn = page.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Inlines is { Count: > 0 } ? string.Concat(block.Inlines.OfType<Avalonia.Controls.Documents.Run>().Select(run => run.Text)) : block.Text ?? string.Empty).ToList();
+
+        Assert.Contains("21 NOV 2026", drawn);
+        Assert.Contains("14 NOV 2026", drawn);
+        Assert.Contains("07 NOV 2026", drawn);
+        Assert.DoesNotContain("21 Nov 2026 · 0:40:00", drawn);
+
+        window.Close();
+    }
+
     private static CheckBox Continuous(Control root) =>
         root.GetVisualDescendants().OfType<CheckBox>().First(box => box.Name == PodcastsPage.ContinuousName);
 

@@ -546,17 +546,20 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
 
         Ink(name, ink);
 
-        if (!_big)
+        var date = line.Episode.Published == DateTimeOffset.MinValue
+            ? null
+            : line.Episode.Published.ToString("dd MMM yyyy", CultureInfo.InvariantCulture);
+        var subText = _big ? date?.ToUpperInvariant() : date is null ? Clock(line.Episode.Duration) : $"{date} · {Clock(line.Episode.Duration)}";
+
+        if (subText is not null)
         {
             var sub = ListRow.Sub(new TextBlock
             {
-                Inlines = [Fonts.Mono(line.Episode.Published == DateTimeOffset.MinValue
-                    ? Clock(line.Episode.Duration)
-                    : $"{line.Episode.Published.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)} · {Clock(line.Episode.Duration)}")],
+                Inlines = [Fonts.Mono(subText)],
                 TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
             });
 
-            Ink(sub, ink);
+            Ink(sub, _big ? ink ?? ThemeManager.GreyKey : ink);
             main.Children.Add(sub);
         }
 
@@ -578,6 +581,13 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
             MinHeight = TypeScale.MinimumTarget,
             Content = dock,
         };
+
+        if (_big)
+        {
+            row.Height = TypeScale.MinimumTarget;
+            row.Padding = new Thickness(12, 4);
+        }
+
         AutomationProperties.SetName(row, line.Episode.Title);
         ListRow.Dress(row);
         row.Click += (_, _) => _ = PlayAsync(show, line.Episode);

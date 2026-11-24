@@ -172,7 +172,7 @@ podcast directory, as "find a podcast" does; **Add** on a result adds its feed. 
 RSS address. **Remove this show** asks first, then removes the feed and forgets where you were in its episodes.
 Adding a feed by address and removing one are made here and in the settings row, never by voice.
 
-The big panel has the same page, with five episodes at a time and **Previous** and **Next** under them. The
+The big panel has the same page, with five episodes at a time and **Previous** and **Next** under them. Each episode row shows the episode's date under its title. The
 continuous play row sits above the episode list's head, and the shows column keeps **Add a show** and **Remove
 this show**.
 
