@@ -134,7 +134,7 @@ public sealed class TheSearchTablesFitTheirColumnsTests
 
         var grids = await Drawn(panel, new Dictionary<string, string> { ["allegiance"] = "Federation" });
 
-        AssertShared(grids, 7);
+        AssertShared(grids, 8);
 
         var head = grids.Single(grid => grid.IsHeader);
         var populationNeed = grids.Where(grid => !grid.IsHeader)

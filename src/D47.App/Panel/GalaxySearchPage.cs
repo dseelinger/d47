@@ -799,6 +799,9 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         return _arranged;
     }
 
+    /// <summary>The table shows the column of this key.</summary>
+    protected bool ColumnShown(string key) => _arranged?.ShownFields.Any(field => field.Key == key) == true;
+
     /// <summary>The table's column head on its rule; a later page redraws its filtered counts.</summary>
     protected Control ColumnHead(ArrangedTable<object> table) => _columnHead = SearchTableFields.Head(table);
 

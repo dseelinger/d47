@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Search > Systems has a Faction state column after System, shown by default, listing every active state of the controlling faction, such as Boom · Civil Liberty, or None when it has none. It sorts, filters by each state, and while it is shown the System cell's second line is the faction name alone. A saved column layout does not gain it automatically; turn it on under COLUMNS.
+
 Fixed: The High Grade Emissions callout reads every faction in the system, not only the controlling one, because each emission belongs to one faction and holds what that faction's state produces. A system whose minor Independent faction is in Outbreak is now named for Pharmaceutical Isolators, and the same goes for the other state materials. Alliance factions count beside Independent ones, so an Alliance system in Outbreak, War, Civil Unrest, Boom or Expansion is named where it had been silent. The HGE search tiles and "where do I find" answers ask for Independent or Alliance systems. Because minor factions now count, the callout speaks in more systems than it did.
 
 Fixed: The HGE search tiles for Military Grade Alloys, Military Supercapacitors and the three Proto materials keep their states on Search > Systems; they had run with no state at all. Allegiance and State on that page take several choices, as Faction state does.

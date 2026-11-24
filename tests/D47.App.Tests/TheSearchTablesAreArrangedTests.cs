@@ -26,7 +26,7 @@ public sealed class TheSearchTablesAreArrangedTests
 {
     private static readonly DateTimeOffset At = new(2026, 11, 17, 12, 0, 0, TimeSpan.Zero);
 
-    private static readonly string[] SystemColumns = ["System", "Distance", "Allegiance", "Economy", "Population", "Power", "Reported"];
+    private static readonly string[] SystemColumns = ["System", "FactionState", "Distance", "Allegiance", "Economy", "Population", "Power", "Reported"];
 
     private static readonly string[] StationColumns = ["Station", "System", "Distance", "Pad", "FromStar", "AskedFor", "Updated"];
 

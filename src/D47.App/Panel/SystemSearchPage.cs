@@ -218,6 +218,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private IReadOnlyList<TableField<object>> Fields(bool headset) =>
     [
         SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 120 }, "System", row => SystemCell((SystemSummary)row), "name", "Controlled by", filters: [SearchValues.One<SystemSummary>("Controlled by", system => system.ControllingFaction, "No faction reported")]),
+        SearchField("FactionState", new TableColumn("FactionState", ColumnFit.Fill) { Min = 100 }, "Faction state", row => TableCells.Text(FactionStates((SystemSummary)row)), local: LocalSort.Text<SystemSummary>(FactionStates), filters: [SearchValues.Many<SystemSummary>("Faction state", FactionStateValues, "No state reported")]),
         SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((SystemSummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
         SearchField("Allegiance", new TableColumn("Allegiance"), "Allegiance", row => Centered(Pair(Value(((SystemSummary)row).Allegiance), Sub(((SystemSummary)row).Government))), "allegiance", "Government", filters: [SearchValues.One<SystemSummary>("Allegiance", system => system.Allegiance, "No allegiance reported"), SearchValues.One<SystemSummary>("Government", system => system.Government, "No government reported")]),
         SearchField("Economy", new TableColumn("Economy"), "Economy", row => Centered(Pair(Value(((SystemSummary)row).PrimaryEconomy), Sub(((SystemSummary)row).Security))), "economy", "Security", filters: [SearchValues.One<SystemSummary>("Economy", system => system.PrimaryEconomy, "No economy reported"), SearchValues.One<SystemSummary>("Security", system => system.Security, "No security reported")]),
@@ -242,6 +243,22 @@ public sealed class SystemSearchPage : GalaxySearchPage
         SearchField("AtWar", new TableColumn("AtWar"), "At war", row => TableCells.Flag(((SystemSummary)row).AtWar), byDefault: false, local: LocalSort.Flag<SystemSummary>(system => system.AtWar), filters: [SearchValues.Flag<SystemSummary>("At war", system => system.AtWar, "Not known")]),
     ];
 
+    private static FactionPresence? ControllingPresence(SystemSummary system) =>
+        system.ControllingFaction is { } controlling
+            ? system.Factions.FirstOrDefault(f => string.Equals(f.Name, controlling, StringComparison.OrdinalIgnoreCase))
+            : null;
+
+    /// <summary>The controlling faction's active states joined with " · ", "None" when it has none, null when it is not known.</summary>
+    internal static string? FactionStates(SystemSummary system) =>
+        ControllingPresence(system) is { } presence
+            ? presence.ActiveStates.Count > 0 ? string.Join(" · ", presence.ActiveStates) : "None"
+            : null;
+
+    private static IEnumerable<string?> FactionStateValues(SystemSummary system) =>
+        ControllingPresence(system) is { } presence
+            ? presence.ActiveStates.Count > 0 ? presence.ActiveStates : ["None"]
+            : [];
+
     private Control SystemCell(SystemSummary system)
     {
         var here = string.Equals(system.Name, _here(), StringComparison.OrdinalIgnoreCase);
@@ -249,7 +266,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
         name.Text = system.Name;
 
         var faction = system.ControllingFaction is { } controlling
-            ? system.Factions.FirstOrDefault(f => string.Equals(f.Name, controlling, StringComparison.OrdinalIgnoreCase))?.State is { } state
+            ? !ColumnShown("FactionState") && ControllingPresence(system)?.State is { } state
                 ? $"{controlling} · {state}"
                 : controlling
             : Dash;
