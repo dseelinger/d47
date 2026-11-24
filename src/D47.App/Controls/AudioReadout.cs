@@ -30,8 +30,9 @@ public sealed class AudioReadout : Border
     private readonly TextBlock _say = new() { Name = SayName };
     private readonly TextBlock _elapsed = new() { Name = ElapsedName };
     private readonly TextBlock _length = new() { Name = LengthName };
-    private readonly Border _fill = new() { Height = 4, HorizontalAlignment = HorizontalAlignment.Left };
+    private readonly Border _fill = new() { Height = 4, VerticalAlignment = VerticalAlignment.Center };
     private readonly Border _rail = new() { Height = 4, VerticalAlignment = VerticalAlignment.Center };
+    private readonly Face _face;
     private readonly Grid _progressRow;
     private readonly DispatcherTimer _poll = new() { Interval = TimeSpan.FromSeconds(1) };
     private Func<TrackProgress?>? _progress;
@@ -86,15 +87,14 @@ public sealed class AudioReadout : Border
 
         ThemeInk.Bind(_rail, BackgroundProperty, ThemeManager.Line2Key);
         ThemeInk.Bind(_fill, BackgroundProperty, ThemeManager.AKey);
-        var bar = new Grid { Name = BarName, Margin = new Thickness(10, 0), VerticalAlignment = VerticalAlignment.Center, Height = 4 };
-        bar.Children.Add(_rail);
-        bar.Children.Add(_fill);
-        bar.SizeChanged += (_, _) => Place();
+        _face = new Face(this) { Margin = new Thickness(10, 0), VerticalAlignment = VerticalAlignment.Center, Height = 4 };
+        _face.Children.Add(_rail);
+        _face.Children.Add(_fill);
 
         _progressRow = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"), Margin = new Thickness(0, 2) };
         _progressRow.Children.Add(_elapsed);
-        Grid.SetColumn(bar, 1);
-        _progressRow.Children.Add(bar);
+        Grid.SetColumn(_face, 1);
+        _progressRow.Children.Add(_face);
         Grid.SetColumn(_length, 2);
         _progressRow.Children.Add(_length);
 
@@ -128,7 +128,7 @@ public sealed class AudioReadout : Border
         _length.Text = AudioPlayerReadout.Clock(now?.Length);
         _position = now is { Length: { } length } && length > TimeSpan.Zero ? Math.Clamp(now.Value.Elapsed / length, 0, 1) : 0;
         ThemeInk.Bind(_fill, BackgroundProperty, _enabled ? ThemeManager.AKey : ThemeManager.Grey2Key);
-        Place();
+        _face.InvalidateArrange();
     }
 
     /// <summary>Reads the position from the headset's tick; true when the times or the bar drawn changed since the last tick.</summary>
@@ -152,8 +152,6 @@ public sealed class AudioReadout : Border
         return true;
     }
 
-    private void Place() => _fill.Width = _position * _rail.Bounds.Width;
-
     public void Update(AudioPlayerReadout read)
     {
         _enabled = read.Enabled;
@@ -170,6 +168,18 @@ public sealed class AudioReadout : Border
         if (_progress is not null)
         {
             Poll();
+        }
+    }
+
+    /// <summary>Lays the rail across its width and the fill at the position of that width, in the same arrange.</summary>
+    private sealed class Face(AudioReadout readout) : Avalonia.Controls.Panel
+    {
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            readout._rail.Arrange(new Rect(finalSize));
+            readout._fill.Arrange(new Rect(0, 0, readout._position * finalSize.Width, finalSize.Height));
+
+            return finalSize;
         }
     }
 }
