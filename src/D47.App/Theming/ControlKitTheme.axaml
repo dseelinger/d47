@@ -193,7 +193,7 @@
                    IsLightDismissEnabled="False"
                    IsOpen="False">
               <Border Background="{DynamicResource D47.Bg}"
-                      BorderBrush="{DynamicResource D47.A}"
+                      BorderBrush="{Binding Path=(theming:GlyphLabel.Result), RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static theming:GlyphLabel.Outline}}"
                       BorderThickness="1"
                       Height="32"
                       Padding="10,0"

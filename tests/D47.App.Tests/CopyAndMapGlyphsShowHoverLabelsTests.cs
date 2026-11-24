@@ -3,6 +3,7 @@ using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Controls;
@@ -174,6 +175,118 @@ public class CopyAndMapGlyphsShowHoverLabelsTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("COPY STATION NAME", LabelText(glyph));
+
+        window.Close();
+    }
+
+    private static Avalonia.Controls.Primitives.Popup LabelOf(Control glyph) =>
+        glyph.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.Popup>().Single(popup => popup.Name == "Label");
+
+    private static IBrush? Outline(Control glyph) => ((Border)LabelOf(glyph).Child!).BorderBrush;
+
+    private static IBrush? Resource(string key) =>
+        Application.Current!.TryFindResource(key, Application.Current!.ActualThemeVariant, out var found) ? found as IBrush : null;
+
+    [AvaloniaFact]
+    public void TheLabelIsOpenAfterACopyWithNoHoverAndClosesTwoSecondsLater()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.Dress(new Button());
+        var (window, _) = Hosted(glyph, headset: false);
+
+        Assert.False(LabelOf(glyph).IsOpen);
+
+        CopyGlyph.Show(glyph, worked: true);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(LabelOf(glyph).IsOpen);
+        Assert.Equal("COPIED", LabelText(glyph));
+        Assert.Equal(Resource("D47.A"), Outline(glyph));
+
+        clock.Advance(TimeSpan.FromSeconds(2));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(LabelOf(glyph).IsOpen);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AFailedCopyOutlinesTheLabelInRedAndTwoSecondsLaterInTheAccent()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.For("Sol", Copy);
+        var (window, _) = Hosted(glyph, headset: false);
+        Hover(window, glyph);
+
+        CopyGlyph.Show(glyph, worked: false);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal("COPY FAILED", LabelText(glyph));
+        Assert.Equal(Resource("D47.Red"), Outline(glyph));
+
+        clock.Advance(TimeSpan.FromSeconds(2));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(LabelOf(glyph).IsOpen);
+        Assert.Equal("COPY SYSTEM NAME", LabelText(glyph));
+        Assert.Equal(Resource("D47.A"), Outline(glyph));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ASecondCopyInsideTwoSecondsShowsItsResultForAFullTwoSeconds()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.Dress(new Button());
+        var (window, _) = Hosted(glyph, headset: false);
+
+        CopyGlyph.Show(glyph, worked: true);
+        clock.Advance(TimeSpan.FromSeconds(1));
+        CopyGlyph.Show(glyph, worked: false);
+        clock.Advance(TimeSpan.FromSeconds(1.5));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(LabelOf(glyph).IsOpen);
+        Assert.Equal("COPY FAILED", LabelText(glyph));
+
+        clock.Advance(TimeSpan.FromSeconds(0.5));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(LabelOf(glyph).IsOpen);
+        Assert.Equal(CopyGlyph.Name, AutomationProperties.GetName(glyph));
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ADisabledGlyphOpensNoLabelAfterACopy()
+    {
+        using var kit = AppLook.ControlKit();
+        new ThemeManager(Application.Current!, NullLogger<ThemeManager>.Instance).Apply(ThemeCatalog.Elite);
+        var clock = new ManualClock();
+        using var replaced = clock.UseForDispatcher();
+
+        var glyph = CopyGlyph.Dress(new Button { IsEnabled = false });
+        var (window, _) = Hosted(glyph, headset: false);
+
+        CopyGlyph.Show(glyph, worked: true);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.False(LabelOf(glyph).IsOpen);
 
         window.Close();
     }

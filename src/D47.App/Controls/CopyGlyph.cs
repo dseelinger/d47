@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using D47.App.Panel;
 using D47.App.Theming;
 using D47.App.Timing;
 
@@ -37,6 +38,9 @@ public static class CopyGlyph
         AvaloniaProperty.RegisterAttached<Button, string?>("Copies", typeof(CopyGlyph));
 
     public static string? GetCopies(Button button) => button.GetValue(CopiesProperty);
+
+    private static readonly AttachedProperty<IDisposable?> RestoreProperty =
+        AvaloniaProperty.RegisterAttached<Button, IDisposable?>("Restore", typeof(CopyGlyph));
 
     private static readonly AttachedProperty<string?> RestingTipProperty =
         AvaloniaProperty.RegisterAttached<Button, string?>("RestingTip", typeof(CopyGlyph));
@@ -159,7 +163,8 @@ public static class CopyGlyph
 
     /// <summary>
     /// Names a copy's result on <paramref name="button"/>, and goes back to <see cref="Name"/> after two seconds.
-    /// A button with a hover label shows the result there too; one with an empty tip keeps it empty.
+    /// In the window the button's label opens with the result for those two seconds, hovered or not; one with an
+    /// empty tip, as on the headset's panel, keeps it empty.
     /// </summary>
     public static void Show(Button button, bool worked)
     {
@@ -175,8 +180,17 @@ public static class CopyGlyph
             GlyphLabel.SetTip(button, result);
         }
 
-        OneShot.Dispatcher(Shown, () =>
+        if (!PanelView.OnHeadset(button))
         {
+            GlyphLabel.SetResult(button, worked);
+        }
+
+        button.GetValue(RestoreProperty)?.Dispose();
+
+        var restore = OneShot.Dispatcher(Shown, () =>
+        {
+            button.SetValue(RestoreProperty, null);
+            GlyphLabel.SetResult(button, null);
             AutomationProperties.SetName(button, Name);
 
             if (button.GetValue(RestingTipProperty) is { } back)
@@ -185,6 +199,8 @@ public static class CopyGlyph
                 GlyphLabel.SetTip(button, back);
             }
         });
+
+        button.SetValue(RestoreProperty, restore);
     }
 
     /// <summary>
