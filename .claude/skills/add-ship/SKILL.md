@@ -1,15 +1,15 @@
 ---
-name: new-ship
-description: Add a new Elite Dangerous hull to d47 in stages — detect it against the specs table, regenerate the data, update the lists the tests name, then take it through the art pipeline to a card still and a release upload. Reports which stages are done and what each remaining one waits on; writes on the maintainer's word where a change leaves this repository, and never pushes. Use when the user invokes /new-ship, /new-ship <symbol>, or says "new ship", "Frontier added a hull", "add the new hull", "is there a new ship".
+name: add-ship
+description: Add a new Elite Dangerous hull to d47 in stages — detect it against the specs table, regenerate the data, update the lists the tests name, then take it through the art pipeline to a card still and a release upload. Reports which stages are done and what each remaining one waits on; writes on the maintainer's word where a change leaves this repository, and never pushes. Use when the user invokes /add-ship, /add-ship <symbol>, or says "new ship", "Frontier added a hull", "add the new hull", "is there a new ship".
 ---
 
-# New ship
+# Add ship
 
 Adding a hull means a regenerated specs table, up to four hand-kept entries, art captured in game and
 a release upload. Each hand-kept entry is enforced by a test, so the stages below follow the tests.
 Read upstream, report, write on acknowledgement. Never push.
 
-An argument names the hull symbol (`/new-ship anaconda_mkii`). With none, run stage 1 and report.
+An argument names the hull symbol (`/add-ship anaconda_mkii`). With none, run stage 1 and report.
 
 Report at the start and end of every run which stages are done and what each remaining one waits on.
 One commit per stage, each with a `CHANGELOG.md` entry when the change is user-visible. Stage 4's

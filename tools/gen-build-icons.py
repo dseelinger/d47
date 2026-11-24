@@ -8,7 +8,7 @@ Not part of the build. The output is committed under `assets/`:
 Requires Pillow. Each icon is `assets/directive-47.ico` with its digits recoloured and its frame
 replaced by a thicker band of diagonal hazard stripes, frame by frame, so every size keeps the
 original's hand-hinted digits. Debug builds take the test-drive icon (`D47.App.csproj`); the
-local-release skill's targets file gives its build the local-release icon, and the new-install skill
+local-release skill's targets file gives its build the local-release icon, and the empty-install skill
 passes the new-install icon to its publish.
 """
 
