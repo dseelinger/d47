@@ -15,8 +15,9 @@ namespace D47.App.Controls;
 public sealed class SeekBar : Border
 {
     private readonly Border _track = new() { Height = 6, VerticalAlignment = VerticalAlignment.Center };
-    private readonly Border _fill = new() { Height = 6, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+    private readonly Border _fill = new() { Height = 6, VerticalAlignment = VerticalAlignment.Center };
     private readonly Border _mark = new() { Width = 4, Height = 24, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center };
+    private readonly Face _face;
     private double _position;
     private bool _active = true;
     private bool _dragging;
@@ -27,13 +28,12 @@ public sealed class SeekBar : Border
         Padding = new Thickness(12, 0);
         Cursor = new Cursor(StandardCursorType.Hand);
 
-        var face = new Grid { VerticalAlignment = VerticalAlignment.Center, Height = 24 };
-        face.Children.Add(_track);
-        face.Children.Add(_fill);
-        face.Children.Add(_mark);
-        Child = face;
+        _face = new Face(this) { VerticalAlignment = VerticalAlignment.Center, Height = 24 };
+        _face.Children.Add(_track);
+        _face.Children.Add(_fill);
+        _face.Children.Add(_mark);
+        Child = _face;
 
-        face.SizeChanged += (_, _) => Place();
         Restyle();
     }
 
@@ -86,14 +86,7 @@ public sealed class SeekBar : Border
     private void Show(double value)
     {
         _position = Math.Clamp(double.IsFinite(value) ? value : 0, 0, 1);
-        Place();
-    }
-
-    private void Place()
-    {
-        var width = _track.Bounds.Width;
-        _fill.Width = _position * width;
-        _mark.Margin = new Thickness(_position * width - 2, 0, 0, 0);
+        _face.InvalidateArrange();
     }
 
     private void Restyle()
@@ -160,6 +153,21 @@ public sealed class SeekBar : Border
         {
             e.Pointer.Capture(null);
             Release(FractionOf(e));
+        }
+    }
+
+    /// <summary>Lays the track across its width and the fill and mark at the position of that width, in the same arrange.</summary>
+    private sealed class Face(SeekBar bar) : Avalonia.Controls.Panel
+    {
+        protected override Size ArrangeOverride(Size finalSize)
+        {
+            var at = bar._position * finalSize.Width;
+
+            bar._track.Arrange(new Rect(finalSize));
+            bar._fill.Arrange(new Rect(0, 0, at, finalSize.Height));
+            bar._mark.Arrange(new Rect(at - (bar._mark.Width / 2), 0, bar._mark.Width, finalSize.Height));
+
+            return finalSize;
         }
     }
 }

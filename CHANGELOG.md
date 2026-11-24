@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: On the headset, the Podcasts, Music and Movies seek bars draw their fill and mark at the point the episode, track or film has reached, on the big panel and, for Podcasts, on the mini panel. Before, the fill was drawn to a width left from an earlier layout, so 15 minutes into a 35-minute podcast it showed about a fifth of the bar on the big panel and three quarters on the mini, and could run past the end of the bar.
+
 Changed: The open section of a page is the same on every surface. Choose Stations on a system page in the d47 window and the headset's big panel shows Stations, and a section chosen on the big panel opens in the window. The same goes for the body, station, faction and campaign pages and for the Settings sections. A surface that opens the page later, or whose page is still loading, opens it on that section. The mini panel's trail ends with the open section where it shows "Not available here", so on Settings with Voice open it ends in VOICE. That trail no longer repeats SETTINGS.
 
 Changed: A move on the headset's big panel moves the d47 window and the 2D overlay with it, as a move in the window moves them: a tab, a sub-tab, a page, a drill, a breadcrumb, Back, Previous and Next put every surface on the same page. Back, Previous and Next then go to the same place whichever surface they are pressed on. A surface with a chooser open stays where it is and moves nothing; once the chooser closes it goes to the page the others are on.
