@@ -173,8 +173,9 @@ public sealed class TheSystemPageFollowsTheCommanderTests
                 || name.Contains("refresh", StringComparison.OrdinalIgnoreCase)
                 || name.Contains("try again", StringComparison.OrdinalIgnoreCase)));
 
+    /// <summary>Mini on Search stands in for the System page rather than drawing it (#2738).</summary>
     [AvaloniaFact]
-    public void SearchHasTheSystemRootOnTheWindowAndNotInMini()
+    public void SearchHasTheSystemRootOnTheWindowAndMiniStandsInForIt()
     {
         var (panel, window) = Shown(new World(), open: false);
 
@@ -187,7 +188,8 @@ public sealed class TheSystemPageFollowsTheCommanderTests
         panel.Nav.Select(PanelTab.Search);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.NotEqual(PanelTab.Search, panel.Tab);
+        Assert.Equal(PanelTab.Search, panel.Tab);
+        Assert.True(StandIns.Shows(panel));
 
         window.Close();
     }

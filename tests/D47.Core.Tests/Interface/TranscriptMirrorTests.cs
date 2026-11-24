@@ -197,10 +197,7 @@ public class TranscriptMirrorTests
         return (window, mini, mirror);
     }
 
-    /// <summary>
-    /// The Commander's words: "switching to a tab in the main window should ALWAYS affect the
-    /// mini-panel — IFF that tab is present on the mini panel."
-    /// </summary>
+    /// <summary>Switching to a tab in the main window always affects the mini panel (#2738).</summary>
     [Fact]
     public void TheWindowsTabCarriesToTheMiniPanel()
     {
@@ -227,9 +224,9 @@ public class TranscriptMirrorTests
         Assert.Equal(Log, mini.RootKeyOf(PanelTab.Transcript));
     }
 
-    /// <summary>The IFF, and it costs no special case.</summary>
+    /// <summary>A tab the mini panel has not got is carried as an address it stands in for, and left with the window (#2738).</summary>
     [Fact]
-    public void ATabTheMiniPanelDoesNotHaveIsSimplyNotCarried()
+    public void ATabTheMiniPanelDoesNotHaveIsStoodInFor()
     {
         var (window, mini, _) = Following();
 
@@ -237,8 +234,14 @@ public class TranscriptMirrorTests
 
         Assert.True(window.Select(PanelTab.Settings));
 
-        Assert.Equal(PanelTab.Settings, window.Tab);
-        Assert.Equal(PanelTab.Commander, mini.Tab);
+        Assert.Equal(PanelTab.Settings, mini.StandingIn?.Tab);
+        Assert.Equal(["settings"], mini.StandingIn!.Trail.Select(crumb => crumb.Key));
+        Assert.Equal(window.DestinationKey, mini.DestinationKey);
+
+        Assert.True(window.Select(PanelTab.Transcript));
+
+        Assert.Null(mini.StandingIn);
+        Assert.Equal(PanelTab.Transcript, mini.Tab);
     }
 
     /// <summary>One-way, which is the half that protects a Commander in a headset.</summary>
@@ -317,9 +320,9 @@ public class TranscriptMirrorTests
         Assert.Equal(["checklist", "item"], mini.Trail.Select(crumb => crumb.Key));
     }
 
-    /// <summary>A follower without the window's root keeps the tab and the root it is on.</summary>
+    /// <summary>A follower without the window's root goes as far as the tab and stands in for the rest of the address (#2738).</summary>
     [Fact]
-    public void AFollowerWithoutTheRootGoesAsFarAsTheTab()
+    public void AFollowerWithoutTheRootGoesAsFarAsTheTabAndStandsInForTheAddress()
     {
         var window = Surface();
         var mini = new PanelNavigator();
@@ -336,6 +339,10 @@ public class TranscriptMirrorTests
 
         Assert.Equal(PanelTab.Commander, mini.Tab);
         Assert.Equal(["checklist"], mini.Trail.Select(crumb => crumb.Key));
+        Assert.Equal(PanelTab.Commander, mini.StandingIn?.Tab);
+        Assert.Equal(["standing", "rank"], mini.StandingIn!.Trail.Select(crumb => crumb.Key));
+        Assert.Equal(2, mini.StandingIn.RootCount);
+        Assert.Equal(window.DestinationKey, mini.DestinationKey);
     }
 
     [Fact]
@@ -392,9 +399,12 @@ public class TranscriptMirrorTests
         Assert.Equal(Log, mirror.Root);
     }
 
-    /// <summary>A chooser or a dialog opened in the window does not open in the headset.</summary>
+    /// <summary>
+    /// A chooser opened in the window stays on the window; a dialog is carried as an address the follower stands in
+    /// for over the page under it, and leaving it returns the follower to that page (#2738).
+    /// </summary>
     [Fact]
-    public void AChooserOrADialogStaysOnTheSurfaceThatOpenedIt()
+    public void AChooserStaysOnTheSurfaceThatOpenedItAndADialogIsStoodInFor()
     {
         var (window, mini, _) = Following();
 
@@ -410,10 +420,63 @@ public class TranscriptMirrorTests
         Assert.Equal(0, miniChanges);
 
         Assert.True(window.Back());
+        Assert.Null(mini.StandingIn);
+
         Assert.True(window.Drill(new NavCrumb("dialog:1", "Confirm") { Local = true }));
 
         Assert.Equal(["checklist", "item"], mini.Trail.Select(crumb => crumb.Key));
-        Assert.Equal(0, miniChanges);
+        Assert.Equal(["checklist", "item", "dialog:1"], mini.StandingIn?.Trail.Select(crumb => crumb.Key));
+        Assert.Equal(window.DestinationKey, mini.DestinationKey);
+
+        Assert.True(window.Back());
+
+        Assert.Null(mini.StandingIn);
+        Assert.Equal(["checklist", "item"], mini.Trail.Select(crumb => crumb.Key));
+    }
+
+    /// <summary>A move the follower makes on the tab it stands in for is its own, and ends the stand-in.</summary>
+    [Fact]
+    public void AFollowersOwnMoveEndsItsStandIn()
+    {
+        var (window, mini, _) = Following();
+
+        window.Select(PanelTab.Commander);
+        window.Drill(new NavCrumb("item", "An item"));
+        window.Drill(new NavCrumb("dialog:1", "Confirm") { Local = true });
+
+        Assert.NotNull(mini.StandingIn);
+
+        Assert.True(mini.Back());
+
+        Assert.Null(mini.StandingIn);
+        Assert.Equal(["checklist"], mini.Trail.Select(crumb => crumb.Key));
+    }
+
+    /// <summary>The transcript reading caught up on a follower standing in for another tab leaves the stand-in in place.</summary>
+    [Fact]
+    public void ATranscriptReadingCarriedUnderAStandInKeepsIt()
+    {
+        var (window, mini, _) = Following();
+
+        Assert.True(window.Select(PanelTab.Settings));
+        Assert.True(window.SelectRoot(PanelTab.Transcript, Log));
+
+        Assert.Equal(Log, mini.RootKeyOf(PanelTab.Transcript));
+        Assert.Equal(PanelTab.Settings, mini.StandingIn?.Tab);
+    }
+
+    /// <summary>A declared sub-page the follower lacks is stood in for under the window's destination key.</summary>
+    [Fact]
+    public void ASubPageTheFollowerLacksReportsTheWindowsDestination()
+    {
+        var (window, mini, _) = Following();
+
+        Assert.True(window.Declare("standing", new NavCrumb("ranks", "Ranks")));
+        Assert.True(window.Show("ranks"));
+
+        Assert.Equal("ranks", window.DestinationKey);
+        Assert.Equal("ranks", mini.DestinationKey);
+        Assert.Equal(["standing", "ranks"], mini.StandingIn?.Trail.Select(crumb => crumb.Key));
     }
 
     /// <summary>

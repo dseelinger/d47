@@ -15,9 +15,9 @@ namespace D47.App.Tests;
 /// <summary>The headset's mini panel, which <see cref="PanelView.Mode"/> still switches.</summary>
 public class ThePanelGoesMiniTooTests
 {
-    /// <summary>A hole that was already open.</summary>
+    /// <summary>Mini stays on a tab it has no reading of and stands in for it; full draws it again (#2738).</summary>
     [AvaloniaFact]
-    public void MiniLeavesATabItHasNoReadingOfAndPutsItBack()
+    public void MiniStaysOnATabItHasNoReadingOfAndStandsIn()
     {
         var (window, panel) = Open();
 
@@ -31,18 +31,16 @@ public class ThePanelGoesMiniTooTests
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        // Not on Settings, and not on a blank pane either: it is reading the transcript, which is the reading
-        // mini actually has.
-        Assert.Equal(PanelTab.Transcript, panel.Tab);
-        Assert.False(panel.GetControl<Border>("PagePane").IsVisible);
-        Assert.True(panel.GetControl<Border>("TranscriptPane").IsVisible);
+        Assert.Equal(PanelTab.Settings, panel.Tab);
+        Assert.True(StandIns.Shows(panel));
+        Assert.False(panel.GetControl<Border>("TranscriptPane").IsVisible);
 
         panel.Mode = PanelMode.Full;
         Dispatcher.UIThread.RunJobs();
 
-        // And coming back restores the tab that was showing, rather than leaving the Commander on the
-        // transcript wondering where their page went.
         Assert.Equal(PanelTab.Settings, panel.Tab);
+        Assert.False(StandIns.Shows(panel));
+        Assert.True(panel.GetControl<Border>("PagePane").IsVisible);
 
         window.Close();
     }
@@ -72,9 +70,9 @@ public class ThePanelGoesMiniTooTests
         window.Close();
     }
 
-    /// <summary>And while in mini, a move to Settings is declined — whatever moved the navigator.</summary>
+    /// <summary>And while in mini, a move to Settings is taken and stood in for, whatever moved the navigator (#2738).</summary>
     [AvaloniaFact]
-    public void AMoveToATabMiniLacksIsDeclinedWhileMini()
+    public void AMoveToATabMiniLacksIsTakenAndStoodInForWhileMini()
     {
         var (window, panel) = Open();
 
@@ -82,17 +80,17 @@ public class ThePanelGoesMiniTooTests
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        panel.Nav.Select(PanelTab.Settings);
+        Assert.True(panel.Nav.Select(PanelTab.Settings));
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Transcript, panel.Tab);
+        Assert.Equal(PanelTab.Settings, panel.Tab);
+        Assert.True(StandIns.Shows(panel));
 
-        // And leaving mini does not then jump to a tab the Commander never chose: the bounce is not the same
-        // as having been there.
         panel.Mode = PanelMode.Full;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Transcript, panel.Tab);
+        Assert.Equal(PanelTab.Settings, panel.Tab);
+        Assert.False(StandIns.Shows(panel));
 
         window.Close();
     }

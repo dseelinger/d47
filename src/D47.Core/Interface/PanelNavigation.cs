@@ -133,11 +133,55 @@ public sealed record PanelDestination(PanelTab Tab, NavCrumb Root, NavCrumb? Sub
 }
 
 /// <summary>
+/// A place on another surface: its tab, its trail, the destination it is, and how many roots its tab has there.
+/// Trails compare by their crumbs.
+/// </summary>
+public sealed record PanelAddress(PanelTab Tab, IReadOnlyList<NavCrumb> Trail, string DestinationKey, int RootCount)
+{
+    public bool Equals(PanelAddress? other) =>
+        other is not null
+        && Tab == other.Tab
+        && DestinationKey == other.DestinationKey
+        && RootCount == other.RootCount
+        && Trail.SequenceEqual(other.Trail);
+
+    public override int GetHashCode() => HashCode.Combine(Tab, DestinationKey, Trail.Count);
+}
+
+/// <summary>
 /// Where the Commander is, per tab and per root, and every way of changing it (Phase 25, "Drill in, and
 /// find your way back").
 /// </summary>
 public sealed class PanelNavigator
 {
+    /// <summary>
+    /// The address this surface shows in place of a page it cannot draw, or null. Set by <see cref="TranscriptMirror"/>;
+    /// a move of this surface's own on the tab it stands in for clears it.
+    /// </summary>
+    public PanelAddress? StandingIn { get; private set; }
+
+    /// <summary>Stands in for an address, or stops with null; false when that is already so.</summary>
+    public bool StandIn(PanelAddress? address)
+    {
+        if (Equals(StandingIn, address))
+        {
+            return false;
+        }
+
+        StandingIn = address;
+        Raise();
+        return true;
+    }
+
+    /// <summary>Stops standing in after a move: any move with no tab, or a move on the showing tab that the stand-in is on.</summary>
+    private void Moved(PanelTab? tab = null)
+    {
+        if (StandingIn is { } address && (tab is not { } on || (on == Tab && address.Tab == on)))
+        {
+            StandingIn = null;
+        }
+    }
+
     /// <summary>The roots each tab offers, in the order the mode control shows them.</summary>
     private readonly Dictionary<PanelTab, List<NavCrumb>> _roots = [];
 
@@ -435,9 +479,13 @@ public sealed class PanelNavigator
 
     /// <summary>
     /// The destination this surface is on: a declared sub-page when the trail is its root and it alone, or its root,
-    /// the page above it and it; under a page-holding root, the page open at any depth; else the root.
+    /// the page above it and it; under a page-holding root, the page open at any depth; else the root. While standing
+    /// in, the address's.
     /// </summary>
-    public string DestinationKey
+    public string DestinationKey => StandingIn?.DestinationKey ?? OwnDestinationKey;
+
+    /// <summary>The destination this surface's own trail is on, whether or not it stands in for another.</summary>
+    internal string OwnDestinationKey
     {
         get
         {
@@ -529,6 +577,7 @@ public sealed class PanelNavigator
         if (drilled && !moved && !selected)
         {
             Remember(before);
+            Moved(tab);
             Raise();
         }
 
@@ -591,6 +640,7 @@ public sealed class PanelNavigator
 
         Tab = tab;
         Remember(before);
+        Moved();
         Raise();
         return true;
     }
@@ -634,6 +684,7 @@ public sealed class PanelNavigator
 
         _current[tab] = rootKey;
         Remember(before);
+        Moved(tab);
         Raise();
         return true;
     }
@@ -643,14 +694,14 @@ public sealed class PanelNavigator
         _current.TryGetValue(tab, out var root) ? root : string.Empty;
 
     /// <summary>One level deeper.</summary>
-    public bool Drill(NavCrumb crumb) => !Modal && Push(Mutable(), crumb, remember: true);
+    public bool Drill(NavCrumb crumb) => !Modal && Push(Tab, crumb, remember: true);
 
     /// <summary>One level deeper on a tab's current root, whether or not that tab is showing.</summary>
     public bool Drill(PanelTab tab, NavCrumb crumb) =>
-        Mutable(tab) is { } trail && !trail[^1].Modal && Push(trail, crumb, remember: true);
+        Mutable(tab) is { } trail && !trail[^1].Modal && Push(tab, crumb, remember: true);
 
     /// <summary>Pushes a level that holds the panel until it is dismissed - a chooser.</summary>
-    public bool Take(NavCrumb crumb) => Push(Mutable(), crumb with { Modal = true }, remember: false);
+    public bool Take(NavCrumb crumb) => Push(Tab, crumb with { Modal = true }, remember: false);
 
     /// <summary>
     /// Back one level, and the answer to all three routes that must agree - the breadcrumb, the
@@ -667,6 +718,7 @@ public sealed class PanelNavigator
 
         trail.RemoveAt(trail.Count - 1);
         Settle();
+        Moved(Tab);
         Raise();
         return true;
     }
@@ -685,6 +737,7 @@ public sealed class PanelNavigator
 
         trail.RemoveRange(Floor(trail), trail.Count - Floor(trail));
         Settle();
+        Moved(Tab);
         Raise();
         return true;
     }
@@ -737,6 +790,7 @@ public sealed class PanelNavigator
 
         trail.RemoveRange(index + 1, trail.Count - index - 1);
         Settle();
+        Moved(Tab);
         Raise();
         return true;
     }
@@ -785,6 +839,7 @@ public sealed class PanelNavigator
         trail.AddRange(below);
 
         Remember(before);
+        Moved(tab);
         Raise();
         return true;
     }
@@ -812,6 +867,7 @@ public sealed class PanelNavigator
 
         Restore(visit);
         Settle();
+        Moved();
         Raise();
         RaisePlace(visit);
         return true;
@@ -839,6 +895,7 @@ public sealed class PanelNavigator
         }
 
         Restore(visit);
+        Moved();
         Raise();
         RaisePlace(visit);
         return true;
@@ -980,8 +1037,10 @@ public sealed class PanelNavigator
         Settle();
     }
 
-    private bool Push(List<NavCrumb>? trail, NavCrumb crumb, bool remember)
+    private bool Push(PanelTab tab, NavCrumb crumb, bool remember)
     {
+        var trail = Mutable(tab);
+
         if (trail is null)
         {
             return false;
@@ -1006,6 +1065,7 @@ public sealed class PanelNavigator
                 Settle();
             }
 
+            Moved(tab);
             Raise();
             return true;
         }
@@ -1024,6 +1084,7 @@ public sealed class PanelNavigator
                 Settle();
             }
 
+            Moved(tab);
             Raise();
             return true;
         }
@@ -1044,6 +1105,7 @@ public sealed class PanelNavigator
 
         trail.Add(crumb);
         Remember(before);
+        Moved(tab);
         Raise();
         return true;
     }

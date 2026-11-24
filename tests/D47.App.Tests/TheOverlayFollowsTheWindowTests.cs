@@ -27,8 +27,9 @@ public class TheOverlayFollowsTheWindowTests
         Assert.Equal(PanelTab.Transcript, follower.Tab);
     }
 
+    /// <summary>A tab the follower has not got is stood in for: the follower shows the address and the stand-in (#2738).</summary>
     [AvaloniaFact]
-    public void ATabTheFollowerHasNotGotMovesTheWindowAlone()
+    public void ATabTheFollowerHasNotGotIsStoodIn()
     {
         var (window, follower) = Pair(stories: true);
 
@@ -39,15 +40,17 @@ public class TheOverlayFollowsTheWindowTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Commander, window.Tab);
-        Assert.Equal(PanelTab.Stories, follower.Tab);
+        Assert.Equal(PanelTab.Commander, follower.Nav.StandingIn?.Tab);
+        Assert.Equal(window.Nav.DestinationKey, follower.Nav.DestinationKey);
+        Assert.True(StandIns.Shows(follower));
     }
 
     /// <summary>
-    /// A follower with no story furnished has one tab, so the window's tab never moves it at all —
-    /// which is what a Commander sees before they have accepted an adventure.
+    /// A follower with no story furnished has one tab, and stands in for every other tab the window goes to — which is
+    /// what a Commander sees before they have accepted an adventure (#2738).
     /// </summary>
     [AvaloniaFact]
-    public void AFollowerWithOneTabNeverMoves()
+    public void AFollowerWithOneTabStandsInForTheOthers()
     {
         var (window, follower) = Pair(stories: false);
 
@@ -55,15 +58,14 @@ public class TheOverlayFollowsTheWindowTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Stories, window.Tab);
-        Assert.Equal(PanelTab.Transcript, follower.Tab);
+        Assert.Equal(PanelTab.Stories, follower.Nav.StandingIn?.Tab);
+        Assert.True(StandIns.Shows(follower));
+        Assert.False(follower.GetControl<Border>("TranscriptPane").IsVisible);
     }
 
-    /// <summary>
-    /// A mini follower refuses Settings, and stays on the tab it was on rather than dropping to the
-    /// transcript (#948).
-    /// </summary>
+    /// <summary>A mini follower goes to Settings with the window and shows the stand-in there (#948, #2738).</summary>
     [AvaloniaFact]
-    public void AMiniFollowerKeepsItsTabWhenTheWindowGoesWhereMiniCannot()
+    public void AMiniFollowerGoesWhereMiniCannotDrawAndStandsIn()
     {
         var (window, follower) = Pair(stories: true);
 
@@ -76,7 +78,8 @@ public class TheOverlayFollowsTheWindowTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Settings, window.Tab);
-        Assert.Equal(PanelTab.Stories, follower.Tab);
+        Assert.Equal(PanelTab.Settings, follower.Tab);
+        Assert.True(StandIns.Shows(follower));
     }
 
     /// <summary>And the reading within the transcript is shared unconditionally, in both directions, which is why "it tracks" and "it does not track" are both true depending on what is being changed.</summary>

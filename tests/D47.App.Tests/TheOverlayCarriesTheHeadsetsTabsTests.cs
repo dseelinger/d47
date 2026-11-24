@@ -60,9 +60,9 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
         overlay.Close();
     }
 
-    /// <summary>Settings is the exclusion, and it is the only one.</summary>
+    /// <summary>Settings is taken in mini and stood in for even when the surface has it; the checklist is drawn (#2738).</summary>
     [AvaloniaFact]
-    public void SettingsIsRefusedInMiniEvenWhenTheSurfaceHasIt()
+    public void SettingsIsStoodInForInMiniEvenWhenTheSurfaceHasIt()
     {
         var (headset, _) = Both();
 
@@ -79,13 +79,15 @@ public class TheOverlayCarriesTheHeadsetsTabsTests
         panel.Nav.Select(PanelTab.Settings);
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(PanelTab.Transcript, panel.Tab);
+        Assert.Equal(PanelTab.Settings, panel.Tab);
+        Assert.True(StandIns.Shows(panel));
 
         // While the checklist, at the same size on the same surface, is taken.
         panel.Nav.Select(PanelTab.Commander);
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal(PanelTab.Commander, panel.Tab);
+        Assert.False(StandIns.Shows(panel));
     }
 
     /// <summary>

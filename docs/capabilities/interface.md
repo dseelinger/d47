@@ -320,9 +320,9 @@ does — including Directive 47's own window, which is right there showing stric
 The mini panel names the tab it is on, and where in it, in a line at the top right of its text area:
 tab, sub-tab and level, shortened with a `…` when it does not fit beside the comms indicator.
 
-**It carries the same tabs as the headset's mini panel**, and it follows the main window between them. Settings is the
-one it does not have, for two reasons that agree: you could not touch it, and it is the one page
-mini cannot fit.
+**It follows the main window to every tab.** On Settings and Search, which mini does not draw, it shows
+where the window is in its trail line and one line in its text area: "Not available here". The same holds
+on any page the window has open that this panel cannot draw: a dialog, All results or a search result.
 
 **You cannot click it, and that is the design.** The pointer goes straight through: a click the
 strip ate would be a click Elite did not get, and a focus steal mid-combat is worse than anything

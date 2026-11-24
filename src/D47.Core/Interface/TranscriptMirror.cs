@@ -154,41 +154,55 @@ public sealed class TranscriptMirror
     }
 
     /// <summary>
-    /// Puts a follower on the leader's tab, root and trail, as far down as it can go: a follower without
-    /// the tab stays where it is, and one without the root stays on the tab's current root.
+    /// Puts a follower on the leader's tab, root and trail, as far down as it can draw: a follower without the
+    /// tab stays where it is, one without the root stays on the tab's current root, and a trail stops above
+    /// the first level that stays on the surface that opened it. A follower that falls short of the leader's
+    /// address, or reads it as another destination, stands in for it. A follower held by a chooser is left alone.
     /// </summary>
     private void Follow(PanelNavigator nav, Position position)
     {
-        if (!nav.Has(position.Tab))
+        if (nav.Modal)
         {
             return;
         }
 
-        // The root first and then the tab, as Show does, so the tab does not open on its previous root.
-        if (position.Trail.Count > 0)
+        List<NavCrumb> drawn = [.. position.Trail.TakeWhile(crumb => !crumb.Local)];
+
+        if (nav.Has(position.Tab))
         {
-            nav.SelectRoot(position.Tab, position.Trail[0].Key);
+            // The root first and then the tab, as Show does, so the tab does not open on its previous root.
+            if (drawn.Count > 0)
+            {
+                nav.SelectRoot(position.Tab, drawn[0].Key);
+            }
+
+            nav.Select(position.Tab);
+
+            if (drawn.Count > 0
+                && nav.Tab == position.Tab
+                && nav.RootKeyOf(position.Tab) == drawn[0].Key
+                && !nav.Trail.Skip(1).SequenceEqual(drawn.Skip(1)))
+            {
+                nav.GoTo(drawn);
+            }
         }
 
-        nav.Select(position.Tab);
+        var there = nav.Tab == position.Tab
+            && nav.OwnDestinationKey == position.DestinationKey
+            && nav.Trail.Select(crumb => crumb.Key).SequenceEqual(position.Trail.Select(crumb => crumb.Key), StringComparer.Ordinal);
 
-        if (position.Trail.Count > 0
-            && nav.Tab == position.Tab
-            && nav.RootKeyOf(position.Tab) == position.Trail[0].Key
-            && !nav.Trail.Skip(1).SequenceEqual(position.Trail.Skip(1)))
-        {
-            nav.GoTo(position.Trail);
-        }
+        nav.StandIn(there ? null : new PanelAddress(position.Tab, position.Trail, position.DestinationKey, position.RootCount));
 
         _seen[nav] = nav.RootKeyOf(PanelTab.Transcript);
     }
 
-    /// <summary>
-    /// A navigator's tab and the part of its trail that is carried: everything above the first level that
-    /// holds the panel or stays on its own surface.
-    /// </summary>
+    /// <summary>A navigator's tab and the part of its trail that is carried: everything above the first chooser.</summary>
     private static Position PositionOf(PanelNavigator nav) =>
-        new(nav.Tab, [.. nav.Trail.TakeWhile(crumb => !crumb.Modal && !crumb.Local)]);
+        new(nav.Tab, [.. nav.Trail.TakeWhile(crumb => !crumb.Modal)])
+        {
+            DestinationKey = nav.DestinationKey,
+            RootCount = nav.Roots(nav.Tab).Count,
+        };
 
     /// <summary>Puts one navigator on the shared root, and records it only if the move was taken.</summary>
     private void CatchUp(PanelNavigator nav)
@@ -222,6 +236,10 @@ public sealed class TranscriptMirror
     /// <summary>A tab and a trail, compared by the crumbs on it.</summary>
     private sealed record Position(PanelTab Tab, IReadOnlyList<NavCrumb> Trail)
     {
+        public string DestinationKey { get; init; } = string.Empty;
+
+        public int RootCount { get; init; }
+
         public bool Equals(Position? other) =>
             other is not null && Tab == other.Tab && Trail.SequenceEqual(other.Trail);
 

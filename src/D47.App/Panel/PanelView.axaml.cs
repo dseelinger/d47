@@ -53,11 +53,6 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     private PanelViewModel? _bound;
 
     /// <summary>
-    /// The tab that was showing when mini took it away, so leaving mini can put it back (Phase 51).
-    /// </summary>
-    private PanelTab? _beforeMini;
-
-    /// <summary>
     /// Where the Commander is on this surface: which tab, which of its roots, and how far down (Phase
     /// 25).
     /// </summary>
@@ -178,10 +173,15 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         // each would be three expressions no test can reach.
         ModeProperty.Changed.AddClassHandler<PanelView>((view, _) =>
         {
-            // Before the chrome, because it may move the tab and the chrome is drawn from it.
-            view.SettleMini();
-
-            view.ApplyChrome();
+            // Mini stands in for Settings and Search and full draws them, so on those the page is decided again.
+            if (MiniShows(view.Tab))
+            {
+                view.ApplyChrome();
+            }
+            else
+            {
+                view.ApplyNavigation();
+            }
 
             // And redrawn, because mini is not only less chrome around the conversation: the bubbles
             // themselves give back their gutter and their padding on a surface that has 512 pixels to spend
@@ -535,7 +535,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     /// <summary>Shows the music's read-out on a mini surface while this surface is on Media › Music.</summary>
     private void ApplyAudioReadout()
     {
-        var open = Mode == PanelMode.Mini && _bound is not null && Nav.DestinationKey == MediaFurnishing.MusicRoot;
+        var open = Mode == PanelMode.Mini && _bound is not null && StandIn is null && Nav.DestinationKey == MediaFurnishing.MusicRoot;
 
         AudioReadoutBar.IsVisible = open;
 
@@ -2875,7 +2875,8 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     private void ApplyChrome()
     {
         var full = Mode == PanelMode.Full;
-        var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
+        var standIn = StandIn is not null;
+        var transcript = !standIn && Tab == PanelTab.Transcript && TranscriptDialog is null;
 
         Header.IsVisible = full;
         Banners.IsVisible = full;
@@ -2911,7 +2912,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
 
         // Mini reading the Stories tab (asked for 2026-08-22), the Astrometrics tab's Plan root (#197) or Galaxy map root (#1916) — the
         // rest of Routing keeps drawing its full-size page even at mini's size.
-        Control? miniControl = Tab switch
+        Control? miniControl = standIn ? null : Tab switch
         {
             PanelTab.Stories => _stories.Mini,
             PanelTab.Media when Nav.RootKeyOf(Tab) == MediaFurnishing.BooksRoot => _media.BooksMini,
@@ -2964,7 +2965,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     private void DrawPageSidebar()
     {
         var root = Nav.Root.Key;
-        var pages = Mode == PanelMode.Full && Tab != PanelTab.Transcript && !Nav.Modal && Nav.HoldsPages(root)
+        var pages = Mode == PanelMode.Full && Tab != PanelTab.Transcript && !Nav.Modal && StandIn is null && Nav.HoldsPages(root)
             ? Nav.PagesOf(root)
             : [];
 
@@ -2995,6 +2996,10 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         PageSidebarHost.IsVisible = true;
     }
 
+    /// <summary>The word a tab's button draws, or the tab's name where there is no button.</summary>
+    private string TabWordOf(PanelTab tab) =>
+        _tabs.TryGetValue(tab, out var button) ? button.Content as string ?? tab.ToString() : tab.ToString();
+
     /// <summary>Gives mini's trail its words; the trail fits them to its own room.</summary>
     private void DrawMiniTrail()
     {
@@ -3005,43 +3010,57 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             return;
         }
 
-        var tabWord = _tabs.TryGetValue(Tab, out var button) ? button.Content as string ?? Tab.ToString() : Tab.ToString();
+        if (StandIn is { } address)
+        {
+            MiniTrailRow.Show(MiniTrail.Words(TabWordOf(address.Tab), address.Trail, address.RootCount));
+            return;
+        }
+
         var section = Tab != PanelTab.Transcript && !Nav.Modal && _pages.TryGetValue(Tab, out var drill) ? drill.OpenSection : string.Empty;
-        MiniTrailRow.Show(MiniTrail.Words(tabWord, Nav.Trail, Nav.Roots(Tab).Count, section));
+        MiniTrailRow.Show(MiniTrail.Words(TabWordOf(Tab), Nav.Trail, Nav.Roots(Tab).Count, section));
+    }
+
+    /// <summary>Whether mini draws this tab's pages.</summary>
+    private static bool MiniShows(PanelTab tab) => tab is not (PanelTab.Settings or PanelTab.Search);
+
+    /// <summary>The words a stand-in shows in place of a page.</summary>
+    public const string NotAvailableHere = "Not available here";
+
+    /// <summary>
+    /// The address this surface shows in place of a page it cannot draw: the one the navigator stands in for, or
+    /// its own where it has no builder for the tab or mini does not draw the tab; null where it draws the page.
+    /// </summary>
+    internal PanelAddress? StandIn =>
+        Nav.StandingIn
+        ?? ((Tab != PanelTab.Transcript && !_builders.ContainsKey(Tab)) || (Mode == PanelMode.Mini && !MiniShows(Tab))
+            ? new PanelAddress(Tab, Nav.Trail, Nav.DestinationKey, Nav.Roots(Tab).Count)
+            : null);
+
+    private TextBlock? _standInLine;
+
+    /// <summary>The stand-in: one grey line of body text at the top left of the page area.</summary>
+    private TextBlock StandInLine()
+    {
+        if (_standInLine is null)
+        {
+            _standInLine = new TextBlock
+            {
+                Text = NotAvailableHere,
+                FontSize = Theming.TypeScale.Body,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+            };
+
+            _standInLine.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.GreyKey));
+        }
+
+        return _standInLine;
     }
 
     /// <summary>
     /// Draws everything the navigator decides: which tab is checked, which modes the segmented control
     /// offers, what the breadcrumb says, and which page is in the slot.
     /// </summary>
-    private static bool MiniShows(PanelTab tab) => tab is not (PanelTab.Settings or PanelTab.Search);
-
-    /// <summary>Keeps mini on a page mini actually has, and puts back what it took (Phase 51).</summary>
-    private void SettleMini()
-    {
-        if (Mode == PanelMode.Mini)
-        {
-            if (!MiniShows(Tab))
-            {
-                _beforeMini = Tab;
-                Tab = PanelTab.Transcript;
-            }
-
-            return;
-        }
-
-        if (_beforeMini is not { } restore)
-        {
-            return;
-        }
-
-        _beforeMini = null;
-
-        // Through the navigator, which declines a tab this surface no longer has - a host can furnish a tab
-        // and nothing ever unfurnishes one, so this is belt and braces rather than a case anybody has seen.
-        Tab = restore;
-    }
-
     private void ApplyNavigation()
     {
         ReleaseDialogs();
@@ -3059,23 +3078,8 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         // Which reading each tab is on, kept for the next launch (#268).
         RecordRoots();
 
-        // A surface that was never given a tab cannot be put on one, whether by a stale property, a host that
-        // forgot to furnish it, or a hand-edited state.
         var tab = Tab;
-
-        if (tab != PanelTab.Transcript && !_builders.ContainsKey(tab))
-        {
-            Tab = PanelTab.Transcript;
-            return;
-        }
-
-        // And mini refuses a tab it has no reading of, whatever moved the navigator — a press, a spoken
-        // phrase, or a switch (Phase 51).
-        if (Mode == PanelMode.Mini && !MiniShows(tab))
-        {
-            Tab = MiniShows(_showing) ? _showing : PanelTab.Transcript;
-            return;
-        }
+        var standIn = StandIn;
 
         // The mark is about the page underneath it, so it comes and goes with the tab.
         ShowHelpAffordance();
@@ -3086,7 +3090,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         {
             foreach (var (which, button) in _tabs)
             {
-                button.IsChecked = which == tab;
+                button.IsChecked = which == (standIn?.Tab ?? tab);
             }
         }
         finally
@@ -3121,6 +3125,14 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         ModalPane.Child = Nav.Modal ? Modal(Nav.Trail[^1]) : null;
 
         ApplyChrome();
+
+        if (standIn is not null)
+        {
+            PagePane.Child = StandInLine();
+            ShowSearch();
+            DrawMiniTrail();
+            return;
+        }
 
         if (TranscriptDialog is { } dialog)
         {
@@ -3168,7 +3180,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         var showing = Nav.RootKeyOf(Nav.Tab);
         showing = showing == RawJournalRoot ? JournalRoot : showing;
 
-        ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtPage;
+        ModePicker.IsVisible = !OutputOnly && roots.Count > 1 && Nav.AtPage && StandIn is null;
         ModeReadings.ItemSpacing = Classes.Contains("headset") ? 16 : 24;
 
         ShowPageBar();
@@ -3231,7 +3243,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         // The box, not the switch: the label lives beside the knob, and hiding one without the other would
         // leave a word floating in the bar.
         RawToggleBox.IsVisible = journal && furnished && Nav.AtRoot && !OutputOnly
-            && Nav.Tab == PanelTab.Transcript;
+            && Nav.Tab == PanelTab.Transcript && StandIn is null;
 
         DrawExplainButton();
 
@@ -3256,7 +3268,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     private void DrawExplainButton() =>
         ExplainButton.IsVisible = Model is { JournalDetail: true }
             && Page == TranscriptPage.Journal && Nav.AtRoot && !OutputOnly
-            && Nav.Tab == PanelTab.Transcript;
+            && Nav.Tab == PanelTab.Transcript && StandIn is null;
 
     private void OnExplainClick(object? sender, RoutedEventArgs e) => Model?.Explain();
 
@@ -3310,6 +3322,12 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     {
         CrumbRow.Children.Clear();
 
+        if (StandIn is { } address)
+        {
+            DrawStandInCrumbs(address);
+            return;
+        }
+
         var trail = Nav.Trail;
 
         if (Nav.AtPage)
@@ -3333,19 +3351,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         {
             if (step > 0)
             {
-                var separator = new TextBlock
-                {
-                    Text = "›",
-                    Margin = new Thickness(2, 0, 2, 0),
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    FontSize = Theming.TypeScale.Body,
-                };
-
-                separator.Bind(
-                    TextBlock.ForegroundProperty,
-                    this.GetResourceObservable(Theming.ThemeManager.GreyKey));
-
-                CrumbRow.Children.Add(separator);
+                CrumbRow.Children.Add(CrumbSeparator());
             }
 
             var last = step == steps.Count - 1;
@@ -3381,9 +3387,51 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         }
     }
 
+    /// <summary>
+    /// The full path a stand-in is for, at every depth: the tab, the root where the tab has more than one, then
+    /// every level. Nothing on it is pressable, since none of it is this surface's own trail.
+    /// </summary>
+    private void DrawStandInCrumbs(PanelAddress address)
+    {
+        var words = new List<string> { TabWords.TryGetValue(address.Tab, out var tabWord) ? tabWord : address.Tab.ToString() };
+        words.AddRange(address.Trail.Where((_, index) => index > 0 || address.RootCount > 1).Select(crumb => crumb.Word));
+
+        for (var step = 0; step < words.Count; step++)
+        {
+            if (step > 0)
+            {
+                CrumbRow.Children.Add(CrumbSeparator());
+            }
+
+            CrumbRow.Children.Add(new Button
+            {
+                Theme = this.FindResource("D47.Crumb") as ControlTheme,
+                Content = words[step],
+                IsEnabled = false,
+            });
+        }
+    }
+
+    private TextBlock CrumbSeparator()
+    {
+        var separator = new TextBlock
+        {
+            Text = "›",
+            Margin = new Thickness(2, 0, 2, 0),
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            FontSize = Theming.TypeScale.Body,
+        };
+
+        separator.Bind(
+            TextBlock.ForegroundProperty,
+            this.GetResourceObservable(Theming.ThemeManager.GreyKey));
+
+        return separator;
+    }
+
     /// <summary>Reads the log, saying so on the tab if it takes long enough to be worth saying.</summary>
     private void SettleLogFollow() =>
-        FollowLogFile(Tab == PanelTab.Transcript && Page == TranscriptPage.Log);
+        FollowLogFile(Tab == PanelTab.Transcript && Page == TranscriptPage.Log && Nav.StandingIn is null);
 
     private void FollowLogFile(bool following)
     {
@@ -4781,7 +4829,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     /// <summary>Whether the page's bar exists at all.</summary>
     private void ShowSearch()
     {
-        var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
+        var transcript = StandIn is null && Tab == PanelTab.Transcript && TranscriptDialog is null;
 
         CopyButton.IsVisible = _searchable && transcript && !OutputOnly;
 
@@ -4821,7 +4869,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     /// <summary>Puts the page's own control on the title line: the settings tile of the Log file or In Ship on that page, the shown page's <see cref="IPageChrome.BarTool"/> elsewhere off the Transcript.</summary>
     private void ShowPageTool()
     {
-        var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
+        var transcript = StandIn is null && Tab == PanelTab.Transcript && TranscriptDialog is null;
 
         var tool = transcript
             ? LogSettingsStrip.IsVisible ? (LogSettingsStrip.Content as IPageChrome)?.BarTool
@@ -4857,7 +4905,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     {
         Theming.TitleText.Show(PageTitle, _tabs.TryGetValue(Tab, out var tab) ? tab.Content as string ?? string.Empty : string.Empty);
 
-        var transcript = Tab == PanelTab.Transcript && TranscriptDialog is null;
+        var transcript = StandIn is null && Tab == PanelTab.Transcript && TranscriptDialog is null;
 
         PageSummary.Text = transcript ? string.Empty : (PagePane.Child as IPageSummary)?.Summary ?? string.Empty;
     }
@@ -4909,7 +4957,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         PageTitle.Measure(Size.Infinity);
 
         const double Gap = 16;
-        var field = Tab == PanelTab.Transcript
+        var field = Tab == PanelTab.Transcript && StandIn is null
             ? TranscriptSearchWidth
             : (PagePane.Child as IFilterablePage)?.FilterWidth ?? Math.Clamp(line * 0.32, 240, 420);
 
@@ -4938,7 +4986,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     private void ShowConversationSettingsStrip()
     {
         var show = Tab == PanelTab.Transcript && Page == TranscriptPage.Conversation && Mode == PanelMode.Full
-                   && Nav.AtRoot && !OutputOnly;
+                   && Nav.AtRoot && !OutputOnly && StandIn is null;
 
         if (show && ConversationSettingsStrip.Content is null)
         {
@@ -4959,7 +5007,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
     {
         ShowConversationSettingsStrip();
 
-        var show = Tab == PanelTab.Transcript && Page == TranscriptPage.Log && Mode == PanelMode.Full;
+        var show = Tab == PanelTab.Transcript && Page == TranscriptPage.Log && Mode == PanelMode.Full && StandIn is null;
 
         if (show && LogSettingsStrip.Content is null)
         {

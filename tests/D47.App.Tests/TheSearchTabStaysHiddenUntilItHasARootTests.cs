@@ -90,16 +90,20 @@ public sealed class TheSearchTabStaysHiddenUntilItHasARootTests
         window.Close();
     }
 
+    /// <summary>Mini goes to Search and stands in for it rather than drawing it (#2738).</summary>
     [AvaloniaFact]
-    public void MiniDoesNotOfferSearch()
+    public void MiniTakesSearchAndStandsInForIt()
     {
         var (panel, window) = Shown(furnishSearch: true);
 
         panel.Mode = PanelMode.Mini;
         Dispatcher.UIThread.RunJobs();
 
-        Assert.False(panel.Nav.Select(PanelTab.Search) && panel.Tab == PanelTab.Search);
-        Assert.Equal(PanelTab.Transcript, panel.Tab);
+        Assert.True(panel.Nav.Select(PanelTab.Search));
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Equal(PanelTab.Search, panel.Tab);
+        Assert.True(StandIns.Shows(panel));
 
         window.Close();
     }
