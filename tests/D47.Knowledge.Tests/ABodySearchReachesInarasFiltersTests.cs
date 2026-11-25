@@ -73,7 +73,7 @@ public class ABodySearchReachesInarasFiltersTests
 
         var filters = JsonDocument.Parse(SpanshRequest.Bodies(query)).RootElement.GetProperty("filters");
 
-        Assert.Equal("1000", filters.GetProperty("distance").GetProperty("max").GetString());
+        Assert.Equal("5000", filters.GetProperty("distance").GetProperty("max").GetString());
     }
 
     [Theory]
