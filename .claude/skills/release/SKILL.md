@@ -188,8 +188,9 @@ number, and send the ready notice. The redeploy is not optional. Once a commit l
 deploy and the dispatch, the published build differs from the installed one but carries the same
 number, and the updater treats the install as current and never replaces it.
 
-- **A redeploy refused because Elite holds the layer DLL.** When the fix commits changed nothing
-  outside `tests/`, the installed payload is already the code the release ships: say so and run
+- **A redeploy refused because Elite holds the layer DLL.** When every commit since the deploy
+  changed only files under `tests/` or `.claude/`, which the app is not built from, the installed
+  payload is already the code the release ships: say so and run
   the script again without the redeploy. Otherwise ask the maintainer to close Elite and wait; do
   not run the script again until the fixed build is installed.
 - A runner re-run with no code change (`gh run rerun`) keeps the deploy.
