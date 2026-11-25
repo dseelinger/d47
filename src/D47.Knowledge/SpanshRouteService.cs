@@ -50,6 +50,7 @@ public sealed class SpanshRouteService : IRouteService, IDisposable
                 ["to"] = query.To,
                 ["range"] = Number(query.JumpRange),
                 ["efficiency"] = query.Efficiency.ToString(CultureInfo.InvariantCulture),
+                ["supercharge_multiplier"] = query.SuperchargeMultiplier.ToString(CultureInfo.InvariantCulture),
             },
             "the route plotter",
             cancellationToken).ConfigureAwait(false);

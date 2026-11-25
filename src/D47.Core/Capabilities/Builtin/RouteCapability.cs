@@ -325,7 +325,8 @@ public static class RouteCapability
                 arguments.Double("jump_range") ?? active?.Ship.MaxJumpRange,
                 arguments.TryGetInt32("efficiency", out var efficiency) ? efficiency : null,
                 out var query,
-                out var failure))
+                out var failure,
+                active?.FlownShip.FrameShiftDrive?.Item))
         {
             return ToolResult.Error(failure);
         }

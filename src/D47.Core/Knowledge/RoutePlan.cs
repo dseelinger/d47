@@ -342,13 +342,18 @@ public sealed record RouteQuery
     /// <summary>How strictly to insist on the direct line, 1 to 100.</summary>
     public int Efficiency { get; init; } = 60;
 
+    /// <summary>The jump range multiplier at a neutron star: 6 with a Mk II overcharge drive, 4 otherwise.</summary>
+    public int SuperchargeMultiplier { get; init; } = 4;
+
+    /// <summary>Validates a plot; the fitted drive's journal item sets <see cref="SuperchargeMultiplier"/>.</summary>
     public static bool TryParse(
         string? from,
         string? to,
         double? jumpRange,
         int? efficiency,
         out RouteQuery query,
-        out string failure)
+        out string failure,
+        string? frameShiftDriveItem = null)
     {
         query = null!;
         failure = string.Empty;
@@ -384,6 +389,7 @@ public sealed record RouteQuery
 
             // Never 100, which the service accepts and then cannot route with.
             Efficiency = Math.Clamp(efficiency ?? 60, 1, 99),
+            SuperchargeMultiplier = StarClasses.SuperchargeMultiplier("N", frameShiftDriveItem) is 6.0 ? 6 : 4,
         };
 
         return true;

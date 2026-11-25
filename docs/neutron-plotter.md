@@ -42,7 +42,7 @@ nav_order: 201
  <line x1="480" y1="212" x2="600" y2="184" stroke="var(--accent-muted)" stroke-width="2.5" stroke-linecap="butt"/>
  <text x="730" y="196" text-anchor="middle" font-size="15" fill="var(--text)">detours through neutron</text>
  <text x="730" y="218" text-anchor="middle" font-size="15" fill="var(--text)">stars, and reaches</text>
- <text x="440" y="256" text-anchor="middle" font-size="15" fill="var(--text-muted)">A supercharged drive jumps about four times as far, so the longer way round is the shorter way there.</text>
+ <text x="440" y="256" text-anchor="middle" font-size="15" fill="var(--text-muted)">A supercharged drive jumps four times as far, six with a Mk II drive: the longer way round is shorter.</text>
 </svg>
 </section>
 <section>
@@ -112,11 +112,16 @@ does and said nothing about the one thing this does that the map cannot.
 light years a jump"*, so jump range and origin come from the journal unless you overrule them.
 Typing a range is for planning a trip in a ship you are not sitting in.
 
+The supercharge also comes from the ship you are flying: with the Mk II Supercharge Optimised Frame
+Shift Drive fitted, as on the Caspian Explorer, the plot counts six times your range at each
+neutron star instead of four. Enter your normal jump range, not the boosted one.
+
 ### Efficiency, again, because it reads backwards
 
 A **lower** number produces a **shorter** route. Efficiency is how strictly the plotter holds to the
 straight line between you and your destination; loosening it lets the route wander to pick up more
-neutron stars, and each supercharge is worth about four jumps. So:
+neutron stars, and each supercharge is worth about four jumps, or six with a Mk II Supercharge
+Optimised drive. So:
 
 - **25** — a wandering route with many supercharges, and the fewest jumps.
 - **60** — the default, and a sensible one.

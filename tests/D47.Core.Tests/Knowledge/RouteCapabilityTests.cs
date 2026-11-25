@@ -218,6 +218,31 @@ public class RouteCapabilityTests
         Assert.Equal(52.31, routes.LastRoute?.JumpRange);
     }
 
+    [Theory]
+    [InlineData("int_hyperdrive_overcharge_size8_class5_overchargebooster_mkii", 6)]
+    [InlineData("int_hyperdrive_size5_class5", 4)]
+    [InlineData(null, 4)]
+    public async Task AMkIiDriveAsksForTheSixfoldSupercharge(string? driveItem, int expected)
+    {
+        var install = new MemoryInstall();
+        var (registry, routes, _, gameState) = Build(install);
+
+        if (driveItem is not null)
+        {
+            Apply(
+                gameState,
+                $$"""{"timestamp":"2026-01-01T00:00:03Z","event":"Loadout","Ship":"explorer_nx","MaxJumpRange":78.5,"Modules":[{"Slot":"FrameShiftDrive","Item":"{{driveItem}}","On":true,"Health":1.0}]}""");
+        }
+
+        var result = await registry.InvokeAsync(
+            "plot_route",
+            Args(("to", "Colonia")),
+            TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsError);
+        Assert.Equal(expected, routes.LastRoute?.SuperchargeMultiplier);
+    }
+
     [Fact]
     public async Task AnEfficiencyOfOneHundredIsNeverSentBecauseTheServiceCannotRouteWithIt()
     {

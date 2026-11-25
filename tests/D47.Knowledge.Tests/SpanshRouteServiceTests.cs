@@ -401,6 +401,30 @@ public class SpanshRouteServiceTests
         Assert.Equal(body.LandmarkValue, body.Species.Sum(species => species.Value));
     }
 
+    [Theory]
+    [InlineData(null, "4")]
+    [InlineData("int_hyperdrive_overcharge_size8_class5_overchargebooster_mkii", "6")]
+    public async Task ANeutronPlotSendsTheDrivesSuperchargeMultiplier(string? driveItem, string expected)
+    {
+        var recorder = new Recorder(
+            (HttpStatusCode.Accepted, Queued),
+            (HttpStatusCode.OK, """{"status":"failed","error":"Unable to find route"}"""));
+
+        using var service = Service(recorder, out _);
+
+        Assert.True(RouteQuery.TryParse("Sol", "Colonia", 50, 60, out var query, out _, driveItem));
+
+        await service.PlotAsync(query, TestContext.Current.CancellationToken);
+
+        var sent = recorder.Requests[0]
+            .Split('&')
+            .ToDictionary(pair => pair.Split('=')[0], pair => pair.Split('=')[1], StringComparer.Ordinal);
+
+        Assert.Equal(expected, sent["supercharge_multiplier"]);
+        Assert.Equal("50", sent["range"]);
+        Assert.Equal("/api/route", recorder.Paths[0]);
+    }
+
     /// <summary><c>from</c> is required, works, and is echoed back as <c>source</c>.</summary>
     [Fact]
     public async Task TheExobiologyPlotSendsFromRatherThanSource()
