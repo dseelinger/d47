@@ -243,7 +243,7 @@ public class TheCodexCataloguePagesListEveryKindTests
 
         Assert.Equal(CodexKindStatus.Missing, choice.Status);
         Assert.Equal(["organic_structures", "guardian_objects"], GroupKeys(page));
-        Assert.True(Shows(Named(page, "CodexCatalogueToken.Status"), "MISSING"));
+        Assert.True(Shows(Named(page, "CodexCatalogueToken.Status"), "MISSING ENTRY"));
 
         window.Close();
 

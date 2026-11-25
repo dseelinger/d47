@@ -113,7 +113,7 @@ public class TheRegionPagesDiscoveriesRowOpensTheMissingCatalogueTests
         var (other, codex) = PageHost.Open(
             () => new CodexCataloguePage(() => state, () => HistoryState.Done, catalogue, CodexCatalogue.Tree.Root, headset, nav));
 
-        Assert.True(Shows(Token(codex, "Status"), "MISSING"));
+        Assert.True(Shows(Token(codex, "Status"), "MISSING ENTRY"));
         Assert.True(Shows(Token(codex, "Region"), "INNER ORION SPUR"));
         Assert.True(Shows(codex, "Known in Inner Orion Spur"));
 
@@ -235,7 +235,7 @@ public class TheRegionPagesDiscoveriesRowOpensTheMissingCatalogueTests
 
         var codex = Assert.Single(In<CodexCataloguePage>(view));
 
-        Assert.True(Shows(Token(codex, "Status"), "MISSING"));
+        Assert.True(Shows(Token(codex, "Status"), "MISSING ENTRY"));
         Assert.True(Shows(Token(codex, "Region"), "INNER ORION SPUR"));
 
         window.Close();

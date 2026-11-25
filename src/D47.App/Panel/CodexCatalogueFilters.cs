@@ -9,7 +9,7 @@ using D47.Core.Knowledge;
 namespace D47.App.Panel;
 
 /// <summary>
-/// The catalogue's filter as a sentence of tokens: "Show [status] kinds in [region]". The values live in the shared
+/// The catalogue's filter as a sentence of tokens: "Show [status] in [region]". The values live in the shared
 /// <see cref="CodexCatalogueChoice"/>, so every catalogue page shows the same ones.
 /// </summary>
 internal sealed class CodexCatalogueFilters : TokenFilterBar<CodexCatalogueFilters.Kind>
@@ -34,7 +34,7 @@ internal sealed class CodexCatalogueFilters : TokenFilterBar<CodexCatalogueFilte
         var sentence = new WrapPanel { Orientation = Orientation.Horizontal };
         sentence.Children.Add(Words("Show"));
         sentence.Children.Add(Token(Kind.Status, "Status"));
-        sentence.Children.Add(Words("kinds in"));
+        sentence.Children.Add(Words("in"));
         sentence.Children.Add(Token(Kind.Region, "Region"));
 
         Assemble(sentence, "CodexCatalogueClear");

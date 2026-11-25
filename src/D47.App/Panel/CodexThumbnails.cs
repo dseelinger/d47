@@ -18,6 +18,9 @@ internal sealed class CodexThumbnails(CodexPictureSet pictures)
     private IReadOnlySet<CodexPictureKey> _local = new HashSet<CodexPictureKey>();
     private IReadOnlyList<CodexPictureRow> _stock = [];
 
+    /// <summary>The keys with a picture as of the last <see cref="Refresh"/>.</summary>
+    public IReadOnlySet<CodexPictureKey> Own => _local;
+
     /// <summary>Re-reads which pictures exist and drops the pictures decoded before; true when the pictures on disk are not the ones read last.</summary>
     public bool Refresh()
     {

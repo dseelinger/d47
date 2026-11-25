@@ -100,16 +100,16 @@ public class TheCodexCatalogueKeepsItsFilterAcrossLevelsTests
         Press(Showing(panel), "CodexGroup.stars");
 
         Assert.Equal("The kinds under Stars.", Showing(panel).Summary);
-        Assert.Equal("MISSING", Token(Showing(panel), "Status"));
+        Assert.Equal("MISSING ENTRY", Token(Showing(panel), "Status"));
         Assert.Equal("INNER ORION SPUR", Token(Showing(panel), "Region"));
 
-        Pick(Showing(panel), "Status", 2);
+        Pick(Showing(panel), "Status", 3);
 
         Assert.True(panel.Nav.Back());
         Dispatcher.UIThread.RunJobs();
 
         Assert.StartsWith("Every kind of object in the Codex.", Showing(panel).Summary, StringComparison.Ordinal);
-        Assert.Equal("ON RECORD", Token(Showing(panel), "Status"));
+        Assert.Equal("RECORDED", Token(Showing(panel), "Status"));
         Assert.Equal("INNER ORION SPUR", Token(Showing(panel), "Region"));
 
         window.Close();

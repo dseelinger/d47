@@ -1,3 +1,4 @@
+using D47.Core.Interface;
 using D47.Core.Knowledge;
 
 namespace D47.Core.Journal;
@@ -7,6 +8,7 @@ public enum CodexKindStatus
 {
     All,
     Missing,
+    MissingImage,
     OnRecord,
 }
 
@@ -15,15 +17,17 @@ public sealed record CodexFirstFind(DateTimeOffset At, string? System, string? B
 
 /// <summary>
 /// One codex entry that counts in a scope: its known systems in the scope and in every region, and its first find in
-/// the scope, null when it is missing.
+/// the scope, null when it is missing. <c>MissingImage</c> is true when the kind is on record in a region of the scope
+/// with no picture of the Commander's own for that region.
 /// </summary>
-public sealed record CodexKindDiscovery(CodexEntry Entry, int Systems, int SystemsAllRegions, CodexFirstFind? FirstFind)
+public sealed record CodexKindDiscovery(
+    CodexEntry Entry, int Systems, int SystemsAllRegions, CodexFirstFind? FirstFind, bool MissingImage = false)
 {
     public bool IsOnRecord => FirstFind is not null;
 }
 
 /// <summary>
-/// A tree node with the kinds that count under it. <c>Counted</c>, <c>OnRecord</c> and <c>Missing</c> cover every
+/// A tree node with the kinds that count under it. <c>Counted</c>, <c>OnRecord</c>, <c>Missing</c> and <c>MissingImage</c> cover every
 /// kind in the subtree whatever the status filter; <c>Kinds</c> are the node's leaf entries (the node's own entry when
 /// it is a leaf), and <c>Groups</c> its other children, both after the filter. A row with children is a group, never a kind.
 /// </summary>
@@ -33,15 +37,21 @@ public sealed record CodexNodeDiscoveries(
     int OnRecord,
     int Missing,
     IReadOnlyList<CodexKindDiscovery> Kinds,
-    IReadOnlyList<CodexNodeDiscoveries> Groups)
+    IReadOnlyList<CodexNodeDiscoveries> Groups,
+    int MissingImage = 0)
 {
     /// <summary>
     /// Compares the kinds under <paramref name="node"/> with the ledger in one region, or in every region when
     /// <paramref name="regionId"/> is null. In a region a kind counts when the table lists it there or the ledger found
     /// it there; in every region all kinds count. A group with no kind left under the filter is left out.
+    /// <paramref name="ownPictures"/> are the Commander's own pictures, which decide <c>MissingImage</c>; null for none.
     /// </summary>
     public static CodexNodeDiscoveries For(
-        CodexLedger ledger, CodexNode node, int? regionId, CodexKindStatus filter = CodexKindStatus.All)
+        CodexLedger ledger,
+        CodexNode node,
+        int? regionId,
+        CodexKindStatus filter = CodexKindStatus.All,
+        IReadOnlySet<CodexPictureKey>? ownPictures = null)
     {
         ArgumentNullException.ThrowIfNull(ledger);
         ArgumentNullException.ThrowIfNull(node);
@@ -59,31 +69,74 @@ public sealed record CodexNodeDiscoveries(
                 .ToDictionary(group => group.Key, group => group.MinBy(kind => kind.At)!, StringComparer.Ordinal)
             : null;
 
-        return Build(ledger, node, regionId, filter, firstCanonn, firstKind);
+        var scope = new Scope(
+            ledger, regionId, firstCanonn, firstKind, ownPictures ?? new HashSet<CodexPictureKey>(), RegionsOf(ledger, regionId));
+
+        return Build(scope, node, filter);
     }
 
-    private static CodexNodeDiscoveries Build(
-        CodexLedger ledger,
-        CodexNode node,
-        int? regionId,
-        CodexKindStatus filter,
-        Dictionary<string, CodexLogEntry> firstCanonn,
-        Dictionary<string, CodexFoundKind>? firstKind)
+    private sealed record Scope(
+        CodexLedger Ledger,
+        int? RegionId,
+        Dictionary<string, CodexLogEntry> FirstCanonn,
+        Dictionary<string, CodexFoundKind>? FirstKind,
+        IReadOnlySet<CodexPictureKey> Own,
+        Dictionary<string, HashSet<int>>? Regions);
+
+    /// <summary>The regions each kind is on record in; null when the scope is one region.</summary>
+    private static Dictionary<string, HashSet<int>>? RegionsOf(CodexLedger ledger, int? regionId)
+    {
+        if (regionId is not null)
+        {
+            return null;
+        }
+
+        var regions = new Dictionary<string, HashSet<int>>(StringComparer.Ordinal);
+
+        foreach (var kind in ledger.FoundKinds)
+        {
+            Add(regions, kind.Key, kind.RegionId);
+        }
+
+        foreach (var entry in ledger.Entries)
+        {
+            if (entry.RegionId is { } region)
+            {
+                Add(regions, CodexKeys.Of(entry.EntryId), region);
+            }
+        }
+
+        return regions;
+    }
+
+    private static void Add(Dictionary<string, HashSet<int>> regions, string key, int region)
+    {
+        if (!regions.TryGetValue(key, out var set))
+        {
+            regions[key] = set = [];
+        }
+
+        set.Add(region);
+    }
+
+    private static CodexNodeDiscoveries Build(Scope scope, CodexNode node, CodexKindStatus filter)
     {
         var shown = new List<CodexKindDiscovery>();
         var groups = new List<CodexNodeDiscoveries>();
         var counted = 0;
         var onRecord = 0;
+        var missingImage = 0;
 
         void Own(CodexNode entryNode)
         {
-            if (Discover(ledger, entryNode.Entry!, regionId, firstCanonn, firstKind) is not { } kind)
+            if (Discover(scope, entryNode.Entry!) is not { } kind)
             {
                 return;
             }
 
             counted++;
             onRecord += kind.IsOnRecord ? 1 : 0;
+            missingImage += kind.MissingImage ? 1 : 0;
 
             if (Passes(kind, filter))
             {
@@ -108,9 +161,10 @@ public sealed record CodexNodeDiscoveries(
                 continue;
             }
 
-            var group = Build(ledger, child, regionId, filter, firstCanonn, firstKind);
+            var group = Build(scope, child, filter);
             counted += group.Counted;
             onRecord += group.OnRecord;
+            missingImage += group.MissingImage;
 
             if (group.Kinds.Count > 0 || group.Groups.Count > 0)
             {
@@ -118,48 +172,50 @@ public sealed record CodexNodeDiscoveries(
             }
         }
 
-        return new CodexNodeDiscoveries(node, counted, onRecord, counted - onRecord, shown, groups);
+        return new CodexNodeDiscoveries(node, counted, onRecord, counted - onRecord, shown, groups, missingImage);
     }
 
     private static bool Passes(CodexKindDiscovery kind, CodexKindStatus filter) =>
         filter switch
         {
             CodexKindStatus.Missing => !kind.IsOnRecord,
+            CodexKindStatus.MissingImage => kind.MissingImage,
             CodexKindStatus.OnRecord => kind.IsOnRecord,
             _ => true,
         };
 
-    private static CodexKindDiscovery? Discover(
-        CodexLedger ledger,
-        CodexEntry entry,
-        int? regionId,
-        Dictionary<string, CodexLogEntry> firstCanonn,
-        Dictionary<string, CodexFoundKind>? firstKind)
+    private static CodexKindDiscovery? Discover(Scope scope, CodexEntry entry)
     {
+        var regionId = scope.RegionId;
         var allRegions = entry.Regions.Values.Sum();
         CodexFirstFind? first;
 
         if (entry.Kind is null)
         {
-            first = firstCanonn.TryGetValue(entry.Key, out var logged)
+            first = scope.FirstCanonn.TryGetValue(entry.Key, out var logged)
                 ? new CodexFirstFind(logged.At, logged.System, logged.Body, logged.RegionId)
                 : null;
         }
         else
         {
             var found = regionId is { } region
-                ? ledger.Found(entry.Key, region)
-                : firstKind!.GetValueOrDefault(entry.Key);
+                ? scope.Ledger.Found(entry.Key, region)
+                : scope.FirstKind!.GetValueOrDefault(entry.Key);
             first = found is null ? null : new CodexFirstFind(found.At, found.System, found.Body, found.RegionId);
         }
 
-        if (regionId is { } scope && !entry.Regions.ContainsKey(scope) && first is null)
+        if (regionId is { } at && !entry.Regions.ContainsKey(at) && first is null)
         {
             return null;
         }
 
-        var systems = regionId is { } at ? entry.Regions.GetValueOrDefault(at) : allRegions;
+        var systems = regionId is { } here ? entry.Regions.GetValueOrDefault(here) : allRegions;
 
-        return new CodexKindDiscovery(entry, systems, allRegions, first);
+        return new CodexKindDiscovery(entry, systems, allRegions, first, first is not null && LacksPicture(scope, entry.Key));
     }
+
+    private static bool LacksPicture(Scope scope, string key) =>
+        scope.RegionId is { } region
+            ? !scope.Own.Contains(new CodexPictureKey(key, region))
+            : scope.Regions!.TryGetValue(key, out var regions) && regions.Any(id => !scope.Own.Contains(new CodexPictureKey(key, id)));
 }

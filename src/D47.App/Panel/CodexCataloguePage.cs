@@ -269,8 +269,8 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
 
         var ledger = state?.CodexLedger ?? CodexLedger.None;
         var scope = _filters.Scope;
-        var whole = CodexCatalogueModel.View(ledger, _tree, _node, scope, _choice.Status, _choice.Segment(_node.Key));
-        var view = Searching ? CodexCatalogueModel.Search(ledger, _node, scope, _choice.Status, _query) : whole;
+        var whole = CodexCatalogueModel.View(ledger, _tree, _node, scope, _choice.Status, _choice.Segment(_node.Key), _thumbs?.Own);
+        var view = Searching ? CodexCatalogueModel.Search(ledger, _node, scope, _choice.Status, _query, _thumbs?.Own) : whole;
 
         SetSummary(CodexCatalogueModel.Summary(whole, _headset));
         Columns(scope);

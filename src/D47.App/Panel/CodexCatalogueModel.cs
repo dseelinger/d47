@@ -1,4 +1,5 @@
 using D47.App.Theming;
+using D47.Core.Interface;
 using D47.Core.Journal;
 using D47.Core.Knowledge;
 
@@ -137,7 +138,7 @@ public static class CodexCatalogueModel
 
     public const string FamilyPlaceholder = "Family placeholder";
 
-    public static readonly IReadOnlyList<string> StatusLabels = ["All", "Missing", "On record"];
+    public static readonly IReadOnlyList<string> StatusLabels = ["All", "Missing entry", "Missing image", "Recorded"];
 
     private static readonly Dictionary<string, string> FamilyLines = new(StringComparer.Ordinal)
     {
@@ -204,16 +205,23 @@ public static class CodexCatalogueModel
 
     /// <summary>The page for <paramref name="node"/> in <paramref name="regionId"/>, or in every region when it is null.</summary>
     public static CodexCatalogueView View(
-        CodexLedger ledger, CodexTree tree, CodexNode node, int? regionId, CodexKindStatus status, int segment = 0)
+        CodexLedger ledger,
+        CodexTree tree,
+        CodexNode node,
+        int? regionId,
+        CodexKindStatus status,
+        int segment = 0,
+        IReadOnlySet<CodexPictureKey>? ownPictures = null)
     {
         ArgumentNullException.ThrowIfNull(ledger);
         ArgumentNullException.ThrowIfNull(tree);
         ArgumentNullException.ThrowIfNull(node);
 
-        var found = CodexNodeDiscoveries.For(ledger, node, regionId, status);
+        var found = CodexNodeDiscoveries.For(ledger, node, regionId, status, ownPictures);
         var shown = status switch
         {
             CodexKindStatus.Missing => found.Missing,
+            CodexKindStatus.MissingImage => found.MissingImage,
             CodexKindStatus.OnRecord => found.OnRecord,
             _ => found.Counted,
         };
@@ -221,7 +229,7 @@ public static class CodexCatalogueModel
 
         if (groupNodes.Count > 0)
         {
-            var each = groupNodes.Select(group => CodexNodeDiscoveries.For(ledger, group, regionId, status)).ToList();
+            var each = groupNodes.Select(group => CodexNodeDiscoveries.For(ledger, group, regionId, status, ownPictures)).ToList();
             var chosen = Math.Clamp(segment, 0, each.Count - 1);
 
             return new CodexCatalogueView(
@@ -259,18 +267,24 @@ public static class CodexCatalogueModel
     /// and <c>Shown</c> those that also pass the status.
     /// </summary>
     public static CodexCatalogueView Search(
-        CodexLedger ledger, CodexNode node, int? regionId, CodexKindStatus status, string text)
+        CodexLedger ledger,
+        CodexNode node,
+        int? regionId,
+        CodexKindStatus status,
+        string text,
+        IReadOnlySet<CodexPictureKey>? ownPictures = null)
     {
         ArgumentNullException.ThrowIfNull(ledger);
         ArgumentNullException.ThrowIfNull(node);
 
-        var matching = AllKinds(CodexNodeDiscoveries.For(ledger, node, regionId))
+        var matching = AllKinds(CodexNodeDiscoveries.For(ledger, node, regionId, CodexKindStatus.All, ownPictures))
             .Where(kind => kind.Entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
             .ToList();
         var rows = matching
             .Where(kind => status switch
             {
                 CodexKindStatus.Missing => !kind.IsOnRecord,
+                CodexKindStatus.MissingImage => kind.MissingImage,
                 CodexKindStatus.OnRecord => kind.IsOnRecord,
                 _ => true,
             })
