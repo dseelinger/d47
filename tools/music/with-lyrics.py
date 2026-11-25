@@ -5,6 +5,8 @@
   with-lyrics.py --count 1 --out DIR    one song into DIR/<folder>/, for a test
   with-lyrics.py --folders a,b          only those folders
   with-lyrics.py --theme christmas      only that theme; every theme in sung.THEMES order by default
+  with-lyrics.py --revoice              sing every song whose vocal is not a clip again, in place, with its lyrics;
+                                        --until, --count, --folders and --theme limit it
 
 Each theme gives every folder its count in catalogue.BRIEFS. A song counts while its file is in the folder or in its
 theme's sung-off folder, so a deleted song is written again. A new song goes where its theme is: the folder when
@@ -163,14 +165,19 @@ def read_ledger():
         shutil.copy2(LEDGER, os.path.join(os.path.dirname(LEDGER), "with-lyrics.before-themes.tsv"))
         for r in rows:
             r["theme"] = "general"
-        tmp = LEDGER + ".tmp"
-        with open(tmp, "w", encoding="utf-8", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=FIELDS, delimiter="\t")
-            w.writeheader()
-            w.writerows(rows)
-        os.replace(tmp, LEDGER)
+        write_ledger(rows)
         log(f"ledger given a theme column: {len(rows)} songs are general")
     return rows
+
+
+def write_ledger(rows):
+    """Rewrites the ledger with rows, through a temporary file."""
+    tmp = LEDGER + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=FIELDS, delimiter="\t")
+        w.writeheader()
+        w.writerows({**r, "lyrics": r["lyrics"].replace("\n", "\\n")} for r in rows)
+    os.replace(tmp, LEDGER)
 
 
 def append_ledger(row):
@@ -291,10 +298,10 @@ def gender_of(voice):
     return "female" if voice.startswith("female-") else "male"
 
 
-def spec(theme, folder, attempt, rows, pools):
+def spec(theme, folder, attempt, rows, pools, mood=None):
     """The song's arrangement, drawn from the folder's brief with a seed of its own. The singer is a reference clip
-    from the folder's pool in pools, other than the folder's last three; the caption names only its gender, since ACE-Step takes the
-    voice from the clip and ignores any other voice wording."""
+    from the folder's pool in pools, other than the folder's last three; the caption names only its gender, since
+    ACE-Step takes the voice from the clip and ignores any other voice wording. A mood given replaces the drawn one."""
     count, dur, bpm_range, style, moods, voicings, shapes = catalogue.BRIEFS[folder]
     seed = catalogue.seed_of(f"song-{folder}-{attempt}" if theme == "general" else f"song-{theme}-{folder}-{attempt}")
     rng = random.Random(seed)
@@ -306,7 +313,8 @@ def spec(theme, folder, attempt, rows, pools):
     lead, second, accompaniment = rng.choice(voicings)
     voice = rng.choice(sorted(v for v in pool if v not in used) or sorted(pool))
     singer = f"{gender_of(voice)} vocal"
-    mood = rng.choice(moods)
+    drawn = rng.choice(moods)
+    mood = mood or drawn
     production = catalogue.COMBAT_PRODUCTION if combat else catalogue.PRODUCTION
     return {"theme": theme, "folder": folder, "seed": seed, "mood": mood, "vocal": voice, "singer": singer,
             "reference": pool[voice], "angle": rng.choice(angles),
@@ -487,6 +495,83 @@ def next_spec(theme, folder, rows, out):
     return spec(theme, folder, sum(1 for r in rows if r["folder"] == folder and sung.theme_of(r) == theme), rows, pools)
 
 
+def is_clip(vocal):
+    return vocal.startswith(("female-", "male-"))
+
+
+def revoice_todo(rows, out, folders, themes, pools):
+    """(ledger index, attempt) for each song still in its folder or sung-off folder whose vocal is not a clip, in
+    ledger order, for the themes and folders given (every folder when none). A song whose pool has no approved clip
+    is left out."""
+    kept = {id(r) for r in present(rows, out)}
+    seen, todo = {}, []
+    for i, r in enumerate(rows):
+        key = (sung.theme_of(r), r["folder"])
+        attempt = seen[key] = seen.get(key, -1) + 1
+        if (id(r) in kept and not is_clip(r["vocal"]) and key[0] in themes and r["folder"] in catalogue.BRIEFS
+                and (not folders or r["folder"] in folders) and pools[pool_of(r["folder"])]):
+            todo.append((i, attempt))
+    return todo
+
+
+def revoice_spec(rows, i, attempt, pools):
+    """The arrangement to sing ledger song i again in a clip's voice. The clip is of the gender the old vocal named
+    when its pool has one; the ledger's seed and mood are kept, the rest is drawn as for a new song. The clip is
+    drawn apart from the song's seed, because the old vocal, and so its gender, came from that seed's draw."""
+    r = rows[i]
+    gender = "female" if "female" in r["vocal"] else "male"
+    pool = pools[pool_of(r["folder"])]
+    pool = {v: p for v, p in pool.items() if gender_of(v) == gender} or pool
+    s = spec(sung.theme_of(r), r["folder"], attempt, rows[:i], pools, mood=r["mood"] or None)
+    used = [x["vocal"] for x in rows[:i] if x["folder"] == r["folder"]][-3:]
+    voice = random.Random(f"revoice-{s['seed']}").choice(sorted(v for v in pool if v not in used) or sorted(pool))
+    singer = f"{gender_of(voice)} vocal"
+    s.update(vocal=voice, reference=pool[voice], singer=singer,
+             caption=s["caption"].replace(f", {s['singer']}, ", f", {singer}, ", 1))
+    if r["seed"]:
+        s["seed"] = int(r["seed"])
+    return s
+
+
+def revoice(rows, out, folders, themes, count, deadline):
+    """Sings each song in the ledger again in a clip's voice with its own lyrics, over its own file, and records the
+    clip in the ledger's vocal column. A file that cannot be replaced, as when it is playing, is kept and tried again
+    next run."""
+    pools = voices()
+    todo = revoice_todo(rows, out, folders, themes, pools)
+    if count:
+        todo = todo[:count]
+    log(f"revoice: {len(todo)} songs to sing again" + (f", until {deadline:%Y-%m-%d %H:%M}" if deadline else ""))
+    if not todo or generate.should_stop(deadline) or not generate.wait_for_game(deadline):
+        return
+    dit = generate.load_models()
+    if dit is None:
+        return
+    done = 0
+    for i, attempt in todo:
+        if generate.should_stop(deadline) or not generate.wait_for_game(deadline):
+            break
+        r, t0 = rows[i], time.time()
+        s = revoice_spec(rows, i, attempt, pools)
+        path = render(dit, s, r["lyrics"].replace("\\n", "\n"))
+        if path is None:
+            continue
+        target = next((os.path.join(root, r["folder"], r["file"]) for root in roots(sung.theme_of(r), out)
+                       if os.path.exists(os.path.join(root, r["folder"], r["file"]))), None)
+        try:
+            if target is None:
+                raise FileNotFoundError(r["file"])
+            os.replace(path, target)
+        except OSError as e:
+            log(f"{r['folder']}: {r['file']} not replaced: {e}")
+            continue
+        r["vocal"] = s["vocal"]
+        write_ledger(rows)
+        done += 1
+        log(f"{sung.theme_of(r)} {r['folder']}: {r['file']} sung again by {s['vocal']} in {time.time() - t0:.0f}s")
+    log(f"revoice finished: {done} songs this run")
+
+
 def theme_arg(value):
     """The themes a --theme value names, in sung.THEMES order."""
     if value == "all":
@@ -505,7 +590,11 @@ def main():
     ap.add_argument("--out", default=OWN, help="the music folders to fill; the installed app's by default")
     ap.add_argument("--after-library", action="store_true",
                     help="run.cmd's call: keep a STOP the library generator's run left, rather than clearing it")
+    ap.add_argument("--revoice", action="store_true",
+                    help="sing the ledger's songs again in clip voices, with their own lyrics, in place")
     args, _ = ap.parse_known_args()
+    if args.revoice and not is_own(args.out):
+        ap.error("--revoice replaces the songs in the installed app's folders and takes no --out")
     if not is_own(args.out):
         global LEDGER
         LEDGER = os.path.join(args.out, "with-lyrics.tsv")
@@ -520,6 +609,9 @@ def main():
         import_experiment(args.out)
         rows = read_ledger()
         log_voice_gaps()
+        if args.revoice:
+            revoice(rows, args.out, set(filter(None, args.folders.split(","))), args.theme, args.count, deadline)
+            return
         todo = plan(rows, args.out, set(filter(None, args.folders.split(","))), args.count, args.theme)
         log(f"start: {len(todo)} songs to make ({', '.join(args.theme)})"
             + (f", until {deadline:%Y-%m-%d %H:%M}" if deadline else ""))
