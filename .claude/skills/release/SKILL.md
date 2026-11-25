@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut a patch or minor release — first install the new version over the local install, backed up, and tell the maintainer it is ready to run, then run tools/release.ps1 and show its progress as a checklist with one plain sentence per stage — the suite, the avatar clips, the dispatch, the workflow, the comparison and the Defender scan — and when the build or a test fails, locally or on the runner, put the previous version back so d47 keeps running, fix it, push the fix, install the fixed build and run the release again. Says aloud and in a heading when d47 is ready to run and when it is being restarted. Use when the user invokes /release, /release patch or /release minor, or says "run the release", "release a patch and fix what breaks".
+description: Cut a patch or minor release — first install the new version over the local install, backed up, and tell the maintainer it is ready to run, then run tools/release.ps1 and show its progress as a checklist with one plain sentence per stage — the suite, the avatar clips, the dispatch, the workflow, the comparison and the Defender scan — and when the build or a test fails, locally or on the runner, fix it forward — the new version stays installed, the fix is pushed, the fixed build is installed over it and the release runs again. Says aloud and in a heading when d47 is ready to run and when the release needs a fix. Use when the user invokes /release, /release patch or /release minor, or says "run the release", "release a patch and fix what breaks".
 ---
 
 # Release
@@ -8,8 +8,8 @@ description: Cut a patch or minor release — first install the new version over
 You install the version being cut over the local install, tell the maintainer it is ready to run,
 then run `tools\release.ps1` and stay with it until the version is published. The script does the
 work; you keep a checklist of its stages and write one plain sentence as each one finishes. When a
-build or test fails you put the previous install back, fix the cause, install the fixed build and
-start the release again.
+build or test fails you fix it forward: the new version stays installed, you fix the cause, push,
+install the fixed build over it and start the release again.
 
 The maintainer's first priority is a working d47 on this PC; the published release comes second.
 Every step that can be ordered so the app is ready sooner is ordered that way. Closing and starting
@@ -61,7 +61,6 @@ fall behind by more than one event.
 When a fix is needed, send the whole list again with the failed item still in progress and these
 inserted after it, then the remaining items from "Run the test suite" on:
 
-- Restore v<previous> so d47 keeps running
 - Fix <the failure, in a few words>
 - Push the fix
 - Install the fixed v<version> locally
@@ -78,7 +77,7 @@ Use a fenced block only for failure output: the failing test's message and stack
 error from `gh run view --log-failed`, a script's red block. Quote the lines that show the cause,
 not the whole log.
 
-## Ready and restart notices
+## Ready and fix notices
 
 The maintainer waits to hear when they can use the new d47. Two notices tell them, each as a `##`
 heading in the transcript and a spoken sentence:
@@ -86,7 +85,7 @@ heading in the transcript and a spoken sentence:
 | Notice | Heading | Spoken |
 |---|---|---|
 | Ready | `## d47 v<version> is ready` | `Release. d47 version <version in words> is ready.` |
-| Restart | `## Restarting d47 on v<previous> while I fix v<version>` | `Release. Version <version in words> needs a fix. Restarting d47 on the previous version.` |
+| Fix | `## v<version> needs a fix` | `Release. Version <version in words> needs a fix. It stays installed while I fix it forward.` |
 
 Under the ready heading, one line: `It is running.` when the deploy started d47 again, or `You can
 launch it.` when d47 was not running.
@@ -107,11 +106,9 @@ itself.
 script starts. It goes out again after every redeploy that follows a fix. Never after a failed
 selftest.
 
-**Restart** goes out when you decide a failure needs a change to the code, just before the restore:
-a local suite failure, a runner Build or Test failure, a runner failure before "Publish the release"
-whose cause is in the repository, or the maintainer reporting the deployed build broken. The
-restore closes d47 and starts the previous version again if it was running. A restore that no
-redeploy follows (a Defender detection, a version mismatch) gets no restart notice.
+**Fix** goes out when you decide a failure needs a change to the code: a local suite failure, a
+runner Build or Test failure, or a runner failure before "Publish the release" whose cause is in the
+repository. The installed build is not touched until the fixed one replaces it.
 
 ## Before the script
 
@@ -185,17 +182,23 @@ It closes the installed d47, saves the `data\` the deployed build wrote to a dat
 because a deploy step stopped part way. Put the `replaced-data-…` path it prints in the report: it
 is whatever the maintainer's play wrote during the release.
 
-Restore when:
+A fix is never a reason to restore. Fix forward instead: the deployed build stays installed while
+you fix, and after the push you deploy again, which installs the fixed HEAD over it under the same
+number, and send the ready notice. The redeploy is not optional. Once a commit lands between the
+deploy and the dispatch, the published build differs from the installed one but carries the same
+number, and the updater treats the install as current and never replaces it.
 
-- **You are about to commit a fix.** Once a commit lands between the deploy and the dispatch, the
-  published build differs from the installed one but carries the same number, and the updater
-  treats the install as current and never replaces it. Restore before the fix commit, so the
-  maintainer is on the previous version while you fix; after the push, deploy again, which installs
-  the fixed HEAD, and send the ready notice. A runner re-run with no code change (`gh run rerun`)
-  keeps the deploy.
+- **A redeploy refused because Elite holds the layer DLL.** When the fix commits changed nothing
+  outside `tests/`, the installed payload is already the code the release ships: say so and run
+  the script again without the redeploy. Otherwise ask the maintainer to close Elite and wait; do
+  not run the script again until the fixed build is installed.
+- A runner re-run with no code change (`gh run rerun`) keeps the deploy.
+
+Restore only when the installed build cannot be used or cannot be released:
+
 - **The selftest failed** (above).
-- **The maintainer says the deployed build is broken** while the release is running. Send the
-  restart notice. If the run has been dispatched, cancelling it is the maintainer's decision.
+- **The maintainer says the deployed build is broken** while the release is running. If the run has
+  been dispatched, cancelling it is the maintainer's decision.
 - **`release.ps1` names a different version** than the one deployed.
 
 When the release stops for a reason that is not a defect in the build (a refusal from the script's
@@ -261,8 +264,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File tools/watch-release.ps1 -RunId <id
 ## When it fails
 
 Read which stage failed before doing anything. Only build and test failures are yours to fix. For
-each one: restart notice, restore, fix, commit, push, deploy again, ready notice, run the script
-again. The checklist shows that sequence (see "The checklist").
+each one: fix notice, fix, commit, push, deploy again, ready notice, run the script again. The checklist shows that sequence (see "The checklist").
 
 ### The local suite failed
 
@@ -288,8 +290,7 @@ Re-run the failing project, not the solution, while fixing:
 dotnet test tests/<Project> -c Release --filter FullyQualifiedName~<Name>
 ```
 
-Send the restart notice and restore before you commit the fix. Then commit, push `main`, deploy
-again, send the ready notice, and run the script again in the background, following its log. It
+Send the fix notice, leave the deployed build installed, then commit, push `main`, deploy again, send the ready notice, and run the script again in the background, following its log. It
 recomputes the same version from the newest tag and runs the whole suite again, which is the check
 that counts.
 
@@ -302,7 +303,7 @@ gh run view <id> --log-failed
 ```
 
 - **Build or Test.** The tag does not exist yet. Confirm with
-  `git ls-remote --tags origin v<version>` (empty output). Restart notice, restore, fix it as above,
+  `git ls-remote --tags origin v<version>` (empty output). Fix notice, fix it as above,
   push, deploy again, ready notice, and run the script again: it dispatches the same version.
 - **Publish, the installer, packing or checksums** — before "Publish the release". Still no tag.
   When the cause is in the repository, handle it the same way. When it is the runner (a download or
@@ -355,8 +356,7 @@ script printed and stop.
 
 Stop and report when the same failure survives a fix, or after three runs of the script. Say what
 failed, what you changed, what is pushed, and which version is installed. A stop after a fix is
-committed leaves the restored install in place; it gets the release through the updater once the
-release is cut.
+committed leaves an unreleased version installed: say so in the report, with the restore command.
 
 ## Pushing and the local install
 
@@ -385,7 +385,7 @@ passed or did not run: `release.ps1` exited 0, or, after the script was killed, 
 `success` and the comparison and the Defender scan found nothing. A difference from the rebuild
 (exit 4) or a Defender detection (exit 3) gets the third heading. Every other stop gets the second,
 naming the stage: the local suite, the runner's step, the avatar upload, the dispatch, or the
-script's own checks. Apart from the ready and restart notices earlier in the run, no other line in
+script's own checks. Apart from the ready and fix notices earlier in the run, no other line in
 the report is a heading.
 
 Under it, a short list in plain words:
