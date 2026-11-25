@@ -225,7 +225,7 @@ public static class ExobiologyCapability
                     ToolParameter.Flag("loop", "Whether the circuit returns to the start. Defaults to true."),
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
+                    PlotAsync(routes, commander, status, settings, plans, now, arguments, cancellationToken),
             },
         ],
         Display = new CapabilityDisplay { PanelTitle = "Exobiology", Order = 58 },
@@ -886,6 +886,7 @@ public static class ExobiologyCapability
     private static async Task<ToolResult> PlotAsync(
         IRouteService? routes,
         Func<CommanderGameState?> commander,
+        Func<GameStatus>? status,
         Configuration.SettingsService settings,
         RoutePlanBook? plans,
         Func<DateTimeOffset>? now,
@@ -906,7 +907,7 @@ public static class ExobiologyCapability
 
                 // The ship's own range where the Commander did not say one, exactly as the other plotters do
                 // — a route plotted at a default 50 for a ship that jumps 18 is a route nobody can fly.
-                arguments.Double("jump_range") ?? commander()?.Ship.MaxJumpRange,
+                arguments.Double("jump_range") ?? RouteCapability.PlottingRange(commander(), status),
                 arguments.Double("radius"),
                 arguments.TryGetInt32("max_results", out var max) ? max : null,
                 arguments.TryGetInt32("min_value", out var min) ? min : null,

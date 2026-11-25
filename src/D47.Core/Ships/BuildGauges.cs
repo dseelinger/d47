@@ -185,17 +185,41 @@ public static partial class ShipGauges
     /// <summary>
     /// The flown ship's laden jump range — full tank, full hold — or null where no drive can be found.
     /// </summary>
-    public static double? LadenRange(ShipLoadout loadout)
+    public static double? LadenRange(ShipLoadout loadout) => FlownJump(loadout)?.Worst;
+
+    /// <summary>
+    /// The jump range a route is plotted at: the flown ship's current range, with the fuel and cargo
+    /// Status.json reports aboard; with a full tank and an empty hold when the Commander is not in the
+    /// ship; the game's <c>MaxJumpRange</c> where no drive can be found.
+    /// </summary>
+    public static double? PlottingRange(ShipLoadout loadout, GameStatus? status)
     {
         if (!loadout.IsKnown)
         {
-            return null;
+            return loadout.MaxJumpRange;
         }
 
         var build = new ShipBuild(string.Empty, string.Empty, loadout.Type!);
 
-        return Read(build, loadout).Jump?.Worst;
+        if (Curve(build, Parts(build, loadout), loadout, modelled: false) is not { } curve)
+        {
+            return loadout.MaxJumpRange;
+        }
+
+        if (status is { IsKnown: true, InShip: true, FuelMain: { } fuel })
+        {
+            return fuel <= 0
+                ? 0
+                : curve.At(curve.Unladen + fuel + (status.Cargo ?? 0), Math.Min(fuel, curve.FuelPerJump));
+        }
+
+        var tank = Math.Max(curve.Tank, curve.FuelPerJump);
+
+        return curve.At(curve.Unladen + tank, curve.FuelPerJump);
     }
+
+    private static JumpGauge? FlownJump(ShipLoadout loadout) =>
+        loadout.IsKnown ? Read(new ShipBuild(string.Empty, string.Empty, loadout.Type!), loadout).Jump : null;
 
     /// <summary>Every slot that has something in it or planned for it, as one list.</summary>
     private static List<Part> Parts(ShipBuild build, ShipLoadout? seen)
@@ -332,6 +356,38 @@ public static partial class ShipGauges
     private static JumpGauge? Jump(
         ShipBuild build, List<Part> parts, ShipLoadout? seen, FigureKind kind, bool modelled)
     {
+        if (Curve(build, parts, seen, modelled) is not { } curve)
+        {
+            return null;
+        }
+
+        var tank = Math.Max(curve.Tank, curve.FuelPerJump);
+
+        return new JumpGauge(
+            curve.At(curve.Unladen + curve.FuelPerJump, curve.FuelPerJump),
+            curve.At(curve.Unladen + tank, curve.FuelPerJump),
+            curve.At(curve.Unladen + tank + curve.Hold, curve.FuelPerJump),
+            kind);
+    }
+
+    /// <summary>The drive's figures and the ship's masses that every jump range is worked out from.</summary>
+    private sealed record DriveCurve(
+        double Unladen,
+        double FuelPerJump,
+        double Tank,
+        double Hold,
+        double OptimalMass,
+        double FuelPower,
+        double FuelMultiplier,
+        double Boost)
+    {
+        /// <summary>Light years at <paramref name="mass"/> tonnes, burning <paramref name="fuel"/> tonnes.</summary>
+        public double At(double mass, double fuel) =>
+            JumpRange.At(mass, OptimalMass, fuel, FuelPower, FuelMultiplier, Boost);
+    }
+
+    private static DriveCurve? Curve(ShipBuild build, List<Part> parts, ShipLoadout? seen, bool modelled)
+    {
         var drive = parts.FirstOrDefault(part => part.Spec.IsDrive);
 
         if (drive is null)
@@ -366,13 +422,7 @@ public static partial class ShipGauges
             return null;
         }
 
-        double At(double mass) => JumpRange.At(mass, optimalMass, fuelPerJump, power, multiplier, boost);
-
-        return new JumpGauge(
-            At(empty + fuelPerJump),
-            At(empty + Math.Max(tank, fuelPerJump)),
-            At(empty + Math.Max(tank, fuelPerJump) + hold),
-            kind);
+        return new DriveCurve(empty, fuelPerJump, tank, hold, optimalMass, power, multiplier, boost);
     }
 
     /// <summary>The hull plus everything in it, for a build there is no measured mass for.</summary>

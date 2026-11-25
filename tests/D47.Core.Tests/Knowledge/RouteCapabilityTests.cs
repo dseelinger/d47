@@ -157,7 +157,8 @@ public class RouteCapabilityTests
 
         // The Trade route page's own saved values (#311), seeded before the registry reads them.
         Action<SettingsService>? configureSettings = null,
-        BestCargoBoard? cargo = null)
+        BestCargoBoard? cargo = null,
+        Func<GameStatus>? status = null)
     {
         var gameState = new GameStateStore();
         Apply(gameState, """{"timestamp":"2026-01-01T00:00:00Z","event":"Commander","FID":"F1","Name":"Fixture"}""");
@@ -188,7 +189,8 @@ public class RouteCapabilityTests
                     plans,
                     () => PlottedAt,
                     navigation,
-                    cargo: cargo),
+                    cargo: cargo,
+                    status: status),
             ]),
             routes,
             trade,
@@ -241,6 +243,23 @@ public class RouteCapabilityTests
 
         Assert.False(result.IsError);
         Assert.Equal(expected, routes.LastRoute?.SuperchargeMultiplier);
+    }
+
+    [Fact]
+    public async Task ANeutronPlotUsesTheRangeWithTheFuelAboardNotTheGamesMaximum()
+    {
+        var install = new MemoryInstall();
+        var status = new GameStatus { Flags = StatusFlags.InMainShip, FuelMain = 64, Cargo = 0, ReadAt = DateTimeOffset.UnixEpoch };
+        var (registry, routes, _, gameState) = Build(install, status: () => status);
+
+        Apply(
+            gameState,
+            """{"timestamp":"2026-01-01T00:00:03Z","event":"Loadout","Ship":"explorer_nx","UnladenMass":1318.66,"FuelCapacity":{"Main":128.0},"MaxJumpRange":84.57,"Modules":[{"Slot":"FrameShiftDrive","Item":"int_hyperdrive_overcharge_size8_class5_overchargebooster_mkii","On":true,"Health":1.0}]}""");
+
+        await registry.InvokeAsync("plot_route", Args(("to", "Colonia")), TestContext.Current.CancellationToken);
+
+        Assert.Equal(D47.Core.Ships.ShipGauges.PlottingRange(gameState.Active!.Ship, status), routes.LastRoute?.JumpRange);
+        Assert.True(routes.LastRoute?.JumpRange < 84.57);
     }
 
     [Fact]

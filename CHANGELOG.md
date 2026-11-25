@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: The Neutron Plotter, Road to Riches and exobiology routes are plotted at your ship's current jump range, the one the galaxy map shows, worked out from the fuel and cargo aboard when you plot. When you are not in the ship, they use a full tank and an empty hold. Before, they used the ship's maximum range, which assumes one jump's fuel and an empty hold, so a route could plan jumps longer than the ship could make. The Jump range box on each card shows the figure that will be used.
+
 Fixed: The Neutron Plotter counts six times your jump range at each neutron star when your ship has the Mk II Supercharge Optimised Frame Shift Drive, as the Caspian Explorer does. Before, every route was plotted at the normal four times, so a ship with that drive was given more waypoints and jumps than it needed. Every other drive is still plotted at four times.
 
 Changed: The distance on the Bodies, Stations, Outfitting, Signals and Rare goods tabs is a dropdown: 10, 100, 250, 500, 1,000, 2,500, 5,000, 10,000, 25,000, 50,000 or 101,000 light years, which reaches the whole galaxy. It opens on 500 on every tab, so Signals, which opened on 100, and Rare goods, which opened on 200, now open on 500. Bodies also offers Any, which it picks by itself for a codex entry or a body type in a region until you pick a distance. A search you run again from history or a link at some other distance, such as 750, shows that distance in the list. The "within" line over Bodies results now shows the distance searched rather than a larger one stored with it.

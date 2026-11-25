@@ -85,7 +85,7 @@ behind it.
 | **Stops** | How many systems the circuit visits | 10 | 1 to 50 |
 | **Radius (ly)** | How far from the start it may look | 200 | 10 to 10,000 |
 | **Least a species is worth (cr)** | The least a species must be worth to be listed; a body is a stop when any of its species clears it | No minimum | 0 to 100,000,000 |
-| **Jump range (ly)** | How far one jump goes | This ship's | 10.01 to 500 |
+| **Jump range (ly)** | How far one jump goes | This ship's range now: the fuel and cargo aboard, or a full tank when you are not aboard | 10.01 to 500 |
 | **Farthest from arrival (ls)** | How far in-system a body may sit | 10,000 | 100 to 1,000,000 |
 | **Come back to the start** | Whether the circuit ends where it started | On | |
 

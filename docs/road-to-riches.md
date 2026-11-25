@@ -105,7 +105,7 @@ The card called **Road to Riches** on the Astrometrics tab's Plan page, and the
 | **Stops** | How many systems the tour visits | 10 |
 | **Radius (ly)** | How far from the start it may look | 500 |
 | **Least worth stopping for (cr)** | The floor a body must clear to be included | 500,000 |
-| **Jump range (ly)** | How far one jump goes | This ship's |
+| **Jump range (ly)** | How far one jump goes | This ship's range now: the fuel and cargo aboard, or a full tank when you are not aboard |
 | **Farthest from arrival (ls)** | How far in-system a body may sit | 10,000 |
 | **Come back to the start** | Whether the last stop is where the first was | On |
 

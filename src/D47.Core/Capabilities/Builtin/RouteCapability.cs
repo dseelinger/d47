@@ -44,7 +44,8 @@ public static class RouteCapability
         Checklists.ChecklistService? checklists = null,
         BestCargoBoard? cargo = null,
         IGalaxyService? galaxy = null,
-        Conversation.NeutronOffer? neutronOffer = null) => new()
+        Conversation.NeutronOffer? neutronOffer = null,
+        Func<GameStatus>? status = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -87,7 +88,7 @@ public static class RouteCapability
                         + "Defaults to 60."),
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotAsync(routes, commander, settings, plans, now, neutronOffer, arguments, cancellationToken),
+                    PlotAsync(routes, commander, status, settings, plans, now, neutronOffer, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -116,7 +117,7 @@ public static class RouteCapability
                     ToolParameter.Flag("loop", "Come back to where the route started. Defaults to true."),
                 ],
                 Handler = (arguments, cancellationToken) =>
-                    PlotRichesAsync(routes, commander, settings, plans, now, arguments, cancellationToken),
+                    PlotRichesAsync(routes, commander, status, settings, plans, now, arguments, cancellationToken),
             },
             new ToolDefinition
             {
@@ -294,6 +295,10 @@ public static class RouteCapability
             phrase,
             new Dictionary<string, string>(StringComparer.Ordinal) { ["kind"] = kind }));
 
+    /// <summary>The flown ship's current jump range, or null where no ship is known.</summary>
+    public static double? PlottingRange(CommanderGameState? active, Func<GameStatus>? status) =>
+        active is null ? null : ShipGauges.PlottingRange(active.Ship, status?.Invoke());
+
     internal const string Unavailable = "Route planning is not available, so I can't plot that.";
 
     private const string NotSetInGame = "\nThe game's course was not set. Use plot_course to set it.";
@@ -301,6 +306,7 @@ public static class RouteCapability
     private static async Task<ToolResult> PlotAsync(
         IRouteService? routes,
         Func<CommanderGameState?> commander,
+        Func<GameStatus>? status,
         Configuration.SettingsService settings,
         RoutePlanBook? plans,
         Func<DateTimeOffset>? now,
@@ -322,7 +328,7 @@ public static class RouteCapability
         if (!RouteQuery.TryParse(
                 from,
                 to,
-                arguments.Double("jump_range") ?? active?.Ship.MaxJumpRange,
+                arguments.Double("jump_range") ?? PlottingRange(active, status),
                 arguments.TryGetInt32("efficiency", out var efficiency) ? efficiency : null,
                 out var query,
                 out var failure,
@@ -422,6 +428,7 @@ public static class RouteCapability
     private static async Task<ToolResult> PlotRichesAsync(
         IRouteService? routes,
         Func<CommanderGameState?> commander,
+        Func<GameStatus>? status,
         Configuration.SettingsService settings,
         RoutePlanBook? plans,
         Func<DateTimeOffset>? now,
@@ -439,7 +446,7 @@ public static class RouteCapability
 
         if (!RichesQuery.TryParse(
                 from,
-                arguments.Double("jump_range") ?? active?.Ship.MaxJumpRange,
+                arguments.Double("jump_range") ?? PlottingRange(active, status),
                 arguments.Double("radius"),
                 arguments.TryGetInt32("stops", out var stops) ? stops : null,
                 arguments.TryGetInt32("minimum_value", out var minimum) ? minimum : null,

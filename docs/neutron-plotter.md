@@ -105,11 +105,13 @@ does and said nothing about the one thing this does that the map cannot.
 |---|---|---|
 | **Destination** | Where you are going | Required — nothing is plotted without it |
 | **From** | Where to start | Where you are now, from the journal |
-| **Jump range (ly)** | Your laden jump range | This ship's, from the journal |
+| **Jump range (ly)** | How far one jump goes | This ship's range now: the fuel and cargo aboard, or a full tank when you are not aboard |
 | **Efficiency** | How far off the direct line you will go | 60 |
 
 **Your ship fills in its own numbers.** Nobody says *"plot me a route to Colonia from Sol at 52.31
-light years a jump"*, so jump range and origin come from the journal unless you overrule them.
+light years a jump"*, so jump range and origin come from the journal unless you overrule them. The
+range is the one the galaxy map calls current: worked out from the fuel and cargo aboard when you
+plot, not the ship's maximum, which assumes one jump's fuel and an empty hold.
 Typing a range is for planning a trip in a ship you are not sitting in.
 
 The supercharge also comes from the ship you are flying: with the Mk II Supercharge Optimised Frame

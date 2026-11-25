@@ -430,7 +430,7 @@ public partial class MainWindow : Window
                 host.Commodities,
 
                 // What the Neutron Plotter's jump range placeholder quotes (#253).
-                () => host.GameState.Active?.Ship.MaxJumpRange,
+                () => D47.Core.Capabilities.Builtin.RouteCapability.PlottingRange(host.GameState.Active, () => host.LiveStatus),
 
                 Clipboard: host.Clipboard,
 
