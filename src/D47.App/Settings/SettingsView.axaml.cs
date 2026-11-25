@@ -160,7 +160,7 @@ public partial class SettingsView : UserControl, D47.App.Panel.IFilterablePage, 
         AddHandler(PointerPressedEvent, (_, _) => ClearLanding(), RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerWheelChangedEvent, (_, _) => ClearLanding(), RoutingStrategies.Tunnel, handledEventsToo: true);
 
-        _marker = new QueryMarker(this, id =>
+        _marker = new QueryMarker(id =>
         {
             if (D47.Core.Interface.HelpLinks.PlaceIdOf(id) is { } placeId)
             {

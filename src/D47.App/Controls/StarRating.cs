@@ -57,11 +57,8 @@ public sealed class StarRating : Control
             Cursor = new Cursor(StandardCursorType.Hand);
         }
 
-        if (Application.Current is { } app)
-        {
-            Bind(FillProperty, app.Resources.GetResourceObservable(ThemeManager.AKey));
-            Bind(EmptyProperty, app.Resources.GetResourceObservable(ThemeManager.Grey2Key));
-        }
+        ThemeInk.Bind(this, FillProperty, ThemeManager.AKey);
+        ThemeInk.Bind(this, EmptyProperty, ThemeManager.Grey2Key);
 
         Describe();
     }
@@ -112,7 +109,7 @@ public sealed class StarRating : Control
 
         if (Application.Current is { } app)
         {
-            count.Bind(TextBlock.ForegroundProperty, app.Resources.GetResourceObservable(ThemeManager.GreyKey));
+            ThemeInk.Bind(count, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         }
 
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Margin = new Thickness(0, 2, 0, 2) };

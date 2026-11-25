@@ -70,11 +70,11 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
         hint.Margin = new Thickness(0, 4, 0, 0);
 
         _panelHost = new Border { BorderThickness = new Thickness(1), Padding = new Thickness(8), Margin = new Thickness(0, 6, 0, 0), IsVisible = false };
-        _panelHost.Bind(Border.BackgroundProperty, Resource(ThemeManager.BarKey));
-        _panelHost.Bind(Border.BorderBrushProperty, Resource(ThemeManager.AKey));
+        ThemeInk.Bind(_panelHost, Border.BackgroundProperty, ThemeManager.BarKey);
+        ThemeInk.Bind(_panelHost, Border.BorderBrushProperty, ThemeManager.AKey);
 
         _count = new TextBlock { FontSize = TypeScale.Body, VerticalAlignment = VerticalAlignment.Center };
-        _count.Bind(TextBlock.ForegroundProperty, Resource(ThemeManager.GreyKey));
+        ThemeInk.Bind(_count, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         _clear = new Button { Name = clearName, Content = "Clear filters", Height = TypeScale.MinimumTarget, MinHeight = TypeScale.MinimumTarget, IsVisible = false };
         _clear.Click += (_, _) => Clear();
@@ -143,7 +143,7 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
 
             token.Classes.Set(ListRow.SelectedClass, open);
             _inks.GetValueOrDefault(kind)?.Dispose();
-            _inks[kind] = Values[kind].Bind(TextBlock.ForegroundProperty, Resource(open ? ThemeManager.KnockKey : ThemeManager.AKey));
+            _inks[kind] = ThemeInk.Bind(Values[kind], TextBlock.ForegroundProperty, open ? ThemeManager.KnockKey : ThemeManager.AKey);
         }
 
         _panelHost!.IsVisible = Open is not null;
@@ -168,7 +168,7 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(0, 0, 8, 0),
         };
-        block.Bind(TextBlock.ForegroundProperty, Resource(ThemeManager.WhiteKey));
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         return block;
     }
 
@@ -220,7 +220,4 @@ internal abstract class TokenFilterBar<TKind> : StackPanel
         Values[kind] = value;
         return button;
     }
-
-    protected static IObservable<object?> Resource(string key) =>
-        Application.Current!.Resources.GetResourceObservable(key);
 }

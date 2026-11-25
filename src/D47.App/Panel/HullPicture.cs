@@ -272,8 +272,7 @@ internal sealed class HullPicture : Grid
         viewer.GotFocus += (_, _) =>
         {
             focusInk?.Dispose();
-            focusInk = frame.Bind(
-                Border.BorderBrushProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.CyanKey));
+            focusInk = ThemeInk.Bind(frame, Border.BorderBrushProperty, ThemeManager.CyanKey);
         };
         viewer.LostFocus += (_, _) =>
         {

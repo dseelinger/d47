@@ -64,7 +64,7 @@ public static class TitleText
             _ => FontWeight.Normal,
         };
         block.LetterSpacing = Tracking(size, rank, sentence);
-        block.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ColourKey(rank)));
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ColourKey(rank));
 
         if (rank == TitleRank.Group)
         {
@@ -131,7 +131,7 @@ public static class TitleText
             TextWrapping = TextWrapping.Wrap,
             Text = text.ToUpperInvariant(),
         };
-        block.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.AKey);
         return block;
     }
 
@@ -147,7 +147,7 @@ public static class TitleText
             HorizontalAlignment = HorizontalAlignment.Right,
             Text = label.ToUpperInvariant(),
         };
-        name.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var figure = new TextBlock
         {
@@ -157,7 +157,7 @@ public static class TitleText
             HorizontalAlignment = HorizontalAlignment.Right,
             Text = value,
         };
-        figure.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.WhiteKey));
+        ThemeInk.Bind(figure, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         return new StackPanel { Spacing = 2, Children = { name, figure } };
     }
@@ -191,7 +191,7 @@ public static class TitleText
             TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        note.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
+        ThemeInk.Bind(note, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         var words = new WrapPanel { Children = { heading, note } };
 
@@ -207,7 +207,7 @@ public static class TitleText
     private static Border Rule(Thickness margin)
     {
         var rule = new Border { Height = 1, Margin = margin };
-        rule.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
+        ThemeInk.Bind(rule, Border.BackgroundProperty, ThemeManager.AKey);
         return rule;
     }
 }

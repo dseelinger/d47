@@ -746,7 +746,7 @@ public partial class PickerPage : UserControl
             };
 
             box.Content = null;
-            ground.Bind(Border.BackgroundProperty, this.GetResourceObservable("D47.Bg"));
+            ThemeInk.Bind(ground, Border.BackgroundProperty, "D47.Bg");
             ground.Margin = new Thickness(0, 0, 8, 0);
             label.TextWrapping = TextWrapping.WrapWithOverflow;
             DockPanel.SetDock(ground, Dock.Left);
@@ -837,7 +837,7 @@ public partial class PickerPage : UserControl
 
     private TextBlock Grey(TextBlock text)
     {
-        text.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable("D47.Grey"));
+        ThemeInk.Bind(text, TextBlock.ForegroundProperty, "D47.Grey");
 
         return text;
     }
@@ -889,7 +889,7 @@ public partial class PickerPage : UserControl
 
         MatchCount.Inlines!.Clear();
         var number = new Run(_matched.ToString());
-        number.Bind(TextElement.ForegroundProperty, this.GetResourceObservable("D47.White"));
+        ThemeInk.Bind(number, TextElement.ForegroundProperty, "D47.White");
         MatchCount.Inlines.Add(number);
         MatchCount.Inlines.Add(new Run($" OF {_all.Count} {_request.ChoiceNoun.ToUpperInvariant()}"));
 

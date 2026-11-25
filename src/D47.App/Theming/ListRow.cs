@@ -186,7 +186,7 @@ public static class ListRow
             TextWrapping = TextWrapping.NoWrap,
         };
 
-        label.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, ThemeManager.AKey);
 
         var head = new Border
         {
@@ -196,7 +196,7 @@ public static class ListRow
             Child = label,
         };
 
-        head.Bind(Border.BorderBrushProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.LineKey));
+        ThemeInk.Bind(head, Border.BorderBrushProperty, ThemeManager.LineKey);
 
         return head;
     }

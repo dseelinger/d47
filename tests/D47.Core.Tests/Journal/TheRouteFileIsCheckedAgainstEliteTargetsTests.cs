@@ -43,6 +43,24 @@ public class TheRouteFileIsCheckedAgainstEliteTargetsTests
     }
 
     [Fact]
+    public void TheChangedRouteIsOneObjectUntilTheTargetMoves()
+    {
+        var live = Folded(Target("Wolf 359", 3));
+        var first = live.Shown(Plotted);
+
+        Assert.Same(first, live.Shown(Plotted));
+
+        live.Fold([Target("Wolf 359", 3, second: 2)], Plotted, "Sol", null);
+        Assert.Same(first, live.Shown(Plotted));
+
+        live.Fold([Target("Ross 128", 2, second: 3)], Plotted, "Sol", null);
+        var moved = live.Shown(Plotted);
+
+        Assert.NotSame(first, moved);
+        Assert.Equal(new RouteTarget("Ross 128", "K", 2), moved.LiveTarget);
+    }
+
+    [Fact]
     public void ATargetThatMatchesTheFileIsNotAChange()
     {
         var live = Folded(Target("Alpha Centauri", 2));

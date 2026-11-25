@@ -164,7 +164,7 @@ public sealed class InlinePicker : ContentControl
         _value.FontFamily = new FontFamily(Mono ? Fonts.MonoFamily : Fonts.ChromeFamily);
 
         var shown = new Run(value);
-        _inks.Add(shown.Bind(TextElement.ForegroundProperty, Resource(valueInk)));
+        _inks.Add(ThemeInk.Bind(shown, TextElement.ForegroundProperty, valueInk));
         _value.Inlines ??= [];
         _value.Inlines.Clear();
         _value.Inlines.Add(shown);
@@ -172,7 +172,7 @@ public sealed class InlinePicker : ContentControl
         if (suffix is not null)
         {
             var after = new Run(suffix);
-            _inks.Add(after.Bind(TextElement.ForegroundProperty, Resource(ThemeManager.GreyKey)));
+            _inks.Add(ThemeInk.Bind(after, TextElement.ForegroundProperty, ThemeManager.GreyKey));
             _value.Inlines.Add(after);
         }
 
@@ -295,8 +295,5 @@ public sealed class InlinePicker : ContentControl
 
         return note;
     }
-
-    private static IObservable<object?> Resource(string key) =>
-        Application.Current!.Resources.GetResourceObservable(key);
 
 }

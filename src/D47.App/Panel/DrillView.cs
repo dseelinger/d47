@@ -285,9 +285,7 @@ public sealed class DrillView : UserControl, IFilterablePage, IPageChrome, IPage
                 Margin = new Thickness(index == 0 ? 0 : 14, 0, 0, 0),
             };
 
-            host.Bind(
-                Border.BorderBrushProperty,
-                this.GetResourceObservable(Theming.ThemeManager.Line2Key));
+            ThemeInk.Bind(host, Border.BorderBrushProperty, Theming.ThemeManager.Line2Key);
 
             Grid.SetColumn(host, index);
             _strip.Children.Add(host);

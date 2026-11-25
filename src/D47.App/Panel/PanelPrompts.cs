@@ -263,9 +263,7 @@ public sealed class PanelPrompts : IHearsText
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            second.Bind(
-                TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+            ThemeInk.Bind(second, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             header.Children.Add(second);
         }
@@ -546,9 +544,7 @@ public sealed class PanelPrompts : IHearsText
             Margin = new Thickness(12, 6),
         };
 
-        nothing.Bind(
-            TextBlock.ForegroundProperty,
-            App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+        ThemeInk.Bind(nothing, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return nothing;
     }
@@ -600,9 +596,7 @@ public sealed class PanelPrompts : IHearsText
             Margin = new Thickness(12, 10, 12, 4),
         };
 
-        said.Bind(
-            TextBlock.ForegroundProperty,
-            App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+        ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return said;
     }
@@ -631,9 +625,7 @@ public sealed class PanelPrompts : IHearsText
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            detail.Bind(
-                TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+            ThemeInk.Bind(detail, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             stack.Children.Add(detail);
         }
@@ -641,13 +633,14 @@ public sealed class PanelPrompts : IHearsText
         if (current)
         {
             // Said rather than only coloured.
-            stack.Children.Add(new TextBlock
+            var word = new TextBlock
             {
                 Text = request.CurrentWord,
                 FontSize = TypeScale.Small,
-                [!TextBlock.ForegroundProperty] =
-                    App.Current!.GetResourceObservable(ThemeManager.AKey).ToBinding(),
-            });
+            };
+
+            ThemeInk.Bind(word, TextBlock.ForegroundProperty, ThemeManager.AKey);
+            stack.Children.Add(word);
         }
 
         var row = new Button
@@ -816,9 +809,7 @@ public sealed class PanelPrompts : IHearsText
                 Margin = new Thickness(0, 0, 0, 12),
             };
 
-            _state.Bind(
-                TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+            ThemeInk.Bind(_state, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             (_swap, _) = LabeledCheckBox.Build("Keyboard");
             _swap.IsCheckedChanged += (_, _) =>
@@ -1224,9 +1215,7 @@ public sealed class PanelPrompts : IHearsText
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            block.Bind(
-                TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+            ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             return block;
         }
@@ -1476,9 +1465,7 @@ public sealed class PanelPrompts : IHearsText
                     && string.Equals(choice.Value, request.Initial, StringComparison.OrdinalIgnoreCase))
                 {
                     button.BorderThickness = new Thickness(2);
-                    button.Bind(
-                        BorderBrushProperty,
-                        App.Current!.GetResourceObservable(ThemeManager.CyanKey));
+                    ThemeInk.Bind(button, BorderBrushProperty, ThemeManager.CyanKey);
                 }
 
                 button.Click += (_, _) => Commit(choice.Value);
@@ -1493,9 +1480,7 @@ public sealed class PanelPrompts : IHearsText
                 Margin = new Thickness(0, 6, 0, 0),
             };
 
-            _state.Bind(
-                TextBlock.ForegroundProperty,
-                App.Current!.GetResourceObservable(ThemeManager.GreyKey));
+            ThemeInk.Bind(_state, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
             var body = new StackPanel { Children = { row, _state } };
 

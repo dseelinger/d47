@@ -44,9 +44,7 @@ internal static class ProposalActions
             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
         };
 
-        block.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.GreyKey));
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
 
         return block;
     }

@@ -173,8 +173,14 @@ public class SystemNamesOnAdventuresAndBookmarksCopyTests
     {
         using var look = AppLook.Put(ThemeCatalog.Elite, null);
 
-        Brush? Name(string? here) =>
-            NameOf((WrapPanel)AdventuresPage.Trigger($"Arrive at {Far}.", here, Far, _ => Task.FromResult(true))).Foreground as Brush;
+        // In a window, because a theme brush is found through the tree the control is in.
+        Brush? Name(string? here)
+        {
+            var trigger = (WrapPanel)AdventuresPage.Trigger($"Arrive at {Far}.", here, Far, _ => Task.FromResult(true));
+            new Window { Content = trigger }.Show();
+
+            return NameOf(trigger).Foreground as Brush;
+        }
 
         var cyan = Assert.IsAssignableFrom<ISolidColorBrush>(Name(Far));
         var plain = Name("Shinrarta Dezhra") as ISolidColorBrush;

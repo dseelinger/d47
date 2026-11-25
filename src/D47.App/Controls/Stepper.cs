@@ -102,9 +102,9 @@ public sealed class Stepper : ContentControl, IChoiceControl
         MaxWidth = MaximumWidth;
         FontFamily = new FontFamily(Theming.Fonts.ChromeFamily);
 
-        _valueInk = _value.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
-        _position.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.Grey2Key));
-        _consequence.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.GreyKey));
+        _valueInk = Theming.ThemeInk.Bind(_value, TextBlock.ForegroundProperty, Theming.ThemeManager.WhiteKey);
+        Theming.ThemeInk.Bind(_position, TextBlock.ForegroundProperty, Theming.ThemeManager.Grey2Key);
+        Theming.ThemeInk.Bind(_consequence, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
 
         _previous = Arrow("◄", "Previous", -1);
         _next = Arrow("►", "Next", 1);
@@ -131,7 +131,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
             Child = inside,
         };
 
-        valueCell.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.SlabKey));
+        Theming.ThemeInk.Bind(valueCell, Border.BackgroundProperty, Theming.ThemeManager.SlabKey);
 
         var row = new Grid
         {
@@ -206,9 +206,7 @@ public sealed class Stepper : ContentControl, IChoiceControl
         if (change.Property == IsInheritedProperty)
         {
             _valueInk?.Dispose();
-            _valueInk = _value.Bind(
-                TextBlock.ForegroundProperty,
-                Application.Current!.Resources.GetResourceObservable(IsInherited ? Theming.ThemeManager.GreyKey : Theming.ThemeManager.WhiteKey));
+            _valueInk = Theming.ThemeInk.Bind(_value, TextBlock.ForegroundProperty, IsInherited ? Theming.ThemeManager.GreyKey : Theming.ThemeManager.WhiteKey);
         }
     }
 
@@ -296,18 +294,17 @@ public sealed class Stepper : ContentControl, IChoiceControl
         _status.Text = status?.Text ?? string.Empty;
         _status.IsVisible = status is not null;
         _statusInk?.Dispose();
-        _statusInk = status is null ? null : _status.Bind(TextBlock.ForegroundProperty, Ink(status.Tone));
+        _statusInk = status is null ? null : Theming.ThemeInk.Bind(_status, TextBlock.ForegroundProperty, InkKey(status.Tone));
     }
 
-    /// <summary>The theme brush a status tone is drawn in.</summary>
-    internal static IObservable<object?> Ink(ChoiceTone tone) =>
-        Application.Current!.Resources.GetResourceObservable(tone switch
-        {
-            ChoiceTone.Yellow => Theming.ThemeManager.YellowKey,
-            ChoiceTone.White => Theming.ThemeManager.WhiteKey,
-            ChoiceTone.Red => Theming.ThemeManager.RedKey,
-            ChoiceTone.Accent => Theming.ThemeManager.AKey,
-            ChoiceTone.Cyan => Theming.ThemeManager.CyanKey,
-            _ => Theming.ThemeManager.GreyKey,
-        });
+    /// <summary>The key of the theme brush a status tone is drawn in.</summary>
+    internal static string InkKey(ChoiceTone tone) => tone switch
+    {
+        ChoiceTone.Yellow => Theming.ThemeManager.YellowKey,
+        ChoiceTone.White => Theming.ThemeManager.WhiteKey,
+        ChoiceTone.Red => Theming.ThemeManager.RedKey,
+        ChoiceTone.Accent => Theming.ThemeManager.AKey,
+        ChoiceTone.Cyan => Theming.ThemeManager.CyanKey,
+        _ => Theming.ThemeManager.GreyKey,
+    };
 }

@@ -21,6 +21,9 @@ public sealed class APlanCellColoursEachPartByItsKindTests
         var layout = LoadoutPages.NewSlotTable();
         var button = Assert.IsType<Button>(LoadoutPages.SlotRow(row, () => { }, layout, showing));
 
+        // In a window, because a theme brush is found through the tree the cell is in.
+        new Window { Content = button }.Show();
+
         // Slot, current, mark, plan, draw.
         return Assert.IsType<TextBlock>(Assert.IsAssignableFrom<Avalonia.Controls.Panel>(button.Content).Children[3]);
     }

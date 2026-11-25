@@ -180,11 +180,10 @@ public sealed class Segment : RovingChoice
                 continue;
             }
 
-            _statusInk.Add(status.Line.Bind(
+            _statusInk.Add(Theming.ThemeInk.Bind(
+                status.Line,
                 TextBlock.ForegroundProperty,
-                i == SelectedIndex
-                    ? Application.Current!.Resources.GetResourceObservable(ThemeManager.BrownKey)
-                    : Stepper.Ink(status.Tone)));
+                i == SelectedIndex ? ThemeManager.BrownKey : Stepper.InkKey(status.Tone)));
         }
     }
 

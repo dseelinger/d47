@@ -63,7 +63,7 @@ public sealed class Amount : ContentControl
             Cursor = new Cursor(StandardCursorType.Ibeam),
             Child = new Avalonia.Controls.Panel { Children = { _shown, _editor } },
         };
-        cell.Bind(Border.BackgroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.SlabKey));
+        Theming.ThemeInk.Bind(cell, Border.BackgroundProperty, Theming.ThemeManager.SlabKey);
         cell.PointerPressed += (_, e) =>
         {
             if (!_editor.IsVisible)
@@ -306,12 +306,12 @@ public sealed class Amount : ContentControl
         if (Value is { } value)
         {
             _shown.Text = Display(value, Format, Unit);
-            _ink = _shown.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.WhiteKey));
+            _ink = Theming.ThemeInk.Bind(_shown, TextBlock.ForegroundProperty, Theming.ThemeManager.WhiteKey);
         }
         else
         {
             _shown.Text = Fallback() is { } fallback ? Display(fallback, Format, Unit) : Placeholder ?? string.Empty;
-            _ink = _shown.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(Theming.ThemeManager.GreyKey));
+            _ink = Theming.ThemeInk.Bind(_shown, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
         }
     }
 }

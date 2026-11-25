@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: d47 no longer uses more and more memory while the Astrometrics tab is open after Elite has moved your route target off the plotted route. Before, the route page was redrawn over and over and every page it replaced stayed in memory, reaching tens of gigabytes within half an hour and keeping a processor core busy. The route page now redraws only when the route or your position changes, and a page that is replaced anywhere in the panel no longer stays in memory because of its theme colours.
+
 Fixed: The Neutron Plotter, Road to Riches and exobiology routes are plotted at your ship's current jump range, the one the galaxy map shows, worked out from the fuel and cargo aboard when you plot. When you are not in the ship, they use a full tank and an empty hold. Before, they used the ship's maximum range, which assumes one jump's fuel and an empty hold, so a route could plan jumps longer than the ship could make. The Jump range box on each card shows the figure that will be used.
 
 Fixed: The Neutron Plotter counts six times your jump range at each neutron star when your ship has the Mk II Supercharge Optimised Frame Shift Drive, as the Caspian Explorer does. Before, every route was plotted at the normal four times, so a ship with that drive was given more waypoints and jumps than it needed. Every other drive is still plotted at four times.

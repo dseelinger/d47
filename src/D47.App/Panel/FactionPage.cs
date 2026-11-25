@@ -1380,8 +1380,8 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         var line = new TextBlock { FontFamily = new FontFamily(Fonts.ProseFamily), FontSize = TypeScale.Small, TextWrapping = TextWrapping.Wrap };
         var label = new Run(side);
         var held = new Run(name.Length == 0 ? FactionModel.Dash : name);
-        label.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
-        held.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(name.Length == 0 ? ThemeManager.GreyKey : ThemeManager.WhiteKey));
+        ThemeInk.Bind(label, TextElement.ForegroundProperty, ThemeManager.GreyKey);
+        ThemeInk.Bind(held, TextElement.ForegroundProperty, name.Length == 0 ? ThemeManager.GreyKey : ThemeManager.WhiteKey);
         line.Inlines ??= [];
         line.Inlines.Add(label);
         line.Inlines.Add(held);
@@ -1597,14 +1597,14 @@ public sealed class FactionPage : UserControl, IPageSummary, IPageSection
         }
 
         var words = new Run($"GALAXY SEARCH · {word} ") { FontFamily = new FontFamily(Fonts.ChromeFamily), FontSize = TypeScale.Meta, FontWeight = FontWeight.Medium };
-        words.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
+        ThemeInk.Bind(words, TextElement.ForegroundProperty, ThemeManager.GreyKey);
         _stamp.Inlines.Add(words);
 
         if (_view is FactionView.Answered or FactionView.Failed)
         {
             var at = _view == FactionView.Failed ? _failedAt : (_report?.FetchedAt ?? _now()).ToLocalTime();
             var time = new Run(at.ToString("HH:mm", CultureInfo.InvariantCulture)) { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Meta };
-            time.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.CyanKey));
+            ThemeInk.Bind(time, TextElement.ForegroundProperty, ThemeManager.CyanKey);
             _stamp.Inlines.Add(time);
         }
     }

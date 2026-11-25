@@ -278,7 +278,7 @@ public sealed class OverlayPanel : Window
         ApplyStyles();
 
         _frame.BorderThickness = new Thickness(2);
-        _frame.Bind(Border.BorderBrushProperty, this.GetResourceObservable(Theming.ThemeManager.AKey));
+        Theming.ThemeInk.Bind(_frame, Border.BorderBrushProperty, Theming.ThemeManager.AKey);
 
         _logger.LogInformation("The overlay is in place mode; drag it and let go");
     }

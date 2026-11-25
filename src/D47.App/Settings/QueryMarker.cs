@@ -10,7 +10,7 @@ using D47.Core.Capabilities;
 namespace D47.App.Settings;
 
 /// <summary>Marks query hits in caption text and decides which of a row's secondary lines are drawn.</summary>
-internal sealed class QueryMarker(Control resources, Func<string, bool> openCapability)
+internal sealed class QueryMarker(Func<string, bool> openCapability)
 {
     public void Illuminate(
         SettingRow row, string caption, TextBlock? label, TextBlock? spoken, TextBlock? help, TextBlock? keyLine, string query)
@@ -109,7 +109,7 @@ internal sealed class QueryMarker(Control resources, Func<string, bool> openCapa
             }
 
             var hit = new Run(text[match.Start..match.End]);
-            hit.Bind(TextElement.BackgroundProperty, resources.GetResourceObservable(ThemeManager.LineKey));
+            ThemeInk.Bind(hit, TextElement.BackgroundProperty, ThemeManager.LineKey);
 
             block.Inlines!.Add(hit);
             cursor = match.End;
@@ -160,16 +160,12 @@ internal sealed class QueryMarker(Control resources, Func<string, bool> openCapa
 
                 if (marked)
                 {
-                    run.Bind(
-                        TextElement.BackgroundProperty,
-                        resources.GetResourceObservable(ThemeManager.LineKey));
+                    ThemeInk.Bind(run, TextElement.BackgroundProperty, ThemeManager.LineKey);
                 }
 
                 if (segment.Target is not null)
                 {
-                    run.Bind(
-                        TextElement.ForegroundProperty,
-                        resources.GetResourceObservable(ThemeManager.AKey));
+                    ThemeInk.Bind(run, TextElement.ForegroundProperty, ThemeManager.AKey);
 
                     run.TextDecorations = TextDecorations.Underline;
                 }

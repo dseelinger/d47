@@ -89,7 +89,7 @@ internal sealed class RangeReadout
         if (words.Reference is { } reference)
         {
             var name = new Run(reference);
-            name.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.CyanKey));
+            ThemeInk.Bind(name, TextElement.ForegroundProperty, ThemeManager.CyanKey);
             Line.Inlines.Add(name);
         }
 

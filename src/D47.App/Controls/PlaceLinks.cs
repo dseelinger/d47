@@ -79,7 +79,7 @@ public static class PlaceLinks
     {
         if (tinted)
         {
-            run.Bind(TextElement.ForegroundProperty, block.GetResourceObservable(ThemeManager.CyanKey));
+            ThemeInk.Bind(run, TextElement.ForegroundProperty, ThemeManager.CyanKey);
         }
 
         if (Drawn.TryGetValue(block, out var links))

@@ -690,11 +690,11 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             (key, label, filled) = (Theming.ThemeManager.AKey, "LOADING MODEL", false);
         }
 
-        MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.StrokeProperty, this.GetResourceObservable(key));
+        ThemeInk.Bind(MicrophoneGlyph, Avalonia.Controls.Shapes.Shape.StrokeProperty, key);
 
         if (filled)
         {
-            MicrophoneGlyph.Bind(Avalonia.Controls.Shapes.Shape.FillProperty, this.GetResourceObservable(key));
+            ThemeInk.Bind(MicrophoneGlyph, Avalonia.Controls.Shapes.Shape.FillProperty, key);
         }
         else
         {
@@ -702,17 +702,16 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         }
 
         // A filled dot glows in its own colour.
-        MicrophoneBloom.Bind(Theming.BloomStack.GlowProperty, this.GetResourceObservable(key));
+        ThemeInk.Bind(MicrophoneBloom, Theming.BloomStack.GlowProperty, key);
         MicrophoneBloom.IsLit = filled;
 
         MicrophoneLabel.Text = label;
 
         // Only a ready microphone lights its words; the other states stay grey.
-        MicrophoneLabel.Bind(
-            TextBlock.ForegroundProperty,
-            this.GetResourceObservable(key == Theming.ThemeManager.CyanKey && !loading
+        ThemeInk.Bind(MicrophoneLabel, TextBlock.ForegroundProperty,
+            key == Theming.ThemeManager.CyanKey && !loading
                 ? Theming.ThemeManager.CyanKey
-                : Theming.ThemeManager.Grey2Key));
+                : Theming.ThemeManager.Grey2Key);
     }
 
     /// <summary>
@@ -3051,7 +3050,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
             };
 
-            _standInLine.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.GreyKey));
+            ThemeInk.Bind(_standInLine, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
         }
 
         return _standInLine;
@@ -3427,9 +3426,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             FontSize = Theming.TypeScale.Body,
         };
 
-        separator.Bind(
-            TextBlock.ForegroundProperty,
-            this.GetResourceObservable(Theming.ThemeManager.GreyKey));
+        ThemeInk.Bind(separator, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
 
         return separator;
     }
@@ -4014,15 +4011,14 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            label.Bind(
-                TextBlock.ForegroundProperty,
-                this.GetResourceObservable(string.Equals(name, current, StringComparison.OrdinalIgnoreCase)
+            ThemeInk.Bind(label, TextBlock.ForegroundProperty,
+                string.Equals(name, current, StringComparison.OrdinalIgnoreCase)
                     ? Theming.ThemeManager.CyanKey
-                    : Theming.ThemeManager.AKey));
+                    : Theming.ThemeManager.AKey);
 
             var chip = new Border { MinHeight = 32, Padding = new Thickness(4, 0), Child = Controls.SystemLink.Of(label, name, keepFont: true, flush: false) };
 
-            chip.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.SlabKey));
+            ThemeInk.Bind(chip, Border.BackgroundProperty, Theming.ThemeManager.SlabKey);
 
             strip.Children.Add(new StackPanel
             {
@@ -4049,7 +4045,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             return block;
         }
 
-        block.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.WhiteKey));
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, Theming.ThemeManager.WhiteKey);
         block.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
         block.TextAlignment = TextAlignment.Left;
 
@@ -4095,18 +4091,16 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             MaxWidth = TurnWidth(),
         };
 
-        row.Bind(
-            Border.BorderBrushProperty,
-            this.GetResourceObservable(
-                commander ? Theming.ThemeManager.CyanKey
+        ThemeInk.Bind(row, Border.BorderBrushProperty,
+            commander ? Theming.ThemeManager.CyanKey
                 : failed ? Theming.ThemeManager.RedKey
-                : Theming.ThemeManager.AKey));
+                : Theming.ThemeManager.AKey);
 
         void Rest()
         {
             if (commander)
             {
-                row.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.CyanGroundKey));
+                ThemeInk.Bind(row, Border.BackgroundProperty, Theming.ThemeManager.CyanGroundKey);
             }
             else
             {
@@ -4117,7 +4111,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         Rest();
 
         row.PointerEntered += (_, _) =>
-            row.Bind(Border.BackgroundProperty, this.GetResourceObservable(Theming.ThemeManager.SlabKey));
+            ThemeInk.Bind(row, Border.BackgroundProperty, Theming.ThemeManager.SlabKey);
 
         row.PointerExited += (_, _) => Rest();
 
@@ -4191,7 +4185,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         if (provenance.Cost is { } cost)
         {
             var figure = new Run(cost);
-            figure.Bind(TextElement.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.AKey));
+            ThemeInk.Bind(figure, TextElement.ForegroundProperty, Theming.ThemeManager.AKey);
 
             inlines.Add(new Run(TurnProvenance.Separator));
             inlines.Add(figure);
@@ -4206,7 +4200,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             Inlines = inlines,
         };
 
-        line.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.Grey2Key));
+        ThemeInk.Bind(line, TextBlock.ForegroundProperty, Theming.ThemeManager.Grey2Key);
 
         return line;
     }
@@ -4298,11 +4292,10 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        name.Bind(
-            TextBlock.ForegroundProperty,
-            this.GetResourceObservable(turn.Voice == TranscriptVoice.Commander
+        ThemeInk.Bind(name, TextBlock.ForegroundProperty,
+            turn.Voice == TranscriptVoice.Commander
                 ? Theming.ThemeManager.CyanKey
-                : Theming.ThemeManager.AKey));
+                : Theming.ThemeManager.AKey);
 
         return name;
     }
@@ -4319,7 +4312,7 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        label.Bind(TextBlock.ForegroundProperty, this.GetResourceObservable(Theming.ThemeManager.GreyKey));
+        ThemeInk.Bind(label, TextBlock.ForegroundProperty, Theming.ThemeManager.GreyKey);
 
         return label;
     }
@@ -4389,26 +4382,20 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
                         }
                         else
                         {
-                            run.Bind(
-                                Avalonia.Controls.Documents.TextElement.BackgroundProperty,
-                                this.GetResourceObservable(Theming.ThemeManager.Line2Key));
+                            ThemeInk.Bind(run, Avalonia.Controls.Documents.TextElement.BackgroundProperty, Theming.ThemeManager.Line2Key);
                         }
                     }
 
                     if (segment.Marker)
                     {
-                        run.Bind(
-                            Avalonia.Controls.Documents.TextElement.ForegroundProperty,
-                            this.GetResourceObservable(Theming.ThemeManager.AKey));
+                        ThemeInk.Bind(run, Avalonia.Controls.Documents.TextElement.ForegroundProperty, Theming.ThemeManager.AKey);
                         run.FontWeight = FontWeight.SemiBold;
                     }
 
                     if (segment.IsTranslation)
                     {
                         run.FontSize = Theming.TypeScale.Translation;
-                        run.Bind(
-                            Avalonia.Controls.Documents.TextElement.ForegroundProperty,
-                            this.GetResourceObservable(Theming.ThemeManager.GreyKey));
+                        ThemeInk.Bind(run, Avalonia.Controls.Documents.TextElement.ForegroundProperty, Theming.ThemeManager.GreyKey);
                     }
 
                     // Before the search marks, so the current hit's ink is drawn over the link's.
@@ -4422,17 +4409,14 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
                         // Every hit is marked and the current one is accented, which is what makes stepping
                         // legible: the count says where you are in the set and the colour says which one of them
                         // you are looking at.
-                        run.Bind(
-                            Avalonia.Controls.Documents.TextElement.BackgroundProperty,
-                            this.GetResourceObservable(match == _search.Hit
+                        ThemeInk.Bind(run, Avalonia.Controls.Documents.TextElement.BackgroundProperty,
+                            match == _search.Hit
                                 ? Theming.ThemeManager.AKey
-                                : Theming.ThemeManager.LineKey));
+                                : Theming.ThemeManager.LineKey);
 
                         if (match == _search.Hit)
                         {
-                            run.Bind(
-                                Avalonia.Controls.Documents.TextElement.ForegroundProperty,
-                                this.GetResourceObservable(Theming.ThemeManager.BgKey));
+                            ThemeInk.Bind(run, Avalonia.Controls.Documents.TextElement.ForegroundProperty, Theming.ThemeManager.BgKey);
                         }
                     }
 

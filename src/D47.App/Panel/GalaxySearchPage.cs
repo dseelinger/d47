@@ -2008,10 +2008,10 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
         }
 
         var words = new Run($"{Origin} · ANSWERED ") { FontFamily = Fonts.ChromeFamily, FontSize = TypeScale.Meta, FontWeight = FontWeight.Medium };
-        words.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.GreyKey));
+        ThemeInk.Bind(words, TextElement.ForegroundProperty, ThemeManager.GreyKey);
 
         var time = new Run(last.AskedAt.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture)) { FontFamily = new FontFamily(Fonts.MonoFamily), FontSize = TypeScale.Meta };
-        time.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.CyanKey));
+        ThemeInk.Bind(time, TextElement.ForegroundProperty, ThemeManager.CyanKey);
 
         _stamp.Inlines.Add(words);
         _stamp.Inlines.Add(time);

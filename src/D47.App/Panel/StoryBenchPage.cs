@@ -297,8 +297,8 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
     /// <summary>Sets the inks that <see cref="ListRow.Name"/> and <see cref="ListRow.Sub"/> follow on <paramref name="row"/>.</summary>
     private static void Inks(Control row, string nameKey, string secondaryKey)
     {
-        row.Bind(ListRow.NameBrushProperty, Application.Current!.Resources.GetResourceObservable(nameKey));
-        row.Bind(ListRow.SecondaryBrushProperty, Application.Current!.Resources.GetResourceObservable(secondaryKey));
+        ThemeInk.Bind(row, ListRow.NameBrushProperty, nameKey);
+        ThemeInk.Bind(row, ListRow.SecondaryBrushProperty, secondaryKey);
     }
 
     // ---- runs --------------------------------------------------------------------------------
@@ -725,7 +725,7 @@ public sealed class StoryBenchPage : UserControl, IPageSummary
             if (checkpoint.Chapter == current)
             {
                 var here = new Run(" · current chapter");
-                here.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.CyanKey));
+                ThemeInk.Bind(here, TextElement.ForegroundProperty, ThemeManager.CyanKey);
                 stage.Inlines.Add(here);
             }
 

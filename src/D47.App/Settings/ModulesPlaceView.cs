@@ -305,7 +305,7 @@ internal sealed class ModulesPlaceView : StackPanel
         {
             var lead = new Avalonia.Controls.Documents.Run { Text = line.Lead };
             text.Inlines!.Add(lead);
-            lead.Bind(Avalonia.Controls.Documents.TextElement.ForegroundProperty, Stepper.Ink(line.Tone));
+            ThemeInk.Bind(lead, Avalonia.Controls.Documents.TextElement.ForegroundProperty, Stepper.InkKey(line.Tone));
         }
 
         text.Inlines!.Add(new Avalonia.Controls.Documents.Run { Text = line.Rest });

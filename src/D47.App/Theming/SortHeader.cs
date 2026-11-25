@@ -275,7 +275,7 @@ public sealed class SortHeader<TRow>
         var block = TitleText.Build(text, size, TitleRank.Subgroup);
         block.FontFamily = Fonts.ChromeFamily;
         block.FontWeight = weight;
-        block.Bind(TextBlock.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(key));
+        ThemeInk.Bind(block, TextBlock.ForegroundProperty, key);
         return block;
     }
 }

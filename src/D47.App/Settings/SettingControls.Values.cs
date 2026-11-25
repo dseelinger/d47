@@ -411,13 +411,13 @@ internal sealed partial class SettingControls
 
                 state.Text = clip.State.Text.ToUpperInvariant();
                 state.IsVisible = true;
-                stateInk = state.Bind(TextBlock.ForegroundProperty, Stepper.Ink(clip.State.Tone));
+                stateInk = ThemeInk.Bind(state, TextBlock.ForegroundProperty, Stepper.InkKey(clip.State.Tone));
             }
             else if (current is not null && row.StatusFor(current, host.Settings.Current) is { } line)
             {
                 status.Text = line.Text;
                 status.IsVisible = true;
-                statusInk = status.Bind(TextBlock.ForegroundProperty, Stepper.Ink(line.Tone));
+                statusInk = ThemeInk.Bind(status, TextBlock.ForegroundProperty, Stepper.InkKey(line.Tone));
                 state.IsVisible = false;
             }
             else
@@ -568,9 +568,7 @@ internal sealed partial class SettingControls
             }
 
             _head.Text = away.Head;
-            _headInk = _head.Bind(
-                TextBlock.ForegroundProperty,
-                Stepper.Ink(away.Clip == ChatterboxClip.Fetching ? ChoiceTone.White : ChoiceTone.Grey));
+            _headInk = ThemeInk.Bind(_head, TextBlock.ForegroundProperty, Stepper.InkKey(away.Clip == ChatterboxClip.Fetching ? ChoiceTone.White : ChoiceTone.Grey));
             _mono.Text = away.Mono;
             _mono.IsVisible = away.Mono is not null;
             _text.Text = away.Text;

@@ -483,7 +483,7 @@ public sealed class ControlKitWindow : Window
         ThemeInk.Bind(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         status.Text = "PAID · KEY STORED";
         status.IsVisible = true;
-        status.Bind(TextBlock.ForegroundProperty, Stepper.Ink(ChoiceTone.Yellow));
+        ThemeInk.Bind(status, TextBlock.ForegroundProperty, Stepper.InkKey(ChoiceTone.Yellow));
         tile.Width = Stepper.MaximumWidth;
 
         var (unset, unsetValue, _) = SettingsView.DropdownTile("Output device");

@@ -489,13 +489,13 @@ public sealed class RouteBestCargoPage : UserControl
         for (var index = 0; index < filters.Count; index++)
         {
             var named = new Run(filters[index]);
-            named.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.WhiteKey));
+            ThemeInk.Bind(named, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
             line.Inlines.Add(named);
 
             if (index < filters.Count - 1)
             {
                 var gap = new Run(" · ");
-                gap.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.WhiteKey));
+                ThemeInk.Bind(gap, TextElement.ForegroundProperty, ThemeManager.WhiteKey);
                 line.Inlines.Add(gap);
             }
         }
@@ -536,7 +536,7 @@ public sealed class RouteBestCargoPage : UserControl
         else
         {
             var system = new Run(destination.ToUpperInvariant());
-            system.Bind(TextElement.ForegroundProperty, Application.Current!.Resources.GetResourceObservable(ThemeManager.AKey));
+            ThemeInk.Bind(system, TextElement.ForegroundProperty, ThemeManager.AKey);
             head.Inlines.Add(system);
         }
 

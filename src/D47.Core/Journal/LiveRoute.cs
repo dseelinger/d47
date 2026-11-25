@@ -83,8 +83,29 @@ public sealed class LiveRoute
     /// The route for panels to draw: <paramref name="file"/>, or, once Elite has changed the route, an empty route
     /// carrying only the target.
     /// </summary>
-    public NavRoute Shown(NavRoute file) =>
-        Changed && Target is { } target ? NavRoute.None with { LiveTarget = target } : file;
+    /// <remarks>
+    /// The same instance is returned until the target changes: the panels redraw when the route is a different
+    /// object.
+    /// </remarks>
+    public NavRoute Shown(NavRoute file)
+    {
+        if (!Changed || Target is not { } target)
+        {
+            return file;
+        }
+
+        var shown = _shown;
+
+        if (shown?.LiveTarget != target)
+        {
+            shown = NavRoute.None with { LiveTarget = target };
+            _shown = shown;
+        }
+
+        return shown;
+    }
+
+    private NavRoute? _shown;
 
     private bool Diverges(string? currentSystem, string? jumpDestination)
     {

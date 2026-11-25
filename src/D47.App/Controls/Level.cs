@@ -250,18 +250,12 @@ public sealed class Level : ContentControl
             var unlit = OnTile ? Theming.ThemeManager.BgKey : Theming.ThemeManager.TileKey;
 
             _inks[i]?.Dispose();
-            _inks[i] = _segments[i].Bind(
-                Border.BackgroundProperty,
-                Application.Current!.Resources.GetResourceObservable(
-                    filled ? lit : unlit));
+            _inks[i] = Theming.ThemeInk.Bind(_segments[i], Border.BackgroundProperty, filled ? lit : unlit);
             _segments[i].Opacity = below && !filled ? 0.4 : 1;
         }
 
         _readout.Text = Value.ToString("0.00", CultureInfo.InvariantCulture);
         _readoutInk?.Dispose();
-        _readoutInk = _readout.Bind(
-            TextBlock.ForegroundProperty,
-            Application.Current!.Resources.GetResourceObservable(
-                Muted ? Theming.ThemeManager.Grey2Key : Theming.ThemeManager.WhiteKey));
+        _readoutInk = Theming.ThemeInk.Bind(_readout, TextBlock.ForegroundProperty, Muted ? Theming.ThemeManager.Grey2Key : Theming.ThemeManager.WhiteKey);
     }
 }
