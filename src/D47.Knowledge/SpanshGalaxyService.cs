@@ -253,7 +253,8 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             _logger,
             token => _http.PostAsync("api/bodies/search", content, token),
             "the body search",
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            budget: TimeSpan.FromSeconds(35)).ConfigureAwait(false);
 
         var result = SpanshResponse.ReadBodies(document!);
 

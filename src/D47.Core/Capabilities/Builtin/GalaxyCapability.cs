@@ -648,7 +648,7 @@ public static class GalaxyCapability
                     NearParameter,
                     ToolParameter.Number(
                         "max_distance",
-                        "How far to look, in light years. Default 500, at most 1,000. A codex_entry search, or a "
+                        "How far to look, in light years. Default 500, at most 101,000. A codex_entry search, or a "
                             + "body_type in a region, with no max_distance has no limit."),
                     LimitParameter,
                     PageParameter,

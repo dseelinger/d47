@@ -22,7 +22,7 @@ public class ACodexEntrySearchHasNoDistanceLimitTests
     [Fact]
     public void ACodexEntryWithADistanceIsBoundedAtTheCeiling()
     {
-        var query = Parse(new() { CodexEntry = "Bacterium Cerbrus", MaxDistance = 5000 });
+        var query = Parse(new() { CodexEntry = "Bacterium Cerbrus", MaxDistance = 200_000 });
 
         Assert.False(query.NoDistanceLimit);
         Assert.Equal(BodyQuery.MaxDistanceCeiling, query.MaxDistance);

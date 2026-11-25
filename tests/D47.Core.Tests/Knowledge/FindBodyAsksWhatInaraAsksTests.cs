@@ -86,17 +86,30 @@ public class FindBodyAsksWhatInaraAsksTests
     }
 
     [Fact]
+    public async Task ARadiusOfTwentyFiveThousandIsSearchedAsAskedWithNoCappedSentence()
+    {
+        var install = new MemoryInstall();
+        var (registry, galaxy, _) = Build(install);
+
+        var result = await FindBody(registry, ("landable", "true"), ("max_distance", "25000"));
+
+        Assert.False(result.IsError, result.Content);
+        Assert.Equal(25_000, galaxy.LastQuery?.MaxDistance);
+        Assert.DoesNotContain("the furthest a body search goes", result.Content, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ARadiusPastTheCeilingIsSearchedAtTheCeilingAndTheAnswerSaysSo()
     {
         var install = new MemoryInstall();
         var (registry, galaxy, _) = Build(install);
 
-        var result = await FindBody(registry, ("landable", "true"), ("max_distance", "5000"));
+        var result = await FindBody(registry, ("landable", "true"), ("max_distance", "200000"));
 
         Assert.False(result.IsError, result.Content);
-        Assert.Equal(1000, galaxy.LastQuery?.MaxDistance);
+        Assert.Equal(101_000, galaxy.LastQuery?.MaxDistance);
         Assert.EndsWith(
-            "I searched 1,000 light years, the furthest a body search goes.",
+            "I searched 101,000 light years, the furthest a body search goes.",
             result.Content,
             StringComparison.Ordinal);
     }
@@ -109,7 +122,7 @@ public class FindBodyAsksWhatInaraAsksTests
 
         galaxy.Result = new BodySearchResult("Sol", 0, []);
 
-        var result = await FindBody(registry, ("landable", "true"), ("max_distance", "5000"));
+        var result = await FindBody(registry, ("landable", "true"), ("max_distance", "200000"));
 
         Assert.EndsWith("the furthest a body search goes.", result.Content, StringComparison.Ordinal);
     }

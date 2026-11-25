@@ -371,7 +371,7 @@ public sealed record BodyQuery
     public const int ExactRingsOf = GalaxyQuery.MaxSize;
 
     /// <summary>The furthest, in light years, a body search goes.</summary>
-    public const double MaxDistanceCeiling = 1000;
+    public const double MaxDistanceCeiling = GalaxyQuery.FarthestDistance;
 
     /// <summary>Whether this asks about rings at all, which decides how the answer reads.</summary>
     public bool IsAboutRings => RingSignal is not null || RingTypes.Count > 0 || ReserveLevel is not null;

@@ -449,6 +449,9 @@ public sealed record GalaxyQuery
     /// <summary>The result count when none is asked for.</summary>
     public const int DefaultSize = 25;
 
+    /// <summary>The furthest, in light years, a body search goes: the galaxy's diameter plus 1,000.</summary>
+    public const double FarthestDistance = 101_000;
+
     /// <summary>The most results one search returns.</summary>
     public const int MaxSize = 100;
 
