@@ -157,7 +157,8 @@ A wishlist is a list of things you want. That is what your ship builds and your 
 are. **This is the arithmetic between them and what is in your hold** — Commander › Assets ›
 Materials, reading across both, because a Commander gathering materials does not care
 which ship needs them. The page also names the nearest material trader of each kind from the galaxy
-search, leaving out a permit system unless your navy rank or a past visit shows you hold the permit.
+search. A station's kind comes from the Commander's own trades there first, then from d47's trader
+table, then from the galaxy search. It leaves out a permit system unless your navy rank or a past visit shows you hold the permit.
 
 ### The ledgers are never totalled together
 

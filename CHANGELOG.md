@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A material trader search lists a station under the kind it trades. Where the galaxy search had a station under the wrong kind, such as Bernoulli City in Machadan under Manufactured when the game's trader there is Raw, the Materials page, the trader answers, the station and outfitting searches and the watches now use the kind from your own trades there, then d47's trader table, then the galaxy search. A station of the kind you ask for that the search filed under another kind is added to the first page, and one filed under the kind but known to be another is left out.
+
 Fixed: Targeting your own parked ship from the SRV no longer counts as meeting another Commander. Before, the next game session's target of your ship was announced as "Commander <your name> — you met … ago; you targeted them", and you appeared in your own Commander log. Earlier meetings with yourself are gone from the log too, since it is rebuilt from the journals at every start.
 
 Fixed: On the headset, the Podcasts, Music and Movies seek bars draw their fill and mark at the point the episode, track or film has reached, on the big panel and, for Podcasts, on the mini panel. Before, the fill was drawn to a width left from an earlier layout, so 15 minutes into a 35-minute podcast it showed about a fifth of the bar on the big panel and three quarters on the mini, and could run past the end of the bar.

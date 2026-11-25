@@ -2420,7 +2420,9 @@ public sealed class AppHost : IDisposable
             loggerFactory.CreateLogger<D47.App.Coverage.CoverageRecorder>());
 
         var galaxy = new D47.Core.Knowledge.GalaxySearchNames(new D47.Core.Knowledge.StationPowerFilter(
-            new D47.Knowledge.SpanshGalaxyService(loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()),
+            new D47.Core.Knowledge.TraderTypeCorrection(
+                new D47.Knowledge.SpanshGalaxyService(loggerFactory.CreateLogger<D47.Knowledge.SpanshGalaxyService>()),
+                id => stores.TraderSightings.TypeOf(id) ?? D47.Core.Knowledge.MaterialTraderTable.TypeOf(id)),
             () => gameState.Active?.Pledge));
 
         var visitedStars = new VisitedStarsBook(VisitedStarsCache.DefaultFolder(), files);
