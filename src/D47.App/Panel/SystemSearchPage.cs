@@ -262,7 +262,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
     private Control SystemCell(SystemSummary system)
     {
         var here = string.Equals(system.Name, _here(), StringComparison.OrdinalIgnoreCase);
-        var name = Chrome(system.Name, TypeScale.Secondary, here ? ThemeManager.CyanKey : ThemeManager.AKey);
+        var name = TableCells.Wraps(Chrome(system.Name, TypeScale.Secondary, here ? ThemeManager.CyanKey : ThemeManager.AKey));
         name.Text = system.Name;
 
         var faction = system.ControllingFaction is { } controlling
@@ -498,7 +498,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.Tip,
             FontWeight = FontWeight.Medium,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
         return block;
@@ -511,7 +511,7 @@ public sealed class SystemSearchPage : GalaxySearchPage
             Text = text ?? Dash,
             FontFamily = Fonts.ProseFamily,
             FontSize = TypeScale.Caption,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(block, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
         return block;

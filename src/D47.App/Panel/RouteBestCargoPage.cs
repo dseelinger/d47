@@ -635,7 +635,7 @@ public sealed class RouteBestCargoPage : UserControl
             FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.Secondary,
             FontWeight = FontWeight.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(commodity, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
@@ -650,7 +650,7 @@ public sealed class RouteBestCargoPage : UserControl
             FontFamily = Fonts.ChromeFamily,
             FontSize = TypeScale.Tip,
             FontWeight = FontWeight.Medium,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(station, TextBlock.ForegroundProperty, ThemeManager.AKey);
 

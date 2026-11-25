@@ -364,7 +364,7 @@ public sealed class BodySearchPage : GalaxySearchPage
     {
         List<TableField<object>> fields =
         [
-            SearchField("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 120 }, "Body", row => Centered(Chrome(((BodySummary)row).Name, TypeScale.Secondary, ThemeManager.AKey)), "name"),
+            SearchField("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 120 }, "Body", row => Centered(TableCells.Wraps(Chrome(((BodySummary)row).Name, TypeScale.Secondary, ThemeManager.AKey))), "name"),
             SearchField("Type", new TableColumn("Type", ColumnFit.Fill) { Min = 120 }, "Type", row => TableCells.Text(((BodySummary)row).Subtype), local: LocalSort.Text<BodySummary>(body => body.Subtype), filters: [SearchValues.One<BodySummary>("Type", body => body.Subtype, "No type reported")]),
             SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((BodySummary)row), "system", filters: [SearchValues.One<BodySummary>("System", body => body.SystemName, "No system reported")]),
             SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((BodySummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),

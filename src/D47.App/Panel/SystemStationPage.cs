@@ -599,8 +599,8 @@ public sealed class SystemStationPage : UserControl, IPageSummary, IPageSection
 
     private static IReadOnlyList<TableField<MarketCommodity>> MarketFields() =>
     [
-        StarSystemPage.Headed(MarketHeads[0], new TableColumn("Commodity", ColumnFit.Fill) { Min = 140 }, commodity => Typeset.Chrome(commodity.Name, TypeScale.Control, ThemeManager.WhiteKey, weight: FontWeight.SemiBold, trimming: TextTrimming.CharacterEllipsis)),
-        StarSystemPage.Headed(MarketHeads[1], new TableColumn("Category", ColumnFit.Fill) { Min = 100 }, commodity => Typeset.Chrome(commodity.Category ?? Dash, TypeScale.Secondary, ThemeManager.AKey, weight: FontWeight.Medium, trimming: TextTrimming.CharacterEllipsis))
+        StarSystemPage.Headed(MarketHeads[0], new TableColumn("Commodity", ColumnFit.Fill) { Min = 140 }, commodity => Typeset.Chrome(commodity.Name, TypeScale.Control, ThemeManager.WhiteKey, weight: FontWeight.SemiBold, wrap: true)),
+        StarSystemPage.Headed(MarketHeads[1], new TableColumn("Category", ColumnFit.Fill) { Min = 100 }, commodity => Typeset.Chrome(commodity.Category ?? Dash, TypeScale.Secondary, ThemeManager.AKey, weight: FontWeight.Medium, wrap: true))
             with { Filters = [ValueLists.One<MarketCommodity>("Category", commodity => commodity.Category, "No category")] },
         StarSystemPage.Headed(MarketHeads[2], new TableColumn("Buy"), commodity => Figure(Amount(commodity.BuyPrice), ThemeManager.AKey), right: true),
         StarSystemPage.Headed(MarketHeads[3], new TableColumn("Sell"), commodity => Figure(Amount(commodity.SellPrice), ThemeManager.AKey), right: true),

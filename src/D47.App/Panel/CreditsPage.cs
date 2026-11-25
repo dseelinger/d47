@@ -362,11 +362,11 @@ public sealed class CreditsPage : UserControl, IPageSummary, IFilterablePage
         var dock = new DockPanel { LastChildFill = false };
         var key = row.Kind == CreditKind.Unaccounted ? ThemeManager.GreyKey : ThemeManager.WhiteKey;
 
-        dock.Children.Add(CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, key));
+        dock.Children.Add(TableCells.Wraps(CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, key)));
 
         if (row.Description.Length > 0)
         {
-            var tail = CreditsKit.Line(row.Description, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
+            var tail = TableCells.Wraps(CreditsKit.Line(row.Description, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
             tail.Margin = new Thickness(8, 0, 0, 0);
             tail.VerticalAlignment = VerticalAlignment.Center;
             dock.Children.Add(tail);

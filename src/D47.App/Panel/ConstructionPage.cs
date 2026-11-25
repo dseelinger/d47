@@ -961,7 +961,7 @@ public sealed class ConstructionPage : UserControl, IPageSummary
             Text = need.Resource.Name,
             FontSize = TypeScale.Tip,
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 

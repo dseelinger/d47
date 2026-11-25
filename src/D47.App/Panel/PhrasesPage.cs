@@ -547,7 +547,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
             FontFamily = new FontFamily(Fonts.MonoFamily),
             FontSize = TypeScale.Tip,
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(said, TextBlock.ForegroundProperty, ThemeManager.CyanKey);
 

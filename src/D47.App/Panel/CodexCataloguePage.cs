@@ -641,12 +641,12 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
     {
         var cell = new StackPanel
         {
-            Children = { CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.Secondary, ThemeManager.WhiteKey) },
+            Children = { TableCells.Wraps(CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.Secondary, ThemeManager.WhiteKey)) },
         };
 
         if (row.Line is { } line)
         {
-            cell.Children.Add(CreditsKit.Line(line, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
+            cell.Children.Add(TableCells.Wraps(CreditsKit.Line(line, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey)));
         }
 
         return cell;
@@ -655,11 +655,11 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
     private StackPanel KindName(CodexKindRow row)
     {
         var picture = Picture(row);
-        var line = CreditsKit.Line(
+        var line = TableCells.Wraps(CreditsKit.Line(
             CodexCatalogueModel.PictureLine(picture.Line).ToUpperInvariant(),
             Fonts.ChromeFamily,
             TypeScale.MetaSmall,
-            picture.Line == CodexPictureChoiceLine.Yours ? ThemeManager.CyanKey : ThemeManager.GreyKey);
+            picture.Line == CodexPictureChoiceLine.Yours ? ThemeManager.CyanKey : ThemeManager.GreyKey));
         line.Name = "CodexPictureLine";
         line.FontWeight = Avalonia.Media.FontWeight.SemiBold;
         line.LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking;
@@ -669,7 +669,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
             Spacing = 1,
             Children =
             {
-                CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.Secondary, ThemeManager.WhiteKey),
+                TableCells.Wraps(CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.Secondary, ThemeManager.WhiteKey)),
                 line,
             },
         };
@@ -711,7 +711,7 @@ public sealed class CodexCataloguePage : UserControl, IPageSummary, IFilterableP
         var here = _state()?.Location.StarSystem is { } current
                    && string.Equals(first.System, current, StringComparison.OrdinalIgnoreCase);
         var place = RoutingKit.Ink(string.Empty, TypeScale.Secondary, here ? ThemeManager.CyanKey : ThemeManager.AKey);
-        place.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+        place.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
         place.Inlines!.Add(new Avalonia.Controls.Documents.Run(first.System ?? CodexModel.UnknownSystemText));
 
         if (CodexModel.BodyOf(first.System, first.Body) is { Length: > 0 } body)

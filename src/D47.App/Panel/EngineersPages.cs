@@ -539,7 +539,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         return
         [
             LedgerTables.Control<EngineerEntry>(new TableColumn("Portrait", ColumnFit.Fixed) { Fixed = TypeScale.MinimumTarget }, PortraitCell),
-            StarSystemPage.Headed(heads[1], new TableColumn("Engineer"), NameCell),
+            StarSystemPage.Headed(heads[1], new TableColumn("Engineer", ColumnFit.Fill), NameCell),
             StarSystemPage.Headed(heads[2], new TableColumn("Status"), entry => StatusCell(entry, Showing(entry)))
                 with { Filters = [ValueLists.One<EngineerEntry>("Status", StatusText, "No status")] },
             StarSystemPage.Headed(heads[3], new TableColumn("Modules", ColumnFit.Fill) { Min = 160 }, entry => ModulesCell(entry, Showing(entry)))
@@ -550,13 +550,13 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
             StarSystemPage.Headed(heads[6], new TableColumn("Distance"), entry => DistanceCell(entry, Showing(entry)), right: true),
             LedgerTables.Added<EngineerEntry>(
                 "System",
-                new TableColumn("System"),
+                new TableColumn("System", ColumnFit.Fill),
                 entry => CopyGlyph.LinkBeside(TableCells.Text(entry.Engineer.System), entry.Engineer.System, _copy),
                 SortColumn<EngineerEntry>.Text("System", entry => entry.Engineer.System))
                 with { Filters = [ValueLists.One<EngineerEntry>("System", entry => entry.Engineer.System, "No system")] },
             LedgerTables.Added<EngineerEntry>(
                 "Station",
-                new TableColumn("Station"),
+                new TableColumn("Station", ColumnFit.Fill),
                 entry => TableCells.Text(entry.Engineer.Station),
                 SortColumn<EngineerEntry>.Text("Station", entry => entry.Engineer.Station)),
             LedgerTables.Added<EngineerEntry>(
@@ -598,7 +598,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
 
     private TextBlock NameCell(EngineerEntry entry)
     {
-        var name = ListRow.Name(new TextBlock { Text = entry.Engineer.Name, TextTrimming = TextTrimming.CharacterEllipsis });
+        var name = ListRow.Name(new TextBlock { Text = entry.Engineer.Name, TextWrapping = TextWrapping.Wrap });
         Watched(name, entry.Engineer.Name);
 
         return name;
@@ -685,8 +685,7 @@ public sealed class EngineerDirectoryPage : EngineerPageBase, IFilterablePage, I
         {
             FontFamily = new FontFamily(Fonts.ProseFamily),
             FontSize = TypeScale.Small,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            TextWrapping = TextWrapping.NoWrap,
+            TextWrapping = TextWrapping.Wrap,
         };
 
         if (showing)

@@ -1174,7 +1174,7 @@ public sealed class CampaignPage : UserControl, IPageSummary, IPageSection, IFil
             TypeScale.ControlLarge,
             row.Old ? ThemeManager.GreyKey : current ? ThemeManager.CyanKey : ThemeManager.AKey,
             weight: FontWeight.Medium,
-            trimming: TextTrimming.CharacterEllipsis);
+            wrap: true);
 
         if (!_headset)
         {

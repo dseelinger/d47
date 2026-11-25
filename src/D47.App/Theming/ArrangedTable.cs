@@ -40,6 +40,7 @@ public sealed class ArrangedTable<TRow>
     private IReadOnlyList<string> _owners = [];
     private SortHeader<TRow> _head;
     private readonly Dictionary<string, double> _floors = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, double> _measured = new(StringComparer.Ordinal);
     private double? _room;
     private readonly RowFilter<TRow> _filter;
 
@@ -202,6 +203,7 @@ public sealed class ArrangedTable<TRow>
 
         var layout = new TableLayout(Id, [.. _drawn.Select(ColumnOf)], _widths, _spacing);
         layout.Sized += width => Resized(layout, width);
+        layout.Widened += () => Widened(layout);
         Layout = layout;
         _head = NewHead();
     }
@@ -611,8 +613,12 @@ public sealed class ArrangedTable<TRow>
             ? field.Column with { Min = Floor(field) }
             : field.Column;
 
-    /// <summary>The narrowest the field's column goes: its set width or minimum, else the wider of its header cells, sorting and choosing.</summary>
-    private double Floor(TableField<TRow> field)
+    /// <summary>The narrowest the field's column goes: the wider of <see cref="HeaderFloor"/> and the narrowest its drawn rows have needed.</summary>
+    private double Floor(TableField<TRow> field) =>
+        Math.Max(HeaderFloor(field), _measured.TryGetValue(field.Key, out var measured) ? measured : 0);
+
+    /// <summary>The field's set width or minimum, else the wider of its header cells, sorting and choosing.</summary>
+    private double HeaderFloor(TableField<TRow> field)
     {
         if (field.Column.Fit == ColumnFit.Fixed)
         {
@@ -692,6 +698,32 @@ public sealed class ArrangedTable<TRow>
         _room = width;
 
         if (Arranging || Fitted(Arranged()).Count != ShownFields.Count)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (layout == Layout)
+                {
+                    Changed?.Invoke();
+                }
+            });
+        }
+    }
+
+    /// <summary>In the headset, keeps the narrowest each column's rows need, and redraws when the columns drawn no longer fit.</summary>
+    private void Widened(TableLayout layout)
+    {
+        if (!Headset || layout != Layout)
+        {
+            return;
+        }
+
+        for (var column = 0; column < _drawn.Count; column++)
+        {
+            var key = _drawn[column].Key;
+            _measured[key] = Math.Max(_measured.TryGetValue(key, out var known) ? known : 0, layout.MinimumOf(column));
+        }
+
+        if (_room is not null && Fitted(Arranged()).Count != ShownFields.Count)
         {
             Dispatcher.UIThread.Post(() =>
             {

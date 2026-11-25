@@ -281,9 +281,9 @@ public sealed class CreditTransactionsPage : UserControl, IPageSummary, IFiltera
         var line = new DockPanel { LastChildFill = false };
         var key = row.Kind == CreditKind.Unaccounted ? ThemeManager.GreyKey : ThemeManager.WhiteKey;
 
-        line.Children.Add(CreditsKit.Line(CreditsModel.KindName(row.Kind), Fonts.ProseFamily, TypeScale.ControlLarge, key));
+        line.Children.Add(TableCells.Wraps(CreditsKit.Line(CreditsModel.KindName(row.Kind), Fonts.ProseFamily, TypeScale.ControlLarge, key)));
 
-        var name = CreditsKit.Line(row.Event, Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey);
+        var name = TableCells.Wraps(CreditsKit.Line(row.Event, Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey));
         name.Margin = new Thickness(8, 0, 0, 0);
         name.VerticalAlignment = VerticalAlignment.Center;
         line.Children.Add(name);

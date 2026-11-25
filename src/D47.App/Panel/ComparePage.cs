@@ -334,12 +334,12 @@ public sealed class ComparePage : UserControl
         var name = TitleText.Build(ship.Name, TypeScale.ControlLarge, TitleRank.Subgroup);
         name.FontFamily = Fonts.ChromeFamily;
         name.FontWeight = FontWeight.SemiBold;
-        name.TextTrimming = TextTrimming.CharacterEllipsis;
+        name.TextWrapping = TextWrapping.Wrap;
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
         var hull = TitleText.Build(ship.Hull, TypeScale.MetaSmall, TitleRank.Subgroup);
         hull.FontFamily = Fonts.ChromeFamily;
-        hull.TextTrimming = TextTrimming.CharacterEllipsis;
+        hull.TextWrapping = TextWrapping.Wrap;
         ThemeInk.Bind(hull, TextBlock.ForegroundProperty, ThemeManager.GreyKey);
 
         return new StackPanel { Children = { name, hull }, HorizontalAlignment = HorizontalAlignment.Left };
@@ -350,7 +350,7 @@ public sealed class ComparePage : UserControl
         var where = TitleText.Build(ship.Where, TypeScale.Control, TitleRank.Subgroup);
         where.FontFamily = Fonts.ChromeFamily;
         where.FontWeight = FontWeight.Medium;
-        where.TextTrimming = TextTrimming.CharacterEllipsis;
+        where.TextWrapping = TextWrapping.Wrap;
         ThemeInk.Bind(where, TextBlock.ForegroundProperty, ship.InCurrentSystem ? ThemeManager.CyanKey : ThemeManager.AKey);
 
         var cell = CopyGlyph.LinkBeside(where, ship.System, _copy);
@@ -364,7 +364,7 @@ public sealed class ComparePage : UserControl
         var grid = _head.Row(ship);
         grid.Margin = new Thickness(14, 0);
 
-        var row = new Border { Height = TypeScale.MinimumTarget, Child = grid };
+        var row = new Border { MinHeight = TypeScale.MinimumTarget, Child = grid };
         ThemeInk.Bind(row, Border.BackgroundProperty, ThemeManager.SlabKey);
 
         return row;

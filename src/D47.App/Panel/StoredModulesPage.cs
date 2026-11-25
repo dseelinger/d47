@@ -89,14 +89,14 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
             Filters = [],
             Alignment = HorizontalAlignment.Right,
         },
-        new("System", new TableColumn("System"), row => CopyGlyph.LinkBeside(TableCells.Text(row.Module.StarSystem), row.Module.StarSystem, copy))
+        new("System", new TableColumn("System", ColumnFit.Fill), row => CopyGlyph.LinkBeside(TableCells.Text(row.Module.StarSystem), row.Module.StarSystem, copy))
         {
             Label = "System",
             Sort = SortColumn<Held>.Text("System", row => row.Module.StarSystem),
             Filters = [ValueLists.One<Held>("System", row => row.Module.StarSystem, "No system")],
             ByDefault = false,
         },
-        new("Station", new TableColumn("Station"), row => TableCells.Text(row.Module.StationName))
+        new("Station", new TableColumn("Station", ColumnFit.Fill), row => TableCells.Text(row.Module.StationName))
         {
             Label = "Station",
             Sort = SortColumn<Held>.Text("Station", row => row.Module.StationName),
@@ -428,7 +428,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
             Text = module.Name,
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
@@ -454,7 +454,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     {
         var row = new Border
         {
-            Height = TypeScale.MinimumTarget,
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
             Child = _table.Row(held),
         };

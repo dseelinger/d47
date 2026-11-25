@@ -387,10 +387,10 @@ public sealed partial class StarSystemPage
     /// <summary>Every field the stations table can show; the › that opens a station is a control column at the right.</summary>
     private IReadOnlyList<TableField<StationProfile>> StationFields() =>
     [
-        StationHead(0, new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, station => Ellipsed(station.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.WhiteKey)),
+        StationHead(0, new TableColumn("Station", ColumnFit.Fill) { Min = 120 }, station => TableCells.Wraps(Ellipsed(station.Name, TypeScale.ControlLarge, FontWeight.SemiBold, ThemeManager.WhiteKey))),
         StationHead(1, new TableColumn("Type"), station => Ellipsed(StationType(station), TypeScale.Control, FontWeight.Medium, station.Kind == StationKind.Other && station.Type is null ? ThemeManager.GreyKey : ThemeManager.AKey))
             with { Filters = [ValueLists.One<StationProfile>("Type", StationType, "No type")] },
-        StationHead(2, new TableColumn("Faction", ColumnFit.Fill) { Min = 100 }, station => Ellipsed(Faction(station), TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey))
+        StationHead(2, new TableColumn("Faction", ColumnFit.Fill) { Min = 100 }, station => TableCells.Wraps(Ellipsed(Faction(station), TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)))
             with { Filters = [ValueLists.One<StationProfile>("Faction", station => station.ControllingFaction is null ? null : Faction(station), "No faction")] },
         StationHead(3, new TableColumn("Government"), station => Ellipsed(station.Government ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey))
             with { Filters = [ValueLists.One<StationProfile>("Government", station => station.Government, "No government")] },

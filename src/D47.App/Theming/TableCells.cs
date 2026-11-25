@@ -10,6 +10,15 @@ public static class TableCells
 {
     public const string Dash = "—";
 
+    /// <summary>Makes <paramref name="text"/> wrap at word breaks instead of trimming, as a name column's text does.</summary>
+    public static TextBlock Wraps(TextBlock text)
+    {
+        text.TextWrapping = TextWrapping.Wrap;
+        text.TextTrimming = TextTrimming.None;
+
+        return text;
+    }
+
     /// <summary>Yes in White or No in Grey.</summary>
     public static TextBlock Flag(bool value) =>
         Typeset.Text(value ? "Yes" : "No", TypeScale.Secondary, value ? ThemeManager.WhiteKey : ThemeManager.GreyKey, vertical: VerticalAlignment.Center);
@@ -18,11 +27,11 @@ public static class TableCells
     public static TextBlock Missing() =>
         Typeset.Text(Dash, TypeScale.Secondary, ThemeManager.GreyKey, vertical: VerticalAlignment.Center);
 
-    /// <summary>The text in White, or <see cref="Missing"/> when there is none.</summary>
+    /// <summary>The text in White, wrapping at word breaks when its column is short of room, or <see cref="Missing"/> when there is none.</summary>
     public static TextBlock Text(string? value) =>
         string.IsNullOrWhiteSpace(value)
             ? Missing()
-            : Typeset.Text(value, TypeScale.Secondary, ThemeManager.WhiteKey, trimming: TextTrimming.CharacterEllipsis, vertical: VerticalAlignment.Center);
+            : Typeset.Text(value, TypeScale.Secondary, ThemeManager.WhiteKey, wrap: true, vertical: VerticalAlignment.Center);
 
     /// <summary>The number in mono, right-aligned; a Grey dash when there is none.</summary>
     public static TextBlock Number(long? value) =>
@@ -33,7 +42,10 @@ public static class TableCells
             vertical: VerticalAlignment.Center,
             horizontal: HorizontalAlignment.Right);
 
-    /// <summary>The first three items joined by " · ", then "+N" in mono Grey for the rest; <see cref="Missing"/> when empty.</summary>
+    /// <summary>
+    /// The first three items joined by " · ", wrapping at word breaks when the column is short of room, then "+N" in mono
+    /// Grey for the rest in a slot of its own; <see cref="Missing"/> when empty.
+    /// </summary>
     public static Control List(IReadOnlyList<string> items)
     {
         if (items.Count == 0)
@@ -45,7 +57,7 @@ public static class TableCells
             string.Join(" · ", items.Take(3)),
             TypeScale.Secondary,
             ThemeManager.WhiteKey,
-            trimming: TextTrimming.CharacterEllipsis,
+            wrap: true,
             vertical: VerticalAlignment.Center);
 
         if (items.Count <= 3)
@@ -59,6 +71,14 @@ public static class TableCells
             ThemeManager.GreyKey,
             vertical: VerticalAlignment.Center);
 
-        return new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { shown, more } };
+        Grid.SetColumn(more, 1);
+
+        return new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            ColumnSpacing = 6,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children = { shown, more },
+        };
     }
 }

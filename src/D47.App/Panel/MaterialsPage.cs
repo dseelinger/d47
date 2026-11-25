@@ -1216,7 +1216,7 @@ public sealed partial class MaterialsPage : UserControl
             Text = material.Name,
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
@@ -1236,7 +1236,7 @@ public sealed partial class MaterialsPage : UserControl
     {
         var row = new Border
         {
-            Height = TypeScale.MinimumTarget,
+            MinHeight = TypeScale.MinimumTarget,
             Padding = new Thickness(14, 0),
             Child = table.Row(line),
         };

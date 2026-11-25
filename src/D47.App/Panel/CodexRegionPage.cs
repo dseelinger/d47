@@ -329,7 +329,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         return
         [
             CodexThumbnails.Column<CodexEntryRow>(row => CodexThumbnails.Square(_thumbs?.Entry(row.Key, _regionId, row.PlaceholderFile))),
-            StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), row => CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
+            StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), row => TableCells.Wraps(CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey))),
             StarSystemPage.Headed(heads[1], new TableColumn("System", ColumnFit.Fill), row => SystemCell(row, _copy))
                 with
                 {
@@ -391,7 +391,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         if (row.System is { } system)
         {
             cell.Children.Add(CopyGlyph.LinkBeside(
-                CreditsKit.Line(system, Fonts.ChromeFamily, TypeScale.ControlLarge, row.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey),
+                TableCells.Wraps(CreditsKit.Line(system, Fonts.ChromeFamily, TypeScale.ControlLarge, row.IsHere ? ThemeManager.CyanKey : ThemeManager.AKey)),
                 system,
                 copy));
         }
@@ -399,7 +399,7 @@ public sealed class CodexRegionPage : UserControl, IPageSummary, IFilterablePage
         if (row.Place.Length > 0)
         {
             var place = RoutingKit.Ink(string.Empty, TypeScale.Small, ThemeManager.GreyKey);
-            place.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+            place.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
 
             if (!string.IsNullOrWhiteSpace(row.Body))
             {

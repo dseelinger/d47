@@ -170,7 +170,7 @@ public sealed class CrewPage : UserControl
             Text = member.Name,
             FontSize = TypeScale.Secondary,
             VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
         };
         ThemeInk.Bind(name, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
 
@@ -180,7 +180,7 @@ public sealed class CrewPage : UserControl
     private Border Row(CrewMember member)
     {
         var line = _table.Row(member);
-        line.Height = TypeScale.MinimumTarget;
+        line.MinHeight = TypeScale.MinimumTarget;
 
         var content = new StackPanel { Children = { line } };
 

@@ -308,8 +308,10 @@ public class TablesAreBuiltFromOneListOfFieldsTests
         Assert.Equal("1,250", TableCells.Number(1250).Text);
         Assert.Equal(Avalonia.Layout.HorizontalAlignment.Right, TableCells.Number(5).HorizontalAlignment);
 
-        var list = Assert.IsType<StackPanel>(TableCells.List(["a", "b", "c", "d", "e"]));
+        var list = Assert.IsType<Grid>(TableCells.List(["a", "b", "c", "d", "e"]));
         Assert.Equal(["a · b · c", "+2"], list.Children.OfType<TextBlock>().Select(block => block.Text));
+        Assert.Equal([0, 1], list.Children.Select(Grid.GetColumn));
+        Assert.Equal(TextWrapping.Wrap, ((TextBlock)list.Children[0]).TextWrapping);
         Assert.Equal("a · b", Assert.IsType<TextBlock>(TableCells.List(["a", "b"])).Text);
     }
 }

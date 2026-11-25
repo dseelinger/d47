@@ -134,7 +134,8 @@ public sealed class SavedRoutesPage : UserControl, IPageSummary
     private static TextBlock NameCell(SavedRoute route)
     {
         var name = CreditsKit.Line(route.Name, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey);
-        name.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+        name.TextTrimming = Avalonia.Media.TextTrimming.None;
+        name.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
 
         return name;
     }

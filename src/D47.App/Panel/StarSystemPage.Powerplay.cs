@@ -294,7 +294,7 @@ public sealed partial class StarSystemPage
         Headed(NeighbourHeads[1], new TableColumn("Distance"), system => Mono(DistanceText(system.Distance), ThemeManager.AKey)),
         Headed(NeighbourHeads[2], new TableColumn("State"), system => Ellipsed(system.State ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey))
             with { Filters = [ValueLists.One<PowerplayNeighbour>("State", system => system.State, "No state")] },
-        Headed(NeighbourHeads[3], new TableColumn("Power", ColumnFit.Fill) { Min = 100 }, system => Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey))
+        Headed(NeighbourHeads[3], new TableColumn("Power", ColumnFit.Fill) { Min = 100 }, system => TableCells.Wraps(Ellipsed(system.ControllingPower ?? Dash, TypeScale.Control, FontWeight.Medium, ThemeManager.WhiteKey)))
             with { Filters = [ValueLists.One<PowerplayNeighbour>("Power", system => system.ControllingPower, "No Power")] },
         Headed(NeighbourHeads[4], new TableColumn("Progress"), system => Influence(system.ControlProgress)),
         Added(

@@ -191,7 +191,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
             StarSystemPage.Headed(heads[0], new TableColumn("Entry", ColumnFit.Fill), EntryCell)
                 with { Filters = [ValueLists.One<RegionFirstRecord>("Kind", record => CodexModel.RegionFirstWord(record.First), "No kind")] },
             StarSystemPage.Headed(heads[1], new TableColumn("Region", ColumnFit.Fill), record =>
-                CreditsKit.Line(record.Region ?? CodexModel.NoRegionName, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey))
+                TableCells.Wraps(CreditsKit.Line(record.Region ?? CodexModel.NoRegionName, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)))
                 with { Filters = [ValueLists.One<RegionFirstRecord>("Region", record => record.Region ?? CodexModel.NoRegionName, "No region")] },
             StarSystemPage.Headed(heads[2], new TableColumn("System", ColumnFit.Fill), SystemCell)
                 with
@@ -221,14 +221,14 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
 
     private static StackPanel EntryCell(RegionFirstRecord record)
     {
-        var kind = CreditsKit.Line(CodexModel.RegionFirstWord(record.First), Fonts.ChromeFamily, TypeScale.MetaSmall, ThemeManager.CyanKey);
+        var kind = TableCells.Wraps(CreditsKit.Line(CodexModel.RegionFirstWord(record.First), Fonts.ChromeFamily, TypeScale.MetaSmall, ThemeManager.CyanKey));
         kind.FontWeight = Avalonia.Media.FontWeight.SemiBold;
 
         return new StackPanel
         {
             Children =
             {
-                CreditsKit.Line(EntryName(record), Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey),
+                TableCells.Wraps(CreditsKit.Line(EntryName(record), Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)),
                 kind,
             },
         };
@@ -245,7 +245,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
         if (record.System is { } name)
         {
             cell.Children.Add(CopyGlyph.LinkBeside(
-                CreditsKit.Line(name, Fonts.ChromeFamily, TypeScale.ControlLarge, here ? ThemeManager.CyanKey : ThemeManager.AKey),
+                TableCells.Wraps(CreditsKit.Line(name, Fonts.ChromeFamily, TypeScale.ControlLarge, here ? ThemeManager.CyanKey : ThemeManager.AKey)),
                 name,
                 _copy));
         }
@@ -256,7 +256,7 @@ public sealed class CodexPossibleFirstsPage : UserControl, IPageSummary, IFilter
         if (!string.IsNullOrWhiteSpace(body) || position is not null)
         {
             var place = RoutingKit.Ink(string.Empty, TypeScale.Small, ThemeManager.GreyKey);
-            place.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+            place.TextWrapping = Avalonia.Media.TextWrapping.Wrap;
 
             if (!string.IsNullOrWhiteSpace(body))
             {

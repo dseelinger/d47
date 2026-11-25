@@ -22,6 +22,7 @@ public sealed class TableLayout
     private readonly ColumnWidthMemory? _memory;
     private readonly double[] _natural;
     private readonly double[] _headerWidth;
+    private readonly double[] _narrowest;
     private readonly Dictionary<string, double> _chosen;
     private readonly double[] _widths;
     private double _available;
@@ -35,6 +36,7 @@ public sealed class TableLayout
         _memory = memory;
         _natural = new double[columns.Count];
         _headerWidth = new double[columns.Count];
+        _narrowest = new double[columns.Count];
         _widths = new double[columns.Count];
         _chosen = memory is null ? [] : new Dictionary<string, double>(memory.Remembered(id), StringComparer.Ordinal);
     }
@@ -51,6 +53,9 @@ public sealed class TableLayout
     /// <summary>Raised when a header or row is measured at a finite width other than the last one.</summary>
     internal event Action<double>? Sized;
 
+    /// <summary>Raised when a newly measured header or row raises a column's natural or narrowest width.</summary>
+    internal event Action? Widened;
+
     /// <summary>How much wider than the last measured width the columns' minimums and the spacing need.</summary>
     internal double Shortfall =>
         Math.Max(0, Enumerable.Range(0, Columns.Count).Sum(MinimumOf) + (Spacing * Math.Max(0, Columns.Count - 1)) - _available);
@@ -64,10 +69,17 @@ public sealed class TableLayout
     /// <summary>Builds a data row from cells, one per column.</summary>
     public TableGrid Row(IReadOnlyList<Control> cells) => Build(cells, header: false);
 
+    /// <summary>
+    /// The narrowest column <paramref name="column"/> goes. A <see cref="ColumnFit.Fill"/> column, which holds names, wraps
+    /// down to its longest word; every other column keeps its widest cell. Neither goes below its minimum or header label.
+    /// </summary>
     internal double MinimumOf(int column) =>
-        Columns[column].Fit == ColumnFit.Fixed
-            ? Columns[column].Fixed
-            : Math.Max(Columns[column].Min ?? _headerWidth[column], Columns[column].Whole ? _natural[column] : 0);
+        Columns[column] switch
+        {
+            { Fit: ColumnFit.Fixed } fixedColumn => fixedColumn.Fixed,
+            { Fit: ColumnFit.Fill, Whole: false } name => Math.Max(name.Min ?? _headerWidth[column], _narrowest[column]),
+            var other => Math.Max(other.Min ?? _headerWidth[column], _natural[column]),
+        };
 
     internal void Compute(double available)
     {
@@ -94,12 +106,18 @@ public sealed class TableLayout
         }
     }
 
-    internal void Report(TableGrid grid, double[] natural, bool header)
+    internal void Report(TableGrid grid, double[] natural, double[] narrowest, bool header)
     {
         var grew = false;
 
         for (var i = 0; i < natural.Length; i++)
         {
+            if (narrowest[i] > _narrowest[i])
+            {
+                _narrowest[i] = narrowest[i];
+                grew = true;
+            }
+
             if (header && natural[i] > _headerWidth[i])
             {
                 _headerWidth[i] = natural[i];
@@ -116,6 +134,7 @@ public sealed class TableLayout
         if (grew)
         {
             Invalidate(except: grid);
+            Widened?.Invoke();
         }
     }
 
@@ -336,7 +355,10 @@ public sealed class ColumnGrip : Border
 /// <summary>A header or row of a <see cref="TableLayout"/>: a <see cref="Grid"/> whose column widths come from the table.</summary>
 public sealed class TableGrid : Grid
 {
-    /// <summary>A natural width a cell supplies when its measured width is not what it needs.</summary>
+    /// <summary>
+    /// A natural width a cell supplies when its measured width is not what it needs. Such a cell fits itself to the width
+    /// it is given, so in a <see cref="ColumnFit.Fill"/> column it sets no narrowest width.
+    /// </summary>
     public static readonly AttachedProperty<double> NaturalWidthProperty =
         AvaloniaProperty.RegisterAttached<TableGrid, Control, double>("NaturalWidth", double.NaN);
 
@@ -362,6 +384,7 @@ public sealed class TableGrid : Grid
     protected override Size MeasureOverride(Size availableSize)
     {
         var natural = new double[Layout.Columns.Count];
+        var narrowest = new double[Layout.Columns.Count];
 
         foreach (var child in Children)
         {
@@ -377,9 +400,14 @@ public sealed class TableGrid : Grid
             var width = child.DesiredSize.Width;
             var supplied = GetNaturalWidth(child);
             natural[column] = Math.Max(natural[column], double.IsNaN(supplied) ? width : Math.Max(supplied, width));
+
+            if (!IsHeader && Layout.Columns[column].Fit == ColumnFit.Fill)
+            {
+                narrowest[column] = Math.Max(narrowest[column], double.IsNaN(supplied) ? NarrowestWidth.Of(child) : 0);
+            }
         }
 
-        Layout.Report(this, natural, IsHeader);
+        Layout.Report(this, natural, narrowest, IsHeader);
         Layout.Compute(availableSize.Width);
 
         for (var i = 0; i < natural.Length; i++)

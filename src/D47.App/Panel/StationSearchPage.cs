@@ -316,7 +316,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         SearchField("MaterialTrader", new TableColumn("MaterialTrader"), "Material trader", row => TableCells.Text(((StationSummary)row).TraderType), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TraderType), filters: [SearchValues.One<StationSummary>("Material trader", station => station.TraderType, "No material trader")]),
         SearchField("TechnologyBroker", new TableColumn("TechnologyBroker"), "Technology broker", row => TableCells.Text(((StationSummary)row).TechnologyBroker), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.TechnologyBroker), filters: [SearchValues.One<StationSummary>("Technology broker", station => station.TechnologyBroker, "No technology broker")]),
         SearchField("StockSeen", new TableColumn("StockSeen"), "Stock seen", row => Centered(Right(Mono(Day(((StationSummary)row).StockLastSeen), TypeScale.Small, ThemeManager.GreyKey))), right: true, byDefault: false, local: LocalSort.When<StationSummary>(station => station.StockLastSeen)),
-        SearchField("Power", new TableColumn("Power"), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingPower), filters: [SearchValues.One<StationSummary>("Power", station => station.ControllingPower, "No Power reported")]),
+        SearchField("Power", new TableColumn("Power", ColumnFit.Fill), "Power", row => TableCells.Text(((StationSummary)row).ControllingPower), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.ControllingPower), filters: [SearchValues.One<StationSummary>("Power", station => station.ControllingPower, "No Power reported")]),
         SearchField("PowerState", new TableColumn("PowerState"), "Power state", row => TableCells.Text(((StationSummary)row).PowerState), byDefault: false, local: LocalSort.Text<StationSummary>(station => station.PowerState), filters: [SearchValues.One<StationSummary>("Power state", station => station.PowerState, "No state reported")]),
     ];
 
@@ -329,7 +329,7 @@ public sealed class StationSearchPage : GalaxySearchPage
 
     private static Control NameCell(StationSummary station)
     {
-        var name = Chrome(station.Name, TypeScale.Secondary, ThemeManager.AKey);
+        var name = TableCells.Wraps(Chrome(station.Name, TypeScale.Secondary, ThemeManager.AKey));
         name.Text = station.Name;
 
         return Centered(Pair(name, Sub(station.Type)));

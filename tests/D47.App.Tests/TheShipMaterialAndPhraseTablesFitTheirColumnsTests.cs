@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -64,17 +65,50 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         return window;
     }
 
+    /// <summary>The cell's width on one line, measured at an unlimited width as the table measures it.</summary>
     private static double Natural(Control child)
     {
         var supplied = TableGrid.GetNaturalWidth(child);
+        var given = child.DesiredSize.Width;
 
-        return double.IsNaN(supplied) ? child.DesiredSize.Width : Math.Max(supplied, child.DesiredSize.Width);
+        child.Measure(Size.Infinity);
+
+        var width = child.DesiredSize.Width;
+
+        child.InvalidateMeasure();
+
+        return Math.Max(given, double.IsNaN(supplied) ? width : Math.Max(supplied, width));
     }
+
+    /// <summary>The widest single word of any wrapping text in <paramref name="cell"/>, measured on its own.</summary>
+    private static double LongestWord(Control cell) =>
+        cell.GetSelfAndVisualDescendants().OfType<TextBlock>()
+            .Where(text => text.TextWrapping != TextWrapping.NoWrap && !string.IsNullOrEmpty(text.Text))
+            .SelectMany(text => text.Text!.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Select(word =>
+            {
+                var probe = new TextBlock
+                {
+                    Text = word,
+                    FontFamily = text.FontFamily,
+                    FontSize = text.FontSize,
+                    FontWeight = text.FontWeight,
+                    FontStyle = text.FontStyle,
+                    LetterSpacing = text.LetterSpacing,
+                };
+                probe.Measure(Size.Infinity);
+                return probe.DesiredSize.Width;
+            }))
+            .DefaultIfEmpty(0)
+            .Max();
 
     private static List<TableGrid> Grids(Visual root, string id) =>
         [.. root.GetVisualDescendants().OfType<TableGrid>().Where(grid => grid.Layout.Id == id)];
 
-    /// <summary>The header and every row share column edges, and no Content column is wider than its widest cell.</summary>
+    /// <summary>
+    /// The header and every row share column edges. With room, every column holds its widest cell on one line and the
+    /// spare width is even. Without room, only name (Fill) columns are narrower than their widest cell, no narrower than
+    /// their minimum, and every other column holds its widest cell with nothing spare.
+    /// </summary>
     private static void Fits(Visual root, string id, int rowsAtLeast = 1, int headers = 1, bool evenSpare = true)
     {
         var grids = Grids(root, id);
@@ -91,31 +125,42 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
             Assert.Equal(edges, grid.ColumnDefinitions.Select(definition => definition.ActualWidth));
         }
 
-        var columns = heads[0].Layout.Columns;
-        var spacing = heads[0].Layout.Spacing;
-
-        var spare = new List<double>();
+        var layout = heads[0].Layout;
+        var columns = layout.Columns;
+        var spacing = layout.Spacing;
+        var widest = new double[columns.Count];
 
         for (var column = 0; column < columns.Count; column++)
         {
-            if (columns[column].Fit == ColumnFit.Fixed)
-            {
-                continue;
-            }
-
-            var widest = grids
+            widest[column] = grids
                 .SelectMany(grid => grid.Children.Where(child => Grid.GetColumn(child) == column && Grid.GetColumnSpan(child) == 1 && child is not ColumnGrip))
+                .ToList()
                 .Select(Natural).DefaultIfEmpty(0).Max();
-
-            Assert.True(edges[column] - spacing >= widest - 1, $"{id}.{columns[column].Key} is {edges[column]} wide; its widest cell is {widest}");
-
-            if (columns[column].Min is null)
-            {
-                spare.Add(edges[column] - spacing - widest);
-            }
         }
 
-        if (evenSpare && spare.Count > 1)
+        var drawable = Enumerable.Range(0, columns.Count).Where(column => columns[column].Fit != ColumnFit.Fixed).ToList();
+        var wrapped = drawable.Where(column => edges[column] - spacing < widest[column] - 1).ToList();
+
+        foreach (var column in wrapped)
+        {
+            Assert.True(columns[column].Fit == ColumnFit.Fill, $"{id}.{columns[column].Key} is {edges[column]} wide; its widest cell is {widest[column]}");
+            var word = grids
+                .SelectMany(grid => grid.Children.Where(child => Grid.GetColumn(child) == column && Grid.GetColumnSpan(child) == 1 && child is not ColumnGrip))
+                .Select(LongestWord).DefaultIfEmpty(0).Max();
+
+            Assert.True(edges[column] - spacing >= word - 1, $"{id}.{columns[column].Key} is {edges[column]} wide; its longest word is {word}");
+        }
+
+        var spare = drawable
+            .Where(column => columns[column].Min is null && !wrapped.Contains(column))
+            .Select(column => edges[column] - spacing - widest[column])
+            .ToList();
+
+        if (wrapped.Count > 0)
+        {
+            Assert.True(spare.All(width => width <= 2), $"{id}: a name column wraps while other columns have spare width: {string.Join(", ", spare.Select(width => Math.Round(width, 1)))}");
+        }
+        else if (evenSpare && spare.Count > 1)
         {
             Assert.True(spare.Max() - spare.Min() <= 2, $"{id}: spare width per column is not even: {string.Join(", ", spare.Select(width => Math.Round(width, 1)))}");
         }
@@ -281,6 +326,77 @@ public class TheShipMaterialAndPhraseTablesFitTheirColumnsTests
         Assert.True(heads >= 2, $"{heads} plans drawn");
 
         Fits(panel, MaterialsPage.NeededTable, 2, headers: heads);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void ANeededMaterialWithNoRoomWrapsItsNameAndTheRowGrows()
+    {
+        using var look = AppLook.Put();
+        var store = Store(
+            Commander,
+            """{"timestamp":"2026-08-18T09:00:00Z","event":"Materials","Raw":[],"Manufactured":[],"Encoded":[]}""");
+        var (window, panel, ships, _) = Fleet(store, Memory());
+
+        var ship = ships.BuildFor(12, "anaconda", "Sacred Wings");
+        ships.Plan(ship.Id, new SlotPlan("MainEngines") { Blueprint = "Dirty Drive Tuning", Grade = 5, Module = "Thrusters" });
+
+        Assert.True(panel.Nav.Show(LoadoutPages.GapRoot));
+        Dispatcher.UIThread.RunJobs();
+
+        window.Width = 900;
+        Dispatcher.UIThread.RunJobs();
+        Dispatcher.UIThread.RunJobs();
+
+        using (var frame = window.CaptureRenderedFrame()!)
+        {
+            frame.SaveCapture("needed-by-plans-without-room.png");
+        }
+
+        var name = Grids(panel, MaterialsPage.NeededTable)
+            .Where(grid => !grid.IsHeader)
+            .SelectMany(grid => grid.Children.OfType<TextBlock>())
+            .Single(text => text.Text == "Modified Consumer Firmware");
+        var row = name.FindAncestorOfType<TableGrid>()!;
+        var oneLine = row.Children.OfType<TextBlock>().Where(text => text != name).Max(text => text.Bounds.Height);
+
+        Assert.True(name.Bounds.Height > oneLine * 1.5, $"the name is {name.Bounds.Height} tall; one line is {oneLine}");
+        Assert.True(row.Bounds.Height >= name.Bounds.Height);
+        Assert.Equal(TextTrimming.None, name.TextTrimming);
+
+        Fits(panel, MaterialsPage.NeededTable, 2);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void AShipsSlotListFitsItsColumnsAtTheWindowsOpeningWidth()
+    {
+        using var look = AppLook.Put();
+        var store = Store(Commander);
+        var (window, panel, ships, _) = Fleet(store, Memory());
+
+        var ship = ships.BuildFor(12, "anaconda", "Sacred Wings");
+        ships.Plan(ship.Id, new SlotPlan("MainEngines") { Blueprint = "Dirty Drive Tuning", Grade = 5, Module = "Thrusters" });
+
+        window.Width = 820;
+        panel.Nav.Show(PanelTabNames.AssetsRoot);
+        Dispatcher.UIThread.RunJobs();
+
+        panel.GetVisualDescendants()
+            .OfType<Button>()
+            .First(button => button.GetVisualDescendants().OfType<TextBlock>().Any(block => (block.Text ?? string.Empty).Contains("Sacred Wings", StringComparison.OrdinalIgnoreCase)))
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Dispatcher.UIThread.RunJobs();
+        Grids(panel, LoadoutPages.SlotTable).Last().BringIntoView();
+        Dispatcher.UIThread.RunJobs();
+        Dispatcher.UIThread.RunJobs();
+
+        using (var frame = window.CaptureRenderedFrame()!)
+        {
+            frame.SaveCapture("ship-slot-list-820.png");
+        }
+
+        Fits(panel, LoadoutPages.SlotTable, 2);
         window.Close();
     }
 

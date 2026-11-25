@@ -145,7 +145,7 @@ public sealed class CommandersPage : UserControl
         StarSystemPage.Headed(Heads[0], new TableColumn("Name", ColumnFit.Fill), NameCell),
         StarSystemPage.Headed(Heads[1], new TableColumn("Ship"), sighting => Text(sighting.Ship ?? "—", Fonts.ChromeFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey))
             with { Filters = [ValueLists.One<CommanderSighting>("Ship", sighting => sighting.Ship, "No ship seen")] },
-        StarSystemPage.Headed(Heads[2], new TableColumn("LastLocation"), LocationCell)
+        StarSystemPage.Headed(Heads[2], new TableColumn("LastLocation", ColumnFit.Fill), LocationCell)
             with { Filters = [ValueLists.One<CommanderSighting>("Last location", sighting => sighting.StarSystem, "No location seen")] },
         StarSystemPage.Headed(Heads[3], new TableColumn("LastDetected"), sighting => Text(CommanderRoster.Detected(sighting.LastSeen), Fonts.MonoFamily, TypeScale.Meta, ThemeManager.GreyKey)),
         LedgerTables.Control<CommanderSighting>(new TableColumn("Switch", ColumnFit.Fixed) { Fixed = 140 }, ActionCell),

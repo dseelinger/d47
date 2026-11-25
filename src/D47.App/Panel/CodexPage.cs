@@ -397,13 +397,13 @@ public sealed class CodexPage : UserControl, IPageSummary, IFilterablePage
         {
             Children =
             {
-                CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, row.Named ? ThemeManager.WhiteKey : ThemeManager.GreyKey),
+                TableCells.Wraps(CreditsKit.Line(row.Name, Fonts.ProseFamily, TypeScale.ControlLarge, row.Named ? ThemeManager.WhiteKey : ThemeManager.GreyKey)),
             },
         };
 
         if (row.Detail.Length > 0)
         {
-            cell.Children.Add(CreditsKit.Line(row.Detail, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
+            cell.Children.Add(TableCells.Wraps(CreditsKit.Line(row.Detail, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey)));
         }
 
         return cell;

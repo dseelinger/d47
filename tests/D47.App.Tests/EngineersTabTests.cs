@@ -146,8 +146,8 @@ public class EngineersTabTests
             "Frame Shift Drive 5 · Sensors 3 · Surface Scanner 3 · Thrusters 3 · Frame Shift Drive Interdictor 1 · Power Plant 1 · Shield Booster 1";
 
         Assert.Equal(Expected, shown);
-        Assert.Equal(Avalonia.Media.TextWrapping.NoWrap, cell.TextWrapping);
-        Assert.Equal(Avalonia.Media.TextTrimming.CharacterEllipsis, cell.TextTrimming);
+        Assert.Equal(Avalonia.Media.TextWrapping.Wrap, cell.TextWrapping);
+        Assert.Equal(Avalonia.Media.TextTrimming.None, cell.TextTrimming);
 
         var entry = new EngineerEntry
         {

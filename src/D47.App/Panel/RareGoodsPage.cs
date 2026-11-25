@@ -534,15 +534,14 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
             string.Equals(rare.Rare.System, _here(), StringComparison.OrdinalIgnoreCase) ? ThemeManager.CyanKey : ThemeManager.AKey,
             vertical: VerticalAlignment.Center);
 
-        var station = new StackPanel
+        var station = new WrapPanel
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
+            ItemSpacing = 6,
             ClipToBounds = true,
             VerticalAlignment = VerticalAlignment.Center,
             Children =
             {
-                Typeset.Prose(rare.Rare.Station, TypeScale.Tip, ThemeManager.WhiteKey, trimming: TextTrimming.CharacterEllipsis, vertical: VerticalAlignment.Center),
+                Typeset.Prose(rare.Rare.Station, TypeScale.Tip, ThemeManager.WhiteKey, wrap: true, vertical: VerticalAlignment.Center),
                 CopyGlyph.LinkBeside(system, rare.Rare.System, _copy),
             },
         };

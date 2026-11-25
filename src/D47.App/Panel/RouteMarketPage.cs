@@ -1089,7 +1089,7 @@ public sealed class RouteMarketPage : UserControl
             cells.Children.Add(new TextBlock
             {
                 FontSize = TypeScale.Secondary,
-                TextTrimming = TextTrimming.CharacterEllipsis,
+                TextWrapping = TextWrapping.Wrap,
                 VerticalAlignment = VerticalAlignment.Center,
                 Inlines = [name, place],
             });

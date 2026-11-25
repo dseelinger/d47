@@ -638,7 +638,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
 
         if (row.Style == CombatNameStyle.Unnamed)
         {
-            dock.Children.Add(CreditsKit.Line(row.Text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey));
+            dock.Children.Add(TableCells.Wraps(CreditsKit.Line(row.Text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.GreyKey)));
             return dock;
         }
 
@@ -646,7 +646,7 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         {
             var isCurrent = current is { } address && row.SystemAddress == address;
             dock.Children.Add(CopyGlyph.LinkBeside(
-                CreditsKit.Line(row.Text, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey),
+                TableCells.Wraps(CreditsKit.Line(row.Text, Fonts.ChromeFamily, TypeScale.ControlLarge, isCurrent ? ThemeManager.CyanKey : ThemeManager.AKey)),
                 row.Text,
                 copy));
             return dock;
@@ -655,11 +655,11 @@ public sealed class CombatStatsPage : UserControl, IPageSummary, IFilterablePage
         var suffix = Suffix(row);
         var text = row.Suffix is null && suffix is not null ? row.Text[..row.Text.LastIndexOf(" (", StringComparison.Ordinal)] : row.Text;
 
-        dock.Children.Add(CreditsKit.Line(text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey));
+        dock.Children.Add(TableCells.Wraps(CreditsKit.Line(text, Fonts.ProseFamily, TypeScale.ControlLarge, ThemeManager.WhiteKey)));
 
         if (suffix is not null)
         {
-            var tail = CreditsKit.Line(suffix, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey);
+            var tail = TableCells.Wraps(CreditsKit.Line(suffix, Fonts.ProseFamily, TypeScale.Small, ThemeManager.GreyKey));
             tail.Margin = new Thickness(8, 0, 0, 0);
             tail.VerticalAlignment = VerticalAlignment.Center;
             dock.Children.Add(tail);

@@ -5,7 +5,10 @@ public enum ColumnFit
     /// <summary>As wide as its widest cell or header label.</summary>
     Content,
 
-    /// <summary>Marks a table's main column; spare width is shared as for <see cref="Content"/>.</summary>
+    /// <summary>
+    /// A name column: names, lists of names or prose. Spare width is shared as for <see cref="Content"/>; when the table is
+    /// short of room, only these columns narrow, their text wrapping at word breaks.
+    /// </summary>
     Fill,
 
     /// <summary>A set width.</summary>
@@ -18,10 +21,10 @@ public sealed record TableColumn(string Key, ColumnFit Fit = ColumnFit.Content)
     /// <summary>Width for <see cref="ColumnFit.Fixed"/>.</summary>
     public double Fixed { get; init; }
 
-    /// <summary>The narrowest the column goes; the header label's width when null.</summary>
+    /// <summary>The narrowest the column goes; the header label's width when null. See <see cref="TableLayout.MinimumOf"/>.</summary>
     public double? Min { get; init; }
 
-    /// <summary>The column never narrows below its widest cell; other columns give way first.</summary>
+    /// <summary>A <see cref="ColumnFit.Fill"/> column that never narrows below its widest cell, as other columns do not.</summary>
     public bool Whole { get; init; }
 }
 

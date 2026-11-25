@@ -965,7 +965,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             FontFamily = new FontFamily(Fonts.ChromeFamily),
             FontSize = TypeScale.ControlLarge,
             FontWeight = FontWeight.SemiBold,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextWrapping = TextWrapping.Wrap,
             VerticalAlignment = VerticalAlignment.Center,
         };
         ThemeInk.Bind(named, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
