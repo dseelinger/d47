@@ -457,21 +457,31 @@ internal sealed class NavigationFurnishing(IPanelTabHost host, CarrierRouteReque
         var here = _routeHere?.Invoke();
         var offDuty = _routeOffDuty?.Invoke(OffDutyNote.Route);
 
-        // And the ship's range, which the plan forms quote (#253).
-        var range = _routeRange?.Invoke();
+        // And the ship's range, which the plan forms quote (#253), rounded to the two decimal places the placeholder
+        // shows. It moves with the fuel aboard, so it changes all through a scoop.
+        var range = _routeRange?.Invoke() is { } ly ? Math.Round(ly, 2) : (double?)null;
 
-        if (ReferenceEquals(route, _routeSeen)
-            && string.Equals(here, _routeWhere, StringComparison.Ordinal)
-            && string.Equals(offDuty, _routeOffDutySeen, StringComparison.Ordinal)
-            && Nullable.Equals(range, _routeRangeSeen))
+        var moved = !ReferenceEquals(route, _routeSeen)
+            || !string.Equals(here, _routeWhere, StringComparison.Ordinal)
+            || !string.Equals(offDuty, _routeOffDutySeen, StringComparison.Ordinal);
+
+        if (!moved && Nullable.Equals(range, _routeRangeSeen))
         {
             return body;
+        }
+
+        _routeRangeSeen = range;
+
+        // Only the plan forms quote the range; the route pages are left as they are.
+        if (!moved)
+        {
+            _routePlan?.RefreshSupplied();
+            return true;
         }
 
         _routeSeen = route;
         _routeWhere = here;
         _routeOffDutySeen = offDuty;
-        _routeRangeSeen = range;
 
         // The progress page only where a host furnished one — the plan forms are furnished separately, and a
         // surface with one and not the other used to return before either.

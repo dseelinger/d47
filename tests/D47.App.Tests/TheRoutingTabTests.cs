@@ -357,6 +357,41 @@ public class TheRoutingTabTests
         Assert.Contains("Achenar", TextOf(panel));
     }
 
+    /// <summary>The jump range moving, as it does while scooping, leaves Progress as it is drawn; a jump still redraws it.</summary>
+    [AvaloniaFact]
+    public void AChangingJumpRangeDoesNotRedrawProgress()
+    {
+        var route = Route(Hop("Sol"), Hop("Colonia", 9));
+        var range = 40.0;
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+
+        panel.EnableRouting(new RoutingSurface(() => route, () => "Sol", JumpRange: () => range));
+        Laid(panel);
+
+        panel.Tab = PanelTab.Astrometrics;
+        panel.TickRouting();
+        Dispatcher.UIThread.RunJobs();
+
+        TextBlock Colonia() => panel.GetVisualDescendants().OfType<TextBlock>().First(block => block.Text == "Colonia");
+        var drawn = Colonia();
+
+        range = 40.004;
+        Assert.False(panel.TickRouting());
+        range = 41.37;
+        Assert.True(panel.TickRouting());
+        Assert.False(panel.TickRouting());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Same(drawn, Colonia());
+
+        route = Route(Hop("Sol"), Hop("Colonia", 9));
+
+        Assert.True(panel.TickRouting());
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.NotSame(drawn, Colonia());
+    }
+
     [Trait("Category", "Integration")]
     [AvaloniaFact]
     public void PlanOffersTheTwoPlanners()
