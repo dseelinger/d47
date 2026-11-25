@@ -22,7 +22,7 @@ internal static class FittedModule
         item.Scope.Group != ChecklistGroup.Build && (LoadoutFor(item, state) is null || Fitted(item, state) is not null);
 
     /// <summary>The module in this item's slot, or null where the slot is empty or the ship unseen.</summary>
-    private static ShipModule? Fitted(ChecklistItem item, CommanderGameState? state)
+    public static ShipModule? Fitted(ChecklistItem item, CommanderGameState? state)
     {
         if (item.Intent?.Subject is not { Length: > 0 } slot)
         {

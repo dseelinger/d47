@@ -20,9 +20,13 @@ public class APlannedSlotIsCostedWithoutItsModuleTests
         [.. report.Ledgers.SelectMany(ledger => ledger.Lines).Select(line => line.Material.Symbol.ToLowerInvariant())
             .Order(StringComparer.Ordinal)];
 
+    /// <summary>Every ingredient of this module kind's recipe from grade 1 up to the grade, since each grade is rolled in turn.</summary>
     private static IReadOnlyList<string> Recipe(string module, string blueprint, int grade) =>
-        [.. BlueprintCatalogue.Named(blueprint, module).Single(recipe => recipe.Grade == grade)
-            .Ingredients.Select(ingredient => ingredient.Symbol.ToLowerInvariant()).Order(StringComparer.Ordinal)];
+        [.. BlueprintCatalogue.Named(blueprint, module).Where(recipe => recipe.Grade <= grade)
+            .SelectMany(recipe => recipe.Ingredients)
+            .Select(ingredient => ingredient.Symbol.ToLowerInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)];
 
     private static void CostedAs(GapReport report, string module, string blueprint, int grade)
     {

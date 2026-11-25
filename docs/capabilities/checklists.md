@@ -518,7 +518,7 @@ that one, so it is checked exactly.
 
 Pressing **Put this build on my checklist** on the page of a ship you do not own makes a list named for the plan, such as
 "Python (planned)". It holds a "Buy a Python" line, a line for each module the plan names, the
-engineering lines and a "Have 12 Arsenic" line for each ship material the plan leaves you short of. A module line ticks once a matching module is in your module storage; until then it
+engineering lines and a "Have 12 Arsenic" line for each ship material the plan leaves you short of. A list gains a line later if a material becomes short after the plan is added. A module line ticks once a matching module is in your module storage; until then it
 says you can buy it into storage before you buy the ship. The checklist filter offers the planned ship group.
 
 Buying the ship ticks "Buy a Python", or removes it when **Remove fulfilled items** is on. The rest of
@@ -532,9 +532,13 @@ plans are for the same hull, neither moves. Deleting the plan removes its list, 
 Netted across **every** live plan at once, because storage caps are shared and two plans that each
 fit can be jointly impossible.
 
-The total is exact rather than a floor. An application costs exactly one of each ingredient —
-measured across 786 blueprints and 1,885 ingredient entries — and the crafts a grade takes are 5, 4,
-3, 2, 1 as your rank exceeds the recipe's grade. Known unit cost times known count is a real number.
+A grade 5 line costs every grade from the one the fitted module is at now up to grade 5, because the
+game makes you roll each grade in turn. A grade the module has finished costs nothing, a part-finished
+one costs the crafts left in it, and a module with another blueprint, or one the plan replaces, starts at
+grade 1. An application costs exactly one of each ingredient — measured across 786 blueprints and 1,885
+ingredient entries — and the crafts a grade takes are 5, 4, 3, 2, 1 as your rank exceeds the recipe's
+grade. Each grade is counted at your current rank, so the total is a ceiling: your rank only rises as you
+craft.
 
 Caps are reported **first**, because needing more than you can hold is a flat certainty — at least
 two trips, however the crafts go — while everything below it is a possibility and has to read like

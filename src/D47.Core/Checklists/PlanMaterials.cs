@@ -49,7 +49,8 @@ public sealed class PlanMaterialNeeds
 }
 
 /// <summary>
-/// The "Have 12 Arsenic" lines a ship's plan writes for each ship material it leaves the Commander short of.
+/// The "Have 12 Arsenic" lines a ship's plan writes for each ship material it leaves the Commander short of, when
+/// the plan is added or whenever a material becomes short later.
 /// A line ticks once what is held covers every live plan's need, stays ticked, and goes when no open
 /// engineering line in its list needs the material.
 /// </summary>
@@ -137,12 +138,27 @@ public static class PlanMaterials
     private static string Text(MaterialEntry material, int need) =>
         $"Have {need.ToString(CultureInfo.InvariantCulture)} {material.Name}";
 
+    /// <summary>Whether the document has anything <see cref="Reconcile"/> reads: a material line or an open plan line.</summary>
+    public static bool Applies(ChecklistDocument document)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        return document.Items.Any(item => Is(item) || IsOpenPlanLine(item));
+    }
+
+    private static bool IsOpenPlanLine(ChecklistItem item) =>
+        !item.IsComplete
+        && item.Source == ChecklistSource.EngineeringPlan
+        && item.Intent?.Kind is ChecklistIntentKind.Blueprint or ChecklistIntentKind.Experimental;
+
     /// <summary>
     /// What the material lines need changing: a line no open engineering line in its list needs is removed;
     /// an open line whose material is covered across every plan is ticked, or removed when
-    /// <paramref name="removeFulfilled"/>; an open line whose need moved is reworded.
+    /// <paramref name="removeFulfilled"/>; an open line whose need moved is reworded; and a list with an open
+    /// plan line gains a line for each ship material its engineering needs, every live plan is short of, and it
+    /// has no line for.
     /// </summary>
-    public static (IReadOnlyList<ChecklistItem> Moved, IReadOnlyList<ChecklistItem> Removed) Reconcile(
+    public static (IReadOnlyList<ChecklistItem> Moved, IReadOnlyList<ChecklistItem> Removed, IReadOnlyList<ChecklistItem> Added) Reconcile(
         PlanMaterialNeeds needs,
         ChecklistDocument document,
         CommanderGameState state,
@@ -199,7 +215,33 @@ public static class PlanMaterials
             }
         }
 
-        return (moved, removed);
+        return (moved, removed, Missing(needs, document, state));
+    }
+
+    private static IReadOnlyList<ChecklistItem> Missing(PlanMaterialNeeds needs, ChecklistDocument document, CommanderGameState state)
+    {
+        if (!state.Materials.SnapshotSeen)
+        {
+            return [];
+        }
+
+        var added = new List<ChecklistItem>();
+
+        foreach (var plan in document.Items.Where(IsOpenPlanLine).GroupBy(item => ChecklistOrdering.Key(item.Scope), StringComparer.Ordinal))
+        {
+            var scope = plan.First().Scope;
+            var list = document.In(scope);
+            var hull = list.Select(item => item.Hull).FirstOrDefault(named => named is not null);
+            var buildName = list.Select(item => item.BuildName).FirstOrDefault(named => named is not null);
+
+            added.AddRange(needs.For(scope).Values
+                .Where(ingredient => needs.All.TryGetValue(ingredient.Material.Symbol, out var every) && every.Short > 0)
+                .Select(ingredient => Line(scope, ingredient.Material, needs.All[ingredient.Material.Symbol].Needed, hull, buildName))
+                .Where(line => !list.Any(existing => string.Equals(existing.Key, line.Key, StringComparison.OrdinalIgnoreCase)))
+                .OrderBy(line => line.Text, StringComparer.Ordinal));
+        }
+
+        return added;
     }
 
     /// <summary>

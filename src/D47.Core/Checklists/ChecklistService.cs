@@ -524,16 +524,19 @@ public sealed class ChecklistService(
 
         // Read again on a tick with events or after the document changed, because netting every plan is not a
         // per-tick cost. A material line ticking says nothing here: ChecklistCallout says the material is covered.
-        if (document.Items.Any(PlanMaterials.Is)
+        var added = new List<ChecklistItem>();
+
+        if (PlanMaterials.Applies(document)
             && (events is { Count: > 0 } || !ReferenceEquals(document, _materialsReconciled)))
         {
             _materialsReconciled = document;
 
-            var (rewritten, gone) = PlanMaterials.Reconcile(
+            var (rewritten, gone, missing) = PlanMaterials.Reconcile(
                 MaterialNeeds(document, state, fresh: true), document, state, RemoveFulfilled);
 
             moved.AddRange(rewritten);
             removed.AddRange(gone);
+            added.AddRange(missing);
         }
 
         if (announce && news.Count > 0)
@@ -547,7 +550,7 @@ public sealed class ChecklistService(
             }
         }
 
-        if (moved.Count == 0 && removed.Count == 0)
+        if (moved.Count == 0 && removed.Count == 0 && added.Count == 0)
         {
             return news;
         }
@@ -586,6 +589,15 @@ public sealed class ChecklistService(
                 {
                     // Forget rather than Delete: Delete refuses a Derived item.
                     updated = updated.Forget(item.Scope, candidate => candidate.Id.Same(item.Id)).Document;
+                }
+
+                foreach (var item in added)
+                {
+                    // Only onto a list that is still there and has room.
+                    if (updated.In(item.Scope).Count is > 0 and < ChecklistLimits.MaxLiveItemsPerScope)
+                    {
+                        updated = updated.Adopt(item);
+                    }
                 }
 
                 return new ChecklistChange(updated, Changed: true, "Recomputed.");

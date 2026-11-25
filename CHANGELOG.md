@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: An engineering plan counts the materials for every grade you still have to roll. Before, a Grade 5 line counted only the grade 5 recipe, so the "Have N" lines, the Materials page and "what do my plans still need" left out grades 1 to 4, and engineering could stop at a lower grade for a material nothing had listed. A grade the fitted module has finished is not counted again, and a part-finished grade counts the crafts left in it. A list that already exists gains a "Have N" line when a material becomes short after the plan was added, including a list whose lines all went under Remove fulfilled items.
+
 Fixed: A material trader search lists a station under the kind it trades. Where the galaxy search had a station under the wrong kind, such as Bernoulli City in Machadan under Manufactured when the game's trader there is Raw, the Materials page, the trader answers, the station and outfitting searches and the watches now use the kind from your own trades there, then d47's trader table, then the galaxy search. A station of the kind you ask for that the search filed under another kind is added to the first page, and one filed under the kind but known to be another is left out.
 
 Fixed: Targeting your own parked ship from the SRV no longer counts as meeting another Commander. Before, the next game session's target of your ship was announced as "Commander <your name> — you met … ago; you targeted them", and you appeared in your own Commander log. Earlier meetings with yourself are gone from the log too, since it is rebuilt from the journals at every start.

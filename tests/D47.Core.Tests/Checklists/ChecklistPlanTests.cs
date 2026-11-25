@@ -8,7 +8,7 @@ namespace D47.Core.Tests.Checklists;
 
 /// <summary>
 /// The seam between Phase 14's tables and this phase's lists: a build costed into the things
-/// a Commander has to do, with an exact total rather than a floor.
+/// a Commander has to do, with a total that is a ceiling rather than a floor.
 /// </summary>
 public class ChecklistPlanTests
 {

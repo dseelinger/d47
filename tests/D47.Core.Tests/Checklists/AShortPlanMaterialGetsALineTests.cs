@@ -229,6 +229,55 @@ public class AShortPlanMaterialGetsALineTests
     }
 
     [Fact]
+    public void APlanAddedWithEverythingHeldGainsALineWhenAMaterialIsSpent()
+    {
+        var bench = new Bench();
+        var build = bench.Plan();
+
+        bench.HoldNothing();
+        bench.Ships.Promote(build.Id);
+        var needs = bench.Needs(build.Scope);
+        bench.Checklists.DeleteList(bench.Checklists.Lists().Single());
+
+        bench.Hold(Counts(needs));
+        bench.Ships.Promote(build.Id);
+        Assert.Empty(bench.MaterialLines(build.Scope));
+
+        var spent = needs.Values.First();
+        var left = Counts(needs);
+        left.Remove(spent.Material.Symbol);
+        bench.Poll(bench.Hold(left));
+
+        var line = Assert.Single(bench.MaterialLines(build.Scope));
+
+        Assert.Equal(spent.Material.Symbol, line.Intent!.Subject);
+        Assert.Equal($"Have {spent.Needed.ToString(CultureInfo.InvariantCulture)} {spent.Material.Name}", line.Text);
+        Assert.Equal(ChecklistState.Open, line.State);
+        Assert.Equal("python", line.Hull);
+    }
+
+    [Fact]
+    public void WithRemoveFulfilledOnAListWhoseLinesAllWentGainsThemBackWhenShortAgain()
+    {
+        var bench = new Bench { RemoveFulfilled = true };
+        var build = bench.Plan();
+
+        bench.HoldNothing();
+        bench.Ships.Promote(build.Id);
+        var needs = bench.Needs(build.Scope);
+
+        bench.Poll(bench.Hold(Counts(needs)));
+        Assert.Empty(bench.MaterialLines(build.Scope));
+
+        bench.Poll(bench.HoldNothing());
+
+        var lines = bench.MaterialLines(build.Scope);
+
+        Assert.Equal(needs.Count, lines.Count);
+        Assert.All(lines, line => Assert.Equal(ChecklistState.Open, line.State));
+    }
+
+    [Fact]
     public void DeletingAnEngineeringLineLowersTheNeedAndRemovesTheLinesItsListNoLongerNeeds()
     {
         var bench = new Bench();
@@ -403,7 +452,7 @@ public class AShortPlanMaterialGetsALineTests
         var line = PlanMaterials.Line(ChecklistScope.Ship(101), over.Material, over.Needed, "python", null);
         var document = ChecklistDocument.For("F1") with { Items = [.. blueprints, line] };
 
-        var (moved, removed) = PlanMaterials.Reconcile(PlanMaterials.Read(document, bench.Game.Active!), document, bench.Game.Active!, removeFulfilled: false);
+        var (moved, removed, _) = PlanMaterials.Reconcile(PlanMaterials.Read(document, bench.Game.Active!), document, bench.Game.Active!, removeFulfilled: false);
         var verdict = PlanMaterials.Verdict(line, PlanMaterials.Read(document, bench.Game.Active!), bench.Game.Active!);
 
         Assert.Empty(moved);

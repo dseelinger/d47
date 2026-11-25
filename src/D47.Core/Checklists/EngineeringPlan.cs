@@ -191,8 +191,9 @@ public static class EngineeringPlan
         var blocks = new List<PlanBlock>();
         var uncovered = new List<string>();
         var assumed = new List<string>();
+        var lines = items as IReadOnlyList<ChecklistItem> ?? [.. items];
 
-        foreach (var item in items)
+        foreach (var item in lines)
         {
             if (item.IsComplete || item.Intent is not { } intent)
             {
@@ -235,17 +236,17 @@ public static class EngineeringPlan
             // hull is being flown.
             var fitted = item.Scope.Group == ChecklistGroup.Ship ? FittedModule.Of(item, state) : null;
 
-            var options = PlannedModule.Candidates(
+            var candidates = PlannedModule.Candidates(
                     intent.Detail,
                     Blank(intent.Module),
                     fitted,
                     EliteSpecifications.Slot(item.Hull, intent.Subject))
-                .Where(recipe => recipe.Kind == wanted);
+                .Where(recipe => recipe.Kind == wanted)
+                .ToList();
 
-            if (grade is { } wantedGrade)
-            {
-                options = options.Where(recipe => recipe.Grade == wantedGrade);
-            }
+            var options = grade is { } wantedGrade
+                ? candidates.Where(recipe => recipe.Grade == wantedGrade)
+                : candidates;
 
             var recipe = PlannedModule.Choose([.. options], out var guessed);
 
@@ -271,23 +272,41 @@ public static class EngineeringPlan
                 continue;
             }
 
-            var (engineer, rank) = BestRoller(intent, state);
+            var top = grade!.Value;
 
-            if (rank is { } known && recipe.TotalFor(known) is { } total)
+            if (Ladder(candidates, recipe, top) is not { } ladder)
             {
-                Add(needed, total);
+                uncovered.Add($"{item.Text} — my table is missing a lower grade of that blueprint.");
                 continue;
             }
 
-            // Nobody unlocked can reach it yet: counted at the worst case rather than left uncosted, and the
+            var (engineer, rank) = BestRoller(intent, state);
+            var progress = item.Scope.Group == ChecklistGroup.Ship ? Progress(item, lines, state, recipe) : null;
+
+            foreach (var step in ladder)
+            {
+                var crafts = Crafts(step.Grade!.Value, rank, progress);
+
+                if (crafts == 0)
+                {
+                    continue;
+                }
+
+                Add(needed,step.Ingredients.Select(ingredient => ingredient with { Size = ingredient.Size * crafts }));
+            }
+
+            // A grade nobody unlocked can reach is counted at the worst case rather than left uncosted, and the
             // gate line says why.
-            Add(needed, recipe.TotalFor(grade!.Value));
-            blocks.Add(new PlanBlock(
-                $"Grade {grade.Value.ToString(CultureInfo.InvariantCulture)} {recipe.Name}",
-                grade.Value,
-                engineer,
-                rank,
-                state?.Engineers.IsKnown ?? false));
+            if (Crafts(top, rank, progress) > 0
+                && (rank is not { } known || EngineeringRules.RollsFor(top, known) is null))
+            {
+                blocks.Add(new PlanBlock(
+                    $"Grade {top.ToString(CultureInfo.InvariantCulture)} {recipe.Name}",
+                    top,
+                    engineer,
+                    rank,
+                    state?.Engineers.IsKnown ?? false));
+            }
         }
 
         var ingredients = needed
@@ -338,6 +357,82 @@ public static class EngineeringPlan
         }
 
         return best.Rank is null ? (first, null) : best;
+    }
+
+    /// <summary>
+    /// The recipe at every grade from 1 to <paramref name="top"/> for the chosen recipe's module kind, or null
+    /// where a grade is missing.
+    /// </summary>
+    private static IReadOnlyList<Blueprint>? Ladder(IReadOnlyList<Blueprint> candidates, Blueprint chosen, int top)
+    {
+        var ladder = new List<Blueprint>();
+
+        for (var grade = 1; grade <= top; grade++)
+        {
+            var step = grade == top
+                ? chosen
+                : candidates.FirstOrDefault(recipe =>
+                    recipe.Grade == grade
+                    && string.Equals(recipe.Module, chosen.Module, StringComparison.Ordinal)
+                    && string.Equals(recipe.Name, chosen.Name, StringComparison.Ordinal));
+
+            if (step is null)
+            {
+                return null;
+            }
+
+            ladder.Add(step);
+        }
+
+        return ladder;
+    }
+
+    /// <summary>
+    /// The grade and fill of this blueprint on the module fitted in the line's slot, or null where the slot holds
+    /// another blueprint, nothing engineered, or a module the plan replaces.
+    /// </summary>
+    private static (int Level, double Quality)? Progress(
+        ChecklistItem item,
+        IReadOnlyList<ChecklistItem> lines,
+        CommanderGameState? state,
+        Blueprint recipe)
+    {
+        var intent = item.Intent!;
+
+        if (FittedModule.Fitted(item, state) is not { Blueprint: { } applied, BlueprintLevel: { } level } module
+            || !recipe.Symbols.Contains(applied, StringComparer.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        if (Blank(intent.Variant) is { } variant && !string.Equals(variant, module.Item, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var replaced = lines.Any(line =>
+            !line.IsComplete
+            && line.Scope.Same(item.Scope)
+            && line.Intent is { Kind: ChecklistIntentKind.Module } swap
+            && string.Equals(swap.Subject, intent.Subject, StringComparison.OrdinalIgnoreCase));
+
+        return replaced ? null : (level, module.Quality ?? 0);
+    }
+
+    /// <summary>
+    /// The crafts one grade still takes: none below the fitted grade, what is left of the fitted grade, and a full
+    /// grade above it. A rank that cannot reach the grade counts it at the most crafts a grade takes.
+    /// </summary>
+    private static int Crafts(int grade, int? rank, (int Level, double Quality)? fitted)
+    {
+        var at = rank is { } known && known >= grade ? known : grade;
+
+        if (fitted is { } done && grade <= done.Level)
+        {
+            return grade < done.Level ? 0 : EngineeringRules.RollsRemaining(grade, at, done.Quality) ?? 0;
+        }
+
+        return EngineeringRules.RollsFor(grade, at) ?? 0;
     }
 
     private static void Add(Dictionary<string, int> into, IEnumerable<BlueprintIngredient>? ingredients)
