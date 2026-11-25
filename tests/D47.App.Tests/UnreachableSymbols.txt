@@ -130,6 +130,7 @@ D47.Core.Knowledge.CodexKinds.OfSpansh(D47.Core.Knowledge.BodyProfile)
 D47.Core.Knowledge.CodexVariants.Of(string)
 D47.Core.Knowledge.CommodityBoard.Posted
 D47.Core.Knowledge.ICommunityBiology.SystemRecordAsync(string, System.Threading.CancellationToken)
+D47.Core.Knowledge.MaterialTraderTable
 D47.Core.Knowledge.OrbitNode.AxialTilt
 D47.Core.Knowledge.Orrery.Place(D47.Core.Knowledge.OrbitNode, System.DateTimeOffset, int)
 D47.Core.Knowledge.Orrery.Position(D47.Core.Knowledge.OrbitNode, System.DateTimeOffset)
