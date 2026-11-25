@@ -74,6 +74,9 @@ public sealed class HistoryBackfill
     /// <summary>The scanned FSS signals, folded the same way.</summary>
     public SignalSightings? Signals { get; init; }
 
+    /// <summary>The material trader types from the Commander's trades, folded the same way.</summary>
+    public TraderSightings? Traders { get; init; }
+
     /// <summary>The Commanders met, folded the same way.</summary>
     public CommanderLog? MetCommanders { get; init; }
 
@@ -451,6 +454,15 @@ public sealed class HistoryBackfill
                 Timed("signal backfill", () =>
                 {
                     signals.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (Traders is { } traders)
+            {
+                Timed("trader type backfill", () =>
+                {
+                    traders.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }

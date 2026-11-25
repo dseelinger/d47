@@ -1419,6 +1419,11 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.SignalSightings>());
 
+        // The trader types the Commander's own trades show, rebuilt by the same walk and extended live.
+        var traderSightings = new D47.Core.Journal.TraderSightings(
+            files,
+            loggerFactory.CreateLogger<D47.Core.Journal.TraderSightings>());
+
         var friends = new D47.Core.Journal.FriendRoster();
 
         var commsChannels = new D47.Core.Conversation.CommsChannels();
@@ -1459,6 +1464,7 @@ public sealed class AppHost : IDisposable
             Activities = activities,
             Mail = mail,
             Signals = signalSightings,
+            Traders = traderSightings,
             MetCommanders = commanderLog,
             Erases = commanderErases,
             Travel = travelLog,
@@ -1911,6 +1917,7 @@ public sealed class AppHost : IDisposable
             Markets = markets,
             Memories = memories,
             SignalSightings = signalSightings,
+            TraderSightings = traderSightings,
             CommanderLog = commanderLog,
             CommanderErases = commanderErases,
             Friends = friends,
@@ -1994,6 +2001,7 @@ public sealed class AppHost : IDisposable
             Crimes = stores.Crimes,
             Activities = stores.Activities,
             SignalSightings = stores.SignalSightings,
+            TraderSightings = stores.TraderSightings,
             CommanderErases = stores.CommanderErases,
             Friends = stores.Friends,
             CommanderLog = stores.CommanderLog,
@@ -4882,6 +4890,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Journal.RegionFirstBook RegionFirsts { get; init; }
 
         public required D47.Core.Journal.SignalSightings SignalSightings { get; init; }
+
+        public required D47.Core.Journal.TraderSightings TraderSightings { get; init; }
 
         public required D47.Core.Journal.CommanderLog CommanderLog { get; init; }
 

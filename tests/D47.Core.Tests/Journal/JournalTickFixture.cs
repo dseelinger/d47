@@ -53,6 +53,7 @@ internal sealed class JournalTickFixture
             Crimes = new OutstandingCrimes(Files, NullLogger.Instance),
             Activities = new ActivityLedger(Files, NullLogger.Instance),
             SignalSightings = new SignalSightings(Files, NullLogger.Instance),
+            TraderSightings = new TraderSightings(Files, NullLogger.Instance),
             CommanderErases = new CommanderErases(Files, NullLogger<CommanderErases>.Instance),
             Friends = new FriendRoster(),
             CommanderLog = new CommanderLog(Files, NullLogger.Instance),

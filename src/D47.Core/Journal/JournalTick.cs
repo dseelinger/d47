@@ -50,6 +50,8 @@ public sealed class JournalTick(JournalTick.Sources sources)
 
         public required SignalSightings SignalSightings { get; init; }
 
+        public required TraderSightings TraderSightings { get; init; }
+
         public required CommanderErases CommanderErases { get; init; }
 
         public required FriendRoster Friends { get; init; }
@@ -169,6 +171,7 @@ public sealed class JournalTick(JournalTick.Sources sources)
         sources.Crimes.Apply(events, inGame);
         sources.Activities.Apply(events, inGame);
         sources.SignalSightings.Apply(events);
+        sources.TraderSightings.Apply(events);
         sources.CommanderErases.Apply(events);
         sources.Friends.Apply(events);
         sources.CommanderLog.Apply(events);
