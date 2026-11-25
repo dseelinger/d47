@@ -112,7 +112,7 @@ public sealed class MaterialDetailPage : UserControl
 
         _body.Children.Clear();
         _body.Children.Add(Heading(ledger, card));
-        _body.Children.Add(Facts(ledger, detail));
+        _body.Children.Add(Facts(detail));
 
         var needs = report.Builds
             .Select(build => (Build: build, Line: build.Lines.FirstOrDefault(line =>
@@ -301,22 +301,21 @@ public sealed class MaterialDetailPage : UserControl
         return crumb;
     }
 
-    /// <summary>Ledger, category, grade, and held against the cap with a gauge.</summary>
-    private static Grid Facts(string ledger, MaterialDetail? detail)
+    /// <summary>Category, grade, and held against the cap with a gauge.</summary>
+    private static Grid Facts(MaterialDetail? detail)
     {
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
+            ColumnDefinitions = new ColumnDefinitions("*,*,*"),
             ColumnSpacing = 2,
             Margin = new Thickness(0, 18, 0, 0),
         };
 
         var material = detail?.Entry;
 
-        grid.Children.Add(Cell(0, "Ledger", Value(ledger)));
-        grid.Children.Add(Cell(1, "Category", Value(material is null ? "—" : LineName(material))));
+        grid.Children.Add(Cell(0, "Category", Value(material is null ? "—" : LineName(material))));
         grid.Children.Add(Cell(
-            2,
+            1,
             "Grade",
             MaterialsPage.Mono(detail?.Grade is { } grade ? $"G{MaterialsPage.Count(grade)}" : "—", ThemeManager.AKey)));
 
@@ -337,7 +336,7 @@ public sealed class MaterialDetailPage : UserControl
 
         var gauge = new StackPanel { Children = { heading, bar } };
         var tile = Tile(gauge);
-        Grid.SetColumn(tile, 3);
+        Grid.SetColumn(tile, 2);
         grid.Children.Add(tile);
 
         return grid;

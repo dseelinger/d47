@@ -67,7 +67,7 @@ public sealed class ActivitiesPage : UserControl
         _commander = commander;
         _now = now ?? (() => DateTimeOffset.Now);
         _wide = new ArrangedTable<ActivityRow>(TableId, WideFields(), columnArrangements, widths, 16, sortedByDefault: "LastDone");
-        _narrowTable = new ArrangedTable<ActivityRow>(TableId, NarrowFields(), columnArrangements, widths);
+        _narrowTable = new ArrangedTable<ActivityRow>(TableId, NarrowFields(), columnArrangements, widths, columnArrangements?.Headset == true ? 12 : 16);
         _wide.Changed += Fill;
         _narrowTable.Changed += Fill;
 

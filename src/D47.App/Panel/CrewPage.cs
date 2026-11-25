@@ -58,7 +58,7 @@ public sealed class CrewPage : UserControl
     {
         _state = state;
         _pictures = pictures;
-        _table = new ArrangedTable<CrewMember>(TableId, Fields(), columnArrangements, columnWidths, headName: "CrewHead");
+        _table = new ArrangedTable<CrewMember>(TableId, Fields(), columnArrangements, columnWidths, columnArrangements?.Headset == true ? 12 : 16, headName: "CrewHead");
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
         _table.Changed += Draw;
 

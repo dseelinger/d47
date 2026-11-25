@@ -96,7 +96,7 @@ public sealed class PhrasesPage : UserControl, IFilterablePage
         ColumnWidthMemory? columnWidths = null,
         ColumnArrangementMemory? columnArrangements = null)
     {
-        _own = new ArrangedTable<LearnedPhrase>(OwnTable, OwnFields(), columnArrangements, columnWidths, headName: "OwnPhrasesHead");
+        _own = new ArrangedTable<LearnedPhrase>(OwnTable, OwnFields(), columnArrangements, columnWidths, columnArrangements?.Headset == true ? 12 : 16, headName: "OwnPhrasesHead");
         _builtIn = new ArrangedTable<BuiltIn>(BuiltInTable, BuiltInFields(), columnArrangements, columnWidths, 12, headName: "BuiltInPhrasesHead");
         _own.Changed += Build;
         _builtIn.Changed += Build;

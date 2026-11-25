@@ -166,7 +166,7 @@ public sealed class StoredModulesPage : UserControl, IFilterablePage
     {
         _state = state;
         _copy = copy;
-        _table = new ArrangedTable<Held>(TableId, Fields(copy), columnArrangements, columnWidths, sortedByDefault: "Module", headName: "StoredHead");
+        _table = new ArrangedTable<Held>(TableId, Fields(copy), columnArrangements, columnWidths, columnArrangements?.Headset == true ? 12 : 16, sortedByDefault: "Module", headName: "StoredHead");
         _clock = new JournalClock(() => state()?.Session.LastEventAt);
         _table.Changed += Draw;
 

@@ -197,6 +197,9 @@ public sealed class TheAssetMgmtTablesAreArrangedTests
 
         var id = MaterialsPage.NeededTable;
         Assert.Equal(["Material", "Ledger", "HeldNeed", "Short", "Gauge"], Keys(panel, id));
+        var header = panel.GetVisualDescendants().OfType<TableGrid>().First(grid => grid.Layout.Id == id && grid.IsHeader);
+        Assert.Equal(16, header.Layout.Spacing);
+        Assert.Contains(panel.GetVisualDescendants().OfType<TextBlock>(), block => block.Text?.ToUpperInvariant() == "CATEGORY");
 
         Press(panel, ColumnArranger.NameOf(id, "Tile"));
         Add(panel, id, "Grade");

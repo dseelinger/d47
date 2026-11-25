@@ -81,7 +81,7 @@ public sealed partial class MaterialsPage : UserControl
     public static readonly IReadOnlyList<SortColumn<GapBuildLine>> ColumnHeadings =
     [
         SortColumn<GapBuildLine>.Text("Material", line => line.Material.Name),
-        SortColumn<GapBuildLine>.Text("Ledger", line => LedgerOf(line.Material)),
+        SortColumn<GapBuildLine>.Text("Category", line => LedgerOf(line.Material)),
         SortColumn<GapBuildLine>.Figure("Held / need", line => (int?)line.Held, SortDirection.Descending),
         SortColumn<GapBuildLine>.Figure("Short", line => (int?)line.Short, SortDirection.Descending),
     ];
@@ -111,7 +111,7 @@ public sealed partial class MaterialsPage : UserControl
         Func<SystemSearchLink?>? systemSearch = null)
     {
         _systemSearch = systemSearch;
-        _needed = new ArrangedTable<GapBuildLine>(NeededTable, Fields(), columnArrangements, columnWidths, headName: "MaterialsHead");
+        _needed = new ArrangedTable<GapBuildLine>(NeededTable, Fields(), columnArrangements, columnWidths, columnArrangements?.Headset == true ? 12 : 16, headName: "MaterialsHead");
         _gap = gap;
         _engineers = engineers;
         _nav = nav;
@@ -1187,7 +1187,7 @@ public sealed partial class MaterialsPage : UserControl
     [
         StarSystemPage.Headed(ColumnHeadings[0], new TableColumn("Material", ColumnFit.Fill), line => NameCell(line.Material)),
         StarSystemPage.Headed(ColumnHeadings[1], new TableColumn("Ledger"), line => Chrome(LedgerOf(line.Material), ThemeManager.GreyKey))
-            with { Filters = [ValueLists.One<GapBuildLine>("Ledger", line => LedgerOf(line.Material), "No ledger")] },
+            with { Filters = [ValueLists.One<GapBuildLine>("Category", line => LedgerOf(line.Material), "No category")] },
         StarSystemPage.Headed(
             ColumnHeadings[2], new TableColumn("HeldNeed"), line => Mono($"{Count(line.Held)} / {Count(line.Needed)}", ThemeManager.WhiteKey), right: true),
         StarSystemPage.Headed(

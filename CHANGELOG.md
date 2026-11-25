@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: Table columns have space between them. On Needed by plans, Crew, Phrases (your own phrases), Stored modules and the narrow Activities table, a right-aligned figure no longer touches the left-aligned word after it. Materials say Category where they said Ledger: the Needed by plans column, its sort and its filter (empty value "No category"). A material's page no longer shows a Ledger fact; Category, Grade and Held remain.
+
 Changed: A table with less width than its columns need wraps its names instead of cutting them short. On Needed by plans and the other tables, a material, station, system or other name continues on the next line and its row grows, while numbers and labels keep their full width on one line. A table that still does not fit scrolls sideways in the window, and on the headset's big panel a column that does not fit is left out. Before, every column narrowed and its text ended in an ellipsis. The Current and Plan columns of a ship's slot list still shorten their effects to fit, with the full text on hover.
 
 Fixed: An engineering plan counts the materials for every grade you still have to roll. Before, a Grade 5 line counted only the grade 5 recipe, so the "Have N" lines, the Materials page and "what do my plans still need" left out grades 1 to 4, and engineering could stop at a lower grade for a material nothing had listed. A grade the fitted module has finished is not counted again, and a part-finished grade counts the crafts left in it. A list that already exists gains a "Have N" line when a material becomes short after the plan was added, including a list whose lines all went under Remove fulfilled items.

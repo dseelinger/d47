@@ -108,6 +108,23 @@ public class AMaterialOpensOnItsOwnPageTests
     }
 
     [AvaloniaFact]
+    public void TheFactsRowShowsCategoryGradeAndHeldWithNoLedgerFact()
+    {
+        var surface = Open();
+        Materials(surface.Panel).Select("raw");
+        Dispatcher.UIThread.RunJobs();
+
+        var shown = Text(Drill(surface, "polonium")).Select(line => line.ToUpperInvariant()).ToList();
+
+        Assert.Contains("CATEGORY", shown);
+        Assert.Contains("GRADE", shown);
+        Assert.Contains("HELD", shown);
+        Assert.DoesNotContain("LEDGER", shown);
+
+        surface.Window.Close();
+    }
+
+    [AvaloniaFact]
     public void PressingALedgerTileDrillsToAPageWithTheLedgerInItsBreadcrumb()
     {
         var surface = Open();
