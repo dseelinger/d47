@@ -10,6 +10,12 @@ Each theme gives every folder its count in catalogue.BRIEFS. A song counts while
 theme's sung-off folder, so a deleted song is written again. A new song goes where its theme is: the folder when
 the theme is on, sung-off\\<theme>\\ when it is off (see sung.py). The ledger is with-lyrics.tsv in the data
 folder; with-lyrics.log is the log.
+Each song is sung in the voice of one a cappella clip in voice-refs\\ in the data folder, passed to ACE-Step as
+reference audio. voice-refs\\credits.tsv lists the clips and their licences. Only a clip whose approved column is
+yes is used, and the maintainer gives that after hearing it. Its pool column is calm or combat: combat folders
+(catalogue.COMBAT) take only combat clips, the rest only calm ones, and a pool with no approved clip has its folders
+skipped. A clip's file name starts female- or male-, which is the only voice wording the caption carries. The ledger's
+vocal column names the clip.
 Nothing here touches tracks\\ or generated.txt, so the weekly publish never sees these songs.
 Shares generate.lock with the library generator, stops after the current song when STOP exists, and waits while
 Elite Dangerous is running. A usage or rate limit from Claude ends the run.
@@ -50,15 +56,8 @@ CUES = {"arrival-from-supercruise", "arrival-from-hyperspace", "interdiction"}
 SOLO_NEEDS = {"saxophone": "saxophone", "piano": "piano", "harp": "harp", "violin": "violin", "flute": "flute",
               "guitar": "guitar", "brass": "brass", "cello": "cello"}
 
-VOCALS = ["warm male vocal", "breathy female vocal", "smoky female vocal", "soft male vocal", "airy female vocal",
-          "rich female alto vocal", "tender male vocal", "intimate female vocal", "mellow male vocal",
-          "clear male vocal", "gentle female vocal", "ethereal female vocal", "weathered male vocal",
-          "smooth soulful female vocal", "hearty male vocal", "soft falsetto male vocal", "husky female vocal",
-          "bright female vocal", "low gentle male vocal", "distant female vocal"]
-COMBAT_VOCALS = ["gritty male baritone vocal", "deep powerful male vocal", "raspy male rock vocal",
-                 "urgent gritty male vocal", "aggressive male vocal", "rough male vocal", "hoarse male vocal",
-                 "breathless male vocal", "fierce female vocal", "powerful female belt vocal",
-                 "dark female alto vocal", "deep ominous male vocal"]
+VOICES = os.path.join(DATA, "voice-refs")
+VOICE_CREDITS = os.path.join(VOICES, "credits.tsv")
 
 ANGLES = ["a pilot talking to the ship", "a letter home that will arrive late", "a promise made before launch",
           "a station worker watching ships come and go", "an old wingmate remembered", "one small object in the cockpit",
@@ -243,13 +242,15 @@ def present(rows, out):
 
 def plan(rows, out, folders, count, themes=sung.THEMES):
     """(theme, folder, attempt) triples to make: theme by theme in order, and within a theme round-robin across
-    the folders furthest from their quota."""
+    the folders furthest from their quota. A folder whose voice pool has no approved clip is left out."""
     kept = present(rows, out)
+    voiced = {kind for kind, pool in voices().items() if pool}
     order = []
     for theme in themes:
         have = {f: sum(1 for r in kept if r["folder"] == f and sung.theme_of(r) == theme) for f in catalogue.BRIEFS}
         made = {f: sum(1 for r in rows if r["folder"] == f and sung.theme_of(r) == theme) for f in catalogue.BRIEFS}
-        need = {f: max(catalogue.BRIEFS[f][0] - have[f], 0) for f in catalogue.BRIEFS if not folders or f in folders}
+        need = {f: max(catalogue.BRIEFS[f][0] - have[f], 0) for f in catalogue.BRIEFS
+                if (not folders or f in folders) and pool_of(f) in voiced}
         for i in range(max(need.values(), default=0)):
             for f, n in need.items():
                 if i < n:
@@ -257,22 +258,59 @@ def plan(rows, out, folders, count, themes=sung.THEMES):
     return order[:count] if count else order
 
 
-def spec(theme, folder, attempt, rows):
-    """The song's arrangement, drawn from the folder's brief with a seed of its own."""
+def voices():
+    """{"calm": {clip stem: path ACE-Step reads}, "combat": {...}} for every clip credits.tsv marks approved yes, under
+    its pool column. A stem starts female- or male-; a WAV beside a clip, with the same stem, is read in its place
+    (ACE-Step cannot read a 22 kHz MP3)."""
+    pools = {"calm": {}, "combat": {}}
+    if not os.path.exists(VOICE_CREDITS):
+        return pools
+    with open(VOICE_CREDITS, encoding="utf-8", newline="") as f:
+        approved = [r for r in csv.DictReader(f, delimiter="\t") if r.get("approved") == "yes" and r.get("pool") in pools]
+    for r in approved:
+        stem = os.path.splitext(r["file"])[0]
+        wav = os.path.join(VOICES, stem + ".wav")
+        path = wav if os.path.exists(wav) else os.path.join(VOICES, r["file"])
+        if os.path.exists(path):
+            pools[r["pool"]][stem] = path
+    return pools
+
+
+def pool_of(folder):
+    return "combat" if folder in catalogue.COMBAT else "calm"
+
+
+def log_voice_gaps():
+    """Logs each voice pool with no approved clip; plan leaves out its folders."""
+    for kind, pool in voices().items():
+        if not pool:
+            log(f"no approved {kind} voice in {VOICE_CREDITS}: {kind} folders are skipped")
+
+
+def gender_of(voice):
+    return "female" if voice.startswith("female-") else "male"
+
+
+def spec(theme, folder, attempt, rows, pools):
+    """The song's arrangement, drawn from the folder's brief with a seed of its own. The singer is a reference clip
+    from the folder's pool in pools, other than the folder's last three; the caption names only its gender, since ACE-Step takes the
+    voice from the clip and ignores any other voice wording."""
     count, dur, bpm_range, style, moods, voicings, shapes = catalogue.BRIEFS[folder]
     seed = catalogue.seed_of(f"song-{folder}-{attempt}" if theme == "general" else f"song-{theme}-{folder}-{attempt}")
     rng = random.Random(seed)
     combat = folder in catalogue.COMBAT
     _, angles, calm_words, combat_words = THEMES[theme]
     words = combat_words if combat else calm_words
+    pool = pools[pool_of(folder)]
     used = [r["vocal"] for r in rows if r["folder"] == folder][-3:]
-    pool = [v for v in (COMBAT_VOCALS if combat else VOCALS) if v not in used]
     lead, second, accompaniment = rng.choice(voicings)
-    vocal = rng.choice(pool)
+    voice = rng.choice(sorted(v for v in pool if v not in used) or sorted(pool))
+    singer = f"{gender_of(voice)} vocal"
     mood = rng.choice(moods)
     production = catalogue.COMBAT_PRODUCTION if combat else catalogue.PRODUCTION
-    return {"theme": theme, "folder": folder, "seed": seed, "mood": mood, "vocal": vocal, "angle": rng.choice(angles),
-            "caption": f"{style}, {words + ', ' if words else ''}{vocal}, {lead}, {second}, {accompaniment}, {mood}, "
+    return {"theme": theme, "folder": folder, "seed": seed, "mood": mood, "vocal": voice, "singer": singer,
+            "reference": pool[voice], "angle": rng.choice(angles),
+            "caption": f"{style}, {words + ', ' if words else ''}{singer}, {lead}, {second}, {accompaniment}, {mood}, "
                        f"{production}",
             "arrangement": f"{lead}, {second}, {accompaniment}",
             "bpm": rng.randint(*bpm_range), "key": rng.choice(catalogue.MINOR if combat else catalogue.KEYS),
@@ -289,7 +327,7 @@ def prompt(s, rows, problems=None):
     brief = THEMES[s["theme"]][0]
     text = (f"Situation: the music folder \"{s['folder']}\" ({style}).\n"
             + (f"Theme: {brief}\n" if brief else "")
-            + f"Mood: {s['mood']}.\nSinger: {s['vocal']}.\nArrangement: {s['arrangement']}.\n"
+            + f"Mood: {s['mood']}.\nSinger: {s['singer']}.\nArrangement: {s['arrangement']}.\n"
             f"Angle for this song: {s['angle']}.\nShape: {shape}\n")
     if earlier:
         text += ("\nSongs already written for this folder. Use a different title, central image and chorus from "
@@ -401,7 +439,7 @@ def render(dit, s, lyrics):
     params = GenerationParams(
         task_type="text2music", thinking=False, caption=s["caption"], lyrics=lyrics, instrumental=False,
         vocal_language="en", bpm=s["bpm"], keyscale=s["key"], duration=s["duration"],
-        use_cot_caption=False, use_cot_metas=False, use_cot_language=False,
+        use_cot_caption=False, use_cot_metas=False, use_cot_language=False, reference_audio=s["reference"],
         inference_steps=50, guidance_scale=7.0, shift=3.0, seed=s["seed"])
     config = GenerationConfig(batch_size=1, audio_format="mp3", use_random_seed=False, seeds=[s["seed"]])
     shutil.rmtree(TMP, ignore_errors=True)
@@ -443,7 +481,10 @@ def next_spec(theme, folder, rows, out):
     have = sum(1 for r in present(rows, out) if r["folder"] == folder and sung.theme_of(r) == theme)
     if have >= catalogue.BRIEFS[folder][0]:
         return None
-    return spec(theme, folder, sum(1 for r in rows if r["folder"] == folder and sung.theme_of(r) == theme), rows)
+    pools = voices()
+    if not pools[pool_of(folder)]:
+        raise RuntimeError(f"no approved {pool_of(folder)} voice in {VOICE_CREDITS}")
+    return spec(theme, folder, sum(1 for r in rows if r["folder"] == folder and sung.theme_of(r) == theme), rows, pools)
 
 
 def theme_arg(value):
@@ -478,11 +519,13 @@ def main():
         deadline = generate.deadline_of(args.until)
         import_experiment(args.out)
         rows = read_ledger()
+        log_voice_gaps()
         todo = plan(rows, args.out, set(filter(None, args.folders.split(","))), args.count, args.theme)
         log(f"start: {len(todo)} songs to make ({', '.join(args.theme)})"
             + (f", until {deadline:%Y-%m-%d %H:%M}" if deadline else ""))
         if not todo or generate.should_stop(deadline) or not generate.wait_for_game(deadline):
             return
+        voice_pools = voices()
 
         dit = generate.load_models()
         if dit is None:
@@ -490,7 +533,10 @@ def main():
 
         done = 0
         with ThreadPoolExecutor(max_workers=1) as pool:
-            specs = [spec(t, f, a, rows) for t, f, a in todo]
+            specs = []
+            for t, f, a in todo:  # each spec sees the voices given earlier in this run
+                specs.append(spec(t, f, a, rows + [{"folder": s["folder"], "vocal": s["vocal"]} for s in specs],
+                                  voice_pools))
             pending = pool.submit(write, specs[0], rows)
             for i, s in enumerate(specs):
                 try:

@@ -85,6 +85,7 @@ def main():
         added = generate.read_generated()
         lyrics.import_experiment(args.out)
         rows = lyrics.read_ledger()
+        lyrics.log_voice_gaps()
         todo = list(generate.queue(0, folders))
         if args.count:
             todo = todo[:args.count]
