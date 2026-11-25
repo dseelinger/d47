@@ -603,32 +603,32 @@ public abstract class GalaxySearchPage : UserControl, IPageSummary, IPageChrome
     }
 
     /// <summary>Adds <c>near</c> and, when it is not the default, <c>max_distance</c>.</summary>
-    protected static void PutNear(Dictionary<string, string> arguments, TextBox near, Amount distance, int defaultDistance)
+    protected static void PutNear(Dictionary<string, string> arguments, TextBox near, DistancePicker distance)
     {
         Put(arguments, "near", near.Text);
 
-        if (distance.Value is { } value && value != defaultDistance)
+        if (distance.Argument(sendChosenDefault: false) is { } value)
         {
-            arguments["max_distance"] = value.ToString("0", CultureInfo.InvariantCulture);
+            arguments["max_distance"] = value;
         }
     }
 
-    /// <summary>Sets <paramref name="distance"/> from <c>max_distance</c>, clamped to <paramref name="ceiling"/>, when it is a number.</summary>
-    protected static void FillDistance(IReadOnlyDictionary<string, string> arguments, Amount distance, double ceiling = 99999)
+    /// <summary>Sets <paramref name="distance"/> from <c>max_distance</c> when it is a number.</summary>
+    protected static void FillDistance(IReadOnlyDictionary<string, string> arguments, DistancePicker distance)
     {
         if (arguments.TryGetValue("max_distance", out var typed)
             && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked))
         {
-            distance.Value = D47.Core.Decimals.FromDouble(Math.Clamp(asked, 1, ceiling));
+            distance.Set(asked);
         }
     }
 
-    /// <summary>The “WITHIN n LY OF ” aside, from <c>max_distance</c> or <paramref name="defaultDistance"/>.</summary>
+    /// <summary>The “WITHIN n LY OF ” aside, from <c>max_distance</c> or <paramref name="defaultDistance"/>, held to the farthest distance searched.</summary>
     protected static (string Lead, string Reference) WithinAside(IReadOnlyDictionary<string, string> arguments, string? reference, int defaultDistance)
     {
         var within = arguments.TryGetValue("max_distance", out var typed)
                      && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked)
-            ? asked
+            ? Math.Min(asked, D47.Core.Knowledge.GalaxyQuery.FarthestDistance)
             : defaultDistance;
 
         return ($"WITHIN {within.ToString("0.##", CultureInfo.InvariantCulture)} LY OF ", AsideFrom(arguments, reference));

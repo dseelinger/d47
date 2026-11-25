@@ -290,8 +290,7 @@ public sealed class TheStationsSearchPageDrawsTheLastAnswerTests
 
         page.GetVisualDescendants().OfType<CheckBox>().Single(box => box.Content as string == "Only colonised systems").IsChecked = true;
 
-        var amounts = page.GetVisualDescendants().OfType<Amount>().ToList();
-        amounts[0].Value = 80;
+        SearchDistance.Pick(page, 250);
         page.MaxReportAgeHours = 48;
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "search_stations");

@@ -46,7 +46,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
     private readonly WrapPanel _tiles = new() { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile };
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
+    private readonly DistancePicker _distance = new(DefaultDistance);
     private readonly Segment _pad = new() { ItemsSource = Pads, SelectedIndex = 0, Height = TypeScale.MinimumTarget };
     private readonly TextBox _fromStar = Field("from the star at most", mono: true);
     private readonly CheckBox _surface = LabeledCheckBox.Caps("Surface stations");
@@ -123,7 +123,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
         Put(arguments, "items", string.Join(", ", _items.Select(item => item.Display)));
-        PutNear(arguments, _near, _distance, DefaultDistance);
+        PutNear(arguments, _near, _distance);
 
         Put(arguments, "min_pad", _pad.SelectedIndex > 0 ? Pads[_pad.SelectedIndex] : null);
         Put(arguments, "max_station_distance", _fromStar.Text);
@@ -152,7 +152,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         _add.Text = string.Empty;
         _near.Text = string.Empty;
         _fromStar.Text = string.Empty;
-        _distance.Value = DefaultDistance;
+        _distance.Reset();
         _pad.SelectedIndex = 0;
         _surface.IsChecked = true;
         _carriers.IsChecked = false;
@@ -280,7 +280,7 @@ public sealed class OutfittingSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
-            Labelled("Distance in LY", _distance),
+            Labelled("Distance in LY", _distance.Picker),
             _age.Field("Max report age")));
 
         Control[] ticks = Headset ? [Columns2("*,*", _surface, _carriers)] : [_surface, _carriers];

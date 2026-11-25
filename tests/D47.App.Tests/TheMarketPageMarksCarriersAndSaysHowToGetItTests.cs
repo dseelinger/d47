@@ -95,7 +95,7 @@ public sealed class TheMarketPageMarksCarriersAndSaysHowToGetItTests
     }
 
     [AvaloniaFact]
-    public void AHotspotCommodityNoteLinksToTheBodiesSearchClampedToItsCeiling()
+    public void AHotspotCommodityNoteLinksToTheBodiesSearchAtTheMarketsDistance()
     {
         IReadOnlyDictionary<string, string>? ran = null;
         var posting = Posting("Painite", false, Market("Galileo", "Coriolis Starport"));
@@ -111,7 +111,7 @@ public sealed class TheMarketPageMarksCarriersAndSaysHowToGetItTests
 
         Assert.Equal("Painite", ran!["hotspot"]);
         Assert.Equal("Sol", ran["near"]);
-        Assert.Equal("1000", ran["max_distance"]);
+        Assert.Equal("5000", ran["max_distance"]);
     }
 
     [AvaloniaFact]

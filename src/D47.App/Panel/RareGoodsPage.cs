@@ -33,7 +33,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
     public const string TableId = "Search.Rares";
 
-    public const int DefaultDistance = 200;
+    public const int DefaultDistance = 500;
 
     public const string DefaultOrder = "profit";
 
@@ -52,7 +52,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
 
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
+    private readonly DistancePicker _distance = new(DefaultDistance);
     private readonly Button _run = new() { Name = RunName, Content = "SEARCH", Height = TypeScale.MinimumTarget, VerticalAlignment = VerticalAlignment.Bottom };
     private readonly ContentControl _answer = new();
     private readonly Control _form;
@@ -132,9 +132,9 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
             arguments["near"] = _near.Text.Trim();
         }
 
-        if (_distance.Value is { } value && value != DefaultDistance)
+        if (_distance.Argument(sendChosenDefault: false) is { } value)
         {
-            arguments["max_distance"] = value.ToString("0", CultureInfo.InvariantCulture);
+            arguments["max_distance"] = value;
         }
 
         arguments["order_by"] = DefaultOrder;
@@ -263,10 +263,13 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
     {
         _near.Text = arguments.GetValueOrDefault("near") ?? string.Empty;
 
-        _distance.Value = arguments.TryGetValue("max_distance", out var typed)
-                          && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked)
-            ? D47.Core.Decimals.FromDouble(Math.Clamp(asked, 1, 99999))
-            : DefaultDistance;
+        _distance.Reset();
+
+        if (arguments.TryGetValue("max_distance", out var typed)
+            && double.TryParse(typed, NumberStyles.Float, CultureInfo.InvariantCulture, out var asked))
+        {
+            _distance.Set(asked);
+        }
     }
 
     private object Stamp() =>
@@ -353,7 +356,7 @@ public sealed class RareGoodsPage : UserControl, IPageSummary
         };
 
         var nearBox = Labelled("Near", near);
-        var distanceBox = Labelled("Max distance in light years", _distance);
+        var distanceBox = Labelled("Max distance in light years", _distance.Picker);
 
         if (_headset)
         {

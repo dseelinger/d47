@@ -20,7 +20,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
 
     public const string Unset = "Choose a signal";
 
-    public const int DefaultDistance = 100;
+    public const int DefaultDistance = 500;
 
     public const string HeadName = "SignalHead";
 
@@ -37,7 +37,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
     private readonly TextBox _name = Field("part of a signal's name");
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
+    private readonly DistancePicker _distance = new(DefaultDistance);
 
     private readonly MaxReportAge _age = new();
 
@@ -125,7 +125,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
             arguments["signal"] = signal;
         }
 
-        PutNear(arguments, _near, _distance, DefaultDistance);
+        PutNear(arguments, _near, _distance);
 
         if (_age.Asked is { } age)
         {
@@ -141,7 +141,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
         _name.Text = string.Empty;
         _near.Text = string.Empty;
         _filling = false;
-        _distance.Value = DefaultDistance;
+        _distance.Reset();
         _age.Reset();
         Pick(null);
     }
@@ -234,7 +234,7 @@ public sealed class SignalSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
-            Labelled("Up to, in LY", _distance),
+            Labelled("Up to, in LY", _distance.Picker),
             _age.Field("Max report age")));
 
         return form;

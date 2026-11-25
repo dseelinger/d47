@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: The distance on the Bodies, Stations, Outfitting, Signals and Rare goods tabs is a dropdown: 10, 100, 250, 500, 1,000, 2,500, 5,000, 10,000, 25,000, 50,000 or 101,000 light years, which reaches the whole galaxy. It opens on 500 on every tab, so Signals, which opened on 100, and Rare goods, which opened on 200, now open on 500. Bodies also offers Any, which it picks by itself for a codex entry or a body type in a region until you pick a distance. A search you run again from history or a link at some other distance, such as 750, shows that distance in the list. The "within" line over Bodies results now shows the distance searched rather than a larger one stored with it.
+
 Changed: Table columns have space between them. On Needed by plans, Crew, Phrases (your own phrases), Stored modules and the narrow Activities table, a right-aligned figure no longer touches the left-aligned word after it. Materials say Category where they said Ledger: the Needed by plans column, its sort and its filter (empty value "No category"). A material's page no longer shows a Ledger fact; Category, Grade and Held remain.
 
 Changed: A body search goes as far as the galaxy, up to 101,000 light years, and waits up to 35 seconds for the answer. Before, it stopped at 1,000 light years. The Bodies tab's Distance in LY box accepts the same range, and a search for a filtered kind of body, such as landable or Earth-like, answers quickly at any radius.

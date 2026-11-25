@@ -153,7 +153,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         var arguments = page.FormArguments();
         Assert.Equal("Norma Arm", arguments["region"]);
         Assert.False(arguments.ContainsKey("max_distance"));
-        Assert.Contains(VisibleText(panel), text => text == "ANY");
+        Assert.Equal("Any", SearchDistance.Shown(page));
         Assert.Contains(VisibleText(panel), text => text.StartsWith("NEAREST TO ", StringComparison.Ordinal));
 
         window.Close();
@@ -166,11 +166,10 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
         var (panel, window) = Shown(world);
         var page = Page(panel);
 
-        Assert.Contains(VisibleText(panel), text => text == "500");
+        Assert.Equal("500", SearchDistance.Shown(page));
 
         page.Type("codex_entry", "Bacterium Cerbrus");
-        Assert.DoesNotContain(VisibleText(panel), text => text == "500");
-        Assert.Contains(VisibleText(panel), text => text == "ANY");
+                Assert.Equal("Any", SearchDistance.Shown(page));
         Assert.False(page.FormArguments().ContainsKey("max_distance"));
 
         page.Run(new Dictionary<string, string> { ["codex_entry"] = "Bacterium Cerbrus", ["max_distance"] = "300" });
@@ -330,7 +329,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
 
         Assert.Equal(arguments.OrderBy(pair => pair.Key, StringComparer.Ordinal), page.FormArguments().OrderBy(pair => pair.Key, StringComparer.Ordinal));
         Assert.True(world.Galaxy.Asked[^1].NoDistanceLimit);
-        Assert.Contains(VisibleText(panel), text => text == "ANY");
+        Assert.Equal("Any", SearchDistance.Shown(page));
 
         page.Type("volcanism", "Water Geysers");
 
@@ -389,8 +388,7 @@ public sealed class TheBodiesSearchPageDrawsTheLastAnswerTests
             });
         }
 
-        var amounts = page.GetVisualDescendants().OfType<Amount>().ToList();
-        amounts[0].Value = 80;
+        SearchDistance.Pick(page, 250);
 
         var tool = GalaxyCapability.Create(null, () => null, world.Settings).Tools.Single(t => t.Name == "find_body");
 

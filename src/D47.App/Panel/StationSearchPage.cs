@@ -36,7 +36,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     private readonly TextBox _near = Field("near");
     private readonly SystemNameSuggestions<SystemNameMatch>? _nearNames;
     private readonly SystemNameSuggestions<string>? _controllingFactionNames;
-    private readonly Amount _distance = new() { Value = DefaultDistance, Minimum = 1, Maximum = 99999, Step = 10, Format = "#,0" };
+    private readonly DistancePicker _distance = new(DefaultDistance);
     private readonly MaxReportAge _age = new(72);
     private readonly Dictionary<string, CheckBox> _types = StationQuery.StationTypeNames.ToDictionary(name => name, name => Tile(name), StringComparer.Ordinal);
     private readonly Stepper _pad = Choice(StationQuery.MinPads);
@@ -136,7 +136,7 @@ public sealed class StationSearchPage : GalaxySearchPage
     {
         var arguments = new Dictionary<string, string>(StringComparer.Ordinal);
 
-        PutNear(arguments, _near, _distance, DefaultDistance);
+        PutNear(arguments, _near, _distance);
         Put(arguments, "min_distance", _minDistance.Text);
 
         Put(arguments, "station_type", string.Join(", ", StationQuery.StationTypeNames.Where(name => _types[name].IsChecked == true)));
@@ -186,7 +186,7 @@ public sealed class StationSearchPage : GalaxySearchPage
             stepper.SelectedIndex = 0;
         }
 
-        _distance.Value = DefaultDistance;
+        _distance.Reset();
         _age.Reset();
         _population.Set(null);
         _colonised.IsChecked = false;
@@ -376,7 +376,7 @@ public sealed class StationSearchPage : GalaxySearchPage
         form.Children.Add(Group(
             "Search out from",
             Labelled("Near", NearField(_near, _nearNames)),
-            Labelled("Distance in LY", _distance),
+            Labelled("Distance in LY", _distance.Picker),
             Labelled("At least this far in LY", _minDistance),
             _age.Field("Max report age")));
 
