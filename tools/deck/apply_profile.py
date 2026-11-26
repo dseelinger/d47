@@ -26,6 +26,7 @@ import uuid
 PROFILE_NAME = 'Directive 47 Development'
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DECK = os.path.join(REPO, 'tools', 'deck')
+HEAVENS_DECK = os.path.join(os.path.dirname(os.path.dirname(REPO)), 'the-heavens-declare', 'tools', 'deck')
 
 ALPHA = '0123456789ABCDEFGHIJKLMNOPQRSTVW'
 
@@ -54,10 +55,10 @@ def _action(action_uuid, name, plugin_name, plugin_uuid, settings, image):
     }
 
 
-def run(script, image):
+def run(script, image, deck=DECK):
     return _action('com.elgato.streamdeck.system.open', 'Open', 'Open',
                    'com.elgato.streamdeck.system.open',
-                   {'path': os.path.join(DECK, script)}, image)
+                   {'path': os.path.join(deck, script)}, image)
 
 
 def send(text, image):
@@ -94,26 +95,23 @@ def obs(action, name, settings, on, off):
     return a
 
 
-# Row 0 opens a session, row 1 types into the session that has focus, row 2 runs the app and
-# cuts releases. Both release scripts follow the run to the end on their own.
+# Row 0 opens a session, row 1 opens the phone launchers and runs the Release build, row 2 cuts
+# releases. Both release scripts follow the run to the end on their own.
 PAGE_1 = {
     '0,0': run('triage.cmd', 'triage'),
-    '1,0': run('coordinator.cmd', 'coord'),
     '2,0': run('architect.cmd', 'architect'),
     '3,0': run('issue-worker.cmd', 'issue'),
     '4,0': run('review.cmd', 'review'),
 
-    '0,1': send('/desktop', 'desktop'),
-    '1,1': send('push', 'push'),
+    # The sessions the phone app reaches: Heavens here, d47 at the end of the row.
+    '0,1': run('launcher.cmd', 'heavens', deck=HEAVENS_DECK),
     '2,1': run('local-release.cmd', 'localrelease'),
-    # Violet in the typing row because it opens a session: /release asks patch or minor.
+    # Violet because it opens a session: /release asks patch or minor.
     '3,1': run('release.cmd', 'release'),
-    # Violet in the typing row because it opens the session the phone app reaches.
-    '4,1': run('launcher.cmd', 'launcher'),
+    '4,1': run('launcher.cmd', 'd47'),
 
     # Bottom left changes page on every page.
     '0,2': page('next', 'page-obs'),
-    '1,2': run('restart-test-drive.cmd', 'restart'),
     # Violet in a row of scripts because it opens a session rather than running one to the end.
     '2,2': run('pre-release.cmd', 'prerelease'),
     '3,2': run('release-patch.cmd', 'patch'),

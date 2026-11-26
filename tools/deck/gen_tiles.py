@@ -28,7 +28,6 @@ DIM = (70, 79, 92)
 VIOLET = (183, 148, 255)    # opens a Claude session
 CYAN = (79, 209, 245)       # types into the focused terminal
 GREEN = (91, 228, 155)      # runs a script
-BLUE = (77, 140, 255)       # runs the app
 AMBER = (255, 176, 32)      # release
 RED = (255, 92, 92)         # controls OBS
 GREY = (150, 160, 175)      # changes page
@@ -65,18 +64,6 @@ def g_prompt(d, cx, cy, r, col):
     d.line([cx - r * 0.78, cy - r * 0.52, cx - r * 0.18, cy, cx - r * 0.78, cy + r * 0.52],
            fill=col, width=w, joint='curve')
     _bar(d, cx + r * 0.42, cy + r * 0.52, r * 0.36, r * 0.09, col)
-
-
-def g_hub(d, cx, cy, r, col):
-    """A hub with three satellites: work being routed."""
-    w = max(2, int(r * 0.13))
-    pts = [(cx + r * 0.82 * math.cos(math.radians(a)),
-            cy + r * 0.82 * math.sin(math.radians(a))) for a in (-90, 30, 150)]
-    for x, y in pts:
-        d.line([cx, cy, x, y], fill=col, width=w)
-    for x, y in pts:
-        _dot(d, x, y, r * 0.22, col)
-    _dot(d, cx, cy, r * 0.30, col)
 
 
 def g_compass(d, cx, cy, r, col):
@@ -144,23 +131,6 @@ def g_pin(d, cx, cy, r, col):
                (cx + r * 0.36, cy - r * 0.04), (cx - r * 0.36, cy - r * 0.04)], fill=col)
     _bar(d, cx, cy + r * 0.02, r * 0.66, r * 0.09, col)
     d.line([cx, cy + r * 0.08, cx, cy + r * 0.92], fill=col, width=w)
-
-
-def g_restart(d, cx, cy, r, col):
-    """Circular arrow: close the test drive and bring it back up."""
-    w = max(2, int(r * 0.15))
-    d.arc([cx - r * 0.86, cy - r * 0.86, cx + r * 0.86, cy + r * 0.86],
-          start=310, end=210, fill=col, width=w)
-    # Arrowhead at the open end of the arc, pointing along the direction of travel.
-    a = math.radians(310)
-    hx, hy = cx + r * 0.86 * math.cos(a), cy + r * 0.86 * math.sin(a)
-    h = r * 0.34
-    d.polygon([(hx + h * math.cos(a - math.pi / 2), hy + h * math.sin(a - math.pi / 2)),
-               (hx + h * math.cos(a + math.pi / 2 - 0.9),
-                hy + h * math.sin(a + math.pi / 2 - 0.9)),
-               (hx + h * math.cos(a + math.pi / 2 + 0.9),
-                hy + h * math.sin(a + math.pi / 2 + 0.9))], fill=col)
-    _dot(d, cx, cy, r * 0.20, col)
 
 
 def g_branch(d, cx, cy, r, col):
@@ -313,21 +283,19 @@ def tile(path, glyph, accent, label, ground=BG):
 KEYS = {
     'claude':     (g_prompt, VIOLET, 'Claude'),
     'triage':     (g_triage, VIOLET, 'Triage'),
-    'coord':      (g_hub, VIOLET, 'Coord'),
     'architect':  (g_compass, VIOLET, 'Architect'),
     'issue':      (g_issue, VIOLET, 'Issue'),
     'review':     (g_magnifier, VIOLET, 'Review'),
     'prerelease': (g_gate, VIOLET, 'Pre-release'),
     'release':    (g_release, VIOLET, 'Release'),
-    'launcher':   (g_phone, VIOLET, 'Launcher'),
+    'heavens':    (g_phone, VIOLET, 'Heavens'),
+    'd47':        (g_phone, VIOLET, 'd47'),
 
     'desktop':    (g_handoff, CYAN, 'Desktop'),
     'push':       (g_push, CYAN, 'Push'),
 
     'localrelease': (g_pin, GREEN, 'Local'),
     'status':     (g_branch, GREEN, 'Status'),
-
-    'restart':    (g_restart, BLUE, 'Restart'),
 
     'patch':      (lambda *a: g_semver(*a, lit=2), GREEN, 'Patch'),
     'minor':      (lambda *a: g_semver(*a, lit=1), AMBER, 'Minor'),

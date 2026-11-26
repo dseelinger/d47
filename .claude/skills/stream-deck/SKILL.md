@@ -175,14 +175,17 @@ Desktop, Push, Pre-release, Patch, Minor.
 Two pages. The bottom-left key changes page on both: `page.next` on page 1, `page.previous` on
 page 2. Grey is page navigation.
 
-Page 1: row 0 opens a session, row 1 types into the session that has focus, row 2 runs the app and
+Page 1: row 0 opens a session, row 1 opens the phone launchers and runs the Release build, row 2
 cuts releases.
 
 | | 0 | 1 | 2 | 3 | 4 |
 | --- | --- | --- | --- | --- | --- |
-| **0** | Triage | Coord | Architect | Issue | Review |
-| **1** | Desktop | Push | Local | Release | Launcher |
-| **2** | → OBS | Restart | Pre-release | Patch | Minor |
+| **0** | Triage | | Architect | Issue | Review |
+| **1** | Heavens | | Local | Release | d47 |
+| **2** | → OBS | | Pre-release | Patch | Minor |
+
+**Heavens** and **d47** each open a Launcher session with Remote Control on, for the phone app:
+Heavens runs `tools\deck\launcher.cmd` in `C:\dev\the-heavens-declare`, d47 runs this repo's.
 
 Page 2 controls OBS, in red. **Record, Pause and Mic** use Elgato's OBS Studio plugin
 (`com.elgato.obsstudio`), which talks to obs-websocket and sets the key's state from what OBS
@@ -210,8 +213,8 @@ takes that issue's model and effort from `.claude/triage-state.json`, which `/tr
 number triage does not name starts on `sonnet`/`medium` and says so. The session cannot correct
 itself afterwards — the desktop app refuses `set_session_model` and `set_session_effort` for the
 session making the call — so the launcher is the only place this can be set.
-**Desktop** types `/desktop` into the focused terminal to hand that session to the desktop app, so
-work starts on a keypress and continues by clicking. **Review** asks for an issue number and
+**Desktop**, on Mobile only, types `/desktop` into the focused terminal to hand that session to the
+desktop app. **Review** asks for an issue number and
 reviews from the parent of the oldest recent commit whose subject has `#N` followed by `)` or `,`
 (so `(#N, #M)` counts and bodies are not searched), covering that issue's
 commits and anything committed after them; Enter alone reviews the last commit. The issue worker
@@ -219,7 +222,7 @@ pushes when it lands, so `origin/main` holds the work and the diff against it is
 **Pre-release** sits in the release row but is violet, because it opens a session rather than
 running a script to the end: it runs the suite, fixes what fails and pushes `main`, and Patch or
 Minor comes after it.
-**Release** is violet in the typing row: it opens a session running `/release`, which asks patch
+**Release** is violet: it opens a session running `/release`, which asks patch
 or minor, relays the run, and fixes a failing build or test and runs the release again.
 The Patch and Minor keys start at once, with no confirmation prompt, and `release.ps1` follows the run to the end on its
 own — a separate watch key duplicates it. **Major is deliberately not on the deck**: cut one with
