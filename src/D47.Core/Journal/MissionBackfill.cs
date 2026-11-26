@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -33,15 +33,19 @@ public static class MissionBackfill
         var journals = JournalFolder.Ordered(files, directory)
             .ToList();
 
-        return FromHistory(journals, logger, path => ReadAll(files, path), cancellation);
+        return FromHistory(
+            journals,
+            logger,
+            path => JournalLines.Read(files, path, NullLogger.Instance, "missions", warnIfMissing: false),
+            cancellation);
     }
 
     /// <summary>The same, over an explicit list oldest-first.</summary>
-    /// <param name="read">Reads one file's text, or returns null where it cannot be read.</param>
+    /// <param name="read">Reads one file's lines, or returns null where it cannot be read.</param>
     public static IReadOnlyDictionary<string, MissionBoard> FromHistory(
         IReadOnlyList<string> files,
         ILogger logger,
-        Func<string, string?> read,
+        Func<string, IEnumerable<string>?> read,
         CancellationToken cancellation = default)
     {
         ArgumentNullException.ThrowIfNull(files);
@@ -60,17 +64,20 @@ public static class MissionBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            if (read(files[i]) is not { } text)
+            if (read(files[i]) is not { } lines)
             {
                 continue;
             }
 
-            opened++;
-
             if (wanted is null)
             {
                 // Down to and including the file holding the latest snapshot, every mission event is kept.
-                var events = Parse(text, _ => true, out var snapshot, out var fid);
+                if (Parse(lines, _ => true, _ => true, out var snapshot, out var fid) is not { } events)
+                {
+                    continue;
+                }
+
+                opened++;
                 kept.Add(events);
 
                 if (snapshot is null)
@@ -93,18 +100,20 @@ public static class MissionBackfill
                 continue;
             }
 
-            // Searched as text before any line is parsed, since most files name none of the missions.
-            if (!wanted.Any(id => JournalText.MentionsValue(text, "\"MissionID", id)))
+            var looking = wanted;
+
+            // Each line is searched as text before it is parsed, since most lines name none of the missions.
+            if (Parse(
+                    lines,
+                    line => looking.Any(id => JournalText.MentionsValue(line, "\"MissionID", id)),
+                    journalEvent => journalEvent.Long("MissionID") is { } id && looking.Contains(id),
+                    out _,
+                    out _) is not { } found)
             {
                 continue;
             }
 
-            var found = Parse(
-                text,
-                journalEvent => journalEvent.Long("MissionID") is { } id && wanted.Contains(id),
-                out _,
-                out _);
-
+            opened++;
             kept.Add(found);
 
             foreach (var journalEvent in found)
@@ -156,11 +165,13 @@ public static class MissionBackfill
     }
 
     /// <summary>
-    /// The mission events in one file that pass <paramref name="keep"/>, with the file's last snapshot and
-    /// the Commander logged in before it.
+    /// The mission events in one file whose line passes <paramref name="mentions"/> and whose event passes
+    /// <paramref name="keep"/>, with the file's last snapshot and the Commander logged in before it; null
+    /// where the file cannot be read to its end.
     /// </summary>
-    private static List<JournalEvent> Parse(
-        string text,
+    private static List<JournalEvent>? Parse(
+        IEnumerable<string> lines,
+        Func<string, bool> mentions,
         Func<JournalEvent, bool> keep,
         out JournalEvent? snapshot,
         out string? commander)
@@ -171,55 +182,54 @@ public static class MissionBackfill
         snapshot = null;
         commander = null;
 
-        foreach (var line in text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            // Tested as text first, since most lines are none of these.
-            if (!Reads.Matches(line))
-            {
-                continue;
-            }
-
-            if (!JournalEvent.TryParse(line, NullLogger.Instance, out var journalEvent) || journalEvent is null)
-            {
-                continue;
-            }
-
-            if (journalEvent.Kind is "Commander" or "LoadGame" && journalEvent.String("FID") is { Length: > 0 } fid)
-            {
-                current = fid;
-                continue;
-            }
-
-            if (journalEvent.Kind is not ("MissionAccepted" or "MissionRedirected" or "CargoDepot"
-                or "MissionCompleted" or "MissionFailed" or "MissionAbandoned" or "Missions" or "NewCommander"))
-            {
-                continue;
-            }
-
-            if (journalEvent.Kind == "Missions")
-            {
-                snapshot = journalEvent;
-                commander = current;
-            }
-
-            if (keep(journalEvent))
-            {
-                events.Add(journalEvent);
-            }
-        }
-
-        return events;
-    }
-
-    private static string? ReadAll(IFileSystem files, string path)
-    {
         try
         {
-            return files.ReadText(path);
+            foreach (var raw in lines)
+            {
+                var line = raw.Trim();
+
+                // Tested as text first, since most lines are none of these.
+                if (line.Length == 0 || !Reads.Matches(line) || !mentions(line))
+                {
+                    continue;
+                }
+
+                if (!JournalEvent.TryParse(line, NullLogger.Instance, out var journalEvent) || journalEvent is null)
+                {
+                    continue;
+                }
+
+                if (journalEvent.Kind is "Commander" or "LoadGame" && journalEvent.String("FID") is { Length: > 0 } fid)
+                {
+                    current = fid;
+                    continue;
+                }
+
+                if (journalEvent.Kind is not ("MissionAccepted" or "MissionRedirected" or "CargoDepot"
+                    or "MissionCompleted" or "MissionFailed" or "MissionAbandoned" or "Missions" or "NewCommander"))
+                {
+                    continue;
+                }
+
+                if (journalEvent.Kind == "Missions")
+                {
+                    snapshot = journalEvent;
+                    commander = current;
+                }
+
+                if (keep(journalEvent))
+                {
+                    events.Add(journalEvent);
+                }
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            snapshot = null;
+            commander = null;
             return null;
         }
+
+        return events;
     }
 }

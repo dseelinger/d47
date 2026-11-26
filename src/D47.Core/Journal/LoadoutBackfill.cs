@@ -10,6 +10,8 @@ public static class LoadoutBackfill
     /// <summary>The fewest journal files to look back over, whatever else is asked for.</summary>
     private const int MinLookback = 25;
 
+    private static readonly JournalLineFilter Logins = JournalLineFilter.Events("Commander", "LoadGame");
+
     /// <summary>
     /// <param name="stored"> What <see cref="LoadoutStore"/> held, to start from rather than to rebuild
     /// over (#128).
@@ -115,36 +117,48 @@ public static class LoadoutBackfill
         {
             cancellation.ThrowIfCancellationRequested();
 
-            string? text;
-
-            try
-            {
-                text = fileSystem.ReadText(files[i]);
-            }
-            catch (IOException)
+            if (LastEvents(fileSystem, files[i], missing) is not { } last)
             {
                 continue;
             }
 
-            if (text is null)
+            foreach (var (ship, boarded) in last)
             {
-                continue;
+                _ = missing.Remove(ship);
+
+                if (boarded)
+                {
+                    earliest = i;
+                }
             }
+        }
 
-            // Searched as text before any line is parsed, since most files name none of the ships.
-            if (!missing.Any(ship => JournalText.MentionsValue(text, "ShipID", ship.ShipId)))
+        return earliest;
+    }
+
+    /// <summary>
+    /// The last event in one file for each missing ship that has one: true for a <c>Loadout</c>, false for a
+    /// sale. Null where the file cannot be read.
+    /// </summary>
+    private static Dictionary<(string Fid, int ShipId), bool>? LastEvents(
+        IFileSystem fileSystem,
+        string file,
+        List<(string Fid, int ShipId)> missing)
+    {
+        var commander = string.Empty;
+        var last = new Dictionary<(string Fid, int ShipId), bool>();
+
+        try
+        {
+            foreach (var line in JournalLines.Read(fileSystem, file, NullLogger.Instance, "loadouts", warnIfMissing: false))
             {
-                continue;
-            }
+                // Tested as text before the line is parsed, since most lines name none of the ships.
+                if (!Logins.Matches(line) && !missing.Any(ship => JournalText.MentionsValue(line, "ShipID", ship.ShipId)))
+                {
+                    continue;
+                }
 
-            var commander = string.Empty;
-
-            // The last event in this file for each missing ship: true for a Loadout, false for a sale.
-            var last = new Dictionary<(string Fid, int ShipId), bool>();
-
-            foreach (var line in text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            {
-                if (!JournalEvent.TryParse(line, NullLogger.Instance, out var journalEvent) || journalEvent is null)
+                if (!JournalEvent.TryParse(line.Trim(), NullLogger.Instance, out var journalEvent) || journalEvent is null)
                 {
                     continue;
                 }
@@ -177,19 +191,13 @@ public static class LoadoutBackfill
                     }
                 }
             }
-
-            foreach (var (ship, boarded) in last)
-            {
-                _ = missing.Remove(ship);
-
-                if (boarded)
-                {
-                    earliest = i;
-                }
-            }
+        }
+        catch (IOException)
+        {
+            return null;
         }
 
-        return earliest;
+        return last;
     }
 
     /// <summary>

@@ -210,7 +210,7 @@ public sealed class AnEraseClearsEveryGameStateHistoryTests
             [Erase(F, "11")],
             [Login(F, "12"), Accepted("12", 2)]);
 
-        var boards = MissionBackfill.FromHistory(paths, NullLogger.Instance, files.ReadText, Cancel);
+        var boards = MissionBackfill.FromHistory(paths, NullLogger.Instance, path => files.ReadText(path)?.Split('\n'), Cancel);
 
         Assert.Equal([2L], boards[F].Missions.Select(mission => mission.Id));
     }

@@ -155,7 +155,7 @@ public sealed class TheMissionBoardSurvivesARestartTests
             path =>
             {
                 opened.Add(Path.GetFileName(path));
-                return files.ReadText(path);
+                return files.ReadText(path)?.Split('\n');
             },
             TestContext.Current.CancellationToken);
 

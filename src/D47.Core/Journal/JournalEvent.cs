@@ -34,29 +34,66 @@ public sealed record JournalEvent(DateTimeOffset Timestamp, string Kind, JsonEle
 
         using (document)
         {
-            var root = document.RootElement;
-
-            if (!root.TryGetProperty("event", out var eventProperty) ||
-                eventProperty.ValueKind != JsonValueKind.String)
+            if (From(document.RootElement, out result))
             {
-                logger.LogWarning("Journal line has no 'event' field; skipped: {Line}", Truncate(line));
-                return false;
+                return true;
             }
 
-            var timestamp = DateTimeOffset.MinValue;
-            if (root.TryGetProperty("timestamp", out var timestampProperty) &&
-                timestampProperty.ValueKind == JsonValueKind.String)
-            {
-                DateTimeOffset.TryParse(
-                    timestampProperty.GetString(),
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.AssumeUniversal,
-                    out timestamp);
-            }
-
-            result = new JournalEvent(timestamp, eventProperty.GetString()!, root.Clone());
-            return true;
+            logger.LogWarning("Journal line has no 'event' field; skipped: {Line}", Truncate(line));
+            return false;
         }
+    }
+
+    /// <summary>
+    /// Parses one line from its UTF-8 bytes, which are not kept. A line that fails, or is not valid UTF-8, is
+    /// decoded and handled as the string overload handles it.
+    /// </summary>
+    public static bool TryParse(ReadOnlyMemory<byte> utf8Line, ILogger logger, out JournalEvent? result)
+    {
+        if (!System.Text.Unicode.Utf8.IsValid(utf8Line.Span))
+        {
+            return TryParse(System.Text.Encoding.UTF8.GetString(utf8Line.Span), logger, out result);
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(utf8Line);
+
+            if (From(document.RootElement, out result))
+            {
+                return true;
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        return TryParse(System.Text.Encoding.UTF8.GetString(utf8Line.Span), logger, out result);
+    }
+
+    private static bool From(JsonElement root, out JournalEvent? result)
+    {
+        result = null;
+
+        if (!root.TryGetProperty("event", out var eventProperty) ||
+            eventProperty.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        var timestamp = DateTimeOffset.MinValue;
+        if (root.TryGetProperty("timestamp", out var timestampProperty) &&
+            timestampProperty.ValueKind == JsonValueKind.String)
+        {
+            DateTimeOffset.TryParse(
+                timestampProperty.GetString(),
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal,
+                out timestamp);
+        }
+
+        result = new JournalEvent(timestamp, eventProperty.GetString()!, root.Clone());
+        return true;
     }
 
     /// <summary>
