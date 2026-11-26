@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: The search history no longer keeps every station's full market, outfitting and shipyard stock. A Stations or Outfitting search was saved with the whole stock of each station it found, about 3 MB for 25 stations, so 25 saved searches held around 69 MB in memory and on disk. Those searches are now saved without the stock, which none of the pages opened from history draws, and the file is no longer indented. A history file saved earlier still loads and is trimmed the next time a search is saved.
+
 Fixed: The route's Progress page is no longer redrawn while you scoop fuel. The jump range the Plan forms quote follows the fuel aboard, and every change to it redrew the whole route; now only the Jump range figure on the Plan forms is updated, and only when it changes at the two decimal places it shows.
 
 Fixed: d47 no longer uses more and more memory while the Astrometrics tab is open after Elite has moved your route target off the plotted route. Before, the route page was redrawn over and over and every page it replaced stayed in memory, reaching tens of gigabytes within half an hour and keeping a processor core busy. The route page now redraws only when the route or your position changes, and a page that is replaced anywhere in the panel no longer stays in memory because of its theme colours.

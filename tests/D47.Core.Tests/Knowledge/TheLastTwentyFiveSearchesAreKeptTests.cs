@@ -81,6 +81,70 @@ public class TheLastTwentyFiveSearchesAreKeptTests
         Assert.Equal("Service 5", kept[^1].Arguments["services"]);
     }
 
+    private static StationSearchResult StationsWithStock() =>
+        new("Sol", 1,
+        [
+            new StationSummary
+            {
+                Name = "Fixture Port",
+                SystemName = "Eurybia",
+                Distance = 12.5,
+                HasOutfitting = true,
+                Market = new StationMarket([], At),
+                Outfitting = new StationOutfitting([new StationModule("Frame Shift Drive", null, null, 5, "A", null)], At),
+                Shipyard = new StationShipyard([new StationShip("Cobra Mk V", null)], At),
+            },
+        ]);
+
+    [Fact]
+    public void AStationEntryIsKeptWithoutItsStock()
+    {
+        Store().Add(SearchHistoryEntry.Of("search_outfitting", Args(), "Sol", null, StationsWithStock(), At));
+
+        var text = _files.ReadText(StorePath)!;
+        Assert.DoesNotContain("Frame Shift Drive", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Cobra Mk V", text, StringComparison.Ordinal);
+
+        var reloaded = Store();
+        reloaded.Load();
+
+        var station = Assert.Single(Assert.IsType<StationSearchResult>(Assert.Single(reloaded.All()).Result).Stations);
+        Assert.Equal("Fixture Port", station.Name);
+        Assert.Equal(true, station.HasOutfitting);
+        Assert.Null(station.Market);
+        Assert.Null(station.Outfitting);
+        Assert.Null(station.Shipyard);
+    }
+
+    [Fact]
+    public void TheFileIsWrittenWithoutIndentation()
+    {
+        Store().Add(StationEntry("Repair"));
+
+        Assert.DoesNotContain(Environment.NewLine, _files.ReadText(StorePath)!, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFileWrittenWithStockLoadsTrimmedAndIsTrimmedOnTheNextWrite()
+    {
+        var full = new MemoryFileSystem();
+        var writer = new SearchHistory(StorePath, full, NullLogger<SearchHistory>.Instance);
+        writer.Add(SearchHistoryEntry.Of("search_outfitting", Args(), "Sol", null, StationsWithStock(), At));
+        var written = full.ReadText(StorePath)!;
+        var withStock = written.Replace("\"name\":\"Fixture Port\"", "\"name\":\"Fixture Port\",\"outfitting\":{\"modules\":[{\"name\":\"Frame Shift Drive\"}]}", StringComparison.Ordinal);
+        _files.WriteText(StorePath, withStock);
+
+        var store = Store();
+        store.Load();
+
+        var station = Assert.Single(Assert.IsType<StationSearchResult>(Assert.Single(store.All()).Result).Stations);
+        Assert.Null(station.Outfitting);
+
+        store.Add(StationEntry("Repair", 5));
+
+        Assert.DoesNotContain("Frame Shift Drive", _files.ReadText(StorePath)!, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void TheSameSearchTwiceLeavesTheNewer()
     {

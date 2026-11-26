@@ -38,7 +38,6 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
 
     private static readonly JsonSerializerOptions Json = new()
     {
-        WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
@@ -76,7 +75,7 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
                 }
             }
 
-            var loaded = Newest(read);
+            var loaded = Newest(read).ConvertAll(Trimmed);
 
             lock (_gate)
             {
@@ -119,7 +118,7 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
             var entries = new List<SearchHistoryEntry>(_entries);
 
             entries.RemoveAll(kept => Same(kept, entry));
-            entries.Insert(0, entry);
+            entries.Insert(0, Trimmed(entry));
 
             if (entries.Count > Capacity)
             {
@@ -139,6 +138,18 @@ public sealed class SearchHistory(string path, IFileSystem files, ILogger<Search
 
     private static List<SearchHistoryEntry> Newest(IEnumerable<SearchHistoryEntry> entries) =>
         [.. entries.DistinctBy(entry => entry.Id).OrderByDescending(entry => entry.AskedAt).Take(Capacity)];
+
+    private static SearchHistoryEntry Trimmed(SearchHistoryEntry entry) =>
+        entry.Result is StationSearchResult result
+            && result.Stations.Any(station => station.Market is not null || station.Outfitting is not null || station.Shipyard is not null)
+            ? entry with
+            {
+                Result = result with
+                {
+                    Stations = [.. result.Stations.Select(station => station with { Market = null, Outfitting = null, Shipyard = null })],
+                },
+            }
+            : entry;
 
     private static bool Same(SearchHistoryEntry a, SearchHistoryEntry b) =>
         a.Tool == b.Tool
