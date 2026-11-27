@@ -57,7 +57,7 @@ public static class NotableBodies
         {
             traits.Add(new NotableTrait(
                 NotableKind.FastRotator,
-                ((int)Math.Round(Math.Abs(rotation) / 3600)).ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                Math.Abs(rotation).ToString("R", System.Globalization.CultureInfo.InvariantCulture)));
         }
 
         if (body.Radius is { } radius &&

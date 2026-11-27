@@ -111,9 +111,9 @@ public sealed class NotableBodiesTests
         Assert.Equal(notable, Kinds(Body() with { RotationPeriod = period }).Contains(NotableKind.FastRotator));
 
     [Fact]
-    public void AFastSpinNamesItsHoursAndATidalLockIsNotFast()
+    public void AFastSpinCarriesItsSecondsAndATidalLockIsNotFast()
     {
-        Assert.Equal("2", Assert.Single(NotableBodies.Of(Body() with { RotationPeriod = -7200 }, [])).Detail);
+        Assert.Equal("7200", Assert.Single(NotableBodies.Of(Body() with { RotationPeriod = -7200 }, [])).Detail);
         Assert.Empty(Kinds(Body() with { RotationPeriod = 100, TidalLock = true }));
     }
 

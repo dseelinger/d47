@@ -84,7 +84,7 @@ public sealed class NotableBodyCallout : ICallout
         NotableKind.ShepherdMoon => "orbiting inside its parent's rings",
         NotableKind.NestedMoon => "a moon of a moon",
         NotableKind.EccentricOrbit => "on a highly eccentric orbit",
-        NotableKind.FastRotator => trait.Detail == "1" ? "turning once every hour" : $"turning once every {trait.Detail} hours",
+        NotableKind.FastRotator => SpinPhrase(trait.Detail),
         NotableKind.WideRings => "with very wide rings",
         NotableKind.PremiumFsdInjection => trait.Detail is { Length: > 0 }
             ? $"five of the six premium FSD injection materials, missing {trait.Detail}"
@@ -92,4 +92,32 @@ public sealed class NotableBodyCallout : ICallout
         NotableKind.LandableAtmosphere => "landable, with an atmosphere",
         _ => "notable",
     };
+
+    internal static string SpinPhrase(string? seconds)
+    {
+        var period = double.Parse(seconds ?? "0", System.Globalization.CultureInfo.InvariantCulture);
+
+        if (period > 0 && period < 1)
+        {
+            var perSecond = Math.Round(1 / period, MidpointRounding.AwayFromZero);
+
+            return perSecond <= 1 ? "turning once every second"
+                : perSecond == 2 ? "turning twice a second"
+                : $"turning about {perSecond:0} times a second";
+        }
+
+        foreach (var (unit, size) in new[] { ("second", 1.0), ("minute", 60.0) })
+        {
+            var count = Math.Round(period / size, MidpointRounding.AwayFromZero);
+
+            if (count < 60)
+            {
+                return count == 1 ? $"turning once every {unit}" : $"turning once every {count:0} {unit}s";
+            }
+        }
+
+        var hours = Math.Round(period / 3600, MidpointRounding.AwayFromZero);
+
+        return hours == 1 ? "turning once every hour" : $"turning once every {hours:0} hours";
+    }
 }
