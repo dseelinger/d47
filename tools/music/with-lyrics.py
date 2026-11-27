@@ -115,18 +115,25 @@ THEMES = {
         "the Westminster Standards. God is the subject, not the pilot's feelings: the triune God, sovereign over "
         "every star, every jump and every outcome; salvation by grace alone, through faith alone, in Christ alone, "
         "by his finished work on the cross and his resurrection; providence, covenant faithfulness, the assurance "
-        "and perseverance of the saints, the Lord's Day, the hope of the resurrection and the new creation. Lament "
-        "and trust belong together, as in the Psalms. Speak of God with reverence. Never make salvation the "
-        "pilot's own work, never promise wealth or safety as a reward for faith, never use God's name casually, "
-        "and never make God a co-pilot or a charm for luck.",
-        ["the heavens declaring the glory of God", "fleeing to the far side of the sea, and God already there",
-         "a prayer before a jump into the unknown", "the Lord's Day kept aboard a carrier",
-         "grace for a pilot who has failed", "providence in a narrow escape",
-         "the God who numbers the stars and calls them by name", "Christ's finished work, with nothing to add",
-         "lament after losing a wingmate, and trust", "the covenant kept from parent to child",
-         "the resurrection hope at a burial in space", "a doxology at journey's end",
-         "the Lord's Supper shared by a small crew", "assurance when the hull is breached",
-         "waiting on the Lord through a long transit", "the new creation, when the black is made new"],
+        "and perseverance of the saints, the Lord's Day, the hope of the resurrection and the new creation. The song "
+        "is worship, as the Psalms are: sung to God or of God, it praises him for who he is and for his works in "
+        "creation, providence and redemption, and thanksgiving and adoration lead. Unless the angle for this song "
+        "is a lament or the resurrection, it does not dwell on death, burial, grief or lost companions. Speak of "
+        "God with reverence. Never make salvation the pilot's own work, never promise wealth or safety as a reward "
+        "for faith, never use God's name casually, and never make God a co-pilot or a charm for luck.",
+        ["the heavens declaring the glory of God", "the God who numbers the stars and calls them by name",
+         "every star and world called to praise him, as in Psalm 148", "the Maker's hand seen in a nebula's light",
+         "holy, holy, holy: the Lord enthroned above the heavens", "what is man, that you are mindful of him",
+         "the steadfast love of the Lord, new every morning", "Christ, by whom all things were made and hold together",
+         "Christ's finished work, with nothing to add", "grace for a pilot who has failed",
+         "thanksgiving for a safe arrival, as in Psalm 107", "the Lord who stills the storm",
+         "fleeing to the far side of the sea, and God already there", "providence in a narrow escape",
+         "the Lord who neither slumbers nor sleeps keeps watch", "the Lord my rock and fortress in battle",
+         "the Lord who trains my hands for battle, as in Psalm 144", "lift up your heads: the King of glory comes in",
+         "a prayer before a jump into the unknown", "waiting on the Lord through a long transit",
+         "the Lord's Day kept aboard a carrier", "the Lord's Supper shared by a small crew",
+         "the covenant kept from parent to child", "a doxology at journey's end",
+         "a lament that turns to trust, as in Psalm 42", "the resurrection hope and the new creation"],
         "reverent worship song, hymn-like melody", "solemn worship song"),
 }
 assert set(THEMES) == set(sung.THEMES)
