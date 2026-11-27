@@ -127,6 +127,7 @@ D47.Core.Journal.OwnBody
 D47.Core.Journal.OwnScanIndex.Collect(System.Collections.Generic.IEnumerable<string>, string, long, System.Collections.Generic.List<D47.Core.Journal.JournalEvent>)
 D47.Core.Journal.OwnScanIndex.Read(string, long, System.Threading.CancellationToken)
 D47.Core.Journal.OwnScanIndex.Version(string, long)
+D47.Core.Journal.OwnScansMerge
 D47.Core.Journal.OwnSystem
 D47.Core.Journal.OwnSystemFold
 D47.Core.Journal.TechBrokerUnlocks.NotKnownToBeUnlocked(string)
