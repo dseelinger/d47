@@ -1,3 +1,5 @@
+using System.Buffers;
+using System.Text.Json;
 using D47.Core.Knowledge;
 using D47.Core.Storage;
 using Microsoft.Extensions.Logging;
@@ -5,9 +7,9 @@ using Microsoft.Extensions.Logging;
 namespace D47.Core.Journal;
 
 /// <summary>
-/// Which journal files hold each Commander's exploration events for each system, by <c>SystemAddress</c>, and the
-/// session's live events. Rebuilt from the journals on every start and extended by live events; holds no file and
-/// no scans: <see cref="Read"/> reads them back.
+/// Which journal files hold each Commander's scans of each system, by <c>SystemAddress</c>, the entry and discovery
+/// events of each system that the fold needs, and the session's live events. Rebuilt from the journals on every start
+/// and extended by live events; holds no file and no scans: <see cref="Read"/> reads them back.
 /// </summary>
 public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
 {
@@ -24,15 +26,27 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
         .. Exploration, "Commander", "NewCommander", "LoadGame", "GameModeChange", "Fileheader", "Shutdown",
     ]);
 
+    /// <summary>The fields of an entry or discovery event that <see cref="OwnSystemFold"/> reads.</summary>
+    private static readonly string[] SummaryFields =
+        ["timestamp", "event", "StarSystem", "StarPos", "SystemAddress", "Population", "SystemName", "BodyCount"];
+
     private readonly Lock _gate = new();
 
     private readonly Dictionary<string, Dictionary<long, List<string>>> _files = new(StringComparer.Ordinal);
+
+    private readonly Dictionary<string, Dictionary<long, Summary>> _summaries = new(StringComparer.Ordinal);
 
     private readonly Dictionary<string, Dictionary<long, List<JournalEvent>>> _live = new(StringComparer.Ordinal);
 
     private readonly Dictionary<(string Fid, long SystemAddress), int> _versions = [];
 
     private string _liveFid = string.Empty;
+
+    /// <summary>
+    /// The last system's events read from its files. A line added to a listed file later also arrives live, so the
+    /// events hold while the system's file list is unchanged.
+    /// </summary>
+    private Collected? _collected;
 
     /// <summary>Folds live events; a synchronous add with no I/O.</summary>
     public void Apply(IReadOnlyList<JournalEvent> events)
@@ -69,27 +83,46 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
         ArgumentNullException.ThrowIfNull(fid);
 
         string[] files;
+        JournalEvent[] summary;
         JournalEvent[] live;
+        Collected? collected;
 
         lock (_gate)
         {
             files = _files.TryGetValue(fid, out var systems) && systems.TryGetValue(systemAddress, out var named) ? [.. named] : [];
+            summary = _summaries.TryGetValue(fid, out var summed) && summed.TryGetValue(systemAddress, out var kept) ? kept.Events() : [];
             live = _live.TryGetValue(fid, out var held) && held.TryGetValue(systemAddress, out var events) ? [.. events] : [];
+            collected = _collected;
         }
 
-        if (files.Length == 0 && live.Length == 0)
+        if (files.Length == 0 && summary.Length == 0 && live.Length == 0)
         {
             return null;
         }
 
-        var found = new List<JournalEvent>();
+        List<JournalEvent> found;
 
-        foreach (var file in files)
+        if (collected is not null && collected.Fid == fid && collected.SystemAddress == systemAddress && collected.Files.SequenceEqual(files))
         {
-            cancellation.ThrowIfCancellationRequested();
-            Collect(JournalLines.Read(fileSystem, file, logger, Purpose, warnIfMissing: false), fid, systemAddress, found);
+            found = [.. collected.Events];
+        }
+        else
+        {
+            found = [];
+
+            foreach (var file in files)
+            {
+                cancellation.ThrowIfCancellationRequested();
+                Collect(JournalLines.Read(fileSystem, file, logger, Purpose, warnIfMissing: false), fid, systemAddress, found);
+            }
+
+            lock (_gate)
+            {
+                _collected = new Collected(fid, systemAddress, files, [.. found]);
+            }
         }
 
+        found.InsertRange(0, summary);
         found.AddRange(live);
 
         return OwnSystemFold.Fold(systemAddress, found);
@@ -112,6 +145,12 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
                     continue;
                 }
 
+                if (IsSummary(journalEvent))
+                {
+                    Keep(fid, address, journalEvent);
+                    continue;
+                }
+
                 if (!_files.TryGetValue(fid, out var systems))
                 {
                     systems = [];
@@ -130,6 +169,95 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
                 }
             }
         }
+    }
+
+    /// <summary>An event whose fold needs only the latest of its kind, and for an entry each change of population.</summary>
+    private static bool IsSummary(JournalEvent journalEvent) =>
+        BodyScans.IsSystemEntry(journalEvent) || journalEvent.Kind is "FSSDiscoveryScan" or "FSSAllBodiesFound";
+
+    /// <summary>Keeps the event if it is the latest of its kind for the system or an entry that changes its population.</summary>
+    private void Keep(string fid, long systemAddress, JournalEvent journalEvent)
+    {
+        if (!_summaries.TryGetValue(fid, out var systems))
+        {
+            systems = [];
+            _summaries[fid] = systems;
+        }
+
+        if (!systems.TryGetValue(systemAddress, out var summary))
+        {
+            summary = new Summary();
+            systems[systemAddress] = summary;
+        }
+
+        switch (journalEvent.Kind)
+        {
+            case "FSSDiscoveryScan":
+                if (IsLatest(summary.Discovery, journalEvent))
+                {
+                    summary.Discovery = Trimmed(journalEvent);
+                }
+
+                return;
+
+            case "FSSAllBodiesFound":
+                if (IsLatest(summary.AllFound, journalEvent))
+                {
+                    summary.AllFound = Trimmed(journalEvent);
+                }
+
+                return;
+        }
+
+        var populated = BodyScans.PopulationOf(journalEvent) is { Populated: true };
+        var latest = IsLatest(summary.Entry, journalEvent);
+
+        if (populated == summary.Populated && !latest)
+        {
+            return;
+        }
+
+        var trimmed = Trimmed(journalEvent);
+
+        if (populated != summary.Populated)
+        {
+            summary.Changes.Add(trimmed);
+            summary.Populated = populated;
+        }
+
+        if (latest)
+        {
+            summary.Entry = trimmed;
+        }
+    }
+
+    /// <summary>Whether the event sorts at or after the one kept, as <see cref="OwnSystemFold"/> orders by time.</summary>
+    private static bool IsLatest(JournalEvent? kept, JournalEvent journalEvent) => kept is null || journalEvent.Timestamp >= kept.Timestamp;
+
+    /// <summary>The event with only <see cref="SummaryFields"/>.</summary>
+    private static JournalEvent Trimmed(JournalEvent journalEvent)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            writer.WriteStartObject();
+
+            foreach (var field in SummaryFields)
+            {
+                if (journalEvent.Raw.TryGetProperty(field, out var value))
+                {
+                    writer.WritePropertyName(field);
+                    value.WriteTo(writer);
+                }
+            }
+
+            writer.WriteEndObject();
+        }
+
+        using var document = JsonDocument.Parse(buffer.WrittenMemory);
+
+        return new JournalEvent(journalEvent.Timestamp, journalEvent.Kind, document.RootElement.Clone());
     }
 
     private void FoldLive(JournalEvent journalEvent)
@@ -177,6 +305,7 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
                 {
                     fid = erased;
                     _files.Remove(erased);
+                    _summaries.Remove(erased);
 
                     if (live)
                     {
@@ -232,6 +361,41 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
             {
                 found.Add(journalEvent);
             }
+        }
+    }
+
+    private sealed record Collected(string Fid, long SystemAddress, string[] Files, JournalEvent[] Events);
+
+    /// <summary>
+    /// The entry and discovery events of one system that <see cref="OwnSystemFold"/> needs, since a file is listed only
+    /// for the system's other events: the latest of each kind, for the name, position, body count and time, and each
+    /// entry that changed the population, which sets the footfall flag of a later scan.
+    /// </summary>
+    private sealed class Summary
+    {
+        public JournalEvent? Entry { get; set; }
+
+        public List<JournalEvent> Changes { get; } = [];
+
+        public bool Populated { get; set; }
+
+        public JournalEvent? Discovery { get; set; }
+
+        public JournalEvent? AllFound { get; set; }
+
+        public JournalEvent[] Events()
+        {
+            List<JournalEvent> events = [.. Changes];
+
+            foreach (var latest in new[] { Entry, Discovery, AllFound })
+            {
+                if (latest is not null && !events.Contains(latest))
+                {
+                    events.Add(latest);
+                }
+            }
+
+            return [.. events];
         }
     }
 }
