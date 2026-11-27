@@ -118,7 +118,12 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
 
             lock (_gate)
             {
-                _collected = new Collected(fid, systemAddress, files, [.. found]);
+                var listed = _files.TryGetValue(fid, out var now) && now.TryGetValue(systemAddress, out var still) ? still : [];
+
+                if (listed.SequenceEqual(files))
+                {
+                    _collected = new Collected(fid, systemAddress, files, [.. found]);
+                }
             }
         }
 
@@ -306,6 +311,11 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
                     fid = erased;
                     _files.Remove(erased);
                     _summaries.Remove(erased);
+
+                    if (_collected?.Fid == erased)
+                    {
+                        _collected = null;
+                    }
 
                     if (live)
                     {
