@@ -47,7 +47,7 @@ nav_order: 157
 <section>
 <h2><span class="num">3</span> Keep a picture.</h2>
 <p class="say">Say "take a picture".</p>
-<p class="expect">D47 presses Elite's screenshot key and answers "Picture taken." The copy goes in Elite's pictures folder. This needs Let D47 press keys in Elite on, works with this row off, and no model sees the picture.</p>
+<p class="expect">D47 presses Elite's screenshot key and answers "Picture taken." The copy goes in Elite's pictures folder. In the headset without SteamVR, D47 also keeps a picture of the headset view with its panel in it. This needs Let D47 press keys in Elite on, works with this row off, and no model sees the picture.</p>
 <svg viewBox="0 0 880 176" role="img" aria-label="Phrases that save a picture">
  <rect x="20" y="24" width="840" height="52" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
  <text x="44" y="57" font-size="17" fill="var(--text)">take a picture</text>
@@ -145,6 +145,27 @@ names of up to three of them and "and N more" for the rest. With Convert Elite's
 key is still pressed, and the answer says the picture is Elite's BMP only. With Elite not the window
 in front, or pressing keys switched off, nothing is pressed and the answer says why.
 
+#### In the headset without SteamVR
+
+With [Show D47 without SteamVR](vr.md#without-steamvr) on and the headset served through D47's
+OpenXR layer, Elite's screenshot does not show D47's panel, so D47 also keeps a picture of the
+headset view. It is the left eye, cut to the lens, with the panel, the avatar, the video, the
+captions, the beam and the cursor drawn where you see them. It is taken first, then F10 is pressed.
+
+- **Where it goes.** With Convert Elite's screenshots on, beside Elite's JPEGs, named as they are
+  with ` headset` at the end. With it off, in `data\captures` as a `capture-` picture, which moves
+  into the pictures folder with its note the first time D47 starts with the row on.
+- **Its note.** The same `.json` note, from the game state when it was taken, with its source as
+  the headset's left eye and no BMP. The codex crop page brightens it as it does every picture from
+  the headset.
+- **What D47 says.** "Picture taken, with a picture of the headset view." When F10 is not pressed,
+  because pressing keys is off or Elite is not the window in front, the headset view is still kept:
+  "Picture of the headset view taken. Elite took no screenshot." and why. When the headset view
+  cannot be taken, F10 is still pressed: "Picture taken. No picture of the headset view:" and why.
+  When neither is taken, the reply is an error giving both reasons.
+
+On the SteamVR route, and with no headset, "take a picture" only presses F10.
+
 ### Off by default
 
 [Let the model look at the screen](conversation.md#let-the-model-look-at-the-screen) is off until
@@ -196,11 +217,13 @@ written to disk.
 
 #### `take_picture`
 
-Sends `ScreenCapability.ScreenshotKey`, an F10 tap, through `IGameInput` on the thread pool and
-writes nothing; `ScreenshotConverter` writes the JPEG and its `PictureNote` when the journal reports
-the screenshot. Takes no arguments, and is protected: the model is refused it. It is not gated by
-Let the model look at the screen, and is gated by Let D47 press keys in Elite. When the press is
-refused it answers `No picture was taken. ` and the reason.
+Sends `ScreenCapability.ScreenshotKey`, an F10 tap, through `IGameInput` on the thread pool;
+`ScreenshotConverter` writes the JPEG and its `PictureNote` when the journal reports the screenshot.
+On the OpenXR layer route it first calls `PictureKeeping.Headset`, which asks the layer for Elite's
+left eye (`OpenXrLayerRuntime.TakeEye`), draws D47's quads over it (`EyeComposite`), and writes it
+with `ScreenCapability.KeepHeadset`. Takes no arguments, and is protected: the model is refused it.
+It is not gated by Let the model look at the screen, and its F10 press is gated by Let D47 press keys
+in Elite. When nothing is kept it answers `No picture was taken. ` and the reasons.
 
 ```json
 {"type":"object","properties":{},"required":[],"additionalProperties":false}

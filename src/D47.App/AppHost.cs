@@ -2331,7 +2331,8 @@ public sealed class AppHost : IDisposable
                 Diagnostics.InputTraceWriter.StillWidth,
                 loggerFactory.CreateLogger<Diagnostics.EliteWindowCapture>()),
             Diagnostics.InputTraceWriter.StillWidth,
-            loggerFactory.CreateLogger<Diagnostics.HeadsetEyeCapture>());
+            loggerFactory.CreateLogger<Diagnostics.HeadsetEyeCapture>(),
+            () => late.Host?.Vr?.Layer);
 
         // Off unless D47_TRACE_INPUT=1 or --trace-input (#365).
         var inputTrace = Diagnostics.InputTraceWriter.Create(
@@ -3118,6 +3119,11 @@ public sealed class AppHost : IDisposable
                 standingWarnings: stores.StandingWarnings,
                 bindingProfiles: services.BindingProfiles,
                 screen: services.ScreenCapture,
+                headsetPictures: new D47.Core.Capabilities.Builtin.HeadsetKeeping(
+                    services.ScreenCapture.KeepLayerViewAsync,
+                    files,
+                    EliteScreenshot.Folder,
+                    paths.Captures),
                 imagesAvailable: () => late.Host?.ReadsPictures ?? true,
                 pictureNote: () => late.Host?.PictureNote,
                 files: files,

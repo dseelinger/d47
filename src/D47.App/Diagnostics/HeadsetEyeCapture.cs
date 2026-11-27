@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Interface;
 using D47.Vr;
 using Microsoft.Extensions.Logging;
@@ -10,14 +11,16 @@ namespace D47.App.Diagnostics;
 
 /// <summary>
 /// The SteamVR compositor's left-eye image while SteamVR is showing Elite, and Elite's window otherwise. A
-/// failed eye image is reported as the still's error, never replaced by the window.
+/// failed eye image is reported as the still's error, never replaced by the window. Through the OpenXR layer it
+/// also keeps a picture of the headset view with D47's quads in it.
 /// </summary>
 public sealed class HeadsetEyeCapture(
     Func<SteamVrRuntime?> headset,
     Func<uint> eliteProcess,
     IWindowCapture window,
     int width,
-    ILogger<HeadsetEyeCapture> logger) : IWindowCapture, IDisposable
+    ILogger<HeadsetEyeCapture> logger,
+    Func<OpenXrLayerRuntime?>? layer = null) : IWindowCapture, IDisposable
 {
     private readonly Lock _gate = new();
 
@@ -43,6 +46,63 @@ public sealed class HeadsetEyeCapture(
     }
 
     public ScreenCaptureResult Take() => Take(full: false);
+
+    /// <summary>
+    /// The headset view through the OpenXR layer, cut to <see cref="ScreenPictures.LensCrop"/>, as a JPEG at its own
+    /// size; <see cref="HeadsetShot.NotHere"/> while the headset is not served through the layer. Runs on the pool.
+    /// </summary>
+    public Task<HeadsetShot> KeepLayerViewAsync(CancellationToken cancellationToken) => Task.Run(
+        () =>
+        {
+            if (layer?.Invoke() is not { } through)
+            {
+                return HeadsetShot.NotHere;
+            }
+
+            HeadsetEye eye;
+
+            try
+            {
+                eye = through.TakeEye(cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogWarning(ex, "The headset's eye could not be taken");
+                return new HeadsetShot(null, 0, 0, $"the headset's eye could not be taken: {ex.Message}");
+            }
+
+            if (eye.Pixels is not { } pixels)
+            {
+                logger.LogInformation("No picture of the headset view: {Reason}", eye.Refusal);
+                return new HeadsetShot(null, 0, 0, eye.Refusal ?? "the eye could not be read.");
+            }
+
+            try
+            {
+                var (cropped, columns, rows) = Crop(pixels, eye.Width, eye.Height);
+
+                using var bitmap = SoftwareBitmap.CreateCopyFromBuffer(
+                    cropped.AsBuffer(),
+                    BitmapPixelFormat.Bgra8,
+                    columns,
+                    rows,
+                    BitmapAlphaMode.Premultiplied);
+
+                var jpeg = EliteWindowCapture.Encode(
+                    bitmap,
+                    BitmapEncoder.JpegEncoderId,
+                    EliteWindowCapture.JpegOptions(EliteWindowCapture.FullJpegQuality),
+                    (columns, rows));
+
+                return new HeadsetShot(jpeg, columns, rows, null);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "The picture of the headset view could not be made");
+                return new HeadsetShot(null, 0, 0, $"it could not be made: {ex.Message}");
+            }
+        },
+        cancellationToken);
 
     public ScreenCaptureResult TakeFull() => Take(full: true);
 

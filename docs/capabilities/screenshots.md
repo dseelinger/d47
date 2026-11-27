@@ -134,7 +134,8 @@ leave it. The headset has no Show in folder, Rename or Delete.
 The row is under Settings › You and your records › Logs and goals, in the Screenshots group, beside **Saved to**, which shows the folder.
 
 Saying "take a picture" makes one: [Screen](screen.md) presses Elite's screenshot key, and the copy and
-its note are made here like any other. Pictures that "take a picture" kept in `data\captures` are
+its note are made here like any other. In the headset without SteamVR it also keeps a picture of the
+headset view with D47's panel in it, here beside Elite's copy, its name ending ` headset`. Pictures that "take a picture" kept in `data\captures` are
 moved into this folder, with their notes, the first time D47 starts with this row on.
 
 This capability has no tools. It is separate from the pictures of the window that

@@ -24,6 +24,9 @@ public sealed class HeadsetRuntime(
     /// <summary>The SteamVR runtime while its route is the live one, otherwise null.</summary>
     public IVrSession? SteamVr => _live == steamVr ? steamVr : null;
 
+    /// <summary>The OpenXR layer runtime while its route is the live one, otherwise null.</summary>
+    public OpenXrLayerRuntime? Layer => _live == layer ? layer : null;
+
     public bool Pointing
     {
         get => _pointing;

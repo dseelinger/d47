@@ -183,6 +183,9 @@ Elite can run on OpenXR through a mod, on a runtime that is not SteamVR's. Turn 
 SteamVR** and D47 serves the headset through an OpenXR layer in Elite's own process. The route was
 tested on Virtual Desktop's runtime; Meta's runtime is untested.
 
+On this route, saying "take a picture" also keeps a picture of the headset view with D47's panel in
+it, beside Elite's own screenshot (see [Screen](screen.md#in-the-headset-without-steamvr)).
+
 ### What you get
 
 Two things float in front of you.

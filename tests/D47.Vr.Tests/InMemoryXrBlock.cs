@@ -110,6 +110,34 @@ internal sealed unsafe class InMemoryXrBlock : IXrBlockMemory, IDisposable
         Write();
     }
 
+    /// <summary>The left eye the layer saw in Elite's last frame.</summary>
+    public void Eye(uint format, uint width, uint height)
+    {
+        _layer.EyeFormat = format;
+        _layer.EyeWidth = width;
+        _layer.EyeHeight = height;
+        Write();
+    }
+
+    /// <summary>The layer's answer to <paramref name="request"/>, at the current frame, with the head as it is now.</summary>
+    public void Answer(ulong request, XrCaptureRefusal refusal = XrCaptureRefusal.None, XrBlockPose? eye = null, XrBlockFov? fov = null)
+    {
+        _layer.CaptureServed = request;
+        _layer.CaptureRefusal = refusal;
+        _layer.CaptureFrame = _layer.FrameCounter;
+        _layer.CaptureEye = eye ?? new XrBlockPose { OrientationW = 1f };
+        _layer.CaptureFov = fov ?? new XrBlockFov
+        {
+            AngleLeft = -MathF.PI / 4,
+            AngleRight = MathF.PI / 4,
+            AngleUp = MathF.PI / 4,
+            AngleDown = -MathF.PI / 4,
+        };
+        _layer.CaptureHead = _layer.Head;
+        _layer.CaptureHeadValid = _layer.HeadValid;
+        Write();
+    }
+
     /// <summary>d47's half as the layer would read it.</summary>
     public XrD47Half D47Half
     {

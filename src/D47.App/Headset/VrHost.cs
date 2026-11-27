@@ -123,6 +123,9 @@ public sealed class VrHost : IDisposable
     /// <summary>The SteamVR session while d47 is attached to it, otherwise null (#601).</summary>
     public SteamVrRuntime? Session => _lifecycle.State == VrState.Active ? (_runtime as HeadsetRuntime)?.SteamVr as SteamVrRuntime : null;
 
+    /// <summary>The OpenXR layer session while d47 serves the headset through it, otherwise null.</summary>
+    public OpenXrLayerRuntime? Layer => _lifecycle.State == VrState.Active ? (_runtime as HeadsetRuntime)?.Layer : null;
+
     /// <summary>
     /// The headset panel's own prompts, so a spoken value can reach a chooser the Commander opened in
     /// the headset rather than only one they opened in the window (Phase 25).
@@ -295,7 +298,8 @@ public sealed class VrHost : IDisposable
             new XrSharedBlock(),
             new D3D11TextureDevice(),
             video,
-            new D3D11TextureDevice());
+            new D3D11TextureDevice(),
+            eyes: new D3D11EyeReader());
         var runtime = new HeadsetRuntime(
             steamVr,
             throughTheLayer,

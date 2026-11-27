@@ -335,6 +335,7 @@ public static class BuiltinCapabilities
 
         // What the Commander is looking at, whether the model in use reads it, and the row's line when not.
         Interface.IScreenCapture? screen = null,
+        Builtin.HeadsetKeeping? headsetPictures = null,
         Func<bool>? imagesAvailable = null,
         Func<string?>? pictureNote = null,
 
@@ -606,7 +607,8 @@ public static class BuiltinCapabilities
             new PictureKeeping(
                 cancellationToken => actions.Input.SendAsync(ScreenCapability.ScreenshotKey, cancellationToken),
                 () => gameState.Active,
-                now ?? (() => DateTimeOffset.MinValue))),
+                now ?? (() => DateTimeOffset.MinValue),
+                headsetPictures)),
 
         SurfaceGuidanceCapability.Create(
             surfaceMarks ?? new Builtin.SurfaceMarks(),

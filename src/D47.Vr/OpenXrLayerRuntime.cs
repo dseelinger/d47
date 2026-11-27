@@ -16,14 +16,16 @@ namespace D47.Vr;
 /// <param name="video">The video quad. Without it and <paramref name="videoTextures"/> there is none.</param>
 /// <param name="videoTextures">The device the video presenter uses, and no other thread.</param>
 /// <param name="videoClock">Runs the video presenter. Without it, a thread of its own.</param>
-public sealed unsafe class OpenXrLayerRuntime(
+/// <param name="eyes">The device a picture of the headset view is read back on. Without it there is none.</param>
+public sealed unsafe partial class OpenXrLayerRuntime(
     IReadOnlyList<IVrSurfaceSource> sources,
     ILogger<OpenXrLayerRuntime> logger,
     IXrBlockMemory memory,
     IVrTextureDevice textures,
     IVrVideoSource? video = null,
     IVrTextureDevice? videoTextures = null,
-    IVrVideoClock? videoClock = null) : IVrSession
+    IVrVideoClock? videoClock = null,
+    IVrEyeReader? eyes = null) : IVrSession
 {
     /// <summary>How long the layer's frame counter may stand still before the session ends.</summary>
     public static readonly TimeSpan StallLimit = TimeSpan.FromSeconds(1);
@@ -79,6 +81,12 @@ public sealed unsafe class OpenXrLayerRuntime(
 
     private Sprite? _beam;
     private readonly Dictionary<VrCursor, Sprite> _cursors = [];
+
+    /// <summary>The cursor last put in its slot. Guarded by <see cref="_half"/>.</summary>
+    private Sprite? _cursorShown;
+
+    /// <summary>Held while a surface is drawn into its buffer, and while a picture copies the buffers.</summary>
+    private readonly Lock _drawing = new();
     private bool _spritesRefused;
 
     private bool _deviceOpen;
@@ -384,6 +392,7 @@ public sealed unsafe class OpenXrLayerRuntime(
             }
 
             _beam = null;
+            _cursorShown = null;
             _cursors.Clear();
             _spritesRefused = false;
 
@@ -394,7 +403,12 @@ public sealed unsafe class OpenXrLayerRuntime(
             }
 
             _d47 = default;
-            _buffers.Clear();
+
+            lock (_drawing)
+            {
+                _buffers.Clear();
+            }
+
             _frames.Clear();
             _refused.Clear();
             _served.Clear();
@@ -407,6 +421,8 @@ public sealed unsafe class OpenXrLayerRuntime(
             Array.Clear(_gripBy);
             Head = null;
         }
+
+        eyes?.Close();
     }
 
     public (IReadOnlyList<VrHand> Hands, VrPose? Head) HandsAndHead()
@@ -561,6 +577,7 @@ public sealed unsafe class OpenXrLayerRuntime(
             else
             {
                 Fill(ref slot, sprite);
+                _cursorShown = sprite;
                 slot.Space = XrQuadSpace.Cockpit;
                 slot.Pose = ToBlock(VrAim.CursorAt(point, head.Position));
                 slot.WidthMetres = VrAim.CursorSizeMetres;
@@ -616,15 +633,20 @@ public sealed unsafe class OpenXrLayerRuntime(
 
         if (plan.Draw)
         {
-            if (!_buffers.TryGetValue(index, out var pixels))
-            {
-                pixels = new VrPixels(width, height);
-                _buffers[index] = pixels;
-            }
+            VrPixels? pixels;
 
-            pixels.Resize(width, height);
-            source.Draw(pixels.Address, pixels.RowBytes);
-            Fade(pixels, placement.Opacity);
+            lock (_drawing)
+            {
+                if (!_buffers.TryGetValue(index, out pixels))
+                {
+                    pixels = new VrPixels(width, height);
+                    _buffers[index] = pixels;
+                }
+
+                pixels.Resize(width, height);
+                source.Draw(pixels.Address, pixels.RowBytes);
+                Fade(pixels, placement.Opacity);
+            }
 
             textures.Write(pair.Spare, pixels.Address, pixels.RowBytes, width, height);
             textures.Flush();
@@ -1031,7 +1053,7 @@ public sealed unsafe class OpenXrLayerRuntime(
             pinned.Free();
         }
 
-        return new Sprite(texture, name, width, height, ++_generation);
+        return new Sprite(texture, name, width, height, ++_generation, bgra);
     }
 
     /// <summary>RGBA as <see cref="VrSprites"/> draws it, swapped to the BGRA every shared texture holds.</summary>
@@ -1195,7 +1217,7 @@ public sealed unsafe class OpenXrLayerRuntime(
         };
     }
 
-    private sealed record Sprite(IntPtr Texture, string Name, int Width, int Height, ulong Generation);
+    private sealed record Sprite(IntPtr Texture, string Name, int Width, int Height, ulong Generation, byte[] Bgra);
 
     /// <summary>Two shared textures: the one the layer was last given, and the spare the next frame is drawn into.</summary>
     private sealed class TexturePair(IntPtr[] handles, string[] names, int width, int height)
