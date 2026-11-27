@@ -1230,6 +1230,12 @@ match: a star Spansh lists as an A-type hypergiant that the Commander's scan sho
 an answer to an A-type search. Each body left out lowers the count by one. A filter on something a
 scan does not hold, such as material share, codex entry or Powerplay, stays as the service answered it.
 
+A star whose galaxy record gives a class with no subclass ("A", "L", "T", "M") is shown as "type
+unconfirmed", under the type on the Bodies tab and after it in the spoken answer: "A (Blue-White
+super giant) Star, type unconfirmed". The record is older than the subclass Elite now writes for every
+star, so its type may be wrong. The row stays in the results in the same place, and a star the
+Commander has scanned takes its class from the scan and is not marked.
+
 Two things about this search were measured and are worth knowing before changing it.
 
 **The radius stops at 101,000 light years.** That is the galaxy's diameter, about 100,000 light

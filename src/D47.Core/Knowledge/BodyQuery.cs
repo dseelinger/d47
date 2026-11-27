@@ -83,6 +83,10 @@ public sealed record BodySummary
     /// <summary>A star's luminosity class, "V".</summary>
     public string? Luminosity { get; init; }
 
+    /// <summary>A star whose spectral class has no digit: a record older than the subclass Elite writes for every star.</summary>
+    public bool TypeUnconfirmed =>
+        Type == "Star" && !string.IsNullOrEmpty(SpectralClass) && !SpectralClass.Any(char.IsAsciiDigit);
+
     public double? SolarMasses { get; init; }
 
     public double? SolarRadius { get; init; }

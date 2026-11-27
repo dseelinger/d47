@@ -3912,7 +3912,7 @@ public static class GalaxyCapability
 
             if (body.Subtype is not null)
             {
-                facts.Add(body.Subtype);
+                facts.Add(body.TypeUnconfirmed ? body.Subtype + ", type unconfirmed" : body.Subtype);
             }
 
             if (body.IsLandable)

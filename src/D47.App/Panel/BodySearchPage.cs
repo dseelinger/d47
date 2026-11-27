@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Media;
 using D47.App.Controls;
 using D47.App.Theming;
 using D47.Core.Knowledge;
@@ -363,7 +364,7 @@ public sealed class BodySearchPage : GalaxySearchPage
         List<TableField<object>> fields =
         [
             SearchField("Body", new TableColumn("Body", ColumnFit.Fill) { Min = 120 }, "Body", row => Centered(TableCells.Wraps(Chrome(((BodySummary)row).Name, TypeScale.Secondary, ThemeManager.AKey))), "name"),
-            SearchField("Type", new TableColumn("Type", ColumnFit.Fill) { Min = 120 }, "Type", row => TableCells.Text(((BodySummary)row).Subtype), local: LocalSort.Text<BodySummary>(body => body.Subtype), filters: [SearchValues.One<BodySummary>("Type", body => body.Subtype, "No type reported")]),
+            SearchField("Type", new TableColumn("Type", ColumnFit.Fill) { Min = 120 }, "Type", row => TypeCell((BodySummary)row), local: LocalSort.Text<BodySummary>(body => body.Subtype), filters: [SearchValues.One<BodySummary>("Type", body => body.Subtype, "No type reported")]),
             SearchField("System", new TableColumn("System", ColumnFit.Fill) { Min = 100 }, "System", row => SystemCell((BodySummary)row), "system", filters: [SearchValues.One<BodySummary>("System", body => body.SystemName, "No system reported")]),
             SearchField("Distance", new TableColumn("Distance"), "LY", row => Centered(Right(Mono(Fixed(((BodySummary)row).Distance), TypeScale.Small, ThemeManager.AKey))), SearchSorts.Distance, right: true),
             SearchField("FromStar", new TableColumn("FromStar"), "From star", row => Centered(Right(Mono(StationSearchPage.Light(((BodySummary)row).DistanceToArrival), TypeScale.Small, ThemeManager.WhiteKey))), "from_star", right: true),
@@ -424,6 +425,23 @@ public sealed class BodySearchPage : GalaxySearchPage
 
     /// <summary>The Rings filter's entry for a ring whose type is not reported.</summary>
     private const string RingTypeNotKnown = "Type not known";
+
+    /// <summary>The type, with TYPE UNCONFIRMED under it when the galaxy record's class has no subclass.</summary>
+    internal static Control TypeCell(BodySummary body)
+    {
+        var type = TableCells.Text(body.Subtype);
+
+        if (!body.TypeUnconfirmed)
+        {
+            return type;
+        }
+
+        var mark = Chrome("Type unconfirmed", TypeScale.MetaSmall, ThemeManager.GreyKey);
+        mark.TextWrapping = TextWrapping.Wrap;
+        mark.TextTrimming = TextTrimming.None;
+
+        return new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, Children = { type, mark } };
+    }
 
     private Control SystemCell(BodySummary body)
     {

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Search › Bodies marks a star whose type the galaxy record does not confirm. A star whose class is letters with no number, such as "A" or "L", is from a record older than the subclass Elite now writes for every star, and its type may be wrong. The row says TYPE UNCONFIRMED in grey under the type, and "find body" says "type unconfirmed" after it. The row stays in the results where it was. A star you have scanned takes its class from your scan and is not marked.
+
 Fixed: A body search no longer lists a body your own scan shows is something else. A star Spansh has as an A-type hypergiant, which your scan shows is a B-type, is left out of a search for A-type hypergiants, and the count drops by one. Where your scan is newer than Spansh's report, the row shows what you scanned.
 
 Changed: The mini panel's Plan list now opens at where you are. The stop for the system you are in is the top row, in cyan, with the next stop below it. Between stops, the last stop you reached is at the top. The list moves down a row with each stop you reach, and a scroll you make yourself stays until you reach the next one.
