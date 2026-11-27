@@ -116,6 +116,22 @@ public class TheNameLadderTests
         Assert.Equal("one nine eight five", SpokenDesignations.Rewrite("1985"));
     }
 
+    /// <summary>A zero between the hundreds and the last digit is said "oh"; other three-digit numbers are unchanged.</summary>
+    [Theory]
+    [InlineData(305, "three oh five")]
+    [InlineData(101, "one oh one")]
+    [InlineData(909, "nine oh nine")]
+    [InlineData(300, "three hundred")]
+    [InlineData(385, "three eighty-five")]
+    [InlineData(310, "three ten")]
+    public void AMiddleZeroIsSaidOh(int value, string expected) =>
+        Assert.Equal(expected, SpokenNumber.UpTo999(value));
+
+    /// <summary>A measured quantity keeps its reading.</summary>
+    [Fact]
+    public void AQuantityWithAMiddleZeroIsUnchanged() =>
+        Assert.Equal("one thousand three hundred five", SpokenNumber.Say("1,305"));
+
     /// <summary>
     /// A three-digit boxel coordinate keeps the casual reading under the same rule, with no special
     /// case for the boxel shape — the one thing #91 flagged as worth hearing before ruling it right.

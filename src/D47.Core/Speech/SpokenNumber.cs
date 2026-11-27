@@ -238,6 +238,11 @@ public static class SpokenNumber
 
         // "three eighty-five", not "three hundred and eighty-five" - the Commander's reading, and the one
         // anybody uses for a designation rather than a quantity.
-        return rest == 0 ? hundreds + " hundred" : hundreds + " " + UpTo999(rest);
+        return rest switch
+        {
+            0 => hundreds + " hundred",
+            < 10 => hundreds + " oh " + Ones[rest],
+            _ => hundreds + " " + UpTo999(rest),
+        };
     }
 }

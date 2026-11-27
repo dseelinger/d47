@@ -34,6 +34,8 @@ public class ANumberInANameIsNotAQuantityTests
     [InlineData("LHS 3447", "LHS three four four seven")]
     [InlineData("Col 385", "Col three eighty-five")]
     [InlineData("Sol 1", "Sol one")]
+    [InlineData("Hank305 is online.", "Hank three oh five is online.")]
+    [InlineData("Col 105 Sector RE-Q d5-104", "Col one oh five Sector RE-Q d five-one oh four")]
     [InlineData("Beta 42", "Beta forty-two")]
     [InlineData("Market 3704402688", "Market three seven zero four four zero two six eight eight")]
     public void TheLengthDecidesTheReading(string written, string expected) =>

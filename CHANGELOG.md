@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A three-digit name with a zero in the middle is no longer spoken without it. "Hank305" was said "Hank three five"; it is now "Hank three oh five", and "Col 105 Sector" is "Col one oh five Sector".
+
 Fixed: The notable-bodies callout no longer says a neutron star turns "once every 0 hours". The spin is now said in a unit that fits it: "turning about 12 times a second" for a black hole, "once every second" or "every 38 seconds" for a neutron star, "every 21 minutes" for a white dwarf, and hours only from an hour up.
 
 Fixed: The search history no longer keeps every station's full market, outfitting and shipyard stock. A Stations or Outfitting search was saved with the whole stock of each station it found, about 3 MB for 25 stations, so 25 saved searches held around 69 MB in memory and on disk. Those searches are now saved without the stock, which none of the pages opened from history draws, and the file is no longer indented. A history file saved earlier still loads and is trimmed the next time a search is saved.
