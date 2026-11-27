@@ -170,6 +170,22 @@ public sealed class OwnScansOpenOnlyTheFilesThatHoldScansTests
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AnEntryInAnotherFileAtTheScansTimeFoldsWhereItsFileIs(bool entryFirst)
+    {
+        string[] scanned = [Login("10T09:00:00"), Scan("10T09:01:00", Home, 1)];
+        string[] entered = [Login("10T09:00:00"), Entry("10T09:01:00", Home, population: 9000)];
+        string[][] files = entryFirst ? [entered, scanned] : [scanned, entered];
+
+        var (index, _, _) = Index(files);
+
+        Assert.Equal(
+            Describe(EveryEvent(files, [], "F1", Home), Home),
+            Describe(index.Read("F1", Home, TestContext.Current.CancellationToken), Home));
+    }
+
     [Fact]
     public void AFileWithOnlyEntriesAndDiscoveryScansIsNotOpened()
     {

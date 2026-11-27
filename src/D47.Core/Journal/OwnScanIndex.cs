@@ -36,6 +36,12 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
 
     private readonly Dictionary<string, Dictionary<long, Summary>> _summaries = new(StringComparer.Ordinal);
 
+    /// <summary>Each folded file's place in <see cref="_order"/> when its fold began.</summary>
+    private readonly Dictionary<string, long> _fileStarts = new(StringComparer.Ordinal);
+
+    /// <summary>Counts the events folded from files, in the order a read lists them.</summary>
+    private long _order;
+
     private readonly Dictionary<string, Dictionary<long, List<JournalEvent>>> _live = new(StringComparer.Ordinal);
 
     private readonly Dictionary<(string Fid, long SystemAddress), int> _versions = [];
@@ -83,13 +89,15 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
         ArgumentNullException.ThrowIfNull(fid);
 
         string[] files;
-        JournalEvent[] summary;
+        long[] starts;
+        Kept[] summary;
         JournalEvent[] live;
         Collected? collected;
 
         lock (_gate)
         {
             files = _files.TryGetValue(fid, out var systems) && systems.TryGetValue(systemAddress, out var named) ? [.. named] : [];
+            starts = [.. files.Select(file => _fileStarts[file])];
             summary = _summaries.TryGetValue(fid, out var summed) && summed.TryGetValue(systemAddress, out var kept) ? kept.Events() : [];
             live = _live.TryGetValue(fid, out var held) && held.TryGetValue(systemAddress, out var events) ? [.. events] : [];
             collected = _collected;
@@ -100,20 +108,20 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
             return null;
         }
 
-        List<JournalEvent> found;
+        List<(long Start, JournalEvent Event)> read;
 
         if (collected is not null && collected.Fid == fid && collected.SystemAddress == systemAddress && collected.Files.SequenceEqual(files))
         {
-            found = [.. collected.Events];
+            read = [.. collected.Events];
         }
         else
         {
-            found = [];
+            read = [];
 
-            foreach (var file in files)
+            for (var i = 0; i < files.Length; i++)
             {
                 cancellation.ThrowIfCancellationRequested();
-                Collect(JournalLines.Read(fileSystem, file, logger, Purpose, warnIfMissing: false), fid, systemAddress, found);
+                Collect(JournalLines.Read(fileSystem, files[i], logger, Purpose, warnIfMissing: false), fid, systemAddress, starts[i], read);
             }
 
             lock (_gate)
@@ -122,15 +130,38 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
 
                 if (listed.SequenceEqual(files))
                 {
-                    _collected = new Collected(fid, systemAddress, files, [.. found]);
+                    _collected = new Collected(fid, systemAddress, files, [.. read]);
                 }
             }
         }
 
-        found.InsertRange(0, summary);
-        found.AddRange(live);
+        return OwnSystemFold.Fold(systemAddress, [.. InFileOrder(read, summary, files), .. live]);
+    }
 
-        return OwnSystemFold.Fold(systemAddress, found);
+    /// <summary>
+    /// The events read from the listed files with the summary events of files not listed, each at its file's place in
+    /// the fold, which is where a read of every file would have put it. A summary event of a listed file is left out,
+    /// since the file was read whole.
+    /// </summary>
+    private static IEnumerable<JournalEvent> InFileOrder(List<(long Start, JournalEvent Event)> read, Kept[] summary, string[] files)
+    {
+        var unlisted = summary.Where(kept => !files.Contains(kept.File, StringComparer.Ordinal)).ToList();
+        var next = 0;
+
+        foreach (var (start, journalEvent) in read)
+        {
+            while (next < unlisted.Count && unlisted[next].Order < start)
+            {
+                yield return unlisted[next++].Event;
+            }
+
+            yield return journalEvent;
+        }
+
+        while (next < unlisted.Count)
+        {
+            yield return unlisted[next++].Event;
+        }
     }
 
     private static bool IsExploration(JournalEvent journalEvent) => Exploration.Contains(journalEvent.Kind);
@@ -142,8 +173,12 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
 
         lock (_gate)
         {
+            _fileStarts.TryAdd(file, _order);
+
             foreach (var journalEvent in OperationMarker.Mark(events))
             {
+                var order = _order++;
+
                 if (Commander(journalEvent, ref fid, live: false) || fid.Length == 0 || journalEvent.InOperation || !IsExploration(journalEvent)
                     || journalEvent.Long("SystemAddress") is not { } address)
                 {
@@ -152,7 +187,7 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
 
                 if (IsSummary(journalEvent))
                 {
-                    Keep(fid, address, journalEvent);
+                    Keep(fid, address, journalEvent, file, order);
                     continue;
                 }
 
@@ -181,7 +216,7 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
         BodyScans.IsSystemEntry(journalEvent) || journalEvent.Kind is "FSSDiscoveryScan" or "FSSAllBodiesFound";
 
     /// <summary>Keeps the event if it is the latest of its kind for the system or an entry that changes its population.</summary>
-    private void Keep(string fid, long systemAddress, JournalEvent journalEvent)
+    private void Keep(string fid, long systemAddress, JournalEvent journalEvent, string file, long order)
     {
         if (!_summaries.TryGetValue(fid, out var systems))
         {
@@ -200,7 +235,7 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
             case "FSSDiscoveryScan":
                 if (IsLatest(summary.Discovery, journalEvent))
                 {
-                    summary.Discovery = Trimmed(journalEvent);
+                    summary.Discovery = new Kept(Trimmed(journalEvent), file, order);
                 }
 
                 return;
@@ -208,7 +243,7 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
             case "FSSAllBodiesFound":
                 if (IsLatest(summary.AllFound, journalEvent))
                 {
-                    summary.AllFound = Trimmed(journalEvent);
+                    summary.AllFound = new Kept(Trimmed(journalEvent), file, order);
                 }
 
                 return;
@@ -222,7 +257,7 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
             return;
         }
 
-        var trimmed = Trimmed(journalEvent);
+        var trimmed = new Kept(Trimmed(journalEvent), file, order);
 
         if (populated != summary.Populated)
         {
@@ -237,7 +272,7 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
     }
 
     /// <summary>Whether the event sorts at or after the one kept, as <see cref="OwnSystemFold"/> orders by time.</summary>
-    private static bool IsLatest(JournalEvent? kept, JournalEvent journalEvent) => kept is null || journalEvent.Timestamp >= kept.Timestamp;
+    private static bool IsLatest(Kept? kept, JournalEvent journalEvent) => kept is null || journalEvent.Timestamp >= kept.Value.Event.Timestamp;
 
     /// <summary>The event with only <see cref="SummaryFields"/>.</summary>
     private static JournalEvent Trimmed(JournalEvent journalEvent)
@@ -336,7 +371,7 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
     }
 
     /// <summary>Adds the file's events for the Commander and system; a <c>NewCommander</c> for the Commander clears what came before.</summary>
-    private void Collect(IEnumerable<string> lines, string fid, long systemAddress, List<JournalEvent> found)
+    private void Collect(IEnumerable<string> lines, string fid, long systemAddress, long start, List<(long Start, JournalEvent Event)> found)
     {
         var current = string.Empty;
 
@@ -369,12 +404,16 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
             if (current == fid && !journalEvent.InOperation && IsExploration(journalEvent)
                 && journalEvent.Long("SystemAddress") == systemAddress)
             {
-                found.Add(journalEvent);
+                found.Add((start, journalEvent));
             }
         }
     }
 
-    private sealed record Collected(string Fid, long SystemAddress, string[] Files, JournalEvent[] Events);
+    /// <summary>The events read from a system's files, each with its file's start in the fold order.</summary>
+    private sealed record Collected(string Fid, long SystemAddress, string[] Files, (long Start, JournalEvent Event)[] Events);
+
+    /// <summary>A trimmed summary event, the file it came from and its place in the fold order.</summary>
+    private readonly record struct Kept(JournalEvent Event, string File, long Order);
 
     /// <summary>
     /// The entry and discovery events of one system that <see cref="OwnSystemFold"/> needs, since a file is listed only
@@ -383,30 +422,19 @@ public sealed class OwnScanIndex(IFileSystem fileSystem, ILogger logger)
     /// </summary>
     private sealed class Summary
     {
-        public JournalEvent? Entry { get; set; }
+        public Kept? Entry { get; set; }
 
-        public List<JournalEvent> Changes { get; } = [];
+        public List<Kept> Changes { get; } = [];
 
         public bool Populated { get; set; }
 
-        public JournalEvent? Discovery { get; set; }
+        public Kept? Discovery { get; set; }
 
-        public JournalEvent? AllFound { get; set; }
+        public Kept? AllFound { get; set; }
 
-        public JournalEvent[] Events()
-        {
-            List<JournalEvent> events = [.. Changes];
-
-            foreach (var latest in new[] { Entry, Discovery, AllFound })
-            {
-                if (latest is not null && !events.Contains(latest))
-                {
-                    events.Add(latest);
-                }
-            }
-
-            return [.. events];
-        }
+        /// <summary>Each kept event once, in the fold order.</summary>
+        public Kept[] Events() =>
+            [.. Changes.Concat(new[] { Entry, Discovery, AllFound }.OfType<Kept>()).DistinctBy(kept => kept.Order).OrderBy(kept => kept.Order)];
     }
 }
 
