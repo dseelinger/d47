@@ -72,6 +72,7 @@ public sealed class ASeekBarsFillMatchesItsPositionOnTheHeadsetTests
         var show = new PodcastShow("Deep Space Radio", [episode]);
 
         var host = new PodcastsHost(
+            TestSurface.Settings(),
             player,
             () => [new CachedShow(feed, show)],
             () => [feed],

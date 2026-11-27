@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Media › Podcasts has a Podcast level bar, at the right of the transport buttons. It sets the same level as the Podcasts row in Settings, follows a change made there or by voice, and is drawn muted while Podcasts is muted. On the headset big panel the transport is now three lines, the episode, the seek bar, and the buttons with the level, and the list shows four episodes a page instead of five.
+
 Added: Search › Bodies marks a star whose type the galaxy record does not confirm. A star whose class is letters with no number, such as "A" or "L", is from a record older than the subclass Elite now writes for every star, and its type may be wrong. The row says TYPE UNCONFIRMED in grey under the type, and "find body" says "type unconfirmed" after it. The row stays in the results where it was. A star you have scanned takes its class from your scan and is not marked.
 
 Fixed: A body search no longer lists a body your own scan shows is something else. A star Spansh has as an A-type hypergiant, which your scan shows is a B-type, is left out of a search for A-type hypergiants, and the count drops by one. Where your scan is newer than Spansh's report, the row shows what you scanned.

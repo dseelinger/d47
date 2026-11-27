@@ -6093,6 +6093,7 @@ public sealed class AppHost : IDisposable
                 var search = PodcastSearch;
 
                 _podcastsHost = new D47.App.Panel.PodcastsHost(
+                    Settings,
                     player,
                     () => store.Shows,
                     () => Settings.Current.Podcasts.FeedUris(),

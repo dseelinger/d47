@@ -86,7 +86,7 @@ nav_order: 168
 <div class="next">
 <div class="next-title">Where to go next</div>
 <div class="cards">
-<a class="card" href="audio.html"><span class="ct">Audio mixer →</span><span class="cd">The ambient music, and the level of the Podcasts channel.</span></a>
+<a class="card" href="audio.html"><span class="ct">Audio mixer →</span><span class="cd">The ambient music, and the level of the Podcasts channel, also on the Podcasts page.</span></a>
 <a class="card" href="privacy.html"><span class="ct">Privacy and egress →</span><span class="cd">Which hosts a feed and its episodes contact.</span></a>
 </div>
 </div>
@@ -162,7 +162,8 @@ the box turns the order on with that order selected. The row reads the same sett
 
 Press an episode to play it from where you left off. Under the lists the transport shows the episode and its
 show, a seek bar with the elapsed time and the length, and **Back 30 s**, **Pause** or **Play**, **Forward
-30 s** and **Next episode**. The seek bar and the two skips are disabled for an episode whose server sends it only
+30 s** and **Next episode**, with **Podcast level** at the right of those buttons. The level bar sets the same
+Podcasts level as the mixer, follows a change made there or by voice, and is drawn muted while Podcasts is muted. The seek bar and the two skips are disabled for an episode whose server sends it only
 from the start.
 
 **Add a show** opens a page with a search box, a feed address box and a list of suggested shows in three groups,
@@ -172,7 +173,7 @@ podcast directory, as "find a podcast" does; **Add** on a result adds its feed. 
 RSS address. **Remove this show** asks first, then removes the feed and forgets where you were in its episodes.
 Adding a feed by address and removing one are made here and in the settings row, never by voice.
 
-The big panel has the same page, with five episodes at a time and **Previous** and **Next** under them. Each episode row shows the episode's date under its title. The
+The big panel has the same page, with four episodes at a time and **Previous** and **Next** under them. The transport is three lines: the episode, the seek bar, then the buttons with **Podcast level** at the right. Each episode row shows the episode's date under its title. The
 continuous play row sits above the episode list's head, and the shows column keeps **Add a show** and **Remove
 this show**.
 

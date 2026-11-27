@@ -62,6 +62,8 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
 
     public const string OrderName = "PodcastOrder";
 
+    public const string LevelName = "PodcastLevel";
+
     public const string KeptOrderName = "PodcastKeptOrder";
 
     public const string ContinuousLabel = "Play another episode when one ends";
@@ -73,7 +75,9 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
     private const double BigOrderWidth = 240;
 
     /// <summary>The episodes the big panel lists at a time.</summary>
-    public const int BigEpisodesPerPage = 5;
+    public const int BigEpisodesPerPage = 4;
+
+    private const double BigTileMinimum = 120;
 
     private const double WindowList = 340;
 
@@ -104,7 +108,9 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
     private readonly Button _play = Tile(PlayName, "PLAY", "Play or pause");
     private readonly Button _forward = Tile(ForwardName, "FORWARD 30 S ►", "Forward 30 seconds");
     private readonly Button _next = Tile(NextName, "NEXT EPISODE ►", "Next episode");
+    private readonly Level _level = new() { Name = LevelName, Minimum = 0, Maximum = 1, VerticalAlignment = VerticalAlignment.Center };
 
+    private bool _refreshing;
     private bool _removing;
     private int _first;
     private string? _paged;
@@ -140,6 +146,17 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         _next.Click += async (_, _) => Report(await _host.Player.Next());
         _play.Click += (_, _) => Report(_host.Player.State is { Playing: true, PausedByCommander: false } ? _host.Player.Pause() : _host.Player.Resume());
 
+        _level.ValueChanged += (_, _) =>
+        {
+            if (!_refreshing)
+            {
+                _host.Settings.Apply(
+                    AudioCapability.LevelKey(AudioChannel.Podcast),
+                    _level.Value.ToString("0.00", CultureInfo.InvariantCulture),
+                    SettingsCaller.Panel);
+            }
+        };
+
         var root = new DockPanel { Margin = new Thickness(14) };
 
         if (settingsStrip is not null)
@@ -166,6 +183,7 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         });
 
         Content = root;
+        DrawLevel();
         Draw();
     }
 
@@ -186,8 +204,10 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         base.OnAttachedToVisualTree(e);
         _host.Changed += OnChanged;
         _host.Player.Changed += OnPlayerChanged;
+        _host.Settings.Changed += OnSettingsChanged;
         _poll.Tick += OnPoll;
         _poll.Start();
+        DrawLevel();
         Draw();
         _ = RefreshAsync();
     }
@@ -197,8 +217,28 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         base.OnDetachedFromVisualTree(e);
         _host.Changed -= OnChanged;
         _host.Player.Changed -= OnPlayerChanged;
+        _host.Settings.Changed -= OnSettingsChanged;
         _poll.Tick -= OnPoll;
         _poll.Stop();
+    }
+
+    private void OnSettingsChanged(SettingsChanged change)
+    {
+        if (change.Key == AudioCapability.LevelKey(AudioChannel.Podcast) || change.Key == AudioCapability.MuteKey(AudioChannel.Podcast))
+        {
+            Dispatcher.UIThread.Post(DrawLevel);
+        }
+    }
+
+    /// <summary>Reads the Podcasts channel's level and mute into the bar without writing them back.</summary>
+    private void DrawLevel()
+    {
+        var mix = _host.Settings.Current.Audio.Podcast;
+
+        _refreshing = true;
+        _level.Value = mix.Level;
+        _level.Muted = mix.Muted;
+        _refreshing = false;
     }
 
     /// <summary>Fetches every feed with the wait mark shown, then a notice for each feed that could not be read.</summary>
@@ -732,22 +772,48 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
         seek.Children.Add(_bar);
         seek.Children.Add(_length);
 
-        Control below;
+        var label = Typeset.Prose("Podcast level", 15, ThemeManager.GreyKey, vertical: VerticalAlignment.Center);
+        var level = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions(_big ? "96,*" : "120,*"),
+            ColumnSpacing = _big ? 10 : 12,
+            MinHeight = TypeScale.MinimumTarget,
+            Width = _big ? 380 : 532,
+        };
+        level.Children.Add(label);
+        Grid.SetColumn(_level, 1);
+        level.Children.Add(_level);
+
+        Control tiles;
+        Control? below = null;
 
         if (_big)
         {
-            seek.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-
-            var tiles = new StackPanel
+            var row = new Grid
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = Gaps.Tile,
-                Margin = new Thickness(12, 0, 0, 0),
-                Children = { _back, _play, _forward, _next },
+                ColumnSpacing = Gaps.Tile,
+                ColumnDefinitions =
+                [
+                    new ColumnDefinition(GridLength.Star) { MinWidth = BigTileMinimum },
+                    new ColumnDefinition(GridLength.Star) { MinWidth = BigTileMinimum },
+                    new ColumnDefinition(GridLength.Star) { MinWidth = BigTileMinimum },
+                    new ColumnDefinition(GridLength.Star) { MinWidth = BigTileMinimum },
+                    new ColumnDefinition(GridLength.Auto),
+                ],
             };
+            Control[] cells = [_back, _play, _forward, _next];
 
-            Grid.SetColumn(tiles, 3);
-            seek.Children.Add(tiles);
+            for (var i = 0; i < cells.Length; i++)
+            {
+                cells[i].MinWidth = BigTileMinimum;
+                Grid.SetColumn(cells[i], i);
+                row.Children.Add(cells[i]);
+            }
+
+            level.Margin = new Thickness(12, 0, 0, 0);
+            Grid.SetColumn(level, 4);
+            row.Children.Add(level);
+            tiles = row;
             below = _idle;
         }
         else
@@ -757,14 +823,16 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
                 tile.MinWidth = 150;
             }
 
-            below = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _back, _play, _forward, _next } };
+            var wrap = new WrapPanel { ItemSpacing = Gaps.Tile, LineSpacing = Gaps.Tile, Children = { _back, _play, _forward, _next, level } };
 
             if (_idle.Parent is null)
             {
-                ((WrapPanel)below).Children.Add(_idle);
+                wrap.Children.Add(_idle);
                 _idle.Margin = new Thickness(14, 0, 0, 0);
                 _idle.VerticalAlignment = VerticalAlignment.Center;
             }
+
+            tiles = wrap;
         }
 
         var frame = new Border
@@ -772,7 +840,9 @@ public sealed class PodcastsPage : UserControl, IPageSummary, IPageChrome
             BorderThickness = new Thickness(0, 1, 0, 0),
             Padding = new Thickness(0, 12, 0, 0),
             Margin = new Thickness(0, 12, 0, 0),
-            Child = new StackPanel { Spacing = _big ? 6 : 10, Children = { head, seek, below } },
+            Child = below is null
+                ? new StackPanel { Spacing = 10, Children = { head, seek, tiles } }
+                : new StackPanel { Spacing = 6, Children = { head, seek, tiles, below } },
         };
 
         ThemeInk.Bind(frame, Border.BorderBrushProperty, ThemeManager.AKey);

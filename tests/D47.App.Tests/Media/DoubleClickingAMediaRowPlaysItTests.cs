@@ -251,6 +251,7 @@ public sealed class DoubleClickingAMediaRowPlaysItTests
         created?.Invoke(player);
 
         var host = new PodcastsHost(
+            TestSurface.Settings(),
             player,
             () => shows,
             () => [FeedOne, FeedTwo],

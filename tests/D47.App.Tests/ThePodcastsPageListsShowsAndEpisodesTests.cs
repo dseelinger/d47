@@ -1,10 +1,13 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D47.App.Panel;
 using D47.Core.Audio;
+using D47.Core.Capabilities.Builtin;
 using D47.Core.Configuration;
 using D47.Core.Interface;
 using D47.Core.Podcasts;
@@ -26,6 +29,8 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
 
     private sealed class Fixture
     {
+        public SettingsService Settings { get; } = TestSurface.Settings();
+
         public List<Uri> Feeds { get; } = [FeedOne, FeedTwo];
 
         public List<Uri> Removed { get; } = [];
@@ -55,6 +60,7 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
             ];
 
             Host = new PodcastsHost(
+                Settings,
                 player,
                 () => [.. shows.Where(show => Feeds.Contains(show.Feed))],
                 () => Feeds,
@@ -216,6 +222,17 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
         window.Close();
     }
 
+    private static double Top(Visual control, Visual relativeTo) => control.TranslatePoint(default, relativeTo)!.Value.Y;
+
+    private static D47.App.Controls.Level LevelOf(Control page) =>
+        page.GetVisualDescendants().OfType<D47.App.Controls.Level>().First(level => level.Name == PodcastsPage.LevelName);
+
+    private static void StepDown(D47.App.Controls.Level level)
+    {
+        level.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Left });
+        Dispatcher.UIThread.RunJobs();
+    }
+
     private static void Press(D47.App.Controls.Segment segment, int index)
     {
         segment.GetVisualDescendants().OfType<RadioButton>().ElementAt(index).IsChecked = true;
@@ -322,6 +339,70 @@ public class ThePodcastsPageListsShowsAndEpisodesTests
         Press(segment, 2);
         Dispatcher.UIThread.RunJobs();
         Assert.Contains("1–4 of 15", Drawn(page));
+
+        window.Close();
+    }
+
+    [AvaloniaTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ThePodcastLevelBarSetsAndFollowsThePodcastChannelLevel(bool big)
+    {
+        var fixture = new Fixture();
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        var window = new Window { Content = panel, Width = 1280, Height = 900 };
+        var page = new PodcastsPage(fixture.Host, panel.Nav, big: big);
+
+        window.Content = page;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var level = LevelOf(page);
+        var before = fixture.Settings.Current.Audio.Podcast.Level;
+
+        Assert.Contains("Podcast level", Drawn(page));
+        Assert.Equal(before, level.Value, 3);
+        Assert.False(level.Muted);
+
+        StepDown(level);
+
+        Assert.True(fixture.Settings.Current.Audio.Podcast.Level < before);
+        Assert.Equal(fixture.Settings.Current.Audio.Podcast.Level, level.Value, 3);
+
+        fixture.Settings.Apply(AudioCapability.LevelKey(AudioChannel.Podcast), "0.40", SettingsCaller.Hotkey);
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(0.4, level.Value, 3);
+
+        fixture.Settings.Apply(AudioCapability.MuteKey(AudioChannel.Podcast), "true", SettingsCaller.Hotkey);
+        Dispatcher.UIThread.RunJobs();
+        Assert.True(level.Muted);
+        Assert.True(level.IsEnabled);
+        Assert.Equal(0.4, fixture.Settings.Current.Audio.Podcast.Level, 3);
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void TheBigPanelTransportIsThreeLinesWithTheLevelOnTheTilesLine()
+    {
+        var fixture = new Fixture();
+        var panel = new PanelView { DataContext = new PanelViewModel() };
+        var window = new Window { Content = panel, Width = 1280, Height = 900 };
+        var page = new PodcastsPage(fixture.Host, panel.Nav, big: true);
+
+        window.Content = page;
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var seek = page.GetVisualDescendants().OfType<D47.App.Controls.SeekBar>().First();
+        var level = LevelOf(page);
+        var tiles = new[] { PodcastsPage.BackName, PodcastsPage.PlayName, PodcastsPage.ForwardName, PodcastsPage.NextName }.Select(name => Named(page, name)).ToList();
+
+        Assert.All(tiles, tile => Assert.True(tile.Bounds.Width >= 120));
+        Assert.All(tiles, tile => Assert.Equal(Top(tiles[0], page), Top(tile, page)));
+        Assert.True(Top(level, page) >= Top(tiles[0], page) - 1);
+        Assert.True(Top(tiles[0], page) > Top(seek, page));
+        Assert.Equal(4, PodcastsPage.BigEpisodesPerPage);
 
         window.Close();
     }

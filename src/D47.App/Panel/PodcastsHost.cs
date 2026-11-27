@@ -5,6 +5,7 @@ namespace D47.App.Panel;
 
 /// <summary>What Media › Podcasts reads and does, shared by the window and the headset.</summary>
 public sealed class PodcastsHost(
+    SettingsService settings,
     PodcastPlayer player,
     Func<IReadOnlyList<CachedShow>> shows,
     Func<IReadOnlyList<Uri>> feeds,
@@ -18,6 +19,8 @@ public sealed class PodcastsHost(
 {
     private readonly Lock _gate = new();
     private Task<IReadOnlyList<PodcastRefresh>>? _refreshing;
+
+    public SettingsService Settings { get; } = settings;
 
     public PodcastPlayer Player { get; } = player;
 
