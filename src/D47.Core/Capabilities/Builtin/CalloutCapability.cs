@@ -42,6 +42,7 @@ public static class CalloutCapability
     public const string SamplingAbandonedKey = "callouts.samplingAbandoned";
     public const string SamplingUnfinishedKey = "callouts.samplingUnfinished";
     public const string FssCloseKey = "callouts.fssClose";
+    public const string SystemLeftKey = "callouts.systemLeft";
     public const string DiscoveryKey = "callouts.discovery";
     public const string OrganicsStarsKey = "callouts.organicsStars";
     public const string FootfallKey = "callouts.footfall";
@@ -586,6 +587,21 @@ public static class CalloutCapability
                 "what the FSS leaves",
                 s => s.Callouts.FssClose,
                 (s, v) => s with { Callouts = s.Callouts with { FssClose = v } }),
+
+            Toggle(
+                SystemLeftKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Leaving work behind "
+                + "(on by default). Start a hyperspace jump from a system with planets worth mapping or biology "
+                + "you have not sampled: D47 counts them during the countdown. Say \"stop calling out what I "
+                + "leave behind\": the row shows off and that is no longer said. Say \"start calling out what I "
+                + "leave behind\" and the row shows on. The row is absent while Speak without being asked is off.",
+                "Leaving work behind",
+                "When a hyperspace jump starts, a count of the bodies worth mapping and the bodies with biology left in the system.",
+                "system-left",
+                "what I leave behind",
+                s => s.Callouts.SystemLeft,
+                (s, v) => s with { Callouts = s.Callouts with { SystemLeft = v } }),
 
             Toggle(
                 DiscoveryKey,

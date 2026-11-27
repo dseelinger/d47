@@ -1106,6 +1106,26 @@ comes during the countdown, while the jump can still be cancelled. Leaving does 
 the sampler keeps it until you log a different species. Lifting off and entering supercruise between
 specimens on the same body say nothing.
 
+#### Leaving work behind {#system-left}
+
+When a hyperspace jump starts and the system you are leaving still has planets worth mapping or biology
+you have not sampled, Directive 47 says how many, during the countdown while the jump can still be
+cancelled:
+
+```text
+Leaving two bodies worth mapping and one with biology.
+```
+
+It gives counts only, never body names, and counts only mapping and biology: geology, unusual signals
+and first discoveries are left to **FSS closed**. A planet counts for mapping on the same terms as
+`get_system_worth`: at or above the "Call out bodies from (credits)" setting, not yet mapped by you, and
+only with a Detailed Surface Scanner fitted.
+
+This line and **Unfinished samples** divide the cases. A body where a set of samples is partly taken is
+left out here, because that line names it. Everything else, such as a body whose biology is untouched,
+counts here. It says nothing while d47 is catching up on the journal, when nothing is left, or on a
+supercruise jump. A cancelled jump followed by a new one may say it again.
+
 #### First footfall {#footfall}
 
 The first time you step onto a body whose scan has not yet recorded a footfall there:

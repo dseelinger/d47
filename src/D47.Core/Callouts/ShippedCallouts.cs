@@ -233,6 +233,7 @@ public static class ShippedCallouts
             .Add(biology)
             .Add(new GeologyCallout())
             .Add(new FssCloseCallout(sources.Cartography, sources.Signals))
+            .Add(new SystemLeftCallout(sources.Cartography))
             .Add(new CodexDiscoveredCallout())
             .Add(new RegionFirstCallout())
             .Add(tradingMode)
@@ -572,6 +573,7 @@ public static class ShippedCallouts
         engine.SetEnabled("biology", callouts.Biology, now);
         engine.SetEnabled("geology", callouts.Geology, now);
         engine.SetEnabled("fss-close", callouts.FssClose, now);
+        engine.SetEnabled("system-left", callouts.SystemLeft, now);
         engine.SetEnabled("codex-discovered", callouts.CodexDiscovered, now);
         engine.SetEnabled("region-first", callouts.RegionFirst, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
@@ -641,6 +643,10 @@ public static class ShippedCallouts
 
                 case FssCloseCallout fssClose:
                     fssClose.Threshold = () => settings.Current.Callouts.BodyValueThreshold;
+                    break;
+
+                case SystemLeftCallout systemLeft:
+                    systemLeft.Threshold = () => settings.Current.Callouts.BodyValueThreshold;
                     break;
 
                 case BiologyCallout biology:
