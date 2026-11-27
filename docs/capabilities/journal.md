@@ -609,6 +609,19 @@ yet sold: `get_unsold_exploration` answers the total, and `clear_unsold_explorat
 The clear is Protected: the keyword phrase, the panel and a hotkey reach it, and the model is
 refused.
 
+`get_system_worth` answers what is still worth doing in the system the Commander is in, from their own
+scans: notable stellar phenomena and bodies with Guardian or Thargoid signals first, then bodies with
+biology not yet sampled by their highest value, planets at or above the `body-value` threshold that the
+Commander has not mapped by value, and landable bodies with likely geology not in the codex for the region.
+Planets for mapping are left out when the ship is known to have no Detailed Surface Scanner. It names at
+most three and counts the rest, and ends with how many of the stars and planets scanned there no one had
+discovered. With no scan of the system on record it says so. "what's left in this system" and "what's
+worth doing here" reach it without the model. It takes no arguments:
+
+```json
+{"type":"object","properties":{},"required":[],"additionalProperties":false}
+```
+
 `get_bgs_work` takes an optional faction and system, each compared without regard to case:
 
 ```json

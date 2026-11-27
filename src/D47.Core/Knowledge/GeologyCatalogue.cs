@@ -84,6 +84,37 @@ public static class GeologyCatalogue
     public static IReadOnlyList<GeologyFeature> Likely(BodyScan scan) =>
         Table.Likely(scan.PlanetClass, scan.Atmosphere, scan.Volcanism);
 
+    /// <summary>
+    /// The likely features of a landable body with geological signals that are not in the codex for the region at
+    /// <paramref name="position"/>. Null while the codex is not whole or the body's scan or signals are missing.
+    /// </summary>
+    public static IReadOnlyList<GeologyFeature>? NotInCodex(
+        CommanderGameState state, long systemAddress, int bodyId, StarPosition? position)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        if (!state.CodexLedger.IsWhole
+            || state.Scans.For(systemAddress, bodyId) is not { Landable: true } scan
+            || state.Bodies.Named(scan.BodyName) is not { GeologicalCount: > 0 })
+        {
+            return null;
+        }
+
+        var likely = Likely(scan);
+
+        if (likely.Count == 0)
+        {
+            return [];
+        }
+
+        var regionId = position is { } starPos && GalacticRegions.Find(starPos) is { } region
+            ? GalacticRegions.IdOf(region)
+            : null;
+        var logged = state.CodexLedger.Logged;
+
+        return [.. likely.Where(feature => !logged.Contains((feature.EntryId, regionId)))];
+    }
+
     private static GeologyTable Load()
     {
         using var stream = typeof(GeologyCatalogue).GetTypeInfo().Assembly

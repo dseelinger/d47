@@ -19,6 +19,8 @@ public static class JournalCapability
 
     public const string ResetExplorationTool = "clear_unsold_exploration";
 
+    public const string SystemWorthTool = "get_system_worth";
+
     public const string CodexPicturesKey = "journal.codexPictures";
 
     public const string ShareCodexPicturesKey = "journal.shareCodexPictures";
@@ -35,6 +37,8 @@ public static class JournalCapability
     /// <param name="cartography">The mapped bodies not yet sold, or null where nothing keeps them.</param>
     /// <param name="crimes">The unpaid fines and bounties, or null where nothing keeps them.</param>
     /// <param name="liveStatus">The latest Status.json read.</param>
+    /// <param name="mappingThreshold">The <c>body-value</c> threshold, which a planet must reach to be worth mapping.</param>
+    /// <param name="signals">The FSS signals scanned, for notable stellar phenomena.</param>
     public static CapabilityDescriptor Create(
         GameStateStore gameState,
         Func<HistoryState>? history = null,
@@ -46,7 +50,9 @@ public static class JournalCapability
         Func<DateTimeOffset?>? bgsTick = null,
         Func<LiveRoute?>? liveRoute = null,
         Knowledge.SquadronFactions? squadronFactions = null,
-        Campaigns.CampaignStore? campaigns = null)
+        Campaigns.CampaignStore? campaigns = null,
+        Func<long>? mappingThreshold = null,
+        SignalSightings? signals = null)
     {
         var state = history ?? (() => HistoryState.Done);
         var plotted = route ?? (() => NavRoute.None);
@@ -143,6 +149,12 @@ public static class JournalCapability
                 new("my navy ranks", "get_standing"),
                 new("exploration data am i carrying", "get_unsold_exploration"),
                 new("unsold exploration", "get_unsold_exploration"),
+                new("what's worth doing here", SystemWorthTool),
+                new("what is worth doing here", SystemWorthTool),
+                new("what's worth doing in this system", SystemWorthTool),
+                new("what is worth doing in this system", SystemWorthTool),
+                new("what's left in this system", SystemWorthTool),
+                new("what is left in this system", SystemWorthTool),
                 new("crime status", "get_crime_status"),
                 new("am i wanted", "get_crime_status"),
                 new("my bounties", "get_crime_status"),
@@ -609,6 +621,23 @@ public static class JournalCapability
                 },
                 new ToolDefinition
                 {
+                    Name = SystemWorthTool,
+                    Exercise =
+                        "In a system you have scanned with the FSS, say \"what's left in this system\". The reply names "
+                        + "up to three things still worth doing, unusual signals first, then biology by value, planets worth "
+                        + "mapping and geology not in your codex, then a count of the rest, and ends with how many bodies "
+                        + "you scanned were undiscovered. With no scan of the system on record it says so.",
+                    Description =
+                        "What is still worth doing in the system the Commander is in, from their own scans: notable "
+                        + "stellar phenomena and bodies with Guardian or Thargoid signals, bodies with biology not yet "
+                        + "sampled, planets worth mapping that the Commander has not mapped, and likely geology not in "
+                        + "the codex for the region, with a count of bodies no one had discovered.",
+                    Parameters = [],
+                    Handler = (_, _) => Task.FromResult(ToolResult.Ok(DescribeSystemWorth(
+                        gameState.Active, cartography, mappingThreshold?.Invoke() ?? DefaultMappingThreshold, signals))),
+                },
+                new ToolDefinition
+                {
                     Name = ResetExplorationTool,
                     Exercise =
                         "Say \"reset unsold exploration\", or press Reset exploration data in the Exploration data "
@@ -674,6 +703,91 @@ public static class JournalCapability
         }
 
         return report.ToString().TrimEnd();
+    }
+
+    private const long DefaultMappingThreshold = 500_000;
+
+    private const int MostWorthNamed = 3;
+
+    private static string DescribeSystemWorth(
+        CommanderGameState? state, CartographyLedger? cartography, long threshold, SignalSightings? signals)
+    {
+        if (state is null)
+        {
+            return "No Elite Dangerous journal has been detected yet.";
+        }
+
+        if (state.Location.SystemAddress is not { } address)
+        {
+            return "I do not know which system you are in, so I cannot say what is left in it.";
+        }
+
+        var answer = SystemWorth.For(
+            state, address, state.Location.StarPos, cartography, threshold, signals?.Snapshot() ?? []);
+
+        if (!answer.IsKnown && answer.Items.Count == 0)
+        {
+            return "I have no scan of this system on record, so I cannot say what is left in it.";
+        }
+
+        var system = state.Location.StarSystem;
+        var report = new StringBuilder();
+
+        if (answer.Items.Count == 0)
+        {
+            report.Append("Nothing I can see in this system is left to do.");
+        }
+        else
+        {
+            report.Append("Worth doing here: ");
+            report.Append(string.Join("; ", answer.Items.Take(MostWorthNamed).Select(item => Worth(item, system))));
+
+            if (answer.Items.Count > MostWorthNamed)
+            {
+                report.Append($"; and {answer.Items.Count - MostWorthNamed} more");
+            }
+
+            report.Append('.');
+        }
+
+        if (!answer.IsKnown)
+        {
+            report.Append(" I have no scan of the bodies here on record.");
+        }
+
+        if (answer.FirstDiscoveries > 0)
+        {
+            var count = answer.FirstDiscoveries;
+
+            report.Append($" {count} bod{(count == 1 ? "y" : "ies")} you scanned here {(count == 1 ? "was" : "were")} undiscovered.");
+        }
+
+        return report.ToString();
+    }
+
+    private static string Worth(WorthItem item, string? system)
+    {
+        var body = BiologyCallout.Short(item.BodyName, system);
+
+        return item.Kind switch
+        {
+            WorthKind.Unusual when item.BodyId is null =>
+                item.BodyName == SignalKind.NotableStellarPhenomena.Name
+                    ? "notable stellar phenomena"
+                    : $"{item.BodyName}, notable stellar phenomena",
+            WorthKind.Unusual => $"{string.Join(" and ", item.Names)} signals on {body}",
+            WorthKind.Biology => $"biology on {body}" + item switch
+            {
+                { Low: { } low, High: { } high } when low < high =>
+                    $", {BiologyCallout.Credits(low)} to {BiologyCallout.Credits(high)}",
+                { High: { } high } => $", up to {BiologyCallout.Credits(high)}",
+                _ => string.Empty,
+            },
+            WorthKind.Mapping =>
+                $"mapping {body}, about {BiologyCallout.Credits(item.High ?? 0)}"
+                + (item.FirstMapping ? ", not mapped by anyone yet" : string.Empty),
+            _ => $"geology on {body} not in your codex",
+        };
     }
 
     private static string ResetUnsoldExploration(CartographyLedger? ledger, CommanderGameState? state, DateTimeOffset at)

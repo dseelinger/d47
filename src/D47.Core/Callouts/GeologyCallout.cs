@@ -41,30 +41,14 @@ public sealed class GeologyCallout : ICallout
             }
 
             if (_said.Contains(key)
-                || !state.CodexLedger.IsWhole
-                || state.Scans.For(systemAddress, bodyId) is not { Landable: true } scan
-                || state.Bodies.Named(scan.BodyName) is not { GeologicalCount: > 0 })
+                || GeologyCatalogue.NotInCodex(state, systemAddress, bodyId, state.Location.StarPos) is not { } missing)
             {
                 continue;
             }
-
-            var likely = GeologyCatalogue.Likely(scan);
-
-            if (likely.Count == 0)
-            {
-                _said.Add(key);
-                continue;
-            }
-
-            var regionId = state.Location.StarPos is { } starPos && GalacticRegions.Find(starPos) is { } region
-                ? GalacticRegions.IdOf(region)
-                : null;
-            var logged = state.CodexLedger.Logged;
-            var missing = likely.Where(feature => !logged.Contains((feature.EntryId, regionId))).ToList();
 
             _said.Add(key);
 
-            if (missing.Count == 0)
+            if (missing.Count == 0 || state.Scans.For(systemAddress, bodyId) is not { } scan)
             {
                 continue;
             }
@@ -77,7 +61,7 @@ public sealed class GeologyCallout : ICallout
         }
     }
 
-    private static string Features(List<GeologyFeature> missing)
+    private static string Features(IReadOnlyList<GeologyFeature> missing)
     {
         var names = missing.Take(MostFeatures).Select(feature => feature.Name.ToLowerInvariant() + "s").ToList();
 

@@ -151,6 +151,17 @@ public sealed class CartographyLedger(string? path, IFileSystem fileSystem, ILog
         }
     }
 
+    /// <summary>Whether <paramref name="commander"/> has ever mapped the body, sold or not; the Commander last seen where null.</summary>
+    public bool Mapped(long system, int bodyId, string? commander = null)
+    {
+        lock (Gate)
+        {
+            return (string.IsNullOrEmpty(commander) ? Current : commander) is { } fid
+                && _books.TryGetValue(fid, out var book)
+                && book.Mappings.Values.Any(mapping => mapping.System == system && mapping.Body == bodyId);
+        }
+    }
+
     private static readonly JournalLineFilter Reads = JournalLineFilter.Events(
         "Commander", "NewCommander", "LoadGame", "Died", "SAAScanComplete", "MultiSellExplorationData",
         "SellExplorationData", "FSDJump", "Location", "CarrierJump");

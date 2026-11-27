@@ -57,6 +57,17 @@ public sealed record BodyScan(string BodyName)
     /// <summary>Null when the scan carried no <c>WasFootfalled</c> field at all.</summary>
     public bool? WasFootfalled { get; init; }
 
+    /// <summary>Null when the scan carried no <c>WasDiscovered</c> field; true once any scan of the body said true.</summary>
+    public bool? WasDiscovered { get; init; }
+
+    /// <summary>Null when the scan carried no <c>WasMapped</c> field; true once any scan of the body said true.</summary>
+    public bool? WasMapped { get; init; }
+
+    /// <summary>The star class, such as K or DA; null for a planet or a belt cluster.</summary>
+    public string? StarType { get; init; }
+
+    public double? DistanceFromArrivalLS { get; init; }
+
     public DateTimeOffset SeenAt { get; init; }
 
     /// <summary>When a Commander first disembarked onto this body, once its scan said no footfall yet.</summary>
@@ -151,6 +162,10 @@ public sealed record BodyScans
             Rings = RingsOf(journalEvent),
             // A footfall is not undone, and a Detailed scan can say false after an AutoScan of the body said true.
             WasFootfalled = existing?.WasFootfalled == true ? true : FootfallFlag(journalEvent, Populated.Contains(systemAddress)),
+            WasDiscovered = existing?.WasDiscovered == true ? true : NullableBool(journalEvent, "WasDiscovered"),
+            WasMapped = existing?.WasMapped == true ? true : NullableBool(journalEvent, "WasMapped"),
+            StarType = journalEvent.String("StarType"),
+            DistanceFromArrivalLS = journalEvent.Double("DistanceFromArrivalLS"),
             SeenAt = journalEvent.Timestamp,
             FootfallTakenAt = existing?.FootfallTakenAt,
         };
