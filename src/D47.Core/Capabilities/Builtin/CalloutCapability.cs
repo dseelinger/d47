@@ -42,6 +42,7 @@ public static class CalloutCapability
     public const string SamplingAbandonedKey = "callouts.samplingAbandoned";
     public const string SamplingUnfinishedKey = "callouts.samplingUnfinished";
     public const string FssCloseKey = "callouts.fssClose";
+    public const string UnusualSignalsKey = "callouts.unusualSignals";
     public const string SystemLeftKey = "callouts.systemLeft";
     public const string DiscoveryKey = "callouts.discovery";
     public const string OrganicsStarsKey = "callouts.organicsStars";
@@ -587,6 +588,21 @@ public static class CalloutCapability
                 "what the FSS leaves",
                 s => s.Callouts.FssClose,
                 (s, v) => s with { Callouts = s.Callouts with { FssClose = v } }),
+
+            Toggle(
+                UnusualSignalsKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find Unusual signals "
+                + "(on by default). Scan a system with the FSS that has notable stellar phenomena, or a body with "
+                + "Guardian or Thargoid signals: D47 says so as they are found. Say \"stop calling out unusual "
+                + "signals\": the row shows off and that is no longer said. Say \"start calling out unusual "
+                + "signals\" and the row shows on. The row is absent while Speak without being asked is off.",
+                "Unusual signals",
+                "Notable stellar phenomena and Guardian or Thargoid signals, said as the FSS finds them.",
+                "unusual-signals",
+                "unusual signals",
+                s => s.Callouts.UnusualSignals,
+                (s, v) => s with { Callouts = s.Callouts with { UnusualSignals = v } }),
 
             Toggle(
                 SystemLeftKey,

@@ -739,6 +739,9 @@ public sealed record CalloutSettings
     /// <summary>What is still worth doing in the system, said when the FSS closes (#2760).</summary>
     public bool FssClose { get; init; } = true;
 
+    /// <summary>Notable stellar phenomena and Guardian or Thargoid signals, said as the FSS finds them (#2762).</summary>
+    public bool UnusualSignals { get; init; } = true;
+
     /// <summary>The biology and mapping left in the system when a hyperspace jump starts.</summary>
     public bool SystemLeft { get; init; } = true;
 

@@ -1367,6 +1367,22 @@ anywhere in Directive 47, so the ranking never considers what you can afford.
 The lookup sends the destination system's name to spansh.co.uk while this callout is on. The
 **Privacy and egress** section of the panel lists it under galaxy search.
 
+#### Unusual signals {#unusual-signals}
+
+As the FSS finds them, Directive 47 says when a system has notable stellar phenomena and when a body has
+Guardian or Thargoid signals:
+
+```text
+Notable stellar phenomena in this system.
+A 4: two Guardian signals.
+B 1: Thargoid signals.
+```
+
+The phenomena line is said once per system, however many `Codex` signals the FSS lists. A Guardian or
+Thargoid line is said once per body and kind, from whichever of `FSSBodySignals` or `SAASignalsFound`
+comes first, and names the count when it is above one. Combat and carrier signals are not said. What d47
+read from the backlog at startup is not said again. It reads the journal only.
+
 #### Undiscovered systems {#discovery}
 
 On arrival, the game auto-scans the star you jumped to:

@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: d47 says when the FSS finds notable stellar phenomena in a system, and when a body has Guardian or Thargoid signals, for example "A 4: two Guardian signals." Phenomena are said once per system, and a body's signals once per kind. It has its own row, Unusual signals, under Exploration callouts, on by default.
+
 Added: When a hyperspace jump starts and the system you are leaving still has planets worth mapping or biology you have not sampled, d47 counts them during the countdown, for example "Leaving two bodies worth mapping and one with biology." Bodies where a set of samples is partly taken are left to the unfinished-samples line. It has its own row, Leaving work behind, under Exploration callouts, on by default.
 
 Added: When you close the FSS, d47 says what in the system is still worth doing: up to three items, such as biology with its value range, planets to map and notable stellar phenomena, then a count of the rest and how many bodies were first discoveries. A body whose own line was said in the last minute is counted but not named again, and reopening and closing the FSS says it again only if the list changed. It has its own row, FSS closed, under Exploration callouts, on by default.
