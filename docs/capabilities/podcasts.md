@@ -116,7 +116,7 @@ open takes them first; with no episode in the slot they go to the music.
 Only one of a podcast and a book plays at a time. Playing or resuming an episode pauses a book being read, and
 starting a book pauses the episode, as if you had paused it; neither resumes by itself. A story playing
 pauses the episode until the story ends or is paused. The episode also pauses while D47 listens or speaks, and
-steps back two seconds when it carries on. Ambient music fades out and stays silent while an episode plays, and comes back when you pause it; a pause for
+steps back two seconds when it carries on. Stop or Cancel while D47 is speaking over the episode leaves it to carry on; otherwise they pause it as if you had. Ambient music fades out and stays silent while an episode plays, and comes back when you pause it; a pause for
 push-to-talk, a callout or a story keeps it off. Invented chatter is not played while an episode plays.
 
 "Next episode" plays the earliest unfinished episode of the same show that was published after the current

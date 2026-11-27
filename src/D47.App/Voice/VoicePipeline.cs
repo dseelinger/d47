@@ -597,7 +597,7 @@ public sealed class VoicePipeline(
 
         if (announcement.Urgency == CalloutUrgency.Urgent)
         {
-            arbiter.Silence();
+            arbiter.SilenceForAlert();
         }
 
         // After the silence and before the speech, on the announcement's own channel, so the queue orders the

@@ -122,7 +122,7 @@ episode pauses the book, as if you had paused it; neither resumes by itself. A b
 while a story plays: D47 says "A story is playing." A story starting pauses the book.
 
 Speech or an alert pauses the book at its sentence, and once it ends the book reads that sentence again, as it
-does after you speak to D47. Invented chatter is not played while the book is read, and the ambient music fades
+does after you speak to D47. Stop or Cancel while D47 is speaking over the book leaves it to carry on; otherwise they pause it as if you had. Invented chatter is not played while the book is read, and the ambient music fades
 out and stays silent until the book stops or you pause it.
 
 <details markdown="1">

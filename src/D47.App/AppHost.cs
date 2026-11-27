@@ -457,9 +457,7 @@ public sealed class AppHost : IDisposable
     /// <summary>Cancel: stop talking, and abandon the turn that is running (#221).</summary>
     public bool CancelNow()
     {
-        RunPlayer.Stop();
-        BookPlayer.Pause(StoryRunPause.Commander);
-        Audio.Silence();
+        CommanderStop.Silence(Audio, RunPlayer, BookPlayer);
         return Cancellation.Cancel();
     }
 
@@ -2623,12 +2621,7 @@ public sealed class AppHost : IDisposable
                 foundations.Version,
                 new SpeechCapability.SpeechSurface
                 {
-                    Silence = () =>
-                    {
-                        late.Host?.RunPlayer.Stop();
-                        late.Host?.BookPlayer.Pause(StoryRunPause.Commander);
-                        services.Audio.Silence();
-                    },
+                    Silence = () => CommanderStop.Silence(services.Audio, late.Host?.RunPlayer, late.Host?.BookPlayer),
 
                     // The local voice, and what fetching it would cost (Phase 59).
                     LocalVoiceState = speech.LocalVoiceState,

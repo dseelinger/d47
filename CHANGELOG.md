@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: Cancel or "stop" while D47 is speaking over a podcast or a book no longer leaves it paused. The episode carries on once D47 is quiet, stepping back two seconds, and the book reads its sentence again; the ambient music no longer comes back in its place. With nothing but the episode or the book playing, Cancel and "stop" still pause it as if you had. An urgent callout over a podcast now pauses it only until the alert ends, as other alerts do.
+
 Changed: A podcast episode or a film's soundtrack that is quieter than D47's voice is raised toward it, the way D47's own speech is, by at most 18 dB. One at that level or louder is left as it is, and ambient music is not touched. It has no setting.
 
 Added: Media › Podcasts has a Podcast level bar, at the right of the transport buttons. It sets the same level as the Podcasts row in Settings, follows a change made there or by voice, and is drawn muted while Podcasts is muted. On the headset big panel the transport is now three lines, the episode, the seek bar, and the buttons with the level, and the list shows four episodes a page instead of five.

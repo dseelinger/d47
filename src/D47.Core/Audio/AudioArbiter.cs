@@ -138,6 +138,9 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
     /// <summary>Paused by a hold: listening, a turn, speech or an alert, or a story playback.</summary>
     private bool _podcastHeld;
+
+    /// <summary>Speech or an alert other than a Media item's, or a story playback, held the podcast at some point in the current hold.</summary>
+    private bool _podcastInterrupted;
     private bool _turnInFlight;
 
     /// <summary>The group of the most recently started routine or alert line, or null before the first.</summary>
@@ -624,11 +627,38 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
     }
 
     /// <summary>
-    /// Stops speech, alerts, cues, the bed, the waiting loop and everything queued; music is left playing. A
-    /// playing playback is paused, not ended. A podcast is paused as the Commander's pause, keeping its position.
-    /// Waits open now stay silent until they close.
+    /// The Commander's stop. Stops speech, alerts, cues, the bed, the waiting loop and everything queued; music is
+    /// left playing. A playing playback is paused, not ended. A podcast that speech, an alert or a story playback
+    /// held during its current hold stays held and resumes once the holds clear; otherwise it is paused as the
+    /// Commander's pause, keeping its position. Waits open now stay silent until they close.
     /// </summary>
-    public void Silence()
+    public void Silence() => Silence(static () => { });
+
+    /// <summary>
+    /// As <see cref="Silence()"/>, running <paramref name="first"/> before the silence and outside the lock; whether
+    /// D47 held the podcast is read before it, so a story playback it ends still counts.
+    /// </summary>
+    public void Silence(Action first)
+    {
+        ArgumentNullException.ThrowIfNull(first);
+        bool interrupted;
+
+        lock (_gate)
+        {
+            interrupted = _podcastHeld && _podcastInterrupted;
+        }
+
+        first();
+        SilenceNow(pausePodcast: !interrupted);
+    }
+
+    /// <summary>
+    /// The silence ahead of an urgent alert: as <see cref="Silence()"/>, but the podcast is left to its holds and is
+    /// never paused as the Commander's pause.
+    /// </summary>
+    public void SilenceForAlert() => SilenceNow(pausePodcast: false);
+
+    private void SilenceNow(bool pausePodcast)
     {
         AudioActivity activity;
         var hadSomething = false;
@@ -647,7 +677,10 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _queue.Clear();
 
             // Before Relevel, so clearing the holds below does not resume it first.
-            PausePodcastLocked();
+            if (pausePodcast)
+            {
+                PausePodcastLocked();
+            }
 
             if (_current is { } playing)
             {
@@ -1089,6 +1122,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _podcast = id;
             _podcastPaused = false;
             _podcastHeld = false;
+            _podcastInterrupted = false;
             sink.Play(PlaybackRequest.Stream(id, Levelled(track), GainFor(AudioChannel.Podcast)));
 
             // The sink can report the episode finished inside Play.
@@ -1309,6 +1343,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         _podcast = null;
         _podcastPaused = false;
         _podcastHeld = false;
+        _podcastInterrupted = false;
     }
 
     /// <summary>
@@ -1322,6 +1357,16 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         || _queue.Exists(static pending => pending.Request.Channel is AudioChannel.Speech or AudioChannel.Alert)
         || (_playbackGroup is not null && !_playbackPaused && !_playbackYields);
 
+    /// <summary>Whether D47 itself holds the podcast: speech or an alert playing or queued, a Media item's sentences aside, or a story playback.</summary>
+    private bool InterruptsPodcast() =>
+        (_current is { } playing && Interrupts(playing.Request))
+        || _queue.Exists(pending => Interrupts(pending.Request))
+        || (_playbackGroup is not null && !_playbackPaused && !_playbackYields);
+
+    private bool Interrupts(AudioRequest request) =>
+        request.Channel is AudioChannel.Speech or AudioChannel.Alert
+        && !(_playbackYields && request.Group is not null && request.Group == _playbackGroup);
+
     /// <summary>
     /// Pauses the podcast when a hold starts, and when the last hold clears steps it back
     /// <see cref="PodcastStepBack"/> and resumes it, unless the Commander paused it.
@@ -1334,6 +1379,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
 
         var hold = PodcastHoldActive();
+        _podcastInterrupted = hold && (_podcastInterrupted || InterruptsPodcast());
 
         if (hold && !_podcastHeld)
         {

@@ -223,10 +223,17 @@ public sealed class BookPlayer
     }
 
     /// <summary>Pauses at the sentence playing; it plays again from its start. A Commander pause replaces any other reason.</summary>
-    public void Pause(StoryRunPause reason)
+    public void Pause(StoryRunPause reason) => Pause(reason, keepInterrupted: false);
+
+    private void Pause(StoryRunPause reason, bool keepInterrupted)
     {
         lock (_gate)
         {
+            if (keepInterrupted && _now is { Pause: StoryRunPause.Interrupted })
+            {
+                return;
+            }
+
             if (_now is { IsPaused: true } paused && reason == StoryRunPause.Commander && (paused.Pause != StoryRunPause.Commander || paused.NotArrived))
             {
                 _now = paused with { Pause = reason, NotArrived = false };
@@ -244,6 +251,12 @@ public sealed class BookPlayer
 
         Raise();
     }
+
+    /// <summary>
+    /// The Commander's stop: pauses as the Commander's pause, unless a callout or an alert has paused the book, which
+    /// then reads its sentence again once D47 is quiet.
+    /// </summary>
+    public void PauseUnlessInterrupted() => Pause(StoryRunPause.Commander, keepInterrupted: true);
 
     /// <summary>
     /// Plays on from the start of the sentence paused at; after a failed voice, that sentence is made again. Nothing

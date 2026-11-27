@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Audio;
 
-/// <summary>A podcast has its own slot, pauses while D47 listens or speaks, and steps back when it resumes (#2653).</summary>
+/// <summary>A podcast has its own slot, pauses while D47 listens or speaks, and steps back when it resumes (#2653); stop pauses it only when D47 did not interrupt it (#2777).</summary>
 public class APodcastPausesWhileD47SpeaksTests
 {
     private static readonly TimeSpan Position = TimeSpan.FromMinutes(12);
@@ -192,10 +192,58 @@ public class APodcastPausesWhileD47SpeaksTests
     }
 
     [Fact]
-    public void StopKeepsThePositionAsTheCommandersPause()
+    public void StopOverSpeechLeavesItToResumeOnceTheHoldsClear()
     {
         var podcast = Play();
-        _audio.Enqueue(On(AudioChannel.Speech, "reply"));
+        _audio.Enqueue(On(AudioChannel.Speech, "callout"));
+
+        _audio.Silence();
+
+        Assert.True(_audio.PodcastPlaying);
+        Assert.False(Paused(podcast));
+        Assert.Equal((podcast, Position - TimeSpan.FromSeconds(2)), _sink.Seeks.Last());
+    }
+
+    [Fact]
+    public void StopSpokenAfterACalloutEndedLeavesItToResumeOnceListeningAndTheTurnClear()
+    {
+        var podcast = Play();
+
+        _audio.Listening = true;
+        _audio.Enqueue(On(AudioChannel.Speech, "callout"));
+        _sink.CompletePlayback(PlayingId("callout"));
+        _audio.TurnInFlight = true;
+
+        _audio.Silence();
+
+        Assert.True(_audio.PodcastPlaying);
+        Assert.True(Paused(podcast));
+
+        _audio.Listening = false;
+        Assert.True(Paused(podcast));
+
+        _audio.TurnInFlight = false;
+        Assert.False(Paused(podcast));
+        Assert.Equal((podcast, Position - TimeSpan.FromSeconds(2)), _sink.Seeks.Last());
+    }
+
+    [Fact]
+    public void CancelOverAStoryPlaybackLeavesItToResume()
+    {
+        var podcast = Play();
+        _audio.HoldSpeechFor("story");
+
+        _audio.Silence(() => _audio.EndPlayback("story"));
+
+        Assert.True(_audio.PodcastPlaying);
+        Assert.False(Paused(podcast));
+        Assert.Equal((podcast, Position - TimeSpan.FromSeconds(2)), _sink.Seeks.Last());
+    }
+
+    [Fact]
+    public void StopWithNothingHoldingItKeepsThePositionAsTheCommandersPause()
+    {
+        var podcast = Play();
 
         _audio.Silence();
 
@@ -204,6 +252,87 @@ public class APodcastPausesWhileD47SpeaksTests
         Assert.Empty(_sink.Seeks);
         Assert.False(_audio.PodcastPlaying);
         Assert.Equal(Position, _audio.PodcastProgress()!.Value.Elapsed);
+    }
+
+    [Fact]
+    public void StopOverListeningATurnAndACueOnlyIsTheCommandersPause()
+    {
+        var podcast = Play();
+
+        _audio.Listening = true;
+        _audio.TurnInFlight = true;
+        _audio.Enqueue(On(AudioChannel.Cue, "chime"));
+
+        _audio.Silence();
+
+        _audio.Listening = false;
+        _audio.TurnInFlight = false;
+
+        Assert.True(Paused(podcast));
+        Assert.False(_audio.PodcastPlaying);
+        Assert.DoesNotContain($"resume {podcast}", _sink.Log);
+    }
+
+    [Fact]
+    public void ASpeechLineFromAnEarlierHoldDoesNotCount()
+    {
+        var podcast = Play();
+
+        _audio.Enqueue(On(AudioChannel.Speech, "callout"));
+        _sink.CompletePlayback(PlayingId("callout"));
+        _audio.Listening = true;
+
+        _audio.Silence();
+        _audio.Listening = false;
+
+        Assert.True(Paused(podcast));
+        Assert.False(_audio.PodcastPlaying);
+    }
+
+    [Fact]
+    public void AMediaItemsOwnSentencesDoNotCountAsD47Interrupting()
+    {
+        var podcast = Play();
+        _audio.HoldSpeechForMedia("book");
+        _audio.Listening = true;
+        _audio.Enqueue(On(AudioChannel.Speech, "sentence", "book"));
+
+        _audio.Silence();
+        _audio.EndPlayback("book");
+        _audio.Listening = false;
+
+        Assert.True(Paused(podcast));
+        Assert.False(_audio.PodcastPlaying);
+    }
+
+    [Fact]
+    public void AnUrgentCalloutsSilenceHoldsItLikeAnyAlert()
+    {
+        var podcast = Play();
+
+        _audio.SilenceForAlert();
+        _audio.Enqueue(On(AudioChannel.Alert, "danger"));
+        Assert.True(Paused(podcast));
+        Assert.True(_audio.PodcastPlaying);
+
+        _sink.CompletePlayback(PlayingId("danger"));
+
+        Assert.False(Paused(podcast));
+        Assert.Equal((podcast, Position - TimeSpan.FromSeconds(2)), _sink.Seeks.Last());
+    }
+
+    [Fact]
+    public void AnUrgentCalloutsSilenceOverSpeechLeavesItHeld()
+    {
+        var podcast = Play();
+        _audio.Enqueue(On(AudioChannel.Speech, "callout"));
+
+        _audio.SilenceForAlert();
+        _audio.Enqueue(On(AudioChannel.Alert, "danger"));
+        _sink.CompletePlayback(PlayingId("danger"));
+
+        Assert.True(_audio.PodcastPlaying);
+        Assert.False(Paused(podcast));
     }
 
     [Fact]
