@@ -429,7 +429,9 @@ public sealed class BodySearchPage : GalaxySearchPage
     /// <summary>The type, with TYPE UNCONFIRMED under it when the galaxy record's class has no subclass.</summary>
     internal static Control TypeCell(BodySummary body)
     {
-        var type = TableCells.Text(body.Subtype);
+        var type = string.IsNullOrWhiteSpace(body.Subtype)
+            ? TableCells.Missing()
+            : Typeset.Text(body.Subtype, TypeScale.BodyType, ThemeManager.WhiteKey, wrap: true, vertical: VerticalAlignment.Center);
 
         if (!body.TypeUnconfirmed)
         {

@@ -60,6 +60,9 @@ public static class TypeScale
     /// <summary>The text in a search field.</summary>
     public const double Search = 14;
 
+    /// <summary>The body type in Search › Bodies' Type cell.</summary>
+    public const double BodyType = 14;
+
     /// <summary>A tile's label.</summary>
     public const double Control = 13;
 
