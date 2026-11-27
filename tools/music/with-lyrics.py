@@ -17,7 +17,8 @@ reference audio. voice-refs\\credits.tsv lists the clips and their licences. Onl
 yes is used, and the maintainer gives that after hearing it. Its pool column is calm or combat: combat folders
 (catalogue.COMBAT) take only combat clips, the rest only calm ones, and a pool with no approved clip has its folders
 skipped. A clip's file name starts female- or male-, which is the only voice wording the caption carries. The ledger's
-vocal column names the clip.
+vocal column names the clip. A theme in CAPTION_VOICED is sung instead in a voice the caption names, from VOCALS or
+COMBAT_VOCALS, needs no clip, and is never re-voiced.
 Nothing here touches tracks\\ or generated.txt, so the weekly publish never sees these songs.
 Shares generate.lock with the library generator, stops after the current song when STOP exists, and waits while
 Elite Dangerous is running. A usage or rate limit from Claude ends the run.
@@ -60,6 +61,18 @@ SOLO_NEEDS = {"saxophone": "saxophone", "piano": "piano", "harp": "harp", "violi
 
 VOICES = os.path.join(DATA, "voice-refs")
 VOICE_CREDITS = os.path.join(VOICES, "credits.tsv")
+
+# Themes sung in a caption voice from these lists rather than a clip, and never re-voiced.
+CAPTION_VOICED = {"christian"}
+VOCALS = ["warm male vocal", "breathy female vocal", "smoky female vocal", "soft male vocal", "airy female vocal",
+          "rich female alto vocal", "tender male vocal", "intimate female vocal", "mellow male vocal",
+          "clear male vocal", "gentle female vocal", "ethereal female vocal", "weathered male vocal",
+          "smooth soulful female vocal", "hearty male vocal", "soft falsetto male vocal", "husky female vocal",
+          "bright female vocal", "low gentle male vocal", "distant female vocal"]
+COMBAT_VOCALS = ["gritty male baritone vocal", "deep powerful male vocal", "raspy male rock vocal",
+                 "urgent gritty male vocal", "aggressive male vocal", "rough male vocal", "hoarse male vocal",
+                 "breathless male vocal", "fierce female vocal", "powerful female belt vocal",
+                 "dark female alto vocal", "deep ominous male vocal"]
 
 ANGLES = ["a pilot talking to the ship", "a letter home that will arrive late", "a promise made before launch",
           "a station worker watching ships come and go", "an old wingmate remembered", "one small object in the cockpit",
@@ -249,7 +262,8 @@ def present(rows, out):
 
 def plan(rows, out, folders, count, themes=sung.THEMES):
     """(theme, folder, attempt) triples to make: theme by theme in order, and within a theme round-robin across
-    the folders furthest from their quota. A folder whose voice pool has no approved clip is left out."""
+    the folders furthest from their quota. A folder whose voice pool has no approved clip is left out, except in a
+    theme in CAPTION_VOICED."""
     kept = present(rows, out)
     voiced = {kind for kind, pool in voices().items() if pool}
     order = []
@@ -257,7 +271,7 @@ def plan(rows, out, folders, count, themes=sung.THEMES):
         have = {f: sum(1 for r in kept if r["folder"] == f and sung.theme_of(r) == theme) for f in catalogue.BRIEFS}
         made = {f: sum(1 for r in rows if r["folder"] == f and sung.theme_of(r) == theme) for f in catalogue.BRIEFS}
         need = {f: max(catalogue.BRIEFS[f][0] - have[f], 0) for f in catalogue.BRIEFS
-                if (not folders or f in folders) and pool_of(f) in voiced}
+                if (not folders or f in folders) and (theme in CAPTION_VOICED or pool_of(f) in voiced)}
         for i in range(max(need.values(), default=0)):
             for f, n in need.items():
                 if i < n:
@@ -308,16 +322,20 @@ def spec(theme, folder, attempt, rows, pools, mood=None):
     combat = folder in catalogue.COMBAT
     _, angles, calm_words, combat_words = THEMES[theme]
     words = combat_words if combat else calm_words
-    pool = pools[pool_of(folder)]
     used = [r["vocal"] for r in rows if r["folder"] == folder][-3:]
     lead, second, accompaniment = rng.choice(voicings)
-    voice = rng.choice(sorted(v for v in pool if v not in used) or sorted(pool))
-    singer = f"{gender_of(voice)} vocal"
+    if theme in CAPTION_VOICED:
+        voice = singer = rng.choice([v for v in (COMBAT_VOCALS if combat else VOCALS) if v not in used])
+        reference = None
+    else:
+        pool = pools[pool_of(folder)]
+        voice = rng.choice(sorted(v for v in pool if v not in used) or sorted(pool))
+        singer, reference = f"{gender_of(voice)} vocal", pool[voice]
     drawn = rng.choice(moods)
     mood = mood or drawn
     production = catalogue.COMBAT_PRODUCTION if combat else catalogue.PRODUCTION
     return {"theme": theme, "folder": folder, "seed": seed, "mood": mood, "vocal": voice, "singer": singer,
-            "reference": pool[voice], "angle": rng.choice(angles),
+            "reference": reference, "angle": rng.choice(angles),
             "caption": f"{style}, {words + ', ' if words else ''}{singer}, {lead}, {second}, {accompaniment}, {mood}, "
                        f"{production}",
             "arrangement": f"{lead}, {second}, {accompaniment}",
@@ -490,7 +508,7 @@ def next_spec(theme, folder, rows, out):
     if have >= catalogue.BRIEFS[folder][0]:
         return None
     pools = voices()
-    if not pools[pool_of(folder)]:
+    if theme not in CAPTION_VOICED and not pools[pool_of(folder)]:
         raise RuntimeError(f"no approved {pool_of(folder)} voice in {VOICE_CREDITS}")
     return spec(theme, folder, sum(1 for r in rows if r["folder"] == folder and sung.theme_of(r) == theme), rows, pools)
 
@@ -501,14 +519,15 @@ def is_clip(vocal):
 
 def revoice_todo(rows, out, folders, themes, pools):
     """(ledger index, attempt) for each song still in its folder or sung-off folder whose vocal is not a clip, in
-    ledger order, for the themes and folders given (every folder when none). A song whose pool has no approved clip
-    is left out."""
+    ledger order, for the themes and folders given (every folder when none). A song of a theme in CAPTION_VOICED, or
+    whose pool has no approved clip, is left out."""
     kept = {id(r) for r in present(rows, out)}
     seen, todo = {}, []
     for i, r in enumerate(rows):
         key = (sung.theme_of(r), r["folder"])
         attempt = seen[key] = seen.get(key, -1) + 1
-        if (id(r) in kept and not is_clip(r["vocal"]) and key[0] in themes and r["folder"] in catalogue.BRIEFS
+        if (id(r) in kept and not is_clip(r["vocal"]) and key[0] in themes and key[0] not in CAPTION_VOICED
+                and r["folder"] in catalogue.BRIEFS
                 and (not folders or r["folder"] in folders) and pools[pool_of(r["folder"])]):
             todo.append((i, attempt))
     return todo
