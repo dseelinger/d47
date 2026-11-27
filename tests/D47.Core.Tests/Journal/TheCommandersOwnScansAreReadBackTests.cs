@@ -165,16 +165,18 @@ public sealed class TheCommandersOwnScansAreReadBackTests
     [Fact]
     public void AnEventInAFileAndInTheLiveListReadsAsOne()
     {
-        string[] lines = [Login("10T09:00:00"), BodySignals("10T09:00:30", 1, "$SAA_SignalType_Geological;", 3), Scan("10T09:01:00", 1, "Ocrinus 1")];
+        // One timestamp, so a second copy of the Scan would fold after the Location and see a populated system.
+        string[] lines =
+        [
+            Login("10T09:00:00"),
+            Scan("10T09:01:00", 1, "Ocrinus 1", extra: ",\"WasFootfalled\":false"),
+            Line("10T09:01:00", "\"event\":\"Location\",\"StarSystem\":\"Ocrinus\",\"SystemAddress\":" + System + ",\"Population\":5000"),
+        ];
         var (index, _, _) = Index(lines);
 
         index.Apply([.. lines.Select(Event)]);
 
-        var system = Read(index)!;
-
-        Assert.Equal(
-            (1, 3),
-            (system.Bodies.Count, Assert.Single(system.Bodies).Signals["$SAA_SignalType_Geological;"]));
+        Assert.Equal(false, Read(index)!.Scans.For(System, 1)?.WasFootfalled);
     }
 
     [Fact]
