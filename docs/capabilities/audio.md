@@ -223,7 +223,8 @@ A voice that is quieter than the rest is raised to the same level, so one quiet 
 story's cast can be heard as well as the others. A voice at that level or louder is left alone.
 The pauses between words are not raised. This applies to every voice and every provider, whether
 it is spoken now, replayed from a message or a story line, or played as a sample in a voice picker.
-It has no setting.
+Podcast episodes and film soundtracks are raised the same way, so a faint one is not left under D47's
+voice. Ambient music is not. None of this has a setting.
 
 ### What you hear if you never touch it
 

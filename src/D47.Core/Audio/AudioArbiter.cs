@@ -1066,6 +1066,8 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
         }
     }
 
+    private static MusicTrack Levelled(MusicTrack track) => track with { Open = () => new StreamLeveller(track.Open()) };
+
     /// <summary>
     /// Streams a podcast episode in its own slot from <paramref name="from"/>, replacing any episode playing. It
     /// starts paused when something already holds it. Returns its playback id; <see cref="PodcastFinished"/> may be
@@ -1087,7 +1089,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
             _podcast = id;
             _podcastPaused = false;
             _podcastHeld = false;
-            sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Podcast)));
+            sink.Play(PlaybackRequest.Stream(id, Levelled(track), GainFor(AudioChannel.Podcast)));
 
             // The sink can report the episode finished inside Play.
             if (_podcast != id)
@@ -1197,7 +1199,7 @@ public sealed class AudioArbiter(IAudioSink sink, ILogger<AudioArbiter> logger) 
 
             id = _nextId++;
             _video = id;
-            sink.Play(PlaybackRequest.Stream(id, track, GainFor(AudioChannel.Video)));
+            sink.Play(PlaybackRequest.Stream(id, Levelled(track), GainFor(AudioChannel.Video)));
 
             // The sink can report the soundtrack finished inside Play.
             if (_video == id && from > TimeSpan.Zero)
