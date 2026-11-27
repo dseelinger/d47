@@ -824,7 +824,16 @@ have **Show on galaxy map**, which opens the Galaxy map on the system. Only a qu
 chooser stays where it is.
 
 The page joins the Commander's own scans of the system to Spansh's record, and where Spansh has no
-record it shows the Commander's scans alone, dated under **From your scans**.
+record it shows the Commander's scans alone, dated under **From your scans**. Each body on the Bodies
+section carries marks after its name: **✓ Mapped by you** once the Commander has mapped it, **First
+mapping** or **Map** with the mapped value when it is worth mapping, **Biology n of m** with the
+value range while genera are left to sample and **✓ Biology m of m** once every genus is done, and
+**Guardian signals**, **Thargoid signals** or **Geology** for the other things `get_system_worth`
+lists there. Orange marks are still worth doing; cyan ones are done. The marks come from the
+Commander's own scans, the Biology section's record and `get_system_worth`'s list, read the same way
+for a system scanned in an earlier session. A scanned planet's page opens with **Your record**:
+Mapping, Biology and Still worth doing. When the galaxy search fails and the Commander has scans of
+the system, the page draws them under the failure notice with only Bodies, Biology and Orbits.
 
 A name with no exact match answers with up to three close names and opens nothing; a misheard name
 is usually one of them. A system Spansh has no record of is said to be unknown and opens nothing.

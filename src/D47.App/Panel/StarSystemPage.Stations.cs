@@ -211,6 +211,30 @@ public sealed partial class StarSystemPage
         return grid;
     }
 
+    /// <summary>The section switch when the page draws the Commander's own scans alone: Bodies, Biology and Orbits.</summary>
+    private Grid OwnScanSections()
+    {
+        var sections = new Segment
+        {
+            ItemsSource = OwnSections.Select(section => section == Section.Biology ? BiologySegment(_profile!) : section.ToString()).ToList(),
+            SelectedIndex = OwnSections.ToList().IndexOf(_section),
+        };
+        Avalonia.Automation.AutomationProperties.SetName(sections, "Sections");
+        sections.SelectionChanged += (_, _) =>
+        {
+            if (sections.SelectedIndex >= 0 && sections.SelectedIndex < OwnSections.Count && OwnSections[sections.SelectedIndex] != _section)
+            {
+                ShowSection(OwnSections[sections.SelectedIndex]);
+            }
+        };
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*") };
+        Grid.SetColumnSpan(sections, 3);
+        grid.Children.Add(sections);
+
+        return grid;
+    }
+
     /// <summary>STATIONS BY KIND on the Overview: one tile per kind, each opening STATIONS on it.</summary>
     private StackPanel KindTiles(StarSystemProfile profile)
     {

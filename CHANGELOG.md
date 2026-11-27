@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Search › System marks each body with what you have done there and what is left. A body shows "✓ Mapped by you" once you have mapped it, "First mapping" or "Map" with its value when it is worth mapping, "Biology 1 of 3" with the value range while genera are left to sample or "✓ Biology 3 of 3" once all are done, and Guardian signals, Thargoid signals or Geology where those are still to do. Orange is still to do, cyan is done. A scanned planet's page opens with Your record, and when the galaxy search fails the page shows what your own scans recorded under the failure notice.
+
 Added: Search › System shows your own scans. Bodies you have scanned are listed with the rest, and a body Spansh does not list opens its own page. A system Spansh has no record of shows what you scanned, dated under "From your scans", instead of saying there is no record. The page updates as you scan, without asking Spansh again.
 
 Added: d47 says when the FSS finds notable stellar phenomena in a system, and when a body has Guardian or Thargoid signals, for example "A 4: two Guardian signals." Phenomena are said once per system, and a body's signals once per kind. It has its own row, Unusual signals, under Exploration callouts, on by default.

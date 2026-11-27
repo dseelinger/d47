@@ -502,6 +502,16 @@ public partial class MainWindow : Window
                     OwnScanVersion = host.OwnScans is { } ownVersions
                         ? address => host.GameState.Active?.Identity.FrontierId is { Length: > 0 } fid ? ownVersions.Version(fid, address) : 0
                         : null,
+                    Worth = (address, position, own) => host.GameState.Active is { } worthState
+                        ? D47.Core.Journal.SystemWorth.For(
+                            worthState,
+                            address,
+                            position,
+                            host.History.Cartography,
+                            host.Settings.Current.Callouts.BodyValueThreshold,
+                            host.SignalSightings?.Snapshot() ?? [],
+                            own)
+                        : null,
                     Remember = (name, address) =>
                     {
                         if (host.SearchHistory is { } history)

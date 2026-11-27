@@ -255,6 +255,12 @@ public sealed record OwnSystem(long SystemAddress)
 
     /// <summary>The latest event folded.</summary>
     public DateTimeOffset LatestAt { get; init; }
+
+    /// <summary>The same events folded as the session's <see cref="CommanderGameState.Scans"/>.</summary>
+    public BodyScans Scans { get; init; } = BodyScans.Empty;
+
+    /// <summary>The same events folded as the session's <see cref="CommanderGameState.Bodies"/>.</summary>
+    public BodySignals Signals { get; init; } = BodySignals.Empty;
 }
 
 /// <summary>What the Commander's own events say about one body beyond its profile.</summary>

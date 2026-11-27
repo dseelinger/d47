@@ -48,19 +48,26 @@ public static class SystemWorth
     /// <param name="cartography">Where planets are priced and own maps are kept; null lists no mapping items.</param>
     /// <param name="mappingThreshold">The least value, in credits, a planet is listed for mapping at.</param>
     /// <param name="signals">The FSS signals scanned, from any system.</param>
+    /// <param name="own">
+    /// The Commander's own record of the system, whose scans and body signals are read in place of the session's; null
+    /// reads the session's.
+    /// </param>
     public static SystemWorthAnswer For(
         CommanderGameState state,
         long systemAddress,
         StarPosition? position,
         CartographyLedger? cartography,
         long mappingThreshold,
-        IReadOnlyList<SignalSighting> signals)
+        IReadOnlyList<SignalSighting> signals,
+        OwnSystem? own = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(signals);
 
-        var scans = state.Scans.InSystem(systemAddress).OrderBy(scan => scan.BodyId).ToList();
-        var bodies = state.Bodies.All
+        var held = own?.Scans ?? state.Scans;
+        var found = own?.Signals ?? state.Bodies;
+        var scans = held.InSystem(systemAddress).OrderBy(scan => scan.BodyId).ToList();
+        var bodies = found.All
             .Where(body => body.SystemAddress == systemAddress)
             .OrderBy(body => body.BodyId)
             .ToList();
@@ -68,9 +75,9 @@ public static class SystemWorth
 
         var items = new List<WorthItem>();
         items.AddRange(Unusual(systemAddress, bodies, signals));
-        items.AddRange(Biology(state, systemAddress, region).OrderByDescending(item => item.High ?? -1));
-        items.AddRange(Mapping(state, systemAddress, scans, cartography, mappingThreshold).OrderByDescending(item => item.High));
-        items.AddRange(Geology(state, systemAddress, scans, position));
+        items.AddRange(Biology(state, held, systemAddress, region).OrderByDescending(item => item.High ?? -1));
+        items.AddRange(Mapping(state, found, systemAddress, scans, cartography, mappingThreshold).OrderByDescending(item => item.High));
+        items.AddRange(Geology(state, held, found, systemAddress, scans, position));
 
         var known = scans.Count > 0 || bodies.Count > 0 || state.Biology.InSystem(systemAddress).Count > 0;
         var firsts = scans.Count(scan => scan.WasDiscovered == false && (scan.StarType is not null || scan.PlanetClass is not null));
@@ -105,7 +112,7 @@ public static class SystemWorth
         }
     }
 
-    private static IEnumerable<WorthItem> Biology(CommanderGameState state, long systemAddress, string? region)
+    private static IEnumerable<WorthItem> Biology(CommanderGameState state, BodyScans held, long systemAddress, string? region)
     {
         foreach (var body in BiologyInSystem.For(state, systemAddress, region, null, null).Bodies)
         {
@@ -121,7 +128,7 @@ public static class SystemWorth
                 continue;
             }
 
-            var scan = state.Scans.For(systemAddress, body.BodyId);
+            var scan = held.For(systemAddress, body.BodyId);
 
             if (scan is { Landable: false })
             {
@@ -144,6 +151,7 @@ public static class SystemWorth
 
     private static IEnumerable<WorthItem> Mapping(
         CommanderGameState state,
+        BodySignals found,
         long systemAddress,
         IReadOnlyList<BodyScan> scans,
         CartographyLedger? cartography,
@@ -161,7 +169,7 @@ public static class SystemWorth
                 || cartography.IfMapped(systemAddress, bodyId) is not { } value
                 || value < threshold
                 || cartography.Mapped(systemAddress, bodyId, state.Identity.FrontierId)
-                || state.Bodies.Named(scan.BodyName) is { Source: BodySignalSource.SurfaceScan })
+                || found.Named(scan.BodyName) is { Source: BodySignalSource.SurfaceScan })
             {
                 continue;
             }
@@ -171,12 +179,17 @@ public static class SystemWorth
     }
 
     private static IEnumerable<WorthItem> Geology(
-        CommanderGameState state, long systemAddress, IReadOnlyList<BodyScan> scans, StarPosition? position)
+        CommanderGameState state,
+        BodyScans held,
+        BodySignals found,
+        long systemAddress,
+        IReadOnlyList<BodyScan> scans,
+        StarPosition? position)
     {
         foreach (var scan in scans)
         {
             if (scan.BodyId is { } bodyId
-                && GeologyCatalogue.NotInCodex(state, systemAddress, bodyId, position) is { Count: > 0 } missing)
+                && GeologyCatalogue.NotInCodex(state.CodexLedger, held, found, systemAddress, bodyId, position) is { Count: > 0 } missing)
             {
                 yield return new WorthItem(WorthKind.Geology, scan.BodyName, bodyId, [.. missing.Select(feature => feature.Name)]);
             }

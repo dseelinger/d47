@@ -148,6 +148,15 @@ internal static class OwnSystemFold
         var profiles = scannedBodies.Select(entry => Finished(entry.Value, ringSignals)).ToList();
         var chains = profiles.Select(body => body.Parents).ToList();
 
+        var scans = BodyScans.Empty;
+        var signals = BodySignals.Empty;
+
+        foreach (var journalEvent in ordered)
+        {
+            scans = scans.Apply(journalEvent);
+            signals = signals.Apply(journalEvent);
+        }
+
         return new OwnSystem(systemAddress)
         {
             Name = name,
@@ -166,6 +175,8 @@ internal static class OwnSystemFold
                     SignalsAt = entry.Value.SignalsAt,
                 }),
             LatestAt = ordered[^1].Timestamp,
+            Scans = scans,
+            Signals = signals,
         };
     }
 

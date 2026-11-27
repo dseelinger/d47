@@ -50,6 +50,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
     private readonly StackPanel _page = new() { Spacing = 18 };
 
     private StarSystemProfile? _profile;
+    private OwnSystem? _own;
     private string? _failure;
     private bool _loading;
     private bool _redrawn;
@@ -94,6 +95,11 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
         {
             _profile = profile;
             Draw();
+
+            if (surface.OwnScans is not null)
+            {
+                _ = ReadOwn();
+            }
         }
         else
         {
@@ -274,6 +280,7 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
     {
         var token = request.Token;
         StarSystemProfile? profile = null;
+        OwnSystem? own = null;
         string? failure = null;
 
         var ownRead = Task.Run(() => _surface.ReadOwn(_address, token), token);
@@ -281,7 +288,8 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
         try
         {
             var spansh = await Task.Run(() => _surface.Systems.ProfileAsync(_address, token), token).ConfigureAwait(false);
-            profile = OwnScansMerge.Into(spansh, await ownRead.ConfigureAwait(false));
+            own = await ownRead.ConfigureAwait(false);
+            profile = OwnScansMerge.Into(spansh, own);
         }
         catch (OperationCanceledException)
         {
@@ -308,9 +316,53 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
 
             _loading = false;
             _profile = profile;
+            _own = own;
             _failure = failure;
             Draw();
         });
+    }
+
+    /// <summary>Reads the Commander's own record of the system for Your record, when the page was handed the system's profile.</summary>
+    private async Task ReadOwn()
+    {
+        var own = await Task.Run(() => _surface.ReadOwn(_address, CancellationToken.None)).ConfigureAwait(false);
+
+        if (own is null)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            _own = own;
+
+            if (!_loading && _failure is null && Body is not null)
+            {
+                Draw();
+            }
+        });
+    }
+
+    /// <summary>The Your record group, or null for a star or a body the Commander has not scanned.</summary>
+    private StackPanel? Record(StarSystemProfile profile, BodyProfile body)
+    {
+        var region = profile.Position is { } at ? GalacticRegions.Find(at) : null;
+        var surveyed = _surface.Surveyed is { } held && held.TryGet(profile.SystemAddress, out var biology) ? biology : null;
+        var slabs = BodyRecord.Slabs(
+            body,
+            _own,
+            _surface.Worth?.Invoke(profile.SystemAddress, profile.Position, _own),
+            _surface.Biology?.Invoke(profile.SystemAddress, region, surveyed));
+
+        if (slabs.Count == 0)
+        {
+            return null;
+        }
+
+        var hint = RoutingKit.Ink(BodyRecord.RecordHint, TypeScale.Control, ThemeManager.GreyKey, wrap: true);
+        var content = new StackPanel { Spacing = 8, Children = { StatTile.Grid([.. slabs.Select(BodyRecord.Slab)], 3), hint } };
+
+        return Group("Your record", null, content);
     }
 
     private void Draw()
@@ -467,6 +519,11 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
     private StackPanel PlanetOverview(StarSystemProfile profile, BodyProfile body)
     {
         var column = new StackPanel { Spacing = 24 };
+
+        if (Record(profile, body) is { } record)
+        {
+            column.Children.Add(record);
+        }
 
         column.Children.Add(StatTile.Grid(
         [

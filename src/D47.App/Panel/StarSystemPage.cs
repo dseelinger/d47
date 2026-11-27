@@ -58,6 +58,12 @@ public sealed record StarSystemSurface(
     /// <summary>Changes when a live event for the system arrives.</summary>
     public Func<long, int>? OwnScanVersion { get; init; }
 
+    /// <summary>
+    /// What is still worth doing in a system, read with the system address, its position and the Commander's own record of
+    /// it; null marks nothing as worth doing.
+    /// </summary>
+    public Func<long, StarPosition?, OwnSystem?, SystemWorthAnswer?>? Worth { get; init; }
+
     /// <summary>The Commander's own record of a system, or null with none or when it cannot be read. Call off the UI thread.</summary>
     internal OwnSystem? ReadOwn(long address, CancellationToken token)
     {
@@ -107,6 +113,12 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     /// <summary>The heading's caption over the date when Spansh has no record and the page draws the Commander's own scans.</summary>
     public const string FromYourScans = "From your scans";
 
+    /// <summary>Added to the failure notice when the page draws the Commander's own scans under it.</summary>
+    public const string OwnScansOnly = "Below is only what your own scans recorded.";
+
+    /// <summary>The sections the page offers when the galaxy search failed and it draws the Commander's own scans.</summary>
+    private static readonly IReadOnlyList<Section> OwnSections = [Section.Bodies, Section.Biology, Section.Orbits];
+
     /// <summary>The shortest time between two re-reads of the Commander's own scans for the system shown.</summary>
     public static readonly TimeSpan OwnScanPause = TimeSpan.FromSeconds(2);
 
@@ -132,6 +144,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     private View _view;
     private StarSystemProfile? _profile;
     private StarSystemProfile? _spansh;
+    private OwnSystem? _own;
     private int _ownVersion;
     private DateTimeOffset _ownReadAt;
     private CancellationTokenSource? _ownInFlight;
@@ -230,7 +243,8 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
 
     public bool OpenSectionById(string id)
     {
-        if (!Enum.TryParse<Section>(id, out var section) || section.ToString() != id)
+        if (!Enum.TryParse<Section>(id, out var section) || section.ToString() != id
+            || (OwnScansAlone && !OwnSections.Contains(section)))
         {
             return false;
         }
@@ -448,6 +462,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         _opened = new Shown(address, name);
         _profile = null;
         _spansh = null;
+        _own = null;
         _failure = null;
         _matches = [];
         _view = View.Loading;
@@ -489,6 +504,18 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             failure = Unreadable;
         }
 
+        if (failure is not null)
+        {
+            try
+            {
+                own = await ownRead.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+        }
+
         Dispatcher.UIThread.Post(() =>
         {
             if (!Finish(request))
@@ -497,16 +524,42 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             }
 
             _spansh = failure is null ? profile : null;
-            _profile = failure is null ? OwnScansMerge.Into(profile, own) : null;
+            _own = own;
             _failure = failure;
             _ownVersion = version;
             _ownReadAt = readAt;
-            _view = failure is not null ? View.Unavailable : _profile is null ? View.Unrecorded : View.Ready;
+            Merge();
 
             Rename(address);
             Draw();
         });
     }
+
+    /// <summary>
+    /// Draws Spansh's answer joined with the Commander's own scans; after a failed search, the own scans alone under the
+    /// failure notice.
+    /// </summary>
+    private void Merge()
+    {
+        if (_failure is not null)
+        {
+            _profile = _own is null ? null : OwnScansMerge.Into(null, _own);
+            _view = View.Unavailable;
+
+            if (_profile is not null && !OwnSections.Contains(_section))
+            {
+                Switch(Section.Bodies);
+            }
+
+            return;
+        }
+
+        _profile = OwnScansMerge.Into(_spansh, _own);
+        _view = _profile is null ? View.Unrecorded : View.Ready;
+    }
+
+    /// <summary>The galaxy search failed and the page draws the Commander's own scans of the system.</summary>
+    private bool OwnScansAlone => _view == View.Unavailable && _profile is not null;
 
     /// <summary>Names the opened system as its record does, when the record has a name.</summary>
     private void Rename(long address)
@@ -524,7 +577,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     private void CheckOwnScans()
     {
         if (_surface.OwnScanVersion is not { } versionOf || _opened is not { } opened || _ownInFlight is not null
-            || _view is not (View.Ready or View.Unrecorded))
+            || _view is not (View.Ready or View.Unrecorded or View.Unavailable))
         {
             return;
         }
@@ -576,13 +629,13 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             _ownInFlight = null;
             request.Dispose();
 
-            if (_opened?.Address != address || _view is not (View.Ready or View.Unrecorded))
+            if (_opened?.Address != address || _view is not (View.Ready or View.Unrecorded or View.Unavailable))
             {
                 return;
             }
 
-            _profile = OwnScansMerge.Into(_spansh, own);
-            _view = _profile is null ? View.Unrecorded : View.Ready;
+            _own = own;
+            Merge();
 
             Rename(address);
             Draw();
@@ -689,7 +742,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     private void Draw()
     {
         DrawBody();
-        var section = _view == View.Ready && _profile is not null ? _section.ToString() : string.Empty;
+        var section = (_view == View.Ready || OwnScansAlone) && _profile is not null ? _section.ToString() : string.Empty;
         _sectionWord.Set(this, section, section);
 
         if (Filters != _filtering)
@@ -729,16 +782,28 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             case View.Unavailable:
                 if (_opened is not null)
                 {
-                    _body.Children.Add(Heading(null));
+                    _body.Children.Add(Heading(_profile is null ? null : _own?.LatestAt));
                 }
 
                 _body.Children.Add(new Notice
                 {
                     Label = "The galaxy search didn't answer",
-                    Text = $"{_failure} {AsksAgain}",
+                    Text = _profile is null ? $"{_failure} {AsksAgain}" : $"{_failure} {OwnScansOnly} {AsksAgain}",
                     MaxWidth = 760,
                     HorizontalAlignment = HorizontalAlignment.Left,
                 });
+
+                if (_profile is { } scanned)
+                {
+                    _body.Children.Add(OwnScanSections());
+                    _body.Children.Add(_section switch
+                    {
+                        Section.Biology => Biology(scanned),
+                        Section.Orbits => Orbits(scanned),
+                        _ => Bodies(scanned),
+                    });
+                }
+
                 break;
 
             case View.Unrecorded:
@@ -887,17 +952,21 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             named = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { title, glyphs } };
         }
 
-        var caption = _spansh is null && _view == View.Ready ? FromYourScans : "Last reported";
+        var own = _spansh is null && _profile is not null;
 
-        return TitleText.Block(named, context, reportedAt is { } at ? Reported(at, caption) : null);
+        return TitleText.Block(
+            named,
+            context,
+            reportedAt is { } at ? Reported(at, own ? FromYourScans : "Last reported", own ? ThemeManager.CyanKey : null) : null);
     }
 
     /// <summary>"2026-11-10 08:14 UTC".</summary>
     internal static string Stamp(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture);
 
-    internal static StackPanel Reported(DateTimeOffset at, string caption = "Last reported")
+    /// <param name="key">The ink of the caption and the date; null draws them grey and white.</param>
+    internal static StackPanel Reported(DateTimeOffset at, string caption = "Last reported", string? key = null)
     {
-        var label = Caption(caption, ThemeManager.GreyKey);
+        var label = Caption(caption, key ?? ThemeManager.GreyKey);
         label.HorizontalAlignment = HorizontalAlignment.Right;
 
         var value = new TextBlock
@@ -907,7 +976,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             FontSize = TypeScale.Body,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
-        ThemeInk.Bind(value, TextBlock.ForegroundProperty, ThemeManager.WhiteKey);
+        ThemeInk.Bind(value, TextBlock.ForegroundProperty, key ?? ThemeManager.WhiteKey);
 
         return new StackPanel { Spacing = 2, Children = { label, value } };
     }

@@ -93,9 +93,20 @@ public static class GeologyCatalogue
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        if (!state.CodexLedger.IsWhole
-            || state.Scans.For(systemAddress, bodyId) is not { Landable: true } scan
-            || state.Bodies.Named(scan.BodyName) is not { GeologicalCount: > 0 })
+        return NotInCodex(state.CodexLedger, state.Scans, state.Bodies, systemAddress, bodyId, position);
+    }
+
+    /// <summary>As <see cref="NotInCodex(CommanderGameState, long, int, StarPosition?)"/>, from the scans and signals given.</summary>
+    public static IReadOnlyList<GeologyFeature>? NotInCodex(
+        CodexLedger codex, BodyScans scans, BodySignals signals, long systemAddress, int bodyId, StarPosition? position)
+    {
+        ArgumentNullException.ThrowIfNull(codex);
+        ArgumentNullException.ThrowIfNull(scans);
+        ArgumentNullException.ThrowIfNull(signals);
+
+        if (!codex.IsWhole
+            || scans.For(systemAddress, bodyId) is not { Landable: true } scan
+            || signals.Named(scan.BodyName) is not { GeologicalCount: > 0 })
         {
             return null;
         }
@@ -110,7 +121,7 @@ public static class GeologyCatalogue
         var regionId = position is { } starPos && GalacticRegions.Find(starPos) is { } region
             ? GalacticRegions.IdOf(region)
             : null;
-        var logged = state.CodexLedger.Logged;
+        var logged = codex.Logged;
 
         return [.. likely.Where(feature => !logged.Contains((feature.EntryId, regionId)))];
     }

@@ -16,6 +16,12 @@ public sealed partial class StarSystemPage
 {
     public const string BodiesNote = "bodies · each star, what orbits it, and moons under their planet";
 
+    /// <summary>The count line's words when the page draws the Commander's own scans alone.</summary>
+    public const string ScannedBodiesNote = "bodies you scanned · each star, what orbits it, and moons under their planet";
+
+    /// <summary>Marks the line of marks on a body's row.</summary>
+    public const string BodyMarksClass = "body-marks";
+
     private const double BodyIndent = 28;
 
     /// <summary>Marks a body's row on the Bodies section.</summary>
@@ -218,22 +224,29 @@ public sealed partial class StarSystemPage
             Children =
             {
                 Figure(profile.Bodies.Count, ThemeManager.WhiteKey),
-                Caption(BodiesNote, ThemeManager.GreyKey),
+                Caption(OwnScansAlone ? ScannedBodiesNote : BodiesNote, ThemeManager.GreyKey),
             },
         };
         Avalonia.Automation.AutomationProperties.SetName(note, $"{profile.Bodies.Count} bodies");
         list.Children.Add(note);
 
+        var worth = _surface.Worth?.Invoke(profile.SystemAddress, profile.Position, _own);
+        var biology = BiologyAnswer(profile);
+
         foreach (var level in BodyTree(profile.Bodies))
         {
-            list.Children.Add(BodySlab(profile, level, _surface.SurfaceMining?.Invoke(profile.SystemAddress, level.Body.BodyId)));
+            list.Children.Add(BodySlab(
+                profile,
+                level,
+                _surface.SurfaceMining?.Invoke(profile.SystemAddress, level.Body.BodyId),
+                BodyRecord.Marks(level.Body, _own, worth, biology)));
         }
 
         return list;
     }
 
     /// <summary>A body's row: pressable where the page can drill a body, its Codex tile beside it, indented by its depth.</summary>
-    private DockPanel BodySlab(StarSystemProfile profile, BodyLevel level, SurfaceMiningSite? mined)
+    private DockPanel BodySlab(StarSystemProfile profile, BodyLevel level, SurfaceMiningSite? mined, IReadOnlyList<BodyMark> marks)
     {
         var body = level.Body;
 
@@ -243,7 +256,7 @@ public sealed partial class StarSystemPage
             ColumnSpacing = 16,
         };
 
-        var name = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, ClipToBounds = true };
+        var name = new WrapPanel { ItemSpacing = 10, LineSpacing = 2, ClipToBounds = true };
         name.Children.Add(Ellipsed(body.Name, TypeScale.Secondary, FontWeight.SemiBold, ThemeManager.WhiteKey));
 
         if (body.IsLandable)
@@ -252,6 +265,20 @@ public sealed partial class StarSystemPage
             landable.FontSize = TypeScale.MetaSmall;
             landable.LetterSpacing = TypeScale.MetaSmall * Fonts.ChromeTracking;
             name.Children.Add(landable);
+        }
+
+        if (marks.Count > 0)
+        {
+            var line = new WrapPanel { ItemSpacing = 10, LineSpacing = 2, VerticalAlignment = VerticalAlignment.Center };
+            line.Classes.Add(BodyMarksClass);
+            line.Children.Add(BodyRecord.Separator());
+
+            foreach (var mark in marks)
+            {
+                line.Children.Add(BodyRecord.Mark(mark));
+            }
+
+            name.Children.Add(line);
         }
 
         var type = Ellipsed(body.SubType ?? body.Type, TypeScale.Control, FontWeight.Medium, ThemeManager.AKey);
