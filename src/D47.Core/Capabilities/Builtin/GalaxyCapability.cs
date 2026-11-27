@@ -131,7 +131,10 @@ public static class GalaxyCapability
         Func<Journal.GameStatus>? gameStatus = null,
 
         // What the quick-search course command plots through.
-        NavigationSurface? navigation = null) => new()
+        NavigationSurface? navigation = null,
+
+        // The Commander's own record of a system, which a body search is corrected by.
+        Func<long, CancellationToken, Journal.OwnSystem?>? ownScans = null) => new()
     {
         Id = Id,
         Group = "Knowledge",
@@ -655,7 +658,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindBodyAsync(
-                        galaxy, currentSystem, currentPosition, settings, searches, Remember(history), now, arguments,
+                        galaxy, currentSystem, currentPosition, settings, searches, Remember(history), now, ownScans, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -3408,6 +3411,7 @@ public static class GalaxyCapability
         GalaxySearchBoard? searches,
         Action<SearchHistoryEntry>? remember,
         Func<DateTimeOffset>? now,
+        Func<long, CancellationToken, Journal.OwnSystem?>? ownScans,
         ToolArguments arguments,
         CancellationToken cancellationToken)
     {
@@ -3479,7 +3483,10 @@ public static class GalaxyCapability
 
         try
         {
-            var result = query.Keep(await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false));
+            var found = await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false);
+            var result = query.Keep(
+                await Task.Run(() => Journal.OwnBodySearch.Apply(found, query, ownScans, cancellationToken), cancellationToken)
+                    .ConfigureAwait(false));
 
             if (from is not null)
             {

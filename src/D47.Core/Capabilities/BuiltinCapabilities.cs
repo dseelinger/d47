@@ -391,7 +391,10 @@ public static class BuiltinCapabilities
         Func<Viewing.WatchDesk?>? watchDesk = null,
 
         // The sources of the titles in Your list, in Continue watching or playing now, for the video disclosures.
-        Func<IReadOnlyList<string>>? heldVideoSources = null) =>
+        Func<IReadOnlyList<string>>? heldVideoSources = null,
+
+        // The Commander's own scans, which a body search is corrected by.
+        Journal.OwnScanIndex? ownScans = null) =>
     [
         HelpCapability.Create(
             registry,
@@ -445,7 +448,10 @@ public static class BuiltinCapabilities
             squadronFactions,
             rareIndex,
             gameStatus,
-            navigation),
+            navigation,
+            ownScans is null
+                ? null
+                : (address, token) => gameState.Active?.Identity.FrontierId is { Length: > 0 } fid ? ownScans.Read(fid, address, token) : null),
         RouteCapability.Create(
             routes,
             trade,

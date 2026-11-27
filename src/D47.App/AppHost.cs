@@ -3111,6 +3111,7 @@ public sealed class AppHost : IDisposable
                 neutronOffer: stores.NeutronOffer,
                 bgsTick: () => late.Host?.BgsTick?.Last,
                 signalSightings: stores.SignalSightings,
+                ownScans: stores.OwnScans,
                 signalIndex: services.SignalIndexStore,
                 rareIndex: services.RareIndexStore,
                 pickCommander: loop.Feed.Picks.Enqueue,

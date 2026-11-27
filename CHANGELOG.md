@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Fixed: A body search no longer lists a body your own scan shows is something else. A star Spansh has as an A-type hypergiant, which your scan shows is a B-type, is left out of a search for A-type hypergiants, and the count drops by one. Where your scan is newer than Spansh's report, the row shows what you scanned.
+
 Changed: The mini panel's Plan list now opens at where you are. The stop for the system you are in is the top row, in cyan, with the next stop below it. Between stops, the last stop you reached is at the top. The list moves down a row with each stop you reach, and a scroll you make yourself stays until you reach the next one.
 
 Added: In the headset with Show D47 without SteamVR on, saying "take a picture" also keeps a picture of what you see, with d47's panel, captions and avatar in it. Elite's own screenshot does not show them. The picture is the left eye cut to the lens, saved beside Elite's JPEG with "headset" at the end of its name and the same note of where it was taken. d47 answers "Picture taken, with a picture of the headset view." The headset picture is kept even when Elite's screenshot key cannot be pressed, and the answer says which of the two was taken. On SteamVR nothing changes.

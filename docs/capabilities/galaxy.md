@@ -1224,6 +1224,12 @@ module names — and the matcher takes a **unique fragment** as well as a spelli
 names exactly one subtype and is what a person says. "gas giant" names nine, so it is refused with
 the candidates rather than answered about whichever one came first.
 
+A body the Commander has scanned takes its fields from the scan where the scan is newer than the
+galaxy record, by the same rule as Search › System, and is left out when the scan shows it does not
+match: a star Spansh lists as an A-type hypergiant that the Commander's scan shows is a B-type is not
+an answer to an A-type search. Each body left out lowers the count by one. A filter on something a
+scan does not hold, such as material share, codex entry or Powerplay, stays as the service answered it.
+
 Two things about this search were measured and are worth knowing before changing it.
 
 **The radius stops at 101,000 light years.** That is the galaxy's diameter, about 100,000 light
