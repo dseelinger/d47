@@ -49,6 +49,9 @@ public static class ShippedCallouts
 
         public required CartographyLedger Cartography { get; init; }
 
+        /// <summary>The FSS signals scanned, or null where nothing keeps them.</summary>
+        public SignalSightings? Signals { get; init; }
+
         public required OutstandingCrimes Crimes { get; init; }
 
         public required NearbyFight Fight { get; init; }
@@ -229,6 +232,7 @@ public static class ShippedCallouts
             .Add(new EarlierFindsCallout(loggers.CreateLogger<EarlierFindsCallout>()))
             .Add(biology)
             .Add(new GeologyCallout())
+            .Add(new FssCloseCallout(sources.Cartography, sources.Signals))
             .Add(new CodexDiscoveredCallout())
             .Add(new RegionFirstCallout())
             .Add(tradingMode)
@@ -567,6 +571,7 @@ public static class ShippedCallouts
         engine.SetEnabled("body-value", callouts.BodyValue, now);
         engine.SetEnabled("biology", callouts.Biology, now);
         engine.SetEnabled("geology", callouts.Geology, now);
+        engine.SetEnabled("fss-close", callouts.FssClose, now);
         engine.SetEnabled("codex-discovered", callouts.CodexDiscovered, now);
         engine.SetEnabled("region-first", callouts.RegionFirst, now);
         engine.SetEnabled("surveyed-biology", callouts.SurveyedBiology, now);
@@ -632,6 +637,10 @@ public static class ShippedCallouts
 
                 case BodyValueCallout bodyValue:
                     bodyValue.Threshold = () => settings.Current.Callouts.BodyValueThreshold;
+                    break;
+
+                case FssCloseCallout fssClose:
+                    fssClose.Threshold = () => settings.Current.Callouts.BodyValueThreshold;
                     break;
 
                 case BiologyCallout biology:

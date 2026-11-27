@@ -27,6 +27,9 @@ public readonly record struct CalloutContext(
     ChatterSaid? LastChatter = null,
     bool AnotherFlying = false)
 {
+    /// <summary>When the announcement with this key was last queued, or null.</summary>
+    public Func<string, DateTimeOffset?> SpokenAt { get; init; } = _ => null;
+
     /// <summary>False while Elite is not running; chatter is refused then.</summary>
     public bool GameRunning { get; init; } = true;
 
@@ -189,6 +192,8 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
         }
     }
 
+    private DateTimeOffset? SpokenAtKey(string key) => _spokenAt.TryGetValue(key, out var at) ? at : null;
+
     /// <summary>The tick-loop entry point.</summary>
     public void Tick(CalloutContext context)
     {
@@ -210,7 +215,7 @@ public sealed class CalloutEngine(ILogger<CalloutEngine> logger)
                 // Derived fresh per callout off the engine's own field, never off the struct it was handed:
                 // two unprompted callouts examined on one tick must not both read "nothing has been said"
                 // (#257).
-                foreach (var announcement in callout.Examine(context with { LastChatter = _lastChatter }))
+                foreach (var announcement in callout.Examine(context with { LastChatter = _lastChatter, SpokenAt = SpokenAtKey }))
                 {
                     if (Offer(callout.Id, announcement, context))
                     {

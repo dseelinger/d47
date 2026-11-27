@@ -41,6 +41,7 @@ public static class CalloutCapability
     public const string SamplingRangeKey = "callouts.samplingRange";
     public const string SamplingAbandonedKey = "callouts.samplingAbandoned";
     public const string SamplingUnfinishedKey = "callouts.samplingUnfinished";
+    public const string FssCloseKey = "callouts.fssClose";
     public const string DiscoveryKey = "callouts.discovery";
     public const string OrganicsStarsKey = "callouts.organicsStars";
     public const string FootfallKey = "callouts.footfall";
@@ -570,6 +571,21 @@ public static class CalloutCapability
                 "unfinished samples",
                 s => s.Callouts.SamplingUnfinished,
                 (s, v) => s with { Callouts = s.Callouts with { SamplingUnfinished = v } }),
+
+            Toggle(
+                FssCloseKey,
+                "With Show every setting on (at the top of the Settings page, or say \"show me every setting\"), "
+                + "open Settings › Your core › Exploring, group Exploration callouts, and find FSS closed "
+                + "(on by default). Scan a system with the FSS, then close it: D47 names up to three things "
+                + "still worth doing there and counts the rest. Say \"stop calling out what the FSS leaves\": "
+                + "the row shows off and that is no longer said. Say \"start calling out what the FSS leaves\" "
+                + "and the row shows on. The row is absent while Speak without being asked is off.",
+                "FSS closed",
+                "When you close the FSS, up to three things still worth doing in the system.",
+                "fss-close",
+                "what the FSS leaves",
+                s => s.Callouts.FssClose,
+                (s, v) => s with { Callouts = s.Callouts with { FssClose = v } }),
 
             Toggle(
                 DiscoveryKey,

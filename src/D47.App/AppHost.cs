@@ -1822,6 +1822,7 @@ public sealed class AppHost : IDisposable
                 GameState = gameState,
                 Exobiology = exobiology,
                 Cartography = cartography,
+                Signals = signalSightings,
                 Crimes = crimes,
                 Fight = fight,
                 Scenes = scenes,

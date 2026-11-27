@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: When you close the FSS, d47 says what in the system is still worth doing: up to three items, such as biology with its value range, planets to map and notable stellar phenomena, then a count of the rest and how many bodies were first discoveries. A body whose own line was said in the last minute is counted but not named again, and reopening and closing the FSS says it again only if the list changed. It has its own row, FSS closed, under Exploration callouts, on by default.
+
 Fixed: A three-digit name with a zero in the middle is no longer spoken without it. "Hank305" was said "Hank three five"; it is now "Hank three oh five", and "Col 105 Sector" is "Col one oh five Sector".
 
 Fixed: The notable-bodies callout no longer says a neutron star turns "once every 0 hours". The spin is now said in a unit that fits it: "turning about 12 times a second" for a black hole, "once every second" or "every 38 seconds" for a neutron star, "every 21 minutes" for a white dwarf, and hours only from an hour up.

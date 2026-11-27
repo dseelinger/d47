@@ -1360,6 +1360,20 @@ nobody has been there. The callout fires on the arrival star's own autoscan only
 scan can carry the same flag in a populated system, and a scan of any other body in the system is not
 the arrival.
 
+#### FSS closed {#fss-close}
+
+When you close the FSS, Directive 47 says what in the system is still worth doing, in the order
+`get_system_worth` gives:
+
+```text
+Worth doing here: A 2 biology, up to 14 million; A 3 to map, first mapping; notable stellar phenomena; and two more. Six first discoveries.
+```
+
+It names at most three items and counts the rest. A body whose own line (value, biology or geology)
+was said in the last 60 seconds is counted but not named again. It says nothing when nothing is left,
+and when the FSS was already open as d47 started. Reopening and closing the FSS says it again only if
+the list has changed. It reads the journal only.
+
 #### F and G stars {#organics-stars}
 
 On arrival at an undiscovered F or G star (including the white supergiant forms), the game's autoscan

@@ -736,6 +736,9 @@ public sealed record CalloutSettings
     /// <summary>A set of one or two samples on the body being left.</summary>
     public bool SamplingUnfinished { get; init; } = true;
 
+    /// <summary>What is still worth doing in the system, said when the FSS closes (#2760).</summary>
+    public bool FssClose { get; init; } = true;
+
     /// <summary>Whether the arrival star's autoscan shows up as undiscovered (#201).</summary>
     public bool Discovery { get; init; } = true;
 

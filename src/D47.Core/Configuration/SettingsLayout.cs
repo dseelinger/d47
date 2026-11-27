@@ -347,6 +347,7 @@ public static class SettingsLayout
                                 E("callouts.samplingRange"),
                                 E("callouts.samplingAbandoned"),
                                 E("callouts.samplingUnfinished"),
+                                E("callouts.fssClose"),
                                 E("callouts.unsoldDataAtRisk"),
                             ]),
                     ]),
