@@ -276,9 +276,12 @@ public sealed class SystemBodyPage : UserControl, IPageSummary, IPageSection
         StarSystemProfile? profile = null;
         string? failure = null;
 
+        var ownRead = Task.Run(() => _surface.ReadOwn(_address, token), token);
+
         try
         {
-            profile = await Task.Run(() => _surface.Systems.ProfileAsync(_address, token), token).ConfigureAwait(false);
+            var spansh = await Task.Run(() => _surface.Systems.ProfileAsync(_address, token), token).ConfigureAwait(false);
+            profile = OwnScansMerge.Into(spansh, await ownRead.ConfigureAwait(false));
         }
         catch (OperationCanceledException)
         {

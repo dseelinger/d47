@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Added: Search › System shows your own scans. Bodies you have scanned are listed with the rest, and a body Spansh does not list opens its own page. A system Spansh has no record of shows what you scanned, dated under "From your scans", instead of saying there is no record. The page updates as you scan, without asking Spansh again.
+
 Added: d47 says when the FSS finds notable stellar phenomena in a system, and when a body has Guardian or Thargoid signals, for example "A 4: two Guardian signals." Phenomena are said once per system, and a body's signals once per kind. It has its own row, Unusual signals, under Exploration callouts, on by default.
 
 Added: When a hyperspace jump starts and the system you are leaving still has planets worth mapping or biology you have not sampled, d47 counts them during the countdown, for example "Leaving two bodies worth mapping and one with biology." Bodies where a set of samples is partly taken are left to the unfinished-samples line. It has its own row, Leaving work behind, under Exploration callouts, on by default.

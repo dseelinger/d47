@@ -496,6 +496,12 @@ public partial class MainWindow : Window
                         : null,
                     Surveyed = host.SurveyedBiology,
                     AskSurveyed = host.Galaxy is { } surveys ? surveys.SystemBiologyAsync : null,
+                    OwnScans = host.OwnScans is { } ownScans
+                        ? (address, token) => host.GameState.Active?.Identity.FrontierId is { Length: > 0 } fid ? ownScans.Read(fid, address, token) : null
+                        : null,
+                    OwnScanVersion = host.OwnScans is { } ownVersions
+                        ? address => host.GameState.Active?.Identity.FrontierId is { Length: > 0 } fid ? ownVersions.Version(fid, address) : 0
+                        : null,
                     Remember = (name, address) =>
                     {
                         if (host.SearchHistory is { } history)

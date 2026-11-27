@@ -51,6 +51,34 @@ public sealed record StarSystemSurface(
 
     /// <summary>What the Orbits section's simulated time runs from.</summary>
     public TimeProvider Clock { get; init; } = TimeProvider.System;
+
+    /// <summary>The playing Commander's own record of a system. Reads journal files: call off the UI thread.</summary>
+    public Func<long, CancellationToken, OwnSystem?>? OwnScans { get; init; }
+
+    /// <summary>Changes when a live event for the system arrives.</summary>
+    public Func<long, int>? OwnScanVersion { get; init; }
+
+    /// <summary>The Commander's own record of a system, or null with none or when it cannot be read. Call off the UI thread.</summary>
+    internal OwnSystem? ReadOwn(long address, CancellationToken token)
+    {
+        if (OwnScans is not { } read)
+        {
+            return null;
+        }
+
+        try
+        {
+            return read(address, token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 }
 
 /// <summary>
@@ -76,6 +104,12 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
 
     public const string Unreadable = "The galaxy search's answer could not be read.";
 
+    /// <summary>The heading's caption over the date when Spansh has no record and the page draws the Commander's own scans.</summary>
+    public const string FromYourScans = "From your scans";
+
+    /// <summary>The shortest time between two re-reads of the Commander's own scans for the system shown.</summary>
+    public static readonly TimeSpan OwnScanPause = TimeSpan.FromSeconds(2);
+
     /// <summary>The most close names listed under the field.</summary>
     public const int CloseNames = 5;
 
@@ -97,6 +131,10 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     private Shown? _opened;
     private View _view;
     private StarSystemProfile? _profile;
+    private StarSystemProfile? _spansh;
+    private int _ownVersion;
+    private DateTimeOffset _ownReadAt;
+    private CancellationTokenSource? _ownInFlight;
     private string? _failure;
     private string _typed = string.Empty;
     private IReadOnlyList<SystemNameMatch> _matches = [];
@@ -254,6 +292,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     {
         var tileChanged = _history.Refresh();
         Check();
+        CheckOwnScans();
         CheckBiology();
         _orbitPlot?.Request();
 
@@ -408,6 +447,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         _following = following;
         _opened = new Shown(address, name);
         _profile = null;
+        _spansh = null;
         _failure = null;
         _matches = [];
         _view = View.Loading;
@@ -422,13 +462,19 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
     private async Task Fetch(long address, CancellationTokenSource request)
     {
         var token = request.Token;
+        var version = _surface.OwnScanVersion?.Invoke(address) ?? 0;
+        var readAt = _surface.Clock.GetUtcNow();
         StarSystemProfile? profile = null;
+        OwnSystem? own = null;
         string? failure = null;
+
+        var ownRead = Task.Run(() => _surface.ReadOwn(address, token), token);
 
         try
         {
             profile = await Task.Run(() => _surface.Systems.ProfileAsync(address, token), token)
                 .ConfigureAwait(false);
+            own = await ownRead.ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -450,15 +496,95 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
                 return;
             }
 
-            _profile = profile;
+            _spansh = failure is null ? profile : null;
+            _profile = failure is null ? OwnScansMerge.Into(profile, own) : null;
             _failure = failure;
-            _view = failure is not null ? View.Unavailable : profile is null ? View.Unrecorded : View.Ready;
+            _ownVersion = version;
+            _ownReadAt = readAt;
+            _view = failure is not null ? View.Unavailable : _profile is null ? View.Unrecorded : View.Ready;
 
-            if (profile is not null && _opened is { } opened && opened.Address == address)
+            Rename(address);
+            Draw();
+        });
+    }
+
+    /// <summary>Names the opened system as its record does, when the record has a name.</summary>
+    private void Rename(long address)
+    {
+        if (_profile is { Name: { Length: > 0 } name } && _opened is { } opened && opened.Address == address)
+        {
+            _opened = opened with { Name = name };
+        }
+    }
+
+    /// <summary>
+    /// Reads the Commander's own scans again when a live event for the system shown has arrived, at most once per
+    /// <see cref="OwnScanPause"/>.
+    /// </summary>
+    private void CheckOwnScans()
+    {
+        if (_surface.OwnScanVersion is not { } versionOf || _opened is not { } opened || _ownInFlight is not null
+            || _view is not (View.Ready or View.Unrecorded))
+        {
+            return;
+        }
+
+        var version = versionOf(opened.Address);
+
+        if (version == _ownVersion)
+        {
+            return;
+        }
+
+        var now = _surface.Clock.GetUtcNow();
+
+        if (now - _ownReadAt < OwnScanPause)
+        {
+            return;
+        }
+
+        _ownVersion = version;
+        _ownReadAt = now;
+
+        var request = _ownInFlight = new CancellationTokenSource();
+
+        _ = Reread(opened.Address, request);
+    }
+
+    /// <summary>Reads own scans again and draws them over the Spansh answer the page already has.</summary>
+    private async Task Reread(long address, CancellationTokenSource request)
+    {
+        var token = request.Token;
+        OwnSystem? own;
+
+        try
+        {
+            own = await Task.Run(() => _surface.ReadOwn(address, token), token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!ReferenceEquals(request, _ownInFlight))
             {
-                _opened = opened with { Name = profile.Name };
+                return;
             }
 
+            _ownInFlight = null;
+            request.Dispose();
+
+            if (_opened?.Address != address || _view is not (View.Ready or View.Unrecorded))
+            {
+                return;
+            }
+
+            _profile = OwnScansMerge.Into(_spansh, own);
+            _view = _profile is null ? View.Unrecorded : View.Ready;
+
+            Rename(address);
             Draw();
         });
     }
@@ -540,6 +666,10 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         _inFlight?.Cancel();
         _inFlight?.Dispose();
         _inFlight = null;
+
+        _ownInFlight?.Cancel();
+        _ownInFlight?.Dispose();
+        _ownInFlight = null;
     }
 
     /// <summary>True when <paramref name="request"/> is still the latest; it is then retired.</summary>
@@ -720,7 +850,7 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
         return box;
     }
 
-    /// <summary>The context line, the system's name and, once read, when Spansh last heard of it.</summary>
+    /// <summary>The context line, the system's name and, once read, when Spansh last heard of it or the Commander last scanned it.</summary>
     private Control Heading(DateTimeOffset? reportedAt)
     {
         var ink = _following ? ThemeManager.CyanKey : ThemeManager.AKey;
@@ -757,15 +887,17 @@ public sealed partial class StarSystemPage : UserControl, IPageSummary, IPageSec
             named = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { title, glyphs } };
         }
 
-        return TitleText.Block(named, context, reportedAt is { } at ? Reported(at) : null);
+        var caption = _spansh is null && _view == View.Ready ? FromYourScans : "Last reported";
+
+        return TitleText.Block(named, context, reportedAt is { } at ? Reported(at, caption) : null);
     }
 
     /// <summary>"2026-11-10 08:14 UTC".</summary>
     internal static string Stamp(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-dd HH:mm 'UTC'", CultureInfo.InvariantCulture);
 
-    internal static StackPanel Reported(DateTimeOffset at)
+    internal static StackPanel Reported(DateTimeOffset at, string caption = "Last reported")
     {
-        var label = Caption("Last reported", ThemeManager.GreyKey);
+        var label = Caption(caption, ThemeManager.GreyKey);
         label.HorizontalAlignment = HorizontalAlignment.Right;
 
         var value = new TextBlock

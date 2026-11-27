@@ -1062,6 +1062,9 @@ public sealed class AppHost : IDisposable
     /// <summary>Each Commander's arrivals, with their positions.</summary>
     public D47.Core.Journal.TravelLog? TravelLog { get; private set; }
 
+    /// <summary>Which journal files hold each Commander's exploration events for each system.</summary>
+    public D47.Core.Journal.OwnScanIndex? OwnScans { get; private set; }
+
     /// <summary>Speech models on disk, and the way to fetch one.</summary>
     public IModelStore Models { get; }
 
@@ -4040,6 +4043,7 @@ public sealed class AppHost : IDisposable
         host._commsSelection = new D47.App.Panel.CommsSelectionMemory(
             stores.CommsChannels, foundations.ViewState, action => Avalonia.Threading.Dispatcher.UIThread.Post(action), TimeProvider.System);
         host.TravelLog = stores.TravelLog;
+        host.OwnScans = stores.OwnScans;
 
         host.ReservedPhrases = PhrasesAlreadyTaken(capabilities, registry.OtherDynamicCommands());
 

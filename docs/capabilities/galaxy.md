@@ -823,6 +823,9 @@ way, and the copy glyph beside it still copies. The page, and each row of the Sy
 have **Show on galaxy map**, which opens the Galaxy map on the system. Only a question the Commander asked moves the panel, and a surface holding a
 chooser stays where it is.
 
+The page joins the Commander's own scans of the system to Spansh's record, and where Spansh has no
+record it shows the Commander's scans alone, dated under **From your scans**.
+
 A name with no exact match answers with up to three close names and opens nothing; a misheard name
 is usually one of them. A system Spansh has no record of is said to be unknown and opens nothing.
 
