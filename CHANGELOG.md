@@ -12,6 +12,8 @@ Fixed: A three-digit name with a zero in the middle is no longer spoken without 
 
 Fixed: The notable-bodies callout no longer says a neutron star turns "once every 0 hours". The spin is now said in a unit that fits it: "turning about 12 times a second" for a black hole, "once every second" or "every 38 seconds" for a neutron star, "every 21 minutes" for a white dwarf, and hours only from an hour up.
 
+Fixed: Searches for systems, stations, outfitting, the nearest station and bodies work from a system Spansh has no record of. They start from your position in the journal when Near is empty or is your own system, and no longer fail with "The body search refused that request." A typed system Spansh does not know now gets "The galaxy search has no record of" that name.
+
 Fixed: The search history no longer keeps every station's full market, outfitting and shipyard stock. A Stations or Outfitting search was saved with the whole stock of each station it found, about 3 MB for 25 stations, so 25 saved searches held around 69 MB in memory and on disk. Those searches are now saved without the stock, which none of the pages opened from history draws, and the file is no longer indented. A history file saved earlier still loads and is trimmed the next time a search is saved.
 
 Fixed: d47 uses less memory after it starts. Reading your journals at startup made several whole copies of each file in memory, which stayed reserved long after; each journal is now read one line at a time.

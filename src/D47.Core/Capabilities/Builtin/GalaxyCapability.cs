@@ -172,7 +172,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, lastFound,
+                        galaxy, currentSystem, currentPosition, settings, factions, searches, Remember(history), now, gameState, lastFound,
                         arguments, cancellationToken),
             },
             new ToolDefinition
@@ -230,7 +230,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchStationsAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, lastFound,
+                        galaxy, currentSystem, currentPosition, settings, factions, searches, Remember(history), now, gameState, lastFound,
                         arguments, cancellationToken),
             },
             new ToolDefinition
@@ -256,7 +256,7 @@ public static class GalaxyCapability
                 RefusalExample = "set course for the nearest vista genomics",
                 Handler = (arguments, cancellationToken) =>
                     CourseToQuickSearchAsync(
-                        galaxy, currentSystem, settings, factions, searches, Remember(history), now, gameState, lastFound,
+                        galaxy, currentSystem, currentPosition, settings, factions, searches, Remember(history), now, gameState, lastFound,
                         navigation, arguments, cancellationToken),
             },
             new ToolDefinition
@@ -291,7 +291,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     SearchOutfittingAsync(
-                        galaxy, currentSystem, settings, searches, Remember(history), now, gameState, arguments,
+                        galaxy, currentSystem, currentPosition, settings, searches, Remember(history), now, gameState, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -563,7 +563,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindStationAsync(
-                        galaxy, trade, currentSystem, currentStation, settings, board, now, clipboard, lastFound,
+                        galaxy, trade, currentSystem, currentPosition, currentStation, settings, board, now, clipboard, lastFound,
                         gameState, arguments, cancellationToken),
             },
             new ToolDefinition
@@ -655,7 +655,7 @@ public static class GalaxyCapability
                 ],
                 Handler = (arguments, cancellationToken) =>
                     FindBodyAsync(
-                        galaxy, currentSystem, settings, searches, Remember(history), now, arguments,
+                        galaxy, currentSystem, currentPosition, settings, searches, Remember(history), now, arguments,
                         cancellationToken),
             },
             new ToolDefinition
@@ -1150,6 +1150,7 @@ public static class GalaxyCapability
     private static async Task<ToolResult> CourseToQuickSearchAsync(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
         Configuration.SettingsService settings,
         Func<IReadOnlyCollection<string>>? factions,
         GalaxySearchBoard? searches,
@@ -1180,10 +1181,10 @@ public static class GalaxyCapability
 
         var searched = quick.Tool == "search_stations"
             ? await SearchStationsAsync(
-                galaxy, currentSystem, settings, factions, searches, remember, now, gameState, found, search, cancellationToken)
+                galaxy, currentSystem, currentPosition, settings, factions, searches, remember, now, gameState, found, search, cancellationToken)
                 .ConfigureAwait(false)
             : await SearchAsync(
-                galaxy, currentSystem, settings, factions, searches, remember, now, gameState, found, search, cancellationToken)
+                galaxy, currentSystem, currentPosition, settings, factions, searches, remember, now, gameState, found, search, cancellationToken)
                 .ConfigureAwait(false);
 
         if (searched.IsError)
@@ -1211,9 +1212,27 @@ public static class GalaxyCapability
         return plotted.IsError ? plotted : ToolResult.Relay(plotted.Content);
     }
 
+    /// <summary>
+    /// The Commander's journal position when <c>near</c> is empty or their own system, so a system Spansh has
+    /// no record of can still be searched from; null when it names another system or the position is unknown.
+    /// </summary>
+    private static Journal.StarPosition? OwnPosition(
+        ToolArguments arguments,
+        Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition)
+    {
+        var asked = arguments.Text("near");
+
+        return string.IsNullOrWhiteSpace(asked)
+               || (currentSystem() is { } here && asked.Trim().Equals(here, StringComparison.OrdinalIgnoreCase))
+            ? currentPosition?.Invoke()
+            : null;
+    }
+
     private static async Task<ToolResult> SearchAsync(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
         Configuration.SettingsService settings,
         Func<IReadOnlyCollection<string>>? factions,
         GalaxySearchBoard? searches,
@@ -1258,9 +1277,21 @@ public static class GalaxyCapability
 
         query = query with { MaxReportAgeHours = reportAge, Page = PageAsked(arguments) };
 
+        var from = OwnPosition(arguments, currentSystem, currentPosition);
+
+        if (from is { } point)
+        {
+            query = query with { ReferenceSystem = null, ReferencePosition = point };
+        }
+
         try
         {
             var result = await galaxy.SearchAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (from is not null)
+            {
+                result = result with { Reference = result.Reference ?? near };
+            }
 
             if (query.Page == 1 && query.Sort?.Words is null)
             {
@@ -1354,6 +1385,7 @@ public static class GalaxyCapability
     private static async Task<ToolResult> SearchStationsAsync(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
         Configuration.SettingsService settings,
         Func<IReadOnlyCollection<string>>? factions,
         GalaxySearchBoard? searches,
@@ -1423,9 +1455,21 @@ public static class GalaxyCapability
 
         query = query with { MaxReportAgeHours = reportAge, Page = PageAsked(arguments) };
 
+        var from = OwnPosition(arguments, currentSystem, currentPosition);
+
+        if (from is { } point)
+        {
+            query = query with { ReferenceSystem = null, ReferencePosition = point };
+        }
+
         try
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (from is not null)
+            {
+                result = result with { Reference = result.Reference ?? near };
+            }
 
             if (query.Page == 1 && query.Sort?.Words is null)
             {
@@ -1464,6 +1508,7 @@ public static class GalaxyCapability
     private static async Task<ToolResult> SearchOutfittingAsync(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
         Configuration.SettingsService settings,
         GalaxySearchBoard? searches,
         Action<SearchHistoryEntry>? remember,
@@ -1512,9 +1557,21 @@ public static class GalaxyCapability
 
         query = query with { MaxReportAgeHours = reportAge, Page = PageAsked(arguments) };
 
+        var from = OwnPosition(arguments, currentSystem, currentPosition);
+
+        if (from is { } point)
+        {
+            query = query with { ReferenceSystem = null, ReferencePosition = point };
+        }
+
         try
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (from is not null)
+            {
+                result = result with { Reference = result.Reference ?? near };
+            }
 
             var said = Describe(result, query, gameState?.Invoke()?.Ranks) + LeftOutSaid(result.LeftOut, result.Pledged) + LimitRefused(askedLimit)
                        + ReportAgeSaid(reportAge);
@@ -2526,6 +2583,7 @@ public static class GalaxyCapability
         IGalaxyService? galaxy,
         ITradePlanService? trade,
         Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
         Func<string?>? currentStation,
         Configuration.SettingsService settings,
         CommodityBoard? board,
@@ -2672,9 +2730,21 @@ public static class GalaxyCapability
 
         query = query with { MaxReportAgeHours = reportAge };
 
+        var from = OwnPosition(arguments, currentSystem, currentPosition);
+
+        if (from is { } point)
+        {
+            query = query with { ReferenceSystem = null, ReferencePosition = point };
+        }
+
         try
         {
             var result = await galaxy.FindStationsAsync(query, cancellationToken).ConfigureAwait(false);
+
+            if (from is not null)
+            {
+                result = result with { Reference = result.Reference ?? near };
+            }
 
             return ToolResult.Ok(
                 Describe(result, query, gameState?.Invoke()?.Ranks) + LeftOutSaid(result.LeftOut, result.Pledged) + LimitRefused(askedLimit) + ReportAgeSaid(reportAge));
@@ -3333,6 +3403,7 @@ public static class GalaxyCapability
     private static async Task<ToolResult> FindBodyAsync(
         IGalaxyService? galaxy,
         Func<string?> currentSystem,
+        Func<Journal.StarPosition?>? currentPosition,
         Configuration.SettingsService settings,
         GalaxySearchBoard? searches,
         Action<SearchHistoryEntry>? remember,
@@ -3399,9 +3470,21 @@ public static class GalaxyCapability
             return ToolResult.Error(failure);
         }
 
+        var from = OwnPosition(arguments, currentSystem, currentPosition);
+
+        if (from is { } point)
+        {
+            query = query with { ReferenceSystem = null, ReferencePosition = point };
+        }
+
         try
         {
             var result = query.Keep(await galaxy.FindBodiesAsync(query, cancellationToken).ConfigureAwait(false));
+
+            if (from is not null)
+            {
+                result = result with { Reference = result.Reference ?? near };
+            }
 
             var said = Describe(result, query) + DistanceCapped(arguments.Double("max_distance"));
 

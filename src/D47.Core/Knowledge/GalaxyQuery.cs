@@ -479,6 +479,9 @@ public sealed record GalaxyQuery
     /// <summary>Where distances are measured from.</summary>
     public string? ReferenceSystem { get; init; }
 
+    /// <summary>Centres the search on a point instead of <see cref="ReferenceSystem"/>.</summary>
+    public Journal.StarPosition? ReferencePosition { get; init; }
+
     public IReadOnlyList<GalaxyCriterion> Criteria { get; init; } = [];
 
     public int Size { get; init; } = 5;

@@ -30,10 +30,7 @@ internal static class SpanshRequest
             writer.WriteNumber("size", query.Size);
             writer.WriteNumber("page", query.Page - 1);
 
-            if (query.ReferenceSystem is not null)
-            {
-                writer.WriteString("reference_system", query.ReferenceSystem);
-            }
+            WriteReference(writer, query.ReferenceSystem, query.ReferencePosition);
 
             writer.WriteEndObject();
         }

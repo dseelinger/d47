@@ -48,7 +48,8 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             _logger,
             token => _http.PostAsync("api/systems/search", content, token),
             "the galaxy search",
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken,
+            unknownReference: query.ReferencePosition is null ? query.ReferenceSystem : null).ConfigureAwait(false);
 
         // Only null where a rejection was asked to mean "missing", which this call does not.
         var result = SpanshResponse.ReadSearch(document!);
@@ -140,7 +141,8 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             _logger,
             token => _http.PostAsync("api/stations/search", content, token),
             "the station search",
-            cancellationToken).ConfigureAwait(false))!;
+            cancellationToken,
+            unknownReference: query.ReferencePosition is null ? query.ReferenceSystem : null).ConfigureAwait(false))!;
     }
 
     private static Func<(StationSummary Station, StationStock Stock), bool> MountsListed(StationQuery query) =>
@@ -214,7 +216,8 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
                 _logger,
                 token => _http.PostAsync("api/stations/search", content, token),
                 "the station search",
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken,
+                unknownReference: query.ReferenceSystem).ConfigureAwait(false);
 
             foreach (var (station, stock) in SpanshResponse.ReadOutfitters(document!))
             {
@@ -254,7 +257,8 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
             token => _http.PostAsync("api/bodies/search", content, token),
             "the body search",
             cancellationToken,
-            budget: TimeSpan.FromSeconds(35)).ConfigureAwait(false);
+            budget: TimeSpan.FromSeconds(35),
+            unknownReference: query.ReferencePosition is null ? query.ReferenceSystem : null).ConfigureAwait(false);
 
         var result = SpanshResponse.ReadBodies(document!);
 
@@ -438,13 +442,15 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
     /// <summary>One request to Spansh, with every way it can go wrong turned into a sentence.</summary>
     /// <param name="missingWhen">The status that means "there is no such record" rather than a fault.</param>
     /// <param name="budget">How long to wait, defaulting to <see cref="Ordinary"/>.</param>
+    /// <param name="unknownReference">The system the search was measured from by name; a 400 then means it is unknown.</param>
     internal static async Task<JsonDocument?> SendAsync(
         ILogger logger,
         Func<CancellationToken, Task<HttpResponseMessage>> send,
         string what,
         CancellationToken cancellationToken,
         HttpStatusCode? missingWhen = null,
-        TimeSpan? budget = null)
+        TimeSpan? budget = null,
+        string? unknownReference = null)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(budget ?? Ordinary);
@@ -484,6 +490,8 @@ public sealed class SpanshGalaxyService : IGalaxyService, IDisposable
                 throw new GalaxyUnavailableException(response.StatusCode switch
                 {
                     HttpStatusCode.NotFound => "The galaxy search has no record of that.",
+                    HttpStatusCode.BadRequest when !string.IsNullOrWhiteSpace(unknownReference) =>
+                        $"The galaxy search has no record of {unknownReference}.",
                     HttpStatusCode.TooManyRequests =>
                         "The galaxy search is rate limiting me. It should clear shortly.",
                     >= HttpStatusCode.InternalServerError =>
