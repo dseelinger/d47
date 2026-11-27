@@ -736,7 +736,7 @@ public sealed record CalloutSettings
     /// <summary>A set of one or two samples on the body being left.</summary>
     public bool SamplingUnfinished { get; init; } = true;
 
-    /// <summary>What is still worth doing in the system, said when the FSS closes (#2760).</summary>
+    /// <summary>What is still worth doing in the system, said when the FSS closes.</summary>
     public bool FssClose { get; init; } = true;
 
     /// <summary>Notable stellar phenomena and Guardian or Thargoid signals, said as the FSS finds them (#2762).</summary>

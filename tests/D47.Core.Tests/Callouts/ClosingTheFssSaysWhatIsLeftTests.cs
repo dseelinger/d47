@@ -6,7 +6,7 @@ using Xunit;
 
 namespace D47.Core.Tests.Callouts;
 
-/// <summary>What is still worth doing in the system, said when the FSS closes (#2760).</summary>
+/// <summary>What is still worth doing in the system, said when the FSS closes.</summary>
 public class ClosingTheFssSaysWhatIsLeftTests
 {
     private const long Here = 1000300;
@@ -86,6 +86,15 @@ public class ClosingTheFssSaysWhatIsLeftTests
          "Signals":[{"Type":"$SAA_SignalType_Guardian;","Type_Localised":"Guardian","Count":2}]}
         """;
 
+    private static readonly string Phenomena = $$"""
+        {"timestamp":"2026-11-20T10:00:00Z","event":"FSSSignalDiscovered","SystemAddress":{{Here}},"SignalName":"$Fixed_Event_Life_Cloud;",
+         "SignalName_Localised":"Notable stellar phenomena","SignalType":"Codex","IsStation":false}
+        """;
+
+    private static string GameMode(string mode) => $$"""
+        {"timestamp":"2026-11-20T10:05:00Z","event":"GameModeChange","GameMode":"{{mode}}"}
+        """;
+
     private static string Undiscovered(int bodyId) => $$"""
         {"timestamp":"2026-11-20T10:01:00Z","event":"Scan","ScanType":"Detailed","StarSystem":"Fixture","SystemAddress":{{Here}},
          "BodyID":{{bodyId}},"BodyName":"Fixture {{bodyId}}","PlanetClass":"Rocky body","Landable":false,"WasDiscovered":false,"WasMapped":true}
@@ -151,6 +160,7 @@ public class ClosingTheFssSaysWhatIsLeftTests
         world.Engine.Add(new Said([new Announcement($"body-value.{Here}.10", "Fixture 10: a rocky world.")]));
 
         world.Tick(Open, 0);
+        world.Tick(Open, 29);
 
         Assert.Equal(["Worth doing here: Guardian signals on 11; and one more."], world.Tick(Closed, 30));
     }
@@ -163,6 +173,7 @@ public class ClosingTheFssSaysWhatIsLeftTests
         world.Engine.Add(new Said([new Announcement($"geology.{Here}.10", "Fixture 10 could have geysers.")]));
 
         world.Tick(Open, 0);
+        world.Tick(Open, 60);
 
         Assert.Equal(
             ["Worth doing here: Guardian signals on 10; Guardian signals on 11."],
@@ -206,5 +217,64 @@ public class ClosingTheFssSaysWhatIsLeftTests
         world.Tick(Open, 0);
 
         Assert.Empty(world.Tick(Closed, 1));
+    }
+
+    [Fact]
+    public void GuardianSignalsJustSaidAreCountedButNotNamedAgain()
+    {
+        var world = new World(Guardian(10), Guardian(11));
+
+        world.Engine.Add(new Said([new Announcement($"unusual-signals.{Here}.10.Guardian", "10: two Guardian signals.")]));
+
+        world.Tick(Open, 0);
+
+        Assert.Equal(["Worth doing here: Guardian signals on 11; and one more."], world.Tick(Closed, 1));
+    }
+
+    [Fact]
+    public void PhenomenaJustSaidAreCountedButNotNamedAgain()
+    {
+        var world = new World(Phenomena, Guardian(10));
+
+        world.Engine.Add(new Said([new Announcement($"unusual-signals.{Here}", "Notable stellar phenomena in this system.")]));
+
+        world.Tick(Open, 0);
+
+        Assert.Equal(["Worth doing here: Guardian signals on 10; and one more."], world.Tick(Closed, 1));
+    }
+
+    [Fact]
+    public void ACloseWhileSwitchedOffIsNotSaidWhenSwitchedBackOn()
+    {
+        var world = new World(Guardian(10));
+
+        world.Tick(Open, 0);
+        world.Engine.SetEnabled("fss-close", false);
+        world.Tick(Closed, 1);
+        world.Engine.SetEnabled("fss-close", true);
+
+        Assert.Empty(world.Tick(Closed, 120));
+    }
+
+    [Fact]
+    public void ACloseInsideAnOperationIsSaidAfterIt()
+    {
+        var world = new World(Guardian(10), GameMode("Operation"));
+
+        world.Tick(Open, 0);
+        Assert.Empty(world.Tick(Closed, 1));
+
+        world.Add(GameMode("Normal"));
+        world.Tick(Open, 2);
+
+        Assert.Equal(["Worth doing here: Guardian signals on 10."], world.Tick(Closed, 3));
+    }
+
+    [Fact]
+    public void AnExactBiologyValueIsNotSaidAsAnUpperBound()
+    {
+        var item = new WorthItem(WorthKind.Biology, "Fixture A 2", 2, ["Bacterium"], 14_000_000, 14_000_000);
+
+        Assert.Equal("A 2 biology, about 14 million", FssCloseCallout.Phrase(item, "Fixture"));
     }
 }
