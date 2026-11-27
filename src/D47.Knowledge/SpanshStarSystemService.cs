@@ -576,7 +576,7 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             Type = body.String("type")!,
             SubType = body.String("subType"),
             DistanceToArrival = body.Double("distanceToArrival"),
-            ParentId = Parent(body),
+            ParentId = BodyParents.Nearest(Parents(body)),
             Parents = Parents(body),
             SpectralClass = body.String("spectralClass"),
             Luminosity = body.String("luminosity"),
@@ -642,17 +642,10 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             return null;
         }
 
-        var parents = chains
-            .Select(chain => chain.FindIndex(entry => entry == ("Null", bodyId)))
-            .Select((index, at) => (index, at))
-            .Where(found => found.index >= 0)
-            .Select(found => chains[found.at].Skip(found.index + 1).ToList())
-            .FirstOrDefault() ?? [];
-
         return new BarycentreProfile
         {
             BodyId = bodyId,
-            Parents = parents,
+            Parents = BodyParents.OfBarycentre(bodyId, chains),
             SemiMajorAxis = barycentre.Double("semiMajorAxis"),
             OrbitalEccentricity = barycentre.Double("orbitalEccentricity"),
             OrbitalInclination = barycentre.Double("orbitalInclination"),
@@ -672,28 +665,6 @@ public sealed class SpanshStarSystemService : IStarSystemService, IDisposable
             .Where(entry => entry.Value.ValueKind == JsonValueKind.Number && entry.Value.TryGetInt32(out _))
             .Select(entry => (entry.Name, entry.Value.GetInt32())),
     ];
-
-    /// <summary>The first entry of <c>parents</c> that is a star or planet, skipping barycentres.</summary>
-    private static int? Parent(JsonElement body)
-    {
-        foreach (var parent in body.Items("parents"))
-        {
-            if (parent.ValueKind != JsonValueKind.Object)
-            {
-                continue;
-            }
-
-            foreach (var entry in parent.EnumerateObject())
-            {
-                if (entry.Name != "Null" && entry.Value.ValueKind == JsonValueKind.Number && entry.Value.TryGetInt32(out var id))
-                {
-                    return id;
-                }
-            }
-        }
-
-        return null;
-    }
 
     private static Dictionary<string, int> Signals(JsonElement holder)
     {

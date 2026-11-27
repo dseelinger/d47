@@ -1444,6 +1444,10 @@ public sealed class AppHost : IDisposable
             files,
             loggerFactory.CreateLogger<D47.Core.Journal.FullyFoundSystems>());
 
+        var ownScans = new D47.Core.Journal.OwnScanIndex(
+            files,
+            loggerFactory.CreateLogger<D47.Core.Journal.OwnScanIndex>());
+
         var history = new HistoryBackfill
         {
             Directory = journalDirectory,
@@ -1469,6 +1473,7 @@ public sealed class AppHost : IDisposable
             Erases = commanderErases,
             Travel = travelLog,
             FullyFound = fullyFound,
+            OwnScans = ownScans,
             Step = StartupTimer.Step,
         };
 
@@ -1925,6 +1930,7 @@ public sealed class AppHost : IDisposable
             CommsChannels = commsChannels,
             TravelLog = travelLog,
             FullyFound = fullyFound,
+            OwnScans = ownScans,
             MemoryBook = memoryBook,
             MemoryObserver = memoryObserver,
             MessageStore = messageStore,
@@ -2008,6 +2014,7 @@ public sealed class AppHost : IDisposable
             CommanderLog = stores.CommanderLog,
             TravelLog = stores.TravelLog,
             FullyFound = stores.FullyFound,
+            OwnScans = stores.OwnScans,
             Mail = stores.Mail,
             PlanBook = stores.PlanBook,
             Fight = stores.Fight,
@@ -4907,6 +4914,8 @@ public sealed class AppHost : IDisposable
         public required D47.Core.Journal.TravelLog TravelLog { get; init; }
 
         public required D47.Core.Journal.FullyFoundSystems FullyFound { get; init; }
+
+        public required D47.Core.Journal.OwnScanIndex OwnScans { get; init; }
 
         public required D47.Core.Knowledge.MarketBook MarketBook { get; init; }
 

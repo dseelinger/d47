@@ -311,7 +311,7 @@ public static partial class CodexKinds
         return table.Entry(key) is { Kind: not null } entry ? CodexFamilies.FileOfTableName(entry.SubCategory) : null;
     }
 
-    private static string? SubTypeOfStar(string starType) =>
+    internal static string? SubTypeOfStar(string starType) =>
         starType[0] == 'D' && starType.All(char.IsAsciiLetterUpper)
             ? "White Dwarf (" + starType + ") Star"
             : StarTypes.GetValueOrDefault(starType);

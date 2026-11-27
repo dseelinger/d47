@@ -62,6 +62,8 @@ public sealed class JournalTick(JournalTick.Sources sources)
 
         public required FullyFoundSystems FullyFound { get; init; }
 
+        public required OwnScanIndex OwnScans { get; init; }
+
         public required MailLedger Mail { get; init; }
 
         public required RoutePlanBook PlanBook { get; init; }
@@ -177,6 +179,7 @@ public sealed class JournalTick(JournalTick.Sources sources)
         sources.CommanderLog.Apply(events);
         sources.TravelLog.Apply(events);
         sources.FullyFound.Apply(events);
+        sources.OwnScans.Apply(events);
 
         if (!context.IsFirst)
         {

@@ -121,6 +121,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
         var met = new CommanderLog(fileSystem, logger);
         var travel = new TravelLog(fileSystem, logger);
         var fullyFound = new FullyFoundSystems(fileSystem, logger);
+        var ownScans = new OwnScanIndex(fileSystem, logger);
 
         var backfill = new HistoryBackfill
         {
@@ -136,6 +137,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
             MetCommanders = met,
             Travel = travel,
             FullyFound = fullyFound,
+            OwnScans = ownScans,
         };
 
         backfill.Run(TestContext.Current.CancellationToken);
@@ -151,6 +153,7 @@ public sealed class NoHistoryKeepsWhatAnEraseRemovedGateTests
             [nameof(HistoryBackfill.MetCommanders)] = () => Snapshot(met.Met(F)),
             [nameof(HistoryBackfill.Travel)] = () => Snapshot(travel.Steps(F)),
             [nameof(HistoryBackfill.FullyFound)] = () => fullyFound.Contains(F, 1).ToString(),
+            [nameof(HistoryBackfill.OwnScans)] = () => Snapshot(ownScans.Read(F, 1, TestContext.Current.CancellationToken)?.Bodies.Select(body => body.Name)),
         };
 
         return new Run(backfill, ledgers);

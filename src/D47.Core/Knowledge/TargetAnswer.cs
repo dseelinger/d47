@@ -9,10 +9,10 @@ public static class TargetAnswer
     public const string NothingTargeted = "Nothing is targeted.";
 
     /// <summary>Standard gravity in m/s², which the journal's <c>SurfaceGravity</c> is divided by to give g.</summary>
-    private const double StandardGravity = 9.80665;
+    internal const double StandardGravity = 9.80665;
 
     /// <summary>Pascals in one atmosphere; the journal writes pressure in pascals, the galaxy record in atmospheres.</summary>
-    private const double Atmosphere = 101_325;
+    internal const double Atmosphere = 101_325;
 
     private const string FromScans = "From your own scans: ";
 

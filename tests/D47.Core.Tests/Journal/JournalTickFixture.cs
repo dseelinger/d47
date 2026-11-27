@@ -59,6 +59,7 @@ internal sealed class JournalTickFixture
             CommanderLog = new CommanderLog(Files, NullLogger.Instance),
             TravelLog = new TravelLog(Files, NullLogger.Instance),
             FullyFound = new FullyFoundSystems(Files, NullLogger.Instance),
+            OwnScans = new OwnScanIndex(Files, NullLogger.Instance),
             Mail = new MailLedger(Path.Combine(Data, MailLedger.FileName), Files, NullLogger.Instance),
             PlanBook = new RoutePlanBook(Path.Combine(Data, "route-plans.json"), Files, NullLogger<RoutePlanBook>.Instance),
             Fight = new NearbyFight(),

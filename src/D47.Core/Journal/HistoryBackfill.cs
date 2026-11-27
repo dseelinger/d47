@@ -89,6 +89,9 @@ public sealed class HistoryBackfill
     /// <summary>The systems each Commander has found whole, folded the same way.</summary>
     public FullyFoundSystems? FullyFound { get; init; }
 
+    /// <summary>Which journals hold each Commander's scans of each system, folded the same way.</summary>
+    public OwnScanIndex? OwnScans { get; init; }
+
     /// <summary>Times one fold, where the caller measures the steps of startup.</summary>
     public Func<string, IDisposable>? Step { get; init; }
 
@@ -499,6 +502,15 @@ public sealed class HistoryBackfill
                 Timed("fully found systems backfill", () =>
                 {
                     fullyFound.FoldHistory(Files(), cancellation);
+                    return true;
+                });
+            }
+
+            if (OwnScans is { } ownScans)
+            {
+                Timed("own scan backfill", () =>
+                {
+                    ownScans.FoldHistory(Files(), cancellation);
                     return true;
                 });
             }
