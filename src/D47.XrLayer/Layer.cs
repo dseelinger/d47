@@ -22,6 +22,8 @@ internal static unsafe class Layer
     private static delegate* unmanaged<ulong, XrInteractionProfileSuggestedBinding*, int> nextSuggestBindings;
     private static delegate* unmanaged<ulong, XrSessionActionSetsAttachInfo*, int> nextAttachActionSets;
     private static delegate* unmanaged<ulong, XrActionsSyncInfo*, int> nextSyncActions;
+    private static delegate* unmanaged<ulong, XrBaseHeader*, uint*, int> nextAcquireSwapchainImage;
+    private static delegate* unmanaged<ulong, XrBaseHeader*, int> nextReleaseSwapchainImage;
     private static readonly SuggestedBindings Suggested = new();
     private static bool blockMapped;
     private static XrBlock* block;
@@ -138,6 +140,16 @@ internal static unsafe class Layer
             nextSyncActions = (delegate* unmanaged<ulong, XrActionsSyncInfo*, int>)*function;
             *function = (nint)(delegate* unmanaged<ulong, XrActionsSyncInfo*, int>)&SyncActions;
         }
+        else if (requested.SequenceEqual("xrAcquireSwapchainImage"u8))
+        {
+            nextAcquireSwapchainImage = (delegate* unmanaged<ulong, XrBaseHeader*, uint*, int>)*function;
+            *function = (nint)(delegate* unmanaged<ulong, XrBaseHeader*, uint*, int>)&AcquireSwapchainImage;
+        }
+        else if (requested.SequenceEqual("xrReleaseSwapchainImage"u8))
+        {
+            nextReleaseSwapchainImage = (delegate* unmanaged<ulong, XrBaseHeader*, int>)*function;
+            *function = (nint)(delegate* unmanaged<ulong, XrBaseHeader*, int>)&ReleaseSwapchainImage;
+        }
 
         return result;
     }
@@ -242,6 +254,40 @@ internal static unsafe class Layer
         return attached is not null && attached.Handle == session
             ? attached.SyncActions(syncInfo)
             : nextSyncActions(session, syncInfo);
+    }
+
+    [UnmanagedCallersOnly]
+    private static int AcquireSwapchainImage(ulong swapchain, XrBaseHeader* acquireInfo, uint* index)
+    {
+        var result = nextAcquireSwapchainImage(swapchain, acquireInfo, index);
+        try
+        {
+            if (result >= XrResult.Success && index is not null)
+            {
+                current?.Acquired(swapchain, *index);
+            }
+        }
+        catch (Exception)
+        {
+            // Never reaches the loader.
+        }
+
+        return result;
+    }
+
+    [UnmanagedCallersOnly]
+    private static int ReleaseSwapchainImage(ulong swapchain, XrBaseHeader* releaseInfo)
+    {
+        try
+        {
+            current?.BeforeRelease(swapchain);
+        }
+        catch (Exception)
+        {
+            // Never reaches the loader.
+        }
+
+        return nextReleaseSwapchainImage(swapchain, releaseInfo);
     }
 
     [UnmanagedCallersOnly]

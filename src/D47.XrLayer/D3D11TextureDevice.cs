@@ -8,13 +8,18 @@ internal sealed unsafe class D3D11TextureDevice : ITextureDevice
     private const int ReleaseSlot = 2;
     private const int DeviceGetImmediateContext = 40;
     private const int Device1OpenSharedResourceByName = 49;
+    private const int ContextCopySubresourceRegion = 46;
     private const int ContextCopyResource = 47;
+    private const int ContextFlush = 111;
     private const int Texture2DGetDesc = 10;
     private const int DxgiDeviceGetAdapter = 7;
     private const int DxgiAdapterGetDesc = 8;
 
     /// <summary>DXGI_SHARED_RESOURCE_READ.</summary>
     private const uint SharedResourceRead = 0x80000000;
+
+    /// <summary>DXGI_SHARED_RESOURCE_WRITE.</summary>
+    private const uint SharedResourceWrite = 0x1;
 
     /// <summary>The size of DXGI_ADAPTER_DESC and the offset of its AdapterLuid.</summary>
     private const int AdapterDescSize = 304;
@@ -61,14 +66,9 @@ internal sealed unsafe class D3D11TextureDevice : ITextureDevice
         return new D3D11TextureDevice(device1, context, ReadAdapterLuid(device));
     }
 
-    public nint OpenShared(char* name)
-    {
-        var iid = Texture2D;
-        nint texture = 0;
-        var result = ((delegate* unmanaged<nint, char*, uint, Guid*, nint*, int>)Method(device1, Device1OpenSharedResourceByName))(
-            device1, name, SharedResourceRead, &iid, &texture);
-        return result < 0 ? 0 : texture;
-    }
+    public nint OpenShared(char* name) => Open(name, SharedResourceRead);
+
+    public nint OpenSharedWritable(char* name) => Open(name, SharedResourceRead | SharedResourceWrite);
 
     public TextureDescription Describe(nint texture)
     {
@@ -79,6 +79,21 @@ internal sealed unsafe class D3D11TextureDevice : ITextureDevice
 
     public void Copy(nint source, nint destination) =>
         ((delegate* unmanaged<nint, nint, nint, void>)Method(context, ContextCopyResource))(context, destination, source);
+
+    public void CopyRegion(nint source, uint subresource, XrRect2Di rect, nint destination)
+    {
+        var box = stackalloc uint[6];
+        box[0] = (uint)rect.X;
+        box[1] = (uint)rect.Y;
+        box[2] = 0;
+        box[3] = (uint)(rect.X + rect.Width);
+        box[4] = (uint)(rect.Y + rect.Height);
+        box[5] = 1;
+        ((delegate* unmanaged<nint, nint, uint, uint, uint, uint, nint, uint, uint*, void>)Method(context, ContextCopySubresourceRegion))(
+            context, destination, 0, 0, 0, 0, source, subresource, box);
+    }
+
+    public void Flush() => ((delegate* unmanaged<nint, void>)Method(context, ContextFlush))(context);
 
     public void Release(nint texture) => ReleaseCom(texture);
 
@@ -95,6 +110,15 @@ internal sealed unsafe class D3D11TextureDevice : ITextureDevice
             ReleaseCom(device1);
             device1 = 0;
         }
+    }
+
+    private nint Open(char* name, uint access)
+    {
+        var iid = Texture2D;
+        nint texture = 0;
+        var result = ((delegate* unmanaged<nint, char*, uint, Guid*, nint*, int>)Method(device1, Device1OpenSharedResourceByName))(
+            device1, name, access, &iid, &texture);
+        return result < 0 ? 0 : texture;
     }
 
     private static (uint, int) ReadAdapterLuid(nint device)

@@ -13,7 +13,12 @@ internal sealed unsafe class LayerRig : IDisposable
     public const ulong Instance = 0x1257;
     public const string TouchProfile = "/interaction_profiles/oculus/touch_controller";
 
-    private readonly XrBaseHeader* eliteLayer;
+    /// <summary>The swapchain Elite's left eye is drawn into, and the space of its projection layer.</summary>
+    public const ulong EliteSwapchain = 0xE5;
+    public const ulong EliteSpace = 0xE7;
+
+    private readonly XrCompositionLayerProjection* eliteLayer;
+    private readonly XrCompositionLayerProjectionView* eliteViews;
     private XrD47Half d47;
 
     public LayerRig(int bindingType = XrType.GraphicsBindingD3D11, long[]? swapchainFormats = null, bool cylinders = false)
@@ -24,8 +29,10 @@ internal sealed unsafe class LayerRig : IDisposable
         }
 
         Block = (XrBlock*)NativeMemory.AllocZeroed((nuint)sizeof(XrBlock));
-        eliteLayer = (XrBaseHeader*)NativeMemory.AllocZeroed((nuint)sizeof(XrBaseHeader));
+        eliteLayer = (XrCompositionLayerProjection*)NativeMemory.AllocZeroed((nuint)sizeof(XrCompositionLayerProjection));
         eliteLayer->Type = XrType.CompositionLayerProjection;
+        eliteLayer->Space = EliteSpace;
+        eliteViews = (XrCompositionLayerProjectionView*)NativeMemory.AllocZeroed((nuint)(2 * sizeof(XrCompositionLayerProjectionView)));
 
         var binding = new XrGraphicsBindingD3D11 { Type = bindingType, Device = 0xD3D };
         var createInfo = new XrSessionCreateInfo { Type = XrType.SessionCreateInfo, Next = &binding };
@@ -70,6 +77,55 @@ internal sealed unsafe class LayerRig : IDisposable
     }
 
     public ref XrQuadSlot Slot(int index) => ref d47.Slots[index];
+
+    /// <summary>
+    /// Gives Elite's projection layer two views, the left one showing <paramref name="rect"/> of an image in
+    /// <see cref="EliteSwapchain"/>, whose three images the device describes.
+    /// </summary>
+    public void ShowEye(XrRect2Di rect, uint format = 29, uint width = 2000, uint height = 1800, uint arraySize = 1, uint sampleCount = 1)
+    {
+        for (var i = 0; i < 3; i++)
+        {
+            Device.Images[FakeNext.SwapchainImage(EliteSwapchain, i)] = Description(width, height) with
+            {
+                Format = format,
+                ArraySize = arraySize,
+                SampleCount = sampleCount,
+            };
+        }
+
+        for (var i = 0; i < 2; i++)
+        {
+            eliteViews[i] = new XrCompositionLayerProjectionView
+            {
+                Type = XrType.CompositionLayerProjectionView,
+                Pose = new XrPosef { OrientationW = 1f, PositionX = i == 0 ? -0.03f : 0.03f },
+                Fov = new XrFovf { AngleLeft = -0.9f, AngleRight = 0.8f, AngleUp = 0.85f, AngleDown = -0.95f },
+                SubImage = new XrSwapchainSubImage { Swapchain = EliteSwapchain, ImageRect = rect, ImageArrayIndex = (uint)i % arraySize },
+            };
+        }
+
+        eliteLayer->ViewCount = 2;
+        eliteLayer->Views = eliteViews;
+    }
+
+    /// <summary>Asks for a capture into a texture of this name, which the device holds at <paramref name="description"/>.</summary>
+    public void Ask(ulong request, string name, TextureDescription description)
+    {
+        Device.Textures[name] = description;
+        d47.CaptureRequest = request;
+        d47.CaptureTexture = default;
+        Span<char> target = d47.CaptureTexture;
+        name.AsSpan().CopyTo(target);
+        Publish();
+    }
+
+    /// <summary>Elite acquiring then releasing image <paramref name="index"/> of its eye swapchain, through the layer.</summary>
+    public void EliteDrawsTheEye(uint index)
+    {
+        Session.Acquired(EliteSwapchain, index);
+        Session.BeforeRelease(EliteSwapchain);
+    }
 
     public void Publish() => XrSeqLock.Write(&Block->D47, d47);
 
@@ -183,6 +239,7 @@ internal sealed unsafe class LayerRig : IDisposable
     public void Dispose()
     {
         NativeMemory.Free(Block);
+        NativeMemory.Free(eliteViews);
         NativeMemory.Free(eliteLayer);
     }
 }
@@ -227,6 +284,12 @@ internal sealed unsafe class FakeNext : ILayerCalls
     public bool RejectCylinders { get; set; }
 
     public nint Original { get; set; }
+
+    /// <summary>The pose LocateSpace gives a space, in place of the default.</summary>
+    public Dictionary<ulong, XrPosef> SpacePoses { get; } = [];
+
+    /// <summary>Spaces LocateSpace locates with no valid flag.</summary>
+    public HashSet<ulong> Unlocatable { get; } = [];
 
     /// <summary>Elite's own attach info, to tell its call passed on unchanged from one the layer built.</summary>
     public nint ElitesAttach { get; set; }
@@ -328,8 +391,14 @@ internal sealed unsafe class FakeNext : ILayerCalls
         }
 
         Calls.Add(nameof(LocateSpace));
+        if (Unlocatable.Contains(space))
+        {
+            location->LocationFlags = 0;
+            return XrResult.Success;
+        }
+
         location->LocationFlags = XrConstant.LocationOrientationValid | XrConstant.LocationPositionValid;
-        location->Pose = new XrPosef { OrientationW = 1f, PositionY = 1.2f };
+        location->Pose = SpacePoses.TryGetValue(space, out var pose) ? pose : new XrPosef { OrientationW = 1f, PositionY = 1.2f };
         return XrResult.Success;
     }
 
@@ -531,6 +600,15 @@ internal sealed unsafe class FakeDevice : ITextureDevice
 
     public Dictionary<string, TextureDescription> Textures { get; } = [];
 
+    /// <summary>Descriptions of swapchain images, by their texture pointer.</summary>
+    public Dictionary<nint, TextureDescription> Images { get; } = [];
+
+    public List<string> OpenedWritable { get; } = [];
+
+    public List<(nint Source, uint Subresource, XrRect2Di Rect, string Destination)> RegionCopies { get; } = [];
+
+    public int Flushes { get; private set; }
+
     public List<(string Source, nint Destination)> Copies { get; } = [];
 
     public List<string> Opened { get; } = [];
@@ -557,7 +635,24 @@ internal sealed unsafe class FakeDevice : ITextureDevice
         return texture;
     }
 
-    public TextureDescription Describe(nint texture) => Textures[open[texture]];
+    public nint OpenSharedWritable(char* name)
+    {
+        var texture = OpenShared(name);
+        if (texture != 0)
+        {
+            OpenedWritable.Add(open[texture]);
+        }
+
+        return texture;
+    }
+
+    public TextureDescription Describe(nint texture) =>
+        open.TryGetValue(texture, out var name) ? Textures[name] : Images[texture];
+
+    public void CopyRegion(nint source, uint subresource, XrRect2Di rect, nint destination) =>
+        RegionCopies.Add((source, subresource, rect, open[destination]));
+
+    public void Flush() => Flushes++;
 
     public void Copy(nint source, nint destination)
     {

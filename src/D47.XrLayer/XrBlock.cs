@@ -15,7 +15,7 @@ internal struct XrBlock
     /// <summary>"D47X" read as a little-endian uint.</summary>
     public const uint MagicValue = 0x58373444;
 
-    public const uint CurrentLayoutVersion = 4;
+    public const uint CurrentLayoutVersion = 5;
 
     public const int SlotCount = 6;
 
@@ -53,6 +53,12 @@ internal struct XrD47Half
     public uint Pointing;
     public ulong Heartbeat;
     public XrQuadSlots Slots;
+
+    /// <summary>Raised to ask for a copy of Elite's left eye. 0 asks for none.</summary>
+    public ulong CaptureRequest;
+
+    /// <summary>The shared texture the copy goes into, null-terminated, at the eye's format and size.</summary>
+    public XrTextureName CaptureTexture;
 }
 
 [InlineArray(XrBlock.SlotCount)]
@@ -137,6 +143,34 @@ internal struct XrLayerHalf
 
     /// <summary>1 while the layer draws a curved slot as a cylinder; 0 draws every slot flat.</summary>
     public uint Cylinders;
+
+    /// <summary>The DXGI format of Elite's left-eye image. 0 while the layer has seen none.</summary>
+    public uint EyeFormat;
+
+    /// <summary>The size of the part of the image Elite shows to the left eye, in pixels.</summary>
+    public uint EyeWidth;
+    public uint EyeHeight;
+
+    /// <summary>Why the last answered capture holds no picture.</summary>
+    public XrCaptureRefusal CaptureRefusal;
+
+    /// <summary>The <see cref="XrD47Half.CaptureRequest"/> last answered.</summary>
+    public ulong CaptureServed;
+
+    /// <summary>The <see cref="FrameCounter"/> of the frame the capture was answered at.</summary>
+    public ulong CaptureFrame;
+
+    /// <summary>The left eye in the LOCAL space, for the captured frame.</summary>
+    public XrBlockPose CaptureEye;
+
+    /// <summary>The VIEW space in the LOCAL space, for the captured frame.</summary>
+    public XrBlockPose CaptureHead;
+
+    /// <summary>XrSpaceLocationFlags of <see cref="CaptureHead"/>.</summary>
+    public uint CaptureHeadValid;
+
+    /// <summary>The left eye's field of view, for the captured frame.</summary>
+    public XrBlockFov CaptureFov;
 }
 
 [InlineArray(XrBlock.HandCount)]
@@ -222,6 +256,49 @@ internal struct XrBlockPose
     public float PositionX;
     public float PositionY;
     public float PositionZ;
+}
+
+/// <summary>An XrFovf: the angles of the view's edges from straight ahead, in radians. Left and down are negative.</summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct XrBlockFov
+{
+    public float AngleLeft;
+    public float AngleRight;
+    public float AngleUp;
+    public float AngleDown;
+}
+
+/// <summary>Why a capture of Elite's eye holds no picture.</summary>
+internal enum XrCaptureRefusal
+{
+    None = 0,
+
+    /// <summary>Elite submitted no projection layer the layer could read, or its swapchain's images could not be listed.</summary>
+    NoEyeImage = 1,
+
+    /// <summary>The texture d47 named could not be opened for writing.</summary>
+    TextureNotOpened = 2,
+
+    /// <summary>The texture d47 named is not the eye image's format and size.</summary>
+    TextureMismatch = 3,
+
+    /// <summary>Elite's eye image is multisampled.</summary>
+    Multisampled = 4,
+
+    /// <summary>Elite released no eye image within <see cref="EyeCaptureLimits.MostFramesWaited"/> frames.</summary>
+    NotReleased = 5,
+
+    /// <summary>The space of Elite's projection layer could not be located.</summary>
+    NoPose = 6,
+
+    Faulted = 7,
+}
+
+/// <summary>The limits of a capture, shared by the layer and d47.</summary>
+internal static class EyeCaptureLimits
+{
+    /// <summary>How many frames a request waits for Elite to release its eye image before it is refused.</summary>
+    public const int MostFramesWaited = 90;
 }
 
 /// <summary>Reads and writes a half whose first field is its sequence counter. A reader never waits.</summary>

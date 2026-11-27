@@ -23,6 +23,9 @@ public sealed unsafe class TheOpenXrStructsHaveTheirNativeSizesTests
         Assert.Equal(32, sizeof(XrSwapchainSubImage));
         Assert.Equal(112, sizeof(XrCompositionLayerQuad));
         Assert.Equal(112, sizeof(XrCompositionLayerCylinderKHR));
+        Assert.Equal(16, sizeof(XrFovf));
+        Assert.Equal(96, sizeof(XrCompositionLayerProjectionView));
+        Assert.Equal(48, sizeof(XrCompositionLayerProjection));
         Assert.Equal(44, sizeof(TextureDescription));
     }
 
@@ -59,6 +62,25 @@ public sealed unsafe class TheOpenXrStructsHaveTheirNativeSizesTests
         Assert.Equal(100, (byte*)&cylinder.Radius - c);
         Assert.Equal(104, (byte*)&cylinder.CentralAngle - c);
         Assert.Equal(108, (byte*)&cylinder.AspectRatio - c);
+    }
+
+    [Fact]
+    public void TheProjectionFieldsSitWhereEliteWritesThem()
+    {
+        var projection = default(XrCompositionLayerProjection);
+        var p = (byte*)&projection;
+        Assert.Equal(16, (byte*)&projection.LayerFlags - p);
+        Assert.Equal(24, (byte*)&projection.Space - p);
+        Assert.Equal(32, (byte*)&projection.ViewCount - p);
+        Assert.Equal(40, (byte*)&projection.Views - p);
+
+        var view = default(XrCompositionLayerProjectionView);
+        var v = (byte*)&view;
+        Assert.Equal(16, (byte*)&view.Pose - v);
+        Assert.Equal(44, (byte*)&view.Fov - v);
+        Assert.Equal(64, (byte*)&view.SubImage - v);
+        Assert.Equal(72, (byte*)&view.SubImage.ImageRect - v);
+        Assert.Equal(88, (byte*)&view.SubImage.ImageArrayIndex - v);
     }
 
     [Fact]

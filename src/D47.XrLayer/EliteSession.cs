@@ -3,8 +3,8 @@ using System.Numerics;
 namespace D47.XrLayer;
 
 /// <summary>
-/// The layer's work in one Elite session: appends d47's quads and cylinders after Elite's layers, reads the motion controllers and
-/// publishes the layer's half of the block. <see cref="EndFrame"/> never throws and never waits on d47.
+/// The layer's work in one Elite session: appends d47's quads and cylinders after Elite's layers, reads the motion controllers,
+/// copies Elite's left eye when d47 asks and publishes the layer's half of the block. <see cref="EndFrame"/> never throws and never waits on d47.
 /// </summary>
 internal sealed unsafe class EliteSession
 {
@@ -41,6 +41,7 @@ internal sealed unsafe class EliteSession
     private readonly XrBlock* block;
     private readonly Slot[] slots = new Slot[XrBlock.SlotCount];
     private readonly Controllers controllers;
+    private readonly EyeCapture eyes;
     private ITextureDevice? device;
     private ulong localSpace;
     private ulong viewSpace;
@@ -62,6 +63,7 @@ internal sealed unsafe class EliteSession
         this.cylinders = cylinders;
         Handle = handle;
         controllers = new Controllers(calls, suggested, instance, handle);
+        eyes = new EyeCapture(calls);
         for (var i = 0; i < slots.Length; i++)
         {
             slots[i] = new Slot();
@@ -147,6 +149,18 @@ internal sealed unsafe class EliteSession
     /// <summary>Elite's xrSyncActions, passed on through <see cref="Controllers.EliteSync"/>.</summary>
     public int SyncActions(XrActionsSyncInfo* syncInfo) => controllers.EliteSync(syncInfo);
 
+    /// <summary>Notes the image Elite acquired from one of its swapchains.</summary>
+    public void Acquired(ulong swapchain, uint index) => eyes.Acquired(swapchain, index);
+
+    /// <summary>Called just before Elite's xrReleaseSwapchainImage is passed on.</summary>
+    public void BeforeRelease(ulong swapchain)
+    {
+        if (drawing)
+        {
+            eyes.BeforeRelease(swapchain, device);
+        }
+    }
+
     /// <summary>Notes a state change xrPollEvent returned for this session.</summary>
     public void StateChanged(int sessionState) => controllers.StateChanged(sessionState);
 
@@ -157,6 +171,7 @@ internal sealed unsafe class EliteSession
         try
         {
             controllers.Destroy();
+            eyes.Destroy(device);
             ReleaseTextures();
             foreach (var slot in slots)
             {
@@ -269,6 +284,7 @@ internal sealed unsafe class EliteSession
         if (drawing)
         {
             LocateHead(time);
+            eyes.Frame(frameEndInfo, time, in lastD47, ref published, device!, localSpace);
         }
 
         controllers.Frame(time, lastD47.Pointing == 1, ref published);

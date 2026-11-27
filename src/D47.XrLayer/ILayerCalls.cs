@@ -62,12 +62,24 @@ internal unsafe interface ITextureDevice
     /// <summary>Opens a shared texture by its null-terminated name for reading. Returns 0 when it cannot.</summary>
     nint OpenShared(char* name);
 
+    /// <summary>Opens a shared texture by its null-terminated name for reading and writing. Returns 0 when it cannot.</summary>
+    nint OpenSharedWritable(char* name);
+
     TextureDescription Describe(nint texture);
 
     /// <summary>Copies the whole of <paramref name="source"/> into <paramref name="destination"/> on the immediate context.</summary>
     void Copy(nint source, nint destination);
 
-    /// <summary>Releases a texture <see cref="OpenShared"/> returned.</summary>
+    /// <summary>
+    /// Copies <paramref name="rect"/> of one subresource of <paramref name="source"/> to the top left of
+    /// <paramref name="destination"/> on the immediate context.
+    /// </summary>
+    void CopyRegion(nint source, uint subresource, XrRect2Di rect, nint destination);
+
+    /// <summary>Sends the immediate context's queued work to the GPU.</summary>
+    void Flush();
+
+    /// <summary>Releases a texture <see cref="OpenShared"/> or <see cref="OpenSharedWritable"/> returned.</summary>
     void Release(nint texture);
 
     /// <summary>Releases the device's own references.</summary>

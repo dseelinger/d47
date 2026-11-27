@@ -169,6 +169,61 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["Layer.RuntimeName"] = 1496,
             ["Layer.Cylinders"] = 1624,
         }),
+        [5] = (1880, 80, new()
+        {
+            ["Magic"] = 0,
+            ["LayoutVersion"] = 4,
+            ["D47.Sequence"] = 8,
+            ["D47.Pointing"] = 12,
+            ["D47.Heartbeat"] = 16,
+            ["D47.Slots[0].Visible"] = 24,
+            ["D47.Slots[0].Space"] = 28,
+            ["D47.Slots[0].Pose"] = 32,
+            ["D47.Slots[0].WidthMetres"] = 60,
+            ["D47.Slots[0].TextureWidth"] = 64,
+            ["D47.Slots[0].TextureHeight"] = 68,
+            ["D47.Slots[0].TextureGeneration"] = 72,
+            ["D47.Slots[0].RectX"] = 80,
+            ["D47.Slots[0].RectY"] = 84,
+            ["D47.Slots[0].RectWidth"] = 88,
+            ["D47.Slots[0].RectHeight"] = 92,
+            ["D47.Slots[0].TextureName"] = 96,
+            ["D47.Slots[0].Curvature"] = 224,
+            ["D47.Slots[1].Visible"] = 232,
+            ["D47.Slots[5].TextureName"] = 1136,
+            ["D47.CaptureRequest"] = 1272,
+            ["D47.CaptureTexture"] = 1280,
+            ["Layer.Sequence"] = 1408,
+            ["Layer.Attached"] = 1412,
+            ["Layer.FrameCounter"] = 1416,
+            ["Layer.Refusal"] = 1424,
+            ["Layer.ControllerRefusal"] = 1428,
+            ["Layer.AdapterLuidLow"] = 1432,
+            ["Layer.AdapterLuidHigh"] = 1436,
+            ["Layer.HeadValid"] = 1440,
+            ["Layer.Head"] = 1444,
+            ["Layer.Hands[0].Aim"] = 1472,
+            ["Layer.Hands[0].Grip"] = 1500,
+            ["Layer.Hands[0].Valid"] = 1528,
+            ["Layer.Hands[0].TriggerValue"] = 1532,
+            ["Layer.Hands[0].GripValue"] = 1536,
+            ["Layer.Hands[0].Buttons"] = 1540,
+            ["Layer.Hands[0].StickX"] = 1544,
+            ["Layer.Hands[0].StickY"] = 1548,
+            ["Layer.Hands[1].Aim"] = 1552,
+            ["Layer.RuntimeName"] = 1632,
+            ["Layer.Cylinders"] = 1760,
+            ["Layer.EyeFormat"] = 1764,
+            ["Layer.EyeWidth"] = 1768,
+            ["Layer.EyeHeight"] = 1772,
+            ["Layer.CaptureRefusal"] = 1776,
+            ["Layer.CaptureServed"] = 1784,
+            ["Layer.CaptureFrame"] = 1792,
+            ["Layer.CaptureEye"] = 1800,
+            ["Layer.CaptureHead"] = 1828,
+            ["Layer.CaptureHeadValid"] = 1856,
+            ["Layer.CaptureFov"] = 1860,
+        }),
     };
 
     [Fact]
@@ -187,6 +242,7 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
     public void ThePoseAndTheNamesHaveTheirWireSizes()
     {
         Assert.Equal(28, sizeof(XrBlockPose));
+        Assert.Equal(16, sizeof(XrBlockFov));
         Assert.Equal(208, sizeof(XrQuadSlot));
         Assert.Equal(XrBlock.TextureNameLength * sizeof(char), sizeof(XrTextureName));
         Assert.Equal(XrBlock.RuntimeNameLength, sizeof(XrRuntimeName));
@@ -246,6 +302,18 @@ public sealed unsafe class TheSharedBlockLayoutIsPinnedTests
             ["Layer.Hands[1].Aim"] = Offset(b, &b->Layer.Hands[1].Aim),
             ["Layer.RuntimeName"] = Offset(b, &b->Layer.RuntimeName),
             ["Layer.Cylinders"] = Offset(b, &b->Layer.Cylinders),
+            ["D47.CaptureRequest"] = Offset(b, &b->D47.CaptureRequest),
+            ["D47.CaptureTexture"] = Offset(b, &b->D47.CaptureTexture),
+            ["Layer.EyeFormat"] = Offset(b, &b->Layer.EyeFormat),
+            ["Layer.EyeWidth"] = Offset(b, &b->Layer.EyeWidth),
+            ["Layer.EyeHeight"] = Offset(b, &b->Layer.EyeHeight),
+            ["Layer.CaptureRefusal"] = Offset(b, &b->Layer.CaptureRefusal),
+            ["Layer.CaptureServed"] = Offset(b, &b->Layer.CaptureServed),
+            ["Layer.CaptureFrame"] = Offset(b, &b->Layer.CaptureFrame),
+            ["Layer.CaptureEye"] = Offset(b, &b->Layer.CaptureEye),
+            ["Layer.CaptureHead"] = Offset(b, &b->Layer.CaptureHead),
+            ["Layer.CaptureHeadValid"] = Offset(b, &b->Layer.CaptureHeadValid),
+            ["Layer.CaptureFov"] = Offset(b, &b->Layer.CaptureFov),
         };
     }
 

@@ -24,6 +24,7 @@ internal static class XrType
     public const int ActionSpaceCreateInfo = 38;
     public const int SpaceLocation = 42;
     public const int InteractionProfileSuggestedBinding = 51;
+    public const int CompositionLayerProjectionView = 48;
     public const int SwapchainImageAcquireInfo = 55;
     public const int SwapchainImageWaitInfo = 56;
     public const int SwapchainImageReleaseInfo = 57;
@@ -223,6 +224,36 @@ internal struct XrSwapchainSubImage
     public ulong Swapchain;
     public XrRect2Di ImageRect;
     public uint ImageArrayIndex;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct XrFovf
+{
+    public float AngleLeft;
+    public float AngleRight;
+    public float AngleUp;
+    public float AngleDown;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrCompositionLayerProjectionView
+{
+    public int Type;
+    public void* Next;
+    public XrPosef Pose;
+    public XrFovf Fov;
+    public XrSwapchainSubImage SubImage;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct XrCompositionLayerProjection
+{
+    public int Type;
+    public void* Next;
+    public ulong LayerFlags;
+    public ulong Space;
+    public uint ViewCount;
+    public XrCompositionLayerProjectionView* Views;
 }
 
 [StructLayout(LayoutKind.Sequential)]
