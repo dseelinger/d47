@@ -17,6 +17,13 @@ public sealed class RouteMini : UserControl
     private readonly Func<string, string?>? _offDuty;
     private readonly Func<string, Task<bool>>? _copy;
     private readonly StackPanel _body = new() { Spacing = 2 };
+    private readonly ScrollViewer _scroll;
+
+    /// <summary>The plan and stop the list was last scrolled to; null while no plan is drawn.</summary>
+    private (RoutePlanKind Kind, DateTimeOffset PlottedAt, int Stop)? _anchored;
+
+    /// <summary>The row to bring to the top once it has been laid out; null when the list is where it belongs.</summary>
+    private Control? _anchorRow;
 
     /// <param name="plan">The plan to draw; the last Jump plan when null.</param>
     public RouteMini(
@@ -33,7 +40,7 @@ public sealed class RouteMini : UserControl
         _route = route;
         _here = here;
 
-        Content = new ScrollViewer
+        Content = _scroll = new ScrollViewer
         {
             Content = _body,
             Margin = new Thickness(10, 8),
@@ -41,7 +48,27 @@ public sealed class RouteMini : UserControl
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
         };
 
+        LayoutUpdated += (_, _) => KeepAnchor();
+
         Fill();
+    }
+
+    /// <summary>
+    /// Scrolls the Commander's stop to the top once its row has been laid out. Called after each layout
+    /// pass, and by <see cref="PanelView.KeepUp"/> between an offscreen surface's two passes.
+    /// </summary>
+    public void KeepAnchor()
+    {
+        if (_anchorRow is not { IsArrangeValid: true } row
+            || row.Bounds.Height <= 0
+            || _scroll.Viewport.Height <= 0
+            || !_body.Children.Contains(row))
+        {
+            return;
+        }
+
+        _anchorRow = null;
+        _scroll.Offset = new Vector(_scroll.Offset.X, row.Bounds.Y);
     }
 
     /// <summary>Redrawn when the plan, the route file or the current system moves. Dispatched to the
@@ -62,19 +89,35 @@ public sealed class RouteMini : UserControl
 
         if (_offDuty?.Invoke(OffDutyNote.Route) is { } offDuty)
         {
+            Unanchor();
             _body.Children.Add(Muted(offDuty));
             return;
         }
 
         if (_plan() is not { } plan || Stops(plan) is not { Count: > 0 } stops)
         {
+            Unanchor();
             _body.Children.Add(Muted(_route().LiveTarget is { } ahead ? ahead.NextJump : "No plan is plotted."));
             return;
         }
 
-        _body.Children.Add(Title(plan));
+        var title = Title(plan);
+        _body.Children.Add(title);
 
         var here = _here();
+        var anchor = Anchor(stops, plan.Reached, here);
+        var moved = _anchored != (plan.Kind, plan.PlottedAt, anchor);
+
+        if (moved)
+        {
+            _anchored = (plan.Kind, plan.PlottedAt, anchor);
+        }
+
+        if (moved || _anchorRow is not null)
+        {
+            _anchorRow = title;
+        }
+
         var next = plan.Jump is { } jump
             ? NextWaypoint(jump, _route(), here)
             : plan.Reached is { } reached ? (reached + 1 >= stops.Count ? Arrived : reached + 1) : 0;
@@ -86,8 +129,50 @@ public sealed class RouteMini : UserControl
 
         for (var index = 0; index < stops.Count; index++)
         {
-            _body.Children.Add(Row(stops[index], index == next, here));
+            var row = Row(stops[index], index == next, here);
+            _body.Children.Add(row);
+
+            if (index == anchor && _anchorRow is not null)
+            {
+                _anchorRow = row;
+            }
         }
+    }
+
+    private void Unanchor()
+    {
+        _anchored = null;
+        _anchorRow = null;
+    }
+
+    /// <summary>
+    /// The stop the list scrolls to: the current system, else the last stop reached, else none, which
+    /// is the top of the list.
+    /// </summary>
+    private static int Anchor(List<Stop> stops, int? reached, string? here)
+    {
+        var last = reached is { } at && at >= 0 && at < stops.Count ? at : None;
+        var found = IndexOf(stops, here, Math.Max(last, 0));
+
+        if (found == None && last > 0)
+        {
+            found = IndexOf(stops, here, 0);
+        }
+
+        return found == None ? last : found;
+    }
+
+    private static int IndexOf(List<Stop> stops, string? here, int from)
+    {
+        for (var index = from; index < stops.Count; index++)
+        {
+            if (RoutingKit.IsHere(stops[index].System, here))
+            {
+                return index;
+            }
+        }
+
+        return None;
     }
 
     private static Control Title(StoredRoutePlan plan)

@@ -4768,8 +4768,12 @@ public partial class PanelView : UserControl, IPanelTabHost, IFullScreenHost
         Nav.ToRoot();
     }
 
-    /// <summary>Goes to the newest line while following.</summary>
-    public void KeepUp() => _scroll.KeepUp();
+    /// <summary>Goes to the newest line while following, and scrolls mini's plan to the Commander's stop.</summary>
+    public void KeepUp()
+    {
+        _scroll.KeepUp();
+        (MiniPane.Child as RouteMini)?.KeepAnchor();
+    }
 
     private static async Task<bool> SetText(Avalonia.Input.Platform.IClipboard clipboard, string text)
     {

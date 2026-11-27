@@ -8,6 +8,8 @@
 
 ## 1.35.3 — The title bar names who is logged in
 
+Changed: The mini panel's Plan list now opens at where you are. The stop for the system you are in is the top row, in cyan, with the next stop below it. Between stops, the last stop you reached is at the top. The list moves down a row with each stop you reach, and a scroll you make yourself stays until you reach the next one.
+
 Added: In the headset with Show D47 without SteamVR on, saying "take a picture" also keeps a picture of what you see, with d47's panel, captions and avatar in it. Elite's own screenshot does not show them. The picture is the left eye cut to the lens, saved beside Elite's JPEG with "headset" at the end of its name and the same note of where it was taken. d47 answers "Picture taken, with a picture of the headset view." The headset picture is kept even when Elite's screenshot key cannot be pressed, and the answer says which of the two was taken. On SteamVR nothing changes.
 
 Added: Search › System marks each body with what you have done there and what is left. A body shows "✓ Mapped by you" once you have mapped it, "First mapping" or "Map" with its value when it is worth mapping, "Biology 1 of 3" with the value range while genera are left to sample or "✓ Biology 3 of 3" once all are done, and Guardian signals, Thargoid signals or Geology where those are still to do. Orange is still to do, cyan is done. A scanned planet's page opens with Your record, and when the galaxy search fails the page shows what your own scans recorded under the failure notice.
